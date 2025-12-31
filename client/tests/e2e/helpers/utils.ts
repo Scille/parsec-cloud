@@ -249,7 +249,7 @@ export async function clientAreaNavigateTo(page: Page, label: string): Promise<v
   await expect(button).toBeTrulyEnabled();
 
   await button.click();
-  await expect(page.locator('.header-content').locator('.header-title')).toHaveText(label);
+  await expect(page.locator('.topbar').locator('.topbar-left-text__title')).toHaveText(label);
 }
 
 export async function workspacesInGridMode(workspacesPage: Page): Promise<boolean> {

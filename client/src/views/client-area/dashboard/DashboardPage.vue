@@ -131,7 +131,7 @@
                       :image="DownloadIcon"
                       class="custom-button__icon"
                     />
-                    {{ $msTranslate('clientArea.dashboard.invoices.download') }}
+                    <span class="custom-button__label">{{ $msTranslate('clientArea.dashboard.invoices.download') }}</span>
                   </a>
                 </ion-text>
               </ion-item>
@@ -294,6 +294,12 @@ onMounted(async () => {
 .client-page-dashboard {
   display: flex;
   gap: 1.5rem;
+  flex-wrap: wrap;
+
+  @include ms.responsive-breakpoint('lg') {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
 }
 
 // summary + invoices section
@@ -309,6 +315,10 @@ onMounted(async () => {
 .payment-container {
   max-width: 20rem;
   height: fit-content;
+
+  @include ms.responsive-breakpoint('lg') {
+    max-width: 100%;
+  }
 }
 
 //every sections
@@ -318,8 +328,13 @@ onMounted(async () => {
   flex-direction: column;
   gap: 2rem;
   padding: 1.5rem 2rem;
-  border-radius: var(--parsec-radius-12);
+  border-radius: var(--parsec-radius-18);
   border: 1px solid var(--parsec-color-light-secondary-premiere);
+  box-shadow: var(--parsec-shadow-input);
+
+  @include ms.responsive-breakpoint('lg') {
+    padding: 1.5rem;
+  }
 
   &-title {
     color: var(--parsec-color-light-primary-700);
@@ -368,7 +383,7 @@ onMounted(async () => {
 .invoices {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
   gap: 0.5rem;
   --max-width-date: 10rem;
   --max-width-organization: 12rem;
@@ -376,24 +391,28 @@ onMounted(async () => {
 
   &-date {
     width: 100%;
-    max-width: var(--max-width-date);
+    flex-basis: var(--max-width-date);
+    min-width: 8rem;
   }
 
   &-organization {
-    width: 100%;
-    max-width: var(--max-width-organization);
+    flex-basis: var(--max-width-organization);
+    min-width: 8rem;
   }
 
   &-amount {
-    width: 100%;
-    max-width: var(--max-width-amount);
+    flex-basis: var(--max-width-amount);
+    min-width: 8rem;
   }
 
   &-status {
-    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-grow: 1;
+    flex-basis: var(--max-width-date);
+    min-width: 8rem;
+    gap: 1rem;
   }
 
   &-header {
@@ -401,6 +420,7 @@ onMounted(async () => {
     justify-content: space-between;
     background: var(--parsec-color-light-secondary-premiere);
     border-radius: var(--parsec-radius-8);
+    min-width: 35rem;
 
     .invoices-header-list {
       display: flex;
@@ -421,6 +441,7 @@ onMounted(async () => {
   &-content {
     display: flex;
     flex-direction: column;
+    min-width: 35rem;
 
     .invoices-list {
       display: flex;
@@ -470,6 +491,7 @@ onMounted(async () => {
           padding-inline: 0.5rem;
           background: var(--parsec-color-light-secondary-disabled);
           color: var(--parsec-color-light-secondary-text);
+          flex-shrink: 0;
 
           &.paid {
             background: var(--parsec-color-light-success-100);
@@ -486,6 +508,13 @@ onMounted(async () => {
           &__icon {
             width: 1rem;
             --fill-color: var(--parsec-color-light-primary-500);
+            flex-shrink: 0;
+          }
+
+          &__label {
+            @include ms.responsive-breakpoint('lg') {
+              display: none;
+            }
           }
 
           &:hover {

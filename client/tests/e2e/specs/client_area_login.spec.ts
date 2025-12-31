@@ -1,6 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_USER_INFORMATION, MockBms, MsPage, answerQuestion, expect, fillIonInput, msTest, setupNewPage } from '@tests/e2e/helpers';
+import {
+  DEFAULT_USER_INFORMATION,
+  DisplaySize,
+  MockBms,
+  MsPage,
+  answerQuestion,
+  expect,
+  fillIonInput,
+  msTest,
+  setupNewPage,
+} from '@tests/e2e/helpers';
 
 msTest('Log into the customer area', { tag: '@important' }, async ({ context }) => {
   const home = (await context.newPage()) as MsPage;
@@ -22,7 +32,7 @@ msTest('Log into the customer area', { tag: '@important' }, async ({ context }) 
   await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await home.locator('.saas-login-button__item').nth(1).click();
-  await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
+  await expect(home.locator('.topbar').locator('.topbar-left-text__title')).toHaveText('Dashboard');
   const logOutButton = home.locator('.sidebar-content').locator('.bottom-section-buttons-logout');
   await expect(logOutButton).toHaveText('Log out');
   await logOutButton.click();
@@ -53,75 +63,109 @@ msTest('Log into the customer area failed', async ({ context }) => {
   await expect(error).toHaveText('Cannot log in. Please check your email and password.');
 });
 
-msTest('Switch pages', async ({ clientArea }) => {
-  const pages = [
-    { button: 'Dashboard', title: 'Dashboard', url: 'dashboard' },
-    { button: 'My profile', title: 'My profile', url: 'personal-data' },
-    { button: 'Statistics', title: 'Statistics', url: 'statistics' },
-    { button: 'Invoices', title: 'Invoices', url: 'invoices' },
-    { button: 'Payment methods', title: 'Payment methods', url: 'payment-methods' },
-    { button: 'Billing details', title: 'Billing details', url: 'billing-details' },
-  ];
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+  msTest(`Switch pages ${displaySize} display`, async ({ clientArea }) => {
+    const pages = [
+      { button: 'Dashboard', title: 'Dashboard', url: 'dashboard' },
+      { button: 'My profile', title: 'My profile', url: 'personal-data' },
+      { button: 'Statistics', title: 'Statistics', url: 'statistics' },
+      { button: 'Invoices', title: 'Invoices', url: 'invoices' },
+      { button: 'Payment methods', title: 'Payment methods', url: 'payment-methods' },
+      { button: 'Billing details', title: 'Billing details', url: 'billing-details' },
+    ];
 
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await expect(clientArea).toHaveURL(/.+\/clientArea\\?(?:.*)$/);
-  await expect(title).toHaveText('Dashboard');
-  await expect(clientArea.locator('.sidebar-header').locator('.card-header-title')).toBeVisible();
-  const menuButtons = clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem');
-  const buttonTexts = pages.map((texts) => texts.button);
-  await expect(menuButtons).toHaveText(buttonTexts);
-  for (let i = 0; i < pages.length; i++) {
-    await menuButtons.nth(i).click();
-    await expect(title).toHaveText(pages[i].title);
-    // eslint-disable-next-line max-len
-    const urlMatch = `https?://[a-z:0-9.]+/clientArea\\?(?:organization=[a-f0-9-]+&)?(?:page=${pages[i].url})&?(?:organization=[a-f0-9-]+)?`;
-    await expect(clientArea).toHaveURL(new RegExp(urlMatch));
-  }
-});
+    if (displaySize === DisplaySize.Small) {
+      await clientArea.setDisplaySize(DisplaySize.Small);
+    }
 
-msTest('Switch org', async ({ clientArea }) => {
-  const org1 = clientArea.orgInfo.name;
-  const org2 = `${clientArea.orgInfo.name}-2`;
+    const title = clientArea.locator('.topbar').locator('.topbar-left-text__title');
+    const sidebar = clientArea.locator('.sidebar');
+    const sidebarMenuButton = clientArea.locator('.topbar').locator('#trigger-toggle-menu-button');
+    await expect(clientArea).toHaveURL(/.+\/clientArea\\?(?:.*)$/);
+    await expect(title).toHaveText('Dashboard');
 
-  const orgSwitchButton = clientArea.locator('.sidebar-header').locator('.card-header-title');
-  await expect(orgSwitchButton).toHaveText(org1);
-  const popover = clientArea.locator('.popover-switch');
-  await expect(popover).toBeHidden();
-  await orgSwitchButton.click();
-  await expect(popover).toBeVisible();
-  const orgs = popover.locator('.organization-list').getByRole('listitem');
-  const orgNames = orgs.locator('.organization-name');
-  await expect(orgNames).toHaveText([org1, org2, 'All organizations']);
-  await expect(orgs.nth(0).locator('.organization-icon-current')).toBeVisible();
-  await expect(orgs.nth(1).locator('.organization-icon-current')).toBeHidden();
-  await expect(orgs.nth(2).locator('.organization-icon-current')).toBeHidden();
-  // Click on backdrop, nothing should change
-  await clientArea.locator('.backdrop-hide').click();
-  await expect(orgSwitchButton).toHaveText(org1);
+    if (displaySize === DisplaySize.Small) {
+      await expect(sidebarMenuButton).toBeVisible();
+      await expect(sidebar).toBeHidden();
+      await sidebarMenuButton.click();
+      await expect(sidebar).toBeVisible();
+    }
 
-  await expect(popover).toBeHidden();
-  await orgSwitchButton.click();
-  await expect(popover).toBeVisible();
-  await expect(orgNames).toHaveText([org1, org2, 'All organizations']);
-  await expect(orgs.nth(0).locator('.organization-icon-current')).toBeVisible();
-  await expect(orgs.nth(1).locator('.organization-icon-current')).toBeHidden();
-  await expect(orgs.nth(2).locator('.organization-icon-current')).toBeHidden();
-  // Click on second org, should switch
-  await orgs.nth(1).click();
-  await expect(popover).toBeHidden();
-  await expect(orgSwitchButton).toHaveText(org2);
+    await expect(clientArea.locator('.sidebar-header').locator('.card-header-title')).toBeVisible();
+    const menuButtons = clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem');
+    const buttonTexts = pages.map((texts) => texts.button);
+    await expect(menuButtons).toHaveText(buttonTexts);
+    for (let i = 0; i < pages.length; i++) {
+      if (displaySize === DisplaySize.Small && i > 0) {
+        await sidebarMenuButton.click();
+        await expect(sidebar).toBeVisible();
+      }
+      await menuButtons.nth(i).click();
+      await expect(title).toHaveText(pages[i].title);
 
-  await orgSwitchButton.click();
-  await expect(popover).toBeVisible();
-  await expect(orgNames).toHaveText([org1, org2, 'All organizations']);
-  // Current one should be second one
-  await expect(orgs.nth(0).locator('.organization-icon-current')).toBeHidden();
-  await expect(orgs.nth(1).locator('.organization-icon-current')).toBeVisible();
-  await expect(orgs.nth(2).locator('.organization-icon-current')).toBeHidden();
-});
+      if (displaySize === DisplaySize.Small) {
+        await expect(sidebar).toBeHidden();
+      }
+      // eslint-disable-next-line max-len
+      const urlMatch = `https?://[a-z:0-9.]+/clientArea\\?(?:organization=[a-f0-9-]+&)?(?:page=${pages[i].url})&?(?:organization=[a-f0-9-]+)?`;
+      await expect(clientArea).toHaveURL(new RegExp(urlMatch));
+    }
+  });
+
+  msTest(`Switch org ${displaySize} display`, async ({ clientArea }) => {
+    const org1 = clientArea.orgInfo.name;
+    const org2 = `${clientArea.orgInfo.name}-2`;
+
+    let orgSwitchButton;
+
+    if (displaySize === DisplaySize.Large) {
+      orgSwitchButton = clientArea.locator('.sidebar-header').locator('.card-header-title');
+    } else {
+      orgSwitchButton = clientArea.locator('#connected-header').locator('.current-organization__name');
+    }
+
+    if (displaySize === DisplaySize.Small) {
+      await clientArea.setDisplaySize(DisplaySize.Small);
+    }
+    await expect(orgSwitchButton).toContainText(org1);
+    const popover = clientArea.locator('.popover-switch');
+    await expect(popover).toBeHidden();
+    await orgSwitchButton.click();
+    await expect(popover).toBeVisible();
+    const orgs = popover.locator('.organization-list').getByRole('listitem');
+    const orgNames = orgs.locator('.organization-name');
+    await expect(orgNames).toHaveText([org1, org2, 'All organizations']);
+    await expect(orgs.nth(0).locator('.organization-icon-current')).toBeVisible();
+    await expect(orgs.nth(1).locator('.organization-icon-current')).toBeHidden();
+    await expect(orgs.nth(2).locator('.organization-icon-current')).toBeHidden();
+    // Click on backdrop, nothing should change
+    await clientArea.locator('.backdrop-hide').click();
+    await expect(orgSwitchButton).toHaveText(org1);
+
+    await expect(popover).toBeHidden();
+    await orgSwitchButton.click();
+    await expect(popover).toBeVisible();
+    await expect(orgNames).toHaveText([org1, org2, 'All organizations']);
+    await expect(orgs.nth(0).locator('.organization-icon-current')).toBeVisible();
+    await expect(orgs.nth(1).locator('.organization-icon-current')).toBeHidden();
+    await expect(orgs.nth(2).locator('.organization-icon-current')).toBeHidden();
+    // Click on second org, should switch
+    await orgs.nth(1).click();
+    await expect(popover).toBeHidden();
+    await expect(orgSwitchButton).toHaveText(org2);
+
+    await orgSwitchButton.click();
+    await expect(popover).toBeVisible();
+    await expect(orgNames).toHaveText([org1, org2, 'All organizations']);
+    // Current one should be second one
+    await expect(orgs.nth(0).locator('.organization-icon-current')).toBeHidden();
+    await expect(orgs.nth(1).locator('.organization-icon-current')).toBeVisible();
+    await expect(orgs.nth(2).locator('.organization-icon-current')).toBeHidden();
+  });
+}
 
 msTest('Open settings modal', async ({ clientArea }) => {
-  const settingsButton = clientArea.locator('.header-content').locator('.custom-button');
+  const settingsButton = clientArea.locator('.topbar').locator('.custom-button');
   const modal = clientArea.locator('.settings-modal');
   await expect(modal).toBeHidden();
   await settingsButton.click();
@@ -185,7 +229,7 @@ msTest('Login in and refresh no remember me', async ({ context }) => {
   await fillIonInput(loginContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(loginContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await loginContainer.locator('.saas-login-button__item').nth(1).click();
-  await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
+  await expect(home.locator('.topbar').locator('.topbar-left-text__title')).toHaveText('Dashboard');
   await expect(home).toBeClientAreaPage();
   await expect(loginContainer).toBeHidden();
   await home.reload();
@@ -217,12 +261,12 @@ msTest('Login in and refresh with remember me', async ({ context }) => {
   await fillIonInput(loginContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await loginContainer.locator('.saas-login-link').locator('ion-checkbox').click();
   await loginContainer.locator('.saas-login-button__item').nth(1).click();
-  await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
+  await expect(home.locator('.topbar').locator('.topbar-left-text__title')).toHaveText('Dashboard');
   await expect(home).toBeClientAreaPage();
   await expect(loginContainer).toBeHidden();
   await home.reload();
   await setupNewPage(home, { skipGoto: true });
   await expect(home).toBeClientAreaPage();
   await expect(loginContainer).toBeHidden();
-  await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
+  await expect(home.locator('.topbar').locator('.topbar-left-text__title')).toHaveText('Dashboard');
 });

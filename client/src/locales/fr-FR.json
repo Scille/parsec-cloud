@@ -2057,7 +2057,8 @@
                 "customOrderProcessing": "Suivi de commande",
                 "orders": "Commandes"
             },
-            "settings": "Paramètres"
+            "settings": "Paramètres",
+            "organization": "Organisation :"
         },
         "personalDataPage": {
             "personalInfo": {

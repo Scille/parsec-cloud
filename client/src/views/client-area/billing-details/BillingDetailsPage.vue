@@ -24,6 +24,7 @@
             :maxlength="256"
             :placeholder="'clientArea.billingDetailsPage.placeholders.line2'"
             :disabled="!isEditing"
+            v-if="isEditing || (line2 && line2.length > 0)"
           />
         </div>
         <div class="form-row">
@@ -64,14 +65,14 @@
         <ion-button
           v-show="!isEditing"
           @click="isEditing = true"
-          class="toggle-button"
+          class="update-button button-default"
         >
           {{ $msTranslate('clientArea.billingDetailsPage.update') }}
         </ion-button>
         <ion-button
           v-show="isEditing"
           @click="onCancelEdit"
-          class="cancel-button"
+          class="cancel-button button-default"
           fill="outline"
         >
           {{ $msTranslate('clientArea.billingDetailsPage.cancel') }}
@@ -79,7 +80,7 @@
         <ion-button
           v-show="isEditing"
           @click="submit"
-          class="submit-button"
+          class="submit-button button-default"
           :disabled="!isFormValid"
         >
           {{ $msTranslate('clientArea.billingDetailsPage.submit') }}
@@ -198,6 +199,7 @@ async function onCancelEdit(): Promise<void> {
   flex-direction: column;
   gap: 1.5rem;
   width: 100%;
+  margin-bottom: 2rem;
 }
 
 .form {
@@ -226,6 +228,15 @@ async function onCancelEdit(): Promise<void> {
 
   &-submit {
     display: flex;
+
+    .update-button {
+      margin-left: auto;
+      --background: var(--parsec-color-light-secondary-text);
+
+      @include ms.responsive-breakpoint('sm') {
+        width: 100%;
+      }
+    }
 
     .submit-button {
       margin-left: auto;

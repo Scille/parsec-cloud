@@ -3,7 +3,7 @@
 import { clientAreaSwitchOrganization, expect, MockBms, msTest } from '@tests/e2e/helpers';
 
 msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
-  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Orders');
 
   const pages = [
@@ -28,7 +28,7 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
 });
 
 msTest('Test sidebar goto org', async ({ clientAreaCustomOrder }) => {
-  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Orders');
   const gotoButton = clientAreaCustomOrder.locator('.sidebar').locator('.organization-card-button');
   await expect(gotoButton).toBeHidden();

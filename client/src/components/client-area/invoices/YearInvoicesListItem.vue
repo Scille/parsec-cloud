@@ -49,6 +49,7 @@ const isVisible = ref(true);
 .invoices-year {
   display: flex;
   flex-direction: column;
+  align-items: start;
   padding: 0.5rem;
   margin-top: 0.5rem;
   border-radius: var(--parsec-radius-12);
@@ -59,10 +60,6 @@ const isVisible = ref(true);
   --max-width-contract-period: 20rem;
   --max-width-amount: 10rem;
   transition: padding 0.2s;
-
-  &:last-of-type {
-    margin-bottom: 3rem;
-  }
 
   &-text {
     display: flex;
@@ -75,6 +72,7 @@ const isVisible = ref(true);
     background: var(--parsec-color-light-secondary-premiere);
     z-index: 3;
     transition: all 0.2s ease;
+    width: 100%;
 
     &:hover {
       background: var(--parsec-color-light-secondary-background);

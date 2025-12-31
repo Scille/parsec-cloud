@@ -3,15 +3,13 @@
 import { clientAreaNavigateTo, clientAreaSwitchOrganization, expect, MockBms, msTest } from '@tests/e2e/helpers';
 
 msTest('Test initial status for an org', async ({ clientAreaCustomOrder }) => {
-  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Orders');
 
   await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
   await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
-  const error = container.locator('.form-error');
-  await expect(error).toBeHidden();
 
   await expect(container.locator('.ms-error').nth(0)).toBeVisible();
   await expect(container.locator('.ms-error').nth(0)).toHaveText(
@@ -55,7 +53,7 @@ msTest('Test initial status for all orgs', async ({ clientAreaCustomOrder }) => 
   const orgSelector = clientAreaCustomOrder.locator('.sidebar-header').locator('.organization-card-header').locator('.card-header-title');
   await expect(orgSelector).toHaveText('All organizations');
 
-  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Orders');
   await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
@@ -85,7 +83,7 @@ msTest('Custom order contract stats generic error', async ({ clientAreaCustomOrd
   await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
-  const error = container.locator('.form-error');
+  const error = container.locator('.ms-error');
   await expect(error).toBeVisible();
   await expect(error).toHaveText('Failed to retrieve the information');
 });
@@ -97,7 +95,7 @@ msTest('Custom order contract stats timeout error', async ({ clientAreaCustomOrd
   await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
-  const error = container.locator('.form-error');
+  const error = container.locator('.ms-error');
   await expect(error).toBeVisible();
   await expect(error).toHaveText('Failed to retrieve the information');
 });
@@ -109,7 +107,7 @@ msTest('Custom order contract details generic error', async ({ clientAreaCustomO
   await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
-  const error = container.locator('.form-error');
+  const error = container.locator('.ms-error');
   await expect(error).toBeVisible();
   await expect(error).toHaveText('Failed to retrieve the information');
 });
@@ -121,7 +119,7 @@ msTest('Custom order contract details timeout error', async ({ clientAreaCustomO
   await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
-  const error = container.locator('.form-error');
+  const error = container.locator('.ms-error');
   await expect(error).toBeVisible();
   await expect(error).toHaveText('Failed to retrieve the information');
 });

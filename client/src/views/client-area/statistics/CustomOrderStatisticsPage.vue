@@ -636,7 +636,6 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
 .organization-list {
   min-height: 4em;
-  margin-top: 1.5rem;
   width: fit-content;
   display: flex;
   flex-direction: column;
@@ -644,7 +643,8 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   border-radius: var(--parsec-radius-12);
   background: var(--parsec-color-light-secondary-background);
   border: 1px solid var(--parsec-color-light-secondary-premiere);
-  overflow: hidden;
+  overflow: auto;
+  margin-bottom: 1.5rem;
 
   &-item {
     display: flex;

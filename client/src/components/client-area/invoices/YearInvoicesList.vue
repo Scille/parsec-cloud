@@ -78,7 +78,10 @@
 
   <!-- invoices -->
   <template v-if="invoices.size > 0 || querying">
-    <div class="invoices-container">
+    <div
+      class="invoices-container"
+      v-show="!querying"
+    >
       <year-invoices-list-item
         v-for="year in invoices.keys()"
         v-show="selectedYears.length === 0 || selectedYears.includes(year)"
@@ -214,11 +217,12 @@ function removeSelectedMonth(month: number): void {
 .invoices-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 
   &-title {
     color: var(--parsec-color-light-primary-700);
+    width: fit-content;
   }
 
   &-filter {

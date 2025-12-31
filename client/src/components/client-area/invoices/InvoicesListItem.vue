@@ -122,6 +122,7 @@ function getCustomOrderStatusInvoiceStep(): Translatable {
       .custom-button__icon {
         width: 1rem;
         --fill-color: var(--parsec-color-light-primary-500);
+        flex-shrink: 0;
       }
 
       &:hover {
@@ -131,7 +132,7 @@ function getCustomOrderStatusInvoiceStep(): Translatable {
     }
 
     .custom-button__label {
-      @include ms.responsive-breakpoint('xl') {
+      @include ms.responsive-breakpoint('md') {
         display: none;
       }
     }
@@ -182,26 +183,31 @@ function getCustomOrderStatusInvoiceStep(): Translatable {
   &-date {
     width: 100%;
     max-width: var(--max-width-date);
+    min-width: 8rem;
   }
 
   &-number {
     width: 100%;
     max-width: var(--max-width-number);
+    min-width: 10rem;
   }
 
   &-organization {
     width: 100%;
     max-width: var(--max-width-organization);
+    min-width: 10rem;
   }
 
   &-amount {
     width: 100%;
     max-width: var(--max-width-amount);
+    min-width: 10rem;
   }
 
   &-contract-period {
     width: 100%;
     max-width: var(--max-width-contract-period);
+    min-width: 10rem;
   }
 
   &-status {
@@ -210,6 +216,9 @@ function getCustomOrderStatusInvoiceStep(): Translatable {
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
+    flex-grow: 1;
+    flex-basis: var(--max-width-date);
+    min-width: 12rem;
   }
 }
 </style>

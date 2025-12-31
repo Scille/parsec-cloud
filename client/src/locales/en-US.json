@@ -2056,7 +2056,8 @@
                 "customOrderProcessing": "Order tracking",
                 "orders": "Orders"
             },
-            "settings": "Settings"
+            "settings": "Settings",
+            "organization": "Organization:"
         },
         "personalDataPage": {
             "personalInfo": {

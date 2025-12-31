@@ -437,6 +437,10 @@ function getUserName(): string {
       width: 10rem;
       height: 100%;
       background: linear-gradient(to right, transparent 0%, var(--parsec-color-light-secondary-white) 100%);
+
+      @include ms.responsive-breakpoint('md') {
+        display: none;
+      }
     }
 
     &-header {
@@ -456,8 +460,13 @@ function getUserName(): string {
 
     &-list {
       display: flex;
-      overflow: auto;
+      flex-wrap: wrap;
       gap: 1rem;
+
+      @include ms.responsive-breakpoint('md') {
+        max-width: 100%;
+        flex-direction: column;
+      }
     }
   }
 
@@ -473,6 +482,11 @@ function getUserName(): string {
     max-width: 25rem;
     flex-shrink: 0;
 
+    @include ms.responsive-breakpoint('md') {
+      max-width: 100%;
+      flex-direction: column;
+    }
+
     &-data {
       display: flex;
       align-items: center;
@@ -482,7 +496,7 @@ function getUserName(): string {
         width: 100px;
         height: 55.8px;
         border-radius: var(--parsec-radius-8);
-        background: red;
+        box-shadow: var(--parsec-shadow-soft);
       }
 
       &-text {

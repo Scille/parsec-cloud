@@ -8,15 +8,18 @@
     <div
       class="resize-divider"
       ref="divider"
-      v-show="isSidebarVisible"
+      v-show="isSidebarVisible && isLargeDisplay"
     />
     <ion-split-pane
-      when="xs"
+      :when="isLargeDisplay"
       content-id="main"
+      menu-id="main-menu"
+      class="large-display-menu-container"
     >
       <ion-menu
         content-id="main"
         class="sidebar"
+        :class="{ 'sidebar-mobile': isSmallDisplay }"
       >
         <template v-if="!querying && loggedIn">
           <client-area-sidebar
@@ -60,7 +63,10 @@
         <client-area-header
           v-if="loggedIn && !querying"
           :title="getTitleByPage()"
+          :organizations="organizations"
+          :current-organization="currentOrganization"
           @page-selected="switchPage"
+          @organization-selected="onOrganizationSelected"
         />
         <ion-content class="main-container">
           <div class="main-content">
@@ -155,7 +161,7 @@ import CustomOrderStatisticsPage from '@/views/client-area/statistics/CustomOrde
 import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
 import { ClientAreaPages, DefaultBmsOrganization, isDefaultOrganization } from '@/views/client-area/types';
 import { createGesture, GestureDetail, IonContent, IonMenu, IonPage, IonSkeletonText, IonSplitPane } from '@ionic/vue';
-import { Translatable } from 'megashark-lib';
+import { Translatable, useWindowSize } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
@@ -169,6 +175,7 @@ const sidebarWidthProperty = ref('');
 const loggedIn = ref(false);
 const refresh = ref(0);
 const querying = ref(true);
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 const watchSidebarWidthCancel = watch(sidebarWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -417,12 +424,10 @@ function getTitleByPage(): Translatable {
 .main-content {
   // multiple lines for cross-browser compatibility
   width: 100%;
-  width: -webkit-fill-available;
-  width: -moz-available;
   width: stretch;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .main-page {
