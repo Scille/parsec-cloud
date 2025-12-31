@@ -10,11 +10,13 @@
         title="clientArea.personalDataPage.personalInfo.title"
         :rows="getPersonalInfoRows()"
         @update="openPersonalInfoModal"
+        class="personal-data-content__item"
       />
       <ms-summary-card
         title="clientArea.personalDataPage.professionalInfo.title"
         :rows="getProfessionalInfoRows()"
         @update="openProfessionalInfoModal"
+        class="personal-data-content__item"
       />
     </div>
     <div class="personal-data-content">
@@ -23,11 +25,13 @@
         :rows="getAuthenticationRows()"
         @update="openAuthenticationModal"
         :read-only="personalData.billingSystem !== BillingSystem.Stripe"
+        class="personal-data-content__item"
       />
       <ms-summary-card
         title="clientArea.personalDataPage.security.title"
         :rows="getSecurityRows()"
         @update="openSecurityModal"
+        class="personal-data-content__item"
       />
     </div>
   </div>
@@ -241,6 +245,7 @@ async function onDataUpdated(message: Translatable): Promise<void> {
 .personal-data-page {
   display: flex;
   gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .personal-data-content {
@@ -249,5 +254,16 @@ async function onDataUpdated(message: Translatable): Promise<void> {
   flex: 1;
   flex-direction: column;
   max-width: 30em;
+
+  &__item {
+    padding: 1.5rem;
+    background: var(--parsec-color-light-secondary-background);
+    border-radius: var(--parsec-radius-12);
+    box-shadow: var(--parsec-shadow-input);
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    max-width: 100%;
+  }
 }
 </style>

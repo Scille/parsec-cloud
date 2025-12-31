@@ -60,10 +60,6 @@ const isVisible = ref(true);
   --max-width-amount: 10rem;
   transition: padding 0.2s;
 
-  &:last-of-type {
-    margin-bottom: 3rem;
-  }
-
   &-text {
     display: flex;
     align-items: center;

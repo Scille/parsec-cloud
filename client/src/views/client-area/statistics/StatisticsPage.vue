@@ -286,9 +286,14 @@
       </ion-text>
 
       <div class="organization-list">
+        <ms-search-input
+          placeholder="HomePage.organizationList.search"
+          v-model="searchQuery"
+          id="search-input-organization"
+        />
         <div
           class="organization-list-item subtitles-normal"
-          v-for="org in organizations"
+          v-for="org in filteredOrganizations"
           :key="org.bmsId"
           @click="onOrganizationSelected(org)"
         >
@@ -320,7 +325,8 @@ import { BmsAccessInstance, BmsOrganization, DataType, OrganizationStatsResultDa
 import { isDefaultOrganization } from '@/views/client-area/types';
 import { IonCard, IonIcon, IonSkeletonText, IonText, IonTitle } from '@ionic/vue';
 import { arrowForward } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { MsSearchInput } from 'megashark-lib';
+import { computed, onMounted, ref } from 'vue';
 
 interface CircleProgressData {
   amount: number;
@@ -345,6 +351,7 @@ const freeSliceSize = ref<number>(0);
 const payingSliceSize = ref<number>(0);
 const querying = ref(true);
 const error = ref('');
+const searchQuery = ref('');
 
 const includedData = ref<CircleProgressData>();
 const payingData = ref<CircleProgressData>();
@@ -356,6 +363,12 @@ function getIncludedData(): CircleProgressData {
     progress: totalData.value > INCLUDED_STORAGE ? 1 : freeSliceSize.value / INCLUDED_STORAGE,
   };
 }
+
+const filteredOrganizations = computed(() =>
+  searchQuery.value.trim()
+    ? props.organizations.filter((org) => org.name.toLowerCase().includes(searchQuery.value.toLowerCase().trim()))
+    : props.organizations,
+);
 
 function getExtraData(): CircleProgressData | undefined {
   if (totalData.value < freeSliceSize.value) {
@@ -701,7 +714,6 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
 .organization-list {
   min-height: 4em;
-  margin-top: 1.5rem;
   width: fit-content;
   display: flex;
   flex-direction: column;
@@ -709,7 +721,23 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   border-radius: var(--parsec-radius-12);
   background: var(--parsec-color-light-secondary-background);
   border: 1px solid var(--parsec-color-light-secondary-premiere);
-  overflow: hidden;
+  overflow: auto;
+
+  #search-input-organization {
+    border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+    flex-shrink: 0;
+    padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+    border: none;
+    border-radius: 0;
+    position: sticky;
+    top: 0rem;
+    background: var(--parsec-color-light-secondary-white);
+    z-index: 10;
+
+    &:focus-within {
+      outline: none;
+    }
+  }
 
   &-item {
     display: flex;

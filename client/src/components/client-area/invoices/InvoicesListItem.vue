@@ -210,6 +210,9 @@ function getCustomOrderStatusInvoiceStep(): Translatable {
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
+    flex-grow: 1;
+    flex-basis: var(--max-width-date);
+    min-width: 8rem;
   }
 }
 </style>
