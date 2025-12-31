@@ -101,7 +101,10 @@
     <div class="menu-client">
       <div class="menu-client-block">
         <!-- menu list -->
-        <ion-list class="menu-client-list">
+        <ion-list
+          class="menu-client-list"
+          :class="{ 'menu-client-list-mobile': !isLargeDisplay }"
+        >
           <!-- dashboard -->
           <ion-item
             button
@@ -111,11 +114,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Dashboard }"
             @click="goToPageClicked(ClientAreaPages.Dashboard)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="grid"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.summary') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="grid"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.summary') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="grid"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.summary') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
 
           <!-- orders -->
@@ -127,11 +141,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Orders }"
             @click="goToPageClicked(ClientAreaPages.Orders)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="cube"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.orders') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="cube"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.orders') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="cube"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.orders') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
 
           <!-- profile -->
@@ -142,11 +167,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.PersonalData }"
             @click="goToPageClicked(ClientAreaPages.PersonalData)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="person"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.personalData') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="person"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.personalData') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="person"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.personalData') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
         </ion-list>
       </div>
@@ -156,6 +192,7 @@
         <ion-list
           v-if="billingSystem === BillingSystem.Stripe"
           class="menu-client-list"
+          :class="{ 'menu-client-list-mobile': !isLargeDisplay }"
         >
           <!-- stats -->
           <ion-item
@@ -166,11 +203,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Statistics }"
             @click="goToPageClicked(ClientAreaPages.Statistics)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="podium"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.stats') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="podium"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.stats') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="podium"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.stats') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
 
           <!-- invoices -->
@@ -181,11 +229,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Invoices }"
             @click="goToPageClicked(ClientAreaPages.Invoices)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="newspaper"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="newspaper"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="newspaper"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.invoices') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
 
           <!-- payment -->
@@ -196,11 +255,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.PaymentMethods }"
             @click="goToPageClicked(ClientAreaPages.PaymentMethods)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="card"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.billingMethod') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="card"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.billingMethod') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="card"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.billingMethod') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
 
           <!-- billing -->
@@ -211,17 +281,29 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.BillingDetails }"
             @click="goToPageClicked(ClientAreaPages.BillingDetails)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="idCard"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="idCard"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="idCard"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
         </ion-list>
 
         <ion-list
           v-if="billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate"
           class="menu-client-list"
+          :class="{ 'menu-client-list-mobile': !isLargeDisplay }"
         >
           <!-- contracts -->
           <ion-item
@@ -232,11 +314,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Contracts }"
             @click="goToPageClicked(ClientAreaPages.Contracts)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="albums"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.contract') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="albums"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.contract') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="albums"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.contract') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
 
           <!-- stats -->
@@ -248,11 +341,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderStatistics }"
             @click="goToPageClicked(ClientAreaPages.CustomOrderStatistics)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="podium"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.stats') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="podium"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.stats') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="podium"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.stats') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
 
           <!-- invoices -->
@@ -264,11 +368,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderInvoices }"
             @click="goToPageClicked(ClientAreaPages.CustomOrderInvoices)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="newspaper"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="newspaper"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="newspaper"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.invoices') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
 
           <!-- billing -->
@@ -283,11 +398,22 @@
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
             @click="goToPageClicked(ClientAreaPages.CustomOrderBillingDetails)"
           >
-            <ion-icon
-              class="menu-client-list-item__icon"
-              :icon="idCard"
-            />
-            {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
+            <template v-if="isLargeDisplay">
+              <ion-icon
+                class="menu-client-list-item__icon"
+                :icon="idCard"
+              />
+              {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
+            </template>
+            <template v-else>
+              <ion-menu-button class="menu-button-wrapper">
+                <ion-icon
+                  class="menu-client-list-item__icon"
+                  :icon="idCard"
+                />
+                <span>{{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}</span>
+              </ion-menu-button>
+            </template>
           </ion-item>
         </ion-list>
       </div>
@@ -372,6 +498,7 @@ import {
   IonIcon,
   IonItem,
   IonList,
+  IonMenuButton,
   IonSkeletonText,
   IonText,
   popoverController,
@@ -391,7 +518,7 @@ import {
   person,
   podium,
 } from 'ionicons/icons';
-import { Answer, askQuestion, ChevronExpand, MsImage, MsInformationTooltip, MsModalResult } from 'megashark-lib';
+import { Answer, askQuestion, ChevronExpand, MsImage, MsInformationTooltip, MsModalResult, useWindowSize } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -403,6 +530,7 @@ const orgStatus = ref<OrganizationStatusResultData | null>(null);
 const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billingSystem);
 const showMenu = ref(false);
 const querying = ref(false);
+const { isLargeDisplay } = useWindowSize();
 
 const clientAreaPagesDisabled = ref<Partial<Record<ClientAreaPages, boolean>>>({
   [ClientAreaPages.Contracts]: false,
@@ -661,7 +789,6 @@ async function createOrganization(): Promise<void> {
   flex-direction: column;
   gap: 4rem;
   position: relative;
-  margin-left: 0.5rem;
 
   &-block {
     position: relative;
@@ -691,30 +818,74 @@ async function createOrganization(): Promise<void> {
       --color: var(--parsec-color-light-secondary-hard-grey);
       --background-hover-opacity: 1;
       --inner-padding-end: 0rem;
-      --padding-start: 0.75rem;
-      --padding-end: 0.75rem;
-      --padding-top: 0.5rem;
-      --padding-bottom: 0.5rem;
-      width: fit-content;
-      border-radius: var(--parsec-radius-6);
+      --padding-start: 1rem;
+      --padding-end: 1rem;
+      --padding-top: 0.625rem;
+      --padding-bottom: 0.625rem;
+      border-radius: var(--parsec-radius-12);
       font-weight: 500;
+      font-size: 1rem;
 
       &__icon {
         color: var(--parsec-color-light-secondary-soft-grey);
-        font-size: 1rem;
+        font-size: 1.2rem;
         margin-inline-end: 0.5rem;
         flex-shrink: 0;
+      }
+
+      &:hover {
+        cursor: pointer;
+        box-shadow: var(--parsec-shadow-input);
       }
 
       &.current-page {
         --background: var(--parsec-color-light-secondary-medium);
         --background-hover: var(--parsec-color-light-secondary-medium);
         --color: var(--parsec-color-light-primary-700);
+        box-shadow: var(--parsec-shadow-input);
 
         .menu-client-list-item__icon {
           color: var(--parsec-color-light-primary-700);
         }
       }
+
+      ion-menu-button {
+        display: flex;
+        font-size: initial;
+        width: 100%;
+        height: fit-content;
+
+        &::part(native) {
+          display: flex;
+          font-size: inherit;
+          padding: 0;
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  &-list-mobile {
+    .menu-client-list-item::part(native) {
+      padding: 0;
+    }
+
+    .menu-button-wrapper {
+      display: flex;
+      font-size: initial;
+      width: 100%;
+      height: fit-content;
+      padding: 0.625rem 1rem;
+
+      &::part(native) {
+        border-radius: 0;
+        --background-hover: none;
+      }
+    }
+
+    span {
+      width: 100%;
+      text-align: left;
     }
   }
 }
@@ -743,16 +914,7 @@ async function createOrganization(): Promise<void> {
 }
 
 .bottom-section {
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 10rem;
-    left: -2rem;
-    width: calc(100% + 4rem);
-    height: 1px;
-    background: var(--parsec-color-light-secondary-disabled);
-    z-index: 2;
-  }
+  padding-top: 3rem;
 
   &-buttons {
     margin: 1rem 0 0.5rem 0;

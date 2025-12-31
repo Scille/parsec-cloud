@@ -13,6 +13,7 @@ export interface SidebarSavedData {
 }
 
 export const SIDEBAR_MENU_DATA_KEY = 'SidebarMenu';
+export const SIDEBAR_CLIENTAREA_MENU_DATA_KEY = 'SidebarClientAreaMenu';
 
 export const SidebarDefaultData: Required<SidebarSavedData> = {
   width: 300,

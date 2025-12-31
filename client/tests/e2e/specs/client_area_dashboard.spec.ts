@@ -3,7 +3,7 @@
 import { clientAreaSwitchOrganization, expect, MockBms, msTest } from '@tests/e2e/helpers';
 
 msTest('Test dashboard', async ({ clientArea }) => {
-  const title = clientArea.locator('.header-content').locator('.header-title');
+  const title = clientArea.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Dashboard');
   const monthSummaryItems = clientArea.locator('.month-summary').locator('.month-summary-item');
   await expect(monthSummaryItems.locator('.month-summary-item__title')).toHaveText(['Active users', 'Used storage']);
@@ -38,7 +38,7 @@ msTest('Test dashboard', async ({ clientArea }) => {
 });
 
 msTest('Test sidebar goto org', async ({ clientArea }) => {
-  const title = clientArea.locator('.header-content').locator('.header-title');
+  const title = clientArea.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Dashboard');
   await MockBms.mockOrganizationStatus(clientArea, { isBootstrapped: false });
   await clientAreaSwitchOrganization(clientArea, 'BlackMesa-2');

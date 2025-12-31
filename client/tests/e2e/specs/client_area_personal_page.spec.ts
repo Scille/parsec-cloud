@@ -4,15 +4,15 @@ import { Page } from '@playwright/test';
 import { DEFAULT_USER_INFORMATION, MockBms, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
 
 async function goToPersonalPage(page: Page): Promise<void> {
-  await page.locator('.header-content').locator('.header-right-profile').click();
-  await expect(page.locator('.header-content').locator('.header-title')).toHaveText('My profile');
+  await page.locator('.topbar').locator('.profile-header').click();
+  await expect(page.locator('.topbar').locator('.topbar-left-text__title')).toHaveText('My profile');
 }
 
 msTest('Check personal data page', async ({ clientArea }) => {
-  const title = clientArea.locator('.header-content').locator('.header-title');
+  const title = clientArea.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Dashboard');
-  const avatar = clientArea.locator('.header-content').locator('.header-right-profile');
-  await expect(avatar.locator('.person-name')).toHaveText(DEFAULT_USER_INFORMATION.name);
+  const avatar = clientArea.locator('.topbar-right').locator('.profile-header');
+  await expect(avatar.locator('.text-content__name')).toHaveText(DEFAULT_USER_INFORMATION.name);
   await avatar.click();
   await expect(title).toHaveText('My profile');
   const container = clientArea.locator('.personal-data-page');

@@ -1,0 +1,1 @@
+Added small screen display mode for the customer area.

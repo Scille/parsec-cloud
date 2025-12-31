@@ -79,7 +79,7 @@ msTest.describe(() => {
     });
 
     // Now verify the page loaded correctly with the error message
-    const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+    const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
     await expect(title).toHaveText('Statistics');
     const page = clientAreaCustomOrder.locator('.client-page-statistics');
     const error = page.locator('.statistics-error');

@@ -286,9 +286,15 @@
       </ion-text>
 
       <div class="organization-list">
+        <ms-search-input
+          placeholder="HomePage.organizationList.search"
+          v-model="searchQuery"
+          id="search-input-organization"
+          v-if="organizations.length > 4"
+        />
         <div
           class="organization-list-item subtitles-normal"
-          v-for="org in organizations"
+          v-for="org in filteredOrganizations"
           :key="org.bmsId"
           @click="onOrganizationSelected(org)"
         >
@@ -320,7 +326,8 @@ import { BmsAccessInstance, BmsOrganization, DataType, OrganizationStatsResultDa
 import { isDefaultOrganization } from '@/views/client-area/types';
 import { IonCard, IonIcon, IonSkeletonText, IonText, IonTitle } from '@ionic/vue';
 import { arrowForward } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { MsSearchInput } from 'megashark-lib';
+import { computed, onMounted, ref } from 'vue';
 
 interface CircleProgressData {
   amount: number;
@@ -345,6 +352,7 @@ const freeSliceSize = ref<number>(0);
 const payingSliceSize = ref<number>(0);
 const querying = ref(true);
 const error = ref('');
+const searchQuery = ref('');
 
 const includedData = ref<CircleProgressData>();
 const payingData = ref<CircleProgressData>();
@@ -356,6 +364,15 @@ function getIncludedData(): CircleProgressData {
     progress: totalData.value > INCLUDED_STORAGE ? 1 : freeSliceSize.value / INCLUDED_STORAGE,
   };
 }
+
+const filteredOrganizations = computed(() => {
+  const query = searchQuery.value.trim();
+  if (query) {
+    return props.organizations.filter((org) => org.name.toLowerCase().includes(query.toLowerCase()));
+  } else {
+    return props.organizations;
+  }
+});
 
 function getExtraData(): CircleProgressData | undefined {
   if (totalData.value < freeSliceSize.value) {
@@ -430,6 +447,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   &-cards-list {
     display: flex;
     gap: 1.5rem;
+    flex-wrap: wrap;
 
     &-item {
       display: flex;
@@ -440,6 +458,11 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
       margin: 0;
       min-width: 9.125rem;
       box-shadow: var(--parsec-shadow-soft);
+
+      @include ms.responsive-breakpoint('sm') {
+        flex: 1 1 calc(50% - 0.75rem);
+        max-width: calc(50% - 0.75rem);
+      }
 
       &-text {
         display: flex;
@@ -478,6 +501,10 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   border-radius: var(--parsec-radius-12);
   gap: 2rem;
   width: 100%;
+
+  @include ms.responsive-breakpoint('lg') {
+    flex-direction: column;
+  }
 
   &__title {
     color: var(--parsec-color-light-secondary-text);
@@ -518,6 +545,10 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
   &-detail {
     flex: 1;
+
+    @include ms.responsive-breakpoint('lg') {
+      flex-direction: row;
+    }
   }
 
   &-usage {
@@ -531,6 +562,12 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   gap: 0.75rem;
   width: 100%;
   max-width: 9.5rem;
+
+  @include ms.responsive-breakpoint('lg') {
+    gap: 1.25rem;
+    flex-direction: row;
+    max-width: 100%;
+  }
 
   &__total {
     color: var(--parsec-color-light-secondary-text);
@@ -557,6 +594,10 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   width: 100%;
   gap: 1.5rem;
 
+  @include ms.responsive-breakpoint('lg') {
+    flex-direction: column;
+  }
+
   &-data {
     display: flex;
     flex-direction: column;
@@ -565,14 +606,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     box-shadow: var(--parsec-shadow-soft);
     padding: 1.5rem;
     border-radius: var(--parsec-radius-12);
-
-    &:nth-child(1) {
-      min-width: 18rem;
-    }
-
-    &:nth-child(2) {
-      min-width: 12rem;
-    }
+    min-width: 18rem;
 
     &__title {
       color: var(--parsec-color-light-secondary-hard-grey);
@@ -701,7 +735,6 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
 .organization-list {
   min-height: 4em;
-  margin-top: 1.5rem;
   width: fit-content;
   display: flex;
   flex-direction: column;
@@ -709,7 +742,23 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   border-radius: var(--parsec-radius-12);
   background: var(--parsec-color-light-secondary-background);
   border: 1px solid var(--parsec-color-light-secondary-premiere);
-  overflow: hidden;
+  overflow: auto;
+
+  #search-input-organization {
+    border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+    flex-shrink: 0;
+    padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+    border: none;
+    border-radius: 0;
+    position: sticky;
+    top: 0rem;
+    background: var(--parsec-color-light-secondary-white);
+    z-index: 10;
+
+    &:focus-within {
+      outline: none;
+    }
+  }
 
   &-item {
     display: flex;

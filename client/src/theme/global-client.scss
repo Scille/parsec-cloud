@@ -13,7 +13,7 @@
   height: 100%;
 
   &::part(scroll) {
-    padding: 2rem 2rem 0;
+    padding: 2rem;
   }
 }
 
@@ -99,5 +99,16 @@ ion-skeleton-text {
 .custom-order-processing {
   .header-content {
     border: none !important;
+  }
+}
+
+.ms-summary-card .update-button {
+  position: relative !important;
+  margin-top: 0.5rem;
+  --background: var(--parsec-color-light-secondary-text);
+  color: var(--parsec-color-light-secondary-white);
+
+  &::part(native) {
+    border-width: 0px;
   }
 }

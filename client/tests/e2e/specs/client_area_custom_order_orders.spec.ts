@@ -3,7 +3,7 @@
 import { expect, MockBms, msTest } from '@tests/e2e/helpers';
 
 msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
-  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Orders');
   await MockBms.mockListOrganizations(clientAreaCustomOrder);
   const container = clientAreaCustomOrder.locator('.client-page-orders');
@@ -54,7 +54,7 @@ msTest.describe(() => {
   });
 
   msTest('Initial status with no orders', async ({ clientAreaCustomOrder }) => {
-    const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+    const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
     await expect(title).toHaveText('Orders');
 
     const container = clientAreaCustomOrder.locator('.client-page-orders');
@@ -74,7 +74,7 @@ msTest.describe(() => {
   });
 
   msTest('Get custom orders error', async ({ clientAreaCustomOrder }) => {
-    const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+    const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
     await expect(title).toHaveText('Orders');
 
     const container = clientAreaCustomOrder.locator('.client-page-orders');
@@ -86,7 +86,7 @@ msTest.describe(() => {
 
 msTest('Order new org', async ({ clientAreaCustomOrder }) => {
   await MockBms.mockListOrganizations(clientAreaCustomOrder);
-  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Orders');
   const container = clientAreaCustomOrder.locator('.client-page-orders');
   await expect(container.locator('.orders-new-title__button')).toHaveText('Request a new organization');
@@ -108,7 +108,7 @@ msTest('Order new org', async ({ clientAreaCustomOrder }) => {
 msTest('Order new org fail', async ({ clientAreaCustomOrder }) => {
   await MockBms.mockListOrganizations(clientAreaCustomOrder);
   await MockBms.mockCustomOrderRequest(clientAreaCustomOrder, undefined, { POST: { timeout: true } });
-  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  const title = clientAreaCustomOrder.locator('.topbar').locator('.topbar-left-text__title');
   await expect(title).toHaveText('Orders');
   const container = clientAreaCustomOrder.locator('.client-page-orders');
   await expect(container.locator('.orders-new-title__button')).toHaveText('Request a new organization');
