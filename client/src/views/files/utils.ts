@@ -5,7 +5,7 @@ import { EntryModel } from '@/components/files';
 import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
 import { EntryName, EntryStat, EntryStatFile, EntryTree, FsPath, listTree, WorkspaceHandle, WorkspaceID, WorkspaceRole } from '@/parsec';
 import { isFileEditable } from '@/services/cryptpad';
-import { FileOperationManager } from '@/services/fileOperationManager';
+import { FileOperationManager } from '@/services/fileOperation/manager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
 import { FileAction, FileContextMenu, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';

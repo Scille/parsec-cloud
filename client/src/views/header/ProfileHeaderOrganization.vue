@@ -44,7 +44,7 @@ import { getClientInfo, UserProfile } from '@/parsec';
 import { navigateTo, ProfilePages, Routes } from '@/router';
 import { APP_VERSION, Env } from '@/services/environment';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import ProfileHeaderOrganizationPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderOrganizationPopover.vue';

@@ -134,7 +134,7 @@
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { EntryName, entryStat, EntryStatFile, getWorkspaceName } from '@/parsec';
-import { DownloadData, FileOperationState, OperationProgressStateData, StateData } from '@/services/fileOperationManager';
+import { DownloadData, FileOperationState, OperationProgressStateData, StateData } from '@/services/fileOperation/manager';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { arrowForward, checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';

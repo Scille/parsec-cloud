@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { EntryName, Path } from '@/parsec';
-import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperationManager';
+import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperation/manager';
 import { IonAvatar, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
 import { document as documentIcon } from 'ionicons/icons';
 import { MsSpinner, Translatable } from 'megashark-lib';

@@ -186,7 +186,7 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import { SortProperty } from '@/components/users';
 import { EntryName, FsPath, getWorkspaceInfo, Path, StartedWorkspaceInfo, WorkspaceHistory } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
-import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';

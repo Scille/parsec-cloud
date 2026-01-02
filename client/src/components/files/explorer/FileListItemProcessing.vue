@@ -70,7 +70,7 @@
 import { formatFileSize, getFileIcon } from '@/common/file';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { ClientInfo, EntryName, getClientInfo, Path, UserProfile } from '@/parsec';
-import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperationManager';
+import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperation/manager';
 import { IonItem, IonText } from '@ionic/vue';
 import { MsImage, MsSpinner, Translatable, useWindowSize } from 'megashark-lib';
 import { onMounted, Ref, ref } from 'vue';

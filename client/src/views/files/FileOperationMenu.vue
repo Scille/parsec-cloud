@@ -170,7 +170,7 @@ import {
   FileOperationState,
   ImportData,
   StateData,
-} from '@/services/fileOperationManager';
+} from '@/services/fileOperation/manager';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
