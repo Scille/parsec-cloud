@@ -83,7 +83,7 @@ msTest('Custom order contract stats generic error', async ({ clientAreaCustomOrd
   await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
-  const error = container.locator('.form-error');
+  const error = container.locator('.ms-error');
   await expect(error).toBeVisible();
   await expect(error).toHaveText('Failed to retrieve the information');
 });

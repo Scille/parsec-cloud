@@ -315,6 +315,10 @@ onMounted(async () => {
 .payment-container {
   max-width: 20rem;
   height: fit-content;
+
+  @include ms.responsive-breakpoint('lg') {
+    max-width: 100%;
+  }
 }
 
 //every sections

@@ -290,6 +290,7 @@
           placeholder="HomePage.organizationList.search"
           v-model="searchQuery"
           id="search-input-organization"
+          v-if="organizations.length > 4"
         />
         <div
           class="organization-list-item subtitles-normal"
