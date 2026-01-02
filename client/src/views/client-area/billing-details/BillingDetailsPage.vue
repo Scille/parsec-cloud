@@ -230,10 +230,10 @@ async function onCancelEdit(): Promise<void> {
 
     .update-button {
       margin-left: auto;
+      --background: var(--parsec-color-light-secondary-text);
 
       @include ms.responsive-breakpoint('sm') {
         width: 100%;
-        --background: var(--parsec-color-light-secondary-text);
       }
     }
 
