@@ -17,7 +17,7 @@ msTest('Test initial status', async ({ clientArea }) => {
   await expect(inputs.nth(4).locator('input')).toHaveValue(DEFAULT_USER_INFORMATION.address.country);
   await expect(inputs.nth(4).locator('input')).toHaveDisabledAttribute();
 
-  const toggleButton = clientArea.locator('.main-content').locator('.toggle-button');
+  const toggleButton = clientArea.locator('.main-content').locator('.update-button');
   const submitButton = clientArea.locator('.main-content').locator('.submit-button');
   const cancelButton = clientArea.locator('.main-content').locator('.cancel-button');
   await expect(toggleButton).toBeTrulyEnabled();
@@ -39,7 +39,7 @@ msTest('Test initial status', async ({ clientArea }) => {
 
 msTest('Test update address', async ({ clientArea }) => {
   await clientAreaNavigateTo(clientArea, 'Billing details');
-  await clientArea.locator('.main-content').locator('.toggle-button').click();
+  await clientArea.locator('.main-content').locator('.update-button').click();
 
   const inputs = clientArea.locator('.main-content').locator('ion-input');
   await fillIonInput(inputs.nth(0), '221B Baker Street');
@@ -57,7 +57,7 @@ msTest('Test update address generic error', async ({ clientArea }) => {
   await MockBms.mockBillingDetails(clientArea, {}, { PATCH: { errors: { status: 400 } } });
 
   await clientAreaNavigateTo(clientArea, 'Billing details');
-  await clientArea.locator('.main-content').locator('.toggle-button').click();
+  await clientArea.locator('.main-content').locator('.update-button').click();
 
   const inputs = clientArea.locator('.main-content').locator('ion-input');
   await fillIonInput(inputs.nth(0), '221B Baker Street');
@@ -75,7 +75,7 @@ msTest('Test update address timeout', async ({ clientArea }) => {
   await MockBms.mockBillingDetails(clientArea, {}, { PATCH: { timeout: true } });
 
   await clientAreaNavigateTo(clientArea, 'Billing details');
-  await clientArea.locator('.main-content').locator('.toggle-button').click();
+  await clientArea.locator('.main-content').locator('.update-button').click();
 
   const inputs = clientArea.locator('.main-content').locator('ion-input');
   await fillIonInput(inputs.nth(0), '221B Baker Street');
@@ -91,7 +91,7 @@ msTest('Test update address timeout', async ({ clientArea }) => {
 
 msTest('Test cancel update address', async ({ clientArea }) => {
   await clientAreaNavigateTo(clientArea, 'Billing details');
-  await clientArea.locator('.main-content').locator('.toggle-button').click();
+  await clientArea.locator('.main-content').locator('.update-button').click();
 
   const inputs = clientArea.locator('.main-content').locator('ion-input');
   await fillIonInput(inputs.nth(0), '221B Baker Street');

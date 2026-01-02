@@ -661,7 +661,6 @@ async function createOrganization(): Promise<void> {
   flex-direction: column;
   gap: 4rem;
   position: relative;
-  margin-left: 0.5rem;
 
   &-block {
     position: relative;
@@ -691,25 +690,31 @@ async function createOrganization(): Promise<void> {
       --color: var(--parsec-color-light-secondary-hard-grey);
       --background-hover-opacity: 1;
       --inner-padding-end: 0rem;
-      --padding-start: 0.75rem;
-      --padding-end: 0.75rem;
-      --padding-top: 0.5rem;
-      --padding-bottom: 0.5rem;
-      width: fit-content;
-      border-radius: var(--parsec-radius-6);
+      --padding-start: 1rem;
+      --padding-end: 1rem;
+      --padding-top: 0.625rem;
+      --padding-bottom: 0.625rem;
+      border-radius: var(--parsec-radius-12);
       font-weight: 500;
+      font-size: 1rem;
 
       &__icon {
         color: var(--parsec-color-light-secondary-soft-grey);
-        font-size: 1rem;
+        font-size: 1.2rem;
         margin-inline-end: 0.5rem;
         flex-shrink: 0;
+      }
+
+      &:hover {
+        cursor: pointer;
+        box-shadow: var(--parsec-shadow-input);
       }
 
       &.current-page {
         --background: var(--parsec-color-light-secondary-medium);
         --background-hover: var(--parsec-color-light-secondary-medium);
         --color: var(--parsec-color-light-primary-700);
+        box-shadow: var(--parsec-shadow-input);
 
         .menu-client-list-item__icon {
           color: var(--parsec-color-light-primary-700);
@@ -743,16 +748,7 @@ async function createOrganization(): Promise<void> {
 }
 
 .bottom-section {
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 10rem;
-    left: -2rem;
-    width: calc(100% + 4rem);
-    height: 1px;
-    background: var(--parsec-color-light-secondary-disabled);
-    z-index: 2;
-  }
+  padding-top: 3rem;
 
   &-buttons {
     margin: 1rem 0 0.5rem 0;

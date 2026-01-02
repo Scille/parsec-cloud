@@ -22,7 +22,7 @@ msTest('Log into the customer area', { tag: '@important' }, async ({ context }) 
   await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await home.locator('.saas-login-button__item').nth(1).click();
-  await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
+  await expect(home.locator('.topbar').locator('.topbar-left__title')).toHaveText('Dashboard');
   const logOutButton = home.locator('.sidebar-content').locator('.bottom-section-buttons-logout');
   await expect(logOutButton).toHaveText('Log out');
   await logOutButton.click();
@@ -63,7 +63,7 @@ msTest('Switch pages', async ({ clientArea }) => {
     { button: 'Billing details', title: 'Billing details', url: 'billing-details' },
   ];
 
-  const title = clientArea.locator('.header-content').locator('.header-title');
+  const title = clientArea.locator('.topbar').locator('.topbar-left__title');
   await expect(clientArea).toHaveURL(/.+\/clientArea\\?(?:.*)$/);
   await expect(title).toHaveText('Dashboard');
   await expect(clientArea.locator('.sidebar-header').locator('.card-header-title')).toBeVisible();
@@ -185,7 +185,7 @@ msTest('Login in and refresh no remember me', async ({ context }) => {
   await fillIonInput(loginContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(loginContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await loginContainer.locator('.saas-login-button__item').nth(1).click();
-  await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
+  await expect(home.locator('.topbar').locator('.topbar-left__title')).toHaveText('Dashboard');
   await expect(home).toBeClientAreaPage();
   await expect(loginContainer).toBeHidden();
   await home.reload();
@@ -217,12 +217,12 @@ msTest('Login in and refresh with remember me', async ({ context }) => {
   await fillIonInput(loginContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await loginContainer.locator('.saas-login-link').locator('ion-checkbox').click();
   await loginContainer.locator('.saas-login-button__item').nth(1).click();
-  await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
+  await expect(home.locator('.topbar').locator('.topbar-left__title')).toHaveText('Dashboard');
   await expect(home).toBeClientAreaPage();
   await expect(loginContainer).toBeHidden();
   await home.reload();
   await setupNewPage(home, { skipGoto: true });
   await expect(home).toBeClientAreaPage();
   await expect(loginContainer).toBeHidden();
-  await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
+  await expect(home.locator('.topbar').locator('.topbar-left__title')).toHaveText('Dashboard');
 });

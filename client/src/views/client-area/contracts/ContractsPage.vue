@@ -2,12 +2,12 @@
 
 <template>
   <div class="client-contract-page">
-    <span
-      class="form-error body"
-      v-show="error"
+    <ms-report-text
+      :theme="MsReportTheme.Error"
+      v-if="error"
     >
       {{ $msTranslate(error) }}
-    </span>
+    </ms-report-text>
 
     <template v-if="organizationStats && contractDetails">
       <div
@@ -563,6 +563,8 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-bottom: 1.5rem;
+  max-width: 70rem;
 }
 
 .loading-container {
