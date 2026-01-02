@@ -328,6 +328,10 @@ onMounted(async () => {
   border: 1px solid var(--parsec-color-light-secondary-premiere);
   box-shadow: var(--parsec-shadow-input);
 
+  @include ms.responsive-breakpoint('lg') {
+    padding: 1.5rem;
+  }
+
   &-title {
     color: var(--parsec-color-light-primary-700);
   }
@@ -375,7 +379,7 @@ onMounted(async () => {
 .invoices {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
   gap: 0.5rem;
   --max-width-date: 10rem;
   --max-width-organization: 12rem;
@@ -412,6 +416,7 @@ onMounted(async () => {
     justify-content: space-between;
     background: var(--parsec-color-light-secondary-premiere);
     border-radius: var(--parsec-radius-8);
+    min-width: 35rem;
 
     .invoices-header-list {
       display: flex;
@@ -432,6 +437,7 @@ onMounted(async () => {
   &-content {
     display: flex;
     flex-direction: column;
+    min-width: 35rem;
 
     .invoices-list {
       display: flex;
