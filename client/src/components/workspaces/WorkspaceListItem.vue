@@ -252,6 +252,10 @@ async function onOptionsClick(event: Event): Promise<void> {
   overflow: hidden;
   text-overflow: ellipsis;
 
+  @include ms.responsive-breakpoint('lg') {
+    min-width: 10rem;
+  }
+
   @include ms.responsive-breakpoint('sm') {
     min-width: 5rem;
   }

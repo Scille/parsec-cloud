@@ -39,9 +39,7 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
       await wk.click({ button: 'right' });
     }
   } else {
-    // Sidebar only shows after a workspace has been accessed recently
     await page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await page.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
     const sidebar = page.locator('.sidebar');
     const wk = sidebar.locator('#sidebar-workspaces').locator('.sidebar-item').nth(0);
     if (method === OpenMenuMethod.Button) {
@@ -120,9 +118,9 @@ for (const mode of ['grid', 'list', 'sidebar']) {
       await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
       await expect(workspaces).toBeDocumentPage();
       await expect(workspaces).toHaveHeader(['wksp1'], true, true);
-      await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();
+      await workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
       await expect(workspaces).toBeWorkspacePage();
-      await workspaces.locator('.sidebar').locator('#sidebar-workspaces').getByRole('listitem').nth(0).click();
+      await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
     }
     await expect(workspaces).toBeDocumentPage();
     await expect(workspaces).toHaveHeader(['wksp1'], true, true);
@@ -157,12 +155,15 @@ for (const mode of ['grid', 'list', 'sidebar']) {
   });
 
   msTest(`Toggle workspace favorite ${mode}`, async ({ workspaces }) => {
-    const favorites = workspaces.locator('.sidebar').locator('#sidebar-workspaces-favorites');
+    const favorites = workspaces.locator('.sidebar').locator('#sidebar-favorite-workspaces');
     await expect(favorites).toBeVisible();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
     await popover.getByRole('listitem').nth(7).click();
     await expect(popover).toBeHidden();
+    if (mode === 'sidebar') {
+      await workspaces.locator('.sidebar').locator('#sidebar-all-workspaces').click();
+    }
 
     let wk;
     if (await isInGridMode(workspaces)) {
@@ -174,8 +175,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     }
     await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__on');
     await expect(favorites).toBeVisible();
-    await expect(favorites.locator('.sidebar-content-workspaces__title')).toHaveText('Pinned');
-    await expect(favorites.getByRole('listitem').nth(0)).toHaveText('wksp1');
+    await expect(favorites.locator('.sidebar-content-organization-button__text')).toHaveText('Pinned');
   });
 
   msTest(`Open workspace sharing ${mode}`, async ({ workspaces }) => {
@@ -197,9 +197,8 @@ msTest('Check workspace rename in header breadcrumb', async ({ workspaces }) => 
   await expect(workspaces).toHaveHeader(['wksp1'], true, true);
 
   // Rename workspace and check both headers
-  const sidebarRecentWorkspaces = workspaces.locator('#sidebar-workspaces-recent');
-  const sidebarWorkspaceButton = sidebarRecentWorkspaces.locator('.sidebar-item').locator('.sidebar-item-workspace').nth(0);
-  await expect(sidebarWorkspaceButton).toHaveText('wksp1');
+  const sidebar = workspaces.locator('.sidebar');
+  const sidebarWorkspaceButton = sidebar.locator('#sidebar-workspaces').locator('.sidebar-item').nth(0);
 
   const bobTab = await workspaces.openNewTab();
   await login(bobTab, 'Boby McBobFace');

@@ -52,6 +52,7 @@ async function onContextMenu(event: Event): Promise<void> {
   --background: none;
   border-radius: var(--parsec-radius-8);
   border: solid 1px transparent;
+  font-size: 0.9375rem;
   --min-height: 0;
   --padding-start: 0.75rem;
   --padding-end: 0.75rem;
