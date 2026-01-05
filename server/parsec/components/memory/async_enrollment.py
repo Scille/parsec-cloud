@@ -251,6 +251,8 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             enrollment.state = MemoryAsyncEnrollmentState.REJECTED
             enrollment.rejected_on = now
 
+            await self._event_bus.send(EventAsyncEnrollment(organization_id=organization_id))
+
     @override
     async def accept(
         self,
