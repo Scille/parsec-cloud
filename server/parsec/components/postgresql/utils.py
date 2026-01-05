@@ -12,6 +12,7 @@ from typing import Any, Concatenate, ParamSpec, Protocol, TypeVar, cast
 from parsec._parsec import (
     AccountAuthMethodID,
     ActiveUsersLimit,
+    AsyncEnrollmentID,
     BlockID,
     DateTime,
     DeviceID,
@@ -44,6 +45,7 @@ SqlQueryParam = (
     | UserID
     | VlobID
     | AccountAuthMethodID
+    | AsyncEnrollmentID
     | Iterable["SqlQueryParam"]
 )
 

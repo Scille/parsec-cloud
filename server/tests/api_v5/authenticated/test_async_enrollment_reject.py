@@ -59,7 +59,6 @@ async def submit_for_mike(
 
 
 async def test_authenticated_async_enrollment_reject_ok(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
 ) -> None:
@@ -88,7 +87,6 @@ async def test_authenticated_async_enrollment_reject_ok(
 
 
 async def test_authenticated_async_enrollment_reject_enrollment_not_found(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     minimalorg: MinimalorgRpcClients,
 ) -> None:
     rep = await minimalorg.alice.async_enrollment_reject(enrollment_id=AsyncEnrollmentID.new())
@@ -96,7 +94,6 @@ async def test_authenticated_async_enrollment_reject_enrollment_not_found(
 
 
 async def test_authenticated_async_enrollment_reject_author_not_allowed(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     coolorg: CoolorgRpcClients,
     backend: Backend,
 ) -> None:
@@ -113,7 +110,6 @@ async def test_authenticated_async_enrollment_reject_author_not_allowed(
 
 
 async def test_authenticated_async_enrollment_reject_enrollment_no_longer_available(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     coolorg: CoolorgRpcClients,
     backend: Backend,
 ) -> None:
@@ -138,7 +134,6 @@ async def test_authenticated_async_enrollment_reject_enrollment_no_longer_availa
 
 
 async def test_authenticated_async_enrollment_reject_http_common_errors(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     coolorg: CoolorgRpcClients,
     backend: Backend,
     anonymous_http_common_errors_tester: HttpCommonErrorsTester,

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
+from hashlib import sha256
+from typing import Literal
 
 from parsec._parsec import (
     AsyncEnrollmentAcceptPayload,
@@ -15,6 +17,7 @@ from parsec._parsec import (
     PkiSignatureAlgorithm,
     UserCertificate,
     VerifyKey,
+    X509Certificate,
     anonymous_cmds,
     authenticated_cmds,
 )
@@ -34,6 +37,12 @@ from parsec.types import BadOutcome, BadOutcomeEnum
 logger = get_logger()
 
 
+# Maximum number of certificates a trustchain can contains (excluding leaf and root).
+# We follow OpenSSL's default here, which should be plenty for most use-cases.
+# (see https://docs.openssl.org/3.2/man3/SSL_CTX_set_verify/)
+MAX_X509_INTERMEDIATE_CERTIFICATES_DEPTH = 100
+
+
 @dataclass(slots=True)
 class AsyncEnrollmentEmailAlreadySubmitted(BadOutcome):
     submitted_on: DateTime
@@ -49,8 +58,8 @@ class AsyncEnrollmentSubmitBadOutcome(BadOutcomeEnum):
 class AsyncEnrollmentSubmitValidateBadOutcome(BadOutcomeEnum):
     INVALID_SUBMIT_PAYLOAD = auto()
     INVALID_SUBMIT_PAYLOAD_SIGNATURE = auto()  # TODO: server-side validation not yet implemented
-    INVALID_DER_X509_CERTIFICATE = auto()  # TODO: server-side validation not yet implemented
-    INVALID_X509_TRUSTCHAIN = auto()  # TODO: server-side validation not yet implemented
+    INVALID_DER_X509_CERTIFICATE = auto()
+    INVALID_X509_TRUSTCHAIN = auto()
 
 
 class AsyncEnrollmentInfoBadOutcome(BadOutcomeEnum):
@@ -165,21 +174,104 @@ class AsyncEnrollmentListItem:
     submit_payload_signature: AsyncEnrollmentPayloadSignature
 
 
+# TODO: `X509Certificate` is error prone since it's validation is currently lazy
+# (see https://github.com/Scille/parsec-cloud/issues/12012).
+@dataclass(slots=True, frozen=True)
+class X509Certificate2:
+    der: bytes
+    issuer: bytes
+    subject: bytes
+    sha256_fingerprint: bytes
+
+    @classmethod
+    def from_der(cls, der: bytes) -> X509Certificate2:
+        certificate = X509Certificate.from_der(der)
+        return X509Certificate2(
+            der=der,
+            # Raises `PkiInvalidCertificateDER` which is a subclass of `ValueError`
+            issuer=certificate.issuer(),
+            subject=certificate.subject(),
+            sha256_fingerprint=sha256(der).digest(),
+        )
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__qualname__}(subject={self.subject}, issuer={self.issuer})"
+
+
+def _validate_x509_trustchain(
+    leaf: bytes, intermediates: list[bytes]
+) -> (
+    list[X509Certificate2]
+    | Literal["INVALID_DER_X509_CERTIFICATE"]
+    | Literal["INVALID_X509_TRUSTCHAIN"]
+):
+    # Validate format for each x509 certificate
+    try:
+        author_der_x509_certificate = X509Certificate2.from_der(leaf)
+        intermediate_der_x509_certificates = [
+            X509Certificate2.from_der(certif) for certif in intermediates
+        ]
+    except ValueError:
+        return "INVALID_DER_X509_CERTIFICATE"
+    x509_trustchain = [author_der_x509_certificate, *intermediate_der_x509_certificates]
+
+    # Validate the x509 trustchain:
+    # - Should not be longer than `MAX_X509_INTERMEDIATE_CERTIFICATES_DEPTH` items (excluding leaf and root)
+    # - Each intermediate certificate should be used exactly once
+
+    if len(intermediate_der_x509_certificates) > MAX_X509_INTERMEDIATE_CERTIFICATES_DEPTH:
+        return "INVALID_X509_TRUSTCHAIN"
+
+    current = author_der_x509_certificate
+    while True:
+        try:
+            i, current = next(
+                (i, c)
+                for i, c in enumerate(intermediate_der_x509_certificates)
+                if c.subject == current.issuer
+            )
+            intermediate_der_x509_certificates.pop(i)
+        except StopIteration:  # Parent not found, we should have reached the root
+            if intermediate_der_x509_certificates:
+                # Unused intermediate certificates is not allowed!
+                return "INVALID_X509_TRUSTCHAIN"
+            break
+
+    return x509_trustchain
+
+
 def async_enrollment_submit_validate(
     now: DateTime,
     submit_payload: bytes,
     submit_payload_signature: AsyncEnrollmentPayloadSignature,
-) -> tuple[AsyncEnrollmentSubmitPayload] | AsyncEnrollmentSubmitValidateBadOutcome:
+) -> (
+    tuple[AsyncEnrollmentSubmitPayload, list[X509Certificate2] | None]
+    | AsyncEnrollmentSubmitValidateBadOutcome
+):
     try:
         p_data = AsyncEnrollmentSubmitPayload.load(submit_payload)
     except ValueError:
         return AsyncEnrollmentSubmitValidateBadOutcome.INVALID_SUBMIT_PAYLOAD
 
+    if isinstance(submit_payload_signature, AsyncEnrollmentPayloadSignaturePKI):
+        match _validate_x509_trustchain(
+            submit_payload_signature.author_der_x509_certificate,
+            submit_payload_signature.intermediate_der_x509_certificates,
+        ):
+            case list() as x509_trustchain:
+                pass
+            case "INVALID_DER_X509_CERTIFICATE":
+                return AsyncEnrollmentSubmitValidateBadOutcome.INVALID_DER_X509_CERTIFICATE
+            case "INVALID_X509_TRUSTCHAIN":
+                return AsyncEnrollmentSubmitValidateBadOutcome.INVALID_X509_TRUSTCHAIN
+    else:
+        x509_trustchain = None
+
     # TODO: Payload signature is currently not validated.
     #       Note this has no big impact on security since the client always
     #       validate the payload signature on its end.
 
-    return (p_data,)
+    return (p_data, x509_trustchain)
 
 
 def async_enrollment_accept_validate(
@@ -193,7 +285,12 @@ def async_enrollment_accept_validate(
     redacted_user_certificate: bytes,
     redacted_device_certificate: bytes,
 ) -> (
-    tuple[AsyncEnrollmentAcceptPayload, UserCertificate, DeviceCertificate]
+    tuple[
+        AsyncEnrollmentAcceptPayload,
+        UserCertificate,
+        DeviceCertificate,
+        list[X509Certificate2] | None,
+    ]
     | TimestampOutOfBallpark
     | AsyncEnrollmentAcceptValidateBadOutcome
 ):
@@ -201,6 +298,20 @@ def async_enrollment_accept_validate(
         p_data = AsyncEnrollmentAcceptPayload.load(accept_payload)
     except ValueError:
         return AsyncEnrollmentAcceptValidateBadOutcome.INVALID_ACCEPT_PAYLOAD
+
+    if isinstance(accept_payload_signature, AsyncEnrollmentPayloadSignaturePKI):
+        match _validate_x509_trustchain(
+            accept_payload_signature.author_der_x509_certificate,
+            accept_payload_signature.intermediate_der_x509_certificates,
+        ):
+            case list() as x509_trustchain:
+                pass
+            case "INVALID_DER_X509_CERTIFICATE":
+                return AsyncEnrollmentAcceptValidateBadOutcome.INVALID_DER_X509_CERTIFICATE
+            case "INVALID_X509_TRUSTCHAIN":
+                return AsyncEnrollmentAcceptValidateBadOutcome.INVALID_X509_TRUSTCHAIN
+    else:
+        x509_trustchain = None
 
     # TODO: Payload signature is currently not validated.
     #       Note this has no big impact on security since the client always
@@ -255,7 +366,7 @@ def async_enrollment_accept_validate(
     if not d_data.redacted_compare(rd_data):
         return AsyncEnrollmentAcceptValidateBadOutcome.CERTIFICATES_REDACTED_MISMATCH
 
-    return p_data, u_data, d_data
+    return p_data, u_data, d_data, x509_trustchain
 
 
 class BaseAsyncEnrollmentComponent:
@@ -303,6 +414,7 @@ class BaseAsyncEnrollmentComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         enrollment_id: AsyncEnrollmentID,
         accept_payload: bytes,
         accept_payload_signature: AsyncEnrollmentPayloadSignature,
@@ -549,6 +661,7 @@ class BaseAsyncEnrollmentComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
             enrollment_id=req.enrollment_id,
             accept_payload=req.accept_payload,
             accept_payload_signature=accept_payload_signature,

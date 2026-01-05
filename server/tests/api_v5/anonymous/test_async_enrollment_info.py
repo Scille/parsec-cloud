@@ -27,6 +27,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
+    TestPki,
     generate_new_device_certificates,
     generate_new_user_certificates,
 )
@@ -68,17 +69,19 @@ async def submit_for_mike(
     "kind", ("submitted", "cancelled", "rejected", "accepted_pki", "accepted_openbao")
 )
 async def test_anonymous_async_enrollment_info_ok(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
+    test_pki: TestPki,
     kind: str,
 ):
     if kind.endswith("_pki"):
         submit_payload_signature = AsyncEnrollmentPayloadSignaturePKI(
             signature=b"<submit_payload_signature>",
-            author_der_x509_certificate=b"<submitter_der_x509_certificate>",
             algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-            intermediate_der_x509_certificates=[],
+            author_der_x509_certificate=test_pki.cert["mallory-sign"].certificate.der,
+            intermediate_der_x509_certificates=[
+                test_pki.intermediate["glados_dev_team"].certificate.der,
+            ],
         )
     else:
         submit_payload_signature = AsyncEnrollmentPayloadSignatureOpenBao(
@@ -110,9 +113,11 @@ async def test_anonymous_async_enrollment_info_ok(
                 minimalorg.organization_id,
                 AsyncEnrollmentPayloadSignaturePKI(
                     signature=b"<signature>",
-                    author_der_x509_certificate=b"<author_der_x509_certificate>",
                     algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-                    intermediate_der_x509_certificates=[],
+                    author_der_x509_certificate=test_pki.cert["mallory-sign"].certificate.der,
+                    intermediate_der_x509_certificates=[
+                        test_pki.intermediate["glados_dev_team"].certificate.der,
+                    ],
                 ),
                 cancelled_on,
             )
@@ -176,6 +181,7 @@ async def test_anonymous_async_enrollment_info_ok(
                 now=accepted_on,
                 organization_id=minimalorg.organization_id,
                 author=minimalorg.alice.device_id,
+                author_verify_key=minimalorg.alice.signing_key.verify_key,
                 enrollment_id=enrollment_id,
                 accept_payload=accept_payload,
                 accept_payload_signature=accept_payload_signature,
@@ -228,14 +234,17 @@ async def test_anonymous_async_enrollment_info_ok(
 
             accept_payload_signature = AsyncEnrollmentPayloadSignaturePKI(
                 signature=b"<accept_payload_signature>",
-                author_der_x509_certificate=b"<accepter_der_x509_certificate>",
                 algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-                intermediate_der_x509_certificates=[],
+                author_der_x509_certificate=test_pki.cert["mallory-sign"].certificate.der,
+                intermediate_der_x509_certificates=[
+                    test_pki.intermediate["glados_dev_team"].certificate.der,
+                ],
             )
             outcome = await backend.async_enrollment.accept(
                 now=accepted_on,
                 organization_id=minimalorg.organization_id,
                 author=minimalorg.alice.device_id,
+                author_verify_key=minimalorg.alice.signing_key.verify_key,
                 enrollment_id=enrollment_id,
                 accept_payload=accept_payload,
                 accept_payload_signature=accept_payload_signature,
@@ -266,7 +275,6 @@ async def test_anonymous_async_enrollment_info_ok(
 
 
 async def test_anonymous_async_enrollment_info_enrollment_not_found(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     minimalorg: MinimalorgRpcClients,
 ) -> None:
     rep = await minimalorg.anonymous.async_enrollment_info(enrollment_id=AsyncEnrollmentID.new())
@@ -274,7 +282,6 @@ async def test_anonymous_async_enrollment_info_enrollment_not_found(
 
 
 async def test_anonymous_async_enrollment_info_http_common_errors(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     coolorg: CoolorgRpcClients,
     backend: Backend,
     anonymous_http_common_errors_tester: HttpCommonErrorsTester,
