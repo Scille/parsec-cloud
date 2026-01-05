@@ -19,6 +19,7 @@ from parsec.components.async_enrollment import (
     AsyncEnrollmentPayloadSignatureOpenBao,
     AsyncEnrollmentPayloadSignaturePKI,
 )
+from parsec.events import EventAsyncEnrollment
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -47,15 +48,18 @@ async def submit_for(
         ),
     )
     submit_payload_raw = submit_payload.dump()
-    outcome = await backend.async_enrollment.submit(
-        now=submitted_on,
-        organization_id=organization_id,
-        enrollment_id=enrollment_id,
-        force=True,
-        submit_payload=submit_payload_raw,
-        submit_payload_signature=submit_payload_signature,
-    )
-    assert outcome is None
+
+    with backend.event_bus.spy() as spy:
+        outcome = await backend.async_enrollment.submit(
+            now=submitted_on,
+            organization_id=organization_id,
+            enrollment_id=enrollment_id,
+            force=True,
+            submit_payload=submit_payload_raw,
+            submit_payload_signature=submit_payload_signature,
+        )
+        assert outcome is None
+        await spy.wait_event_occurred(EventAsyncEnrollment(organization_id=organization_id))
 
     return (enrollment_id, submit_payload, submit_payload_raw)
 
