@@ -26,6 +26,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
+    TestPki,
 )
 
 
@@ -61,11 +62,11 @@ async def submit_for_mike(
     return (enrollment_id, submit_payload)
 
 
-@pytest.mark.parametrize("kind", ("openbao", "pki"))
+@pytest.mark.parametrize("kind", ("openbao", "pki-with-intermediate", "pki-no-intermediate"))
 async def test_anonymous_async_enrollment_submit_ok(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     backend: Backend,
     minimalorg: MinimalorgRpcClients,
+    test_pki: TestPki,
     kind: str,
 ) -> None:
     match kind:
@@ -75,13 +76,28 @@ async def test_anonymous_async_enrollment_submit_ok(
                 submitter_openbao_entity_id="33cc217a-5464-4a62-b19b-5bb217153357",
             )
 
-        case "pki":
+        case "pki-with-intermediate":
             submit_payload_signature = (
                 anonymous_cmds.latest.async_enrollment_submit.SubmitPayloadSignaturePKI(
                     signature=b"<submit_payload_signature>",
-                    submitter_der_x509_certificate=b"<submitter_der_x509_certificate>",
                     algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-                    intermediate_der_x509_certificates=[],
+                    submitter_der_x509_certificate=test_pki.cert["mallory-sign"].certificate.der,
+                    intermediate_der_x509_certificates=[
+                        test_pki.intermediate["glados_dev_team"].certificate.der,
+                    ],
+                )
+            )
+
+        case "pki-no-intermediate":
+            submit_payload_signature = (
+                anonymous_cmds.latest.async_enrollment_submit.SubmitPayloadSignaturePKI(
+                    signature=b"<submit_payload_signature>",
+                    algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
+                    submitter_der_x509_certificate=test_pki.cert["mallory-sign"].certificate.der,
+                    intermediate_der_x509_certificates=[
+                        # Don't include "Glados dev team1" intermediate certificate,
+                        # so the server will think it is a root certificate
+                    ],
                 )
             )
 
@@ -116,7 +132,6 @@ async def test_anonymous_async_enrollment_submit_ok(
 
 
 async def test_anonymous_async_enrollment_submit_email_already_enrolled(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     minimalorg: MinimalorgRpcClients,
 ) -> None:
     rep = await minimalorg.anonymous.async_enrollment_submit(
@@ -139,7 +154,6 @@ async def test_anonymous_async_enrollment_submit_email_already_enrolled(
 
 
 async def test_anonymous_async_enrollment_submit_email_already_submitted(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     backend: Backend,
     minimalorg: MinimalorgRpcClients,
 ) -> None:
@@ -176,7 +190,6 @@ async def test_anonymous_async_enrollment_submit_email_already_submitted(
 
 
 async def test_anonymous_async_enrollment_submit_id_already_used(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     backend: Backend,
     minimalorg: MinimalorgRpcClients,
 ) -> None:
@@ -209,7 +222,6 @@ async def test_anonymous_async_enrollment_submit_id_already_used(
 
 
 async def test_anonymous_async_enrollment_submit_invalid_submit_payload(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     minimalorg: MinimalorgRpcClients,
 ) -> None:
     rep = await minimalorg.anonymous.async_enrollment_submit(
@@ -226,7 +238,6 @@ async def test_anonymous_async_enrollment_submit_invalid_submit_payload(
 
 @pytest.mark.skip(reason="Server-side identity validation not implemented yet")
 async def test_anonymous_async_enrollment_submit_invalid_submit_payload_signature(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     minimalorg: MinimalorgRpcClients,
 ) -> None:
     rep = await minimalorg.anonymous.async_enrollment_submit(
@@ -248,11 +259,24 @@ async def test_anonymous_async_enrollment_submit_invalid_submit_payload_signatur
     assert rep == anonymous_cmds.latest.async_enrollment_submit.RepInvalidSubmitPayloadSignature()
 
 
-@pytest.mark.skip(reason="Server-side identity validation not implemented yet")
+@pytest.mark.parametrize("kind", ("bad_leaf", "bad_intermediate"))
 async def test_anonymous_async_enrollment_submit_invalid_der_x509_certificate(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     minimalorg: MinimalorgRpcClients,
+    test_pki: TestPki,
+    kind: str,
 ) -> None:
+    match kind:
+        case "bad_leaf":
+            submitter_der_x509_certificate = b"<dummy>"
+            intermediate_der_x509_certificates = []
+
+        case "bad_intermediate":
+            submitter_der_x509_certificate = test_pki.cert["bob"].certificate.der
+            intermediate_der_x509_certificates = [b"<dummy>"]
+
+        case unknown:
+            assert False, unknown
+
     rep = await minimalorg.anonymous.async_enrollment_submit(
         enrollment_id=AsyncEnrollmentID.new(),
         force=False,
@@ -266,19 +290,43 @@ async def test_anonymous_async_enrollment_submit_invalid_der_x509_certificate(
         ).dump(),
         submit_payload_signature=anonymous_cmds.latest.async_enrollment_submit.SubmitPayloadSignaturePKI(
             signature=b"<submit_payload_signature>",
-            submitter_der_x509_certificate=b"<submitter_der_x509_certificate>",
             algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-            intermediate_der_x509_certificates=[],
+            submitter_der_x509_certificate=submitter_der_x509_certificate,
+            intermediate_der_x509_certificates=intermediate_der_x509_certificates,
         ),
     )
     assert rep == anonymous_cmds.latest.async_enrollment_submit.RepInvalidDerX509Certificate()
 
 
-@pytest.mark.skip(reason="Server-side identity validation not implemented yet")
+@pytest.mark.parametrize("kind", ("too_many_intermediate", "unused_intermediate"))
 async def test_anonymous_async_enrollment_submit_invalid_x509_trustchain(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
+    monkeypatch: pytest.MonkeyPatch,
     minimalorg: MinimalorgRpcClients,
+    test_pki: TestPki,
+    kind: str,
 ) -> None:
+    match kind:
+        case "too_many_intermediate":
+            # Mallory is signed by Glados Dev Team intermediary certificate, so this is all good...
+            submitter_der_x509_certificate = test_pki.cert["mallory-sign"].certificate.der
+            intermediate_der_x509_certificates = [
+                test_pki.intermediate["glados_dev_team"].certificate.der
+            ]
+            # ...but we patch the server to consider even one intermediary certificate is too much!
+            monkeypatch.setattr(
+                "parsec.components.async_enrollment.MAX_X509_INTERMEDIATE_CERTIFICATES_DEPTH", 0
+            )
+
+        case "unused_intermediate":
+            # Unlike Mallory, Alice is not signed by Glados Dev Team intermediary certificate
+            submitter_der_x509_certificate = test_pki.cert["alice"].certificate.der
+            intermediate_der_x509_certificates = [
+                test_pki.intermediate["glados_dev_team"].certificate.der,
+            ]
+
+        case unknown:
+            assert False, unknown
+
     rep = await minimalorg.anonymous.async_enrollment_submit(
         enrollment_id=AsyncEnrollmentID.new(),
         force=False,
@@ -292,16 +340,15 @@ async def test_anonymous_async_enrollment_submit_invalid_x509_trustchain(
         ).dump(),
         submit_payload_signature=anonymous_cmds.latest.async_enrollment_submit.SubmitPayloadSignaturePKI(
             signature=b"<submit_payload_signature>",
-            submitter_der_x509_certificate=b"<submitter_der_x509_certificate>",
             algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-            intermediate_der_x509_certificates=[],
+            submitter_der_x509_certificate=submitter_der_x509_certificate,
+            intermediate_der_x509_certificates=intermediate_der_x509_certificates,
         ),
     )
     assert rep == anonymous_cmds.latest.async_enrollment_submit.RepInvalidX509Trustchain()
 
 
 async def test_anonymous_async_enrollment_submit_http_common_errors(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     coolorg: CoolorgRpcClients,
     anonymous_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:

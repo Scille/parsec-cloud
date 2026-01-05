@@ -11,6 +11,7 @@ from parsec._parsec import (
     OrganizationID,
     UserCertificate,
     UserProfile,
+    VerifyKey,
 )
 from parsec.ballpark import (
     RequireGreaterTimestamp,
@@ -86,7 +87,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             submit_payload=submit_payload,
             submit_payload_signature=submit_payload_signature,
         ):
-            case (s_payload,):
+            case (s_payload, _):
                 pass
             case error:
                 return error
@@ -259,6 +260,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         enrollment_id: AsyncEnrollmentID,
         accept_payload: bytes,
         accept_payload_signature: AsyncEnrollmentPayloadSignature,
@@ -317,7 +319,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             match async_enrollment_accept_validate(
                 now=now,
                 expected_author=author,
-                author_verify_key=author_device.cooked.verify_key,
+                author_verify_key=author_verify_key,
                 accept_payload=accept_payload,
                 accept_payload_signature=accept_payload_signature,
                 user_certificate=submitter_user_certificate,
@@ -325,7 +327,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
                 redacted_user_certificate=submitter_redacted_user_certificate,
                 redacted_device_certificate=submitter_redacted_device_certificate,
             ):
-                case (a_payload, u_certif, d_certif):
+                case (a_payload, u_certif, d_certif, _):
                     pass
                 case error:
                     return error

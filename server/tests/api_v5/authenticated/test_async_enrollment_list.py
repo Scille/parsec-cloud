@@ -25,6 +25,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
+    TestPki,
     generate_new_device_certificates,
     generate_new_user_certificates,
 )
@@ -65,11 +66,11 @@ async def submit_for(
 
 
 async def test_authenticated_async_enrollment_list_ok(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
+    test_pki: TestPki,
 ) -> None:
-    # Reject enrollment, should be ignored
+    # Rejected enrollment, should be ignored
 
     rejected_enrollment_id, _, _ = await submit_for(
         backend=backend,
@@ -137,6 +138,7 @@ async def test_authenticated_async_enrollment_list_ok(
         now=accepted_on,
         organization_id=minimalorg.organization_id,
         author=minimalorg.alice.device_id,
+        author_verify_key=minimalorg.alice.signing_key.verify_key,
         enrollment_id=accepted_enrollment_id,
         accept_payload=accept_payload,
         accept_payload_signature=accept_payload_signature,
@@ -180,9 +182,11 @@ async def test_authenticated_async_enrollment_list_ok(
     philip_submitted_on = DateTime(2013, 1, 1)
     philip_submit_payload_signature = AsyncEnrollmentPayloadSignaturePKI(
         signature=b"<submit_payload_signature>",
-        author_der_x509_certificate=b"<submitter_der_x509_certificate>",
         algorithm=PkiSignatureAlgorithm.RSASSA_PSS_SHA256,
-        intermediate_der_x509_certificates=[],
+        author_der_x509_certificate=test_pki.cert["mallory-sign"].certificate.der,
+        intermediate_der_x509_certificates=[
+            test_pki.intermediate["glados_dev_team"].certificate.der,
+        ],
     )
     philip_enrollment_id, _, philip_submit_payload_raw = await submit_for(
         backend=backend,
@@ -222,7 +226,6 @@ async def test_authenticated_async_enrollment_list_ok(
 
 
 async def test_authenticated_async_enrollment_list_author_not_allowed(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.bob.async_enrollment_list()
@@ -230,7 +233,6 @@ async def test_authenticated_async_enrollment_list_author_not_allowed(
 
 
 async def test_authenticated_async_enrollment_list_http_common_errors(
-    xfail_if_postgresql: None,  # TODO: Postgresql async enrollment not implement yet (https://github.com/Scille/parsec-cloud/issues/11934)
     coolorg: CoolorgRpcClients,
     anonymous_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
