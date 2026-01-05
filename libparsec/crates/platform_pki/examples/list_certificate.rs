@@ -13,7 +13,6 @@ mod unix_only {
     use cryptoki::{
         context::Pkcs11,
         object::{Attribute, AttributeInfo, AttributeType, ObjectClass},
-        types::AuthPin,
     };
     use libparsec_types::X509CertificateHash;
     use percent_encoding::{percent_encode, utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
@@ -81,7 +80,9 @@ mod unix_only {
         let args = Args::parse();
         println!("args={args:?}");
         let pkcs11 = Pkcs11::new(args.module)?;
-        pkcs11.initialize(cryptoki::context::CInitializeArgs::OsThreads)?;
+        pkcs11.initialize(cryptoki::context::CInitializeArgs::new(
+            cryptoki::context::CInitializeFlags::OS_LOCKING_OK,
+        ))?;
 
         let slots = pkcs11
             .get_slots_with_token()
@@ -116,7 +117,7 @@ mod unix_only {
             // Not required to login, but that allow access to more sensible items (like private
             // key).
             if let Some(user_pin) = &args.user_pin {
-                session.login(cryptoki::session::UserType::User, Some(&AuthPin::new(user_pin.into()))).context("Cannot login")?;
+                session.login(cryptoki::session::UserType::User, Some(&user_pin.as_str().into())).context("Cannot login")?;
             }
 
             for (j, res) in session.iter_objects(&[])?.enumerate() {
