@@ -1,0 +1,1 @@
+CLI: Allow to import a folder recursively in a workspace
