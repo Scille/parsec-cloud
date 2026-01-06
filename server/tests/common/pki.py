@@ -168,8 +168,7 @@ async def list_files(dir: Path) -> dict[str, PkiCertificate]:
                 else:
                     store[name] = PkiPartialCertificate.load_pem_certificate(path, name, content)
             case _:
-                print(f"ignoring {name}: unknown suffix {path.suffix} ({path=})")
-                pass
+                pass  # Skip unknown suffix
 
     return {k: PkiCertificate.from_partial(partial) for k, partial in store.items()}
 
