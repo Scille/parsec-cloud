@@ -34,8 +34,8 @@ msTest('Fab button and menu as administrator and read/write', async ({ workspace
   await expect(workspaces).toBeOrganizationPage();
   await fabButton.click();
   await expect(fabModal).toBeVisible();
-  await expect(fabModalOptions).toHaveCount(2);
-  await expect(fabModalOptions).toHaveText(['Invite a user', 'Copy link (PKI)']);
+  await expect(fabModalOptions).toHaveCount(1);
+  await expect(fabModalOptions).toHaveText(['Invite a user']);
   await fabButton.click();
   await expect(fabModal).toBeHidden();
 
@@ -44,8 +44,8 @@ msTest('Fab button and menu as administrator and read/write', async ({ workspace
   await expect(workspaces).toBeMyProfilePage();
   await fabButton.click();
   await expect(fabModal).toBeVisible();
-  await expect(fabModalOptions).toHaveCount(2);
-  await expect(fabModalOptions).toHaveText(['Invite a user', 'Copy link (PKI)']);
+  await expect(fabModalOptions).toHaveCount(1);
+  await expect(fabModalOptions).toHaveText(['Invite a user']);
   await fabButton.click();
   await expect(fabModal).toBeHidden();
 });

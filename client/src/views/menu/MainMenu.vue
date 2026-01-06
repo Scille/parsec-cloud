@@ -553,10 +553,11 @@ function setActions(): void {
       currentRouteIs(Routes.Invitations)) &&
     props.userInfo.currentProfile === UserProfile.Admin
   ) {
-    actions.value = [
-      [{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }],
-      [{ action: UserAction.CopyPkiLink, label: 'InvitationsPage.pkiRequests.copyLink', icon: link }],
-    ];
+    actions.value = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
+    if (false) {
+      // TODO enable with PKI support
+      actions.value.push([{ action: UserAction.CopyPkiLink, label: 'InvitationsPage.pkiRequests.copyLink', icon: link }]);
+    }
   } else {
     actions.value = [];
   }
