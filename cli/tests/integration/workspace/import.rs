@@ -247,7 +247,7 @@ async fn refresh_workspace_list(device: Arc<LocalDevice>) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn workspace_fail_import_folder(tmp_path: TmpPath) {
+async fn workspace_import_folder(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     // Initialize workspace
@@ -270,12 +270,17 @@ async fn workspace_fail_import_folder(tmp_path: TmpPath) {
         wid
     };
 
-    // Create a folder
+    // Create a file hierarchy
     let folder = tmp_path.join("a_folder");
-    std::fs::create_dir_all(&folder).unwrap();
+    let subfolder = folder.join("subfolder");
+    std::fs::create_dir_all(&subfolder).unwrap();
+    let file_a = folder.join("hello.txt");
+    std::fs::write(&file_a, "Hello, World!").unwrap();
+    let file_b = subfolder.join("wid");
+    std::fs::write(&file_b, wid.to_string()).unwrap();
 
     // Try to import the folder
-    crate::assert_cmd_failure!(
+    crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
         "workspace",
         "import",
@@ -286,6 +291,46 @@ async fn workspace_fail_import_folder(tmp_path: TmpPath) {
         &folder.to_string_lossy(),
         "/test"
     )
-    .stdout(predicates::str::is_empty())
-    .stderr(predicates::str::contains("Only supporting importing file"));
+    .stdout(predicates::str::is_empty());
+
+    let bob_client = start_client(bob.clone()).await.unwrap();
+    bob_client.poll_server_for_new_certificates().await.unwrap();
+    bob_client.refresh_workspaces_list().await.unwrap();
+    let workspace = bob_client.start_workspace(wid).await.unwrap();
+    workspace.refresh_realm_checkpoint().await.unwrap();
+    loop {
+        let entries_to_sync = workspace.get_need_inbound_sync(32).await.unwrap();
+        log::debug!("Entries to inbound sync: {entries_to_sync:?}");
+        if entries_to_sync.is_empty() {
+            break;
+        }
+        for entry in entries_to_sync {
+            workspace.inbound_sync(entry).await.unwrap();
+        }
+    }
+    let mut entries = workspace
+        .stat_folder_children(&"/test".parse().unwrap())
+        .await
+        .unwrap();
+
+    assert_eq!(entries.len(), 2);
+    entries.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let (name, stat) = entries.pop().unwrap();
+    assert_eq!(name.as_ref(), "subfolder");
+    assert!(matches!(stat, libparsec::EntryStat::Folder { .. }));
+
+    let (name, stat) = entries.pop().unwrap();
+    assert_eq!(name.as_ref(), "hello.txt");
+    assert!(matches!(stat, libparsec::EntryStat::File { size, .. } if size == 13));
+
+    let mut entries = workspace
+        .stat_folder_children(&"/test/subfolder".parse().unwrap())
+        .await
+        .unwrap();
+    assert_eq!(entries.len(), 1);
+
+    let (name, stat) = entries.pop().unwrap();
+    assert_eq!(name.as_ref(), "wid");
+    assert!(matches!(stat, libparsec::EntryStat::File { size, .. } if dbg!(size) == 36));
 }

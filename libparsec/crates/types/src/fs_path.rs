@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::ffi::OsStr;
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use unicode_normalization::UnicodeNormalization;
@@ -137,6 +139,16 @@ impl TryFrom<String> for EntryName {
         };
 
         Self::is_valid(&id).map(|_| Self(id))
+    }
+}
+
+impl TryFrom<&OsStr> for EntryName {
+    type Error = EntryNameError;
+
+    fn try_from(name: &OsStr) -> Result<Self, Self::Error> {
+        name.to_str()
+            .ok_or(EntryNameError::InvalidName)
+            .and_then(TryFrom::try_from)
     }
 }
 

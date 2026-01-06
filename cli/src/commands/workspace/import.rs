@@ -5,9 +5,9 @@ use std::{
     vec,
 };
 
-use libparsec::{anyhow::Context, FsPath, OpenOptions, VlobID};
+use libparsec::{anyhow::Context, EntryName, EntryNameError, FsPath, OpenOptions, VlobID};
 use libparsec_client::{EventBus, WorkspaceOps};
-use tokio::io::AsyncReadExt;
+use tokio::{io::AsyncReadExt, task::JoinSet};
 
 use crate::utils::StartedClient;
 
@@ -60,40 +60,49 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
     let workspace = client.start_workspace(wid).await?;
     let (files_to_sync, _watch_files_to_sync) = watch_workspace_sync_events(&client.event_bus, wid);
 
+    let (notify, _event_conn) =
+        notify_sync_completion(&client.event_bus, wid, files_to_sync.clone());
+
     // Create parent directories if the `--parents` flag was specified
     if parents {
         log::debug!("Creating parent directories");
-        let _ = match workspace.create_folder_all(dest.clone().parent()).await {
-            Ok(vlob_id) => Ok(vlob_id),
-            Err(err) => match err {
-                // create_folder_all returns an error if the full path already exists
+        workspace
+            .create_folder_all(dest.clone().parent())
+            .await
+            .or_else(|e| match e {
+                // `create_folder_all` returns an error if the full path already exists
                 // but in our case this is not a problem so we explicitly ignore it
                 libparsec::WorkspaceCreateFolderError::EntryExists { entry_id } => Ok(entry_id),
                 // All other errors are propagated
-                _ => Err(err),
-            },
-        }?;
+                _ => Err(e),
+            })?;
     }
     let src_metadata = src.metadata()?;
     let src_file_type = src_metadata.file_type();
     if src_file_type.is_file() {
-        import_file(client, workspace, &src, dest, files_to_sync).await
+        import_file(workspace, &src, dest).await?;
+    } else if src_file_type.is_dir() {
+        import_folder(workspace, src, dest).await?;
     } else {
-        anyhow::bail!("Only supporting importing file")
+        anyhow::bail!("Unsupported file type {src_file_type:?}")
     }
+    // After importing the file/folder, we may need to wait for the workspace to sync its data with the server.
+    // Note that, in addition to the files being imported, this operation may involve syncing other files.
+    // So instead of being peaky about which file to sync or wait, we just wait for all files to be synced for this workspace.
+    if !files_to_sync.lock().expect("Mutex poisoned").is_empty() {
+        log::debug!("Waiting for sync");
+        notify.notified().await;
+        log::trace!("Sync done");
+    }
+
+    Ok(())
 }
 
-async fn import_file(
-    client: &StartedClient,
-    workspace: Arc<WorkspaceOps>,
-    src: &Path,
-    dest: FsPath,
-    files_to_sync: Arc<std::sync::Mutex<HashSet<VlobID>>>,
-) -> anyhow::Result<()> {
+async fn import_file(workspace: Arc<WorkspaceOps>, src: &Path, dest: FsPath) -> anyhow::Result<()> {
     // Open the remote file (create it if it does not exists)
     let fd = workspace
         .open_file(
-            dest,
+            dest.clone(),
             OpenOptions {
                 read: false,
                 write: true,
@@ -102,11 +111,13 @@ async fn import_file(
                 create_new: false,
             },
         )
-        .await?;
-
-    let wid = workspace.realm_id();
-    let (notify, _event_conn) =
-        notify_sync_completion(&client.event_bus, wid, files_to_sync.clone());
+        .await
+        .with_context(|| {
+            format!(
+                "Cannot open file {dest} in workspace {}",
+                workspace.realm_id()
+            )
+        })?;
 
     // Copy content from local file to remote file description
     copy_file_to_fd(src, &workspace, fd).await?;
@@ -114,14 +125,6 @@ async fn import_file(
     workspace.fd_flush(fd).await?;
     workspace.fd_close(fd).await?;
 
-    // After importing the file, we may need to wait for the workspace to sync its data with the server.
-    // Note that, in addition to the file being imported, this operation may involve syncing other files.
-    // So instead of being peaky about which file to sync or wait, we just wait for all files to be synced for this workspace.
-    if !files_to_sync.lock().expect("Mutex poisoned").is_empty() {
-        log::debug!("Waiting for sync");
-        notify.notified().await;
-        log::trace!("Sync done");
-    }
     Ok(())
 }
 
@@ -218,4 +221,76 @@ async fn copy_file_to_fd(
         }
     }
     Ok(())
+}
+
+fn import_folder(
+    workspace: Arc<WorkspaceOps>,
+    src: PathBuf,
+    dest: FsPath,
+) -> impl std::future::Future<Output = anyhow::Result<()>> + Send + 'static {
+    log::debug!(
+        "Importing {} to {}:{dest}",
+        src.display(),
+        workspace.realm_id()
+    );
+    async move {
+        workspace
+            .create_folder(dest.clone())
+            .await
+            .or_else(|e| match e {
+                // `create_folder` returns an error if the full path already exists
+                // but in our case this is not a problem so we explicitly ignore it
+                libparsec::WorkspaceCreateFolderError::EntryExists { entry_id } => Ok(entry_id),
+                // All other errors are propagated
+                _ => Err(e),
+            })?;
+        let mut import_tasks = JoinSet::new();
+        let mut readdir = tokio::fs::read_dir(&src).await?;
+        loop {
+            let Some(entry) = readdir.next_entry().await? else {
+                log::trace!("Finished exploring child of {}", src.display());
+                break;
+            };
+            let entry_ft = entry.file_type().await?;
+            let entry_path = entry.path();
+            let entry_name = match filename_to_entryname(&entry_path) {
+                Some(Ok(v)) => v,
+                Some(Err(e)) => {
+                    log::warn!(
+                        "Skipping {} because it has an invalid filename ({e})",
+                        entry_path.display()
+                    );
+                    continue;
+                }
+                None => continue,
+            };
+            let entry_dest = dest.join(entry_name);
+            let dup_workspace = workspace.clone();
+            if entry_ft.is_file() {
+                import_tasks.spawn(async move {
+                    import_file(dup_workspace, &entry_path, entry_dest).await
+                });
+            } else if entry_ft.is_dir() {
+                import_tasks.spawn(async move {
+                    import_folder(dup_workspace, entry_path, entry_dest).await
+                });
+            } else {
+                log::warn!(
+                    "Skipping {} because it has an unsupported file type ({entry_ft:?})",
+                    entry_path.display()
+                )
+            }
+        }
+        import_tasks
+            .join_all()
+            .await
+            .into_iter()
+            .find(Result::is_err)
+            .transpose()
+            .and(Ok(()))
+    }
+}
+
+fn filename_to_entryname(path: &Path) -> Option<Result<EntryName, EntryNameError>> {
+    path.file_name().map(TryFrom::try_from)
 }
