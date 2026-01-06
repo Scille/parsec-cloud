@@ -181,10 +181,9 @@
             >
               <sidebar-workspace-item
                 :workspace="currentWorkspace"
+                :is-hidden="workspaceAttributes.isHidden(currentWorkspace.id)"
                 @workspace-click="goToWorkspace"
-                @context-menu-requested="
-                  openWorkspaceContextMenu($event, currentWorkspace, workspaceAttributes, eventDistributor, informationManager, true)
-                "
+                @context-menu-requested="onOpenWorkspaceContextMenu(currentWorkspace, $event)"
               />
             </div>
 
@@ -330,6 +329,7 @@ import {
   getLoggedInDevices,
   getOrganizationCreationDate,
   getPkiJoinOrganizationLink,
+  getWorkspaceInfo,
   listWorkspaces,
   LoggedInDeviceInfo,
   UserProfile,
@@ -353,6 +353,7 @@ import {
   EventDistributorKey,
   Events,
   MenuActionData,
+  WorkspaceMountpointInfo,
   WorkspaceRoleUpdateData,
 } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
@@ -577,7 +578,8 @@ onMounted(async () => {
       Events.ExpiredOrganization |
       Events.MenuAction |
       Events.WorkspaceRoleUpdate |
-      Events.DeviceCreated,
+      Events.DeviceCreated |
+      Events.WorkspaceMountpointsSync,
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
         await loadAll();
@@ -586,6 +588,21 @@ onMounted(async () => {
         const connectionHandle = getConnectionHandle();
         if (connectionHandle) {
           await recentDocumentManager.refreshWorkspaces(connectionHandle);
+        }
+        await loadAll();
+      } else if (event === Events.WorkspaceMountpointsSync) {
+        const { workspaceId, isMounted } = data as WorkspaceMountpointInfo;
+        const workspace = workspaces.value.find((w) => w.id === workspaceId);
+
+        if (workspace) {
+          if (!isMounted) {
+            workspace.mountpoints = [];
+          } else {
+            const result = await getWorkspaceInfo(workspace.handle);
+            if (result.ok) {
+              workspace.mountpoints = result.value.mountpoints;
+            }
+          }
         }
         await loadAll();
       } else if (event === Events.ExpiredOrganization) {
@@ -756,6 +773,10 @@ async function openRecentFile(file: RecentFile): Promise<void> {
 
 async function removeRecentFile(file: RecentFile): Promise<void> {
   recentDocumentManager.removeFile(file);
+}
+
+async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event): Promise<void> {
+  await openWorkspaceContextMenu(event, workspace, workspaceAttributes, eventDistributor, informationManager, storageManager, true);
 }
 
 async function onOrganizationMenuVisibilityChanged(visible: boolean): Promise<void> {
