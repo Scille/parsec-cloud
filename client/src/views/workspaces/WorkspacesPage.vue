@@ -324,11 +324,12 @@ onMounted(async (): Promise<void> => {
   );
 
   eventCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction,
+    Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction | Events.WorkspaceMountpointsSync,
     async (event: Events, data?: EventData) => {
       switch (event) {
         case Events.WorkspaceUpdated:
         case Events.WorkspaceCreated:
+        case Events.WorkspaceMountpointsSync:
           await refreshWorkspacesList();
           break;
         case Events.MenuAction:
@@ -656,7 +657,16 @@ async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openWorkspaceContextMenu(event, workspace, workspaceAttributes, eventDistributor, informationManager, false, isLargeDisplay.value);
+  await openWorkspaceContextMenu(
+    event,
+    workspace,
+    workspaceAttributes,
+    eventDistributor,
+    informationManager,
+    storageManager,
+    false,
+    isLargeDisplay.value,
+  );
   await refreshWorkspacesList();
 
   if (onFinished) {

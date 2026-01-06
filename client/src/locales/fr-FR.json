@@ -717,6 +717,34 @@
             "successDesktopShown": "L'espace de travail est maintenant visible dans Parsec et votre explorateur.",
             "successWebShown": "L'espace de travail est maintenant visible dans Parsec.",
             "failedShown": "Impossible d'afficher l'espace de travail. Veuillez réessayer."
+        },
+        "workspaceHiddenModal": {
+            "title": "Masquer un espace de travail",
+            "affectedWorkspaces": "Vous êtes sur le point de masquer l'espace de travail {workspace}. Cet espace de travail ne sera plus visible depuis l'explorateur de fichiers.",
+            "info": "Vous pouvez cocher “Afficher les espaces masqués” pour le voir sur Parsec.",
+            "actionConfirm": "Masquer l'espace de travail",
+            "actionCancel": "Annuler",
+            "noReminder": "Ne plus me rappeler",
+            "showWorkspace": {
+                "toastSuccess": "L'espace de travail {workspace} est maintenant visible.",
+                "toastFailure": "Impossible d'afficher l'espace de travail {workspace}. Veuillez réessayer."
+            },
+            "hideWorkspace": {
+                "toastSuccess": "L'espace de travail {workspace} est maintenant masqué.",
+                "toastFailure": "Impossible de masquer l'espace de travail {workspace}. Veuillez réessayer."
+            }
+        },
+        "openInExplorerModal": {
+            "file": {
+                "title": "Impossible d'ouvrir le fichier",
+                "description": "Vous devez rendre visible cet espace de travail pour pouvoir le consulter depuis votre explorateur de fichiers."
+            },
+            "workspace": {
+                "title": "Impossible d'ouvrir l'espace de travail",
+                "description": "Vous devez rendre visible cet espace de travail pour pouvoir le consulter depuis votre explorateur de fichiers."
+            },
+            "actionConfirm": "Rendre cet espace de travail visible",
+            "actionCancel": "Annuler"
         }
     },
     "FoldersPage": {
