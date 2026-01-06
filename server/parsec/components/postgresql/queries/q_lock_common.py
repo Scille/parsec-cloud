@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import auto
 
 from parsec._parsec import (
     DateTime,
@@ -11,12 +10,6 @@ from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
     Q,
 )
-from parsec.types import BadOutcomeEnum
-
-
-class LockCommonWriteRealmBadOutcome(BadOutcomeEnum):
-    REALM_NOT_FOUND = auto()
-    USER_NOT_IN_COMMON = auto()
 
 
 @dataclass(slots=True)
@@ -40,7 +33,7 @@ _q_lock_common_read = Q(_Q_LOCK_COMMON_TEMPLATE.format(row_lock="FOR SHARE"))
 async def lock_common_write(
     conn: AsyncpgConnection,
     organization_internal_id: int,
-) -> LockCommonData | LockCommonWriteRealmBadOutcome:
+) -> LockCommonData:
     return await _do_lock_common(
         conn,
         _q_lock_common_write,
@@ -51,7 +44,7 @@ async def lock_common_write(
 async def lock_common_read(
     conn: AsyncpgConnection,
     organization_internal_id: int,
-) -> LockCommonData | LockCommonWriteRealmBadOutcome:
+) -> LockCommonData:
     return await _do_lock_common(
         conn,
         _q_lock_common_read,
@@ -63,7 +56,7 @@ async def _do_lock_common(
     conn: AsyncpgConnection,
     lock_query: Q,
     organization_internal_id: int,
-) -> LockCommonData | LockCommonWriteRealmBadOutcome:
+) -> LockCommonData:
     row = await conn.fetchrow(*lock_query(organization_internal_id=organization_internal_id))
     assert row is not None
 
