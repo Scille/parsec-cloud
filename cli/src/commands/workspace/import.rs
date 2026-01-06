@@ -1,7 +1,12 @@
-use std::{collections::HashSet, path::PathBuf, sync::Arc, vec};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+    sync::Arc,
+    vec,
+};
 
 use libparsec::{anyhow::Context, FsPath, OpenOptions, VlobID};
-use libparsec_client::EventBus;
+use libparsec_client::{EventBus, WorkspaceOps};
 use tokio::io::AsyncReadExt;
 
 use crate::utils::StartedClient;
@@ -69,6 +74,22 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
             },
         }?;
     }
+    let src_metadata = src.metadata()?;
+    let src_file_type = src_metadata.file_type();
+    if src_file_type.is_file() {
+        import_file(client, workspace, &src, dest, files_to_sync).await
+    } else {
+        anyhow::bail!("Only supporting importing file")
+    }
+}
+
+async fn import_file(
+    client: &StartedClient,
+    workspace: Arc<WorkspaceOps>,
+    src: &Path,
+    dest: FsPath,
+    files_to_sync: Arc<std::sync::Mutex<HashSet<VlobID>>>,
+) -> anyhow::Result<()> {
     // Open the remote file (create it if it does not exists)
     let fd = workspace
         .open_file(
@@ -83,6 +104,7 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
         )
         .await?;
 
+    let wid = workspace.realm_id();
     let (notify, _event_conn) =
         notify_sync_completion(&client.event_bus, wid, files_to_sync.clone());
 
@@ -165,11 +187,11 @@ fn notify_sync_completion(
 }
 
 async fn copy_file_to_fd(
-    src: PathBuf,
+    src: &Path,
     workspace: &Arc<libparsec_client::WorkspaceOps>,
     fd: libparsec::FileDescriptor,
 ) -> Result<(), anyhow::Error> {
-    let file = tokio::fs::File::open(&src)
+    let file = tokio::fs::File::open(src)
         .await
         .context("Cannot open local file")?;
     let mut buf_file = tokio::io::BufReader::new(file);

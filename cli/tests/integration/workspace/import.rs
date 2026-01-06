@@ -244,3 +244,48 @@ async fn refresh_workspace_list(device: Arc<LocalDevice>) {
     client.list_workspaces().await;
     client.stop().await;
 }
+
+#[rstest::rstest]
+#[tokio::test]
+async fn workspace_fail_import_folder(tmp_path: TmpPath) {
+    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+
+    // Initialize workspace
+    let wid = {
+        let alice_client = start_client(alice.clone()).await.unwrap();
+
+        // Create the workspace used to copy the file to
+        let wid = alice_client
+            .create_workspace("new-workspace".parse().unwrap())
+            .await
+            .unwrap();
+        alice_client.ensure_workspaces_bootstrapped().await.unwrap();
+        alice_client
+            .share_workspace(wid, bob.user_id, Some(libparsec::RealmRole::Reader))
+            .await
+            .unwrap();
+
+        alice_client.stop().await;
+
+        wid
+    };
+
+    // Create a folder
+    let folder = tmp_path.join("a_folder");
+    std::fs::create_dir_all(&folder).unwrap();
+
+    // Try to import the folder
+    crate::assert_cmd_failure!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "workspace",
+        "import",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace",
+        &wid.hex(),
+        &folder.to_string_lossy(),
+        "/test"
+    )
+    .stdout(predicates::str::is_empty())
+    .stderr(predicates::str::contains("Only supporting importing file"));
+}
