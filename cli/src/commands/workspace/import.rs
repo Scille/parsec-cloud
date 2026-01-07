@@ -5,7 +5,7 @@ use std::{
     vec,
 };
 
-use libparsec::{anyhow::Context, EntryName, EntryNameError, FsPath, OpenOptions, VlobID};
+use libparsec::{EntryName, EntryNameError, FsPath, OpenOptions, VlobID, WorkspaceOpenFileError};
 use libparsec_client::{EventBus, WorkspaceOps};
 use tokio::{io::AsyncReadExt, task::JoinSet};
 
@@ -14,7 +14,7 @@ use crate::utils::StartedClient;
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin, workspace]
     pub struct Args {
-        /// Local file to import (e.g. "myfile.txt")
+        /// Local file or folder to import (e.g. "myfile.txt")
         pub(crate) src: PathBuf,
         /// Destination path in the workspace (e.g. "/path/to/myfile.txt")
         ///
@@ -28,8 +28,22 @@ crate::clap_parser_with_shared_opts_builder!(
         /// No error if parent directories already exist (similar to `mkdir -p`)
         #[clap(long, short, action)]
         pub(crate) parents: bool,
+        /// Control how existing files are updated.
+        ///
+        /// (similar to `cp --update=...`)
+        #[clap(long, value_enum, default_value_t)]
+        update: UpdateMode,
     }
 );
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+enum UpdateMode {
+    /// Existing files in destination are replaced
+    All,
+    /// Existing files in destination are not replaced but raise and error instead.
+    #[default]
+    NoneFail,
+}
 
 crate::build_main_with_client!(
     main,
@@ -47,6 +61,7 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
         dest,
         parents,
         workspace: wid,
+        update,
         ..
     } = args;
 
@@ -77,15 +92,28 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
                 _ => Err(e),
             })?;
     }
-    let src_metadata = src.metadata()?;
-    let src_file_type = src_metadata.file_type();
-    if src_file_type.is_file() {
-        import_file(workspace, &src, dest).await?;
-    } else if src_file_type.is_dir() {
-        import_folder(workspace, src, dest).await?;
-    } else {
-        anyhow::bail!("Unsupported file type {src_file_type:?}")
-    }
+
+    if let Err(err) = import_item(workspace, src, dest, update).await {
+        match err {
+            ImportItemError::Folder(ImportFolderError::ImportErrors(mut errors)) => {
+                eprintln!("Errors during folder import:");
+                let mut error_count = errors.len();
+                while let Some(error) = errors.pop() {
+                    match error {
+                        ImportItemError::Folder(ImportFolderError::ImportErrors(errs)) => {
+                            error_count += errs.len();
+                            errors.extend(errs);
+                            continue;
+                        }
+                        err => eprintln!("{err}"),
+                    }
+                }
+                anyhow::bail!("{error_count} errors during folder import")
+            }
+            _ => return Err(err.into()),
+        }
+    };
+
     // After importing the file/folder, we may need to wait for the workspace to sync its data with the server.
     // Note that, in addition to the files being imported, this operation may involve syncing other files.
     // So instead of being peaky about which file to sync or wait, we just wait for all files to be synced for this workspace.
@@ -98,7 +126,78 @@ pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Res
     Ok(())
 }
 
-async fn import_file(workspace: Arc<WorkspaceOps>, src: &Path, dest: FsPath) -> anyhow::Result<()> {
+#[derive(Debug, thiserror::Error)]
+enum ImportItemError {
+    #[error("{}: {source}", path.display())]
+    File {
+        path: PathBuf,
+        source: ImportFileError,
+    },
+    #[error(transparent)]
+    Folder(#[from] ImportFolderError),
+    #[error("{}: unsupported file type ({file_type:?})", path.display())]
+    UnsupportedFileType {
+        path: PathBuf,
+        file_type: std::fs::FileType,
+    },
+    #[error("{}: cannot stat file: {source}", path.display())]
+    CannotStat {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+}
+
+async fn import_item(
+    workspace: Arc<WorkspaceOps>,
+    src: PathBuf,
+    dest: FsPath,
+    update: UpdateMode,
+) -> Result<(), ImportItemError> {
+    let src_metadata =
+        tokio::fs::metadata(&src)
+            .await
+            .map_err(|source| ImportItemError::CannotStat {
+                path: src.clone(),
+                source,
+            })?;
+    let src_file_type = src_metadata.file_type();
+    if src_file_type.is_file() {
+        import_file(workspace, &src, dest, update)
+            .await
+            .map_err(|source| ImportItemError::File {
+                path: src.clone(),
+                source,
+            })
+    } else if src_file_type.is_dir() {
+        import_folder(workspace, src, dest, update)
+            .await
+            .map_err(Into::into)
+    } else {
+        Err(ImportItemError::UnsupportedFileType {
+            path: src.clone(),
+            file_type: src_file_type,
+        })
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+enum ImportFileError {
+    #[error("already exists")]
+    AlreadyExists,
+    #[error("open error: {0}")]
+    OpenError(#[from] WorkspaceOpenFileError),
+    #[error("copy error: {0}")]
+    CopyError(#[from] CopyFileError),
+    #[error("close error: {0}")]
+    CloseError(anyhow::Error),
+}
+
+async fn import_file(
+    workspace: Arc<WorkspaceOps>,
+    src: &Path,
+    dest: FsPath,
+    update: UpdateMode,
+) -> Result<(), ImportFileError> {
     // Open the remote file (create it if it does not exists)
     let fd = workspace
         .open_file(
@@ -108,22 +207,35 @@ async fn import_file(workspace: Arc<WorkspaceOps>, src: &Path, dest: FsPath) -> 
                 write: true,
                 truncate: true,
                 create: true,
-                create_new: false,
+                // When update mode is set to none, we can use the `create_new` option to ensure
+                // that the opened file did not exist beforehand
+                // (so not updating something that exist)
+                create_new: update == UpdateMode::NoneFail,
             },
         )
         .await
-        .with_context(|| {
-            format!(
-                "Cannot open file {dest} in workspace {}",
-                workspace.realm_id()
-            )
+        .map_err(|e| match e {
+            WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. }
+                if update == UpdateMode::NoneFail =>
+            {
+                ImportFileError::AlreadyExists
+            }
+            _ => ImportFileError::OpenError(e),
         })?;
 
     // Copy content from local file to remote file description
     copy_file_to_fd(src, &workspace, fd).await?;
     log::debug!("Flushing and closing file");
-    workspace.fd_flush(fd).await?;
-    workspace.fd_close(fd).await?;
+    workspace
+        .fd_flush(fd)
+        .await
+        .map_err(anyhow::Error::from)
+        .map_err(ImportFileError::CloseError)?;
+    workspace
+        .fd_close(fd)
+        .await
+        .map_err(anyhow::Error::from)
+        .map_err(ImportFileError::CloseError)?;
 
     Ok(())
 }
@@ -189,14 +301,24 @@ fn notify_sync_completion(
     (notify, event_conn)
 }
 
+#[derive(Debug, thiserror::Error)]
+enum CopyFileError {
+    #[error("cannot open source file: {0}")]
+    CannotOpenSrcFile(std::io::Error),
+    #[error("cannot read source file: {0}")]
+    ReadError(std::io::Error),
+    #[error("cannot write: {0}")]
+    WriteError(libparsec::WorkspaceFdWriteError),
+}
+
 async fn copy_file_to_fd(
     src: &Path,
     workspace: &Arc<libparsec_client::WorkspaceOps>,
     fd: libparsec::FileDescriptor,
-) -> Result<(), anyhow::Error> {
+) -> Result<(), CopyFileError> {
     let file = tokio::fs::File::open(src)
         .await
-        .context("Cannot open local file")?;
+        .map_err(CopyFileError::CannotOpenSrcFile)?;
     let mut buf_file = tokio::io::BufReader::new(file);
     let mut buffer = vec![0_u8; 4096];
     let mut dst_offset = 0_usize;
@@ -205,7 +327,7 @@ async fn copy_file_to_fd(
         let bytes_read = buf_file
             .read(&mut buffer)
             .await
-            .context("Cannot read local file")?;
+            .map_err(CopyFileError::ReadError)?;
         let mut buf = &buffer[..bytes_read];
 
         if bytes_read == 0 {
@@ -216,7 +338,7 @@ async fn copy_file_to_fd(
             let bytes_written = workspace
                 .fd_write(fd, dst_offset as u64, buf)
                 .await
-                .context("Cannot write to workspace")? as usize;
+                .map_err(CopyFileError::WriteError)? as usize;
             buf = &buf[bytes_written..];
             dst_offset += bytes_written;
         }
@@ -224,11 +346,33 @@ async fn copy_file_to_fd(
     Ok(())
 }
 
+#[derive(Debug, thiserror::Error)]
+enum ImportFolderError {
+    #[error("{}: cannot create folder: {source}", path.display())]
+    CreateFolder {
+        path: PathBuf,
+        source: libparsec::WorkspaceCreateFolderError,
+    },
+    #[error("{}: cannot read directory: {source}", path.display())]
+    ReadDirectory {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("{}: invalid filename: {source}", path.display())]
+    InvalidEntryName {
+        path: PathBuf,
+        source: libparsec::EntryNameError,
+    },
+    #[error("{} import errors", .0.len())]
+    ImportErrors(Vec<ImportItemError>),
+}
+
 fn import_folder(
     workspace: Arc<WorkspaceOps>,
     src: PathBuf,
     dest: FsPath,
-) -> impl std::future::Future<Output = anyhow::Result<()>> + Send + 'static {
+    update: UpdateMode,
+) -> impl std::future::Future<Output = Result<(), ImportFolderError>> + Send + 'static {
     log::debug!(
         "Importing {} to {}:{dest}",
         src.display(),
@@ -244,51 +388,65 @@ fn import_folder(
                 libparsec::WorkspaceCreateFolderError::EntryExists { entry_id } => Ok(entry_id),
                 // All other errors are propagated
                 _ => Err(e),
+            })
+            .map_err(|source| ImportFolderError::CreateFolder {
+                path: src.clone(),
+                source,
             })?;
         let mut import_tasks = JoinSet::new();
-        let mut readdir = tokio::fs::read_dir(&src).await?;
+        let mut readdir =
+            tokio::fs::read_dir(&src)
+                .await
+                .map_err(|source| ImportFolderError::ReadDirectory {
+                    path: src.clone(),
+                    source,
+                })?;
         loop {
-            let Some(entry) = readdir.next_entry().await? else {
+            let Some(entry) =
+                readdir
+                    .next_entry()
+                    .await
+                    .map_err(|source| ImportFolderError::ReadDirectory {
+                        path: src.clone(),
+                        source,
+                    })?
+            else {
                 log::trace!("Finished exploring child of {}", src.display());
                 break;
             };
-            let entry_ft = entry.file_type().await?;
             let entry_path = entry.path();
             let entry_name = match filename_to_entryname(&entry_path) {
                 Some(Ok(v)) => v,
                 Some(Err(e)) => {
-                    log::warn!(
-                        "Skipping {} because it has an invalid filename ({e})",
-                        entry_path.display()
-                    );
+                    import_tasks.spawn(async {
+                        Err(ImportItemError::Folder(
+                            ImportFolderError::InvalidEntryName {
+                                path: entry_path,
+                                source: e,
+                            },
+                        ))
+                    });
                     continue;
                 }
                 None => continue,
             };
             let entry_dest = dest.join(entry_name);
             let dup_workspace = workspace.clone();
-            if entry_ft.is_file() {
-                import_tasks.spawn(async move {
-                    import_file(dup_workspace, &entry_path, entry_dest).await
-                });
-            } else if entry_ft.is_dir() {
-                import_tasks.spawn(async move {
-                    import_folder(dup_workspace, entry_path, entry_dest).await
-                });
-            } else {
-                log::warn!(
-                    "Skipping {} because it has an unsupported file type ({entry_ft:?})",
-                    entry_path.display()
-                )
-            }
+            import_tasks.spawn(async move {
+                import_item(dup_workspace, entry_path, entry_dest, update).await
+            });
         }
-        import_tasks
+        let errs = import_tasks
             .join_all()
             .await
             .into_iter()
-            .find(Result::is_err)
-            .transpose()
-            .and(Ok(()))
+            .filter_map(Result::err)
+            .collect::<Vec<_>>();
+        if errs.is_empty() {
+            Ok(())
+        } else {
+            Err(ImportFolderError::ImportErrors(errs))
+        }
     }
 }
 

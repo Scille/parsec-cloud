@@ -135,7 +135,7 @@ async fn workspace_import_file_to_specific_path(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::is_empty());
 
-    // Import the file again to the same folder
+    // Import the file again to the same folder but with another name
     // Using `--parents` shouldn't fail even if the path already exists
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -147,7 +147,7 @@ async fn workspace_import_file_to_specific_path(tmp_path: TmpPath) {
         &wid.hex(),
         "--parents",
         &file.to_string_lossy(),
-        "/d/e/f/test.txt" // path exists but it should not fail
+        "/d/e/f/test2.txt" // path exists but it should not fail
     )
     .stdout(predicates::str::is_empty());
 
@@ -166,15 +166,21 @@ async fn workspace_import_file_to_specific_path(tmp_path: TmpPath) {
             workspace.inbound_sync(entry).await.unwrap();
         }
     }
-    let entries = workspace
+    let mut entries = workspace
         .stat_folder_children(&"/d/e/f/".parse().unwrap())
         .await
         .unwrap();
 
-    assert_eq!(entries.len(), 1);
-    let (name, stat) = &entries[0];
+    assert_eq!(entries.len(), 2);
+    entries.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let (name, stat) = entries.pop().unwrap();
+    assert_eq!(name.as_ref(), "test2.txt");
+    assert!(matches!(stat, libparsec::EntryStat::File { size, .. } if size == 13));
+
+    let (name, stat) = entries.pop().unwrap();
     assert_eq!(name.as_ref(), "test.txt");
-    assert!(matches!(stat, libparsec::EntryStat::File { size, .. } if size == &13));
+    assert!(matches!(stat, libparsec::EntryStat::File { size, .. } if size == 13));
 }
 
 #[rstest::rstest]
@@ -221,6 +227,7 @@ async fn issue_8941_import_file_where_inbound_and_outbound_sync_are_required(tmp
         &alice.device_id.hex(),
         "--workspace",
         &wid.hex(),
+        "--update=all",
         &test_file.to_string_lossy(),
         "/test.txt"
     )
@@ -333,4 +340,68 @@ async fn workspace_import_folder(tmp_path: TmpPath) {
     let (name, stat) = entries.pop().unwrap();
     assert_eq!(name.as_ref(), "wid");
     assert!(matches!(stat, libparsec::EntryStat::File { size, .. } if dbg!(size) == 36));
+}
+
+#[rstest::rstest]
+#[tokio::test]
+async fn import_prevent_overwrite(tmp_path: TmpPath) {
+    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+
+    // Initialize workspace
+    let wid = {
+        let alice_client = start_client(alice.clone()).await.unwrap();
+
+        // Create the workspace used to copy the file to
+        let wid = alice_client
+            .create_workspace("new-workspace".parse().unwrap())
+            .await
+            .unwrap();
+        alice_client.ensure_workspaces_bootstrapped().await.unwrap();
+        alice_client
+            .share_workspace(wid, bob.user_id, Some(libparsec::RealmRole::Reader))
+            .await
+            .unwrap();
+
+        alice_client.stop().await;
+
+        wid
+    };
+
+    // Create a file to import
+    let file = tmp_path.join("do_not_overwrite_me.txt");
+    std::fs::write(&file, "Hello, World!").unwrap();
+
+    // Import the file
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "workspace",
+        "import",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace",
+        &wid.hex(),
+        &file.to_string_lossy(),
+        "/do_not_overwrite_me.txt"
+    )
+    .stdout(predicates::str::is_empty())
+    .stderr(predicates::str::is_empty());
+
+    // Import the file a second time, but without allowing to overwrite files
+    crate::assert_cmd_failure!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "workspace",
+        "import",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace",
+        &wid.hex(),
+        "--update=none-fail",
+        &file.to_string_lossy(),
+        "/do_not_overwrite_me.txt"
+    )
+    .stdout(predicates::str::is_empty())
+    .stderr(predicates::str::contains(format!(
+        "{}: already exists",
+        file.display()
+    )));
 }
