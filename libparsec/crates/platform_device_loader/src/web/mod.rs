@@ -10,11 +10,13 @@ use libparsec_types::prelude::*;
 
 use crate::{
     AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, ListPkiLocalPendingError,
-    LoadCiphertextKeyError, OpenBaoOperationsFetchOpaqueKeyError, ReadFileError,
-    RemoteOperationServer, RemoveDeviceError, SaveDeviceError, SavePkiLocalPendingError,
-    UpdateDeviceError,
+    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
+    ListAvailableDeviceError, ListPendingAsyncEnrollmentsError, ListPkiLocalPendingError,
+    LoadCiphertextKeyError, LoadPendingAsyncEnrollmentError, OpenBaoOperationsFetchOpaqueKeyError,
+    ReadFileError, RemoteOperationServer, RemoveDeviceError, SaveAsyncEnrollmentLocalPendingError,
+    SaveDeviceError, SavePkiLocalPendingError, UpdateDeviceError,
 };
+use error::ListFileEntriesError;
 use internal::Storage;
 
 /*
@@ -243,4 +245,79 @@ pub(super) async fn list_pki_local_pending(
             log::error!("Failed to list available devices: {e}");
         })
         .map_err(|e| ListPkiLocalPendingError::Internal(anyhow::anyhow!("{e}")))
+}
+
+pub(super) async fn save_pending_async_enrollment(
+    content: &[u8],
+    file_path: &Path,
+) -> Result<(), SaveAsyncEnrollmentLocalPendingError> {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
+        log::error!("Failed to access storage: {e}");
+    }) else {
+        return Err(SaveAsyncEnrollmentLocalPendingError::StorageNotAvailable);
+    };
+
+    storage
+        .save_raw_data(file_path, content)
+        .await
+        .map_err(|err| {
+            SaveAsyncEnrollmentLocalPendingError::InvalidPath(anyhow::anyhow!("{err}"))
+        })?;
+
+    Ok(())
+}
+
+pub(super) async fn load_pending_async_enrollment(
+    file_path: &Path,
+) -> Result<
+    (
+        AsyncEnrollmentLocalPending,
+        AsyncEnrollmentLocalPendingCleartextContent,
+    ),
+    LoadPendingAsyncEnrollmentError,
+> {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
+        log::error!("Failed to access storage: {e}");
+    }) else {
+        return Err(LoadPendingAsyncEnrollmentError::StorageNotAvailable);
+    };
+
+    let raw = storage
+        .read_file(file_path)
+        .await
+        .map_err(|err| LoadPendingAsyncEnrollmentError::InvalidPath(anyhow::anyhow!("{err}")))?;
+
+    super::load_pending_async_enrollment_frow_raw(file_path, &raw)
+        .map_err(|_| LoadPendingAsyncEnrollmentError::InvalidData)
+}
+
+pub(super) async fn list_pending_async_enrollments(
+    pending_async_enrollments_dir: &Path,
+) -> Result<Vec<AvailablePendingAsyncEnrollment>, ListPendingAsyncEnrollmentsError> {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
+        log::error!("Failed to access storage: {e}");
+    }) else {
+        return Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable);
+    };
+
+    let files = storage.list_file_entries(pending_async_enrollments_dir, crate::PENDING_ASYNC_ENROLLMENT_EXT).await
+        .or_else(|err| match err {
+            ListFileEntriesError::NotFound { .. } => Ok(vec![]),
+            _ => {
+                log::error!(path:% = pending_async_enrollments_dir.display(), err:%; "Cannot list pending request files");
+                Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable)
+            }
+        })?;
+
+    let mut items = Vec::with_capacity(files.len());
+    for file in files {
+        let outcome = file.read_to_end().await.ok().and_then(|raw| {
+            super::load_pending_async_enrollment_as_available_frow_raw(file.path, &raw).ok()
+        });
+        if let Some(available) = outcome {
+            items.push(available);
+        }
+    }
+
+    Ok(items)
 }
