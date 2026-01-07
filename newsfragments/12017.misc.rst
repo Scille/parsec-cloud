@@ -1,0 +1,1 @@
+Fixed toast messages appearance in small display mode

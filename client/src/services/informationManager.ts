@@ -4,7 +4,7 @@ import { ConnectionHandle, EntryName, FsPath, UserID, WorkspaceHandle, Workspace
 import { getConnectionHandle } from '@/router';
 import { NotificationManager } from '@/services/notificationManager';
 import { modalController } from '@ionic/vue';
-import { MsAlertModal, MsAlertModalConfig, MsReportTheme, ToastManager, Translatable } from 'megashark-lib';
+import { MsAlertModal, MsAlertModalConfig, MsReportTheme, ToastManager, Translatable, useWindowSize } from 'megashark-lib';
 import { v4 as uuid4 } from 'uuid';
 
 export const InformationManagerKey = 'information';
@@ -194,9 +194,11 @@ export class InformationManager {
   }
 
   private async showToast(information: Information): Promise<void> {
+    const { isSmallDisplay } = useWindowSize();
     this.toastManager.createAndPresent({
       theme: information.theme,
       message: information.message,
+      smallDisplay: isSmallDisplay.value,
     });
   }
 

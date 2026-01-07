@@ -417,6 +417,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (event: 'sidebarWidthChanged', value: number): void;
+  (event: 'windowWidthChanged'): void;
 }>();
 
 const workspaceAttributes = useWorkspaceAttributes();
@@ -565,6 +566,7 @@ function setActions(): void {
 
 const watchWindowWidthCancel = watch(windowWidth, async () => {
   updateDividerPosition();
+  emits('windowWidthChanged');
 });
 
 const watchRouteCancel = watchRoute(async () => {
