@@ -196,6 +196,7 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   await roles.nth(0).click();
   await workspaces.locator('.sheet-modal').locator('.button-solid').nth(1).click();
   await expect(users.nth(1).locator('#dropdown-popover-button').locator('.input-text')).toHaveText('Owner');
+  await workspaces.locator('.toast-container').locator('.toast-button').click();
   await workspaceSharingModal.locator('.closeBtn').click();
 
   await expect(checklistButton).toHaveTheClass('unread');
@@ -210,7 +211,6 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   ]);
   await checklistModal.locator('ion-backdrop').click();
   await expect(checklistModal).toBeHidden();
-  await workspaces.locator('.toast-container').locator('.toast-button').click();
 
   // Create a recovery file
   await workspaces.locator('#tab-bar').locator('.tab-bar-menu-button').nth(3).click();

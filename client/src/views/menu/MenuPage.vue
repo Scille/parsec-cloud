@@ -6,6 +6,7 @@
       v-if="userInfo"
       :user-info="userInfo"
       @sidebar-width-changed="onSidebarWidthChanged"
+      @window-width-changed="updateToastOffset"
     />
   </ion-page>
 </template>
@@ -24,10 +25,10 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 
 function onSidebarWidthChanged(value: number): void {
   sidebarWidth.value = value;
-  setToastOffset(value);
+  updateToastOffset();
 }
 
-async function updateWindowWidth(): Promise<void> {
+function updateToastOffset(): void {
   if (isSmallDisplay.value) {
     setToastOffset(0);
   } else {
@@ -43,7 +44,7 @@ onMounted(async () => {
   } else {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
   }
-  updateWindowWidth();
+  updateToastOffset();
 });
 
 onUnmounted(async () => {
