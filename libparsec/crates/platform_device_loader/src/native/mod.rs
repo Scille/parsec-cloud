@@ -116,7 +116,7 @@ fn load_available_device(key_file_path: PathBuf) -> Result<AvailableDevice, Load
 pub(super) async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
     tokio::fs::read(file)
         .await
-        .map_err(|e| ReadFileError::Internal(e.into()))
+        .map_err(|e| ReadFileError::InvalidPath(e.into()))
 }
 
 pub(super) async fn load_ciphertext_key(
@@ -265,7 +265,7 @@ pub(super) async fn load_ciphertext_key(
     }
 }
 
-async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), SaveDeviceError> {
+async fn save_content(key_file: &Path, file_content: &[u8]) -> Result<(), SaveDeviceError> {
     if let Some(parent) = key_file.parent() {
         tokio::fs::create_dir_all(parent)
             .await
@@ -273,7 +273,7 @@ async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), Sav
     }
     let tmp_path = match key_file.file_name() {
         Some(file_name) => {
-            let mut tmp_path = key_file.clone();
+            let mut tmp_path = key_file.to_owned();
             {
                 let mut tmp_file_name = file_name.to_owned();
                 tmp_file_name.push(".tmp");
@@ -304,7 +304,7 @@ async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), Sav
 }
 
 async fn generate_keyring_user(
-    keyring_user_path: &PathBuf,
+    keyring_user_path: &Path,
 ) -> Result<(SecretKey, String), SaveDeviceError> {
     // Generate a keyring user
     let keyring_user = Uuid::new_v4().to_string();
@@ -670,7 +670,7 @@ pub(super) fn is_keyring_available() -> bool {
     }
 }
 
-pub async fn save_pki_local_pending(
+pub(super) async fn save_pki_local_pending(
     local_pending: PKILocalPendingEnrollment,
     local_file: PathBuf,
 ) -> Result<(), SavePkiLocalPendingError> {
@@ -680,7 +680,7 @@ pub async fn save_pki_local_pending(
         .map_err(Into::into)
 }
 
-pub async fn list_pki_local_pending(
+pub(super) async fn list_pki_local_pending(
     config_dir: &Path,
 ) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
     let pending_dir = crate::get_local_pending_dir(config_dir);

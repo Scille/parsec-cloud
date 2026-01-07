@@ -54,7 +54,7 @@ pub(super) async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
     storage
         .read_file(file)
         .await
-        .map_err(|err| ReadFileError::Internal(anyhow::anyhow!("{err}")))
+        .map_err(|err| ReadFileError::InvalidPath(anyhow::anyhow!("{err}")))
 }
 
 pub(super) async fn load_ciphertext_key(

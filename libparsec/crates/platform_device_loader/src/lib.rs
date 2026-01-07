@@ -39,7 +39,7 @@ enum ReadFileError {
     #[error("Device storage is not available")]
     StorageNotAvailable,
     #[error(transparent)]
-    Internal(anyhow::Error),
+    InvalidPath(anyhow::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -217,7 +217,7 @@ pub async fn load_available_device(
         .await
         .map_err(|err| match err {
             ReadFileError::StorageNotAvailable => LoadAvailableDeviceError::StorageNotAvailable,
-            ReadFileError::Internal(err) => LoadAvailableDeviceError::InvalidPath(err),
+            ReadFileError::InvalidPath(err) => LoadAvailableDeviceError::InvalidPath(err),
         })?;
 
     load_available_device_from_blob(device_file, &file_content)
@@ -272,7 +272,7 @@ pub async fn load_device(
         .await
         .map_err(|err| match err {
             ReadFileError::StorageNotAvailable => LoadDeviceError::StorageNotAvailable,
-            ReadFileError::Internal(err) => LoadDeviceError::InvalidPath(err),
+            ReadFileError::InvalidPath(err) => LoadDeviceError::InvalidPath(err),
         })?;
     let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
     let ciphertext_key = platform::load_ciphertext_key(access, &device_file)
@@ -397,7 +397,7 @@ pub async fn update_device_change_authentication(
         .await
         .map_err(|err| match err {
             ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            ReadFileError::Internal(err) => UpdateDeviceError::InvalidPath(err),
+            ReadFileError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
         })?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
@@ -471,7 +471,7 @@ pub async fn update_device_overwrite_server_addr(
         .await
         .map_err(|err| match err {
             ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            ReadFileError::Internal(err) => UpdateDeviceError::InvalidPath(err),
+            ReadFileError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
         })?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
@@ -822,7 +822,10 @@ pub async fn save_pki_local_pending(
     local_pending: PKILocalPendingEnrollment,
     local_file: PathBuf,
 ) -> Result<(), SavePkiLocalPendingError> {
-    log::debug!("Saving local device at {}", local_file.display());
+    log::debug!(
+        "Saving pki enrollment local pending file at {}",
+        local_file.display()
+    );
     platform::save_pki_local_pending(local_pending, local_file).await
 }
 
