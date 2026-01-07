@@ -9,9 +9,11 @@ use uuid::Uuid;
 use crate::{
     encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
     AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    DeviceAccessStrategy, DeviceSaveStrategy, ListAvailableDeviceError, ListPkiLocalPendingError,
-    LoadCiphertextKeyError, LoadDeviceError, OpenBaoOperationsFetchOpaqueKeyError,
-    OpenBaoOperationsUploadOpaqueKeyError, ReadFileError, RemoteOperationServer, RemoveDeviceError,
+    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
+    ListAvailableDeviceError, ListPendingAsyncEnrollmentsError, ListPkiLocalPendingError,
+    LoadCiphertextKeyError, LoadDeviceError, LoadPendingAsyncEnrollmentError,
+    OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError, ReadFileError,
+    RemoteOperationServer, RemoveDeviceError, SaveAsyncEnrollmentLocalPendingError,
     SaveDeviceError, SavePkiLocalPendingError, UpdateDeviceError, DEVICE_FILE_EXT,
     LOCAL_PENDING_EXT,
 };
@@ -668,4 +670,72 @@ async fn load_pki_pending_file(path: &Path) -> Result<PKILocalPendingEnrollment,
             |err| log::debug!(path:% = path.display(), err:%; "Failed to load pki pending file"),
         )
         .map_err(|_| LoadFileError::InvalidData)
+}
+
+pub(super) async fn save_pending_async_enrollment(
+    content: &[u8],
+    file_path: &Path,
+) -> Result<(), SaveAsyncEnrollmentLocalPendingError> {
+    save_content(file_path, content).await.map_err(Into::into)
+}
+
+pub(super) async fn load_pending_async_enrollment(
+    file_path: &Path,
+) -> Result<
+    (
+        AsyncEnrollmentLocalPending,
+        AsyncEnrollmentLocalPendingCleartextContent,
+    ),
+    LoadPendingAsyncEnrollmentError,
+> {
+    let raw = tokio::fs::read(&file_path)
+        .await
+        .map_err(|err| LoadPendingAsyncEnrollmentError::InvalidPath(err.into()))?;
+    super::load_pending_async_enrollment_frow_raw(file_path, &raw)
+        .map_err(|_| LoadPendingAsyncEnrollmentError::InvalidData)
+}
+
+pub(super) async fn list_pending_async_enrollments(
+    pending_async_enrollments_dir: &Path,
+) -> Result<Vec<AvailablePendingAsyncEnrollment>, ListPendingAsyncEnrollmentsError> {
+    let mut files = find_pending_async_enrollment_files(pending_async_enrollments_dir).await?;
+
+    // Sort entries so result is deterministic
+    files.sort();
+
+    Ok(libparsec_platform_async::stream::iter(files)
+        .filter_map(async |path| {
+            let raw = tokio::fs::read(&path).await.ok()?;
+            super::load_pending_async_enrollment_as_available_frow_raw(path, &raw).ok()
+        })
+        .collect::<Vec<_>>()
+        .await)
+}
+
+async fn find_pending_async_enrollment_files(
+    path: &Path,
+) -> Result<Vec<PathBuf>, ListPendingAsyncEnrollmentsError> {
+    let mut entries = match tokio::fs::read_dir(path).await {
+        Ok(v) => v,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(err) => {
+            log::error!(path:% = path.display(), err:%; "Cannot list pending request files");
+            return Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable);
+        }
+    };
+    let mut files = Vec::new();
+
+    while let Some(entry) = entries.next_entry().await.unwrap_or_default() {
+        let Ok(metadata) = entry.metadata().await else {
+            continue;
+        };
+        let path = entry.path();
+        if metadata.is_dir() {
+            let mut sub_files = Box::pin(find_pending_async_enrollment_files(&path)).await?;
+            files.append(&mut sub_files);
+        } else if metadata.is_file() && path.extension() == Some(LOCAL_PENDING_EXT.as_ref()) {
+            files.push(path);
+        }
+    }
+    Ok(files)
 }
