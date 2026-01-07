@@ -40,7 +40,7 @@ msTest.describe(() => {
     await expect(entry.locator('.label-name')).toHaveText('image.png');
     await entry.hover();
     await expect(entry).toBeVisible();
-    await entry.click({ force: true });
+    await entry.locator('ion-checkbox').click();
     await expect(entry).toContainClass('selected');
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('ion-button').nth(0)).toHaveText('Preview');
