@@ -2389,6 +2389,13 @@ dependencies = [
 [[package]]
 name = "libparsec_platform_filesystem"
 version = "3.7.2-a.0+dev"
+dependencies = [
+ "libparsec_platform_async",
+ "log",
+ "thiserror 2.0.17",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
 
 [[package]]
 name = "libparsec_platform_http_proxy"

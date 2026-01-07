@@ -12,3 +12,31 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
+
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# TODO Move to regular dependencies when progressing on #11954
+log = { workspace = true }
+# TODO Move to regular dependencies when progressing on #11954
+libparsec_platform_async = { workspace = true }
+# TODO Move to regular dependencies when progressing on #11954
+thiserror = { workspace = true }
+
+wasm-bindgen-futures = { workspace = true, features = ["futures-core-03-stream"] }
+web-sys = { workspace = true, features = [
+    "DomException",
+    "FileSystemDirectoryHandle",
+    "FileSystemGetDirectoryOptions",
+    "FileSystemGetFileOptions",
+    "FileSystemWritableFileStream",
+    "File",
+    "Blob",
+    "FileSystemHandle",
+    "FileSystemFileHandle",
+    "FileSystemHandleKind",
+    "Navigator",
+    "StorageManager",
+    "Window",
+    "WorkerGlobalScope",
+    "WorkerNavigator",
+] }
