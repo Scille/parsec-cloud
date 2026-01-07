@@ -211,7 +211,8 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 
   &__you {
-    color: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-text);
+    font-weight: 700;
   }
 }
 

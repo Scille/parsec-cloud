@@ -704,10 +704,14 @@
         },
         "categoriesMenu": {
             "all": "Tous les espaces",
+            "allShort": "Tous",
             "recents": "Vus récemment",
+            "recentsShort": "Récents",
             "favorites": "Épinglés",
             "noRecentWorkspaces": "Vous n'avez encore consulté aucun espace de travail. Les espaces consultés récemment apparaîtront ici.",
-            "noFavoriteWorkspaces": "Vous n'avez encore épinglé aucun espace de travail. Épinglez un espace pour qu'il apparaisse ici."
+            "noFavoriteWorkspaces": "Vous n'avez encore épinglé aucun espace de travail. Épinglez un espace pour qu'il apparaisse ici.",
+            "showHiddenWorkspaces": "Afficher les espaces masqués",
+            "showHiddenWorkspacesShort": "Espaces masqués"
         },
         "showHideWorkspace": {
             "failedStarted": "Impossible d'obtenir les informations relatives à l'espace de travail. Veuillez réessayer.",

@@ -204,21 +204,6 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
-.workspace-list-item--hidden {
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-
-  .workspace-list-item-content {
-    opacity: 0.8;
-    filter: brightness(0.8);
-  }
-
-  &:hover {
-    .workspace-list-item-content {
-      background: var(--parsec-color-light-secondary-premiere);
-    }
-  }
-}
-
 .workspace-favorite-icon {
   display: flex;
   align-items: center;
@@ -309,6 +294,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   padding: 3px 0.5rem;
   border-radius: var(--parsec-radius-8);
   flex-shrink: 0;
+  width: 5rem;
 
   &__icon {
     font-size: 0.875rem;
@@ -433,6 +419,10 @@ async function onOptionsClick(event: Event): Promise<void> {
     .workspace-list-item-content {
       background: var(--parsec-color-light-secondary-premiere);
     }
+  }
+
+  .workspace-name {
+    max-width: calc(45vw - 5rem);
   }
 }
 </style>

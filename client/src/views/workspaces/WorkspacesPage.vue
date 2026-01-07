@@ -49,6 +49,21 @@
           :active-menu="workspaceMenuState"
           @update-menu="workspaceMenuState = $event"
         />
+        <ms-checkbox
+          v-model="hiddenWorkspaces"
+          @click.stop
+          @dblclick.stop
+          label-placement="end"
+          class="hidden-workspaces-checkbox"
+          id="show-hidden-workspaces-large"
+        >
+          <ion-text class="button-medium">
+            <span v-if="windowWidth > WindowSizeBreakpoints.LG">
+              {{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspaces') }}
+            </span>
+            <span v-else>{{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspacesShort') }}</span>
+          </ion-text>
+        </ms-checkbox>
       </div>
 
       <!-- workspaces -->
@@ -58,6 +73,21 @@
           v-if="isSmallDisplay"
         >
           <div class="mobile-filters-buttons">
+            <ms-checkbox
+              v-model="hiddenWorkspaces"
+              @click.stop
+              @dblclick.stop
+              label-placement="end"
+              class="hidden-workspaces-checkbox"
+              id="show-hidden-workspaces-small"
+            >
+              <ion-text class="button-medium">
+                <span v-if="windowWidth > WindowSizeBreakpoints.XS">
+                  {{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspaces') }}
+                </span>
+                <span v-else>{{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspacesShort') }}</span>
+              </ion-text>
+            </ms-checkbox>
             <workspace-filter
               :filters="workspaceFilters"
               @change="onFilterUpdate"
@@ -113,6 +143,7 @@
             <ion-button
               v-show="clientProfile !== UserProfile.Outsider"
               id="new-workspace"
+              class="button-default button-large"
               fill="outline"
               @click="openCreateWorkspaceModal()"
             >
@@ -235,6 +266,7 @@ import {
   Answer,
   DisplayState,
   MsActionBar,
+  MsCheckbox,
   MsGridListToggle,
   MsImage,
   MsOptions,
@@ -243,6 +275,7 @@ import {
   MsSorterChangeEvent,
   MsSpinner,
   NoWorkspace,
+  WindowSizeBreakpoints,
   askQuestion,
   getTextFromUser,
   useWindowSize,
@@ -258,7 +291,7 @@ enum SortWorkspaceBy {
 
 const workspaceAttributes = useWorkspaceAttributes();
 
-const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const sortBy = ref(SortWorkspaceBy.Name);
 const sortByAsc = ref(true);
@@ -268,6 +301,7 @@ const searchFilterContent = ref('');
 const workspaceFilters = ref<WorkspacesPageFilters>({ owner: true, manager: true, contributor: true, reader: true });
 const querying = ref(true);
 
+const hiddenWorkspaces = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
@@ -519,6 +553,9 @@ const filteredWorkspaces = computed(() => {
       if (!workspace.currentName.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.currentSelfRole)) {
         return false;
       }
+      if (!hiddenWorkspaces.value && workspaceAttributes.isHidden(workspace.id)) {
+        return false;
+      }
       return true;
     })
     .sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
@@ -732,6 +769,11 @@ async function onFilterUpdate(): Promise<void> {
   height: 100%;
   align-items: center;
 
+  @include ms.responsive-breakpoint('xs') {
+    align-items: start;
+    height: fit-content;
+  }
+
   &-loading,
   .no-all-workspaces,
   .no-recent-workspaces,
@@ -760,6 +802,11 @@ async function onFilterUpdate(): Promise<void> {
   &__image {
     width: 8rem;
     height: 8rem;
+
+    @include ms.responsive-breakpoint('xs') {
+      width: 6rem;
+      height: 6rem;
+    }
   }
 
   .no-all-workspaces .no-workspaces__image {
@@ -806,6 +853,58 @@ async function onFilterUpdate(): Promise<void> {
 
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem 1rem;
+  }
+}
+
+.workspace-filters-menu {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.5rem 2rem 0;
+
+  @include ms.responsive-breakpoint('lg') {
+    width: 100%;
+    flex-direction: column;
+    padding: 1.5rem 1.25rem 0;
+  }
+}
+
+.hidden-workspaces-checkbox {
+  position: relative;
+  z-index: 3;
+  align-self: stretch;
+  border-radius: var(--parsec-radius-12);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  background: var(--parsec-color-light-secondary-white);
+  padding: 0.5rem 0.875rem;
+  display: flex;
+  align-items: center;
+  color: var(--parsec-color-light-secondary-grey);
+  --checkbox-background-checked: var(--parsec-color-light-secondary-text);
+  --checkbox-border-checked: var(--parsec-color-light-secondary-text);
+  --border-color-checked: var(--parsec-color-light-secondary-text);
+  transition: all 0.2s ease-in-out;
+
+  &::part(label) {
+    margin-left: 0.675rem;
+  }
+
+  &.checkbox-checked::part(container) {
+    border-color: var(--parsec-color-light-secondary-text);
+  }
+
+  &:hover {
+    box-shadow: var(--parsec-shadow-soft);
+  }
+
+  &:is(.checkbox-checked) {
+    box-shadow: var(--parsec-shadow-soft);
+    border-color: var(--parsec-color-light-secondary-light);
+    color: var(--parsec-color-light-secondary-grey);
+  }
+
+  @include ms.responsive-breakpoint('lg') {
+    margin-right: auto;
   }
 }
 

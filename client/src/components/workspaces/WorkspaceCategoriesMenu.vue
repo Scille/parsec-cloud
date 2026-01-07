@@ -25,9 +25,10 @@
 import { WorkspaceMenu } from '@/views/workspaces/types';
 import { IonIcon, IonText } from '@ionic/vue';
 import { rocket, star, time } from 'ionicons/icons';
-import { useWindowSize } from 'megashark-lib';
+import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
+import { computed } from 'vue';
 
-const { isLargeDisplay } = useWindowSize();
+const { isLargeDisplay, windowWidth } = useWindowSize();
 
 defineProps<{
   activeMenu: WorkspaceMenu;
@@ -37,23 +38,24 @@ defineEmits<{
   (e: 'updateMenu', value: WorkspaceMenu): void;
 }>();
 
-const workspaceMenuList = [
+const workspaceMenuList = computed(() => [
   {
     icon: rocket,
     key: WorkspaceMenu.All,
-    label: 'WorkspacesPage.categoriesMenu.all',
+    label: windowWidth.value > WindowSizeBreakpoints.XS ? 'WorkspacesPage.categoriesMenu.all' : 'WorkspacesPage.categoriesMenu.allShort',
   },
   {
     icon: time,
     key: WorkspaceMenu.Recents,
-    label: 'WorkspacesPage.categoriesMenu.recents',
+    label:
+      windowWidth.value > WindowSizeBreakpoints.XS ? 'WorkspacesPage.categoriesMenu.recents' : 'WorkspacesPage.categoriesMenu.recentsShort',
   },
   {
     icon: star,
     key: WorkspaceMenu.Favorites,
     label: 'WorkspacesPage.categoriesMenu.favorites',
   },
-];
+]);
 </script>
 
 <style scoped lang="scss">
@@ -65,6 +67,7 @@ const workspaceMenuList = [
   border-radius: var(--parsec-radius-12);
   background: var(--parsec-color-light-secondary-premiere);
   position: relative;
+  z-index: 5;
 
   @include ms.responsive-breakpoint('lg') {
     width: 100%;
@@ -98,6 +101,7 @@ const workspaceMenuList = [
     gap: 0.5rem;
     cursor: pointer;
     flex: 1 0 12rem;
+    min-width: 12rem;
     padding: 0.5rem 1rem;
     color: var(--parsec-color-light-secondary-soft-text);
     box-shadow: var(--parsec-shadow-filter);
@@ -109,6 +113,7 @@ const workspaceMenuList = [
     @include ms.responsive-breakpoint('lg') {
       flex-basis: auto;
       width: calc(100% / 3);
+      text-align: center;
     }
 
     &:not(.active):hover {
