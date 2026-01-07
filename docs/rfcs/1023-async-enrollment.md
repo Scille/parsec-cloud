@@ -74,6 +74,15 @@ This is notably to reflect two fundamental differences:
     signing key. She also remove the file created during step 4 that represents a pending
     enrollment.
 
+> [!NOTE]
+> We don't provide a clean way for Alice to cancel her enrollment submission after step 5
+> (as we consider this rather unusual).
+> So instead Alice is only expected to remove the enrollment info from her machine's filesystem
+> (hence there is no longer an enrollment pending from her point of view), and an admin
+> should manually cancel the enrollment (but accepting it by mistake is not an issue either,
+> since Alice no longer knows about her user & device secret keys, so the admin will just
+> have to remove this phantom Alice user first before the new enrollment can take place).
+
 ## 3 - Protocol
 
 ### 3.1 - Submit the request to join an organization
