@@ -206,17 +206,18 @@ async fn copy_file_to_fd(
             .read(&mut buffer)
             .await
             .context("Cannot read local file")?;
+        let mut buf = &buffer[..bytes_read];
 
         if bytes_read == 0 {
             break;
         }
 
-        let mut bytes_written = 0_usize;
-        while bytes_written < bytes_read {
-            bytes_written = workspace
-                .fd_write(fd, dst_offset as u64, &buffer[bytes_written..bytes_read])
+        while !buf.is_empty() {
+            let bytes_written = workspace
+                .fd_write(fd, dst_offset as u64, buf)
                 .await
                 .context("Cannot write to workspace")? as usize;
+            buf = &buf[bytes_written..];
             dst_offset += bytes_written;
         }
     }
