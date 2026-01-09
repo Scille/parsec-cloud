@@ -291,12 +291,10 @@ pub async fn submitter_finalize_async_enrollment(
     )
     .await
     .map_err(|err| match err {
-        SaveDeviceError::StorageNotAvailable => {
-            SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable
+        SaveDeviceError::SaveContentError(e) => {
+            SubmitterFinalizeAsyncEnrollmentError::Internal(e.into()) // TODO #11955
         }
-        SaveDeviceError::InvalidPath(err) => {
-            SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath(err)
-        }
+
         SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
             SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline {
                 server,

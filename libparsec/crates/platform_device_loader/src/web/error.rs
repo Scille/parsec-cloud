@@ -5,8 +5,6 @@ use std::path::PathBuf;
 use libparsec_types::prelude::*;
 use web_sys::wasm_bindgen::JsValue;
 
-use crate::RemoteOperationServer;
-
 error_set::error_set! {
     DomExceptionError := {
         #[display("DOM exception: {exception:?}")]
@@ -104,19 +102,6 @@ error_set::error_set! {
         GetFile(GetFileHandleError),
         ReadFile(ReadToEndError),
     }
-    SaveDeviceError := SaveRawDataError || {
-        #[display("{server} server opaque key upload failed: {error}")]
-        RemoteOpaqueKeyUploadFailed {
-            server: RemoteOperationServer,
-            error: anyhow::Error,
-        },
-        #[display("No response from {server} server: {error}")]
-        RemoteOpaqueKeyUploadOffline {
-            server: RemoteOperationServer,
-            error: anyhow::Error,
-        },
-        Internal(anyhow::Error),
-    }
     SaveRawDataError := GetFileHandleError || WriteAllError
     RemoveEntryError := NotFoundError || DomExceptionError || AwaitPromiseError || GetDirectoryHandleError
     ArchiveDeviceError := RemoveEntryError || {
@@ -148,64 +133,14 @@ impl_from_new_storage_error!(
     crate::RemoveDeviceError
 );
 
-impl From<SaveDeviceError> for crate::SaveDeviceError {
-    fn from(value: SaveDeviceError) -> Self {
-        match value {
-            SaveDeviceError::NotAFile { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::NotADirectory { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::NotFound { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::CreateWritable { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::CannotEdit { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Write { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Close { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::DomException { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
-                Self::RemoteOpaqueKeyUploadFailed { server, error }
-            }
-            SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
-                Self::RemoteOpaqueKeyUploadOffline { server, error }
-            }
-            SaveDeviceError::Internal(err) => Self::Internal(err),
-        }
-    }
-}
-
-impl From<SaveDeviceError> for crate::UpdateDeviceError {
-    fn from(value: SaveDeviceError) -> Self {
-        match value {
-            SaveDeviceError::NotAFile { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::NotADirectory { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::NotFound { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::CreateWritable { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::CannotEdit { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Write { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Close { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::DomException { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
-                Self::RemoteOpaqueKeyOperationFailed { server, error }
-            }
-            SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
-                Self::RemoteOpaqueKeyOperationOffline { server, error }
-            }
-            SaveDeviceError::Internal(err) => Self::Internal(err),
-        }
-    }
-}
-
 impl From<RemoveDeviceError> for crate::UpdateDeviceError {
     fn from(value: RemoveDeviceError) -> Self {
         match value {
-            RemoveDeviceError::NotAFile { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::NotAFile { .. } => Self::Internal(anyhow::anyhow!("{value}")), //  TODO #11955
             RemoveDeviceError::NotADirectory { .. } => {
-                Self::InvalidPath(anyhow::anyhow!("{value}"))
+                Self::Internal(anyhow::anyhow!("{value}")) //  TODO #11955
             }
-            RemoveDeviceError::Cast { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             RemoveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             RemoveDeviceError::DomException { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             RemoveDeviceError::NotFound { .. } => Self::Internal(anyhow::anyhow!("{value}")),
@@ -230,23 +165,5 @@ impl From<RemoveDeviceError> for crate::RemoveDeviceError {
 impl From<ArchiveDeviceError> for crate::ArchiveDeviceError {
     fn from(value: ArchiveDeviceError) -> Self {
         Self::Internal(anyhow::anyhow!("{value}"))
-    }
-}
-
-impl From<SaveRawDataError> for crate::SavePkiLocalPendingError {
-    fn from(value: SaveRawDataError) -> Self {
-        match value {
-            SaveRawDataError::NotAFile { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveRawDataError::NotADirectory { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveRawDataError::NotFound { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveRawDataError::CreateWritable { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveRawDataError::CannotEdit { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveRawDataError::Write { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveRawDataError::Close { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveRawDataError::DomException { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveRawDataError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveRawDataError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveRawDataError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-        }
     }
 }

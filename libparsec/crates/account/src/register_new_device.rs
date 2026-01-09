@@ -148,12 +148,10 @@ pub(super) async fn account_register_new_device(
         save_device(&account.config_dir, &save_strategy, &new_device, key_file)
             .await
             .map_err(|err| match err {
-                SaveDeviceError::StorageNotAvailable => {
-                    AccountRegisterNewDeviceError::StorageNotAvailable
+                SaveDeviceError::SaveContentError(e) => {
+                    AccountRegisterNewDeviceError::Internal(e.into()) // TODO #11955
                 }
-                SaveDeviceError::InvalidPath(error) => {
-                    AccountRegisterNewDeviceError::InvalidPath(error)
-                }
+
                 SaveDeviceError::Internal(error) => AccountRegisterNewDeviceError::Internal(error),
                 SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
                     AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadOffline { server, error }

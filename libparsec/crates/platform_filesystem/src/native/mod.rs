@@ -5,3 +5,5 @@ mod load;
 mod remove;
 mod rename;
 mod save;
+
+pub use save::save_content;

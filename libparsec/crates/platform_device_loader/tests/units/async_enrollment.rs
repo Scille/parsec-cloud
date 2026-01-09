@@ -6,6 +6,7 @@ use crate::{
     AvailablePendingAsyncEnrollmentIdentitySystem, RemovePendingAsyncEnrollmentError,
     SaveAsyncEnrollmentLocalPendingError,
 };
+use libparsec_platform_filesystem::SaveContentError;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_tests_lite::{p_assert_eq, p_assert_matches};
 use libparsec_types::prelude::*;
@@ -73,18 +74,36 @@ async fn save_list_load(tmp_path: TmpPath) {
     create_device_file(&invalid_file_path, b"<dummy>").await;
 
     // 3) Save file error (target is already a folder)
-
+    let output = save_pending_async_enrollment(
+        &tmp_path,
+        cleartext_content.clone(),
+        &SigningKey::generate(),
+        &PrivateKey::generate(),
+        &SecretKey::generate(),
+        tmp_path.clone(), // The target file is already a folder !
+    )
+    .await;
+    // TODO #11955
+    #[cfg(target_arch = "wasm32")]
     p_assert_matches!(
-        save_pending_async_enrollment(
-            &tmp_path,
-            cleartext_content.clone(),
-            &SigningKey::generate(),
-            &PrivateKey::generate(),
-            &SecretKey::generate(),
-            tmp_path.clone(), // The target file is already a folder !
-        )
-        .await,
-        Err(SaveAsyncEnrollmentLocalPendingError::InvalidPath(_))
+        output,
+        Err(SaveAsyncEnrollmentLocalPendingError::SaveContentError(
+            SaveContentError::InvalidPath
+        ))
+    );
+    #[cfg(target_os = "windows")] // 💀
+    p_assert_matches!(
+        output,
+        Err(SaveAsyncEnrollmentLocalPendingError::SaveContentError(
+            SaveContentError::CannotEdit
+        ))
+    );
+    #[cfg(all(not(target_arch = "wasm32"), not(target_os = "windows")))]
+    p_assert_matches!(
+        output,
+        Err(SaveAsyncEnrollmentLocalPendingError::SaveContentError(
+            SaveContentError::NotAFile
+        ))
     );
 
     // 4) Get back file
