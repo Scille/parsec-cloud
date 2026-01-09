@@ -111,6 +111,7 @@ impl Directory {
         }
     }
 
+    #[cfg(test)]
     pub async fn create_dir_all(&self, path: &Path) -> Result<Self, GetDirectoryHandleError> {
         self.get_directory_from_path(path, Some(OpenOptions::create()))
             .await

@@ -294,8 +294,10 @@ pub async fn submitter_finalize_async_enrollment(
         SaveDeviceError::StorageNotAvailable => {
             SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable
         }
-        SaveDeviceError::InvalidPath(err) => {
-            SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath(err)
+        SaveDeviceError::InvalidPath => {
+            SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath(anyhow::anyhow!(
+                "invalid path while saving device"
+            ))
         }
         SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
             SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline {
