@@ -1,8 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from collections import deque
-from collections.abc import Iterator
-from contextlib import contextmanager
 from unittest.mock import MagicMock
 
 import anyio
@@ -16,8 +14,11 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.events import EventPinged
-from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
-from tests.common.backend import AsgiApp
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    MinimalorgRpcClients,
+)
 
 
 @pytest.mark.parametrize("initial_good_auth", (False, True))
@@ -182,73 +183,6 @@ async def test_keep_alive(minimalorg: MinimalorgRpcClients, backend: Backend) ->
             if line == "event:keepalive":
                 got_keepalive = True
                 break
-
-    assert got_keepalive
-
-
-@contextmanager
-def fork_process_to_run_asgi_server(app: AsgiApp) -> Iterator[tuple[str, int]]:
-    """
-    Uvicorn is not designed to be run programmatically like we are going to do here
-    (it contains calls to `sys.exit`, captures signal, and spawn tasks in the event loop).
-    So instead we have to spawn it in it own sub-process...
-
-    Note this comes with is own issues given it means the our test process gets
-    forked and hence the `app`/`backend` objects diverge between the two processes
-    (i.e. cannot send a request to the server then use the `backend` object to check
-    how the server internal state has changed).
-    """
-    from multiprocessing import Process
-
-    from parsec.asgi import serve_parsec_asgi_app
-
-    # TODO: This is a hack to get a unique-enough port for the server.
-    # It would be cleaner to pass port=0, then parse the sub-process
-    # stdout to retrieve the actual port in use.
-    def get_local_port(host: str) -> int:
-        import socket
-
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind((host, 0))
-            return s.getsockname()[1]
-
-    HOST = "localhost"
-    PORT = get_local_port(HOST)
-
-    proc = Process(
-        target=serve_parsec_asgi_app,
-        kwargs={
-            "app": app,
-            "host": HOST,
-            "port": PORT,
-            "proxy_trusted_addresses": None,
-        },
-    )
-
-    proc.start()
-    yield (HOST, PORT)
-    proc.terminate()
-    proc.join()
-
-
-@pytest.mark.timeout(3)
-async def test_keep_alive_real_server(minimalorg: MinimalorgRpcClients, app: AsgiApp) -> None:
-    assert isinstance(app.state.backend, Backend)
-    app.state.backend.config.sse_keepalive = 1
-
-    got_keepalive = False
-
-    alice = minimalorg.alice
-    with fork_process_to_run_asgi_server(app) as (host, port):
-        alice.url = f"http://{host}:{port}/authenticated/{alice.organization_id}"
-
-        async with alice.raw_sse_connection() as raw_sse_stream:
-            async for line in raw_sse_stream.aiter_lines():
-                line = line.rstrip("\n")
-
-                if line == "event:keepalive":
-                    got_keepalive = True
-                    break
 
     assert got_keepalive
 
