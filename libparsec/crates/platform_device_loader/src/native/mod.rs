@@ -626,7 +626,7 @@ pub(super) async fn list_pki_local_pending(
 
     // Sort entries so result is deterministic
     files.sort();
-    log::trace!(files:?; "Found pending request files");
+    log::trace!("Found pending request files: {files:?}");
 
     Ok(libparsec_platform_async::stream::iter(files)
         .filter_map(async |path| load_pki_pending_file(&path).await.ok())
@@ -639,7 +639,10 @@ async fn find_local_pending_files(path: &Path) -> Result<Vec<PathBuf>, ListPkiLo
         Ok(v) => v,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(err) => {
-            log::error!(path:% = path.display(), err:%; "Cannot list pending request files");
+            log::error!(
+                "Cannot list pending request files in {}: {err}",
+                path.display()
+            );
             return Err(ListPkiLocalPendingError::StorageNotAvailable);
         }
     };
@@ -666,9 +669,7 @@ async fn load_pki_pending_file(path: &Path) -> Result<PKILocalPendingEnrollment,
         .map_err(Into::into)
         .map_err(LoadFileError::InvalidPath)?;
     PKILocalPendingEnrollment::load(&content)
-        .inspect_err(
-            |err| log::debug!(path:% = path.display(), err:%; "Failed to load pki pending file"),
-        )
+        .inspect_err(|err| log::debug!("Failed to load pki pending file {}: {err}", path.display()))
         .map_err(|_| LoadFileError::InvalidData)
 }
 
@@ -719,7 +720,10 @@ async fn find_pending_async_enrollment_files(
         Ok(v) => v,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(err) => {
-            log::error!(path:% = path.display(), err:%; "Cannot list pending request files");
+            log::error!(
+                "Cannot list pending request files in {}: {err}",
+                path.display()
+            );
             return Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable);
         }
     };

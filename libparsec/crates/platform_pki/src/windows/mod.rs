@@ -155,10 +155,9 @@ pub fn list_trusted_root_certificate_anchors(
                 .map(|anchor| anchor.to_owned())
                 .inspect_err(|err| {
                     log::warn!(
-                            name:? = ctx.friendly_name().ok(),
-                            fingerprint:? = ctx.fingerprint(HashAlgorithm::sha256()).ok(),
-                            err:%;
-                            "Invalid root certificate"
+                        "Invalid root certificate: name={:?}, fingerprint={:?}, err={err}",
+                        ctx.friendly_name().ok(),
+                        ctx.fingerprint(HashAlgorithm::sha256()).ok()
                     )
                 })
                 .ok()

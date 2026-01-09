@@ -24,7 +24,7 @@ sha2 = { workspace = true }
 libparsec_types = { workspace = true }
 # Use to decode subject & issuer fields of used x509 certificate.
 x509-cert = { workspace = true, features = ["std"] }
-log = { workspace = true, features = ["kv"] }
+log = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
 
@@ -44,7 +44,7 @@ clap = { workspace = true, default-features = true, features = ["env", "derive"]
 # We use some hex encoding in the crate's examples
 data-encoding = { workspace = true, default-features = true }
 anyhow = { workspace = true }
-env_logger = { workspace = true, features = ["kv"] }
+env_logger = { workspace = true }
 hex-literal = { workspace = true }
 libparsec_tests_lite = { workspace = true }
 serde = { workspace = true }
