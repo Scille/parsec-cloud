@@ -16,9 +16,6 @@ from parsec._parsec import (
 from parsec.components.events import BaseEventsComponent, EventBus, SseAPiEventsListenBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.handler import parse_signal, send_signal
-from parsec.components.postgresql.organization import PGOrganizationComponent
-from parsec.components.postgresql.realm import PGRealmComponent
-from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import Q, transaction
 from parsec.config import BackendConfig
 from parsec.events import Event, EventOrganizationConfig
@@ -161,20 +158,6 @@ class PGEventsComponent(BaseEventsComponent):
     def __init__(self, pool: AsyncpgPool, config: BackendConfig, event_bus: EventBus):
         super().__init__(config, event_bus)
         self.pool = pool
-        self.organization: PGOrganizationComponent
-        self.user: PGUserComponent
-        self.realm: PGRealmComponent
-
-    def register_components(
-        self,
-        organization: PGOrganizationComponent,
-        user: PGUserComponent,
-        realm: PGRealmComponent,
-        **kwargs,
-    ) -> None:
-        self.organization = organization
-        self.user = user
-        self.realm = realm
 
     @override
     @transaction
