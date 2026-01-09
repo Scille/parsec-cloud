@@ -63,9 +63,8 @@ impl Storage {
         extension: impl AsRef<OsStr> + std::fmt::Display,
     ) -> Result<Vec<File>, ListFileEntriesError> {
         log::debug!(
-            directory:% = dir.display(),
-            extension:%;
-            "Listing file entries",
+            "Listing file entries in {} with extension {extension}",
+            dir.display()
         );
         let dir = match self.root_dir.get_directory_from_path(&dir, None).await {
             Ok(dir) => dir,
@@ -83,7 +82,7 @@ impl Storage {
             drop(handle);
             res
         } {
-            log::trace!(path:% = dir.path.display(); "Exploring directory");
+            log::trace!("Exploring directory {}", dir.path.display());
             let mut entries_stream = dir.entries();
             while let Some(entry) = entries_stream.next().await {
                 let DirEntry { path, handle } = entry;
@@ -91,14 +90,14 @@ impl Storage {
                     DirOrFileHandle::File(handle)
                         if path.extension() == Some(extension.as_ref()) =>
                     {
-                        log::trace!(path:% = path.display(); "File with correct extension");
+                        log::trace!("File {} with correct extension", path.display());
                         files.push(File { path, handle })
                     }
                     DirOrFileHandle::File(_) => {
-                        log::trace!(path:% = path.display(); "Ignoring file because of bad suffix");
+                        log::trace!("Ignoring file {} because of bad suffix", path.display());
                     }
                     DirOrFileHandle::Dir(handle) => {
-                        log::trace!(path:% = path.display(); "New directory to explore");
+                        log::trace!("New directory to explore: {}", path.display());
                         dirs_to_explore
                             .lock()
                             .await
@@ -373,9 +372,9 @@ async fn load_pki_local_pending(
     PKILocalPendingEnrollment::load(&raw_data)
         .inspect_err(|err| {
             log::warn!(
-                path:% = file.path().display(),
-                err:%;
-                "Failed to decode local pending")
+                "Failed to decode local pending at {}: {err}",
+                file.path().display()
+            )
         })
         .map_err(LoadPkiLocalPendingError::DataError)
 }

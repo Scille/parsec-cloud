@@ -299,11 +299,19 @@ pub(super) async fn list_pending_async_enrollments(
         return Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable);
     };
 
-    let files = storage.list_file_entries(pending_async_enrollments_dir, crate::PENDING_ASYNC_ENROLLMENT_EXT).await
+    let files = storage
+        .list_file_entries(
+            pending_async_enrollments_dir,
+            crate::PENDING_ASYNC_ENROLLMENT_EXT,
+        )
+        .await
         .or_else(|err| match err {
             ListFileEntriesError::NotFound { .. } => Ok(vec![]),
             _ => {
-                log::error!(path:% = pending_async_enrollments_dir.display(), err:%; "Cannot list pending request files");
+                log::error!(
+                    "Cannot list pending request files in {}: {err}",
+                    pending_async_enrollments_dir.display()
+                );
                 Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable)
             }
         })?;

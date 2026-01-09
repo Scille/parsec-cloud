@@ -1033,16 +1033,23 @@ fn load_pending_async_enrollment_frow_raw(
     (),
 > {
     let cooked = AsyncEnrollmentLocalPending::load(raw)
-        .inspect_err(
-            |err| log::warn!(path:% = path.display(), err:%; "Failed to load async enrollment local pending file")
-        )
+        .inspect_err(|err| {
+            log::warn!(
+                "Failed to load async enrollment local pending file {}: {err}",
+                path.display()
+            )
+        })
         .map_err(|_| ())?;
 
-    let cooked_cleartext_content = AsyncEnrollmentLocalPendingCleartextContent::load(&cooked.cleartext_content)
-        .inspect_err(
-            |err| log::warn!(path:% = path.display(), err:%; "Failed to load cleartext part of async enrollment local pending file")
+    let cooked_cleartext_content =
+        AsyncEnrollmentLocalPendingCleartextContent::load(&cooked.cleartext_content)
+            .inspect_err(|err| {
+                log::warn!(
+            "Failed to load cleartext part of async enrollment local pending file {}: {err}",
+            path.display()
         )
-        .map_err(|_| ())?;
+            })
+            .map_err(|_| ())?;
 
     Ok((cooked, cooked_cleartext_content))
 }

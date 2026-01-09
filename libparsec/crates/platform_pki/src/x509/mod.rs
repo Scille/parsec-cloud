@@ -95,10 +95,10 @@ impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
 
     fn try_from(value: x509_cert::Certificate) -> Result<Self, Self::Error> {
         let subject = extract_dn_list_from_rnd_seq(value.tbs_certificate.subject);
-        log::trace!(subject:?; "Collected subject");
+        log::trace!("Collected subject: {subject:?}");
 
         let issuer = extract_dn_list_from_rnd_seq(value.tbs_certificate.issuer);
-        log::trace!(issuer:?; "Collected issuer");
+        log::trace!("Collected issuer: {issuer:?}");
 
         // Extensions are only available on V3 certificate
         let extensions: Extensions = if value.tbs_certificate.version == Version::V3 {

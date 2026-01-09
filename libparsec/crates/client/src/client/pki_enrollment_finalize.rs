@@ -97,7 +97,7 @@ pub async fn finalize(
     drop(
         libparsec_platform_device_loader::remove_device(config_dir, &local_pending_path)
             .await
-            .inspect_err(|err| log::warn!(err:%; "Failed to remove pki local pending file")),
+            .inspect_err(|err| log::warn!("Failed to remove pki local pending file: {err}")),
     );
 
     Ok(available_device)

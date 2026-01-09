@@ -132,7 +132,7 @@ pub async fn verify_untrusted_items(
                 ) {
                     Ok(payload) => payload,
                     Err(err) => {
-                        log::debug!(err:%; "Cannot validate submit payload");
+                        log::debug!("Cannot validate submit payload: {err}");
                         return PkiEnrollmentListItem::Invalid {
                             human_handle: human_handle.ok(),
                             enrollment_id: req.enrollment_id,
