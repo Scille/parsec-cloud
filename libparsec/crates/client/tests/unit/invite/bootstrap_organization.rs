@@ -164,7 +164,7 @@ async fn bad_finalize(
                 finalize_ctx
                     .save_local_device(&save_strategy, &key_file)
                     .await,
-                Err(OrganizationBootstrapFinalizeSaveLocalDeviceError::InvalidPath(_))
+                Err(OrganizationBootstrapFinalizeSaveLocalDeviceError::InvalidPath)
             );
         }
 

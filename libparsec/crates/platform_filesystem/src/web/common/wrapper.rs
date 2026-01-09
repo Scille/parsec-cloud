@@ -157,6 +157,7 @@ impl Directory {
             .inspect(|_v| log::trace!("Found handle `{dirname}` in {}", self.path.display()))
     }
 
+    #[expect(unused)]
     pub async fn get_file_from_path(
         &self,
         path: &Path,
@@ -212,6 +213,7 @@ impl Directory {
             .inspect(|_v| log::trace!("Found handle `{filename}` in {}", self.path.display()))
     }
 
+    #[expect(unused)]
     pub fn entries(&self) -> impl Stream<Item = DirEntry> + use<'_> {
         log::trace!("Listing entries at {}", self.path.display());
         JsStream::from(self.handle.values()).filter_map(|v| {
@@ -235,6 +237,7 @@ impl Directory {
         })
     }
 
+    #[expect(unused)]
     pub async fn remove_entry_from_path(&self, path: &Path) -> Result<(), RemoveEntryError> {
         log::trace!("Remove entry `{}` from path", path.display());
         debug_assert!(path.has_root());
@@ -347,11 +350,12 @@ impl File {
             handle,
         }
     }
-
+    #[expect(unused)]
     pub fn path(&self) -> &Path {
         &self.path
     }
 
+    #[expect(unused)]
     pub async fn read_to_end(&self) -> Result<Vec<u8>, ReadToEndError> {
         let file = JsFuture::from(self.handle.get_file())
             .await

@@ -19,6 +19,7 @@ vendored-dbus = ["keyring/vendored"]
 libparsec_client_connection = { workspace = true }
 libparsec_crypto = { workspace = true }
 libparsec_platform_async = { workspace = true }
+libparsec_platform_filesystem = { workspace = true }
 libparsec_platform_pki = { workspace = true }
 libparsec_testbed = { workspace = true, optional = true }
 libparsec_types = { workspace = true }

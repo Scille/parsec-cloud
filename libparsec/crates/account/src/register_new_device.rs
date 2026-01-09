@@ -151,9 +151,9 @@ pub(super) async fn account_register_new_device(
                 SaveDeviceError::StorageNotAvailable => {
                     AccountRegisterNewDeviceError::StorageNotAvailable
                 }
-                SaveDeviceError::InvalidPath(error) => {
-                    AccountRegisterNewDeviceError::InvalidPath(error)
-                }
+                SaveDeviceError::InvalidPath => AccountRegisterNewDeviceError::InvalidPath(
+                    anyhow::anyhow!("invalid path while saving device"),
+                ),
                 SaveDeviceError::Internal(error) => AccountRegisterNewDeviceError::Internal(error),
                 SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
                     AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadOffline { server, error }

@@ -497,7 +497,7 @@ pub(crate) fn maybe_update_device(
             Err(e) => {
                 return Some(Err(match e {
                     LoadDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-                    LoadDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
+                    LoadDeviceError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
                     LoadDeviceError::InvalidData => UpdateDeviceError::InvalidData,
                     LoadDeviceError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
                     LoadDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
@@ -507,7 +507,7 @@ pub(crate) fn maybe_update_device(
                     LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error } => {
                         UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
                     }
-                }))
+                }));
             }
         };
 
@@ -533,19 +533,7 @@ pub(crate) fn maybe_update_device(
         .expect("testbed env already accessed")
         {
             Ok(available_device) => available_device,
-            Err(e) => {
-                return Some(Err(match e {
-                    SaveDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-                    SaveDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
-                    SaveDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
-                    SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
-                        UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
-                    }
-                    SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
-                        UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
-                    }
-                }))
-            }
+            Err(e) => return Some(Err(e.into())),
         };
 
         let key_file = current_access.key_file();

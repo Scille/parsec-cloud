@@ -73,18 +73,19 @@ async fn save_list_load(tmp_path: TmpPath) {
     create_device_file(&invalid_file_path, b"<dummy>").await;
 
     // 3) Save file error (target is already a folder)
-
+    let output = save_pending_async_enrollment(
+        &tmp_path,
+        cleartext_content.clone(),
+        &SigningKey::generate(),
+        &PrivateKey::generate(),
+        &SecretKey::generate(),
+        tmp_path.clone(), // The target file is already a folder !
+    )
+    .await;
+    // TODO #11955
     p_assert_matches!(
-        save_pending_async_enrollment(
-            &tmp_path,
-            cleartext_content.clone(),
-            &SigningKey::generate(),
-            &PrivateKey::generate(),
-            &SecretKey::generate(),
-            tmp_path.clone(), // The target file is already a folder !
-        )
-        .await,
-        Err(SaveAsyncEnrollmentLocalPendingError::InvalidPath(_))
+        output,
+        Err(SaveAsyncEnrollmentLocalPendingError::InvalidPath)
     );
 
     // 4) Get back file

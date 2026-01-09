@@ -2410,6 +2410,7 @@ dependencies = [
  "libparsec_client_connection",
  "libparsec_crypto",
  "libparsec_platform_async",
+ "libparsec_platform_filesystem",
  "libparsec_platform_pki",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
@@ -2429,9 +2430,13 @@ dependencies = [
 name = "libparsec_platform_filesystem"
 version = "3.7.2-a.0+dev"
 dependencies = [
+ "anyhow",
  "libparsec_platform_async",
+ "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
  "log",
  "thiserror 2.0.18",
+ "tokio",
  "wasm-bindgen-futures",
  "web-sys",
 ]
