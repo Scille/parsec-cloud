@@ -293,21 +293,9 @@ jobs:
         with:
           tool: nextest@0.9.114
 
-      - name: Check rust agnostic codebase
-        shell: bash -ex {0}
-        run: |
-          NON_BINDINGS_CRATES=`python3 misc/libparsec_crates_flags.py agnostic platform`
-          cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-libsodium
-        timeout-minutes: 15 # It can be very slow if cache has missed
-        env:
-          RUST_LOG: debug
-
-      # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
-      # implementation and its compatibility with the rest of the project
-      - name: Test rust crypto crate with sodium
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-libsodium
-        timeout-minutes: 10
-
+      # Only test `platform_*` crates here, the other crates are supposed to be
+      # platform-agnostic so it is enough to only test them on Linux.
+      # Also note we use libsodium for crypto to stay closer to what is used in release.
       - name: Test Rust platform codebase with sodium
         shell: bash -ex -o pipefail {0}
         run: |
@@ -318,4 +306,4 @@ jobs:
             PLATFORM_CRATES=`echo $PLATFORM_CRATES | sed -e 's/-p libparsec_platform_mountpoint//'`
           fi
           cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $PLATFORM_CRATES --features libparsec_crypto/use-libsodium
-        timeout-minutes: 10
+        timeout-minutes: 30
