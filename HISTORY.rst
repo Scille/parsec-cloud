@@ -4,6 +4,44 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.8.0-a.0 (2026-01-12)
+------------------------------
+
+Features
+~~~~~~~~
+
+* User can copy email addresses to clipboard by clicking on them from the user
+  list.
+  (`#11735 <https://github.com/Scille/parsec-cloud/issues/11735>`__)
+
+* Windows: Update winfsp dependency to 2025 version
+  (`#11803 <https://github.com/Scille/parsec-cloud/issues/11803>`__)
+
+* User can switch to categories "Recent", "Pinned", and "All workspaces" from
+  the workspace list page or the sidebar.
+  (`#11993 <https://github.com/Scille/parsec-cloud/issues/11993>`__)
+
+* CLI: Allow to import a folder recursively in a workspace
+  (`#9161 <https://github.com/Scille/parsec-cloud/issues/9161>`__)
+
+* CLI: Add option ``--update`` to ``workspace import`` to control how to update
+  existing files
+  (`#12021 <https://github.com/Scille/parsec-cloud/issues/12021>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* User can reduce the height of the organization creation modal on small height
+  screens.
+  (`#11987 <https://github.com/Scille/parsec-cloud/issues/11987>`__)
+
+* User can return to the list of workspaces from the sidebar without displaying
+  the contents of the workspace.
+  (`#10227 <https://github.com/Scille/parsec-cloud/issues/10227>`__)
+
+
+
 Parsec v3.7.1 (2025-12-11)
 --------------------------
 
