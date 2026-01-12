@@ -83,7 +83,10 @@ onMounted(async () => {
   scale.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
 
   try {
-    pdf.value = await pdfjs.getDocument(props.contentInfo.data).promise;
+    pdf.value = await pdfjs.getDocument({
+      data: props.contentInfo.data,
+      wasmUrl: import.meta.env.BASE_URL !== '/' ? `${import.meta.env.BASE_URL}/pdfjs/` : 'pdfjs/',
+    }).promise;
     await loadPages();
     await renderPage(1);
   } catch (e: any) {

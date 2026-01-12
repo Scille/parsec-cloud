@@ -7,6 +7,7 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } from 'vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import topLevelAwait from 'vite-plugin-top-level-await';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
@@ -90,6 +91,17 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
 if (process.env.NODE_ENV === 'development' || process.env.CI) {
   plugins.push(basicSsl());
 }
+
+plugins.push(
+  viteStaticCopy({
+    targets: [
+      {
+        src: 'node_modules/pdfjs-dist/wasm/*',
+        dest: 'pdfjs',
+      },
+    ],
+  }),
+);
 
 // 4) Finally configure Vite
 

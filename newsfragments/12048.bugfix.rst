@@ -1,0 +1,1 @@
+Fixed some images in PDFs not being visible
