@@ -213,7 +213,7 @@ async function withoutSharedWorker(): Promise<any> {
   }
 
   class WorkerProxy {
-    get(target: any, name: any): any {
+    get(_target: any, name: any): any {
       // Are you ready for another Javascript clusterfuck ?
       // - Awaiting a promise is done recursively: if the promise returns another promise,
       //   it is awaited too.
@@ -272,7 +272,7 @@ async function withoutSharedWorker(): Promise<any> {
             return { ok: false, error: maybeLockError };
           }
 
-          const ret = (await target.clientStart(config, access)) as Result<Handle, ClientStartError>;
+          const ret = (await module.clientStart(config, access)) as Result<Handle, ClientStartError>;
 
           if (!ret.ok) {
             // Release the lock since we failed to start the client !
@@ -287,7 +287,7 @@ async function withoutSharedWorker(): Promise<any> {
 
       if (name === 'clientStop') {
         return async (client: Handle): Promise<Result<null, ClientStopError>> => {
-          const ret = (await target.clientStop(client)) as Result<null, ClientStopError>;
+          const ret = (await module.clientStop(client)) as Result<null, ClientStopError>;
 
           // We only release the lock if the client was successfully stopped, else
           // we consider the device is still in use.
@@ -299,11 +299,11 @@ async function withoutSharedWorker(): Promise<any> {
         };
       }
 
-      return target[name];
+      return module[name];
     }
   }
 
-  const proxy = new Proxy(module, new WorkerProxy());
+  const proxy = new Proxy({}, new WorkerProxy());
 
   return proxy;
 }
