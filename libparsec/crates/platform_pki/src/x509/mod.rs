@@ -4,11 +4,12 @@ mod distinguished_name;
 mod extensions;
 
 pub use distinguished_name::extract_dn_list_from_rnd_seq;
-use libparsec_types::HumanHandle;
 use x509_cert::{
     der::{Decode, Error as DERError, SliceReader},
     Version,
 };
+
+use libparsec_types::prelude::*;
 
 pub use distinguished_name::DistinguishedNameValue;
 pub use extensions::{Extensions, SubjectAltName};

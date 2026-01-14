@@ -3,20 +3,19 @@
 use crate::{
     encrypt_message,
     errors::{
-        GetValidationPathForCertError, InvalidPemContent, LoadAnswerPayloadError,
+        GetValidationPathForCertError, ListCertificatesError, LoadAnswerPayloadError,
         ValidatePayloadError, VerifyCertificateError, VerifySignatureError,
     },
-    get_der_encoded_certificate, EncryptedMessage, PkiSignatureAlgorithm,
+    get_der_encoded_certificate, CreateLocalPendingError, EncryptMessageError, EncryptedMessage,
+    GetDerEncodedCertificateError, PkiSignatureAlgorithm,
 };
+
 use bytes::Bytes;
-use libparsec_types::{
-    DateTime, PKIEnrollmentID, PKILocalPendingEnrollment, ParsecPkiEnrollmentAddr,
-    PkiEnrollmentAnswerPayload, PkiEnrollmentSubmitPayload, PrivateParts, SecretKey,
-    X509CertificateReference,
-};
 use rustls_pki_types::{pem::PemObject, CertificateDer, TrustAnchor};
 pub use webpki::EndEntityCert as X509EndCertificate;
 use webpki::{Error as WebPkiError, KeyUsage};
+
+use libparsec_types::prelude::*;
 
 #[derive(Clone)]
 pub struct Certificate<'a> {
@@ -24,10 +23,10 @@ pub struct Certificate<'a> {
 }
 
 impl<'a> Certificate<'a> {
-    pub fn try_from_pem(raw: &'a [u8]) -> Result<Self, InvalidPemContent> {
+    pub fn try_from_pem(raw: &'a [u8]) -> anyhow::Result<Self> {
         CertificateDer::from_pem_slice(raw)
             .map(Self::new)
-            .map_err(Into::into)
+            .map_err(|err| anyhow::anyhow!("Invalid PEM content: {err}"))
     }
 
     pub fn from_der(raw: &'a [u8]) -> Self {
@@ -76,10 +75,7 @@ pub fn verify_message<'message, 'a>(
     certificate
         .verify_signature(verifier, &signed_message.message, &signed_message.signature)
         .map(|_| signed_message.message.as_ref())
-        .map_err(|e| match e {
-            WebPkiError::InvalidSignatureForPublicKey => VerifySignatureError::InvalidSignature,
-            e => VerifySignatureError::UnexpectedError(e),
-        })
+        .map_err(VerifySignatureError::InvalidSignature)
 }
 
 pub fn create_local_pending(
@@ -89,13 +85,23 @@ pub fn create_local_pending(
     submitted_on: DateTime,
     payload: PkiEnrollmentSubmitPayload,
     private_parts: PrivateParts,
-) -> Result<PKILocalPendingEnrollment, crate::errors::CreateLocalPendingError> {
+) -> Result<PKILocalPendingEnrollment, CreateLocalPendingError> {
     let key = SecretKey::generate();
     let EncryptedMessage {
         cert_ref,
         algo,
         ciphered: encrypted_key,
-    } = encrypt_message(key.as_ref(), cert_ref)?;
+    } = encrypt_message(key.as_ref(), cert_ref).map_err(|err| match err {
+        EncryptMessageError::CannotOpenStore(err) => CreateLocalPendingError::CannotOpenStore(err),
+        EncryptMessageError::NotFound => CreateLocalPendingError::NotFound,
+        EncryptMessageError::CannotGetCertificateInfo(err) => {
+            CreateLocalPendingError::CannotGetCertificateInfo(err)
+        }
+        EncryptMessageError::CannotAcquireKeypair(err) => {
+            CreateLocalPendingError::CannotAcquireKeypair(err)
+        }
+        EncryptMessageError::CannotEncrypt(err) => CreateLocalPendingError::CannotEncrypt(err),
+    })?;
     let ciphered_private_parts = key.encrypt(&private_parts.dump()).into();
 
     let local_pending = PKILocalPendingEnrollment {
@@ -175,10 +181,18 @@ pub fn validate_payload<'message, 'cert>(
         &intermediate_certs,
         now,
         KeyUsage::client_auth(),
-    )?;
+    )
+    .map_err(|err| match err {
+        VerifyCertificateError::DateTimeOutOfRange(err) => {
+            ValidatePayloadError::DateTimeOutOfRange(err)
+        }
+        VerifyCertificateError::Untrusted(err) => ValidatePayloadError::Untrusted(err),
+    })?;
     let trusted_cert = verified_path.end_entity();
 
-    verify_message(signed_message, trusted_cert).map_err(Into::into)
+    verify_message(signed_message, trusted_cert).map_err(|err| match err {
+        VerifySignatureError::InvalidSignature(e) => ValidatePayloadError::InvalidSignature(e),
+    })
 }
 
 pub fn load_answer_payload<'cert>(
@@ -207,10 +221,28 @@ pub fn get_validation_path_for_cert(
     cert_ref: &X509CertificateReference,
     now: DateTime,
 ) -> Result<ValidationPathOwned, GetValidationPathForCertError> {
-    let trusted_anchor = crate::list_trusted_root_certificate_anchors()?;
-    let intermediate_certs = crate::list_intermediate_certificates()?;
+    let trusted_anchor =
+        crate::list_trusted_root_certificate_anchors().map_err(|err| match err {
+            ListCertificatesError::CannotOpenStore(err) => {
+                GetValidationPathForCertError::CannotOpenStore(err)
+            }
+        })?;
+    let intermediate_certs = crate::list_intermediate_certificates().map_err(|err| match err {
+        ListCertificatesError::CannotOpenStore(err) => {
+            GetValidationPathForCertError::CannotOpenStore(err)
+        }
+    })?;
     let base_raw_cert = get_der_encoded_certificate(cert_ref)
-        .map(|v| Certificate::from_der_owned(v.der_content.into()))?;
+        .map(|v| Certificate::from_der_owned(v.der_content.into()))
+        .map_err(|err| match err {
+            GetDerEncodedCertificateError::CannotOpenStore(err) => {
+                GetValidationPathForCertError::CannotOpenStore(err)
+            }
+            GetDerEncodedCertificateError::NotFound => GetValidationPathForCertError::NotFound,
+            GetDerEncodedCertificateError::CannotGetCertificateInfo(err) => {
+                GetValidationPathForCertError::CannotGetCertificateInfo(err)
+            }
+        })?;
     let base_cert = base_raw_cert
         .to_end_certificate()
         .map_err(GetValidationPathForCertError::InvalidCertificateDer)?;
@@ -221,7 +253,15 @@ pub fn get_validation_path_for_cert(
         &intermediate_certs,
         now,
         KeyUsage::client_auth(),
-    )?;
+    )
+    .map_err(|err| match err {
+        VerifyCertificateError::DateTimeOutOfRange(err) => {
+            GetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(err)
+        }
+        VerifyCertificateError::Untrusted(err) => {
+            GetValidationPathForCertError::InvalidCertificateUntrusted(err)
+        }
+    })?;
 
     let intermediate_certs = path
         .intermediate_certificates()
