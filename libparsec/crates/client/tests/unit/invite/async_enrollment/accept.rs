@@ -305,7 +305,7 @@ async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
 async fn invalid_x509_trustchain(env: &TestbedEnv) {
     p_assert_matches!(
         test_server_error(env, protocol::authenticated_cmds::latest::async_enrollment_accept::Rep::InvalidX509Trustchain).await,
-        ClientAcceptAsyncEnrollmentError::InvalidX509Trustchain
+        ClientAcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain
     );
 }
 

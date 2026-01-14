@@ -67,10 +67,11 @@ pub enum SubmitterFinalizeAsyncEnrollmentError {
     OpenBaoBadServerResponse(anyhow::Error),
 
     // PKI-related errors
-    #[error("Invalid X509 trustchain (server doesn't recognize the root certificate)")]
-    InvalidX509Trustchain,
-    // TODO: add other PKI-related errors
-    // (see https://github.com/Scille/parsec-cloud/issues/12028)
+    #[error("Cannot open PKI X509 certificate store: {0}")]
+    PKICannotOpenCertificateStore(anyhow::Error),
+    // Certificate not found, invalid certificate, cannot use to sign etc.
+    #[error("Cannot use the referenced X509 certificate for PKI operation: {0}")]
+    PKIUnusableX509CertificateReference(anyhow::Error),
 }
 
 pub trait SubmitterFinalizeAsyncEnrollmentIdentityStrategy: Send + Sync {

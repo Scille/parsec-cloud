@@ -146,7 +146,13 @@ class ClientAcceptAsyncEnrollmentError(ErrorVariant):
     class OpenBaoBadServerResponse:
         pass
 
-    class InvalidX509Trustchain:
+    class PKIServerInvalidX509Trustchain:
+        pass
+
+    class PKICannotOpenCertificateStore:
+        pass
+
+    class PKIUnusableX509CertificateReference:
         pass
 
 
@@ -187,7 +193,13 @@ class SubmitAsyncEnrollmentError(ErrorVariant):
     class OpenBaoBadServerResponse:
         pass
 
-    class InvalidX509Trustchain:
+    class PKIServerInvalidX509Trustchain:
+        pass
+
+    class PKICannotOpenCertificateStore:
+        pass
+
+    class PKIUnusableX509CertificateReference:
         pass
 
 
@@ -320,7 +332,10 @@ class SubmitterFinalizeAsyncEnrollmentError(ErrorVariant):
     class OpenBaoBadServerResponse:
         pass
 
-    class InvalidX509Trustchain:
+    class PKICannotOpenCertificateStore:
+        pass
+
+    class PKIUnusableX509CertificateReference:
         pass
 
 
