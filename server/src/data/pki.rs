@@ -311,8 +311,8 @@ pub(crate) fn load_submit_payload<'py>(
         match e {
             InvalidCertificateDer(error) => PkiInvalidCertificateDER::new_err(error.to_string()),
             DateTimeOutOfRange(..) | Untrusted(..) => PkiUntrusted::new_err(e.to_string()),
-            InvalidSignature => PkiInvalidSignature::new_err(()),
-            UnexpectedError(..) | DataError(..) => PyValueError::new_err(e.to_string()),
+            InvalidSignature(..) => PkiInvalidSignature::new_err(e.to_string()),
+            DataError(..) => PyValueError::new_err(e.to_string()),
         }
     })
     .map(Into::into)
@@ -339,8 +339,8 @@ pub(crate) fn load_accept_payload<'py>(
         match e {
             InvalidCertificateDer(error) => PkiInvalidCertificateDER::new_err(error.to_string()),
             DateTimeOutOfRange(..) | Untrusted(..) => PkiUntrusted::new_err(e.to_string()),
-            InvalidSignature => PkiInvalidSignature::new_err(()),
-            UnexpectedError(..) | DataError(..) => PyValueError::new_err(e.to_string()),
+            InvalidSignature(..) => PkiInvalidSignature::new_err(e.to_string()),
+            DataError(..) => PyValueError::new_err(e.to_string()),
         }
     })
     .map(Into::into)
