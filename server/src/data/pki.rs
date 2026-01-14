@@ -310,7 +310,7 @@ pub(crate) fn load_submit_payload<'py>(
         use libparsec_platform_pki::LoadSubmitPayloadError::*;
         match e {
             InvalidCertificateDer(error) => PkiInvalidCertificateDER::new_err(error.to_string()),
-            DateTimeOutOfRange(..) | Untrusted(..) => PkiUntrusted::new_err(e.to_string()),
+            Untrusted(..) => PkiUntrusted::new_err(e.to_string()),
             InvalidSignature(..) => PkiInvalidSignature::new_err(e.to_string()),
             DataError(..) => PyValueError::new_err(e.to_string()),
         }
@@ -338,7 +338,7 @@ pub(crate) fn load_accept_payload<'py>(
         use libparsec_platform_pki::LoadAnswerPayloadError::*;
         match e {
             InvalidCertificateDer(error) => PkiInvalidCertificateDER::new_err(error.to_string()),
-            DateTimeOutOfRange(..) | Untrusted(..) => PkiUntrusted::new_err(e.to_string()),
+            Untrusted(..) => PkiUntrusted::new_err(e.to_string()),
             InvalidSignature(..) => PkiInvalidSignature::new_err(e.to_string()),
             DataError(..) => PyValueError::new_err(e.to_string()),
         }

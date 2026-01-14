@@ -68,8 +68,6 @@ pub enum DecryptMessageError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum VerifyCertificateError {
-    #[error("Time out of valid range: {0}")]
-    DateTimeOutOfRange(chrono::OutOfRangeError),
     #[error("The provided certificate cannot be trusted: {0}")]
     Untrusted(webpki::Error),
 }
@@ -112,8 +110,6 @@ error_set::error_set! {
             InvalidCertificateDer(webpki::Error),
             #[display("Invalid signature for the given message and certificate: {0}")]
             InvalidSignature(webpki::Error),
-            #[display("Invalid certificate: time out of valid range: {0}")]
-            DateTimeOutOfRange(chrono::OutOfRangeError),
             #[display("Invalid certificate: cannot be trusted: {0}")]
             Untrusted(webpki::Error),
         }
