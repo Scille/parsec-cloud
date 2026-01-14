@@ -7497,7 +7497,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js<'a>(
                 JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientAcceptAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain")
                     .or_throw(cx)?;
@@ -16372,7 +16372,7 @@ fn variant_submit_async_enrollment_error_rs_to_js<'a>(
                 JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::SubmitAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
+        libparsec::SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
             let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInvalidX509Trustchain")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16560,7 +16560,7 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::InvalidX509Trustchain{  .. } => {
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKIInvalidX509Trustchain{  .. } => {
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }

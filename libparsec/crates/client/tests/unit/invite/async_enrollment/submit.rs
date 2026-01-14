@@ -147,7 +147,7 @@ async fn invalid_x509_trustchain(env: &TestbedEnv) {
             protocol::anonymous_cmds::latest::async_enrollment_submit::Rep::InvalidX509Trustchain
         )
         .await,
-        SubmitAsyncEnrollmentError::InvalidX509Trustchain
+        SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain
     );
 }
 

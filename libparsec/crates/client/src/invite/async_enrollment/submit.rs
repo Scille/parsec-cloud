@@ -36,9 +36,12 @@ pub enum SubmitAsyncEnrollmentError {
 
     // PKI-related errors
     #[error("Invalid X509 trustchain (server doesn't recognize the root certificate)")]
-    InvalidX509Trustchain,
-    // TODO: add other PKI-related errors
-    // (see https://github.com/Scille/parsec-cloud/issues/12028)
+    PKIServerInvalidX509Trustchain,
+    #[error("Cannot open PKI X509 certificate store: {0}")]
+    PKICannotOpenCertificateStore(anyhow::Error),
+    // Certificate not found, invalid certificate, cannot use to sign etc.
+    #[error("Cannot use the referenced X509 certificate for PKI operation: {0}")]
+    PKIUnusableX509CertificateReference(anyhow::Error),
 }
 
 pub trait SubmitAsyncEnrollmentIdentityStrategy: Send + Sync {
@@ -103,7 +106,9 @@ pub async fn submit_async_enrollment(
                 Err(SubmitAsyncEnrollmentError::EmailAlreadySubmitted { submitted_on })
             }
             Rep::EmailAlreadyEnrolled => Err(SubmitAsyncEnrollmentError::EmailAlreadyEnrolled),
-            Rep::InvalidX509Trustchain => Err(SubmitAsyncEnrollmentError::InvalidX509Trustchain),
+            Rep::InvalidX509Trustchain => {
+                Err(SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain)
+            }
             bad_rep @ (Rep::IdAlreadyUsed
             | Rep::InvalidSubmitPayload
             | Rep::InvalidDerX509Certificate
