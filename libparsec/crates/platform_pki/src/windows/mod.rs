@@ -9,11 +9,8 @@ use crate::{
     ListTrustedRootCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
     SignedMessageFromPki,
 };
+
 use bytes::Bytes;
-use libparsec_types::{
-    PKIEncryptionAlgorithm, PkiSignatureAlgorithm, X509CertificateHash, X509CertificateReference,
-    X509WindowsCngURI,
-};
 use schannel::{
     cert_context::{CertContext, HashAlgorithm, PrivateKey},
     cert_store::CertStore,
@@ -25,6 +22,8 @@ use windows_sys::Win32::Security::Cryptography::{
     BCRYPT_PSS_PADDING_INFO, NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
     UI::CryptUIDlgSelectCertificateFromStore,
 };
+
+use libparsec_types::prelude::*;
 
 pub fn is_available() -> bool {
     open_store().is_ok()
@@ -225,7 +224,7 @@ pub fn sign_message(
         find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
     let reference = get_id_and_hash_from_cert_context(&cert_context)
         .map_err(SignMessageError::CannotGetCertificateInfo)?;
-    let keypair = get_keypair(&cert_context)?;
+    let keypair = get_keypair(&cert_context).map_err(SignMessageError::CannotAcquireKeypair)?;
     let (algo, signature) = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
         PrivateKey::CryptProv(..) => {
@@ -243,13 +242,12 @@ pub fn sign_message(
     })
 }
 
-fn get_keypair(context: &CertContext) -> Result<PrivateKey, crate::errors::BaseKeyPairError> {
+fn get_keypair(context: &CertContext) -> Result<PrivateKey, std::io::Error> {
     let mut acq_keypair = context.private_key();
     acq_keypair
         // Ensure private key correspond to the certificate public key.
         .compare_key(true)
         .acquire()
-        .map_err(crate::errors::BaseKeyPairError::CannotAcquireKeypair)
 }
 
 fn ncrypt_sign_message_with_rsa(
@@ -326,7 +324,7 @@ pub fn encrypt_message(
         find_certificate(&store, certificate_ref).ok_or(EncryptMessageError::NotFound)?;
     let reference = get_id_and_hash_from_cert_context(&cert_context)
         .map_err(EncryptMessageError::CannotGetCertificateInfo)?;
-    let keypair = get_keypair(&cert_context)?;
+    let keypair = get_keypair(&cert_context).map_err(EncryptMessageError::CannotAcquireKeypair)?;
     let (algo, ciphered) = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
         PrivateKey::CryptProv(..) => {
@@ -415,7 +413,7 @@ pub fn decrypt_message(
         find_certificate(&store, certificate_ref).ok_or(DecryptMessageError::NotFound)?;
     let reference = get_id_and_hash_from_cert_context(&cert_context)
         .map_err(DecryptMessageError::CannotGetCertificateInfo)?;
-    let keypair = get_keypair(&cert_context)?;
+    let keypair = get_keypair(&cert_context).map_err(DecryptMessageError::CannotAcquireKeypair)?;
     let data = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
         PrivateKey::CryptProv(..) => {

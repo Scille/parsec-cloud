@@ -52,7 +52,6 @@ pub enum InvalidityReason {
     DateTimeOutOfRange,
     Untrusted,
     InvalidSignature,
-    UnexpectedError,
     DataError,
     InvalidUserInformation,
 }
@@ -66,7 +65,6 @@ impl From<LoadSubmitPayloadError> for InvalidityReason {
             LoadSubmitPayloadError::DateTimeOutOfRange(..) => InvalidityReason::DateTimeOutOfRange,
             LoadSubmitPayloadError::Untrusted(..) => InvalidityReason::Untrusted,
             LoadSubmitPayloadError::InvalidSignature => InvalidityReason::InvalidSignature,
-            LoadSubmitPayloadError::UnexpectedError(..) => InvalidityReason::UnexpectedError,
             LoadSubmitPayloadError::DataError(..) => InvalidityReason::DataError,
         }
     }
