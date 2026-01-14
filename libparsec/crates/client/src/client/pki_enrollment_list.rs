@@ -49,7 +49,6 @@ pub enum InvalidityReason {
     CannotOpenStore,
     NotFound,
     CannotGetCertificateInfo,
-    DateTimeOutOfRange,
     Untrusted,
     InvalidSignature,
     DataError,
@@ -62,7 +61,6 @@ impl From<LoadSubmitPayloadError> for InvalidityReason {
             LoadSubmitPayloadError::InvalidCertificateDer(..) => {
                 InvalidityReason::InvalidCertificateDer
             }
-            LoadSubmitPayloadError::DateTimeOutOfRange(..) => InvalidityReason::DateTimeOutOfRange,
             LoadSubmitPayloadError::Untrusted(..) => InvalidityReason::Untrusted,
             LoadSubmitPayloadError::InvalidSignature(..) => InvalidityReason::InvalidSignature,
             LoadSubmitPayloadError::DataError(..) => InvalidityReason::DataError,
