@@ -164,6 +164,9 @@ pub use errors::VerifyCertificateError;
 pub use shared::verify_certificate;
 pub use webpki::KeyUsage;
 
+pub use errors::VerifyMessageError;
+pub use shared::verify_message2;
+
 pub use errors::LoadSubmitPayloadError;
 pub use shared::load_submit_payload;
 

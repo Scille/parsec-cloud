@@ -33,6 +33,13 @@ pub enum SignMessageError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum VerifyMessageError {
+    #[error("X509 certificate cannot be trusted: {0}")]
+    X509CertificateUntrusted(webpki::Error),
+    #[error("Invalid signature: {0}")]
+    InvalidSignature(webpki::Error),
+}
+#[derive(Debug, thiserror::Error)]
 pub enum VerifySignatureError {
     #[error("Invalid signature: {0}")]
     InvalidSignature(webpki::Error),
