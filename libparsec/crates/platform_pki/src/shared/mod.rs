@@ -4,7 +4,7 @@ use crate::{
     encrypt_message,
     errors::{
         GetValidationPathForCertError, ListCertificatesError, LoadAnswerPayloadError,
-        ValidatePayloadError, VerifyCertificateError, VerifySignatureError,
+        ValidatePayloadError, VerifyCertificateError, VerifyMessageError, VerifySignatureError,
     },
     get_der_encoded_certificate, CreateLocalPendingError, EncryptMessageError, EncryptedMessage,
     GetDerEncodedCertificateError, PkiSignatureAlgorithm,
@@ -146,6 +146,61 @@ pub fn verify_certificate<'der>(
             None,
         )
         .map_err(VerifyCertificateError::Untrusted)
+}
+
+// TODO: rename to `verify_message` once pki-enrollment specific code is removed
+// see https://github.com/Scille/parsec-cloud/issues/12054
+pub fn verify_message2<'a>(
+    message: &[u8],
+    signature: &[u8],
+    algorithm: PkiSignatureAlgorithm,
+    certificate: &[u8],
+    intermediate_certs: impl Iterator<Item = &'a [u8]>,
+    trusted_roots: &[TrustAnchor<'_>],
+    now: DateTime,
+) -> Result<(), VerifyMessageError> {
+    let time = rustls_pki_types::UnixTime::since_unix_epoch(
+        // `duration_since_unix_epoch()` returns an error if `now` is negative (i.e.
+        // smaller than UNIX EPOCH), which is never supposed to happen since EPOCH
+        // already occurred and the arrow of time only goes in one direction!
+        now.duration_since_unix_epoch()
+            .expect("current time always > EPOCH"),
+    );
+
+    // 1) Verify the certificate trustchain
+
+    let certificate_der = CertificateDer::from(certificate);
+    let certificate = X509EndCertificate::try_from(&certificate_der)
+        .map_err(VerifyMessageError::X509CertificateUntrusted)?;
+
+    certificate
+        .verify_for_usage(
+            webpki::ALL_VERIFICATION_ALGS,
+            trusted_roots,
+            &intermediate_certs
+                .map(CertificateDer::from)
+                .collect::<Vec<_>>(),
+            time,
+            KeyUsage::client_auth(),
+            // TODO: Build the revocation options from a CRLS
+            // webpki::RevocationOptionsBuilder require a non empty list, for now we provide None
+            // instead
+            None,
+            // We do not have additional constrain to reject a valid path.
+            None,
+        )
+        .map_err(VerifyMessageError::X509CertificateUntrusted)?;
+
+    // 2) Verify the message signature
+
+    let verifier = match algorithm {
+        PkiSignatureAlgorithm::RsassaPssSha256 => webpki::ring::RSA_PSS_2048_8192_SHA256_LEGACY_KEY,
+    };
+    certificate
+        .verify_signature(verifier, message, signature)
+        .map_err(VerifyMessageError::InvalidSignature)?;
+
+    Ok(())
 }
 
 pub fn load_submit_payload<'cert>(
