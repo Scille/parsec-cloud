@@ -125,8 +125,11 @@ pub fn verify_certificate<'der>(
     key_usage: KeyUsage,
 ) -> Result<webpki::VerifiedPath<'der>, VerifyCertificateError> {
     let time = rustls_pki_types::UnixTime::since_unix_epoch(
+        // `duration_since_unix_epoch()` returns an error if `now` is negative (i.e.
+        // smaller than UNIX EPOCH), which is never supposed to happen since EPOCH
+        // already occurred and the arrow of time only goes in one direction!
         now.duration_since_unix_epoch()
-            .map_err(VerifyCertificateError::DateTimeOutOfRange)?,
+            .expect("current time always > EPOCH"),
     );
     certificate
         .verify_for_usage(
@@ -183,9 +186,6 @@ pub fn validate_payload<'message, 'cert>(
         KeyUsage::client_auth(),
     )
     .map_err(|err| match err {
-        VerifyCertificateError::DateTimeOutOfRange(err) => {
-            ValidatePayloadError::DateTimeOutOfRange(err)
-        }
         VerifyCertificateError::Untrusted(err) => ValidatePayloadError::Untrusted(err),
     })?;
     let trusted_cert = verified_path.end_entity();
@@ -255,9 +255,6 @@ pub fn get_validation_path_for_cert(
         KeyUsage::client_auth(),
     )
     .map_err(|err| match err {
-        VerifyCertificateError::DateTimeOutOfRange(err) => {
-            GetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(err)
-        }
         VerifyCertificateError::Untrusted(err) => {
             GetValidationPathForCertError::InvalidCertificateUntrusted(err)
         }
