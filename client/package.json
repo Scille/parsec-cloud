@@ -65,6 +65,7 @@
         "pdfjs-dist": "^5.0.375",
         "qrcode-vue3": "^1.7.1",
         "uuid": "^11.1.0",
+        "vite-plugin-static-copy": "^3.1.4",
         "vue": "^3.5.13",
         "vue-i18n": "^11.1.2",
         "vue-router": "^4.5.0",
