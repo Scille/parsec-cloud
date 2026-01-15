@@ -257,6 +257,7 @@ swiftclient
 syft
 syncer
 targetver
+testpki
 texlive
 thyj
 toctree
