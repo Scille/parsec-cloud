@@ -159,8 +159,7 @@ export interface AvailableDevice {
 export interface AvailablePendingAsyncEnrollment {
     filePath: string
     submittedOn: number
-    serverAddr: string
-    organizationId: string
+    addr: string
     enrollmentId: string
     requestedDeviceLabel: string
     requestedHumanHandle: HumanHandle
@@ -1397,10 +1396,6 @@ export interface ClientAcceptAsyncEnrollmentErrorInternal {
     tag: "ClientAcceptAsyncEnrollmentErrorInternal"
     error: string
 }
-export interface ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain {
-    tag: "ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain"
-    error: string
-}
 export interface ClientAcceptAsyncEnrollmentErrorOffline {
     tag: "ClientAcceptAsyncEnrollmentErrorOffline"
     error: string
@@ -1417,6 +1412,18 @@ export interface ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse {
     tag: "ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse"
     error: string
 }
+export interface ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore {
+    tag: "ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain {
+    tag: "ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain"
+    error: string
+}
+export interface ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
+    tag: "ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference"
+    error: string
+}
 export interface ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark {
     tag: "ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark"
     error: string
@@ -1430,11 +1437,13 @@ export type ClientAcceptAsyncEnrollmentError =
   | ClientAcceptAsyncEnrollmentErrorHumanHandleAlreadyTaken
   | ClientAcceptAsyncEnrollmentErrorIdentityStrategyMismatch
   | ClientAcceptAsyncEnrollmentErrorInternal
-  | ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain
   | ClientAcceptAsyncEnrollmentErrorOffline
   | ClientAcceptAsyncEnrollmentErrorOpenBaoBadServerResponse
   | ClientAcceptAsyncEnrollmentErrorOpenBaoBadURL
   | ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse
+  | ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore
+  | ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain
+  | ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference
   | ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark
 
 
@@ -1752,6 +1761,15 @@ export interface ClientForgetAllCertificatesErrorStopped {
 export type ClientForgetAllCertificatesError =
   | ClientForgetAllCertificatesErrorInternal
   | ClientForgetAllCertificatesErrorStopped
+
+
+// ClientGetAsyncEnrollmentAddrError
+export interface ClientGetAsyncEnrollmentAddrErrorInternal {
+    tag: "ClientGetAsyncEnrollmentAddrErrorInternal"
+    error: string
+}
+export type ClientGetAsyncEnrollmentAddrError =
+  | ClientGetAsyncEnrollmentAddrErrorInternal
 
 
 // ClientGetOrganizationBootstrapDateError
@@ -3628,10 +3646,6 @@ export interface SubmitAsyncEnrollmentErrorInvalidPath {
     tag: "SubmitAsyncEnrollmentErrorInvalidPath"
     error: string
 }
-export interface SubmitAsyncEnrollmentErrorInvalidX509Trustchain {
-    tag: "SubmitAsyncEnrollmentErrorInvalidX509Trustchain"
-    error: string
-}
 export interface SubmitAsyncEnrollmentErrorOffline {
     tag: "SubmitAsyncEnrollmentErrorOffline"
     error: string
@@ -3648,6 +3662,18 @@ export interface SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse {
     tag: "SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse"
     error: string
 }
+export interface SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore {
+    tag: "SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain {
+    tag: "SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain"
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
+    tag: "SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference"
+    error: string
+}
 export interface SubmitAsyncEnrollmentErrorStorageNotAvailable {
     tag: "SubmitAsyncEnrollmentErrorStorageNotAvailable"
     error: string
@@ -3657,11 +3683,13 @@ export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorEmailAlreadySubmitted
   | SubmitAsyncEnrollmentErrorInternal
   | SubmitAsyncEnrollmentErrorInvalidPath
-  | SubmitAsyncEnrollmentErrorInvalidX509Trustchain
   | SubmitAsyncEnrollmentErrorOffline
   | SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse
   | SubmitAsyncEnrollmentErrorOpenBaoBadURL
   | SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse
+  | SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore
+  | SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain
+  | SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference
   | SubmitAsyncEnrollmentErrorStorageNotAvailable
 
 
@@ -3714,10 +3742,6 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorInternal {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorInternal"
     error: string
 }
-export interface SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain {
-    tag: "SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain"
-    error: string
-}
 export interface SubmitterFinalizeAsyncEnrollmentErrorNotAccepted {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorNotAccepted"
     error: string
@@ -3736,6 +3760,14 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL {
 }
 export interface SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore"
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference"
     error: string
 }
 export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath {
@@ -3762,12 +3794,13 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer
   | SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch
   | SubmitterFinalizeAsyncEnrollmentErrorInternal
-  | SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain
   | SubmitterFinalizeAsyncEnrollmentErrorNotAccepted
   | SubmitterFinalizeAsyncEnrollmentErrorOffline
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse
+  | SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore
+  | SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline
@@ -5322,6 +5355,9 @@ export function clientExportRecoveryDevice(
 export function clientForgetAllCertificates(
     client: number
 ): Promise<Result<null, ClientForgetAllCertificatesError>>
+export function clientGetAsyncEnrollmentAddr(
+    client: number
+): Promise<Result<string, ClientGetAsyncEnrollmentAddrError>>
 export function clientGetOrganizationBootstrapDate(
     client_handle: number
 ): Promise<Result<number, ClientGetOrganizationBootstrapDateError>>
@@ -5644,7 +5680,6 @@ export function submitterFinalizeAsyncEnrollment(
     config: ClientConfig,
     enrollment_file: string,
     new_device_save_strategy: DeviceSaveStrategy,
-    new_device_key_file: string,
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy
 ): Promise<Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError>>
 export function submitterForgetAsyncEnrollment(
