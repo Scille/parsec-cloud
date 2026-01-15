@@ -21,7 +21,7 @@ serde = { workspace = true, features = ["derive", "rc"] }
 serde_with = { workspace = true }
 rmp-serde = { workspace = true }
 lazy_static = { workspace = true }
-reqwest = { workspace = true, features = ["default-tls", "query"] }
+reqwest = { workspace = true, features = ["native-tls", "query"] }
 regex = { workspace = true, features = ["std", "perf", "unicode"] }
 log = { workspace = true }
 paste = { workspace = true }
