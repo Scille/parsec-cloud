@@ -1,0 +1,33 @@
+# Platform PKI
+
+A Rust crate to provide a platform-agnostic support of PKI (authenticate with a certificate, smart card, YubiKey, ...)
+
+## Import a test PKI
+
+We provide a test PKI at `./test-pki/`, that PKI can be imported in your environment with the following commands:
+
+For windows
+
+```powershell
+& .\examples\import_testpki_windows.ps1
+```
+
+For Linux (with SoftHSM2):
+
+```shell
+bash ./examples/init_softhsm2.sh
+```
+
+## Test PKI support
+
+We provide some example to test the PKI support:
+
+- `examples/decode_cert_subject.rs`: Load a certificate either as a file or a reference to the credential store.
+- `examples/decrypt_message.rs`: Decrypt a message using the private key of a referenced certificate.
+- `examples/encrypt_message.rs`: Encrypt a message using the public key of referenced certificate.
+- `examples/get_certificate_der.rs`: Get the certificate DER content either by a provided reference or using a selection dialog on Windows.
+- `examples/list_certificate.rs`: List detected certificate (currently only support unix with PKCS11 support).
+- `examples/sign_message.rs`: Sign a message using the private key of a referenced certificate.
+- `examples/verify_message.rs`: Verify a message signature using the public key of a reference certificate
+- `examples/list_trusted_roots.rs`: List trusted root found on system.
+- `examples/verify_certificate.rs`: Check for a certificate trust
