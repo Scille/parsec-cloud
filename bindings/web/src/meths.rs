@@ -1243,8 +1243,8 @@ fn struct_available_pending_async_enrollment_js_to_rs(
             v
         }
     };
-    let server_addr = {
-        let js_val = Reflect::get(&obj, &"serverAddr".into())?;
+    let addr = {
+        let js_val = Reflect::get(&obj, &"addr".into())?;
         js_val
             .dyn_into::<JsString>()
             .ok()
@@ -1252,21 +1252,7 @@ fn struct_available_pending_async_enrollment_js_to_rs(
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-                };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
-    };
-    let organization_id = {
-        let js_val = Reflect::get(&obj, &"organizationId".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
@@ -1310,8 +1296,7 @@ fn struct_available_pending_async_enrollment_js_to_rs(
     Ok(libparsec::AvailablePendingAsyncEnrollment {
         file_path,
         submitted_on,
-        server_addr,
-        organization_id,
+        addr,
         enrollment_id,
         requested_device_label,
         requested_human_handle,
@@ -1348,19 +1333,18 @@ fn struct_available_pending_async_enrollment_rs_to_js(
         JsValue::from(v)
     };
     Reflect::set(&js_obj, &"submittedOn".into(), &js_submitted_on)?;
-    let js_server_addr = JsValue::from_str({
-        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-            Ok(addr.to_url().into())
-        };
-        match custom_to_rs_string(rs_obj.server_addr) {
+    let js_addr = JsValue::from_str({
+        let custom_to_rs_string =
+            |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.addr) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
     });
-    Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
-    let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
-    Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+    Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
     let js_enrollment_id = JsValue::from_str({
         let custom_to_rs_string =
             |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -7956,13 +7940,6 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorInternal".into(),
             )?;
         }
-        libparsec::ClientAcceptAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain".into(),
-            )?;
-        }
         libparsec::ClientAcceptAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7989,6 +7966,29 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference {
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into(),
             )?;
         }
         libparsec::ClientAcceptAsyncEnrollmentError::TimestampOutOfBallpark { .. } => {
@@ -9436,6 +9436,27 @@ fn variant_client_forget_all_certificates_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientForgetAllCertificatesErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientGetAsyncEnrollmentAddrError
+
+#[allow(dead_code)]
+fn variant_client_get_async_enrollment_addr_error_rs_to_js(
+    rs_obj: libparsec::ClientGetAsyncEnrollmentAddrError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientGetAsyncEnrollmentAddrError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetAsyncEnrollmentAddrErrorInternal".into(),
             )?;
         }
     }
@@ -17867,13 +17888,6 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorInvalidPath".into(),
             )?;
         }
-        libparsec::SubmitAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"SubmitAsyncEnrollmentErrorInvalidX509Trustchain".into(),
-            )?;
-        }
         libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17900,6 +17914,27 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into(),
             )?;
         }
         libparsec::SubmitAsyncEnrollmentError::StorageNotAvailable { .. } => {
@@ -18106,9 +18141,6 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         libparsec::SubmitterFinalizeAsyncEnrollmentError::Internal{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorInternal".into())?;
         }
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::InvalidX509Trustchain{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain".into())?;
-        }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorNotAccepted".into())?;
         }
@@ -18123,6 +18155,12 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoNoServerResponse{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKICannotOpenCertificateStore{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into())?;
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath".into())?;
@@ -22711,6 +22749,38 @@ pub fn clientForgetAllCertificates(client: u32) -> Promise {
     }))
 }
 
+// client_get_async_enrollment_addr
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientGetAsyncEnrollmentAddr(client: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_get_async_enrollment_addr(client);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string = |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_get_async_enrollment_addr_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // client_get_organization_bootstrap_date
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -25434,7 +25504,6 @@ pub fn submitterFinalizeAsyncEnrollment(
     config: Object,
     enrollment_file: String,
     new_device_save_strategy: Object,
-    new_device_key_file: String,
     identity_strategy: Object,
 ) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
@@ -25451,12 +25520,6 @@ pub fn submitterFinalizeAsyncEnrollment(
         let new_device_save_strategy =
             variant_device_save_strategy_js_to_rs(new_device_save_strategy)?;
 
-        let new_device_key_file = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(new_device_key_file).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
         let identity_strategy = identity_strategy.into();
         let identity_strategy =
             variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(identity_strategy)?;
@@ -25465,7 +25528,6 @@ pub fn submitterFinalizeAsyncEnrollment(
             config,
             &enrollment_file,
             new_device_save_strategy,
-            &new_device_key_file,
             identity_strategy,
         )
         .await;

@@ -1200,23 +1200,11 @@ fn struct_available_pending_async_enrollment_js_to_rs<'a>(
             }
         }
     };
-    let server_addr = {
-        let js_val: Handle<JsString> = obj.get(cx, "serverAddr")?;
+    let addr = {
+        let js_val: Handle<JsString> = obj.get(cx, "addr")?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let organization_id = {
-        let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
@@ -1259,8 +1247,7 @@ fn struct_available_pending_async_enrollment_js_to_rs<'a>(
     Ok(libparsec::AvailablePendingAsyncEnrollment {
         file_path,
         submitted_on,
-        server_addr,
-        organization_id,
+        addr,
         enrollment_id,
         requested_device_label,
         requested_human_handle,
@@ -1297,19 +1284,18 @@ fn struct_available_pending_async_enrollment_rs_to_js<'a>(
         }
     });
     js_obj.set(cx, "submittedOn", js_submitted_on)?;
-    let js_server_addr = JsString::try_new(cx, {
-        let custom_to_rs_string = |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-            Ok(addr.to_url().into())
-        };
-        match custom_to_rs_string(rs_obj.server_addr) {
+    let js_addr = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.addr) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err.to_string()),
         }
     })
     .or_throw(cx)?;
-    js_obj.set(cx, "serverAddr", js_server_addr)?;
-    let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
-    js_obj.set(cx, "organizationId", js_organization_id)?;
+    js_obj.set(cx, "addr", js_addr)?;
     let js_enrollment_id = JsString::try_new(cx, {
         let custom_to_rs_string =
             |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -7497,12 +7483,6 @@ fn variant_client_accept_async_enrollment_error_rs_to_js<'a>(
                 JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientAcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::ClientAcceptAsyncEnrollmentError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientAcceptAsyncEnrollmentErrorOffline").or_throw(cx)?;
@@ -7525,6 +7505,32 @@ fn variant_client_accept_async_enrollment_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(
                 cx,
                 "ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference",
             )
             .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -8809,6 +8815,26 @@ fn variant_client_forget_all_certificates_error_rs_to_js<'a>(
         libparsec::ClientForgetAllCertificatesError::Stopped { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientForgetAllCertificatesErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientGetAsyncEnrollmentAddrError
+
+#[allow(dead_code)]
+fn variant_client_get_async_enrollment_addr_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientGetAsyncEnrollmentAddrError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientGetAsyncEnrollmentAddrError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientGetAsyncEnrollmentAddrErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -16372,11 +16398,6 @@ fn variant_submit_async_enrollment_error_rs_to_js<'a>(
                 JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInvalidX509Trustchain")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16395,6 +16416,30 @@ fn variant_submit_async_enrollment_error_rs_to_js<'a>(
         libparsec::SubmitAsyncEnrollmentError::OpenBaoNoServerResponse { .. } => {
             let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse")
                 .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::SubmitAsyncEnrollmentError::StorageNotAvailable { .. } => {
@@ -16560,10 +16605,6 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKIInvalidX509Trustchain{  .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{  .. } => {
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorNotAccepted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16582,6 +16623,14 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoNoServerResponse{  .. } => {
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKICannotOpenCertificateStore{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath{  .. } => {
@@ -22360,6 +22409,54 @@ fn client_forget_all_certificates(mut cx: FunctionContext) -> JsResult<JsPromise
     Ok(promise)
 }
 
+// client_get_async_enrollment_addr
+fn client_get_async_enrollment_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let ret = libparsec::client_get_async_enrollment_addr(client);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = JsString::try_new(&mut cx, {
+                let custom_to_rs_string =
+                    |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(ok) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(&mut cx)?;
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_client_get_async_enrollment_addr_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // client_get_organization_bootstrap_date
 fn client_get_organization_bootstrap_date(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -27200,19 +27297,8 @@ fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPr
         let js_val = cx.argument::<JsObject>(2)?;
         variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
-    let new_device_key_file = {
-        let js_val = cx.argument::<JsString>(3)?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
     let identity_strategy = {
-        let js_val = cx.argument::<JsObject>(4)?;
+        let js_val = cx.argument::<JsObject>(3)?;
         variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
@@ -27227,7 +27313,6 @@ fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPr
                 config,
                 &enrollment_file,
                 new_device_save_strategy,
-                &new_device_key_file,
                 identity_strategy,
             )
             .await;
@@ -31681,6 +31766,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function(
         "clientForgetAllCertificates",
         client_forget_all_certificates,
+    )?;
+    cx.export_function(
+        "clientGetAsyncEnrollmentAddr",
+        client_get_async_enrollment_addr,
     )?;
     cx.export_function(
         "clientGetOrganizationBootstrapDate",
