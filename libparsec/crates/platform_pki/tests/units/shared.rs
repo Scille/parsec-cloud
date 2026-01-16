@@ -1,14 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use rustls_pki_types::CertificateDer;
-use webpki::KeyUsage;
 
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
     test_fixture::{test_pki, TestPKI},
-    verify_certificate, VerifyCertificateError,
+    verify_certificate,
 };
 
 #[rstest]
@@ -31,14 +30,7 @@ fn test_verify_cert_ok(test_pki: &TestPKI) {
         .to_end_certificate()
         .expect("Should be a valid certificate data");
 
-    verify_certificate(
-        &untrusted_cert,
-        &trusted_roots,
-        &[],
-        DateTime::now(),
-        KeyUsage::client_auth(),
-    )
-    .unwrap();
+    verify_certificate(&untrusted_cert, &trusted_roots, &[], DateTime::now()).unwrap();
 }
 
 #[rstest]
@@ -55,15 +47,11 @@ fn test_verify_unknown_issuer(test_pki: &TestPKI) {
         &[], // No trusted root, so always invalid
         &[],
         DateTime::now(),
-        KeyUsage::client_auth(),
     )
     .map(|_| ())
     .expect_err("Should not be trusted");
 
-    assert!(matches!(
-        err,
-        VerifyCertificateError::Untrusted(webpki::Error::UnknownIssuer)
-    ));
+    assert!(matches!(err, webpki::Error::UnknownIssuer));
 }
 
 #[rstest]
@@ -96,7 +84,6 @@ fn test_verify_with_intermediate(test_pki: &TestPKI) {
         &trusted_roots,
         &intermediate_certs,
         DateTime::now(),
-        KeyUsage::client_auth(),
     )
     .unwrap();
 }

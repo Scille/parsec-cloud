@@ -74,12 +74,6 @@ pub enum DecryptMessageError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum VerifyCertificateError {
-    #[error("The provided certificate cannot be trusted: {0}")]
-    Untrusted(webpki::Error),
-}
-
-#[derive(Debug, thiserror::Error)]
 pub enum GetValidationPathForCertError {
     #[error("Cannot open certificate store: {0}")]
     CannotOpenStore(std::io::Error),
