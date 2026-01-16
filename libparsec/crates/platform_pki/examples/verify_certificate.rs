@@ -44,7 +44,6 @@ pub fn main() -> anyhow::Result<()> {
         &trusted_roots,
         &intermediate_certificates,
         DateTime::now(),
-        webpki::KeyUsage::client_auth(),
     )
     .context("Cannot trust certificate")?;
 

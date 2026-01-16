@@ -7956,13 +7956,6 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorInternal".into(),
             )?;
         }
-        libparsec::ClientAcceptAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientAcceptAsyncEnrollmentErrorInvalidX509Trustchain".into(),
-            )?;
-        }
         libparsec::ClientAcceptAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7989,6 +7982,29 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain".into(),
+            )?;
+        }
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference {
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into(),
             )?;
         }
         libparsec::ClientAcceptAsyncEnrollmentError::TimestampOutOfBallpark { .. } => {
@@ -12125,9 +12141,6 @@ fn variant_invalidity_reason_js_to_rs(
         }
         "InvalidityReasonCannotOpenStore" => Ok(libparsec::InvalidityReason::CannotOpenStore {}),
         "InvalidityReasonDataError" => Ok(libparsec::InvalidityReason::DataError {}),
-        "InvalidityReasonDateTimeOutOfRange" => {
-            Ok(libparsec::InvalidityReason::DateTimeOutOfRange {})
-        }
         "InvalidityReasonInvalidCertificateDer" => {
             Ok(libparsec::InvalidityReason::InvalidCertificateDer {})
         }
@@ -12139,7 +12152,6 @@ fn variant_invalidity_reason_js_to_rs(
             Ok(libparsec::InvalidityReason::InvalidUserInformation {})
         }
         "InvalidityReasonNotFound" => Ok(libparsec::InvalidityReason::NotFound {}),
-        "InvalidityReasonUnexpectedError" => Ok(libparsec::InvalidityReason::UnexpectedError {}),
         "InvalidityReasonUntrusted" => Ok(libparsec::InvalidityReason::Untrusted {}),
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a InvalidityReason",
@@ -12169,13 +12181,6 @@ fn variant_invalidity_reason_rs_to_js(
         }
         libparsec::InvalidityReason::DataError { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"InvalidityReasonDataError".into())?;
-        }
-        libparsec::InvalidityReason::DateTimeOutOfRange { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"InvalidityReasonDateTimeOutOfRange".into(),
-            )?;
         }
         libparsec::InvalidityReason::InvalidCertificateDer { .. } => {
             Reflect::set(
@@ -12207,13 +12212,6 @@ fn variant_invalidity_reason_rs_to_js(
         }
         libparsec::InvalidityReason::NotFound { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"InvalidityReasonNotFound".into())?;
-        }
-        libparsec::InvalidityReason::UnexpectedError { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"InvalidityReasonUnexpectedError".into(),
-            )?;
         }
         libparsec::InvalidityReason::Untrusted { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"InvalidityReasonUntrusted".into())?;
@@ -17885,13 +17883,6 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorInvalidPath".into(),
             )?;
         }
-        libparsec::SubmitAsyncEnrollmentError::InvalidX509Trustchain { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"SubmitAsyncEnrollmentErrorInvalidX509Trustchain".into(),
-            )?;
-        }
         libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17918,6 +17909,27 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain".into(),
+            )?;
+        }
+        libparsec::SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into(),
             )?;
         }
         libparsec::SubmitAsyncEnrollmentError::StorageNotAvailable { .. } => {
@@ -18124,9 +18136,6 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         libparsec::SubmitterFinalizeAsyncEnrollmentError::Internal{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorInternal".into())?;
         }
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::InvalidX509Trustchain{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorInvalidX509Trustchain".into())?;
-        }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorNotAccepted".into())?;
         }
@@ -18141,6 +18150,12 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoNoServerResponse{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKICannotOpenCertificateStore{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore".into())?;
+        }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into())?;
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath".into())?;

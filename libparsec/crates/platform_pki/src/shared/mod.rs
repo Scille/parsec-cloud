@@ -4,7 +4,7 @@ use crate::{
     encrypt_message,
     errors::{
         GetValidationPathForCertError, ListCertificatesError, LoadAnswerPayloadError,
-        ValidatePayloadError, VerifyCertificateError, VerifySignatureError,
+        ValidatePayloadError, VerifyMessageError, VerifySignatureError,
     },
     get_der_encoded_certificate, CreateLocalPendingError, EncryptMessageError, EncryptedMessage,
     GetDerEncodedCertificateError, PkiSignatureAlgorithm,
@@ -65,6 +65,7 @@ pub struct SignedMessage {
     pub message: Bytes,
 }
 
+// Internal API, but `pub` is needed by `examples/verify_message.rs`
 pub fn verify_message<'message, 'a>(
     signed_message: &'message SignedMessage,
     certificate: &'a X509EndCertificate<'a>,
@@ -117,13 +118,13 @@ pub fn create_local_pending(
     Ok(local_pending)
 }
 
+// Internal API, but `pub` is needed by `examples/verify_certificate.rs`
 pub fn verify_certificate<'der>(
     certificate: &'der X509EndCertificate<'der>,
     trusted_roots: &'der [TrustAnchor<'_>],
     intermediate_certs: &'der [CertificateDer<'der>],
     now: DateTime,
-    key_usage: KeyUsage,
-) -> Result<webpki::VerifiedPath<'der>, VerifyCertificateError> {
+) -> Result<webpki::VerifiedPath<'der>, webpki::Error> {
     let time = rustls_pki_types::UnixTime::since_unix_epoch(
         // `duration_since_unix_epoch()` returns an error if `now` is negative (i.e.
         // smaller than UNIX EPOCH), which is never supposed to happen since EPOCH
@@ -131,21 +132,58 @@ pub fn verify_certificate<'der>(
         now.duration_since_unix_epoch()
             .expect("current time always > EPOCH"),
     );
+    certificate.verify_for_usage(
+        webpki::ALL_VERIFICATION_ALGS,
+        trusted_roots,
+        intermediate_certs,
+        time,
+        KeyUsage::client_auth(),
+        // TODO: Build the revocation options from a CRLS
+        // webpki::RevocationOptionsBuilder require a non empty list, for now we provide None
+        // instead
+        None,
+        // We do not have additional constrain to reject a valid path.
+        None,
+    )
+}
+
+// TODO: rename to `verify_message` once pki-enrollment specific code is removed
+// see https://github.com/Scille/parsec-cloud/issues/12054
+pub fn verify_message2<'a>(
+    message: &[u8],
+    signature: &[u8],
+    algorithm: PkiSignatureAlgorithm,
+    certificate: &[u8],
+    intermediate_certs: impl Iterator<Item = &'a [u8]>,
+    trusted_roots: &[TrustAnchor<'_>],
+    now: DateTime,
+) -> Result<(), VerifyMessageError> {
+    // 1) Verify the certificate trustchain
+
+    let certificate_der = CertificateDer::from(certificate);
+    let certificate = X509EndCertificate::try_from(&certificate_der)
+        .map_err(VerifyMessageError::X509CertificateUntrusted)?;
+
+    verify_certificate(
+        &certificate,
+        trusted_roots,
+        &intermediate_certs
+            .map(CertificateDer::from)
+            .collect::<Vec<_>>(),
+        now,
+    )
+    .map_err(VerifyMessageError::X509CertificateUntrusted)?;
+
+    // 2) Verify the message signature
+
+    let verifier = match algorithm {
+        PkiSignatureAlgorithm::RsassaPssSha256 => webpki::ring::RSA_PSS_2048_8192_SHA256_LEGACY_KEY,
+    };
     certificate
-        .verify_for_usage(
-            webpki::ALL_VERIFICATION_ALGS,
-            trusted_roots,
-            intermediate_certs,
-            time,
-            key_usage,
-            // TODO: Build the revocation options from a CRLS
-            // webpki::RevocationOptionsBuilder require a non empty list, for now we provide None
-            // instead
-            None,
-            // We do not have additional constrain to reject a valid path.
-            None,
-        )
-        .map_err(VerifyCertificateError::Untrusted)
+        .verify_signature(verifier, message, signature)
+        .map_err(VerifyMessageError::InvalidSignature)?;
+
+    Ok(())
 }
 
 pub fn load_submit_payload<'cert>(
@@ -165,7 +203,7 @@ pub fn load_submit_payload<'cert>(
     PkiEnrollmentSubmitPayload::load(validated_payload).map_err(Into::into)
 }
 
-pub fn validate_payload<'message, 'cert>(
+fn validate_payload<'message, 'cert>(
     der_certificate: &[u8],
     signed_message: &'message SignedMessage,
     trusted_roots: &[TrustAnchor<'_>],
@@ -178,16 +216,9 @@ pub fn validate_payload<'message, 'cert>(
     let untrusted_cert = binding
         .to_end_certificate()
         .map_err(ValidatePayloadError::InvalidCertificateDer)?;
-    let verified_path = verify_certificate(
-        &untrusted_cert,
-        trusted_roots,
-        &intermediate_certs,
-        now,
-        KeyUsage::client_auth(),
-    )
-    .map_err(|err| match err {
-        VerifyCertificateError::Untrusted(err) => ValidatePayloadError::Untrusted(err),
-    })?;
+    let verified_path =
+        verify_certificate(&untrusted_cert, trusted_roots, &intermediate_certs, now)
+            .map_err(ValidatePayloadError::Untrusted)?;
     let trusted_cert = verified_path.end_entity();
 
     verify_message(signed_message, trusted_cert).map_err(|err| match err {
@@ -221,7 +252,7 @@ pub fn get_validation_path_for_cert(
     cert_ref: &X509CertificateReference,
     now: DateTime,
 ) -> Result<ValidationPathOwned, GetValidationPathForCertError> {
-    let trusted_anchor =
+    let trusted_roots =
         crate::list_trusted_root_certificate_anchors().map_err(|err| match err {
             ListCertificatesError::CannotOpenStore(err) => {
                 GetValidationPathForCertError::CannotOpenStore(err)
@@ -247,18 +278,8 @@ pub fn get_validation_path_for_cert(
         .to_end_certificate()
         .map_err(GetValidationPathForCertError::InvalidCertificateDer)?;
 
-    let path = verify_certificate(
-        &base_cert,
-        &trusted_anchor,
-        &intermediate_certs,
-        now,
-        KeyUsage::client_auth(),
-    )
-    .map_err(|err| match err {
-        VerifyCertificateError::Untrusted(err) => {
-            GetValidationPathForCertError::InvalidCertificateUntrusted(err)
-        }
-    })?;
+    let path = verify_certificate(&base_cert, &trusted_roots, &intermediate_certs, now)
+        .map_err(GetValidationPathForCertError::InvalidCertificateUntrusted)?;
 
     let intermediate_certs = path
         .intermediate_certificates()

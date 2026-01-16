@@ -33,6 +33,13 @@ pub enum SignMessageError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum VerifyMessageError {
+    #[error("X509 certificate cannot be trusted: {0}")]
+    X509CertificateUntrusted(webpki::Error),
+    #[error("Invalid signature: {0}")]
+    InvalidSignature(webpki::Error),
+}
+#[derive(Debug, thiserror::Error)]
 pub enum VerifySignatureError {
     #[error("Invalid signature: {0}")]
     InvalidSignature(webpki::Error),
@@ -64,12 +71,6 @@ pub enum DecryptMessageError {
     CannotAcquireKeypair(std::io::Error),
     #[error("Cannot decrypt message: {0}")]
     CannotDecrypt(std::io::Error),
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum VerifyCertificateError {
-    #[error("The provided certificate cannot be trusted: {0}")]
-    Untrusted(webpki::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
