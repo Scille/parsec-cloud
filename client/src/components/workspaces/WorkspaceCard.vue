@@ -3,7 +3,10 @@
 <template>
   <div
     class="workspace-card-item ion-no-padding"
-    :class="{ 'workspace-hovered': isHovered || menuOpened }"
+    :class="{
+      'workspace-hovered': isHovered || menuOpened,
+      'workspace-card-item--hidden': isHidden,
+    }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -37,13 +40,23 @@
             :icon="workspace.availableOffline ? cloudDone : cloudOffline"
           />
         </ion-text>
-
         <ion-text
           class="workspace-card-content__size body-sm"
           v-if="false"
         >
           {{ $msTranslate(formatFileSize(workspace.size)) }}
         </ion-text>
+
+        <div
+          class="workspace-hidden subtitles-sm"
+          v-if="isHidden"
+        >
+          <ion-icon
+            class="cloud-overlay"
+            :icon="eyeOff"
+          />
+          <ion-text>{{ $msTranslate('WorkspacesPage.Workspace.hidden') }}</ion-text>
+        </div>
       </div>
     </div>
     <div class="workspace-card-bottom">
@@ -81,7 +94,7 @@ import { formatFileSize } from '@/common/file';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal, shareSocial, star } from 'ionicons/icons';
+import { cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
 import { formatTimeSince } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -92,6 +105,7 @@ const props = defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
   isFavorite: boolean;
+  isHidden: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -180,6 +194,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   flex-direction: column;
   gap: 0.75rem;
   overflow: hidden;
+  position: relative;
 
   &__title {
     color: var(--parsec-color-light-primary-900);
@@ -188,6 +203,8 @@ async function onOptionsClick(event: Event): Promise<void> {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    align-items: center;
+    gap: 0.5rem;
     margin-right: 1.125rem;
 
     ion-text {
@@ -218,6 +235,21 @@ async function onOptionsClick(event: Event): Promise<void> {
 
     .cloud-overlay-ko {
       color: var(--parsec-color-light-secondary-grey);
+    }
+  }
+
+  .workspace-hidden {
+    background: var(--parsec-color-light-secondary-white);
+    color: var(--parsec-color-light-secondary-contrast);
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 3px 0.5rem;
+    border-radius: var(--parsec-radius-8);
+
+    ion-icon {
+      font-size: 0.875rem;
     }
   }
 
@@ -276,6 +308,17 @@ async function onOptionsClick(event: Event): Promise<void> {
 
     @include ms.responsive-breakpoint('sm') {
       padding: 0 0.25rem;
+    }
+  }
+}
+
+.workspace-card-item--hidden {
+  .workspace-card-content {
+    opacity: 0.9;
+    filter: brightness(0.85);
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-premiere) !important;
     }
   }
 }

@@ -32,7 +32,7 @@ import {
   WorkspaceRole,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { WorkspaceStopError, libparsec } from '@/plugins/libparsec';
+import { MountpointUnmountError, WorkspaceStopError, libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
@@ -240,13 +240,33 @@ export async function mountWorkspace(
   const startedWorkspaceResult = await getWorkspaceInfo(workspaceHandle);
   if (!startedWorkspaceResult.ok) {
     console.error(`Failed to get started workspace info: ${startedWorkspaceResult.error}`);
-    return { ok: false, error: { tag: WorkspaceMountErrorTag.Internal, error: '' } };
+    return { ok: false, error: { tag: WorkspaceMountErrorTag.Internal, error: startedWorkspaceResult.error.error } };
   } else {
     if (startedWorkspaceResult.value.mountpoints.length > 0) {
       return { ok: true, value: startedWorkspaceResult.value.mountpoints[0] };
     }
   }
   return await libparsec.workspaceMount(workspaceHandle);
+}
+
+export async function unmountWorkspace(workspace: WorkspaceInfo | StartedWorkspaceInfo): Promise<Result<null, MountpointUnmountError>> {
+  let error: MountpointUnmountError | null = null;
+
+  for (let i = workspace.mountpoints.length - 1; i >= 0; i--) {
+    const result = await libparsec.mountpointUnmount(workspace.mountpoints[i][0]);
+
+    if (result.ok) {
+      workspace.mountpoints.splice(i, 1);
+    } else {
+      error = result.error;
+    }
+  }
+
+  if (error) {
+    return generateNoHandleError<MountpointUnmountError>();
+  }
+
+  return { ok: true, value: null };
 }
 
 export async function getPathLink(

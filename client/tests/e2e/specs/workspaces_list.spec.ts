@@ -255,6 +255,97 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await favoriteWorkspacesButton.click({ force: true });
     await verifyActiveCategory(workspaces, 2);
   });
+
+  msTest(`Show/hide workspace ${displaySize} display`, async ({ workspaces }) => {
+    if (displaySize === DisplaySize.Small) {
+      await workspaces.setDisplaySize(DisplaySize.Small);
+    }
+
+    let showHiddenWorkspace;
+
+    if (displaySize === DisplaySize.Large) {
+      showHiddenWorkspace = workspaces.locator('.workspace-filters-menu').locator('#show-hidden-workspaces-large');
+    } else {
+      showHiddenWorkspace = workspaces.locator('.mobile-filters-buttons').locator('#show-hidden-workspaces-small');
+    }
+    await expect(showHiddenWorkspace).toHaveState('unchecked');
+
+    const workspaceCard = workspaces.locator('.workspace-card-item').nth(0);
+    await workspaceCard.click({ button: 'right' });
+    let popover;
+    if (displaySize === DisplaySize.Large) {
+      popover = workspaces.locator('#workspace-context-menu');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('group')).toHaveCount(3);
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Manage workspace',
+        'Rename',
+        'History',
+        'Hide this workspace',
+        'Collaboration',
+        'Copy link',
+        'Sharing and roles',
+        'Miscellaneous',
+        'Pin',
+      ]);
+      await popover.getByRole('listitem').nth(3).click();
+    } else {
+      popover = workspaces.locator('.workspace-context-sheet-modal');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Rename',
+        'History',
+        'Hide this workspace',
+        'Copy link',
+        'Sharing and roles',
+        'Pin',
+      ]);
+      await popover.getByRole('listitem').nth(2).click();
+    }
+
+    await expect(workspaces).toShowToast('The workspace is now hidden in Parsec.', 'Success');
+
+    await expect(workspaceCard).toBeHidden();
+    await expect(showHiddenWorkspace).toBeVisible();
+    await expect(showHiddenWorkspace).toHaveState('unchecked');
+    await showHiddenWorkspace.click();
+    await expect(showHiddenWorkspace).toHaveState('checked');
+    await expect(workspaceCard.locator('.workspace-hidden')).toHaveText('Hidden');
+    await expect(workspaceCard).toBeVisible();
+
+    await workspaceCard.click({ button: 'right' });
+    await expect(popover).toBeVisible();
+    if (displaySize === DisplaySize.Large) {
+      popover = workspaces.locator('#workspace-context-menu');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('group')).toHaveCount(3);
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Manage workspace',
+        'Rename',
+        'History',
+        'Show this workspace',
+        'Collaboration',
+        'Copy link',
+        'Sharing and roles',
+        'Miscellaneous',
+        'Pin',
+      ]);
+      await popover.getByRole('listitem').nth(3).click();
+    } else {
+      popover = workspaces.locator('.workspace-context-sheet-modal');
+      await expect(popover).toBeVisible();
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Rename',
+        'History',
+        'Show this workspace',
+        'Copy link',
+        'Sharing and roles',
+        'Pin',
+      ]);
+      await popover.getByRole('listitem').nth(2).click();
+    }
+    await expect(workspaces).toShowToast('The workspace is now visible in Parsec.', 'Success');
+  });
 }
 
 for (const gridMode of [false, true]) {

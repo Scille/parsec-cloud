@@ -48,6 +48,7 @@ enum Events {
   EntryRenamed = 1 << 25,
   EntryDeleted = 1 << 26,
   EntrySyncProgress = 1 << 27,
+  WorkspaceMountpointsSync = 1 << 28,
 }
 
 interface WorkspaceCreatedData {
@@ -124,6 +125,11 @@ interface EntryDeletedData {
   path: FsPath;
 }
 
+interface WorkspaceMountpointInfo {
+  workspaceId: WorkspaceID;
+  isMounted: boolean;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -138,7 +144,8 @@ type EventData =
   | DeviceCreatedData
   | WorkspaceRoleUpdateData
   | EntryRenamedData
-  | EntryDeletedData;
+  | EntryDeletedData
+  | WorkspaceMountpointInfo;
 
 interface Callback {
   id: string;
@@ -230,5 +237,6 @@ export {
   MenuActionData,
   UpdateAvailabilityData,
   WorkspaceCreatedData,
+  WorkspaceMountpointInfo,
   WorkspaceRoleUpdateData,
 };
