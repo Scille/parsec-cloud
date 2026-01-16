@@ -160,7 +160,6 @@ pub use shared::create_local_pending;
 
 pub use platform::is_available;
 
-pub use errors::VerifyCertificateError;
 pub use shared::verify_certificate;
 pub use webpki::KeyUsage;
 
