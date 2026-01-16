@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_tests_lite::rstest::rstest;
-use libparsec_types::DateTime;
 use rustls_pki_types::CertificateDer;
 use webpki::KeyUsage;
+
+use libparsec_tests_lite::prelude::*;
+use libparsec_types::prelude::*;
 
 use crate::{
     test_fixture::{test_pki, TestPKI},

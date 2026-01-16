@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_types::anyhow;
+use bytes::Bytes;
 use rustls_pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer};
 use std::collections::HashMap;
 
-use bytes::Bytes;
+use libparsec_types::prelude::*;
 
 use crate::x509::X509CertificateInformation;
 

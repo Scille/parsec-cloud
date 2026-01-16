@@ -1,10 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use super::schannel_utils;
-use libparsec_types::X509WindowsCngURI;
+
 use schannel::{cert_context::CertContext, cert_store::CertStore};
 use std::os::raw::c_void;
 use windows_sys::Win32::Security::Cryptography;
+
+use libparsec_types::prelude::*;
 
 /// Possible filter to use
 /// A detailed list can be found here:

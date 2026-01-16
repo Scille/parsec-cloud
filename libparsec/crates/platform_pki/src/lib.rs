@@ -14,7 +14,7 @@ pub use test_fixture::*;
 #[path = "../tests/units/mod.rs"]
 mod test;
 
-use libparsec_types::{PKIEncryptionAlgorithm, PkiSignatureAlgorithm, X509CertificateReference};
+use libparsec_types::prelude::*;
 
 use bytes::Bytes;
 
