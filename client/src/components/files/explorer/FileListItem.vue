@@ -3,8 +3,7 @@
 <template>
   <file-drop-zone
     :disabled="disableDrop || entry.isFile()"
-    :current-path="currentPath"
-    @files-added="$emit('filesAdded', $event)"
+    @files-added="$emit('filesAdded', $event, !entry.isFile() ? entry.name : undefined)"
     :is-reader="isWorkspaceReader"
     class="drop-zone-item"
     @drop-as-reader="$emit('dropAsReader')"
@@ -139,13 +138,12 @@
 import { formatFileSize, getFileIcon } from '@/common/file';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryModel, EntrySyncStatus, FileModel } from '@/components/files/types';
-import { FileImportTuple } from '@/components/files/utils';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { FsPath, Path, UserProfile } from '@/parsec';
+import { EntryName, UserProfile } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, cloudUpload, ellipsisHorizontal } from 'ionicons/icons';
 import { Folder, formatTimeSince, MsCheckbox, MsImage, useWindowSize } from 'megashark-lib';
-import { computed, onMounted, Ref, ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
@@ -164,7 +162,7 @@ const emits = defineEmits<{
   (e: 'click', event: Event, entry: EntryModel): void;
   (e: 'openItem', event: Event, entry: EntryModel): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
-  (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'filesAdded', files: Array<File>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
   (e: 'update:modelValue', value: boolean): void;
 }>();
@@ -174,7 +172,6 @@ defineExpose({
   props,
 });
 
-const currentPath: Ref<FsPath> = ref('/');
 const syncStatus = computed(() => {
   switch (props.entry.syncStatus) {
     case EntrySyncStatus.Synced:
@@ -183,14 +180,6 @@ const syncStatus = computed(() => {
       return { class: 'cloud-overlay-ko', icon: cloudUpload };
     default:
       return { class: 'cloud-overlay-ko', icon: cloudOffline };
-  }
-});
-
-onMounted(async () => {
-  if (props.entry.isFile()) {
-    currentPath.value = await Path.parent(props.entry.path);
-  } else {
-    currentPath.value = props.entry.path;
   }
 });
 

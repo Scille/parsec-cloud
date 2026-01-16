@@ -1040,3 +1040,9 @@
     }
   }
 }
+
+.file-operation-conflicts-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-md);
+  }
+}

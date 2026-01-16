@@ -16,45 +16,33 @@
       </ion-title>
 
       <ion-text class="card-content-last-update body-sm">
-        <span>{{ $msTranslate(getFileOperationLabel()) }}</span>
+        <span>{{ $msTranslate(operationLabel) }}</span>
       </ion-text>
     </div>
   </ion-item>
 </template>
 
 <script setup lang="ts">
-import { EntryName, Path } from '@/parsec';
-import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperationManager';
+import { EntryName } from '@/parsec';
+import { FileOperationDataType } from '@/services/fileOperation';
 import { IonAvatar, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
 import { document as documentIcon } from 'ionicons/icons';
 import { MsSpinner, Translatable } from 'megashark-lib';
-import { onMounted, ref, Ref } from 'vue';
 
 const props = defineProps<{
-  data: FileOperationData;
+  operationType: FileOperationDataType;
+  fileName: EntryName;
   progress: number;
 }>();
 
-const fileName: Ref<EntryName> = ref('');
-
-onMounted(async () => {
-  if (props.data.getDataType() === FileOperationDataType.Import) {
-    fileName.value = (props.data as ImportData).file.name;
-  } else if (props.data.getDataType() === FileOperationDataType.Copy) {
-    fileName.value = (await Path.filename((props.data as CopyData).srcPath)) || '';
-  } else if (props.data.getDataType() === FileOperationDataType.Move) {
-    fileName.value = (await Path.filename((props.data as CopyData).dstPath)) || '';
-  }
-});
-
-function getFileOperationLabel(): Translatable {
-  if (props.data.getDataType() === FileOperationDataType.Copy) {
+const operationLabel: Translatable = (() => {
+  if (props.operationType === FileOperationDataType.Copy) {
     return 'FoldersPage.File.copying';
-  } else if (props.data.getDataType() === FileOperationDataType.Move) {
+  } else if (props.operationType === FileOperationDataType.Move) {
     return 'FoldersPage.File.moving';
   }
   return 'FoldersPage.File.importing';
-}
+})();
 </script>
 
 <style lang="scss" scoped>
