@@ -112,8 +112,19 @@ const workspaceMenuList = computed(() => [
 
     @include ms.responsive-breakpoint('lg') {
       flex-basis: auto;
+      min-width: auto;
       width: calc(100% / 3);
       text-align: center;
+    }
+
+    @include ms.responsive-breakpoint('lg') {
+      padding: 0.375rem 0.75rem;
+    }
+
+    &__text {
+      @include ms.responsive-breakpoint('sm') {
+        font-size: 0.9375rem !important;
+      }
     }
 
     &:not(.active):hover {

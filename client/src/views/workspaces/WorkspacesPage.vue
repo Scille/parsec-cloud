@@ -541,6 +541,10 @@ const filteredWorkspaces = computed(() => {
   const filter = searchFilterContent.value.toLocaleLowerCase();
   return Array.from(workspaceList.value)
     .filter((workspace) => {
+      if (!hiddenWorkspaces.value && workspaceAttributes.isHidden(workspace.id)) {
+        return false;
+      }
+
       switch (workspaceMenuState.value) {
         case WorkspaceMenu.Recents:
           return recentDocumentManager.getWorkspaces().find((workspaceRecents) => workspaceRecents.id === workspace.id) !== undefined;
@@ -551,9 +555,6 @@ const filteredWorkspaces = computed(() => {
       }
 
       if (!workspace.currentName.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.currentSelfRole)) {
-        return false;
-      }
-      if (!hiddenWorkspaces.value && workspaceAttributes.isHidden(workspace.id)) {
         return false;
       }
       return true;
