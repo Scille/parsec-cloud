@@ -7,8 +7,10 @@ use std::{
 };
 
 use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
+use libparsec_platform_filesystem::save_content;
 use libparsec_types::prelude::*;
 
+use crate::SaveDeviceError;
 use crate::{
     web::wrapper::{DirEntry, DirOrFileHandle, OpenOptions},
     AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
@@ -115,7 +117,6 @@ impl Storage {
     }
 
     pub(crate) async fn save_device(
-        &self,
         strategy: &DeviceSaveStrategy,
         key_file: PathBuf,
         device: &LocalDevice,
@@ -145,7 +146,7 @@ impl Storage {
                     ciphertext,
                 });
 
-                self.save_device_file(&key_file, &file_data).await?;
+                save_content(&key_file, &file_data.dump()).await?
             }
 
             DeviceSaveStrategy::AccountVault { operations } => {
@@ -182,7 +183,7 @@ impl Storage {
                     ciphertext,
                 });
 
-                self.save_device_file(&key_file, &file_data).await?;
+                save_content(&key_file, &file_data.dump()).await?
             }
 
             DeviceSaveStrategy::OpenBao { operations } => {
@@ -222,7 +223,7 @@ impl Storage {
                     ciphertext,
                 });
 
-                self.save_device_file(&key_file, &file_data).await?;
+                save_content(&key_file, &file_data.dump()).await?
             }
 
             DeviceSaveStrategy::Keyring { .. } => panic!("Keyring not supported on Web"),
@@ -241,39 +242,6 @@ impl Storage {
             device_label: device.device_label.clone(),
             ty: strategy.ty(),
         })
-    }
-
-    pub(crate) async fn save_device_file(
-        &self,
-        key: &Path,
-        file_data: &DeviceFile,
-    ) -> Result<(), SaveRawDataError> {
-        let data = file_data.dump();
-        self.save_raw_data(key, &data).await
-    }
-
-    pub(crate) async fn save_raw_data(
-        &self,
-        path: &Path,
-        data: &[u8],
-    ) -> Result<(), SaveRawDataError> {
-        log::trace!("Saving device file at {}", path.display());
-        let parent = if let Some(parent) = path.parent() {
-            Some(self.root_dir.create_dir_all(parent).await?)
-        } else {
-            None
-        };
-        let file = parent
-            .as_ref()
-            .unwrap_or(&self.root_dir)
-            .get_file(
-                path.file_name()
-                    .and_then(std::ffi::OsStr::to_str)
-                    .expect("Missing filename"),
-                Some(OpenOptions::create()),
-            )
-            .await?;
-        file.write_all(&data).await.map_err(Into::into)
     }
 
     pub(crate) async fn archive_device(&self, path: &Path) -> Result<(), ArchiveDeviceError> {
@@ -309,15 +277,6 @@ impl Storage {
             .remove_entry_from_path(path)
             .await
             .map_err(Into::into)
-    }
-
-    pub(crate) async fn save_pki_local_pending(
-        &self,
-        local_file: PathBuf,
-        file_data: PKILocalPendingEnrollment,
-    ) -> Result<(), SaveRawDataError> {
-        let data = file_data.dump();
-        self.save_raw_data(&local_file, &data).await
     }
 
     pub(crate) async fn list_pki_local_pending(

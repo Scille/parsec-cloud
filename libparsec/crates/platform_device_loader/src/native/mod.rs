@@ -3,6 +3,7 @@
 use itertools::Itertools as _;
 use keyring::Entry as KeyringEntry;
 use libparsec_platform_async::{future::FutureExt as _, stream::StreamExt as _};
+use libparsec_platform_filesystem::save_content;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
@@ -13,8 +14,7 @@ use crate::{
     ListAvailableDeviceError, ListPendingAsyncEnrollmentsError, ListPkiLocalPendingError,
     LoadCiphertextKeyError, LoadDeviceError, LoadPendingAsyncEnrollmentError,
     OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError, ReadFileError,
-    RemoteOperationServer, RemoveDeviceError, SaveAsyncEnrollmentLocalPendingError,
-    SaveDeviceError, SavePkiLocalPendingError, UpdateDeviceError, DEVICE_FILE_EXT,
+    RemoteOperationServer, RemoveDeviceError, SaveDeviceError, UpdateDeviceError, DEVICE_FILE_EXT,
     LOCAL_PENDING_EXT,
 };
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
@@ -248,44 +248,6 @@ pub(super) async fn load_ciphertext_key(
             }
         }
     }
-}
-
-async fn save_content(key_file: &Path, file_content: &[u8]) -> Result<(), SaveDeviceError> {
-    if let Some(parent) = key_file.parent() {
-        tokio::fs::create_dir_all(parent)
-            .await
-            .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
-    }
-    let tmp_path = match key_file.file_name() {
-        Some(file_name) => {
-            let mut tmp_path = key_file.to_owned();
-            {
-                let mut tmp_file_name = file_name.to_owned();
-                tmp_file_name.push(".tmp");
-                tmp_path.set_file_name(tmp_file_name);
-            }
-            tmp_path
-        }
-        None => {
-            return Err(SaveDeviceError::InvalidPath(anyhow::anyhow!(
-                "Path is missing a file name"
-            )))
-        }
-    };
-
-    // Classic pattern for atomic file creation:
-    // - First write the file in a temporary location
-    // - Then move the file to it final location
-    // This way a crash during file write won't end up with a corrupted
-    // file in the final location.
-    tokio::fs::write(&tmp_path, file_content)
-        .await
-        .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
-    tokio::fs::rename(&tmp_path, key_file)
-        .await
-        .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
-
-    Ok(())
 }
 
 async fn generate_keyring_user(
@@ -539,19 +501,7 @@ pub(super) async fn update_device(
     new_key_file: &Path,
 ) -> Result<AvailableDevice, UpdateDeviceError> {
     let available_device =
-        save_device(new_strategy, device, created_on, new_key_file.to_path_buf())
-            .await
-            .map_err(|err| match err {
-                SaveDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-                SaveDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
-                SaveDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
-                SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
-                    UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
-                }
-                SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
-                    UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
-                }
-            })?;
+        save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
 
     if current_key_file != new_key_file {
         if let Err(err) = tokio::fs::remove_file(current_key_file).await {
@@ -608,16 +558,6 @@ pub(super) fn is_keyring_available() -> bool {
     }
 }
 
-pub(super) async fn save_pki_local_pending(
-    local_pending: PKILocalPendingEnrollment,
-    local_file: PathBuf,
-) -> Result<(), SavePkiLocalPendingError> {
-    let file_content = local_pending.dump();
-    save_content(&local_file, &file_content)
-        .await
-        .map_err(Into::into)
-}
-
 pub(super) async fn list_pki_local_pending(
     config_dir: &Path,
 ) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
@@ -671,13 +611,6 @@ async fn load_pki_pending_file(path: &Path) -> Result<PKILocalPendingEnrollment,
     PKILocalPendingEnrollment::load(&content)
         .inspect_err(|err| log::debug!("Failed to load pki pending file {}: {err}", path.display()))
         .map_err(|_| LoadFileError::InvalidData)
-}
-
-pub(super) async fn save_pending_async_enrollment(
-    content: &[u8],
-    file_path: &Path,
-) -> Result<(), SaveAsyncEnrollmentLocalPendingError> {
-    save_content(file_path, content).await.map_err(Into::into)
 }
 
 pub(super) async fn load_pending_async_enrollment(

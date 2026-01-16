@@ -3,18 +3,16 @@
 pub(crate) mod error;
 pub(crate) mod internal;
 pub(crate) mod wrapper;
-
-use std::path::{Path, PathBuf};
-
+use anyhow::anyhow;
 use libparsec_types::prelude::*;
+use std::path::{Path, PathBuf};
 
 use crate::{
     AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
     AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
     ListAvailableDeviceError, ListPendingAsyncEnrollmentsError, ListPkiLocalPendingError,
     LoadCiphertextKeyError, LoadPendingAsyncEnrollmentError, OpenBaoOperationsFetchOpaqueKeyError,
-    ReadFileError, RemoteOperationServer, RemoveDeviceError, SaveAsyncEnrollmentLocalPendingError,
-    SaveDeviceError, SavePkiLocalPendingError, UpdateDeviceError,
+    ReadFileError, RemoteOperationServer, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
 };
 use error::ListFileEntriesError;
 use internal::Storage;
@@ -148,13 +146,7 @@ pub(super) async fn save_device(
     created_on: DateTime,
     key_file: PathBuf,
 ) -> Result<AvailableDevice, SaveDeviceError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(SaveDeviceError::StorageNotAvailable);
-    };
-    storage
-        .save_device(strategy, key_file, device, created_on)
+    Storage::save_device(strategy, key_file, device, created_on)
         .await
         .map_err(Into::into)
 }
@@ -169,17 +161,18 @@ pub(super) async fn update_device(
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
-        return Err(UpdateDeviceError::StorageNotAvailable);
+        return Err(UpdateDeviceError::Internal(anyhow!(
+            "storage not available"
+        ))); // TODO # 11995
     };
 
-    let available_device = storage
-        .save_device(
-            new_strategy,
-            new_key_file.to_path_buf(),
-            &device,
-            created_on,
-        )
-        .await?;
+    let available_device = Storage::save_device(
+        new_strategy,
+        new_key_file.to_path_buf(),
+        &device,
+        created_on,
+    )
+    .await?;
 
     if current_key_file != new_key_file {
         if let Err(err) = storage.remove_device(current_key_file).await {
@@ -211,21 +204,6 @@ pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDevice
     storage.remove_device(device_path).await.map_err(Into::into)
 }
 
-pub(super) async fn save_pki_local_pending(
-    local_pending: PKILocalPendingEnrollment,
-    local_file: PathBuf,
-) -> Result<(), SavePkiLocalPendingError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(SavePkiLocalPendingError::StorageNotAvailable);
-    };
-    storage
-        .save_pki_local_pending(local_file, local_pending)
-        .await
-        .map_err(Into::into)
-}
-
 pub(super) async fn list_pki_local_pending(
     config_dir: &Path,
 ) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
@@ -244,26 +222,6 @@ pub(super) async fn list_pki_local_pending(
             log::error!("Failed to list available devices: {e}");
         })
         .map_err(|e| ListPkiLocalPendingError::Internal(anyhow::anyhow!("{e}")))
-}
-
-pub(super) async fn save_pending_async_enrollment(
-    content: &[u8],
-    file_path: &Path,
-) -> Result<(), SaveAsyncEnrollmentLocalPendingError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(SaveAsyncEnrollmentLocalPendingError::StorageNotAvailable);
-    };
-
-    storage
-        .save_raw_data(file_path, content)
-        .await
-        .map_err(|err| {
-            SaveAsyncEnrollmentLocalPendingError::InvalidPath(anyhow::anyhow!("{err}"))
-        })?;
-
-    Ok(())
 }
 
 pub(super) async fn load_pending_async_enrollment(

@@ -143,11 +143,8 @@ pub async fn submit_async_enrollment(
     )
     .await
     .map_err(|err| match err {
-        SaveAsyncEnrollmentLocalPendingError::StorageNotAvailable => {
-            SubmitAsyncEnrollmentError::StorageNotAvailable
-        }
-        SaveAsyncEnrollmentLocalPendingError::InvalidPath(err) => {
-            SubmitAsyncEnrollmentError::InvalidPath(err)
+        SaveAsyncEnrollmentLocalPendingError::SaveContentError(e) => {
+            SubmitAsyncEnrollmentError::Internal(e.into()) // TODO #11955
         }
         SaveAsyncEnrollmentLocalPendingError::Internal(err) => {
             SubmitAsyncEnrollmentError::Internal(err)

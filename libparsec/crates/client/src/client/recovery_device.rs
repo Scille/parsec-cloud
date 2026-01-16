@@ -189,8 +189,7 @@ impl From<RegisterNewDeviceError> for ImportRecoveryDeviceError {
 impl From<SaveDeviceError> for ImportRecoveryDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
-            SaveDeviceError::StorageNotAvailable => ImportRecoveryDeviceError::StorageNotAvailable,
-            SaveDeviceError::InvalidPath(error) => ImportRecoveryDeviceError::InvalidPath(error),
+            SaveDeviceError::SaveContentError(e) => ImportRecoveryDeviceError::Internal(e.into()), // TODO #11955
             SaveDeviceError::Internal(error) => ImportRecoveryDeviceError::Internal(error),
             SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
                 ImportRecoveryDeviceError::RemoteOpaqueKeyUploadOffline { server, error }

@@ -164,12 +164,10 @@ pub async fn bootstrap_organization(
         .await
         .inspect_err(|e| log::error!("Error while saving device: {e}"))
         .map_err(|err| match err {
-            SaveDeviceError::StorageNotAvailable => {
-                BootstrapOrganizationError::SaveDeviceStorageNotAvailable
+            SaveDeviceError::SaveContentError(e) => {
+                BootstrapOrganizationError::Internal(e.into()) // TODO #11955
             }
-            SaveDeviceError::InvalidPath(err) => {
-                BootstrapOrganizationError::SaveDeviceInvalidPath(err)
-            }
+
             SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
                 BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadOffline { server, error }
             }

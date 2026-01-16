@@ -4,8 +4,6 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-#[cfg(not(target_arch = "wasm32"))]
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::{
@@ -16,47 +14,6 @@ use crate::{
 use libparsec_client_connection::ConnectionError;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
-
-#[cfg(not(target_arch = "wasm32"))]
-enum BadPathKind {
-    PathIsDir,
-    TmpPathIsDir,
-    PathIsRoot,
-    PathHasNoName,
-}
-
-// Wasm impl do not use a filesystem, so we do not have invalidPath error except if the path
-// contain invalid utf-8 char.
-#[cfg(not(target_arch = "wasm32"))]
-#[parsec_test(testbed = "minimal")]
-#[case::path_is_dir(BadPathKind::PathIsDir)]
-#[case::path_is_dir(BadPathKind::TmpPathIsDir)]
-#[case::path_is_root(BadPathKind::PathIsRoot)]
-#[case::path_has_no_name(BadPathKind::PathHasNoName)]
-async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind, env: &TestbedEnv) {
-    let key_file = match kind {
-        BadPathKind::PathIsDir => {
-            let path = tmp_path.join("devices/my_device.keys");
-            std::fs::create_dir_all(&path).unwrap();
-            path
-        }
-        BadPathKind::TmpPathIsDir => {
-            let path = tmp_path.join("devices/my_device.keys");
-            let tmp_path = tmp_path.join("devices/my_device.keys.tmp");
-            std::fs::create_dir_all(tmp_path).unwrap();
-            path
-        }
-        BadPathKind::PathIsRoot => PathBuf::from("/"),
-        BadPathKind::PathHasNoName => tmp_path.join("devices/my_device.keys/.."),
-    };
-
-    let device = env.local_device("alice@dev1");
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
-    };
-    let outcome = save_device(&tmp_path, &save_strategy, &device, key_file).await;
-    p_assert_matches!(outcome, Err(SaveDeviceError::InvalidPath(_)));
-}
 
 #[parsec_test(testbed = "minimal")]
 async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {

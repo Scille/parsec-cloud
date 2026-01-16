@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod strategy;
+use libparsec_platform_filesystem::{save_content, SaveContentError};
 pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
@@ -317,10 +318,8 @@ pub async fn load_device(
 
 #[derive(Debug, thiserror::Error)]
 pub enum SaveDeviceError {
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
     #[error(transparent)]
-    InvalidPath(anyhow::Error),
+    SaveContentError(#[from] SaveContentError),
     /// Note only a subset of save strategies requires server access to
     /// upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -363,10 +362,12 @@ pub async fn save_device(
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateDeviceError {
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
+    // #[error(transparent)]
+    // ReadContentError(#[from] ReadContentError),
+    #[error("todo #12005")]
+    ReadContentError,
     #[error(transparent)]
-    InvalidPath(anyhow::Error),
+    SaveContentError(#[from] SaveContentError),
     #[error("Cannot deserialize file content")]
     InvalidData,
     #[error("Failed to decrypt file content")]
@@ -394,6 +395,23 @@ pub enum UpdateDeviceError {
     Internal(anyhow::Error),
 }
 
+impl From<SaveDeviceError> for UpdateDeviceError {
+    fn from(value: SaveDeviceError) -> Self {
+        match value {
+            SaveDeviceError::SaveContentError(save_content_error) => {
+                UpdateDeviceError::SaveContentError(save_content_error)
+            }
+            SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
+            }
+            SaveDeviceError::RemoteOpaqueKeyUploadFailed { server, error } => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
+            }
+            SaveDeviceError::Internal(error) => UpdateDeviceError::Internal(error),
+        }
+    }
+}
+
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn update_device_change_authentication(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
@@ -415,8 +433,8 @@ pub async fn update_device_change_authentication(
     let file_content = platform::read_file(current_key_file)
         .await
         .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
+            ReadFileError::StorageNotAvailable => UpdateDeviceError::ReadContentError, // TODO #12005
+            ReadFileError::InvalidPath(_) => UpdateDeviceError::ReadContentError, // TODO #12005
         })?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
@@ -462,8 +480,8 @@ pub async fn update_device_overwrite_server_addr(
     let available_device = load_available_device(config_dir, key_file.to_owned())
         .await
         .map_err(|err| match err {
-            LoadAvailableDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            LoadAvailableDeviceError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
+            LoadAvailableDeviceError::StorageNotAvailable => UpdateDeviceError::ReadContentError, // TODO #12005
+            LoadAvailableDeviceError::InvalidPath(_) => UpdateDeviceError::ReadContentError,
             LoadAvailableDeviceError::InvalidData => UpdateDeviceError::InvalidData,
             LoadAvailableDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
         })?;
@@ -489,8 +507,8 @@ pub async fn update_device_overwrite_server_addr(
     let file_content = platform::read_file(key_file)
         .await
         .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(err) => UpdateDeviceError::InvalidPath(err),
+            ReadFileError::StorageNotAvailable => UpdateDeviceError::ReadContentError, // TODO #12005
+            ReadFileError::InvalidPath(_) => UpdateDeviceError::ReadContentError,
         })?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
@@ -807,23 +825,10 @@ fn decrypt_device_file(
 
 #[derive(Debug, thiserror::Error)]
 pub enum SavePkiLocalPendingError {
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
     #[error(transparent)]
-    InvalidPath(anyhow::Error),
+    SaveContentError(#[from] SaveContentError),
     #[error(transparent)]
     Internal(anyhow::Error),
-}
-
-impl From<SaveDeviceError> for SavePkiLocalPendingError {
-    fn from(value: SaveDeviceError) -> Self {
-        match value {
-            SaveDeviceError::StorageNotAvailable => Self::StorageNotAvailable,
-            SaveDeviceError::InvalidPath(error) => Self::InvalidPath(error),
-            SaveDeviceError::Internal(error) => Self::Internal(error),
-            _ => unreachable!(),
-        }
-    }
 }
 
 pub async fn save_pki_local_pending(
@@ -834,7 +839,8 @@ pub async fn save_pki_local_pending(
         "Saving pki enrollment local pending file at {}",
         local_file.display()
     );
-    platform::save_pki_local_pending(local_pending, local_file).await
+    let data = local_pending.dump();
+    Ok(save_content(&local_file, &data).await?)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -853,23 +859,10 @@ pub async fn list_pki_local_pending(
 
 #[derive(Debug, thiserror::Error)]
 pub enum SaveAsyncEnrollmentLocalPendingError {
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
     #[error(transparent)]
-    InvalidPath(anyhow::Error),
+    SaveContentError(#[from] SaveContentError),
     #[error(transparent)]
     Internal(anyhow::Error),
-}
-
-impl From<SaveDeviceError> for SaveAsyncEnrollmentLocalPendingError {
-    fn from(value: SaveDeviceError) -> Self {
-        match value {
-            SaveDeviceError::StorageNotAvailable => Self::StorageNotAvailable,
-            SaveDeviceError::InvalidPath(error) => Self::InvalidPath(error),
-            SaveDeviceError::Internal(error) => Self::Internal(error),
-            _ => unreachable!(),
-        }
-    }
 }
 
 pub async fn save_pending_async_enrollment(
@@ -915,7 +908,7 @@ pub async fn save_pending_async_enrollment(
     }
 
     if !saved {
-        platform::save_pending_async_enrollment(&raw_content, &file_path).await?;
+        save_content(&file_path, &raw_content).await?;
     }
 
     let identity_system = match cleartext_content.identity_system {

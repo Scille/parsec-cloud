@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use crate::SaveContentError;
 use std::path::PathBuf;
 use web_sys::wasm_bindgen::JsValue;
 
@@ -100,6 +101,8 @@ pub enum WriteAllError {
     NotFound(PathBuf),
 }
 
+pub type NewStorageError = GetRootDirectoryError;
+
 impl From<GetDirectoryHandleError> for GetFileHandleError {
     fn from(e: GetDirectoryHandleError) -> Self {
         match e {
@@ -119,6 +122,65 @@ impl From<GetDirectoryHandleError> for RemoveEntryError {
             GetDirectoryHandleError::DomException(e) => RemoveEntryError::DomException(e),
             GetDirectoryHandleError::NotADirectory(e) => RemoveEntryError::NotADirectory(e),
             GetDirectoryHandleError::NotFound(e) => RemoveEntryError::NotFound(e),
+        }
+    }
+}
+
+impl From<WriteAllError> for SaveContentError {
+    fn from(e: WriteAllError) -> Self {
+        match e {
+            WriteAllError::Cast { .. }
+            | WriteAllError::DomException(..)
+            | WriteAllError::Close(..)
+            | WriteAllError::Write(..)
+            | WriteAllError::CreateWritable(..) => {
+                SaveContentError::Internal(anyhow::anyhow!("{e}"))
+            }
+            WriteAllError::NoSpaceLeft(..) => SaveContentError::NoSpaceLeft,
+            WriteAllError::CannotEdit { .. } => SaveContentError::CannotEdit,
+            WriteAllError::NotFound(..) => unreachable!("file should be created if not existing ?"),
+        }
+    }
+}
+
+impl From<GetFileHandleError> for SaveContentError {
+    fn from(e: GetFileHandleError) -> Self {
+        match e {
+            GetFileHandleError::Cast { .. }
+            | GetFileHandleError::DomException(..)
+            | GetFileHandleError::Promise(..) => SaveContentError::Internal(anyhow::anyhow!("{e}")),
+            GetFileHandleError::NotAFile(..) => SaveContentError::InvalidPath,
+            GetFileHandleError::NotFound(..) => {
+                unreachable!("file should be created if not existing ?")
+            }
+            GetFileHandleError::NotADirectory(..) => SaveContentError::InvalidParent,
+        }
+    }
+}
+
+impl From<GetDirectoryHandleError> for SaveContentError {
+    fn from(e: GetDirectoryHandleError) -> Self {
+        match e {
+            GetDirectoryHandleError::Cast { .. }
+            | GetDirectoryHandleError::DomException(..)
+            | GetDirectoryHandleError::Promise(..) => {
+                SaveContentError::Internal(anyhow::anyhow!("{e}"))
+            }
+            GetDirectoryHandleError::NotADirectory(..) => SaveContentError::InvalidParent,
+            GetDirectoryHandleError::NotFound(..) => SaveContentError::ParentNotFound,
+        }
+    }
+}
+
+impl From<GetRootDirectoryError> for SaveContentError {
+    fn from(e: GetRootDirectoryError) -> Self {
+        match e {
+            GetRootDirectoryError::Cast { .. } | GetRootDirectoryError::DomException(..) => {
+                SaveContentError::Internal(anyhow::anyhow!("{e}"))
+            }
+            GetRootDirectoryError::StorageNotAvailable { .. } => {
+                SaveContentError::StorageNotAvailable
+            }
         }
     }
 }
