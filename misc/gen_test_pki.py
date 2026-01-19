@@ -7,7 +7,7 @@ import subprocess
 from argparse import ArgumentParser, Namespace
 from collections.abc import Generator, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum, auto
 from pathlib import Path
 
@@ -19,10 +19,7 @@ SCRIPT_LAST_MODIFICATION = Path(__file__).stat().st_mtime
 
 
 def file_need_update(file: Path) -> bool:
-    try:
-        return file.stat().st_mtime < SCRIPT_LAST_MODIFICATION
-    except FileNotFoundError:
-        return True
+    return not file.exists()
 
 
 @dataclass
@@ -141,7 +138,7 @@ TRUSTCHAINS = [
         subject={COMMON_NAME: "Aperture Science CA", ORGANIZATION: "Aperture Science"},
         key_algorithm=RSAKeyAlgorithm(length=2048),
         not_before=not_before,
-        not_after=now + timedelta(hours=24),
+        not_after=not_after,
         extensions={BASIC_CONSTRAINTS: "CA:TRUE"},
         signing=[
             CertificateConfig(
@@ -230,7 +227,7 @@ def create_trustchain(chain: CertificateConfig, signer: CertificateConfig | None
         create_trustchain(children, chain, output_dir)
 
 
-def generate_self_signed_cert(chain, key_file: Path, cert_file: Path):
+def generate_self_signed_cert(chain: CertificateConfig, key_file: Path, cert_file: Path):
     check_run(
         [
             "openssl",
@@ -240,12 +237,22 @@ def generate_self_signed_cert(chain, key_file: Path, cert_file: Path):
             key_file,
             "-out",
             cert_file,
+            "-not_before",
+            format_date_for_openssl(chain.not_before),
+            "-not_after",
+            format_date_for_openssl(chain.not_after),
             "-subj",
             gen_subject_option_arg(chain.subject),
             "-batch",
             *gen_extensions_args(chain.extensions),
         ]
     )
+
+
+def format_date_for_openssl(date: datetime) -> str:
+    # cspell:ignore YYMMDDHHMMSSZ
+    """Openssl expect the date to be formatted in the follow schema: [CC]YYMMDDHHMMSSZ"""
+    return date.astimezone(UTC).strftime("%Y%m%d%H%M%SZ")
 
 
 def gen_subject_option_arg(subject: dict[str, str]) -> str:
@@ -273,6 +280,10 @@ def generate_signed_cert(
             key_file,
             "-out",
             csr_file,
+            "-not_before",
+            format_date_for_openssl(chain.not_before),
+            "-not_after",
+            format_date_for_openssl(chain.not_after),
             "-subj",
             gen_subject_option_arg(chain.subject),
             "-batch",
@@ -297,6 +308,11 @@ def generate_signed_cert(
             ca_cert,
             "-CAkey",
             ca_key,
+            # Not using "-preserve_dates" because during testing, it does not seems to be taken into account
+            "-not_before",
+            format_date_for_openssl(chain.not_before),
+            "-not_after",
+            format_date_for_openssl(chain.not_after),
             "-copy_extensions",
             "copyall",
         ]
