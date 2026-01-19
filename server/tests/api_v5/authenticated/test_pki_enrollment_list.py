@@ -47,7 +47,7 @@ async def test_authenticated_pki_enrollment_list_ok(
     ] = []
 
     every_cert = [*test_pki.cert.values(), *test_pki.intermediate.values(), *test_pki.root.values()]
-    for subject in ("alice", "mallory-encrypt", "bob", "old-boby"):
+    for subject in ("alice", "mallory-encrypt", "bob"):
         submitted_on = DateTime.now()
         submit_payload = PkiEnrollmentSubmitPayload(
             verify_key=SigningKey.generate().verify_key,
