@@ -2,6 +2,10 @@
 # RUST #
 ########
 
+test-pki: &test-pki
+  - libparsec/crates/platform_pki/test-pki/**/*.crt
+  - libparsec/crates/platform_pki/test-pki/**/*.key
+
 # Every non platform rust source files.
 libparsec-rust-not-platform: &libparsec-rust-not-platform libparsec/crates/!(platform_*)/src/**
 
@@ -71,6 +75,7 @@ rust-changes: &rust-changes
 rust-jobs:
   - .github/workflows/ci-rust.yml
   - *rust-changes
+  - *test-pki
 
 ##########
 # PYTHON #
@@ -114,6 +119,7 @@ python-jobs:
   - *libparsec-schema-file
   - *rust-toolchain
   - *rust-python-binding
+  - *test-pki
 
 #########
 # IONIC #
