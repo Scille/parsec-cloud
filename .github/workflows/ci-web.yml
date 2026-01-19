@@ -49,7 +49,7 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # pin v6.1.0
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238  # pin v6.2.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -101,7 +101,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -131,7 +131,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # pin v2.66.1
+      - uses: taiki-e/install-action@542cebaaed782771e619bd5609d97659d109c492 # pin v2.66.7
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
@@ -144,7 +144,7 @@ jobs:
 
       - name: Save libparsec to be reuse later
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
+        uses: actions/cache/save@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -187,7 +187,7 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         timeout-minutes: 2
 
-      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # pin v6.1.0
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # pin v6.2.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -207,7 +207,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
         with:
           # We use the cache setup by `test-web-app`
           fail-on-cache-miss: true
@@ -265,7 +265,7 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         timeout-minutes: 2
 
-      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f  # pin v6.1.0
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238  # pin v6.2.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
