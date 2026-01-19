@@ -58,6 +58,7 @@ export function setupContentSecurityPolicy(customScheme: string): void {
           'https://*.stripe.com',
           'https://m.stripe.network',
           'https://*.hcaptcha.com',
+          'https://*.parsec.cloud',
           ...(electronIsDev ? ['http://localhost:3000', 'http://safe.localhost:3000'] : []),
         ],
       },
@@ -92,15 +93,26 @@ export function setupContentSecurityPolicy(customScheme: string): void {
   // Parsec Cloud services
   rules.push(
     new CspRule({ host: /.+\.parsec\.cloud$/ }, customScheme, [
-      { type: CspDirective.DefaultSrc, sources: ['data:', 'blob:'] },
-      { type: CspDirective.ScriptSrc, sources: ["'unsafe-inline'", "'unsafe-eval'", 'https://*.stripe.com', 'https://hcaptcha.com'] },
+      { type: CspDirective.DefaultSrc, sources: ['data:', 'blob:', 'https://*.parsec.cloud'] },
+      {
+        type: CspDirective.ScriptSrc,
+        sources: ["'unsafe-inline'", "'unsafe-eval'", 'https://*.stripe.com', 'https://hcaptcha.com', 'https://*.parsec.cloud'],
+      },
       {
         type: CspDirective.ConnectSrc,
-        sources: ['wss://*.parsec.cloud', 'ws://*.parsec.cloud', 'data:', 'blob:', 'https://*.stripe.com', 'https://*.hcaptcha.com'],
+        sources: [
+          'wss://*.parsec.cloud',
+          'ws://*.parsec.cloud',
+          'data:',
+          'blob:',
+          'https://*.stripe.com',
+          'https://*.hcaptcha.com',
+          'https://*.parsec.cloud',
+        ],
       },
-      { type: CspDirective.ImgSrc, sources: ['data:', 'blob:', 'https://*.stripe.com'] },
-      { type: CspDirective.StyleSrc, sources: ["'unsafe-inline'", 'https://*.stripe.com'] },
-      { type: CspDirective.FontSrc, sources: ['data:'] },
+      { type: CspDirective.ImgSrc, sources: ['data:', 'blob:', 'https://*.stripe.com', 'https://*.parsec.cloud'] },
+      { type: CspDirective.StyleSrc, sources: ["'unsafe-inline'", 'https://*.stripe.com', 'https://*.parsec.cloud'] },
+      { type: CspDirective.FontSrc, sources: ['data:', 'https://*.parsec.cloud'] },
       {
         type: CspDirective.FrameSrc,
         sources: [
@@ -109,16 +121,17 @@ export function setupContentSecurityPolicy(customScheme: string): void {
           'https://*.stripe.com',
           'https://m.stripe.network',
           'https://*.hcaptcha.com',
+          'https://*.parsec.cloud',
           ...(electronIsDev ? ['http://localhost:3000', 'http://safe.localhost:3000'] : []),
         ],
       },
-      { type: CspDirective.WorkerSrc, sources: ['blob:', 'https://m.stripe.network'] },
+      { type: CspDirective.WorkerSrc, sources: ['blob:', 'https://m.stripe.network', 'https://*.parsec.cloud'] },
     ]),
   );
 
   // CryptPad sandbox - OnlyOffice specific path (needs unsafe-eval, must come before general safe.localhost rule)
   rules.push(
-    new CspRule({ host: /^safe\..+\.parsec\.cloud$/, path: /^\/common\/onlyoffice/ }, customScheme, [
+    new CspRule({ host: /^cryptpad-.+-safe\.parsec\.cloud$/, path: /^\/common\/onlyoffice/ }, customScheme, [
       { type: CspDirective.DefaultSrc, sources: ['http://safe.localhost:3000', 'data:', 'blob:'] },
       { type: CspDirective.FrameSrc, sources: ['http://safe.localhost:3000', 'http://localhost:3000', 'data:', 'blob:'] },
       {
@@ -138,7 +151,7 @@ export function setupContentSecurityPolicy(customScheme: string): void {
 
   // CryptPad sandbox (general rule)
   rules.push(
-    new CspRule({ host: /^safe\..+\.parsec\.cloud$/ }, customScheme, [
+    new CspRule({ host: /^cryptpad-.+-safe\.parsec\.cloud$/ }, customScheme, [
       { type: CspDirective.DefaultSrc, sources: ['http://safe.localhost:3000', 'data:', 'blob:'] },
       { type: CspDirective.FrameSrc, sources: ['http://safe.localhost:3000', 'http://localhost:3000', 'data:', 'blob:'] },
       { type: CspDirective.ScriptSrc, sources: ['http://safe.localhost:3000', 'http://localhost:3000', "'unsafe-inline'"] },
