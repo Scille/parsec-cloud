@@ -352,7 +352,6 @@ async def submitter_finalize_async_enrollment(
     config: ClientConfig,
     enrollment_file: Ref[Path],
     new_device_save_strategy: DeviceSaveStrategy,
-    new_device_key_file: Ref[Path],
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
 ) -> Result[AvailableDevice, SubmitterFinalizeAsyncEnrollmentError]:
     raise NotImplementedError
