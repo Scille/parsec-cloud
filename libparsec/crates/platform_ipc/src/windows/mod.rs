@@ -98,6 +98,5 @@ fn try_flock_exclusive(file: &File) -> std::io::Result<()> {
 }
 
 fn error_is_lock_violation(err: &std::io::Error) -> bool {
-    err.raw_os_error()
-        .map_or(false, |x| x == ERROR_LOCK_VIOLATION as i32)
+    err.raw_os_error() == Some(ERROR_LOCK_VIOLATION as i32)
 }
