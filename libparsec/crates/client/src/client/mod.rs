@@ -747,7 +747,7 @@ impl Client {
         .await
     }
 
-    pub async fn async_enrollment_get_addr(&self) -> ParsecAsyncEnrollmentAddr {
+    pub fn get_async_enrollment_addr(&self) -> ParsecAsyncEnrollmentAddr {
         ParsecAsyncEnrollmentAddr::new(
             self.device.organization_addr.clone(),
             self.device.organization_id().to_owned(),
