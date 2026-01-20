@@ -963,8 +963,10 @@ pub async fn save_pending_async_enrollment(
     Ok(AvailablePendingAsyncEnrollment {
         file_path,
         submitted_on: cleartext_content.submitted_on,
-        server_addr: cleartext_content.server_url,
-        organization_id: cleartext_content.organization_id,
+        addr: ParsecAsyncEnrollmentAddr::new(
+            cleartext_content.server_url,
+            cleartext_content.organization_id,
+        ),
         enrollment_id: cleartext_content.enrollment_id,
         requested_device_label: cleartext_content.requested_device_label,
         requested_human_handle: cleartext_content.requested_human_handle,
@@ -1020,8 +1022,7 @@ pub enum ListPendingAsyncEnrollmentsError {
 pub struct AvailablePendingAsyncEnrollment {
     pub file_path: PathBuf,
     pub submitted_on: DateTime,
-    pub server_addr: ParsecAddr,
-    pub organization_id: OrganizationID,
+    pub addr: ParsecAsyncEnrollmentAddr,
     pub enrollment_id: AsyncEnrollmentID,
     pub requested_device_label: DeviceLabel,
     pub requested_human_handle: HumanHandle,
@@ -1106,8 +1107,7 @@ fn load_pending_async_enrollment_as_available_frow_raw(
     Ok(AvailablePendingAsyncEnrollment {
         file_path: path,
         submitted_on: content.submitted_on,
-        server_addr: content.server_url,
-        organization_id: content.organization_id,
+        addr: ParsecAsyncEnrollmentAddr::new(content.server_url, content.organization_id),
         enrollment_id: content.enrollment_id,
         requested_device_label: content.requested_device_label,
         requested_human_handle: content.requested_human_handle,

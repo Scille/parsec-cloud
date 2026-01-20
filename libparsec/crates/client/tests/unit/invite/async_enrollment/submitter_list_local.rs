@@ -54,8 +54,10 @@ async fn ok(env: &TestbedEnv) {
         vec![AvailablePendingAsyncEnrollment {
             file_path,
             submitted_on: cleartext_content.submitted_on,
-            server_addr: cleartext_content.server_url,
-            organization_id: cleartext_content.organization_id,
+            addr: ParsecAsyncEnrollmentAddr::new(
+                cleartext_content.server_url,
+                cleartext_content.organization_id
+            ),
             enrollment_id: cleartext_content.enrollment_id,
             requested_device_label: cleartext_content.requested_device_label,
             requested_human_handle: cleartext_content.requested_human_handle,

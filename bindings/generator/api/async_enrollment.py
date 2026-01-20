@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
-from .addr import ParsecAddr, ParsecAsyncEnrollmentAddr
+from .addr import ParsecAsyncEnrollmentAddr
 from .common import (
     AsyncEnrollmentID,
     DateTime,
@@ -9,7 +9,6 @@ from .common import (
     ErrorVariant,
     Handle,
     HumanHandle,
-    OrganizationID,
     Path,
     Ref,
     Result,
@@ -215,8 +214,7 @@ class AvailablePendingAsyncEnrollmentIdentitySystem(Variant):
 class AvailablePendingAsyncEnrollment(Structure):
     file_path: Path
     submitted_on: DateTime
-    server_addr: ParsecAddr
-    organization_id: OrganizationID
+    addr: ParsecAsyncEnrollmentAddr
     enrollment_id: AsyncEnrollmentID
     requested_device_label: DeviceLabel
     requested_human_handle: HumanHandle
