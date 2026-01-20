@@ -22,6 +22,17 @@ from .config import ClientConfig
 from .device import AvailableDevice, DeviceSaveStrategy
 
 
+class ClientGetAsyncEnrollmentAddrError(ErrorVariant):
+    class Internal:
+        pass
+
+
+def client_get_async_enrollment_addr(
+    client: Handle,
+) -> Result[ParsecAsyncEnrollmentAddr, ClientGetAsyncEnrollmentAddrError]:
+    raise NotImplementedError
+
+
 class SubmitAsyncEnrollmentIdentityStrategy(Variant):
     class OpenBao:
         requested_human_handle: HumanHandle

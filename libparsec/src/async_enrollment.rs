@@ -864,6 +864,23 @@ pub use strategy::{
     AcceptFinalizeAsyncEnrollmentIdentityStrategy, SubmitAsyncEnrollmentIdentityStrategy,
 };
 
+#[derive(Debug, thiserror::Error)]
+pub enum ClientGetAsyncEnrollmentAddrError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub fn client_get_async_enrollment_addr(
+    client: Handle,
+) -> Result<ParsecAsyncEnrollmentAddr, ClientGetAsyncEnrollmentAddrError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })?;
+
+    Ok(client.get_async_enrollment_addr())
+}
+
 pub async fn client_list_async_enrollments(
     client: Handle,
 ) -> Result<Vec<AsyncEnrollmentUntrusted>, ClientListAsyncEnrollmentsError> {
