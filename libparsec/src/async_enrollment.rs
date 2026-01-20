@@ -116,7 +116,7 @@ mod strategy {
                     // Parse certificate and extract human handle
                     let cert_info =
                         libparsec_platform_pki::x509::X509CertificateInformation::load_der(
-                            &cert_der.der_content,
+                            &cert_der,
                         )
                         .map_err(|e| anyhow::anyhow!("Cannot load certificate info: {}", e))?;
 
@@ -231,18 +231,19 @@ mod strategy {
             let cert_ref = self.certificate_reference.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 // 1. Sign the payload
-                let signed_message = libparsec_platform_pki::sign_message(&payload, &cert_ref)
-                    .map_err(|err| match err {
-                        err @ (PKISignMessageError::NotFound
-                        | PKISignMessageError::CannotGetCertificateInfo(_)
-                        | PKISignMessageError::CannotAcquireKeypair(_)
-                        | PKISignMessageError::CannotSign(_)) => {
-                            SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                err.into(),
-                            )
-                        }
-                        PKISignMessageError::CannotOpenStore(e) => {
-                            SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                let (algorithm, signature) =
+                    libparsec_platform_pki::sign_message(&payload, &cert_ref).map_err(|err| {
+                        match err {
+                            err @ (PKISignMessageError::NotFound
+                            | PKISignMessageError::CannotAcquireKeypair(_)
+                            | PKISignMessageError::CannotSign(_)) => {
+                                SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                    err.into(),
+                                )
+                            }
+                            PKISignMessageError::CannotOpenStore(e) => {
+                                SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                            }
                         }
                     })?;
 
@@ -252,7 +253,6 @@ mod strategy {
                         .map_err(|err| match err {
                             err @ (
                                 PKIGetValidationPathForCertError::NotFound
-                                | PKIGetValidationPathForCertError::CannotGetCertificateInfo(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateDer(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateUntrusted(_)
@@ -263,23 +263,24 @@ mod strategy {
                         })?;
 
                 // 3. Get leaf certificate
-                let submitter_cert = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)
-                    .map_err(|err| match err {
-                        err @ (PKIGetDerEncodedCertificateError::NotFound
-                        | PKIGetDerEncodedCertificateError::CannotGetCertificateInfo(_)) => {
-                            SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                err.into(),
-                            )
-                        }
-                        PKIGetDerEncodedCertificateError::CannotOpenStore(e) => {
-                            SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                        }
-                    })?;
+                let submitter_der_x509_certificate =
+                    libparsec_platform_pki::get_der_encoded_certificate(&cert_ref).map_err(
+                        |err| match err {
+                            err @ PKIGetDerEncodedCertificateError::NotFound => {
+                                SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                    err.into(),
+                                )
+                            }
+                            PKIGetDerEncodedCertificateError::CannotOpenStore(e) => {
+                                SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                            }
+                        },
+                    )?;
 
                 Ok(protocol::anonymous_cmds::latest::async_enrollment_submit::SubmitPayloadSignature::PKI {
-                    signature: signed_message.signature,
-                    algorithm: signed_message.algo,
-                    submitter_der_x509_certificate: submitter_cert.der_content,
+                    signature,
+                    algorithm,
+                    submitter_der_x509_certificate,
                     intermediate_der_x509_certificates: validation_path.intermediate_certs,
                 })
             }))
@@ -301,26 +302,26 @@ mod strategy {
                 let key = SecretKey::generate();
 
                 // 2. Encrypt it with the PKI certificate's public key
-                let encrypted = libparsec_platform_pki::encrypt_message(key.as_ref(), &cert_ref)
-                    .map_err(|err| match err {
-                        err @ (PKIEncryptMessageError::NotFound
-                        | PKIEncryptMessageError::CannotGetCertificateInfo(_)
-                        | PKIEncryptMessageError::CannotAcquireKeypair(_)
-                        | PKIEncryptMessageError::CannotEncrypt(_)) => {
-                            SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                err.into(),
-                            )
-                        }
-                        PKIEncryptMessageError::CannotOpenStore(e) => {
-                            SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                        }
-                    })?;
+                let (algorithm, encrypted_key) = libparsec_platform_pki::encrypt_message(
+                    key.as_ref(),
+                    &cert_ref,
+                )
+                .map_err(|err| match err {
+                    err @ (PKIEncryptMessageError::NotFound
+                    | PKIEncryptMessageError::CannotAcquireKeypair(_)
+                    | PKIEncryptMessageError::CannotEncrypt(_)) => {
+                        SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
+                    }
+                    PKIEncryptMessageError::CannotOpenStore(e) => {
+                        SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                    }
+                })?;
 
                 // 3. Create the identity system metadata
                 let identity_system = AsyncEnrollmentLocalPendingIdentitySystem::PKI {
-                    encrypted_key: encrypted.ciphered,
+                    encrypted_key,
                     certificate_ref: cert_ref,
-                    algorithm: encrypted.algo,
+                    algorithm,
                 };
 
                 Ok((key, identity_system))
@@ -614,7 +615,6 @@ mod strategy {
                         .map_err(|err| match err {
                             err @ (
                                 PKIGetValidationPathForCertError::NotFound
-                                | PKIGetValidationPathForCertError::CannotGetCertificateInfo(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateDer(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateUntrusted(_)
@@ -690,18 +690,19 @@ mod strategy {
             let cert_ref = self.certificate_reference.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 // 1. Sign the payload
-                let signed_message = libparsec_platform_pki::sign_message(&payload, &cert_ref)
-                    .map_err(|err| match err {
-                        err @ (PKISignMessageError::NotFound
-                        | PKISignMessageError::CannotGetCertificateInfo(_)
-                        | PKISignMessageError::CannotAcquireKeypair(_)
-                        | PKISignMessageError::CannotSign(_)) => {
-                            AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                err.into(),
-                            )
-                        }
-                        PKISignMessageError::CannotOpenStore(e) => {
-                            AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                let (algorithm, signature) =
+                    libparsec_platform_pki::sign_message(&payload, &cert_ref).map_err(|err| {
+                        match err {
+                            err @ (PKISignMessageError::NotFound
+                            | PKISignMessageError::CannotAcquireKeypair(_)
+                            | PKISignMessageError::CannotSign(_)) => {
+                                AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                    err.into(),
+                                )
+                            }
+                            PKISignMessageError::CannotOpenStore(e) => {
+                                AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                            }
                         }
                     })?;
 
@@ -711,7 +712,6 @@ mod strategy {
                         .map_err(|err| match err {
                             err @ (
                                 PKIGetValidationPathForCertError::NotFound
-                                | PKIGetValidationPathForCertError::CannotGetCertificateInfo(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateDer(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateUntrusted(_)
@@ -723,23 +723,24 @@ mod strategy {
                         })?;
 
                 // 3. Get leaf certificate
-                let accepter_cert = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)
-                    .map_err(|err| match err {
-                        err @ (PKIGetDerEncodedCertificateError::NotFound
-                        | PKIGetDerEncodedCertificateError::CannotGetCertificateInfo(_)) => {
-                            AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                err.into(),
-                            )
-                        }
-                        PKIGetDerEncodedCertificateError::CannotOpenStore(e) => {
-                            AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                        }
-                    })?;
+                let accepter_der_x509_certificate =
+                    libparsec_platform_pki::get_der_encoded_certificate(&cert_ref).map_err(
+                        |err| match err {
+                            err @ PKIGetDerEncodedCertificateError::NotFound => {
+                                AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                    err.into(),
+                                )
+                            }
+                            PKIGetDerEncodedCertificateError::CannotOpenStore(e) => {
+                                AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                            }
+                        },
+                    )?;
 
                 Ok(protocol::authenticated_cmds::latest::async_enrollment_accept::AcceptPayloadSignature::PKI {
-                    signature: signed_message.signature,
-                    algorithm: signed_message.algo,
-                    accepter_der_x509_certificate: accepter_cert.der_content,
+                    signature,
+                    algorithm,
+                    accepter_der_x509_certificate,
                     intermediate_der_x509_certificates: validation_path.intermediate_certs,
                 })
             }))
@@ -779,7 +780,6 @@ mod strategy {
                         .map_err(|err| match err {
                             err @ (
                                 PKIGetValidationPathForCertError::NotFound
-                                | PKIGetValidationPathForCertError::CannotGetCertificateInfo(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateDer(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(_)
                                 | PKIGetValidationPathForCertError::InvalidCertificateUntrusted(_)
@@ -839,7 +839,6 @@ mod strategy {
                 )
                 .map_err(|err| match err {
                     err @ (PKIDecryptMessageError::NotFound
-                    | PKIDecryptMessageError::CannotGetCertificateInfo(_)
                     | PKIDecryptMessageError::CannotAcquireKeypair(_)
                     | PKIDecryptMessageError::CannotDecrypt(_)) => {
                         SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
@@ -853,7 +852,7 @@ mod strategy {
                     }
                 })?;
 
-                SecretKey::try_from(decrypted.data.as_ref())
+                SecretKey::try_from(decrypted.as_ref())
                     .map_err(|_| SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidData)
             }))
         }

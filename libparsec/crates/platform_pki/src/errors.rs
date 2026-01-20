@@ -6,8 +6,6 @@ pub enum GetDerEncodedCertificateError {
     CannotOpenStore(std::io::Error),
     #[error("Cannot find certificate")]
     NotFound,
-    #[error("Cannot get certificate info: {0}")]
-    CannotGetCertificateInfo(std::io::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -24,8 +22,6 @@ pub enum SignMessageError {
     CannotOpenStore(std::io::Error),
     #[error("Cannot find certificate")]
     NotFound,
-    #[error("Cannot get certificate info: {0}")]
-    CannotGetCertificateInfo(std::io::Error),
     #[error("Cannot acquire keypair related to certificate: {0}")]
     CannotAcquireKeypair(std::io::Error),
     #[error("Cannot sign message: {0}")]
@@ -51,8 +47,6 @@ pub enum EncryptMessageError {
     CannotOpenStore(std::io::Error),
     #[error("Cannot find certificate")]
     NotFound,
-    #[error("Cannot get certificate info: {0}")]
-    CannotGetCertificateInfo(std::io::Error),
     #[error("Cannot acquire keypair related to certificate: {0}")]
     CannotAcquireKeypair(std::io::Error),
     #[error("Cannot encrypt message: {0}")]
@@ -65,8 +59,6 @@ pub enum DecryptMessageError {
     CannotOpenStore(std::io::Error),
     #[error("Cannot find certificate")]
     NotFound,
-    #[error("Cannot get certificate info: {0}")]
-    CannotGetCertificateInfo(std::io::Error),
     #[error("Cannot acquire keypair related to certificate: {0}")]
     CannotAcquireKeypair(std::io::Error),
     #[error("Cannot decrypt message: {0}")]
@@ -79,8 +71,6 @@ pub enum GetValidationPathForCertError {
     CannotOpenStore(std::io::Error),
     #[error("Cannot find certificate")]
     NotFound,
-    #[error("Cannot get certificate info: {0}")]
-    CannotGetCertificateInfo(std::io::Error),
     #[error("Invalid certificate: invalid DER format: {0}")]
     InvalidCertificateDer(webpki::Error),
     #[error("Invalid certificate: time out of valid range: {0}")]

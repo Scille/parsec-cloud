@@ -54,10 +54,11 @@ pub async fn pki_enrollment_submit(
         device_label,
     };
     let raw_payload = payload.dump();
-    let payload_signature = libparsec_platform_pki::sign_message(&raw_payload, &x509_cert_ref)
-        .map_err(anyhow::Error::from)
-        .context("Failed to sign payload with PKI")
-        .map_err(PkiEnrollmentSubmitError::PkiOperationError)?;
+    let (payload_signature_algorithm, payload_signature) =
+        libparsec_platform_pki::sign_message(&raw_payload, &x509_cert_ref)
+            .map_err(anyhow::Error::from)
+            .context("Failed to sign payload with PKI")
+            .map_err(PkiEnrollmentSubmitError::PkiOperationError)?;
 
     let intermediate_certificates =
         libparsec_platform_pki::get_validation_path_for_cert(&x509_cert_ref, DateTime::now())
@@ -67,13 +68,13 @@ pub async fn pki_enrollment_submit(
 
     let submitted_on = match cmds
         .send(Req {
-            der_x509_certificate: der_x509_certificate.der_content,
+            der_x509_certificate,
             intermediate_der_x509_certificates: intermediate_certificates.intermediate_certs,
             enrollment_id,
             force,
             payload: raw_payload.into(),
-            payload_signature: payload_signature.signature,
-            payload_signature_algorithm: payload_signature.algo,
+            payload_signature,
+            payload_signature_algorithm,
         })
         .await?
     {

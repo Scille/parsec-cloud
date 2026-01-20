@@ -43,16 +43,17 @@ async fn ok(#[case] status: &str, env: &TestbedEnv) {
             };
 
             let cert_ref = X509CertificateHash::fake_sha256().into();
-            let signed = sign_message(&expected_answer.dump(), &cert_ref)
-                .context("Failed to sign message")
-                .unwrap();
+            let (accept_payload_signature_algorithm, accept_payload_signature) =
+                sign_message(&expected_answer.dump(), &cert_ref)
+                    .context("Failed to sign message")
+                    .unwrap();
 
             PkiEnrollmentInfoStatus::Accepted {
                 accepter_der_x509_certificate: b"a cert".as_ref().into(),
                 accepter_intermediate_der_x509_certificates: [b"deadbeef".as_ref().into()].to_vec(),
                 accept_payload: expected_answer.dump().into(),
-                accept_payload_signature: signed.signature,
-                accept_payload_signature_algorithm: signed.algo,
+                accept_payload_signature,
+                accept_payload_signature_algorithm,
                 submitted_on: expected_submitted_on,
                 accepted_on: expected_accepted_on,
             }

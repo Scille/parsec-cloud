@@ -6,7 +6,7 @@ use crate::{
         GetValidationPathForCertError, ListCertificatesError, LoadAnswerPayloadError,
         ValidatePayloadError, VerifyMessageError, VerifySignatureError,
     },
-    get_der_encoded_certificate, CreateLocalPendingError, EncryptMessageError, EncryptedMessage,
+    get_der_encoded_certificate, CreateLocalPendingError, EncryptMessageError,
     GetDerEncodedCertificateError, PkiSignatureAlgorithm,
 };
 
@@ -88,25 +88,21 @@ pub fn create_local_pending(
     private_parts: PrivateParts,
 ) -> Result<PKILocalPendingEnrollment, CreateLocalPendingError> {
     let key = SecretKey::generate();
-    let EncryptedMessage {
-        cert_ref,
-        algo,
-        ciphered: encrypted_key,
-    } = encrypt_message(key.as_ref(), cert_ref).map_err(|err| match err {
-        EncryptMessageError::CannotOpenStore(err) => CreateLocalPendingError::CannotOpenStore(err),
-        EncryptMessageError::NotFound => CreateLocalPendingError::NotFound,
-        EncryptMessageError::CannotGetCertificateInfo(err) => {
-            CreateLocalPendingError::CannotGetCertificateInfo(err)
-        }
-        EncryptMessageError::CannotAcquireKeypair(err) => {
-            CreateLocalPendingError::CannotAcquireKeypair(err)
-        }
-        EncryptMessageError::CannotEncrypt(err) => CreateLocalPendingError::CannotEncrypt(err),
-    })?;
+    let (algo, encrypted_key) =
+        encrypt_message(key.as_ref(), cert_ref).map_err(|err| match err {
+            EncryptMessageError::CannotOpenStore(err) => {
+                CreateLocalPendingError::CannotOpenStore(err)
+            }
+            EncryptMessageError::NotFound => CreateLocalPendingError::NotFound,
+            EncryptMessageError::CannotAcquireKeypair(err) => {
+                CreateLocalPendingError::CannotAcquireKeypair(err)
+            }
+            EncryptMessageError::CannotEncrypt(err) => CreateLocalPendingError::CannotEncrypt(err),
+        })?;
     let ciphered_private_parts = key.encrypt(&private_parts.dump()).into();
 
     let local_pending = PKILocalPendingEnrollment {
-        cert_ref,
+        cert_ref: cert_ref.to_owned(),
         addr,
         submitted_on,
         enrollment_id,
@@ -264,15 +260,12 @@ pub fn get_validation_path_for_cert(
         }
     })?;
     let base_raw_cert = get_der_encoded_certificate(cert_ref)
-        .map(|v| Certificate::from_der_owned(v.der_content.into()))
+        .map(|der| Certificate::from_der_owned(der.into()))
         .map_err(|err| match err {
             GetDerEncodedCertificateError::CannotOpenStore(err) => {
                 GetValidationPathForCertError::CannotOpenStore(err)
             }
             GetDerEncodedCertificateError::NotFound => GetValidationPathForCertError::NotFound,
-            GetDerEncodedCertificateError::CannotGetCertificateInfo(err) => {
-                GetValidationPathForCertError::CannotGetCertificateInfo(err)
-            }
         })?;
     let base_cert = base_raw_cert
         .to_end_certificate()

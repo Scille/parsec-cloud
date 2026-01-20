@@ -131,12 +131,13 @@ impl CertificateOrRef {
     #[allow(dead_code)]
     pub fn get_certificate(&self) -> anyhow::Result<Certificate<'static>> {
         let cert = if let Some(hash) = self.certificate_hash.clone() {
-            let res = libparsec_platform_pki::get_der_encoded_certificate(&hash.into())?;
+            let cert_ref: libparsec_types::X509CertificateReference = hash.into();
+            let certificate = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)?;
             println!("Will verify signature using cert with id {{{}}}", {
                 #[expect(clippy::unwrap_used)]
-                res.cert_ref.uris().next().unwrap()
+                cert_ref.uris().next().unwrap()
             });
-            Certificate::from_der_owned(res.der_content.into())
+            Certificate::from_der_owned(certificate.into())
         } else if let Some(der_file) = &self.der_file {
             let raw = std::fs::read(der_file).context("Failed to read file")?;
             Certificate::from_der_owned(raw)
