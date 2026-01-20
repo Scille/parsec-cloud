@@ -12,10 +12,10 @@
 [CmdletBinding()]
 param(
     [switch] $OnlyCleanup,
-    [Parameter(mandatory=$true)]
-    [string] $ImportPath
+    [string] $ImportPath = ".\test-pki"
 )
 
+# Store the thumbprints of the imported certificates here for later cleanup
 $register_file = ".\.imported-test-pki.txt"
 
 function Cleanup-Test-PKI {
@@ -86,10 +86,11 @@ function ImportNRegister-Certificates {
 ImportNRegister-Certificates -ImportPath $ImportPath\Root -Store Root
 ImportNRegister-Certificates -ImportPath $ImportPath\Intermediate -Store CA
 ImportNRegister-Certificates -ImportPath $ImportPath\Cert -Store MY -UsePfx
-
 try {
-    Write-Output "Press any key to continue..."
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Write-Output "Certificates are installed and ready to use. Once you are done, press ENTER to uninstall them..."
+    do {
+        $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    } while ($key.VirtualKeyCode -ne [ConsoleKey]::ENTER)
 }
 finally {
     On-Exit
