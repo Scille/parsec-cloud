@@ -965,7 +965,6 @@ pub async fn submitter_finalize_async_enrollment(
     config: ClientConfig,
     enrollment_file: &Path,
     new_device_save_strategy: DeviceSaveStrategy,
-    new_device_key_file: &Path,
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
 ) -> Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
@@ -976,7 +975,6 @@ pub async fn submitter_finalize_async_enrollment(
         config,
         enrollment_file,
         &new_device_save_strategy,
-        new_device_key_file,
         identity_strategy.as_ref(),
     )
     .await

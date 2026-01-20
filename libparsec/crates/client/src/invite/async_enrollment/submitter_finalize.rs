@@ -105,7 +105,6 @@ pub async fn submitter_finalize_async_enrollment(
     config: Arc<ClientConfig>,
     enrollment_file: &Path,
     new_device_save_strategy: &DeviceSaveStrategy,
-    new_device_key_file: &Path,
     identity_strategy: &dyn SubmitterFinalizeAsyncEnrollmentIdentityStrategy,
 ) -> Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError> {
     // 1) Load the local pending async enrollment file
@@ -257,6 +256,11 @@ pub async fn submitter_finalize_async_enrollment(
 
     // 4) Remove the pending async enrollment file and save the final local device file \o/
 
+    let new_device_key_file = libparsec_platform_device_loader::get_default_key_file(
+        &config.config_dir,
+        new_local_device.device_id,
+    );
+
     // Note we destroy the pending file, then save the final local device file.
     //
     // This means there is a small chance that we lost the the new device if an
@@ -288,7 +292,7 @@ pub async fn submitter_finalize_async_enrollment(
         &config.config_dir,
         new_device_save_strategy,
         &new_local_device,
-        new_device_key_file.to_path_buf(),
+        new_device_key_file,
     )
     .await
     .map_err(|err| match err {

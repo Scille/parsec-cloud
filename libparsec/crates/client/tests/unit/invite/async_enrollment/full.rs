@@ -92,7 +92,6 @@ async fn with_server(env: &TestbedEnv) {
 
     // 6) Submitter finalize the enrollment
 
-    let mike_key_file = config.config_dir.join("mike.keys");
     let mike_save_strategy = DeviceSaveStrategy::Password {
         password: "P@ssw0rd.".to_owned().into(),
     };
@@ -100,17 +99,23 @@ async fn with_server(env: &TestbedEnv) {
         config.clone(),
         &enrollment_file,
         &mike_save_strategy,
-        &mike_key_file,
         &mock_identity_strategy,
     )
     .await
     .unwrap();
-    p_assert_eq!(available_device.key_file_path, mike_key_file);
+    p_assert_eq!(
+        available_device.key_file_path,
+        config
+            .config_dir
+            .join("devices")
+            .join(format!("{}.keys", available_device.device_id.hex()))
+    );
     p_assert_eq!(available_device.organization_id, env.organization_id);
 
     // 7) Ensure the obtained device can be used
 
-    let mike_access_strategy = mike_save_strategy.into_access(mike_key_file.clone());
+    let mike_access_strategy =
+        mike_save_strategy.into_access(available_device.key_file_path.clone());
     let mike =
         libparsec_platform_device_loader::load_device(&config.config_dir, &mike_access_strategy)
             .await
