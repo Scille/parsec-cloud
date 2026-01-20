@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import shlex
 import subprocess
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
+from base64 import b64encode
+from binascii import unhexlify
 from collections.abc import Generator, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum, auto
 from pathlib import Path
+
+ROOT_DIR = Path(__file__).parent.parent.resolve()
 
 ROOT_CERT_DIR = Path("Root")
 INTERMEDIATE_CERT_DIR = Path("Intermediate")
@@ -18,8 +22,7 @@ LEAF_CERT_DIR = Path("Cert")
 SCRIPT_LAST_MODIFICATION = Path(__file__).stat().st_mtime
 
 
-def file_need_update(file: Path) -> bool:
-    return not file.exists()
+type Sha256Fingerprint = bytes
 
 
 @dataclass
@@ -173,25 +176,37 @@ TRUSTCHAINS = [
 ]
 
 
-def main():
-    args = parse_args()
-    output_dir: Path = args.output_dir
-
+def main(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    gitignore = output_dir / ".gitignore"
-    gitignore.write_text("*")
+    readme_file_content = [
+        "# Test PKI certificates",
+        "",
+        "⚠️ Auto-generated file, don't edit by hand ! ⚠️",
+        "",
+        "This directory contains X509 certificates for test purpose.",
+        "See `misc/gen_test_pki.py` for the generation script.",
+        f"Last generation date: {datetime.fromtimestamp(SCRIPT_LAST_MODIFICATION, tz=UTC).isoformat()}",
+        "",
+        "Certificates:",
+        "",
+    ]
+
     for chain in TRUSTCHAINS:
-        create_trustchain(chain, None, output_dir)
+        certifs = create_trustchain(chain, None, output_dir)
+        for name, fingerprint in certifs.items():
+            hex_fingerprint = fingerprint.hex().upper()
+            coded_fingerprint = f"sha256-{b64encode(fingerprint).decode('utf-8')}"
+            readme_file_content.append(
+                f"- {name}: SHA256={hex_fingerprint} (aka `{coded_fingerprint}`)"
+            )
+
+    readme_file = output_dir / "README.md"
+    readme_file.write_text("\n".join(readme_file_content))
 
 
-def parse_args() -> Namespace:
-    parser = ArgumentParser()
-    parser.add_argument("--output-dir", default=Path("test-pki"), type=Path)
-
-    return parser.parse_args()
-
-
-def create_trustchain(chain: CertificateConfig, signer: CertificateConfig | None, output_dir: Path):
+def create_trustchain(
+    chain: CertificateConfig, signer: CertificateConfig | None, output_dir: Path
+) -> dict[str, Sha256Fingerprint]:
     if signer:
         print(f"Creating trustchain for {chain.name} signed by {signer.name}")
         # Inherit signer subject
@@ -205,26 +220,31 @@ def create_trustchain(chain: CertificateConfig, signer: CertificateConfig | None
     # Create key file
     key_file = workdir / (chain.name + ".key")
 
-    if file_need_update(key_file):
-        print(f"Creating key {key_file} of type {chain.key_algorithm}")
-        key_file.parent.mkdir(parents=True, exist_ok=True)
-        chain.key_algorithm.run_openssl_cmd(key_file)
+    print(f"Creating key {key_file} of type {chain.key_algorithm}")
+    key_file.parent.mkdir(parents=True, exist_ok=True)
+    chain.key_algorithm.run_openssl_cmd(key_file)
 
     cert_file = workdir / (chain.name + ".crt")
-    if file_need_update(cert_file):
-        print(f"Creating cert {cert_file}")
-        cert_file.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Creating cert {cert_file}")
+    cert_file.parent.mkdir(parents=True, exist_ok=True)
 
-        if signer is None:
-            generate_self_signed_cert(chain, key_file, cert_file)
-        else:
-            generate_signed_cert(chain, signer, key_file, cert_file, output_dir)
+    if signer is None:
+        generate_self_signed_cert(chain, key_file, cert_file)
+    else:
+        generate_signed_cert(chain, signer, key_file, cert_file, output_dir)
 
-        pkcs12_file = workdir / (chain.name + ".pfx")
-        generate_pkcs12_file(chain, cert_file, key_file, pkcs12_file)
+    pkcs12_file = workdir / (chain.name + ".pfx")
+    generate_pkcs12_file(chain, cert_file, key_file, pkcs12_file)
+
+    generated = {}
+
+    fingerprint = get_sha256_fingerprint(cert_file)
+    generated[chain.name] = fingerprint
 
     for children in chain.signing:
-        create_trustchain(children, chain, output_dir)
+        generated |= create_trustchain(children, chain, output_dir)
+
+    return generated
 
 
 def generate_self_signed_cert(chain: CertificateConfig, key_file: Path, cert_file: Path):
@@ -269,7 +289,7 @@ def generate_signed_cert(
     key_file: Path,
     cert_file: Path,
     output_dir: Path,
-):
+) -> None:
     csr_file = cert_file.with_suffix(".csr")
     check_run(
         [
@@ -320,7 +340,28 @@ def generate_signed_cert(
     )
 
 
-def generate_pkcs12_file(chain: CertificateConfig, cert_file: Path, key_file: Path, out_file: Path):
+def get_sha256_fingerprint(cert_file: Path) -> Sha256Fingerprint:
+    raw_fingerprint = subprocess.check_output(
+        [
+            "openssl",
+            "x509",
+            "-in",
+            cert_file,
+            "-inform",
+            "pem",
+            "-noout",
+            "-fingerprint",
+            "-sha256",
+        ]
+    )
+    PREFIX = b"sha256 Fingerprint="
+    assert raw_fingerprint.startswith(PREFIX)
+    return unhexlify(raw_fingerprint[len(PREFIX) :].strip().decode("utf-8").replace(":", ""))
+
+
+def generate_pkcs12_file(
+    chain: CertificateConfig, cert_file: Path, key_file: Path, out_file: Path
+) -> None:
     check_run(
         [
             "openssl",
@@ -341,4 +382,10 @@ def generate_pkcs12_file(chain: CertificateConfig, cert_file: Path, key_file: Pa
 
 
 if __name__ == "__main__":
-    main()
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--output-dir", default=ROOT_DIR / "libparsec/crates/platform_pki/test-pki/", type=Path
+    )
+
+    args = parser.parse_args()
+    main(args.output_dir)
