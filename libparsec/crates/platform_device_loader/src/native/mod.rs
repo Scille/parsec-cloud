@@ -183,7 +183,6 @@ pub(super) async fn load_ciphertext_key(
                     &device.certificate_ref,
                 )
                 .map_err(|_| LoadCiphertextKeyError::InvalidData)?
-                .data
                 .as_ref()
                 .try_into()
                 .map_err(|_| LoadCiphertextKeyError::InvalidData)?)
@@ -356,19 +355,14 @@ pub(super) async fn save_device(
             let secret_key = SecretKey::generate();
 
             // Encrypt the key using the public key related to a certificate from the store
-            let encrypted_message = encrypt_message(secret_key.as_ref(), certificate_ref)
+            let (algorithm, encrypted_key) = encrypt_message(secret_key.as_ref(), certificate_ref)
                 .map_err(|e| SaveDeviceError::Internal(e.into()))?;
 
             // May check if we are able to decrypt the encrypted key from the previous step
             assert_eq!(
-                decrypt_message(
-                    encrypted_message.algo,
-                    &encrypted_message.ciphered,
-                    certificate_ref,
-                )
-                .map_err(|e| SaveDeviceError::Internal(e.into()))?
-                .data
-                .as_ref(),
+                decrypt_message(algorithm, &encrypted_key, certificate_ref,)
+                    .map_err(|e| SaveDeviceError::Internal(e.into()))?
+                    .as_ref(),
                 secret_key.as_ref()
             );
 
@@ -385,10 +379,10 @@ pub(super) async fn save_device(
                 device_id: device.device_id,
                 human_handle: device.human_handle.to_owned(),
                 device_label: device.device_label.to_owned(),
-                certificate_ref: encrypted_message.cert_ref,
-                encrypted_key: encrypted_message.ciphered,
+                certificate_ref: certificate_ref.to_owned(),
+                encrypted_key,
                 ciphertext,
-                algorithm: encrypted_message.algo,
+                algorithm,
             });
 
             let file_content = file_content.dump();

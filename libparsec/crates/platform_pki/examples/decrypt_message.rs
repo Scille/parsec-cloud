@@ -31,18 +31,18 @@ fn main() -> anyhow::Result<()> {
         .decode(&b64_data)
         .context("Failed to decode hex encoded data")?;
 
-    let res =
+    let data =
         decrypt_message(args.algorithm, &data, &cert_ref).context("Failed to decrypt message")?;
 
     println!(
         "Decrypted by cert with id {{{}}} with algo {}",
-        &res.cert_ref.uris().next().unwrap(),
+        &cert_ref.uris().next().unwrap(),
         args.algorithm
     );
-    println!("Decrypted by cert with fingerprint: {}", res.cert_ref.hash);
+    println!("Decrypted by cert with fingerprint: {}", cert_ref.hash);
     println!(
         "Decrypted data: {}",
-        data_encoding::BASE64.encode_display(&res.data)
+        data_encoding::BASE64.encode_display(&data)
     );
 
     Ok(())

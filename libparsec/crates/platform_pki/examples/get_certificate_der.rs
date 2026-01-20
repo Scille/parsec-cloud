@@ -51,20 +51,20 @@ fn main() -> anyhow::Result<()> {
         println!("original uri: {uri}");
     }
     println!("original fingerprint: {}", cert_ref.hash);
-    let cert = get_der_encoded_certificate(&cert_ref).context("Get certificate")?;
+    let certificate = get_der_encoded_certificate(&cert_ref).context("Get certificate")?;
 
-    let uri = cert.cert_ref.uris().next().unwrap();
+    let uri = cert_ref.uris().next().unwrap();
     println!("uri: {uri}");
     println!("serialized uri: {}", display_serialized_uri(uri));
-    println!("fingerprint: {}", cert.cert_ref.hash);
+    println!("fingerprint: {}", cert_ref.hash);
     {
-        let digest = sha2::Sha256::digest(&cert.der_content);
+        let digest = sha2::Sha256::digest(&certificate);
         let hash = X509CertificateHash::SHA256(Box::new(digest.into()));
         println!("Manually calculated fingerprint: {hash}");
     }
     println!(
         "content: {}",
-        data_encoding::BASE64.encode_display(&cert.der_content)
+        data_encoding::BASE64.encode_display(&certificate)
     );
 
     Ok(())

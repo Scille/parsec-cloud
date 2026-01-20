@@ -25,17 +25,18 @@ fn main() -> anyhow::Result<()> {
     let cert_ref = args.certificate_hash.into();
     let data = args.content.into_bytes()?;
 
-    let res = encrypt_message(&data, &cert_ref).context("Failed to encrypt message")?;
+    let (algo, ciphered) =
+        encrypt_message(&data, &cert_ref).context("Failed to encrypt message")?;
 
     println!(
         "Encrypted by cert with id {{{}}} using the algorithm {}",
-        &res.cert_ref.uris().next().unwrap(),
-        res.algo
+        &cert_ref.uris().next().unwrap(),
+        algo
     );
-    println!("Encrypted by cert with fingerprint: {}", res.cert_ref.hash);
+    println!("Encrypted by cert with fingerprint: {}", cert_ref.hash);
     println!(
         "Encrypted data: {}",
-        data_encoding::BASE64.encode_display(&res.ciphered)
+        data_encoding::BASE64.encode_display(&ciphered)
     );
 
     Ok(())

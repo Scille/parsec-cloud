@@ -16,8 +16,6 @@ mod test;
 
 use libparsec_types::prelude::*;
 
-use bytes::Bytes;
-
 #[cfg(target_os = "windows")]
 pub(crate) use windows as platform;
 
@@ -25,16 +23,15 @@ pub(crate) use windows as platform;
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use crate::{
-        errors::ListTrustedRootCertificatesError, CertificateDer, DecryptMessageError,
-        DecryptedMessage, EncryptMessageError, EncryptedMessage, GetDerEncodedCertificateError,
-        ListIntermediateCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
-        SignedMessageFromPki,
+        errors::ListTrustedRootCertificatesError, DecryptMessageError, EncryptMessageError,
+        GetDerEncodedCertificateError, ListIntermediateCertificatesError,
+        ShowCertificateSelectionDialogError, SignMessageError,
     };
-    use libparsec_types::{PKIEncryptionAlgorithm, X509CertificateReference};
+    use libparsec_types::prelude::*;
 
     pub fn get_der_encoded_certificate(
         certificate_ref: &X509CertificateReference,
-    ) -> Result<CertificateDer, GetDerEncodedCertificateError> {
+    ) -> Result<Bytes, GetDerEncodedCertificateError> {
         let _ = certificate_ref;
         unimplemented!("platform not supported")
     }
@@ -53,7 +50,7 @@ mod platform {
     pub fn sign_message(
         message: &[u8],
         certificate_ref: &X509CertificateReference,
-    ) -> Result<SignedMessageFromPki, SignMessageError> {
+    ) -> Result<(PkiSignatureAlgorithm, Bytes), SignMessageError> {
         let _ = message;
         let _ = certificate_ref;
         unimplemented!("platform not supported")
@@ -62,7 +59,7 @@ mod platform {
     pub fn encrypt_message(
         message: &[u8],
         certificate_ref: &X509CertificateReference,
-    ) -> Result<EncryptedMessage, EncryptMessageError> {
+    ) -> Result<(PKIEncryptionAlgorithm, Bytes), EncryptMessageError> {
         let _ = (message, certificate_ref);
         unimplemented!("platform not supported")
     }
@@ -71,7 +68,7 @@ mod platform {
         algo: PKIEncryptionAlgorithm,
         encrypted_message: &[u8],
         certificate_ref: &X509CertificateReference,
-    ) -> Result<DecryptedMessage, DecryptMessageError> {
+    ) -> Result<Bytes, DecryptMessageError> {
         let _ = (algo, encrypted_message, certificate_ref);
         unimplemented!("platform not supported")
     }
@@ -116,41 +113,19 @@ pub use platform::show_certificate_selection_dialog_windows_only;
 pub use errors::GetDerEncodedCertificateError;
 pub use platform::get_der_encoded_certificate;
 
-pub struct CertificateDer {
-    pub cert_ref: X509CertificateReference,
-    pub der_content: Bytes,
-}
-
 pub use errors::ListTrustedRootCertificatesError;
 pub use platform::list_trusted_root_certificate_anchors;
 
 pub use errors::ListIntermediateCertificatesError;
 pub use platform::list_intermediate_certificates;
 
-pub struct SignedMessageFromPki {
-    pub algo: PkiSignatureAlgorithm,
-    pub cert_ref: X509CertificateReference,
-    pub signature: Bytes,
-}
-
 pub use errors::SignMessageError;
 pub use platform::sign_message;
 
 pub use shared::{verify_message, Certificate, SignedMessage, X509EndCertificate};
 
-pub struct EncryptedMessage {
-    pub algo: PKIEncryptionAlgorithm,
-    pub cert_ref: X509CertificateReference,
-    pub ciphered: Bytes,
-}
-
 pub use errors::EncryptMessageError;
 pub use platform::encrypt_message;
-
-pub struct DecryptedMessage {
-    pub cert_ref: X509CertificateReference,
-    pub data: Bytes,
-}
 
 pub use errors::DecryptMessageError;
 pub use platform::decrypt_message;

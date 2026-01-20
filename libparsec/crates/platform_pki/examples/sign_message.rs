@@ -24,17 +24,17 @@ fn main() -> anyhow::Result<()> {
 
     let cert_ref = args.certificate_hash.into();
     let data = args.content.into_bytes()?;
-    let res = sign_message(&data, &cert_ref).context("Failed to sign message")?;
+    let (algo, signature) = sign_message(&data, &cert_ref).context("Failed to sign message")?;
 
     println!(
         "Signed by cert with id {{{}}} with algorithm {}",
-        &res.cert_ref.uris().next().unwrap(),
-        res.algo
+        &cert_ref.uris().next().unwrap(),
+        algo
     );
-    println!("Signed by cert with fingerprint: {}", res.cert_ref.hash);
+    println!("Signed by cert with fingerprint: {}", cert_ref.hash);
     println!(
         "Signature: {}",
-        data_encoding::BASE64.encode_display(&res.signature)
+        data_encoding::BASE64.encode_display(&signature)
     );
 
     Ok(())

@@ -47,8 +47,7 @@ pub async fn accept(
     // Keep looping while `RequireGreaterTimestamp` is returned
     let mut to_use_timestamp = client.device.now();
     let accepter_der_x509_certificate = get_der_encoded_certificate(accepter_cert_ref)
-        .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?
-        .der_content;
+        .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?;
     let submitter_human_handle = X509CertificateInformation::load_der(submitter_der_cert)
         .context("Failed to load submitter certificate information")
         .and_then(|info| {
@@ -129,8 +128,9 @@ async fn accept_internal(
     );
 
     // sign payload with accepter x509certificate
-    let payload_signature = sign_message(&payload, accepter.cert_ref)
-        .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?;
+    let (payload_signature_algorithm, payload_signature) =
+        sign_message(&payload, accepter.cert_ref)
+            .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?;
 
     // send request
     match client
@@ -140,8 +140,8 @@ async fn accept_internal(
             accepter_der_x509_certificate: Bytes::copy_from_slice(accepter.der_cert),
             accepter_intermediate_der_x509_certificates: accepter.intermediate_der_certs.to_vec(),
             payload,
-            payload_signature: payload_signature.signature,
-            payload_signature_algorithm: payload_signature.algo,
+            payload_signature,
+            payload_signature_algorithm,
             submitter_device_certificate,
             submitter_redacted_device_certificate,
             submitter_redacted_user_certificate,

@@ -4,10 +4,9 @@ mod find_in_store;
 mod schannel_utils;
 
 use crate::{
-    CertificateDer, DecryptMessageError, DecryptedMessage, EncryptMessageError, EncryptedMessage,
-    GetDerEncodedCertificateError, ListIntermediateCertificatesError,
-    ListTrustedRootCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
-    SignedMessageFromPki,
+    DecryptMessageError, EncryptMessageError, GetDerEncodedCertificateError,
+    ListIntermediateCertificatesError, ListTrustedRootCertificatesError,
+    ShowCertificateSelectionDialogError, SignMessageError,
 };
 
 use bytes::Bytes;
@@ -105,19 +104,11 @@ fn get_certificate_uri(cert_context: &CertContext) -> X509WindowsCngURI {
 
 pub fn get_der_encoded_certificate(
     certificate_ref: &X509CertificateReference,
-) -> Result<CertificateDer, GetDerEncodedCertificateError> {
+) -> Result<Bytes, GetDerEncodedCertificateError> {
     let store = open_store().map_err(GetDerEncodedCertificateError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(GetDerEncodedCertificateError::NotFound)?;
-
-    let reference = get_id_and_hash_from_cert_context(&cert_context)
-        .map_err(GetDerEncodedCertificateError::CannotGetCertificateInfo)?;
-    let der_content = Bytes::copy_from_slice(cert_context.to_der());
-
-    Ok(CertificateDer {
-        cert_ref: reference,
-        der_content,
-    })
+    Ok(Bytes::copy_from_slice(cert_context.to_der()))
 }
 
 fn get_id_and_hash_from_cert_context(
@@ -218,12 +209,10 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
 pub fn sign_message(
     message: &[u8],
     certificate_ref: &X509CertificateReference,
-) -> Result<SignedMessageFromPki, SignMessageError> {
+) -> Result<(PkiSignatureAlgorithm, Bytes), SignMessageError> {
     let store = open_store().map_err(SignMessageError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
-    let reference = get_id_and_hash_from_cert_context(&cert_context)
-        .map_err(SignMessageError::CannotGetCertificateInfo)?;
     let keypair = get_keypair(&cert_context).map_err(SignMessageError::CannotAcquireKeypair)?;
     let (algo, signature) = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
@@ -235,11 +224,7 @@ pub fn sign_message(
     }
     .map_err(SignMessageError::CannotSign)?;
 
-    Ok(SignedMessageFromPki {
-        algo,
-        signature: signature.into(),
-        cert_ref: reference,
-    })
+    Ok((algo, signature.into()))
 }
 
 fn get_keypair(context: &CertContext) -> Result<PrivateKey, std::io::Error> {
@@ -318,12 +303,10 @@ fn ncrypt_sign_message_with_rsa(
 pub fn encrypt_message(
     message: &[u8],
     certificate_ref: &X509CertificateReference,
-) -> Result<EncryptedMessage, EncryptMessageError> {
+) -> Result<(PKIEncryptionAlgorithm, Bytes), EncryptMessageError> {
     let store = open_store().map_err(EncryptMessageError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(EncryptMessageError::NotFound)?;
-    let reference = get_id_and_hash_from_cert_context(&cert_context)
-        .map_err(EncryptMessageError::CannotGetCertificateInfo)?;
     let keypair = get_keypair(&cert_context).map_err(EncryptMessageError::CannotAcquireKeypair)?;
     let (algo, ciphered) = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
@@ -335,11 +318,7 @@ pub fn encrypt_message(
     }
     .map_err(EncryptMessageError::CannotEncrypt)?;
 
-    Ok(EncryptedMessage {
-        algo,
-        ciphered: ciphered.into(),
-        cert_ref: reference,
-    })
+    Ok((algo, ciphered.into()))
 }
 
 fn ncrypt_encrypt_message_with_rsa(
@@ -407,12 +386,10 @@ pub fn decrypt_message(
     algo: PKIEncryptionAlgorithm,
     encrypted_message: &[u8],
     certificate_ref: &X509CertificateReference,
-) -> Result<DecryptedMessage, DecryptMessageError> {
+) -> Result<Bytes, DecryptMessageError> {
     let store = open_store().map_err(DecryptMessageError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(DecryptMessageError::NotFound)?;
-    let reference = get_id_and_hash_from_cert_context(&cert_context)
-        .map_err(DecryptMessageError::CannotGetCertificateInfo)?;
     let keypair = get_keypair(&cert_context).map_err(DecryptMessageError::CannotAcquireKeypair)?;
     let data = match keypair {
         // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
@@ -429,10 +406,7 @@ pub fn decrypt_message(
     }
     .map_err(DecryptMessageError::CannotDecrypt)?;
 
-    Ok(DecryptedMessage {
-        data,
-        cert_ref: reference,
-    })
+    Ok(data)
 }
 
 fn ncrypt_decrypt_message_with_rsa(
