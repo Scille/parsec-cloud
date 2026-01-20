@@ -3272,13 +3272,11 @@ export enum InvalidityReasonTag {
     CannotGetCertificateInfo = 'InvalidityReasonCannotGetCertificateInfo',
     CannotOpenStore = 'InvalidityReasonCannotOpenStore',
     DataError = 'InvalidityReasonDataError',
-    DateTimeOutOfRange = 'InvalidityReasonDateTimeOutOfRange',
     InvalidCertificateDer = 'InvalidityReasonInvalidCertificateDer',
     InvalidRootCertificate = 'InvalidityReasonInvalidRootCertificate',
     InvalidSignature = 'InvalidityReasonInvalidSignature',
     InvalidUserInformation = 'InvalidityReasonInvalidUserInformation',
     NotFound = 'InvalidityReasonNotFound',
-    UnexpectedError = 'InvalidityReasonUnexpectedError',
     Untrusted = 'InvalidityReasonUntrusted',
 }
 
@@ -3290,9 +3288,6 @@ export interface InvalidityReasonCannotOpenStore {
 }
 export interface InvalidityReasonDataError {
     tag: InvalidityReasonTag.DataError
-}
-export interface InvalidityReasonDateTimeOutOfRange {
-    tag: InvalidityReasonTag.DateTimeOutOfRange
 }
 export interface InvalidityReasonInvalidCertificateDer {
     tag: InvalidityReasonTag.InvalidCertificateDer
@@ -3309,9 +3304,6 @@ export interface InvalidityReasonInvalidUserInformation {
 export interface InvalidityReasonNotFound {
     tag: InvalidityReasonTag.NotFound
 }
-export interface InvalidityReasonUnexpectedError {
-    tag: InvalidityReasonTag.UnexpectedError
-}
 export interface InvalidityReasonUntrusted {
     tag: InvalidityReasonTag.Untrusted
 }
@@ -3319,13 +3311,11 @@ export type InvalidityReason =
   | InvalidityReasonCannotGetCertificateInfo
   | InvalidityReasonCannotOpenStore
   | InvalidityReasonDataError
-  | InvalidityReasonDateTimeOutOfRange
   | InvalidityReasonInvalidCertificateDer
   | InvalidityReasonInvalidRootCertificate
   | InvalidityReasonInvalidSignature
   | InvalidityReasonInvalidUserInformation
   | InvalidityReasonNotFound
-  | InvalidityReasonUnexpectedError
   | InvalidityReasonUntrusted
 
 // InviteInfoInvitationCreatedBy

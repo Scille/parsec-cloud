@@ -11129,9 +11129,6 @@ fn variant_invalidity_reason_js_to_rs<'a>(
         }
         "InvalidityReasonCannotOpenStore" => Ok(libparsec::InvalidityReason::CannotOpenStore {}),
         "InvalidityReasonDataError" => Ok(libparsec::InvalidityReason::DataError {}),
-        "InvalidityReasonDateTimeOutOfRange" => {
-            Ok(libparsec::InvalidityReason::DateTimeOutOfRange {})
-        }
         "InvalidityReasonInvalidCertificateDer" => {
             Ok(libparsec::InvalidityReason::InvalidCertificateDer {})
         }
@@ -11143,7 +11140,6 @@ fn variant_invalidity_reason_js_to_rs<'a>(
             Ok(libparsec::InvalidityReason::InvalidUserInformation {})
         }
         "InvalidityReasonNotFound" => Ok(libparsec::InvalidityReason::NotFound {}),
-        "InvalidityReasonUnexpectedError" => Ok(libparsec::InvalidityReason::UnexpectedError {}),
         "InvalidityReasonUntrusted" => Ok(libparsec::InvalidityReason::Untrusted {}),
         _ => cx.throw_type_error("Object is not a InvalidityReason"),
     }
@@ -11169,11 +11165,6 @@ fn variant_invalidity_reason_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "InvalidityReasonDataError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::InvalidityReason::DateTimeOutOfRange { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "InvalidityReasonDateTimeOutOfRange").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::InvalidityReason::InvalidCertificateDer { .. } => {
             let js_tag =
                 JsString::try_new(cx, "InvalidityReasonInvalidCertificateDer").or_throw(cx)?;
@@ -11195,10 +11186,6 @@ fn variant_invalidity_reason_rs_to_js<'a>(
         }
         libparsec::InvalidityReason::NotFound { .. } => {
             let js_tag = JsString::try_new(cx, "InvalidityReasonNotFound").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidityReason::UnexpectedError { .. } => {
-            let js_tag = JsString::try_new(cx, "InvalidityReasonUnexpectedError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::InvalidityReason::Untrusted { .. } => {
