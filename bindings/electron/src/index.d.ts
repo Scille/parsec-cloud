@@ -2776,9 +2776,6 @@ export interface InvalidityReasonCannotOpenStore {
 export interface InvalidityReasonDataError {
     tag: "InvalidityReasonDataError"
 }
-export interface InvalidityReasonDateTimeOutOfRange {
-    tag: "InvalidityReasonDateTimeOutOfRange"
-}
 export interface InvalidityReasonInvalidCertificateDer {
     tag: "InvalidityReasonInvalidCertificateDer"
 }
@@ -2794,9 +2791,6 @@ export interface InvalidityReasonInvalidUserInformation {
 export interface InvalidityReasonNotFound {
     tag: "InvalidityReasonNotFound"
 }
-export interface InvalidityReasonUnexpectedError {
-    tag: "InvalidityReasonUnexpectedError"
-}
 export interface InvalidityReasonUntrusted {
     tag: "InvalidityReasonUntrusted"
 }
@@ -2804,13 +2798,11 @@ export type InvalidityReason =
   | InvalidityReasonCannotGetCertificateInfo
   | InvalidityReasonCannotOpenStore
   | InvalidityReasonDataError
-  | InvalidityReasonDateTimeOutOfRange
   | InvalidityReasonInvalidCertificateDer
   | InvalidityReasonInvalidRootCertificate
   | InvalidityReasonInvalidSignature
   | InvalidityReasonInvalidUserInformation
   | InvalidityReasonNotFound
-  | InvalidityReasonUnexpectedError
   | InvalidityReasonUntrusted
 
 

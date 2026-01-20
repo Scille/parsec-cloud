@@ -12125,9 +12125,6 @@ fn variant_invalidity_reason_js_to_rs(
         }
         "InvalidityReasonCannotOpenStore" => Ok(libparsec::InvalidityReason::CannotOpenStore {}),
         "InvalidityReasonDataError" => Ok(libparsec::InvalidityReason::DataError {}),
-        "InvalidityReasonDateTimeOutOfRange" => {
-            Ok(libparsec::InvalidityReason::DateTimeOutOfRange {})
-        }
         "InvalidityReasonInvalidCertificateDer" => {
             Ok(libparsec::InvalidityReason::InvalidCertificateDer {})
         }
@@ -12139,7 +12136,6 @@ fn variant_invalidity_reason_js_to_rs(
             Ok(libparsec::InvalidityReason::InvalidUserInformation {})
         }
         "InvalidityReasonNotFound" => Ok(libparsec::InvalidityReason::NotFound {}),
-        "InvalidityReasonUnexpectedError" => Ok(libparsec::InvalidityReason::UnexpectedError {}),
         "InvalidityReasonUntrusted" => Ok(libparsec::InvalidityReason::Untrusted {}),
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a InvalidityReason",
@@ -12169,13 +12165,6 @@ fn variant_invalidity_reason_rs_to_js(
         }
         libparsec::InvalidityReason::DataError { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"InvalidityReasonDataError".into())?;
-        }
-        libparsec::InvalidityReason::DateTimeOutOfRange { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"InvalidityReasonDateTimeOutOfRange".into(),
-            )?;
         }
         libparsec::InvalidityReason::InvalidCertificateDer { .. } => {
             Reflect::set(
@@ -12207,13 +12196,6 @@ fn variant_invalidity_reason_rs_to_js(
         }
         libparsec::InvalidityReason::NotFound { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"InvalidityReasonNotFound".into())?;
-        }
-        libparsec::InvalidityReason::UnexpectedError { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"InvalidityReasonUnexpectedError".into(),
-            )?;
         }
         libparsec::InvalidityReason::Untrusted { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"InvalidityReasonUntrusted".into())?;
