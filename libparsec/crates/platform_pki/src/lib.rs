@@ -83,26 +83,13 @@ mod platform {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum ShowCertificateSelectionDialogError {
+    #[error("Cannot open certificate store: {0}")]
     CannotOpenStore(std::io::Error),
+    #[error("Cannot get certificate info: {0}")]
     CannotGetCertificateInfo(std::io::Error),
 }
-
-impl std::fmt::Display for ShowCertificateSelectionDialogError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ShowCertificateSelectionDialogError::CannotOpenStore(e) => {
-                write!(f, "Cannot open certificate store: {e}")
-            }
-            ShowCertificateSelectionDialogError::CannotGetCertificateInfo(e) => {
-                write!(f, "Cannot get certificate info: {e}")
-            }
-        }
-    }
-}
-
-impl std::error::Error for ShowCertificateSelectionDialogError {}
 
 // TODO: https://github.com/Scille/parsec-cloud/issues/11215
 // This is specific to windows, it cannot be replicated on other platform.
