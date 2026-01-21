@@ -675,10 +675,12 @@ msTest('Update multiple profiles', async ({ usersPage }) => {
 msTest('Small display selection', async ({ usersPage }) => {
   await usersPage.setDisplaySize(DisplaySize.Small);
 
-  const headerTexts = usersPage.locator('.small-display-header-title').locator('ion-text');
-  const headerOption = usersPage.locator('.small-display-header-title').locator('ion-icon');
-  await expect(headerTexts).toHaveCount(1);
-  await expect(headerTexts.nth(0)).toHaveText('Users');
+  const topbar = usersPage.locator('.topbar');
+  const topbarTitle = topbar.locator('.topbar-left-text__title');
+  const headerSelection = usersPage.locator('.small-display-selection-header');
+  const headerOption = usersPage.locator('.topbar-right-buttons').locator('ion-button').nth(1);
+
+  await expect(topbarTitle).toHaveText('Users');
   const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   const user2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
   await expect(user1.locator('.ms-checkbox')).not.toBeVisible();
@@ -692,27 +694,27 @@ msTest('Small display selection', async ({ usersPage }) => {
   // Selection
   await modal.locator('.button-right').click();
   await expect(modal).not.toBeVisible();
-  await expect(headerTexts).toHaveCount(3);
-  await expect(headerTexts.nth(0)).toHaveText('Unselect');
-  await expect(headerTexts.nth(1)).toHaveText('2 users selected');
-  await expect(headerTexts.nth(2)).toHaveText('Cancel');
+  await expect(headerSelection).toBeVisible();
+  await expect(headerSelection.locator('.title__text')).toContainText('2 users selected');
+  await expect(headerSelection.locator('.title__button').nth(0)).toHaveText('Unselect');
+  await expect(headerSelection.locator('.title__button').nth(1)).toHaveText('Cancel');
   await expect(user1.locator('.ms-checkbox')).toBeVisible();
   await expect(user2.locator('.ms-checkbox')).toBeVisible();
   await expect(user1.locator('.ms-checkbox')).toBeChecked();
   await expect(user2.locator('.ms-checkbox')).toBeChecked();
   await user1.locator('.ms-checkbox').uncheck();
   await expect(user1.locator('.ms-checkbox')).not.toBeChecked();
-  await expect(headerTexts.nth(1)).toHaveText('One user selected');
+  await expect(headerSelection.locator('.title__text')).toContainText('One user selected');
   await user1.locator('.ms-checkbox').check();
-  await expect(headerTexts.nth(1)).toHaveText('2 users selected');
-  await headerTexts.nth(0).click();
-  await expect(headerTexts.nth(1)).toHaveText('Users');
+  await expect(headerSelection.locator('.title__text')).toContainText('2 users selected');
+  await headerSelection.locator('.title__button').nth(0).click();
+
+  await expect(headerSelection.locator('.title__text')).toHaveText('No user selected');
   await expect(user1.locator('.ms-checkbox')).not.toBeChecked();
   await expect(user2.locator('.ms-checkbox')).not.toBeChecked();
-  await headerTexts.nth(2).click();
+  await headerSelection.locator('.title__button').nth(1).click();
   await expect(user1.locator('.ms-checkbox')).not.toBeVisible();
   await expect(user2.locator('.ms-checkbox')).not.toBeVisible();
-  await expect(headerTexts).toHaveCount(1);
 });
 
 msTest('Small display member context menu', async ({ usersPage }) => {
@@ -740,12 +742,13 @@ msTest('Small display external context menu', async ({ usersPage }) => {
 msTest('Small display multiple users context menu', async ({ usersPage }) => {
   await usersPage.setDisplaySize(DisplaySize.Small);
   const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
-  const headerOption = usersPage.locator('.small-display-header-title').locator('ion-icon');
   const modal = usersPage.locator('.user-context-sheet-modal');
-  await headerOption.click();
 
-  await expect(modal).toBeVisible();
-  await modal.locator('.button-right').click();
+  await user1.hover();
+  await user1.locator('.ms-checkbox').click();
+  const headerOption = usersPage.locator('.small-display-selection-header').locator('.button-medium');
+  await headerOption.nth(0).click();
+  await headerOption.nth(0).click();
 
   await user1.locator('.user-options').click();
   await expect(modal.getByRole('group')).toHaveCount(1);

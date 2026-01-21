@@ -52,18 +52,13 @@
           />
         </div>
       </ms-action-bar>
-      <small-display-header-title
-        v-if="isSmallDisplay"
-        :title="
-          users.selectedCount() > 0
-            ? { key: 'UsersPage.userSelectedCount', data: { count: users.selectedCount() }, count: users.selectedCount() }
-            : 'HeaderPage.titles.users'
-        "
+      <small-display-selection-header
+        v-if="isSmallDisplay && selectionEnabled"
+        :title="{ key: 'UsersPage.userSelectedCount', data: { count: users.selectedCount() }, count: users.selectedCount() }"
         @open-contextual-modal="openGlobalUserContextMenu"
         @select="selectAllUsers"
         @unselect="unselectAllUsers"
         @cancel-selection="onSelectionCancel"
-        :selection-enabled="selectionEnabled"
         :some-selected="users.hasSelected()"
         :options-disabled="users.selectableUsersCount() === 0"
       />
@@ -143,7 +138,7 @@
 
 <script setup lang="ts">
 import { copyToClipboard } from '@/common/clipboard';
-import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
+import SmallDisplaySelectionHeader from '@/components/header/SmallDisplaySelectionHeader.vue';
 import { SortProperty, UserCollection, UserFilter, UserFilterLabels, UserModel } from '@/components/users';
 import {
   ClientInfo,
@@ -161,6 +156,7 @@ import {
 } from '@/parsec';
 import { Routes, currentRouteIsUserRoute, navigateTo, watchRoute } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
+import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -208,6 +204,7 @@ let eventCbId: string | null = null;
 
 const USERS_PAGE_DATA_KEY = 'UsersPage';
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { hideHeader, showHeader } = useHeaderControl();
 
 const customTabBar = useCustomTabBar();
 
@@ -635,14 +632,18 @@ const routeWatchCancel = watchRoute(async () => {
   await refreshUserList();
 });
 
-onMounted(async (): Promise<void> => {
-  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, data?: EventData) => {
-    if (event === Events.InvitationUpdated && data) {
-      if ((data as InvitationUpdatedData).status === InvitationStatus.Finished) {
-        await refreshUserList();
-      }
+async function handleEvents(event: Events, data?: EventData): Promise<void> {
+  if (event === Events.InvitationUpdated && data) {
+    if ((data as InvitationUpdatedData).status === InvitationStatus.Finished) {
+      await refreshUserList();
     }
-  });
+  } else if (event === Events.OpenContextMenu) {
+    await openGlobalUserContextMenu();
+  }
+}
+
+onMounted(async (): Promise<void> => {
+  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated | Events.OpenContextMenu, handleEvents);
   await restoreComponentData();
 
   hotkeys = hotkeyManager.newHotkeys();
@@ -676,6 +677,7 @@ onUnmounted(async () => {
   customTabBar.hide();
   routeWatchCancel();
   tabBarWatchCancel();
+  headerWatchCancel();
 });
 
 const actionBarOptionsUsersPage = computed(() => {
@@ -745,6 +747,10 @@ const actionBarOptionsUsersPage = computed(() => {
   }
 
   return actionArray;
+});
+
+const headerWatchCancel = watch([isSmallDisplay, selectionEnabled], () => {
+  isSmallDisplay.value && selectionEnabled.value ? hideHeader() : showHeader();
 });
 </script>
 

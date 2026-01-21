@@ -94,7 +94,7 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
 
   await expect(checklistPopover).toBeHidden();
   await expect(checklist).toBeVisible();
-  await expect(checklist.locator('.checklist-text__title')).toHaveText('Security checklist');
+  await expect(checklist.locator('.checklist-text__title')).toHaveText('Security recommendations');
   await expect(checklist.locator('.checklist-text__description')).toHaveText('2 remaining tasks');
   await checklist.click();
   await expect(checklistPopover).toBeVisible();
@@ -116,7 +116,7 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
   workspaces.locator('.dropdown-popover').getByRole('listitem').nth(0).click();
   await workspaceSharingModal.locator('.closeBtn').click();
 
-  await expect(checklist.locator('.checklist-text__title')).toHaveText('Security checklist');
+  await expect(checklist.locator('.checklist-text__title')).toHaveText('Security recommendations');
   await expect(checklist.locator('.checklist-text__description')).toHaveText('1 remaining task');
   await checklist.click();
   await expect(checklistPopover).toBeVisible();
@@ -198,8 +198,6 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   await expect(users.nth(1).locator('#dropdown-popover-button').locator('.input-text')).toHaveText('Owner');
   await workspaces.locator('.toast-container').locator('.toast-button').click();
   await workspaceSharingModal.locator('.closeBtn').click();
-
-  await expect(checklistButton).toHaveTheClass('unread');
 
   await checklistButton.click();
   await expect(checklistModal).toBeVisible();

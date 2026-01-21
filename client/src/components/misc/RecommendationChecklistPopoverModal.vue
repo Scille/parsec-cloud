@@ -9,7 +9,7 @@
     <div class="checklist-list">
       <div
         class="checklist-list-item subtitles-sm"
-        v-show="securityWarnings.isWorkspaceOwner"
+        v-show="securityWarnings.needsSecondOwner"
         :class="{ done: securityWarnings.soloOwnerWorkspaces.length === 0, clickable: workspaceWarningClickable }"
         @click="workspaceWarningClickable && onClick(RecommendationAction.AddWorkspaceOwner)"
       >

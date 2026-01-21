@@ -3,7 +3,7 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$msTranslate('WorkspaceSharing.title')"
+      title="WorkspaceSharing.title"
       :close-button="{ visible: true }"
     >
       <ion-text class="sharing-modal__title body">{{ workspaceName }}</ion-text>
@@ -11,7 +11,7 @@
         <ms-search-input
           class="modal-head-content__search"
           v-model="search"
-          :placeholder="'WorkspaceSharing.searchPlaceholder'"
+          placeholder="WorkspaceSharing.searchPlaceholder"
         />
         <div class="modal-head-content-right">
           <ion-text

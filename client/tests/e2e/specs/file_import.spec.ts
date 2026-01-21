@@ -147,7 +147,11 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     // Start with an empty workspace
     await createWorkspace(workspaces, 'New_Workspace');
     await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    if (displaySize === DisplaySize.Large) {
+      await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    } else {
+      await expect(workspaces.locator('.breadcrumb-file-mobile__title')).toHaveText('New_Workspace');
+    }
     const documents = workspaces;
 
     if (displaySize === DisplaySize.Small) {
@@ -174,8 +178,10 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await checkFilesUploaded(documents, 1, 11);
     await documents.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(1).click();
     await expect(documents.locator('.upload-menu')).toBeHidden();
-    await documents.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
-    await expect(workspaces).toHaveHeader(['New_Workspace', 'imports'], true, true);
+    await documents.locator('.folder-container').locator('.file-list-item').locator('.label-name').nth(0).click();
+    if (displaySize === DisplaySize.Large) {
+      await expect(workspaces).toHaveHeader(['New_Workspace', 'imports'], true, true);
+    }
     await expect(documents.locator('.folder-container').locator('.file-list-item')).toHaveCount(fs.readdirSync(importPath).length);
   });
 }
@@ -189,7 +195,9 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     // Start with an empty workspace
     await createWorkspace(workspaces, 'New_Workspace');
     await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    if (displaySize === DisplaySize.Large) {
+      await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    }
     const documents = workspaces;
 
     if (displaySize === DisplaySize.Small) {

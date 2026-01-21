@@ -1,58 +1,40 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="small-display-header-title"
-    :class="selectionEnabled ? 'small-display-header-title--selection' : ''"
-  >
-    <div v-if="selectionEnabled">
-      <ion-text
-        v-if="someSelected"
-        class="button-medium title__button title__button-left"
-        @click="$emit('unselect', $event)"
-      >
-        {{ $msTranslate('FoldersPage.actions.unselect') }}
-      </ion-text>
-      <ion-text
-        v-else
-        class="button-medium title__button title__button-left"
-        @click="$emit('select', $event)"
-      >
-        {{ $msTranslate('FoldersPage.actions.select') }}
-      </ion-text>
-    </div>
+  <div class="small-display-selection-header">
     <ion-text
-      v-if="title"
-      class="title__text title-h2"
-      :class="selectionEnabled ? 'title__text--selection' : ''"
+      v-if="someSelected"
+      class="button-medium title__button title__button-left"
+      @click="$emit('unselect', $event)"
     >
+      {{ $msTranslate('FoldersPage.actions.unselect') }}
+    </ion-text>
+    <ion-text
+      v-else
+      class="button-medium title__button title__button-left"
+      @click="$emit('select', $event)"
+    >
+      {{ $msTranslate('FoldersPage.actions.select') }}
+    </ion-text>
+    <ion-text class="title__text title-h3">
       <span class="title__text--content">{{ $msTranslate(props.title) }}</span>
     </ion-text>
     <slot />
     <ion-text
-      v-if="selectionEnabled"
       class="button-medium title__button title__button-right"
       @click="$emit('cancelSelection', $event)"
     >
       {{ $msTranslate('FoldersPage.actions.cancel') }}
     </ion-text>
-    <ion-icon
-      v-if="!selectionEnabled && !optionsDisabled"
-      class="title__icon"
-      :icon="ellipsisHorizontal"
-      @click="$emit('openContextualModal', $event)"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { IonIcon, IonText } from '@ionic/vue';
-import { ellipsisHorizontal } from 'ionicons/icons';
+import { IonText } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
 
 const props = defineProps<{
   title: Translatable;
-  selectionEnabled?: boolean;
   someSelected?: boolean;
   optionsDisabled?: boolean;
 }>();
@@ -66,18 +48,13 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-.small-display-header-title {
+.small-display-selection-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.125rem 2rem 1rem;
-  min-height: 3.75rem;
   gap: 0.5rem;
   background: var(--parsec-color-light-secondary-background);
-
-  &--selection {
-    padding: 0.125rem 0.25rem 1rem;
-  }
+  padding: 1.5rem 1rem;
 }
 
 .title__text {
@@ -87,15 +64,12 @@ defineEmits<{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  justify-content: center;
 
   &--content {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-  }
-
-  &--selection {
-    justify-content: center;
   }
 }
 
@@ -116,8 +90,12 @@ defineEmits<{
 }
 
 .title__button {
-  padding: 0.8rem;
+  padding: 0.625rem 0.825rem;
   flex-shrink: 0;
+  background: var(--parsec-color-light-secondary-white);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  border-radius: var(--parsec-radius-12);
+  box-shadow: var(--parsec-shadow-soft);
 
   &:hover {
     cursor: pointer;

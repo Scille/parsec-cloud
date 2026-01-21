@@ -2,9 +2,11 @@
 
 <template>
   <ion-page>
-    <ion-header id="connected-header">
+    <ion-header
+      v-if="showHeader"
+      id="connected-header"
+    >
       <ion-toolbar
-        v-if="showHeader"
         class="topbar"
         :class="currentRouteIs(Routes.History) ? 'topbar-history' : ''"
       >
@@ -38,8 +40,7 @@
           >
             <ion-label
               class="topbar-left-text__title title-h2"
-              :class="hasHistory() ? 'align-center' : 'align-left'"
-              v-if="(!currentRouteIs(Routes.Users) && isSmallDisplay) || isLargeDisplay"
+              :class="hasHistory() || isLargeDisplay ? 'align-center' : 'align-left'"
             >
               {{ $msTranslate(getTitleForRoute()) }}
             </ion-label>
@@ -53,9 +54,10 @@
 
           <div
             class="topbar-left__breadcrumb"
-            v-if="currentRouteIsFileRoute() && (!currentRouteIs(Routes.Workspaces) || isLargeDisplay)"
+            v-if="(currentRouteIsFileRoute() && isLargeDisplay) || (!currentRouteIs(Routes.Workspaces) && isSmallDisplay)"
           >
             <header-breadcrumbs
+              :workspace-name="workspaceName"
               :path-nodes="fullPath"
               @change="onNodeSelected"
               :from-header-page="true"
@@ -64,7 +66,7 @@
           </div>
 
           <div
-            v-if="isSmallDisplay && userInfo && currentRouteIs(Routes.Workspaces)"
+            v-if="currentRouteIs(Routes.Workspaces) && isSmallDisplay && userInfo"
             class="topbar-left-workspaces-mobile"
           >
             <ion-text class="topbar-left-workspaces-mobile__orga body">{{ userInfo.organizationId }}</ion-text>
@@ -78,49 +80,41 @@
           class="topbar-right"
         >
           <div
-            class="topbar-right-button"
+            class="topbar-right-buttons"
             v-if="!currentRouteIs(Routes.History) && !currentRouteIs(Routes.MyProfile) && !currentRouteIs(Routes.Invitations)"
           >
-            <invitations-button v-if="!currentRouteIs(Routes.Invitations)" />
+            <invitations-button
+              v-if="
+                (!currentRouteIs(Routes.Invitations) && isLargeDisplay) || currentRouteIs(Routes.Workspaces) || currentRouteIs(Routes.Users)
+              "
+            />
+            <ion-button
+              slot="icon-only"
+              class="topbar-right-buttons__item"
+              id="trigger-contextual-menu-button"
+              @click="openContextualMenu($event)"
+              ref="contextualMenuButton"
+              v-if="!currentRouteIs(Routes.Workspaces) && isSmallDisplay"
+            >
+              <ion-icon :icon="ellipsisHorizontal" />
+            </ion-button>
 
             <ion-button
               v-show="false"
               v-if="!isMobile()"
               slot="icon-only"
               id="trigger-search-button"
-              class="topbar-right-button__item"
+              class="topbar-right-buttons__item"
             >
               <ion-icon
                 slot="icon-only"
                 :icon="search"
               />
             </ion-button>
-            <div
-              v-if="!isMobile() && securityWarningsCount > 0 && securityWarnings && isSmallDisplay && !currentRouteIs(Routes.Invitations)"
-              id="trigger-checklist-button"
-              class="topbar-right-button__item unread"
-              @click="openSecurityWarningsModal()"
-              ref="checklistSecurityButton"
-            >
-              <ion-icon :icon="checkmarkCircle" />
-              <div class="checklist-security-levels">
-                <span
-                  v-if="securityWarnings?.isWorkspaceOwner"
-                  class="security-level"
-                  :class="{ 'security-level--done': securityWarningsCount < 3 }"
-                />
-                <span
-                  class="security-level"
-                  :class="{ 'security-level--done': securityWarningsCount < 2 }"
-                />
-                <span class="security-level" />
-              </div>
-            </div>
             <ion-button
-              v-if="!isMobile()"
               slot="icon-only"
               id="trigger-notifications-button"
-              class="topbar-right-button__item"
+              class="topbar-right-buttons__item"
               :class="{
                 active: notificationPopoverIsVisible,
                 unread: informationManager.notificationManager.hasUnreadNotifications(),
@@ -142,6 +136,43 @@
           />
         </ion-buttons>
       </ion-toolbar>
+      <div
+        v-if="!currentRouteIs(Routes.Invitations) && !currentRouteIs(Routes.History) && showSecurityChecklistSmallDisplay"
+        id="trigger-checklist-button"
+        class="checklist-security-container"
+        @click="openSecurityWarningsModal()"
+        ref="checklistSecurityButton"
+      >
+        <div
+          class="checklist-security"
+          v-if="securityWarnings"
+        >
+          <ion-text class="checklist-security__title button-large">
+            {{ $msTranslate('SideMenu.checklist.title') }}
+          </ion-text>
+          <ion-icon
+            v-if="securityWarnings.hasMultipleDevices === true"
+            class="checklist-security__icon"
+            :icon="checkmarkCircle"
+          />
+          <ion-icon
+            v-if="securityWarnings.hasRecoveryDevice === true"
+            class="checklist-security__icon"
+            :icon="checkmarkCircle"
+          />
+          <ion-icon
+            v-if="userInfo && userInfo.currentProfile !== UserProfile.Outsider && securityWarnings.soloOwnerWorkspaces.length === 0"
+            class="checklist-security__icon"
+            :icon="checkmarkCircle"
+          />
+          <ion-icon
+            class="checklist-security__icon to-do"
+            v-for="index in securityWarningsCount"
+            :key="index"
+            :icon="ellipseOutline"
+          />
+        </div>
+      </div>
     </ion-header>
 
     <ion-content>
@@ -164,6 +195,7 @@ import {
   currentRouteIs,
   currentRouteIsFileRoute,
   currentRouteIsLoggedRoute,
+  currentRouteIsUserRoute,
   getCurrentRouteName,
   getCurrentRouteParams,
   getDocumentPath,
@@ -173,7 +205,14 @@ import {
   routerGoBack,
   watchRoute,
 } from '@/router';
-import { EventData, EventDistributor, EventDistributorKey, Events, WorkspaceRoleUpdateData } from '@/services/eventDistributor';
+import {
+  EventData,
+  EventDistributor,
+  EventDistributorKey,
+  Events,
+  OpenContextualMenuData,
+  WorkspaceRoleUpdateData,
+} from '@/services/eventDistributor';
 import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
@@ -196,7 +235,7 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-import { checkmarkCircle, home, notifications, search } from 'ionicons/icons';
+import { checkmarkCircle, ellipseOutline, ellipsisHorizontal, home, notifications, search } from 'ionicons/icons';
 import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
@@ -227,7 +266,7 @@ const securityWarningsCount = computed(() => {
 
 const showHeader = computed(() => {
   // Override visibility for specific routes
-  if (currentRouteIs(Routes.FileHandler)) {
+  if (currentRouteIs(Routes.FileHandler) || currentRouteIsUserRoute() || currentRouteIsFileRoute()) {
     return isHeaderVisible();
   }
   // Hide header on small displays for specific routes
@@ -239,6 +278,9 @@ const showHeader = computed(() => {
 const breadcrumbsWidth = ref(0);
 const backBlockRef = useTemplateRef('backBlock');
 const topbarLeftRef = useTemplateRef('topbarLeft');
+const showSecurityChecklistSmallDisplay = computed(() => {
+  return isSmallDisplay.value && securityWarningsCount.value > 0 && securityWarnings.value;
+});
 
 const topbarWidthWatchCancel = watch([windowWidth, fullPath], () => {
   if (topbarLeftRef.value?.offsetWidth && backBlockRef.value?.offsetWidth) {
@@ -400,6 +442,16 @@ function getTitleForRoute(): Translatable {
   return '';
 }
 
+async function openContextualMenu(event: Event): Promise<void> {
+  event.stopPropagation();
+
+  if (currentRouteIs(Routes.Documents) || currentRouteIs(Routes.Users)) {
+    await eventDistributor.dispatchEvent(Events.OpenContextMenu, {
+      event,
+    } as OpenContextualMenuData);
+  }
+}
+
 async function openNotificationCenter(event: Event): Promise<void> {
   event.stopPropagation();
   notificationPopoverIsVisible.value = true;
@@ -486,6 +538,18 @@ async function openSecurityWarningsModal(): Promise<void> {
   display: flex;
   padding: 1.5rem 2rem 1rem;
 
+  &::part(container) {
+    @include ms.responsive-breakpoint('sm') {
+      contain: none;
+      overflow: visible;
+      gap: 0.5rem;
+    }
+  }
+
+  &::part(content) {
+    overflow: hidden;
+  }
+
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem 1.5rem 1rem;
     --background: var(--parsec-color-light-secondary-background);
@@ -504,14 +568,66 @@ async function openSecurityWarningsModal(): Promise<void> {
   }
 }
 
+.topbar-left {
+  display: flex;
+  align-items: center;
+  margin-right: 0.5rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    margin-right: 0 !important;
+    gap: 0.5rem;
+  }
+
+  &-workspaces-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    &__orga {
+      color: var(--parsec-color-light-secondary-grey);
+    }
+
+    &__title {
+      color: var(--parsec-color-light-primary-800);
+    }
+  }
+
+  &-text {
+    width: 100%;
+    color: var(--parsec-color-light-primary-800);
+    text-align: center;
+
+    .align-left {
+      display: flex;
+      justify-content: start;
+      align-items: center;
+      margin-inline: 1.5rem;
+    }
+
+    .align-center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+  }
+
+  &__breadcrumb {
+    display: flex;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+}
+
 .topbar-right {
   display: flex;
   gap: 1.5em;
   margin-inline-end: 0;
 
-  &-button {
+  &-buttons {
     display: flex;
-    gap: 1em;
+    gap: 0.75em;
     align-items: center;
 
     &::part(native) {
@@ -552,8 +668,9 @@ async function openSecurityWarningsModal(): Promise<void> {
       }
 
       &:hover {
-        --background-hover: var(--parsec-color-light-secondary-premiere);
-        background: var(--parsec-color-light-secondary-premiere);
+        --background-hover: var(--parsec-color-light-secondary-medium);
+        background: var(--parsec-color-light-secondary-medium);
+        color: var(--parsec-color-light-secondary-text);
       }
 
       &.active {
@@ -580,43 +697,16 @@ async function openSecurityWarningsModal(): Promise<void> {
           border-radius: var(--parsec-radius-12);
         }
       }
-    }
-  }
 
-  #trigger-checklist-button {
-    padding: 0.625rem;
-    border-radius: var(--parsec-radius-12);
-    cursor: pointer;
-    position: relative;
-    display: flex;
+      @include ms.responsive-breakpoint('sm') {
+        padding: 0.5rem;
+        background: var(--parsec-color-light-secondary-white);
+        border-radius: var(--parsec-radius-circle);
+        box-shadow: var(--parsec-shadow-soft);
 
-    &:hover {
-      background: var(--parsec-color-light-secondary-premiere);
-    }
-
-    .checklist-security-levels {
-      position: absolute;
-      display: flex;
-      flex-direction: column;
-      top: 0;
-      bottom: 0;
-      right: 0;
-      transform: translateY(15%);
-      justify-content: center;
-      align-items: center;
-      gap: 0.15rem;
-      height: fit-content;
-
-      .security-level {
-        width: 0.5rem;
-        height: 0.5rem;
-        background: var(--parsec-color-light-primary-500);
-        opacity: 0.3;
-        border-radius: var(--parsec-radius-2);
-
-        &--done {
-          opacity: 1;
-          background: var(--parsec-color-light-primary-400);
+        ion-icon {
+          color: var(--parsec-color-light-secondary-hard-grey);
+          font-size: 1.375rem;
         }
       }
     }
@@ -704,6 +794,46 @@ async function openSecurityWarningsModal(): Promise<void> {
         &__workspace {
           color: var(--parsec-color-light-secondary-grey);
         }
+      }
+    }
+  }
+}
+
+#trigger-checklist-button {
+  padding: 0.5rem 0.825rem 1rem 0.825rem;
+  background: var(--parsec-color-light-secondary-background);
+  cursor: pointer;
+
+  .checklist-security {
+    padding: 0.5rem 0.825rem;
+    border-radius: var(--parsec-radius-8);
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    background: var(--parsec-color-light-gradient-background);
+    box-shadow: var(--parsec-shadow-soft);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &__title {
+      color: var(--parsec-color-light-secondary-white);
+      margin-inline-end: 0.5rem;
+      width: 100%;
+    }
+
+    &__icon {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 0.15rem;
+      font-size: 1.5rem;
+      color: var(--parsec-color-light-secondary-white);
+      opacity: 0.8;
+
+      &.to-do {
+        color: var(--parsec-color-light-secondary-white);
       }
     }
   }

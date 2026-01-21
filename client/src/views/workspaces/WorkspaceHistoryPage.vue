@@ -71,7 +71,8 @@
                 </ion-button>
               </div>
               <header-breadcrumbs
-                v-if="isLargeDisplay"
+                v-if="workspaceInfo && isLargeDisplay"
+                :workspace-name="workspaceInfo.currentName"
                 :path-nodes="headerPath"
                 @change="onPathChange"
                 class="navigation-breadcrumb"
@@ -110,24 +111,21 @@
             </div>
           </div>
           <div
-            class="current-folder button-medium"
-            v-if="headerPath.length > 0 && isSmallDisplay"
+            class="current-folder button-large"
+            v-if="isSmallDisplay"
           >
             <ms-image
               v-show="pathLength > 1"
               :image="Folder"
               class="current-folder__icon"
             />
-            <ion-text class="current-folder__text">{{ `${headerPath[headerPath.length - 1].display}` }}</ion-text>
             <header-breadcrumbs
-              v-if="pathLength > 1"
+              v-if="workspaceInfo"
+              :workspace-name="workspaceInfo.currentName"
               :path-nodes="headerPath"
               @change="onPathChange"
               class="navigation-breadcrumb"
-              :items-before-collapse="0"
-              :items-after-collapse="0"
-              :max-shown="0"
-              :available-width="breadcrumbsWidth"
+              :from-header-page="false"
               :show-parent-node="false"
             />
             <ion-button
@@ -597,44 +595,74 @@ async function onRestoreClicked(): Promise<void> {
   }
 
   .current-folder {
-    color: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-hard-grey);
     background: var(--parsec-color-light-secondary-white);
     border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
     padding: 0.5rem 1.75rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     overflow: hidden;
 
     @include ms.responsive-breakpoint('sm') {
       order: 1;
-      padding: 0.5rem 1rem;
+      padding: 0.75rem 1rem;
       flex-shrink: 0;
     }
 
     &__text {
       width: fit-content;
       max-width: 10rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .chevron-icon {
+        font-size: 1rem;
+        color: var(--parsec-color-light-secondary-text);
+        font-size: 0.75rem;
+        padding: 0.125rem;
+        flex-shrink: 0;
+        border-radius: var(--parsec-radius-circle);
+        background: var(--parsec-color-light-secondary-medium);
+      }
     }
 
     &__icon {
       flex-shrink: 0;
-      width: 1.25rem;
-      height: 1.25rem;
+      width: 1.375rem;
+      height: 1.375rem;
     }
   }
 
   .select-button {
+    padding: 0.75rem 1rem;
+    margin-left: 0.75rem;
+    flex-shrink: 0;
+    background: var(--parsec-color-light-secondary-white);
     color: var(--parsec-color-light-primary-500);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-8);
+    box-shadow: var(--parsec-shadow-input);
     cursor: pointer;
-    margin-left: auto;
-    font-size: 0.875rem;
-    --background: transparent;
-    --background-hover: var(--parsec-color-light-primary-50);
+
+    &::part(native) {
+      padding: 0;
+      background: transparent;
+      --background-hover: transparent;
+      --border-radius: none;
+    }
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-medium);
+    }
 
     @include ms.responsive-breakpoint('sm') {
+      padding: 0.625rem 0.825rem;
+      border-radius: var(--parsec-radius-8);
+      box-shadow: var(--parsec-shadow-soft);
+
       &::part(native) {
-        padding: 0.25rem 0.5rem;
+        padding: 0;
       }
     }
   }

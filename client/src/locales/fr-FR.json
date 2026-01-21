@@ -1094,7 +1094,7 @@
         "noRecentDocuments": "Aucun document récent",
         "back": "Retour",
         "checklist": {
-            "title": "Actions recommandées",
+            "title": "Recommandations de sécurité",
             "description": "Pour réduire le risque de perte de données, nous vous recommandons d'effectuer les tâches suivantes.",
             "remaining": "1 tâche restante | {count} tâches restantes",
             "open": "Ouvrir",

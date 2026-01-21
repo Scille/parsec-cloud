@@ -3,7 +3,7 @@
 import { answerQuestion, expect, getClipboardText, inviteUsers, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
 
 msTest('Profile popover default state', async ({ connected }) => {
-  await expect(connected.locator('.topbar').locator('#invitations-button')).toHaveText('One invitation');
+  await expect(connected.locator('.topbar').locator('#invitations-button').locator('.unread-count')).toHaveText('1');
 
   await expect(connected.locator('.invitations-list-popover')).toBeHidden();
   await connected.locator('.topbar').locator('#invitations-button').click();
@@ -87,7 +87,7 @@ msTest('Invite new user', async ({ connected }) => {
   await expect(connected).toShowToast('An invitation to join the organization has been sent to zana@wraeclast.', 'Success');
   await connected.locator('.topbar .back-button').click();
   await expect(connected).toBeWorkspacePage();
-  await expect(connected.locator('.topbar').locator('#invitations-button')).toHaveText('2 invitations');
+  await expect(connected.locator('.topbar').locator('#invitations-button').locator('.unread-count')).toHaveText('2');
 
   await expect(connected.locator('.invitations-list-popover')).toBeHidden();
   await connected.locator('.topbar').locator('#invitations-button').click();
