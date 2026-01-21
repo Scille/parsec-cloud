@@ -246,6 +246,19 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
         timeout-minutes: 5
 
+      - name: Install test PKI certificates
+        if: startsWith(matrix.os, 'windows')
+        shell: powershell
+        # Root certificates require admin credentials, and Windows UAC triggers a
+        # confirmation dialogue (that then hangs forever...) when importing them
+        # from `import_testpki_windows.ps1`.
+        # However no such dialogue is displayed when directly importing with `certutil`
+        # since the current powershell runs with admin privilege ¯\_(ツ)_/¯
+        run: |
+          certutil -addstore -f "Root" libparsec\crates\platform_pki\test-pki\Root\aperture_science.crt
+          certutil -addstore -f "Root" libparsec\crates\platform_pki\test-pki\Root\black_mesa.crt
+          ./libparsec/crates/platform_pki/examples/import_testpki_windows.ps1 -ImportPath ./libparsec/crates/platform_pki/test-pki -NoCleanup
+
       - name: Retrieve runner specs
         id: runner-specs
         uses: ./.github/actions/system-info
