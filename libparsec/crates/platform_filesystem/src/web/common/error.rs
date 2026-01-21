@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use crate::LoadFileError;
 use crate::SaveContentError;
 use std::path::PathBuf;
 use web_sys::wasm_bindgen::JsValue;
@@ -102,6 +103,63 @@ pub enum WriteAllError {
 }
 
 pub type NewStorageError = GetRootDirectoryError;
+
+#[derive(Debug, thiserror::Error)]
+pub enum ReadFileError {
+    #[error("Failed to cast to {ty} ({value:?}")]
+    Cast { ty: &'static str, value: JsValue },
+    #[error("Failed to await JS promise ({0:?})")]
+    Promise(JsValue),
+    #[error("DOM exception: {0:?}")]
+    DomException(web_sys::DomException),
+    #[error("Item at {0:?} is not a directory")]
+    NotAFile(PathBuf),
+    #[error("No such file or directory at {0:?}")]
+    NotFound(PathBuf),
+    #[error("Item at {0:?} is not a directory")]
+    NotADirectory(PathBuf),
+    #[error("Failed to get file object ({0:?})")]
+    GetFile(JsValue),
+}
+
+impl From<ReadFileError> for LoadFileError {
+    fn from(value: ReadFileError) -> Self {
+        match value {
+            ReadFileError::Cast { .. }
+            | ReadFileError::DomException(..)
+            | ReadFileError::Promise(..)
+            | ReadFileError::GetFile(..) => LoadFileError::Internal(anyhow::anyhow!("{value}")),
+            ReadFileError::NotAFile(..) => LoadFileError::NotAFile,
+            ReadFileError::NotFound(..) => LoadFileError::NotFound,
+            ReadFileError::NotADirectory(..) => LoadFileError::InvalidParent,
+        }
+    }
+}
+
+impl From<ReadToEndError> for ReadFileError {
+    fn from(value: ReadToEndError) -> Self {
+        match value {
+            ReadToEndError::Cast { ty, value } => ReadFileError::Cast { ty, value },
+            ReadToEndError::Promise(e) => ReadFileError::Promise(e),
+            ReadToEndError::DomException(e) => ReadFileError::DomException(e),
+            ReadToEndError::NotFound(e) => ReadFileError::NotFound(e),
+            ReadToEndError::GetFile(e) => ReadFileError::GetFile(e),
+        }
+    }
+}
+
+impl From<GetFileHandleError> for ReadFileError {
+    fn from(value: GetFileHandleError) -> Self {
+        match value {
+            GetFileHandleError::Cast { ty, value } => ReadFileError::Cast { ty, value },
+            GetFileHandleError::Promise(e) => ReadFileError::Promise(e),
+            GetFileHandleError::DomException(e) => ReadFileError::DomException(e),
+            GetFileHandleError::NotADirectory(e) => ReadFileError::NotADirectory(e),
+            GetFileHandleError::NotFound(e) => ReadFileError::NotFound(e),
+            GetFileHandleError::NotAFile(e) => ReadFileError::NotAFile(e),
+        }
+    }
+}
 
 impl From<GetDirectoryHandleError> for GetFileHandleError {
     fn from(e: GetDirectoryHandleError) -> Self {

@@ -10,11 +10,12 @@ use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
 use libparsec_platform_filesystem::save_content;
 use libparsec_types::prelude::*;
 
-use crate::SaveDeviceError;
 use crate::{
+    load_available_device, load_pki_pending_file,
     web::wrapper::{DirEntry, DirOrFileHandle, OpenOptions},
     AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
-    OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer,
+    LoadAvailableDeviceError, LoadContentError, OpenBaoOperationsUploadOpaqueKeyError,
+    RemoteOperationServer, SaveDeviceError,
 };
 
 use super::{
@@ -43,14 +44,22 @@ impl Storage {
             .await?;
         let mut devices = Vec::with_capacity(file_entries.len());
         for file_entry in file_entries {
-            match load_available_device(&file_entry).await {
+            match load_available_device(&config_dir, file_entry.path).await {
                 Ok(device) => {
                     devices.push(device);
                 }
                 // Ignore invalid files
-                Err(LoadAvailableDeviceError::RmpDecode(_)) => continue,
+                Err(LoadAvailableDeviceError::InvalidData) => continue,
                 // Unexpected error, make it bubble up
-                Err(e) => return Err(ListAvailableDevicesError::from(e)),
+                Err(LoadAvailableDeviceError::StorageNotAvailable) => {
+                    return Err(ListAvailableDevicesError::StorageNotAvailable)
+                }
+                Err(LoadAvailableDeviceError::InvalidPath(_)) => {
+                    return Err(ListAvailableDevicesError::InvalidPath)
+                }
+                Err(LoadAvailableDeviceError::Internal(e)) => {
+                    return Err(ListAvailableDevicesError::Internal(e.into()))
+                }
             }
         }
 
@@ -109,11 +118,6 @@ impl Storage {
             }
         }
         Ok(files)
-    }
-
-    pub(crate) async fn read_file(&self, file: &Path) -> Result<Vec<u8>, ReadFile> {
-        let file = self.root_dir.get_file_from_path(file, None).await?;
-        file.read_to_end().await.map_err(|e| e.into())
     }
 
     pub(crate) async fn save_device(
@@ -289,14 +293,22 @@ impl Storage {
             .await?;
         let mut entries = Vec::with_capacity(file_entries.len());
         for file_entry in file_entries {
-            match load_pki_local_pending(&file_entry).await {
+            match load_pki_pending_file(&file_entry.path()).await {
                 Ok(device) => {
                     entries.push(device);
                 }
                 // Ignore invalid files
-                Err(LoadPkiLocalPendingError::DataError(_)) => continue,
+                Err(LoadContentError::InvalidData) => continue,
                 // Unexpected error, make it bubble up
-                Err(e) => return Err(ListPkiLocalPendingError::from(e)),
+                Err(LoadContentError::StorageNotAvailable) => {
+                    return Err(ListPkiLocalPendingError::StorageNotAvailable)
+                }
+                Err(LoadContentError::InvalidPath(_)) => {
+                    return Err(ListPkiLocalPendingError::InvalidPath)
+                }
+                Err(LoadContentError::Internal(e)) => {
+                    return Err(ListPkiLocalPendingError::Internal(e.into()))
+                }
             }
         }
 
@@ -304,36 +316,4 @@ impl Storage {
 
         Ok(entries)
     }
-}
-
-async fn load_available_device(file: &File) -> Result<AvailableDevice, LoadAvailableDeviceError> {
-    let raw_data = file
-        .read_to_end()
-        .await
-        .map_err(LoadAvailableDeviceError::ReadToEnd)?;
-    crate::load_available_device_from_blob(file.path().to_owned(), &raw_data)
-        .inspect_err(|e| {
-            log::warn!(
-                "Failed to decode device from {}: {e}",
-                file.path().display()
-            )
-        })
-        .map_err(LoadAvailableDeviceError::RmpDecode)
-}
-
-async fn load_pki_local_pending(
-    file: &File,
-) -> Result<PKILocalPendingEnrollment, LoadPkiLocalPendingError> {
-    let raw_data = file
-        .read_to_end()
-        .await
-        .map_err(LoadPkiLocalPendingError::ReadToEnd)?;
-    PKILocalPendingEnrollment::load(&raw_data)
-        .inspect_err(|err| {
-            log::warn!(
-                "Failed to decode local pending at {}: {err}",
-                file.path().display()
-            )
-        })
-        .map_err(LoadPkiLocalPendingError::DataError)
 }

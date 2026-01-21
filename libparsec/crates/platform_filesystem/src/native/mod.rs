@@ -6,4 +6,5 @@ mod remove;
 mod rename;
 mod save;
 
+pub use load::load_file;
 pub use save::save_content;

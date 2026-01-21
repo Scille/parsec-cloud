@@ -3,6 +3,9 @@
 use anyhow::anyhow;
 use std::io::ErrorKind;
 
+use libparsec_types::prelude::*;
+use std::path::Path;
+
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
 #[cfg(target_arch = "wasm32")]
@@ -70,6 +73,7 @@ impl From<std::io::Error> for SaveContentError {
         }
     }
 }
+
 #[cfg(not(target_arch = "wasm32"))]
 pub async fn save_content(path: &std::path::Path, content: &[u8]) -> Result<(), SaveContentError> {
     native::save_content(path, content).await
@@ -79,6 +83,44 @@ pub async fn save_content(path: &std::path::Path, content: &[u8]) -> Result<(), 
 pub async fn save_content(path: &std::path::Path, content: &[u8]) -> Result<(), SaveContentError> {
     let store = web::common::internal::Storage::new().await?;
     web::save_content(store, path, content).await
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum LoadFileError {
+    #[error("storage not available")]
+    StorageNotAvailable,
+    #[error("not a file")]
+    NotAFile,
+    #[error("invalid parent")]
+    InvalidParent,
+    #[error("invalid path")]
+    InvalidPath,
+    #[error("file not found")]
+    NotFound,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<std::io::Error> for LoadFileError {
+    fn from(value: std::io::Error) -> Self {
+        match value.kind() {
+            ErrorKind::NotFound => LoadFileError::NotFound,
+            ErrorKind::NotADirectory => LoadFileError::InvalidParent,
+            ErrorKind::IsADirectory => LoadFileError::NotAFile,
+            ErrorKind::InvalidFilename | ErrorKind::PermissionDenied => LoadFileError::InvalidPath,
+            e => LoadFileError::Internal(anyhow!("io error {e}")),
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub async fn load_file(path: &Path) -> Result<Bytes, LoadFileError> {
+    native::load_file(path).await
+}
+
+#[cfg(target_arch = "wasm32")]
+pub async fn load_file(path: &Path) -> Result<Bytes, LoadFileError> {
+    web::load_file(path).await
 }
 
 #[path = "../tests/units/mod.rs"]

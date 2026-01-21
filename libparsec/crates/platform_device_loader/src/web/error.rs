@@ -2,6 +2,7 @@
 
 use std::path::PathBuf;
 
+use crate::LoadContentError;
 use libparsec_types::prelude::*;
 use web_sys::wasm_bindgen::JsValue;
 
@@ -78,26 +79,28 @@ error_set::error_set! {
     NewStorageError := GetRootDirectoryError
     ListFileEntriesError := GetDirectoryHandleError
     ListAvailableDevicesError := ListFileEntriesError
-        || LoadAvailableDeviceError
         || AwaitPromiseError
         || {
-            ReadToEnd(ReadToEndError)
+            ReadToEnd(ReadToEndError),
+            InvalidPath, // TODO #11955
+            StorageNotAvailable, // TODO #11955,
+            Internal(anyhow::Error),// TODO #11955
         }
     ListPkiLocalPendingError := GetDirectoryHandleError
         || LoadPkiLocalPendingError
         || AwaitPromiseError
         || {
-            ReadToEnd(ReadToEndError)
+            ReadToEnd(ReadToEndError),
+            InvalidPath, // TODO #11955
+            StorageNotAvailable, // TODO #11955,
+            InvalidData,// TODO #11955,
+            Internal(anyhow::Error),// TODO #11955
         }
     LoadPkiLocalPendingError := {
         ReadToEnd(ReadToEndError),
         DataError(libparsec_types::DataError)
     }
     DeviceMissingError := NotFoundError
-    LoadAvailableDeviceError := {
-        ReadToEnd(ReadToEndError),
-        RmpDecode(libparsec_types::RmpDecodeError)
-    }
     ReadFile := {
         GetFile(GetFileHandleError),
         ReadFile(ReadToEndError),
@@ -165,5 +168,16 @@ impl From<RemoveDeviceError> for crate::RemoveDeviceError {
 impl From<ArchiveDeviceError> for crate::ArchiveDeviceError {
     fn from(value: ArchiveDeviceError) -> Self {
         Self::Internal(anyhow::anyhow!("{value}"))
+    }
+}
+
+impl From<LoadContentError> for ListPkiLocalPendingError {
+    fn from(value: LoadContentError) -> Self {
+        match value {
+            LoadContentError::InvalidPath(..) => ListPkiLocalPendingError::InvalidPath,
+            LoadContentError::InvalidData => ListPkiLocalPendingError::InvalidData,
+            LoadContentError::StorageNotAvailable => ListPkiLocalPendingError::StorageNotAvailable,
+            LoadContentError::Internal(..) => ListPkiLocalPendingError::Internal(value.into()),
+        }
     }
 }

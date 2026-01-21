@@ -157,7 +157,6 @@ impl Directory {
             .inspect(|_v| log::trace!("Found handle `{dirname}` in {}", self.path.display()))
     }
 
-    #[expect(unused)]
     pub async fn get_file_from_path(
         &self,
         path: &Path,
@@ -168,7 +167,7 @@ impl Directory {
         let filename = path
             .file_name()
             .and_then(OsStr::to_str)
-            .expect("Missing filename");
+            .ok_or(GetFileHandleError::NotAFile(path.to_path_buf()))?;
         let dir = self.get_parent_directory(path.parent(), None).await?;
         dir.as_ref()
             .unwrap_or(self)
@@ -355,7 +354,6 @@ impl File {
         &self.path
     }
 
-    #[expect(unused)]
     pub async fn read_to_end(&self) -> Result<Vec<u8>, ReadToEndError> {
         let file = JsFuture::from(self.handle.get_file())
             .await
