@@ -3,7 +3,7 @@
 <template>
   <div class="header-breadcrumbs">
     <ion-breadcrumbs
-      v-show="isLargeDisplay"
+      v-if="isLargeDisplay"
       class="breadcrumb"
       @ion-collapsed-click="openPopover($event)"
       :max-items="maxShown"
@@ -29,48 +29,20 @@
       </ion-breadcrumb>
     </ion-breadcrumbs>
     <div
-      v-if="isSmallDisplay && pathNodes.length > (fromHeaderPage ? 2 : 0)"
+      v-if="isSmallDisplay && props.pathNodes.length > 1"
       class="breadcrumb-small-container"
     >
-      <template v-if="showParentNode">
-        <ion-text
-          v-if="pathNodes.length > (fromHeaderPage ? 3 : 1)"
-          class="breadcrumb-normal breadcrumb-small"
-        >
-          {{ '...' }}
-        </ion-text>
-        <ion-text
-          v-if="pathNodes.length > (fromHeaderPage ? 3 : 1)"
-          class="breadcrumb-normal breadcrumb-small"
-        >
-          {{ '/' }}
-        </ion-text>
-        <ion-text
-          class="breadcrumb-normal breadcrumb-small breadcrumb-small-text"
-          :class="fromHeaderPage ? '' : 'breadcrumb-small-active'"
-        >
-          {{ `${pathNodes[pathNodes.length - (fromHeaderPage ? 2 : 1)].display}` }}
-        </ion-text>
-        <ion-text
-          v-if="fromHeaderPage"
-          class="breadcrumb-normal breadcrumb-small"
-        >
-          {{ '/' }}
-        </ion-text>
-      </template>
-      <div class="breadcrumb-popover-button-container">
-        <ion-button
-          v-if="pathNodes.length > 1"
-          @click="openPopover"
-          class="breadcrumb-popover-button"
-          fill="outline"
-        >
-          <ion-icon
-            :icon="caretDown"
-            slot="icon-only"
-            class="breadcrumb-popover-button__icon"
-          />
-        </ion-button>
+      <div
+        class="breadcrumb-file-mobile"
+        :class="{ is_browsing: props.pathNodes.length > 2 }"
+        @click="props.pathNodes.length > 2 ? openPopover($event) : null"
+      >
+        <ion-text class="breadcrumb-file-mobile__title title-h2">{{ currentFolderName }}</ion-text>
+        <ion-icon
+          v-if="props.pathNodes.length > 2"
+          class="breadcrumb-file-mobile__icon"
+          :icon="chevronDown"
+        />
       </div>
     </div>
   </div>
@@ -91,14 +63,16 @@ export interface RouterPathNode {
 
 <script setup lang="ts">
 import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
+import { WorkspaceName } from '@/parsec';
 import { Query, Routes } from '@/router';
-import { IonBreadcrumb, IonBreadcrumbs, IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
-import { caretDown } from 'ionicons/icons';
+import { IonBreadcrumb, IonBreadcrumbs, IonIcon, IonText, popoverController } from '@ionic/vue';
+import { chevronDown } from 'ionicons/icons';
 import { Translatable, useWindowSize } from 'megashark-lib';
-import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{
+    workspaceName: WorkspaceName;
     pathNodes: RouterPathNode[];
     itemsBeforeCollapse?: number;
     itemsAfterCollapse?: number;
@@ -146,15 +120,24 @@ onUnmounted(() => {
   watchNodeSizeCancel();
 });
 
+const currentFolderName = computed(() => {
+  if (props.pathNodes.length === 0) {
+    return '';
+  }
+
+  if (props.pathNodes.length === 2) {
+    return props.workspaceName;
+  }
+
+  const lastNode = props.pathNodes[props.pathNodes.length - 1];
+  return lastNode.display || props.workspaceName;
+});
+
 function setBreadcrumbWidth(): void {
   if (props.availableWidth > 0 && breadcrumbRef.value) {
     let visibleNodes = Math.min(props.pathNodes.length, props.maxShown);
     let breadcrumbWidth = props.availableWidth - 1;
 
-    if (isSmallDisplay.value && props.fromHeaderPage && props.pathNodes.length === props.maxShown) {
-      // "... /" not showing, difference of 2rem
-      breadcrumbWidth += 2;
-    }
     if (props.pathNodes.length > props.maxShown || (isSmallDisplay.value && props.pathNodes.length !== 1)) {
       // Deduce collapsed element or popover button width if present
       breadcrumbWidth -= props.fromHeaderPage && isLargeDisplay.value ? 4.125 : 5.375;
@@ -184,7 +167,7 @@ function getCollapsedItems(): Array<RouterPathNode> {
   return props.pathNodes.slice(0, props.pathNodes.length - 1);
 }
 
-async function openPopover(event: CustomEvent): Promise<void> {
+async function openPopover(event: Event): Promise<void> {
   ignoreNextEvent = true;
   const popover = await popoverController.create({
     component: HeaderBreadcrumbPopover,
@@ -299,48 +282,46 @@ function navigateTo(path: RouterPathNode): void {
   }
 }
 
-.breadcrumb-small-container {
+.breadcrumb-file-mobile {
   display: flex;
   align-items: center;
-  color: var(--parsec-color-light-secondary-grey);
   gap: 0.5rem;
+  padding: 0.5rem 0.825rem;
+  border-radius: var(--parsec-radius-8);
+  overflow: hidden;
+  width: fit-content;
 
-  .breadcrumb-small {
-    color: var(--parsec-color-light-secondary-grey);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-    max-width: calc(v-bind(breadcrumbWidthProperty));
-
-    &-active {
-      color: var(--parsec-color-light-primary-700);
-    }
+  * {
+    transition: all 0.15s ease-in-out;
   }
 
-  .breadcrumb-popover-button {
-    min-width: 0;
-    padding: 0;
-    background: var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-8);
+  &__title {
+    color: var(--parsec-color-light-primary-800);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
 
-    &::part(native) {
-      --background-hover: none;
-      --background-focused: none;
-      border: none;
-      padding: 0.375rem;
-    }
+  &__icon {
+    color: var(--parsec-color-light-secondary-text);
+    font-size: 0.75rem;
+    padding: 0.125rem;
+    flex-shrink: 0;
+    border-radius: var(--parsec-radius-circle);
+    background: var(--parsec-color-light-secondary-medium);
+  }
 
-    &-container {
-      display: flex;
-    }
+  &.is_browsing {
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
 
-    &__icon {
-      font-size: 0.875rem;
-      color: var(--parsec-color-light-secondary-hard-grey);
-    }
+    &:hover {
+      background: var(--parsec-color-light-secondary-medium);
 
-    &:hover .breadcrumb-popover-button__icon {
-      color: var(--parsec-color-light-secondary-text);
+      .breadcrumb-file-mobile__icon {
+        background: var(--parsec-color-light-secondary-soft-grey);
+        color: var(--parsec-color-light-secondary-white);
+      }
     }
   }
 }

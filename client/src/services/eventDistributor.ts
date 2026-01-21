@@ -49,6 +49,7 @@ enum Events {
   EntryDeleted = 1 << 26,
   EntrySyncProgress = 1 << 27,
   WorkspaceMountpointsSync = 1 << 28,
+  OpenContextMenu = 1 << 28,
 }
 
 interface WorkspaceCreatedData {
@@ -130,6 +131,10 @@ interface WorkspaceMountpointInfo {
   isMounted: boolean;
 }
 
+interface OpenContextualMenuData {
+  event: Event;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -145,7 +150,8 @@ type EventData =
   | WorkspaceRoleUpdateData
   | EntryRenamedData
   | EntryDeletedData
-  | WorkspaceMountpointInfo;
+  | WorkspaceMountpointInfo
+  | OpenContextualMenuData;
 
 interface Callback {
   id: string;
@@ -235,6 +241,7 @@ export {
   IncompatibleServerData,
   InvitationUpdatedData,
   MenuActionData,
+  OpenContextualMenuData,
   UpdateAvailabilityData,
   WorkspaceCreatedData,
   WorkspaceMountpointInfo,

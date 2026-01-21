@@ -41,6 +41,7 @@ async function openPopover(page: MsPage, index: number): Promise<Locator> {
     await entry.locator('.card-option').click();
   } else {
     const entry = page.locator('.folder-container').locator('.file-list-item').nth(index);
+    await expect(entry).toBeVisible();
     await entry.hover();
     await entry.locator('.options-button').click();
   }
@@ -637,7 +638,7 @@ msTest.describe(() => {
         if (gridMode) {
           await toggleViewMode(documents);
         }
-        await documents.locator('.folder-content').locator('.small-display-header-title .title__icon').click();
+        await documents.locator('.topbar-right-buttons').locator('.topbar-right-buttons__item').nth(0).click();
         await expect(documents.locator('.file-context-sheet-modal')).toBeVisible();
         const modal = documents.locator('.file-context-sheet-modal');
         await expandSheetModal(documents, modal);
@@ -647,7 +648,7 @@ msTest.describe(() => {
         await expect(modal.locator('.list-group-item').nth(0)).toHaveText('Select all');
         await modal.locator('.list-group-item').click();
 
-        const headerElements = documents.locator('.small-display-header-title').locator('ion-text');
+        const headerElements = documents.locator('.small-display-selection-header').locator('ion-text');
         await expect(headerElements).toHaveCount(3);
         await expect(headerElements.nth(0)).toHaveText('Unselect');
         await expect(headerElements.nth(1)).toHaveText('2 selected items');
@@ -657,8 +658,7 @@ msTest.describe(() => {
         await expect(headerElements.nth(0)).toBeVisible();
         await expect(headerElements.nth(2)).toBeVisible();
         await headerElements.nth(2).click();
-        await expect(headerElements).toHaveCount(1);
-        await expect(headerElements.nth(0)).toHaveText('wksp1');
+        await expect(headerElements).toBeHidden();
       },
     );
 
@@ -676,14 +676,12 @@ msTest.describe(() => {
           await toggleViewMode(documents);
           entries = documents.locator('.folder-container').locator('.file-card-item');
         }
-        await documents.locator('.folder-content').locator('.small-display-header-title .title__icon').click();
+        await documents.locator('.topbar-right-buttons').locator('.topbar-right-buttons__item').nth(0).click();
         await expandSheetModal(documents, documents.locator('.file-context-sheet-modal'));
 
         await documents.locator('.file-context-sheet-modal').locator('.list-group-item').nth(0).click();
 
-        await expect(documents.locator('.folder-content').locator('.small-display-header-title .title__text--content')).toHaveText(
-          '3 selected items',
-        );
+        await expect(documents.locator('.folder-content').locator('.title__text')).toContainText('3 selected items');
 
         await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
         await expect(entries.nth(1).locator('.ms-checkbox')).toBeChecked();
@@ -715,7 +713,7 @@ msTest.describe(() => {
           await toggleViewMode(documents);
           entries = documents.locator('.folder-container').locator('.file-card-item');
         }
-        await documents.locator('.folder-content').locator('.small-display-header-title .title__icon').click();
+        await documents.locator('.topbar-right-buttons').locator('.topbar-right-buttons__item').nth(0).click();
         await expandSheetModal(documents, documents.locator('.file-context-sheet-modal'));
         await documents.locator('.file-context-sheet-modal').locator('.list-group-item').nth(0).click();
         await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();

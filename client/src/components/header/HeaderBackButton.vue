@@ -55,19 +55,19 @@ async function goBack(): Promise<void> {
   flex-shrink: 0;
 
   @include ms.responsive-breakpoint('sm') {
-    background: var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-8);
+    background: var(--parsec-color-light-secondary-white);
+    border-radius: var(--parsec-radius-circle);
+    --border-radius: var(--parsec-radius-circle);
+    box-shadow: var(--parsec-shadow-soft);
   }
 
   &::part(native) {
     padding: 0.5rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: 0.375rem;
-    }
   }
 
   &__icon {
+    font-size: 1.375rem;
+
     @include ms.responsive-breakpoint('sm') {
       color: var(--parsec-color-light-secondary-hard-grey);
     }
@@ -75,6 +75,13 @@ async function goBack(): Promise<void> {
 
   &__label {
     margin-left: 0.625rem;
+  }
+
+  &:hover {
+    @include ms.responsive-breakpoint('sm') {
+      --background-hover: var(--parsec-color-light-secondary-medium);
+      background: var(--parsec-color-light-secondary-medium);
+    }
   }
 }
 

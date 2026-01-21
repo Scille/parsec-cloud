@@ -71,7 +71,8 @@
                 </ion-button>
               </div>
               <header-breadcrumbs
-                v-if="isLargeDisplay"
+                v-if="workspaceInfo"
+                :workspace-name="workspaceInfo.currentName"
                 :path-nodes="headerPath"
                 @change="onPathChange"
                 class="navigation-breadcrumb"
@@ -120,7 +121,8 @@
             />
             <ion-text class="current-folder__text">{{ `${headerPath[headerPath.length - 1].display}` }}</ion-text>
             <header-breadcrumbs
-              v-if="pathLength > 1"
+              v-if="pathLength > 1 && workspaceInfo"
+              :workspace-name="workspaceInfo.currentName"
               :path-nodes="headerPath"
               @change="onPathChange"
               class="navigation-breadcrumb"

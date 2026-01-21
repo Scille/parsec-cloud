@@ -111,9 +111,12 @@ msTest.describe(() => {
         await expect(entries.nth(1).locator('.label-name')).toHaveText('image.png');
       }
       // And also in the folder
-      await entries.nth(0).dblclick();
+      await expect(entries.nth(0).locator(gridMode ? '.file-card__title' : '.label-name')).toHaveText('Dir_Folder');
+      await entries
+        .nth(0)
+        .locator(gridMode ? '.file-card__title' : '.label-name')
+        .click();
 
-      await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder'], true, true);
       await expect(entries).toHaveCount(1);
 
       if (gridMode) {

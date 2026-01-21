@@ -156,7 +156,7 @@ msTest.describe(() => {
     await navigateDown();
     await headerContentMatch(['wksp1', '', '', '', 'Subdir 3']);
 
-    const popoverItems = documents.locator('.breadcrumbs-popover').locator('.popover-item');
+    const popoverItems = documents.locator('.breadcrumbs-popover').locator('.breadcrumb-item');
     await clickOnBreadcrumb(1);
     await expect(popoverItems).toHaveCount(3);
     await popoverItems.nth(2).click();
