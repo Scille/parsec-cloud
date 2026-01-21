@@ -4,16 +4,16 @@
   <ion-content class="popover">
     <ion-list>
       <ion-item
-        class="popover-item ion-no-padding"
         v-for="(breadcrumb, index) in filteredBreadcrumbs"
+        class="breadcrumb-item ion-no-padding"
         :key="index"
         @click="onClick(breadcrumb)"
       >
         <ion-icon
           :icon="breadcrumb.popoverIcon ? breadcrumb.popoverIcon : returnDownForward"
-          class="popover-item__icon"
+          class="breadcrumb-item__icon"
         />
-        <ion-text class="button-medium">{{ breadcrumb.display }}</ion-text>
+        <ion-text class="breadcrumb-item__text button-medium">{{ breadcrumb.display }}</ion-text>
       </ion-item>
     </ion-list>
   </ion-content>
@@ -36,7 +36,7 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.popover {
+.breadcrumb {
   &-item {
     color: var(--parsec-color-light-secondary-soft-text);
     --background: none;
@@ -50,7 +50,7 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
       background: var(--parsec-color-light-secondary-background);
     }
 
-    ion-text {
+    &__text {
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
@@ -60,6 +60,16 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
       font-size: 1rem;
       color: var(--parsec-color-light-secondary-grey);
       margin-right: 0.625rem;
+    }
+
+    &--disabled {
+      pointer-events: none;
+      color: var(--parsec-color-light-secondary-text);
+      opacity: 0.5;
+
+      & .breadcrumb-item__icon {
+        color: var(--parsec-color-light-secondary-text);
+      }
     }
   }
 }

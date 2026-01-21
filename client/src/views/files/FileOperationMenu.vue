@@ -299,6 +299,7 @@ function scrollToTop(): void {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  z-index: 20;
 
   @include ms.responsive-breakpoint('sm') {
     right: 0;
@@ -418,6 +419,10 @@ function scrollToTop(): void {
     max-height: 28rem;
     transition: all 250ms ease-in-out;
     background: var(--parsec-color-light-secondary-white);
+
+    @media screen and (max-height: 1000px) {
+      height: 40vh;
+    }
 
     &__empty {
       overflow: hidden;

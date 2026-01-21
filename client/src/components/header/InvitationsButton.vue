@@ -7,16 +7,10 @@
     id="invitations-button"
     class="button-medium"
     :class="{
-      unread: invitations,
+      unread: invitations.length > 0,
       'gradient-button': isGradientButton,
     }"
   >
-    <span
-      v-if="isLargeDisplay"
-      class="button-text"
-    >
-      {{ $msTranslate({ key: 'HeaderPage.invitations.title', data: { count: invitations.length }, count: invitations.length }) }}
-    </span>
     <ion-text
       v-if="isGradientButton"
       :class="{ 'gradient-button-text': isGradientButton }"
@@ -29,13 +23,14 @@
     <span
       class="unread-count"
       :class="{ 'unread-count--more': invitations.length > 99 }"
-      v-if="invitations.length > 0 && !isGradientButton && windowWidth < WindowSizeBreakpoints.LG"
+      v-if="invitations.length > 0 && !isGradientButton"
     >
       {{ invitations.length > 99 ? '99+' : invitations.length }}
     </span>
     <ion-icon
       v-if="!isGradientButton"
       :icon="mail"
+      class="invitation-button-icon"
     />
     <ion-icon
       v-else
@@ -56,14 +51,14 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import { IonButton, IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
 import { mail, mailUnread } from 'ionicons/icons';
-import { Answer, MsModalResult, WindowSizeBreakpoints, askQuestion, useWindowSize } from 'megashark-lib';
+import { Answer, MsModalResult, askQuestion, useWindowSize } from 'megashark-lib';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
-const { isLargeDisplay, windowWidth } = useWindowSize();
+const { isLargeDisplay } = useWindowSize();
 
 defineProps<{
   isGradientButton?: boolean;
@@ -227,13 +222,8 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
     }
   }
 
-  ion-icon {
+  .invitation-button-icon {
     font-size: 1.375rem;
-    margin-left: 0.5rem;
-
-    @include ms.responsive-breakpoint('lg') {
-      margin-left: 0;
-    }
   }
 
   .button-text {
@@ -245,26 +235,9 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
   &.unread {
     position: relative;
 
-    &::after {
-      content: '';
-      position: absolute;
-      right: 6px;
-      top: 5px;
-      width: 0.625rem;
-      height: 0.625rem;
-      background: var(--parsec-color-light-danger-500);
-      border: 2px solid var(--parsec-color-light-primary-50);
-      border-radius: var(--parsec-radius-12);
-    }
-
-    @include ms.responsive-breakpoint('lg') {
-      &::after {
-        content: none;
-      }
-    }
-
     .unread-count {
       position: absolute;
+      z-index: 3;
       right: -8px;
       top: -8px;
       padding-inline: 2px;
@@ -280,12 +253,28 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
       background: var(--parsec-color-light-danger-500);
       border: 2px solid var(--parsec-color-light-primary-50);
       border-radius: var(--parsec-radius-12);
-      z-index: 2;
+
+      @include ms.responsive-breakpoint('sm') {
+        left: 12px;
+        right: auto;
+        border-color: var(--parsec-color-light-secondary-white);
+      }
 
       &--more {
         font-size: 10px;
         right: -10px;
+        justify-content: end;
       }
+    }
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    &::part(native) {
+      padding: 0.5rem;
+      border-radius: var(--parsec-radius-circle);
+      --background: var(--parsec-color-light-secondary-white);
+      box-shadow: var(--parsec-shadow-soft);
+      overflow: visible;
     }
   }
 }

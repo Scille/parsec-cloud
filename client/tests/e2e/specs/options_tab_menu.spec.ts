@@ -252,7 +252,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   await expect(optionsTabModal).toBeVisible();
   await expect(documents).toBeWorkspaceHistoryPage();
   await expect(documents.locator('.history-container')).toBeVisible();
-  await expect(documents.locator('.history-container').locator('.current-folder__text')).toHaveText('wksp1');
+  await expect(documents.locator('.history-container').locator('.breadcrumb-file-mobile__title')).toHaveText('wksp1');
   await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').click();
   await expect(documents).toBeDocumentPage();
 

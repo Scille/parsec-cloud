@@ -55,14 +55,13 @@
           />
         </div>
       </ms-action-bar>
-      <small-display-header-title
-        v-if="workspaceInfo && isSmallDisplay"
+      <small-display-selection-header
+        v-if="workspaceInfo && isSmallDisplay && selectionEnabled"
         :title="getDisplayText()"
         @open-contextual-modal="openGlobalContextMenu"
         @select="selectAll"
         @unselect="unselectAll"
         @cancel-selection="onSelectionCancel"
-        :selection-enabled="selectionEnabled"
         :some-selected="selectedFilesCount > 0"
       />
       <div class="folder-container scroll">
@@ -235,7 +234,7 @@ import {
   selectFolder,
 } from '@/components/files';
 import { EntrySyncStatus, FileOperationCurrentFolder } from '@/components/files/types';
-import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
+import SmallDisplaySelectionHeader from '@/components/header/SmallDisplaySelectionHeader.vue';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import { showWorkspace } from '@/components/workspaces/utils';
 import {
@@ -255,7 +254,15 @@ import {
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { isFileEditable } from '@/services/cryptpad';
-import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
+import {
+  EntrySyncData,
+  EventData,
+  EventDistributor,
+  EventDistributorKey,
+  Events,
+  MenuActionData,
+  OpenContextualMenuData,
+} from '@/services/eventDistributor';
 import {
   FileEventRegistrationCanceller,
   FileOperationCopyData,
@@ -269,6 +276,7 @@ import {
   FileOperationMoveData,
   FileOperationRestoreData,
 } from '@/services/fileOperation';
+import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener, { OpenPathOptions } from '@/services/pathOpener';
@@ -295,6 +303,7 @@ const customTabBar = useCustomTabBar();
 const workspaceAttributes = useWorkspaceAttributes();
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { hideHeader, showHeader } = useHeaderControl();
 
 const msSorterOptions: MsOptions = new MsOptions([
   { label: 'FoldersPage.sort.byName', key: SortProperty.Name },
@@ -503,6 +512,10 @@ const fileOperationsCurrentDir = asyncComputed(async () => {
   return entryNames;
 });
 
+const headerWatchCancel = watch([isSmallDisplay, selectionEnabled], () => {
+  isSmallDisplay.value && selectionEnabled.value ? hideHeader() : showHeader();
+});
+
 const tabBarWatchCancel = watch([isSmallDisplay, selectedFilesCount], () => {
   if (isSmallDisplay.value && selectedFilesCount.value >= 1) {
     customTabBar.show();
@@ -620,6 +633,8 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
     if (isFolderGlobalAction(menuAction.action)) {
       await performFolderAction(menuAction.action);
     }
+  } else if (event === Events.OpenContextMenu) {
+    await openGlobalContextMenu((data as OpenContextualMenuData).event);
   }
 }
 
@@ -652,7 +667,8 @@ onMounted(async () => {
       Events.EntrySynced |
       Events.EntrySyncStarted |
       Events.MenuAction |
-      Events.EntrySyncProgress,
+      Events.EntrySyncProgress |
+      Events.OpenContextMenu,
     handleEvents,
   );
 
@@ -686,6 +702,7 @@ onUnmounted(async () => {
   selectionEnabled.value = false;
   routeWatchCancel();
   tabBarWatchCancel();
+  headerWatchCancel();
   selectedCountWatchCancel();
   if (eventCbId) {
     eventDistributor.removeCallback(eventCbId);
@@ -1652,6 +1669,12 @@ const actionBarOptionsFoldersPage = computed(() => {
   &::part(background) {
     @include ms.responsive-breakpoint('sm') {
       background: var(--parsec-color-light-secondary-background);
+    }
+  }
+
+  &::part(scroll) {
+    @include ms.responsive-breakpoint('sm') {
+      padding-top: 1rem;
     }
   }
 }

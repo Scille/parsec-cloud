@@ -179,7 +179,7 @@ export async function openFileType(
   for (const entry of await entries.all()) {
     const entryName = (await entry.locator('.file-name').locator('.label-name').textContent()) ?? '';
     if (entryName.endsWith(`.${type}`)) {
-      await entry.dblclick();
+      await entry.locator('.label-name').click();
       await expect(documentsPage).toBeFileHandlerPage();
       return;
     }

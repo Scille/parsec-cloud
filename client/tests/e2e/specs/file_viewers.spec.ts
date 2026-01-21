@@ -625,7 +625,7 @@ msTest.describe(() => {
     await documents.setDisplaySize(DisplaySize.Small);
 
     const entries = documents.locator('.folder-container').locator('.file-list-item');
-    await entries.nth(0).dblclick();
+    await entries.nth(0).locator('.label-name').click();
     await expect(documents).toBeViewerPage();
 
     await expect(documents.locator('.sidebar')).toBeHidden();
