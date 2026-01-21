@@ -709,6 +709,39 @@
             "noFavoriteWorkspaces": "You have not pinned any workspaces yet. Pin a workspace to have it be listed here."
         }
     },
+    "WorkspaceDetails": {
+        "title": "Workspace details",
+        "labelName": "Name",
+        "stats": {
+            "generalInfo": "General information",
+            "rights": "Access rights",
+            "joinedOn": "Joined on",
+            "created": "Created"
+        },
+        "rightsInfos": {
+            "owner": "As an {role}, you have full control over this workspace, including managing sharing settings and permissions.",
+            "manager": "As a {role}, you can manage sharing settings and permissions for this workspace.",
+            "contributor": "As a {role}, you can add, modify, and delete files within this workspace.",
+            "reader": "As a {role}, you can only view and download files but cannot make any changes."
+        },
+        "offlineAvailability": {
+            "notAvailable": "Not available offline",
+            "inProgress": "Synchronising...",
+            "available": "Available offline",
+            "title": "Offline availability",
+            "storage": "Required storage",
+            "remainingToDownload": "{size} remaining to download",
+            "availableOfflineInfo": "This workspace is available offline. You can access its files even without an internet connection.",
+            "stopSynchronisation": "Stop offline availability",
+            "makeAvailableOffline": "Make available offline",
+            "cancel": "Cancel",
+            "close": "Close",
+            "error": {
+                "enableFailed": "Failed to enable offline availability for this workspace.",
+                "disableFailed": "Failed to disable offline availability for this workspace."
+            }
+        }
+    },
     "FoldersPage": {
         "createFolder": "New folder",
         "copyHere": "Copy here",
