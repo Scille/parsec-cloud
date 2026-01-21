@@ -83,18 +83,11 @@ mod platform {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum ShowCertificateSelectionDialogError {
-    #[error("Cannot open certificate store: {0}")]
-    CannotOpenStore(std::io::Error),
-    #[error("Cannot get certificate info: {0}")]
-    CannotGetCertificateInfo(std::io::Error),
-}
-
 // TODO: https://github.com/Scille/parsec-cloud/issues/11215
 // This is specific to windows, it cannot be replicated on other platform.
 // Instead, we likely need to go the manual way and show a custom dialog on the client side with a
 // list of certificate that we retrieve from the platform certstore.
+pub use errors::ShowCertificateSelectionDialogError;
 pub use platform::show_certificate_selection_dialog_windows_only;
 
 pub use errors::GetDerEncodedCertificateError;

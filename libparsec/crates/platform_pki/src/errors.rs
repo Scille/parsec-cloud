@@ -1,6 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 #[derive(Debug, thiserror::Error)]
+pub enum ShowCertificateSelectionDialogError {
+    #[error("Cannot open certificate store: {0}")]
+    CannotOpenStore(std::io::Error),
+    #[error("Cannot get certificate info: {0}")]
+    CannotGetCertificateInfo(std::io::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum GetDerEncodedCertificateError {
     #[error("Cannot open certificate store: {0}")]
     CannotOpenStore(std::io::Error),
