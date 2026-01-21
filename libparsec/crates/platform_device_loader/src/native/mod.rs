@@ -8,12 +8,12 @@ use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use crate::{
-    encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
-    AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
-    ListAvailableDeviceError, ListPendingAsyncEnrollmentsError, ListPkiLocalPendingError,
-    LoadCiphertextKeyError, LoadDeviceError, LoadPendingAsyncEnrollmentError,
-    OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError, ReadFileError,
+    encrypt_device, get_device_archive_path, load_available_device, load_pki_pending_file,
+    AccountVaultOperationsFetchOpaqueKeyError, AccountVaultOperationsUploadOpaqueKeyError,
+    ArchiveDeviceError, AvailableDevice, AvailablePendingAsyncEnrollment, DeviceAccessStrategy,
+    DeviceSaveStrategy, ListAvailableDeviceError, ListPendingAsyncEnrollmentsError,
+    ListPkiLocalPendingError, LoadCiphertextKeyError, LoadDeviceError,
+    OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
     RemoteOperationServer, RemoveDeviceError, SaveDeviceError, UpdateDeviceError, DEVICE_FILE_EXT,
     LOCAL_PENDING_EXT,
 };
@@ -76,50 +76,26 @@ pub(super) async fn list_available_devices(
     key_file_paths.sort();
     log::trace!("Found the following device files: {key_file_paths:?}");
 
-    Ok(key_file_paths
-        .into_iter()
-        // List only valid devices.
-        .filter_map(|path| {
-            load_available_device(path.clone())
-                .inspect_err(|e| {
-                    log::debug!(
-                        "Failed to load device at {path} with {e}",
-                        path = path.display()
-                    )
-                })
-                .ok()
-        })
-        // Ignore duplicate devices
-        .unique_by(|v| v.device_id)
-        .collect())
-}
-
-#[derive(Debug, thiserror::Error)]
-enum LoadFileError {
-    #[error(transparent)]
-    InvalidPath(anyhow::Error),
-    #[error("Cannot deserialize file content")]
-    InvalidData,
-}
-
-fn load_available_device(key_file_path: PathBuf) -> Result<AvailableDevice, LoadFileError> {
-    // TODO: make file access on a worker thread !
-    let content =
-        std::fs::read(&key_file_path).map_err(|e| LoadFileError::InvalidPath(e.into()))?;
-
-    super::load_available_device_from_blob(key_file_path, &content)
-        .map_err(|_| LoadFileError::InvalidData)
+    let mut res = Vec::with_capacity(key_file_paths.len());
+    for key_file in key_file_paths {
+        if let Ok(device) = load_available_device(config_dir, key_file.clone())
+            .await
+            .inspect_err(|e| {
+                log::debug!(
+                    "Failed to load device at {path} with {e}",
+                    path = key_file.display()
+                )
+            })
+        {
+            res.push(device);
+        }
+    }
+    Ok(res.into_iter().unique_by(|v| v.device_id).collect_vec())
 }
 
 /*
  * Save & load
  */
-
-pub(super) async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
-    tokio::fs::read(file)
-        .await
-        .map_err(|e| ReadFileError::InvalidPath(e.into()))
-}
 
 pub(super) async fn load_ciphertext_key(
     access: &DeviceAccessStrategy,
@@ -601,32 +577,6 @@ async fn find_local_pending_files(path: &Path) -> Result<Vec<PathBuf>, ListPkiLo
         }
     }
     Ok(files)
-}
-
-async fn load_pki_pending_file(path: &Path) -> Result<PKILocalPendingEnrollment, LoadFileError> {
-    let content = tokio::fs::read(path)
-        .await
-        .map_err(Into::into)
-        .map_err(LoadFileError::InvalidPath)?;
-    PKILocalPendingEnrollment::load(&content)
-        .inspect_err(|err| log::debug!("Failed to load pki pending file {}: {err}", path.display()))
-        .map_err(|_| LoadFileError::InvalidData)
-}
-
-pub(super) async fn load_pending_async_enrollment(
-    file_path: &Path,
-) -> Result<
-    (
-        AsyncEnrollmentLocalPending,
-        AsyncEnrollmentLocalPendingCleartextContent,
-    ),
-    LoadPendingAsyncEnrollmentError,
-> {
-    let raw = tokio::fs::read(&file_path)
-        .await
-        .map_err(|err| LoadPendingAsyncEnrollmentError::InvalidPath(err.into()))?;
-    super::load_pending_async_enrollment_frow_raw(file_path, &raw)
-        .map_err(|_| LoadPendingAsyncEnrollmentError::InvalidData)
 }
 
 pub(super) async fn list_pending_async_enrollments(

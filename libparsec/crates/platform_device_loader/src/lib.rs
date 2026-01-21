@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod strategy;
-use libparsec_platform_filesystem::{save_content, SaveContentError};
+use libparsec_platform_filesystem::{load_file, save_content, LoadFileError, SaveContentError};
 pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
@@ -34,15 +34,6 @@ pub(crate) const PENDING_ASYNC_ENROLLMENT_EXT: &str = "pending";
 pub const PARSEC_BASE_CONFIG_DIR: &str = "PARSEC_BASE_CONFIG_DIR";
 pub const PARSEC_BASE_DATA_DIR: &str = "PARSEC_BASE_DATA_DIR";
 pub const PARSEC_BASE_HOME_DIR: &str = "PARSEC_BASE_HOME_DIR";
-
-#[derive(Debug, thiserror::Error)]
-enum ReadFileError {
-    #[cfg_attr(not(target_arch = "wasm32"), expect(dead_code))]
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
-    #[error(transparent)]
-    InvalidPath(anyhow::Error),
-}
 
 #[derive(Debug, thiserror::Error)]
 enum LoadCiphertextKeyError {
@@ -212,6 +203,19 @@ pub enum LoadAvailableDeviceError {
     Internal(anyhow::Error),
 }
 
+impl From<LoadFileError> for LoadAvailableDeviceError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => LoadAvailableDeviceError::StorageNotAvailable,
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => LoadAvailableDeviceError::InvalidPath(value.into()),
+            LoadFileError::Internal(error) => LoadAvailableDeviceError::Internal(error),
+        }
+    }
+}
+
 /// Similar than `load_device`, but without the decryption part.
 ///
 /// This is only needed for device file vault access that needs its
@@ -233,12 +237,7 @@ pub async fn load_available_device(
         }
     }
 
-    let file_content = platform::read_file(&device_file)
-        .await
-        .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => LoadAvailableDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(err) => LoadAvailableDeviceError::InvalidPath(err),
-        })?;
+    let file_content = load_file(&device_file).await?;
 
     load_available_device_from_blob(device_file, &file_content)
         .map_err(|_| LoadAvailableDeviceError::InvalidData)
@@ -277,6 +276,19 @@ pub enum LoadDeviceError {
     Internal(anyhow::Error),
 }
 
+impl From<LoadFileError> for LoadDeviceError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => LoadDeviceError::StorageNotAvailable,
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => LoadDeviceError::InvalidPath(value.into()),
+            LoadFileError::Internal(error) => LoadDeviceError::Internal(error),
+        }
+    }
+}
+
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn load_device(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
@@ -288,12 +300,7 @@ pub async fn load_device(
         return result;
     }
 
-    let file_content = platform::read_file(access.key_file())
-        .await
-        .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => LoadDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(err) => LoadDeviceError::InvalidPath(err),
-        })?;
+    let file_content = load_file(access.key_file()).await?;
     let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
     let ciphertext_key = platform::load_ciphertext_key(access, &device_file)
         .await
@@ -428,6 +435,19 @@ impl From<SaveDeviceError> for UpdateDeviceError {
     }
 }
 
+impl From<LoadFileError> for UpdateDeviceError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => UpdateDeviceError::InvalidPath,
+            LoadFileError::Internal(error) => UpdateDeviceError::Internal(error),
+        }
+    }
+}
+
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn update_device_change_authentication(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
@@ -446,12 +466,7 @@ pub async fn update_device_change_authentication(
 
     // 1. Load the current device keys file...
 
-    let file_content = platform::read_file(current_key_file)
-        .await
-        .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
-        })?;
+    let file_content = load_file(current_key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
     let ciphertext_key = platform::load_ciphertext_key(current_access, &device_file)
@@ -520,12 +535,7 @@ pub async fn update_device_overwrite_server_addr(
 
     // 1. Load the current device keys file...
 
-    let file_content = platform::read_file(key_file)
-        .await
-        .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
-        })?;
+    let file_content = load_file(key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
     let ciphertext_key = platform::load_ciphertext_key(strategy, &device_file)
@@ -860,6 +870,38 @@ pub async fn save_pki_local_pending(
 }
 
 #[derive(Debug, thiserror::Error)]
+enum LoadContentError {
+    #[error(transparent)]
+    InvalidPath(anyhow::Error),
+    #[error("Cannot deserialize file content")]
+    InvalidData,
+    #[error("storage not available")]
+    StorageNotAvailable,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<LoadFileError> for LoadContentError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => LoadContentError::StorageNotAvailable,
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => LoadContentError::InvalidPath(value.into()),
+            LoadFileError::Internal(error) => LoadContentError::Internal(error),
+        }
+    }
+}
+
+async fn load_pki_pending_file(path: &Path) -> Result<PKILocalPendingEnrollment, LoadContentError> {
+    let content = load_file(path).await?;
+    PKILocalPendingEnrollment::load(&content)
+        .inspect_err(|err| log::debug!("Failed to load pki pending file {}: {err}", path.display()))
+        .map_err(|_| LoadContentError::InvalidData)
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum ListPkiLocalPendingError {
     #[error("Device storage is not available")]
     StorageNotAvailable,
@@ -984,6 +1026,20 @@ pub enum LoadPendingAsyncEnrollmentError {
     Internal(anyhow::Error),
 }
 
+impl From<LoadFileError> for LoadPendingAsyncEnrollmentError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => {
+                LoadPendingAsyncEnrollmentError::StorageNotAvailable
+            }
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => LoadPendingAsyncEnrollmentError::InvalidPath(value.into()),
+            LoadFileError::Internal(..) => LoadPendingAsyncEnrollmentError::Internal(value.into()),
+        }
+    }
+}
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn load_pending_async_enrollment(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
@@ -1005,7 +1061,9 @@ pub async fn load_pending_async_enrollment(
         return result;
     }
 
-    platform::load_pending_async_enrollment(file_path).await
+    let raw = load_file(file_path).await?;
+    load_pending_async_enrollment_frow_raw(file_path, &raw)
+        .map_err(|_| LoadPendingAsyncEnrollmentError::InvalidData)
 }
 
 #[derive(Debug, thiserror::Error)]

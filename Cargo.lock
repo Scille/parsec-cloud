@@ -2434,6 +2434,7 @@ dependencies = [
  "libparsec_platform_async",
  "libparsec_tests_fixtures",
  "libparsec_tests_lite",
+ "libparsec_types",
  "log",
  "thiserror 2.0.18",
  "tokio",

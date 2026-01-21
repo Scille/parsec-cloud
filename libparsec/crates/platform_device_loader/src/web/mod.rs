@@ -11,8 +11,8 @@ use crate::{
     AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
     AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
     ListAvailableDeviceError, ListPendingAsyncEnrollmentsError, ListPkiLocalPendingError,
-    LoadCiphertextKeyError, LoadPendingAsyncEnrollmentError, OpenBaoOperationsFetchOpaqueKeyError,
-    ReadFileError, RemoteOperationServer, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    LoadCiphertextKeyError, OpenBaoOperationsFetchOpaqueKeyError, RemoteOperationServer,
+    RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
 };
 use error::ListFileEntriesError;
 use internal::Storage;
@@ -39,22 +39,6 @@ pub(super) async fn list_available_devices(
             log::error!("Failed to list available devices: {e}");
         })
         .map_err(|e| ListAvailableDeviceError::Internal(anyhow::anyhow!("{e}")))
-}
-
-/*
- * Save & load
- */
-
-pub(super) async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(ReadFileError::StorageNotAvailable);
-    };
-    storage
-        .read_file(file)
-        .await
-        .map_err(|err| ReadFileError::InvalidPath(anyhow::anyhow!("{err}")))
 }
 
 pub(super) async fn load_ciphertext_key(
@@ -222,30 +206,6 @@ pub(super) async fn list_pki_local_pending(
             log::error!("Failed to list available devices: {e}");
         })
         .map_err(|e| ListPkiLocalPendingError::Internal(anyhow::anyhow!("{e}")))
-}
-
-pub(super) async fn load_pending_async_enrollment(
-    file_path: &Path,
-) -> Result<
-    (
-        AsyncEnrollmentLocalPending,
-        AsyncEnrollmentLocalPendingCleartextContent,
-    ),
-    LoadPendingAsyncEnrollmentError,
-> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(LoadPendingAsyncEnrollmentError::StorageNotAvailable);
-    };
-
-    let raw = storage
-        .read_file(file_path)
-        .await
-        .map_err(|err| LoadPendingAsyncEnrollmentError::InvalidPath(anyhow::anyhow!("{err}")))?;
-
-    super::load_pending_async_enrollment_frow_raw(file_path, &raw)
-        .map_err(|_| LoadPendingAsyncEnrollmentError::InvalidData)
 }
 
 pub(super) async fn list_pending_async_enrollments(
