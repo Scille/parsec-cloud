@@ -1,30 +1,23 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use rustls_pki_types::CertificateDer;
-
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{
-    test_fixture::{test_pki, TestPKI},
-    verify_certificate,
-};
+use super::utils::{certificates, InstalledCertificates};
+use crate::verify_certificate;
 
 #[rstest]
-fn test_verify_cert_ok(test_pki: &TestPKI) {
-    let trusted_roots = test_pki
-        .root
-        .values()
-        .map(|cert| {
+fn test_verify_cert_ok(certificates: &InstalledCertificates) {
+    let der_certificate = certificates.bob_der_cert();
+    let trusted_roots =
+        [
             webpki::anchor_from_trusted_cert(&rustls_pki_types::CertificateDer::from_slice(
-                cert.der_certificate.as_ref(),
+                &certificates.black_mesa_der_cert(),
             ))
             .unwrap()
-            .to_owned()
-        })
-        .collect::<Vec<_>>();
-    let der_certificate = &test_pki.cert["bob"].der_certificate;
-    let binding = crate::shared::Certificate::from_der(der_certificate);
+            .to_owned(),
+        ];
+    let binding = crate::shared::Certificate::from_der(&der_certificate);
 
     let untrusted_cert = binding
         .to_end_certificate()
@@ -34,9 +27,9 @@ fn test_verify_cert_ok(test_pki: &TestPKI) {
 }
 
 #[rstest]
-fn test_verify_unknown_issuer(test_pki: &TestPKI) {
-    let der_certificate = &test_pki.cert["bob"].der_certificate;
-    let binding = crate::shared::Certificate::from_der(der_certificate);
+fn test_verify_unknown_issuer(certificates: &InstalledCertificates) {
+    let der_certificate = certificates.bob_der_cert();
+    let binding = crate::shared::Certificate::from_der(&der_certificate);
 
     let untrusted_cert = binding
         .to_end_certificate()
@@ -55,25 +48,21 @@ fn test_verify_unknown_issuer(test_pki: &TestPKI) {
 }
 
 #[rstest]
-fn test_verify_with_intermediate(test_pki: &TestPKI) {
-    let trusted_roots = test_pki
-        .root
-        .values()
-        .map(|cert| {
+fn test_verify_with_intermediate(certificates: &InstalledCertificates) {
+    let der_certificate = certificates.mallory_sign_der_cert();
+    let trusted_roots =
+        [
             webpki::anchor_from_trusted_cert(&rustls_pki_types::CertificateDer::from_slice(
-                cert.der_certificate.as_ref(),
+                &certificates.aperture_science_der_cert(),
             ))
             .unwrap()
-            .to_owned()
-        })
-        .collect::<Vec<_>>();
-    let intermediate_certs = test_pki
-        .intermediate
-        .values()
-        .map(|cert| CertificateDer::from_slice(&cert.der_certificate))
-        .collect::<Vec<_>>();
-    let der_certificate = &test_pki.cert["mallory-sign"].der_certificate;
-    let binding = crate::shared::Certificate::from_der(der_certificate);
+            .to_owned(),
+        ];
+    let glados_dev_team_der_cert = certificates.glados_dev_team_der_cert();
+    let intermediate_certs = [rustls_pki_types::CertificateDer::from_slice(
+        &glados_dev_team_der_cert,
+    )];
+    let binding = crate::shared::Certificate::from_der(&der_certificate);
 
     let untrusted_cert = binding
         .to_end_certificate()
@@ -82,7 +71,7 @@ fn test_verify_with_intermediate(test_pki: &TestPKI) {
     verify_certificate(
         &untrusted_cert,
         &trusted_roots,
-        &intermediate_certs,
+        intermediate_certs.as_ref(),
         DateTime::now(),
     )
     .unwrap();

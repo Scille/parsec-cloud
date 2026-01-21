@@ -1,5 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// TODO: This fixture is only used by `libparsec/crates/client/tests/unit/client/pki_enrollment_list.rs`
+//       We can remove it once pki_enrollment is removed.
+//       see https://github.com/Scille/parsec-cloud/issues/12054
+
 use bytes::Bytes;
 use rustls_pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer};
 use std::collections::HashMap;
