@@ -40,7 +40,6 @@ mod strategy {
     use libparsec_platform_pki::{
         DecryptMessageError as PKIDecryptMessageError,
         EncryptMessageError as PKIEncryptMessageError,
-        GetDerEncodedCertificateError as PKIGetDerEncodedCertificateError,
         GetValidationPathForCertError as PKIGetValidationPathForCertError,
         SignMessageError as PKISignMessageError,
     };
@@ -247,7 +246,7 @@ mod strategy {
                         }
                     })?;
 
-                // 2. Get intermediate certificates
+                // 2. Get leaf & intermediate certificates
                 let validation_path: libparsec_platform_pki::ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
                         .map_err(|err| match err {
@@ -262,26 +261,11 @@ mod strategy {
                             }
                         })?;
 
-                // 3. Get leaf certificate
-                let submitter_der_x509_certificate =
-                    libparsec_platform_pki::get_der_encoded_certificate(&cert_ref).map_err(
-                        |err| match err {
-                            err @ PKIGetDerEncodedCertificateError::NotFound => {
-                                SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                    err.into(),
-                                )
-                            }
-                            PKIGetDerEncodedCertificateError::CannotOpenStore(e) => {
-                                SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                            }
-                        },
-                    )?;
-
                 Ok(protocol::anonymous_cmds::latest::async_enrollment_submit::SubmitPayloadSignature::PKI {
                     signature,
                     algorithm,
-                    submitter_der_x509_certificate,
-                    intermediate_der_x509_certificates: validation_path.intermediate_certs,
+                    submitter_der_x509_certificate: validation_path.leaf,
+                    intermediate_der_x509_certificates: validation_path.intermediates,
                 })
             }))
         }
@@ -706,7 +690,7 @@ mod strategy {
                         }
                     })?;
 
-                // 2. Get intermediate certificates
+                // 2. Get leaf & intermediate certificates
                 let validation_path: libparsec_platform_pki::ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
                         .map_err(|err| match err {
@@ -722,26 +706,11 @@ mod strategy {
 
                         })?;
 
-                // 3. Get leaf certificate
-                let accepter_der_x509_certificate =
-                    libparsec_platform_pki::get_der_encoded_certificate(&cert_ref).map_err(
-                        |err| match err {
-                            err @ PKIGetDerEncodedCertificateError::NotFound => {
-                                AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                    err.into(),
-                                )
-                            }
-                            PKIGetDerEncodedCertificateError::CannotOpenStore(e) => {
-                                AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                            }
-                        },
-                    )?;
-
                 Ok(protocol::authenticated_cmds::latest::async_enrollment_accept::AcceptPayloadSignature::PKI {
                     signature,
                     algorithm,
-                    accepter_der_x509_certificate,
-                    intermediate_der_x509_certificates: validation_path.intermediate_certs,
+                    accepter_der_x509_certificate: validation_path.leaf,
+                    intermediate_der_x509_certificates: validation_path.intermediates,
                 })
             }))
         }

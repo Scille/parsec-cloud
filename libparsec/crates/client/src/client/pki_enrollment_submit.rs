@@ -44,10 +44,6 @@ pub async fn pki_enrollment_submit(
     let signing_key = SigningKey::generate();
     let private_key = PrivateKey::generate();
 
-    let der_x509_certificate = libparsec_platform_pki::get_der_encoded_certificate(&x509_cert_ref)
-        .map_err(anyhow::Error::from)
-        .context("Failed to get certificate DER content")
-        .map_err(PkiEnrollmentSubmitError::PkiOperationError)?;
     let payload = PkiEnrollmentSubmitPayload {
         verify_key: signing_key.verify_key(),
         public_key: private_key.public_key(),
@@ -68,8 +64,8 @@ pub async fn pki_enrollment_submit(
 
     let submitted_on = match cmds
         .send(Req {
-            der_x509_certificate,
-            intermediate_der_x509_certificates: intermediate_certificates.intermediate_certs,
+            der_x509_certificate: intermediate_certificates.leaf,
+            intermediate_der_x509_certificates: intermediate_certificates.intermediates,
             enrollment_id,
             force,
             payload: raw_payload.into(),

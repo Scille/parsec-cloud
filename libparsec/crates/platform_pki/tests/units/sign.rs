@@ -13,18 +13,14 @@ fn sign_and_verify(certificates: &InstalledCertificates) {
     let (algo, signature) = crate::sign_message(payload.as_ref(), &certificate_ref).unwrap();
 
     let now = DateTime::now();
-    let certificate = crate::get_der_encoded_certificate(&certificate_ref).unwrap();
     let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now).unwrap();
 
     crate::verify_message2(
         payload.as_ref(),
         &signature,
         algo,
-        &certificate,
-        validation_path
-            .intermediate_certs
-            .iter()
-            .map(|c| c.as_ref()),
+        &validation_path.leaf,
+        validation_path.intermediates.iter().map(|c| c.as_ref()),
         &[validation_path.root],
         now,
     )
@@ -49,18 +45,14 @@ fn verify(certificates: &InstalledCertificates) {
 
     let certificate_ref = certificates.alice_cert_ref();
     let now: DateTime = "2026-02-01T00:00:00Z".parse().unwrap();
-    let certificate = crate::get_der_encoded_certificate(&certificate_ref).unwrap();
     let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now).unwrap();
 
     crate::verify_message2(
         payload.as_ref(),
         &signature,
         algo,
-        &certificate,
-        validation_path
-            .intermediate_certs
-            .iter()
-            .map(|c| c.as_ref()),
+        &validation_path.leaf,
+        validation_path.intermediates.iter().map(|c| c.as_ref()),
         &[validation_path.root],
         now,
     )
@@ -100,18 +92,15 @@ fn sign_ko_not_found() {
 #[rstest]
 fn verify_message_ko_outdated_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, signature, certificate, validation_path) = certificates.alice_sign_message(payload);
+    let (algo, signature, validation_path) = certificates.alice_sign_message(payload);
 
     p_assert_matches!(
         crate::verify_message2(
             payload.as_ref(),
             &signature,
             algo,
-            &certificate,
-            validation_path
-                .intermediate_certs
-                .iter()
-                .map(|c| c.as_ref()),
+            &validation_path.leaf,
+            validation_path.intermediates.iter().map(|c| c.as_ref()),
             &[validation_path.root],
             "9999-01-01T00:00:00Z".parse().unwrap(), // Certificate is outdated at this date
         ),
@@ -124,19 +113,17 @@ fn verify_message_ko_outdated_certificate(certificates: &InstalledCertificates) 
 #[rstest]
 fn verify_message_ko_different_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, signature, _, validation_path) = certificates.alice_sign_message(payload);
-    let certificate = crate::get_der_encoded_certificate(&certificates.bob_cert_ref()).unwrap();
+    let (algo, signature, validation_path) = certificates.alice_sign_message(payload);
+    let different_certificate =
+        crate::get_der_encoded_certificate(&certificates.bob_cert_ref()).unwrap();
 
     p_assert_matches!(
         crate::verify_message2(
             payload.as_ref(),
             &signature,
             algo,
-            &certificate,
-            validation_path
-                .intermediate_certs
-                .iter()
-                .map(|c| c.as_ref()),
+            &different_certificate,
+            validation_path.intermediates.iter().map(|c| c.as_ref()),
             &[validation_path.root],
             DateTime::now(),
         ),
@@ -149,18 +136,15 @@ fn verify_message_ko_different_certificate(certificates: &InstalledCertificates)
 #[rstest]
 fn verify_message_ko_different_payload(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, signature, certificate, validation_path) = certificates.alice_sign_message(payload);
+    let (algo, signature, validation_path) = certificates.alice_sign_message(payload);
 
     p_assert_matches!(
         crate::verify_message2(
             b"Different payload",
             &signature,
             algo,
-            &certificate,
-            validation_path
-                .intermediate_certs
-                .iter()
-                .map(|c| c.as_ref()),
+            &validation_path.leaf,
+            validation_path.intermediates.iter().map(|c| c.as_ref()),
             &[validation_path.root],
             DateTime::now(),
         ),

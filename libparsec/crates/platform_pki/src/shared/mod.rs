@@ -240,41 +240,40 @@ pub fn load_answer_payload<'cert>(
 }
 
 pub struct ValidationPathOwned {
+    pub leaf: Bytes,
+    pub intermediates: Vec<Bytes>,
     pub root: TrustAnchor<'static>,
-    pub intermediate_certs: Vec<Bytes>,
 }
 
 pub fn get_validation_path_for_cert(
     cert_ref: &X509CertificateReference,
     now: DateTime,
 ) -> Result<ValidationPathOwned, GetValidationPathForCertError> {
-    let trusted_roots =
+    let all_trusted_roots =
         crate::list_trusted_root_certificate_anchors().map_err(|err| match err {
             ListCertificatesError::CannotOpenStore(err) => {
                 GetValidationPathForCertError::CannotOpenStore(err)
             }
         })?;
-    let intermediate_certs = crate::list_intermediate_certificates().map_err(|err| match err {
+    let all_intermediates = crate::list_intermediate_certificates().map_err(|err| match err {
         ListCertificatesError::CannotOpenStore(err) => {
             GetValidationPathForCertError::CannotOpenStore(err)
         }
     })?;
-    let base_raw_cert = get_der_encoded_certificate(cert_ref)
-        .map(|der| Certificate::from_der_owned(der.into()))
-        .map_err(|err| match err {
-            GetDerEncodedCertificateError::CannotOpenStore(err) => {
-                GetValidationPathForCertError::CannotOpenStore(err)
-            }
-            GetDerEncodedCertificateError::NotFound => GetValidationPathForCertError::NotFound,
-        })?;
-    let base_cert = base_raw_cert
-        .to_end_certificate()
-        .map_err(GetValidationPathForCertError::InvalidCertificateDer)?;
+    let leaf = get_der_encoded_certificate(cert_ref).map_err(|err| match err {
+        GetDerEncodedCertificateError::CannotOpenStore(err) => {
+            GetValidationPathForCertError::CannotOpenStore(err)
+        }
+        GetDerEncodedCertificateError::NotFound => GetValidationPathForCertError::NotFound,
+    })?;
 
-    let path = verify_certificate(&base_cert, &trusted_roots, &intermediate_certs, now)
+    let leaf_cert_der = rustls_pki_types::CertificateDer::from_slice(&leaf);
+    let leaf_end_cert = X509EndCertificate::try_from(&leaf_cert_der)
+        .map_err(GetValidationPathForCertError::InvalidCertificateDer)?;
+    let path = verify_certificate(&leaf_end_cert, &all_trusted_roots, &all_intermediates, now)
         .map_err(GetValidationPathForCertError::InvalidCertificateUntrusted)?;
 
-    let intermediate_certs = path
+    let intermediates = path
         .intermediate_certificates()
         .map(|cert| cert.der().to_vec().into())
         .collect();
@@ -282,6 +281,7 @@ pub fn get_validation_path_for_cert(
 
     Ok(ValidationPathOwned {
         root,
-        intermediate_certs,
+        intermediates,
+        leaf,
     })
 }

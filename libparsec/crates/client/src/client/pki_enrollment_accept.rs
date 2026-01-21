@@ -1,9 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
-use libparsec_platform_pki::{
-    get_der_encoded_certificate, sign_message, x509::X509CertificateInformation,
-};
+use libparsec_platform_pki::{sign_message, x509::X509CertificateInformation};
 use libparsec_protocol::authenticated_cmds::latest::pki_enrollment_accept::{Rep, Req};
 use libparsec_types::prelude::*;
 
@@ -46,8 +44,6 @@ pub async fn accept(
 ) -> Result<(), PkiEnrollmentAcceptError> {
     // Keep looping while `RequireGreaterTimestamp` is returned
     let mut to_use_timestamp = client.device.now();
-    let accepter_der_x509_certificate = get_der_encoded_certificate(accepter_cert_ref)
-        .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?;
     let submitter_human_handle = X509CertificateInformation::load_der(submitter_der_cert)
         .context("Failed to load submitter certificate information")
         .and_then(|info| {
@@ -67,8 +63,8 @@ pub async fn accept(
             enrollment_id,
             Accepter {
                 cert_ref: accepter_cert_ref,
-                der_cert: &accepter_der_x509_certificate,
-                intermediate_der_certs: &accepter_intermediate_certs.intermediate_certs,
+                der_cert: &accepter_intermediate_certs.leaf,
+                intermediate_der_certs: &accepter_intermediate_certs.intermediates,
             },
             Submitter {
                 payload: submit_payload.clone(),
