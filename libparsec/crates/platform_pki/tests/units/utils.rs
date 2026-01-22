@@ -52,9 +52,13 @@ impl InstalledCertificates {
                 .unwrap(),
         )
     }
+
+    #[expect(dead_code)]
     pub fn mallory_sign_cert_ref(&self) -> X509CertificateReference {
         self.cert_ref(MALLORY_SIGN_SHA256_CERT_HASH)
     }
+
+    #[expect(dead_code)]
     pub fn mallory_encrypt_cert_ref(&self) -> X509CertificateReference {
         self.cert_ref(MALLORY_ENCRYPT_SHA256_CERT_HASH)
     }
