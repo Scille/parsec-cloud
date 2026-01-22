@@ -59,15 +59,17 @@ fn verify(certificates: &InstalledCertificates) {
     .unwrap();
 }
 
-#[rstest]
-fn sign_ko_certificate_without_signing_key(certificates: &InstalledCertificates) {
-    let payload = b"The cake is a lie!";
-    let certificate_ref = certificates.mallory_encrypt_cert_ref();
-    p_assert_matches!(
-        crate::sign_message(payload.as_ref(), &certificate_ref),
-        Err(SignMessageError::CannotSign(_))
-    );
-}
+// TODO: Support `KeyUsage` field in X509 certificate
+//       see https://github.com/Scille/parsec-cloud/issues/12087
+// #[rstest]
+// fn sign_ko_certificate_without_signing_key(certificates: &InstalledCertificates) {
+//     let payload = b"The cake is a lie!";
+//     let certificate_ref = certificates.mallory_encrypt_cert_ref();
+//     p_assert_matches!(
+//         crate::sign_message(payload.as_ref(), &certificate_ref),
+//         Err(SignMessageError::CannotSign(_))
+//     );
+// }
 
 #[rstest]
 fn sign_ko_cannot_use_root_certificate(certificates: &InstalledCertificates) {

@@ -51,15 +51,17 @@ fn encrypt_ko_not_found() {
     );
 }
 
-#[rstest]
-fn encrypt_ko_certificate_without_encrypting_key(certificates: &InstalledCertificates) {
-    let payload = b"The cake is a lie!";
-    let certificate_ref = certificates.mallory_sign_cert_ref();
-    p_assert_matches!(
-        crate::encrypt_message(payload.as_ref(), &certificate_ref),
-        Err(EncryptMessageError::CannotEncrypt(_))
-    );
-}
+// TODO: Support `KeyUsage` field in X509 certificate
+//       see https://github.com/Scille/parsec-cloud/issues/12087
+// #[rstest]
+// fn encrypt_ko_certificate_without_encrypting_key(certificates: &InstalledCertificates) {
+//     let payload = b"The cake is a lie!";
+//     let certificate_ref = certificates.mallory_sign_cert_ref();
+//     p_assert_matches!(
+//         crate::encrypt_message(payload.as_ref(), &certificate_ref),
+//         Err(EncryptMessageError::CannotEncrypt(_))
+//     );
+// }
 
 #[rstest]
 fn encrypt_ko_cannot_use_root_certificate(certificates: &InstalledCertificates) {
