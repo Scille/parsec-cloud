@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #[cfg(target_arch = "wasm32")]
-use crate::web::common::internal::Storage;
+use crate::platform::common::internal::Storage;
 use crate::{load_file, save_content};
 use crate::{tests::CONTENT, LoadFileError};
 use libparsec_tests_fixtures::prelude::*;

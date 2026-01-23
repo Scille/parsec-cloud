@@ -212,7 +212,6 @@ impl Directory {
             .inspect(|_v| log::trace!("Found handle `{filename}` in {}", self.path.display()))
     }
 
-    #[expect(unused)]
     pub fn entries(&self) -> impl Stream<Item = DirEntry> + use<'_> {
         log::trace!("Listing entries at {}", self.path.display());
         JsStream::from(self.handle.values()).filter_map(|v| {

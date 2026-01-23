@@ -1,7 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod strategy;
-use libparsec_platform_filesystem::{load_file, save_content, LoadFileError, SaveContentError};
+use itertools::Itertools;
+use libparsec_platform_async::stream::StreamExt;
+use libparsec_platform_filesystem::{
+    list_files, load_file, save_content, ListFilesError, LoadFileError, SaveContentError,
+};
 pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
@@ -179,6 +183,17 @@ pub enum ListAvailableDeviceError {
     Internal(anyhow::Error),
 }
 
+impl From<ListFilesError> for ListAvailableDeviceError {
+    fn from(value: ListFilesError) -> Self {
+        match value {
+            ListFilesError::StorageNotAvailable => ListAvailableDeviceError::StorageNotAvailable,
+            ListFilesError::InvalidParent | ListFilesError::Internal(_) => {
+                ListAvailableDeviceError::Internal(value.into())
+            }
+        }
+    }
+}
+
 /// On web `config_dir` is used as database discriminant when using IndexedDB API
 pub async fn list_available_devices(
     config_dir: &Path,
@@ -188,7 +203,31 @@ pub async fn list_available_devices(
         return Ok(result);
     }
 
-    platform::list_available_devices(config_dir).await
+    let devices_dir = get_devices_dir(config_dir);
+
+    // Consider `.keys` files in devices directory
+    let mut key_file_paths = list_files(&devices_dir, DEVICE_FILE_EXT).await?;
+
+    // Sort paths so the discovery order is deterministic
+    // In the case of duplicate files, that means only the first discovered device is considered
+    key_file_paths.sort();
+    log::trace!("Found the following device files: {key_file_paths:?}");
+
+    let mut res = Vec::with_capacity(key_file_paths.len());
+    for key_file in key_file_paths {
+        if let Ok(device) = load_available_device(config_dir, key_file.clone())
+            .await
+            .inspect_err(|e| {
+                log::debug!(
+                    "Failed to load device at {path} with {e}",
+                    path = key_file.display()
+                )
+            })
+        {
+            res.push(device);
+        }
+    }
+    Ok(res.into_iter().unique_by(|v| v.device_id).collect_vec())
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -908,11 +947,31 @@ pub enum ListPkiLocalPendingError {
     #[error(transparent)]
     Internal(anyhow::Error),
 }
+impl From<ListFilesError> for ListPkiLocalPendingError {
+    fn from(value: ListFilesError) -> Self {
+        match value {
+            ListFilesError::StorageNotAvailable => ListPkiLocalPendingError::StorageNotAvailable,
+            ListFilesError::InvalidParent | ListFilesError::Internal(_) => {
+                ListPkiLocalPendingError::Internal(value.into())
+            }
+        }
+    }
+}
 
 pub async fn list_pki_local_pending(
     config_dir: &Path,
 ) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
-    platform::list_pki_local_pending(config_dir).await
+    let pending_dir = get_local_pending_dir(config_dir);
+    let mut files = list_files(&pending_dir, LOCAL_PENDING_EXT).await?;
+
+    // Sort entries so result is deterministic
+    files.sort();
+    log::trace!("Found pending request files: {files:?}");
+
+    Ok(libparsec_platform_async::stream::iter(files)
+        .filter_map(async |path| load_pki_pending_file(&path).await.ok())
+        .collect::<Vec<_>>()
+        .await)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1076,6 +1135,36 @@ pub enum ListPendingAsyncEnrollmentsError {
     Internal(anyhow::Error),
 }
 
+impl From<LoadFileError> for ListPendingAsyncEnrollmentsError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => {
+                ListPendingAsyncEnrollmentsError::StorageNotAvailable
+            }
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound
+            | LoadFileError::Internal(_) => {
+                ListPendingAsyncEnrollmentsError::Internal(value.into())
+            }
+        }
+    }
+}
+
+impl From<ListFilesError> for ListPendingAsyncEnrollmentsError {
+    fn from(value: ListFilesError) -> Self {
+        match value {
+            ListFilesError::StorageNotAvailable => {
+                ListPendingAsyncEnrollmentsError::StorageNotAvailable
+            }
+            ListFilesError::InvalidParent | ListFilesError::Internal(_) => {
+                ListPendingAsyncEnrollmentsError::Internal(value.into())
+            }
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct AvailablePendingAsyncEnrollment {
     pub file_path: PathBuf,
@@ -1105,9 +1194,19 @@ pub async fn list_pending_async_enrollments(
     if let Some(result) = testbed::maybe_list_pending_async_enrollments(config_dir) {
         return result;
     }
-
     let pending_async_enrollments_dir = get_pending_async_enrollment_dir(config_dir);
-    platform::list_pending_async_enrollments(&pending_async_enrollments_dir).await
+    let mut files = list_files(&pending_async_enrollments_dir, LOCAL_PENDING_EXT).await?;
+
+    // Sort entries so result is deterministic
+    files.sort();
+
+    Ok(libparsec_platform_async::stream::iter(files)
+        .filter_map(async |path| {
+            let raw = load_file(&path).await.ok()?;
+            load_pending_async_enrollment_as_available_frow_raw(path, &raw).ok()
+        })
+        .collect::<Vec<_>>()
+        .await)
 }
 
 fn load_pending_async_enrollment_frow_raw(

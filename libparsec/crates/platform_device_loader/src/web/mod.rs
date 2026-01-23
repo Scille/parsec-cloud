@@ -9,37 +9,15 @@ use std::path::{Path, PathBuf};
 
 use crate::{
     AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
-    ListAvailableDeviceError, ListPendingAsyncEnrollmentsError, ListPkiLocalPendingError,
-    LoadCiphertextKeyError, OpenBaoOperationsFetchOpaqueKeyError, RemoteOperationServer,
-    RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    DeviceAccessStrategy, DeviceSaveStrategy, LoadCiphertextKeyError,
+    OpenBaoOperationsFetchOpaqueKeyError, RemoteOperationServer, RemoveDeviceError,
+    SaveDeviceError, UpdateDeviceError,
 };
-use error::ListFileEntriesError;
 use internal::Storage;
 
 /*
  * List available devices
  */
-
-pub(super) async fn list_available_devices(
-    config_dir: &Path,
-) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(ListAvailableDeviceError::StorageNotAvailable);
-    };
-    storage
-        .list_available_devices(config_dir)
-        .await
-        .inspect(|v| {
-            log::trace!("Found the following devices: {v:?}");
-        })
-        .inspect_err(|e| {
-            log::error!("Failed to list available devices: {e}");
-        })
-        .map_err(|e| ListAvailableDeviceError::Internal(anyhow::anyhow!("{e}")))
-}
 
 pub(super) async fn load_ciphertext_key(
     access: &DeviceAccessStrategy,
@@ -186,63 +164,4 @@ pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDevice
         return Err(RemoveDeviceError::StorageNotAvailable);
     };
     storage.remove_device(device_path).await.map_err(Into::into)
-}
-
-pub(super) async fn list_pki_local_pending(
-    config_dir: &Path,
-) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(ListPkiLocalPendingError::StorageNotAvailable);
-    };
-    storage
-        .list_pki_local_pending(config_dir)
-        .await
-        .inspect(|v| {
-            log::trace!("Found the following devices: {v:?}");
-        })
-        .inspect_err(|e| {
-            log::error!("Failed to list available devices: {e}");
-        })
-        .map_err(|e| ListPkiLocalPendingError::Internal(anyhow::anyhow!("{e}")))
-}
-
-pub(super) async fn list_pending_async_enrollments(
-    pending_async_enrollments_dir: &Path,
-) -> Result<Vec<AvailablePendingAsyncEnrollment>, ListPendingAsyncEnrollmentsError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable);
-    };
-
-    let files = storage
-        .list_file_entries(
-            pending_async_enrollments_dir,
-            crate::PENDING_ASYNC_ENROLLMENT_EXT,
-        )
-        .await
-        .or_else(|err| match err {
-            ListFileEntriesError::NotFound { .. } => Ok(vec![]),
-            _ => {
-                log::error!(
-                    "Cannot list pending request files in {}: {err}",
-                    pending_async_enrollments_dir.display()
-                );
-                Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable)
-            }
-        })?;
-
-    let mut items = Vec::with_capacity(files.len());
-    for file in files {
-        let outcome = file.read_to_end().await.ok().and_then(|raw| {
-            super::load_pending_async_enrollment_as_available_frow_raw(file.path, &raw).ok()
-        });
-        if let Some(available) = outcome {
-            items.push(available);
-        }
-    }
-
-    Ok(items)
 }
