@@ -34,11 +34,6 @@ fn main() -> anyhow::Result<()> {
     let data =
         decrypt_message(args.algorithm, &data, &cert_ref).context("Failed to decrypt message")?;
 
-    println!(
-        "Decrypted by cert with id {{{}}} with algo {}",
-        &cert_ref.uris().next().unwrap(),
-        args.algorithm
-    );
     println!("Decrypted by cert with fingerprint: {}", cert_ref.hash);
     println!(
         "Decrypted data: {}",
