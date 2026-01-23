@@ -1,15 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use anyhow::anyhow;
-use std::io::ErrorKind;
-
 use libparsec_types::prelude::*;
+use std::io::ErrorKind;
 use std::path::Path;
+use std::{ffi::OsStr, path::PathBuf};
 
 #[cfg(not(target_arch = "wasm32"))]
-mod native;
+#[path = "native/mod.rs"]
+mod platform;
+
 #[cfg(target_arch = "wasm32")]
-mod web;
+#[path = "web/mod.rs"]
+mod platform;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SaveContentError {
@@ -74,15 +77,8 @@ impl From<std::io::Error> for SaveContentError {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub async fn save_content(path: &std::path::Path, content: &[u8]) -> Result<(), SaveContentError> {
-    native::save_content(path, content).await
-}
-
-#[cfg(target_arch = "wasm32")]
-pub async fn save_content(path: &std::path::Path, content: &[u8]) -> Result<(), SaveContentError> {
-    let store = web::common::internal::Storage::new().await?;
-    web::save_content(store, path, content).await
+    platform::save_content(path, content).await
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -113,14 +109,25 @@ impl From<std::io::Error> for LoadFileError {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub async fn load_file(path: &Path) -> Result<Bytes, LoadFileError> {
-    native::load_file(path).await
+    platform::load_file(path).await
 }
 
-#[cfg(target_arch = "wasm32")]
-pub async fn load_file(path: &Path) -> Result<Bytes, LoadFileError> {
-    web::load_file(path).await
+#[derive(Debug, thiserror::Error)]
+pub enum ListFilesError {
+    #[error("storage not available")]
+    StorageNotAvailable,
+    #[error("invalid parent")]
+    InvalidParent,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn list_files(
+    root_dir: &Path,
+    extension: impl AsRef<OsStr> + std::fmt::Display,
+) -> Result<Vec<PathBuf>, ListFilesError> {
+    platform::list_files(root_dir, extension).await
 }
 
 #[path = "../tests/units/mod.rs"]

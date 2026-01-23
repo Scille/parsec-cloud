@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use crate::ListFilesError;
 use crate::LoadFileError;
 use crate::SaveContentError;
 use std::path::PathBuf;
@@ -24,6 +25,8 @@ pub enum GetDirectoryHandleError {
     #[error("No such file or directory at {0:?}")]
     NotFound(PathBuf),
 }
+
+pub type ListFileEntriesError = GetDirectoryHandleError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum GetFileHandleError {
@@ -239,6 +242,20 @@ impl From<GetRootDirectoryError> for SaveContentError {
             GetRootDirectoryError::StorageNotAvailable { .. } => {
                 SaveContentError::StorageNotAvailable
             }
+        }
+    }
+}
+
+impl From<ListFileEntriesError> for ListFilesError {
+    fn from(e: GetDirectoryHandleError) -> Self {
+        match e {
+            GetDirectoryHandleError::Cast { .. }
+            | GetDirectoryHandleError::DomException(..)
+            | GetDirectoryHandleError::Promise(..)
+            | GetDirectoryHandleError::NotFound(..) => {
+                ListFilesError::Internal(anyhow::anyhow!("{e}"))
+            }
+            GetDirectoryHandleError::NotADirectory(..) => ListFilesError::InvalidParent,
         }
     }
 }

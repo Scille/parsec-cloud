@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::web::common::internal::Storage;
+use super::common::internal::Storage;
 use crate::LoadFileError;
 use libparsec_types::Bytes;
 use std::path::Path;

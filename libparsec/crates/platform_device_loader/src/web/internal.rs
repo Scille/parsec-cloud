@@ -1,27 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf},
-    rc::Rc,
-};
+use std::path::{Path, PathBuf};
 
-use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
 use libparsec_platform_filesystem::save_content;
 use libparsec_types::prelude::*;
 
 use crate::{
-    load_available_device, load_pki_pending_file,
-    web::wrapper::{DirEntry, DirOrFileHandle, OpenOptions},
-    AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
-    LoadAvailableDeviceError, LoadContentError, OpenBaoOperationsUploadOpaqueKeyError,
-    RemoteOperationServer, SaveDeviceError,
+    web::wrapper::OpenOptions, AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice,
+    DeviceSaveStrategy, OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer,
+    SaveDeviceError,
 };
 
-use super::{
-    error::*,
-    wrapper::{Directory, File},
-};
+use super::{error::*, wrapper::Directory};
 
 pub struct Storage {
     root_dir: Directory,
@@ -31,93 +21,6 @@ impl Storage {
     pub(crate) async fn new() -> Result<Self, NewStorageError> {
         let root_dir = Directory::get_root().await?;
         Ok(Self { root_dir })
-    }
-
-    pub(crate) async fn list_available_devices(
-        &self,
-        config_dir: &Path,
-    ) -> Result<Vec<AvailableDevice>, ListAvailableDevicesError> {
-        let devices_dir = crate::get_devices_dir(config_dir);
-
-        let file_entries = self
-            .list_file_entries(&devices_dir, crate::DEVICE_FILE_EXT)
-            .await?;
-        let mut devices = Vec::with_capacity(file_entries.len());
-        for file_entry in file_entries {
-            match load_available_device(&config_dir, file_entry.path).await {
-                Ok(device) => {
-                    devices.push(device);
-                }
-                // Ignore invalid files
-                Err(LoadAvailableDeviceError::InvalidData) => continue,
-                // Unexpected error, make it bubble up
-                Err(LoadAvailableDeviceError::StorageNotAvailable) => {
-                    return Err(ListAvailableDevicesError::StorageNotAvailable)
-                }
-                Err(LoadAvailableDeviceError::InvalidPath(_)) => {
-                    return Err(ListAvailableDevicesError::InvalidPath)
-                }
-                Err(LoadAvailableDeviceError::Internal(e)) => {
-                    return Err(ListAvailableDevicesError::Internal(e.into()))
-                }
-            }
-        }
-
-        devices.sort_by(|a, b| a.key_file_path.cmp(&b.key_file_path));
-
-        Ok(devices)
-    }
-
-    pub(super) async fn list_file_entries(
-        &self,
-        dir: &Path,
-        extension: impl AsRef<OsStr> + std::fmt::Display,
-    ) -> Result<Vec<File>, ListFileEntriesError> {
-        log::debug!(
-            "Listing file entries in {} with extension {extension}",
-            dir.display()
-        );
-        let dir = match self.root_dir.get_directory_from_path(&dir, None).await {
-            Ok(dir) => dir,
-            Err(GetDirectoryHandleError::NotFound { .. }) => {
-                log::debug!("Could not find devices dir");
-                return Ok(Vec::new());
-            }
-            Err(e) => return Err(e.into()),
-        };
-        let mut files = Vec::<File>::new();
-        let dirs_to_explore = Rc::new(Mutex::new(Vec::from([dir])));
-        while let Some(dir) = {
-            let mut handle = dirs_to_explore.lock().await;
-            let res = handle.pop();
-            drop(handle);
-            res
-        } {
-            log::trace!("Exploring directory {}", dir.path.display());
-            let mut entries_stream = dir.entries();
-            while let Some(entry) = entries_stream.next().await {
-                let DirEntry { path, handle } = entry;
-                match handle {
-                    DirOrFileHandle::File(handle)
-                        if path.extension() == Some(extension.as_ref()) =>
-                    {
-                        log::trace!("File {} with correct extension", path.display());
-                        files.push(File { path, handle })
-                    }
-                    DirOrFileHandle::File(_) => {
-                        log::trace!("Ignoring file {} because of bad suffix", path.display());
-                    }
-                    DirOrFileHandle::Dir(handle) => {
-                        log::trace!("New directory to explore: {}", path.display());
-                        dirs_to_explore
-                            .lock()
-                            .await
-                            .push(Directory { path, handle });
-                    }
-                }
-            }
-        }
-        Ok(files)
     }
 
     pub(crate) async fn save_device(
@@ -281,39 +184,5 @@ impl Storage {
             .remove_entry_from_path(path)
             .await
             .map_err(Into::into)
-    }
-
-    pub(crate) async fn list_pki_local_pending(
-        &self,
-        config_dir: &Path,
-    ) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
-        let pending_dir = crate::get_local_pending_dir(config_dir);
-        let file_entries = self
-            .list_file_entries(&pending_dir, crate::LOCAL_PENDING_EXT)
-            .await?;
-        let mut entries = Vec::with_capacity(file_entries.len());
-        for file_entry in file_entries {
-            match load_pki_pending_file(&file_entry.path()).await {
-                Ok(device) => {
-                    entries.push(device);
-                }
-                // Ignore invalid files
-                Err(LoadContentError::InvalidData) => continue,
-                // Unexpected error, make it bubble up
-                Err(LoadContentError::StorageNotAvailable) => {
-                    return Err(ListPkiLocalPendingError::StorageNotAvailable)
-                }
-                Err(LoadContentError::InvalidPath(_)) => {
-                    return Err(ListPkiLocalPendingError::InvalidPath)
-                }
-                Err(LoadContentError::Internal(e)) => {
-                    return Err(ListPkiLocalPendingError::Internal(e.into()))
-                }
-            }
-        }
-
-        entries.sort_by_key(|v| v.enrollment_id);
-
-        Ok(entries)
     }
 }

@@ -1,21 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use itertools::Itertools as _;
 use keyring::Entry as KeyringEntry;
-use libparsec_platform_async::{future::FutureExt as _, stream::StreamExt as _};
+use libparsec_platform_async::future::FutureExt as _;
 use libparsec_platform_filesystem::save_content;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use crate::{
-    encrypt_device, get_device_archive_path, load_available_device, load_pki_pending_file,
-    AccountVaultOperationsFetchOpaqueKeyError, AccountVaultOperationsUploadOpaqueKeyError,
-    ArchiveDeviceError, AvailableDevice, AvailablePendingAsyncEnrollment, DeviceAccessStrategy,
-    DeviceSaveStrategy, ListAvailableDeviceError, ListPendingAsyncEnrollmentsError,
-    ListPkiLocalPendingError, LoadCiphertextKeyError, LoadDeviceError,
+    encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
+    AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
+    DeviceAccessStrategy, DeviceSaveStrategy, LoadCiphertextKeyError, LoadDeviceError,
     OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
-    RemoteOperationServer, RemoveDeviceError, SaveDeviceError, UpdateDeviceError, DEVICE_FILE_EXT,
-    LOCAL_PENDING_EXT,
+    RemoteOperationServer, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
 };
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
 use libparsec_types::prelude::*;
@@ -32,65 +28,6 @@ impl From<keyring::Error> for SaveDeviceError {
     fn from(value: keyring::Error) -> Self {
         Self::Internal(anyhow::anyhow!(value))
     }
-}
-
-/*
- * List available devices
- */
-
-fn find_device_files(path: &Path) -> Result<Vec<PathBuf>, ListAvailableDeviceError> {
-    // TODO: make file access on a worker thread !
-
-    match std::fs::read_dir(path) {
-        Ok(children) => {
-            let mut key_file_paths = vec![];
-            for path in
-                children.filter_map(|entry| entry.as_ref().map(std::fs::DirEntry::path).ok())
-            {
-                if path.extension() == Some(DEVICE_FILE_EXT.as_ref()) {
-                    key_file_paths.push(path)
-                } else if path.is_dir() {
-                    key_file_paths.append(&mut find_device_files(&path)?)
-                }
-            }
-            Ok(key_file_paths)
-        }
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
-        Err(e) => {
-            log::error!("Cannot list available devices at {}: {e}", path.display());
-            Err(ListAvailableDeviceError::StorageNotAvailable)
-        }
-    }
-}
-
-pub(super) async fn list_available_devices(
-    config_dir: &Path,
-) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
-    let devices_dir = crate::get_devices_dir(config_dir);
-
-    // Consider `.keys` files in devices directory
-    let mut key_file_paths = find_device_files(&devices_dir)?;
-
-    // Sort paths so the discovery order is deterministic
-    // In the case of duplicate files, that means only the first discovered device is considered
-    key_file_paths.sort();
-    log::trace!("Found the following device files: {key_file_paths:?}");
-
-    let mut res = Vec::with_capacity(key_file_paths.len());
-    for key_file in key_file_paths {
-        if let Ok(device) = load_available_device(config_dir, key_file.clone())
-            .await
-            .inspect_err(|e| {
-                log::debug!(
-                    "Failed to load device at {path} with {e}",
-                    path = key_file.display()
-                )
-            })
-        {
-            res.push(device);
-        }
-    }
-    Ok(res.into_iter().unique_by(|v| v.device_id).collect_vec())
 }
 
 /*
@@ -526,97 +463,4 @@ pub(super) fn is_keyring_available() -> bool {
             false
         }
     }
-}
-
-pub(super) async fn list_pki_local_pending(
-    config_dir: &Path,
-) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
-    let pending_dir = crate::get_local_pending_dir(config_dir);
-    let mut files = find_local_pending_files(&pending_dir).await?;
-
-    // Sort entries so result is deterministic
-    files.sort();
-    log::trace!("Found pending request files: {files:?}");
-
-    Ok(libparsec_platform_async::stream::iter(files)
-        .filter_map(async |path| load_pki_pending_file(&path).await.ok())
-        .collect::<Vec<_>>()
-        .await)
-}
-
-async fn find_local_pending_files(path: &Path) -> Result<Vec<PathBuf>, ListPkiLocalPendingError> {
-    let mut entries = match tokio::fs::read_dir(path).await {
-        Ok(v) => v,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(err) => {
-            log::error!(
-                "Cannot list pending request files in {}: {err}",
-                path.display()
-            );
-            return Err(ListPkiLocalPendingError::StorageNotAvailable);
-        }
-    };
-    let mut files = Vec::new();
-
-    while let Some(entry) = entries.next_entry().await.unwrap_or_default() {
-        let Ok(metadata) = entry.metadata().await else {
-            continue;
-        };
-        let path = entry.path();
-        if metadata.is_dir() {
-            let mut sub_files = Box::pin(find_local_pending_files(&path)).await?;
-            files.append(&mut sub_files);
-        } else if metadata.is_file() && path.extension() == Some(LOCAL_PENDING_EXT.as_ref()) {
-            files.push(path);
-        }
-    }
-    Ok(files)
-}
-
-pub(super) async fn list_pending_async_enrollments(
-    pending_async_enrollments_dir: &Path,
-) -> Result<Vec<AvailablePendingAsyncEnrollment>, ListPendingAsyncEnrollmentsError> {
-    let mut files = find_pending_async_enrollment_files(pending_async_enrollments_dir).await?;
-
-    // Sort entries so result is deterministic
-    files.sort();
-
-    Ok(libparsec_platform_async::stream::iter(files)
-        .filter_map(async |path| {
-            let raw = tokio::fs::read(&path).await.ok()?;
-            super::load_pending_async_enrollment_as_available_frow_raw(path, &raw).ok()
-        })
-        .collect::<Vec<_>>()
-        .await)
-}
-
-async fn find_pending_async_enrollment_files(
-    path: &Path,
-) -> Result<Vec<PathBuf>, ListPendingAsyncEnrollmentsError> {
-    let mut entries = match tokio::fs::read_dir(path).await {
-        Ok(v) => v,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(err) => {
-            log::error!(
-                "Cannot list pending request files in {}: {err}",
-                path.display()
-            );
-            return Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable);
-        }
-    };
-    let mut files = Vec::new();
-
-    while let Some(entry) = entries.next_entry().await.unwrap_or_default() {
-        let Ok(metadata) = entry.metadata().await else {
-            continue;
-        };
-        let path = entry.path();
-        if metadata.is_dir() {
-            let mut sub_files = Box::pin(find_pending_async_enrollment_files(&path)).await?;
-            files.append(&mut sub_files);
-        } else if metadata.is_file() && path.extension() == Some(LOCAL_PENDING_EXT.as_ref()) {
-            files.push(path);
-        }
-    }
-    Ok(files)
 }
