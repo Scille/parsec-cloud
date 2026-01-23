@@ -2,6 +2,7 @@
 
 use libparsec_types::prelude::*;
 
+mod identity;
 mod opaque_key;
 mod sign;
 
@@ -32,6 +33,7 @@ pub enum OpenBaoOperationError {
 pub type OpenBaoFetchOpaqueKeyError = OpenBaoOperationError;
 pub type OpenBaoUploadOpaqueKeyError = OpenBaoOperationError;
 pub type OpenBaoSignError = OpenBaoOperationError;
+pub type OpenBaoListEntityEmailsError = OpenBaoOperationError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum OpenBaoVerifyError {
@@ -108,6 +110,14 @@ impl OpenBaoCmds {
             expected_author,
         )
         .await
+    }
+
+    /// Note we return the emails as `String` and not as `EmailAddress`!
+    /// This is because `EmailADdress` only allow a subset of all the valid emails
+    /// (typically emails containing unicode are not allowed), while OpenBAO has
+    /// no such limitation.
+    pub async fn list_self_emails(&self) -> Result<Vec<String>, OpenBaoListEntityEmailsError> {
+        identity::list_emails(self, &self.openbao_entity_id).await
     }
 }
 

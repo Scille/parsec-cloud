@@ -11,6 +11,7 @@ from .config import *
 from .device import *
 from .events import *
 from .invite import *
+from .openbao import *
 from .path import *
 from .pki import *
 from .platform import *
