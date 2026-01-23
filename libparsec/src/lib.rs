@@ -12,6 +12,7 @@ mod device;
 mod events;
 mod handle;
 mod invite;
+mod openbao;
 mod path;
 mod pki;
 mod platform;
@@ -39,6 +40,7 @@ pub use libparsec_platform_device_loader::{
 pub use libparsec_platform_storage as storage;
 pub use libparsec_protocol::*;
 pub use libparsec_types::prelude::*;
+pub use openbao::*;
 pub use path::*;
 pub use pki::*;
 pub use platform::*;
