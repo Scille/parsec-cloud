@@ -26,11 +26,7 @@ fn main() -> anyhow::Result<()> {
     let data = args.content.into_bytes()?;
     let (algo, signature) = sign_message(&data, &cert_ref).context("Failed to sign message")?;
 
-    println!(
-        "Signed by cert with id {{{}}} with algorithm {}",
-        &cert_ref.uris().next().unwrap(),
-        algo
-    );
+    println!("Signed with algorithm {}", algo);
     println!("Signed by cert with fingerprint: {}", cert_ref.hash);
     println!(
         "Signature: {}",

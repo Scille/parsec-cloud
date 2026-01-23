@@ -28,11 +28,7 @@ fn main() -> anyhow::Result<()> {
     let (algo, ciphered) =
         encrypt_message(&data, &cert_ref).context("Failed to encrypt message")?;
 
-    println!(
-        "Encrypted by cert with id {{{}}} using the algorithm {}",
-        &cert_ref.uris().next().unwrap(),
-        algo
-    );
+    println!("Encrypted using the algorithm {}", algo);
     println!("Encrypted by cert with fingerprint: {}", cert_ref.hash);
     println!(
         "Encrypted data: {}",

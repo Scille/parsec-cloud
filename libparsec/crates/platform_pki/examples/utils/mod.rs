@@ -133,10 +133,6 @@ impl CertificateOrRef {
         let cert = if let Some(hash) = self.certificate_hash.clone() {
             let cert_ref: libparsec_types::X509CertificateReference = hash.into();
             let certificate = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)?;
-            println!("Will verify signature using cert with id {{{}}}", {
-                #[expect(clippy::unwrap_used)]
-                cert_ref.uris().next().unwrap()
-            });
             Certificate::from_der_owned(certificate.into())
         } else if let Some(der_file) = &self.der_file {
             let raw = std::fs::read(der_file).context("Failed to read file")?;
