@@ -13179,6 +13179,48 @@ fn variant_open_bao_auth_config_rs_to_js(
     Ok(js_obj)
 }
 
+// OpenBaoListSelfEmailsError
+
+#[allow(dead_code)]
+fn variant_open_bao_list_self_emails_error_rs_to_js(
+    rs_obj: libparsec::OpenBaoListSelfEmailsError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::OpenBaoListSelfEmailsError::BadServerResponse { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OpenBaoListSelfEmailsErrorBadServerResponse".into(),
+            )?;
+        }
+        libparsec::OpenBaoListSelfEmailsError::BadURL { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OpenBaoListSelfEmailsErrorBadURL".into(),
+            )?;
+        }
+        libparsec::OpenBaoListSelfEmailsError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OpenBaoListSelfEmailsErrorInternal".into(),
+            )?;
+        }
+        libparsec::OpenBaoListSelfEmailsError::NoServerResponse { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OpenBaoListSelfEmailsErrorNoServerResponse".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // OpenBaoSecretConfig
 
 #[allow(dead_code)]
@@ -25033,6 +25075,52 @@ pub fn newCanceller() -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::new_canceller();
         Ok(JsValue::from(ret))
+    }))
+}
+
+// openbao_list_self_emails
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn openbaoListSelfEmails(
+    openbao_server_url: String,
+    openbao_secret_mount_path: String,
+    openbao_transit_mount_path: String,
+    openbao_entity_id: String,
+    openbao_auth_token: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::openbao_list_self_emails(
+            openbao_server_url,
+            openbao_secret_mount_path,
+            openbao_transit_mount_path,
+            openbao_entity_id,
+            openbao_auth_token,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = elem.into();
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_open_bao_list_self_emails_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
     }))
 }
 

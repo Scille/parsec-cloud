@@ -2999,6 +2999,30 @@ export type OpenBaoAuthConfig =
   | OpenBaoAuthConfigOIDCProConnect
 
 
+// OpenBaoListSelfEmailsError
+export interface OpenBaoListSelfEmailsErrorBadServerResponse {
+    tag: "OpenBaoListSelfEmailsErrorBadServerResponse"
+    error: string
+}
+export interface OpenBaoListSelfEmailsErrorBadURL {
+    tag: "OpenBaoListSelfEmailsErrorBadURL"
+    error: string
+}
+export interface OpenBaoListSelfEmailsErrorInternal {
+    tag: "OpenBaoListSelfEmailsErrorInternal"
+    error: string
+}
+export interface OpenBaoListSelfEmailsErrorNoServerResponse {
+    tag: "OpenBaoListSelfEmailsErrorNoServerResponse"
+    error: string
+}
+export type OpenBaoListSelfEmailsError =
+  | OpenBaoListSelfEmailsErrorBadServerResponse
+  | OpenBaoListSelfEmailsErrorBadURL
+  | OpenBaoListSelfEmailsErrorInternal
+  | OpenBaoListSelfEmailsErrorNoServerResponse
+
+
 // OpenBaoSecretConfig
 export interface OpenBaoSecretConfigKV2 {
     tag: "OpenBaoSecretConfigKV2"
@@ -5621,6 +5645,13 @@ export function mountpointUnmount(
 ): Promise<Result<null, MountpointUnmountError>>
 export function newCanceller(
 ): Promise<number>
+export function openbaoListSelfEmails(
+    openbao_server_url: string,
+    openbao_secret_mount_path: string,
+    openbao_transit_mount_path: string,
+    openbao_entity_id: string,
+    openbao_auth_token: string
+): Promise<Result<Array<string>, OpenBaoListSelfEmailsError>>
 export function parseParsecAddr(
     url: string
 ): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>>
