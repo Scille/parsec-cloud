@@ -12074,6 +12074,40 @@ fn variant_open_bao_auth_config_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// OpenBaoListSelfEmailsError
+
+#[allow(dead_code)]
+fn variant_open_bao_list_self_emails_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OpenBaoListSelfEmailsError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::OpenBaoListSelfEmailsError::BadServerResponse { .. } => {
+            let js_tag = JsString::try_new(cx, "OpenBaoListSelfEmailsErrorBadServerResponse")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::OpenBaoListSelfEmailsError::BadURL { .. } => {
+            let js_tag = JsString::try_new(cx, "OpenBaoListSelfEmailsErrorBadURL").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::OpenBaoListSelfEmailsError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "OpenBaoListSelfEmailsErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::OpenBaoListSelfEmailsError::NoServerResponse { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "OpenBaoListSelfEmailsErrorNoServerResponse").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // OpenBaoSecretConfig
 
 #[allow(dead_code)]
@@ -26625,6 +26659,81 @@ fn new_canceller(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// openbao_list_self_emails
+fn openbao_list_self_emails(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let openbao_server_url = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let openbao_secret_mount_path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        js_val.value(&mut cx)
+    };
+    let openbao_transit_mount_path = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let openbao_entity_id = {
+        let js_val = cx.argument::<JsString>(3)?;
+        js_val.value(&mut cx)
+    };
+    let openbao_auth_token = {
+        let js_val = cx.argument::<JsString>(4)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::openbao_list_self_emails(
+                openbao_server_url,
+                openbao_secret_mount_path,
+                openbao_transit_mount_path,
+                openbao_entity_id,
+                openbao_auth_token,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = JsString::try_new(&mut cx, elem).or_throw(&mut cx)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_open_bao_list_self_emails_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // parse_parsec_addr
 fn parse_parsec_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -31934,6 +32043,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;
     cx.export_function("mountpointUnmount", mountpoint_unmount)?;
     cx.export_function("newCanceller", new_canceller)?;
+    cx.export_function("openbaoListSelfEmails", openbao_list_self_emails)?;
     cx.export_function("parseParsecAddr", parse_parsec_addr)?;
     cx.export_function("pathFilename", path_filename)?;
     cx.export_function("pathJoin", path_join)?;

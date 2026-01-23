@@ -3562,6 +3562,36 @@ export type OpenBaoAuthConfig =
   | OpenBaoAuthConfigOIDCHexagone
   | OpenBaoAuthConfigOIDCProConnect
 
+// OpenBaoListSelfEmailsError
+export enum OpenBaoListSelfEmailsErrorTag {
+    BadServerResponse = 'OpenBaoListSelfEmailsErrorBadServerResponse',
+    BadURL = 'OpenBaoListSelfEmailsErrorBadURL',
+    Internal = 'OpenBaoListSelfEmailsErrorInternal',
+    NoServerResponse = 'OpenBaoListSelfEmailsErrorNoServerResponse',
+}
+
+export interface OpenBaoListSelfEmailsErrorBadServerResponse {
+    tag: OpenBaoListSelfEmailsErrorTag.BadServerResponse
+    error: string
+}
+export interface OpenBaoListSelfEmailsErrorBadURL {
+    tag: OpenBaoListSelfEmailsErrorTag.BadURL
+    error: string
+}
+export interface OpenBaoListSelfEmailsErrorInternal {
+    tag: OpenBaoListSelfEmailsErrorTag.Internal
+    error: string
+}
+export interface OpenBaoListSelfEmailsErrorNoServerResponse {
+    tag: OpenBaoListSelfEmailsErrorTag.NoServerResponse
+    error: string
+}
+export type OpenBaoListSelfEmailsError =
+  | OpenBaoListSelfEmailsErrorBadServerResponse
+  | OpenBaoListSelfEmailsErrorBadURL
+  | OpenBaoListSelfEmailsErrorInternal
+  | OpenBaoListSelfEmailsErrorNoServerResponse
+
 // OpenBaoSecretConfig
 export enum OpenBaoSecretConfigTag {
     KV2 = 'OpenBaoSecretConfigKV2',
@@ -6667,6 +6697,13 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, MountpointUnmountError>>
     newCanceller(
     ): Promise<Handle>
+    openbaoListSelfEmails(
+        openbao_server_url: string,
+        openbao_secret_mount_path: string,
+        openbao_transit_mount_path: string,
+        openbao_entity_id: string,
+        openbao_auth_token: string
+    ): Promise<Result<Array<string>, OpenBaoListSelfEmailsError>>
     parseParsecAddr(
         url: string
     ): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>>
