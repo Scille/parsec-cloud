@@ -50,7 +50,7 @@ msTest('Go through trial org creation process', async ({ context }) => {
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
   await expect(userNext).toHaveDisabledAttribute();
-  await userInfoContainer.locator('.checkbox').locator('.native-wrapper').click();
+  await userInfoContainer.locator('.ms-checkbox').check();
   await expect(userNext).toNotHaveDisabledAttribute();
 
   // Try cancelling
@@ -168,7 +168,7 @@ msTest('Go through trial org creation process from bootstrap link', async ({ con
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
   await expect(userNext).toHaveDisabledAttribute();
-  await userInfoContainer.locator('.checkbox').locator('.native-wrapper').click();
+  await userInfoContainer.locator('.ms-checkbox').check();
   await expect(userNext).toNotHaveDisabledAttribute();
   await userNext.click();
 

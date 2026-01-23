@@ -695,6 +695,10 @@
 
   .ms-modal-footer {
     margin-top: auto;
+
+    .ms-modal-toolbar::part(background) {
+      background: none;
+    }
   }
 }
 

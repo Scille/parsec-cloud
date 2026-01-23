@@ -19,7 +19,7 @@
         'file-list-item-mobile': isSmallDisplay,
       }"
       @dblclick="$emit('openItem', $event, entry)"
-      @click.stop="$emit('update:modelValue', !props.entry.isSelected)"
+      @click="$emit('update:modelValue', !entry.isSelected)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
       @contextmenu="onOptionsClick"
@@ -29,14 +29,13 @@
           class="file-selected"
           v-if="isLargeDisplay || entry.isSelected || showCheckbox"
         >
-          <!-- eslint-disable vue/no-mutating-props -->
           <ms-checkbox
-            v-model="entry.isSelected"
+            @change="$emit('update:modelValue', !entry.isSelected)"
+            :checked="entry.isSelected"
             v-show="entry.isSelected || isHovered || showCheckbox"
             @click.stop
             @dblclick.stop
           />
-          <!-- eslint-enable vue/no-mutating-props -->
         </div>
 
         <!-- file name -->
@@ -252,6 +251,7 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
 
   .file-selected {
     max-width: 2.5rem;
+    overflow: visible;
   }
 }
 

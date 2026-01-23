@@ -32,12 +32,10 @@
       </ion-text>
     </div>
     <ms-checkbox
-      class="long-paths-modal__checkbox body"
+      class="long-paths-modal__checkbox"
       v-model="skipLongPathsSupportWarning"
     >
-      <ion-text>
-        {{ $msTranslate('LongPathsSupportModal.noReminder') }}
-      </ion-text>
+      {{ $msTranslate('LongPathsSupportModal.noReminder') }}
     </ms-checkbox>
   </ms-modal>
 </template>
@@ -83,6 +81,7 @@ async function dismiss(): Promise<boolean> {
 
   &__checkbox {
     position: absolute;
+    z-index: 10;
     bottom: 2.25rem;
     color: var(--parsec-color-light-secondary-soft-text);
     padding: 0.25rem 0.25rem;

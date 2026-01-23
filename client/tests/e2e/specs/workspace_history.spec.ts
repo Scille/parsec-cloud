@@ -66,7 +66,7 @@ msTest.describe(() => {
     await breadcrumbs.nth(0).click();
     await expect(breadcrumbs).toHaveText([' wksp1']);
 
-    await folderList.locator('.file-list-item').nth(1).locator('ion-checkbox').click();
+    await folderList.locator('.file-list-item').nth(1).locator('.ms-checkbox').click();
     await expect(restoreButton).toBeTrulyEnabled();
     await restoreButton.click();
     await answerQuestion(documents, true, {
@@ -213,11 +213,11 @@ msTest.describe(() => {
     await expect(entries).toHaveCount(3);
     await expect(selectAllButton).toHaveText('Deselect all');
     for (const entry of await entries.all()) {
-      await expect(entry.locator('ion-checkbox')).toHaveState('checked');
+      await expect(entry.locator('.ms-checkbox')).toBeChecked();
     }
     await selectAllButton.click();
-    for (const checkbox of await entries.locator('ion-checkbox').all()) {
-      await expect(checkbox).toHaveState('unchecked');
+    for (const checkbox of await entries.locator('.ms-checkbox').all()) {
+      await expect(checkbox).not.toBeChecked();
     }
   });
 });

@@ -40,7 +40,7 @@ msTest.describe(() => {
     await expect(entry.locator('.label-name')).toHaveText('image.png');
     await entry.hover();
     await expect(entry).toBeVisible();
-    await entry.locator('ion-checkbox').click();
+    await entry.locator('.ms-checkbox').click();
     await expect(entry).toContainClass('selected');
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('ion-button').nth(0)).toHaveText('Preview');
@@ -503,7 +503,6 @@ msTest.describe(() => {
     const header = documents.locator('#connected-header');
     await expect(sidebar).toBeVisible();
     await expect(header).toBeVisible();
-    await documents.locator('.header-label-name').click();
 
     // Open first file and ensure it's loaded
     await entries.nth(0).locator('.file-name .file-mobile-text .label-name').click();
@@ -573,7 +572,6 @@ msTest.describe(() => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Png, false);
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     const toggleButton = documents.locator('#trigger-toggle-menu-button');
-    await documents.locator('.header-label-name').click();
 
     // Sidebar starts visible (default state)
     await expect(documents.locator('.sidebar')).toBeVisible();

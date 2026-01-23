@@ -370,7 +370,7 @@ msTest.skip('Edit file in editor with two users', async ({ parsecEditics }) => {
   await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').click();
   const secondEntries = secondTab.locator('.folder-container').locator('.file-list-item');
   await secondEntries.nth(2).hover();
-  await secondEntries.nth(2).locator('ion-checkbox').click();
+  await secondEntries.nth(2).locator('.ms-checkbox').check();
   const actionBar = secondTab.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
   await actionBar.locator('ion-button').nth(1).click();
@@ -465,7 +465,7 @@ msTest.skip('Check file edited by other user', async ({ parsecEditics }) => {
   await secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').click();
   const secondEntries = secondTab.locator('.folder-container').locator('.file-list-item');
   await secondEntries.nth(2).hover();
-  await secondEntries.nth(2).locator('ion-checkbox').click();
+  await secondEntries.nth(2).locator('.ms-checkbox').check();
   const actionBar = secondTab.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
   await actionBar.locator('ion-button').nth(1).click();

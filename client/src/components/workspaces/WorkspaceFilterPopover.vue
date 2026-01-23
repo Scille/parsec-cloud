@@ -33,55 +33,51 @@
           class="list-group-item ion-no-padding"
           id="filter-check-admin"
         >
-          <ion-text
-            class="filter-text button-medium"
-            @click="filters.owner = !filters.owner"
-          >
-            {{ $msTranslate('workspaceRoles.owner.label') }}
-          </ion-text>
           <ms-checkbox
             v-model="filters.owner"
             class="filter-checkbox"
-          />
+            label-position="left"
+          >
+            <ion-text>
+              {{ $msTranslate('workspaceRoles.owner.label') }}
+            </ion-text>
+          </ms-checkbox>
         </ion-item>
         <ion-item
           class="list-group-item ion-no-padding"
           id="filter-check-standard"
         >
-          <ion-text
-            class="filter-text button-medium"
-            @click="filters.manager = !filters.manager"
-          >
-            {{ $msTranslate('workspaceRoles.manager.label') }}
-          </ion-text>
           <ms-checkbox
             v-model="filters.manager"
             class="filter-checkbox"
-          />
+            label-position="left"
+          >
+            <ion-text>
+              {{ $msTranslate('workspaceRoles.manager.label') }}
+            </ion-text>
+          </ms-checkbox>
         </ion-item>
         <ion-item class="list-group-item ion-no-padding">
-          <ion-text
-            class="filter-text button-medium"
-            @click="filters.contributor = !filters.contributor"
-          >
-            {{ $msTranslate('workspaceRoles.contributor.label') }}
-          </ion-text>
           <ms-checkbox
             v-model="filters.contributor"
             class="filter-checkbox"
-          />
+            label-position="left"
+          >
+            <ion-text>
+              {{ $msTranslate('workspaceRoles.contributor.label') }}
+            </ion-text>
+          </ms-checkbox>
         </ion-item>
         <ion-item class="list-group-item ion-no-padding">
-          <ion-text
-            class="filter-text button-medium"
-            @click="filters.reader = !filters.reader"
-          >
-            {{ $msTranslate('workspaceRoles.reader.label') }}
-          </ion-text>
           <ms-checkbox
             v-model="filters.reader"
             class="filter-checkbox"
-          />
+            label-position="left"
+          >
+            <ion-text>
+              {{ $msTranslate('workspaceRoles.reader.label') }}
+            </ion-text>
+          </ms-checkbox>
         </ion-item>
       </ion-item-group>
     </ion-list>

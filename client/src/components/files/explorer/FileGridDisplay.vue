@@ -17,6 +17,7 @@
           class="folder-grid-item"
           ref="folderItems"
           v-for="folder in folders.getEntries()"
+          v-model="folder.isSelected"
           :key="folder.id"
           :entry="folder"
           :show-checkbox="hasSelected() || selectionEnabled === true"
@@ -25,11 +26,11 @@
           @files-added="onFilesAdded"
           :is-workspace-reader="ownRole === WorkspaceRole.Reader"
           @drop-as-reader="$emit('dropAsReader')"
-          v-model="folder.isSelected"
         />
         <file-card
           class="folder-grid-item"
           ref="fileItems"
+          v-model="file.isSelected"
           v-for="file in files.getEntries()"
           :key="file.id"
           :entry="file"
@@ -38,7 +39,6 @@
           @menu-click="onMenuClick"
           @files-added="onFilesAdded"
           @drop-as-reader="$emit('dropAsReader')"
-          v-model="file.isSelected"
         />
         <file-card-processing
           v-for="op in fileOperations"

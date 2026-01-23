@@ -41,7 +41,7 @@
       v-model="noReminder"
       label-placement="end"
       justify="start"
-      class="download-warning-checkbox body"
+      class="download-warning-checkbox"
     >
       {{ $msTranslate('FoldersPage.DownloadFile.notRemindMe') }}
     </ms-checkbox>
@@ -89,11 +89,10 @@ async function onConfirmClicked(): Promise<boolean> {
 
   &-checkbox {
     position: absolute;
-    bottom: 2.5rem;
-    color: var(--parsec-color-light-secondary-soft-text);
+    z-index: 200;
+    bottom: 1.75rem;
 
     @include ms.responsive-breakpoint('sm') {
-      bottom: 3.5rem;
     }
 
     @include ms.responsive-breakpoint('xs') {
