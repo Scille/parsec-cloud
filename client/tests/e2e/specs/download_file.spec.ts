@@ -22,7 +22,7 @@ async function confirmDownload(page: MsPage, noReminder = false): Promise<void> 
 
   await expect(modal).toBeVisible();
   if (noReminder) {
-    await modal.locator('.download-warning-checkbox').click();
+    await modal.locator('.ms-checkbox').check();
   }
   await modal.locator('#next-button').click();
   await expect(modal).toBeHidden();
@@ -136,7 +136,7 @@ msTest.describe(() => {
     await openExternalLink(documents, docLink, new RegExp('^https://docs.parsec.cloud/.+$'));
 
     // Check the do not remind me
-    await warningModal.locator('.download-warning-checkbox').click();
+    await warningModal.locator('.ms-checkbox').check();
 
     await warningModal.locator('#next-button').click();
     await expect(warningModal).toBeHidden();
@@ -148,7 +148,7 @@ msTest.describe(() => {
     await expect(uploadMenu).toBeVisible();
     const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
     await expect(opItems).toHaveCount(2);
-    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading code.py');
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading audio.mp3');
     await expect(opItems.nth(0).locator('.element-details-info')).toHaveText(' wksp1');
     await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(0).click();
     await expect(documents.locator('.upload-menu')).toHaveTheClass('minimize');
@@ -160,7 +160,7 @@ msTest.describe(() => {
     // This time the warning doesn't show up
     await documents.waitForTimeout(1000);
     await expect(opItems).toHaveCount(3);
-    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading audio.mp3');
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading code.py');
     await expect(opItems.nth(0).locator('.element-details-info')).toHaveText(' wksp1');
   });
 
@@ -208,7 +208,7 @@ msTest.describe(() => {
     await expect(entries).toHaveCount(1);
 
     await entries.nth(0).hover();
-    await entries.nth(0).locator('ion-checkbox').click();
+    await entries.nth(0).locator('.ms-checkbox').check();
 
     await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
     await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(7);
@@ -235,10 +235,10 @@ msTest.describe(() => {
     expect(zipEntries.length).toBe(2);
     // cspell:disable-next-line
     expect(zipEntries.at(0)?.entryName).toBe('Folder/Имя файла.png');
-    expect(zipEntries.at(0)?.header.size).toBe(243871);
+    expect(zipEntries.at(0)?.header.size).toBe(6335);
     // cspell:disable-next-line
     expect(zipEntries.at(1)?.entryName).toBe('Folder/文件名.png');
-    expect(zipEntries.at(1)?.header.size).toBe(6335);
+    expect(zipEntries.at(1)?.header.size).toBe(243871);
   });
 
   msTest('Download archive too many recursion', async ({ documents }, testInfo: TestInfo) => {
@@ -268,8 +268,8 @@ msTest.describe(() => {
     await expect(entries).toHaveCount(1);
 
     await entries.nth(0).hover();
-    await entries.nth(0).locator('ion-checkbox').click();
-    await expect(entries.nth(0).locator('ion-checkbox')).toHaveTheClass('checkbox-checked');
+    await entries.nth(0).locator('.ms-checkbox').check();
+    await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
 
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('.counter')).toHaveText('1 selected item');

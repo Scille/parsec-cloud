@@ -246,12 +246,13 @@ msTest.describe(() => {
       },
     );
 
-    // Did everything in my power, those checkboxes don't work properly in tests.
-    msTest.skip(
+    msTest(
       `Document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} only files`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, ImportDocuments.Pdf | ImportDocuments.Png, false);
         await expect(documents.locator('.file-context-menu')).toBeHidden();
+        await documents.locator('.folder-container').locator('.folder-list-header').locator('.ms-checkbox').check();
+
         let entries: Locator;
 
         if (!gridMode) {
@@ -261,14 +262,6 @@ msTest.describe(() => {
           entries = documents.locator('.folder-container').locator('.file-card-item');
         }
 
-        for (const entry of await entries.all()) {
-          await entry.hover();
-          await documents.waitForTimeout(300);
-          await expect(entry.locator('.checkbox')).toBeVisible();
-          await entry.locator('.checkbox').click();
-          await documents.waitForTimeout(200);
-          await expect(entry.locator('.checkbox')).toHaveState('checked');
-        }
         await entries.nth(0).click({ button: 'right' });
 
         await expect(documents.locator('.file-context-menu')).toBeVisible();
@@ -283,6 +276,7 @@ msTest.describe(() => {
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
         await expect(documents.locator('.file-context-menu')).toBeHidden();
+        await documents.locator('.folder-container').locator('.folder-list-header').locator('.ms-checkbox').check();
         let entries: Locator;
 
         if (!gridMode) {
@@ -292,14 +286,6 @@ msTest.describe(() => {
           entries = documents.locator('.folder-container').locator('.file-card-item');
         }
         await expect(entries).toHaveCount(2);
-        await expect(documents.locator('#folders-ms-action-bar').locator('.counter')).toHaveText('2 items');
-        if (gridMode) {
-          await entries.nth(0).locator('.file-card-last-update').click();
-          await entries.nth(1).locator('.file-card-last-update').click();
-        } else {
-          await entries.nth(0).locator('.file-last-update').click();
-          await entries.nth(1).locator('.file-last-update').click();
-        }
         await expect(documents.locator('#folders-ms-action-bar').locator('.counter')).toHaveText('2 selected items');
 
         if (gridMode) {
@@ -692,14 +678,19 @@ msTest.describe(() => {
         }
         await documents.locator('.folder-content').locator('.small-display-header-title .title__icon').click();
         await expandSheetModal(documents, documents.locator('.file-context-sheet-modal'));
+
         await documents.locator('.file-context-sheet-modal').locator('.list-group-item').nth(0).click();
-        await documents.waitForTimeout(500);
-        for (const entry of await entries.all()) {
-          await expect(entry.locator('ion-checkbox')).toHaveState('checked');
-        }
+
+        await expect(documents.locator('.folder-content').locator('.small-display-header-title .title__text--content')).toHaveText(
+          '3 selected items',
+        );
+
+        await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
+        await expect(entries.nth(1).locator('.ms-checkbox')).toBeChecked();
+        await expect(entries.nth(2).locator('.ms-checkbox')).toBeChecked();
 
         // Unselect the folder
-        entries.nth(0).locator('ion-checkbox').click();
+        entries.nth(0).locator('.ms-checkbox').click();
         await entries.nth(1).click({ button: 'right' });
 
         await expect(documents.locator('.file-context-sheet-modal')).toBeVisible();
@@ -709,10 +700,11 @@ msTest.describe(() => {
       },
     );
 
-    msTest.skip(
+    msTest(
       `Small display document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} with a folder`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, true);
+
         await documents.setDisplaySize(DisplaySize.Small);
         await expect(documents.locator('.file-context-menu')).toBeHidden();
         let entries: Locator;
@@ -726,10 +718,9 @@ msTest.describe(() => {
         await documents.locator('.folder-content').locator('.small-display-header-title .title__icon').click();
         await expandSheetModal(documents, documents.locator('.file-context-sheet-modal'));
         await documents.locator('.file-context-sheet-modal').locator('.list-group-item').nth(0).click();
-        await documents.waitForTimeout(500);
-        for (const entry of await entries.all()) {
-          await expect(entry.locator('ion-checkbox')).toHaveState('checked');
-        }
+        await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
+        await expect(entries.nth(1).locator('.ms-checkbox')).toBeChecked();
+        await expect(entries.nth(2).locator('.ms-checkbox')).toBeChecked();
 
         await entries.nth(0).click({ button: 'right' });
 

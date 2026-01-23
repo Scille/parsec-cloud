@@ -31,7 +31,7 @@ export interface FoldersPageSavedData {
 export const FolderDefaultData: Required<FoldersPageSavedData> = {
   displayState: DisplayState.List,
   sortProperty: SortProperty.Name,
-  sortAscending: true,
+  sortAscending: false,
 };
 
 export async function copyPathLinkToClipboard(

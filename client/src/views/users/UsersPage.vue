@@ -115,8 +115,8 @@
             <user-list-display
               :users="(users as UserCollection)"
               @menu-click="openUserContextMenu"
-              @checkbox-click="selectionEnabled = true"
-              :selection-enabled="selectionEnabled && isSmallDisplay"
+              @checkbox-click="selectionEnabled = users.hasSelected()"
+              :selection-enabled="selectionEnabled"
             />
           </div>
           <div
@@ -127,8 +127,8 @@
             <user-grid-display
               :users="(users as UserCollection)"
               @menu-click="openUserContextMenu"
-              @checkbox-click="selectionEnabled = true"
-              :selection-enabled="selectionEnabled && isSmallDisplay"
+              @checkbox-click="selectionEnabled = users.hasSelected()"
+              :selection-enabled="selectionEnabled"
             />
           </div>
         </div>

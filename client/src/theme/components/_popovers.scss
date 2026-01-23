@@ -83,18 +83,13 @@
     flex-direction: column;
     gap: 1rem;
 
-    .filter-text,
-    .status-tag {
+    .filter-checkbox {
       width: 100%;
     }
 
-    .filter-text {
-      color: var(--parsec-color-light-secondary-soft-text);
-    }
-
-    .filter-checkbox {
-      max-height: 1.25rem;
-      max-width: 1.25rem;
+    .filter-text,
+    .status-tag {
+      width: 100%;
     }
 
     &-small {
@@ -102,16 +97,10 @@
     }
   }
 
-  .list-group:not(:last-child) {
-    padding-bottom: 1rem;
-    border-bottom: solid 1px var(--parsec-color-light-secondary-disabled);
-  }
-
   .list-group {
     padding: 0 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
 
     &-header {
       display: flex;
@@ -135,6 +124,7 @@
     &-title {
       color: var(--parsec-color-light-secondary-grey);
       user-select: none;
+      opacity: 0.7;
 
       &::part(native) {
         padding-left: 0.5rem;
@@ -143,6 +133,11 @@
       &__label {
         margin: 0;
       }
+    }
+
+    &:not(:last-of-type) {
+      padding-bottom: 1rem;
+      border-bottom: solid 1px var(--parsec-color-light-secondary-disabled);
     }
 
     &-item {
@@ -154,6 +149,10 @@
       border-radius: var(--parsec-radius-6);
       cursor: pointer;
       transition: all 0.15s ease-in-out;
+
+      &::part(native) {
+        overflow: visible;
+      }
 
       &__label,
       &-label-small {
@@ -212,6 +211,14 @@
   }
 }
 
+#workspace-context-menu,
+#file-context-menu,
+#user-context-menu {
+  .list-group {
+    gap: 0.375rem;
+  }
+}
+
 // specific margin-top for handle
 #fab-modal,
 #workspace-context-sheet-modal,
@@ -220,14 +227,6 @@
 #viewer-action-menu-modal {
   .menu-list-small {
     margin-top: 1.5rem;
-  }
-}
-
-// should be deleted when more then one item-group is present
-#file-context-menu {
-  .list-group:not(:last-child) {
-    padding-bottom: 0;
-    border-bottom: none;
   }
 }
 

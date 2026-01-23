@@ -259,7 +259,7 @@ msTest('Login in and refresh with remember me', async ({ context }) => {
   await expect(loginContainer.locator('.saas-login__title')).toHaveText('Log in to your customer account');
   await fillIonInput(loginContainer.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(loginContainer.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-  await loginContainer.locator('.saas-login-link').locator('ion-checkbox').click();
+  await loginContainer.locator('.saas-login-link').locator('.ms-checkbox').check();
   await loginContainer.locator('.saas-login-button__item').nth(1).click();
   await expect(home.locator('.topbar').locator('.topbar-left-text__title')).toHaveText('Dashboard');
   await expect(home).toBeClientAreaPage();

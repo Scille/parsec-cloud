@@ -20,14 +20,12 @@
       class="card-checkbox"
       v-if="!user.isRevoked() && !user.isCurrent"
     >
-      <!-- eslint-disable vue/no-mutating-props -->
       <ms-checkbox
-        v-model="user.isSelected"
+        :checked="user.isSelected"
         v-if="user.isSelected || isHovered || showCheckbox"
         @click.stop
-        @ion-change="$emit('select', user, $event)"
+        @change="$emit('select', user, $event)"
       />
-      <!-- eslint-enable vue/no-mutating-props -->
     </div>
     <div
       class="card-option"
