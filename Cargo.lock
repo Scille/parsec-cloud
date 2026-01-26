@@ -757,15 +757,14 @@ dependencies = [
 
 [[package]]
 name = "cryptoki"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1988310baf84fc66da11d876b3c01d268cdc416b330158790318507f739bb72f"
+checksum = "ff765b99fc49f3116c9a908484486a2b92fd73c48da45c3a69716471c6cc56c6"
 dependencies = [
  "bitflags 2.10.0",
  "cryptoki-sys",
  "libloading",
  "log",
- "paste",
  "secrecy",
 ]
 
