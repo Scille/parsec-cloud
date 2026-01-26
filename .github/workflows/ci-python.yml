@@ -47,7 +47,7 @@ jobs:
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues!
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin v6.0.2
         timeout-minutes: 5
 
       - name: Retrieve runner specs
@@ -131,7 +131,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -211,7 +211,7 @@ jobs:
           (!inputs.style-only)
           && steps.cache-libparsec.outputs.cache-hit != 'true'
           && !contains(github.ref, 'gh-readonly-queue')
-        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb # pin v5.0.1
+        uses: actions/cache/save@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
