@@ -69,7 +69,7 @@ jobs:
           # The GNU target provide a dynamically linked CLI
           - linux-gnu
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin v6.0.2
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -157,7 +157,7 @@ jobs:
           - target: x86_64-pc-windows-msvc
             suffix: windows-x86_64-msvc
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # pin v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin v6.0.2
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
