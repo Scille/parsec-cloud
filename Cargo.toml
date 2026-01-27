@@ -261,7 +261,11 @@ debug = false
 # ground. Removing that saves ~20% in artifacts size.
 incremental = false
 
-[profile.ci-python]
+# Profile used when the rust code is not the component being tested (since we benefit
+# from a more optimized libparsec, especially given its compilation is entirely skipped
+# for any PR that doesn't touch the libparsec source code \o/).
+# This profile is typically used by the CI jobs testing Python and web.
+[profile.ci-bindings]
 inherits = "ci-rust"
 # Using `opt-level = 0` divides by 2 compilation time, however it makes code run much
 # slower which is a no-go for Python tests :'(

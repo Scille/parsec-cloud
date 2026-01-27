@@ -152,7 +152,7 @@ const cargo_flags = get_cargo_flag(profile);
 // the two profiles which is no big deal.
 switch (profile) {
   case "ci":
-    const ci_profile = "ci-python"
+    const ci_profile = "ci-bindings"
 
     // Sanity check on the expected name of the profile
     if (cargo_flags.find((e) => e == `--profile=${ci_profile}`) == undefined) {
