@@ -11,11 +11,13 @@ describe('File types detection', async () => {
     ['jpg', FileContentType.Image],
     ['webp', FileContentType.Image],
     ['docx', FileContentType.Document],
-    ['odt', FileContentType.Unknown],
+    ['odt', FileContentType.Document],
     ['xlsx', FileContentType.Spreadsheet],
+    ['ods', FileContentType.Spreadsheet],
     ['pdf', FileContentType.PdfDocument],
     ['mp3', FileContentType.Audio],
     ['mp4', FileContentType.Video],
+    ['odp', FileContentType.Unknown],
   ])('Detect file content type %s', async (extension, expectedFileType) => {
     const entryName = `example.${extension}`;
     const detected = detectFileContentType(entryName);
