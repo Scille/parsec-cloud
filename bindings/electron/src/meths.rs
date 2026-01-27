@@ -6885,6 +6885,13 @@ fn variant_async_enrollment_identity_system_js_to_rs<'a>(
                 x509_root_certificate_subject,
             })
         }
+        "AsyncEnrollmentIdentitySystemPKICorrupted" => {
+            let reason = {
+                let js_val: Handle<JsString> = obj.get(cx, "reason")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::AsyncEnrollmentIdentitySystem::PKICorrupted { reason })
+        }
         _ => cx.throw_type_error("Object is not a AsyncEnrollmentIdentitySystem"),
     }
 }
@@ -6924,6 +6931,13 @@ fn variant_async_enrollment_identity_system_rs_to_js<'a>(
                 "x509RootCertificateSubject",
                 js_x509_root_certificate_subject,
             )?;
+        }
+        libparsec::AsyncEnrollmentIdentitySystem::PKICorrupted { reason, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "AsyncEnrollmentIdentitySystemPKICorrupted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_reason = JsString::try_new(cx, reason).or_throw(cx)?;
+            js_obj.set(cx, "reason", js_reason)?;
         }
     }
     Ok(js_obj)

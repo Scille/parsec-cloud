@@ -1215,6 +1215,7 @@ export type ArchiveDeviceError =
 export enum AsyncEnrollmentIdentitySystemTag {
     OpenBao = 'AsyncEnrollmentIdentitySystemOpenBao',
     PKI = 'AsyncEnrollmentIdentitySystemPKI',
+    PKICorrupted = 'AsyncEnrollmentIdentitySystemPKICorrupted',
 }
 
 export interface AsyncEnrollmentIdentitySystemOpenBao {
@@ -1225,9 +1226,14 @@ export interface AsyncEnrollmentIdentitySystemPKI {
     x509RootCertificateCommonName: string
     x509RootCertificateSubject: Uint8Array
 }
+export interface AsyncEnrollmentIdentitySystemPKICorrupted {
+    tag: AsyncEnrollmentIdentitySystemTag.PKICorrupted
+    reason: string
+}
 export type AsyncEnrollmentIdentitySystem =
   | AsyncEnrollmentIdentitySystemOpenBao
   | AsyncEnrollmentIdentitySystemPKI
+  | AsyncEnrollmentIdentitySystemPKICorrupted
 
 // AvailableDeviceType
 export enum AvailableDeviceTypeTag {
