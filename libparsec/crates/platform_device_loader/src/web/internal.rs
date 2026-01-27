@@ -178,11 +178,4 @@ impl Storage {
             .await
             .map_err(Into::into)
     }
-
-    pub(crate) async fn remove_device(&self, path: &Path) -> Result<(), RemoveDeviceError> {
-        self.root_dir
-            .remove_entry_from_path(path)
-            .await
-            .map_err(Into::into)
-    }
 }

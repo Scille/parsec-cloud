@@ -4,7 +4,8 @@ mod strategy;
 use itertools::Itertools;
 use libparsec_platform_async::stream::StreamExt;
 use libparsec_platform_filesystem::{
-    list_files, load_file, save_content, ListFilesError, LoadFileError, SaveContentError,
+    list_files, load_file, remove_file, save_content, ListFilesError, LoadFileError,
+    RemoveFileError, SaveContentError,
 };
 pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
@@ -486,6 +487,24 @@ impl From<LoadFileError> for UpdateDeviceError {
         }
     }
 }
+pub async fn update_device(
+    device: &LocalDevice,
+    created_on: DateTime,
+    current_key_file: &Path,
+    new_strategy: &DeviceSaveStrategy,
+    new_key_file: &Path,
+) -> Result<AvailableDevice, UpdateDeviceError> {
+    let available_device =
+        platform::save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
+
+    if current_key_file != new_key_file {
+        if let Err(err) = remove_file(current_key_file).await {
+            log::warn!("Cannot remove old key file {current_key_file:?}: {err}");
+        }
+    }
+
+    Ok(available_device)
+}
 
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn update_device_change_authentication(
@@ -528,7 +547,7 @@ pub async fn update_device_change_authentication(
 
     // 2. ...and ask to overwrite it
 
-    platform::update_device(
+    update_device(
         &device,
         device_file.created_on(),
         current_key_file,
@@ -605,7 +624,7 @@ pub async fn update_device_overwrite_server_addr(
 
     // 2. ...and ask to overwrite it
 
-    platform::update_device(
+    update_device(
         &device,
         device_file.created_on(),
         key_file,
@@ -667,12 +686,14 @@ pub enum RemoveDeviceError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<std::io::Error> for RemoveDeviceError {
-    fn from(value: std::io::Error) -> Self {
-        use std::io::ErrorKind;
-        match value.kind() {
-            ErrorKind::NotFound => RemoveDeviceError::NotFound,
-            _ => RemoveDeviceError::Internal(value.into()),
+impl From<RemoveFileError> for RemoveDeviceError {
+    fn from(value: RemoveFileError) -> Self {
+        match value {
+            RemoveFileError::NotFound => RemoveDeviceError::NotFound,
+            RemoveFileError::StorageNotAvailable => RemoveDeviceError::StorageNotAvailable,
+            RemoveFileError::InvalidParent
+            | RemoveFileError::InvalidPath
+            | RemoveFileError::Internal(_) => RemoveDeviceError::Internal(value.into()),
         }
     }
 }
@@ -686,7 +707,7 @@ pub async fn remove_device(
         return result;
     }
 
-    platform::remove_device(device_path).await
+    Ok(remove_file(device_path).await?)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1283,5 +1304,5 @@ pub async fn remove_pending_async_enrollment(
         return result;
     }
 
-    platform::remove_device(file_path).await
+    Ok(remove_file(file_path).await?)
 }

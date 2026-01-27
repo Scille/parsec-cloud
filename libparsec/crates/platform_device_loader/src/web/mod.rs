@@ -3,15 +3,13 @@
 pub(crate) mod error;
 pub(crate) mod internal;
 pub(crate) mod wrapper;
-use anyhow::anyhow;
 use libparsec_types::prelude::*;
 use std::path::{Path, PathBuf};
 
 use crate::{
     AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
     DeviceAccessStrategy, DeviceSaveStrategy, LoadCiphertextKeyError,
-    OpenBaoOperationsFetchOpaqueKeyError, RemoteOperationServer, RemoveDeviceError,
-    SaveDeviceError, UpdateDeviceError,
+    OpenBaoOperationsFetchOpaqueKeyError, RemoteOperationServer, SaveDeviceError,
 };
 use internal::Storage;
 
@@ -113,38 +111,6 @@ pub(super) async fn save_device(
         .map_err(Into::into)
 }
 
-pub(super) async fn update_device(
-    device: &LocalDevice,
-    created_on: DateTime,
-    current_key_file: &Path,
-    new_strategy: &DeviceSaveStrategy,
-    new_key_file: &Path,
-) -> Result<AvailableDevice, UpdateDeviceError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(UpdateDeviceError::Internal(anyhow!(
-            "storage not available"
-        ))); // TODO # 11995
-    };
-
-    let available_device = Storage::save_device(
-        new_strategy,
-        new_key_file.to_path_buf(),
-        &device,
-        created_on,
-    )
-    .await?;
-
-    if current_key_file != new_key_file {
-        if let Err(err) = storage.remove_device(current_key_file).await {
-            log::warn!("Cannot remove old key file {current_key_file:?}: {err}");
-        }
-    }
-
-    Ok(available_device)
-}
-
 pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
     let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
@@ -155,13 +121,4 @@ pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDevi
         .archive_device(device_path)
         .await
         .map_err(Into::into)
-}
-
-pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(RemoveDeviceError::StorageNotAvailable);
-    };
-    storage.remove_device(device_path).await.map_err(Into::into)
 }

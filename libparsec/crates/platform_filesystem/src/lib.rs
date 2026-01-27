@@ -130,6 +130,34 @@ pub async fn list_files(
     platform::list_files(root_dir, extension).await
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum RemoveFileError {
+    #[error("storage not available")]
+    StorageNotAvailable,
+    #[error("invalid parent")]
+    InvalidParent,
+    #[error("invalid path")]
+    InvalidPath,
+    #[error("not found")]
+    NotFound,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<std::io::Error> for RemoveFileError {
+    fn from(value: std::io::Error) -> Self {
+        use std::io::ErrorKind;
+        match value.kind() {
+            ErrorKind::NotFound => RemoveFileError::NotFound,
+            _ => RemoveFileError::Internal(value.into()),
+        }
+    }
+}
+
+pub async fn remove_file(path: &Path) -> Result<(), RemoveFileError> {
+    platform::remove_file(path).await
+}
+
 #[path = "../tests/units/mod.rs"]
 #[cfg(test)]
 mod tests;
