@@ -28,6 +28,10 @@ pub enum AsyncEnrollmentIdentitySystem {
         /// `C=BE, O=GlobalSign nv-sa, OU=Root CA, CN=GlobalSign Root CA`
         x509_root_certificate_subject: Vec<u8>,
     },
+    /// We cannot extract root certificate info if the trustchain contains invalid certificates.
+    /// The enrollment is not ignored though, since it allow the administrator to get
+    /// notified about potential issues in the PKI setup (and he can reject the enrollment).
+    PKICorrupted { reason: String },
     /// Unlike PKI, OpenBao acts as a single hub for all available SSO authentications.
     OpenBao,
 }
@@ -75,11 +79,28 @@ pub(crate) async fn list_async_enrollments(
                 untrusted_requested_device_label: payload.requested_device_label,
                 untrusted_requested_human_handle: payload.requested_human_handle,
                 identity_system: match enrollment.submit_payload_signature {
-                    SubmitPayloadSignature::PKI { .. } => {
-                        // TODO: use `libparsec_platform_pki` to obtain info on
-                        // the X509 root certificate from the submitter X509 certificate
-                        // (see https://github.com/Scille/parsec-cloud/issues/12028)
-                        todo!()
+                    SubmitPayloadSignature::PKI {
+                        submitter_der_x509_certificate,
+                        intermediate_der_x509_certificates,
+                        ..
+                    } => {
+                        match libparsec_platform_pki::get_root_certificate_info_from_trustchain(
+                            &submitter_der_x509_certificate,
+                            intermediate_der_x509_certificates
+                                .iter()
+                                .map(|cert| cert.as_ref()),
+                        ) {
+                            Ok(root_info) => AsyncEnrollmentIdentitySystem::PKI {
+                                x509_root_certificate_common_name: root_info.common_name,
+                                x509_root_certificate_subject: root_info.subject,
+                            },
+                            Err(err) => AsyncEnrollmentIdentitySystem::PKICorrupted {
+                                reason: format!(
+                                    "Cannot extract X509 root certificate info: {}",
+                                    err
+                                ),
+                            },
+                        }
                     }
                     SubmitPayloadSignature::OpenBao { .. } => {
                         AsyncEnrollmentIdentitySystem::OpenBao
