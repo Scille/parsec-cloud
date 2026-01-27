@@ -1101,9 +1101,14 @@ export interface AsyncEnrollmentIdentitySystemPKI {
     x509_root_certificate_common_name: string
     x509_root_certificate_subject: Uint8Array
 }
+export interface AsyncEnrollmentIdentitySystemPKICorrupted {
+    tag: "AsyncEnrollmentIdentitySystemPKICorrupted"
+    reason: string
+}
 export type AsyncEnrollmentIdentitySystem =
   | AsyncEnrollmentIdentitySystemOpenBao
   | AsyncEnrollmentIdentitySystemPKI
+  | AsyncEnrollmentIdentitySystemPKICorrupted
 
 
 // AvailableDeviceType
