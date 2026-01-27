@@ -235,7 +235,6 @@ impl Directory {
         })
     }
 
-    #[expect(unused)]
     pub async fn remove_entry_from_path(&self, path: &Path) -> Result<(), RemoveEntryError> {
         log::trace!("Remove entry `{}` from path", path.display());
         debug_assert!(path.has_root());

@@ -2,6 +2,7 @@
 
 use crate::ListFilesError;
 use crate::LoadFileError;
+use crate::RemoveFileError;
 use crate::SaveContentError;
 use std::path::PathBuf;
 use web_sys::wasm_bindgen::JsValue;
@@ -256,6 +257,18 @@ impl From<ListFileEntriesError> for ListFilesError {
                 ListFilesError::Internal(anyhow::anyhow!("{e}"))
             }
             GetDirectoryHandleError::NotADirectory(..) => ListFilesError::InvalidParent,
+        }
+    }
+}
+
+impl From<RemoveEntryError> for RemoveFileError {
+    fn from(e: RemoveEntryError) -> Self {
+        match e {
+            RemoveEntryError::Cast { .. }
+            | RemoveEntryError::DomException(..)
+            | RemoveEntryError::Promise(..) => RemoveFileError::Internal(anyhow::anyhow!("{e}")),
+            RemoveEntryError::NotADirectory(..) => RemoveFileError::InvalidParent,
+            RemoveEntryError::NotFound(..) => RemoveFileError::NotFound,
         }
     }
 }

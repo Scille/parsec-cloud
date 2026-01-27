@@ -11,7 +11,7 @@ use crate::{
     AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
     DeviceAccessStrategy, DeviceSaveStrategy, LoadCiphertextKeyError, LoadDeviceError,
     OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
-    RemoteOperationServer, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    RemoteOperationServer, SaveDeviceError,
 };
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
 use libparsec_types::prelude::*;
@@ -400,25 +400,6 @@ pub(super) async fn save_device(
     })
 }
 
-pub(super) async fn update_device(
-    device: &LocalDevice,
-    created_on: DateTime,
-    current_key_file: &Path,
-    new_strategy: &DeviceSaveStrategy,
-    new_key_file: &Path,
-) -> Result<AvailableDevice, UpdateDeviceError> {
-    let available_device =
-        save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
-
-    if current_key_file != new_key_file {
-        if let Err(err) = tokio::fs::remove_file(current_key_file).await {
-            log::warn!("Cannot remove old key file {current_key_file:?}: {err}");
-        }
-    }
-
-    Ok(available_device)
-}
-
 pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
     let archive_device_path = get_device_archive_path(device_path);
 
@@ -431,14 +412,6 @@ pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDevi
     tokio::fs::rename(device_path, archive_device_path)
         .await
         .map_err(|e| ArchiveDeviceError::Internal(e.into()))
-}
-
-pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
-    log::debug!("Removing device {}", device_path.display());
-
-    tokio::fs::remove_file(device_path)
-        .await
-        .map_err(Into::into)
 }
 
 pub(super) fn is_keyring_available() -> bool {
