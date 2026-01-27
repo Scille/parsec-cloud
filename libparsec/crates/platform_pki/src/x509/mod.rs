@@ -3,7 +3,6 @@
 mod distinguished_name;
 mod extensions;
 
-pub use distinguished_name::extract_dn_list_from_rnd_seq;
 use x509_cert::{
     der::{Decode, Error as DERError, SliceReader},
     Version,
@@ -11,7 +10,8 @@ use x509_cert::{
 
 use libparsec_types::prelude::*;
 
-pub use distinguished_name::DistinguishedNameValue;
+pub(crate) use distinguished_name::extract_common_name_from_subject;
+pub use distinguished_name::{extract_dn_list_from_rnd_seq, DistinguishedNameValue};
 pub use extensions::{Extensions, SubjectAltName};
 
 error_set::error_set! {
@@ -31,6 +31,8 @@ pub enum HandleFromCertInfoError {
     InvalidHumanHandle(#[from] libparsec_types::HumanHandleParseError),
 }
 
+// TODO: Remove `pub` qualifier once pki_enrollment is removed.
+//       see https://github.com/Scille/parsec-cloud/issues/12054
 #[derive(Debug, Clone)]
 pub struct X509CertificateInformation {
     pub subject: Vec<DistinguishedNameValue>,

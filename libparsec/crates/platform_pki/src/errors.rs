@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_types::prelude::*;
+
 #[derive(Debug, thiserror::Error)]
 pub enum ShowCertificateSelectionDialogError {
     #[error("Cannot open certificate store: {0}")]
@@ -85,6 +87,14 @@ pub enum GetValidationPathForCertError {
     InvalidCertificateDateTimeOutOfRange(chrono::OutOfRangeError),
     #[error("Invalid certificate: cannot be trusted: {0}")]
     InvalidCertificateUntrusted(webpki::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum GetRootCertificateInfoFromTrustchainError {
+    #[error("Invalid certificate: invalid DER format: {0}")]
+    InvalidCertificateDer(anyhow::Error),
+    #[error("Invalid certificate: missing common name")]
+    InvalidCertificateNoCommonName,
 }
 
 error_set::error_set! {

@@ -7,7 +7,8 @@ use x509_cert::{
     der::{
         self, asn1,
         oid::db::{rfc3280::EMAIL_ADDRESS, rfc4519::COMMON_NAME},
-        Choice, Decode, DecodeValue, ErrorKind as DERErrorKind, Reader, Result as DERResult, Tag,
+        Choice, Decode, DecodeValue, ErrorKind as DERErrorKind, Reader, Result as DERResult,
+        SliceReader, Tag,
     },
     name::RdnSequence,
 };
@@ -147,4 +148,26 @@ impl<'der> Display for CommonNameValue<'der> {
             Self::Bmp(bmp_string) => bmp_string.fmt(f),
         }
     }
+}
+
+pub(crate) fn extract_common_name_from_subject(
+    subject: &[u8],
+) -> Result<Option<String>, x509_cert::der::Error> {
+    let reader = &mut SliceReader::new(subject)?;
+    let header = x509_cert::der::Header::new(x509_cert::der::Tag::Sequence, subject.len())?;
+    let parsed_subject = x509_cert::name::Name::decode_value(reader, header)?;
+
+    for rdn_sequence in parsed_subject.0.iter() {
+        for atv in rdn_sequence.0.iter() {
+            if atv.oid == COMMON_NAME {
+                return atv
+                    .value
+                    .decode_as::<CommonNameValue>()
+                    .map(|v| Some(v.to_string()));
+            }
+        }
+    }
+
+    // No common name in the subject
+    Ok(None)
 }
