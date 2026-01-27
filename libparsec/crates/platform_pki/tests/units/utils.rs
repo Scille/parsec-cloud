@@ -110,7 +110,6 @@ impl InstalledCertificates {
         certificate_reference
     }
 
-    #[expect(dead_code)]
     pub fn alice_der_cert(&self) -> Bytes {
         load_pem_and_return_der(ALICE_PEM)
     }
@@ -132,7 +131,6 @@ impl InstalledCertificates {
         load_pem_and_return_der(MALLORY_SIGN_PEM)
     }
 
-    #[expect(dead_code)]
     pub fn mallory_encrypt_der_cert(&self) -> Bytes {
         load_pem_and_return_der(MALLORY_ENCRYPT_PEM)
     }

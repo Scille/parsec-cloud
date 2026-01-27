@@ -129,3 +129,5 @@ pub use shared::load_answer_payload;
 
 pub use errors::GetValidationPathForCertError;
 pub use shared::{get_validation_path_for_cert, ValidationPathOwned};
+
+pub use shared::get_root_certificate_info_from_trustchain;
