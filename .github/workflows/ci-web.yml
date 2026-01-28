@@ -16,6 +16,7 @@ concurrency:
 env:
   node-version: 22.14.0
   wasm-pack-version: 0.12.1
+  libparsec-cache-version: 1
 
 permissions:
   contents: read
@@ -91,7 +92,7 @@ jobs:
       - name: Setup cache-key
         id: cache-key
         run: >-
-          echo "key=web-${{ hashFiles(
+          echo "key=web-v${{ env.libparsec-cache-version }}-${{ hashFiles(
             'bindings/web/**',
             'libparsec/**',
             'rust-toolchain.toml',
@@ -197,7 +198,7 @@ jobs:
       - name: Setup cache-key
         id: cache-key
         run: >-
-          echo "key=web-${{ hashFiles(
+          echo "key=web-v${{ env.libparsec-cache-version }}-${{ hashFiles(
             'bindings/web/**',
             'libparsec/**',
             'rust-toolchain.toml',

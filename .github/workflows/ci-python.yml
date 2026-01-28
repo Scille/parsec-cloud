@@ -34,6 +34,7 @@ env:
     -vv
     -x
   postgresql-version: 16
+  libparsec-cache-version: 1
 
 permissions:
   contents: read
@@ -126,7 +127,7 @@ jobs:
       # Hence if we have a cache hit we know that there is no need for a rebuild !
       - name: Setup cache-key
         id: cache-key
-        run: echo "key=libparsec-${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}-${{ hashFiles('make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
+        run: echo "key=libparsec-v${{ env.libparsec-cache-version }}-${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}-${{ hashFiles('make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
