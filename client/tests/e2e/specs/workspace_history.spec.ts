@@ -43,6 +43,8 @@ msTest.describe(() => {
 
   msTest('Test workspace history page', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
+    // Give it some time to upload the file
+    await documents.waitForTimeout(1000);
 
     await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').locator('ion-button').click();
     await expect(documents).toBeWorkspacePage();
@@ -86,6 +88,8 @@ msTest.describe(() => {
 
   msTest('Test viewer in history', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
+    // Give it some time to upload the file
+    await documents.waitForTimeout(1000);
 
     await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').locator('ion-button').click();
     await expect(documents).toBeWorkspacePage();
@@ -107,6 +111,8 @@ msTest.describe(() => {
   msTest('Workspace history breadcrumbs', async ({ documents }, testInfo: TestInfo) => {
     msTest.setTimeout(45_000);
     await importDefaultFiles(documents, testInfo, 0, true);
+    // Give it some time to upload the file
+    await documents.waitForTimeout(1000);
 
     async function clickOnBreadcrumb(i: number): Promise<void> {
       await documents.locator('.history-container').locator('.navigation-breadcrumb').locator('ion-breadcrumb').nth(i).click();
@@ -197,6 +203,8 @@ msTest.describe(() => {
 
   msTest('Workspace history select all', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, true);
+    // Give it some time to upload the file
+    await documents.waitForTimeout(1000);
 
     const entries = documents.locator('.folder-list-main').locator('.file-list-item');
     await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
