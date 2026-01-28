@@ -4,6 +4,7 @@ import { TestInfo } from '@playwright/test';
 import {
   answerQuestion,
   expect,
+  fillInputModal,
   getClipboardText,
   importDefaultFiles,
   ImportDocuments,
@@ -332,6 +333,85 @@ msTest.describe(() => {
 
     await expect(frame.locator('#editor-container')).toBeVisible();
     await expect(frame.locator('#editor-container')).toHaveText('A simple text file with updates');
+  });
+
+  msTest('Check files handled', async ({ parsecEditics }, testInfo: TestInfo) => {
+    // Makes sure that some files cannot be opened, and also checks that the opening + back + opening + ...
+    // works properly.
+
+    msTest.setTimeout(60_000);
+
+    const FILES = [
+      { fileName: 'file.txt', opener: 'editor', renameIndex: 3 },
+      { fileName: 'file.html', opener: 'editor', renameIndex: 3 },
+      { fileName: 'file.odt', opener: 'editor', renameIndex: 3 },
+      { fileName: 'file.docx', opener: 'editor', renameIndex: 3 },
+      { fileName: 'file.doc', opener: undefined, renameIndex: 3 },
+      { fileName: 'file.xls', opener: 'editor', renameIndex: 2 },
+      { fileName: 'file.xlsx', opener: 'editor', renameIndex: 3 },
+      { fileName: 'file.ods', opener: 'editor', renameIndex: 3 },
+      { fileName: 'file.pptx', opener: 'editor', renameIndex: 3 },
+      { fileName: 'file.odp', opener: undefined, renameIndex: 3 },
+      { fileName: 'file.ppt', opener: undefined, renameIndex: 2 },
+      { fileName: 'file.rtf', opener: undefined, renameIndex: 2 },
+      { fileName: 'file.log', opener: 'editor', renameIndex: 2 },
+      { fileName: 'file.png', opener: 'viewer', renameIndex: 3 },
+      { fileName: 'file.pdf', opener: 'viewer', renameIndex: 2 },
+      { fileName: 'file.mp3', opener: 'viewer', renameIndex: 2 },
+      { fileName: 'file.mp4', opener: 'viewer', renameIndex: 2 },
+      { fileName: 'file', opener: undefined, renameIndex: 2 },
+    ];
+
+    await mockCryptpadServer(parsecEditics);
+    // Doesn't matter which one we import initially
+    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Txt, false);
+    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
+
+    for (const fileData of FILES) {
+      const menu = parsecEditics.locator('#file-context-menu');
+
+      console.log(`Checking file '${fileData.fileName}'`);
+
+      // Rename the file first, we match the extension
+      await entry.click({ button: 'right' });
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('listitem').nth(fileData.renameIndex)).toHaveText('Rename');
+      await menu.getByRole('listitem').nth(fileData.renameIndex).click();
+      await fillInputModal(parsecEditics, fileData.fileName);
+      expect(menu).toBeHidden();
+      await expect(entry.locator('.label-name')).toHaveText(fileData.fileName);
+      await entry.click({ button: 'right' });
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
+      await menu.getByRole('listitem').nth(1).click();
+
+      if (!fileData.opener) {
+        await expect(parsecEditics).toShowInformationModal(
+          'Parsec cannot preview this type of document. You can download it ' +
+            "by selecting the file or showing options then click 'Download'.",
+          'Info',
+          'Cannot preview this file',
+        );
+        await expect(parsecEditics).toBeDocumentPage();
+      } else if (fileData.opener === 'viewer') {
+        await expect(parsecEditics).toBeViewerPage();
+        const topbar = parsecEditics.locator('.file-handler-topbar');
+        await expect(topbar.locator('.file-handler-topbar__title')).toHaveText(fileData.fileName);
+        await expect(topbar.locator('.back-button')).toBeVisible();
+        await topbar.locator('.back-button').click();
+        await expect(parsecEditics).toBeDocumentPage();
+      } else {
+        await expect(parsecEditics).toBeEditorPage();
+        await expect(parsecEditics.locator('.file-editor')).toBeVisible();
+        const frame = parsecEditics.frameLocator('.file-editor');
+        await expect(frame.locator('#editor-container')).toBeVisible();
+        const topbar = parsecEditics.locator('.file-handler-topbar');
+        await expect(topbar.locator('.file-handler-topbar__title')).toHaveText(fileData.fileName);
+        await expect(topbar.locator('.back-button')).toBeVisible();
+        await topbar.locator('.back-button').click();
+        await expect(parsecEditics).toBeDocumentPage();
+      }
+    }
   });
 });
 

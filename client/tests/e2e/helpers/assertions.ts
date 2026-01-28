@@ -411,7 +411,12 @@ export const expect = baseExpect.extend({
     };
   },
 
-  async toShowInformationModal(page: Page, message: string, theme: 'Success' | 'Warning' | 'Error' | 'Info'): Promise<AssertReturnType> {
+  async toShowInformationModal(
+    page: Page,
+    message: string,
+    theme: 'Success' | 'Warning' | 'Error' | 'Info',
+    title?: string,
+  ): Promise<AssertReturnType> {
     const modal = page.locator('.information-modal');
     let errorMessage = '';
     let pass = true;
@@ -421,6 +426,15 @@ export const expect = baseExpect.extend({
     } catch (_error: any) {
       errorMessage = 'Modal is not visible';
       pass = false;
+    }
+
+    if (pass && title) {
+      try {
+        await baseExpect(modal.locator('.ms-modal-header__title')).toHaveText(title);
+      } catch (error: any) {
+        errorMessage = `Modal does not contain the title '${title}'. Found: '${error.matcherResult.actual}' instead.`;
+        pass = false;
+      }
     }
 
     if (pass) {
@@ -442,7 +456,7 @@ export const expect = baseExpect.extend({
       }
     }
 
-    // Close toast
+    // Close modal
     await modal.locator('#next-button').click();
     await expect(modal).toBeHidden();
 
