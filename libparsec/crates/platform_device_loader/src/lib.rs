@@ -4,8 +4,8 @@ mod strategy;
 use itertools::Itertools;
 use libparsec_platform_async::stream::StreamExt;
 use libparsec_platform_filesystem::{
-    list_files, load_file, remove_file, save_content, ListFilesError, LoadFileError,
-    RemoveFileError, SaveContentError,
+    list_files, load_file, remove_file, rename_file, save_content, ListFilesError, LoadFileError,
+    RemoveFileError, RenameFileError, SaveContentError,
 };
 pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
@@ -673,7 +673,25 @@ pub async fn archive_device(
         return result;
     }
 
-    platform::archive_device(device_path).await
+    let archive_device_path = get_device_archive_path(device_path);
+
+    log::debug!(
+        "Archiving device {} to {}",
+        device_path.display(),
+        archive_device_path.display()
+    );
+
+    rename_file(device_path, &archive_device_path)
+        .await
+        .map_err(|e| match e {
+            RenameFileError::StorageNotAvailable | RenameFileError::NoSpaceLeft => {
+                ArchiveDeviceError::StorageNotAvailable
+            } // TODO #11955
+            RenameFileError::InvalidParent
+            | RenameFileError::InvalidPath
+            | RenameFileError::NotFound
+            | RenameFileError::Internal(_) => ArchiveDeviceError::Internal(e.into()),
+        })
 }
 
 #[derive(Debug, thiserror::Error)]

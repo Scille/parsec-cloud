@@ -3,6 +3,7 @@
 use crate::ListFilesError;
 use crate::LoadFileError;
 use crate::RemoveFileError;
+use crate::RenameFileError;
 use crate::SaveContentError;
 use std::path::PathBuf;
 use web_sys::wasm_bindgen::JsValue;
@@ -269,6 +270,62 @@ impl From<RemoveEntryError> for RemoveFileError {
             | RemoveEntryError::Promise(..) => RemoveFileError::Internal(anyhow::anyhow!("{e}")),
             RemoveEntryError::NotADirectory(..) => RemoveFileError::InvalidParent,
             RemoveEntryError::NotFound(..) => RemoveFileError::NotFound,
+        }
+    }
+}
+
+impl From<RemoveEntryError> for RenameFileError {
+    fn from(e: RemoveEntryError) -> Self {
+        match e {
+            RemoveEntryError::Cast { .. }
+            | RemoveEntryError::DomException(..)
+            | RemoveEntryError::Promise(..) => RenameFileError::Internal(anyhow::anyhow!("{e}")),
+            RemoveEntryError::NotADirectory(..) => RenameFileError::InvalidParent,
+            RemoveEntryError::NotFound(..) => RenameFileError::NotFound,
+        }
+    }
+}
+
+impl From<WriteAllError> for RenameFileError {
+    fn from(e: WriteAllError) -> Self {
+        match e {
+            WriteAllError::Cast { .. }
+            | WriteAllError::DomException(..)
+            | WriteAllError::Close(..)
+            | WriteAllError::Write(..)
+            | WriteAllError::CreateWritable(..)
+            | WriteAllError::CannotEdit { .. } => RenameFileError::Internal(anyhow::anyhow!("{e}")),
+            WriteAllError::NoSpaceLeft(..) => RenameFileError::NoSpaceLeft,
+            WriteAllError::NotFound(..) => unreachable!("file should be created if not existing ?"),
+        }
+    }
+}
+
+impl From<GetFileHandleError> for RenameFileError {
+    fn from(value: GetFileHandleError) -> Self {
+        match value {
+            GetFileHandleError::Cast { .. }
+            | GetFileHandleError::Promise(_)
+            | GetFileHandleError::DomException(_) => {
+                RenameFileError::Internal(anyhow::anyhow!("{value}"))
+            }
+            GetFileHandleError::NotADirectory(_) => RenameFileError::InvalidParent,
+            GetFileHandleError::NotFound(_) => RenameFileError::NotFound,
+            GetFileHandleError::NotAFile(_) => RenameFileError::InvalidPath,
+        }
+    }
+}
+
+impl From<ReadToEndError> for RenameFileError {
+    fn from(value: ReadToEndError) -> Self {
+        match value {
+            ReadToEndError::Cast { .. }
+            | ReadToEndError::Promise(_)
+            | ReadToEndError::DomException(_) => {
+                RenameFileError::Internal(anyhow::anyhow!("{value}"))
+            }
+            ReadToEndError::NotFound(_) => RenameFileError::NotFound,
+            ReadToEndError::GetFile(_) => RenameFileError::InvalidPath,
         }
     }
 }
