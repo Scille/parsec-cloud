@@ -220,8 +220,9 @@ let timeoutId: number | null = null;
 const resultFromSearch = ref(false);
 const error = ref('');
 const selectEntry: Ref<EntryName> = ref('');
-const minDate = ref(DateTime.now().toJSDate());
-const maxDate = ref(DateTime.now().toJSDate());
+// Not adding too much of a constraint while we're initializing
+const minDate = ref(DateTime.fromMillis(0).toJSDate());
+const maxDate = ref(DateTime.now().plus({ minutes: 1 }).toJSDate());
 
 const allSelected = computed(() => {
   return entries.value.selectedCount() === entries.value.entriesCount();
@@ -267,6 +268,7 @@ async function loadHistory(): Promise<void> {
 }
 
 onMounted(async () => {
+  selectedDateTime.value = DateTime.now().toJSDate();
   await loadHistory();
 });
 
