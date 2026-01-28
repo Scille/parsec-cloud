@@ -4,12 +4,12 @@ pub(crate) mod error;
 pub(crate) mod internal;
 pub(crate) mod wrapper;
 use libparsec_types::prelude::*;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::{
-    AccountVaultOperationsFetchOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    DeviceAccessStrategy, DeviceSaveStrategy, LoadCiphertextKeyError,
-    OpenBaoOperationsFetchOpaqueKeyError, RemoteOperationServer, SaveDeviceError,
+    AccountVaultOperationsFetchOpaqueKeyError, AvailableDevice, DeviceAccessStrategy,
+    DeviceSaveStrategy, LoadCiphertextKeyError, OpenBaoOperationsFetchOpaqueKeyError,
+    RemoteOperationServer, SaveDeviceError,
 };
 use internal::Storage;
 
@@ -107,18 +107,6 @@ pub(super) async fn save_device(
     key_file: PathBuf,
 ) -> Result<AvailableDevice, SaveDeviceError> {
     Storage::save_device(strategy, key_file, device, created_on)
-        .await
-        .map_err(Into::into)
-}
-
-pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
-    let Ok(storage) = Storage::new().await.inspect_err(|e| {
-        log::error!("Failed to access storage: {e}");
-    }) else {
-        return Err(ArchiveDeviceError::StorageNotAvailable);
-    };
-    storage
-        .archive_device(device_path)
         .await
         .map_err(Into::into)
 }

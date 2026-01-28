@@ -7,9 +7,9 @@ use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use crate::{
-    encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
-    AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    DeviceAccessStrategy, DeviceSaveStrategy, LoadCiphertextKeyError, LoadDeviceError,
+    encrypt_device, AccountVaultOperationsFetchOpaqueKeyError,
+    AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceAccessStrategy,
+    DeviceSaveStrategy, LoadCiphertextKeyError, LoadDeviceError,
     OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
     RemoteOperationServer, SaveDeviceError,
 };
@@ -398,20 +398,6 @@ pub(super) async fn save_device(
         human_handle: device.human_handle.clone(),
         ty: strategy.ty(),
     })
-}
-
-pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
-    let archive_device_path = get_device_archive_path(device_path);
-
-    log::debug!(
-        "Archiving device {} to {}",
-        device_path.display(),
-        archive_device_path.display()
-    );
-
-    tokio::fs::rename(device_path, archive_device_path)
-        .await
-        .map_err(|e| ArchiveDeviceError::Internal(e.into()))
 }
 
 pub(super) fn is_keyring_available() -> bool {

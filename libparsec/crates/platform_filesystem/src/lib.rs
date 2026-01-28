@@ -146,7 +146,6 @@ pub enum RemoveFileError {
 
 impl From<std::io::Error> for RemoveFileError {
     fn from(value: std::io::Error) -> Self {
-        use std::io::ErrorKind;
         match value.kind() {
             ErrorKind::NotFound => RemoveFileError::NotFound,
             _ => RemoveFileError::Internal(value.into()),
@@ -156,6 +155,36 @@ impl From<std::io::Error> for RemoveFileError {
 
 pub async fn remove_file(path: &Path) -> Result<(), RemoveFileError> {
     platform::remove_file(path).await
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum RenameFileError {
+    #[error("storage not available")]
+    StorageNotAvailable,
+    #[error("no space left")]
+    NoSpaceLeft,
+    #[error("invalid parent")]
+    InvalidParent,
+    #[error("invalid path")]
+    InvalidPath,
+    #[error("not found")]
+    NotFound,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<std::io::Error> for RenameFileError {
+    fn from(value: std::io::Error) -> Self {
+        match value.kind() {
+            ErrorKind::NotFound => RenameFileError::NotFound,
+            ErrorKind::StorageFull => RenameFileError::NoSpaceLeft,
+            _ => RenameFileError::Internal(value.into()),
+        }
+    }
+}
+
+pub async fn rename_file(old: &Path, new: &Path) -> Result<(), RenameFileError> {
+    platform::rename_file(old, new).await
 }
 
 #[path = "../tests/units/mod.rs"]

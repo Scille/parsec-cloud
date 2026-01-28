@@ -2,6 +2,8 @@
 
 use super::wrapper::{DirEntry, DirOrFileHandle};
 use super::{error::*, wrapper::Directory};
+use crate::platform::common::wrapper::OpenOptions;
+use crate::RenameFileError;
 use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
 use std::{
     ffi::OsStr,
@@ -77,5 +79,21 @@ impl Storage {
         }
         files.sort();
         Ok(files)
+    }
+
+    pub(crate) async fn rename_file(&self, old: &Path, new: &Path) -> Result<(), RenameFileError> {
+        let old_file = self.root_dir.get_file_from_path(old, None).await?;
+        let old_data = old_file.read_to_end().await?;
+
+        let new_file = self
+            .root_dir
+            .get_file_from_path(&new, Some(OpenOptions::create()))
+            .await?;
+        new_file.write_all(&old_data).await?;
+
+        self.root_dir
+            .remove_entry_from_path(old)
+            .await
+            .map_err(Into::into)
     }
 }

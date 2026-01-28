@@ -7,4 +7,5 @@ const CONTENT: &[u8] =  b"Lorem ipsum dolor sit amet, consectetur adipiscing eli
 mod list;
 mod load;
 mod remove;
+mod rename;
 mod save;

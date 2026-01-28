@@ -1,28 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use libparsec_platform_filesystem::save_content;
 use libparsec_types::prelude::*;
 
 use crate::{
-    web::wrapper::OpenOptions, AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice,
-    DeviceSaveStrategy, OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer,
-    SaveDeviceError,
+    AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
+    OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer, SaveDeviceError,
 };
 
-use super::{error::*, wrapper::Directory};
-
-pub struct Storage {
-    root_dir: Directory,
-}
+pub struct Storage {}
 
 impl Storage {
-    pub(crate) async fn new() -> Result<Self, NewStorageError> {
-        let root_dir = Directory::get_root().await?;
-        Ok(Self { root_dir })
-    }
-
     pub(crate) async fn save_device(
         strategy: &DeviceSaveStrategy,
         key_file: PathBuf,
@@ -149,33 +139,5 @@ impl Storage {
             device_label: device.device_label.clone(),
             ty: strategy.ty(),
         })
-    }
-
-    pub(crate) async fn archive_device(&self, path: &Path) -> Result<(), ArchiveDeviceError> {
-        let old_device = self
-            .root_dir
-            .get_file_from_path(path, None)
-            .await
-            .map_err(ArchiveDeviceError::GetDeviceToArchive)?;
-        let old_data = old_device
-            .read_to_end()
-            .await
-            .map_err(ArchiveDeviceError::ReadDeviceToArchive)?;
-
-        let archive_path = crate::get_device_archive_path(path);
-        let archive_device = self
-            .root_dir
-            .get_file_from_path(&archive_path, Some(OpenOptions::create()))
-            .await
-            .map_err(ArchiveDeviceError::CreateArchiveDevice)?;
-        archive_device
-            .write_all(&old_data)
-            .await
-            .map_err(ArchiveDeviceError::WriteArchiveDevice)?;
-
-        self.root_dir
-            .remove_entry_from_path(path)
-            .await
-            .map_err(Into::into)
     }
 }
