@@ -104,7 +104,11 @@ async fn ok(env: &TestbedEnv) {
                 Some(&philip_email), // Bad email
             )
             .await,
-        Err(OpenBaoVerifyError::UnexpectedAuthor)
+        Err(OpenBaoVerifyError::UnexpectedAuthor {
+            expected,
+            got,
+        })
+        if expected == philip_email.to_string() && got == mike_email.to_string()
     );
 }
 

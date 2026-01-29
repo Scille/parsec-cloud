@@ -421,7 +421,8 @@ mod strategy {
                 .await
                 .map_err(|err| match err {
                     err @ (OpenBaoVerifyError::BadSignature
-                    | OpenBaoVerifyError::UnexpectedAuthor) => {
+                    | OpenBaoVerifyError::UnexpectedAuthor { .. }
+                    | OpenBaoVerifyError::AuthorOpenBaoEntityHasNoEmail { .. }) => {
                         AcceptAsyncEnrollmentError::BadSubmitPayload(err.into())
                     }
                     OpenBaoVerifyError::BadURL(err) => {
@@ -493,7 +494,8 @@ mod strategy {
                 .await
                 .map_err(|err| match err {
                     err @ (OpenBaoVerifyError::BadSignature
-                    | OpenBaoVerifyError::UnexpectedAuthor) => {
+                    | OpenBaoVerifyError::UnexpectedAuthor { .. }
+                    | OpenBaoVerifyError::AuthorOpenBaoEntityHasNoEmail { .. }) => {
                         SubmitterFinalizeAsyncEnrollmentError::BadAcceptPayload(err.into())
                     }
                     OpenBaoVerifyError::BadURL(err) => {
