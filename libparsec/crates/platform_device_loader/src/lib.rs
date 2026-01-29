@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+mod load;
+mod save;
 mod strategy;
 use itertools::Itertools;
 use libparsec_platform_async::stream::StreamExt;
@@ -9,9 +11,12 @@ use libparsec_platform_filesystem::{
 };
 pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
-mod native;
+#[path = "native/mod.rs"]
+mod platform;
+
 #[cfg(target_arch = "wasm32")]
-mod web;
+#[path = "web/mod.rs"]
+mod platform;
 // Testbed integration is tested in the `libparsec_tests_fixture` crate.
 #[cfg(feature = "test-with-testbed")]
 mod testbed;
@@ -27,10 +32,6 @@ use std::{
 use zeroize::Zeroizing;
 
 use libparsec_types::prelude::*;
-#[cfg(not(target_arch = "wasm32"))]
-use native as platform;
-#[cfg(target_arch = "wasm32")]
-use web as platform;
 
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 pub(crate) const ARCHIVE_DEVICE_EXT: &str = "archived";
@@ -342,7 +343,7 @@ pub async fn load_device(
 
     let file_content = load_file(access.key_file()).await?;
     let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
-    let ciphertext_key = platform::load_ciphertext_key(access, &device_file)
+    let ciphertext_key = load::load_ciphertext_key(access, &device_file)
         .await
         .map_err(|err| match err {
             LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
@@ -423,7 +424,7 @@ pub async fn save_device(
         return result;
     }
 
-    platform::save_device(strategy, device, device.now(), key_file).await
+    save::save_device(strategy, device, device.now(), key_file).await
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -495,7 +496,7 @@ pub async fn update_device(
     new_key_file: &Path,
 ) -> Result<AvailableDevice, UpdateDeviceError> {
     let available_device =
-        platform::save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
+        save::save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
 
     if current_key_file != new_key_file {
         if let Err(err) = remove_file(current_key_file).await {
@@ -527,7 +528,7 @@ pub async fn update_device_change_authentication(
     let file_content = load_file(current_key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
-    let ciphertext_key = platform::load_ciphertext_key(current_access, &device_file)
+    let ciphertext_key = load::load_ciphertext_key(current_access, &device_file)
         .await
         .map_err(|err| match err {
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
@@ -596,7 +597,7 @@ pub async fn update_device_overwrite_server_addr(
     let file_content = load_file(key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
-    let ciphertext_key = platform::load_ciphertext_key(strategy, &device_file)
+    let ciphertext_key = load::load_ciphertext_key(strategy, &device_file)
         .await
         .map_err(|err| match err {
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
@@ -637,11 +638,7 @@ pub async fn update_device_overwrite_server_addr(
 }
 
 pub fn is_keyring_available() -> bool {
-    #[cfg(target_arch = "wasm32")]
-    return false;
-
-    #[cfg(not(target_arch = "wasm32"))]
-    native::is_keyring_available()
+    platform::is_keyring_available()
 }
 
 #[derive(Debug, thiserror::Error)]
