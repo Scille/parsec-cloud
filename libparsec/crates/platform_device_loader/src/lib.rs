@@ -1,7 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod strategy;
-use libparsec_platform_filesystem::{save_content, SaveContentError};
+use itertools::Itertools;
+use libparsec_platform_async::stream::StreamExt;
+use libparsec_platform_filesystem::{
+    list_files, load_file, remove_file, save_content, ListFilesError, LoadFileError,
+    RemoveFileError, SaveContentError,
+};
 pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
@@ -34,15 +39,6 @@ pub(crate) const PENDING_ASYNC_ENROLLMENT_EXT: &str = "pending";
 pub const PARSEC_BASE_CONFIG_DIR: &str = "PARSEC_BASE_CONFIG_DIR";
 pub const PARSEC_BASE_DATA_DIR: &str = "PARSEC_BASE_DATA_DIR";
 pub const PARSEC_BASE_HOME_DIR: &str = "PARSEC_BASE_HOME_DIR";
-
-#[derive(Debug, thiserror::Error)]
-enum ReadFileError {
-    #[cfg_attr(not(target_arch = "wasm32"), expect(dead_code))]
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
-    #[error(transparent)]
-    InvalidPath(anyhow::Error),
-}
 
 #[derive(Debug, thiserror::Error)]
 enum LoadCiphertextKeyError {
@@ -188,6 +184,17 @@ pub enum ListAvailableDeviceError {
     Internal(anyhow::Error),
 }
 
+impl From<ListFilesError> for ListAvailableDeviceError {
+    fn from(value: ListFilesError) -> Self {
+        match value {
+            ListFilesError::StorageNotAvailable => ListAvailableDeviceError::StorageNotAvailable,
+            ListFilesError::InvalidParent | ListFilesError::Internal(_) => {
+                ListAvailableDeviceError::Internal(value.into())
+            }
+        }
+    }
+}
+
 /// On web `config_dir` is used as database discriminant when using IndexedDB API
 pub async fn list_available_devices(
     config_dir: &Path,
@@ -197,7 +204,31 @@ pub async fn list_available_devices(
         return Ok(result);
     }
 
-    platform::list_available_devices(config_dir).await
+    let devices_dir = get_devices_dir(config_dir);
+
+    // Consider `.keys` files in devices directory
+    let mut key_file_paths = list_files(&devices_dir, DEVICE_FILE_EXT).await?;
+
+    // Sort paths so the discovery order is deterministic
+    // In the case of duplicate files, that means only the first discovered device is considered
+    key_file_paths.sort();
+    log::trace!("Found the following device files: {key_file_paths:?}");
+
+    let mut res = Vec::with_capacity(key_file_paths.len());
+    for key_file in key_file_paths {
+        if let Ok(device) = load_available_device(config_dir, key_file.clone())
+            .await
+            .inspect_err(|e| {
+                log::debug!(
+                    "Failed to load device at {path} with {e}",
+                    path = key_file.display()
+                )
+            })
+        {
+            res.push(device);
+        }
+    }
+    Ok(res.into_iter().unique_by(|v| v.device_id).collect_vec())
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -210,6 +241,19 @@ pub enum LoadAvailableDeviceError {
     InvalidData,
     #[error(transparent)]
     Internal(anyhow::Error),
+}
+
+impl From<LoadFileError> for LoadAvailableDeviceError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => LoadAvailableDeviceError::StorageNotAvailable,
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => LoadAvailableDeviceError::InvalidPath(value.into()),
+            LoadFileError::Internal(error) => LoadAvailableDeviceError::Internal(error),
+        }
+    }
 }
 
 /// Similar than `load_device`, but without the decryption part.
@@ -233,12 +277,7 @@ pub async fn load_available_device(
         }
     }
 
-    let file_content = platform::read_file(&device_file)
-        .await
-        .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => LoadAvailableDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(err) => LoadAvailableDeviceError::InvalidPath(err),
-        })?;
+    let file_content = load_file(&device_file).await?;
 
     load_available_device_from_blob(device_file, &file_content)
         .map_err(|_| LoadAvailableDeviceError::InvalidData)
@@ -277,6 +316,19 @@ pub enum LoadDeviceError {
     Internal(anyhow::Error),
 }
 
+impl From<LoadFileError> for LoadDeviceError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => LoadDeviceError::StorageNotAvailable,
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => LoadDeviceError::InvalidPath(value.into()),
+            LoadFileError::Internal(error) => LoadDeviceError::Internal(error),
+        }
+    }
+}
+
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn load_device(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
@@ -288,12 +340,7 @@ pub async fn load_device(
         return result;
     }
 
-    let file_content = platform::read_file(access.key_file())
-        .await
-        .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => LoadDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(err) => LoadDeviceError::InvalidPath(err),
-        })?;
+    let file_content = load_file(access.key_file()).await?;
     let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
     let ciphertext_key = platform::load_ciphertext_key(access, &device_file)
         .await
@@ -428,6 +475,37 @@ impl From<SaveDeviceError> for UpdateDeviceError {
     }
 }
 
+impl From<LoadFileError> for UpdateDeviceError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => UpdateDeviceError::InvalidPath,
+            LoadFileError::Internal(error) => UpdateDeviceError::Internal(error),
+        }
+    }
+}
+pub async fn update_device(
+    device: &LocalDevice,
+    created_on: DateTime,
+    current_key_file: &Path,
+    new_strategy: &DeviceSaveStrategy,
+    new_key_file: &Path,
+) -> Result<AvailableDevice, UpdateDeviceError> {
+    let available_device =
+        platform::save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
+
+    if current_key_file != new_key_file {
+        if let Err(err) = remove_file(current_key_file).await {
+            log::warn!("Cannot remove old key file {current_key_file:?}: {err}");
+        }
+    }
+
+    Ok(available_device)
+}
+
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn update_device_change_authentication(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
@@ -446,12 +524,7 @@ pub async fn update_device_change_authentication(
 
     // 1. Load the current device keys file...
 
-    let file_content = platform::read_file(current_key_file)
-        .await
-        .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
-        })?;
+    let file_content = load_file(current_key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
     let ciphertext_key = platform::load_ciphertext_key(current_access, &device_file)
@@ -474,7 +547,7 @@ pub async fn update_device_change_authentication(
 
     // 2. ...and ask to overwrite it
 
-    platform::update_device(
+    update_device(
         &device,
         device_file.created_on(),
         current_key_file,
@@ -520,12 +593,7 @@ pub async fn update_device_overwrite_server_addr(
 
     // 1. Load the current device keys file...
 
-    let file_content = platform::read_file(key_file)
-        .await
-        .map_err(|err| match err {
-            ReadFileError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
-            ReadFileError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
-        })?;
+    let file_content = load_file(key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
     let ciphertext_key = platform::load_ciphertext_key(strategy, &device_file)
@@ -556,7 +624,7 @@ pub async fn update_device_overwrite_server_addr(
 
     // 2. ...and ask to overwrite it
 
-    platform::update_device(
+    update_device(
         &device,
         device_file.created_on(),
         key_file,
@@ -618,12 +686,14 @@ pub enum RemoveDeviceError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<std::io::Error> for RemoveDeviceError {
-    fn from(value: std::io::Error) -> Self {
-        use std::io::ErrorKind;
-        match value.kind() {
-            ErrorKind::NotFound => RemoveDeviceError::NotFound,
-            _ => RemoveDeviceError::Internal(value.into()),
+impl From<RemoveFileError> for RemoveDeviceError {
+    fn from(value: RemoveFileError) -> Self {
+        match value {
+            RemoveFileError::NotFound => RemoveDeviceError::NotFound,
+            RemoveFileError::StorageNotAvailable => RemoveDeviceError::StorageNotAvailable,
+            RemoveFileError::InvalidParent
+            | RemoveFileError::InvalidPath
+            | RemoveFileError::Internal(_) => RemoveDeviceError::Internal(value.into()),
         }
     }
 }
@@ -637,7 +707,7 @@ pub async fn remove_device(
         return result;
     }
 
-    platform::remove_device(device_path).await
+    Ok(remove_file(device_path).await?)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -860,17 +930,69 @@ pub async fn save_pki_local_pending(
 }
 
 #[derive(Debug, thiserror::Error)]
+enum LoadContentError {
+    #[error(transparent)]
+    InvalidPath(anyhow::Error),
+    #[error("Cannot deserialize file content")]
+    InvalidData,
+    #[error("storage not available")]
+    StorageNotAvailable,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<LoadFileError> for LoadContentError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => LoadContentError::StorageNotAvailable,
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => LoadContentError::InvalidPath(value.into()),
+            LoadFileError::Internal(error) => LoadContentError::Internal(error),
+        }
+    }
+}
+
+async fn load_pki_pending_file(path: &Path) -> Result<PKILocalPendingEnrollment, LoadContentError> {
+    let content = load_file(path).await?;
+    PKILocalPendingEnrollment::load(&content)
+        .inspect_err(|err| log::debug!("Failed to load pki pending file {}: {err}", path.display()))
+        .map_err(|_| LoadContentError::InvalidData)
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum ListPkiLocalPendingError {
     #[error("Device storage is not available")]
     StorageNotAvailable,
     #[error(transparent)]
     Internal(anyhow::Error),
 }
+impl From<ListFilesError> for ListPkiLocalPendingError {
+    fn from(value: ListFilesError) -> Self {
+        match value {
+            ListFilesError::StorageNotAvailable => ListPkiLocalPendingError::StorageNotAvailable,
+            ListFilesError::InvalidParent | ListFilesError::Internal(_) => {
+                ListPkiLocalPendingError::Internal(value.into())
+            }
+        }
+    }
+}
 
 pub async fn list_pki_local_pending(
     config_dir: &Path,
 ) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
-    platform::list_pki_local_pending(config_dir).await
+    let pending_dir = get_local_pending_dir(config_dir);
+    let mut files = list_files(&pending_dir, LOCAL_PENDING_EXT).await?;
+
+    // Sort entries so result is deterministic
+    files.sort();
+    log::trace!("Found pending request files: {files:?}");
+
+    Ok(libparsec_platform_async::stream::iter(files)
+        .filter_map(async |path| load_pki_pending_file(&path).await.ok())
+        .collect::<Vec<_>>()
+        .await)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -986,6 +1108,20 @@ pub enum LoadPendingAsyncEnrollmentError {
     Internal(anyhow::Error),
 }
 
+impl From<LoadFileError> for LoadPendingAsyncEnrollmentError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => {
+                LoadPendingAsyncEnrollmentError::StorageNotAvailable
+            }
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound => LoadPendingAsyncEnrollmentError::InvalidPath(value.into()),
+            LoadFileError::Internal(..) => LoadPendingAsyncEnrollmentError::Internal(value.into()),
+        }
+    }
+}
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn load_pending_async_enrollment(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
@@ -1007,7 +1143,9 @@ pub async fn load_pending_async_enrollment(
         return result;
     }
 
-    platform::load_pending_async_enrollment(file_path).await
+    let raw = load_file(file_path).await?;
+    load_pending_async_enrollment_frow_raw(file_path, &raw)
+        .map_err(|_| LoadPendingAsyncEnrollmentError::InvalidData)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1016,6 +1154,36 @@ pub enum ListPendingAsyncEnrollmentsError {
     StorageNotAvailable,
     #[error(transparent)]
     Internal(anyhow::Error),
+}
+
+impl From<LoadFileError> for ListPendingAsyncEnrollmentsError {
+    fn from(value: LoadFileError) -> Self {
+        match value {
+            LoadFileError::StorageNotAvailable => {
+                ListPendingAsyncEnrollmentsError::StorageNotAvailable
+            }
+            LoadFileError::NotAFile
+            | LoadFileError::InvalidParent
+            | LoadFileError::InvalidPath
+            | LoadFileError::NotFound
+            | LoadFileError::Internal(_) => {
+                ListPendingAsyncEnrollmentsError::Internal(value.into())
+            }
+        }
+    }
+}
+
+impl From<ListFilesError> for ListPendingAsyncEnrollmentsError {
+    fn from(value: ListFilesError) -> Self {
+        match value {
+            ListFilesError::StorageNotAvailable => {
+                ListPendingAsyncEnrollmentsError::StorageNotAvailable
+            }
+            ListFilesError::InvalidParent | ListFilesError::Internal(_) => {
+                ListPendingAsyncEnrollmentsError::Internal(value.into())
+            }
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -1047,9 +1215,19 @@ pub async fn list_pending_async_enrollments(
     if let Some(result) = testbed::maybe_list_pending_async_enrollments(config_dir) {
         return result;
     }
-
     let pending_async_enrollments_dir = get_pending_async_enrollment_dir(config_dir);
-    platform::list_pending_async_enrollments(&pending_async_enrollments_dir).await
+    let mut files = list_files(&pending_async_enrollments_dir, LOCAL_PENDING_EXT).await?;
+
+    // Sort entries so result is deterministic
+    files.sort();
+
+    Ok(libparsec_platform_async::stream::iter(files)
+        .filter_map(async |path| {
+            let raw = load_file(&path).await.ok()?;
+            load_pending_async_enrollment_as_available_frow_raw(path, &raw).ok()
+        })
+        .collect::<Vec<_>>()
+        .await)
 }
 
 fn load_pending_async_enrollment_frow_raw(
@@ -1126,5 +1304,5 @@ pub async fn remove_pending_async_enrollment(
         return result;
     }
 
-    platform::remove_device(file_path).await
+    Ok(remove_file(file_path).await?)
 }

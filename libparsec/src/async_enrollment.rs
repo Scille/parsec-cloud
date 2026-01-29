@@ -421,7 +421,8 @@ mod strategy {
                 .await
                 .map_err(|err| match err {
                     err @ (OpenBaoVerifyError::BadSignature
-                    | OpenBaoVerifyError::UnexpectedAuthor) => {
+                    | OpenBaoVerifyError::UnexpectedAuthor { .. }
+                    | OpenBaoVerifyError::AuthorOpenBaoEntityHasNoEmail { .. }) => {
                         AcceptAsyncEnrollmentError::BadSubmitPayload(err.into())
                     }
                     OpenBaoVerifyError::BadURL(err) => {
@@ -493,7 +494,8 @@ mod strategy {
                 .await
                 .map_err(|err| match err {
                     err @ (OpenBaoVerifyError::BadSignature
-                    | OpenBaoVerifyError::UnexpectedAuthor) => {
+                    | OpenBaoVerifyError::UnexpectedAuthor { .. }
+                    | OpenBaoVerifyError::AuthorOpenBaoEntityHasNoEmail { .. }) => {
                         SubmitterFinalizeAsyncEnrollmentError::BadAcceptPayload(err.into())
                     }
                     OpenBaoVerifyError::BadURL(err) => {
@@ -647,13 +649,14 @@ mod strategy {
                     ))
                 })?;
 
-                if cert_info.emails().any({
+                let valid_email = cert_info.emails().any({
                     let expected_author = expected_author.to_string();
                     move |email| email == expected_author
-                }) {
+                });
+                if !valid_email {
                     return Err(AcceptAsyncEnrollmentError::BadSubmitPayload(
                         anyhow::anyhow!(
-                            "Signature is valid, but doesn't come from the expected author (expected `{}`, got `{}`)",
+                            "Signature is valid, but doesn't come from the expected author (expected `{}` according to the X509 certificate, got `{}`)",
                             expected_author,
                             cert_first_email
                         )

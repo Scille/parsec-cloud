@@ -96,23 +96,36 @@
         >
           <div
             class="no-all-workspaces"
-            v-if="workspaceMenuState === WorkspaceMenu.All"
+            v-if="workspaceMenuState === WorkspaceMenu.All && filteredWorkspaces.length === 0"
           >
             <ms-image
               :image="NoWorkspace"
               class="no-workspaces__image"
             />
-            <ion-text v-if="clientProfile !== UserProfile.Outsider">
-              {{
-                workspaceList.length > 0 ? $msTranslate('WorkspacesPage.noMatchingWorkspaces') : $msTranslate('WorkspacesPage.noWorkspaces')
-              }}
+            <ion-text v-if="workspaceList.length > 0">
+              <span
+                v-if="
+                  workspaceAttributes.getHidden().value.length === workspaceList.length && workspaceAttributes.getHidden().value.length > 0
+                "
+              >
+                {{ $msTranslate('WorkspacesPage.allWorkspacesHidden') }}
+              </span>
+              <span v-else-if="filteredWorkspaces.length === 0"> {{ $msTranslate('WorkspacesPage.noMatchingWorkspaces') }}</span>
             </ion-text>
-            <ion-text v-else>
-              {{ $msTranslate('WorkspacesPage.noWorkspacesExternal') }}
-            </ion-text>
+            <span v-else>{{ $msTranslate('WorkspacesPage.noWorkspaces') }}</span>
             <ion-button
+              v-if="showHiddenWorkspacesButton"
+              @click="workspaceMenuState = WorkspaceMenu.Hidden"
+              id="show-hidden-workspaces"
+              class="button-default button-medium"
+            >
+              {{ $msTranslate('WorkspacesPage.categoriesMenu.showHiddenWorkspaces') }}
+            </ion-button>
+            <ion-button
+              v-if="workspaceList.length === 0"
               v-show="clientProfile !== UserProfile.Outsider"
               id="new-workspace"
+              class="button-default button-large"
               fill="outline"
               @click="openCreateWorkspaceModal()"
             >
@@ -122,7 +135,7 @@
           </div>
           <div
             class="no-recent-workspaces"
-            v-if="workspaceMenuState === WorkspaceMenu.Recents"
+            v-if="workspaceMenuState === WorkspaceMenu.Recents && filteredWorkspaces.length === 0"
           >
             <ms-image
               :image="NoRecentWorkspaces"
@@ -134,7 +147,7 @@
           </div>
           <div
             class="no-favorite-workspaces"
-            v-if="workspaceMenuState === WorkspaceMenu.Favorites"
+            v-if="workspaceMenuState === WorkspaceMenu.Favorites && filteredWorkspaces.length === 0"
           >
             <ms-image
               :image="NoFavoriteWorkspaces"
@@ -142,6 +155,18 @@
             />
             <ion-text>
               {{ $msTranslate('WorkspacesPage.categoriesMenu.noFavoriteWorkspaces') }}
+            </ion-text>
+          </div>
+          <div
+            class="no-hidden-workspaces"
+            v-if="workspaceMenuState === WorkspaceMenu.Hidden && filteredWorkspaces.length === 0"
+          >
+            <ms-image
+              :image="NoHiddenWorkspaces"
+              class="no-workspaces__image"
+            />
+            <ion-text>
+              {{ $msTranslate('WorkspacesPage.categoriesMenu.noHiddenWorkspaces') }}
             </ion-text>
           </div>
         </div>
@@ -154,6 +179,7 @@
               :workspace="workspace"
               :client-profile="clientProfile"
               :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
+              :is-hidden="workspaceAttributes.isHidden(workspace.id)"
               @click="onWorkspaceClick"
               @favorite-click="onWorkspaceFavoriteClick"
               @menu-click="onOpenWorkspaceContextMenu"
@@ -171,6 +197,7 @@
             :workspace="workspace"
             :client-profile="clientProfile"
             :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
+            :is-hidden="workspaceAttributes.isHidden(workspace.id)"
             @click="onWorkspaceClick"
             @favorite-click="onWorkspaceFavoriteClick"
             @menu-click="onOpenWorkspaceContextMenu"
@@ -184,6 +211,7 @@
 
 <script setup lang="ts">
 import NoFavoriteWorkspaces from '@/assets/images/no-favorite-workspaces.svg?raw';
+import NoHiddenWorkspaces from '@/assets/images/no-hidden-workspaces.svg?raw';
 import NoRecentWorkspaces from '@/assets/images/no-recent-workspaces.svg?raw';
 import { workspaceNameValidator } from '@/common/validators';
 import {
@@ -322,11 +350,12 @@ onMounted(async (): Promise<void> => {
   );
 
   eventCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction,
+    Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction | Events.WorkspaceMountpointsSync,
     async (event: Events, data?: EventData) => {
       switch (event) {
         case Events.WorkspaceUpdated:
         case Events.WorkspaceCreated:
+        case Events.WorkspaceMountpointsSync:
           await refreshWorkspacesList();
           break;
         case Events.MenuAction:
@@ -468,7 +497,7 @@ async function refreshWorkspacesList(): Promise<void> {
       } else {
         window.electronAPI.log('warn', `Failed to get sharing for ${wk.currentName}`);
       }
-      if (isDesktop() && wk.mountpoints.length === 0) {
+      if (isDesktop() && wk.mountpoints.length === 0 && !workspaceAttributes.isHidden(wk.id)) {
         const mountResult = await parsecMountWorkspace(wk.handle);
         if (mountResult.ok) {
           wk.mountpoints.push(mountResult.value);
@@ -499,21 +528,37 @@ async function refreshWorkspacesList(): Promise<void> {
   querying.value = false;
 }
 
+const showHiddenWorkspacesButton = computed(() => {
+  return (
+    workspaceAttributes.getHidden().value.length === workspaceList.value.length &&
+    workspaceList.value.length > 0 &&
+    filteredWorkspaces.value.length === 0 &&
+    workspaceMenuState.value !== WorkspaceMenu.Hidden
+  );
+});
+
 const filteredWorkspaces = computed(() => {
   const filter = searchFilterContent.value.toLocaleLowerCase();
   return Array.from(workspaceList.value)
     .filter((workspace) => {
-      switch (workspaceMenuState.value) {
-        case WorkspaceMenu.Recents:
-          return recentDocumentManager.getWorkspaces().find((workspaceRecents) => workspaceRecents.id === workspace.id) !== undefined;
-        case WorkspaceMenu.Favorites:
-          return workspaceAttributes.isFavorite(workspace.id);
-        default:
-          break;
-      }
-
       if (!workspace.currentName.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.currentSelfRole)) {
         return false;
+      }
+
+      switch (workspaceMenuState.value) {
+        case WorkspaceMenu.Recents:
+          return (
+            recentDocumentManager.getWorkspaces().find((workspaceRecents) => workspaceRecents.id === workspace.id) !== undefined &&
+            !workspaceAttributes.isHidden(workspace.id)
+          );
+        case WorkspaceMenu.Favorites:
+          return workspaceAttributes.isFavorite(workspace.id) && !workspaceAttributes.isHidden(workspace.id);
+        case WorkspaceMenu.Hidden:
+          return workspaceAttributes.isHidden(workspace.id);
+        case WorkspaceMenu.All:
+          return workspaceAttributes.isHidden(workspace.id) === false;
+        default:
+          break;
       }
       return true;
     })
@@ -653,7 +698,16 @@ async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openWorkspaceContextMenu(event, workspace, workspaceAttributes, eventDistributor, informationManager, false, isLargeDisplay.value);
+  await openWorkspaceContextMenu(
+    event,
+    workspace,
+    workspaceAttributes,
+    eventDistributor,
+    informationManager,
+    storageManager,
+    false,
+    isLargeDisplay.value,
+  );
   await refreshWorkspacesList();
 
   if (onFinished) {
@@ -719,10 +773,16 @@ async function onFilterUpdate(): Promise<void> {
   height: 100%;
   align-items: center;
 
+  @include ms.responsive-breakpoint('xs') {
+    align-items: start;
+    height: fit-content;
+  }
+
   &-loading,
   .no-all-workspaces,
   .no-recent-workspaces,
-  .no-favorite-workspaces {
+  .no-favorite-workspaces,
+  .no-hidden-workspaces {
     border-radius: var(--parsec-radius-8);
     display: flex;
     height: fit-content;
@@ -747,6 +807,11 @@ async function onFilterUpdate(): Promise<void> {
   &__image {
     width: 8rem;
     height: 8rem;
+
+    @include ms.responsive-breakpoint('xs') {
+      width: 6rem;
+      height: 6rem;
+    }
   }
 
   .no-all-workspaces .no-workspaces__image {
@@ -770,7 +835,7 @@ async function onFilterUpdate(): Promise<void> {
   flex-wrap: wrap;
   gap: 1.5em;
   overflow: visible;
-  padding: 1.5rem 0;
+  padding: 0.75rem 0 1.5rem 0;
 
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem 1rem;
@@ -801,6 +866,58 @@ async function onFilterUpdate(): Promise<void> {
   gap: 1rem;
   align-items: center;
   padding: 1.5rem 2rem 0;
+
+  @include ms.responsive-breakpoint('lg') {
+    width: 100%;
+    flex-direction: column;
+    padding: 1.5rem 1.25rem 0;
+  }
+}
+
+.hidden-workspaces-checkbox {
+  position: relative;
+  z-index: 3;
+  align-self: stretch;
+  border-radius: var(--parsec-radius-12);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  background: var(--parsec-color-light-secondary-white);
+  padding: 0.5rem 0.875rem;
+  display: flex;
+  align-items: center;
+  color: var(--parsec-color-light-secondary-grey);
+  --checkbox-background-checked: var(--parsec-color-light-secondary-text);
+  --checkbox-border-checked: var(--parsec-color-light-secondary-text);
+  --border-color-checked: var(--parsec-color-light-secondary-text);
+  transition: all 0.2s ease-in-out;
+
+  &::part(label) {
+    margin-left: 0.675rem;
+  }
+
+  &.checkbox-checked::part(container) {
+    border-color: var(--parsec-color-light-secondary-text);
+  }
+
+  &:hover {
+    box-shadow: var(--parsec-shadow-soft);
+  }
+
+  &:is(.checkbox-checked) {
+    box-shadow: var(--parsec-shadow-soft);
+    border-color: var(--parsec-color-light-secondary-light);
+    color: var(--parsec-color-light-secondary-text);
+  }
+
+  @include ms.responsive-breakpoint('lg') {
+    margin-right: auto;
+  }
+}
+
+.workspace-filters-menu {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.5rem 2rem 0.5rem;
 
   @include ms.responsive-breakpoint('lg') {
     width: 100%;

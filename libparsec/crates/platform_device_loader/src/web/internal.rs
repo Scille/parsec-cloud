@@ -1,26 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf},
-    rc::Rc,
-};
+use std::path::{Path, PathBuf};
 
-use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
 use libparsec_platform_filesystem::save_content;
 use libparsec_types::prelude::*;
 
-use crate::SaveDeviceError;
 use crate::{
-    web::wrapper::{DirEntry, DirOrFileHandle, OpenOptions},
-    AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
-    OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer,
+    web::wrapper::OpenOptions, AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice,
+    DeviceSaveStrategy, OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer,
+    SaveDeviceError,
 };
 
-use super::{
-    error::*,
-    wrapper::{Directory, File},
-};
+use super::{error::*, wrapper::Directory};
 
 pub struct Storage {
     root_dir: Directory,
@@ -30,90 +21,6 @@ impl Storage {
     pub(crate) async fn new() -> Result<Self, NewStorageError> {
         let root_dir = Directory::get_root().await?;
         Ok(Self { root_dir })
-    }
-
-    pub(crate) async fn list_available_devices(
-        &self,
-        config_dir: &Path,
-    ) -> Result<Vec<AvailableDevice>, ListAvailableDevicesError> {
-        let devices_dir = crate::get_devices_dir(config_dir);
-
-        let file_entries = self
-            .list_file_entries(&devices_dir, crate::DEVICE_FILE_EXT)
-            .await?;
-        let mut devices = Vec::with_capacity(file_entries.len());
-        for file_entry in file_entries {
-            match load_available_device(&file_entry).await {
-                Ok(device) => {
-                    devices.push(device);
-                }
-                // Ignore invalid files
-                Err(LoadAvailableDeviceError::RmpDecode(_)) => continue,
-                // Unexpected error, make it bubble up
-                Err(e) => return Err(ListAvailableDevicesError::from(e)),
-            }
-        }
-
-        devices.sort_by(|a, b| a.key_file_path.cmp(&b.key_file_path));
-
-        Ok(devices)
-    }
-
-    pub(super) async fn list_file_entries(
-        &self,
-        dir: &Path,
-        extension: impl AsRef<OsStr> + std::fmt::Display,
-    ) -> Result<Vec<File>, ListFileEntriesError> {
-        log::debug!(
-            "Listing file entries in {} with extension {extension}",
-            dir.display()
-        );
-        let dir = match self.root_dir.get_directory_from_path(&dir, None).await {
-            Ok(dir) => dir,
-            Err(GetDirectoryHandleError::NotFound { .. }) => {
-                log::debug!("Could not find devices dir");
-                return Ok(Vec::new());
-            }
-            Err(e) => return Err(e.into()),
-        };
-        let mut files = Vec::<File>::new();
-        let dirs_to_explore = Rc::new(Mutex::new(Vec::from([dir])));
-        while let Some(dir) = {
-            let mut handle = dirs_to_explore.lock().await;
-            let res = handle.pop();
-            drop(handle);
-            res
-        } {
-            log::trace!("Exploring directory {}", dir.path.display());
-            let mut entries_stream = dir.entries();
-            while let Some(entry) = entries_stream.next().await {
-                let DirEntry { path, handle } = entry;
-                match handle {
-                    DirOrFileHandle::File(handle)
-                        if path.extension() == Some(extension.as_ref()) =>
-                    {
-                        log::trace!("File {} with correct extension", path.display());
-                        files.push(File { path, handle })
-                    }
-                    DirOrFileHandle::File(_) => {
-                        log::trace!("Ignoring file {} because of bad suffix", path.display());
-                    }
-                    DirOrFileHandle::Dir(handle) => {
-                        log::trace!("New directory to explore: {}", path.display());
-                        dirs_to_explore
-                            .lock()
-                            .await
-                            .push(Directory { path, handle });
-                    }
-                }
-            }
-        }
-        Ok(files)
-    }
-
-    pub(crate) async fn read_file(&self, file: &Path) -> Result<Vec<u8>, ReadFile> {
-        let file = self.root_dir.get_file_from_path(file, None).await?;
-        file.read_to_end().await.map_err(|e| e.into())
     }
 
     pub(crate) async fn save_device(
@@ -271,69 +178,4 @@ impl Storage {
             .await
             .map_err(Into::into)
     }
-
-    pub(crate) async fn remove_device(&self, path: &Path) -> Result<(), RemoveDeviceError> {
-        self.root_dir
-            .remove_entry_from_path(path)
-            .await
-            .map_err(Into::into)
-    }
-
-    pub(crate) async fn list_pki_local_pending(
-        &self,
-        config_dir: &Path,
-    ) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
-        let pending_dir = crate::get_local_pending_dir(config_dir);
-        let file_entries = self
-            .list_file_entries(&pending_dir, crate::LOCAL_PENDING_EXT)
-            .await?;
-        let mut entries = Vec::with_capacity(file_entries.len());
-        for file_entry in file_entries {
-            match load_pki_local_pending(&file_entry).await {
-                Ok(device) => {
-                    entries.push(device);
-                }
-                // Ignore invalid files
-                Err(LoadPkiLocalPendingError::DataError(_)) => continue,
-                // Unexpected error, make it bubble up
-                Err(e) => return Err(ListPkiLocalPendingError::from(e)),
-            }
-        }
-
-        entries.sort_by_key(|v| v.enrollment_id);
-
-        Ok(entries)
-    }
-}
-
-async fn load_available_device(file: &File) -> Result<AvailableDevice, LoadAvailableDeviceError> {
-    let raw_data = file
-        .read_to_end()
-        .await
-        .map_err(LoadAvailableDeviceError::ReadToEnd)?;
-    crate::load_available_device_from_blob(file.path().to_owned(), &raw_data)
-        .inspect_err(|e| {
-            log::warn!(
-                "Failed to decode device from {}: {e}",
-                file.path().display()
-            )
-        })
-        .map_err(LoadAvailableDeviceError::RmpDecode)
-}
-
-async fn load_pki_local_pending(
-    file: &File,
-) -> Result<PKILocalPendingEnrollment, LoadPkiLocalPendingError> {
-    let raw_data = file
-        .read_to_end()
-        .await
-        .map_err(LoadPkiLocalPendingError::ReadToEnd)?;
-    PKILocalPendingEnrollment::load(&raw_data)
-        .inspect_err(|err| {
-            log::warn!(
-                "Failed to decode local pending at {}: {err}",
-                file.path().display()
-            )
-        })
-        .map_err(LoadPkiLocalPendingError::DataError)
 }

@@ -3,8 +3,9 @@
 use crate::{
     encrypt_message,
     errors::{
-        GetValidationPathForCertError, ListCertificatesError, LoadAnswerPayloadError,
-        ValidatePayloadError, VerifyMessageError, VerifySignatureError,
+        GetRootCertificateInfoFromTrustchainError, GetValidationPathForCertError,
+        ListCertificatesError, LoadAnswerPayloadError, ValidatePayloadError, VerifyMessageError,
+        VerifySignatureError,
     },
     get_der_encoded_certificate, CreateLocalPendingError, EncryptMessageError,
     GetDerEncodedCertificateError, PkiSignatureAlgorithm,
@@ -267,7 +268,7 @@ pub fn get_validation_path_for_cert(
         GetDerEncodedCertificateError::NotFound => GetValidationPathForCertError::NotFound,
     })?;
 
-    let leaf_cert_der = rustls_pki_types::CertificateDer::from_slice(&leaf);
+    let leaf_cert_der = CertificateDer::from_slice(&leaf);
     let leaf_end_cert = X509EndCertificate::try_from(&leaf_cert_der)
         .map_err(GetValidationPathForCertError::InvalidCertificateDer)?;
     let path = verify_certificate(&leaf_end_cert, &all_trusted_roots, &all_intermediates, now)
@@ -283,5 +284,65 @@ pub fn get_validation_path_for_cert(
         root,
         intermediates,
         leaf,
+    })
+}
+
+#[derive(Debug)]
+pub struct RootCertificateInfo {
+    pub common_name: String,
+    pub subject: Vec<u8>,
+}
+
+pub fn get_root_certificate_info_from_trustchain<'cert>(
+    submitter_der_x509_certificate: &[u8],
+    intermediate_der_x509_certificates: impl Iterator<Item = &'cert [u8]>,
+) -> Result<RootCertificateInfo, GetRootCertificateInfoFromTrustchainError> {
+    // 1. Walk up the chain until we reach the root
+
+    let submitter_der_x509_certificate_der =
+        CertificateDer::from_slice(submitter_der_x509_certificate);
+    let submitter_der_x509_certificate_end =
+        X509EndCertificate::try_from(&submitter_der_x509_certificate_der).map_err(|err| {
+            GetRootCertificateInfoFromTrustchainError::InvalidCertificateDer(err.into())
+        })?;
+
+    let intermediate_der_x509_certificates_der = intermediate_der_x509_certificates
+        .map(CertificateDer::from_slice)
+        .collect::<Vec<_>>();
+    let mut intermediate_der_x509_certificates_end = intermediate_der_x509_certificates_der
+        .iter()
+        .map(X509EndCertificate::try_from)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|err| {
+            GetRootCertificateInfoFromTrustchainError::InvalidCertificateDer(err.into())
+        })?;
+
+    let mut current = submitter_der_x509_certificate_end;
+    while let Some(i) = intermediate_der_x509_certificates_end
+        .iter()
+        .position(|cert| cert.subject() == current.issuer())
+    {
+        current = intermediate_der_x509_certificates_end.swap_remove(i);
+    }
+
+    // 2. Extract root subject & common name from the certificate issuer
+
+    let subject = current.issuer().to_vec();
+
+    let common_name = match crate::x509::extract_common_name_from_subject(&subject) {
+        Ok(Some(common_name)) => common_name,
+        Ok(None) => {
+            return Err(GetRootCertificateInfoFromTrustchainError::InvalidCertificateNoCommonName)
+        }
+        Err(err) => {
+            return Err(
+                GetRootCertificateInfoFromTrustchainError::InvalidCertificateDer(err.into()),
+            )
+        }
+    };
+
+    Ok(RootCertificateInfo {
+        subject,
+        common_name,
     })
 }

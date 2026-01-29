@@ -1,12 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use anyhow::anyhow;
+use libparsec_types::prelude::*;
 use std::io::ErrorKind;
+use std::path::Path;
+use std::{ffi::OsStr, path::PathBuf};
 
 #[cfg(not(target_arch = "wasm32"))]
-mod native;
+#[path = "native/mod.rs"]
+mod platform;
+
 #[cfg(target_arch = "wasm32")]
-mod web;
+#[path = "web/mod.rs"]
+mod platform;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SaveContentError {
@@ -70,15 +76,86 @@ impl From<std::io::Error> for SaveContentError {
         }
     }
 }
-#[cfg(not(target_arch = "wasm32"))]
+
 pub async fn save_content(path: &std::path::Path, content: &[u8]) -> Result<(), SaveContentError> {
-    native::save_content(path, content).await
+    platform::save_content(path, content).await
 }
 
-#[cfg(target_arch = "wasm32")]
-pub async fn save_content(path: &std::path::Path, content: &[u8]) -> Result<(), SaveContentError> {
-    let store = web::common::internal::Storage::new().await?;
-    web::save_content(store, path, content).await
+#[derive(Debug, thiserror::Error)]
+pub enum LoadFileError {
+    #[error("storage not available")]
+    StorageNotAvailable,
+    #[error("not a file")]
+    NotAFile,
+    #[error("invalid parent")]
+    InvalidParent,
+    #[error("invalid path")]
+    InvalidPath,
+    #[error("file not found")]
+    NotFound,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<std::io::Error> for LoadFileError {
+    fn from(value: std::io::Error) -> Self {
+        match value.kind() {
+            ErrorKind::NotFound => LoadFileError::NotFound,
+            ErrorKind::NotADirectory => LoadFileError::InvalidParent,
+            ErrorKind::IsADirectory => LoadFileError::NotAFile,
+            ErrorKind::InvalidFilename | ErrorKind::PermissionDenied => LoadFileError::InvalidPath,
+            e => LoadFileError::Internal(anyhow!("io error {e}")),
+        }
+    }
+}
+
+pub async fn load_file(path: &Path) -> Result<Bytes, LoadFileError> {
+    platform::load_file(path).await
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ListFilesError {
+    #[error("storage not available")]
+    StorageNotAvailable,
+    #[error("invalid parent")]
+    InvalidParent,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn list_files(
+    root_dir: &Path,
+    extension: impl AsRef<OsStr> + std::fmt::Display,
+) -> Result<Vec<PathBuf>, ListFilesError> {
+    platform::list_files(root_dir, extension).await
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum RemoveFileError {
+    #[error("storage not available")]
+    StorageNotAvailable,
+    #[error("invalid parent")]
+    InvalidParent,
+    #[error("invalid path")]
+    InvalidPath,
+    #[error("not found")]
+    NotFound,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<std::io::Error> for RemoveFileError {
+    fn from(value: std::io::Error) -> Self {
+        use std::io::ErrorKind;
+        match value.kind() {
+            ErrorKind::NotFound => RemoveFileError::NotFound,
+            _ => RemoveFileError::Internal(value.into()),
+        }
+    }
+}
+
+pub async fn remove_file(path: &Path) -> Result<(), RemoveFileError> {
+    platform::remove_file(path).await
 }
 
 #[path = "../tests/units/mod.rs"]

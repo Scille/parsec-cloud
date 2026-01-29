@@ -24,10 +24,11 @@
 <script lang="ts" setup>
 import { WorkspaceMenu } from '@/views/workspaces/types';
 import { IonIcon, IonText } from '@ionic/vue';
-import { rocket, star, time } from 'ionicons/icons';
-import { useWindowSize } from 'megashark-lib';
+import { eyeOff, rocket, star, time } from 'ionicons/icons';
+import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
+import { computed } from 'vue';
 
-const { isLargeDisplay } = useWindowSize();
+const { isLargeDisplay, windowWidth } = useWindowSize();
 
 defineProps<{
   activeMenu: WorkspaceMenu;
@@ -37,23 +38,29 @@ defineEmits<{
   (e: 'updateMenu', value: WorkspaceMenu): void;
 }>();
 
-const workspaceMenuList = [
+const workspaceMenuList = computed(() => [
   {
     icon: rocket,
     key: WorkspaceMenu.All,
-    label: 'WorkspacesPage.categoriesMenu.all',
+    label: windowWidth.value > WindowSizeBreakpoints.MD ? 'WorkspacesPage.categoriesMenu.all' : 'WorkspacesPage.categoriesMenu.allShort',
   },
   {
     icon: time,
     key: WorkspaceMenu.Recents,
-    label: 'WorkspacesPage.categoriesMenu.recents',
+    label:
+      windowWidth.value > WindowSizeBreakpoints.MD ? 'WorkspacesPage.categoriesMenu.recents' : 'WorkspacesPage.categoriesMenu.recentsShort',
   },
   {
     icon: star,
     key: WorkspaceMenu.Favorites,
     label: 'WorkspacesPage.categoriesMenu.favorites',
   },
-];
+  {
+    icon: eyeOff,
+    key: WorkspaceMenu.Hidden,
+    label: 'WorkspacesPage.categoriesMenu.hidden',
+  },
+]);
 </script>
 
 <style scoped lang="scss">
@@ -65,10 +72,12 @@ const workspaceMenuList = [
   border-radius: var(--parsec-radius-12);
   background: var(--parsec-color-light-secondary-premiere);
   position: relative;
+  z-index: 5;
 
   @include ms.responsive-breakpoint('lg') {
     width: 100%;
     margin: 0 1rem;
+    gap: 0;
   }
 
   &::after {
@@ -87,7 +96,7 @@ const workspaceMenuList = [
       left 0.25s ease-in-out;
 
     @include ms.responsive-breakpoint('lg') {
-      width: calc(100% / 3 - 0.25rem);
+      width: calc(100% / 4 - 0.25rem);
     }
   }
 
@@ -98,6 +107,7 @@ const workspaceMenuList = [
     gap: 0.5rem;
     cursor: pointer;
     flex: 1 0 12rem;
+    min-width: 12rem;
     padding: 0.5rem 1rem;
     color: var(--parsec-color-light-secondary-soft-text);
     box-shadow: var(--parsec-shadow-filter);
@@ -106,9 +116,29 @@ const workspaceMenuList = [
     z-index: 3;
     transition: background-color 0.2s ease-in-out;
 
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 1px;
+      height: 100%;
+      background-color: var(--parsec-color-light-secondary-disabled);
+    }
+
     @include ms.responsive-breakpoint('lg') {
       flex-basis: auto;
-      width: calc(100% / 3);
+      min-width: auto;
+      width: calc(100% / 4 - 1rem);
+      text-align: center;
+      padding: 0.375rem 0.5rem;
+    }
+
+    &__text {
+      @include ms.responsive-breakpoint('sm') {
+        font-size: 0.9375rem !important;
+      }
     }
 
     &:not(.active):hover {
@@ -117,6 +147,7 @@ const workspaceMenuList = [
 
     &__icon {
       font-size: 1rem;
+      flex-shrink: 0;
     }
 
     &.active {
@@ -133,30 +164,45 @@ const workspaceMenuList = [
     }
   }
 
-  &:has(.workspace-categories-menu-item:nth-child(1).active)::after {
-    left: 0.25rem;
+  &:has(.workspace-categories-menu-item:nth-child(1).active) {
+    &::after {
+      left: 0.25rem;
+    }
 
-    @include ms.responsive-breakpoint('lg') {
-      left: auto;
-      right: calc(100% - 100% / 3);
+    .workspace-categories-menu-item:nth-child(1)::after {
+      content: none;
     }
   }
 
-  &:has(.workspace-categories-menu-item:nth-child(2).active)::after {
-    left: 12.25rem;
+  &:has(.workspace-categories-menu-item:nth-child(2).active) {
+    &::after {
+      left: 25%;
+    }
 
-    @include ms.responsive-breakpoint('lg') {
-      left: auto;
-      right: calc(100% / 3);
+    .workspace-categories-menu-item:nth-child(1)::after,
+    .workspace-categories-menu-item:nth-child(2)::after {
+      content: none;
     }
   }
 
-  &:has(.workspace-categories-menu-item:nth-child(3).active)::after {
-    left: calc(100% - 100% / 3);
+  &:has(.workspace-categories-menu-item:nth-child(3).active) {
+    &::after {
+      left: 50%;
+    }
 
-    @include ms.responsive-breakpoint('lg') {
-      left: auto;
-      right: 0.25rem;
+    .workspace-categories-menu-item:nth-child(2)::after,
+    .workspace-categories-menu-item:nth-child(3)::after {
+      content: none;
+    }
+  }
+
+  &:has(.workspace-categories-menu-item:nth-child(4).active) {
+    &::after {
+      left: 75%;
+    }
+
+    .workspace-categories-menu-item:nth-child(3)::after {
+      content: none;
     }
   }
 }

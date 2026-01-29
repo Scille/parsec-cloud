@@ -542,9 +542,9 @@ export const msTest = debugTest.extend<{
 
     // Check "remember me" checkbox so tokens persist across page reloads
     if (clientAreaInitialParams?.rememberMe) {
-      const rememberMeCheckbox = saasContainer.locator('ion-checkbox');
+      const rememberMeCheckbox = saasContainer.locator('.ms-checkbox');
       await expect(rememberMeCheckbox).toBeVisible();
-      await rememberMeCheckbox.click();
+      await rememberMeCheckbox.check();
       await expect(rememberMeCheckbox).toBeChecked();
     }
 
@@ -596,9 +596,9 @@ export const msTest = debugTest.extend<{
 
     // Check "remember me" checkbox so tokens persist across page reloads
     if (clientAreaInitialParams?.rememberMe) {
-      const rememberMeCheckbox = saasContainer.locator('ion-checkbox');
+      const rememberMeCheckbox = saasContainer.locator('.ms-checkbox');
       await expect(rememberMeCheckbox).toBeVisible();
-      await rememberMeCheckbox.click();
+      await rememberMeCheckbox.check();
       await expect(rememberMeCheckbox).toBeChecked();
     }
 

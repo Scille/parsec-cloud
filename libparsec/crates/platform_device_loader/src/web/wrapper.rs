@@ -6,15 +6,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use libparsec_platform_async::{
-    future::{self, FutureExt},
-    stream::{Stream, StreamExt},
-};
-use wasm_bindgen_futures::{stream::JsStream, JsFuture};
+use libparsec_platform_async::future::FutureExt;
+use wasm_bindgen_futures::JsFuture;
 use web_sys::{js_sys, wasm_bindgen::JsCast, DomException};
 
 use super::error::{
-    CastError, GetDirectoryHandleError, GetFileHandleError, GetRootDirectoryError, ReadToEndError,
+    GetDirectoryHandleError, GetFileHandleError, GetRootDirectoryError, ReadToEndError,
     RemoveEntryError, WriteAllError,
 };
 
@@ -214,29 +211,6 @@ impl Directory {
             .inspect(|_v| log::trace!("Found handle `{filename}` in {}", self.path.display()))
     }
 
-    pub fn entries(&self) -> impl Stream<Item = DirEntry> + use<'_> {
-        log::trace!("Listing entries at {}", self.path.display());
-        JsStream::from(self.handle.values()).filter_map(|v| {
-            log::trace!("Entries {v:?}");
-            future::ready(
-                v.ok()
-                    .and_then(|v| {
-                        v.dyn_into::<web_sys::FileSystemFileHandle>()
-                            .map(DirOrFileHandle::File)
-                            .or_else(|v| {
-                                v.dyn_into::<web_sys::FileSystemDirectoryHandle>()
-                                    .map(DirOrFileHandle::Dir)
-                            })
-                            .inspect_err(|e| {
-                                log::warn!("{e:?} is neither a file or directory handle")
-                            })
-                            .ok()
-                    })
-                    .map(|v| DirEntry::new(v, &self.path)),
-            )
-        })
-    }
-
     pub async fn remove_entry_from_path(&self, path: &Path) -> Result<(), RemoveEntryError> {
         log::trace!("Remove entry `{}` from path", path.display());
         debug_assert!(path.has_root());
@@ -291,51 +265,6 @@ impl From<OpenOptions> for web_sys::FileSystemGetFileOptions {
     }
 }
 
-pub struct DirEntry {
-    pub path: PathBuf,
-    pub handle: DirOrFileHandle,
-}
-
-impl DirEntry {
-    fn new(handle: DirOrFileHandle, parent: &Path) -> Self {
-        Self {
-            path: parent.join(handle.name()),
-            handle,
-        }
-    }
-}
-
-impl TryFrom<DirEntry> for File {
-    type Error = CastError;
-
-    fn try_from(value: DirEntry) -> Result<Self, Self::Error> {
-        match value.handle {
-            DirOrFileHandle::File(handle) => Ok(Self {
-                path: value.path,
-                handle,
-            }),
-            DirOrFileHandle::Dir(d) => Err(CastError::Cast {
-                ty: stringify!(web_sys::FileSystemFileHandle),
-                value: d.into(),
-            }),
-        }
-    }
-}
-
-pub enum DirOrFileHandle {
-    Dir(web_sys::FileSystemDirectoryHandle),
-    File(web_sys::FileSystemFileHandle),
-}
-
-impl DirOrFileHandle {
-    pub fn name(&self) -> String {
-        match self {
-            Self::Dir(v) => v.name(),
-            Self::File(v) => v.name(),
-        }
-    }
-}
-
 pub struct File {
     pub path: PathBuf,
     pub handle: web_sys::FileSystemFileHandle,
@@ -347,10 +276,6 @@ impl File {
             path: parent.join(handle.name()),
             handle,
         }
-    }
-
-    pub fn path(&self) -> &Path {
-        &self.path
     }
 
     pub async fn read_to_end(&self) -> Result<Vec<u8>, ReadToEndError> {

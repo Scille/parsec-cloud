@@ -1,8 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use itertools::Itertools as _;
 use keyring::Entry as KeyringEntry;
-use libparsec_platform_async::{future::FutureExt as _, stream::StreamExt as _};
+use libparsec_platform_async::future::FutureExt as _;
 use libparsec_platform_filesystem::save_content;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
@@ -10,12 +9,9 @@ use uuid::Uuid;
 use crate::{
     encrypt_device, get_device_archive_path, AccountVaultOperationsFetchOpaqueKeyError,
     AccountVaultOperationsUploadOpaqueKeyError, ArchiveDeviceError, AvailableDevice,
-    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
-    ListAvailableDeviceError, ListPendingAsyncEnrollmentsError, ListPkiLocalPendingError,
-    LoadCiphertextKeyError, LoadDeviceError, LoadPendingAsyncEnrollmentError,
-    OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError, ReadFileError,
-    RemoteOperationServer, RemoveDeviceError, SaveDeviceError, UpdateDeviceError, DEVICE_FILE_EXT,
-    LOCAL_PENDING_EXT,
+    DeviceAccessStrategy, DeviceSaveStrategy, LoadCiphertextKeyError, LoadDeviceError,
+    OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
+    RemoteOperationServer, SaveDeviceError,
 };
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
 use libparsec_types::prelude::*;
@@ -35,91 +31,8 @@ impl From<keyring::Error> for SaveDeviceError {
 }
 
 /*
- * List available devices
- */
-
-fn find_device_files(path: &Path) -> Result<Vec<PathBuf>, ListAvailableDeviceError> {
-    // TODO: make file access on a worker thread !
-
-    match std::fs::read_dir(path) {
-        Ok(children) => {
-            let mut key_file_paths = vec![];
-            for path in
-                children.filter_map(|entry| entry.as_ref().map(std::fs::DirEntry::path).ok())
-            {
-                if path.extension() == Some(DEVICE_FILE_EXT.as_ref()) {
-                    key_file_paths.push(path)
-                } else if path.is_dir() {
-                    key_file_paths.append(&mut find_device_files(&path)?)
-                }
-            }
-            Ok(key_file_paths)
-        }
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
-        Err(e) => {
-            log::error!("Cannot list available devices at {}: {e}", path.display());
-            Err(ListAvailableDeviceError::StorageNotAvailable)
-        }
-    }
-}
-
-pub(super) async fn list_available_devices(
-    config_dir: &Path,
-) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
-    let devices_dir = crate::get_devices_dir(config_dir);
-
-    // Consider `.keys` files in devices directory
-    let mut key_file_paths = find_device_files(&devices_dir)?;
-
-    // Sort paths so the discovery order is deterministic
-    // In the case of duplicate files, that means only the first discovered device is considered
-    key_file_paths.sort();
-    log::trace!("Found the following device files: {key_file_paths:?}");
-
-    Ok(key_file_paths
-        .into_iter()
-        // List only valid devices.
-        .filter_map(|path| {
-            load_available_device(path.clone())
-                .inspect_err(|e| {
-                    log::debug!(
-                        "Failed to load device at {path} with {e}",
-                        path = path.display()
-                    )
-                })
-                .ok()
-        })
-        // Ignore duplicate devices
-        .unique_by(|v| v.device_id)
-        .collect())
-}
-
-#[derive(Debug, thiserror::Error)]
-enum LoadFileError {
-    #[error(transparent)]
-    InvalidPath(anyhow::Error),
-    #[error("Cannot deserialize file content")]
-    InvalidData,
-}
-
-fn load_available_device(key_file_path: PathBuf) -> Result<AvailableDevice, LoadFileError> {
-    // TODO: make file access on a worker thread !
-    let content =
-        std::fs::read(&key_file_path).map_err(|e| LoadFileError::InvalidPath(e.into()))?;
-
-    super::load_available_device_from_blob(key_file_path, &content)
-        .map_err(|_| LoadFileError::InvalidData)
-}
-
-/*
  * Save & load
  */
-
-pub(super) async fn read_file(file: &Path) -> Result<Vec<u8>, ReadFileError> {
-    tokio::fs::read(file)
-        .await
-        .map_err(|e| ReadFileError::InvalidPath(e.into()))
-}
 
 pub(super) async fn load_ciphertext_key(
     access: &DeviceAccessStrategy,
@@ -487,25 +400,6 @@ pub(super) async fn save_device(
     })
 }
 
-pub(super) async fn update_device(
-    device: &LocalDevice,
-    created_on: DateTime,
-    current_key_file: &Path,
-    new_strategy: &DeviceSaveStrategy,
-    new_key_file: &Path,
-) -> Result<AvailableDevice, UpdateDeviceError> {
-    let available_device =
-        save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
-
-    if current_key_file != new_key_file {
-        if let Err(err) = tokio::fs::remove_file(current_key_file).await {
-            log::warn!("Cannot remove old key file {current_key_file:?}: {err}");
-        }
-    }
-
-    Ok(available_device)
-}
-
 pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
     let archive_device_path = get_device_archive_path(device_path);
 
@@ -518,14 +412,6 @@ pub(super) async fn archive_device(device_path: &Path) -> Result<(), ArchiveDevi
     tokio::fs::rename(device_path, archive_device_path)
         .await
         .map_err(|e| ArchiveDeviceError::Internal(e.into()))
-}
-
-pub(super) async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
-    log::debug!("Removing device {}", device_path.display());
-
-    tokio::fs::remove_file(device_path)
-        .await
-        .map_err(Into::into)
 }
 
 pub(super) fn is_keyring_available() -> bool {
@@ -550,123 +436,4 @@ pub(super) fn is_keyring_available() -> bool {
             false
         }
     }
-}
-
-pub(super) async fn list_pki_local_pending(
-    config_dir: &Path,
-) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
-    let pending_dir = crate::get_local_pending_dir(config_dir);
-    let mut files = find_local_pending_files(&pending_dir).await?;
-
-    // Sort entries so result is deterministic
-    files.sort();
-    log::trace!("Found pending request files: {files:?}");
-
-    Ok(libparsec_platform_async::stream::iter(files)
-        .filter_map(async |path| load_pki_pending_file(&path).await.ok())
-        .collect::<Vec<_>>()
-        .await)
-}
-
-async fn find_local_pending_files(path: &Path) -> Result<Vec<PathBuf>, ListPkiLocalPendingError> {
-    let mut entries = match tokio::fs::read_dir(path).await {
-        Ok(v) => v,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(err) => {
-            log::error!(
-                "Cannot list pending request files in {}: {err}",
-                path.display()
-            );
-            return Err(ListPkiLocalPendingError::StorageNotAvailable);
-        }
-    };
-    let mut files = Vec::new();
-
-    while let Some(entry) = entries.next_entry().await.unwrap_or_default() {
-        let Ok(metadata) = entry.metadata().await else {
-            continue;
-        };
-        let path = entry.path();
-        if metadata.is_dir() {
-            let mut sub_files = Box::pin(find_local_pending_files(&path)).await?;
-            files.append(&mut sub_files);
-        } else if metadata.is_file() && path.extension() == Some(LOCAL_PENDING_EXT.as_ref()) {
-            files.push(path);
-        }
-    }
-    Ok(files)
-}
-
-async fn load_pki_pending_file(path: &Path) -> Result<PKILocalPendingEnrollment, LoadFileError> {
-    let content = tokio::fs::read(path)
-        .await
-        .map_err(Into::into)
-        .map_err(LoadFileError::InvalidPath)?;
-    PKILocalPendingEnrollment::load(&content)
-        .inspect_err(|err| log::debug!("Failed to load pki pending file {}: {err}", path.display()))
-        .map_err(|_| LoadFileError::InvalidData)
-}
-
-pub(super) async fn load_pending_async_enrollment(
-    file_path: &Path,
-) -> Result<
-    (
-        AsyncEnrollmentLocalPending,
-        AsyncEnrollmentLocalPendingCleartextContent,
-    ),
-    LoadPendingAsyncEnrollmentError,
-> {
-    let raw = tokio::fs::read(&file_path)
-        .await
-        .map_err(|err| LoadPendingAsyncEnrollmentError::InvalidPath(err.into()))?;
-    super::load_pending_async_enrollment_frow_raw(file_path, &raw)
-        .map_err(|_| LoadPendingAsyncEnrollmentError::InvalidData)
-}
-
-pub(super) async fn list_pending_async_enrollments(
-    pending_async_enrollments_dir: &Path,
-) -> Result<Vec<AvailablePendingAsyncEnrollment>, ListPendingAsyncEnrollmentsError> {
-    let mut files = find_pending_async_enrollment_files(pending_async_enrollments_dir).await?;
-
-    // Sort entries so result is deterministic
-    files.sort();
-
-    Ok(libparsec_platform_async::stream::iter(files)
-        .filter_map(async |path| {
-            let raw = tokio::fs::read(&path).await.ok()?;
-            super::load_pending_async_enrollment_as_available_frow_raw(path, &raw).ok()
-        })
-        .collect::<Vec<_>>()
-        .await)
-}
-
-async fn find_pending_async_enrollment_files(
-    path: &Path,
-) -> Result<Vec<PathBuf>, ListPendingAsyncEnrollmentsError> {
-    let mut entries = match tokio::fs::read_dir(path).await {
-        Ok(v) => v,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(err) => {
-            log::error!(
-                "Cannot list pending request files in {}: {err}",
-                path.display()
-            );
-            return Err(ListPendingAsyncEnrollmentsError::StorageNotAvailable);
-        }
-    };
-    let mut files = Vec::new();
-
-    while let Some(entry) = entries.next_entry().await.unwrap_or_default() {
-        let Ok(metadata) = entry.metadata().await else {
-            continue;
-        };
-        let path = entry.path();
-        if metadata.is_dir() {
-            let mut sub_files = Box::pin(find_pending_async_enrollment_files(&path)).await?;
-            files.append(&mut sub_files);
-        } else if metadata.is_file() && path.extension() == Some(LOCAL_PENDING_EXT.as_ref()) {
-            files.push(path);
-        }
-    }
-    Ok(files)
 }

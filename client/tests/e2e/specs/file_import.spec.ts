@@ -73,11 +73,11 @@ for (const mode of ['list', 'grid']) {
     if (mode === 'list') {
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.label-name')).toHaveText(['yo.png', 'hell_yeah.png']);
+      await expect(entries.locator('.label-name')).toHaveText(['hell_yeah.png', 'yo.png']);
     } else {
       const entries = documents.locator('.folder-container').locator('.file-card-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.file-card__title')).toHaveText(['yo.png', 'hell_yeah.png']);
+      await expect(entries.locator('.file-card__title')).toHaveText(['hell_yeah.png', 'yo.png']);
     }
   });
 }
@@ -115,11 +115,11 @@ for (const mode of ['list', 'grid']) {
     if (mode === 'list') {
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.label-name')).toHaveText(['yo.png', 'hell_yeah.png']);
+      await expect(entries.locator('.label-name')).toHaveText(['hell_yeah.png', 'yo.png']);
     } else {
       const entries = documents.locator('.folder-container').locator('.file-card-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.file-card__title')).toHaveText(['yo.png', 'hell_yeah.png']);
+      await expect(entries.locator('.file-card__title')).toHaveText(['hell_yeah.png', 'yo.png']);
     }
 
     await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
@@ -227,7 +227,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     }
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     await expect(entries).toHaveCount(2);
-    await expect(entries.locator('.label-name')).toHaveText(['yo.png', 'hell_yeah.png']);
+    await expect(entries.locator('.label-name')).toHaveText(['hell_yeah.png', 'yo.png']);
   });
 }
 
@@ -271,8 +271,8 @@ for (const dupPolicy of ['replace', 'ignore', 'addCount']) {
     } else {
       await buttons.nth(2).click();
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.label-name')).toHaveText(['file.txt', 'file (2).txt']);
-      await expect(entries.locator('.label-size')).toHaveText(['1 B', '5 B']);
+      await expect(entries.locator('.label-name')).toHaveText(['file (2).txt', 'file.txt']);
+      await expect(entries.locator('.label-size')).toHaveText(['5 B', '1 B']);
     }
     await checkFilesUploaded(documents, 2, 1);
   });

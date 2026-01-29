@@ -32,7 +32,7 @@
         v-model="checked"
         label-placement="end"
         justify="start"
-        class="tos-checkbox body"
+        class="tos-checkbox"
       >
         {{ $msTranslate('CreateOrganization.acceptTOS.update.checkbox') }}
       </ms-checkbox>

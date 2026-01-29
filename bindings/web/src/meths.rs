@@ -7248,6 +7248,17 @@ fn variant_async_enrollment_identity_system_js_to_rs(
                 x509_root_certificate_subject,
             })
         }
+        "AsyncEnrollmentIdentitySystemPKICorrupted" => {
+            let reason = {
+                let js_val = Reflect::get(&obj, &"reason".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::AsyncEnrollmentIdentitySystem::PKICorrupted { reason })
+        }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a AsyncEnrollmentIdentitySystem",
         ))),
@@ -7290,6 +7301,15 @@ fn variant_async_enrollment_identity_system_rs_to_js(
                 &"x509RootCertificateSubject".into(),
                 &js_x509_root_certificate_subject,
             )?;
+        }
+        libparsec::AsyncEnrollmentIdentitySystem::PKICorrupted { reason, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AsyncEnrollmentIdentitySystemPKICorrupted".into(),
+            )?;
+            let js_reason = reason.into();
+            Reflect::set(&js_obj, &"reason".into(), &js_reason)?;
         }
     }
     Ok(js_obj)

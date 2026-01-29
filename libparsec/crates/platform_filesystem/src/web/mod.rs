@@ -7,4 +7,7 @@ mod remove;
 mod rename;
 mod save;
 
+pub use list::list_files;
+pub use load::load_file;
+pub use remove::remove_file;
 pub use save::save_content;

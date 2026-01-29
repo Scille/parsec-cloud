@@ -205,8 +205,8 @@ msTest.describe(() => {
         await expect(entries.locator('.label-name')).toHaveText('Folder');
         await entries.nth(0).dblclick();
         await expect(entries).toHaveCount(2);
-        await expect(entries.locator('.label-name')).toHaveText(['file.txt', 'file (2).txt']);
-        await expect(entries.locator('.file-size')).toHaveText(['1 B', '5 B']);
+        await expect(entries.locator('.label-name')).toHaveText(['file (2).txt', 'file.txt']);
+        await expect(entries.locator('.file-size')).toHaveText(['5 B', '1 B']);
       }
     });
 
@@ -216,9 +216,9 @@ msTest.describe(() => {
 
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.label-name')).toHaveText(['FolderB', 'FolderA']);
+      await expect(entries.locator('.label-name')).toHaveText(['FolderA', 'FolderB']);
 
-      await entries.nth(1).dblclick();
+      await entries.nth(0).dblclick();
       await expect(documents).toHaveHeader(['wksp1', 'FolderA'], true, true);
       await createFolder(documents, 'Folder');
       // Drop a file with the content '1' in the 'FolderA/Folder' folder
@@ -231,7 +231,7 @@ msTest.describe(() => {
       await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
       await expect(documents).toHaveHeader(['wksp1'], true, true);
 
-      await entries.nth(0).dblclick();
+      await entries.nth(1).dblclick();
       await expect(documents).toHaveHeader(['wksp1', 'FolderB'], true, true);
       await createFolder(documents, 'Folder');
       // Drop a file with the content '12345' in the 'FolderB/Folder' folder
@@ -297,7 +297,7 @@ msTest.describe(() => {
 
       await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
       await expect(documents).toHaveHeader(['wksp1'], true, true);
-      await entries.nth(1).dblclick();
+      await entries.nth(0).dblclick();
       await expect(documents).toHaveHeader(['wksp1', 'FolderA'], true, true);
 
       if (dupPolicy === 'replace') {
@@ -318,14 +318,14 @@ msTest.describe(() => {
         await expect(entries.locator('.file-size')).toHaveText('1 B');
       } else {
         await expect(entries.locator('.label-name')).toHaveCount(2);
-        await expect(entries.locator('.label-name')).toHaveText(['Folder (2)', 'Folder']);
-        await entries.nth(1).dblclick();
+        await expect(entries.locator('.label-name')).toHaveText(['Folder', 'Folder (2)']);
+        await entries.nth(0).dblclick();
         await expect(documents).toHaveHeader(['wksp1', '', 'Folder'], true, true);
         await expect(entries.locator('.label-name')).toHaveCount(1);
         await expect(entries.locator('.label-name')).toHaveText('file.txt');
         await expect(entries.locator('.file-size')).toHaveText('1 B');
         await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
-        await entries.nth(0).dblclick();
+        await entries.nth(1).dblclick();
         await expect(documents).toHaveHeader(['wksp1', '', 'Folder (2)'], true, true);
         await expect(entries.locator('.label-name')).toHaveCount(1);
         await expect(entries.locator('.label-name')).toHaveText('file.txt');

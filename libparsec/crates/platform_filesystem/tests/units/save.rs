@@ -1,10 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #![allow(unused)] // TODO remove when a test for wasm32 is written
+use crate::tests::CONTENT;
 use crate::{save_content, SaveContentError};
 use libparsec_tests_fixtures::prelude::*;
 use std::path::PathBuf;
-
-const CONTENT: &[u8] =  b"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed porta augue ante. Morbi molestie sapien eget nisi aliquet, ut commodo turpis venenatis. Maecenas porttitor mauris sapien, at gravida dui euismod et.";
 
 #[cfg(not(target_arch = "wasm32"))]
 enum BadPathKind {
@@ -88,5 +87,5 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
     };
 
     save_content(&path, CONTENT).await.unwrap();
-    // TODO check roundtrip with load #12005
+    // Roundtrip need load, it's done in `load.rs::ok`
 }

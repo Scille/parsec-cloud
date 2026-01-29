@@ -11,7 +11,7 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
-    @click="$emit('update:modelValue', !props.entry.isSelected)"
+    @click.stop="$emit('update:modelValue', !entry.isSelected)"
   >
     <file-drop-zone
       :disabled="entry.isFile()"
@@ -20,14 +20,13 @@
       @drop-as-reader="$emit('dropAsReader')"
     >
       <div class="card-checkbox">
-        <!-- eslint-disable vue/no-mutating-props -->
         <ms-checkbox
-          v-model="entry.isSelected"
+          :checked="entry.isSelected"
+          @change="$emit('update:modelValue', !entry.isSelected)"
           v-show="entry.isSelected || isHovered || showCheckbox"
           @click.stop
           @dblclick.stop
         />
-        <!-- eslint-enable vue/no-mutating-props -->
       </div>
       <div
         class="card-option"
@@ -141,6 +140,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 .card-checkbox {
   left: 0.5rem;
+  top: 0.25rem;
 }
 
 .card-option {

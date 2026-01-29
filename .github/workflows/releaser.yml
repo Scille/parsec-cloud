@@ -243,6 +243,9 @@ jobs:
             echo "| Linux (Snap)     | $(gen_mk_dl_link ".linux-gnu.x86_64.client.snap") |"
             echo "| WebApp           | $(gen_mk_dl_link ".webapp") |"
             echo
+            echo '> AppImage support is currently in alpha, you are likely to encounter crashes'
+            echo '> if your Linux distribution differs too much from Ubuntu 24.04.'
+            echo
             echo '## Server'
             echo
             echo '| Platform         | Download link |'

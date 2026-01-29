@@ -18,16 +18,14 @@
     @contextmenu="onOptionsClick"
   >
     <div class="user-selected">
-      <!-- eslint-disable vue/no-mutating-props -->
       <ms-checkbox
         :class="{ 'checkbox-mobile': isSmallDisplay }"
-        v-model="user.isSelected"
+        :checked="user.isSelected"
         v-show="user.isSelected || isHovered || showCheckbox"
         v-if="!user.isRevoked() && !user.isCurrent"
-        @click.stop
         @change="$emit('select', user, $event)"
+        @click.stop
       />
-      <!-- eslint-enable vue/no-mutating-props -->
     </div>
 
     <!-- user name -->
@@ -56,7 +54,7 @@
         :user-avatar="user.humanHandle.label"
         class="user-mobile-avatar"
         :class="{
-          'hide-avatar': showCheckbox && !user.isRevoked() && !user.isCurrent,
+          'hide-avatar': showCheckbox || isHovered,
           'disable-avatar': user.isRevoked() || user.isCurrent,
         }"
       />
@@ -211,7 +209,8 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 
   &__you {
-    color: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-text);
+    font-weight: 700;
   }
 }
 
@@ -223,6 +222,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   padding: 0.75rem 0.5rem;
 
   .user-mobile-avatar {
+    pointer-events: none;
     padding: 0.5rem;
 
     &.hide-avatar {

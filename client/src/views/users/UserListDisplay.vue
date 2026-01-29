@@ -49,9 +49,9 @@
       :class="{
         'current-user': user.isCurrent,
       }"
-      :show-checkbox="someSelected || selectionEnabled === true"
+      :show-checkbox="!user.isCurrent && !user.isRevoked() && (someSelected || selectionEnabled === true)"
       @menu-click="onMenuClick"
-      @select="$emit('checkboxClick')"
+      @select="onUserSelected"
     />
   </ion-list>
 </template>
@@ -84,6 +84,11 @@ const someSelected = computed(() => {
 
 async function onMenuClick(event: Event, user: UserModel, onFinished: () => void): Promise<void> {
   emits('menuClick', event, user, onFinished);
+}
+
+function onUserSelected(user: UserModel, selected: boolean): void {
+  user.isSelected = selected;
+  emits('checkboxClick');
 }
 </script>
 

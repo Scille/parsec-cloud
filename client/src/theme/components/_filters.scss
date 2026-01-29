@@ -32,15 +32,20 @@
   }
 
   &:has(.missing-filters) {
-    --background: var(--parsec-color-light-secondary-medium);
+    border-color: var(--parsec-color-light-primary-500);
+    color: var(--parsec-color-light-primary-500);
+
+    .filter-button__icon {
+      color: var(--parsec-color-light-primary-500);
+    }
   }
 }
 
 .missing-filters::after {
   content: '';
   position: absolute;
-  right: -11px;
-  top: -7px;
+  right: -13px;
+  top: -8px;
   width: 0.625rem;
   height: 0.625rem;
   background: var(--parsec-color-light-primary-500);
@@ -74,6 +79,15 @@
       width: 100%;
       justify-content: flex-end;
       border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    }
+
+    &__filter:has(.missing-filters) {
+      border: 1px solid var(--parsec-color-light-primary-500);
+      color: var(--parsec-color-light-primary-500);
+
+      .filter-button__icon {
+        color: var(--parsec-color-light-primary-500);
+      }
     }
   }
 

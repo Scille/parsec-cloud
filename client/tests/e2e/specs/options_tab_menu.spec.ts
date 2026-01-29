@@ -27,7 +27,7 @@ msTest('Files options tab menu display', async ({ documents }) => {
 
   // With 1 folder selected
   await entryFolder.hover();
-  await entryFolder.locator('ion-checkbox').click();
+  await entryFolder.locator('.ms-checkbox').check();
   await expect(optionsTab).toBeVisible();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'More']);
@@ -40,12 +40,12 @@ msTest('Files options tab menu display', async ({ documents }) => {
   await expect(optionsTabModal).not.toBeVisible();
 
   // With file + folder selected
-  await entryFile.locator('ion-checkbox').click();
+  await entryFile.locator('.ms-checkbox').check();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Copy', 'Move', 'Delete', 'Download']);
 
   // With 1 file selected
-  await entryFolder.locator('ion-checkbox').click();
+  await entryFolder.locator('.ms-checkbox').uncheck();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'More']);
   await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
@@ -78,7 +78,7 @@ msTest('Files options tab menu display with editics', async ({ parsecEditics }) 
 
   // With 1 folder selected
   await entryFolder.hover();
-  await entryFolder.locator('ion-checkbox').click();
+  await entryFolder.locator('.ms-checkbox').check();
   await expect(optionsTab).toBeVisible();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'More']);
@@ -91,12 +91,12 @@ msTest('Files options tab menu display with editics', async ({ parsecEditics }) 
   await expect(optionsTabModal).not.toBeVisible();
 
   // With file + folder selected
-  await entryFile.locator('ion-checkbox').click();
+  await entryFile.locator('.ms-checkbox').check();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Copy', 'Move', 'Delete', 'Download']);
 
   // With 1 file selected
-  await entryFolder.locator('ion-checkbox').click();
+  await entryFolder.locator('.ms-checkbox').uncheck();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'More']);
   await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
@@ -130,7 +130,7 @@ msTest('Files options tab menu display with editics on non-editable file', async
 
   // With 1 folder selected
   await entryFolder.hover();
-  await entryFolder.locator('ion-checkbox').click();
+  await entryFolder.locator('.ms-checkbox').check();
   await expect(optionsTab).toBeVisible();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'More']);
@@ -143,12 +143,12 @@ msTest('Files options tab menu display with editics on non-editable file', async
   await expect(optionsTabModal).not.toBeVisible();
 
   // With file + folder selected
-  await entryFile.locator('ion-checkbox').click();
+  await entryFile.locator('.ms-checkbox').check();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Copy', 'Move', 'Delete', 'Download']);
 
   // With 1 file selected
-  await entryFolder.locator('ion-checkbox').click();
+  await entryFolder.locator('.ms-checkbox').uncheck();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'More']);
   await optionsTab.locator('.tab-bar-menu-button').nth(3).click();
@@ -172,7 +172,6 @@ msTest('Files options tab menu display with editics on non-editable file', async
 msTest('Test files options tab menu', async ({ documents, context }) => {
   msTest.setTimeout(45_000);
 
-  await documents.locator('.header-label-name').click();
   await toggleViewMode(documents);
   await documents.setDisplaySize(DisplaySize.Small);
   await context.grantPermissions(['clipboard-write']);
@@ -181,7 +180,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
   const optionsTabModal = documents.locator('#tab-bar-options-modal');
   const entryFile = documents.locator('.folder-container').locator('.folder-grid-item').nth(1);
   await entryFile.hover();
-  await entryFile.locator('ion-checkbox').click();
+  await entryFile.locator('.ms-checkbox').check();
   await expect(optionsTab).toBeVisible();
   const tabItem = optionsTab.locator('.tab-bar-menu-button');
   await expect(tabItem).toHaveCount(4);
@@ -227,7 +226,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
 
   // `Copy` button
   await entryFile.hover();
-  await entryFile.locator('ion-checkbox').click();
+  await entryFile.locator('.ms-checkbox').check();
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
   await tabModalItem.nth(2).click();
@@ -259,7 +258,7 @@ msTest('Test files options tab menu', async ({ documents, context }) => {
 
   // `Details` button
   await entryFile.hover();
-  await entryFile.locator('ion-checkbox').click();
+  await entryFile.locator('.ms-checkbox').check();
   await tabItem.nth(3).click();
   await expect(optionsTabModal).toBeVisible();
   await tabModalItem.nth(5).click();
@@ -279,23 +278,23 @@ msTest('Users options tab menu display', async ({ usersPage }) => {
 
   // With 1 External selected
   await user2.hover();
-  await user2.locator('ion-checkbox').click();
+  await user2.locator('.ms-checkbox').check();
   await expect(optionsTab).toBeVisible();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(3);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Details', 'Roles', 'Revoke']);
 
   // With External + Standard selected
-  await user1.locator('ion-checkbox').click();
+  await user1.locator('.ms-checkbox').check();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(2);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Profile', 'Revoke']);
 
   // With 1 Standard selected
-  await user2.locator('ion-checkbox').click();
+  await user2.locator('.ms-checkbox').uncheck();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Details', 'Roles', 'Profile', 'Revoke']);
 
   // Nothing selected, menu goes away
-  await user1.locator('ion-checkbox').click();
+  await user1.locator('.ms-checkbox').uncheck();
   await expect(optionsTab).not.toBeVisible();
 });
 
@@ -304,7 +303,7 @@ msTest('Test user options tab menu', async ({ usersPage }) => {
   const optionsTab = usersPage.locator('#tab-bar-options');
   const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await user1.hover();
-  await user1.locator('ion-checkbox').click();
+  await user1.locator('.ms-checkbox').check();
   await expect(optionsTab).toBeVisible();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   const tabItem = optionsTab.locator('.tab-bar-menu-button');

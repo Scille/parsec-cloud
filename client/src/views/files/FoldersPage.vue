@@ -237,6 +237,7 @@ import {
 import { EntrySyncStatus, FileOperationCurrentFolder } from '@/components/files/types';
 import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
 import { WorkspaceRoleTag } from '@/components/workspaces';
+import { showWorkspace } from '@/components/workspaces/utils';
 import {
   ClientInfo,
   EntryName,
@@ -272,6 +273,7 @@ import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } fr
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import usePathOpener, { OpenPathOptions } from '@/services/pathOpener';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import {
   FileAction,
   FileDetailsModal,
@@ -290,6 +292,7 @@ import { arrowRedo, create, download, duplicate, eye, folderOpen, informationCir
 import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const customTabBar = useCustomTabBar();
+const workspaceAttributes = useWorkspaceAttributes();
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
@@ -1313,6 +1316,26 @@ async function openEntry(entryToOpen: EntryModel, options: OpenPathOptions): Pro
   const entry = entryToOpen as EntryStatFile;
   const workspaceHandle = workspaceInfo.value.handle;
 
+  if (workspaceAttributes.isHidden(workspaceInfo.value.id)) {
+    const answer = await askQuestion(
+      'WorkspacesPage.openInExplorerModal.file.title',
+      'WorkspacesPage.openInExplorerModal.file.description',
+      {
+        yesText: 'WorkspacesPage.openInExplorerModal.actionConfirm',
+        noText: 'WorkspacesPage.openInExplorerModal.actionCancel',
+      },
+    );
+    if (answer === Answer.No) {
+      return;
+    }
+
+    const result = await showWorkspace(workspaceInfo.value, workspaceAttributes, informationManager, eventDistributor);
+
+    if (!result) {
+      return;
+    }
+  }
+
   await pathOpener.openPath(workspaceHandle, entry.path, informationManager, options);
   selectionEnabled.value = false;
 }
@@ -1438,11 +1461,28 @@ async function seeInExplorer(entries: EntryModel[]): Promise<void> {
   if (entries.length > 1 || !workspaceInfo.value || !isDesktop()) {
     return;
   }
-  if (entries[0].isFile()) {
-    await pathOpener.showInExplorer(workspaceInfo.value.handle, entries[0].path, informationManager);
-  } else {
-    await pathOpener.openPath(workspaceInfo.value.handle, entries[0].path, informationManager, { skipViewers: true });
+  if (workspaceAttributes.isHidden(workspaceInfo.value.id)) {
+    const answer = await askQuestion(
+      'WorkspacesPage.openInExplorerModal.file.title',
+      'WorkspacesPage.openInExplorerModal.file.description',
+      {
+        yesText: 'WorkspacesPage.openInExplorerModal.actionConfirm',
+        noText: 'WorkspacesPage.openInExplorerModal.actionCancel',
+      },
+    );
+
+    if (answer === Answer.No) {
+      return;
+    }
+
+    const result = await showWorkspace(workspaceInfo.value, workspaceAttributes, informationManager, eventDistributor);
+
+    if (!result) {
+      return;
+    }
   }
+
+  await pathOpener.showInExplorer(workspaceInfo.value.handle, entries[0].path, informationManager);
 }
 
 async function onDropAsReader(): Promise<void> {

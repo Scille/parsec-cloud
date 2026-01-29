@@ -21,12 +21,13 @@ interface DetectedFileType {
 }
 
 const IMAGES = ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif'];
-const SPREADSHEETS = ['xlsx', 'xls'];
-const DOCUMENTS = ['docx'];
+const SPREADSHEETS = ['xlsx', 'xls', 'ods'];
+const DOCUMENTS = ['docx', 'odt'];
 const PDF_DOCUMENTS = ['pdf'];
 const AUDIOS = ['wav', 'mp3', 'ogg'];
 const VIDEOS = ['mp4', 'mpeg', 'webm'];
-const PRESENTATIONS = ['pptx'];
+// TODO: enable ODP when supported: https://github.com/Scille/parsec-cloud/issues/12110
+const PRESENTATIONS = ['pptx']; // , 'odp'];
 
 // For generic text/plain
 const TEXTS = [

@@ -75,6 +75,9 @@ class AsyncEnrollmentIdentitySystem(Variant):
         x509_root_certificate_common_name: str
         x509_root_certificate_subject: bytes
 
+    class PKICorrupted:
+        reason: str
+
     OpenBao = VariantItemUnit()
 
 
