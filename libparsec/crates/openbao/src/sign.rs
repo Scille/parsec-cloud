@@ -297,7 +297,7 @@ pub async fn do_verify(
     Ok(())
 }
 
-pub async fn do_check_author(
+async fn do_check_author(
     cmds: &OpenBaoCmds,
     author_openbao_entity_id: &str,
     expected_author: &EmailAddress,
@@ -314,9 +314,18 @@ pub async fn do_check_author(
             }
         })?;
 
+    if allowed_emails.is_empty() {
+        return Err(OpenBaoVerifyError::AuthorOpenBaoEntityHasNoEmail {
+            openbao_entity_id: author_openbao_entity_id.to_owned(),
+        });
+    }
+
     let expected_author = expected_author.to_string();
     if !allowed_emails.contains(&expected_author) {
-        return Err(OpenBaoVerifyError::UnexpectedAuthor);
+        return Err(OpenBaoVerifyError::UnexpectedAuthor {
+            expected: expected_author,
+            got: allowed_emails[0].to_owned(),
+        });
     }
 
     Ok(())
