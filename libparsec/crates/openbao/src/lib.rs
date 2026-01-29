@@ -88,7 +88,7 @@ impl OpenBaoCmds {
     }
 
     /// This signing system relies on the fact OpenBao is configured to only
-    /// allow POST `/transit/sign/user-{entity_id}` (i.e. the signing API) to
+    /// allow POST `/transit/sign/entity-{entity_id}` (i.e. the signing API) to
     /// the user referenced in OpenBao by this entity ID.
     ///
     /// This way the verify operation knows the entity ID of the author, and can

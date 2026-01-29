@@ -13,7 +13,7 @@ enum SignOutcome {
 }
 
 fn generate_sign_key_name(openbao_entity_id: &str) -> String {
-    format!("user-{}", openbao_entity_id)
+    format!("entity-{}", openbao_entity_id)
 }
 
 pub async fn sign(cmds: &OpenBaoCmds, payload: &[u8]) -> Result<String, OpenBaoSignError> {

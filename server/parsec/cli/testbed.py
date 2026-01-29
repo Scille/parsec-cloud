@@ -530,7 +530,7 @@ async def test_openbao_create_key(request: Request, key_name: str):
     if not entity_id:
         return Response(status_code=403)
 
-    if key_name != f"user-{entity_id}":
+    if key_name != f"entity-{entity_id}":
         return Response(status_code=403)
 
     # See https://openbao.org/api-docs/secret/transit/#create-key
@@ -592,7 +592,7 @@ async def test_openbao_sign(request: Request, key_name: str):
     if not entity_id:
         return Response(status_code=403)
 
-    if key_name != f"user-{entity_id}":
+    if key_name != f"entity-{entity_id}":
         return Response(status_code=403)
 
     # See https://openbao.org/api-docs/secret/transit/#sign-data
@@ -640,7 +640,7 @@ async def test_openbao_verify(request: Request, key_name: str):
     if not entity_id:
         return Response(status_code=403)
 
-    author_entity_id = key_name.removeprefix("user-")
+    author_entity_id = key_name.removeprefix("entity-")
 
     # See https://openbao.org/api-docs/secret/transit/#verify-signed-data
 
