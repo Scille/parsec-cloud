@@ -3,10 +3,13 @@
 use keyring::Entry as KeyringEntry;
 use libparsec_platform_async::future::FutureExt as _;
 use libparsec_platform_filesystem::save_content;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
-use crate::{encrypt_device, LoadCiphertextKeyError, LoadDeviceError, SaveDeviceError};
+use crate::{
+    encrypt_device, LoadCiphertextKeyError, LoadDeviceError, SaveDeviceError,
+    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
+};
 use libparsec_platform_pki::{decrypt_message, encrypt_message};
 use libparsec_types::prelude::*;
 
@@ -123,10 +126,6 @@ pub(crate) async fn save_device_pki(
     Ok(())
 }
 
-/*
- * Save & load
- */
-
 async fn generate_keyring_user(
     keyring_user_path: &Path,
 ) -> Result<(SecretKey, String), SaveDeviceError> {
@@ -221,4 +220,37 @@ pub(super) async fn load_ciphertext_key_pki(
     } else {
         Err(LoadCiphertextKeyError::InvalidData)
     }
+}
+
+pub(super) fn get_default_data_base_dir() -> PathBuf {
+    let mut path = if let Ok(data_dir) = std::env::var(PARSEC_BASE_DATA_DIR) {
+        PathBuf::from(data_dir)
+    } else {
+        dirs::data_dir().expect("Could not determine base data directory")
+    };
+
+    path.push("parsec3");
+    path
+}
+
+pub(super) fn get_default_config_dir() -> PathBuf {
+    let mut path = if let Ok(config_dir) = std::env::var(PARSEC_BASE_CONFIG_DIR) {
+        PathBuf::from(config_dir)
+    } else {
+        dirs::config_dir().expect("Could not determine base config directory")
+    };
+
+    path.push("parsec3/libparsec");
+    path
+}
+
+pub(super) fn get_default_mountpoint_base_dir() -> PathBuf {
+    let mut path = if let Ok(home_dir) = std::env::var(PARSEC_BASE_HOME_DIR) {
+        PathBuf::from(home_dir)
+    } else {
+        dirs::home_dir().expect("Could not determine home directory")
+    };
+
+    path.push("Parsec3");
+    path
 }

@@ -2,7 +2,7 @@
 
 use crate::{LoadCiphertextKeyError, SaveDeviceError};
 use libparsec_types::prelude::*;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub(crate) async fn save_device_keyring(
     _: &LocalDevice,
@@ -38,5 +38,17 @@ pub(super) async fn load_ciphertext_key_pki(
 }
 
 pub(super) fn is_keyring_available() -> bool {
-    panic!("Keyring not supported on Web")
+    false
+}
+
+pub(super) fn get_default_data_base_dir() -> PathBuf {
+    PathBuf::from("/")
+}
+
+pub(super) fn get_default_config_dir() -> PathBuf {
+    PathBuf::from("/")
+}
+
+pub(super) fn get_default_mountpoint_base_dir() -> PathBuf {
+    PathBuf::from("/")
 }
