@@ -33,6 +33,8 @@ use zeroize::Zeroizing;
 
 use libparsec_types::prelude::*;
 
+const LOCAL_PENDING_EXT: &str = "pending";
+
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 pub(crate) const ARCHIVE_DEVICE_EXT: &str = "archived";
 pub(crate) const PENDING_ASYNC_ENROLLMENT_EXT: &str = "pending";
@@ -73,57 +75,15 @@ enum LoadCiphertextKeyError {
 }
 
 pub fn get_default_data_base_dir() -> PathBuf {
-    #[cfg(target_arch = "wasm32")]
-    {
-        PathBuf::from("/")
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut path = if let Ok(data_dir) = std::env::var(PARSEC_BASE_DATA_DIR) {
-            PathBuf::from(data_dir)
-        } else {
-            dirs::data_dir().expect("Could not determine base data directory")
-        };
-
-        path.push("parsec3");
-        path
-    }
+    platform::get_default_data_base_dir()
 }
 
 pub fn get_default_config_dir() -> PathBuf {
-    #[cfg(target_arch = "wasm32")]
-    {
-        PathBuf::from("/")
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut path = if let Ok(config_dir) = std::env::var(PARSEC_BASE_CONFIG_DIR) {
-            PathBuf::from(config_dir)
-        } else {
-            dirs::config_dir().expect("Could not determine base config directory")
-        };
-
-        path.push("parsec3/libparsec");
-        path
-    }
+    platform::get_default_config_dir()
 }
 
 pub fn get_default_mountpoint_base_dir() -> PathBuf {
-    #[cfg(target_arch = "wasm32")]
-    {
-        PathBuf::from("/")
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut path = if let Ok(home_dir) = std::env::var(PARSEC_BASE_HOME_DIR) {
-            PathBuf::from(home_dir)
-        } else {
-            dirs::home_dir().expect("Could not determine home directory")
-        };
-
-        path.push("Parsec3");
-        path
-    }
+    platform::get_default_mountpoint_base_dir()
 }
 
 fn get_devices_dir(config_dir: &Path) -> PathBuf {
@@ -136,9 +96,7 @@ fn get_devices_dir(config_dir: &Path) -> PathBuf {
 /// Here, we simply use the device ID (as it is a UUID) to avoid name collision.
 pub fn get_default_key_file(config_dir: &Path, device_id: DeviceID) -> PathBuf {
     let mut device_path = get_devices_dir(config_dir);
-
     device_path.push(format!("{}.{DEVICE_FILE_EXT}", device_id.hex()));
-
     device_path
 }
 
@@ -147,13 +105,9 @@ pub fn get_default_local_pending_file(
     enrollment_id: PKIEnrollmentID,
 ) -> PathBuf {
     let mut local_pending_path = get_local_pending_dir(config_dir);
-
     local_pending_path.push(format!("{}.{LOCAL_PENDING_EXT}", enrollment_id.hex()));
-
     local_pending_path
 }
-
-const LOCAL_PENDING_EXT: &str = "pending";
 
 fn get_local_pending_dir(config_dir: &Path) -> PathBuf {
     config_dir.join("pending_requests")
