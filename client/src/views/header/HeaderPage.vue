@@ -91,6 +91,7 @@
             <ion-button
               slot="icon-only"
               class="topbar-right-buttons__item"
+              id="trigger-contextual-menu-button"
               @click="openContextualMenu($event)"
               ref="contextualMenuButton"
               v-if="!currentRouteIs(Routes.Workspaces) && isSmallDisplay"

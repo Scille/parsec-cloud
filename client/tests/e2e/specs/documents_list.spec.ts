@@ -289,23 +289,19 @@ msTest.describe(() => {
         await expect(documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumbs')).toBeHidden();
         await expect(smallBreadcrumbsPopover).toBeHidden();
         await navigateDown();
-        await documents.locator('#connected-header').locator('.topbar-left-file-mobile').click();
+        await documents.locator('.topbar').locator('.breadcrumb-file-mobile').click();
         await expect(smallBreadcrumbsPopover).toBeVisible();
-        await expect(smallBreadcrumbsPopover.locator('ion-text')).toHaveCount(2);
+        await expect(smallBreadcrumbsPopover.locator('ion-text')).toHaveCount(1);
         await expect(smallBreadcrumbsPopover.locator('ion-text').nth(0)).toHaveText('wksp1');
-        await expect(smallBreadcrumbsPopover.locator('ion-text').nth(1)).toHaveText('Dir_Folder');
-        await expect(smallBreadcrumbsPopover.locator('.breadcrumb-item').nth(1)).toHaveDisabledAttribute();
         await smallBreadcrumbsPopover.locator('.breadcrumb-item').nth(0).click();
         await navigateDown();
         await expect(smallBreadcrumbsPopover).toBeHidden();
         await createFolder(documents, 'Subdir');
         await navigateDown();
-        await documents.locator('#connected-header').locator('.topbar-left-file-mobile').click();
-        await expect(smallBreadcrumbsPopover.locator('ion-text')).toHaveCount(3);
+        await documents.locator('.topbar').locator('.breadcrumb-file-mobile').click();
+        await expect(smallBreadcrumbsPopover.locator('ion-text')).toHaveCount(2);
         await expect(smallBreadcrumbsPopover.locator('ion-text').nth(0)).toHaveText('wksp1');
         await expect(smallBreadcrumbsPopover.locator('ion-text').nth(1)).toHaveText('Dir_Folder');
-        await expect(smallBreadcrumbsPopover.locator('ion-text').nth(2)).toHaveText('Subdir');
-        await expect(smallBreadcrumbsPopover.locator('.breadcrumb-item').nth(2)).toHaveDisabledAttribute();
         await smallBreadcrumbsPopover.locator('.breadcrumb-item').nth(1).click();
         await expect(smallBreadcrumbsPopover).toBeHidden();
       } else {

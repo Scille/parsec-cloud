@@ -2,22 +2,20 @@
 
 <template>
   <div class="small-display-selection-header">
-    <div class="selection-header-buttons">
-      <ion-text
-        v-if="someSelected"
-        class="button-medium title__button title__button-left"
-        @click="$emit('unselect', $event)"
-      >
-        {{ $msTranslate('FoldersPage.actions.unselect') }}
-      </ion-text>
-      <ion-text
-        v-else
-        class="button-medium title__button title__button-left"
-        @click="$emit('select', $event)"
-      >
-        {{ $msTranslate('FoldersPage.actions.select') }}
-      </ion-text>
-    </div>
+    <ion-text
+      v-if="someSelected"
+      class="button-medium title__button title__button-left"
+      @click="$emit('unselect', $event)"
+    >
+      {{ $msTranslate('FoldersPage.actions.unselect') }}
+    </ion-text>
+    <ion-text
+      v-else
+      class="button-medium title__button title__button-left"
+      @click="$emit('select', $event)"
+    >
+      {{ $msTranslate('FoldersPage.actions.select') }}
+    </ion-text>
     <ion-text class="title__text title-h3">
       <span class="title__text--content">{{ $msTranslate(props.title) }}</span>
     </ion-text>
@@ -57,11 +55,6 @@ defineEmits<{
   gap: 0.5rem;
   background: var(--parsec-color-light-secondary-background);
   padding: 1.5rem 1rem;
-}
-
-.selection-header-buttons {
-  display: flex;
-  gap: 0.5rem;
 }
 
 .title__text {

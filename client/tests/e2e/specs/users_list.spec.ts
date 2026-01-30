@@ -742,12 +742,13 @@ msTest('Small display external context menu', async ({ usersPage }) => {
 msTest('Small display multiple users context menu', async ({ usersPage }) => {
   await usersPage.setDisplaySize(DisplaySize.Small);
   const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
-  const headerOption = usersPage.locator('.small-display-selection-header').locator('ion-icon');
   const modal = usersPage.locator('.user-context-sheet-modal');
-  await headerOption.click();
 
-  await expect(modal).toBeVisible();
-  await modal.locator('.button-right').click();
+  await user1.hover();
+  await user1.locator('.ms-checkbox').click();
+  const headerOption = usersPage.locator('.small-display-selection-header').locator('.button-medium');
+  await headerOption.nth(0).click();
+  await headerOption.nth(0).click();
 
   await user1.locator('.user-options').click();
   await expect(modal.getByRole('group')).toHaveCount(1);
