@@ -29,21 +29,17 @@
       </ion-breadcrumb>
     </ion-breadcrumbs>
     <div
-      v-if="isSmallDisplay && props.pathNodes.length > 1"
-      class="breadcrumb-small-container"
+      v-if="isSmallDisplay && props.pathNodes.length > 0"
+      class="breadcrumb-file-mobile"
+      :class="{ is_browsing: props.pathNodes.length > 1 }"
+      @click="props.pathNodes.length > 1 ? openPopover($event) : null"
     >
-      <div
-        class="breadcrumb-file-mobile"
-        :class="{ is_browsing: props.pathNodes.length > 2 }"
-        @click="props.pathNodes.length > 2 ? openPopover($event) : null"
-      >
-        <ion-text class="breadcrumb-file-mobile__title title-h2">{{ currentFolderName }}</ion-text>
-        <ion-icon
-          v-if="props.pathNodes.length > 2"
-          class="breadcrumb-file-mobile__icon"
-          :icon="chevronDown"
-        />
-      </div>
+      <ion-text class="breadcrumb-file-mobile__title title-h3">{{ currentFolderName }}</ion-text>
+      <ion-icon
+        v-if="props.pathNodes.length > 1"
+        class="breadcrumb-file-mobile__icon"
+        :icon="chevronDown"
+      />
     </div>
   </div>
 </template>
@@ -125,7 +121,7 @@ const currentFolderName = computed(() => {
     return '';
   }
 
-  if (props.pathNodes.length === 2) {
+  if (props.pathNodes.length === 1) {
     return props.workspaceName;
   }
 
@@ -203,6 +199,12 @@ function navigateTo(path: RouterPathNode): void {
   display: flex;
   align-items: center;
   width: 100%;
+
+  @include ms.responsive-breakpoint('sm') {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
 }
 
 .breadcrumb {
@@ -285,11 +287,13 @@ function navigateTo(path: RouterPathNode): void {
 .breadcrumb-file-mobile {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.825rem;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--parsec-radius-8);
   overflow: hidden;
   width: fit-content;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 
   * {
     transition: all 0.15s ease-in-out;

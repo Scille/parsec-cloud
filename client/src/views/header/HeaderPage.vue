@@ -54,7 +54,7 @@
 
           <div
             class="topbar-left__breadcrumb"
-            v-if="currentRouteIsFileRoute()"
+            v-if="currentRouteIsFileRoute() && isLargeDisplay"
           >
             <header-breadcrumbs
               :workspace-name="workspaceName"
@@ -137,7 +137,12 @@
         </ion-buttons>
       </ion-toolbar>
       <div
-        v-if="isSmallDisplay && securityWarningsCount > 0 && securityWarnings && !currentRouteIs(Routes.Invitations)"
+        v-if="isSmallDisplay &&
+          securityWarningsCount > 0 &&
+          securityWarnings &&
+          !currentRouteIs(Routes.Invitations) &&
+          !currentRouteIs(Routes.History)
+        "
         id="trigger-checklist-button"
         class="checklist-security-container"
         @click="openSecurityWarningsModal()"
@@ -537,7 +542,12 @@ async function openSecurityWarningsModal(): Promise<void> {
     @include ms.responsive-breakpoint('sm') {
       contain: none;
       overflow: visible;
+      gap: 0.5rem;
     }
+  }
+
+  &::part(content) {
+    overflow: hidden;
   }
 
   @include ms.responsive-breakpoint('sm') {
@@ -564,6 +574,7 @@ async function openSecurityWarningsModal(): Promise<void> {
   margin-right: 0.5rem;
 
   @include ms.responsive-breakpoint('sm') {
+    margin-right: 0 !important;
     gap: 0.5rem;
   }
 
@@ -603,6 +614,9 @@ async function openSecurityWarningsModal(): Promise<void> {
 
   &__breadcrumb {
     display: flex;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 }
 
