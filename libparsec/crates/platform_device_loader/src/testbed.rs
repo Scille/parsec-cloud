@@ -12,10 +12,11 @@ use libparsec_testbed::{
 use libparsec_types::prelude::*;
 
 use crate::{
-    ArchiveDeviceError, AvailableDevice, AvailableDeviceType, AvailablePendingAsyncEnrollment,
-    DeviceAccessStrategy, DeviceSaveStrategy, ListPendingAsyncEnrollmentsError, LoadDeviceError,
-    LoadPendingAsyncEnrollmentError, RemoveDeviceError, RemovePendingAsyncEnrollmentError,
-    SaveAsyncEnrollmentLocalPendingError, SaveDeviceError, UpdateDeviceError,
+    device::ArchiveDeviceError, AvailableDevice, AvailableDeviceType,
+    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
+    ListPendingAsyncEnrollmentsError, LoadDeviceError, LoadPendingAsyncEnrollmentError,
+    RemoveDeviceError, RemovePendingAsyncEnrollmentError, SaveAsyncEnrollmentLocalPendingError,
+    SaveDeviceError, UpdateDeviceError,
 };
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
