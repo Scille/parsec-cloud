@@ -41,6 +41,7 @@ describe('Header breadcrumbs', () => {
     ];
     const wrapper = mount(HeaderBreadcrumbs, {
       props: {
+        workspaceName: 'My Workspace',
         pathNodes: NODES,
       },
       global: {

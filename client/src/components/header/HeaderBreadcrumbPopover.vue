@@ -4,16 +4,19 @@
   <ion-content class="popover">
     <ion-list>
       <ion-item
-        class="popover-item ion-no-padding"
         v-for="(breadcrumb, index) in filteredBreadcrumbs"
+        class="breadcrumb-item ion-no-padding"
+        :class="{ 'breadcrumb-item--disabled': isCurrentPath(breadcrumb) }"
+        :disabled="isCurrentPath(breadcrumb)"
         :key="index"
         @click="onClick(breadcrumb)"
       >
         <ion-icon
+          v-if="!isCurrentPath(breadcrumb)"
           :icon="breadcrumb.popoverIcon ? breadcrumb.popoverIcon : returnDownForward"
-          class="popover-item__icon"
+          class="breadcrumb-item__icon"
         />
-        <ion-text class="button-medium">{{ breadcrumb.display }}</ion-text>
+        <ion-text class="breadcrumb-item__text button-medium">{{ breadcrumb.display }}</ion-text>
       </ion-item>
     </ion-list>
   </ion-content>
@@ -26,6 +29,7 @@ import { returnDownForward } from 'ionicons/icons';
 
 const props = defineProps<{
   breadcrumbs: RouterPathNode[];
+  currentPath?: RouterPathNode;
 }>();
 
 const filteredBreadcrumbs = props.breadcrumbs.filter((breadcrumb) => breadcrumb.display !== undefined);
@@ -33,10 +37,14 @@ const filteredBreadcrumbs = props.breadcrumbs.filter((breadcrumb) => breadcrumb.
 async function onClick(breadcrumb: RouterPathNode): Promise<void> {
   await popoverController.dismiss({ breadcrumb: breadcrumb });
 }
+
+function isCurrentPath(breadcrumb: RouterPathNode): boolean {
+  return props.currentPath?.id === breadcrumb.id; // ← Compare par ID
+}
 </script>
 
 <style scoped lang="scss">
-.popover {
+.breadcrumb {
   &-item {
     color: var(--parsec-color-light-secondary-soft-text);
     --background: none;
@@ -50,7 +58,7 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
       background: var(--parsec-color-light-secondary-background);
     }
 
-    ion-text {
+    &__text {
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
@@ -60,6 +68,16 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
       font-size: 1rem;
       color: var(--parsec-color-light-secondary-grey);
       margin-right: 0.625rem;
+    }
+
+    &--disabled {
+      pointer-events: none;
+      color: var(--parsec-color-light-secondary-text);
+      opacity: 0.5;
+
+      & .breadcrumb-item__icon {
+        color: var(--parsec-color-light-secondary-text);
+      }
     }
   }
 }

@@ -1094,7 +1094,7 @@
         "noRecentDocuments": "No recent documents",
         "back": "Back",
         "checklist": {
-            "title": "Security checklist",
+            "title": "Security recommendations",
             "description": "To reduce the risk of data loss, we strongly recommend that you take the following actions.",
             "remaining": "1 remaining task | {count} remaining tasks",
             "open": "Open",

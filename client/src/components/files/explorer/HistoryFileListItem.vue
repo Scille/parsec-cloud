@@ -100,6 +100,7 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .file-selected {
   flex-shrink: 0;
+  overflow: visible;
   width: 2.5rem;
 
   @include ms.responsive-breakpoint('sm') {

@@ -20,11 +20,11 @@
       class="navigation"
       ref="navigation"
     >
-      <div ref="buttons">
-        <div
-          class="navigation-buttons"
-          v-if="isLargeDisplay"
-        >
+      <div
+        v-if="isLargeDisplay"
+        ref="buttons"
+      >
+        <div class="navigation-buttons">
           <ion-button
             fill="clear"
             @click="back()"
@@ -46,12 +46,14 @@
         </div>
       </div>
       <header-breadcrumbs
+        v-if="workspaceInfo"
         :path-nodes="headerPath"
         @change="onPathChange"
         class="navigation-breadcrumb"
         :items-before-collapse="1"
         :items-after-collapse="2"
         :available-width="breadcrumbsWidth"
+        :workspace-name="workspaceInfo.currentName"
       />
     </div>
     <ion-list class="folder-list">

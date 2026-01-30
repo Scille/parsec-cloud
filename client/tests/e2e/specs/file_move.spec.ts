@@ -110,14 +110,14 @@ msTest.describe(() => {
       if (gridMode) {
         await expect(entries).toHaveCount(1);
         await expect(entries.nth(0).locator('.file-card__title')).toHaveText('Dir_Folder');
+        await entries.nth(0).locator('.file-card__title').click();
       } else {
         await expect(entries).toHaveCount(1);
         await expect(entries.nth(0).locator('.label-name')).toHaveText('Dir_Folder');
+        await entries.nth(0).locator('.label-name').click();
       }
       // But in the folder
-      await entries.nth(0).dblclick();
 
-      await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder'], true, true);
       await expect(entries).toHaveCount(1);
 
       if (gridMode) {

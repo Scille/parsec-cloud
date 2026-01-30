@@ -273,7 +273,7 @@ msTest.describe(() => {
 
     msTest(`Header breadcrumbs ${displaySize} display`, async ({ documents }, testInfo: TestInfo) => {
       async function navigateDown(): Promise<void> {
-        await documents.locator('.folder-container').getByRole('listitem').nth(0).dblclick();
+        await documents.locator('.folder-container').getByRole('listitem').nth(0).locator('.label-name').click();
       }
 
       async function clickOnBreadcrumb(i: number): Promise<void> {
@@ -284,38 +284,26 @@ msTest.describe(() => {
 
       if (displaySize === DisplaySize.Small) {
         await documents.setDisplaySize(DisplaySize.Small);
-        const smallBreadcrumbs = documents.locator('#connected-header').locator('.topbar-left').locator('.breadcrumb-small-container');
+        const smallBreadcrumbsPopover = documents.locator('.breadcrumbs-popover');
 
-        await expect(documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumbs')).not.toBeVisible();
-        await expect(smallBreadcrumbs).not.toBeVisible();
+        await expect(documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumbs')).toBeHidden();
+        await expect(smallBreadcrumbsPopover).toBeHidden();
         await navigateDown();
-        await expect(smallBreadcrumbs).toBeVisible();
-        await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(2);
-        await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('wksp1');
-        await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
-        await expect(smallBreadcrumbs.locator('.breadcrumb-popover-button')).toBeVisible();
+        await documents.locator('.topbar').locator('.breadcrumb-file-mobile').click();
+        await expect(smallBreadcrumbsPopover).toBeVisible();
+        await expect(smallBreadcrumbsPopover.locator('ion-text')).toHaveCount(1);
+        await expect(smallBreadcrumbsPopover.locator('ion-text').nth(0)).toHaveText('wksp1');
+        await smallBreadcrumbsPopover.locator('.breadcrumb-item').nth(0).click();
+        await navigateDown();
+        await expect(smallBreadcrumbsPopover).toBeHidden();
         await createFolder(documents, 'Subdir');
         await navigateDown();
-        await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(4);
-        await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('...');
-        await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
-        await expect(smallBreadcrumbs.locator('ion-text').nth(2)).toHaveText('Dir_Folder');
-        await expect(smallBreadcrumbs.locator('ion-text').nth(3)).toHaveText('/');
-        await smallBreadcrumbs.locator('.breadcrumb-popover-button').click();
-
-        const popoverItems = documents.locator('ion-popover').locator('.popover-item');
-        await expect(popoverItems).toHaveCount(2);
-        await expect(popoverItems.nth(0)).toHaveText('wksp1');
-        await expect(popoverItems.nth(1)).toHaveText('Dir_Folder');
-        await popoverItems.nth(1).click();
-        await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(2);
-        await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('wksp1');
-        await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
-        await smallBreadcrumbs.locator('.breadcrumb-popover-button').click();
-        await expect(popoverItems).toHaveCount(1);
-        await expect(popoverItems).toHaveText('wksp1');
-        await popoverItems.click();
-        await expect(smallBreadcrumbs).not.toBeVisible();
+        await documents.locator('.topbar').locator('.breadcrumb-file-mobile').click();
+        await expect(smallBreadcrumbsPopover.locator('ion-text')).toHaveCount(2);
+        await expect(smallBreadcrumbsPopover.locator('ion-text').nth(0)).toHaveText('wksp1');
+        await expect(smallBreadcrumbsPopover.locator('ion-text').nth(1)).toHaveText('Dir_Folder');
+        await smallBreadcrumbsPopover.locator('.breadcrumb-item').nth(1).click();
+        await expect(smallBreadcrumbsPopover).toBeHidden();
       } else {
         await expect(documents).toHaveHeader(['wksp1'], true, true);
         await navigateDown();
@@ -330,7 +318,7 @@ msTest.describe(() => {
         await navigateDown();
         await expect(documents).toHaveHeader(['wksp1', '', '', '', 'Subdir 3'], true, true);
         await clickOnBreadcrumb(2);
-        const popoverItems = documents.locator('ion-popover').locator('.popover-item');
+        const popoverItems = documents.locator('ion-popover').locator('.breadcrumb-item');
         await expect(popoverItems).toHaveCount(3);
         await popoverItems.nth(2).click();
         await expect(documents).toHaveHeader(['wksp1', '', '', 'Subdir 2'], true, true);

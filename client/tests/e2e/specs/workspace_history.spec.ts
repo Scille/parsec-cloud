@@ -141,7 +141,7 @@ msTest.describe(() => {
     await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
     await expect(documents).toBeWorkspacePage();
     await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
-    await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
+    await documents.locator('.workspace-card-item').locator('.icon-option-container').click();
     const contextMenu = documents.locator('.workspace-context-menu');
     await expect(contextMenu).toBeVisible();
     await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
@@ -156,7 +156,7 @@ msTest.describe(() => {
     await navigateDown();
     await headerContentMatch(['wksp1', '', '', '', 'Subdir 3']);
 
-    const popoverItems = documents.locator('.breadcrumbs-popover').locator('.popover-item');
+    const popoverItems = documents.locator('.breadcrumbs-popover').locator('.breadcrumb-item');
     await clickOnBreadcrumb(1);
     await expect(popoverItems).toHaveCount(3);
     await popoverItems.nth(2).click();
@@ -173,7 +173,7 @@ msTest.describe(() => {
     await expect(documents.locator('.history-container').locator('.navigation-breadcrumb').locator('ion-breadcrumbs')).not.toBeVisible();
     await expect(smallBreadcrumbsButton).toBeHidden();
     await expect(documents.locator('.topbar-left-text__workspace')).toHaveText('wksp1');
-    const currentFolder = documents.locator('.history-container').locator('.current-folder__text');
+    const currentFolder = documents.locator('.history-container').locator('.breadcrumb-file-mobile__title');
     await navigateDown();
     await expect(currentFolder).toHaveText('Dir_Folder');
     await expect(currentFolder).toBeVisible();
