@@ -24,7 +24,7 @@
       @mouseleave="isHovered = false"
       @contextmenu="onOptionsClick"
     >
-      <div class="list-item-container">
+      <div class="list-item-container file-list-item-container">
         <div
           class="file-selected"
           v-if="isLargeDisplay || entry.isSelected || showCheckbox"
@@ -50,8 +50,9 @@
           <div class="file-mobile-text">
             <ion-text
               class="label-name cell"
+              :class="{ selection: showCheckbox }"
               :title="entry.name"
-              @click="!($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
+              @click="showCheckbox ? null : !($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
               @dblclick.stop
             >
               {{ entry.name }}
@@ -210,7 +211,7 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
   .label-name {
     color: var(--parsec-color-light-secondary-text);
 
-    &:hover {
+    &:not(.selection):hover {
       text-decoration: underline;
       cursor: pointer !important;
     }

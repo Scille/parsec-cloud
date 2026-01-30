@@ -46,9 +46,6 @@
       :key="user.id"
       :user="user"
       :disabled="user.isCurrent"
-      :class="{
-        'current-user': user.isCurrent,
-      }"
       :show-checkbox="!user.isCurrent && !user.isRevoked() && (someSelected || selectionEnabled === true)"
       @menu-click="onMenuClick"
       @select="onUserSelected"

@@ -337,6 +337,20 @@
     bottom: 0.25rem !important;
     background: hsla(214, 100%, 60%, 0.3);
   }
+
+  .file-list-item.file-hovered,
+  .file-card-item.file-hovered {
+    .file-list-item-container:has(.label-name:not(.selection):hover) .ms-checkbox,
+    .drop-zone:has(.file-card__title:not(.selection):hover) .ms-checkbox {
+      outline: none;
+    }
+  }
+
+  .history-file-list-item {
+    .list-item-container:has(.label-name:not(.selection):hover) .ms-checkbox {
+      outline: none;
+    }
+  }
 }
 
 // ------- Users only -------

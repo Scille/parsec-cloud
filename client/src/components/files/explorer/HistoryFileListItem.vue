@@ -7,9 +7,11 @@
     :detail="false"
     :class="{
       selected: entry.isSelected,
-      'file-hovered': !entry.isSelected && (menuOpened || isHovered),
+      'file-hovered': !entry.isSelected && isHovered,
+      'is-folder': !entry.isFile(),
     }"
-    class="file-list-item"
+    class="file-list-item history-file-list-item"
+    @click.stop="onSelectEntry(entry, !entry.isSelected)"
     @dblclick="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -33,7 +35,11 @@
           :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
           class="file-icon"
         />
-        <ion-label class="label-name cell">
+        <ion-label
+          class="label-name cell"
+          :class="{ selection: showCheckbox }"
+          @click.stop="showCheckbox ? onSelectEntry(entry, !entry.isSelected) : $emit('click', $event, entry)"
+        >
           {{ entry.name }}
         </ion-label>
       </div>
@@ -69,14 +75,18 @@ import { Folder, MsCheckbox, MsImage, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
 const isHovered = ref(false);
-const menuOpened = ref(false);
 
 const props = defineProps<{
   entry: WorkspaceHistoryEntryModel;
   showCheckbox: boolean;
 }>();
 
-defineEmits<{
+async function onSelectEntry(entry: WorkspaceHistoryEntryModel, checked: boolean): Promise<void> {
+  emit('selectedChange', entry, checked);
+  entry.isSelected = checked;
+}
+
+const emit = defineEmits<{
   (e: 'click', event: Event, entry: WorkspaceHistoryEntryModel): void;
   (e: 'selectedChange', entry: WorkspaceHistoryEntryModel, checked: boolean): void;
 }>();
@@ -126,10 +136,10 @@ onMounted(async () => {
 
   .label-name {
     color: var(--parsec-color-light-secondary-text);
-    margin-left: 1em;
 
-    @include ms.responsive-breakpoint('sm') {
-      margin-left: 0;
+    &:not(.selection):hover {
+      cursor: pointer;
+      text-decoration: underline;
     }
   }
 }

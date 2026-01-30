@@ -9,10 +9,11 @@
     :class="{
       selected: user.isSelected && !user.isRevoked(),
       revoked: user.isRevoked(),
+      'current-user': user.isCurrent,
       'no-padding-end': !user.isSelected,
       'user-hovered': !user.isSelected && (menuOpened || isHovered),
     }"
-    @click="$emit('click', $event, user)"
+    @click="$emit('select', user, !user.isSelected)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
@@ -25,6 +26,11 @@
         v-if="!user.isRevoked() && !user.isCurrent"
         @change="$emit('select', user, $event)"
         @click.stop
+      />
+      <ms-image
+        v-if="user.isCurrent"
+        :image="LockClosedIcon"
+        class="lock-icon"
       />
     </div>
 
@@ -97,7 +103,7 @@
       <ion-text
         class="user-email__label cell"
         :title="user.humanHandle.email"
-        @click="onCopyEmailClicked(user.humanHandle.email)"
+        @click.stop="onCopyEmailClicked(user.humanHandle.email)"
       >
         {{ user.humanHandle.email }}
         <ion-icon
@@ -155,7 +161,7 @@ import { UserModel } from '@/components/users/types';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { checkmark, copy, ellipsisHorizontal } from 'ionicons/icons';
-import { formatTimeSince, MsCheckbox, useWindowSize } from 'megashark-lib';
+import { formatTimeSince, LockClosedIcon, MsCheckbox, MsImage, useWindowSize } from 'megashark-lib';
 import { inject, ref } from 'vue';
 
 const isHovered = ref(false);
@@ -300,6 +306,15 @@ async function onOptionsClick(event: Event): Promise<void> {
       .email-copy-icon {
         color: var(--parsec-color-light-primary-600);
       }
+    }
+  }
+
+  &.current-user {
+    --background: var(--parsec-color-light-secondary-background);
+
+    .lock-icon {
+      width: 1.25rem;
+      --fill-color: var(--parsec-color-light-secondary-grey);
     }
   }
 }

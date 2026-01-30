@@ -5,18 +5,6 @@
 @use 'megashark-lib/theme' as ms;
 
 // Workspace Sharing Modal
-.current-user {
-  // remove currentUser icon in dropdown
-  .ms-dropdown-icon {
-    display: none;
-  }
-
-  // set opacity to 1 for multiple selection
-  &.workspace-user-role .button-disabled {
-    opacity: 1;
-  }
-}
-
 .saas-login-content__input .input-content,
 .saas-forgot-password-content__input .input-content {
   background: var(--parsec-color-light-secondary-inversed-contrast);
@@ -27,6 +15,18 @@
 }
 
 .workspace-sharing-modal {
+  .current-user {
+    // remove currentUser icon in dropdown
+    .ms-dropdown-icon {
+      display: none;
+    }
+
+    // set opacity to 1 for multiple selection
+    &.workspace-user-role .button-disabled {
+      opacity: 1;
+    }
+  }
+
   .current-user .dropdown-button-content .input-text {
     color: var(--parsec-color-light-secondary-grey);
   }
