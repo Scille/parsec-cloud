@@ -1,15 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+mod device;
 mod load;
 mod save;
 mod strategy;
+pub use device::*;
 use itertools::Itertools;
 use libparsec_platform_async::stream::StreamExt;
 use libparsec_platform_filesystem::{
-    list_files, load_file, remove_file, rename_file, save_content, ListFilesError, LoadFileError,
-    RemoveFileError, RenameFileError, SaveContentError,
+    list_files, load_file, remove_file, save_content, ListFilesError, LoadFileError,
+    RemoveFileError, SaveContentError,
 };
 pub use strategy::*;
+
 #[cfg(not(target_arch = "wasm32"))]
 #[path = "native/mod.rs"]
 mod platform;
@@ -593,56 +596,6 @@ pub async fn update_device_overwrite_server_addr(
 
 pub fn is_keyring_available() -> bool {
     platform::is_keyring_available()
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum ArchiveDeviceError {
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-pub(crate) fn get_device_archive_path(path: &Path) -> PathBuf {
-    if let Some(current_file_extension) = path.extension() {
-        // Add ARCHIVE_DEVICE_EXT to the current file extension resulting in extension `.{current}.{ARCHIVE_DEVICE_EXT}`.
-        let mut ext = current_file_extension.to_owned();
-        ext.extend([".".as_ref(), ARCHIVE_DEVICE_EXT.as_ref()]);
-        path.with_extension(ext)
-    } else {
-        path.with_extension(ARCHIVE_DEVICE_EXT)
-    }
-}
-
-/// Archive a device identified by its path.
-pub async fn archive_device(
-    #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
-    device_path: &Path,
-) -> Result<(), ArchiveDeviceError> {
-    #[cfg(feature = "test-with-testbed")]
-    if let Some(result) = testbed::maybe_archive_device(config_dir, device_path) {
-        return result;
-    }
-
-    let archive_device_path = get_device_archive_path(device_path);
-
-    log::debug!(
-        "Archiving device {} to {}",
-        device_path.display(),
-        archive_device_path.display()
-    );
-
-    rename_file(device_path, &archive_device_path)
-        .await
-        .map_err(|e| match e {
-            RenameFileError::StorageNotAvailable | RenameFileError::NoSpaceLeft => {
-                ArchiveDeviceError::StorageNotAvailable
-            } // TODO #11955
-            RenameFileError::InvalidParent
-            | RenameFileError::InvalidPath
-            | RenameFileError::NotFound
-            | RenameFileError::Internal(_) => ArchiveDeviceError::Internal(e.into()),
-        })
 }
 
 #[derive(Debug, thiserror::Error)]
