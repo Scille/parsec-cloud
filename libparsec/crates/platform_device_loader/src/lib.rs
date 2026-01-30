@@ -2,7 +2,6 @@
 
 mod device;
 mod load;
-mod save;
 mod strategy;
 pub use device::*;
 use itertools::Itertools;
@@ -320,52 +319,6 @@ pub async fn load_device(
     Ok(Arc::new(device))
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum SaveDeviceError {
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
-    #[error("Path is invalid")]
-    InvalidPath,
-    /// Note only a subset of save strategies requires server access to
-    /// upload an opaque key that itself protects the ciphertext key
-    /// (e.g. account vault).
-    #[error("No response from {server} server: {error}")]
-    // We don't use `ConnectionError` here since this type only corresponds to
-    // an answer from the Parsec server and here any arbitrary server may have
-    // been (unsuccessfully) requested (e.g. OpenBao server).
-    RemoteOpaqueKeyUploadOffline {
-        server: RemoteOperationServer,
-        error: anyhow::Error,
-    },
-    /// Note only a subset of save strategies requires server access to
-    /// upload an opaque key that itself protects the ciphertext key
-    /// (e.g. account vault).
-    #[error("{server} server opaque key upload failed: {error}")]
-    RemoteOpaqueKeyUploadFailed {
-        server: RemoteOperationServer,
-        error: anyhow::Error,
-    },
-    #[error(transparent)]
-    Internal(anyhow::Error),
-}
-
-impl From<SaveContentError> for SaveDeviceError {
-    fn from(value: SaveContentError) -> Self {
-        match value {
-            SaveContentError::NotAFile
-            | SaveContentError::InvalidParent
-            | SaveContentError::InvalidPath
-            | SaveContentError::ParentNotFound
-            | SaveContentError::CannotEdit => SaveDeviceError::InvalidPath,
-
-            SaveContentError::StorageNotAvailable => SaveDeviceError::StorageNotAvailable,
-            SaveContentError::NoSpaceLeft | SaveContentError::Internal(_) => {
-                SaveDeviceError::Internal(value.into()) // TODO move NoSpaceLeft out of internal #12081
-            }
-        }
-    }
-}
-
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn save_device(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
@@ -380,7 +333,7 @@ pub async fn save_device(
         return result;
     }
 
-    save::save_device(strategy, device, device.now(), key_file).await
+    device::save_device(strategy, device, device.now(), key_file).await
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -452,7 +405,7 @@ pub async fn update_device(
     new_key_file: &Path,
 ) -> Result<AvailableDevice, UpdateDeviceError> {
     let available_device =
-        save::save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
+        device::save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
 
     if current_key_file != new_key_file {
         if let Err(err) = remove_file(current_key_file).await {
