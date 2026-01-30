@@ -405,6 +405,37 @@ msTest.describe(() => {
     await expect(entries.nth(2).locator('.ms-checkbox')).not.toBeChecked();
   });
 
+  msTest.skip('Selection in grid mode by clicking on the file item', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, true);
+
+    const actionBar = documents.locator('#folders-ms-action-bar');
+
+    await expect(actionBar.locator('.counter')).toHaveText('3 items');
+
+    const listEntries = documents.locator('.folder-container').locator('.file-list-item');
+
+    await listEntries.nth(0).click();
+    await expect(listEntries.nth(0).locator('.ms-checkbox')).toBeChecked();
+    await listEntries.nth(1).locator('.label-name').click();
+    await expect(listEntries.nth(1).locator('.ms-checkbox')).toBeChecked();
+
+    await expect(actionBar.locator('.counter')).toHaveText('2 selected items');
+
+    await toggleViewMode(documents);
+    await expect(actionBar.locator('.counter')).toHaveText('2 selected items');
+    const entries = documents.locator('.folder-container').locator('.file-card-item');
+
+    await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
+    await expect(entries.nth(1).locator('.ms-checkbox')).toBeChecked();
+
+    await entries.nth(0).locator('.ms-checkbox').click();
+    await expect(entries.nth(0).locator('.ms-checkbox')).not.toBeChecked();
+    await entries.nth(1).locator('.ms-checkbox').click();
+    await expect(entries.nth(1).locator('.ms-checkbox')).not.toBeChecked();
+    await entries.nth(1).locator('.file-card__title').click();
+    await expect(documents).toBeViewerPage();
+  });
+
   msTest('Check in FoldersPage if action bar updates after resized', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
 

@@ -150,7 +150,7 @@ msTest.describe(() => {
         await documents.setDisplaySize(DisplaySize.Small);
       }
 
-      await entries.nth(0).dblclick();
+      await entries.nth(0).locator('.label-name').click();
       await expect(documents).toBeViewerPage();
       const doc1Name = (await documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').textContent()) ?? '';
 

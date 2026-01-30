@@ -131,6 +131,7 @@
             <ion-button
               class="select-button button-medium button-default"
               @click="entries.selectAll(!allSelected)"
+              v-if="entries.entriesCount() > 0"
             >
               <span v-if="!allSelected">{{ $msTranslate('workspaceHistory.actions.selectAll') }}</span>
               <span v-else>{{ $msTranslate('workspaceHistory.actions.deselectAll') }}</span>
@@ -165,7 +166,7 @@
                   v-for="entry in entries.getEntries()"
                   :key="entry.id"
                   :entry="entry"
-                  :show-checkbox="true"
+                  :show-checkbox="someSelected"
                   @click="onEntryClicked(entry)"
                 />
               </ion-list>

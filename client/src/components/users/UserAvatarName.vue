@@ -9,7 +9,7 @@
       {{ userAvatar.substring(0, 2) }}
     </ion-avatar>
     <ion-text
-      class="person-name body"
+      class="person-name button-sm"
       v-if="userName"
       :title="userName"
     >

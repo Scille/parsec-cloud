@@ -68,6 +68,7 @@ msTest.describe(() => {
     await breadcrumbs.nth(0).click();
     await expect(breadcrumbs).toHaveText([' wksp1']);
 
+    await folderList.locator('.file-list-item').nth(1).hover();
     await folderList.locator('.file-list-item').nth(1).locator('.ms-checkbox').click();
     await expect(restoreButton).toBeTrulyEnabled();
     await restoreButton.click();
@@ -125,7 +126,7 @@ msTest.describe(() => {
     }
 
     async function navigateDown(): Promise<void> {
-      await documents.locator('.folder-container').getByRole('listitem').nth(0).dblclick();
+      await documents.locator('.folder-container').getByRole('listitem').nth(0).locator('.label-name').click();
     }
 
     const entries = documents.locator('.folder-container').locator('.file-list-item');

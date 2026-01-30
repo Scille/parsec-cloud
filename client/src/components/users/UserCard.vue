@@ -6,25 +6,31 @@
     :detail="false"
     :class="{
       selected: user.isSelected,
-      'no-padding-end': !user.isSelected,
       revoked: user.isRevoked(),
       suspended: user.isFrozen(),
+      'current-user': user.isCurrent,
+      'no-padding-end': !user.isSelected,
       'user-hovered': !user.isSelected && (menuOpened || isHovered),
     }"
-    @click="$emit('click', $event, user)"
+    @click="$emit('select', user, !user.isSelected)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
   >
     <div
       class="card-checkbox"
-      v-if="!user.isRevoked() && !user.isCurrent"
+      v-if="!user.isRevoked()"
     >
       <ms-checkbox
         :checked="user.isSelected"
-        v-if="user.isSelected || isHovered || showCheckbox"
+        v-if="(user.isSelected || isHovered || showCheckbox) && !user.isCurrent"
         @click.stop
         @change="$emit('select', user, $event)"
+      />
+      <ms-image
+        v-if="user.isCurrent"
+        :image="LockClosedIcon"
+        class="lock-icon"
       />
     </div>
     <div
@@ -52,19 +58,19 @@
             {{ $msTranslate('UsersPage.currentUser') }}
           </span>
         </ion-text>
-        <ion-text
-          class="user-card-info__email body-sm"
+        <div
+          class="user-card-info__email"
           :title="user.humanHandle.email"
-          @click="onCopyEmailClicked(user.humanHandle.email)"
+          @click.stop="onCopyEmailClicked(user.humanHandle.email)"
         >
-          {{ user.humanHandle.email }}
+          <ion-text class="email-label body-sm">{{ user.humanHandle.email }}</ion-text>
           <ion-icon
             v-if="!user.isCurrent"
             :icon="emailCopied ? checkmark : copy"
             class="email-copy-icon"
             :class="{ 'email-copy-icon--copied': emailCopied }"
           />
-        </ion-text>
+        </div>
       </div>
       <div class="user-card-profile">
         <user-profile-tag :profile="user.currentProfile" />
@@ -97,7 +103,7 @@ import { UserModel } from '@/components/users/types';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { checkmark, copy, ellipsisHorizontal } from 'ionicons/icons';
-import { MsCheckbox, formatTimeSince } from 'megashark-lib';
+import { formatTimeSince, LockClosedIcon, MsCheckbox, MsImage } from 'megashark-lib';
 import { inject, ref } from 'vue';
 
 const isHovered = ref(false);
@@ -163,6 +169,15 @@ async function onCopyEmailClicked(email: string): Promise<void> {
       color: var(--parsec-color-light-secondary-text);
     }
   }
+
+  &.current-user {
+    --background: var(--parsec-color-light-secondary-background);
+
+    .lock-icon {
+      width: 1.25rem;
+      --fill-color: var(--parsec-color-light-secondary-grey);
+    }
+  }
 }
 
 .card-checkbox {
@@ -196,7 +211,8 @@ async function onCopyEmailClicked(email: string): Promise<void> {
       gap: 0.5rem;
 
       .name-you {
-        color: var(--parsec-color-light-secondary-grey);
+        color: var(--parsec-color-light-secondary-text);
+        font-weight: 700;
       }
     }
 
@@ -221,6 +237,12 @@ async function onCopyEmailClicked(email: string): Promise<void> {
     align-items: center;
     cursor: pointer;
     gap: 0.125rem;
+  }
+
+  .email-label {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   .email-copy-icon {

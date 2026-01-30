@@ -9,9 +9,6 @@
     :show-checkbox="someSelected || selectionEnabled === true"
     @menu-click="onMenuClick"
     @select="onUserSelected"
-    :class="{
-      'current-user': user.isCurrent,
-    }"
   />
   <ion-text
     class="no-match-result body"
