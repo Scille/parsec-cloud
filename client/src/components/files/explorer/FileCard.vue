@@ -51,7 +51,8 @@
 
         <ion-text
           class="file-card__title cell"
-          @click="!($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
+          :class="{ selection: showCheckbox }"
+          @click="showCheckbox ? null : !($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
           @dblclick.stop
           :title="entry.name"
         >
@@ -203,7 +204,7 @@ async function onOptionsClick(event: Event): Promise<void> {
     overflow: hidden;
     text-overflow: ellipsis;
 
-    &:hover {
+    &:not(.selection):hover {
       text-decoration: underline;
       cursor: pointer !important;
     }
