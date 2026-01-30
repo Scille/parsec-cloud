@@ -1,16 +1,62 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::platform;
-use libparsec_platform_filesystem::save_content;
+use crate::{encrypt_device, platform};
+use libparsec_platform_filesystem::{save_content, SaveContentError};
 use std::path::PathBuf;
 
 use crate::{
     AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
-    OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer, SaveDeviceError,
+    OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer,
 };
 use libparsec_types::prelude::*;
 
-pub(super) async fn save_device(
+#[derive(Debug, thiserror::Error)]
+pub enum SaveDeviceError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
+    #[error("Path is invalid")]
+    InvalidPath,
+    /// Note only a subset of save strategies requires server access to
+    /// upload an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("No response from {server} server: {error}")]
+    // We don't use `ConnectionError` here since this type only corresponds to
+    // an answer from the Parsec server and here any arbitrary server may have
+    // been (unsuccessfully) requested (e.g. OpenBao server).
+    RemoteOpaqueKeyUploadOffline {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
+    /// Note only a subset of save strategies requires server access to
+    /// upload an opaque key that itself protects the ciphertext key
+    /// (e.g. account vault).
+    #[error("{server} server opaque key upload failed: {error}")]
+    RemoteOpaqueKeyUploadFailed {
+        server: RemoteOperationServer,
+        error: anyhow::Error,
+    },
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+impl From<SaveContentError> for SaveDeviceError {
+    fn from(value: SaveContentError) -> Self {
+        match value {
+            SaveContentError::NotAFile
+            | SaveContentError::InvalidParent
+            | SaveContentError::InvalidPath
+            | SaveContentError::ParentNotFound
+            | SaveContentError::CannotEdit => SaveDeviceError::InvalidPath,
+
+            SaveContentError::StorageNotAvailable => SaveDeviceError::StorageNotAvailable,
+            SaveContentError::NoSpaceLeft | SaveContentError::Internal(_) => {
+                SaveDeviceError::Internal(value.into()) // TODO move NoSpaceLeft out of internal #12081
+            }
+        }
+    }
+}
+
+pub(crate) async fn save_device(
     strategy: &DeviceSaveStrategy,
     device: &LocalDevice,
     created_on: DateTime,
@@ -38,7 +84,7 @@ pub(super) async fn save_device(
                 .compute_secret_key(password)
                 .expect("Failed to derive key from password");
 
-            let ciphertext = super::encrypt_device(device, &key);
+            let ciphertext = encrypt_device(device, &key);
 
             let file_content = DeviceFile::Password(DeviceFilePassword {
                 created_on,
@@ -90,7 +136,7 @@ pub(super) async fn save_device(
                     }
                 })?;
 
-            let ciphertext = super::encrypt_device(device, &ciphertext_key);
+            let ciphertext = encrypt_device(device, &ciphertext_key);
 
             let file_content = DeviceFile::AccountVault(DeviceFileAccountVault {
                 created_on,
@@ -130,7 +176,7 @@ pub(super) async fn save_device(
                     }
                 })?;
 
-            let ciphertext = super::encrypt_device(device, &ciphertext_key);
+            let ciphertext = encrypt_device(device, &ciphertext_key);
 
             let file_content = DeviceFile::OpenBao(DeviceFileOpenBao {
                 created_on,
