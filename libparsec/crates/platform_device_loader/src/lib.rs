@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+mod load;
+mod save;
 mod strategy;
 use itertools::Itertools;
 use libparsec_platform_async::stream::StreamExt;
@@ -9,9 +11,12 @@ use libparsec_platform_filesystem::{
 };
 pub use strategy::*;
 #[cfg(not(target_arch = "wasm32"))]
-mod native;
+#[path = "native/mod.rs"]
+mod platform;
+
 #[cfg(target_arch = "wasm32")]
-mod web;
+#[path = "web/mod.rs"]
+mod platform;
 // Testbed integration is tested in the `libparsec_tests_fixture` crate.
 #[cfg(feature = "test-with-testbed")]
 mod testbed;
@@ -27,10 +32,8 @@ use std::{
 use zeroize::Zeroizing;
 
 use libparsec_types::prelude::*;
-#[cfg(not(target_arch = "wasm32"))]
-use native as platform;
-#[cfg(target_arch = "wasm32")]
-use web as platform;
+
+const LOCAL_PENDING_EXT: &str = "pending";
 
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 pub(crate) const ARCHIVE_DEVICE_EXT: &str = "archived";
@@ -72,57 +75,15 @@ enum LoadCiphertextKeyError {
 }
 
 pub fn get_default_data_base_dir() -> PathBuf {
-    #[cfg(target_arch = "wasm32")]
-    {
-        PathBuf::from("/")
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut path = if let Ok(data_dir) = std::env::var(PARSEC_BASE_DATA_DIR) {
-            PathBuf::from(data_dir)
-        } else {
-            dirs::data_dir().expect("Could not determine base data directory")
-        };
-
-        path.push("parsec3");
-        path
-    }
+    platform::get_default_data_base_dir()
 }
 
 pub fn get_default_config_dir() -> PathBuf {
-    #[cfg(target_arch = "wasm32")]
-    {
-        PathBuf::from("/")
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut path = if let Ok(config_dir) = std::env::var(PARSEC_BASE_CONFIG_DIR) {
-            PathBuf::from(config_dir)
-        } else {
-            dirs::config_dir().expect("Could not determine base config directory")
-        };
-
-        path.push("parsec3/libparsec");
-        path
-    }
+    platform::get_default_config_dir()
 }
 
 pub fn get_default_mountpoint_base_dir() -> PathBuf {
-    #[cfg(target_arch = "wasm32")]
-    {
-        PathBuf::from("/")
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut path = if let Ok(home_dir) = std::env::var(PARSEC_BASE_HOME_DIR) {
-            PathBuf::from(home_dir)
-        } else {
-            dirs::home_dir().expect("Could not determine home directory")
-        };
-
-        path.push("Parsec3");
-        path
-    }
+    platform::get_default_mountpoint_base_dir()
 }
 
 fn get_devices_dir(config_dir: &Path) -> PathBuf {
@@ -135,9 +96,7 @@ fn get_devices_dir(config_dir: &Path) -> PathBuf {
 /// Here, we simply use the device ID (as it is a UUID) to avoid name collision.
 pub fn get_default_key_file(config_dir: &Path, device_id: DeviceID) -> PathBuf {
     let mut device_path = get_devices_dir(config_dir);
-
     device_path.push(format!("{}.{DEVICE_FILE_EXT}", device_id.hex()));
-
     device_path
 }
 
@@ -146,13 +105,9 @@ pub fn get_default_local_pending_file(
     enrollment_id: PKIEnrollmentID,
 ) -> PathBuf {
     let mut local_pending_path = get_local_pending_dir(config_dir);
-
     local_pending_path.push(format!("{}.{LOCAL_PENDING_EXT}", enrollment_id.hex()));
-
     local_pending_path
 }
-
-const LOCAL_PENDING_EXT: &str = "pending";
 
 fn get_local_pending_dir(config_dir: &Path) -> PathBuf {
     config_dir.join("pending_requests")
@@ -342,7 +297,7 @@ pub async fn load_device(
 
     let file_content = load_file(access.key_file()).await?;
     let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
-    let ciphertext_key = platform::load_ciphertext_key(access, &device_file)
+    let ciphertext_key = load::load_ciphertext_key(access, &device_file)
         .await
         .map_err(|err| match err {
             LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
@@ -423,7 +378,7 @@ pub async fn save_device(
         return result;
     }
 
-    platform::save_device(strategy, device, device.now(), key_file).await
+    save::save_device(strategy, device, device.now(), key_file).await
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -495,7 +450,7 @@ pub async fn update_device(
     new_key_file: &Path,
 ) -> Result<AvailableDevice, UpdateDeviceError> {
     let available_device =
-        platform::save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
+        save::save_device(new_strategy, device, created_on, new_key_file.to_path_buf()).await?;
 
     if current_key_file != new_key_file {
         if let Err(err) = remove_file(current_key_file).await {
@@ -527,7 +482,7 @@ pub async fn update_device_change_authentication(
     let file_content = load_file(current_key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
-    let ciphertext_key = platform::load_ciphertext_key(current_access, &device_file)
+    let ciphertext_key = load::load_ciphertext_key(current_access, &device_file)
         .await
         .map_err(|err| match err {
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
@@ -596,7 +551,7 @@ pub async fn update_device_overwrite_server_addr(
     let file_content = load_file(key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
-    let ciphertext_key = platform::load_ciphertext_key(strategy, &device_file)
+    let ciphertext_key = load::load_ciphertext_key(strategy, &device_file)
         .await
         .map_err(|err| match err {
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
@@ -637,11 +592,7 @@ pub async fn update_device_overwrite_server_addr(
 }
 
 pub fn is_keyring_available() -> bool {
-    #[cfg(target_arch = "wasm32")]
-    return false;
-
-    #[cfg(not(target_arch = "wasm32"))]
-    native::is_keyring_available()
+    platform::is_keyring_available()
 }
 
 #[derive(Debug, thiserror::Error)]
