@@ -1,6 +1,6 @@
 {
     "name": "parsec",
-    "version": "3.7.2-a.0+dev",
+    "version": "3.7.2-a.0.dev.20484+4cc2927",
     "description": "Secure file sharing in the cloud",
     "author": {
         "name": "Scille SAS",

@@ -4,6 +4,62 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.7.2-a.0.dev.20484+4cc2927 (2026-01-31)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Added small screen display mode for the customer area.
+  (`#11998 <https://github.com/Scille/parsec-cloud/issues/11998>`__)
+
+* CLI: Allow to import a folder recursively in a workspace
+  (`#9161 <https://github.com/Scille/parsec-cloud/issues/9161>`__)
+
+* Windows: Update winfsp dependency to 2025 version
+  (`#11803 <https://github.com/Scille/parsec-cloud/issues/11803>`__)
+
+* User can copy email addresses to clipboard by clicking on them from the user
+  list.
+  (`#11735 <https://github.com/Scille/parsec-cloud/issues/11735>`__)
+
+* User can show or hide a workspace from the list of workspaces. A hidden
+  workspace will be not visible from the explorer (on desktop app) and can be
+  toggled to be visible or not in Parsec.
+  (`#6969 <https://github.com/Scille/parsec-cloud/issues/6969>`__)
+
+* User can switch to categories "Recent", "Pinned", and "All workspaces" from
+  the workspace list page or the sidebar.
+  (`#11993 <https://github.com/Scille/parsec-cloud/issues/11993>`__)
+
+* CLI: Add option ``--update`` to ``workspace import`` to control how to update
+  existing files
+  (`#12021 <https://github.com/Scille/parsec-cloud/issues/12021>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed some images in PDFs not being visible
+  (`#12048 <https://github.com/Scille/parsec-cloud/issues/12048>`__)
+
+* User can reduce the height of the organization creation modal on small height
+  screens.
+  (`#11987 <https://github.com/Scille/parsec-cloud/issues/11987>`__)
+
+* User can return to the list of workspaces from the sidebar without displaying
+  the contents of the workspace.
+  (`#10227 <https://github.com/Scille/parsec-cloud/issues/10227>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Fixed toast messages appearance in small display mode
+  (`#12017 <https://github.com/Scille/parsec-cloud/issues/12017>`__)
+
+
+
 Parsec v3.7.1 (2025-12-11)
 --------------------------
 
