@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from . import (
+    async_enrollment_cancel,
     async_enrollment_info,
     async_enrollment_submit,
     organization_bootstrap,
@@ -18,7 +19,8 @@ class AnyCmdReq:
     def load(
         cls, raw: bytes
     ) -> (
-        async_enrollment_info.Req
+        async_enrollment_cancel.Req
+        | async_enrollment_info.Req
         | async_enrollment_submit.Req
         | organization_bootstrap.Req
         | ping.Req
@@ -28,6 +30,7 @@ class AnyCmdReq:
 
 __all__ = [
     "AnyCmdReq",
+    "async_enrollment_cancel",
     "async_enrollment_info",
     "async_enrollment_submit",
     "organization_bootstrap",
