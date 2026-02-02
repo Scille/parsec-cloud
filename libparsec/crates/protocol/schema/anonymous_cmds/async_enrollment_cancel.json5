@@ -1,0 +1,32 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "async_enrollment_cancel",
+        "req": {
+            "fields": [
+                {
+                    // The enrollment ID to cancel
+                    "name": "enrollment_id",
+                    "type": "AsyncEnrollmentID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // The server did not find a request for the provided ID
+                "status": "enrollment_not_found"
+            },
+            {
+                // The enrollment is no longer in the submitted state
+                // (already accepted, rejected, or cancelled)
+                "status": "enrollment_no_longer_available"
+            }
+        ],
+        "nested_types": []
+    }
+]
