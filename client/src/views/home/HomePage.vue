@@ -874,7 +874,6 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
 }
 
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
-  const eventDistributor = new EventDistributor();
   loginInProgress.value = true;
   window.electronAPI.log('debug', 'Starting Parsec login');
   const result = await parsecLogin(device, access);
@@ -901,6 +900,7 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
       },
     };
     if (!injectionProvider.hasInjections(result.value)) {
+      const eventDistributor = new EventDistributor();
       injectionProvider.createNewInjections(result.value, eventDistributor);
     }
     await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
