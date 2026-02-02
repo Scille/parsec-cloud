@@ -97,6 +97,7 @@ import {
   AsyncEnrollmentRequest,
   AvailableDevice,
   AvailableDeviceTypeTag,
+  AvailablePendingAsyncEnrollmentIdentitySystemPKI,
   AvailablePendingAsyncEnrollmentIdentitySystemTag,
   ClientStartError,
   ClientStartErrorTag,
@@ -148,7 +149,6 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
 import AsyncEnrollmentModal from '@/views/users/AsyncEnrollmentModal.vue';
 import AsyncEnrollmentOpenBaoAuthModal from '@/views/users/AsyncEnrollmentOpenBaoAuthModal.vue';
-import AsyncEnrollmentPkiAuthModal from '@/views/users/AsyncEnrollmentPkiAuthModal.vue';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import {
@@ -569,18 +569,9 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
       window.electronAPI.log('error', 'Weird case of PKI not being available when creating the device from the async request');
       return;
     }
-    const pkiModal = await modalController.create({
-      component: AsyncEnrollmentPkiAuthModal,
-      cssClass: 'async-enrollment-pki-modal',
-    });
-    await pkiModal.present();
-    const { role, data } = await pkiModal.onWillDismiss();
-    await pkiModal.dismiss();
-    if (role !== MsModalResult.Confirm || !data.certificate) {
-      return;
-    }
-    identityStrategy = makeAcceptPkiIdentityStrategy(toRaw(data.certificate));
-    saveStrategy = SaveStrategy.useSmartCard(toRaw(data.certificate));
+    const identitySystem = request.enrollment.identitySystem as AvailablePendingAsyncEnrollmentIdentitySystemPKI;
+    identityStrategy = makeAcceptPkiIdentityStrategy(toRaw(identitySystem.certificateRef));
+    saveStrategy = SaveStrategy.useSmartCard(toRaw(identitySystem.certificateRef));
   } else if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.OpenBao) {
     const parsedAddrResult = await parseParsecAddr(request.enrollment.addr);
     if (!parsedAddrResult.ok) {

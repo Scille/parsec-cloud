@@ -132,6 +132,7 @@ export type {
   AvailableDevice,
   AvailableDeviceType,
   AvailableDeviceTypeOpenBao,
+  AvailablePendingAsyncEnrollmentIdentitySystemPKI,
   BootstrapOrganizationError,
   ClaimerRetrieveInfoError,
   ClaimFinalizeError,

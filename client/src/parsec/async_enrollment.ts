@@ -98,6 +98,10 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
       identityStrategy,
     );
     request.enrollment.submittedOn = DateTime.fromSeconds(request.enrollment.submittedOn as any as number);
+    if (result.ok) {
+      result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
+      result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
+    }
     return result;
   },
 
