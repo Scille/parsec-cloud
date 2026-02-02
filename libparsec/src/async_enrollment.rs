@@ -8,7 +8,7 @@ pub use libparsec_client::{
     AvailablePendingAsyncEnrollment, AvailablePendingAsyncEnrollmentIdentitySystem,
     ClientAcceptAsyncEnrollmentError, ClientListAsyncEnrollmentsError,
     ClientRejectAsyncEnrollmentError, PendingAsyncEnrollmentInfo, SubmitAsyncEnrollmentError,
-    SubmitterFinalizeAsyncEnrollmentError, SubmitterForgetAsyncEnrollmentError,
+    SubmitterCancelAsyncEnrollmentError, SubmitterFinalizeAsyncEnrollmentError,
     SubmitterGetAsyncEnrollmentInfoError, SubmitterListLocalAsyncEnrollmentsError,
 };
 pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
@@ -956,9 +956,11 @@ pub async fn submitter_finalize_async_enrollment(
     .await
 }
 
-pub async fn submitter_forget_async_enrollment(
-    config_dir: &Path,
+pub async fn submitter_cancel_async_enrollment(
+    config: ClientConfig,
+    addr: ParsecAsyncEnrollmentAddr,
     enrollment_id: AsyncEnrollmentID,
-) -> Result<(), SubmitterForgetAsyncEnrollmentError> {
-    libparsec_client::submitter_forget_async_enrollment(config_dir, enrollment_id).await
+) -> Result<(), SubmitterCancelAsyncEnrollmentError> {
+    let config: Arc<libparsec_client::ClientConfig> = config.into();
+    libparsec_client::submitter_cancel_async_enrollment(config, addr, enrollment_id).await
 }
