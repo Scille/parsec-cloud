@@ -5,6 +5,7 @@ mod list;
 mod load;
 mod load_ciphertext_key;
 mod recovery;
+mod remove;
 mod save;
 mod update;
 
@@ -13,5 +14,6 @@ pub use list::*;
 pub use load::*;
 pub use load_ciphertext_key::*;
 pub use recovery::*;
+pub use remove::*;
 pub use save::*;
 pub use update::*;
