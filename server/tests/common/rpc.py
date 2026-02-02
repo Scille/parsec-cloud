@@ -37,6 +37,13 @@ class BaseAnonymousRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
 
+    async def async_enrollment_cancel(
+        self, enrollment_id: AsyncEnrollmentID
+    ) -> anonymous_cmds.latest.async_enrollment_cancel.Rep:
+        req = anonymous_cmds.latest.async_enrollment_cancel.Req(enrollment_id=enrollment_id)
+        raw_rep = await self._do_request(req.dump(), "anonymous")
+        return anonymous_cmds.latest.async_enrollment_cancel.Rep.load(raw_rep)
+
     async def async_enrollment_info(
         self, enrollment_id: AsyncEnrollmentID
     ) -> anonymous_cmds.latest.async_enrollment_info.Rep:
