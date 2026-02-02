@@ -367,6 +367,9 @@ pub(crate) fn maybe_load_device(
                                     Some(Err(LoadDeviceError::DecryptionFailed))
                                 }
                             }
+                            (DeviceAccessStrategy::PKI { .. }, DeviceSaveStrategy::PKI { .. }) => {
+                                Some(Ok(c_device.to_owned()))
+                            }
                             // Don't use a `_ => None` fallthrough match here to avoid
                             // silent bug whenever a new variant is added :/
                             (
