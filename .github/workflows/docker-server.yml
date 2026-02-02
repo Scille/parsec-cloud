@@ -8,7 +8,7 @@ on:
     paths:
       - server/packaging/server/**
       - .github/workflows/docker-server.yml
-  # Only run on pushed tag because we don't want this workflow to run everytime we push something to the main branch.
+  # Only run on pushed tag because we don't want this workflow to run every time we push something to the main branch.
   push:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+*

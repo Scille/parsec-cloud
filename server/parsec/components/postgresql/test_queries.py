@@ -111,7 +111,7 @@ deleted_realm_vlob_updates AS (
     RETURNING _id
 ),
 
-deleted_block_datas AS (
+deleted_block_data AS (
     DELETE FROM block_data
     WHERE organization_id = $organization_id
     RETURNING _id

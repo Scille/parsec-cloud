@@ -208,7 +208,7 @@ class Version:
         return base
 
     @property
-    def is_preversion(self) -> bool:
+    def is_pre_version(self) -> bool:
         return self.pre is not None
 
     @property
@@ -956,7 +956,7 @@ def acknowledge_main(args: argparse.Namespace) -> None:
 
     version: Version = args.version
 
-    if any((version.is_preversion, version.is_dev, version.local)):
+    if any((version.is_pre_version, version.is_dev, version.local)):
         print(
             f"[{COLOR_YELLOW}WARNING{COLOR_END}] You are trying to acknowledge a non-stable version (it has a prerelease, dev or local part in the version), you are on your own"
         )

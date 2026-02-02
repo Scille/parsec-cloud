@@ -63,7 +63,7 @@ jobs:
         shell: bash -eux -o pipefail {0}
         run: |
           case '${{ github.event_name }}' in
-            # In the conext of a release event, `ref_name` is set to the tag of the release.
+            # In the context of a release event, `ref_name` is set to the tag of the release.
             release)
               tag='${{ github.ref_name }}'
               ;;

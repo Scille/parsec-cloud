@@ -93,7 +93,9 @@
         >
           <ion-text class="trial-card__tag button-medium">{{ $msTranslate('SideMenu.trial.tag') }}</ion-text>
           <div class="trial-card-text">
-            <ion-text class="trial-card-text__time title-h3">{{ $msTranslate(formatExpirationTime(expirationDuration)) }}</ion-text>
+            <ion-text class="trial-card-text__time title-h3">
+              {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
+            </ion-text>
             <ion-text class="trial-card-text__info body">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
           </div>
           <ion-button
@@ -206,8 +208,8 @@
 
             <!-- Recent -->
             <ion-text
-              @click="onCategoryMenuChange(WorkspaceMenu.Recents)"
-              :class="{ active: workspaceMenuState === WorkspaceMenu.Recents && currentRouteIs(Routes.Workspaces) }"
+              @click="onCategoryMenuChange(WorkspaceMenu.Recent)"
+              :class="{ active: workspaceMenuState === WorkspaceMenu.Recent && currentRouteIs(Routes.Workspaces) }"
               class="sidebar-content-organization-button button-medium"
               id="sidebar-recent-workspaces"
               button
@@ -310,7 +312,9 @@
               </ion-text>
             </div>
             <div class="checklist-button">
-              <ion-text class="checklist-button__text button-small">{{ $msTranslate({ key: 'SideMenu.checklist.open' }) }}</ion-text>
+              <ion-text class="checklist-button__text button-small">
+                {{ $msTranslate({ key: 'SideMenu.checklist.open' }) }}
+              </ion-text>
               <ion-icon
                 :icon="chevronForward"
                 class="checklist-button__icon"

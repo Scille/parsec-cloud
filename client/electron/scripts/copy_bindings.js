@@ -6,7 +6,7 @@ const path = require('path');
 
 const WORKDIR = path.join(__dirname, '..');
 const SRCDIR = path.join(WORKDIR, '../../bindings/electron/dist/');
-const DSTDIR = path.join(WORKDIR, 'build');
+const DEST_DIR = path.join(WORKDIR, 'build');
 
 function copy(src, dst) {
   if (!fs.existsSync(src)) {
@@ -20,5 +20,5 @@ function copy(src, dst) {
   fs.copyFileSync(src, dst);
 }
 
-copy(path.join(SRCDIR, 'libparsec.node'), path.join(DSTDIR, 'src/libparsec.node'));
-copy(path.join(SRCDIR, 'libparsec.d.ts'), path.join(DSTDIR, 'generated-ts/src/libparsec.d.ts'));
+copy(path.join(SRCDIR, 'libparsec.node'), path.join(DEST_DIR, 'src/libparsec.node'));
+copy(path.join(SRCDIR, 'libparsec.d.ts'), path.join(DEST_DIR, 'generated-ts/src/libparsec.d.ts'));

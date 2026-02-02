@@ -709,8 +709,8 @@
         "categoriesMenu": {
             "all": "All workspaces",
             "allShort": "All",
-            "recents": "Recently viewed",
-            "recentsShort": "Recent",
+            "recent": "Recently viewed",
+            "recentShort": "Recent",
             "favorites": "Favorites",
             "hidden": "Hidden",
             "noRecentWorkspaces": "You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.",

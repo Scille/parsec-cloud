@@ -4,7 +4,7 @@
 --  Migration
 --
 -- Unicode support for email is messy and opens the door to homoglyph attacks
--- while covering few legit usecase (basically everybody use ASCII-only email
+-- while covering few legit use case (basically everybody use ASCII-only email
 -- addresses, and legitimate unicode email address can also be encoded in ASCII
 -- using Punycode).
 --

@@ -262,13 +262,13 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       ]);
     }
     const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(0);
-    const recentsWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(1);
+    const recentWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(1);
     const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
     const hiddenWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(3);
 
     await verifyActiveCategory(workspaces, 0);
 
-    await recentsWorkspacesButton.click({ force: true });
+    await recentWorkspacesButton.click({ force: true });
     await verifyActiveCategory(workspaces, 1);
 
     await allWorkspacesButton.click({ force: true });
@@ -529,9 +529,9 @@ msTest('Create new workspace with similar name', async ({ workspaces }) => {
 msTest('Check no favorite or recent workspaces', async ({ connected }) => {
   const workspaceCategoriesMenu = connected.locator('.workspace-categories-menu');
 
-  const recentsWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(1);
-  await expect(recentsWorkspacesButton).toBeVisible();
-  await recentsWorkspacesButton.click({ force: true });
+  const recentWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(1);
+  await expect(recentWorkspacesButton).toBeVisible();
+  await recentWorkspacesButton.click({ force: true });
   await expect(connected.locator('.workspaces-container').locator('.no-recent-workspaces')).toBeVisible();
   await expect(connected.locator('.workspaces-container').locator('.no-recent-workspaces').locator('ion-text')).toHaveText(
     'You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.',

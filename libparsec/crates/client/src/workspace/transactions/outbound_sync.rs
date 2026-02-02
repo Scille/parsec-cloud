@@ -658,7 +658,7 @@ enum DoNextReshapeOperationOutcome {
     EntryIsBusy,
 }
 
-/// A reshape is done everytime the file is closed, hence this function should be a noop
+/// A reshape is done every time the file is closed, hence this function should be a noop
 /// in most case.
 /// However the reshape on file close doesn't download blocks that are missing in local,
 /// hence this function has to handle this corner case.

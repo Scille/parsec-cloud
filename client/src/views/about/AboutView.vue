@@ -40,7 +40,7 @@
         </div>
       </ion-item>
 
-      <!-- developper -->
+      <!-- developer -->
       <ion-item class="body info-list__item">
         <ion-label class="app-info-key">
           {{ $msTranslate('AboutPage.appInfo.developer') }}
@@ -205,6 +205,7 @@ async function update(): Promise<void> {
     }
   }
 }
+
 .app-info-key {
   max-width: 10rem;
   margin: 0;

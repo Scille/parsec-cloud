@@ -2185,7 +2185,7 @@ impl TestbedEventNewShamirRecovery {
             //
             // When this code is called, the server address and organization ID are unknown,
             // this is especially true since on the server we first load the template as
-            // it own organization, then clone it everytime we need to instantiate the template
+            // it own organization, then clone it every time we need to instantiate the template
             // for a given test.
             //
             // So we have no choice but to provide placeholder values for server address and

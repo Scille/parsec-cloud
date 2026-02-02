@@ -46,9 +46,9 @@ const workspaceMenuList = computed(() => [
   },
   {
     icon: time,
-    key: WorkspaceMenu.Recents,
+    key: WorkspaceMenu.Recent,
     label:
-      windowWidth.value > WindowSizeBreakpoints.MD ? 'WorkspacesPage.categoriesMenu.recents' : 'WorkspacesPage.categoriesMenu.recentsShort',
+      windowWidth.value > WindowSizeBreakpoints.MD ? 'WorkspacesPage.categoriesMenu.recent' : 'WorkspacesPage.categoriesMenu.recentShort',
   },
   {
     icon: star,
