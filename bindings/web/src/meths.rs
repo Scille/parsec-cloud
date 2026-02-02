@@ -18172,6 +18172,48 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
     Ok(js_obj)
 }
 
+// SubmitterCancelAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_submitter_cancel_async_enrollment_error_rs_to_js(
+    rs_obj: libparsec::SubmitterCancelAsyncEnrollmentError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::SubmitterCancelAsyncEnrollmentError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterCancelAsyncEnrollmentErrorInternal".into(),
+            )?;
+        }
+        libparsec::SubmitterCancelAsyncEnrollmentError::NotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterCancelAsyncEnrollmentErrorNotFound".into(),
+            )?;
+        }
+        libparsec::SubmitterCancelAsyncEnrollmentError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterCancelAsyncEnrollmentErrorOffline".into(),
+            )?;
+        }
+        libparsec::SubmitterCancelAsyncEnrollmentError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // SubmitterFinalizeAsyncEnrollmentError
 
 #[allow(dead_code)]
@@ -18235,41 +18277,6 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// SubmitterForgetAsyncEnrollmentError
-
-#[allow(dead_code)]
-fn variant_submitter_forget_async_enrollment_error_rs_to_js(
-    rs_obj: libparsec::SubmitterForgetAsyncEnrollmentError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::SubmitterForgetAsyncEnrollmentError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"SubmitterForgetAsyncEnrollmentErrorInternal".into(),
-            )?;
-        }
-        libparsec::SubmitterForgetAsyncEnrollmentError::NotFound { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"SubmitterForgetAsyncEnrollmentErrorNotFound".into(),
-            )?;
-        }
-        libparsec::SubmitterForgetAsyncEnrollmentError::StorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable".into(),
-            )?;
         }
     }
     Ok(js_obj)
@@ -25605,6 +25612,53 @@ pub fn submitAsyncEnrollment(
     }))
 }
 
+// submitter_cancel_async_enrollment
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn submitterCancelAsyncEnrollment(
+    config: Object,
+    addr: String,
+    enrollment_id: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let enrollment_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::submitter_cancel_async_enrollment(config, addr, enrollment_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_submitter_cancel_async_enrollment_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // submitter_finalize_async_enrollment
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -25651,46 +25705,6 @@ pub fn submitterFinalizeAsyncEnrollment(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_submitter_finalize_async_enrollment_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    }))
-}
-
-// submitter_forget_async_enrollment
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn submitterForgetAsyncEnrollment(config_dir: String, enrollment_id: String) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let config_dir = {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let enrollment_id = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
-                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::submitter_forget_async_enrollment(&config_dir, enrollment_id).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_submitter_forget_async_enrollment_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

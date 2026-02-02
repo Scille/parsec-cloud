@@ -4465,6 +4465,36 @@ export type SubmitAsyncEnrollmentIdentityStrategy =
   | SubmitAsyncEnrollmentIdentityStrategyOpenBao
   | SubmitAsyncEnrollmentIdentityStrategyPKI
 
+// SubmitterCancelAsyncEnrollmentError
+export enum SubmitterCancelAsyncEnrollmentErrorTag {
+    Internal = 'SubmitterCancelAsyncEnrollmentErrorInternal',
+    NotFound = 'SubmitterCancelAsyncEnrollmentErrorNotFound',
+    Offline = 'SubmitterCancelAsyncEnrollmentErrorOffline',
+    StorageNotAvailable = 'SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable',
+}
+
+export interface SubmitterCancelAsyncEnrollmentErrorInternal {
+    tag: SubmitterCancelAsyncEnrollmentErrorTag.Internal
+    error: string
+}
+export interface SubmitterCancelAsyncEnrollmentErrorNotFound {
+    tag: SubmitterCancelAsyncEnrollmentErrorTag.NotFound
+    error: string
+}
+export interface SubmitterCancelAsyncEnrollmentErrorOffline {
+    tag: SubmitterCancelAsyncEnrollmentErrorTag.Offline
+    error: string
+}
+export interface SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable {
+    tag: SubmitterCancelAsyncEnrollmentErrorTag.StorageNotAvailable
+    error: string
+}
+export type SubmitterCancelAsyncEnrollmentError =
+  | SubmitterCancelAsyncEnrollmentErrorInternal
+  | SubmitterCancelAsyncEnrollmentErrorNotFound
+  | SubmitterCancelAsyncEnrollmentErrorOffline
+  | SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable
+
 // SubmitterFinalizeAsyncEnrollmentError
 export enum SubmitterFinalizeAsyncEnrollmentErrorTag {
     BadAcceptPayload = 'SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload',
@@ -4578,30 +4608,6 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline
   | SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable
-
-// SubmitterForgetAsyncEnrollmentError
-export enum SubmitterForgetAsyncEnrollmentErrorTag {
-    Internal = 'SubmitterForgetAsyncEnrollmentErrorInternal',
-    NotFound = 'SubmitterForgetAsyncEnrollmentErrorNotFound',
-    StorageNotAvailable = 'SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable',
-}
-
-export interface SubmitterForgetAsyncEnrollmentErrorInternal {
-    tag: SubmitterForgetAsyncEnrollmentErrorTag.Internal
-    error: string
-}
-export interface SubmitterForgetAsyncEnrollmentErrorNotFound {
-    tag: SubmitterForgetAsyncEnrollmentErrorTag.NotFound
-    error: string
-}
-export interface SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable {
-    tag: SubmitterForgetAsyncEnrollmentErrorTag.StorageNotAvailable
-    error: string
-}
-export type SubmitterForgetAsyncEnrollmentError =
-  | SubmitterForgetAsyncEnrollmentErrorInternal
-  | SubmitterForgetAsyncEnrollmentErrorNotFound
-  | SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable
 
 // SubmitterGetAsyncEnrollmentInfoError
 export enum SubmitterGetAsyncEnrollmentInfoErrorTag {
@@ -6765,16 +6771,17 @@ export interface LibParsecPlugin {
         requested_device_label: DeviceLabel,
         identity_strategy: SubmitAsyncEnrollmentIdentityStrategy
     ): Promise<Result<AvailablePendingAsyncEnrollment, SubmitAsyncEnrollmentError>>
+    submitterCancelAsyncEnrollment(
+        config: ClientConfig,
+        addr: ParsecAsyncEnrollmentAddr,
+        enrollment_id: AsyncEnrollmentID
+    ): Promise<Result<null, SubmitterCancelAsyncEnrollmentError>>
     submitterFinalizeAsyncEnrollment(
         config: ClientConfig,
         enrollment_file: Path,
         new_device_save_strategy: DeviceSaveStrategy,
         identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy
     ): Promise<Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError>>
-    submitterForgetAsyncEnrollment(
-        config_dir: Path,
-        enrollment_id: AsyncEnrollmentID
-    ): Promise<Result<null, SubmitterForgetAsyncEnrollmentError>>
     submitterGetAsyncEnrollmentInfo(
         config: ClientConfig,
         addr: ParsecAsyncEnrollmentAddr,
