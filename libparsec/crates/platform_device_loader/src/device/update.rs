@@ -8,9 +8,9 @@ use libparsec_types::prelude::*;
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed;
 use crate::{
-    decrypt_device_file, load, load_available_device, AvailableDevice, DecryptDeviceFileError,
-    DeviceAccessStrategy, DeviceSaveStrategy, LoadAvailableDeviceError, LoadCiphertextKeyError,
-    RemoteOperationServer, SaveDeviceError,
+    decrypt_device_file, device::load_ciphertext_key::load_ciphertext_key, load_available_device,
+    AvailableDevice, DecryptDeviceFileError, DeviceAccessStrategy, DeviceSaveStrategy,
+    LoadAvailableDeviceError, LoadCiphertextKeyError, RemoteOperationServer, SaveDeviceError,
 };
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateDeviceError {
@@ -113,7 +113,7 @@ pub async fn update_device_change_authentication(
     let file_content = load_file(current_key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
-    let ciphertext_key = load::load_ciphertext_key(current_access, &device_file)
+    let ciphertext_key = load_ciphertext_key(current_access, &device_file)
         .await
         .map_err(|err| match err {
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
@@ -182,19 +182,20 @@ pub async fn update_device_overwrite_server_addr(
     let file_content = load_file(key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
-    let ciphertext_key = load::load_ciphertext_key(strategy, &device_file)
-        .await
-        .map_err(|err| match err {
-            LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
-            LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
-            LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
-                UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
-            }
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
-                UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
-            }
-        })?;
+    let ciphertext_key =
+        load_ciphertext_key(strategy, &device_file)
+            .await
+            .map_err(|err| match err {
+                LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
+                LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
+                LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
+                LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                    UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
+                }
+                LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                    UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
+                }
+            })?;
     let mut device =
         decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
             DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
