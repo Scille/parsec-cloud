@@ -675,11 +675,11 @@ async def test_restart_partially_exported(
     vanilla_blockstore_read = backend.blockstore.read
     block_fetch_semaphore = asyncio.Semaphore(1)
 
-    async def patched_blocstore_read(*args, **kwargs):
+    async def patched_blockstore_read(*args, **kwargs):
         await block_fetch_semaphore.acquire()
         return await vanilla_blockstore_read(*args, **kwargs)
 
-    backend.blockstore.read = patched_blocstore_read
+    backend.blockstore.read = patched_blockstore_read
 
     for cancel_on_event in (
         "certificates_start",

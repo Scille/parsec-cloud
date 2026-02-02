@@ -25,7 +25,7 @@ describe('Device Card', () => {
       props: {
         device: {
           deviceLabel: 'My Device',
-          id: 'somedeviceid',
+          id: 'some_device_id',
           purpose: DevicePurpose.Standard,
           createdOn: DateTime.now(),
           createdBy: null,
@@ -52,7 +52,7 @@ describe('Device Card', () => {
       props: {
         device: {
           deviceLabel: 'My Device',
-          id: 'somedeviceid',
+          id: 'some_device_id',
           purpose: DevicePurpose.Standard,
           createdOn: DateTime.now(),
           createdBy: null,

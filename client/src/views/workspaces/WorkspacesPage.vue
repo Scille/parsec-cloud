@@ -14,7 +14,13 @@
         <div class="right-side">
           <div class="counter">
             <ion-text class="body">
-              {{ $msTranslate({ key: 'WorkspacesPage.itemCount', data: { count: workspaceList.length }, count: workspaceList.length }) }}
+              {{
+                $msTranslate({
+                  key: 'WorkspacesPage.itemCount',
+                  data: { count: workspaceList.length },
+                  count: workspaceList.length,
+                })
+              }}
             </ion-text>
           </div>
           <ms-search-input
@@ -135,7 +141,7 @@
           </div>
           <div
             class="no-recent-workspaces"
-            v-if="workspaceMenuState === WorkspaceMenu.Recents && filteredWorkspaces.length === 0"
+            v-if="workspaceMenuState === WorkspaceMenu.Recent && filteredWorkspaces.length === 0"
           >
             <ms-image
               :image="NoRecentWorkspaces"
@@ -546,9 +552,9 @@ const filteredWorkspaces = computed(() => {
       }
 
       switch (workspaceMenuState.value) {
-        case WorkspaceMenu.Recents:
+        case WorkspaceMenu.Recent:
           return (
-            recentDocumentManager.getWorkspaces().find((workspaceRecents) => workspaceRecents.id === workspace.id) !== undefined &&
+            recentDocumentManager.getWorkspaces().find((workspaceRecent) => workspaceRecent.id === workspace.id) !== undefined &&
             !workspaceAttributes.isHidden(workspace.id)
           );
         case WorkspaceMenu.Favorites:

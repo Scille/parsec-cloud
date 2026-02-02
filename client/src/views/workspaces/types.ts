@@ -16,7 +16,7 @@ enum WorkspaceAction {
 
 enum WorkspaceMenu {
   All = 'all',
-  Recents = 'recents',
+  Recent = 'recent',
   Favorites = 'favorites',
   Hidden = 'hidden',
 }

@@ -708,8 +708,8 @@
         "categoriesMenu": {
             "all": "Tous les espaces",
             "allShort": "Tous",
-            "recents": "Vus récemment",
-            "recentsShort": "Récents",
+            "recent": "Vus récemment",
+            "recentShort": "Récents",
             "favorites": "Favoris",
             "hidden": "Masqués",
             "noRecentWorkspaces": "Vous n'avez encore consulté aucun espace de travail. Les espaces consultés récemment apparaîtront ici.",

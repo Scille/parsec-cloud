@@ -138,7 +138,7 @@
                     // provides the certificates and the client rely on this assumption
                     // (e.g. to determine an user realm role at a given point in time).
                     // So the best way to avoid messing with this is to always rely on
-                    // `certificate_get` everytime we detect we need to fetch new stuff.
+                    // `certificate_get` every time we detect we need to fetch new stuff.
                     {
                         "name": "CommonCertificate",
                         "discriminant_value": "COMMON_CERTIFICATE",

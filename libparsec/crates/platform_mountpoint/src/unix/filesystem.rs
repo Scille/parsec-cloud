@@ -363,7 +363,7 @@ impl fuser::Filesystem for Filesystem {
         log::info!("Destroying filesystem for realm: {}", self.ops.realm_id());
     }
 
-    /// `lookup` is called everytime Fuse meets a new ressource it doesn't know about.
+    /// `lookup` is called every time Fuse meets a new resource it doesn't know about.
     /// The lookup transforms the path name to an `inode`.
     /// The `inode` is then used by all other operations and is freed by `forget`.
     fn lookup(

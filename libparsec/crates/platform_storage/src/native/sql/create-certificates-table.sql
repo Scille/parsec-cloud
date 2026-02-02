@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS certificates (
     -- We want to have a way to retrieve a singe certificate without having to iterate,
     -- decrypt and deserialize all of them.
     -- However this is tricky given we don't want to make this table dependent on the
-    -- types of certificates, otherwise a migration would be required everytime we
+    -- types of certificates, otherwise a migration would be required every time we
     -- introduce a new type of certificate :(
     --
     -- Hence:

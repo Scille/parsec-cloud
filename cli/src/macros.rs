@@ -1,6 +1,6 @@
 /// This macro builds a main function that takes the `Args` struct defined in the same module.
 ///
-/// Once called, it will initialize a client using the provided arguments and then call the sub-task and cleanup the client ressource before returning.
+/// Once called, it will initialize a client using the provided arguments and then call the sub-task and cleanup the client resource before returning.
 ///
 /// the callback takes (args: Args, client: &StartedClient) as arguments and returns anyhow::Result<()>
 #[macro_export]
