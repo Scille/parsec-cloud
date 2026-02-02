@@ -431,13 +431,6 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
 
   async selectCertificate(): Promise<Result<X509CertificateReference | undefined, ShowCertificateSelectionDialogError>> {
     return {
-      ok: false,
-      error: {
-        tag: ShowCertificateSelectionDialogErrorTag.CannotOpenStore,
-        error: 'ERROR',
-      },
-    };
-    return {
       ok: true,
       value: {
         uris: [
@@ -449,6 +442,7 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
             },
           },
         ],
+        // cspell:disable-next-line
         hash: 'ijkl',
       },
     };

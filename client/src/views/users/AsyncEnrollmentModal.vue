@@ -266,7 +266,7 @@ async function onNextButtonClicked(): Promise<boolean> {
     }
   } else if (state.value === JoinRequestState.MethodPKI) {
     if (!certificate.value) {
-      window.electronAPI.log('error', 'Invalid state for async enrollement with PKI');
+      window.electronAPI.log('error', 'Invalid state for async enrollment with PKI');
       return false;
     }
     const result = await requestJoinOrganization(props.link, makeRequestPkiIdentityStrategy(toRaw(certificate.value)));
