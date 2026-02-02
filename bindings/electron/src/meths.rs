@@ -16614,6 +16614,42 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// SubmitterCancelAsyncEnrollmentError
+
+#[allow(dead_code)]
+fn variant_submitter_cancel_async_enrollment_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::SubmitterCancelAsyncEnrollmentError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::SubmitterCancelAsyncEnrollmentError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterCancelAsyncEnrollmentErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterCancelAsyncEnrollmentError::NotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterCancelAsyncEnrollmentErrorNotFound")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterCancelAsyncEnrollmentError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitterCancelAsyncEnrollmentErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::SubmitterCancelAsyncEnrollmentError::StorageNotAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // SubmitterFinalizeAsyncEnrollmentError
 
 #[allow(dead_code)]
@@ -16695,37 +16731,6 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable{  .. } => {
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// SubmitterForgetAsyncEnrollmentError
-
-#[allow(dead_code)]
-fn variant_submitter_forget_async_enrollment_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::SubmitterForgetAsyncEnrollmentError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::SubmitterForgetAsyncEnrollmentError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitterForgetAsyncEnrollmentErrorInternal")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::SubmitterForgetAsyncEnrollmentError::NotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitterForgetAsyncEnrollmentErrorNotFound")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::SubmitterForgetAsyncEnrollmentError::StorageNotAvailable { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable")
-                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -27398,6 +27403,79 @@ fn submit_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// submitter_cancel_async_enrollment
+fn submitter_cancel_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let enrollment_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
+                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::submitter_cancel_async_enrollment(config, addr, enrollment_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_submitter_cancel_async_enrollment_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // submitter_finalize_async_enrollment
 fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -27457,74 +27535,6 @@ fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_err = variant_submitter_finalize_async_enrollment_error_rs_to_js(
                             &mut cx, err,
                         )?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
-// submitter_forget_async_enrollment
-fn submitter_forget_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let config_dir = {
-        let js_val = cx.argument::<JsString>(0)?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let enrollment_id = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
-                libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret =
-                libparsec::submitter_forget_async_enrollment(&config_dir, enrollment_id).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            #[allow(clippy::let_unit_value)]
-                            let _ = ok;
-                            JsNull::new(&mut cx)
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err =
-                            variant_submitter_forget_async_enrollment_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -32075,12 +32085,12 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("submitAsyncEnrollment", submit_async_enrollment)?;
     cx.export_function(
-        "submitterFinalizeAsyncEnrollment",
-        submitter_finalize_async_enrollment,
+        "submitterCancelAsyncEnrollment",
+        submitter_cancel_async_enrollment,
     )?;
     cx.export_function(
-        "submitterForgetAsyncEnrollment",
-        submitter_forget_async_enrollment,
+        "submitterFinalizeAsyncEnrollment",
+        submitter_finalize_async_enrollment,
     )?;
     cx.export_function(
         "submitterGetAsyncEnrollmentInfo",

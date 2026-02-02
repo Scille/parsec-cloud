@@ -3742,6 +3742,30 @@ export type SubmitAsyncEnrollmentIdentityStrategy =
   | SubmitAsyncEnrollmentIdentityStrategyPKI
 
 
+// SubmitterCancelAsyncEnrollmentError
+export interface SubmitterCancelAsyncEnrollmentErrorInternal {
+    tag: "SubmitterCancelAsyncEnrollmentErrorInternal"
+    error: string
+}
+export interface SubmitterCancelAsyncEnrollmentErrorNotFound {
+    tag: "SubmitterCancelAsyncEnrollmentErrorNotFound"
+    error: string
+}
+export interface SubmitterCancelAsyncEnrollmentErrorOffline {
+    tag: "SubmitterCancelAsyncEnrollmentErrorOffline"
+    error: string
+}
+export interface SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable {
+    tag: "SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable"
+    error: string
+}
+export type SubmitterCancelAsyncEnrollmentError =
+  | SubmitterCancelAsyncEnrollmentErrorInternal
+  | SubmitterCancelAsyncEnrollmentErrorNotFound
+  | SubmitterCancelAsyncEnrollmentErrorOffline
+  | SubmitterCancelAsyncEnrollmentErrorStorageNotAvailable
+
+
 // SubmitterFinalizeAsyncEnrollmentError
 export interface SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload"
@@ -3834,25 +3858,6 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline
   | SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable
-
-
-// SubmitterForgetAsyncEnrollmentError
-export interface SubmitterForgetAsyncEnrollmentErrorInternal {
-    tag: "SubmitterForgetAsyncEnrollmentErrorInternal"
-    error: string
-}
-export interface SubmitterForgetAsyncEnrollmentErrorNotFound {
-    tag: "SubmitterForgetAsyncEnrollmentErrorNotFound"
-    error: string
-}
-export interface SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable {
-    tag: "SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable"
-    error: string
-}
-export type SubmitterForgetAsyncEnrollmentError =
-  | SubmitterForgetAsyncEnrollmentErrorInternal
-  | SubmitterForgetAsyncEnrollmentErrorNotFound
-  | SubmitterForgetAsyncEnrollmentErrorStorageNotAvailable
 
 
 // SubmitterGetAsyncEnrollmentInfoError
@@ -5712,16 +5717,17 @@ export function submitAsyncEnrollment(
     requested_device_label: string,
     identity_strategy: SubmitAsyncEnrollmentIdentityStrategy
 ): Promise<Result<AvailablePendingAsyncEnrollment, SubmitAsyncEnrollmentError>>
+export function submitterCancelAsyncEnrollment(
+    config: ClientConfig,
+    addr: string,
+    enrollment_id: string
+): Promise<Result<null, SubmitterCancelAsyncEnrollmentError>>
 export function submitterFinalizeAsyncEnrollment(
     config: ClientConfig,
     enrollment_file: string,
     new_device_save_strategy: DeviceSaveStrategy,
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy
 ): Promise<Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError>>
-export function submitterForgetAsyncEnrollment(
-    config_dir: string,
-    enrollment_id: string
-): Promise<Result<null, SubmitterForgetAsyncEnrollmentError>>
 export function submitterGetAsyncEnrollmentInfo(
     config: ClientConfig,
     addr: string,
