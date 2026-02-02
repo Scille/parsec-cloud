@@ -360,19 +360,23 @@ async def submitter_finalize_async_enrollment(
     raise NotImplementedError
 
 
-class SubmitterForgetAsyncEnrollmentError(ErrorVariant):
-    class StorageNotAvailable:
+class SubmitterCancelAsyncEnrollmentError(ErrorVariant):
+    class Offline:
         pass
 
     class NotFound:
+        pass
+
+    class StorageNotAvailable:
         pass
 
     class Internal:
         pass
 
 
-async def submitter_forget_async_enrollment(
-    config_dir: Ref[Path],
+async def submitter_cancel_async_enrollment(
+    config: ClientConfig,
+    addr: ParsecAsyncEnrollmentAddr,
     enrollment_id: AsyncEnrollmentID,
-) -> Result[None, SubmitterForgetAsyncEnrollmentError]:
+) -> Result[None, SubmitterCancelAsyncEnrollmentError]:
     raise NotImplementedError
