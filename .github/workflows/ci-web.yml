@@ -102,7 +102,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # pin v5.0.3
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -132,7 +132,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@887bc4e03483810873d617344dd5189cd82e7b8b # pin v2.67.11
+      - uses: taiki-e/install-action@650c5ca14212efbbf3e580844b04bdccf68dac31 # pin v2.67.18
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
@@ -145,7 +145,7 @@ jobs:
 
       - name: Save libparsec to be reuse later
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        uses: actions/cache/save@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # pin v5.0.3
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -208,7 +208,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # pin v5.0.3
         with:
           # We use the cache setup by `test-web-app`
           fail-on-cache-miss: true
