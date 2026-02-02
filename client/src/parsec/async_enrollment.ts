@@ -73,7 +73,13 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
         } else if (infoResult.value.tag === PendingAsyncEnrollmentInfoTag.Rejected) {
           infoResult.value.rejectedOn = DateTime.fromSeconds(infoResult.value.rejectedOn as any as number);
         }
-        list.push({ info: infoResult.value, enrollment: enrollment, organizationId: addrResult.value.organizationId });
+        const request = { info: infoResult.value, enrollment: enrollment, organizationId: addrResult.value.organizationId };
+
+        if (infoResult.value.tag === PendingAsyncEnrollmentInfoTag.Cancelled) {
+          await deleteJoinRequest(request);
+        } else {
+          list.push(request);
+        }
       }
     }
     return { ok: true, value: list };
@@ -95,7 +101,7 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
     return result;
   },
 
-  async cancelJoinRequest(request: AsyncEnrollmentRequest): Promise<Result<null, SubmitterForgetAsyncEnrollmentError>> {
+  async deleteJoinRequest(request: AsyncEnrollmentRequest): Promise<Result<null, SubmitterForgetAsyncEnrollmentError>> {
     return await libparsec.submitterForgetAsyncEnrollment(getClientConfig().configDir, request.enrollment.enrollmentId);
   },
 
@@ -331,7 +337,7 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
     };
   },
 
-  async cancelJoinRequest(_request: AsyncEnrollmentRequest): Promise<Result<null, SubmitterForgetAsyncEnrollmentError>> {
+  async deleteJoinRequest(_request: AsyncEnrollmentRequest): Promise<Result<null, SubmitterForgetAsyncEnrollmentError>> {
     return { ok: true, value: null };
   },
 
@@ -542,7 +548,7 @@ function bind<K extends keyof PkiImpl>(key: K) {
 const requestJoinOrganization = bind('requestJoinOrganization');
 const listJoinRequests = bind('listJoinRequests');
 const confirmJoinRequest = bind('confirmJoinRequest');
-const cancelJoinRequest = bind('cancelJoinRequest');
+const deleteJoinRequest = bind('deleteJoinRequest');
 const listAsyncEnrollments = bind('listAsyncEnrollments');
 const acceptAsyncEnrollment = bind('acceptAsyncEnrollment');
 const rejectAsyncEnrollment = bind('rejectAsyncEnrollment');
@@ -551,8 +557,8 @@ const isSmartcardAvailable = bind('isSmartcardAvailable');
 
 export {
   acceptAsyncEnrollment,
-  cancelJoinRequest,
   confirmJoinRequest,
+  deleteJoinRequest,
   getAsyncEnrollmentAddr,
   getOpenBaoEmails,
   isSmartcardAvailable,

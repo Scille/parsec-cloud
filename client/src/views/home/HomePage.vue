@@ -110,8 +110,8 @@ import {
   SaveStrategy,
   archiveDevice,
   buildParsecAddr,
-  cancelJoinRequest,
   confirmJoinRequest,
+  deleteJoinRequest,
   getDeviceHandle,
   getOrganizationCreationDate,
   getServerConfig,
@@ -511,7 +511,7 @@ async function onJoinRequestClicked(request: AsyncEnrollmentRequest): Promise<vo
       noText: 'HomePage.organizationRequest.pending.no',
     });
     if (answer === Answer.Yes) {
-      const result = await cancelJoinRequest(request);
+      const result = await deleteJoinRequest(request);
       if (result.ok) {
         informationManager.present(
           new Information({
@@ -532,22 +532,16 @@ async function onJoinRequestClicked(request: AsyncEnrollmentRequest): Promise<vo
       }
     }
   } else if (request.info.tag === PendingAsyncEnrollmentInfoTag.Rejected) {
-    const answer = await askQuestion('HomePage.organizationRequest.rejected.title', 'HomePage.organizationRequest.rejected.message', {
-      yesText: 'HomePage.organizationRequest.rejected.yes',
-      noText: 'HomePage.organizationRequest.rejected.no',
-    });
-    if (answer === Answer.Yes) {
-      await cancelJoinRequest(request);
-      informationManager.present(
-        new Information({
-          message: 'HomePage.organizationRequest.requestDeleted',
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-    }
+    await deleteJoinRequest(request);
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.requestDeleted',
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
   } else if (request.info.tag === PendingAsyncEnrollmentInfoTag.Cancelled) {
-    await cancelJoinRequest(request);
+    await deleteJoinRequest(request);
   } else if (request.info.tag === PendingAsyncEnrollmentInfoTag.Accepted) {
     await finalizeRequest(request);
   }
