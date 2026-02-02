@@ -52,7 +52,7 @@
           label-placement="end"
           justify="start"
           :value="DeviceSaveStrategyTag.PKI"
-          :disabled="!smartcardAvailable || activeAuth === AvailableDeviceTypeTag.PKI"
+          :disabled="!smartcardAvailable"
         >
           <authentication-card
             @click="onMethodSelected(DeviceSaveStrategyTag.PKI)"
