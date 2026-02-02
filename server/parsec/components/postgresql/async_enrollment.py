@@ -16,6 +16,7 @@ from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.async_enrollment import (
     AsyncEnrollmentAcceptBadOutcome,
     AsyncEnrollmentAcceptValidateBadOutcome,
+    AsyncEnrollmentCancelBadOutcome,
     AsyncEnrollmentEmailAlreadySubmitted,
     AsyncEnrollmentInfo,
     AsyncEnrollmentInfoBadOutcome,
@@ -29,6 +30,7 @@ from parsec.components.async_enrollment import (
 )
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.async_enrollment_accept import async_enrollment_accept
+from parsec.components.postgresql.async_enrollment_cancel import async_enrollment_cancel
 from parsec.components.postgresql.async_enrollment_info import async_enrollment_info
 from parsec.components.postgresql.async_enrollment_list import async_enrollment_list
 from parsec.components.postgresql.async_enrollment_reject import async_enrollment_reject
@@ -93,6 +95,22 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             conn,
             organization_id,
             author,
+        )
+
+    @override
+    @transaction
+    async def cancel(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        enrollment_id: AsyncEnrollmentID,
+    ) -> None | AsyncEnrollmentCancelBadOutcome:
+        return await async_enrollment_cancel(
+            conn,
+            now,
+            organization_id,
+            enrollment_id,
         )
 
     @override
