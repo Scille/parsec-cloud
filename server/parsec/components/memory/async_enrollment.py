@@ -20,6 +20,7 @@ from parsec.ballpark import (
 from parsec.components.async_enrollment import (
     AsyncEnrollmentAcceptBadOutcome,
     AsyncEnrollmentAcceptValidateBadOutcome,
+    AsyncEnrollmentCancelBadOutcome,
     AsyncEnrollmentEmailAlreadySubmitted,
     AsyncEnrollmentInfo,
     AsyncEnrollmentInfoAccepted,
@@ -213,6 +214,33 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             ],
             key=lambda e: e.submitted_on,
         )
+
+    @override
+    async def cancel(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        enrollment_id: AsyncEnrollmentID,
+    ) -> None | AsyncEnrollmentCancelBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return AsyncEnrollmentCancelBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return AsyncEnrollmentCancelBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            enrollment = org.async_enrollments[enrollment_id]
+        except KeyError:
+            return AsyncEnrollmentCancelBadOutcome.ENROLLMENT_NOT_FOUND
+
+        if enrollment.state != MemoryAsyncEnrollmentState.SUBMITTED:
+            return AsyncEnrollmentCancelBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
+
+        enrollment.state = MemoryAsyncEnrollmentState.CANCELLED
+        enrollment.cancelled_on = now
+
+        await self._event_bus.send(EventAsyncEnrollment(organization_id=organization_id))
 
     @override
     async def reject(

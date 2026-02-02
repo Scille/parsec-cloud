@@ -76,6 +76,13 @@ class AsyncEnrollmentListBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_ALLOWED = auto()
 
 
+class AsyncEnrollmentCancelBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    ENROLLMENT_NOT_FOUND = auto()
+    ENROLLMENT_NO_LONGER_AVAILABLE = auto()
+
+
 class AsyncEnrollmentRejectBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
@@ -400,6 +407,14 @@ class BaseAsyncEnrollmentComponent:
     ) -> list[AsyncEnrollmentListItem] | AsyncEnrollmentListBadOutcome:
         raise NotImplementedError
 
+    async def cancel(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        enrollment_id: AsyncEnrollmentID,
+    ) -> None | AsyncEnrollmentCancelBadOutcome:
+        raise NotImplementedError
+
     async def reject(
         self,
         now: DateTime,
@@ -550,6 +565,31 @@ class BaseAsyncEnrollmentComponent:
             case AsyncEnrollmentInfoBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case AsyncEnrollmentInfoBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+
+    @api
+    async def api_async_enrollment_cancel(
+        self,
+        client_ctx: AnonymousClientContext,
+        req: anonymous_cmds.latest.async_enrollment_cancel.Req,
+    ) -> anonymous_cmds.latest.async_enrollment_cancel.Rep:
+        outcome = await self.cancel(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            enrollment_id=req.enrollment_id,
+        )
+        match outcome:
+            case None:
+                return anonymous_cmds.latest.async_enrollment_cancel.RepOk()
+            case AsyncEnrollmentCancelBadOutcome.ENROLLMENT_NOT_FOUND:
+                return anonymous_cmds.latest.async_enrollment_cancel.RepEnrollmentNotFound()
+            case AsyncEnrollmentCancelBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE:
+                return (
+                    anonymous_cmds.latest.async_enrollment_cancel.RepEnrollmentNoLongerAvailable()
+                )
+            case AsyncEnrollmentCancelBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case AsyncEnrollmentCancelBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
 
     @api
