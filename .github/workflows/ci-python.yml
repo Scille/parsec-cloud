@@ -132,7 +132,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # pin v5.0.3
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -212,7 +212,7 @@ jobs:
           (!inputs.style-only)
           && steps.cache-libparsec.outputs.cache-hit != 'true'
           && !contains(github.ref, 'gh-readonly-queue')
-        uses: actions/cache/save@8b402f58fbc84540c8b491a91e594a4576fec3d7 # pin v5.0.2
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # pin v5.0.3
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |

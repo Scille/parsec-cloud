@@ -35,7 +35,7 @@ runs:
       run: poetry self add poetry-plugin-export
 
     - name: Install python
-      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548  # pin v6.1.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # pin v6.2.0
       id: setup-python
       with:
         python-version-file: ${{ inputs.project-path }}/pyproject.toml
