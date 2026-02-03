@@ -206,7 +206,7 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
     }
 }
 
-pub fn sign_message(
+pub async fn sign_message(
     message: &[u8],
     certificate_ref: &X509CertificateReference,
 ) -> Result<(PkiSignatureAlgorithm, Bytes), SignMessageError> {
