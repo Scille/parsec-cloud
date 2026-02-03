@@ -1,0 +1,65 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-01 18:52+0200\n"
+"PO-Revision-Date: 2026-04-01 18:57+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.9\n"
+
+#: ../../userguide/troubleshooting/ms_filename_too_long.rst:6
+msgid "Microsoft Word or similar software says the file name is too long"
+msgstr ""
+"\"Microsoft Word ou un logiciel similaire indique que le nom du fichier est "
+"trop long"
+
+#: ../../userguide/troubleshooting/ms_filename_too_long.rst:8
+msgid ""
+"This error is due to Microsoft's `Maximum File Path Limitation <https://"
+"learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-"
+"limitation>`_."
+msgstr ""
+"Cette erreur est due à la `Limitation du Chemin d'Accès Maximal <https://"
+"learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-"
+"limitation>`_ de Microsoft."
+
+#: ../../userguide/troubleshooting/ms_filename_too_long.rst:10
+msgid ""
+"When you save or open a file, its full path cannot exceed 260 characters. "
+"This limitation includes 3 characters for the drive (i.e. `D:`), the "
+"characters  in all the intermediate folder names, the backslash character "
+"between folders, and the characters in the file name."
+msgstr ""
+"Lorsque vous enregistrez ou ouvrez un fichier, son chemin d'accès complet ne "
+"doit pas dépasser 260 caractères. Cette limite inclut les 3 caractères "
+"correspondant à la lettre du lecteur (par exemple `D:`), les caractères de "
+"tous les noms de dossiers intermédiaires, la barre oblique inversée entre "
+"les dossiers et les caractères du nom du fichier."
+
+#: ../../userguide/troubleshooting/ms_filename_too_long.rst:14
+msgid ""
+"The only solution is to rename the file or the folders containing it in "
+"order to have a shorter path."
+msgstr ""
+"La seule solution consiste à renommer le fichier ou les dossiers qui le "
+"contiennent afin d'obtenir un chemin d'accès plus court."
+
+#: ../../userguide/troubleshooting/ms_filename_too_long.rst:16
+msgid ""
+"Microsoft's article also mentions a more cumbersome approach by modifying a "
+"registry entry. This might work, but it has not been tested in Parsec."
+msgstr ""
+"L'article de Microsoft mentionne également une méthode plus fastidieuse "
+"consistant à modifier une entrée du registre. Cela pourrait fonctionner, "
+"mais cela n'a pas été testé dans Parsec."
