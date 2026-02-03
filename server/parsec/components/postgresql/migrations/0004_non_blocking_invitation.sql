@@ -4,7 +4,7 @@
 --  Migration
 -------------------------------------------------------
 
-CREATE TYPE cancelled_greeting_attempt_reason AS ENUM (
+CREATE TYPE CANCELLED_GREETING_ATTEMPT_REASON AS ENUM (
     'MANUALLY_CANCELLED',
     'INVALID_NONCE_HASH',
     'INVALID_SAS_CODE',
@@ -14,7 +14,7 @@ CREATE TYPE cancelled_greeting_attempt_reason AS ENUM (
     'AUTOMATICALLY_CANCELLED'
 );
 
-CREATE TYPE greeter_or_claimer AS ENUM (
+CREATE TYPE GREETER_OR_CLAIMER AS ENUM (
     'GREETER',
     'CLAIMER'
 );
