@@ -75,13 +75,8 @@ This is notably to reflect two fundamental differences:
     enrollment.
 
 > [!NOTE]
-> We don't provide a clean way for Alice to cancel her enrollment submission after step 5
-> (as we consider this rather unusual).
-> So instead Alice is only expected to remove the enrollment info from her machine's filesystem
-> (hence there is no longer an enrollment pending from her point of view), and an admin
-> should manually cancel the enrollment (but accepting it by mistake is not an issue either,
-> since Alice no longer knows about her user & device secret keys, so the admin will just
-> have to remove this phantom Alice user first before the new enrollment can take place).
+> Alice can cancel her request while her enrollment has not been processed.
+
 
 ## 3 - Protocol
 
@@ -849,7 +844,66 @@ Anonymous API:
 ]
 ```
 
-### 3.6 - New event for async enrollment changes
+### 3.6 Cancel a request
+
+This anonymous command marks the demand as cancelled on the server. It is expected
+that the client removes the corresponding files as well.
+
+> [!IMPORTANT]
+> To cancel a request, one only needs an enrollment ID without any further authentication.
+> That means that a third party could cancel Alice's request provided they have her enrollment ID.
+> The organization's admin are expected to know about that ID, but
+> they also have the possibility to reject the enrollment request.
+> The server's admin have access to the ID as it is part of the metadata.
+> For an unauthorized third party to have access to that ID that would mean
+> either of the following:
+> - access to Alice's physical device
+> - an organization admin parsec device
+> - a admin access to the metadata server
+> - luck generating a uuid
+>
+> The first three cases are problematic, but this command does not allow
+> anything more that is already possible in these situations.
+> The last case means that someone is attempting to brut force the uuid,
+> a 128-bit value. This is considered as highly improbable.
+
+```json5
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "async_enrollment_cancel",
+        "req": {
+            "fields": [
+                {
+                    // The enrollment ID to cancel
+                    "name": "enrollment_id",
+                    "type": "AsyncEnrollmentID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // The server did not find a request for the provided ID
+                "status": "enrollment_not_found"
+            },
+            {
+                // The enrollment is no longer in the submitted state
+                // (already accepted, rejected, or cancelled)
+                "status": "enrollment_no_longer_available"
+            }
+        ],
+        "nested_types": []
+    }
+]
+```
+
+
+### 3.7 - New event for async enrollment changes
 
 Update the `events_listen` authenticated command:
 
@@ -887,7 +941,7 @@ Notes:
 - This event is only fired for users with ADMIN profile, since only them can interact
   with the async enrollments.
 
-### 3.7 - Update `server_config`: Provide OpenBao's transit mount path
+### 3.8 - Update `server_config`: Provide OpenBao's transit mount path
 
 Add new `transit_mount_path` in the OpenBao config:
 
