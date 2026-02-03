@@ -91,6 +91,7 @@ pub(crate) async fn save_device_pki(
 
     // Encrypt the key using the public key related to a certificate from the store
     let (algorithm, encrypted_key) = encrypt_message(secret_key.as_ref(), certificate_ref)
+        .await
         .map_err(|e| SaveDeviceError::Internal(e.into()))?;
 
     // May check if we are able to decrypt the encrypted key from the previous step

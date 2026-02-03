@@ -288,20 +288,21 @@ mod strategy {
                 let key = SecretKey::generate();
 
                 // 2. Encrypt it with the PKI certificate's public key
-                let (algorithm, encrypted_key) = libparsec_platform_pki::encrypt_message(
-                    key.as_ref(),
-                    &cert_ref,
-                )
-                .map_err(|err| match err {
-                    err @ (PKIEncryptMessageError::NotFound
-                    | PKIEncryptMessageError::CannotAcquireKeypair(_)
-                    | PKIEncryptMessageError::CannotEncrypt(_)) => {
-                        SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
-                    }
-                    PKIEncryptMessageError::CannotOpenStore(e) => {
-                        SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                    }
-                })?;
+                let (algorithm, encrypted_key) =
+                    libparsec_platform_pki::encrypt_message(key.as_ref(), &cert_ref)
+                        .await
+                        .map_err(|err| match err {
+                            err @ (PKIEncryptMessageError::NotFound
+                            | PKIEncryptMessageError::CannotAcquireKeypair(_)
+                            | PKIEncryptMessageError::CannotEncrypt(_)) => {
+                                SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                    err.into(),
+                                )
+                            }
+                            PKIEncryptMessageError::CannotOpenStore(e) => {
+                                SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                            }
+                        })?;
 
                 // 3. Create the identity system metadata
                 let identity_system = AsyncEnrollmentLocalPendingIdentitySystem::PKI {

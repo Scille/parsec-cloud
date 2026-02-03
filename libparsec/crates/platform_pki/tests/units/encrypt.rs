@@ -12,8 +12,9 @@ async fn encrypt_decrypt(certificates: &InstalledCertificates) {
     // Alice key is 2048 bits (i.e. 256 bytes), so we use the maximum allowed payload size here.
     let payload = [b'x'; 256 - 66]; // 66 bytes is the OAEP SHA-256 overhead
     let certificate_ref = certificates.alice_cert_ref().await;
-    let (algo, encrypted_message) =
-        crate::encrypt_message(payload.as_ref(), &certificate_ref).unwrap();
+    let (algo, encrypted_message) = crate::encrypt_message(payload.as_ref(), &certificate_ref)
+        .await
+        .unwrap();
 
     let decrypted_message =
         crate::decrypt_message(algo, &encrypted_message, &certificate_ref).unwrap();
@@ -41,12 +42,12 @@ async fn decrypt(certificates: &InstalledCertificates) {
     assert_eq!(*decrypted_message, *payload);
 }
 
-#[test]
-fn encrypt_ko_not_found() {
+#[parsec_test]
+async fn encrypt_ko_not_found() {
     let payload = b"The cake is a lie!";
     let dummy_certificate_ref: X509CertificateReference = X509CertificateHash::fake_sha256().into();
     p_assert_matches!(
-        crate::encrypt_message(payload.as_ref(), &dummy_certificate_ref),
+        crate::encrypt_message(payload.as_ref(), &dummy_certificate_ref).await,
         Err(EncryptMessageError::NotFound)
     );
 }
@@ -58,7 +59,7 @@ fn encrypt_ko_not_found() {
 //     let payload = b"The cake is a lie!";
 //     let certificate_ref = certificates.mallory_sign_cert_ref();
 //     p_assert_matches!(
-//         crate::encrypt_message(payload.as_ref(), &certificate_ref),
+//         crate::encrypt_message(payload.as_ref(), &certificate_ref).await,
 //         Err(EncryptMessageError::CannotEncrypt(_))
 //     );
 // }
@@ -68,7 +69,7 @@ async fn encrypt_ko_cannot_use_root_certificate(certificates: &InstalledCertific
     let payload = b"The cake is a lie!";
     let certificate_ref = certificates.black_mesa_cert_ref();
     p_assert_matches!(
-        crate::encrypt_message(payload.as_ref(), &certificate_ref),
+        crate::encrypt_message(payload.as_ref(), &certificate_ref).await,
         Err(EncryptMessageError::NotFound)
     );
 }
@@ -79,7 +80,7 @@ async fn encrypt_payload_too_big(certificates: &InstalledCertificates) {
     let payload = [b'x'; 256 - 66 + 1];
     let certificate_ref = certificates.alice_cert_ref().await;
     p_assert_matches!(
-        crate::encrypt_message(payload.as_ref(), &certificate_ref),
+        crate::encrypt_message(payload.as_ref(), &certificate_ref).await,
         Err(EncryptMessageError::CannotEncrypt(_))
     );
 }
