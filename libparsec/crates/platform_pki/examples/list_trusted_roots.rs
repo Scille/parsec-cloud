@@ -3,9 +3,10 @@
 
 mod utils;
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> anyhow::Result<()> {
     env_logger::init();
-    let roots = libparsec_platform_pki::list_trusted_root_certificate_anchors()?;
+    let roots = libparsec_platform_pki::list_trusted_root_certificate_anchors().await?;
 
     println!("Found {} trusted roots", roots.len());
 

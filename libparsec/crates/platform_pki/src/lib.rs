@@ -36,12 +36,12 @@ mod platform {
         unimplemented!("platform not supported")
     }
 
-    pub fn list_trusted_root_certificate_anchors(
+    pub async fn list_trusted_root_certificate_anchors(
     ) -> Result<Vec<rustls_pki_types::TrustAnchor<'static>>, ListTrustedRootCertificatesError> {
         unimplemented!("platform not supported")
     }
 
-    pub fn list_intermediate_certificates(
+    pub async fn list_intermediate_certificates(
     ) -> Result<Vec<rustls_pki_types::CertificateDer<'static>>, ListIntermediateCertificatesError>
     {
         unimplemented!("platform not supported")

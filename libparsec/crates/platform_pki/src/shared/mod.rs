@@ -250,17 +250,21 @@ pub async fn get_validation_path_for_cert(
     cert_ref: &X509CertificateReference,
     now: DateTime,
 ) -> Result<ValidationPathOwned, GetValidationPathForCertError> {
-    let all_trusted_roots =
-        crate::list_trusted_root_certificate_anchors().map_err(|err| match err {
+    let all_trusted_roots = crate::list_trusted_root_certificate_anchors()
+        .await
+        .map_err(|err| match err {
             ListCertificatesError::CannotOpenStore(err) => {
                 GetValidationPathForCertError::CannotOpenStore(err)
             }
         })?;
-    let all_intermediates = crate::list_intermediate_certificates().map_err(|err| match err {
-        ListCertificatesError::CannotOpenStore(err) => {
-            GetValidationPathForCertError::CannotOpenStore(err)
-        }
-    })?;
+    let all_intermediates =
+        crate::list_intermediate_certificates()
+            .await
+            .map_err(|err| match err {
+                ListCertificatesError::CannotOpenStore(err) => {
+                    GetValidationPathForCertError::CannotOpenStore(err)
+                }
+            })?;
     let leaf = get_der_encoded_certificate(cert_ref)
         .await
         .map_err(|err| match err {
