@@ -13,7 +13,8 @@ struct Args {
     cert: utils::CertificateOrRef,
 }
 
-pub fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+pub async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     log::debug!("args={args:?}");
@@ -32,6 +33,7 @@ pub fn main() -> anyhow::Result<()> {
     let untrusted_certificate = args
         .cert
         .get_certificate()
+        .await
         .context("Cannot get certificate")?;
 
     let end_cert = untrusted_certificate

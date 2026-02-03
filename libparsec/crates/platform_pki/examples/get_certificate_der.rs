@@ -20,7 +20,8 @@ struct Args {
     certificate_uri: Option<X509URIFlavorValue>,
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     log::debug!("args={args:x?}");
@@ -51,7 +52,9 @@ fn main() -> anyhow::Result<()> {
         println!("original uri: {uri}");
     }
     println!("original fingerprint: {}", cert_ref.hash);
-    let certificate = get_der_encoded_certificate(&cert_ref).context("Get certificate")?;
+    let certificate = get_der_encoded_certificate(&cert_ref)
+        .await
+        .context("Get certificate")?;
 
     let uri = cert_ref.uris().next().unwrap();
     println!("uri: {uri}");

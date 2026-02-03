@@ -102,7 +102,7 @@ fn get_certificate_uri(cert_context: &CertContext) -> X509WindowsCngURI {
     }
 }
 
-pub fn get_der_encoded_certificate(
+pub async fn get_der_encoded_certificate(
     certificate_ref: &X509CertificateReference,
 ) -> Result<Bytes, GetDerEncodedCertificateError> {
     let store = open_store().map_err(GetDerEncodedCertificateError::CannotOpenStore)?;

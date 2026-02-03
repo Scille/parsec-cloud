@@ -21,14 +21,15 @@ struct Args {
     signature: Bytes,
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     log::debug!("args={args:?}");
 
     let data = args.content.into_bytes()?;
 
-    let cert = args.cert.get_certificate()?;
+    let cert = args.cert.get_certificate().await?;
 
     {
         let fingerprint =

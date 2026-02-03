@@ -46,6 +46,9 @@ data-encoding = { workspace = true, default-features = true }
 anyhow = { workspace = true }
 env_logger = { workspace = true }
 hex-literal = { workspace = true }
-libparsec_tests_lite = { workspace = true }
+libparsec_tests_lite = { workspace = true, features = ["parsec_test_macro"] }
 serde = { workspace = true }
 rmp-serde = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+tokio = { workspace = true, features = ["macros"] }

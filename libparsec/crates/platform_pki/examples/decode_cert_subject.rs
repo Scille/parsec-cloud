@@ -13,7 +13,8 @@ struct Args {
     cert: utils::CertificateOrRef,
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     log::debug!("args={args:?}");
@@ -21,6 +22,7 @@ fn main() -> anyhow::Result<()> {
     let raw_cert = args
         .cert
         .get_certificate()
+        .await
         .context("Invalid cert arguments")?;
     let cert =
         libparsec_platform_pki::x509::X509CertificateInformation::load_der(raw_cert.as_ref())

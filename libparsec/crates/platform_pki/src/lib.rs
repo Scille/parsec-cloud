@@ -29,7 +29,7 @@ mod platform {
     };
     use libparsec_types::prelude::*;
 
-    pub fn get_der_encoded_certificate(
+    pub async fn get_der_encoded_certificate(
         certificate_ref: &X509CertificateReference,
     ) -> Result<Bytes, GetDerEncodedCertificateError> {
         let _ = certificate_ref;

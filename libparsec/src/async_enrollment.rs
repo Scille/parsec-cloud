@@ -71,7 +71,7 @@ mod strategy {
     }
 
     impl SubmitAsyncEnrollmentIdentityStrategy {
-        pub(super) fn convert(
+        pub(super) async fn convert(
             self,
         ) -> anyhow::Result<Box<dyn libparsec_client::SubmitAsyncEnrollmentIdentityStrategy>>
         {
@@ -110,6 +110,7 @@ mod strategy {
                     // Get certificate DER
                     let cert_der =
                         libparsec_platform_pki::get_der_encoded_certificate(&certificate_reference)
+                            .await
                             .map_err(|e| anyhow::anyhow!("Cannot get certificate: {}", e))?;
 
                     // Parse certificate and extract human handle
@@ -249,6 +250,7 @@ mod strategy {
                 // 2. Get leaf & intermediate certificates
                 let validation_path: libparsec_platform_pki::ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
+                    .await
                         .map_err(|err| match err {
                             err @ (
                                 PKIGetValidationPathForCertError::NotFound
@@ -598,6 +600,7 @@ mod strategy {
 
                 let validation_path: libparsec_platform_pki::ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
+                        .await
                         .map_err(|err| match err {
                             err @ (
                                 PKIGetValidationPathForCertError::NotFound
@@ -696,6 +699,7 @@ mod strategy {
                 // 2. Get leaf & intermediate certificates
                 let validation_path: libparsec_platform_pki::ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
+                        .await
                         .map_err(|err| match err {
                             err @ (
                                 PKIGetValidationPathForCertError::NotFound
@@ -749,6 +753,7 @@ mod strategy {
 
                 let validation_path: libparsec_platform_pki::ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
+                        .await
                         .map_err(|err| match err {
                             err @ (
                                 PKIGetValidationPathForCertError::NotFound
@@ -904,7 +909,7 @@ pub async fn submit_async_enrollment(
     identity_strategy: SubmitAsyncEnrollmentIdentityStrategy,
 ) -> Result<AvailablePendingAsyncEnrollment, SubmitAsyncEnrollmentError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
-    let identity_strategy = identity_strategy.convert()?;
+    let identity_strategy = identity_strategy.convert().await?;
 
     libparsec_client::submit_async_enrollment(
         config,

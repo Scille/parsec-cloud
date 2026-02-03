@@ -34,13 +34,13 @@ fn load_pem_and_return_der(pem: &[u8]) -> Bytes {
 pub(super) struct InstalledCertificates {}
 
 impl InstalledCertificates {
-    pub fn alice_cert_ref(&self) -> X509CertificateReference {
-        self.cert_ref(ALICE_SHA256_CERT_HASH)
+    pub async fn alice_cert_ref(&self) -> X509CertificateReference {
+        self.cert_ref(ALICE_SHA256_CERT_HASH).await
     }
 
     #[cfg_attr(not(windows), expect(dead_code))]
-    pub fn bob_cert_ref(&self) -> X509CertificateReference {
-        self.cert_ref(BOB_SHA256_CERT_HASH)
+    pub async fn bob_cert_ref(&self) -> X509CertificateReference {
+        self.cert_ref(BOB_SHA256_CERT_HASH).await
     }
 
     #[cfg_attr(not(windows), expect(dead_code))]
@@ -54,13 +54,13 @@ impl InstalledCertificates {
     }
 
     #[expect(dead_code)]
-    pub fn mallory_sign_cert_ref(&self) -> X509CertificateReference {
-        self.cert_ref(MALLORY_SIGN_SHA256_CERT_HASH)
+    pub async fn mallory_sign_cert_ref(&self) -> X509CertificateReference {
+        self.cert_ref(MALLORY_SIGN_SHA256_CERT_HASH).await
     }
 
     #[expect(dead_code)]
-    pub fn mallory_encrypt_cert_ref(&self) -> X509CertificateReference {
-        self.cert_ref(MALLORY_ENCRYPT_SHA256_CERT_HASH)
+    pub async fn mallory_encrypt_cert_ref(&self) -> X509CertificateReference {
+        self.cert_ref(MALLORY_ENCRYPT_SHA256_CERT_HASH).await
     }
 
     #[expect(dead_code)]
@@ -83,11 +83,14 @@ impl InstalledCertificates {
         )
     }
 
-    fn cert_ref(&self, sha256_hash: &str) -> X509CertificateReference {
+    async fn cert_ref(&self, sha256_hash: &str) -> X509CertificateReference {
         let certificate_reference =
             X509CertificateReference::from(sha256_hash.parse::<X509CertificateHash>().unwrap());
         // Sanity check to ensure the certificate is installed
-        if crate::get_der_encoded_certificate(&certificate_reference).is_err() {
+        if crate::get_der_encoded_certificate(&certificate_reference)
+            .await
+            .is_err()
+        {
             #[cfg(windows)]
             panic!(
                 "Certificate not found: \x1b[1;31m{}\x1b[0m\n\
@@ -144,24 +147,26 @@ impl InstalledCertificates {
     }
 
     #[cfg_attr(not(windows), expect(dead_code))]
-    pub fn alice_encrypt_message(
+    pub async fn alice_encrypt_message(
         &self,
         payload: &[u8],
     ) -> (PKIEncryptionAlgorithm, Bytes, X509CertificateReference) {
-        let certificate_ref = self.alice_cert_ref();
+        let certificate_ref = self.alice_cert_ref().await;
         let (algo, encrypted_message) = crate::encrypt_message(payload, &certificate_ref).unwrap();
         (algo, encrypted_message, certificate_ref)
     }
 
     #[cfg_attr(not(windows), expect(dead_code))]
-    pub fn alice_sign_message(
+    pub async fn alice_sign_message(
         &self,
         payload: &[u8],
     ) -> (PkiSignatureAlgorithm, Bytes, ValidationPathOwned) {
-        let certificate_ref = self.alice_cert_ref();
+        let certificate_ref = self.alice_cert_ref().await;
         let (algo, signature) = crate::sign_message(payload, &certificate_ref).unwrap();
         let now = DateTime::now();
-        let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now).unwrap();
+        let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now)
+            .await
+            .unwrap();
         (algo, signature, validation_path)
     }
 }
