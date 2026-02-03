@@ -20,10 +20,12 @@ pub async fn main() -> anyhow::Result<()> {
     log::debug!("args={args:?}");
 
     let trusted_roots = libparsec_platform_pki::list_trusted_root_certificate_anchors()
+        .await
         .context("Cannot list trusted root certificates")?;
     println!("Found {} trusted roots", trusted_roots.len());
 
     let intermediate_certificates = libparsec_platform_pki::list_intermediate_certificates()
+        .await
         .context("Cannot list intermediate certificates")?;
     println!(
         "Found {} intermediate certificates",

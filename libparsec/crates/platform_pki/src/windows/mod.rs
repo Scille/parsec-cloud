@@ -120,7 +120,7 @@ fn get_id_and_hash_from_cert_context(
     Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
 }
 
-pub fn list_trusted_root_certificate_anchors(
+pub async fn list_trusted_root_certificate_anchors(
 ) -> Result<Vec<rustls_pki_types::TrustAnchor<'static>>, ListTrustedRootCertificatesError> {
     let store = CertStore::open_current_user("Root")
         .map_err(ListTrustedRootCertificatesError::CannotOpenStore)?;
@@ -157,7 +157,7 @@ pub fn list_trusted_root_certificate_anchors(
     Ok(res)
 }
 
-pub fn list_intermediate_certificates(
+pub async fn list_intermediate_certificates(
 ) -> Result<Vec<rustls_pki_types::CertificateDer<'static>>, ListIntermediateCertificatesError> {
     let store = CertStore::open_current_user("CA")
         .map_err(ListIntermediateCertificatesError::CannotOpenStore)?;
