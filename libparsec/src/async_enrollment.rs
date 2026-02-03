@@ -815,6 +815,7 @@ mod strategy {
                     &encrypted_key,
                     &certificate_ref,
                 )
+                .await
                 .map_err(|err| match err {
                     err @ (PKIDecryptMessageError::NotFound
                     | PKIDecryptMessageError::CannotAcquireKeypair(_)

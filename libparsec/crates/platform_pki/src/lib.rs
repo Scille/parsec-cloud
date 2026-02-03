@@ -64,7 +64,7 @@ mod platform {
         unimplemented!("platform not supported")
     }
 
-    pub fn decrypt_message(
+    pub async fn decrypt_message(
         algo: PKIEncryptionAlgorithm,
         encrypted_message: &[u8],
         certificate_ref: &X509CertificateReference,
