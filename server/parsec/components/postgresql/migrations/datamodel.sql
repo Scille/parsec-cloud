@@ -46,7 +46,7 @@ CREATE TABLE vault_item (
 );
 
 
-CREATE TYPE password_algorithm AS ENUM ('ARGON2ID');
+CREATE TYPE PASSWORD_ALGORITHM AS ENUM ('ARGON2ID');
 
 
 CREATE TABLE vault_authentication_method (
@@ -147,7 +147,7 @@ CREATE TABLE organization (
 -------------------------------------------------------
 -- Sequester
 -------------------------------------------------------
-CREATE TYPE sequester_service_type AS ENUM ('STORAGE', 'WEBHOOK');
+CREATE TYPE SEQUESTER_SERVICE_TYPE AS ENUM ('STORAGE', 'WEBHOOK');
 
 CREATE TABLE sequester_service (
     _id SERIAL PRIMARY KEY,
@@ -181,7 +181,7 @@ CREATE TABLE human (
 );
 
 
-CREATE TYPE user_profile AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
+CREATE TYPE USER_PROFILE AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
 
 
 CREATE TABLE user_ (
@@ -310,12 +310,12 @@ ALTER TABLE user_ ADD FOREIGN KEY (
 --  Invitation
 -------------------------------------------------------
 
-CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
-CREATE TYPE invitation_deleted_reason AS ENUM (
+CREATE TYPE INVITATION_TYPE AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
+CREATE TYPE INVITATION_DELETED_REASON AS ENUM (
     'FINISHED', 'CANCELLED', 'ROTTEN'
 );
 
-CREATE TYPE cancelled_greeting_attempt_reason AS ENUM (
+CREATE TYPE CANCELLED_GREETING_ATTEMPT_REASON AS ENUM (
     'MANUALLY_CANCELLED',
     'INVALID_NONCE_HASH',
     'INVALID_SAS_CODE',
@@ -325,7 +325,7 @@ CREATE TYPE cancelled_greeting_attempt_reason AS ENUM (
     'AUTOMATICALLY_CANCELLED'
 );
 
-CREATE TYPE greeter_or_claimer AS ENUM (
+CREATE TYPE GREETER_OR_CLAIMER AS ENUM (
     'GREETER',
     'CLAIMER'
 );
@@ -428,16 +428,16 @@ CREATE TABLE pki_certificate (
     der_content BYTEA NOT NULL
 );
 
-CREATE TYPE enrollment_state AS ENUM (
+CREATE TYPE ENROLLMENT_STATE AS ENUM (
     'SUBMITTED',
     'ACCEPTED',
     'REJECTED',
     'CANCELLED'
 );
 
-CREATE TYPE pki_signature_algorithm AS ENUM ('RSASSA_PSS_SHA256');
+CREATE TYPE PKI_SIGNATURE_ALGORITHM AS ENUM ('RSASSA_PSS_SHA256');
 
-CREATE TYPE pki_enrollment_info_accepted AS (
+CREATE TYPE PKI_ENROLLMENT_INFO_ACCEPTED AS (
     accepted_on TIMESTAMPTZ,
     accept_payload_signature BYTEA,
     accept_payload BYTEA,
@@ -448,11 +448,11 @@ CREATE TYPE pki_enrollment_info_accepted AS (
     accepter_x509_cert_sha256_fingerprint BYTEA
 );
 
-CREATE TYPE pki_enrollment_info_rejected AS (
+CREATE TYPE PKI_ENROLLMENT_INFO_REJECTED AS (
     rejected_on TIMESTAMPTZ
 );
 
-CREATE TYPE pki_enrollment_info_cancelled AS (
+CREATE TYPE PKI_ENROLLMENT_INFO_CANCELLED AS (
     cancelled_on TIMESTAMPTZ
 );
 
@@ -501,9 +501,9 @@ CREATE TABLE pki_x509_certificate (
     der_content BYTEA NOT NULL
 );
 
-CREATE TYPE async_enrollment_signature_type AS ENUM ('PKI', 'OPENBAO');
+CREATE TYPE ASYNC_ENROLLMENT_SIGNATURE_TYPE AS ENUM ('PKI', 'OPENBAO');
 
-CREATE TYPE async_enrollment_state AS ENUM ('SUBMITTED', 'ACCEPTED', 'REJECTED', 'CANCELLED');
+CREATE TYPE ASYNC_ENROLLMENT_STATE AS ENUM ('SUBMITTED', 'ACCEPTED', 'REJECTED', 'CANCELLED');
 
 CREATE TABLE async_enrollment (
     _id SERIAL PRIMARY KEY,
@@ -548,7 +548,7 @@ CREATE TABLE async_enrollment (
 -------------------------------------------------------
 
 
-CREATE TYPE maintenance_type AS ENUM ('REENCRYPTION', 'GARBAGE_COLLECTION');
+CREATE TYPE MAINTENANCE_TYPE AS ENUM ('REENCRYPTION', 'GARBAGE_COLLECTION');
 
 
 CREATE TABLE realm (
@@ -562,7 +562,7 @@ CREATE TABLE realm (
 );
 
 
-CREATE TYPE realm_role AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
+CREATE TYPE REALM_ROLE AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
 
 
 CREATE TABLE realm_user_role (
@@ -576,7 +576,7 @@ CREATE TABLE realm_user_role (
     certified_on TIMESTAMPTZ NOT NULL
 );
 
-CREATE TYPE realm_archiving_configuration AS ENUM (
+CREATE TYPE REALM_ARCHIVING_CONFIGURATION AS ENUM (
     'AVAILABLE', 'ARCHIVED', 'DELETION_PLANNED'
 );
 

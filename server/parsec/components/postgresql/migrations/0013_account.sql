@@ -41,7 +41,7 @@ CREATE TABLE vault_item (
 );
 
 
-CREATE TYPE password_algorithm AS ENUM ('ARGON2ID');
+CREATE TYPE PASSWORD_ALGORITHM AS ENUM ('ARGON2ID');
 
 
 CREATE TABLE vault_authentication_method (
