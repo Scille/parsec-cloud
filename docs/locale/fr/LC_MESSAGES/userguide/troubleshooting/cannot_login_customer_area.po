@@ -1,0 +1,75 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-01 18:52+0200\n"
+"PO-Revision-Date: 2026-04-01 19:03+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.9\n"
+
+#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:6
+msgid "Cannot login to my Customer Area (Parsec SaaS)"
+msgstr "Je n'arrive pas à me connecter à mon espace client (Parsec SaaS)"
+
+#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:8
+msgid ""
+"The Customer Area is the home of your Parsec SaaS subscription, where you "
+"can find information about your organization statistics, invoices, payment "
+"methods and billing address."
+msgstr ""
+"L'Espace Client est le centre de gestion de votre abonnement SaaS Parsec, où "
+"vous trouverez des informations sur les statistiques de votre organisation, "
+"vos factures, vos modes de paiement et votre adresse de facturation."
+
+#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:11
+msgid ""
+"If you forgot your password, you can reset it from the Customer Area login "
+"page:"
+msgstr ""
+"Si vous avez oublié votre mot de passe, vous pouvez le réinitialiser depuis "
+"la page de connexion de l'Espace client :"
+
+#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:13
+msgid "Go to the **Customer area** (1)"
+msgstr "Accédez à l'**Espace client** (1)"
+
+#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:14
+msgid "Click **Forgot your password?** (2)"
+msgstr "Cliquez sur **Mot de passe oublié ?** (2)"
+
+#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:15
+msgid "Enter the e-mail address used for your Parsec SaaS subscription"
+msgstr ""
+"Saisissez l'adresse e-mail utilisée pour votre abonnement au service SaaS "
+"Parsec"
+
+#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:20
+msgid ""
+"You will receive an e-mail with instructions to reset your password. Check "
+"your spam folder in case your e-mail service is filtering it."
+msgstr ""
+"Vous recevrez un e-mail contenant les instructions pour réinitialiser votre "
+"mot de passe. Vérifiez votre dossier de courrier indésirable au cas où votre "
+"fournisseur de messagerie l'aurait filtré."
+
+#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:23
+msgid ""
+"If you don't receive the e-mail, or have other problems to login, please "
+"contact us at `support@parsec.cloud <mailto:support@parsec.cloud?"
+"subject=Cannot%20login%20to%20my%20customer%20area>`_."
+msgstr ""
+"Si vous ne recevez pas l'e-mail ou si vous rencontrez d'autres difficultés "
+"pour vous connecter, veuillez nous contacter à l'adresse `support@parsec."
+"cloud <mailto:support@parsec.cloud?"
+"subject=Cannot%20login%20to%20my%20customer%20area>`_."
