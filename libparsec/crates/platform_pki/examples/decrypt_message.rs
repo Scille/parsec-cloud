@@ -20,7 +20,8 @@ struct Args {
     algorithm: PKIEncryptionAlgorithm,
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     log::debug!("args={args:?}");
@@ -31,8 +32,9 @@ fn main() -> anyhow::Result<()> {
         .decode(&b64_data)
         .context("Failed to decode hex encoded data")?;
 
-    let data =
-        decrypt_message(args.algorithm, &data, &cert_ref).context("Failed to decrypt message")?;
+    let data = decrypt_message(args.algorithm, &data, &cert_ref)
+        .await
+        .context("Failed to decrypt message")?;
 
     println!("Decrypted by cert with fingerprint: {}", cert_ref.hash);
     println!(

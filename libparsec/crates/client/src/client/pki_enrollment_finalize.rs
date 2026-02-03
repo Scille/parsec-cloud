@@ -36,6 +36,7 @@ pub async fn finalize(
 
     let key =
         libparsec_platform_pki::decrypt_message(encrypted_key_algo, &encrypted_key, &cert_ref)
+            .await
             .context("Cannot decrypt key")
             .and_then(|raw| SecretKey::try_from(raw.as_ref()).context("Invalid key"))?;
     let human_handle = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)

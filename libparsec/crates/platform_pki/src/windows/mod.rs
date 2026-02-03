@@ -382,7 +382,7 @@ fn ncrypt_encrypt_message_with_rsa(
     }
 }
 
-pub fn decrypt_message(
+pub async fn decrypt_message(
     algo: PKIEncryptionAlgorithm,
     encrypted_message: &[u8],
     certificate_ref: &X509CertificateReference,

@@ -96,7 +96,8 @@ pub(crate) async fn save_device_pki(
 
     // May check if we are able to decrypt the encrypted key from the previous step
     assert_eq!(
-        decrypt_message(algorithm, &encrypted_key, certificate_ref,)
+        decrypt_message(algorithm, &encrypted_key, certificate_ref)
+            .await
             .map_err(|e| SaveDeviceError::Internal(e.into()))?
             .as_ref(),
         secret_key.as_ref()
@@ -209,15 +210,16 @@ pub(super) async fn load_ciphertext_key_pki(
     device_file: &DeviceFile,
 ) -> Result<SecretKey, LoadCiphertextKeyError> {
     if let DeviceFile::PKI(device) = device_file {
-        Ok(decrypt_message(
+        decrypt_message(
             device.algorithm,
             device.encrypted_key.as_ref(),
             &device.certificate_ref,
         )
+        .await
         .map_err(|_| LoadCiphertextKeyError::InvalidData)?
         .as_ref()
         .try_into()
-        .map_err(|_| LoadCiphertextKeyError::InvalidData)?)
+        .map_err(|_| LoadCiphertextKeyError::InvalidData)
     } else {
         Err(LoadCiphertextKeyError::InvalidData)
     }

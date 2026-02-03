@@ -16,8 +16,9 @@ async fn encrypt_decrypt(certificates: &InstalledCertificates) {
         .await
         .unwrap();
 
-    let decrypted_message =
-        crate::decrypt_message(algo, &encrypted_message, &certificate_ref).unwrap();
+    let decrypted_message = crate::decrypt_message(algo, &encrypted_message, &certificate_ref)
+        .await
+        .unwrap();
     assert_eq!(*decrypted_message, payload);
 }
 
@@ -37,8 +38,9 @@ async fn decrypt(certificates: &InstalledCertificates) {
         "6e0254fcb7c210e0a8fb32"
     );
     let certificate_ref = certificates.alice_cert_ref().await;
-    let decrypted_message =
-        crate::decrypt_message(algo, &encrypted_message, &certificate_ref).unwrap();
+    let decrypted_message = crate::decrypt_message(algo, &encrypted_message, &certificate_ref)
+        .await
+        .unwrap();
     assert_eq!(*decrypted_message, *payload);
 }
 
@@ -96,7 +98,7 @@ async fn decrypt_ko_not_found(certificates: &InstalledCertificates) {
             .unwrap(),
     );
     p_assert_matches!(
-        crate::decrypt_message(algo, &encrypted_message, &dummy_certificate_ref),
+        crate::decrypt_message(algo, &encrypted_message, &dummy_certificate_ref).await,
         Err(DecryptMessageError::NotFound)
     );
 }
@@ -107,7 +109,7 @@ async fn decrypt_ko_cannot_decrypt(certificates: &InstalledCertificates) {
     let (algo, _, certificate_ref) = certificates.alice_encrypt_message(payload).await;
 
     p_assert_matches!(
-        crate::decrypt_message(algo, b"<dummy_message>", &certificate_ref),
+        crate::decrypt_message(algo, b"<dummy_message>", &certificate_ref).await,
         Err(DecryptMessageError::CannotDecrypt(_))
     );
 }
