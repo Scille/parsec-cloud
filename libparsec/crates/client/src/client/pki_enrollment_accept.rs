@@ -52,6 +52,7 @@ pub async fn accept(
         })?;
     let accepter_intermediate_certs =
         libparsec_platform_pki::get_validation_path_for_cert(accepter_cert_ref, DateTime::now())
+            .await
             .map_err(anyhow::Error::from)
             .context("Failed to get intermediate certificates for itself")
             .map_err(PkiEnrollmentAcceptError::PkiOperationError)?;

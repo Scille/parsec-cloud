@@ -5,15 +5,17 @@ use crate::{SignMessageError, VerifyMessageError, X509CertificateHash, X509Certi
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-#[rstest]
-fn sign_and_verify(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn sign_and_verify(certificates: &InstalledCertificates) {
     // Alice key is 2048 bits (i.e. 256 bytes), so we check that the payload can be larger than the key.
     let payload = [b'x'; 257];
-    let certificate_ref = certificates.alice_cert_ref();
+    let certificate_ref = certificates.alice_cert_ref().await;
     let (algo, signature) = crate::sign_message(payload.as_ref(), &certificate_ref).unwrap();
 
     let now = DateTime::now();
-    let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now).unwrap();
+    let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now)
+        .await
+        .unwrap();
 
     crate::verify_message2(
         payload.as_ref(),
@@ -27,8 +29,8 @@ fn sign_and_verify(certificates: &InstalledCertificates) {
     .unwrap();
 }
 
-#[rstest]
-fn verify(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn verify(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
     let algo = PkiSignatureAlgorithm::RsassaPssSha256;
     // Pre-generated signature to ensure test stability
@@ -43,9 +45,11 @@ fn verify(certificates: &InstalledCertificates) {
         "50a46299802826ac298262"
     );
 
-    let certificate_ref = certificates.alice_cert_ref();
+    let certificate_ref = certificates.alice_cert_ref().await;
     let now: DateTime = "2026-02-01T00:00:00Z".parse().unwrap();
-    let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now).unwrap();
+    let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now)
+        .await
+        .unwrap();
 
     crate::verify_message2(
         payload.as_ref(),
@@ -61,7 +65,7 @@ fn verify(certificates: &InstalledCertificates) {
 
 // TODO: Support `KeyUsage` field in X509 certificate
 //       see https://github.com/Scille/parsec-cloud/issues/12087
-// #[rstest]
+// #[parsec_test]
 // fn sign_ko_certificate_without_signing_key(certificates: &InstalledCertificates) {
 //     let payload = b"The cake is a lie!";
 //     let certificate_ref = certificates.mallory_encrypt_cert_ref();
@@ -71,8 +75,8 @@ fn verify(certificates: &InstalledCertificates) {
 //     );
 // }
 
-#[rstest]
-fn sign_ko_cannot_use_root_certificate(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn sign_ko_cannot_use_root_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
     let certificate_ref = certificates.black_mesa_cert_ref();
     p_assert_matches!(
@@ -91,10 +95,10 @@ fn sign_ko_not_found() {
     );
 }
 
-#[rstest]
-fn verify_message_ko_outdated_certificate(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn verify_message_ko_outdated_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, signature, validation_path) = certificates.alice_sign_message(payload);
+    let (algo, signature, validation_path) = certificates.alice_sign_message(payload).await;
 
     p_assert_matches!(
         crate::verify_message2(
@@ -112,12 +116,14 @@ fn verify_message_ko_outdated_certificate(certificates: &InstalledCertificates) 
     );
 }
 
-#[rstest]
-fn verify_message_ko_different_certificate(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn verify_message_ko_different_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, signature, validation_path) = certificates.alice_sign_message(payload);
+    let (algo, signature, validation_path) = certificates.alice_sign_message(payload).await;
     let different_certificate =
-        crate::get_der_encoded_certificate(&certificates.bob_cert_ref()).unwrap();
+        crate::get_der_encoded_certificate(&certificates.bob_cert_ref().await)
+            .await
+            .unwrap();
 
     p_assert_matches!(
         crate::verify_message2(
@@ -135,10 +141,10 @@ fn verify_message_ko_different_certificate(certificates: &InstalledCertificates)
     );
 }
 
-#[rstest]
-fn verify_message_ko_different_payload(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn verify_message_ko_different_payload(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, signature, validation_path) = certificates.alice_sign_message(payload);
+    let (algo, signature, validation_path) = certificates.alice_sign_message(payload).await;
 
     p_assert_matches!(
         crate::verify_message2(

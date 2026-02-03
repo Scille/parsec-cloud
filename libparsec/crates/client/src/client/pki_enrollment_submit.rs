@@ -58,6 +58,7 @@ pub async fn pki_enrollment_submit(
 
     let intermediate_certificates =
         libparsec_platform_pki::get_validation_path_for_cert(&x509_cert_ref, DateTime::now())
+            .await
             .map_err(anyhow::Error::from)
             .context("Failed to get intermediate certificates for itself")
             .map_err(PkiEnrollmentSubmitError::PkiOperationError)?;

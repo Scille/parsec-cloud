@@ -85,6 +85,7 @@ pub async fn verify_untrusted_items(
     libparsec_platform_async::spawn(async move {
         // Obtain the root cert used by the PKI
         let path = libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, now)
+            .await
             .context("Failed to validate own certificate")
             .map_err(PkiEnrollmentListError::Internal)?;
 

@@ -100,6 +100,7 @@ pub async fn info(
             // Get root anchor to use to verify the response
             let path =
                 libparsec_platform_pki::get_validation_path_for_cert(&x509_cert_ref, accepted_on)
+                    .await
                     .context("Cannot validate own certificate")
                     .map_err(PkiEnrollmentInfoError::Internal)?;
 

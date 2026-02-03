@@ -7,11 +7,11 @@ use crate::{
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-#[rstest]
-fn encrypt_decrypt(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn encrypt_decrypt(certificates: &InstalledCertificates) {
     // Alice key is 2048 bits (i.e. 256 bytes), so we use the maximum allowed payload size here.
     let payload = [b'x'; 256 - 66]; // 66 bytes is the OAEP SHA-256 overhead
-    let certificate_ref = certificates.alice_cert_ref();
+    let certificate_ref = certificates.alice_cert_ref().await;
     let (algo, encrypted_message) =
         crate::encrypt_message(payload.as_ref(), &certificate_ref).unwrap();
 
@@ -20,8 +20,8 @@ fn encrypt_decrypt(certificates: &InstalledCertificates) {
     assert_eq!(*decrypted_message, payload);
 }
 
-#[rstest]
-fn decrypt(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn decrypt(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
     let algo = PKIEncryptionAlgorithm::RsaesOaepSha256;
     // Pre-generated encrypted message to ensure test stability
@@ -35,7 +35,7 @@ fn decrypt(certificates: &InstalledCertificates) {
         "063df66b4e70db2f2a0d4ba4c4109f131676cf11da7925a50db9d77745e5a4f22e9e5b"
         "6e0254fcb7c210e0a8fb32"
     );
-    let certificate_ref = certificates.alice_cert_ref();
+    let certificate_ref = certificates.alice_cert_ref().await;
     let decrypted_message =
         crate::decrypt_message(algo, &encrypted_message, &certificate_ref).unwrap();
     assert_eq!(*decrypted_message, *payload);
@@ -53,8 +53,8 @@ fn encrypt_ko_not_found() {
 
 // TODO: Support `KeyUsage` field in X509 certificate
 //       see https://github.com/Scille/parsec-cloud/issues/12087
-// #[rstest]
-// fn encrypt_ko_certificate_without_encrypting_key(certificates: &InstalledCertificates) {
+// #[parsec_test]
+// async fn encrypt_ko_certificate_without_encrypting_key(certificates: &InstalledCertificates) {
 //     let payload = b"The cake is a lie!";
 //     let certificate_ref = certificates.mallory_sign_cert_ref();
 //     p_assert_matches!(
@@ -63,8 +63,8 @@ fn encrypt_ko_not_found() {
 //     );
 // }
 
-#[rstest]
-fn encrypt_ko_cannot_use_root_certificate(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn encrypt_ko_cannot_use_root_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
     let certificate_ref = certificates.black_mesa_cert_ref();
     p_assert_matches!(
@@ -73,21 +73,21 @@ fn encrypt_ko_cannot_use_root_certificate(certificates: &InstalledCertificates) 
     );
 }
 
-#[rstest]
-fn encrypt_payload_too_big(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn encrypt_payload_too_big(certificates: &InstalledCertificates) {
     // Alice key is 2048 bits (i.e. 256 bytes), and 66 bytes is the OAEP SHA-256 overhead
     let payload = [b'x'; 256 - 66 + 1];
-    let certificate_ref = certificates.alice_cert_ref();
+    let certificate_ref = certificates.alice_cert_ref().await;
     p_assert_matches!(
         crate::encrypt_message(payload.as_ref(), &certificate_ref),
         Err(EncryptMessageError::CannotEncrypt(_))
     );
 }
 
-#[rstest]
-fn decrypt_ko_not_found(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn decrypt_ko_not_found(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, encrypted_message, _) = certificates.alice_encrypt_message(payload);
+    let (algo, encrypted_message, _) = certificates.alice_encrypt_message(payload).await;
 
     let dummy_certificate_ref = X509CertificateReference::from(
         "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
@@ -100,10 +100,10 @@ fn decrypt_ko_not_found(certificates: &InstalledCertificates) {
     );
 }
 
-#[rstest]
-fn decrypt_ko_cannot_decrypt(certificates: &InstalledCertificates) {
+#[parsec_test]
+async fn decrypt_ko_cannot_decrypt(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, _, certificate_ref) = certificates.alice_encrypt_message(payload);
+    let (algo, _, certificate_ref) = certificates.alice_encrypt_message(payload).await;
 
     p_assert_matches!(
         crate::decrypt_message(algo, b"<dummy_message>", &certificate_ref),

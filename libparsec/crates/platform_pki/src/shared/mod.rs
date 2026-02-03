@@ -246,7 +246,7 @@ pub struct ValidationPathOwned {
     pub root: TrustAnchor<'static>,
 }
 
-pub fn get_validation_path_for_cert(
+pub async fn get_validation_path_for_cert(
     cert_ref: &X509CertificateReference,
     now: DateTime,
 ) -> Result<ValidationPathOwned, GetValidationPathForCertError> {
@@ -261,12 +261,14 @@ pub fn get_validation_path_for_cert(
             GetValidationPathForCertError::CannotOpenStore(err)
         }
     })?;
-    let leaf = get_der_encoded_certificate(cert_ref).map_err(|err| match err {
-        GetDerEncodedCertificateError::CannotOpenStore(err) => {
-            GetValidationPathForCertError::CannotOpenStore(err)
-        }
-        GetDerEncodedCertificateError::NotFound => GetValidationPathForCertError::NotFound,
-    })?;
+    let leaf = get_der_encoded_certificate(cert_ref)
+        .await
+        .map_err(|err| match err {
+            GetDerEncodedCertificateError::CannotOpenStore(err) => {
+                GetValidationPathForCertError::CannotOpenStore(err)
+            }
+            GetDerEncodedCertificateError::NotFound => GetValidationPathForCertError::NotFound,
+        })?;
 
     let leaf_cert_der = CertificateDer::from_slice(&leaf);
     let leaf_end_cert = X509EndCertificate::try_from(&leaf_cert_der)
