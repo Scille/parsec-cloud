@@ -165,6 +165,10 @@ function preventRightClick(): void {
   });
 }
 
+window.addEventListener('securitypolicyviolation', (e) => {
+  window.electronAPI.log('error', `'{e.blockedURI}' blocked because if violates '${e.violatedDirective}' (${e.effectiveDirective})`);
+});
+
 const injectionProvider = new InjectionProvider();
 
 async function setupApp(): Promise<void> {
