@@ -334,7 +334,7 @@
             "requestCancelled": "Your request to join the organization has been cancelled.",
             "requestCancelError": "Could not cancel the request.",
             "requestDeleted": "Your request to join the organization has been deleted.",
-            "joinButton": "Join",
+            "joinButton": "Add to my organizations",
             "pending": {
                 "title": "Organization request pending",
                 "message": "Your request to join the organization is still pending. Are you sure you want to cancel it?",
@@ -380,8 +380,8 @@
                     "existingEmail": "A user with this email already exists. Please use another email address.",
                     "problemWithRequestCertificate": "There is a problem with the request certificate.",
                     "offline": "You are offline. Please make sure you are connected to the Internet and try again.",
-                    "failedToJoinWithPKI": "Could not join the organization using PKI. Please make sure you have access to the certificate and try again.",
-                    "failedToJoinWithOpenBao": "Could not join the organization using OpenBAO. Please make sure you have access to the certificate and try again.",
+                    "failedToJoinWithPKI": "Could not join the organization using PKI. Check the certificate provided and try again..",
+                    "failedToJoinWithOpenBao": "Could not join the organization using OpenBAO. Please make sure you are connected and try again.",
                     "couldNotContactServer": "Could not contact the server. Please make sure you are online."
                 },
                 "buttons": {
@@ -552,7 +552,7 @@
         "titles": {
             "workspaces": "My workspaces",
             "about": "About",
-            "invitations": "Invitations",
+            "invitationsRequests": "Invitations & Requests",
             "users": "Users",
             "organization": {
                 "storage": "Storage",
@@ -1129,7 +1129,7 @@
         "hidden": "Hidden",
         "noWorkspace": "No workspaces",
         "users": "Users",
-        "invitations": "Invitations",
+        "invitationsRequests": "Invitations & Requests",
         "storage": "Storage",
         "information": "Information",
         "goToHome": "My workspaces",
@@ -1793,6 +1793,7 @@
                 }
             },
             "errors": {
+                "failToListRequests": "Failed to retrieve link requests. Please make sure you are online.",
                 "noSsoConfigured": "SSO is not configured.",
                 "pkiNotAvailable": "PKI is not available on this organization.",
                 "unknownIdentitySystem": "The identity system used for this request is unknown.",

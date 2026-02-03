@@ -157,9 +157,13 @@
             </ion-text>
           </div>
         </div>
-        <div v-show="asyncEnrollmentRequests.length === 0 && asyncListError">
+        <ms-report-text
+          class="invitations-error-message"
+          v-show="asyncEnrollmentRequests.length === 0 && asyncListError"
+          :theme="MsReportTheme.Error"
+        >
           {{ $msTranslate(asyncListError) }}
-        </div>
+        </ms-report-text>
         <div v-show="asyncEnrollmentRequests.length > 0">
           <async-enrollment-request-list
             :requests="asyncEnrollmentRequests"
@@ -220,6 +224,8 @@ import {
   askQuestion,
   MsImage,
   MsModalResult,
+  MsReportText,
+  MsReportTheme,
   NoInvitation,
   Translatable,
   useWindowSize,
@@ -705,7 +711,7 @@ async function refreshAsyncEnrollmentRequestList(): Promise<void> {
     asyncEnrollmentRequests.value = result.value;
     asyncListError.value = '';
   } else {
-    asyncListError.value = 'FAILED TO LIST ASYNC ENROLLMENT REQUESTS';
+    asyncListError.value = 'InvitationsPage.asyncEnrollmentRequest.errors.failToListRequests';
     window.electronAPI.log('error', `Failed to list pki join requests: ${result.error.tag} (${result.error.error})`);
   }
 }
@@ -1046,6 +1052,16 @@ async function refreshAll(): Promise<void> {
       margin-left: auto;
       color: var(--parsec-color-light-secondary-grey);
     }
+  }
+}
+
+.invitations-error-message {
+  max-width: 30rem;
+  width: 100%;
+  margin: 1rem;
+
+  @include ms.responsive-breakpoint('md') {
+    max-width: 100%;
   }
 }
 </style>

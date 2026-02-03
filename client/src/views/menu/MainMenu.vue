@@ -144,7 +144,7 @@
                 :icon="mailUnread"
               />
               <span class="sidebar-content-organization-button__text">
-                {{ $msTranslate('SideMenu.invitations') }}
+                {{ $msTranslate('SideMenu.invitationsRequests') }}
               </span>
             </ion-text>
 

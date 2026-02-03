@@ -41,10 +41,6 @@
           @click="$emit('joinOrganization', request)"
         >
           {{ $msTranslate('HomePage.organizationRequest.joinButton') }}
-          <ion-icon
-            :icon="arrowForward"
-            class="button-icon"
-          />
         </ion-button>
       </div>
     </ion-card-content>
@@ -54,7 +50,7 @@
 <script lang="ts" setup>
 import { AsyncEnrollmentRequest, PendingAsyncEnrollmentInfoTag } from '@/parsec';
 import { IonButton, IonCardContent, IonIcon, IonText } from '@ionic/vue';
-import { arrowForward, closeCircle } from 'ionicons/icons';
+import { closeCircle } from 'ionicons/icons';
 import { attachMouseOverTooltip } from 'megashark-lib';
 import { computed, onMounted, useTemplateRef, watch } from 'vue';
 
@@ -242,6 +238,12 @@ const statusText = computed(() => {
   &.accepted {
     border: 1px solid var(--parsec-color-light-secondary-medium);
     background: var(--parsec-color-light-secondary-white);
+    transition: all 0.15s ease-in-out;
+
+    &:hover {
+      box-shadow: var(--parsec-shadow-soft);
+      background: var(--parsec-color-light-secondary-background);
+    }
   }
 }
 </style>

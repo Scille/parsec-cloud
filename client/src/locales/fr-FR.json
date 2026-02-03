@@ -333,7 +333,7 @@
             "requestCancelled": "Votre demande pour rejoindre l'organisation a bien été annulée.",
             "requestCancelError": "Impossible d'annuler la requête.",
             "requestDeleted": "Votre demande pour rejoindre l'organisation a bien été supprimée.",
-            "joinButton": "Rejoindre",
+            "joinButton": "Ajouter à mes organisations",
             "pending": {
                 "title": "Demande d'organisation en attente",
                 "message": "Votre demande pour rejoindre l'organisation est toujours en attente. Êtes-vous sûr de vouloir l'annuler ?",
@@ -379,8 +379,8 @@
                     "existingEmail": "Un utilisateur avec cet e-mail existe déjà. Veuillez utiliser une autre adresse e-mail.",
                     "problemWithRequestCertificate": "Il y a un problème avec le certificat de demande.",
                     "offline": "Vous êtes hors ligne. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
-                    "failedToJoinWithPKI": "Impossible de rejoindre l'organisation en utilisant PKI. Veuillez vous assurer que vous avez accès au certificat et réessayer.",
-                    "failedToJoinWithOpenBao": "Impossible de rejoindre l'organisation en utilisant OpenBAO. Veuillez vous assurer que vous avez accès au certificat et réessayer.",
+                    "failedToJoinWithPKI": "Impossible de rejoindre l'organisation en utilisant PKI. Vérifier le certificat fournis et réessayer.",
+                    "failedToJoinWithOpenBao": "Impossible de rejoindre l'organisation en utilisant OpenBAO. Veuillez vérifier que vous êtes connecté(e) à Internet.",
                     "couldNotContactServer": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet et que l'adresse du serveur est correcte."
                 },
                 "buttons": {
@@ -552,7 +552,7 @@
             "workspaces": "Mes espaces",
             "about": "À propos",
             "users": "Utilisateurs",
-            "invitations": "Invitations",
+            "invitationsRequests": "Invitations & Demandes",
             "organization": {
                 "storage": "Stockage",
                 "information": "Informations"
@@ -1129,7 +1129,7 @@
         "hidden": "Masqués",
         "noWorkspace": "Aucun espace de travail",
         "users": "Utilisateurs",
-        "invitations": "Invitations",
+        "invitationsRequests": "Invitations & Demandes",
         "storage": "Stockage",
         "information": "Informations",
         "goToHome": "Mes espaces",
@@ -1792,6 +1792,7 @@
                 }
             },
             "errors": {
+                "failToListRequests": "Échec de la récupération des demandes. Veuillez vous assurer que vous êtes en ligne.",
                 "noSsoConfigured": "SSO n'est pas configuré.",
                 "pkiNotAvailable": "PKI n'est pas disponible dans cette organisation.",
                 "unknownIdentitySystem": "Le système d'identité utilisé pour cette demande est inconnu.",
