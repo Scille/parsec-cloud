@@ -80,7 +80,7 @@ pub fn verify_message<'message, 'a>(
         .map_err(VerifySignatureError::InvalidSignature)
 }
 
-pub fn create_local_pending(
+pub async fn create_local_pending(
     cert_ref: &X509CertificateReference,
     addr: ParsecPkiEnrollmentAddr,
     enrollment_id: PKIEnrollmentID,
@@ -89,8 +89,9 @@ pub fn create_local_pending(
     private_parts: PrivateParts,
 ) -> Result<PKILocalPendingEnrollment, CreateLocalPendingError> {
     let key = SecretKey::generate();
-    let (algo, encrypted_key) =
-        encrypt_message(key.as_ref(), cert_ref).map_err(|err| match err {
+    let (algo, encrypted_key) = encrypt_message(key.as_ref(), cert_ref)
+        .await
+        .map_err(|err| match err {
             EncryptMessageError::CannotOpenStore(err) => {
                 CreateLocalPendingError::CannotOpenStore(err)
             }

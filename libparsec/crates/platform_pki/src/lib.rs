@@ -56,7 +56,7 @@ mod platform {
         unimplemented!("platform not supported")
     }
 
-    pub fn encrypt_message(
+    pub async fn encrypt_message(
         message: &[u8],
         certificate_ref: &X509CertificateReference,
     ) -> Result<(PKIEncryptionAlgorithm, Bytes), EncryptMessageError> {

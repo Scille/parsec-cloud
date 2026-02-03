@@ -104,6 +104,7 @@ pub async fn pki_enrollment_submit(
         payload,
         private_parts,
     )
+    .await
     .map_err(anyhow::Error::from)
     .context("Failed to encrypt local parts with PKI")
     .map_err(PkiEnrollmentSubmitError::PkiOperationError)?;
