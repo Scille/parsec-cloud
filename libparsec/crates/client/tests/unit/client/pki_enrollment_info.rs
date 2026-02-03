@@ -45,6 +45,7 @@ async fn ok(#[case] status: &str, env: &TestbedEnv) {
             let cert_ref = X509CertificateHash::fake_sha256().into();
             let (accept_payload_signature_algorithm, accept_payload_signature) =
                 sign_message(&expected_answer.dump(), &cert_ref)
+                    .await
                     .context("Failed to sign message")
                     .unwrap();
 

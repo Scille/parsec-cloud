@@ -162,7 +162,9 @@ impl InstalledCertificates {
         payload: &[u8],
     ) -> (PkiSignatureAlgorithm, Bytes, ValidationPathOwned) {
         let certificate_ref = self.alice_cert_ref().await;
-        let (algo, signature) = crate::sign_message(payload, &certificate_ref).unwrap();
+        let (algo, signature) = crate::sign_message(payload, &certificate_ref)
+            .await
+            .unwrap();
         let now = DateTime::now();
         let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now)
             .await

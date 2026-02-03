@@ -17,14 +17,17 @@ struct Args {
     content: utils::ContentOpts,
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     log::debug!("args={args:?}");
 
     let cert_ref = args.certificate_hash.into();
     let data = args.content.into_bytes()?;
-    let (algo, signature) = sign_message(&data, &cert_ref).context("Failed to sign message")?;
+    let (algo, signature) = sign_message(&data, &cert_ref)
+        .await
+        .context("Failed to sign message")?;
 
     println!("Signed with algorithm {}", algo);
     println!("Signed by cert with fingerprint: {}", cert_ref.hash);

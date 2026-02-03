@@ -10,7 +10,9 @@ async fn sign_and_verify(certificates: &InstalledCertificates) {
     // Alice key is 2048 bits (i.e. 256 bytes), so we check that the payload can be larger than the key.
     let payload = [b'x'; 257];
     let certificate_ref = certificates.alice_cert_ref().await;
-    let (algo, signature) = crate::sign_message(payload.as_ref(), &certificate_ref).unwrap();
+    let (algo, signature) = crate::sign_message(payload.as_ref(), &certificate_ref)
+        .await
+        .unwrap();
 
     let now = DateTime::now();
     let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now)
@@ -66,11 +68,11 @@ async fn verify(certificates: &InstalledCertificates) {
 // TODO: Support `KeyUsage` field in X509 certificate
 //       see https://github.com/Scille/parsec-cloud/issues/12087
 // #[parsec_test]
-// fn sign_ko_certificate_without_signing_key(certificates: &InstalledCertificates) {
+// async fn sign_ko_certificate_without_signing_key(certificates: &InstalledCertificates) {
 //     let payload = b"The cake is a lie!";
 //     let certificate_ref = certificates.mallory_encrypt_cert_ref();
 //     p_assert_matches!(
-//         crate::sign_message(payload.as_ref(), &certificate_ref),
+//         crate::sign_message(payload.as_ref(), &certificate_ref).await,
 //         Err(SignMessageError::CannotSign(_))
 //     );
 // }
@@ -80,17 +82,17 @@ async fn sign_ko_cannot_use_root_certificate(certificates: &InstalledCertificate
     let payload = b"The cake is a lie!";
     let certificate_ref = certificates.black_mesa_cert_ref();
     p_assert_matches!(
-        crate::sign_message(payload.as_ref(), &certificate_ref),
+        crate::sign_message(payload.as_ref(), &certificate_ref).await,
         Err(SignMessageError::NotFound)
     );
 }
 
-#[test]
-fn sign_ko_not_found() {
+#[parsec_test]
+async fn sign_ko_not_found() {
     let payload = b"The cake is a lie!";
     let dummy_certificate_ref: X509CertificateReference = X509CertificateHash::fake_sha256().into();
     p_assert_matches!(
-        crate::sign_message(payload.as_ref(), &dummy_certificate_ref),
+        crate::sign_message(payload.as_ref(), &dummy_certificate_ref).await,
         Err(SignMessageError::NotFound)
     );
 }

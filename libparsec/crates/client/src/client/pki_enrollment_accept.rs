@@ -127,6 +127,7 @@ async fn accept_internal(
     // sign payload with accepter x509certificate
     let (payload_signature_algorithm, payload_signature) =
         sign_message(&payload, accepter.cert_ref)
+            .await
             .map_err(|e| PkiEnrollmentAcceptError::PkiOperationError(e.into()))?;
 
     // send request

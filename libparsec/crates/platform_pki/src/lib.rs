@@ -47,7 +47,7 @@ mod platform {
         unimplemented!("platform not supported")
     }
 
-    pub fn sign_message(
+    pub async fn sign_message(
         message: &[u8],
         certificate_ref: &X509CertificateReference,
     ) -> Result<(PkiSignatureAlgorithm, Bytes), SignMessageError> {

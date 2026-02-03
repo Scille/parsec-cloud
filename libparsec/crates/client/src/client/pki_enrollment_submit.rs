@@ -52,6 +52,7 @@ pub async fn pki_enrollment_submit(
     let raw_payload = payload.dump();
     let (payload_signature_algorithm, payload_signature) =
         libparsec_platform_pki::sign_message(&raw_payload, &x509_cert_ref)
+            .await
             .map_err(anyhow::Error::from)
             .context("Failed to sign payload with PKI")
             .map_err(PkiEnrollmentSubmitError::PkiOperationError)?;

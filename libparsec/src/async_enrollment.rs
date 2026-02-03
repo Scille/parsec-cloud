@@ -232,8 +232,9 @@ mod strategy {
             Box::pin(pretend_future_is_send_on_web(async move {
                 // 1. Sign the payload
                 let (algorithm, signature) =
-                    libparsec_platform_pki::sign_message(&payload, &cert_ref).map_err(|err| {
-                        match err {
+                    libparsec_platform_pki::sign_message(&payload, &cert_ref)
+                        .await
+                        .map_err(|err| match err {
                             err @ (PKISignMessageError::NotFound
                             | PKISignMessageError::CannotAcquireKeypair(_)
                             | PKISignMessageError::CannotSign(_)) => {
@@ -244,8 +245,7 @@ mod strategy {
                             PKISignMessageError::CannotOpenStore(e) => {
                                 SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
                             }
-                        }
-                    })?;
+                        })?;
 
                 // 2. Get leaf & intermediate certificates
                 let validation_path: libparsec_platform_pki::ValidationPathOwned =
@@ -681,8 +681,9 @@ mod strategy {
             Box::pin(pretend_future_is_send_on_web(async move {
                 // 1. Sign the payload
                 let (algorithm, signature) =
-                    libparsec_platform_pki::sign_message(&payload, &cert_ref).map_err(|err| {
-                        match err {
+                    libparsec_platform_pki::sign_message(&payload, &cert_ref)
+                        .await
+                        .map_err(|err| match err {
                             err @ (PKISignMessageError::NotFound
                             | PKISignMessageError::CannotAcquireKeypair(_)
                             | PKISignMessageError::CannotSign(_)) => {
@@ -693,8 +694,7 @@ mod strategy {
                             PKISignMessageError::CannotOpenStore(e) => {
                                 AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
                             }
-                        }
-                    })?;
+                        })?;
 
                 // 2. Get leaf & intermediate certificates
                 let validation_path: libparsec_platform_pki::ValidationPathOwned =
