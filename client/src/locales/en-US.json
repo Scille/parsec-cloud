@@ -363,7 +363,7 @@
                 "sso": {
                     "label": "Continue with Single Sign-On",
                     "title": "Single Sign-On (SSO)",
-                    "description": "Log in with SSO to access your organisation.",
+                    "description": "Log in with SSO to access the organization.",
                     "noEmail": "No email registered on OpenBAO.",
                     "join": "Join with Single Sign-On",
                     "connected": "You are connected with ProConnect."
@@ -375,7 +375,7 @@
                 },
                 "errors": {
                     "invalidLink": "PKI is not available on this system, and this server does not Support Single Sign-on (SSO).",
-                    "pkiSsoNotAvailable": "The link to join the organisation is invalid.",
+                    "pkiSsoNotAvailable": "The link to join the organization is invalid.",
                     "failedToGetEmailsFromOpenBao": "Failed to get email addresses from SSO provider. Please try again.",
                     "existingEmail": "A user with this email already exists. Please use another email address.",
                     "problemWithRequestCertificate": "There is a problem with the request certificate.",
