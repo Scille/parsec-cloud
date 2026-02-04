@@ -335,7 +335,7 @@ async function onNextButtonClicked(): Promise<boolean> {
 }
 
 async function onPreviousClicked(): Promise<boolean> {
-  if (state.value === JoinRequestState.ChooseMethod) {
+  if (state.value === JoinRequestState.ChooseMethod || !multipleMethodsAvailable.value) {
     return modalController.dismiss(null, MsModalResult.Cancel);
   } else {
     state.value = JoinRequestState.ChooseMethod;

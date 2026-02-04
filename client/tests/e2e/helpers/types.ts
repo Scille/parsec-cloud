@@ -28,6 +28,7 @@ export interface SetupOptions {
   libparsecMockFunctions?: Array<LibParsecFunction>;
   enableStripe?: boolean;
   enableUpdateEvent?: boolean;
+  mockPki?: boolean;
 }
 
 export interface MsPage extends Page {
