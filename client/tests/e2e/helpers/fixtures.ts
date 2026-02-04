@@ -68,6 +68,9 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.enableUpdateEvent) {
         (window as any).TESTING_ENABLE_UPDATE_EVENT = options.enableUpdateEvent;
       }
+      if (options.mockPki) {
+        (window as any).TESTING_PKI = true;
+      }
       if (options.openBaoServer) {
         (window as any).TESTING_OPEN_BAO_SERVER = options.openBaoServer;
       }

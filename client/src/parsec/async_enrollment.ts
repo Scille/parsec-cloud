@@ -2,21 +2,26 @@
 
 import { getDefaultDeviceName } from '@/common/device';
 import { getClientConfig } from '@/parsec/internals';
+import { parseParsecAddr } from '@/parsec/organization';
 import {
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
   AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao,
   AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI,
   AcceptFinalizeAsyncEnrollmentIdentityStrategyTag,
+  AsyncEnrollmentIdentitySystem,
+  AsyncEnrollmentIdentitySystemTag,
   AsyncEnrollmentRequest,
   AsyncEnrollmentUntrusted,
   AvailableDevice,
   AvailableDeviceTypeTag,
+  AvailablePendingAsyncEnrollmentIdentitySystem,
   AvailablePendingAsyncEnrollmentIdentitySystemTag,
   ClientAcceptAsyncEnrollmentError,
   ClientGetAsyncEnrollmentAddrError,
   ClientListAsyncEnrollmentsError,
   ClientRejectAsyncEnrollmentError,
   DeviceSaveStrategy,
+  HumanHandle,
   OpenBaoListSelfEmailsError,
   ParsecAsyncEnrollmentAddr,
   ParsedParsecAddrTag,
@@ -30,13 +35,21 @@ import {
   SubmitAsyncEnrollmentIdentityStrategyPKI,
   SubmitAsyncEnrollmentIdentityStrategyTag,
   SubmitterCancelAsyncEnrollmentError,
+  SubmitterCancelAsyncEnrollmentErrorTag,
   SubmitterFinalizeAsyncEnrollmentError,
+  SubmitterFinalizeAsyncEnrollmentErrorTag,
   SubmitterListLocalAsyncEnrollmentsError,
   UserProfile,
   X509CertificateReference,
+  X509URIFlavorValueTag,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { AsyncEnrollmentIdentitySystemTag, HumanHandle, libparsec, X509URIFlavorValueTag } from '@/plugins/libparsec';
+import {
+  ClientAcceptAsyncEnrollmentErrorTag,
+  ClientRejectAsyncEnrollmentErrorTag,
+  libparsec,
+  SubmitAsyncEnrollmentErrorTag,
+} from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { OpenBaoClient } from '@/services/openBao';
 import { DateTime } from 'luxon';
@@ -164,154 +177,61 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
   },
 };
 
+const REQUESTS = new Array<AsyncEnrollmentRequest>();
+
 const _ASYNC_ENROLLMENT_MOCKED_API = {
   async requestJoinOrganization(
-    _link: ParsecAsyncEnrollmentAddr,
-    _identityStrategy: SubmitAsyncEnrollmentIdentityStrategy,
+    link: ParsecAsyncEnrollmentAddr,
+    identityStrategy: SubmitAsyncEnrollmentIdentityStrategy,
   ): Promise<Result<null, SubmitAsyncEnrollmentError>> {
+    let identitySystem: AvailablePendingAsyncEnrollmentIdentitySystem;
+    let humanHandle: HumanHandle;
+
+    if (identityStrategy.tag === SubmitAsyncEnrollmentIdentityStrategyTag.OpenBao) {
+      identitySystem = {
+        tag: AvailablePendingAsyncEnrollmentIdentitySystemTag.OpenBao,
+        openbaoEntityId: identityStrategy.openbaoEntityId,
+        openbaoPreferredAuthId: identityStrategy.openbaoPreferredAuthId,
+      };
+      humanHandle = identityStrategy.requestedHumanHandle;
+    } else {
+      identitySystem = {
+        tag: AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI,
+        certificateRef: identityStrategy.certificateReference,
+      };
+      humanHandle = {
+        label: 'Gordon Freeman',
+        email: 'gordon.freeman@blackmesa.nm',
+      };
+    }
+    const id = crypto.randomUUID();
+    const addrResult = await parseParsecAddr(link);
+
+    if (!addrResult.ok || addrResult.value.tag !== ParsedParsecAddrTag.AsyncEnrollment) {
+      return { ok: false, error: { tag: SubmitAsyncEnrollmentErrorTag.Internal, error: 'invalid link' } };
+    }
+
+    REQUESTS.push({
+      info: {
+        tag: PendingAsyncEnrollmentInfoTag.Submitted,
+        submittedOn: DateTime.utc(),
+      },
+      enrollment: {
+        filePath: `/${id}`,
+        submittedOn: DateTime.utc(),
+        addr: link,
+        enrollmentId: id,
+        requestedDeviceLabel: 'DeviceLabel',
+        requestedHumanHandle: humanHandle,
+        identitySystem: identitySystem,
+      },
+      organizationId: addrResult.value.organizationId,
+    });
     return { ok: true, value: null };
   },
 
   async listJoinRequests(): Promise<Result<Array<AsyncEnrollmentRequest>, SubmitterListLocalAsyncEnrollmentsError>> {
-    const REQUESTS: Array<AsyncEnrollmentRequest> = [
-      {
-        info: {
-          tag: PendingAsyncEnrollmentInfoTag.Accepted,
-          submittedOn: DateTime.utc(),
-          acceptedOn: DateTime.utc(),
-        },
-        enrollment: {
-          filePath: '/path1',
-          submittedOn: DateTime.utc(),
-          addr: 'parsec3://localhost:6770/BlackMesa?no_ssl=true&a=pki_enrollment',
-          enrollmentId: '1',
-          requestedDeviceLabel: 'DeviceLabel',
-          requestedHumanHandle: {
-            label: 'Gordon Freeman',
-            email: 'gordon.freeman@blackmesa.nm',
-          },
-          identitySystem: {
-            tag: AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI,
-            certificateRef: {
-              uris: [
-                {
-                  tag: X509URIFlavorValueTag.WindowsCNG,
-                  x1: {
-                    issuer: new Uint8Array(),
-                    serialNumber: new Uint8Array(),
-                  },
-                },
-              ],
-              hash: 'abcd2',
-            },
-          },
-        },
-        organizationId: 'BlackMesa',
-      },
-      {
-        info: {
-          tag: PendingAsyncEnrollmentInfoTag.Cancelled,
-          submittedOn: DateTime.utc(),
-          cancelledOn: DateTime.utc(),
-        },
-        enrollment: {
-          filePath: '/path2',
-          submittedOn: DateTime.utc(),
-          addr: 'parsec3://localhost:6770/BlackMesa?no_ssl=true&a=pki_enrollment',
-          enrollmentId: '2',
-          requestedDeviceLabel: 'DeviceLabel',
-          requestedHumanHandle: {
-            label: 'Gordon Freeman',
-            email: 'gordon.freeman@blackmesa.nm',
-          },
-          identitySystem: {
-            tag: AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI,
-            certificateRef: {
-              uris: [
-                {
-                  tag: X509URIFlavorValueTag.WindowsCNG,
-                  x1: {
-                    issuer: new Uint8Array(),
-                    serialNumber: new Uint8Array(),
-                  },
-                },
-              ],
-              hash: 'abcd2',
-            },
-          },
-        },
-        organizationId: 'BlackMesa',
-      },
-      {
-        info: {
-          tag: PendingAsyncEnrollmentInfoTag.Rejected,
-          submittedOn: DateTime.utc(),
-          rejectedOn: DateTime.utc(),
-        },
-        enrollment: {
-          filePath: '/path1',
-          submittedOn: DateTime.utc(),
-          addr: 'parsec3://localhost:6770/BlackMesa?no_ssl=true&a=pki_enrollment',
-          enrollmentId: '1',
-          requestedDeviceLabel: 'DeviceLabel',
-          requestedHumanHandle: {
-            label: 'Gordon Freeman',
-            email: 'gordon.freeman@blackmesa.nm',
-          },
-          identitySystem: {
-            tag: AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI,
-            certificateRef: {
-              uris: [
-                {
-                  tag: X509URIFlavorValueTag.WindowsCNG,
-                  x1: {
-                    issuer: new Uint8Array(),
-                    serialNumber: new Uint8Array(),
-                  },
-                },
-              ],
-              hash: 'abcd2',
-            },
-          },
-        },
-        organizationId: 'BlackMesa',
-      },
-      {
-        info: {
-          tag: PendingAsyncEnrollmentInfoTag.Submitted,
-          submittedOn: DateTime.utc(),
-        },
-        enrollment: {
-          filePath: '/path1',
-          submittedOn: DateTime.utc(),
-          addr: 'parsec3://localhost:6770/BlackMesa?no_ssl=true&a=pki_enrollment',
-          enrollmentId: '1',
-          requestedDeviceLabel: 'DeviceLabel',
-          requestedHumanHandle: {
-            label: 'Gordon Freeman',
-            email: 'gordon.freeman@blackmesa.nm',
-          },
-          identitySystem: {
-            tag: AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI,
-            certificateRef: {
-              uris: [
-                {
-                  tag: X509URIFlavorValueTag.WindowsCNG,
-                  x1: {
-                    issuer: new Uint8Array(),
-                    serialNumber: new Uint8Array(),
-                  },
-                },
-              ],
-              hash: 'abcd2',
-            },
-          },
-        },
-        organizationId: 'BlackMesa',
-      },
-    ];
-
-    return { ok: true, value: REQUESTS };
+    return { ok: true, value: [...REQUESTS] };
   },
 
   async confirmJoinRequest(
@@ -319,6 +239,12 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
     _saveStrategy: DeviceSaveStrategy,
     _identityStrategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
   ): Promise<Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError>> {
+    const reqIndex = REQUESTS.findIndex((req) => req.enrollment.enrollmentId === request.enrollment.enrollmentId);
+
+    if (reqIndex === -1) {
+      return { ok: false, error: { tag: SubmitterFinalizeAsyncEnrollmentErrorTag.EnrollmentNotFoundOnServer, error: 'not found' } };
+    }
+    REQUESTS.splice(reqIndex, 1);
     return {
       ok: true,
       value: {
@@ -341,7 +267,13 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
     };
   },
 
-  async deleteJoinRequest(_request: AsyncEnrollmentRequest): Promise<Result<null, SubmitterCancelAsyncEnrollmentError>> {
+  async deleteJoinRequest(request: AsyncEnrollmentRequest): Promise<Result<null, SubmitterCancelAsyncEnrollmentError>> {
+    const reqIndex = REQUESTS.findIndex((req) => req.enrollment.enrollmentId === request.enrollment.enrollmentId);
+
+    if (reqIndex === -1) {
+      return { ok: false, error: { tag: SubmitterCancelAsyncEnrollmentErrorTag.NotFound, error: 'not found' } };
+    }
+    REQUESTS.splice(reqIndex, 1);
     return { ok: true, value: null };
   },
 
@@ -352,67 +284,36 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
       return generateNoHandleError<ClientListAsyncEnrollmentsError>();
     }
 
-    const ENROLLMENTS: Array<AsyncEnrollmentUntrusted> = [
-      {
-        enrollmentId: '1',
-        submittedOn: DateTime.utc(),
-        untrustedRequestedDeviceLabel: 'Device Label PKI',
-        untrustedRequestedHumanHandle: {
-          label: 'Gordon Freeman',
-          email: 'gordon.freeman@blackmesa.nm',
-        },
-        identitySystem: {
+    const ENROLLMENTS: Array<AsyncEnrollmentUntrusted> = REQUESTS.filter(
+      (req) => req.info.tag === PendingAsyncEnrollmentInfoTag.Submitted,
+    ).map((req) => {
+      let identitySystem: AsyncEnrollmentIdentitySystem;
+
+      if (req.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI) {
+        identitySystem = {
           tag: AsyncEnrollmentIdentitySystemTag.PKI,
-          x509RootCertificateCommonName: 'Certificate Common Name',
-          x509RootCertificateSubject: new Uint8Array(),
-        },
-      },
-      {
-        enrollmentId: '2',
-        submittedOn: DateTime.utc(),
-        untrustedRequestedDeviceLabel: 'Device Label PKI',
-        untrustedRequestedHumanHandle: {
-          label: 'Gordon Freeman',
-          email: 'gordon.freeman@blackmesa.nm',
-        },
-        identitySystem: {
-          tag: AsyncEnrollmentIdentitySystemTag.PKI,
-          x509RootCertificateCommonName: 'Certificate Common Name',
-          x509RootCertificateSubject: new Uint8Array(),
-        },
-      },
-      {
-        enrollmentId: '3',
-        submittedOn: DateTime.utc(),
-        untrustedRequestedDeviceLabel: 'Device Label SSO',
-        untrustedRequestedHumanHandle: {
-          label: 'Gordon Freeman',
-          email: 'gordon.freeman@blackmesa.nm',
-        },
-        identitySystem: {
+          x509RootCertificateCommonName: 'Common Name',
+          x509RootCertificateSubject: new Uint8Array([1, 2, 3, 4]),
+        };
+      } else {
+        identitySystem = {
           tag: AsyncEnrollmentIdentitySystemTag.OpenBao,
-        },
-      },
-      {
-        enrollmentId: '4',
-        submittedOn: DateTime.utc(),
-        untrustedRequestedDeviceLabel: 'Device Label SSO',
-        untrustedRequestedHumanHandle: {
-          label: 'UNKNOWN',
-          email: 'UNKNOWN',
-        },
-        identitySystem: {
-          tag: AsyncEnrollmentIdentitySystemTag.PKICorrupted,
-          reason: 'Corrupted',
-        },
-      },
-    ];
+        };
+      }
+      return {
+        enrollmentId: req.enrollment.enrollmentId,
+        submittedOn: req.enrollment.submittedOn,
+        untrustedRequestedDeviceLabel: req.enrollment.requestedDeviceLabel,
+        untrustedRequestedHumanHandle: req.enrollment.requestedHumanHandle,
+        identitySystem: identitySystem,
+      };
+    });
 
     return { ok: true, value: ENROLLMENTS };
   },
 
   async acceptAsyncEnrollment(
-    _request: AsyncEnrollmentUntrusted,
+    request: AsyncEnrollmentUntrusted,
     _profile: UserProfile,
     _identityStrategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
   ): Promise<Result<null, ClientAcceptAsyncEnrollmentError>> {
@@ -421,15 +322,35 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
     if (!handle) {
       return generateNoHandleError<ClientAcceptAsyncEnrollmentError>();
     }
+    const found = REQUESTS.find((req) => req.enrollment.enrollmentId === request.enrollmentId);
+    if (!found) {
+      return { ok: false, error: { tag: ClientAcceptAsyncEnrollmentErrorTag.EnrollmentNotFound, error: 'not found' } };
+    }
+    found.info = {
+      tag: PendingAsyncEnrollmentInfoTag.Accepted,
+      submittedOn: found.info.submittedOn,
+      acceptedOn: DateTime.utc(),
+    };
+
     return { ok: true, value: null };
   },
 
-  async rejectAsyncEnrollment(_request: AsyncEnrollmentUntrusted): Promise<Result<null, ClientRejectAsyncEnrollmentError>> {
+  async rejectAsyncEnrollment(request: AsyncEnrollmentUntrusted): Promise<Result<null, ClientRejectAsyncEnrollmentError>> {
     const handle = getConnectionHandle();
 
     if (!handle) {
       return generateNoHandleError<ClientRejectAsyncEnrollmentError>();
     }
+    const found = REQUESTS.find((req) => req.enrollment.enrollmentId === request.enrollmentId);
+    if (!found) {
+      return { ok: false, error: { tag: ClientRejectAsyncEnrollmentErrorTag.EnrollmentNotFound, error: 'not found' } };
+    }
+    found.info = {
+      tag: PendingAsyncEnrollmentInfoTag.Rejected,
+      submittedOn: found.info.submittedOn,
+      rejectedOn: DateTime.utc(),
+    };
+
     return { ok: true, value: null };
   },
 
