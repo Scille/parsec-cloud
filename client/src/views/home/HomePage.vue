@@ -483,7 +483,7 @@ async function handleAsyncEnrollment(link: string): Promise<void> {
       serverConfig: serverConfigResult.ok ? serverConfigResult.value : undefined,
       pkiAvailable: pkiAvailable,
     },
-    cssClass: 'join-async-modal',
+    cssClass: 'async-enrollment-modal',
   });
   await modal.present();
   const { role } = await modal.onDidDismiss();
