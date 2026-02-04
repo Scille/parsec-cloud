@@ -42,13 +42,11 @@ export async function initializeWorkspace(
 ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError | ClientStartWorkspaceError>> {
   const startResult = await startWorkspace(workspaceId, connectionHandle);
   if (!startResult.ok) {
-    console.error(`Failed to start workspace ${workspaceId}: ${startResult.error}`);
     return startResult;
   }
 
   const startedWorkspaceResult = await getWorkspaceInfo(startResult.value);
   if (!startedWorkspaceResult.ok) {
-    console.error(`Failed to get started workspace info ${workspaceId}: ${startedWorkspaceResult.error}`);
     return startedWorkspaceResult;
   }
   return startedWorkspaceResult;
@@ -69,7 +67,6 @@ export async function listWorkspaces(
       for (const wkInfo of result.value) {
         const startResult = await startWorkspace(wkInfo.id, handle);
         if (!startResult.ok) {
-          console.error(`Failed to start workspace ${wkInfo.currentName}: ${startResult.error}`);
           continue;
         }
 
@@ -239,7 +236,6 @@ export async function mountWorkspace(
 ): Promise<Result<[MountpointHandle, SystemPath], WorkspaceMountError>> {
   const startedWorkspaceResult = await getWorkspaceInfo(workspaceHandle);
   if (!startedWorkspaceResult.ok) {
-    console.error(`Failed to get started workspace info: ${startedWorkspaceResult.error}`);
     return { ok: false, error: { tag: WorkspaceMountErrorTag.Internal, error: startedWorkspaceResult.error.error } };
   } else {
     if (startedWorkspaceResult.value.mountpoints.length > 0) {

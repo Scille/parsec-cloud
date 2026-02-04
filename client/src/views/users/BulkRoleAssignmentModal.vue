@@ -252,6 +252,7 @@ async function findWorkspaces(): Promise<void> {
 
   const sourceWorkspaces = sourceUserWorkspacesResult.value;
   const targetWorkspaces = targetUserWorkspacesResult.value;
+
   roleUpdates.value = [];
 
   for (const wsInfo of sourceWorkspaces) {
