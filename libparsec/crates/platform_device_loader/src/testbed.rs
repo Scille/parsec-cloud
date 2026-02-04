@@ -500,7 +500,7 @@ pub(crate) fn maybe_update_device(
             Ok(device) => device,
             Err(e) => {
                 return Some(Err(match e {
-                    LoadDeviceError::StorageNotAvailable => UpdateDeviceError::StorageNotAvailable,
+                    LoadDeviceError::StorageNotAvailable => UpdateDeviceError::NoStorageAvailable,
                     LoadDeviceError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
                     LoadDeviceError::InvalidData => UpdateDeviceError::InvalidData,
                     LoadDeviceError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
