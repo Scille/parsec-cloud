@@ -7202,11 +7202,11 @@ fn variant_archive_device_error_rs_to_js(
         libparsec::ArchiveDeviceError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ArchiveDeviceErrorInternal".into())?;
         }
-        libparsec::ArchiveDeviceError::StorageNotAvailable { .. } => {
+        libparsec::ArchiveDeviceError::NoSpaceAvailable { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ArchiveDeviceErrorStorageNotAvailable".into(),
+                &"ArchiveDeviceErrorNoSpaceAvailable".into(),
             )?;
         }
     }

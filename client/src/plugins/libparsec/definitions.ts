@@ -1196,20 +1196,20 @@ export type AnyClaimRetrievedInfo =
 // ArchiveDeviceError
 export enum ArchiveDeviceErrorTag {
     Internal = 'ArchiveDeviceErrorInternal',
-    StorageNotAvailable = 'ArchiveDeviceErrorStorageNotAvailable',
+    NoSpaceAvailable = 'ArchiveDeviceErrorNoSpaceAvailable',
 }
 
 export interface ArchiveDeviceErrorInternal {
     tag: ArchiveDeviceErrorTag.Internal
     error: string
 }
-export interface ArchiveDeviceErrorStorageNotAvailable {
-    tag: ArchiveDeviceErrorTag.StorageNotAvailable
+export interface ArchiveDeviceErrorNoSpaceAvailable {
+    tag: ArchiveDeviceErrorTag.NoSpaceAvailable
     error: string
 }
 export type ArchiveDeviceError =
   | ArchiveDeviceErrorInternal
-  | ArchiveDeviceErrorStorageNotAvailable
+  | ArchiveDeviceErrorNoSpaceAvailable
 
 // AsyncEnrollmentIdentitySystem
 export enum AsyncEnrollmentIdentitySystemTag {

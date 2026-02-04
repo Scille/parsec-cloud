@@ -1083,13 +1083,13 @@ export interface ArchiveDeviceErrorInternal {
     tag: "ArchiveDeviceErrorInternal"
     error: string
 }
-export interface ArchiveDeviceErrorStorageNotAvailable {
-    tag: "ArchiveDeviceErrorStorageNotAvailable"
+export interface ArchiveDeviceErrorNoSpaceAvailable {
+    tag: "ArchiveDeviceErrorNoSpaceAvailable"
     error: string
 }
 export type ArchiveDeviceError =
   | ArchiveDeviceErrorInternal
-  | ArchiveDeviceErrorStorageNotAvailable
+  | ArchiveDeviceErrorNoSpaceAvailable
 
 
 // AsyncEnrollmentIdentitySystem

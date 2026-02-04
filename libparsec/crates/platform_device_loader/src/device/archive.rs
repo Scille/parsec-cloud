@@ -12,8 +12,8 @@ use crate::ARCHIVE_DEVICE_EXT;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ArchiveDeviceError {
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -51,8 +51,8 @@ pub async fn archive_device(
         .await
         .map_err(|e| match e {
             RenameFileError::StorageNotAvailable | RenameFileError::NoSpaceLeft => {
-                ArchiveDeviceError::StorageNotAvailable
-            } // TODO #11955
+                ArchiveDeviceError::NoSpaceAvailable
+            }
             RenameFileError::InvalidParent
             | RenameFileError::InvalidPath
             | RenameFileError::NotFound
