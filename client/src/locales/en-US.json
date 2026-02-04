@@ -1775,7 +1775,7 @@
             },
             "pkiRequests": {
                 "modal": {
-                    "title": "A root certificate is required to accept the request",
+                    "title": "A certificate is required to accept the request",
                     "description": "A certificate is required to validate requests received by PKI. For security reasons, it must be provided each time the organization is reopened.",
                     "next": "Continue",
                     "cancel": "Cancel",

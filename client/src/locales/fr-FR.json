@@ -1774,12 +1774,12 @@
             },
             "pkiRequests": {
                 "modal": {
-                    "title": "Un certificat racine est requis pour accepter la demande",
-                    "description": "Un certificat racine est nécessaire pour valider les demandes à rejoindre l'organisation via PKI. Pour des raisons de sécurité, nous ne sauvegardons pas le certificat, il vous sera demandé à chaque connexion à votre organisation.",
+                    "title": "Un certificat est requis pour accepter la demande",
+                    "description": "Un certificat est nécessaire pour valider les demandes à rejoindre l'organisation via PKI. Pour des raisons de sécurité, nous ne sauvegardons pas le certificat, il vous sera demandé à chaque connexion à votre organisation.",
                     "next": "Continuer",
                     "cancel": "Annuler",
-                    "setRootCertificate": "Ajouter le certificat racine",
-                    "updateRootCertificate": "Mettre à jour le certificat racine"
+                    "setRootCertificate": "Sélectionner un certificat",
+                    "updateRootCertificate": "Mettre à jour le certificat"
                 }
             },
             "ssoRequests": {
