@@ -6850,9 +6850,9 @@ fn variant_archive_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ArchiveDeviceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ArchiveDeviceError::StorageNotAvailable { .. } => {
+        libparsec::ArchiveDeviceError::NoSpaceAvailable { .. } => {
             let js_tag =
-                JsString::try_new(cx, "ArchiveDeviceErrorStorageNotAvailable").or_throw(cx)?;
+                JsString::try_new(cx, "ArchiveDeviceErrorNoSpaceAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }

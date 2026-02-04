@@ -111,7 +111,7 @@ async def list_available_devices(
 
 
 class ArchiveDeviceError(ErrorVariant):
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class Internal:
