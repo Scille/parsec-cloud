@@ -4675,9 +4675,9 @@ export enum UpdateDeviceErrorTag {
     Internal = 'UpdateDeviceErrorInternal',
     InvalidData = 'UpdateDeviceErrorInvalidData',
     InvalidPath = 'UpdateDeviceErrorInvalidPath',
+    NoStorageAvailable = 'UpdateDeviceErrorNoStorageAvailable',
     RemoteOpaqueKeyOperationFailed = 'UpdateDeviceErrorRemoteOpaqueKeyOperationFailed',
     RemoteOpaqueKeyOperationOffline = 'UpdateDeviceErrorRemoteOpaqueKeyOperationOffline',
-    StorageNotAvailable = 'UpdateDeviceErrorStorageNotAvailable',
 }
 
 export interface UpdateDeviceErrorDecryptionFailed {
@@ -4696,6 +4696,10 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: UpdateDeviceErrorTag.InvalidPath
     error: string
 }
+export interface UpdateDeviceErrorNoStorageAvailable {
+    tag: UpdateDeviceErrorTag.NoStorageAvailable
+    error: string
+}
 export interface UpdateDeviceErrorRemoteOpaqueKeyOperationFailed {
     tag: UpdateDeviceErrorTag.RemoteOpaqueKeyOperationFailed
     error: string
@@ -4704,18 +4708,14 @@ export interface UpdateDeviceErrorRemoteOpaqueKeyOperationOffline {
     tag: UpdateDeviceErrorTag.RemoteOpaqueKeyOperationOffline
     error: string
 }
-export interface UpdateDeviceErrorStorageNotAvailable {
-    tag: UpdateDeviceErrorTag.StorageNotAvailable
-    error: string
-}
 export type UpdateDeviceError =
   | UpdateDeviceErrorDecryptionFailed
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
+  | UpdateDeviceErrorNoStorageAvailable
   | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
   | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline
-  | UpdateDeviceErrorStorageNotAvailable
 
 // UserClaimListInitialInfosError
 export enum UserClaimListInitialInfosErrorTag {

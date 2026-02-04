@@ -18397,6 +18397,13 @@ fn variant_update_device_error_rs_to_js(
                 &"UpdateDeviceErrorInvalidPath".into(),
             )?;
         }
+        libparsec::UpdateDeviceError::NoStorageAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorNoStorageAvailable".into(),
+            )?;
+        }
         libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18409,13 +18416,6 @@ fn variant_update_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"UpdateDeviceErrorRemoteOpaqueKeyOperationOffline".into(),
-            )?;
-        }
-        libparsec::UpdateDeviceError::StorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"UpdateDeviceErrorStorageNotAvailable".into(),
             )?;
         }
     }

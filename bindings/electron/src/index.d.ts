@@ -3924,6 +3924,10 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: "UpdateDeviceErrorInvalidPath"
     error: string
 }
+export interface UpdateDeviceErrorNoStorageAvailable {
+    tag: "UpdateDeviceErrorNoStorageAvailable"
+    error: string
+}
 export interface UpdateDeviceErrorRemoteOpaqueKeyOperationFailed {
     tag: "UpdateDeviceErrorRemoteOpaqueKeyOperationFailed"
     error: string
@@ -3932,18 +3936,14 @@ export interface UpdateDeviceErrorRemoteOpaqueKeyOperationOffline {
     tag: "UpdateDeviceErrorRemoteOpaqueKeyOperationOffline"
     error: string
 }
-export interface UpdateDeviceErrorStorageNotAvailable {
-    tag: "UpdateDeviceErrorStorageNotAvailable"
-    error: string
-}
 export type UpdateDeviceError =
   | UpdateDeviceErrorDecryptionFailed
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
+  | UpdateDeviceErrorNoStorageAvailable
   | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
   | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline
-  | UpdateDeviceErrorStorageNotAvailable
 
 
 // UserClaimListInitialInfosError
