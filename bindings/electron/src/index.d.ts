@@ -3924,8 +3924,8 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: "UpdateDeviceErrorInvalidPath"
     error: string
 }
-export interface UpdateDeviceErrorNoStorageAvailable {
-    tag: "UpdateDeviceErrorNoStorageAvailable"
+export interface UpdateDeviceErrorNoSpaceAvailable {
+    tag: "UpdateDeviceErrorNoSpaceAvailable"
     error: string
 }
 export interface UpdateDeviceErrorRemoteOpaqueKeyOperationFailed {
@@ -3941,7 +3941,7 @@ export type UpdateDeviceError =
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
-  | UpdateDeviceErrorNoStorageAvailable
+  | UpdateDeviceErrorNoSpaceAvailable
   | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
   | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline
 

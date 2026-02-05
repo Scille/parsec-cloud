@@ -16846,9 +16846,8 @@ fn variant_update_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "UpdateDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::UpdateDeviceError::NoStorageAvailable { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "UpdateDeviceErrorNoStorageAvailable").or_throw(cx)?;
+        libparsec::UpdateDeviceError::NoSpaceAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "UpdateDeviceErrorNoSpaceAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationFailed { .. } => {

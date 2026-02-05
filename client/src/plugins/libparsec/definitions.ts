@@ -4675,7 +4675,7 @@ export enum UpdateDeviceErrorTag {
     Internal = 'UpdateDeviceErrorInternal',
     InvalidData = 'UpdateDeviceErrorInvalidData',
     InvalidPath = 'UpdateDeviceErrorInvalidPath',
-    NoStorageAvailable = 'UpdateDeviceErrorNoStorageAvailable',
+    NoSpaceAvailable = 'UpdateDeviceErrorNoSpaceAvailable',
     RemoteOpaqueKeyOperationFailed = 'UpdateDeviceErrorRemoteOpaqueKeyOperationFailed',
     RemoteOpaqueKeyOperationOffline = 'UpdateDeviceErrorRemoteOpaqueKeyOperationOffline',
 }
@@ -4696,8 +4696,8 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: UpdateDeviceErrorTag.InvalidPath
     error: string
 }
-export interface UpdateDeviceErrorNoStorageAvailable {
-    tag: UpdateDeviceErrorTag.NoStorageAvailable
+export interface UpdateDeviceErrorNoSpaceAvailable {
+    tag: UpdateDeviceErrorTag.NoSpaceAvailable
     error: string
 }
 export interface UpdateDeviceErrorRemoteOpaqueKeyOperationFailed {
@@ -4713,7 +4713,7 @@ export type UpdateDeviceError =
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
-  | UpdateDeviceErrorNoStorageAvailable
+  | UpdateDeviceErrorNoSpaceAvailable
   | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
   | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline
 
