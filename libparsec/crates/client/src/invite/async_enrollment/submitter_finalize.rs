@@ -296,8 +296,8 @@ pub async fn submitter_finalize_async_enrollment(
     )
     .await
     .map_err(|err| match err {
-        SaveDeviceError::StorageNotAvailable => {
-            SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable
+        SaveDeviceError::NoSpaceAvailable => {
+            SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable // TODO #11955
         }
         SaveDeviceError::InvalidPath => {
             SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath(anyhow::anyhow!(

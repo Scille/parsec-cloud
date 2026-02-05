@@ -1391,9 +1391,9 @@ export type CancelError =
 export enum ClaimFinalizeErrorTag {
     Internal = 'ClaimFinalizeErrorInternal',
     InvalidPath = 'ClaimFinalizeErrorInvalidPath',
+    NoSpaceAvailable = 'ClaimFinalizeErrorNoSpaceAvailable',
     RemoteOpaqueKeyUploadFailed = 'ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed',
     RemoteOpaqueKeyUploadOffline = 'ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline',
-    StorageNotAvailable = 'ClaimFinalizeErrorStorageNotAvailable',
 }
 
 export interface ClaimFinalizeErrorInternal {
@@ -1404,6 +1404,10 @@ export interface ClaimFinalizeErrorInvalidPath {
     tag: ClaimFinalizeErrorTag.InvalidPath
     error: string
 }
+export interface ClaimFinalizeErrorNoSpaceAvailable {
+    tag: ClaimFinalizeErrorTag.NoSpaceAvailable
+    error: string
+}
 export interface ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed {
     tag: ClaimFinalizeErrorTag.RemoteOpaqueKeyUploadFailed
     error: string
@@ -1412,16 +1416,12 @@ export interface ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline {
     tag: ClaimFinalizeErrorTag.RemoteOpaqueKeyUploadOffline
     error: string
 }
-export interface ClaimFinalizeErrorStorageNotAvailable {
-    tag: ClaimFinalizeErrorTag.StorageNotAvailable
-    error: string
-}
 export type ClaimFinalizeError =
   | ClaimFinalizeErrorInternal
   | ClaimFinalizeErrorInvalidPath
+  | ClaimFinalizeErrorNoSpaceAvailable
   | ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed
   | ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline
-  | ClaimFinalizeErrorStorageNotAvailable
 
 // ClaimInProgressError
 export enum ClaimInProgressErrorTag {

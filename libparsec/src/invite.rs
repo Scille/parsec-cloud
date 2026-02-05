@@ -173,8 +173,8 @@ pub async fn bootstrap_organization(
             SaveDeviceError::Internal(err) => {
                 BootstrapOrganizationError::Internal(err.context("Cannot save device"))
             }
-            SaveDeviceError::StorageNotAvailable => {
-                BootstrapOrganizationError::SaveDeviceStorageNotAvailable
+            SaveDeviceError::NoSpaceAvailable => {
+                BootstrapOrganizationError::SaveDeviceStorageNotAvailable // #TODO #11955
             }
             SaveDeviceError::InvalidPath => {
                 BootstrapOrganizationError::SaveDeviceInvalidPath(anyhow::anyhow!("invalid path"))

@@ -148,8 +148,8 @@ pub(super) async fn account_register_new_device(
         save_device(&account.config_dir, &save_strategy, &new_device, key_file)
             .await
             .map_err(|err| match err {
-                SaveDeviceError::StorageNotAvailable => {
-                    AccountRegisterNewDeviceError::StorageNotAvailable
+                SaveDeviceError::NoSpaceAvailable => {
+                    AccountRegisterNewDeviceError::StorageNotAvailable // TODO #11955
                 }
                 SaveDeviceError::InvalidPath => AccountRegisterNewDeviceError::InvalidPath(
                     anyhow::anyhow!("invalid path while saving device"),

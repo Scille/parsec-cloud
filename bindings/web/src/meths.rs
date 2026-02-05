@@ -7680,6 +7680,13 @@ fn variant_claim_finalize_error_rs_to_js(
                 &"ClaimFinalizeErrorInvalidPath".into(),
             )?;
         }
+        libparsec::ClaimFinalizeError::NoSpaceAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimFinalizeErrorNoSpaceAvailable".into(),
+            )?;
+        }
         libparsec::ClaimFinalizeError::RemoteOpaqueKeyUploadFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7692,13 +7699,6 @@ fn variant_claim_finalize_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline".into(),
-            )?;
-        }
-        libparsec::ClaimFinalizeError::StorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClaimFinalizeErrorStorageNotAvailable".into(),
             )?;
         }
     }

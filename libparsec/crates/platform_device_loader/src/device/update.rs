@@ -55,7 +55,7 @@ impl From<SaveDeviceError> for UpdateDeviceError {
                 UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
             }
             SaveDeviceError::Internal(error) => UpdateDeviceError::Internal(error),
-            SaveDeviceError::StorageNotAvailable => UpdateDeviceError::NoSpaceAvailable,
+            SaveDeviceError::NoSpaceAvailable => UpdateDeviceError::NoSpaceAvailable,
             SaveDeviceError::InvalidPath => UpdateDeviceError::InvalidPath,
         }
     }
