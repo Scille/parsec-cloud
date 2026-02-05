@@ -128,6 +128,56 @@ msTest.describe(() => {
     });
   }
 
+  msTest('Move document in new folder', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
+
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await expect(documents.locator('.folder-selection-modal')).toBeHidden();
+    await expect(entries.nth(1).locator('.file-name')).toHaveText('image.png');
+    await DocumentsPage.clickAction(await DocumentsPage.openActionPopover(documents, 1), 'Move to');
+    const modal = documents.locator('.folder-selection-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('.ms-modal-header__title')).toHaveText('Move one item');
+
+    // Try to create a folder with existing name
+    await modal.locator('.create-folder-button').click();
+    await modal.locator('.new-folder').locator('input').fill('Dir_Folder');
+    await modal.locator('.new-folder').locator('input').press('Enter');
+    await expect(modal.locator('.folder-selection-modal-error__text')).toBeVisible();
+    await expect(modal.locator('.folder-selection-modal-error__text')).toHaveText(
+      'Failed to create folder `Dir_Folder` because an entry with the same name already exists.',
+    );
+
+    // Create a new folder with valid name
+    await modal.locator('.new-folder').locator('input').fill('1-Folder');
+    await modal.locator('.new-folder').locator('input').press('Enter');
+
+    await expect(modal.locator('.current-folder__text')).toHaveText('1-Folder');
+
+    const okButton = modal.locator('#next-button');
+    await expect(okButton).toHaveText('Move here');
+    await expect(okButton).toNotHaveDisabledAttribute();
+    await okButton.click();
+    await expect(modal).toBeHidden();
+
+    const uploadMenu = documents.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    await expect(opItems).toHaveCount(2);
+    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving image.png');
+    await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('wksp1');
+
+    await expect(entries).toHaveCount(2);
+    await expect(entries.nth(0).locator('.label-name')).toHaveText('1-Folder');
+    // But in the folder
+    await entries.nth(0).dblclick();
+
+    await expect(documents).toHaveHeader(['wksp1', '1-Folder'], true, true);
+    await expect(entries).toHaveCount(1);
+
+    await expect(entries.nth(0).locator('.label-name')).toHaveText('image.png');
+  });
+
   for (const dupPolicy of ['replace', 'ignore', 'addCount']) {
     msTest(`Move document with duplicate and ${dupPolicy}`, async ({ documents }) => {
       await createFolder(documents, 'Folder');

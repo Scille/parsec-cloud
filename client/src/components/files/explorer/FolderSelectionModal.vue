@@ -55,6 +55,17 @@
         :available-width="breadcrumbsWidth"
         :workspace-name="workspaceInfo.currentName"
       />
+      <div
+        v-if="isSmallDisplay"
+        @click="createNewFolder()"
+        class="create-folder-button-small"
+        :disabled="isCreatingFolder"
+      >
+        <ms-image
+          :image="NewFolder"
+          class="button-icon"
+        />
+      </div>
     </div>
     <ion-list class="folder-list">
       <ion-text
@@ -70,14 +81,43 @@
 
       <ion-text
         class="folder-list__empty body"
-        v-if="currentEntries.length === 0"
+        v-if="currentEntries.length === 0 && !isCreatingFolder"
       >
         {{ $msTranslate('FoldersPage.copyMoveFolderNoElement') }}
       </ion-text>
       <div
         class="folder-container"
-        v-if="currentEntries.length > 0"
+        ref="folder-list"
+        v-if="currentEntries.length > 0 || isCreatingFolder"
       >
+        <div
+          class="new-folder"
+          v-if="isCreatingFolder"
+        >
+          <ms-image
+            :image="Folder"
+            class="new-folder-image"
+          />
+          <ms-input
+            v-model="newFolderName"
+            @update:model-value="onNewFolderNameChange"
+            ref="newFolderInput"
+            placeholder="FoldersPage.createFolder"
+            @keydown.enter.prevent.stop="confirmNewFolder()"
+            class="new-folder__input"
+            autofocus
+          />
+          <ion-button
+            fill="clear"
+            @click="confirmNewFolder()"
+            class="new-folder-confirm"
+          >
+            <ion-icon
+              :icon="checkmark"
+              class="button-icon"
+            />
+          </ion-button>
+        </div>
         <ion-item
           class="file-item"
           v-for="entry in currentEntries"
@@ -129,25 +169,64 @@
         <ion-icon :icon="chevronForward" />
       </ion-button>
     </div>
+    <ion-button
+      slot="footer"
+      class="create-folder-button button-default"
+      @click="createNewFolder()"
+      :disabled="isCreatingFolder"
+      v-if="isLargeDisplay"
+    >
+      <ms-image
+        :image="NewFolder"
+        class="button-icon"
+      />
+      {{ $msTranslate('FoldersPage.createFolder') }}
+    </ion-button>
+    <div
+      v-if="error"
+      class="folder-selection-modal-error"
+    >
+      <ion-icon
+        class="folder-selection-modal-error__icon"
+        :icon="warning"
+      />
+
+      <ion-text class="folder-selection-modal-error__text button-medium">
+        {{ $msTranslate(error) }}
+      </ion-text>
+    </div>
   </ms-modal>
 </template>
 
 <script setup lang="ts">
+import NewFolder from '@/assets/images/folder-new.svg?raw';
 import { getFileIcon } from '@/common/file';
 import { pxToRem } from '@/common/utils';
 import { FolderSelectionOptions } from '@/components/files';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
+import {
+  EntryStat,
+  FsPath,
+  Path,
+  StartedWorkspaceInfo,
+  WorkspaceCreateFolderErrorTag,
+  createFolder,
+  getWorkspaceInfo,
+  statFolderChildren,
+} from '@/parsec';
 import { Routes } from '@/router';
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText, modalController } from '@ionic/vue';
-import { chevronBack, chevronForward, home } from 'ionicons/icons';
-import { Folder, MsImage, MsModal, MsModalResult, formatTimeSince, useWindowSize } from 'megashark-lib';
-import { Ref, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { checkmark, chevronBack, chevronForward, home, warning } from 'ionicons/icons';
+import { Folder, I18n, MsImage, MsInput, MsModal, MsModalResult, Translatable, formatTimeSince, useWindowSize } from 'megashark-lib';
+import { Ref, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath: Ref<FsPath> = ref(props.startingPath);
+const error = ref<Translatable>('');
 const headerPath: Ref<RouterPathNode[]> = ref([]);
 const pathLength = ref(0);
+const isCreatingFolder = ref(false);
+const newFolderName = ref('');
 const currentEntries: Ref<[EntryStat, boolean][]> = ref([]);
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 const backStack: FsPath[] = [];
@@ -155,6 +234,9 @@ const forwardStack: FsPath[] = [];
 const breadcrumbsWidth = ref(0);
 const navigationRef = useTemplateRef<HTMLDivElement>('navigation');
 const buttonsRef = useTemplateRef<HTMLDivElement>('buttons');
+const folderListRef = useTemplateRef<HTMLElement>('folder-list');
+const newFolderInput = useTemplateRef<InstanceType<typeof MsInput>>('newFolderInput');
+
 const { windowWidth, isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {
@@ -165,6 +247,61 @@ const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {
     }
   }
 });
+
+async function createNewFolder(): Promise<void> {
+  isCreatingFolder.value = true;
+  newFolderName.value = '';
+  await nextTick();
+  newFolderInput.value?.setFocus();
+
+  if (folderListRef.value) {
+    await nextTick();
+    folderListRef.value.scrollTop = 0;
+  }
+}
+
+async function confirmNewFolder(): Promise<void> {
+  let trimmedName = newFolderName.value.trim();
+
+  if (!workspaceInfo.value) {
+    cancelNewFolder();
+    return;
+  }
+
+  if (trimmedName.length === 0) {
+    trimmedName = I18n.translate('FoldersPage.createFolder');
+  }
+
+  const path = await Path.join(selectedPath.value, trimmedName);
+  const result = await createFolder(workspaceInfo.value.handle, path);
+
+  if (!result.ok) {
+    switch (result.error.tag) {
+      case WorkspaceCreateFolderErrorTag.EntryExists: {
+        error.value = { key: 'FoldersPage.errors.createFolderAlreadyExists', data: { name: trimmedName } };
+        break;
+      }
+      default:
+        error.value = { key: 'FoldersPage.errors.createFolderFailed', data: { name: trimmedName } };
+        cancelNewFolder();
+    }
+  } else {
+    await update();
+    const entry = currentEntries.value.find((e) => e[0]?.name === trimmedName)?.[0] as EntryStat;
+    await enterFolder(entry);
+    isCreatingFolder.value = false;
+  }
+}
+
+async function onNewFolderNameChange(): Promise<void> {
+  newFolderName.value.trim();
+  error.value = '';
+}
+
+async function cancelNewFolder(): Promise<void> {
+  isCreatingFolder.value = false;
+  newFolderName.value = '';
+}
 
 onMounted(async () => {
   const result = await getWorkspaceInfo(props.workspaceHandle);
@@ -260,6 +397,7 @@ async function back(): Promise<void> {
 
 async function onPathChange(node: RouterPathNode): Promise<void> {
   forwardStack.splice(0, forwardStack.length);
+  await cancelNewFolder();
   if (node.query && node.query.documentPath) {
     selectedPath.value = node.query.documentPath;
     await update();
@@ -267,9 +405,7 @@ async function onPathChange(node: RouterPathNode): Promise<void> {
 }
 
 async function enterFolder(entry: EntryStat): Promise<void> {
-  if (entry.isFile()) {
-    return;
-  }
+  cancelNewFolder();
   backStack.push(selectedPath.value);
   selectedPath.value = await Path.join(selectedPath.value, entry.name);
   await update();
@@ -307,7 +443,7 @@ async function cancel(): Promise<boolean> {
 
     @include ms.responsive-breakpoint('sm') {
       position: absolute;
-      bottom: 3.25rem;
+      bottom: 3rem;
       z-index: 10;
 
       ion-icon {
@@ -322,6 +458,7 @@ async function cancel(): Promise<boolean> {
   display: flex;
   flex-direction: column;
   background: var(--parsec-color-light-secondary-background);
+  box-shadow: var(--parsec-shadow-input);
   border: 1px solid var(--parsec-color-light-secondary-premiere);
   height: -webkit-fill-available;
   border-radius: var(--parsec-radius-8);
@@ -366,13 +503,15 @@ async function cancel(): Promise<boolean> {
   overflow-y: auto;
   width: 100%;
   padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  scroll-behavior: smooth;
 }
 
 .file-item {
-  border-radius: var(--parsec-radius-6);
   --show-full-highlight: 0;
-  --background: var(--parsec-color-light-secondary-background);
-  --background-hover: var(--parsec-color-light-secondary-white);
+  --background: var(--parsec-color-light-secondary-white);
   cursor: pointer;
   position: relative;
   overflow: visible;
@@ -380,28 +519,18 @@ async function cancel(): Promise<boolean> {
   &::part(native) {
     --padding-start: 0px;
     padding: 0.125rem 0.75rem;
-    border-radius: var(--parsec-radius-6);
-  }
-
-  &:not(:last-child):after {
-    content: '';
-    position: absolute;
-    left: 3rem;
-    width: calc(100% - 3rem);
-    height: 1px;
-    z-index: 10;
-    background-color: var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-8);
   }
 
   &:hover {
-    color: var(--parsec-color-light-secondary-text);
-    --background: var(--parsec-color-light-secondary-white);
+    --background: var(--parsec-color-light-secondary-medium);
+    box-shadow: var(--parsec-shadow-input);
   }
 
   &:focus,
   &:active {
-    --background-focused: var(--parsec-color-light-primary-100);
-    --background: var(--parsec-color-light-primary-100);
+    --background: var(--parsec-color-light-secondary-medium);
+    --background-focused: var(--parsec-color-light-secondary-medium);
     --background-focused-opacity: 1;
     --border-width: 0;
   }
@@ -414,6 +543,112 @@ async function cancel(): Promise<boolean> {
   &-image {
     width: 1.75rem;
     height: 1.75rem;
+  }
+}
+
+.new-folder {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  box-shadow: var(--parsec-shadow-input);
+  border-radius: var(--parsec-radius-8);
+  gap: 0.5rem;
+  background: var(--parsec-color-light-secondary-white);
+  height: fit-content;
+
+  &-image {
+    width: 1.75rem;
+    min-width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  &__name {
+    margin: 0.75rem 1rem;
+    font-weight: 500;
+  }
+
+  &__input {
+    flex-grow: 1;
+  }
+}
+
+.create-folder-button {
+  position: absolute;
+  left: 1.5rem;
+  bottom: 1.5rem;
+  background: var(--parsec-color-light-secondary-premiere);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  color: var(--parsec-color-light-secondary-text);
+  cursor: pointer;
+  border-radius: var(--parsec-radius-8);
+  z-index: 20;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+
+  .button-icon {
+    width: 1.125rem;
+    margin-right: 0.5rem;
+    --fill-color: var(--parsec-color-light-secondary-text);
+  }
+
+  &::part(native) {
+    background: none;
+    --background-hover: none;
+    padding: 0.5rem 1rem;
+    border-color: var(--parsec-color-light-secondary-text);
+  }
+
+  &:hover {
+    background: var(--parsec-color-light-secondary-disabled);
+    box-shadow: var(--parsec-shadow-input);
+  }
+}
+
+.create-folder-button-small {
+  background: var(--parsec-color-light-secondary-medium);
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-radius: var(--parsec-radius-circle);
+  box-shadow: var(--parsec-shadow-soft);
+  padding: 0.5rem;
+  cursor: pointer;
+
+  .button-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    --fill-color: var(--parsec-color-light-secondary-text);
+  }
+
+  &:hover {
+    background: var(--parsec-color-light-secondary-disabled);
+    box-shadow: var(--parsec-shadow-input);
+  }
+
+  &[disabled='true'] {
+    --fill-color: var(--parsec-color-light-secondary-text);
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.folder-selection-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 1rem;
+
+  &__icon {
+    color: var(--parsec-color-light-danger-500);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      font-size: 1rem;
+    }
+  }
+
+  &__text {
+    color: var(--parsec-color-light-danger-500);
   }
 }
 </style>
