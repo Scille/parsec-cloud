@@ -15,8 +15,8 @@ use crate::{device::RemoveDeviceError, get_pending_async_enrollment_dir, LOCAL_P
 
 #[derive(Debug, thiserror::Error)]
 pub enum SaveAsyncEnrollmentLocalPendingError {
-    #[error("No space left")]
-    NoSpaceLeft,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error("Path is invalid")]
     InvalidPath,
     #[error(transparent)]
@@ -27,7 +27,7 @@ impl From<SaveContentError> for SaveAsyncEnrollmentLocalPendingError {
     fn from(value: SaveContentError) -> Self {
         match value {
             SaveContentError::StorageNotAvailable | SaveContentError::NoSpaceLeft => {
-                SaveAsyncEnrollmentLocalPendingError::NoSpaceLeft
+                SaveAsyncEnrollmentLocalPendingError::NoSpaceAvailable
             }
             SaveContentError::NotAFile
             | SaveContentError::InvalidParent
