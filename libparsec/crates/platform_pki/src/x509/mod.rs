@@ -3,8 +3,9 @@
 mod distinguished_name;
 mod extensions;
 
+use rsa::pkcs8::DecodePublicKey;
 use x509_cert::{
-    der::{Decode, Error as DERError, SliceReader},
+    der::{Decode, Encode, Error as DERError, SliceReader},
     Version,
 };
 
@@ -120,4 +121,40 @@ impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
             extensions,
         })
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum GetCertificatePublicKeyError {
+    #[error("Invalid certificate DER: {}", .0)]
+    InvalidDer(#[from] x509_cert::der::Error),
+    #[error("Unsupported public key ({})", .0)]
+    UnsupportedPubKey(x509_cert::der::oid::ObjectIdentifier),
+    #[error("Invalid SPKI: {}", .0)]
+    SpkiError(rsa::pkcs8::spki::Error),
+}
+
+pub(crate) fn get_certificate_public_key(
+    raw_cert: &[u8],
+) -> Result<PublicKey, GetCertificatePublicKeyError> {
+    let spki = x509_cert::Certificate::decode(&mut SliceReader::new(raw_cert)?)
+        .map(|v| v.tbs_certificate.subject_public_key_info)?;
+
+    match spki.algorithm.oid {
+        x509_cert::der::oid::db::rfc5912::RSA_ENCRYPTION => {
+            // TODO: Use RsaPublicKey::try_from(spki::SubjectPublicKeyInfo) once rsa is update and
+            // use the same version of spki.
+            // https://github.com/Scille/parsec-cloud/issues/11457
+            let mut buffer = Vec::new();
+            spki.encode_to_vec(&mut buffer)
+                .map_err(GetCertificatePublicKeyError::InvalidDer)?;
+            rsa::RsaPublicKey::from_public_key_der(buffer.as_slice())
+                .map(PublicKey::Rsa)
+                .map_err(GetCertificatePublicKeyError::SpkiError)
+        }
+        ty => Err(GetCertificatePublicKeyError::UnsupportedPubKey(ty)),
+    }
+}
+
+pub enum PublicKey {
+    Rsa(rsa::RsaPublicKey),
 }

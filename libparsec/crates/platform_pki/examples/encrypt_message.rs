@@ -5,7 +5,7 @@ mod utils;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::encrypt_message;
+use libparsec_platform_pki::{encrypt_message, get_der_encoded_certificate};
 use libparsec_types::X509CertificateHash;
 
 #[derive(Debug, Parser)]
@@ -26,7 +26,8 @@ async fn main() -> anyhow::Result<()> {
     let cert_ref = args.certificate_hash.into();
     let data = args.content.into_bytes()?;
 
-    let (algo, ciphered) = encrypt_message(&data, &cert_ref)
+    let der = get_der_encoded_certificate(&cert_ref).await?;
+    let (algo, ciphered) = encrypt_message(der.as_ref(), &data)
         .await
         .context("Failed to encrypt message")?;
 

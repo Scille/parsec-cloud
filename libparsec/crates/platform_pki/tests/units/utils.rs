@@ -152,9 +152,11 @@ impl InstalledCertificates {
         payload: &[u8],
     ) -> (PKIEncryptionAlgorithm, Bytes, X509CertificateReference) {
         let certificate_ref = self.alice_cert_ref().await;
-        let (algo, encrypted_message) = crate::encrypt_message(payload, &certificate_ref)
+        let der = crate::get_der_encoded_certificate(&certificate_ref)
             .await
             .unwrap();
+        let (algo, encrypted_message) =
+            crate::encrypt_message(der.as_ref(), payload).await.unwrap();
         (algo, encrypted_message, certificate_ref)
     }
 
