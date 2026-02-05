@@ -12,10 +12,29 @@ use crate::{get_local_pending_dir, LOCAL_PENDING_EXT};
 
 #[derive(Debug, thiserror::Error)]
 pub enum SavePkiLocalPendingError {
-    #[error(transparent)]
-    SaveContentError(#[from] SaveContentError),
+    #[error("No space available")]
+    NoSpaceAvailable,
+    #[error("invalid path")]
+    InvalidPath,
     #[error(transparent)]
     Internal(anyhow::Error),
+}
+
+impl From<SaveContentError> for SavePkiLocalPendingError {
+    fn from(value: SaveContentError) -> Self {
+        match value {
+            SaveContentError::NotAFile
+            | SaveContentError::InvalidParent
+            | SaveContentError::InvalidPath
+            | SaveContentError::ParentNotFound
+            | SaveContentError::CannotEdit => SavePkiLocalPendingError::InvalidPath,
+
+            SaveContentError::StorageNotAvailable | SaveContentError::NoSpaceLeft => {
+                SavePkiLocalPendingError::NoSpaceAvailable
+            }
+            SaveContentError::Internal(_) => SavePkiLocalPendingError::Internal(value.into()),
+        }
+    }
 }
 
 pub async fn save_pki_local_pending(
