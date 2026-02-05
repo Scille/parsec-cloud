@@ -12,8 +12,8 @@ use libparsec_types::prelude::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SaveDeviceError {
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error("Path is invalid")]
     InvalidPath,
     /// Note only a subset of save strategies requires server access to
@@ -48,10 +48,10 @@ impl From<SaveContentError> for SaveDeviceError {
             | SaveContentError::ParentNotFound
             | SaveContentError::CannotEdit => SaveDeviceError::InvalidPath,
 
-            SaveContentError::StorageNotAvailable => SaveDeviceError::StorageNotAvailable,
-            SaveContentError::NoSpaceLeft | SaveContentError::Internal(_) => {
-                SaveDeviceError::Internal(value.into()) // TODO move NoSpaceLeft out of internal #12081
+            SaveContentError::StorageNotAvailable | SaveContentError::NoSpaceLeft => {
+                SaveDeviceError::NoSpaceAvailable
             }
+            SaveContentError::Internal(_) => SaveDeviceError::Internal(value.into()),
         }
     }
 }

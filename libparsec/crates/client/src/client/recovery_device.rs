@@ -189,7 +189,7 @@ impl From<RegisterNewDeviceError> for ImportRecoveryDeviceError {
 impl From<SaveDeviceError> for ImportRecoveryDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
-            SaveDeviceError::StorageNotAvailable => ImportRecoveryDeviceError::StorageNotAvailable,
+            SaveDeviceError::NoSpaceAvailable => ImportRecoveryDeviceError::StorageNotAvailable, // TODO #11955
             SaveDeviceError::InvalidPath => {
                 ImportRecoveryDeviceError::InvalidPath(anyhow::anyhow!("invalid path"))
             }

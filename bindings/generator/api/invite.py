@@ -171,8 +171,9 @@ class ClaimInProgressError(ErrorVariant):
         pass
 
 
+# in libparsec this is a SaveDeviceError type alias
 class ClaimFinalizeError(ErrorVariant):
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class InvalidPath:

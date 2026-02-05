@@ -1243,6 +1243,10 @@ export interface ClaimFinalizeErrorInvalidPath {
     tag: "ClaimFinalizeErrorInvalidPath"
     error: string
 }
+export interface ClaimFinalizeErrorNoSpaceAvailable {
+    tag: "ClaimFinalizeErrorNoSpaceAvailable"
+    error: string
+}
 export interface ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed {
     tag: "ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed"
     error: string
@@ -1251,16 +1255,12 @@ export interface ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline {
     tag: "ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline"
     error: string
 }
-export interface ClaimFinalizeErrorStorageNotAvailable {
-    tag: "ClaimFinalizeErrorStorageNotAvailable"
-    error: string
-}
 export type ClaimFinalizeError =
   | ClaimFinalizeErrorInternal
   | ClaimFinalizeErrorInvalidPath
+  | ClaimFinalizeErrorNoSpaceAvailable
   | ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed
   | ClaimFinalizeErrorRemoteOpaqueKeyUploadOffline
-  | ClaimFinalizeErrorStorageNotAvailable
 
 
 // ClaimInProgressError
