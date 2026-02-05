@@ -52,18 +52,6 @@ pub enum VerifySignatureError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum EncryptMessageError {
-    #[error("Cannot open certificate store: {0}")]
-    CannotOpenStore(std::io::Error),
-    #[error("Cannot find certificate")]
-    NotFound,
-    #[error("Cannot acquire keypair related to certificate: {0}")]
-    CannotAcquireKeypair(std::io::Error),
-    #[error("Cannot encrypt message: {0}")]
-    CannotEncrypt(std::io::Error),
-}
-
-#[derive(Debug, thiserror::Error)]
 pub enum DecryptMessageError {
     #[error("Cannot open certificate store: {0}")]
     CannotOpenStore(std::io::Error),
@@ -98,22 +86,6 @@ pub enum GetRootCertificateInfoFromTrustchainError {
 }
 
 error_set::error_set! {
-    BaseCertStoreError := {
-        #[display("Cannot open certificate store: {0}")]
-        CannotOpenStore(std::io::Error),
-        #[display("Cannot find certificate")]
-        NotFound,
-        #[display("Cannot get certificate info: {0}")]
-        CannotGetCertificateInfo(std::io::Error),
-    }
-    BaseKeyPairError := {
-        #[display("Cannot acquire keypair related to certificate: {0}")]
-        CannotAcquireKeypair(std::io::Error),
-    }
-    CreateLocalPendingError := BaseCertStoreError || BaseKeyPairError || {
-        #[display("Cannot encrypt message: {0}")]
-        CannotEncrypt(std::io::Error),
-    }
     ValidatePayloadError := {
             #[display("Invalid certificate: {0}")]
             InvalidCertificateDer(webpki::Error),
