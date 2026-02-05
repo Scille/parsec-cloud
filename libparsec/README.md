@@ -75,7 +75,8 @@ The platform crates:
 - `platform_async`: Asynchronous programming, works differently between web and native
   (the former has to integrate with the javascript runtime, the latter uses Tokio), so
   this crate exposes platform-agnostic utilities (e.g. spawn a future, async lock etc.).
-- `platform_device_loader`: Loads the device keys file from disk.
+- `platform_device_loader`: Manages the device encryption and where they are stored.
+- `platform_filesystem` : Manages (device) data on disk, as files.
 - `platform_http_proxy`: Handles HTTP proxy.
 - `platform_ipc`: Allows communication between processes to ensure a device is not
   concurrently used.
