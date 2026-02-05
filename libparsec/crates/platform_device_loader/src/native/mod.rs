@@ -90,7 +90,10 @@ pub(crate) async fn save_device_pki(
     let secret_key = SecretKey::generate();
 
     // Encrypt the key using the public key related to a certificate from the store
-    let (algorithm, encrypted_key) = encrypt_message(secret_key.as_ref(), certificate_ref)
+    let der = libparsec_platform_pki::get_der_encoded_certificate(certificate_ref)
+        .await
+        .map_err(|e| SaveDeviceError::Internal(e.into()))?;
+    let (algorithm, encrypted_key) = encrypt_message(der.as_ref(), secret_key.as_ref())
         .await
         .map_err(|e| SaveDeviceError::Internal(e.into()))?;
 

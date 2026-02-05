@@ -4,9 +4,8 @@ mod find_in_store;
 mod schannel_utils;
 
 use crate::{
-    DecryptMessageError, EncryptMessageError, GetDerEncodedCertificateError,
-    ListIntermediateCertificatesError, ListTrustedRootCertificatesError,
-    ShowCertificateSelectionDialogError, SignMessageError,
+    DecryptMessageError, GetDerEncodedCertificateError, ListIntermediateCertificatesError,
+    ListTrustedRootCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
 };
 
 use bytes::Bytes;
@@ -17,8 +16,8 @@ use schannel::{
 };
 use sha2::Digest as _;
 use windows_sys::Win32::Security::Cryptography::{
-    NCryptDecrypt, NCryptEncrypt, NCryptSignHash, BCRYPT_OAEP_PADDING_INFO,
-    BCRYPT_PSS_PADDING_INFO, NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
+    NCryptDecrypt, NCryptSignHash, BCRYPT_OAEP_PADDING_INFO, BCRYPT_PSS_PADDING_INFO,
+    NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
     UI::CryptUIDlgSelectCertificateFromStore,
 };
 
@@ -293,88 +292,6 @@ fn ncrypt_sign_message_with_rsa(
             flags,
         );
 
-        if res != 0 {
-            return Err(std::io::Error::last_os_error());
-        }
-        Ok((ALGO, buff))
-    }
-}
-
-pub async fn encrypt_message(
-    message: &[u8],
-    certificate_ref: &X509CertificateReference,
-) -> Result<(PKIEncryptionAlgorithm, Bytes), EncryptMessageError> {
-    let store = open_store().map_err(EncryptMessageError::CannotOpenStore)?;
-    let cert_context =
-        find_certificate(&store, certificate_ref).ok_or(EncryptMessageError::NotFound)?;
-    let keypair = get_keypair(&cert_context).map_err(EncryptMessageError::CannotAcquireKeypair)?;
-    let (algo, ciphered) = match keypair {
-        // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
-        PrivateKey::CryptProv(..) => {
-            todo!("Use CryptGetUserKey to get the keypair")
-        }
-        // Handle to a CryptoGraphy Next Generation (CNG) API
-        PrivateKey::NcryptKey(handle) => ncrypt_encrypt_message_with_rsa(message, &handle),
-    }
-    .map_err(EncryptMessageError::CannotEncrypt)?;
-
-    Ok((algo, ciphered.into()))
-}
-
-fn ncrypt_encrypt_message_with_rsa(
-    message: &[u8],
-    handle: &NcryptKey,
-) -> std::io::Result<(PKIEncryptionAlgorithm, Vec<u8>)> {
-    const ALGO: PKIEncryptionAlgorithm = PKIEncryptionAlgorithm::RsaesOaepSha256;
-    let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
-
-    // SAFETY: We follow the windows documentation by correctly passing the correct flags according
-    // to padding_info type, and the other pointer are either coming from allocated buffer or null
-    // pointer with their correct associated sizes.
-    //
-    // Documentation of the below function:
-    // https://learn.microsoft.com/en-us/windows/win32/api/ncrypt/nf-ncrypt-ncryptencrypt
-    // Rust doc:
-    // https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/Cryptography/fn.NCryptEncrypt.html
-    unsafe {
-        // We pad the ciphered data using OAEP.
-        let flags = NCRYPT_PAD_OAEP_FLAG;
-        // https://learn.microsoft.com/en-us/windows/win32/api/bcrypt/ns-bcrypt-bcrypt_oaep_padding_info
-        let padding_info = BCRYPT_OAEP_PADDING_INFO {
-            pszAlgId: NCRYPT_SHA256_ALGORITHM,
-            pbLabel: std::ptr::null_mut(),
-            cbLabel: 0,
-        };
-        let padding_info_ptr = (&raw const padding_info) as *const std::os::raw::c_void;
-        let mut len = 0_u32;
-
-        // 1. Get size of the resulting ciphered data.
-        let res = NCryptEncrypt(
-            raw_handle,
-            message.as_ptr(),
-            message.len() as u32,
-            padding_info_ptr,
-            std::ptr::null_mut(),
-            0,
-            &mut len,
-            flags,
-        );
-        if res != 0 {
-            return Err(std::io::Error::last_os_error());
-        }
-
-        // 2. Actually perform the encryption.
-        let mut buff = vec![0_u8; len as usize];
-        let res = NCryptEncrypt(
-            raw_handle,
-            message.as_ptr(),
-            message.len() as u32,
-            padding_info_ptr,
-            buff.as_mut_ptr(),
-            buff.len() as u32,
-            &mut len,
-            flags,
-        );
         if res != 0 {
             return Err(std::io::Error::last_os_error());
         }
