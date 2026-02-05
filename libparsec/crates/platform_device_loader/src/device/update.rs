@@ -14,8 +14,8 @@ use crate::{
 };
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateDeviceError {
-    #[error("No storage available")]
-    NoStorageAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error("Path is invalid")]
     InvalidPath,
     #[error("Cannot deserialize file content")]
@@ -55,7 +55,7 @@ impl From<SaveDeviceError> for UpdateDeviceError {
                 UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
             }
             SaveDeviceError::Internal(error) => UpdateDeviceError::Internal(error),
-            SaveDeviceError::StorageNotAvailable => UpdateDeviceError::NoStorageAvailable,
+            SaveDeviceError::StorageNotAvailable => UpdateDeviceError::NoSpaceAvailable,
             SaveDeviceError::InvalidPath => UpdateDeviceError::InvalidPath,
         }
     }
@@ -64,7 +64,7 @@ impl From<SaveDeviceError> for UpdateDeviceError {
 impl From<LoadFileError> for UpdateDeviceError {
     fn from(value: LoadFileError) -> Self {
         match value {
-            LoadFileError::StorageNotAvailable => UpdateDeviceError::NoStorageAvailable,
+            LoadFileError::StorageNotAvailable => UpdateDeviceError::NoSpaceAvailable,
             LoadFileError::NotAFile
             | LoadFileError::InvalidParent
             | LoadFileError::InvalidPath
@@ -155,7 +155,7 @@ pub async fn update_device_overwrite_server_addr(
     let available_device = load_available_device(config_dir, key_file.to_owned())
         .await
         .map_err(|err| match err {
-            LoadAvailableDeviceError::StorageNotAvailable => UpdateDeviceError::NoStorageAvailable,
+            LoadAvailableDeviceError::StorageNotAvailable => UpdateDeviceError::NoSpaceAvailable,
             LoadAvailableDeviceError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
             LoadAvailableDeviceError::InvalidData => UpdateDeviceError::InvalidData,
             LoadAvailableDeviceError::Internal(err) => UpdateDeviceError::Internal(err),

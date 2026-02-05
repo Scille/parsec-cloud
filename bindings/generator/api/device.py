@@ -136,7 +136,7 @@ async def remove_device_data(
 
 
 class UpdateDeviceError(ErrorVariant):
-    class NoStorageAvailable:
+    class NoSpaceAvailable:
         pass
 
     class InvalidPath:
