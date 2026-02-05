@@ -35,6 +35,14 @@
       >
         {{ $msTranslate('MenuPage.settings') }}
       </ion-button>
+      <!-- bug report button -->
+      <ion-button
+        id="bug-report-button"
+        class="menu-secondary-buttons-item"
+        @click="$emit('reportBugClick')"
+      >
+        {{ $msTranslate('MenuPage.reportBug') }}
+      </ion-button>
       <!-- customer area button -->
       <ion-button
         class="menu-secondary-buttons-item"
@@ -66,6 +74,7 @@ async function openSettings(): Promise<void> {
 const emits = defineEmits<{
   (e: 'customerAreaClick'): void;
   (e: 'settingsClick'): void;
+  (e: 'reportBugClick'): void;
 }>();
 </script>
 

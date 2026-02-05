@@ -46,6 +46,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Documentation',
         'Contact',
         'Settings',
+        'Report a bug',
         'Customer area',
       ]);
     } else {
@@ -59,6 +60,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Documentation',
         'Contact',
         'Settings',
+        'Report a bug',
         'Customer area',
       ]);
     }
@@ -186,12 +188,13 @@ msTest('Logout and go back to devices list', async ({ home }) => {
 });
 
 msTest('Check header buttons', async ({ home }) => {
-  await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveCount(5);
+  await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveCount(6);
   await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
     'About',
     'Documentation',
     'Contact',
     'Settings',
+    'Report a bug',
     'Customer area',
   ]);
 });
@@ -244,6 +247,23 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const newTab = await newTabPromise;
     await newTab.waitForLoadState();
     await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));
+  });
+
+  msTest(`Open bug report modal in ${displaySize} display`, async ({ home }) => {
+    const bugReportModal = home.locator('.bug-report-modal');
+    await expect(bugReportModal).toBeHidden();
+    if (displaySize === DisplaySize.Small) {
+      await home.setDisplaySize(DisplaySize.Small);
+      await expect(home.locator('.menu-secondary')).toBeHidden();
+      await home.locator('.menu-button').isVisible();
+      await home.locator('.menu-button').click();
+      await expect(home.locator('.menu-secondary-collapse-buttons').locator('ion-button').nth(4)).toHaveText('Report a bug');
+      await home.locator('.menu-secondary-collapse-buttons').locator('ion-button').nth(4).click();
+    } else {
+      await expect(home.locator('.menu-secondary-buttons').locator('ion-button').nth(4)).toHaveText('Report a bug');
+      await home.locator('.menu-secondary-buttons').locator('ion-button').nth(4).click();
+    }
+    await expect(bugReportModal).toBeVisible();
   });
 }
 
