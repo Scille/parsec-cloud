@@ -6717,6 +6717,13 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorInvalidPath".into(),
             )?;
         }
+        libparsec::AccountRegisterNewDeviceError::NoSpaceAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRegisterNewDeviceErrorNoSpaceAvailable".into(),
+            )?;
+        }
         libparsec::AccountRegisterNewDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6736,13 +6743,6 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline".into(),
-            )?;
-        }
-        libparsec::AccountRegisterNewDeviceError::StorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountRegisterNewDeviceErrorStorageNotAvailable".into(),
             )?;
         }
         libparsec::AccountRegisterNewDeviceError::TimestampOutOfBallpark { .. } => {
