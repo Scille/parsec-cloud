@@ -4369,6 +4369,7 @@ export enum SubmitAsyncEnrollmentErrorTag {
     EmailAlreadySubmitted = 'SubmitAsyncEnrollmentErrorEmailAlreadySubmitted',
     Internal = 'SubmitAsyncEnrollmentErrorInternal',
     InvalidPath = 'SubmitAsyncEnrollmentErrorInvalidPath',
+    NoSpaceAvailable = 'SubmitAsyncEnrollmentErrorNoSpaceAvailable',
     Offline = 'SubmitAsyncEnrollmentErrorOffline',
     OpenBaoBadServerResponse = 'SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse',
     OpenBaoBadURL = 'SubmitAsyncEnrollmentErrorOpenBaoBadURL',
@@ -4376,7 +4377,6 @@ export enum SubmitAsyncEnrollmentErrorTag {
     PKICannotOpenCertificateStore = 'SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore',
     PKIServerInvalidX509Trustchain = 'SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain',
     PKIUnusableX509CertificateReference = 'SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference',
-    StorageNotAvailable = 'SubmitAsyncEnrollmentErrorStorageNotAvailable',
 }
 
 export interface SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled {
@@ -4393,6 +4393,10 @@ export interface SubmitAsyncEnrollmentErrorInternal {
 }
 export interface SubmitAsyncEnrollmentErrorInvalidPath {
     tag: SubmitAsyncEnrollmentErrorTag.InvalidPath
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorNoSpaceAvailable {
+    tag: SubmitAsyncEnrollmentErrorTag.NoSpaceAvailable
     error: string
 }
 export interface SubmitAsyncEnrollmentErrorOffline {
@@ -4423,15 +4427,12 @@ export interface SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
     tag: SubmitAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference
     error: string
 }
-export interface SubmitAsyncEnrollmentErrorStorageNotAvailable {
-    tag: SubmitAsyncEnrollmentErrorTag.StorageNotAvailable
-    error: string
-}
 export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled
   | SubmitAsyncEnrollmentErrorEmailAlreadySubmitted
   | SubmitAsyncEnrollmentErrorInternal
   | SubmitAsyncEnrollmentErrorInvalidPath
+  | SubmitAsyncEnrollmentErrorNoSpaceAvailable
   | SubmitAsyncEnrollmentErrorOffline
   | SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse
   | SubmitAsyncEnrollmentErrorOpenBaoBadURL
@@ -4439,7 +4440,6 @@ export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore
   | SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain
   | SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference
-  | SubmitAsyncEnrollmentErrorStorageNotAvailable
 
 // SubmitAsyncEnrollmentIdentityStrategy
 export enum SubmitAsyncEnrollmentIdentityStrategyTag {

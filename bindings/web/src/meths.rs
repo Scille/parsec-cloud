@@ -17950,6 +17950,13 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorInvalidPath".into(),
             )?;
         }
+        libparsec::SubmitAsyncEnrollmentError::NoSpaceAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorNoSpaceAvailable".into(),
+            )?;
+        }
         libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17997,13 +18004,6 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into(),
-            )?;
-        }
-        libparsec::SubmitAsyncEnrollmentError::StorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"SubmitAsyncEnrollmentErrorStorageNotAvailable".into(),
             )?;
         }
     }
