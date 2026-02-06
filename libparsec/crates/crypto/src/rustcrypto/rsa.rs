@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use rand::rngs::OsRng;
+use rand::rngs::SysRng;
 use rsa::{
-    PublicKeyParts,
     pkcs8::{DecodePrivateKey, EncodePrivateKey},
+    rand_core::UnwrapErr,
+    traits::PublicKeyParts,
 };
 
 use crate::{CryptoError, CryptoResult};
@@ -31,7 +32,8 @@ impl From<RsaPrivateKey> for rsa::RsaPrivateKey {
 
 impl RsaPrivateKey {
     pub fn gen_keypair(size: usize) -> (Self, RsaPublicKey) {
-        let pkey = rsa::RsaPrivateKey::new(&mut OsRng, size).expect("Cannot generate the RSA key");
+        let pkey = rsa::RsaPrivateKey::new(&mut UnwrapErr(SysRng), size)
+            .expect("Cannot generate the RSA key");
         let pubkey = pkey.to_public_key();
         (Self(pkey), RsaPublicKey(pubkey))
     }
@@ -43,7 +45,7 @@ impl RsaPrivateKey {
     }
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.n().bits() / 8
+        (self.0.n().bits() / 8) as usize
     }
 
     pub fn to_pkcs8_der(&self) -> zeroize::Zeroizing<Vec<u8>> {
@@ -58,7 +60,7 @@ impl RsaPrivateKey {
 
     pub fn sign_pkcs1v15_unprefixed(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
         self.0
-            .sign(rsa::pkcs1v15::Pkcs1v15Sign::new_raw(), data)
+            .sign(rsa::pkcs1v15::Pkcs1v15Sign::new_unprefixed(), data)
             .map_err(|_| CryptoError::Signature)
     }
 }

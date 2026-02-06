@@ -76,7 +76,7 @@ rstest = { workspace = true }
 uuid = { workspace = true, features = ["v6", "std", "rng"] }
 
 criterion = { workspace = true }
-rand = { workspace = true, features = ["std", "std_rng"] }
+rand = { workspace = true, features = ["std"] }
 
 [build-dependencies]
 shadow-rs = { workspace = true, features = ["git2", "build"] }

@@ -220,11 +220,11 @@ fn random_tree_generator(
     let mut files = HashSet::new();
 
     // iter on current depth
-    for _ in 0..rng.gen_range(params.min_depth..params.max_depth) {
+    for _ in 0..rng.random_range(params.min_depth..params.max_depth) {
         // iter on all folders for a given depth
         while let Some(current_dir) = current_depth_paths.iter().next() {
             // generate new dirs
-            let dir_count = rng.gen_range(params.min_dir_per_dir..params.max_dir_per_dir);
+            let dir_count = rng.random_range(params.min_dir_per_dir..params.max_dir_per_dir);
             let new_folders: HashSet<_> = (0..dir_count)
                 .map(|_| current_dir.join(gen_filename(rng)))
                 .collect();
@@ -232,7 +232,7 @@ fn random_tree_generator(
             next_depth_paths.extend(new_folders);
 
             // generate new files
-            let file_count = rng.gen_range(params.min_files_per_dir..params.max_files_per_dir);
+            let file_count = rng.random_range(params.min_files_per_dir..params.max_files_per_dir);
             for _ in 0..file_count {
                 let content =
                     random_content_generator(rng, params.min_file_size, params.max_file_size);
@@ -246,16 +246,12 @@ fn random_tree_generator(
 }
 
 fn gen_filename(rng: &mut StdRng) -> PathBuf {
-    // gen is a reserved keyword since rust 2024
-    // TODO update to rand 0.9 or later where gen has been renamed
-    String::from_iter(rng.r#gen::<[char; 15]>()).into()
+    String::from_iter(rng.random::<[char; 15]>()).into()
 }
 
 fn random_content_generator(rng: &mut StdRng, min_file_size: u64, max_file_size: u64) -> Vec<u8> {
-    // gen is a reserved keyword since rust 2024
-    // TODO update to rand 0.9 or later where gen has been renamed
-    (0..rng.gen_range(min_file_size..max_file_size))
-        .map(|_| rng.r#gen())
+    (0..rng.random_range(min_file_size..max_file_size))
+        .map(|_| rng.random())
         .collect()
 }
 

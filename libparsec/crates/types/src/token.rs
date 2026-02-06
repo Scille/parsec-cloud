@@ -16,8 +16,8 @@ pub struct AccessToken([u8; TOKEN_SIZE]);
 
 impl Default for AccessToken {
     fn default() -> Self {
-        use ::rand::{Rng, thread_rng};
-        let bytes = thread_rng().r#gen::<[u8; TOKEN_SIZE]>();
+        use ::rand::RngExt;
+        let bytes = rand::rng().random::<[u8; TOKEN_SIZE]>();
         Self::from(bytes)
     }
 }

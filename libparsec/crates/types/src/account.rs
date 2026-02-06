@@ -2,7 +2,7 @@
 
 use bytes::Bytes;
 use libparsec_crypto::{HashDigest, SecretKey};
-use rand::Rng;
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use thiserror::Error;
@@ -57,7 +57,7 @@ impl Default for ValidationCode {
     fn default() -> Self {
         let mut bytes = [0u8; VALIDATION_CODE_SIZE];
         for c in bytes.iter_mut() {
-            let r = rand::thread_rng().gen_range(0..32);
+            let r = rand::rng().random_range(0..32);
             *c = VALIDATION_CODE_CHARS[r];
         }
         Self(bytes)

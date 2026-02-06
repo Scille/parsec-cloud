@@ -25,7 +25,6 @@ use-libsodium = ["dep:libsodium-rs", "dep:openssl"]
 #     "dep:generic-array",
 #     "dep:getrandom_01",
 #     "dep:getrandom_02",
-#     "dep:lazy_static",
 #     "dep:rand_08",
 #     "dep:rsa",
 #     "dep:sha2",
@@ -123,8 +122,7 @@ ed25519-dalek = { workspace = true, features = [
     "rand_core",
 ] } # Optional rustcrypto dep
 generic-array = { workspace = true, features = ["serde"] } # Optional rustcrypto dep
-lazy_static = { workspace = true } # Optional rustcrypto dep
-rsa = { workspace = true, features = ["std", "pem"] } # Optional rustcrypto dep
+rsa = { workspace = true, features = ["std", "encoding", "sha2"] } # Optional rustcrypto dep
 sha2 = { workspace = true, features = ["std"] } # Optional rustcrypto dep
 x25519-dalek = { workspace = true, features = [
     "alloc",
@@ -137,7 +135,8 @@ crypto_secretbox = { workspace = true, features = [
     "getrandom",
     "salsa20",
 ] } # Optional rustcrypto dep
-rand = { workspace = true, features = ["std", "std_rng"] } # Optional rustcrypto dep
+rand = { workspace = true, features = ["std", "sys_rng"] } # Optional rustcrypto dep
+rand8 = { workspace = true, features = ["std", "std_rng"] } # Optional rustcrypto dep
 
 [dev-dependencies]
 pretty_assertions = { workspace = true, features = ["std", "unstable"] }

@@ -79,10 +79,11 @@ fn decrypt_for_self_key_non_contributory() {
     }
 
     let alice_sk = PrivateKey::generate();
+    let mut sys_rng = rand8::rngs::OsRng;
 
     // Sanity check to ensure `sealed_box_crafter` correctly implements sealed box
     {
-        let strong_ephemeral_sk = crypto_box::SecretKey::generate(&mut rand::rngs::OsRng);
+        let strong_ephemeral_sk = crypto_box::SecretKey::generate(&mut sys_rng);
         let strong_ciphered = sealed_box_crafter(
             &crypto_box::SecretKey::from_bytes(*alice_sk.to_bytes()),
             alice_sk.public_key().as_ref(),
@@ -100,7 +101,7 @@ fn decrypt_for_self_key_non_contributory() {
         let weak_pk =
             crypto_box::PublicKey::from_bytes(small_order_ed_point.to_montgomery().to_bytes());
 
-        let attacker_sk = crypto_box::SecretKey::generate(&mut rand::rngs::OsRng);
+        let attacker_sk = crypto_box::SecretKey::generate(&mut sys_rng);
         let weak_ciphered =
             sealed_box_crafter(&attacker_sk, alice_sk.public_key().as_ref(), &weak_pk);
 

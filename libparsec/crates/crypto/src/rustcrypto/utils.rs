@@ -5,10 +5,10 @@ use generic_array::{
     ArrayLength, GenericArray,
     typenum::{IsLessOrEqual, LeEq, NonZero, consts::U64},
 };
-use rand::{RngCore, rngs::OsRng};
+use rand::{TryRng, rngs::SysRng};
 
 pub(crate) fn generate_rand(out: &mut [u8]) {
-    OsRng.fill_bytes(out);
+    SysRng.try_fill_bytes(out).expect("Failed to fill bytes")
 }
 
 pub(crate) fn blake2b_hash<'a, Size>(data: impl Iterator<Item = &'a [u8]>) -> GenericArray<u8, Size>

@@ -15,7 +15,6 @@ mod sealed_box {
 
     //re-export keys
     pub use crypto_box::{PublicKey, SecretKey};
-    use rand::rngs::OsRng;
 
     const BOX_NONCE_LENGTH: usize = 24;
     const BOX_OVERHEAD: usize = 16;
@@ -49,7 +48,7 @@ mod sealed_box {
     pub fn seal(data: &[u8], pk: &PublicKey) -> Vec<u8> {
         let mut out = Vec::with_capacity(SEALED_OVERHEAD + data.len());
 
-        let ep_sk = SecretKey::generate(&mut OsRng);
+        let ep_sk = SecretKey::generate(&mut rand8::rngs::OsRng);
         let ep_pk = ep_sk.public_key();
         out.extend_from_slice(ep_pk.as_bytes());
 
@@ -177,7 +176,6 @@ mod sealed_box {
 use blake2::Blake2b512;
 use crypto_box::KEY_SIZE;
 use digest::Digest;
-use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 use zeroize::Zeroizing;
@@ -217,7 +215,7 @@ impl PrivateKey {
     }
 
     pub fn generate() -> Self {
-        Self(crypto_box::SecretKey::generate(&mut OsRng))
+        Self(crypto_box::SecretKey::generate(&mut rand8::rngs::OsRng))
     }
 
     pub fn decrypt_from_self(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {

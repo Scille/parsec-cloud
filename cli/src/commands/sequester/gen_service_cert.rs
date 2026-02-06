@@ -68,6 +68,13 @@ pub async fn main(_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         encryption_key_der,
     };
 
+    let required_size = SequesterSigningKeyDer::hash_len() + authority_pkey.salt_len() + 2;
+    anyhow::ensure!(
+        required_size < authority_pkey.size_in_bytes(),
+        "The authority key is too small (need at least {}, actual: {})",
+        required_size,
+        authority_pkey.size_in_bytes(),
+    );
     let data = authority_pkey.sign(&certificate.dump());
     let b64_data = data_encoding::BASE64.encode(&data);
     let formatted_data = textwrap::wrap(&b64_data, 64);
