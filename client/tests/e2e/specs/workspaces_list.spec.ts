@@ -194,25 +194,16 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     ]);
     const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
     const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(0);
-    const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
-    if (displaySize === DisplaySize.Small) {
-      await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-        'All',
-        'Recent',
-        'Favorites',
-        'Hidden',
-      ]);
-    } else {
-      await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-        'All workspaces',
-        'Recent',
-        'Starred',
-        'Hidden',
-      ]);
-    }
+    const starredWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
+      'My workspaces',
+      'Recent',
+      'Starred',
+      'Hidden',
+    ]);
     await expect(workspaceCategoriesMenu).toBeVisible();
-    await expect(favoriteWorkspacesButton).toBeVisible();
-    await favoriteWorkspacesButton.click({ force: true });
+    await expect(starredWorkspacesButton).toBeVisible();
+    await starredWorkspacesButton.click({ force: true });
     await allWorkspacesButton.click({ force: true });
     await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
       'wksp1',
