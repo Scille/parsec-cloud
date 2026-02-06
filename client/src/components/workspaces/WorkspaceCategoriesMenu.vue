@@ -10,7 +10,6 @@
       @click="$emit('updateMenu', item.key)"
     >
       <ion-icon
-        v-if="isLargeDisplay"
         class="workspace-categories-menu-item__icon"
         :icon="item.icon"
       />
@@ -25,10 +24,10 @@
 import { WorkspaceMenu } from '@/views/workspaces/types';
 import { IonIcon, IonText } from '@ionic/vue';
 import { eyeOff, rocket, star, time } from 'ionicons/icons';
-import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
+import { useWindowSize } from 'megashark-lib';
 import { computed } from 'vue';
 
-const { isLargeDisplay, windowWidth } = useWindowSize();
+const { isSmallDisplay } = useWindowSize();
 
 defineProps<{
   activeMenu: WorkspaceMenu;
@@ -38,29 +37,36 @@ defineEmits<{
   (e: 'updateMenu', value: WorkspaceMenu): void;
 }>();
 
-const workspaceMenuList = computed(() => [
-  {
-    icon: rocket,
-    key: WorkspaceMenu.All,
-    label: windowWidth.value > WindowSizeBreakpoints.MD ? 'WorkspacesPage.categoriesMenu.all' : 'WorkspacesPage.categoriesMenu.allShort',
-  },
-  {
-    icon: time,
-    key: WorkspaceMenu.Recent,
-    label:
-      windowWidth.value > WindowSizeBreakpoints.MD ? 'WorkspacesPage.categoriesMenu.recent' : 'WorkspacesPage.categoriesMenu.recentShort',
-  },
-  {
-    icon: star,
-    key: WorkspaceMenu.Favorites,
-    label: 'WorkspacesPage.categoriesMenu.favorites',
-  },
-  {
-    icon: eyeOff,
-    key: WorkspaceMenu.Hidden,
-    label: 'WorkspacesPage.categoriesMenu.hidden',
-  },
-]);
+const workspaceMenuList = computed(() => {
+  const allMenus = [
+    {
+      icon: rocket,
+      key: WorkspaceMenu.All,
+      label: 'WorkspacesPage.categoriesMenu.myWorkspaces',
+    },
+    {
+      icon: time,
+      key: WorkspaceMenu.Recent,
+      label: 'WorkspacesPage.categoriesMenu.recent',
+    },
+    {
+      icon: star,
+      key: WorkspaceMenu.Favorites,
+      label: 'WorkspacesPage.categoriesMenu.favorites',
+    },
+    {
+      icon: eyeOff,
+      key: WorkspaceMenu.Hidden,
+      label: 'WorkspacesPage.categoriesMenu.hidden',
+    },
+  ];
+
+  if (isSmallDisplay.value) {
+    return allMenus.filter((menu) => [WorkspaceMenu.Recent, WorkspaceMenu.Favorites, WorkspaceMenu.Hidden].includes(menu.key));
+  }
+
+  return allMenus;
+});
 </script>
 
 <style scoped lang="scss">
@@ -78,6 +84,12 @@ const workspaceMenuList = computed(() => [
     width: 100%;
     margin: 0 1rem;
     gap: 0;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    background: none;
+    gap: 1rem;
+    overflow: auto;
   }
 
   &::after {
@@ -98,6 +110,10 @@ const workspaceMenuList = computed(() => [
     @include ms.responsive-breakpoint('lg') {
       width: calc(100% / 4 - 0.25rem);
     }
+
+    @include ms.responsive-breakpoint('sm') {
+      display: none;
+    }
   }
 
   &-item {
@@ -110,11 +126,17 @@ const workspaceMenuList = computed(() => [
     min-width: 12rem;
     padding: 0.5rem 1rem;
     color: var(--parsec-color-light-secondary-soft-text);
-    box-shadow: var(--parsec-shadow-filter);
     position: relative;
     border-radius: var(--parsec-radius-8);
+    overflow: visible;
     z-index: 3;
     transition: background-color 0.2s ease-in-out;
+
+    &:not(.active) {
+      @include ms.responsive-breakpoint('sm') {
+        outline: 1px solid var(--parsec-color-light-secondary-disabled);
+      }
+    }
 
     &:not(:last-child)::after {
       content: '';
@@ -125,6 +147,10 @@ const workspaceMenuList = computed(() => [
       width: 1px;
       height: 100%;
       background-color: var(--parsec-color-light-secondary-disabled);
+
+      @include ms.responsive-breakpoint('sm') {
+        display: none;
+      }
     }
 
     @include ms.responsive-breakpoint('lg') {
@@ -133,6 +159,11 @@ const workspaceMenuList = computed(() => [
       width: calc(100% / 4 - 1rem);
       text-align: center;
       padding: 0.375rem 0.5rem;
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.5rem 1rem;
+      min-width: fit-content;
     }
 
     &__text {
@@ -151,6 +182,12 @@ const workspaceMenuList = computed(() => [
     }
 
     &.active {
+      @include ms.responsive-breakpoint('sm') {
+        background-color: var(--parsec-color-light-secondary-background);
+        outline: 1px solid var(--parsec-color-light-primary-400);
+        box-shadow: var(--parsec-shadow-input);
+      }
+
       .workspace-categories-menu-item__text {
         background: var(--parsec-color-light-gradient-background);
         background-clip: text;

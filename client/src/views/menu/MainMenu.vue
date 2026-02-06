@@ -202,7 +202,7 @@
                 :icon="rocket"
               />
               <span class="sidebar-content-organization-button__text">
-                {{ $msTranslate('SideMenu.allWorkspaces') }}
+                {{ $msTranslate('SideMenu.myWorkspaces') }}
               </span>
             </ion-text>
 
@@ -219,7 +219,7 @@
                 :icon="time"
               />
               <span class="sidebar-content-organization-button__text">
-                {{ $msTranslate('SideMenu.recentWorkspaces') }}
+                {{ $msTranslate('SideMenu.recent') }}
               </span>
             </ion-text>
 

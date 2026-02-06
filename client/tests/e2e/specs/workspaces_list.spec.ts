@@ -193,27 +193,27 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       'The Copper Coronet',
     ]);
     const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
-    const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(0);
-    const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
+    const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('My workspaces');
+    const starredWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('Starred');
     if (displaySize === DisplaySize.Small) {
-      await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-        'All',
-        'Recent',
-        'Favorites',
-        'Hidden',
-      ]);
+      await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred', 'Hidden']);
     } else {
       await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-        'All workspaces',
-        'Recently viewed',
-        'Favorites',
+        'My workspaces',
+        'Recent',
+        'Starred',
         'Hidden',
       ]);
     }
     await expect(workspaceCategoriesMenu).toBeVisible();
-    await expect(favoriteWorkspacesButton).toBeVisible();
-    await favoriteWorkspacesButton.click({ force: true });
-    await allWorkspacesButton.click({ force: true });
+    await expect(starredWorkspacesButton).toBeVisible();
+    await starredWorkspacesButton.click({ force: true });
+    if (displaySize === DisplaySize.Large) {
+      await allWorkspacesButton.click({ force: true });
+    } else {
+      // In small display, we toggle the current category to show/hide starred workspaces
+      await starredWorkspacesButton.click({ force: true });
+    }
     await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
       'wksp1',
       'The Copper Coronet',
@@ -247,38 +247,50 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 
     await expect(workspaceCategoriesMenu).toBeVisible();
     if (displaySize === DisplaySize.Small) {
-      await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-        'All',
-        'Recent',
-        'Favorites',
-        'Hidden',
-      ]);
+      await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred', 'Hidden']);
     } else {
       await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-        'All workspaces',
-        'Recently viewed',
-        'Favorites',
+        'My workspaces',
+        'Recent',
+        'Starred',
         'Hidden',
       ]);
     }
-    const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(0);
-    const recentWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(1);
-    const favoriteWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(2);
-    const hiddenWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').nth(3);
+    const allWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('My workspaces');
+    const recentWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('Recent');
+    const starredWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('Starred');
+    const hiddenWorkspacesButton = workspaceCategoriesMenu.locator('.workspace-categories-menu-item').getByText('Hidden');
 
-    await verifyActiveCategory(workspaces, 0);
+    if (displaySize === DisplaySize.Large) {
+      await verifyActiveCategory(workspaces, 0);
+    }
 
     await recentWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 1);
 
-    await allWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 0);
+    if (displaySize === DisplaySize.Large) {
+      await verifyActiveCategory(workspaces, 1);
+    } else {
+      await verifyActiveCategory(workspaces, 0);
+    }
 
-    await favoriteWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 2);
+    if (displaySize === DisplaySize.Large) {
+      await allWorkspacesButton.click({ force: true });
+      await verifyActiveCategory(workspaces, 0);
+    }
+
+    await starredWorkspacesButton.click({ force: true });
+    if (displaySize === DisplaySize.Large) {
+      await verifyActiveCategory(workspaces, 2);
+    } else {
+      await verifyActiveCategory(workspaces, 1);
+    }
 
     await hiddenWorkspacesButton.click({ force: true });
-    await verifyActiveCategory(workspaces, 3);
+    if (displaySize === DisplaySize.Large) {
+      await verifyActiveCategory(workspaces, 3);
+    } else {
+      await verifyActiveCategory(workspaces, 2);
+    }
   });
 
   msTest(`Show/hide workspace ${displaySize} display`, async ({ workspaces }) => {
@@ -307,7 +319,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Copy link',
         'Sharing and roles',
         'Miscellaneous',
-        'Add to favorites',
+        'Add as starred',
       ]);
       await popover.getByRole('listitem').nth(3).click();
     } else {
@@ -319,7 +331,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Hide this workspace',
         'Copy link',
         'Sharing and roles',
-        'Add to favorites',
+        'Add as starred',
       ]);
       await popover.getByRole('listitem').nth(2).click();
     }
@@ -341,7 +353,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await expect(workspaceCard.nth(0)).toBeHidden();
     await expect(workspaceCard.nth(1)).toBeHidden();
 
-    await workspaces.locator('.workspace-categories-menu-item').nth(3).click();
+    await workspaces.locator('.workspace-categories-menu-item').getByText('Hidden').click();
     await expect(workspaceCard.nth(0).locator('.workspace-hidden')).toHaveText('Hidden');
     await expect(workspaceCard.nth(0)).toBeVisible();
     await expect(workspaceCard.nth(1).locator('.workspace-hidden')).toHaveText('Hidden');
@@ -362,7 +374,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Copy link',
         'Sharing and roles',
         'Miscellaneous',
-        'Add to favorites',
+        'Add as starred',
       ]);
       await popover.getByRole('listitem').nth(3).click();
     } else {
@@ -374,7 +386,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Show this workspace',
         'Copy link',
         'Sharing and roles',
-        'Add to favorites',
+        'Add as starred',
       ]);
       await popover.getByRole('listitem').nth(2).click();
     }
@@ -542,6 +554,6 @@ msTest('Check no favorite or recent workspaces', async ({ connected }) => {
   await favoriteWorkspacesButton.click({ force: true });
   await expect(connected.locator('.workspaces-container').locator('.no-favorite-workspaces')).toBeVisible();
   await expect(connected.locator('.workspaces-container').locator('.no-favorite-workspaces').locator('ion-text')).toHaveText(
-    'You have not set any workspaces as favorite. Favorite a workspace to have it be listed here.',
+    'You have not set starred any workspaces yet. Starred workspaces will be listed here.',
   );
 });

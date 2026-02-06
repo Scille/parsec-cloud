@@ -333,9 +333,10 @@ async function seeInExplorer(
       },
     );
 
-    if (answer === Answer.Yes) {
-      await showWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
+    if (answer === Answer.No) {
+      return;
     }
+    await showWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
   }
 
   const result = await getSystemPath(workspace.handle, '/');

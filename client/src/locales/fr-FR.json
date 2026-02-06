@@ -750,10 +750,8 @@
             "reset": "Réinitialiser"
         },
         "categoriesMenu": {
-            "all": "Tous les espaces",
-            "allShort": "Tous",
-            "recent": "Vus récemment",
-            "recentShort": "Récents",
+            "myWorkspaces": "Mes espaces",
+            "recent": "Récents",
             "favorites": "Favoris",
             "hidden": "Masqués",
             "noRecentWorkspaces": "Vous n'avez encore consulté aucun espace de travail. Les espaces consultés récemment apparaîtront ici.",
@@ -788,11 +786,11 @@
         },
         "openInExplorerModal": {
             "file": {
-                "title": "Impossible d'ouvrir le fichier",
+                "title": "Espace de travail masqué",
                 "description": "Vous devez rendre visible cet espace de travail pour pouvoir le consulter depuis votre explorateur de fichiers."
             },
             "workspace": {
-                "title": "Impossible d'ouvrir l'espace de travail",
+                "title": "Espace de travail masqué",
                 "description": "Vous devez rendre visible cet espace de travail pour pouvoir le consulter depuis votre explorateur de fichiers."
             },
             "actionConfirm": "Rendre cet espace de travail visible",
@@ -1123,8 +1121,8 @@
     },
     "SideMenu": {
         "organization": "Organisation",
-        "workspaces": "Mes espaces de travail",
-        "recentWorkspaces": "Vus récemment",
+        "workspaces": "Espaces de travail",
+        "recent": "Récents",
         "favorites": "Favoris",
         "hidden": "Masqués",
         "noWorkspace": "Aucun espace de travail",
@@ -1133,7 +1131,7 @@
         "storage": "Stockage",
         "information": "Informations",
         "goToHome": "Mes espaces",
-        "allWorkspaces": "Tous les espaces",
+        "myWorkspaces": "Mes espaces",
         "recentDocuments": "Documents récents",
         "noRecentDocuments": "Aucun document récent",
         "back": "Retour",
