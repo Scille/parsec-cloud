@@ -9,7 +9,7 @@ use generic_array::{
     },
     ArrayLength, GenericArray,
 };
-use rand::{rngs::OsRng, RngCore};
+use rand::{rngs::SysRng, Rng, TryRng};
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
@@ -29,7 +29,9 @@ impl KeyDerivation {
 
     pub fn generate() -> Self {
         let mut bytes = [0u8; Self::SIZE];
-        OsRng.fill_bytes(&mut bytes);
+        SysRng
+            .try_fill_bytes(&mut bytes)
+            .expect("Failed to generate random data");
         Self(bytes.into())
     }
 

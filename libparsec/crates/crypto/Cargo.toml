@@ -125,7 +125,7 @@ ed25519-dalek = { workspace = true, features = [
 ] } # Optional rustcrypto dep
 generic-array = { workspace = true, features = ["serde"] } # Optional rustcrypto dep
 lazy_static = { workspace = true } # Optional rustcrypto dep
-rsa = { workspace = true, features = ["std", "pem"] } # Optional rustcrypto dep
+rsa = { workspace = true, features = ["std", "encoding", "sha2"] } # Optional rustcrypto dep
 sha2 = { workspace = true, features = ["std"] } # Optional rustcrypto dep
 # This is exceptionally allowed since no significant changes
 # were made from the last stable version to this major pre-release version.
@@ -142,8 +142,9 @@ crypto_secretbox = { workspace = true, features = [
 ] } # Optional rustcrypto dep
 # Cryptographic randomness is required for generating SecretKey, SigningKey and PrivateKey
 # `getrandom` is a dependency of `rand`, we specify it here in order  to configure its `wasm-unknown-unknown` web support (see [target] part).
-getrandom = { workspace = true }                           # Optional rustcrypto dep
-rand = { workspace = true, features = ["std", "std_rng"] } # Optional rustcrypto dep
+getrandom = { workspace = true }                            # Optional rustcrypto dep
+rand = { workspace = true, features = ["std", "sys_rng"] }  # Optional rustcrypto dep
+rand8 = { workspace = true, features = ["std", "std_rng"] } # Optional rustcrypto dep
 # Need to list previous version of `getrandom@0.2` to be able to enable the `js` feature
 _getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
 

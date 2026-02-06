@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use rand::rngs::OsRng;
+use rand::rngs::SysRng;
 use rsa::{
     oaep::Oaep,
     pkcs8::{
@@ -8,12 +8,13 @@ use rsa::{
         EncodePublicKey,
     },
     pss::{Signature, SigningKey, VerifyingKey},
-    signature::{RandomizedSigner, Verifier},
-    PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
+    sha2::Sha256,
+    signature::{RandomizedSigner, SignatureEncoding, Verifier},
+    traits::PublicKeyParts,
+    RsaPrivateKey, RsaPublicKey,
 };
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sha2::Sha256;
 
 use crate::{
     deserialize_with_armor, serialize_with_armor, CryptoError, CryptoResult, SecretKey,
@@ -43,7 +44,7 @@ impl SequesterPrivateKeyDer {
     const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
-        let priv_key = RsaPrivateKey::new(&mut OsRng, size_in_bits as usize)
+        let priv_key = RsaPrivateKey::new(&mut SysRng, size_in_bits as usize)
             .expect("Cannot generate the RSA key");
         let pub_key = RsaPublicKey::from(&priv_key);
 
@@ -51,7 +52,7 @@ impl SequesterPrivateKeyDer {
     }
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.n().bits() / 8
+        self.0.n().bits() as usize / 8
     }
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {
@@ -73,7 +74,7 @@ impl SequesterPrivateKeyDer {
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
         let (cipherkey, ciphertext) =
             deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
-        let padding = Oaep::new::<Sha256>();
+        let padding = Oaep::<rsa::sha2::Sha256>::new();
 
         let clearkey = SecretKey::try_from(
             &self
@@ -127,7 +128,7 @@ impl SequesterPublicKeyDer {
     const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.n().bits() / 8
+        self.0.n().bits() as usize / 8
     }
 
     pub fn dump(&self) -> Vec<u8> {
@@ -149,11 +150,11 @@ impl SequesterPublicKeyDer {
     // Encryption format:
     //   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
-        let padding = Oaep::new::<Sha256>();
+        let padding = Oaep::<rsa::sha2::Sha256>::new();
         let secret_key = SecretKey::generate();
         let secret_key_encrypted = self
             .0
-            .encrypt(&mut OsRng, padding, secret_key.as_ref())
+            .encrypt(&mut SysRng, padding, secret_key.as_ref())
             .expect("Unreachable");
 
         // RSAES-OAEP uses 42 bytes for padding, hence even with an insecure
@@ -172,16 +173,10 @@ impl SequesterPublicKeyDer {
  * SigningKey
  */
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct SequesterSigningKeyDer(SigningKey<Sha256>);
 
 crate::impl_key_debug!(SequesterSigningKeyDer);
-
-impl PartialEq for SequesterSigningKeyDer {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.as_ref() == other.0.as_ref()
-    }
-}
 
 impl Eq for SequesterSigningKeyDer {}
 
@@ -208,7 +203,7 @@ impl SequesterSigningKeyDer {
     }
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.as_ref().n().bits() / 8
+        self.0.as_ref().n().bits() as usize / 8
     }
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {
@@ -230,10 +225,13 @@ impl SequesterSigningKeyDer {
     // Signature format:
     //   <algorithm name>:<signature><data>
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        let signature = self.0.sign_with_rng(&mut OsRng, data);
+        let signature = self
+            .0
+            .try_sign_with_rng(&mut SysRng, data)
+            .expect("Failed to generate signature");
 
         serialize_with_armor(
-            signature.as_ref(),
+            signature.to_bytes().as_ref(),
             data,
             self.size_in_bytes(),
             Self::ALGORITHM,
@@ -245,17 +243,11 @@ impl SequesterSigningKeyDer {
  * VerifyKey
  */
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, PartialEq)]
 #[serde(try_from = "&Bytes")]
 pub struct SequesterVerifyKeyDer(VerifyingKey<Sha256>);
 
 crate::impl_key_debug!(SequesterVerifyKeyDer);
-
-impl PartialEq for SequesterVerifyKeyDer {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.as_ref() == other.0.as_ref()
-    }
-}
 
 impl Eq for SequesterVerifyKeyDer {}
 
@@ -291,7 +283,7 @@ impl SequesterVerifyKeyDer {
     const ALGORITHM: &'static str = "RSASSA-PSS-SHA256";
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.as_ref().n().bits() / 8
+        self.0.as_ref().n().bits() as usize / 8
     }
 
     pub fn dump(&self) -> Vec<u8> {
