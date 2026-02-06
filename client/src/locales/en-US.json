@@ -707,14 +707,12 @@
             "reset": "Reset"
         },
         "categoriesMenu": {
-            "all": "All workspaces",
-            "allShort": "All",
-            "recent": "Recently viewed",
-            "recentShort": "Recent",
-            "favorites": "Favorites",
+            "myWorkspaces": "My workspaces",
+            "recent": "Recent",
+            "favorites": "Starred",
             "hidden": "Hidden",
             "noRecentWorkspaces": "You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.",
-            "noFavoriteWorkspaces": "You have not set any workspaces as favorite. Favorite a workspace to have it be listed here.",
+            "noFavoriteWorkspaces": "You have not set starred any workspaces yet. Star a workspace to have it be listed here.",
             "noHiddenWorkspaces": "You have not hidden any workspaces yet. Hidden workspaces will be listed here.",
             "showHiddenWorkspaces": "Show hidden workspaces"
         },
@@ -745,11 +743,11 @@
         },
         "openInExplorerModal": {
             "file": {
-                "title": "Failed to open the file in your explorer",
+                "title": "Workspace hidden in your file explorer",
                 "description": "You must make this workspace visible in order to view your file in your explorer."
             },
             "workspace": {
-                "title": "Failed to open the workspace in your explorer",
+                "title": "Workspace hidden in your file explorer",
                 "description": "You must make this workspace visible in order to view it from your file explorer."
             },
             "actionConfirm": "Make this workspace visible",
@@ -1079,9 +1077,9 @@
     },
     "SideMenu": {
         "organization": "Organization",
-        "workspaces": "My workspaces",
-        "recentWorkspaces": "Recently viewed",
-        "favorites": "Favorites",
+        "workspaces": "Workspaces",
+        "recent": "Recent",
+        "favorites": "Starred",
         "hidden": "Hidden",
         "noWorkspace": "No workspaces",
         "users": "Users",
@@ -1089,7 +1087,7 @@
         "storage": "Storage",
         "information": "Information",
         "goToHome": "My workspaces",
-        "allWorkspaces": "All workspaces",
+        "myWorkspaces": "My workspaces",
         "recentDocuments": "Recent documents",
         "noRecentDocuments": "No recent documents",
         "back": "Back",

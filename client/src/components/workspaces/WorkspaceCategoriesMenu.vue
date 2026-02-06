@@ -25,10 +25,10 @@
 import { WorkspaceMenu } from '@/views/workspaces/types';
 import { IonIcon, IonText } from '@ionic/vue';
 import { eyeOff, rocket, star, time } from 'ionicons/icons';
-import { useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
+import { useWindowSize } from 'megashark-lib';
 import { computed } from 'vue';
 
-const { isLargeDisplay, windowWidth } = useWindowSize();
+const { isLargeDisplay } = useWindowSize();
 
 defineProps<{
   activeMenu: WorkspaceMenu;
@@ -42,13 +42,12 @@ const workspaceMenuList = computed(() => [
   {
     icon: rocket,
     key: WorkspaceMenu.All,
-    label: windowWidth.value > WindowSizeBreakpoints.MD ? 'WorkspacesPage.categoriesMenu.all' : 'WorkspacesPage.categoriesMenu.allShort',
+    label: 'WorkspacesPage.categoriesMenu.myWorkspaces',
   },
   {
     icon: time,
     key: WorkspaceMenu.Recent,
-    label:
-      windowWidth.value > WindowSizeBreakpoints.MD ? 'WorkspacesPage.categoriesMenu.recent' : 'WorkspacesPage.categoriesMenu.recentShort',
+    label: 'WorkspacesPage.categoriesMenu.recent',
   },
   {
     icon: star,
