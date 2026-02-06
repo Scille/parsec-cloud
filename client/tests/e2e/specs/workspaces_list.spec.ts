@@ -205,8 +205,8 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     } else {
       await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
         'All workspaces',
-        'Recently viewed',
-        'Favorites',
+        'Recent',
+        'Starred',
         'Hidden',
       ]);
     }
@@ -248,16 +248,16 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await expect(workspaceCategoriesMenu).toBeVisible();
     if (displaySize === DisplaySize.Small) {
       await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-        'All',
+        'My workspaces',
         'Recent',
-        'Favorites',
+        'Starred',
         'Hidden',
       ]);
     } else {
       await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-        'All workspaces',
-        'Recently viewed',
-        'Favorites',
+        'My workspaces',
+        'Recent',
+        'Starred',
         'Hidden',
       ]);
     }
@@ -542,6 +542,6 @@ msTest('Check no favorite or recent workspaces', async ({ connected }) => {
   await favoriteWorkspacesButton.click({ force: true });
   await expect(connected.locator('.workspaces-container').locator('.no-favorite-workspaces')).toBeVisible();
   await expect(connected.locator('.workspaces-container').locator('.no-favorite-workspaces').locator('ion-text')).toHaveText(
-    'You have not set any workspaces as favorite. Favorite a workspace to have it be listed here.',
+    'You have not set starred any workspaces yet. Star a workspace to have it be listed here.',
   );
 });

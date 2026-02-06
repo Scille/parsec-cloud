@@ -418,15 +418,15 @@ msTest.describe(() => {
 
     await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
       'All workspaces',
-      'Recently viewed',
-      'Favorites',
+      'Recent',
+      'Starred',
       'Hidden',
     ]);
 
     await expect(workspaceCategoriesSidebar.locator('.sidebar-content-organization-button__text')).toHaveText([
       'All workspaces',
-      'Recently viewed',
-      'Favorites',
+      'Recent',
+      'Starred',
       'Hidden',
     ]);
 
