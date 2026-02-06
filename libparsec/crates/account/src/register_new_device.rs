@@ -24,8 +24,8 @@ pub enum AccountRegisterNewDeviceError {
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-    #[error("Storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -149,7 +149,7 @@ pub(super) async fn account_register_new_device(
             .await
             .map_err(|err| match err {
                 SaveDeviceError::NoSpaceAvailable => {
-                    AccountRegisterNewDeviceError::StorageNotAvailable // TODO #11955
+                    AccountRegisterNewDeviceError::NoSpaceAvailable
                 }
                 SaveDeviceError::InvalidPath => AccountRegisterNewDeviceError::InvalidPath(
                     anyhow::anyhow!("invalid path while saving device"),

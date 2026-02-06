@@ -19,8 +19,8 @@ pub enum SubmitAsyncEnrollmentError {
     EmailAlreadySubmitted { submitted_on: DateTime },
     #[error("A user already exists for the requested email")]
     EmailAlreadyEnrolled,
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error(transparent)]
@@ -149,7 +149,7 @@ pub async fn submit_async_enrollment(
     .await
     .map_err(|err| match err {
         SaveAsyncEnrollmentLocalPendingError::NoSpaceAvailable => {
-            SubmitAsyncEnrollmentError::StorageNotAvailable // TODO #11955
+            SubmitAsyncEnrollmentError::NoSpaceAvailable
         }
         SaveAsyncEnrollmentLocalPendingError::InvalidPath => {
             SubmitAsyncEnrollmentError::InvalidPath(anyhow::anyhow!(

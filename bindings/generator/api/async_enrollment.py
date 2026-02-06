@@ -188,7 +188,7 @@ class SubmitAsyncEnrollmentError(ErrorVariant):
     class EmailAlreadyEnrolled:
         pass
 
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class InvalidPath:
@@ -299,7 +299,7 @@ class SubmitterFinalizeAsyncEnrollmentError(ErrorVariant):
     class Offline:
         pass
 
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class NotAccepted:

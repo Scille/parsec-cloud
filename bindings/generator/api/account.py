@@ -346,7 +346,7 @@ class AccountRegisterNewDeviceError(ErrorVariant):
     class Internal:
         pass
 
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class InvalidPath:

@@ -6717,6 +6717,13 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorInvalidPath".into(),
             )?;
         }
+        libparsec::AccountRegisterNewDeviceError::NoSpaceAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountRegisterNewDeviceErrorNoSpaceAvailable".into(),
+            )?;
+        }
         libparsec::AccountRegisterNewDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6736,13 +6743,6 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline".into(),
-            )?;
-        }
-        libparsec::AccountRegisterNewDeviceError::StorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountRegisterNewDeviceErrorStorageNotAvailable".into(),
             )?;
         }
         libparsec::AccountRegisterNewDeviceError::TimestampOutOfBallpark { .. } => {
@@ -7568,6 +7568,13 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorSaveDeviceInvalidPath".into(),
             )?;
         }
+        libparsec::BootstrapOrganizationError::SaveDeviceNoSpaceAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable".into(),
+            )?;
+        }
         libparsec::BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7582,13 +7589,6 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline".into(),
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::SaveDeviceStorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorSaveDeviceStorageNotAvailable".into(),
             )?;
         }
         libparsec::BootstrapOrganizationError::TimestampOutOfBallpark {
@@ -12064,6 +12064,13 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorInvalidPath".into(),
             )?;
         }
+        libparsec::ImportRecoveryDeviceError::NoSpaceAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorNoSpaceAvailable".into(),
+            )?;
+        }
         libparsec::ImportRecoveryDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12090,13 +12097,6 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ImportRecoveryDeviceErrorStopped".into(),
-            )?;
-        }
-        libparsec::ImportRecoveryDeviceError::StorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ImportRecoveryDeviceErrorStorageNotAvailable".into(),
             )?;
         }
         libparsec::ImportRecoveryDeviceError::TimestampOutOfBallpark {
@@ -17950,6 +17950,13 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorInvalidPath".into(),
             )?;
         }
+        libparsec::SubmitAsyncEnrollmentError::NoSpaceAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SubmitAsyncEnrollmentErrorNoSpaceAvailable".into(),
+            )?;
+        }
         libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17997,13 +18004,6 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into(),
-            )?;
-        }
-        libparsec::SubmitAsyncEnrollmentError::StorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"SubmitAsyncEnrollmentErrorStorageNotAvailable".into(),
             )?;
         }
     }
@@ -18245,6 +18245,9 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         libparsec::SubmitterFinalizeAsyncEnrollmentError::Internal{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorInternal".into())?;
         }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable".into())?;
+        }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorNotAccepted".into())?;
         }
@@ -18274,9 +18277,6 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline".into())?;
-        }
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable".into())?;
         }
     }
     Ok(js_obj)

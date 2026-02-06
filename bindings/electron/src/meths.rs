@@ -6412,6 +6412,11 @@ fn variant_account_register_new_device_error_rs_to_js<'a>(
                 JsString::try_new(cx, "AccountRegisterNewDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::AccountRegisterNewDeviceError::NoSpaceAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountRegisterNewDeviceErrorNoSpaceAvailable")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountRegisterNewDeviceError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "AccountRegisterNewDeviceErrorOffline").or_throw(cx)?;
@@ -6431,11 +6436,6 @@ fn variant_account_register_new_device_error_rs_to_js<'a>(
                 "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline",
             )
             .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountRegisterNewDeviceError::StorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountRegisterNewDeviceErrorStorageNotAvailable")
-                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::AccountRegisterNewDeviceError::TimestampOutOfBallpark { .. } => {
@@ -7150,6 +7150,12 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::BootstrapOrganizationError::SaveDeviceNoSpaceAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed { .. } => {
             let js_tag = JsString::try_new(
                 cx,
@@ -7164,14 +7170,6 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(
                 cx,
                 "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline",
-            )
-            .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::BootstrapOrganizationError::SaveDeviceStorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "BootstrapOrganizationErrorSaveDeviceStorageNotAvailable",
             )
             .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -11083,6 +11081,11 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
                 JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ImportRecoveryDeviceError::NoSpaceAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorNoSpaceAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ImportRecoveryDeviceError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -11101,11 +11104,6 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
         }
         libparsec::ImportRecoveryDeviceError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorStopped").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ImportRecoveryDeviceError::StorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorStorageNotAvailable")
-                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ImportRecoveryDeviceError::TimestampOutOfBallpark {
@@ -16446,6 +16444,11 @@ fn variant_submit_async_enrollment_error_rs_to_js<'a>(
                 JsString::try_new(cx, "SubmitAsyncEnrollmentErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::SubmitAsyncEnrollmentError::NoSpaceAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "SubmitAsyncEnrollmentErrorNoSpaceAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16488,11 +16491,6 @@ fn variant_submit_async_enrollment_error_rs_to_js<'a>(
                 "SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference",
             )
             .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::SubmitAsyncEnrollmentError::StorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitAsyncEnrollmentErrorStorageNotAvailable")
-                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -16689,6 +16687,10 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable{  .. } => {
+            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{  .. } => {
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorNotAccepted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16727,10 +16729,6 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js<'a>(
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline{  .. } => {
             let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable{  .. } => {
-            let js_tag = JsString::try_new(cx, "SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }

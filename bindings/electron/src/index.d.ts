@@ -996,6 +996,10 @@ export interface AccountRegisterNewDeviceErrorInvalidPath {
     tag: "AccountRegisterNewDeviceErrorInvalidPath"
     error: string
 }
+export interface AccountRegisterNewDeviceErrorNoSpaceAvailable {
+    tag: "AccountRegisterNewDeviceErrorNoSpaceAvailable"
+    error: string
+}
 export interface AccountRegisterNewDeviceErrorOffline {
     tag: "AccountRegisterNewDeviceErrorOffline"
     error: string
@@ -1006,10 +1010,6 @@ export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed {
 }
 export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline {
     tag: "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline"
-    error: string
-}
-export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
-    tag: "AccountRegisterNewDeviceErrorStorageNotAvailable"
     error: string
 }
 export interface AccountRegisterNewDeviceErrorTimestampOutOfBallpark {
@@ -1025,10 +1025,10 @@ export type AccountRegisterNewDeviceError =
   | AccountRegisterNewDeviceErrorCorruptedRegistrationDevice
   | AccountRegisterNewDeviceErrorInternal
   | AccountRegisterNewDeviceErrorInvalidPath
+  | AccountRegisterNewDeviceErrorNoSpaceAvailable
   | AccountRegisterNewDeviceErrorOffline
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline
-  | AccountRegisterNewDeviceErrorStorageNotAvailable
   | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
   | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
 
@@ -1186,16 +1186,16 @@ export interface BootstrapOrganizationErrorSaveDeviceInvalidPath {
     tag: "BootstrapOrganizationErrorSaveDeviceInvalidPath"
     error: string
 }
+export interface BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable {
+    tag: "BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable"
+    error: string
+}
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed {
     tag: "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed"
     error: string
 }
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline {
     tag: "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline"
-    error: string
-}
-export interface BootstrapOrganizationErrorSaveDeviceStorageNotAvailable {
-    tag: "BootstrapOrganizationErrorSaveDeviceStorageNotAvailable"
     error: string
 }
 export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
@@ -1214,9 +1214,9 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
   | BootstrapOrganizationErrorSaveDeviceInvalidPath
+  | BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | BootstrapOrganizationErrorSaveDeviceStorageNotAvailable
   | BootstrapOrganizationErrorTimestampOutOfBallpark
 
 
@@ -2746,6 +2746,10 @@ export interface ImportRecoveryDeviceErrorInvalidPath {
     tag: "ImportRecoveryDeviceErrorInvalidPath"
     error: string
 }
+export interface ImportRecoveryDeviceErrorNoSpaceAvailable {
+    tag: "ImportRecoveryDeviceErrorNoSpaceAvailable"
+    error: string
+}
 export interface ImportRecoveryDeviceErrorOffline {
     tag: "ImportRecoveryDeviceErrorOffline"
     error: string
@@ -2760,10 +2764,6 @@ export interface ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline {
 }
 export interface ImportRecoveryDeviceErrorStopped {
     tag: "ImportRecoveryDeviceErrorStopped"
-    error: string
-}
-export interface ImportRecoveryDeviceErrorStorageNotAvailable {
-    tag: "ImportRecoveryDeviceErrorStorageNotAvailable"
     error: string
 }
 export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
@@ -2781,11 +2781,11 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorInvalidData
   | ImportRecoveryDeviceErrorInvalidPassphrase
   | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorNoSpaceAvailable
   | ImportRecoveryDeviceErrorOffline
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline
   | ImportRecoveryDeviceErrorStopped
-  | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 
@@ -3675,6 +3675,10 @@ export interface SubmitAsyncEnrollmentErrorInvalidPath {
     tag: "SubmitAsyncEnrollmentErrorInvalidPath"
     error: string
 }
+export interface SubmitAsyncEnrollmentErrorNoSpaceAvailable {
+    tag: "SubmitAsyncEnrollmentErrorNoSpaceAvailable"
+    error: string
+}
 export interface SubmitAsyncEnrollmentErrorOffline {
     tag: "SubmitAsyncEnrollmentErrorOffline"
     error: string
@@ -3703,15 +3707,12 @@ export interface SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
     tag: "SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference"
     error: string
 }
-export interface SubmitAsyncEnrollmentErrorStorageNotAvailable {
-    tag: "SubmitAsyncEnrollmentErrorStorageNotAvailable"
-    error: string
-}
 export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled
   | SubmitAsyncEnrollmentErrorEmailAlreadySubmitted
   | SubmitAsyncEnrollmentErrorInternal
   | SubmitAsyncEnrollmentErrorInvalidPath
+  | SubmitAsyncEnrollmentErrorNoSpaceAvailable
   | SubmitAsyncEnrollmentErrorOffline
   | SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse
   | SubmitAsyncEnrollmentErrorOpenBaoBadURL
@@ -3719,7 +3720,6 @@ export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore
   | SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain
   | SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference
-  | SubmitAsyncEnrollmentErrorStorageNotAvailable
 
 
 // SubmitAsyncEnrollmentIdentityStrategy
@@ -3795,6 +3795,10 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorInternal {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorInternal"
     error: string
 }
+export interface SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable"
+    error: string
+}
 export interface SubmitterFinalizeAsyncEnrollmentErrorNotAccepted {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorNotAccepted"
     error: string
@@ -3835,10 +3839,6 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyU
     tag: "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline"
     error: string
 }
-export interface SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable {
-    tag: "SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable"
-    error: string
-}
 export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey
@@ -3847,6 +3847,7 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer
   | SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch
   | SubmitterFinalizeAsyncEnrollmentErrorInternal
+  | SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable
   | SubmitterFinalizeAsyncEnrollmentErrorNotAccepted
   | SubmitterFinalizeAsyncEnrollmentErrorOffline
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse
@@ -3857,7 +3858,6 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable
 
 
 // SubmitterGetAsyncEnrollmentInfoError

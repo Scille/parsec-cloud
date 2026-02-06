@@ -205,7 +205,7 @@ pub fn test_organization_bootstrap_finalize_ctx_factory(
 }
 
 pub type OrganizationBootstrapFinalizeSaveLocalDeviceError =
-    libparsec_platform_device_loader::SaveDeviceError; // TODO 11955
+    libparsec_platform_device_loader::SaveDeviceError;
 
 impl OrganizationBootstrapFinalizeCtx {
     pub async fn save_local_device(

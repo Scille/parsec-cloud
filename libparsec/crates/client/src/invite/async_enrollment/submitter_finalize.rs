@@ -16,8 +16,8 @@ use crate::ClientConfig;
 pub enum SubmitterFinalizeAsyncEnrollmentError {
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("Device storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
     #[error("Enrollment is not in the accepted state")]
     NotAccepted,
     #[error("Accepter has provided an invalid request payload: {0}")]
@@ -117,7 +117,7 @@ pub async fn submitter_finalize_async_enrollment(
         .await
         .map_err(|err| match err {
             LoadPendingAsyncEnrollmentError::StorageNotAvailable => {
-                SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable
+                SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable
             }
             LoadPendingAsyncEnrollmentError::InvalidPath(err) => {
                 SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidPath(err)
@@ -279,7 +279,7 @@ pub async fn submitter_finalize_async_enrollment(
     .await
     .or_else(|err| match err {
         RemoveDeviceError::StorageNotAvailable => {
-            Err(SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable)
+            Err(SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable)
         }
         // Not found is unexpected... but we can continue nevertheless
         RemoveDeviceError::NotFound => Ok(()),
@@ -297,7 +297,7 @@ pub async fn submitter_finalize_async_enrollment(
     .await
     .map_err(|err| match err {
         SaveDeviceError::NoSpaceAvailable => {
-            SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable // TODO #11955
+            SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable
         }
         SaveDeviceError::InvalidPath => {
             SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath(anyhow::anyhow!(

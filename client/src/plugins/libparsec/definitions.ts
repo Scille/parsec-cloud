@@ -1079,10 +1079,10 @@ export enum AccountRegisterNewDeviceErrorTag {
     CorruptedRegistrationDevice = 'AccountRegisterNewDeviceErrorCorruptedRegistrationDevice',
     Internal = 'AccountRegisterNewDeviceErrorInternal',
     InvalidPath = 'AccountRegisterNewDeviceErrorInvalidPath',
+    NoSpaceAvailable = 'AccountRegisterNewDeviceErrorNoSpaceAvailable',
     Offline = 'AccountRegisterNewDeviceErrorOffline',
     RemoteOpaqueKeyUploadFailed = 'AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed',
     RemoteOpaqueKeyUploadOffline = 'AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline',
-    StorageNotAvailable = 'AccountRegisterNewDeviceErrorStorageNotAvailable',
     TimestampOutOfBallpark = 'AccountRegisterNewDeviceErrorTimestampOutOfBallpark',
     UnknownRegistrationDevice = 'AccountRegisterNewDeviceErrorUnknownRegistrationDevice',
 }
@@ -1103,6 +1103,10 @@ export interface AccountRegisterNewDeviceErrorInvalidPath {
     tag: AccountRegisterNewDeviceErrorTag.InvalidPath
     error: string
 }
+export interface AccountRegisterNewDeviceErrorNoSpaceAvailable {
+    tag: AccountRegisterNewDeviceErrorTag.NoSpaceAvailable
+    error: string
+}
 export interface AccountRegisterNewDeviceErrorOffline {
     tag: AccountRegisterNewDeviceErrorTag.Offline
     error: string
@@ -1113,10 +1117,6 @@ export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed {
 }
 export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline {
     tag: AccountRegisterNewDeviceErrorTag.RemoteOpaqueKeyUploadOffline
-    error: string
-}
-export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
-    tag: AccountRegisterNewDeviceErrorTag.StorageNotAvailable
     error: string
 }
 export interface AccountRegisterNewDeviceErrorTimestampOutOfBallpark {
@@ -1132,10 +1132,10 @@ export type AccountRegisterNewDeviceError =
   | AccountRegisterNewDeviceErrorCorruptedRegistrationDevice
   | AccountRegisterNewDeviceErrorInternal
   | AccountRegisterNewDeviceErrorInvalidPath
+  | AccountRegisterNewDeviceErrorNoSpaceAvailable
   | AccountRegisterNewDeviceErrorOffline
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline
-  | AccountRegisterNewDeviceErrorStorageNotAvailable
   | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
   | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
 
@@ -1302,9 +1302,9 @@ export enum BootstrapOrganizationErrorTag {
     Offline = 'BootstrapOrganizationErrorOffline',
     OrganizationExpired = 'BootstrapOrganizationErrorOrganizationExpired',
     SaveDeviceInvalidPath = 'BootstrapOrganizationErrorSaveDeviceInvalidPath',
+    SaveDeviceNoSpaceAvailable = 'BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable',
     SaveDeviceRemoteOpaqueKeyUploadFailed = 'BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed',
     SaveDeviceRemoteOpaqueKeyUploadOffline = 'BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline',
-    SaveDeviceStorageNotAvailable = 'BootstrapOrganizationErrorSaveDeviceStorageNotAvailable',
     TimestampOutOfBallpark = 'BootstrapOrganizationErrorTimestampOutOfBallpark',
 }
 
@@ -1336,16 +1336,16 @@ export interface BootstrapOrganizationErrorSaveDeviceInvalidPath {
     tag: BootstrapOrganizationErrorTag.SaveDeviceInvalidPath
     error: string
 }
+export interface BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable {
+    tag: BootstrapOrganizationErrorTag.SaveDeviceNoSpaceAvailable
+    error: string
+}
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed {
     tag: BootstrapOrganizationErrorTag.SaveDeviceRemoteOpaqueKeyUploadFailed
     error: string
 }
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline {
     tag: BootstrapOrganizationErrorTag.SaveDeviceRemoteOpaqueKeyUploadOffline
-    error: string
-}
-export interface BootstrapOrganizationErrorSaveDeviceStorageNotAvailable {
-    tag: BootstrapOrganizationErrorTag.SaveDeviceStorageNotAvailable
     error: string
 }
 export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
@@ -1364,9 +1364,9 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
   | BootstrapOrganizationErrorSaveDeviceInvalidPath
+  | BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | BootstrapOrganizationErrorSaveDeviceStorageNotAvailable
   | BootstrapOrganizationErrorTimestampOutOfBallpark
 
 // CancelError
@@ -3222,11 +3222,11 @@ export enum ImportRecoveryDeviceErrorTag {
     InvalidData = 'ImportRecoveryDeviceErrorInvalidData',
     InvalidPassphrase = 'ImportRecoveryDeviceErrorInvalidPassphrase',
     InvalidPath = 'ImportRecoveryDeviceErrorInvalidPath',
+    NoSpaceAvailable = 'ImportRecoveryDeviceErrorNoSpaceAvailable',
     Offline = 'ImportRecoveryDeviceErrorOffline',
     RemoteOpaqueKeyUploadFailed = 'ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed',
     RemoteOpaqueKeyUploadOffline = 'ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline',
     Stopped = 'ImportRecoveryDeviceErrorStopped',
-    StorageNotAvailable = 'ImportRecoveryDeviceErrorStorageNotAvailable',
     TimestampOutOfBallpark = 'ImportRecoveryDeviceErrorTimestampOutOfBallpark',
 }
 
@@ -3254,6 +3254,10 @@ export interface ImportRecoveryDeviceErrorInvalidPath {
     tag: ImportRecoveryDeviceErrorTag.InvalidPath
     error: string
 }
+export interface ImportRecoveryDeviceErrorNoSpaceAvailable {
+    tag: ImportRecoveryDeviceErrorTag.NoSpaceAvailable
+    error: string
+}
 export interface ImportRecoveryDeviceErrorOffline {
     tag: ImportRecoveryDeviceErrorTag.Offline
     error: string
@@ -3268,10 +3272,6 @@ export interface ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline {
 }
 export interface ImportRecoveryDeviceErrorStopped {
     tag: ImportRecoveryDeviceErrorTag.Stopped
-    error: string
-}
-export interface ImportRecoveryDeviceErrorStorageNotAvailable {
-    tag: ImportRecoveryDeviceErrorTag.StorageNotAvailable
     error: string
 }
 export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
@@ -3289,11 +3289,11 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorInvalidData
   | ImportRecoveryDeviceErrorInvalidPassphrase
   | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorNoSpaceAvailable
   | ImportRecoveryDeviceErrorOffline
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline
   | ImportRecoveryDeviceErrorStopped
-  | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 // InvalidityReason
@@ -4369,6 +4369,7 @@ export enum SubmitAsyncEnrollmentErrorTag {
     EmailAlreadySubmitted = 'SubmitAsyncEnrollmentErrorEmailAlreadySubmitted',
     Internal = 'SubmitAsyncEnrollmentErrorInternal',
     InvalidPath = 'SubmitAsyncEnrollmentErrorInvalidPath',
+    NoSpaceAvailable = 'SubmitAsyncEnrollmentErrorNoSpaceAvailable',
     Offline = 'SubmitAsyncEnrollmentErrorOffline',
     OpenBaoBadServerResponse = 'SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse',
     OpenBaoBadURL = 'SubmitAsyncEnrollmentErrorOpenBaoBadURL',
@@ -4376,7 +4377,6 @@ export enum SubmitAsyncEnrollmentErrorTag {
     PKICannotOpenCertificateStore = 'SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore',
     PKIServerInvalidX509Trustchain = 'SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain',
     PKIUnusableX509CertificateReference = 'SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference',
-    StorageNotAvailable = 'SubmitAsyncEnrollmentErrorStorageNotAvailable',
 }
 
 export interface SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled {
@@ -4393,6 +4393,10 @@ export interface SubmitAsyncEnrollmentErrorInternal {
 }
 export interface SubmitAsyncEnrollmentErrorInvalidPath {
     tag: SubmitAsyncEnrollmentErrorTag.InvalidPath
+    error: string
+}
+export interface SubmitAsyncEnrollmentErrorNoSpaceAvailable {
+    tag: SubmitAsyncEnrollmentErrorTag.NoSpaceAvailable
     error: string
 }
 export interface SubmitAsyncEnrollmentErrorOffline {
@@ -4423,15 +4427,12 @@ export interface SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
     tag: SubmitAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference
     error: string
 }
-export interface SubmitAsyncEnrollmentErrorStorageNotAvailable {
-    tag: SubmitAsyncEnrollmentErrorTag.StorageNotAvailable
-    error: string
-}
 export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled
   | SubmitAsyncEnrollmentErrorEmailAlreadySubmitted
   | SubmitAsyncEnrollmentErrorInternal
   | SubmitAsyncEnrollmentErrorInvalidPath
+  | SubmitAsyncEnrollmentErrorNoSpaceAvailable
   | SubmitAsyncEnrollmentErrorOffline
   | SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse
   | SubmitAsyncEnrollmentErrorOpenBaoBadURL
@@ -4439,7 +4440,6 @@ export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore
   | SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain
   | SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference
-  | SubmitAsyncEnrollmentErrorStorageNotAvailable
 
 // SubmitAsyncEnrollmentIdentityStrategy
 export enum SubmitAsyncEnrollmentIdentityStrategyTag {
@@ -4504,6 +4504,7 @@ export enum SubmitterFinalizeAsyncEnrollmentErrorTag {
     EnrollmentNotFoundOnServer = 'SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer',
     IdentityStrategyMismatch = 'SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch',
     Internal = 'SubmitterFinalizeAsyncEnrollmentErrorInternal',
+    NoSpaceAvailable = 'SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable',
     NotAccepted = 'SubmitterFinalizeAsyncEnrollmentErrorNotAccepted',
     Offline = 'SubmitterFinalizeAsyncEnrollmentErrorOffline',
     OpenBaoBadServerResponse = 'SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse',
@@ -4514,7 +4515,6 @@ export enum SubmitterFinalizeAsyncEnrollmentErrorTag {
     SaveDeviceInvalidPath = 'SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath',
     SaveDeviceRemoteOpaqueKeyUploadFailed = 'SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed',
     SaveDeviceRemoteOpaqueKeyUploadOffline = 'SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline',
-    StorageNotAvailable = 'SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable',
 }
 
 export interface SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload {
@@ -4543,6 +4543,10 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch {
 }
 export interface SubmitterFinalizeAsyncEnrollmentErrorInternal {
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.Internal
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable {
+    tag: SubmitterFinalizeAsyncEnrollmentErrorTag.NoSpaceAvailable
     error: string
 }
 export interface SubmitterFinalizeAsyncEnrollmentErrorNotAccepted {
@@ -4585,10 +4589,6 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyU
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.SaveDeviceRemoteOpaqueKeyUploadOffline
     error: string
 }
-export interface SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable {
-    tag: SubmitterFinalizeAsyncEnrollmentErrorTag.StorageNotAvailable
-    error: string
-}
 export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey
@@ -4597,6 +4597,7 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer
   | SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch
   | SubmitterFinalizeAsyncEnrollmentErrorInternal
+  | SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable
   | SubmitterFinalizeAsyncEnrollmentErrorNotAccepted
   | SubmitterFinalizeAsyncEnrollmentErrorOffline
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse
@@ -4607,7 +4608,6 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable
 
 // SubmitterGetAsyncEnrollmentInfoError
 export enum SubmitterGetAsyncEnrollmentInfoErrorTag {
