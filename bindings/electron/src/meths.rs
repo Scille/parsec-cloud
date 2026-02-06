@@ -11083,6 +11083,11 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
                 JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ImportRecoveryDeviceError::NoSpaceAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorNoSpaceAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ImportRecoveryDeviceError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -11101,11 +11106,6 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
         }
         libparsec::ImportRecoveryDeviceError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorStopped").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ImportRecoveryDeviceError::StorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorStorageNotAvailable")
-                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ImportRecoveryDeviceError::TimestampOutOfBallpark {

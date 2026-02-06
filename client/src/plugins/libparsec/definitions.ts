@@ -3222,11 +3222,11 @@ export enum ImportRecoveryDeviceErrorTag {
     InvalidData = 'ImportRecoveryDeviceErrorInvalidData',
     InvalidPassphrase = 'ImportRecoveryDeviceErrorInvalidPassphrase',
     InvalidPath = 'ImportRecoveryDeviceErrorInvalidPath',
+    NoSpaceAvailable = 'ImportRecoveryDeviceErrorNoSpaceAvailable',
     Offline = 'ImportRecoveryDeviceErrorOffline',
     RemoteOpaqueKeyUploadFailed = 'ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed',
     RemoteOpaqueKeyUploadOffline = 'ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline',
     Stopped = 'ImportRecoveryDeviceErrorStopped',
-    StorageNotAvailable = 'ImportRecoveryDeviceErrorStorageNotAvailable',
     TimestampOutOfBallpark = 'ImportRecoveryDeviceErrorTimestampOutOfBallpark',
 }
 
@@ -3254,6 +3254,10 @@ export interface ImportRecoveryDeviceErrorInvalidPath {
     tag: ImportRecoveryDeviceErrorTag.InvalidPath
     error: string
 }
+export interface ImportRecoveryDeviceErrorNoSpaceAvailable {
+    tag: ImportRecoveryDeviceErrorTag.NoSpaceAvailable
+    error: string
+}
 export interface ImportRecoveryDeviceErrorOffline {
     tag: ImportRecoveryDeviceErrorTag.Offline
     error: string
@@ -3268,10 +3272,6 @@ export interface ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline {
 }
 export interface ImportRecoveryDeviceErrorStopped {
     tag: ImportRecoveryDeviceErrorTag.Stopped
-    error: string
-}
-export interface ImportRecoveryDeviceErrorStorageNotAvailable {
-    tag: ImportRecoveryDeviceErrorTag.StorageNotAvailable
     error: string
 }
 export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
@@ -3289,11 +3289,11 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorInvalidData
   | ImportRecoveryDeviceErrorInvalidPassphrase
   | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorNoSpaceAvailable
   | ImportRecoveryDeviceErrorOffline
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline
   | ImportRecoveryDeviceErrorStopped
-  | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 // InvalidityReason
