@@ -6412,6 +6412,11 @@ fn variant_account_register_new_device_error_rs_to_js<'a>(
                 JsString::try_new(cx, "AccountRegisterNewDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::AccountRegisterNewDeviceError::NoSpaceAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "AccountRegisterNewDeviceErrorNoSpaceAvailable")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountRegisterNewDeviceError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "AccountRegisterNewDeviceErrorOffline").or_throw(cx)?;
@@ -6431,11 +6436,6 @@ fn variant_account_register_new_device_error_rs_to_js<'a>(
                 "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline",
             )
             .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AccountRegisterNewDeviceError::StorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountRegisterNewDeviceErrorStorageNotAvailable")
-                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::AccountRegisterNewDeviceError::TimestampOutOfBallpark { .. } => {

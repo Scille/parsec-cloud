@@ -1079,10 +1079,10 @@ export enum AccountRegisterNewDeviceErrorTag {
     CorruptedRegistrationDevice = 'AccountRegisterNewDeviceErrorCorruptedRegistrationDevice',
     Internal = 'AccountRegisterNewDeviceErrorInternal',
     InvalidPath = 'AccountRegisterNewDeviceErrorInvalidPath',
+    NoSpaceAvailable = 'AccountRegisterNewDeviceErrorNoSpaceAvailable',
     Offline = 'AccountRegisterNewDeviceErrorOffline',
     RemoteOpaqueKeyUploadFailed = 'AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed',
     RemoteOpaqueKeyUploadOffline = 'AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline',
-    StorageNotAvailable = 'AccountRegisterNewDeviceErrorStorageNotAvailable',
     TimestampOutOfBallpark = 'AccountRegisterNewDeviceErrorTimestampOutOfBallpark',
     UnknownRegistrationDevice = 'AccountRegisterNewDeviceErrorUnknownRegistrationDevice',
 }
@@ -1103,6 +1103,10 @@ export interface AccountRegisterNewDeviceErrorInvalidPath {
     tag: AccountRegisterNewDeviceErrorTag.InvalidPath
     error: string
 }
+export interface AccountRegisterNewDeviceErrorNoSpaceAvailable {
+    tag: AccountRegisterNewDeviceErrorTag.NoSpaceAvailable
+    error: string
+}
 export interface AccountRegisterNewDeviceErrorOffline {
     tag: AccountRegisterNewDeviceErrorTag.Offline
     error: string
@@ -1113,10 +1117,6 @@ export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed {
 }
 export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline {
     tag: AccountRegisterNewDeviceErrorTag.RemoteOpaqueKeyUploadOffline
-    error: string
-}
-export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
-    tag: AccountRegisterNewDeviceErrorTag.StorageNotAvailable
     error: string
 }
 export interface AccountRegisterNewDeviceErrorTimestampOutOfBallpark {
@@ -1132,10 +1132,10 @@ export type AccountRegisterNewDeviceError =
   | AccountRegisterNewDeviceErrorCorruptedRegistrationDevice
   | AccountRegisterNewDeviceErrorInternal
   | AccountRegisterNewDeviceErrorInvalidPath
+  | AccountRegisterNewDeviceErrorNoSpaceAvailable
   | AccountRegisterNewDeviceErrorOffline
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline
-  | AccountRegisterNewDeviceErrorStorageNotAvailable
   | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
   | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
 

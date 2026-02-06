@@ -996,6 +996,10 @@ export interface AccountRegisterNewDeviceErrorInvalidPath {
     tag: "AccountRegisterNewDeviceErrorInvalidPath"
     error: string
 }
+export interface AccountRegisterNewDeviceErrorNoSpaceAvailable {
+    tag: "AccountRegisterNewDeviceErrorNoSpaceAvailable"
+    error: string
+}
 export interface AccountRegisterNewDeviceErrorOffline {
     tag: "AccountRegisterNewDeviceErrorOffline"
     error: string
@@ -1006,10 +1010,6 @@ export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed {
 }
 export interface AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline {
     tag: "AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline"
-    error: string
-}
-export interface AccountRegisterNewDeviceErrorStorageNotAvailable {
-    tag: "AccountRegisterNewDeviceErrorStorageNotAvailable"
     error: string
 }
 export interface AccountRegisterNewDeviceErrorTimestampOutOfBallpark {
@@ -1025,10 +1025,10 @@ export type AccountRegisterNewDeviceError =
   | AccountRegisterNewDeviceErrorCorruptedRegistrationDevice
   | AccountRegisterNewDeviceErrorInternal
   | AccountRegisterNewDeviceErrorInvalidPath
+  | AccountRegisterNewDeviceErrorNoSpaceAvailable
   | AccountRegisterNewDeviceErrorOffline
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed
   | AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline
-  | AccountRegisterNewDeviceErrorStorageNotAvailable
   | AccountRegisterNewDeviceErrorTimestampOutOfBallpark
   | AccountRegisterNewDeviceErrorUnknownRegistrationDevice
 
