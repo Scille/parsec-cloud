@@ -4504,6 +4504,7 @@ export enum SubmitterFinalizeAsyncEnrollmentErrorTag {
     EnrollmentNotFoundOnServer = 'SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer',
     IdentityStrategyMismatch = 'SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch',
     Internal = 'SubmitterFinalizeAsyncEnrollmentErrorInternal',
+    NoSpaceAvailable = 'SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable',
     NotAccepted = 'SubmitterFinalizeAsyncEnrollmentErrorNotAccepted',
     Offline = 'SubmitterFinalizeAsyncEnrollmentErrorOffline',
     OpenBaoBadServerResponse = 'SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse',
@@ -4514,7 +4515,6 @@ export enum SubmitterFinalizeAsyncEnrollmentErrorTag {
     SaveDeviceInvalidPath = 'SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath',
     SaveDeviceRemoteOpaqueKeyUploadFailed = 'SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed',
     SaveDeviceRemoteOpaqueKeyUploadOffline = 'SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline',
-    StorageNotAvailable = 'SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable',
 }
 
 export interface SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload {
@@ -4543,6 +4543,10 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch {
 }
 export interface SubmitterFinalizeAsyncEnrollmentErrorInternal {
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.Internal
+    error: string
+}
+export interface SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable {
+    tag: SubmitterFinalizeAsyncEnrollmentErrorTag.NoSpaceAvailable
     error: string
 }
 export interface SubmitterFinalizeAsyncEnrollmentErrorNotAccepted {
@@ -4585,10 +4589,6 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyU
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.SaveDeviceRemoteOpaqueKeyUploadOffline
     error: string
 }
-export interface SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable {
-    tag: SubmitterFinalizeAsyncEnrollmentErrorTag.StorageNotAvailable
-    error: string
-}
 export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey
@@ -4597,6 +4597,7 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer
   | SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch
   | SubmitterFinalizeAsyncEnrollmentErrorInternal
+  | SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable
   | SubmitterFinalizeAsyncEnrollmentErrorNotAccepted
   | SubmitterFinalizeAsyncEnrollmentErrorOffline
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse
@@ -4607,7 +4608,6 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable
 
 // SubmitterGetAsyncEnrollmentInfoError
 export enum SubmitterGetAsyncEnrollmentInfoErrorTag {

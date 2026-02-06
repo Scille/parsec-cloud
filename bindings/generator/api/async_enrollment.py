@@ -299,7 +299,7 @@ class SubmitterFinalizeAsyncEnrollmentError(ErrorVariant):
     class Offline:
         pass
 
-    class StorageNotAvailable:
+    class NoSpaceAvailable:
         pass
 
     class NotAccepted:

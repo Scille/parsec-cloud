@@ -3795,6 +3795,10 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorInternal {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorInternal"
     error: string
 }
+export interface SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable {
+    tag: "SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable"
+    error: string
+}
 export interface SubmitterFinalizeAsyncEnrollmentErrorNotAccepted {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorNotAccepted"
     error: string
@@ -3835,10 +3839,6 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyU
     tag: "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline"
     error: string
 }
-export interface SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable {
-    tag: "SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable"
-    error: string
-}
 export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey
@@ -3847,6 +3847,7 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer
   | SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch
   | SubmitterFinalizeAsyncEnrollmentErrorInternal
+  | SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable
   | SubmitterFinalizeAsyncEnrollmentErrorNotAccepted
   | SubmitterFinalizeAsyncEnrollmentErrorOffline
   | SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse
@@ -3857,7 +3858,6 @@ export type SubmitterFinalizeAsyncEnrollmentError =
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable
 
 
 // SubmitterGetAsyncEnrollmentInfoError
