@@ -12064,6 +12064,13 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorInvalidPath".into(),
             )?;
         }
+        libparsec::ImportRecoveryDeviceError::NoSpaceAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorNoSpaceAvailable".into(),
+            )?;
+        }
         libparsec::ImportRecoveryDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12090,13 +12097,6 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ImportRecoveryDeviceErrorStopped".into(),
-            )?;
-        }
-        libparsec::ImportRecoveryDeviceError::StorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ImportRecoveryDeviceErrorStorageNotAvailable".into(),
             )?;
         }
         libparsec::ImportRecoveryDeviceError::TimestampOutOfBallpark {

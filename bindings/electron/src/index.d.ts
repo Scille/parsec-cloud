@@ -2746,6 +2746,10 @@ export interface ImportRecoveryDeviceErrorInvalidPath {
     tag: "ImportRecoveryDeviceErrorInvalidPath"
     error: string
 }
+export interface ImportRecoveryDeviceErrorNoSpaceAvailable {
+    tag: "ImportRecoveryDeviceErrorNoSpaceAvailable"
+    error: string
+}
 export interface ImportRecoveryDeviceErrorOffline {
     tag: "ImportRecoveryDeviceErrorOffline"
     error: string
@@ -2760,10 +2764,6 @@ export interface ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline {
 }
 export interface ImportRecoveryDeviceErrorStopped {
     tag: "ImportRecoveryDeviceErrorStopped"
-    error: string
-}
-export interface ImportRecoveryDeviceErrorStorageNotAvailable {
-    tag: "ImportRecoveryDeviceErrorStorageNotAvailable"
     error: string
 }
 export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
@@ -2781,11 +2781,11 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorInvalidData
   | ImportRecoveryDeviceErrorInvalidPassphrase
   | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorNoSpaceAvailable
   | ImportRecoveryDeviceErrorOffline
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed
   | ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline
   | ImportRecoveryDeviceErrorStopped
-  | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 

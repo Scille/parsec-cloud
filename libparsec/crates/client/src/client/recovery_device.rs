@@ -114,8 +114,8 @@ pub enum ImportRecoveryDeviceError {
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-    #[error("Storage is not available")]
-    StorageNotAvailable,
+    #[error("No space available")]
+    NoSpaceAvailable,
 
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
@@ -189,7 +189,7 @@ impl From<RegisterNewDeviceError> for ImportRecoveryDeviceError {
 impl From<SaveDeviceError> for ImportRecoveryDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
-            SaveDeviceError::NoSpaceAvailable => ImportRecoveryDeviceError::StorageNotAvailable, // TODO #11955
+            SaveDeviceError::NoSpaceAvailable => ImportRecoveryDeviceError::NoSpaceAvailable,
             SaveDeviceError::InvalidPath => {
                 ImportRecoveryDeviceError::InvalidPath(anyhow::anyhow!("invalid path"))
             }
