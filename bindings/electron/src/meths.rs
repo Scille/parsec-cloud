@@ -7150,6 +7150,12 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::BootstrapOrganizationError::SaveDeviceNoSpaceAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed { .. } => {
             let js_tag = JsString::try_new(
                 cx,
@@ -7164,14 +7170,6 @@ fn variant_bootstrap_organization_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(
                 cx,
                 "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline",
-            )
-            .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::BootstrapOrganizationError::SaveDeviceStorageNotAvailable { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "BootstrapOrganizationErrorSaveDeviceStorageNotAvailable",
             )
             .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;

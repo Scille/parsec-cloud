@@ -67,7 +67,7 @@ class BootstrapOrganizationError(ErrorVariant):
         ballpark_client_early_offset: float
         ballpark_client_late_offset: float
 
-    class SaveDeviceStorageNotAvailable:
+    class SaveDeviceNoSpaceAvailable:
         pass
 
     class SaveDeviceInvalidPath:

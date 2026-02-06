@@ -1302,9 +1302,9 @@ export enum BootstrapOrganizationErrorTag {
     Offline = 'BootstrapOrganizationErrorOffline',
     OrganizationExpired = 'BootstrapOrganizationErrorOrganizationExpired',
     SaveDeviceInvalidPath = 'BootstrapOrganizationErrorSaveDeviceInvalidPath',
+    SaveDeviceNoSpaceAvailable = 'BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable',
     SaveDeviceRemoteOpaqueKeyUploadFailed = 'BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed',
     SaveDeviceRemoteOpaqueKeyUploadOffline = 'BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline',
-    SaveDeviceStorageNotAvailable = 'BootstrapOrganizationErrorSaveDeviceStorageNotAvailable',
     TimestampOutOfBallpark = 'BootstrapOrganizationErrorTimestampOutOfBallpark',
 }
 
@@ -1336,16 +1336,16 @@ export interface BootstrapOrganizationErrorSaveDeviceInvalidPath {
     tag: BootstrapOrganizationErrorTag.SaveDeviceInvalidPath
     error: string
 }
+export interface BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable {
+    tag: BootstrapOrganizationErrorTag.SaveDeviceNoSpaceAvailable
+    error: string
+}
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed {
     tag: BootstrapOrganizationErrorTag.SaveDeviceRemoteOpaqueKeyUploadFailed
     error: string
 }
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline {
     tag: BootstrapOrganizationErrorTag.SaveDeviceRemoteOpaqueKeyUploadOffline
-    error: string
-}
-export interface BootstrapOrganizationErrorSaveDeviceStorageNotAvailable {
-    tag: BootstrapOrganizationErrorTag.SaveDeviceStorageNotAvailable
     error: string
 }
 export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
@@ -1364,9 +1364,9 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
   | BootstrapOrganizationErrorSaveDeviceInvalidPath
+  | BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | BootstrapOrganizationErrorSaveDeviceStorageNotAvailable
   | BootstrapOrganizationErrorTimestampOutOfBallpark
 
 // CancelError

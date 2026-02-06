@@ -45,8 +45,8 @@ pub enum BootstrapOrganizationError {
         ballpark_client_early_offset: f64,
         ballpark_client_late_offset: f64,
     },
-    #[error("Cannot save device: device storage is not available")]
-    SaveDeviceStorageNotAvailable,
+    #[error("Cannot save device: no space is available")]
+    SaveDeviceNoSpaceAvailable,
     #[error("Cannot save device: invalid path: {0}")]
     SaveDeviceInvalidPath(anyhow::Error),
     #[error("Cannot save device: no response from {server} server: {error}")]
@@ -174,7 +174,7 @@ pub async fn bootstrap_organization(
                 BootstrapOrganizationError::Internal(err.context("Cannot save device"))
             }
             SaveDeviceError::NoSpaceAvailable => {
-                BootstrapOrganizationError::SaveDeviceStorageNotAvailable // #TODO #11955
+                BootstrapOrganizationError::SaveDeviceNoSpaceAvailable
             }
             SaveDeviceError::InvalidPath => {
                 BootstrapOrganizationError::SaveDeviceInvalidPath(anyhow::anyhow!("invalid path"))
