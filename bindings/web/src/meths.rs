@@ -18245,6 +18245,9 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         libparsec::SubmitterFinalizeAsyncEnrollmentError::Internal{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorInternal".into())?;
         }
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable".into())?;
+        }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorNotAccepted".into())?;
         }
@@ -18274,9 +18277,6 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         }
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline".into())?;
-        }
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::StorageNotAvailable{   .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorStorageNotAvailable".into())?;
         }
     }
     Ok(js_obj)
