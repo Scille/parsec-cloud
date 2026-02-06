@@ -11,6 +11,7 @@
       :class="{ 'proconnect-group--connected': isConnected }"
     >
       <button
+        v-if="!isConnected"
         class="proconnect-button"
         @click="$emit('ssoSelected', OpenBaoAuthConfigTag.OIDCProConnect)"
       >
@@ -85,6 +86,10 @@ defineProps<{
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+.proconnect-group p {
+  margin-bottom: 0;
 }
 
 .proconnect-button {
@@ -177,7 +182,7 @@ button {
   gap: 0.625rem;
   background: var(--parsec-color-light-success-50);
   border: 1px solid var(--parsec-color-light-success-500);
-  padding: 0.75rem 1.5rem 0.75rem 1rem;
+  padding: 0.75rem 1rem 0.75rem 1rem;
   border-radius: var(--parsec-radius-12);
   box-shadow: var(--parsec-shadow-input);
   justify-content: space-between;

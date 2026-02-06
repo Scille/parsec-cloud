@@ -64,7 +64,16 @@ export function setupContentSecurityPolicy(customScheme: string): void {
       },
       {
         type: CspDirective.ConnectSrc,
-        sources: ['data:', 'blob:', 'https://*.stripe.com', 'https://*.hcaptcha.com', 'wss://*.parsec.cloud', 'ws://*.parsec.cloud'],
+        sources: [
+          'data:',
+          'blob:',
+          'https://*.stripe.com',
+          'https://*.hcaptcha.com',
+          'wss://*.parsec.cloud',
+          'ws://*.parsec.cloud',
+          'https://*.parsec.cloud',
+          ...(electronIsDev ? ['http://localhost:6770'] : []),
+        ],
       },
       { type: CspDirective.ImgSrc, sources: ['data:', 'blob:', 'https://*.stripe.com'] },
       {

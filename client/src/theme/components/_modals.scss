@@ -1054,3 +1054,62 @@
     max-width: var(--parsec-modal-width-md);
   }
 }
+
+.async-enrollment-openbao-modal,
+.async-enrollment-pki-modal {
+  &::part(content) {
+    max-width: 26.5rem;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    .ms-modal-content {
+      margin-bottom: 2rem;
+    }
+  }
+
+  .ms-modal-footer-buttons .button-default,
+  .choose-certificate-controls .button-default {
+    width: 100%;
+  }
+}
+
+.join-async-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+
+  .choose-certificate-button--choose {
+    width: 100%;
+  }
+}
+
+.async-enrollment-openbao-modal,
+.async-enrollment-pki-modal,
+.join-async-modal {
+  .async-authentication-modal {
+    &-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 1rem 0.5rem 1rem;
+
+      &__icon {
+        width: 2rem;
+        height: 2rem;
+      }
+
+      &__title {
+        color: var(--parsec-color-light-secondary-text);
+        display: block;
+        text-align: center;
+      }
+    }
+
+    &-text {
+      color: var(--parsec-color-light-secondary-soft-text);
+      line-height: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+  }
+}

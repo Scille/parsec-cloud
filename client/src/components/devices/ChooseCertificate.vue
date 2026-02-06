@@ -6,9 +6,6 @@
       v-if="smartcardAvailable"
       class="choose-certificate"
     >
-      <ion-text class="choose-certificate-instructions body">
-        {{ $msTranslate('Authentication.method.smartcard.selectInstructions') }}
-      </ion-text>
       <div class="choose-certificate-controls">
         <div
           class="choose-certificate-selected"
@@ -33,6 +30,15 @@
           {{ $msTranslate(certificate ? 'Authentication.method.smartcard.selectOther' : 'Authentication.method.smartcard.selectButton') }}
         </ion-button>
       </div>
+      <ion-text class="choose-certificate-instructions body">
+        {{ $msTranslate('Authentication.method.smartcard.selectInstructions') }}
+      </ion-text>
+      <ms-report-text
+        v-if="error"
+        :theme="MsReportTheme.Error"
+      >
+        {{ $msTranslate(error) }}
+      </ms-report-text>
     </div>
     <ms-report-text
       v-else
@@ -52,6 +58,7 @@ import { onMounted, ref } from 'vue';
 
 const certificate = ref<X509CertificateReference | undefined>(undefined);
 const smartcardAvailable = ref(false);
+const error = ref('');
 
 const emits = defineEmits<{
   (e: 'certificateSelected', certificate: X509CertificateReference | undefined): void;
@@ -74,6 +81,7 @@ async function selectCertificate(): Promise<void> {
   if (!result.ok) {
     window.electronAPI.log('error', `Can't select certificate: ${result.error.tag} (${result.error.error})`);
     certificate.value = undefined;
+    error.value = 'Authentication.method.smartcard.errors.globalError';
   } else {
     certificate.value = result.value ?? undefined;
     emits('certificateSelected', certificate.value);

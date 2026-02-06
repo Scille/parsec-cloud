@@ -146,7 +146,7 @@
                 :icon="mailUnread"
               />
               <span class="sidebar-content-organization-button__text">
-                {{ $msTranslate('SideMenu.invitations') }}
+                {{ $msTranslate('SideMenu.invitationsRequests') }}
               </span>
             </ion-text>
 
@@ -345,11 +345,11 @@ import { SidebarMenuList, SidebarRecentFileItem, SidebarWorkspaceItem } from '@/
 import { openWorkspaceContextMenu } from '@/components/workspaces';
 import {
   ClientInfo,
+  getAsyncEnrollmentAddr,
   getClientInfo,
   getCurrentAvailableDevice,
   getLoggedInDevices,
   getOrganizationCreationDate,
-  getPkiJoinOrganizationLink,
   getWorkspaceInfo,
   listWorkspaces,
   LoggedInDeviceInfo,
@@ -580,7 +580,9 @@ function setActions(): void {
     actions.value = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
     if (false) {
       // TODO enable with PKI support
-      actions.value.push([{ action: UserAction.CopyPkiLink, label: 'InvitationsPage.pkiRequests.copyLink', icon: link }]);
+      actions.value.push([
+        { action: UserAction.CopyAsyncEnrollmentLink, label: 'InvitationsPage.asyncEnrollmentRequest.copyLink', icon: link },
+      ]);
     }
   } else {
     actions.value = [];
@@ -637,14 +639,14 @@ onMounted(async () => {
           const userAction = (data as MenuActionData).action.action as UserAction;
           if (userAction === UserAction.Invite) {
             await navigateTo(Routes.Invitations, { query: { openInvite: true } });
-          } else if (userAction === UserAction.CopyPkiLink) {
-            const result = await getPkiJoinOrganizationLink();
+          } else if (userAction === UserAction.CopyAsyncEnrollmentLink) {
+            const result = await getAsyncEnrollmentAddr();
             if (result.ok) {
               await copyToClipboard(
                 result.value,
                 informationManager,
-                'InvitationsPage.pkiRequests.linkCopiedToClipboard.success',
-                'InvitationsPage.pkiRequests.linkCopiedToClipboard.failed',
+                'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
+                'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
               );
             }
           }
