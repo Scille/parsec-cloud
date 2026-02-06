@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use ed25519_dalek::{Signature, Signer, Verifier};
-use rand::rngs::OsRng;
+use rand::rngs::SysRng;
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 
@@ -37,7 +37,7 @@ impl SigningKey {
     }
 
     pub fn generate() -> Self {
-        Self(ed25519_dalek::SigningKey::generate(&mut OsRng))
+        Self(ed25519_dalek::SigningKey::generate(&mut rand8::rngs::OsRng))
     }
 
     /// Sign the message and prefix it with the signature.

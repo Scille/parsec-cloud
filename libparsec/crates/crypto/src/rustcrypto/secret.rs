@@ -8,7 +8,7 @@ use generic_array::{
     typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
     ArrayLength, GenericArray,
 };
-use rand::rngs::OsRng;
+use rand::rngs::SysRng;
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
@@ -23,7 +23,7 @@ impl SecretKey {
     pub const SIZE: usize = XSalsa20Poly1305::KEY_SIZE;
 
     pub fn generate() -> Self {
-        Self(XSalsa20Poly1305::generate_key(OsRng))
+        Self(XSalsa20Poly1305::generate_key(rand8::rngs::OsRng))
     }
 
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
@@ -31,7 +31,7 @@ impl SecretKey {
         // TODO: zero copy with pre-allocated buffer
         // let mut ciphered = Vec::with_capacity(NONCE_SIZE + TAG_SIZE + data.len());
         let cipher = XSalsa20Poly1305::new(&self.0);
-        let nonce = XSalsa20Poly1305::generate_nonce(OsRng);
+        let nonce = XSalsa20Poly1305::generate_nonce(rand8::rngs::OsRng);
         // TODO: handle this error?
         let mut ciphered = cipher.encrypt(&nonce, data).expect("encryption failure !");
         let mut res = vec![];
