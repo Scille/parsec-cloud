@@ -62,7 +62,7 @@ const MENU = [
   },
   {
     title: 'Miscellaneous',
-    actions: ['Add to favorites'],
+    actions: ['Add as starred'],
   },
 ];
 
@@ -175,7 +175,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     }
     await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__on');
     await expect(favorites).toBeVisible();
-    await expect(favorites.locator('.sidebar-content-organization-button__text')).toHaveText('Favorites');
+    await expect(favorites.locator('.sidebar-content-organization-button__text')).toHaveText('Starred');
   });
 
   msTest(`Open workspace sharing ${mode}`, async ({ workspaces }) => {

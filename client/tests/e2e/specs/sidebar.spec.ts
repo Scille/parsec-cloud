@@ -26,7 +26,7 @@ msTest('Sidebar in organization management', async ({ organizationPage }) => {
   const sidebar = organizationPage.locator('.sidebar');
 
   const mainButtons = sidebar.locator('.list-sidebar-header-text');
-  await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
+  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const items = sidebar.locator('#sidebar-organization').locator('.sidebar-content-organization-button__text');
   await expect(items).toHaveText(['Users', 'Invitations & Requests', 'Information']);
@@ -38,11 +38,11 @@ msTest('Sidebar in workspaces page', async ({ workspaces }) => {
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
 
   const mainButtons = sidebar.locator('.list-sidebar-header-text');
-  await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
+  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const currentWorkspace = sidebar.locator('#sidebar-workspaces').locator('.current-workspace').locator('.sidebar-item');
   await expect(currentWorkspace).toBeVisible();
-  await expect(sidebar.locator('#sidebar-all-workspaces')).toHaveText('All workspaces');
+  await expect(sidebar.locator('#sidebar-all-workspaces')).toHaveText('My workspaces');
   await sidebar.locator('.sidebar-content-organization-button').nth(0).click();
   await expect(currentWorkspace).toBeHidden();
 });
@@ -51,7 +51,7 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
   const sidebar = workspaces.locator('.sidebar');
 
   const mainButtons = sidebar.locator('.list-sidebar-header-text');
-  await expect(mainButtons).toHaveText(['Organization', 'My workspaces', 'Recent documents']);
+  await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const organizationContent = sidebar.locator('#sidebar-organization');
   const workspacesContent = sidebar.locator('#sidebar-workspaces');
@@ -67,7 +67,7 @@ msTest('Sidebar in connected page', async ({ workspaces }) => {
   }
 
   await checkSidebarToggleVisibility(organizationContent, 'Organization');
-  await checkSidebarToggleVisibility(workspacesContent, 'My workspaces');
+  await checkSidebarToggleVisibility(workspacesContent, 'Workspaces');
   await checkSidebarToggleVisibility(filesContent, 'Recent documents');
 
   await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
@@ -417,16 +417,9 @@ msTest.describe(() => {
     const workspaceCategoriesSidebarItem = workspaceCategoriesSidebar.locator('.sidebar-content-organization-button');
 
     await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-      'All workspaces',
-      'Recently viewed',
-      'Favorites',
-      'Hidden',
-    ]);
-
-    await expect(workspaceCategoriesSidebar.locator('.sidebar-content-organization-button__text')).toHaveText([
-      'All workspaces',
-      'Recently viewed',
-      'Favorites',
+      'My workspaces',
+      'Recent',
+      'Starred',
       'Hidden',
     ]);
 
@@ -463,7 +456,7 @@ msTest('Trying to navigate through the workspace content, profile, invitations, 
   await expect(connected).toBeInvitationPage();
 
   const allWorkspacesButton = connected.locator('#sidebar-all-workspaces');
-  await expect(allWorkspacesButton).toHaveText('All workspaces');
+  await expect(allWorkspacesButton).toHaveText('My workspaces');
   await allWorkspacesButton.click();
   await expect(connected).toBeWorkspacePage();
 });

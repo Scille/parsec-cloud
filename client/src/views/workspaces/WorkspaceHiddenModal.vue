@@ -26,9 +26,6 @@
             </template>
           </i18n-t>
         </ion-text>
-        <ms-report-text :theme="MsReportTheme.Info">
-          {{ $msTranslate('WorkspacesPage.workspaceHiddenModal.info') }}
-        </ms-report-text>
       </div>
       <ms-checkbox
         label-placement="end"
@@ -46,7 +43,7 @@
 <script setup lang="ts">
 import { WorkspaceName } from '@/parsec';
 import { IonPage, IonText, modalController } from '@ionic/vue';
-import { MsCheckbox, MsModal, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
+import { MsCheckbox, MsModal, MsModalResult } from 'megashark-lib';
 import { ref } from 'vue';
 
 defineProps<{
@@ -77,7 +74,8 @@ async function confirmHidden(): Promise<boolean> {
 
   &__checkbox {
     position: absolute;
-    bottom: 2.25rem;
+    z-index: 30;
+    bottom: 1.625rem;
     color: var(--parsec-color-light-secondary-soft-text);
     padding: 0.25rem 0.25rem;
     border-radius: var(--parsec-radius-8);

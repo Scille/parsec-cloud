@@ -53,7 +53,7 @@
       >
         <workspace-categories-menu
           :active-menu="workspaceMenuState"
-          @update-menu="workspaceMenuState = $event"
+          @update-menu="onMenuUpdate"
         />
       </div>
 
@@ -80,7 +80,7 @@
           </div>
           <workspace-categories-menu
             :active-menu="workspaceMenuState"
-            @update-menu="workspaceMenuState = $event"
+            @update-menu="onMenuUpdate"
           />
           <ms-search-input
             v-model="searchFilterContent"
@@ -751,6 +751,18 @@ function isWorkspaceFiltered(role: WorkspaceRole): boolean {
 
 async function onFilterUpdate(): Promise<void> {
   await refreshWorkspacesList();
+}
+
+function onMenuUpdate(menu: WorkspaceMenu): void {
+  if (isSmallDisplay.value) {
+    if (workspaceMenuState.value === menu) {
+      workspaceMenuState.value = WorkspaceMenu.All;
+    } else {
+      workspaceMenuState.value = menu;
+    }
+  } else {
+    workspaceMenuState.value = menu;
+  }
 }
 </script>
 
