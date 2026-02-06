@@ -1,5 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-use crate::tests::CONTENT;
+use crate::tests::{create_dir_all, CONTENT};
 
 use crate::{list_files, rename_file, save_content, RenameFileError};
 use libparsec_tests_fixtures::prelude::*;
@@ -17,19 +17,7 @@ async fn ok(tmp_path: TmpPath, #[case] env: &TestbedEnv) {
         vec![file_path.clone()]
     );
 
-    #[cfg(not(target_arch = "wasm32"))]
-    std::fs::create_dir(dir_path.join("archived")).unwrap();
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use crate::platform::common::internal::Storage;
-        let storage = Storage::new().await.unwrap();
-        storage
-            .root_dir()
-            .create_dir_all(&dir_path.join("archived"))
-            .await
-            .unwrap();
-    }
+    create_dir_all(&dir_path.join("archived")).await;
 
     rename_file(&file_path, &new_file_path).await.unwrap();
     assert_eq!(

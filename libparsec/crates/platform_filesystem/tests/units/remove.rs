@@ -6,7 +6,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_tests_lite::p_assert_matches;
 
 #[parsec_test(testbed = "minimal")]
-async fn ok(tmp_path: TmpPath, #[case] env: &TestbedEnv) {
+async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
     let file_path = tmp_path.join("devices/my_device.keys");
     let dir_path = tmp_path.join("devices");
 
@@ -20,7 +20,7 @@ async fn ok(tmp_path: TmpPath, #[case] env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn no_file_to_remove(tmp_path: TmpPath, #[case] env: &TestbedEnv) {
+async fn no_file_to_remove(tmp_path: TmpPath, env: &TestbedEnv) {
     let file_path = tmp_path.join("devices/my_device.keys");
 
     p_assert_matches!(
