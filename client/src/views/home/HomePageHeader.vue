@@ -30,6 +30,7 @@
         :show-customer-area-button="!showBackButton"
         @settings-click="openSettings"
         @customer-area-click="$emit('customerAreaClick')"
+        @report-bug-click="openBugReport"
       />
     </ion-menu>
 
@@ -38,6 +39,7 @@
       class="homepage-menu-secondary"
       @customer-area-click="$emit('customerAreaClick')"
       @settings-click="openSettings"
+      @report-bug-click="openBugReport"
     />
 
     <div class="topbar">
@@ -129,11 +131,13 @@
 <script setup lang="ts">
 import HomePageSecondaryMenu from '@/components/header/HomePageSecondaryMenu.vue';
 import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondaryMenuCollapse.vue';
+import { openBugReportModal } from '@/components/misc';
 import { AccountInfo, ParsecAccount } from '@/parsec';
 import { navigateTo, Routes, watchRoute } from '@/router';
 import { APP_VERSION, Env } from '@/services/environment';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { Information, InformationLevel, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { useUpdateManager } from '@/services/updateManager';
 import { openAboutModal } from '@/views/about';
@@ -150,6 +154,7 @@ const { isSmallDisplay, isLargeDisplay, windowWidth } = useWindowSize();
 const { isUpdatePromptAllowed, suppressUpdatePrompt } = useUpdateManager();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
+const informationManager = injectionProvider.getDefault().informationManager;
 const updateAvailability: Ref<UpdateAvailabilityData | null> = ref(null);
 let eventCbId: string | null = null;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
@@ -258,6 +263,19 @@ async function openSettings(): Promise<void> {
     await openSettingsModal();
   } else {
     emits('settingsClick');
+  }
+}
+
+async function openBugReport(): Promise<void> {
+  const result = await openBugReportModal();
+  if (result === MsModalResult.Confirm) {
+    informationManager.present(
+      new Information({
+        message: 'bugReport.sent',
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
   }
 }
 
