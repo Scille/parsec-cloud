@@ -1186,16 +1186,16 @@ export interface BootstrapOrganizationErrorSaveDeviceInvalidPath {
     tag: "BootstrapOrganizationErrorSaveDeviceInvalidPath"
     error: string
 }
+export interface BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable {
+    tag: "BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable"
+    error: string
+}
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed {
     tag: "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed"
     error: string
 }
 export interface BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline {
     tag: "BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline"
-    error: string
-}
-export interface BootstrapOrganizationErrorSaveDeviceStorageNotAvailable {
-    tag: "BootstrapOrganizationErrorSaveDeviceStorageNotAvailable"
     error: string
 }
 export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
@@ -1214,9 +1214,9 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
   | BootstrapOrganizationErrorSaveDeviceInvalidPath
+  | BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed
   | BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline
-  | BootstrapOrganizationErrorSaveDeviceStorageNotAvailable
   | BootstrapOrganizationErrorTimestampOutOfBallpark
 
 

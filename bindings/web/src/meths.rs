@@ -7568,6 +7568,13 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorSaveDeviceInvalidPath".into(),
             )?;
         }
+        libparsec::BootstrapOrganizationError::SaveDeviceNoSpaceAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable".into(),
+            )?;
+        }
         libparsec::BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7582,13 +7589,6 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline".into(),
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::SaveDeviceStorageNotAvailable { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorSaveDeviceStorageNotAvailable".into(),
             )?;
         }
         libparsec::BootstrapOrganizationError::TimestampOutOfBallpark {
