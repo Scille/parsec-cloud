@@ -82,7 +82,6 @@ async fn save_list_load(tmp_path: TmpPath) {
         tmp_path.clone(), // The target file is already a folder !
     )
     .await;
-    // TODO #11955
     p_assert_matches!(
         output,
         Err(SaveAsyncEnrollmentLocalPendingError::InvalidPath)
