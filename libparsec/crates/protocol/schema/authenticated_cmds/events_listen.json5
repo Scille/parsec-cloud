@@ -59,7 +59,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "invitation_status",
@@ -73,7 +73,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "greeting_attempt",
@@ -87,7 +87,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "greeting_attempt",
@@ -101,7 +101,7 @@
                         "fields": [
                             {
                                 "name": "token",
-                                "type": "InvitationToken"
+                                "type": "AccessToken"
                             },
                             {
                                 "name": "greeting_attempt",

@@ -7,11 +7,11 @@ import pytest
 
 from parsec import events
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
     DateTime,
     DeviceID,
     InvitationStatus,
-    InvitationToken,
     OrganizationID,
     PKIEnrollmentID,
     UserID,
@@ -35,7 +35,7 @@ class GenerateEvent(Protocol):
     ) -> Event: ...
 
 
-INVITATION_TOKEN = InvitationToken.from_hex("f22a1230c2d6463d85b1b7575e601d9f")
+INVITATION_TOKEN = AccessToken.from_hex("f22a1230c2d6463d85b1b7575e601d9f")
 ENROLLMENT_ID = PKIEnrollmentID.from_hex("be6510e4-3e0b-4144-b3a7-fd5ad2c01fd8")
 VLOB_ID = VlobID.from_hex("cc7dca19-447c-4aca-9c99-b8205655afee")
 DEVICE_ID = DeviceID.from_hex("86615315-5af4-4b55-bc6c-723bd72df7ac")

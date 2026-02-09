@@ -249,7 +249,7 @@ pub async fn account_list_invitations(
     Vec<(
         ParsecInvitationAddr,
         OrganizationID,
-        InvitationToken,
+        AccessToken,
         InvitationType,
     )>,
     AccountListInvitationsError,

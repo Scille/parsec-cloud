@@ -3,12 +3,12 @@
 from typing import Literal, override
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     DateTime,
     EmailAddress,
     HashDigest,
     HumanHandle,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     SecretKey,
@@ -333,7 +333,7 @@ class PGAccountComponent(BaseAccountComponent):
     @no_transaction
     async def invite_self_list(
         self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
-    ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
+    ) -> list[tuple[OrganizationID, AccessToken, InvitationType]] | AccountInviteListBadOutcome:
         return await invite_self_list(conn, auth_method_id)
 
     @override

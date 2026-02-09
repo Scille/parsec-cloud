@@ -252,13 +252,13 @@ export type {
 } from '@/plugins/libparsec';
 
 import type {
+  AccessToken,
   DateTime,
   DeviceInfo,
   EntryName,
   FsPath,
   Handle,
   HumanHandle,
-  InvitationToken,
   OrganizationID,
   AuthMethodInfo as ParsecAuthMethodInfo,
   EntryStatFile as ParsecEntryStatFile,
@@ -416,7 +416,7 @@ interface OrganizationInfo {
 interface AccountInvitation {
   addr: ParsecInvitationAddr;
   organizationId: OrganizationID;
-  token: InvitationToken;
+  token: AccessToken;
   type: InvitationType;
 }
 
@@ -430,6 +430,7 @@ interface AuthMethodInfo extends ParsecAuthMethodInfo {
 }
 
 export {
+  AccessToken,
   AccountHandle,
   AccountInvitation,
   AuthMethodInfo,
@@ -445,7 +446,6 @@ export {
   GetWorkspaceNameError,
   GetWorkspaceNameErrorTag,
   HumanHandle,
-  InvitationToken,
   InvitationType,
   MountpointHandle,
   OpenOptions,

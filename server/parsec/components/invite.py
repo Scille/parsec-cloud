@@ -12,6 +12,7 @@ from enum import auto
 from jinja2 import Environment
 
 from parsec._parsec import (
+    AccessToken,
     ApiVersion,
     CancelledGreetingAttemptReason,
     DateTime,
@@ -22,7 +23,6 @@ from parsec._parsec import (
     HashDigest,
     HumanHandle,
     InvitationStatus,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     ParsecInvitationAddr,
@@ -88,7 +88,7 @@ type InvitationCreatedBy = InvitationCreatedByUser | InvitationCreatedByExternal
 class UserInvitation:
     TYPE = InvitationType.USER
     created_by: InvitationCreatedBy
-    token: InvitationToken
+    token: AccessToken
     created_on: DateTime
     status: InvitationStatus
 
@@ -105,7 +105,7 @@ class UserInvitation:
 class DeviceInvitation:
     TYPE = InvitationType.DEVICE
     created_by: InvitationCreatedBy
-    token: InvitationToken
+    token: AccessToken
     created_on: DateTime
     status: InvitationStatus
 
@@ -118,7 +118,7 @@ class DeviceInvitation:
 class ShamirRecoveryInvitation:
     TYPE = InvitationType.SHAMIR_RECOVERY
     created_by: InvitationCreatedBy
-    token: InvitationToken
+    token: AccessToken
     created_on: DateTime
     status: InvitationStatus
 
@@ -523,7 +523,7 @@ class BaseInviteComponent:
     async def _send_user_invitation_email(
         self,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         claimer_email: EmailAddress,
         greeter_human_handle: HumanHandle,
     ) -> None | SendEmailBadOutcome:
@@ -559,7 +559,7 @@ class BaseInviteComponent:
     async def _send_device_invitation_email(
         self,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         email: EmailAddress,
     ) -> None | SendEmailBadOutcome:
         if not self._config.server_addr:
@@ -592,7 +592,7 @@ class BaseInviteComponent:
     async def _send_shamir_recovery_invitation_email(
         self,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         email: EmailAddress,
         greeter_human_handle: HumanHandle,
     ) -> None | SendEmailBadOutcome:
@@ -636,8 +636,8 @@ class BaseInviteComponent:
         claimer_email: EmailAddress,
         send_email: bool,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
         raise NotImplementedError
 
     async def new_for_device(
@@ -647,8 +647,8 @@ class BaseInviteComponent:
         author: DeviceID,
         send_email: bool,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
         raise NotImplementedError
 
     async def new_for_shamir_recovery(
@@ -659,8 +659,8 @@ class BaseInviteComponent:
         send_email: bool,
         claimer_user_id: UserID,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
         raise NotImplementedError
 
     async def cancel(
@@ -668,7 +668,7 @@ class BaseInviteComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> None | InviteCancelBadOutcome:
         raise NotImplementedError
 
@@ -678,7 +678,7 @@ class BaseInviteComponent:
         raise NotImplementedError
 
     async def info_as_invited(
-        self, organization_id: OrganizationID, token: InvitationToken
+        self, organization_id: OrganizationID, token: AccessToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         raise NotImplementedError
 
@@ -705,16 +705,16 @@ class BaseInviteComponent:
             send_email=req.send_email,
         )
         match outcome:
-            case (InvitationToken() as token, None):
+            case (AccessToken() as token, None):
                 email_sent = (
                     authenticated_cmds.latest.invite_new_user.InvitationEmailSentStatus.SUCCESS
                 )
             case (
-                InvitationToken() as token,
+                AccessToken() as token,
                 SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE,
             ):
                 email_sent = authenticated_cmds.latest.invite_new_user.InvitationEmailSentStatus.SERVER_UNAVAILABLE
-            case (InvitationToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
+            case (AccessToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
                 email_sent = authenticated_cmds.latest.invite_new_user.InvitationEmailSentStatus.RECIPIENT_REFUSED
             case InviteNewForUserBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.invite_new_user.RepAuthorNotAllowed()
@@ -747,16 +747,16 @@ class BaseInviteComponent:
             send_email=req.send_email,
         )
         match outcome:
-            case (InvitationToken() as token, None):
+            case (AccessToken() as token, None):
                 email_sent = (
                     authenticated_cmds.latest.invite_new_device.InvitationEmailSentStatus.SUCCESS
                 )
             case (
-                InvitationToken() as token,
+                AccessToken() as token,
                 SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE,
             ):
                 email_sent = authenticated_cmds.latest.invite_new_device.InvitationEmailSentStatus.SERVER_UNAVAILABLE
-            case (InvitationToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
+            case (AccessToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
                 email_sent = authenticated_cmds.latest.invite_new_device.InvitationEmailSentStatus.RECIPIENT_REFUSED
             case InviteNewForDeviceBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
@@ -786,14 +786,14 @@ class BaseInviteComponent:
             claimer_user_id=req.claimer_user_id,
         )
         match outcome:
-            case (InvitationToken() as token, None):
+            case (AccessToken() as token, None):
                 email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SUCCESS
             case (
-                InvitationToken() as token,
+                AccessToken() as token,
                 SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE,
             ):
                 email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SERVER_UNAVAILABLE
-            case (InvitationToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
+            case (AccessToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
                 email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.RECIPIENT_REFUSED
             case InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.invite_new_shamir_recovery.RepAuthorNotAllowed()
@@ -1010,7 +1010,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         greeter: UserID,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> GreetingAttemptID | InviteGreeterStartGreetingAttemptBadOutcome:
         raise NotImplementedError
 
@@ -1059,7 +1059,7 @@ class BaseInviteComponent:
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         greeter: UserID,
     ) -> GreetingAttemptID | InviteClaimerStartGreetingAttemptBadOutcome:
         raise NotImplementedError
@@ -1166,7 +1166,7 @@ class BaseInviteComponent:
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
     ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
@@ -1301,7 +1301,7 @@ class BaseInviteComponent:
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
         step_index: int,
         claimer_data: bytes,
@@ -1345,7 +1345,7 @@ class BaseInviteComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> None | InviteCompleteBadOutcome:
         raise NotImplementedError
 
@@ -1381,7 +1381,7 @@ class BaseInviteComponent:
     async def shamir_recovery_reveal(
         self,
         organization_id: OrganizationID,
-        token: InvitationToken,
-        reveal_token: InvitationToken,
+        token: AccessToken,
+        reveal_token: AccessToken,
     ) -> bytes | InviteShamirRecoveryRevealBadOutcome:
         raise NotImplementedError

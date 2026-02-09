@@ -9,7 +9,7 @@ use libparsec::{
         UserGreetInProgress2Ctx, UserGreetInProgress3Ctx, UserGreetInProgress4Ctx,
         UserGreetInitialCtx,
     },
-    InvitationToken,
+    AccessToken,
 };
 use libparsec_client::{
     Client, ShamirRecoveryGreetInProgress1Ctx, ShamirRecoveryGreetInProgress2Ctx,
@@ -22,8 +22,8 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
     pub struct Args {
         /// Invitation token
-        #[arg(value_parser = InvitationToken::from_hex)]
-        token: InvitationToken,
+        #[arg(value_parser = AccessToken::from_hex)]
+        token: AccessToken,
     }
 );
 
@@ -68,10 +68,7 @@ pub async fn device_greet(args: Args, client: &StartedClient) -> anyhow::Result<
 }
 
 /// Step 0: retrieve info
-async fn step0(
-    client: &Client,
-    invitation_token: InvitationToken,
-) -> anyhow::Result<InviteListItem> {
+async fn step0(client: &Client, invitation_token: AccessToken) -> anyhow::Result<InviteListItem> {
     let mut handle = start_spinner("Retrieving invitation info".into());
 
     let invitations = client.list_invitations().await.context("Server error")?;

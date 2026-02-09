@@ -11,13 +11,13 @@ from typing import Literal
 from jinja2 import Environment
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     ActiveUsersLimit,
     DateTime,
     EmailAddress,
     HashDigest,
     HumanHandle,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     SecretKey,
@@ -398,7 +398,7 @@ class BaseAccountComponent:
 
     async def invite_self_list(
         self, auth_method_id: AccountAuthMethodID
-    ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
+    ) -> list[tuple[OrganizationID, AccessToken, InvitationType]] | AccountInviteListBadOutcome:
         raise NotImplementedError
 
     async def organization_self_list(

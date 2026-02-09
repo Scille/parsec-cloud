@@ -3,6 +3,7 @@
 from collections.abc import Callable
 
 from .common import (
+    AccessToken,
     ApiVersion,
     DateTime,
     DeviceID,
@@ -10,7 +11,6 @@ from .common import (
     Handle,
     IndexInt,
     InvitationStatus,
-    InvitationToken,
     SizeInt,
     Variant,
     VlobID,
@@ -70,19 +70,19 @@ class ClientEvent(Variant):
         entry_id: VlobID
 
     class InvitationChanged:
-        token: InvitationToken
+        token: AccessToken
         status: InvitationStatus
 
     class GreetingAttemptReady:
-        token: InvitationToken
+        token: AccessToken
         greeting_attempt: GreetingAttemptID
 
     class GreetingAttemptCancelled:
-        token: InvitationToken
+        token: AccessToken
         greeting_attempt: GreetingAttemptID
 
     class GreetingAttemptJoined:
-        token: InvitationToken
+        token: AccessToken
         greeting_attempt: GreetingAttemptID
 
     class TooMuchDriftWithServerClock:

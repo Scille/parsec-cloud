@@ -4,8 +4,8 @@ from __future__ import annotations
 from typing import Any, override
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     DeviceCertificate,
     DeviceID,
@@ -68,12 +68,12 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
-        force_bootstrap_token: BootstrapToken | None = None,
-    ) -> BootstrapToken | OrganizationCreateBadOutcome:
+        force_bootstrap_token: AccessToken | None = None,
+    ) -> AccessToken | OrganizationCreateBadOutcome:
         if minimum_archiving_period is not Unset:
             assert minimum_archiving_period >= 0  # Sanity check
 
-        bootstrap_token = force_bootstrap_token or BootstrapToken.new()
+        bootstrap_token = force_bootstrap_token or AccessToken.new()
         org = self._data.organizations.get(id)
         # Allow overwriting of not-yet-bootstrapped organization
         if org and org.root_verify_key:
@@ -150,7 +150,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         id: OrganizationID,
         now: DateTime,
-        bootstrap_token: BootstrapToken | None,
+        bootstrap_token: AccessToken | None,
         root_verify_key: VerifyKey,
         user_certificate: bytes,
         device_certificate: bytes,

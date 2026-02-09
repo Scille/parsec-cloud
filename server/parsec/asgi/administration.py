@@ -19,7 +19,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
 
 from parsec._parsec import (
-    BootstrapToken,
+    AccessToken,
     DateTime,
     OrganizationID,
     ParsecOrganizationBootstrapAddr,
@@ -184,7 +184,7 @@ async def administration_create_organizations(
         tos=body.tos,
     )
     match outcome:
-        case BootstrapToken() as bootstrap_token:
+        case AccessToken() as bootstrap_token:
             pass
         case OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS:
             raise HTTPException(

@@ -12,13 +12,13 @@ from itertools import chain
 from typing import Literal
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     ActiveUsersLimit,
     AsyncEnrollmentAcceptPayload,
     AsyncEnrollmentID,
     AsyncEnrollmentSubmitPayload,
     BlockID,
-    BootstrapToken,
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceCertificate,
@@ -29,7 +29,6 @@ from parsec._parsec import (
     HashDigest,
     HumanHandle,
     InvitationStatus,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     PKIEnrollmentID,
@@ -142,7 +141,7 @@ class MemoryDatamodel:
 @dataclass(slots=True)
 class MemoryOrganization:
     organization_id: OrganizationID
-    bootstrap_token: BootstrapToken | None
+    bootstrap_token: AccessToken | None
     created_on: DateTime
     active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
@@ -159,7 +158,7 @@ class MemoryOrganization:
     sequester_services: dict[SequesterServiceID, MemorySequesterService] | None = None
     users: dict[UserID, MemoryUser] = field(default_factory=dict)
     devices: dict[DeviceID, MemoryDevice] = field(default_factory=dict)
-    invitations: dict[InvitationToken, MemoryInvitation] = field(default_factory=dict)
+    invitations: dict[AccessToken, MemoryInvitation] = field(default_factory=dict)
     greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
     pki_enrollments: dict[PKIEnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
     pki_certificates: dict[bytes, MemoryPkiCertificate] = field(default_factory=dict)
@@ -584,7 +583,7 @@ class MemoryInvitationDeletedReason(Enum):
 
 @dataclass(slots=True)
 class MemoryInvitation:
-    token: InvitationToken
+    token: AccessToken
     type: InvitationType
     created_by: InvitationCreatedBy
 
@@ -641,7 +640,7 @@ class MemoryInvitation:
 @dataclass(slots=True)
 class MemoryGreetingSession:
     # Immutable properties
-    token: InvitationToken
+    token: AccessToken
     greeter_id: UserID
 
     # Mutable properties
@@ -690,7 +689,7 @@ class MemoryGreetingSession:
 class MemoryGreetingAttempt:
     # Immutable properties
     greeting_attempt: GreetingAttemptID
-    token: InvitationToken
+    token: AccessToken
     greeter_id: UserID
 
     # Mutable properties
@@ -927,7 +926,7 @@ class MemoryShamirRecovery:
     # The token the claimer should provide to get access to `ciphered_data`.
     # This token is split into shares, hence it acts as a proof the claimer
     # asking for the `ciphered_data` had it identity confirmed by the recipients.
-    reveal_token: InvitationToken
+    reveal_token: AccessToken
     # The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
     # It contains the threshold for the quorum and the shares recipients.
     # This field has a certain level of duplication with the "shares" below,

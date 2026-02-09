@@ -1109,7 +1109,7 @@ pub async fn claimer_shamir_recovery_finalize_save_local_device(
 
 pub struct NewInvitationInfo {
     pub addr: ParsecInvitationAddr,
-    pub token: InvitationToken,
+    pub token: AccessToken,
     pub email_sent_status: InvitationEmailSentStatus,
 }
 
@@ -1190,7 +1190,7 @@ pub async fn client_new_shamir_recovery_invitation(
 
 pub async fn client_cancel_invitation(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<(), ClientCancelInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
@@ -1205,7 +1205,7 @@ pub async fn client_cancel_invitation(
 pub enum InviteListItem {
     User {
         addr: ParsecInvitationAddr,
-        token: InvitationToken,
+        token: AccessToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
         claimer_email: EmailAddress,
@@ -1213,14 +1213,14 @@ pub enum InviteListItem {
     },
     Device {
         addr: ParsecInvitationAddr,
-        token: InvitationToken,
+        token: AccessToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
         status: InvitationStatus,
     },
     ShamirRecovery {
         addr: ParsecInvitationAddr,
-        token: InvitationToken,
+        token: AccessToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
         claimer_user_id: UserID,
@@ -1322,7 +1322,7 @@ pub enum ClientStartInvitationGreetError {
 
 pub async fn client_start_user_invitation_greet(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<UserGreetInitialInfo, ClientStartInvitationGreetError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
@@ -1338,7 +1338,7 @@ pub async fn client_start_user_invitation_greet(
 
 pub async fn client_start_device_invitation_greet(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
@@ -1354,7 +1354,7 @@ pub async fn client_start_device_invitation_greet(
 
 pub async fn client_start_shamir_recovery_invitation_greet(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),

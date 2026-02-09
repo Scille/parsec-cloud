@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
-    BootstrapToken,
+    AccessToken,
     DateTime,
     DeviceCertificate,
     OrganizationID,
@@ -157,7 +157,7 @@ async def organization_bootstrap(
     conn: AsyncpgConnection,
     id: OrganizationID,
     now: DateTime,
-    bootstrap_token: BootstrapToken | None,
+    bootstrap_token: AccessToken | None,
     root_verify_key: VerifyKey,
     user_certificate: bytes,
     device_certificate: bytes,

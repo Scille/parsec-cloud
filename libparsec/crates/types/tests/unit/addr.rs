@@ -430,7 +430,7 @@ fn bootstrap_addr_token() {
 
     // Url with token
     let addr: ParsecOrganizationBootstrapAddr = testbed.url().parse().unwrap();
-    let expected_token = BootstrapToken::from_hex(TOKEN).unwrap();
+    let expected_token = AccessToken::from_hex(TOKEN).unwrap();
     p_assert_eq!(addr.token(), Some(&expected_token));
 
     // Url without token (for spontaneous bootstrap)
@@ -556,7 +556,7 @@ fn invitation_addr_bad_type(
 fn invitation_addr_token() {
     let testbed = InvitationAddrTestbed {};
     let addr: ParsecInvitationAddr = testbed.url().parse().unwrap();
-    let expected_token = InvitationToken::from_hex(TOKEN).unwrap();
+    let expected_token = AccessToken::from_hex(TOKEN).unwrap();
     p_assert_eq!(addr.token(), expected_token);
 }
 
@@ -900,7 +900,7 @@ fn organization_bootstrap_addr_good(
     let verify_key = SigningKey::generate().verify_key();
     let org = OrganizationID::from_str("org").unwrap();
     let server_addr = ParsecAddr::from_str(base_url).unwrap();
-    let token = BootstrapToken::from_hex(TOKEN).unwrap();
+    let token = AccessToken::from_hex(TOKEN).unwrap();
     let addr = ParsecOrganizationBootstrapAddr::new(server_addr, org.clone(), Some(token));
 
     p_assert_eq!(addr.hostname(), "foo");

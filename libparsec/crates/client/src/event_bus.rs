@@ -415,7 +415,7 @@ impl_events!(
     /// we are at the origin of the change (e.g. we cancelled the invitation).
     InvitationChanged {
         status: InvitationStatus,
-        token: InvitationToken,
+        token: AccessToken,
     },
 
     /// This event is fired by the connection monitor.
@@ -424,7 +424,7 @@ impl_events!(
     /// More precisely, this event is sent each time the claimer polls the first step
     /// (WAIT_PEER) of the corresponding greeting attempt.
     GreetingAttemptReady {
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
     },
 
@@ -437,7 +437,7 @@ impl_events!(
     /// Note this event will be fired (i.e. the server pushes it to us) even if
     /// we are at the origin of the change (e.g. we cancelled the greeting attempt).
     GreetingAttemptCancelled {
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
     },
 
@@ -450,7 +450,7 @@ impl_events!(
     /// Note this event will be fired (i.e. the server pushes it to us) even if
     /// we are at the origin of the change (e.g. we cancelled the greeting attempt).
     GreetingAttemptJoined {
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
     },
 

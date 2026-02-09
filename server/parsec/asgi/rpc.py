@@ -19,9 +19,9 @@ from fastapi.responses import StreamingResponse
 from starlette.requests import ClientDisconnect
 
 from parsec._parsec import (
+    AccessToken,
     ApiVersion,
     DateTime,
-    InvitationToken,
     OrganizationID,
     anonymous_cmds,
     anonymous_server_cmds,
@@ -298,7 +298,7 @@ class ParsedAuthHeaders:
     client_api_version: ApiVersion
     user_agent: str
     authenticated_token: AuthenticatedToken | None
-    invited_token: InvitationToken | None
+    invited_token: AccessToken | None
     last_event_id: UUID | None
 
 
@@ -382,7 +382,7 @@ def _parse_auth_headers_or_abort(
             expected_bearer, raw_invitation_token = raw_authorization.split()
             if expected_bearer.lower() != "bearer":
                 raise ValueError
-            invited_token = InvitationToken.from_hex(raw_invitation_token)
+            invited_token = AccessToken.from_hex(raw_invitation_token)
         except ValueError:
             _handshake_abort(
                 CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version

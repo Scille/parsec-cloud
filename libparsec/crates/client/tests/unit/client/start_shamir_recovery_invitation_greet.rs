@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_tests_fixtures::prelude::*;
-use libparsec_types::{InvitationToken, ShamirRecoveryShareData};
+use libparsec_types::{AccessToken, ShamirRecoveryShareData};
 
 use crate::{ClientStartShamirRecoveryInvitationGreetError, ShamirRecoveryGreetInitialCtx};
 
 use super::utils::client_factory;
 
-fn get_alice_token(env: &TestbedEnv) -> InvitationToken {
+fn get_alice_token(env: &TestbedEnv) -> AccessToken {
     let alice = env.local_device("alice@dev1");
     env.template
         .events
@@ -154,7 +154,7 @@ async fn invitation_not_found(env: &TestbedEnv) {
 
     p_assert_matches!(
         client
-            .start_shamir_recovery_invitation_greet(InvitationToken::default())
+            .start_shamir_recovery_invitation_greet(AccessToken::default())
             .await
             .unwrap_err(),
         ClientStartShamirRecoveryInvitationGreetError::InvitationNotFound

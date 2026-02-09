@@ -3,11 +3,11 @@
 from typing import override
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     DateTime,
     DeviceID,
     EmailAddress,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     SecretKey,
@@ -245,7 +245,7 @@ class PGAuthComponent(BaseAuthComponent):
         conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
         row = await conn.fetchrow(
             *_q_invited_get_info(organization_id=organization_id.str, token=token.hex)

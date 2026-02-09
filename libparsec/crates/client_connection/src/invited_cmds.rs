@@ -148,7 +148,7 @@ impl InvitedCmds {
 /// Prepare a new request, the body will be added to the Request using [RequestBuilder::body]
 fn prepare_request(
     request_builder: RequestBuilder,
-    token: InvitationToken,
+    token: AccessToken,
     api_version_header_value: HeaderValue,
     body: Vec<u8>,
 ) -> RequestBuilder {

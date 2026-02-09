@@ -21,7 +21,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         env.server_addr.clone(),
         env.organization_id.clone(),
         libparsec_types::InvitationType::User,
-        InvitationToken::default(),
+        AccessToken::default(),
     );
 
     let config = Arc::new(ClientConfig {

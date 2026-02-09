@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use anyhow::Context;
-use libparsec::InvitationToken;
+use libparsec::AccessToken;
 
 use crate::utils::*;
 
@@ -9,8 +9,8 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
     pub struct Args {
         /// Invitation token
-        #[arg(value_parser = InvitationToken::from_hex)]
-        token: InvitationToken,
+        #[arg(value_parser = AccessToken::from_hex)]
+        token: AccessToken,
     }
 );
 

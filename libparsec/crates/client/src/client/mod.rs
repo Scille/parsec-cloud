@@ -598,14 +598,14 @@ impl Client {
         &self,
         claimer_email: EmailAddress,
         send_email: bool,
-    ) -> Result<(InvitationToken, InvitationEmailSentStatus), ClientNewUserInvitationError> {
+    ) -> Result<(AccessToken, InvitationEmailSentStatus), ClientNewUserInvitationError> {
         crate::invite::new_user_invitation(&self.cmds, claimer_email, send_email).await
     }
 
     pub async fn new_device_invitation(
         &self,
         send_email: bool,
-    ) -> Result<(InvitationToken, InvitationEmailSentStatus), ClientNewDeviceInvitationError> {
+    ) -> Result<(AccessToken, InvitationEmailSentStatus), ClientNewDeviceInvitationError> {
         crate::invite::new_device_invitation(&self.cmds, send_email).await
     }
 
@@ -613,14 +613,14 @@ impl Client {
         &self,
         user_id: UserID,
         send_email: bool,
-    ) -> Result<(InvitationToken, InvitationEmailSentStatus), ClientNewShamirRecoveryInvitationError>
+    ) -> Result<(AccessToken, InvitationEmailSentStatus), ClientNewShamirRecoveryInvitationError>
     {
         crate::invite::new_shamir_recovery_invitation(&self.cmds, user_id, send_email).await
     }
 
     pub async fn cancel_invitation(
         &self,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Result<(), ClientCancelInvitationError> {
         crate::invite::cancel_invitation(&self.cmds, token).await
     }
@@ -631,17 +631,17 @@ impl Client {
         crate::invite::list_invitations(&self.cmds).await
     }
 
-    pub fn start_user_invitation_greet(&self, token: InvitationToken) -> UserGreetInitialCtx {
+    pub fn start_user_invitation_greet(&self, token: AccessToken) -> UserGreetInitialCtx {
         start_invitation_greet::start_user_invitation_greet(self, token)
     }
 
-    pub fn start_device_invitation_greet(&self, token: InvitationToken) -> DeviceGreetInitialCtx {
+    pub fn start_device_invitation_greet(&self, token: AccessToken) -> DeviceGreetInitialCtx {
         start_invitation_greet::start_device_invitation_greet(self, token)
     }
 
     pub async fn start_shamir_recovery_invitation_greet(
         &self,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Result<ShamirRecoveryGreetInitialCtx, ClientStartShamirRecoveryInvitationGreetError> {
         start_invitation_greet::start_shamir_recovery_invitation_greet(self, token).await
     }

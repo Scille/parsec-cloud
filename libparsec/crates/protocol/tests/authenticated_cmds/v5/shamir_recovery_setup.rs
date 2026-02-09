@@ -2,7 +2,7 @@
 #![allow(clippy::unwrap_used)]
 
 use libparsec_tests_lite::prelude::*;
-use libparsec_types::InvitationToken;
+use libparsec_types::AccessToken;
 
 use super::authenticated_cmds;
 
@@ -58,7 +58,7 @@ pub fn req() {
         shamir_recovery_brief_certificate: "brief".into(),
         shamir_recovery_share_certificates: vec!["shares".into()],
         ciphered_data: "ciphered_data".into(),
-        reveal_token: InvitationToken::from_hex("0563ff98846c4dbf9e0a1cc2f6fbb149").unwrap(),
+        reveal_token: AccessToken::from_hex("0563ff98846c4dbf9e0a1cc2f6fbb149").unwrap(),
     };
 
     req_helper(raw, expected);

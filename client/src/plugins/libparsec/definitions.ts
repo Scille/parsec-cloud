@@ -93,7 +93,7 @@ export type EmailAddress = string
 export type EntryName = string
 export type FsPath = string
 export type GreetingAttemptID = string
-export type InvitationToken = string
+export type AccessToken = string
 export type OrganizationID = string
 export type PKIEncryptionAlgorithm = string
 export type PKIEnrollmentID = string
@@ -302,7 +302,7 @@ export interface HumanHandle {
 
 export interface NewInvitationInfo {
     addr: ParsecInvitationAddr
-    token: InvitationToken
+    token: AccessToken
     emailSentStatus: InvitationEmailSentStatus
 }
 
@@ -1839,17 +1839,17 @@ export interface ClientEventFrozenSelfUser {
 }
 export interface ClientEventGreetingAttemptCancelled {
     tag: ClientEventTag.GreetingAttemptCancelled
-    token: InvitationToken
+    token: AccessToken
     greetingAttempt: GreetingAttemptID
 }
 export interface ClientEventGreetingAttemptJoined {
     tag: ClientEventTag.GreetingAttemptJoined
-    token: InvitationToken
+    token: AccessToken
     greetingAttempt: GreetingAttemptID
 }
 export interface ClientEventGreetingAttemptReady {
     tag: ClientEventTag.GreetingAttemptReady
-    token: InvitationToken
+    token: AccessToken
     greetingAttempt: GreetingAttemptID
 }
 export interface ClientEventIncompatibleServer {
@@ -1866,7 +1866,7 @@ export interface ClientEventInvitationAlreadyUsedOrDeleted {
 }
 export interface ClientEventInvitationChanged {
     tag: ClientEventTag.InvitationChanged
-    token: InvitationToken
+    token: AccessToken
     status: InvitationStatus
 }
 export interface ClientEventMustAcceptTos {
@@ -3395,7 +3395,7 @@ export enum InviteListItemTag {
 export interface InviteListItemDevice {
     tag: InviteListItemTag.Device
     addr: ParsecInvitationAddr
-    token: InvitationToken
+    token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
     status: InvitationStatus
@@ -3403,7 +3403,7 @@ export interface InviteListItemDevice {
 export interface InviteListItemShamirRecovery {
     tag: InviteListItemTag.ShamirRecovery
     addr: ParsecInvitationAddr
-    token: InvitationToken
+    token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
     claimerUserId: UserID
@@ -3413,7 +3413,7 @@ export interface InviteListItemShamirRecovery {
 export interface InviteListItemUser {
     tag: InviteListItemTag.User
     addr: ParsecInvitationAddr
-    token: InvitationToken
+    token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
     claimerEmail: EmailAddress
@@ -3750,7 +3750,7 @@ export interface ParsedParsecAddrInvitationDevice {
     isDefaultPort: boolean
     useSsl: boolean
     organizationId: OrganizationID
-    token: InvitationToken
+    token: AccessToken
 }
 export interface ParsedParsecAddrInvitationShamirRecovery {
     tag: ParsedParsecAddrTag.InvitationShamirRecovery
@@ -3759,7 +3759,7 @@ export interface ParsedParsecAddrInvitationShamirRecovery {
     isDefaultPort: boolean
     useSsl: boolean
     organizationId: OrganizationID
-    token: InvitationToken
+    token: AccessToken
 }
 export interface ParsedParsecAddrInvitationUser {
     tag: ParsedParsecAddrTag.InvitationUser
@@ -3768,7 +3768,7 @@ export interface ParsedParsecAddrInvitationUser {
     isDefaultPort: boolean
     useSsl: boolean
     organizationId: OrganizationID
-    token: InvitationToken
+    token: AccessToken
 }
 export interface ParsedParsecAddrOrganization {
     tag: ParsedParsecAddrTag.Organization
@@ -6256,7 +6256,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>>
     accountListInvitations(
         account: Handle
-    ): Promise<Result<Array<[ParsecInvitationAddr, OrganizationID, InvitationToken, InvitationType]>, AccountListInvitationsError>>
+    ): Promise<Result<Array<[ParsecInvitationAddr, OrganizationID, AccessToken, InvitationType]>, AccountListInvitationsError>>
     accountListOrganizations(
         account: Handle
     ): Promise<Result<AccountOrganizations, AccountListOrganizationsError>>
@@ -6427,7 +6427,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ClientAcceptTosError>>
     clientCancelInvitation(
         client: Handle,
-        token: InvitationToken
+        token: AccessToken
     ): Promise<Result<null, ClientCancelInvitationError>>
     clientCreateWorkspace(
         client: Handle,
@@ -6563,15 +6563,15 @@ export interface LibParsecPlugin {
     ): Promise<Result<Handle, ClientStartError>>
     clientStartDeviceInvitationGreet(
         client: Handle,
-        token: InvitationToken
+        token: AccessToken
     ): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>>
     clientStartShamirRecoveryInvitationGreet(
         client: Handle,
-        token: InvitationToken
+        token: AccessToken
     ): Promise<Result<ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError>>
     clientStartUserInvitationGreet(
         client: Handle,
-        token: InvitationToken
+        token: AccessToken
     ): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>>
     clientStartWorkspace(
         client: Handle,

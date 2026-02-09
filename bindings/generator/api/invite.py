@@ -6,6 +6,7 @@ from .addr import (
     ParsecOrganizationBootstrapAddr,
 )
 from .common import (
+    AccessToken,
     DateTime,
     DeviceLabel,
     EmailAddress,
@@ -15,7 +16,6 @@ from .common import (
     Handle,
     HumanHandle,
     InvitationStatus,
-    InvitationToken,
     NonZeroU8,
     Ref,
     Result,
@@ -592,7 +592,7 @@ class ClientNewUserInvitationError(ErrorVariant):
 
 class NewInvitationInfo(Structure):
     addr: ParsecInvitationAddr
-    token: InvitationToken
+    token: AccessToken
     email_sent_status: InvitationEmailSentStatus
 
 
@@ -672,7 +672,7 @@ class ClientCancelInvitationError(ErrorVariant):
 
 async def client_cancel_invitation(
     client: Handle,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result[None, ClientCancelInvitationError]:
     raise NotImplementedError
 
@@ -689,7 +689,7 @@ class InviteListInvitationCreatedBy(Variant):
 class InviteListItem(Variant):
     class User:
         addr: ParsecInvitationAddr
-        token: InvitationToken
+        token: AccessToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
         claimer_email: EmailAddress
@@ -697,14 +697,14 @@ class InviteListItem(Variant):
 
     class Device:
         addr: ParsecInvitationAddr
-        token: InvitationToken
+        token: AccessToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
         status: InvitationStatus
 
     class ShamirRecovery:
         addr: ParsecInvitationAddr
-        token: InvitationToken
+        token: AccessToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
         claimer_user_id: UserID
@@ -773,19 +773,19 @@ class ClientStartShamirRecoveryInvitationGreetError(ErrorVariant):
 
 
 async def client_start_user_invitation_greet(
-    client: Handle, token: InvitationToken
+    client: Handle, token: AccessToken
 ) -> Result[UserGreetInitialInfo, ClientStartInvitationGreetError]:
     raise NotImplementedError
 
 
 async def client_start_device_invitation_greet(
-    client: Handle, token: InvitationToken
+    client: Handle, token: AccessToken
 ) -> Result[DeviceGreetInitialInfo, ClientStartInvitationGreetError]:
     raise NotImplementedError
 
 
 async def client_start_shamir_recovery_invitation_greet(
-    client: Handle, token: InvitationToken
+    client: Handle, token: AccessToken
 ) -> Result[ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError]:
     raise NotImplementedError
 

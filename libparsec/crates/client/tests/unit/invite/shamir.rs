@@ -302,7 +302,7 @@ async fn shamir_invitation_does_not_exist(env: &TestbedEnv) {
         env.server_addr.clone(),
         env.organization_id.clone(),
         libparsec_types::InvitationType::User,
-        InvitationToken::default(),
+        AccessToken::default(),
     );
 
     let error = claimer_retrieve_info(config, addr, None).await.unwrap_err();

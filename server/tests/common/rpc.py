@@ -5,16 +5,15 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     AsyncEnrollmentID,
     BlockID,
-    BootstrapToken,
     CancelledGreetingAttemptReason,
     DateTime,
     EmailAddress,
     GreetingAttemptID,
     HashDigest,
-    InvitationToken,
     PKIEnrollmentID,
     PkiSignatureAlgorithm,
     SecretKey,
@@ -69,7 +68,7 @@ class BaseAnonymousRpcClient:
 
     async def organization_bootstrap(
         self,
-        bootstrap_token: BootstrapToken | None,
+        bootstrap_token: AccessToken | None,
         root_verify_key: VerifyKey,
         user_certificate: bytes,
         device_certificate: bytes,
@@ -282,14 +281,14 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.events_listen.Rep.load(raw_rep)
 
     async def invite_cancel(
-        self, token: InvitationToken
+        self, token: AccessToken
     ) -> authenticated_cmds.latest.invite_cancel.Rep:
         req = authenticated_cmds.latest.invite_cancel.Req(token=token)
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.invite_cancel.Rep.load(raw_rep)
 
     async def invite_complete(
-        self, token: InvitationToken
+        self, token: AccessToken
     ) -> authenticated_cmds.latest.invite_complete.Rep:
         req = authenticated_cmds.latest.invite_complete.Req(token=token)
         raw_rep = await self._do_request(req.dump(), "authenticated")
@@ -305,7 +304,7 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Rep.load(raw_rep)
 
     async def invite_greeter_start_greeting_attempt(
-        self, token: InvitationToken
+        self, token: AccessToken
     ) -> authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Rep:
         req = authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Req(token=token)
         raw_rep = await self._do_request(req.dump(), "authenticated")
@@ -490,7 +489,7 @@ class BaseAuthenticatedRpcClient:
     async def shamir_recovery_setup(
         self,
         ciphered_data: bytes,
-        reveal_token: InvitationToken,
+        reveal_token: AccessToken,
         shamir_recovery_brief_certificate: bytes,
         shamir_recovery_share_certificates: list[bytes],
     ) -> authenticated_cmds.latest.shamir_recovery_setup.Rep:
@@ -751,7 +750,7 @@ class BaseInvitedRpcClient:
         return invited_cmds.latest.invite_info.Rep.load(raw_rep)
 
     async def invite_shamir_recovery_reveal(
-        self, reveal_token: InvitationToken
+        self, reveal_token: AccessToken
     ) -> invited_cmds.latest.invite_shamir_recovery_reveal.Rep:
         req = invited_cmds.latest.invite_shamir_recovery_reveal.Req(reveal_token=reveal_token)
         raw_rep = await self._do_request(req.dump(), "invited")

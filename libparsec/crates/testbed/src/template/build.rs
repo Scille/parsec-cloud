@@ -201,7 +201,7 @@ impl TestbedTemplateBuilderCounters {
         self.current_entry_id += 1;
         self.current_entry_id.to_be_bytes().into()
     }
-    pub fn next_invitation_token(&mut self) -> InvitationToken {
+    pub fn next_invitation_token(&mut self) -> AccessToken {
         self.current_invitation_token += 1;
         self.current_invitation_token.to_be_bytes().into()
     }
@@ -569,7 +569,7 @@ impl_event_builder!(NewDeviceInvitation, [created_by: DeviceID]);
 impl TestbedEventNewDeviceInvitationBuilder<'_> {
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
-    impl_customize_field_meth!(token, InvitationToken);
+    impl_customize_field_meth!(token, AccessToken);
 }
 
 /*
@@ -582,7 +582,7 @@ impl TestbedEventNewUserInvitationBuilder<'_> {
     impl_customize_field_meth!(claimer_email, EmailAddress);
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
-    impl_customize_field_meth!(token, InvitationToken);
+    impl_customize_field_meth!(token, AccessToken);
 }
 
 /*
@@ -595,7 +595,7 @@ impl TestbedEventNewShamirRecoveryInvitationBuilder<'_> {
     impl_customize_field_meth!(claimer, UserID);
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
-    impl_customize_field_meth!(token, InvitationToken);
+    impl_customize_field_meth!(token, AccessToken);
 }
 
 /*

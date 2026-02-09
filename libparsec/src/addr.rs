@@ -46,7 +46,7 @@ pub enum ParsedParsecAddr {
         is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
     },
     InvitationDevice {
         hostname: String,
@@ -54,7 +54,7 @@ pub enum ParsedParsecAddr {
         is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
     },
     InvitationShamirRecovery {
         hostname: String,
@@ -62,7 +62,7 @@ pub enum ParsedParsecAddr {
         is_default_port: bool,
         use_ssl: bool,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
     },
     PkiEnrollment {
         hostname: String,

@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from parsec._parsec import (
-    BootstrapToken,
+    AccessToken,
     DateTime,
     DeviceCertificate,
     DeviceID,
@@ -93,7 +93,7 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
         )
 
 
-TEST_BOOTSTRAP_TOKEN = BootstrapToken.from_hex("672bc6ba9c43455da28344e975dc72b7")
+TEST_BOOTSTRAP_TOKEN = AccessToken.from_hex("672bc6ba9c43455da28344e975dc72b7")
 
 
 @dataclass(slots=True, eq=False, repr=False)
@@ -164,7 +164,7 @@ class Backend:
         match await self.organization.create(
             now=DateTime(1970, 1, 1), id=org_id, force_bootstrap_token=TEST_BOOTSTRAP_TOKEN
         ):
-            case BootstrapToken():
+            case AccessToken():
                 pass
             case error:
                 assert False, error

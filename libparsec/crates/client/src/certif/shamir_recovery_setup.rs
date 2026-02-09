@@ -338,7 +338,7 @@ async fn do_shamir_recovery_setup(
     .into();
 
     let data_key = SecretKey::generate();
-    let reveal_token = InvitationToken::default();
+    let reveal_token = AccessToken::default();
 
     let ciphered_data = data_key.encrypt(&recovery_device.dump()).into();
 

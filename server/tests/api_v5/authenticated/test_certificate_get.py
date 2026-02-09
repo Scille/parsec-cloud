@@ -3,14 +3,13 @@
 import pytest
 
 from parsec._parsec import (
-    BootstrapToken,
+    AccessToken,
     DateTime,
     DeviceID,
     DeviceLabel,
     EmailAddress,
     HashAlgorithm,
     HumanHandle,
-    InvitationToken,
     PrivateKey,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
@@ -91,7 +90,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         author_signing_key=root_key,
     )
 
-    bootstrap_token = BootstrapToken.new()
+    bootstrap_token = AccessToken.new()
     await backend.organization.create(now=t1, id=org_id, force_bootstrap_token=bootstrap_token)
     outcome = await backend.organization.bootstrap(
         id=org_id,
@@ -875,7 +874,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=raw_brief,
         shamir_recovery_share_certificates=[raw_share],
     )

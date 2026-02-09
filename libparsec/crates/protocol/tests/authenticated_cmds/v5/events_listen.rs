@@ -167,7 +167,7 @@ pub fn rep_ok() {
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::Invitation {
                     invitation_status: InvitationStatus::Pending,
-                    token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
+                    token: AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 },
             ),
         ),

@@ -4,8 +4,8 @@ from __future__ import annotations
 from typing import override
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     DeviceCertificate,
     DeviceID,
@@ -124,12 +124,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
-        force_bootstrap_token: BootstrapToken | None = None,
-    ) -> BootstrapToken | OrganizationCreateBadOutcome:
+        force_bootstrap_token: AccessToken | None = None,
+    ) -> AccessToken | OrganizationCreateBadOutcome:
         if minimum_archiving_period is not Unset:
             assert minimum_archiving_period >= 0  # Sanity check
 
-        bootstrap_token = force_bootstrap_token or BootstrapToken.new()
+        bootstrap_token = force_bootstrap_token or AccessToken.new()
         if active_users_limit is Unset:
             active_users_limit = self._config.organization_initial_active_users_limit
         if user_profile_outsider_allowed is Unset:
@@ -210,7 +210,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
         raw_bootstrap_token = row["bootstrap_token"]
         bootstrap_token = (
-            None if raw_bootstrap_token is None else BootstrapToken.from_hex(raw_bootstrap_token)
+            None if raw_bootstrap_token is None else AccessToken.from_hex(raw_bootstrap_token)
         )
 
         match (row["tos_updated_on"], row["tos_per_locale_urls"]):
@@ -261,7 +261,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         conn: AsyncpgConnection,
         id: OrganizationID,
         now: DateTime,
-        bootstrap_token: BootstrapToken | None,
+        bootstrap_token: AccessToken | None,
         root_verify_key: VerifyKey,
         user_certificate: bytes,
         device_certificate: bytes,

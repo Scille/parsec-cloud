@@ -61,7 +61,7 @@ fn serde_shamir_recovery_secret() {
     let data_key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
-    let reveal_token = InvitationToken::from_hex("a927333c187d46f28bce5892563da708").unwrap();
+    let reveal_token = AccessToken::from_hex("a927333c187d46f28bce5892563da708").unwrap();
 
     let expected = ShamirRecoverySecret {
         data_key,

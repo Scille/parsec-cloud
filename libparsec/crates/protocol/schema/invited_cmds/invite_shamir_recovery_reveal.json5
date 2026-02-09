@@ -8,7 +8,7 @@
             "fields": [
                 {
                     "name": "reveal_token",
-                    "type": "InvitationToken"
+                    "type": "AccessToken"
                 }
             ]
         },

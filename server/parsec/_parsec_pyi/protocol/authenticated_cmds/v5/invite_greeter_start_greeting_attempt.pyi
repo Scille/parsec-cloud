@@ -4,13 +4,13 @@
 
 from __future__ import annotations
 
-from parsec._parsec import GreetingAttemptID, InvitationToken
+from parsec._parsec import AccessToken, GreetingAttemptID
 
 class Req:
-    def __init__(self, token: InvitationToken) -> None: ...
+    def __init__(self, token: AccessToken) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def token(self) -> InvitationToken: ...
+    def token(self) -> AccessToken: ...
 
 class Rep:
     @staticmethod

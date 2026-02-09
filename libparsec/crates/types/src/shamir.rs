@@ -6,7 +6,7 @@ use crate::{
     self as libparsec_types,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DataResult, DateTime, DeviceID, InvitationToken,
+    AccessToken, DataError, DataResult, DateTime, DeviceID,
 };
 use libparsec_crypto::{
     impl_key_debug, CryptoError, CryptoResult, PrivateKey, PublicKey, SecretKey, SigningKey,
@@ -20,7 +20,7 @@ use serde_bytes::Bytes;
 #[serde(into = "ShamirRecoverySecretData", from = "ShamirRecoverySecretData")]
 pub struct ShamirRecoverySecret {
     pub data_key: SecretKey,
-    pub reveal_token: InvitationToken,
+    pub reveal_token: AccessToken,
 }
 
 parsec_data!("schema/shamir/shamir_recovery_secret.json5");

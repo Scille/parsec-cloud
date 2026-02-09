@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
+  AccessToken,
   ClientStartInvitationGreetError,
   ConnectionHandle,
   DeviceLabel,
   GreetInProgressError,
   HumanHandle,
-  InvitationToken,
   Result,
   UserGreetInProgress1Info,
   UserGreetInProgress2Info,
@@ -65,7 +65,7 @@ export class UserGreet {
     }
   }
 
-  async startGreet(token: InvitationToken): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>> {
+  async startGreet(token: AccessToken): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>> {
     const clientHandle = getConnectionHandle();
 
     if (clientHandle !== null) {

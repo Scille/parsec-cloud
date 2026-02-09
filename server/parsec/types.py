@@ -20,13 +20,13 @@ from pydantic_core.core_schema import (
 )
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
     DateTime,
     DeviceID,
     EmailAddress,
     GreetingAttemptID,
     InvitationStatus,
-    InvitationToken,
     OrganizationID,
     RealmRole,
     SequesterServiceID,
@@ -206,11 +206,11 @@ SequesterServiceIDField = Annotated[
     ),
 ]
 InvitationTokenField = Annotated[
-    InvitationToken,
+    AccessToken,
     get_pydantic_schema(
-        InvitationToken,
-        lambda v: InvitationToken.from_hex(v),
-        lambda v: v.hex if isinstance(v, InvitationToken) else v,
+        AccessToken,
+        lambda v: AccessToken.from_hex(v),
+        lambda v: v.hex if isinstance(v, AccessToken) else v,
     ),
 ]
 GreetingAttemptIDField = Annotated[

@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     OrganizationID,
 )
@@ -103,7 +103,7 @@ async def organization_create(
     user_profile_outsider_allowed: bool,
     minimum_archiving_period: int,
     tos_per_locale_urls: dict[TosLocale, TosUrl] | None,
-    bootstrap_token: BootstrapToken | None,
+    bootstrap_token: AccessToken | None,
 ) -> int | OrganizationCreateBadOutcome:
     organization_internal_id = await conn.fetchval(
         *_q_insert_organization(

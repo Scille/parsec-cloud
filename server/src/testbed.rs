@@ -20,10 +20,9 @@ use crate::{
         UserUpdateCertificate,
     },
     protocol::ActiveUsersLimit,
-    BlockID, DateTime, DeviceID, DeviceLabel, EmailAddress, HumanHandle, InvitationToken,
-    PrivateKey, RealmRole, SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer,
-    SequesterServiceID, SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID,
-    UserProfile, VlobID,
+    AccessToken, BlockID, DateTime, DeviceID, DeviceLabel, EmailAddress, HumanHandle, PrivateKey,
+    RealmRole, SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterServiceID,
+    SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
 };
 
 #[pyclass]
@@ -245,7 +244,7 @@ event_wrapper!(
     [
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ],
     |_py, x: &TestbedEventNewDeviceInvitation| -> PyResult<String> {
         Ok(format!(
@@ -261,7 +260,7 @@ event_wrapper!(
         claimer_email: EmailAddress,
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ],
     |_py, x: &TestbedEventNewUserInvitation| -> PyResult<String> {
         Ok(format!(
@@ -277,7 +276,7 @@ event_wrapper!(
         claimer: UserID,
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ],
     |_py, x: &TestbedEventNewShamirRecoveryInvitation| -> PyResult<String> {
         Ok(format!(
@@ -406,7 +405,7 @@ event_wrapper!(
         per_recipient_shares: HashMap<UserID, NonZeroU8>,
         recovery_device: DeviceID,
         data_key: SecretKey,
-        reveal_token: InvitationToken,
+        reveal_token: AccessToken,
         ciphered_data: Py<PyBytes>,
         brief_certificate: ShamirRecoveryBriefCertificate,
         raw_brief_certificate: Py<PyBytes>,
