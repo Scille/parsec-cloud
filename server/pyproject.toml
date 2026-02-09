@@ -67,7 +67,7 @@ setuptools = "^82.0.0"
 deptry = "^0.24.0"
 editorconfig-checker = "^3.2.1"
 pyright = "^1.1.353"
-ruff = "^0.14.0"
+ruff = "^0.15.0"
 sqlfluff = "^4.0.0"
 # test
 httpx-sse = "^0.4.1"
