@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import EmailAddress, InvitationToken
+from parsec._parsec import AccessToken, EmailAddress
 
 class InvitationEmailSentStatus:
     VALUES: tuple[InvitationEmailSentStatus]
@@ -38,11 +38,11 @@ class RepUnknownStatus(Rep):
     def reason(self) -> str | None: ...
 
 class RepOk(Rep):
-    def __init__(self, token: InvitationToken, email_sent: InvitationEmailSentStatus) -> None: ...
+    def __init__(self, token: AccessToken, email_sent: InvitationEmailSentStatus) -> None: ...
     @property
     def email_sent(self) -> InvitationEmailSentStatus: ...
     @property
-    def token(self) -> InvitationToken: ...
+    def token(self) -> AccessToken: ...
 
 class RepAuthorNotAllowed(Rep):
     def __init__(

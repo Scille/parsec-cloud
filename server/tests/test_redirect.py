@@ -6,7 +6,7 @@ import httpx
 import pytest
 
 from parsec._parsec import (
-    InvitationToken,
+    AccessToken,
     InvitationType,
     OrganizationID,
     ParsecAddr,
@@ -57,7 +57,7 @@ async def test_get_redirect_invitation(use_ssl: bool, client: httpx.AsyncClient,
         server_addr=backend.config.server_addr,
         organization_id=OrganizationID("Org"),
         invitation_type=InvitationType.USER,
-        token=InvitationToken.new(),
+        token=AccessToken.new(),
     )
     # TODO: should use invitation_addr.to_redirection_url() when available !
     *_, target = invitation_addr.to_url().split("/")

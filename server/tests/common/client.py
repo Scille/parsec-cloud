@@ -10,13 +10,13 @@ from httpx import ASGITransport, AsyncClient, Response
 from httpx_sse import EventSource, ServerSentEvent, aconnect_sse
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     ApiVersion,
     DateTime,
     DeviceID,
     EmailAddress,
     HumanHandle,
-    InvitationToken,
     OrganizationID,
     SecretKey,
     SequesterServiceID,
@@ -273,7 +273,7 @@ class InvitedRpcClient(BaseInvitedRpcClient):
         return self.event.claimer_email
 
     @property
-    def token(self) -> InvitationToken:
+    def token(self) -> AccessToken:
         return self.event.token
 
     async def _do_request(self, req: bytes, family: str) -> bytes:
@@ -654,19 +654,19 @@ class ShamirOrgRpcClients:
         return self._last_shamir_topic_timestamp()
 
     @property
-    def alice_shamir_reveal_token(self) -> InvitationToken:
+    def alice_shamir_reveal_token(self) -> AccessToken:
         return self._shamir_reveal_token_for("alice")
 
     @property
-    def bob_shamir_reveal_token(self) -> InvitationToken:
+    def bob_shamir_reveal_token(self) -> AccessToken:
         return self._shamir_reveal_token_for("bob")
 
     @property
-    def mallory_shamir_reveal_token(self) -> InvitationToken:
+    def mallory_shamir_reveal_token(self) -> AccessToken:
         return self._shamir_reveal_token_for("mallory")
 
     @property
-    def mike_shamir_reveal_token(self) -> InvitationToken:
+    def mike_shamir_reveal_token(self) -> AccessToken:
         return self._shamir_reveal_token_for("mike")
 
     @property
@@ -710,7 +710,7 @@ class ShamirOrgRpcClients:
                 return event.shares_certificates
         raise RuntimeError(f"New shamir recovery event not found for user `{user}` !")
 
-    def _shamir_reveal_token_for(self, user: str) -> InvitationToken:
+    def _shamir_reveal_token_for(self, user: str) -> AccessToken:
         user_id = UserID.test_from_nickname(user)
         for event in self.testbed_template.events:
             if isinstance(event, tb.TestbedEventNewShamirRecovery) and event.user_id == user_id:

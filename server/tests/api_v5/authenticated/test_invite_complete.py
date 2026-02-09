@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
-from parsec._parsec import InvitationToken, UserProfile, authenticated_cmds
+from parsec._parsec import AccessToken, UserProfile, authenticated_cmds
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -38,7 +38,7 @@ async def test_authenticated_invite_complete_ok_for_non_admin_users(
 async def test_authenticated_invite_complete_invitation_not_found(
     coolorg: CoolorgRpcClients,
 ) -> None:
-    rep = await coolorg.alice.invite_complete(InvitationToken.new())
+    rep = await coolorg.alice.invite_complete(AccessToken.new())
 
     assert rep == authenticated_cmds.latest.invite_complete.RepInvitationNotFound()
 

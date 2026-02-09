@@ -3,9 +3,9 @@
 
 from .common import (
     U16,
+    AccessToken,
     ErrorVariant,
     IndexInt,
-    InvitationToken,
     OrganizationID,
     Ref,
     Result,
@@ -95,7 +95,7 @@ class ParsedParsecAddr(Variant):
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
-        token: InvitationToken
+        token: AccessToken
 
     class InvitationDevice:
         hostname: str
@@ -103,7 +103,7 @@ class ParsedParsecAddr(Variant):
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
-        token: InvitationToken
+        token: AccessToken
 
     class InvitationShamirRecovery:
         hostname: str
@@ -111,7 +111,7 @@ class ParsedParsecAddr(Variant):
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
-        token: InvitationToken
+        token: AccessToken
 
     class PkiEnrollment:
         hostname: str

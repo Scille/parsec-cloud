@@ -5,11 +5,11 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    AccessToken,
     DateTime,
     EmailAddress,
     HumanHandle,
     InvitationStatus,
-    InvitationToken,
     UserID,
 )
 
@@ -34,7 +34,7 @@ class InviteListItem:
 class InviteListItemUser(InviteListItem):
     def __init__(
         self,
-        token: InvitationToken,
+        token: AccessToken,
         created_on: DateTime,
         created_by: InvitationCreatedBy,
         claimer_email: EmailAddress,
@@ -49,12 +49,12 @@ class InviteListItemUser(InviteListItem):
     @property
     def status(self) -> InvitationStatus: ...
     @property
-    def token(self) -> InvitationToken: ...
+    def token(self) -> AccessToken: ...
 
 class InviteListItemDevice(InviteListItem):
     def __init__(
         self,
-        token: InvitationToken,
+        token: AccessToken,
         created_on: DateTime,
         created_by: InvitationCreatedBy,
         status: InvitationStatus,
@@ -66,12 +66,12 @@ class InviteListItemDevice(InviteListItem):
     @property
     def status(self) -> InvitationStatus: ...
     @property
-    def token(self) -> InvitationToken: ...
+    def token(self) -> AccessToken: ...
 
 class InviteListItemShamirRecovery(InviteListItem):
     def __init__(
         self,
-        token: InvitationToken,
+        token: AccessToken,
         created_on: DateTime,
         created_by: InvitationCreatedBy,
         claimer_user_id: UserID,
@@ -89,7 +89,7 @@ class InviteListItemShamirRecovery(InviteListItem):
     @property
     def status(self) -> InvitationStatus: ...
     @property
-    def token(self) -> InvitationToken: ...
+    def token(self) -> AccessToken: ...
 
 class Req:
     def __init__(

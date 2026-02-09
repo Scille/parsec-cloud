@@ -16,7 +16,7 @@ import {
   createDeviceInvitation,
 } from '@/parsec';
 import { generateNoHandleError } from '@/parsec/utils';
-import { InvitationToken, ParsecInvitationAddr, SASCode, libparsec } from '@/plugins/libparsec';
+import { AccessToken, ParsecInvitationAddr, SASCode, libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 
 export class DeviceGreet {
@@ -26,7 +26,7 @@ export class DeviceGreet {
   correctSASCode: SASCode;
   SASCodeChoices: SASCode[];
   requestedDeviceLabel: DeviceLabel;
-  token: InvitationToken;
+  token: AccessToken;
   invitationLink: ParsecInvitationAddr;
 
   constructor() {

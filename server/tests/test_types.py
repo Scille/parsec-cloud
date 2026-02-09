@@ -18,6 +18,7 @@ from parsec._parsec import (
     VlobID,
 )
 from parsec.types import (
+    AccessToken,
     ActiveUsersLimitField,
     Base64BytesField,
     DateTimeField,
@@ -25,7 +26,6 @@ from parsec.types import (
     EmailAddressField,
     GreetingAttemptIDField,
     InvitationStatusField,
-    InvitationToken,
     InvitationTokenField,
     OrganizationIDField,
     RealmRoleField,
@@ -81,7 +81,7 @@ def test_good(field: str):
             expected = SequesterServiceID.from_hex("4263b5fb763b48e897bbef8228f71a45")
         case "invitation_token":
             data = {"invitation_token": "4263b5fb763b48e897bbef8228f71a45"}
-            expected = InvitationToken.from_hex("4263b5fb763b48e897bbef8228f71a45")
+            expected = AccessToken.from_hex("4263b5fb763b48e897bbef8228f71a45")
         case "greeting_attempt_id":
             data = {"greeting_attempt_id": "4263b5fb763b48e897bbef8228f71a45"}
             expected = GreetingAttemptID.from_hex("4263b5fb763b48e897bbef8228f71a45")

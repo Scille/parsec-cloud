@@ -25,7 +25,7 @@ pub use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
-use crate::{BootstrapToken, IndexInt, InvitationToken, InvitationType, OrganizationID, VlobID};
+use crate::{AccessToken, IndexInt, InvitationType, OrganizationID, VlobID};
 
 pub const PARSEC_SCHEME: &str = "parsec3";
 const HTTP_OR_HTTPS_SCHEME: &str = "http(s)";
@@ -711,7 +711,7 @@ impl std::str::FromStr for ParsecActionAddr {
 pub struct ParsecOrganizationBootstrapAddr {
     base: BaseParsecAddr,
     organization_id: OrganizationID,
-    token: Option<BootstrapToken>,
+    token: Option<AccessToken>,
 }
 
 impl_common_stuff!(ParsecOrganizationBootstrapAddr);
@@ -720,7 +720,7 @@ impl ParsecOrganizationBootstrapAddr {
     pub fn new(
         server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
-        token: Option<BootstrapToken>,
+        token: Option<AccessToken>,
     ) -> Self {
         Self {
             base: server_addr.into().base,
@@ -742,7 +742,7 @@ impl ParsecOrganizationBootstrapAddr {
         let token = extract_param_and_b64_msgpack_deserialize!(
             &pairs,
             PARSEC_PARAM_PAYLOAD,
-            Option<BootstrapToken>
+            Option<AccessToken>
         )?;
 
         Ok(Self {
@@ -771,7 +771,7 @@ impl ParsecOrganizationBootstrapAddr {
         &self.organization_id
     }
 
-    pub fn token(&self) -> Option<&BootstrapToken> {
+    pub fn token(&self) -> Option<&AccessToken> {
         self.token.as_ref()
     }
 
@@ -886,7 +886,7 @@ pub struct ParsecInvitationAddr {
     base: BaseParsecAddr,
     organization_id: OrganizationID,
     invitation_type: InvitationType,
-    token: InvitationToken,
+    token: AccessToken,
 }
 
 impl_common_stuff!(ParsecInvitationAddr);
@@ -896,7 +896,7 @@ impl ParsecInvitationAddr {
         server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Self {
         Self {
             base: server_addr.into().base,
@@ -924,11 +924,8 @@ impl ParsecInvitationAddr {
                 })
             }
         };
-        let token = extract_param_and_b64_msgpack_deserialize!(
-            &pairs,
-            PARSEC_PARAM_PAYLOAD,
-            InvitationToken
-        )?;
+        let token =
+            extract_param_and_b64_msgpack_deserialize!(&pairs, PARSEC_PARAM_PAYLOAD, AccessToken)?;
 
         Ok(Self {
             base,
@@ -968,7 +965,7 @@ impl ParsecInvitationAddr {
         self.invitation_type
     }
 
-    pub fn token(&self) -> InvitationToken {
+    pub fn token(&self) -> AccessToken {
         self.token
     }
 

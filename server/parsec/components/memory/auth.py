@@ -2,7 +2,7 @@
 
 from typing import Any, override
 
-from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID
+from parsec._parsec import AccessToken, DateTime, DeviceID, OrganizationID
 from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.auth import (
     AccountAuthenticationToken,
@@ -61,7 +61,7 @@ class MemoryAuthComponent(BaseAuthComponent):
 
     @override
     async def invited_auth(
-        self, now: DateTime, organization_id: OrganizationID, token: InvitationToken
+        self, now: DateTime, organization_id: OrganizationID, token: AccessToken
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
         try:
             org = self._data.organizations[organization_id]

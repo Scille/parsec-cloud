@@ -43,7 +43,7 @@ pub async fn new_user_invitation(
     cmds: &AuthenticatedCmds,
     claimer_email: EmailAddress,
     send_email: bool,
-) -> Result<(InvitationToken, InvitationEmailSentStatus), NewUserInvitationError> {
+) -> Result<(AccessToken, InvitationEmailSentStatus), NewUserInvitationError> {
     use authenticated_cmds::latest::invite_new_user::{
         InvitationEmailSentStatus as ApiInvitationEmailSentStatus, Rep, Req,
     };
@@ -90,7 +90,7 @@ pub enum NewDeviceInvitationError {
 pub async fn new_device_invitation(
     cmds: &AuthenticatedCmds,
     send_email: bool,
-) -> Result<(InvitationToken, InvitationEmailSentStatus), NewDeviceInvitationError> {
+) -> Result<(AccessToken, InvitationEmailSentStatus), NewDeviceInvitationError> {
     use authenticated_cmds::latest::invite_new_device::{
         InvitationEmailSentStatus as ApiInvitationEmailSentStatus, Rep, Req,
     };
@@ -137,7 +137,7 @@ pub async fn new_shamir_recovery_invitation(
     cmds: &AuthenticatedCmds,
     claimer_user_id: UserID,
     send_email: bool,
-) -> Result<(InvitationToken, InvitationEmailSentStatus), NewShamirRecoveryInvitationError> {
+) -> Result<(AccessToken, InvitationEmailSentStatus), NewShamirRecoveryInvitationError> {
     use authenticated_cmds::latest::invite_new_shamir_recovery::{
         InvitationEmailSentStatus as ApiInvitationEmailSentStatus, Rep, Req,
     };
@@ -191,7 +191,7 @@ pub enum CancelInvitationError {
 
 pub async fn cancel_invitation(
     cmds: &AuthenticatedCmds,
-    token: InvitationToken,
+    token: AccessToken,
 ) -> Result<(), CancelInvitationError> {
     use authenticated_cmds::latest::invite_cancel::{Rep, Req};
 
@@ -445,7 +445,7 @@ impl GreetCancellerCtx {
 
 #[derive(Debug)]
 struct BaseGreetInitialCtx {
-    token: InvitationToken,
+    token: AccessToken,
     device: Arc<LocalDevice>,
     cmds: Arc<AuthenticatedCmds>,
     event_bus: EventBus,
@@ -456,7 +456,7 @@ impl BaseGreetInitialCtx {
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
         event_bus: EventBus,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Self {
         Self {
             token,
@@ -675,7 +675,7 @@ impl UserGreetInitialCtx {
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
         event_bus: EventBus,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Self {
         UserGreetInitialCtx(BaseGreetInitialCtx::new(device, cmds, event_bus, token))
     }
@@ -703,7 +703,7 @@ impl DeviceGreetInitialCtx {
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
         event_bus: EventBus,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Self {
         Self(BaseGreetInitialCtx::new(device, cmds, event_bus, token))
     }
@@ -734,7 +734,7 @@ impl ShamirRecoveryGreetInitialCtx {
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
         event_bus: EventBus,
-        token: InvitationToken,
+        token: AccessToken,
         share_data: ShamirRecoveryShareData,
     ) -> Self {
         Self {
@@ -773,7 +773,7 @@ impl ShamirRecoveryGreetInitialCtx {
 
 #[derive(Debug)]
 struct BaseGreetInProgress1Ctx {
-    token: InvitationToken,
+    token: AccessToken,
     greeting_attempt: GreetingAttemptID,
     device: Arc<LocalDevice>,
     greeter_sas: SASCode,
@@ -883,7 +883,7 @@ impl ShamirRecoveryGreetInProgress1Ctx {
 
 #[derive(Debug)]
 struct BaseGreetInProgress2Ctx {
-    token: InvitationToken,
+    token: AccessToken,
     greeting_attempt: GreetingAttemptID,
     device: Arc<LocalDevice>,
     claimer_sas: SASCode,
@@ -1021,7 +1021,7 @@ impl ShamirRecoveryGreetInProgress2Ctx {
 
 #[derive(Debug)]
 struct BaseGreetInProgress3Ctx {
-    token: InvitationToken,
+    token: AccessToken,
     greeting_attempt: GreetingAttemptID,
     device: Arc<LocalDevice>,
     shared_secret_key: SecretKey,
@@ -1031,7 +1031,7 @@ struct BaseGreetInProgress3Ctx {
 
 #[derive(Debug)]
 struct BaseGreetInProgress3WithPayloadCtx {
-    token: InvitationToken,
+    token: AccessToken,
     greeting_attempt: GreetingAttemptID,
     device: Arc<LocalDevice>,
     shared_secret_key: SecretKey,
@@ -1322,7 +1322,7 @@ fn create_new_signed_device_certificates(
 
 #[derive(Debug)]
 pub struct UserGreetInProgress4Ctx {
-    pub token: InvitationToken,
+    pub token: AccessToken,
     pub greeting_attempt: GreetingAttemptID,
     pub requested_device_label: DeviceLabel,
     pub requested_human_handle: HumanHandle,
@@ -1486,7 +1486,7 @@ impl UserGreetInProgress4Ctx {
 
 #[derive(Debug)]
 pub struct DeviceGreetInProgress4Ctx {
-    pub token: InvitationToken,
+    pub token: AccessToken,
     pub greeting_attempt: GreetingAttemptID,
     pub requested_device_label: DeviceLabel,
     device: Arc<LocalDevice>,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
     BlockID,
     DateTime,
@@ -11,7 +12,6 @@ from parsec._parsec import (
     DeviceLabel,
     EmailAddress,
     HumanHandle,
-    InvitationToken,
     PrivateKey,
     RealmArchivingCertificate,
     RealmKeyRotationCertificate,
@@ -156,18 +156,18 @@ class TestbedEventNewUserInvitation:
     claimer_email: EmailAddress
     created_by: DeviceID
     created_on: DateTime
-    token: InvitationToken
+    token: AccessToken
 
 class TestbedEventNewDeviceInvitation:
     created_by: DeviceID
     created_on: DateTime
-    token: InvitationToken
+    token: AccessToken
 
 class TestbedEventNewShamirRecoveryInvitation:
     claimer: UserID
     created_by: DeviceID
     created_on: DateTime
-    token: InvitationToken
+    token: AccessToken
 
 class TestbedEventNewRealm:
     timestamp: DateTime
@@ -228,7 +228,7 @@ class TestbedEventNewShamirRecovery:
     per_recipient_shares: dict[UserID, int]
     recovery_device: DeviceID
     data_key: SecretKey
-    reveal_token: InvitationToken
+    reveal_token: AccessToken
 
     ciphered_data: bytes
     brief_certificate: ShamirRecoveryBriefCertificate

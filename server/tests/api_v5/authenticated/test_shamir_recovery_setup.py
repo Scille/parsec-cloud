@@ -3,8 +3,8 @@
 import pytest
 
 from parsec._parsec import (
+    AccessToken,
     DateTime,
-    InvitationToken,
     RevokedUserCertificate,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryShareCertificate,
@@ -43,7 +43,7 @@ async def test_authenticated_shamir_recovery_setup_ok(
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -110,7 +110,7 @@ async def test_authenticated_shamir_recovery_setup_not_isolated_from_other_users
 
     rep = await shamirorg.bob.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(shamirorg.bob.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(shamirorg.bob.signing_key)],
     )
@@ -151,7 +151,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_cor
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief,
         shamir_recovery_share_certificates=[share],
     )
@@ -195,7 +195,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_brief_cor
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief,
         shamir_recovery_share_certificates=[share],
     )
@@ -225,7 +225,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_rec
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -264,7 +264,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_duplicate
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[
             share.dump_and_sign(coolorg.alice.signing_key),
@@ -298,7 +298,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_author_in
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -329,7 +329,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_missing_s
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -359,7 +359,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_inc
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -392,7 +392,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_user_id_m
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -430,7 +430,7 @@ async def test_authenticated_shamir_recovery_setup_recipient_not_found(
 
     rep = await shamirorg.mike.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(shamirorg.mike.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(shamirorg.mike.signing_key)],
     )
@@ -483,7 +483,7 @@ async def test_authenticated_shamir_recovery_setup_revoked_recipient(
 
     rep = await shamirorg.mike.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(shamirorg.mike.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(shamirorg.mike.signing_key)],
     )
@@ -521,7 +521,7 @@ async def test_authenticated_shamir_recovery_setup_shamir_recovery_already_exist
 
     rep = await shamirorg.alice.shamir_recovery_setup(
         ciphered_data=b"def",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(shamirorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(shamirorg.alice.signing_key)],
     )
@@ -550,7 +550,7 @@ async def test_authenticated_shamir_recovery_setup_timestamp_out_of_ballpark(
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -598,7 +598,7 @@ async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
 
     rep = await author.shamir_recovery_setup(
         ciphered_data=b"abc",
-        reveal_token=InvitationToken.new(),
+        reveal_token=AccessToken.new(),
         shamir_recovery_brief_certificate=brief.dump_and_sign(author.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(author.signing_key)],
     )
@@ -629,7 +629,7 @@ async def test_authenticated_shamir_recovery_setup_http_common_errors(
 
         await coolorg.alice.shamir_recovery_setup(
             ciphered_data=b"abc",
-            reveal_token=InvitationToken.new(),
+            reveal_token=AccessToken.new(),
             shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
             shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
         )

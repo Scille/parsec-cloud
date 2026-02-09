@@ -13,7 +13,7 @@
                         "name": "invitations",
                         // Only the bare minimum is provided here, additional information
                         // about should be retrieved using `invite_info` invited API.
-                        "type": "List<(OrganizationID, InvitationToken, InvitationType)>"
+                        "type": "List<(OrganizationID, AccessToken, InvitationType)>"
                     }
                 ]
             }

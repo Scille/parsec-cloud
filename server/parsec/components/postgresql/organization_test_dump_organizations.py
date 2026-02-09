@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     OrganizationID,
 )
@@ -50,7 +50,7 @@ async def organization_test_dump_organizations(
 
         match row["bootstrap_token"]:
             case str() as raw_bootstrap_token:
-                bootstrap_token = BootstrapToken.from_hex(raw_bootstrap_token)
+                bootstrap_token = AccessToken.from_hex(raw_bootstrap_token)
             case None as bootstrap_token:
                 pass
             case _:

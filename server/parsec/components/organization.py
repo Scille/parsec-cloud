@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from enum import auto
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     DeviceCertificate,
     DeviceID,
@@ -60,7 +60,7 @@ class TermsOfService:
 @dataclass(slots=True)
 class OrganizationDump:
     organization_id: OrganizationID
-    bootstrap_token: BootstrapToken | None
+    bootstrap_token: AccessToken | None
     is_bootstrapped: bool
     is_expired: bool
     active_users_limit: ActiveUsersLimit
@@ -169,7 +169,7 @@ def organization_bootstrap_validate(
 @dataclass(slots=True)
 class Organization:
     organization_id: OrganizationID
-    bootstrap_token: BootstrapToken | None
+    bootstrap_token: AccessToken | None
     is_expired: bool
     created_on: DateTime
     minimum_archiving_period: int
@@ -255,8 +255,8 @@ class BaseOrganizationComponent:
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
-        force_bootstrap_token: BootstrapToken | None = None,
-    ) -> BootstrapToken | OrganizationCreateBadOutcome:
+        force_bootstrap_token: AccessToken | None = None,
+    ) -> AccessToken | OrganizationCreateBadOutcome:
         raise NotImplementedError
 
     async def get(self, id: OrganizationID) -> Organization | OrganizationGetBadOutcome:
@@ -266,7 +266,7 @@ class BaseOrganizationComponent:
         self,
         id: OrganizationID,
         now: DateTime,
-        bootstrap_token: BootstrapToken | None,
+        bootstrap_token: AccessToken | None,
         root_verify_key: VerifyKey,
         user_certificate: bytes,
         device_certificate: bytes,

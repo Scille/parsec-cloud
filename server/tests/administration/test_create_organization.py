@@ -8,8 +8,8 @@ import httpx
 import pytest
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     OrganizationID,
     ParsecOrganizationBootstrapAddr,
@@ -209,7 +209,7 @@ async def test_overwrite_existing(
     backend: Backend,
 ) -> None:
     org_id = next_organization_id(prefix="MyNewOrg")
-    bootstrap_token = BootstrapToken.new()
+    bootstrap_token = AccessToken.new()
 
     t0 = DateTime.now()
     outcome = await backend.organization.create(
@@ -221,7 +221,7 @@ async def test_overwrite_existing(
         tos={"en_HK": "https://parsec.invalid/tos_en.pdf"},
         force_bootstrap_token=bootstrap_token,
     )
-    assert isinstance(outcome, BootstrapToken)
+    assert isinstance(outcome, AccessToken)
 
     # Sanity check
     dump = await backend.organization.test_dump_organizations()

@@ -296,7 +296,7 @@ class EntryName(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, _> { s.parse::<libparsec::EntryName>().map_err(|e| e.to_string()) }"
 
 
-# VlobID and InvitationToken, are defined as strings (instead of
+# VlobID and AccessToken, are defined as strings (instead of
 # Uint8Array) so that the Typescript code only manipulates strings without
 # conversion or parsing.
 
@@ -306,10 +306,10 @@ class VlobID(StrBasedType):
     custom_to_rs_string = "|x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
-class InvitationToken(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<libparsec::InvitationToken, _> { libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+class AccessToken(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::AccessToken, _> { libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
     custom_to_rs_string = (
-        "|x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) }"
+        "|x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) }"
     )
 
 

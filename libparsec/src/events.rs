@@ -63,22 +63,22 @@ pub enum ClientEvent {
     },
 
     InvitationChanged {
-        token: InvitationToken,
+        token: AccessToken,
         status: InvitationStatus,
     },
 
     GreetingAttemptReady {
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
     },
 
     GreetingAttemptCancelled {
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
     },
 
     GreetingAttemptJoined {
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
     },
 

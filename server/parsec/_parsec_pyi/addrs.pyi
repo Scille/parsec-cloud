@@ -5,8 +5,7 @@ from __future__ import annotations
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationType
 from parsec._parsec_pyi.ids import (
-    BootstrapToken,
-    InvitationToken,
+    AccessToken,
     OrganizationID,
     VlobID,
 )
@@ -82,7 +81,7 @@ class ParsecOrganizationBootstrapAddr(ParsecAddr):
     def __init__(
         self,
         organization_id: OrganizationID,
-        token: BootstrapToken | None,
+        token: AccessToken | None,
         hostname: str,
         port: int | None,
         use_ssl: bool = True,
@@ -91,7 +90,7 @@ class ParsecOrganizationBootstrapAddr(ParsecAddr):
     @property
     def organization_id(self) -> OrganizationID: ...
     @property
-    def token(self) -> BootstrapToken | None: ...
+    def token(self) -> AccessToken | None: ...
     @property
     def hostname(self) -> str: ...
     @property
@@ -113,7 +112,7 @@ class ParsecOrganizationBootstrapAddr(ParsecAddr):
         cls,
         server_addr: ParsecAddr,
         organization_id: OrganizationID,
-        token: BootstrapToken | None = None,
+        token: AccessToken | None = None,
     ) -> ParsecOrganizationBootstrapAddr: ...
 
 class ParsecWorkspacePathAddr(ParsecAddr):
@@ -165,7 +164,7 @@ class ParsecInvitationAddr(ParsecAddr):
         self,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: InvitationToken,
+        token: AccessToken,
         hostname: str,
         port: int | None,
         use_ssl: bool = True,
@@ -184,7 +183,7 @@ class ParsecInvitationAddr(ParsecAddr):
     @property
     def invitation_type(self) -> InvitationType: ...
     @property
-    def token(self) -> InvitationToken: ...
+    def token(self) -> AccessToken: ...
     def get_server_addr(self) -> ParsecAddr: ...
     def to_url(self) -> str: ...
     def to_http_redirection_url(self) -> str: ...
@@ -197,7 +196,7 @@ class ParsecInvitationAddr(ParsecAddr):
         server_addr: ParsecAddr,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> ParsecInvitationAddr: ...
 
 class ParsecPkiEnrollmentAddr(ParsecAddr):

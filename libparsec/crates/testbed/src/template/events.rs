@@ -1994,7 +1994,7 @@ pub struct TestbedEventNewShamirRecovery {
     pub per_recipient_shares: Vec<(UserID, NonZeroU8)>,
     pub recovery_device: DeviceID,
     pub data_key: SecretKey,
-    pub reveal_token: InvitationToken,
+    pub reveal_token: AccessToken,
     #[serde(skip)]
     cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventNewShamirRecoveryCache>>>,
 }
@@ -2008,7 +2008,7 @@ impl_event_debug!(
         per_recipient_shares: Vec<UserID, NonZeroU8>,
         recovery_device: DeviceID,
         data_key: SecretKey,
-        reveal_token: InvitationToken,
+        reveal_token: AccessToken,
     ]
 );
 impl_event_crc_hash!(
@@ -2020,7 +2020,7 @@ impl_event_crc_hash!(
         per_recipient_shares: Vec<(UserID, NonZeroU8)>,
         recovery_device: DeviceID,
         data_key: SecretKey,
-        reveal_token: InvitationToken,
+        reveal_token: AccessToken,
     ]
 );
 
@@ -2418,7 +2418,7 @@ no_certificate_event!(
     [
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ]
 );
 
@@ -2452,7 +2452,7 @@ no_certificate_event!(
         created_by: DeviceID,
         claimer_email: EmailAddress,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ]
 );
 
@@ -2489,7 +2489,7 @@ no_certificate_event!(
         claimer: UserID,
         created_by: DeviceID,
         created_on: DateTime,
-        token: InvitationToken,
+        token: AccessToken,
     ]
 );
 

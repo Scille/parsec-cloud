@@ -101,7 +101,7 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
         env.server_addr.clone(),
         env.organization_id.to_owned(),
         InvitationType::User,
-        InvitationToken::default(),
+        AccessToken::default(),
     );
     let cmds = InvitedCmds::new(&env.discriminant_dir, bad_addr, ProxyConfig::default()).unwrap();
 
@@ -133,7 +133,7 @@ macro_rules! register_rpc_http_hook {
                 env.server_addr.clone(),
                 env.organization_id.to_owned(),
                 InvitationType::User,
-                InvitationToken::default(),
+                AccessToken::default(),
             );
             let cmds =
                 InvitedCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();

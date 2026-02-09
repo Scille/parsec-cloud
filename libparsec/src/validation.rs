@@ -28,7 +28,7 @@ pub fn validate_device_label(raw: &str) -> bool {
 }
 
 pub fn validate_invitation_token(raw: &str) -> bool {
-    libparsec_types::InvitationToken::from_hex(raw).is_ok()
+    libparsec_types::AccessToken::from_hex(raw).is_ok()
 }
 
 pub fn validate_organization_id(raw: &str) -> bool {

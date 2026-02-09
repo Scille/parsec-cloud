@@ -921,8 +921,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::HumanHandle => quote_rs_to_py_class!(crate::ids::HumanHandle),
         FieldType::UserProfile => quote_rs_to_py_class!(crate::enumerate::UserProfile),
         FieldType::RealmRole => quote_rs_to_py_class!(crate::enumerate::RealmRole),
-        FieldType::BootstrapToken => quote_rs_to_py_class!(crate::token::BootstrapToken),
-        FieldType::InvitationToken => quote_rs_to_py_class!(crate::token::InvitationToken),
+        FieldType::AccessToken => quote_rs_to_py_class!(crate::ids::AccessToken),
         FieldType::InvitationStatus => quote_rs_to_py_class!(crate::enumerate::InvitationStatus),
         FieldType::InvitationType => quote_rs_to_py_class!(crate::enumerate::InvitationType),
         FieldType::CertificateSigner => {
@@ -1035,8 +1034,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
         FieldType::UserProfile => quote! { crate::enumerate::UserProfile },
         FieldType::RealmRole => quote! { crate::enumerate::RealmRole },
-        FieldType::BootstrapToken => quote! { crate::token::BootstrapToken },
-        FieldType::InvitationToken => quote! { crate::token::InvitationToken },
+        FieldType::AccessToken => quote! { crate::ids::AccessToken },
         FieldType::InvitationStatus => quote! { crate::enumerate::InvitationStatus },
         FieldType::InvitationType => quote! { crate::enumerate::InvitationType },
         FieldType::CertificateSigner => quote! { crate::certif::CertificateSigner },
@@ -1182,8 +1180,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::EmailAddress
         | FieldType::UserProfile
         | FieldType::RealmRole
-        | FieldType::BootstrapToken
-        | FieldType::InvitationToken
+        | FieldType::AccessToken
         | FieldType::InvitationStatus
         | FieldType::InvitationType
         | FieldType::CertificateSigner

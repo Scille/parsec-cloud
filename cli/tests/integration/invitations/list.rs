@@ -1,6 +1,6 @@
 use libparsec::{
-    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
-    AuthenticatedCmds, InvitationToken, ProxyConfig, TmpPath,
+    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path, AccessToken,
+    AuthenticatedCmds, ProxyConfig, TmpPath,
 };
 use predicates::prelude::PredicateBooleanExt;
 
@@ -10,7 +10,7 @@ use crate::{
 };
 use parsec_cli::utils::{RESET, YELLOW};
 
-async fn invite_device(cmds: &AuthenticatedCmds) -> InvitationToken {
+async fn invite_device(cmds: &AuthenticatedCmds) -> AccessToken {
     let rep = cmds
         .send(invite_new_device::Req { send_email: false })
         .await
@@ -67,7 +67,7 @@ async fn issue_9176_list_more_than_one_invitations(tmp_path: TmpPath) {
     let token2 = invite_device(&cmds).await;
     let token3 = invite_device(&cmds).await;
 
-    let contains_invite = |token: InvitationToken| {
+    let contains_invite = |token: AccessToken| {
         predicates::str::contains(format!("{token}\t{YELLOW}pending{RESET}\tdevice"))
     };
 

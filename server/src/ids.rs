@@ -362,3 +362,47 @@ impl EmailAddress {
         self.0.to_string()
     }
 }
+
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    AccessToken,
+    libparsec_types::AccessToken,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ eq,
+    __hash__,
+);
+
+#[pymethods]
+impl AccessToken {
+    #[classmethod]
+    fn from_bytes(_cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>, bytes: &[u8]) -> PyResult<Self> {
+        libparsec_types::AccessToken::try_from(bytes)
+            .map(Self)
+            .map_err(|e| ::pyo3::exceptions::PyValueError::new_err(e.to_string()))
+    }
+
+    #[classmethod]
+    fn from_hex(_cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>, hex: &str) -> PyResult<Self> {
+        libparsec_types::AccessToken::from_hex(hex)
+            .map(Self)
+            .map_err(|e| ::pyo3::exceptions::PyValueError::new_err(e.to_string()))
+    }
+
+    #[classmethod]
+    #[pyo3(name = "new")]
+    fn default(_cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>) -> Self {
+        Self(libparsec_types::AccessToken::default())
+    }
+
+    #[getter]
+    fn bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+
+    #[getter]
+    fn hex(&self) -> String {
+        self.0.hex()
+    }
+}

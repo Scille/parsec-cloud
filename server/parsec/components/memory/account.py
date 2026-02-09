@@ -3,12 +3,12 @@
 from typing import Literal, override
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     DateTime,
     EmailAddress,
     HashDigest,
     HumanHandle,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     SecretKey,
@@ -503,7 +503,7 @@ class MemoryAccountComponent(BaseAccountComponent):
     @override
     async def invite_self_list(
         self, auth_method_id: AccountAuthMethodID
-    ) -> list[tuple[OrganizationID, InvitationToken, InvitationType]] | AccountInviteListBadOutcome:
+    ) -> list[tuple[OrganizationID, AccessToken, InvitationType]] | AccountInviteListBadOutcome:
         match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
             case (account, _):
                 pass

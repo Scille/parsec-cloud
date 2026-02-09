@@ -4,6 +4,7 @@
 from .addr import ParsecAddr, ParsecInvitationAddr
 from .client import ActiveUsersLimit
 from .common import (
+    AccessToken,
     AccountAuthMethodID,
     DateTime,
     DeviceLabel,
@@ -11,7 +12,6 @@ from .common import (
     ErrorVariant,
     Handle,
     HumanHandle,
-    InvitationToken,
     InvitationType,
     KeyDerivation,
     OrganizationID,
@@ -226,7 +226,7 @@ class AccountListInvitationsError(ErrorVariant):
 async def account_list_invitations(
     account: Handle,
 ) -> Result[
-    list[tuple[ParsecInvitationAddr, OrganizationID, InvitationToken, InvitationType]],
+    list[tuple[ParsecInvitationAddr, OrganizationID, AccessToken, InvitationType]],
     AccountListInvitationsError,
 ]:
     raise NotImplementedError

@@ -8,10 +8,7 @@ use pyo3::{
 };
 use std::str::FromStr;
 
-use crate::{
-    BootstrapToken, BytesWrapper, InvitationToken, InvitationType, OrganizationID, VerifyKey,
-    VlobID,
-};
+use crate::{AccessToken, BytesWrapper, InvitationType, OrganizationID, VerifyKey, VlobID};
 
 crate::binding_utils::gen_py_wrapper_class!(
     ParsecAddr,
@@ -311,7 +308,7 @@ impl ParsecOrganizationBootstrapAddr {
     #[pyo3(signature = (organization_id, token, **py_kwargs))]
     fn new(
         organization_id: OrganizationID,
-        token: Option<BootstrapToken>,
+        token: Option<AccessToken>,
         py_kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         let addr = match py_kwargs {
@@ -370,7 +367,7 @@ impl ParsecOrganizationBootstrapAddr {
     }
 
     #[getter]
-    fn token(&self) -> Option<BootstrapToken> {
+    fn token(&self) -> Option<AccessToken> {
         self.0.token().map(|token| (*token).into())
     }
 
@@ -423,7 +420,7 @@ impl ParsecOrganizationBootstrapAddr {
         _cls: Bound<'_, PyType>,
         server_addr: ParsecAddr,
         organization_id: OrganizationID,
-        token: Option<BootstrapToken>,
+        token: Option<AccessToken>,
     ) -> Self {
         Self(libparsec_types::ParsecOrganizationBootstrapAddr::new(
             server_addr.0,
@@ -603,7 +600,7 @@ impl ParsecInvitationAddr {
     fn new(
         organization_id: OrganizationID,
         invitation_type: &InvitationType,
-        token: InvitationToken,
+        token: AccessToken,
         py_kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         let addr = match py_kwargs {
@@ -668,8 +665,8 @@ impl ParsecInvitationAddr {
     }
 
     #[getter]
-    fn token(&self) -> InvitationToken {
-        InvitationToken(self.0.token())
+    fn token(&self) -> AccessToken {
+        AccessToken(self.0.token())
     }
 
     fn to_url(&self) -> String {
@@ -721,7 +718,7 @@ impl ParsecInvitationAddr {
         server_addr: ParsecAddr,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> Self {
         Self(libparsec_types::ParsecInvitationAddr::new(
             server_addr.0,

@@ -3,8 +3,8 @@
 
 use super::authenticated_cmds;
 use libparsec_tests_lite::{hex, p_assert_eq};
+use libparsec_types::AccessToken;
 use libparsec_types::GreetingAttemptID;
-use libparsec_types::InvitationToken;
 
 pub fn rep_author_not_allowed() {
     // Generated from Parsec 3.0.0-b.12+dev
@@ -75,7 +75,7 @@ pub fn req() {
     "675f617474656d7074a5746f6b656ec410d864b93ded264aae9ae583fd3d40c45a"
     )
     .as_ref();
-    let req = authenticated_cmds::invite_greeter_start_greeting_attempt::InviteGreeterStartGreetingAttemptReq {token:InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap()};
+    let req = authenticated_cmds::invite_greeter_start_greeting_attempt::InviteGreeterStartGreetingAttemptReq {token:AccessToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap()};
     println!("***expected: {:?}", req.dump().unwrap());
 
     let expected = authenticated_cmds::AnyCmdReq::InviteGreeterStartGreetingAttempt(req);

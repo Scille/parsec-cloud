@@ -18,7 +18,6 @@ mod protocol;
 #[cfg(feature = "test-utils")]
 mod testbed;
 mod time;
-mod token;
 
 pub(crate) use addrs::*;
 pub(crate) use binding_utils::*;
@@ -29,7 +28,6 @@ pub(crate) use misc::*;
 #[cfg(feature = "test-utils")]
 pub(crate) use testbed::*;
 pub(crate) use time::*;
-pub(crate) use token::*;
 
 /// A Python module implemented in Rust.
 #[pymodule]
@@ -77,8 +75,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DeviceID>()?;
     m.add_class::<DeviceLabel>()?;
     m.add_class::<UserID>()?;
-    m.add_class::<BootstrapToken>()?;
-    m.add_class::<InvitationToken>()?;
+    m.add_class::<AccessToken>()?;
     m.add_class::<GreetingAttemptID>()?;
     m.add_class::<AccountAuthMethodID>()?;
 

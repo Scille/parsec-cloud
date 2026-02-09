@@ -8,8 +8,8 @@ from unittest.mock import ANY
 import pytest
 
 from parsec._parsec import (
+    AccessToken,
     ActiveUsersLimit,
-    BootstrapToken,
     DateTime,
     DeviceLabel,
     EmailAddress,
@@ -44,7 +44,7 @@ class BackendPreConfig:
 class BackendConfig:
     spontaneous: bool
     sequestered: bool
-    bootstrap_token: BootstrapToken | None
+    bootstrap_token: AccessToken | None
 
 
 class ConfigureBackend(Protocol):
@@ -77,7 +77,7 @@ def backend_bootstrap_config(backend: Backend, request: pytest.FixtureRequest) -
                 id=organization_id,
                 tos={"cn_HK": "https://parsec.invalid/tos_cn.pdf"},
             )
-            assert isinstance(bootstrap_token, BootstrapToken), bootstrap_token
+            assert isinstance(bootstrap_token, AccessToken), bootstrap_token
         return BackendConfig(
             spontaneous=config.spontaneous,
             sequestered=config.sequestered,
@@ -294,7 +294,7 @@ async def test_anonymous_organization_bootstrap_invalid_bootstrap_token(
     sequester_authority_certificate = bootstrap_event.sequester_authority_raw_certificate
 
     rep = await anonymous_client.organization_bootstrap(
-        bootstrap_token=BootstrapToken.new(),
+        bootstrap_token=AccessToken.new(),
         root_verify_key=root_verify_key,
         user_certificate=user_certificate,
         device_certificate=device_certificate,

@@ -12,7 +12,7 @@ use super::anonymous_cmds;
 // Request
 
 pub fn req() {
-    let bootstrap_token = BootstrapToken::from_hex("672bc6ba9c43455da28344e975dc72b7").unwrap();
+    let bootstrap_token = AccessToken::from_hex("672bc6ba9c43455da28344e975dc72b7").unwrap();
 
     let raw_expected = [
         (

@@ -5,13 +5,13 @@ from collections.abc import Buffer
 from typing import override
 
 from parsec._parsec import (
+    AccessToken,
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
     EmailAddress,
     GreetingAttemptID,
     InvitationStatus,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     UserID,
@@ -196,8 +196,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         claimer_email: EmailAddress,
         send_email: bool,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -242,7 +242,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
             else:
                 # Must create a new invitation
-                token = force_token or InvitationToken.new()
+                token = force_token or AccessToken.new()
                 created_by = InvitationCreatedByUser(
                     user_id=author_user_id,
                     human_handle=author_user.cooked.human_handle,
@@ -282,8 +282,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         author: DeviceID,
         send_email: bool,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -321,7 +321,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
             else:
                 # Must create a new invitation
-                token = force_token or InvitationToken.new()
+                token = force_token or AccessToken.new()
                 created_by = InvitationCreatedByUser(
                     user_id=author_user_id,
                     human_handle=author_user.cooked.human_handle,
@@ -361,8 +361,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         send_email: bool,
         claimer_user_id: UserID,
         # Only needed for testbed template
-        force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
+        force_token: AccessToken | None = None,
+    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -424,7 +424,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             else:
                 # Must create a new invitation
 
-                token = force_token or InvitationToken.new()
+                token = force_token or AccessToken.new()
                 created_by = InvitationCreatedByUser(
                     user_id=author_user_id,
                     human_handle=author_user.cooked.human_handle,
@@ -462,7 +462,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> None | InviteCancelBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -589,7 +589,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
     @override
     async def info_as_invited(
-        self, organization_id: OrganizationID, token: InvitationToken
+        self, organization_id: OrganizationID, token: AccessToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -639,8 +639,8 @@ class MemoryInviteComponent(BaseInviteComponent):
     async def shamir_recovery_reveal(
         self,
         organization_id: OrganizationID,
-        token: InvitationToken,
-        reveal_token: InvitationToken,
+        token: AccessToken,
+        reveal_token: AccessToken,
     ) -> bytes | InviteShamirRecoveryRevealBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -753,7 +753,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         greeter: UserID,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> GreetingAttemptID | InviteGreeterStartGreetingAttemptBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -793,7 +793,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         greeter: UserID,
     ) -> GreetingAttemptID | InviteClaimerStartGreetingAttemptBadOutcome:
         try:
@@ -891,7 +891,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
     ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
@@ -1012,7 +1012,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        token: AccessToken,
         greeting_attempt: GreetingAttemptID,
         step_index: int,
         claimer_data: bytes,
@@ -1075,7 +1075,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        token: InvitationToken,
+        token: AccessToken,
     ) -> None | InviteCompleteBadOutcome:
         try:
             org = self._data.organizations[organization_id]

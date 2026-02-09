@@ -5,12 +5,12 @@ from dataclasses import dataclass
 from enum import auto
 
 from parsec._parsec import (
+    AccessToken,
     AccountAuthMethodID,
     CryptoError,
     DateTime,
     DeviceID,
     EmailAddress,
-    InvitationToken,
     InvitationType,
     OrganizationID,
     SecretKey,
@@ -76,7 +76,7 @@ class AuthenticatedAccountAuthInfo:
 @dataclass
 class InvitedAuthInfo:
     organization_id: OrganizationID
-    token: InvitationToken
+    token: AccessToken
     type: InvitationType
     organization_internal_id: int
     invitation_internal_id: int
@@ -255,7 +255,7 @@ class BaseAuthComponent:
         raise NotImplementedError
 
     async def invited_auth(
-        self, now: DateTime, organization_id: OrganizationID, token: InvitationToken
+        self, now: DateTime, organization_id: OrganizationID, token: AccessToken
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
         raise NotImplementedError
 

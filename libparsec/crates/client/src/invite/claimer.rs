@@ -1836,7 +1836,7 @@ impl DeviceClaimFinalizeCtx {
 pub struct ShamirRecoveryClaimFinalizeCtx {
     pub config: Arc<ClientConfig>,
     pub new_local_device: Arc<LocalDevice>,
-    pub token: InvitationToken,
+    pub token: AccessToken,
 }
 
 impl ShamirRecoveryClaimFinalizeCtx {

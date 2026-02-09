@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
+  AccessToken,
   ApiVersion,
   ConnectionHandle,
   DeviceInfo,
@@ -9,7 +10,6 @@ import {
   FsPath,
   GreetingAttemptID,
   InvitationStatus,
-  InvitationToken,
   UserID,
   WorkspaceHandle,
   WorkspaceID,
@@ -57,22 +57,22 @@ interface WorkspaceCreatedData {
 }
 
 interface InvitationUpdatedData {
-  token: InvitationToken;
+  token: AccessToken;
   status: InvitationStatus;
 }
 
 interface GreetingAttemptReadyData {
-  token: InvitationToken;
+  token: AccessToken;
   greetingAttempt: GreetingAttemptID;
 }
 
 interface GreetingAttemptCancelledData {
-  token: InvitationToken;
+  token: AccessToken;
   greetingAttempt: GreetingAttemptID;
 }
 
 interface GreetingAttemptJoinedData {
-  token: InvitationToken;
+  token: AccessToken;
   greetingAttempt: GreetingAttemptID;
 }
 

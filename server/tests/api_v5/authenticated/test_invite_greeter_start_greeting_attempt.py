@@ -2,9 +2,9 @@
 
 
 from parsec._parsec import (
+    AccessToken,
     DateTime,
     GreetingAttemptID,
-    InvitationToken,
     ShamirRecoveryDeletionCertificate,
     authenticated_cmds,
 )
@@ -40,7 +40,7 @@ async def test_authenticated_invite_greeter_start_greeting_attempt_invitation_no
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
-        token=InvitationToken.new(),
+        token=AccessToken.new(),
     )
 
     assert (
