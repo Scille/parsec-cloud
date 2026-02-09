@@ -190,9 +190,7 @@ const options = {
     synopsis: 'Secure cloud framework',
     description: 'Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file hosting.',
     category: 'Office Network FileTransfer FileSystem Security',
-    desktop: {
-      MimeType: `x-scheme-handler/${PARSEC_SCHEME}`,
-    },
+    mimeTypes: [`x-scheme-handler/${PARSEC_SCHEME}`],
     target: 'snap',
   },
 
