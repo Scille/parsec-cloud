@@ -11,7 +11,7 @@ use libparsec_types::PKIEnrollmentID;
 
 use crate::{
     get_default_local_pending_file, remove_device, save_pki_local_pending,
-    tests::pki::save::create_pki_local_pending_from_device, RemoveDeviceError,
+    tests::pki::create_pki_local_pending_from_device, RemoveDeviceError,
 };
 
 #[parsec_test(testbed = "minimal")]
