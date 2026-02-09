@@ -30,7 +30,12 @@ from parsec.components.sequester import (
     SequesterServiceConfig,
     SequesterServiceType,
 )
-from parsec.config import BaseDatabaseConfig, DisabledBlockStoreConfig, LogLevel
+from parsec.config import (
+    BaseDatabaseConfig,
+    DisabledBlockStoreConfig,
+    LogLevel,
+    MockedBlockStoreConfig,
+)
 
 SEQUESTER_SERVICE_CERTIFICATE_PEM_HEADER = "-----BEGIN PARSEC SEQUESTER SERVICE CERTIFICATE-----"
 SEQUESTER_SERVICE_CERTIFICATE_PEM_FOOTER = "-----END PARSEC SEQUESTER SERVICE CERTIFICATE-----"
@@ -322,7 +327,11 @@ async def _create_service(
     sequester_service_config: SequesterServiceConfig,
 ) -> None:
     # Can use a dummy blockstore config since we are not going to query it
-    blockstore_config = DisabledBlockStoreConfig()
+    if with_testbed is None:
+        blockstore_config = DisabledBlockStoreConfig()
+    else:
+        # Testbed template might need to create some blocks
+        blockstore_config = MockedBlockStoreConfig()
 
     async with start_backend(
         db_config=db_config,
