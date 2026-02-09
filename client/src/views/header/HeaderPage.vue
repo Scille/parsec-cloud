@@ -1,5 +1,6 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
+<!-- eslint-disable vue/html-indent -->
 <template>
   <ion-page>
     <ion-header
@@ -60,7 +61,18 @@
               :workspace-name="workspaceName"
               :path-nodes="fullPath"
               @change="onNodeSelected"
-              :from-header-page="true"
+              :from-header-page="
+                currentWorkspace
+                  ? {
+                      workspace: currentWorkspace,
+                      workspaceAttributes,
+                      eventDistributor,
+                      informationManager,
+                      storageManager: storageManager,
+                      ownRole: currentWorkspace.currentSelfRole,
+                    }
+                  : undefined
+              "
               :available-width="breadcrumbsWidth"
             />
           </div>
@@ -188,7 +200,17 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile } from '@/parsec';
+import {
+  ClientInfo,
+  Path,
+  UserProfile,
+  WorkspaceInfo,
+  WorkspaceRole,
+  getClientInfo,
+  getWorkspaceName,
+  isMobile,
+  listWorkspaces,
+} from '@/parsec';
 import {
   ProfilePages,
   Routes,
@@ -212,11 +234,14 @@ import {
   Events,
   OpenContextualMenuData,
   WorkspaceRoleUpdateData,
+  WorkspaceUpdatedData,
 } from '@/services/eventDistributor';
 import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
@@ -240,10 +265,13 @@ import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } fr
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
+const workspaceAttributes = useWorkspaceAttributes();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 let eventDistributorCbId: string | null = null;
 const workspaceName = ref('');
+const workspace = ref<Array<WorkspaceInfo>>([]);
+const currentWorkspace = ref<WorkspaceInfo>();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
 const { isHeaderVisible } = useHeaderControl();
 const userInfo: Ref<ClientInfo | null> = ref(null);
@@ -251,6 +279,7 @@ const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
 const securityWarnings = ref<SecurityWarnings | undefined>();
 const securityWarningsCount = computed(() => {
@@ -324,6 +353,11 @@ async function updateRoute(): Promise<void> {
   } else if (currentRouteIs(Routes.Documents)) {
     const workspaceHandle = getWorkspaceHandle();
     if (workspaceHandle) {
+      const workspacesResult = await listWorkspaces();
+      if (workspacesResult.ok) {
+        workspace.value = workspacesResult.value;
+      }
+      currentWorkspace.value = workspace.value.find((wk) => wk.handle === workspaceHandle);
       workspaceName.value = await getWorkspaceName(workspaceHandle, true);
     }
 
@@ -376,6 +410,8 @@ onMounted(async () => {
     async () => await notificationCenterButtonRef.value?.$el.click(),
   );
 
+  await storageManager.retrieveConfig();
+
   const result = await getClientInfo();
   if (result.ok) {
     userInfo.value = result.value;
@@ -402,7 +438,13 @@ onMounted(async () => {
       } else if (event === Events.Online) {
         securityWarnings.value = await getSecurityWarnings();
       } else if (event === Events.WorkspaceUpdated) {
-        await updateRoute();
+        const updateData = data as WorkspaceUpdatedData;
+        if (updateData?.newName && currentWorkspace.value && updateData.workspaceId === currentWorkspace.value.id) {
+          workspaceName.value = updateData.newName;
+          await updateRoute();
+        } else {
+          await updateRoute();
+        }
       }
     },
   );

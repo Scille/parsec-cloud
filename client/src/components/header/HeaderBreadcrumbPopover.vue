@@ -60,6 +60,7 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
       font-size: 1rem;
       color: var(--parsec-color-light-secondary-grey);
       margin-right: 0.625rem;
+      flex-shrink: 0;
     }
 
     &--disabled {

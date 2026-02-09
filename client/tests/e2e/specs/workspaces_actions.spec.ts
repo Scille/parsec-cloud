@@ -3,7 +3,7 @@
 import { Page } from '@playwright/test';
 import { expect, fillInputModal, getClipboardText, login, msTest, resizePage } from '@tests/e2e/helpers';
 
-type Mode = 'grid' | 'list' | 'sidebar';
+type Mode = 'grid' | 'list' | 'sidebar' | 'breadcrumb';
 
 enum OpenMenuMethod {
   Button = 'button',
@@ -38,7 +38,7 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
     } else {
       await wk.click({ button: 'right' });
     }
-  } else {
+  } else if (mode === 'sidebar') {
     await page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
     const sidebar = page.locator('.sidebar');
     const wk = sidebar.locator('#sidebar-workspaces').locator('.sidebar-item').nth(0);
@@ -48,6 +48,9 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
     } else {
       await wk.click({ button: 'right' });
     }
+  } else {
+    await page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await page.locator('.topbar-left').locator('.breadcrumb-element--active').locator('.option-icon').click();
   }
 }
 
@@ -66,7 +69,7 @@ const MENU = [
   },
 ];
 
-for (const mode of ['grid', 'list', 'sidebar']) {
+for (const mode of ['grid', 'list', 'sidebar', 'breadcrumb']) {
   msTest(`Checks workspace context menu ${mode}`, async ({ workspaces }) => {
     await expect(workspaces.locator('.workspace-context-menu')).toBeHidden();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
@@ -166,6 +169,9 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     }
 
     let wk;
+    if (mode === 'breadcrumb') {
+      await workspaces.locator('.topbar-left').locator('.breadcrumb-element').nth(0).click();
+    }
     if (await isInGridMode(workspaces)) {
       wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
       await expect(wk.locator('.workspace-card-content__title')).toHaveText('wksp1');

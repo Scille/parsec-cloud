@@ -1,0 +1,1 @@
+User can open contextual menu from the breadcrumb for the active workspace or folder.

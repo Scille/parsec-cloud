@@ -856,3 +856,33 @@ msTest.describe(() => {
     );
   }
 });
+
+msTest('Rename current folder from breadcrumbs', async ({ documents }) => {
+  const optionFolder = documents.locator('.topbar-left').locator('.breadcrumb-element--active').locator('.option-icon');
+
+  await expect(documents).toHaveHeader(['wksp1'], true, true);
+  await documents.locator('.folder-container').getByRole('listitem').nth(0).locator('.label-name').click();
+  await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder'], true, true);
+  await optionFolder.click();
+
+  const popover = documents.locator('.folder-breadcrumb-context-menu');
+  await expect(popover).toBeVisible();
+  await expect(popover.getByRole('group')).toHaveCount(2);
+  await expect(popover.getByRole('listitem')).toHaveText([
+    'Folder management',
+    'Rename',
+    'History',
+    'Details',
+    'Collaboration',
+    'Copy link',
+  ]);
+
+  await popover.getByRole('listitem').filter({ hasText: 'Rename' }).click();
+  await fillInputModal(documents, 'New Folder Name', true);
+  await expect(documents).toHaveHeader(['wksp1', 'New Folder Name'], true, true);
+
+  await documents.locator('.topbar-left').locator('.breadcrumb-element').nth(1).click();
+  await expect(documents.locator('.folder-container').getByRole('listitem').nth(0).locator('.label-name')).toHaveText('New Folder Name');
+
+  await expect(documents).toHaveHeader(['wksp1'], true, true);
+});

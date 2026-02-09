@@ -4,7 +4,7 @@
   <div class="header-breadcrumbs">
     <ion-breadcrumbs
       v-if="isLargeDisplay"
-      class="breadcrumb"
+      class="breadcrumb-container"
       @ion-collapsed-click="openPopover($event)"
       :max-items="maxShown"
       :items-before-collapse="itemsBeforeCollapse"
@@ -12,9 +12,13 @@
     >
       <ion-breadcrumb
         v-for="path in pathNodes"
-        @click="navigateTo(path)"
+        @click="path.display !== currentFolderName ? navigateTo(path) : null"
         :path="path"
         class="breadcrumb-element breadcrumb-normal"
+        :class="{
+          'breadcrumb-element--home': props.pathNodes.length === 1,
+          'breadcrumb-element--active': path.display === currentFolderName || (props.pathNodes.length === 1 && props.fromHeaderPage),
+        }"
         :key="path.id"
         ref="breadcrumb"
       >
@@ -26,6 +30,12 @@
         <div class="breadcrumb-text">
           {{ path.display ? path.display : $msTranslate(path.title) }}
         </div>
+        <ion-icon
+          v-if="currentFolderName === path.display && props.fromHeaderPage"
+          :icon="ellipsisHorizontal"
+          class="option-icon"
+          @click="breadcrumbOptionClick(path, $event)"
+        />
       </ion-breadcrumb>
     </ion-breadcrumbs>
     <div
@@ -59,12 +69,17 @@ export interface RouterPathNode {
 
 <script setup lang="ts">
 import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
-import { WorkspaceName } from '@/parsec';
+import { openWorkspaceContextMenu } from '@/components/workspaces';
+import { StartedWorkspaceInfo, WorkspaceInfo, WorkspaceName, WorkspaceRole } from '@/parsec';
 import { Query, Routes } from '@/router';
+import { EventDistributor, EventDistributorKey, Events, OpenFolderBreadcrumbContextMenuData } from '@/services/eventDistributor';
+import { InformationManager } from '@/services/informationManager';
+import { StorageManager } from '@/services/storageManager';
+import { WorkspaceAttributes } from '@/services/workspaceAttributes';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon, IonText, popoverController } from '@ionic/vue';
-import { chevronDown } from 'ionicons/icons';
+import { chevronDown, ellipsisHorizontal } from 'ionicons/icons';
 import { Translatable, useWindowSize } from 'megashark-lib';
-import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{
@@ -73,7 +88,14 @@ const props = withDefaults(
     itemsBeforeCollapse?: number;
     itemsAfterCollapse?: number;
     maxShown?: number;
-    fromHeaderPage?: boolean;
+    fromHeaderPage?: {
+      workspaceAttributes: WorkspaceAttributes;
+      workspace: StartedWorkspaceInfo | WorkspaceInfo;
+      ownRole: WorkspaceRole;
+      eventDistributor: EventDistributor;
+      informationManager: InformationManager;
+      storageManager: StorageManager;
+    };
     availableWidth?: number;
     showParentNode?: boolean;
   }>(),
@@ -81,13 +103,14 @@ const props = withDefaults(
     itemsBeforeCollapse: 2,
     itemsAfterCollapse: 1,
     maxShown: 3,
-    fromHeaderPage: false,
+    fromHeaderPage: undefined,
     availableWidth: 0,
     showParentNode: true,
   },
 );
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const breadcrumbRef = useTemplateRef<HTMLIonBreadcrumbElement>('breadcrumb');
 const breadcrumbWidthProperty = ref('');
 let ignoreNextEvent = false;
@@ -121,13 +144,36 @@ const currentFolderName = computed(() => {
     return '';
   }
 
-  if (props.pathNodes.length === 1) {
-    return props.workspaceName;
+  if (props.pathNodes.length === 1 && props.fromHeaderPage) {
+    return props.fromHeaderPage.workspace.currentName;
   }
 
   const lastNode = props.pathNodes[props.pathNodes.length - 1];
   return lastNode.display || props.workspaceName;
 });
+
+async function breadcrumbOptionClick(path: RouterPathNode, event: Event): Promise<void> {
+  if (!props.fromHeaderPage) {
+    return;
+  }
+
+  if (path.display === props.workspaceName) {
+    await openWorkspaceContextMenu(
+      event,
+      props.fromHeaderPage.workspace as WorkspaceInfo,
+      props.fromHeaderPage.workspaceAttributes,
+      props.fromHeaderPage.eventDistributor,
+      props.fromHeaderPage.informationManager,
+      props.fromHeaderPage.storageManager,
+      true,
+    );
+  } else {
+    await eventDistributor.dispatchEvent(Events.OpenFolderBreadcrumbContextMenu, {
+      event,
+      role: props.fromHeaderPage.ownRole,
+    } as OpenFolderBreadcrumbContextMenuData);
+  }
+}
 
 function setBreadcrumbWidth(): void {
   if (props.availableWidth > 0 && breadcrumbRef.value) {
@@ -207,13 +253,13 @@ function navigateTo(path: RouterPathNode): void {
   }
 }
 
-.breadcrumb {
+.breadcrumb-container {
   padding: 0;
   color: var(--parsec-color-light-secondary-grey);
   display: flex;
   flex-wrap: nowrap;
 
-  &-element {
+  .breadcrumb-element {
     .main-icon {
       font-size: 1.125rem;
     }
@@ -240,6 +286,7 @@ function navigateTo(path: RouterPathNode): void {
     &:hover:not(.breadcrumb-collapsed) {
       color: var(--parsec-color-light-secondary-text);
       position: relative;
+      cursor: default;
 
       &::after {
         content: '';
@@ -259,28 +306,70 @@ function navigateTo(path: RouterPathNode): void {
         }
       }
     }
-  }
 
-  // Defined by ionic
-  // eslint-disable-next-line vue-scoped-css/no-unused-selector
-  &-active {
-    color: var(--parsec-color-light-primary-700);
-    pointer-events: none;
-
-    &::part(native) {
+    .breadcrumb-text {
+      overflow-x: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 1rem;
+      pointer-events: none;
       cursor: default;
     }
 
-    .main-icon {
+    &--active {
+      pointer-events: none;
+    }
+
+    &--active:not(.breadcrumb-element--home) {
+      color: var(--parsec-color-light-secondary-text);
+      --background: none;
+
+      &::part(native) {
+        border-radius: var(--parsec-radius-6);
+      }
+
+      .breadcrumb-text {
+        pointer-events: none;
+        cursor: default;
+      }
+
+      &:hover:not(.breadcrumb-collapsed) {
+        color: var(--parsec-color-light-primary-700);
+        position: relative;
+
+        &::after {
+          content: none;
+        }
+      }
+
+      .option-icon:hover {
+        background: var(--parsec-color-light-secondary-medium);
+        border-radius: var(--parsec-radius-8);
+        pointer-events: all;
+        opacity: 1;
+        cursor: pointer;
+      }
+    }
+
+    &--home {
       color: var(--parsec-color-light-primary-700);
-      margin-right: 0.5rem;
+      pointer-events: none;
+
+      .main-icon {
+        color: var(--parsec-color-light-primary-700);
+        margin-right: 0.5rem;
+      }
     }
   }
 
-  &-text {
-    overflow-x: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .option-icon {
+    font-size: 1.25rem;
+    padding: 0.25rem;
+    color: var(--parsec-color-light-secondary-text);
+    margin-left: 0.25rem;
+    opacity: 0.3;
+    pointer-events: all;
+    flex-shrink: 0;
   }
 }
 

@@ -13,6 +13,7 @@ import {
   UserID,
   WorkspaceHandle,
   WorkspaceID,
+  WorkspaceName,
   WorkspaceRole,
 } from '@/parsec';
 import { MenuAction } from '@/views/menu';
@@ -49,7 +50,8 @@ enum Events {
   EntryDeleted = 1 << 26,
   EntrySyncProgress = 1 << 27,
   WorkspaceMountpointsSync = 1 << 28,
-  OpenContextMenu = 1 << 28,
+  OpenContextMenu = 1 << 29,
+  OpenFolderBreadcrumbContextMenu = 1 << 30,
 }
 
 interface WorkspaceCreatedData {
@@ -111,6 +113,11 @@ interface WorkspaceRoleUpdateData {
   newRole: WorkspaceRole | null;
 }
 
+interface WorkspaceUpdatedData {
+  workspaceId: WorkspaceID;
+  newName?: WorkspaceName;
+}
+
 interface EntryRenamedData {
   workspaceHandle: WorkspaceHandle;
   entryId: EntryID;
@@ -135,6 +142,11 @@ interface OpenContextualMenuData {
   event: Event;
 }
 
+interface OpenFolderBreadcrumbContextMenuData {
+  event: Event;
+  role: WorkspaceRole;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -148,10 +160,12 @@ type EventData =
   | MenuActionData
   | DeviceCreatedData
   | WorkspaceRoleUpdateData
+  | WorkspaceUpdatedData
   | EntryRenamedData
   | EntryDeletedData
   | WorkspaceMountpointInfo
-  | OpenContextualMenuData;
+  | OpenContextualMenuData
+  | OpenFolderBreadcrumbContextMenuData;
 
 interface Callback {
   id: string;
@@ -242,8 +256,10 @@ export {
   InvitationUpdatedData,
   MenuActionData,
   OpenContextualMenuData,
+  OpenFolderBreadcrumbContextMenuData,
   UpdateAvailabilityData,
   WorkspaceCreatedData,
   WorkspaceMountpointInfo,
   WorkspaceRoleUpdateData,
+  WorkspaceUpdatedData,
 };

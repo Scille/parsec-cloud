@@ -125,7 +125,6 @@
               :path-nodes="headerPath"
               @change="onPathChange"
               class="navigation-breadcrumb"
-              :from-header-page="false"
               :show-parent-node="false"
             />
             <ion-button
