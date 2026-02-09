@@ -2579,8 +2579,8 @@ fn struct_new_invitation_info_js_to_rs(
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                    libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                    libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
@@ -2622,7 +2622,7 @@ fn struct_new_invitation_info_rs_to_js(
     Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
     let js_token = JsValue::from_str({
         let custom_to_rs_string =
-            |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+            |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.token) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -8299,8 +8299,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -8337,8 +8337,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -8375,8 +8375,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -8472,8 +8472,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -8863,7 +8863,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             )?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -8896,7 +8896,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             )?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -8929,7 +8929,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             )?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -9021,7 +9021,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             )?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -12466,8 +12466,8 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -12532,8 +12532,8 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -12626,8 +12626,8 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -12718,7 +12718,7 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -12771,7 +12771,7 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -12844,7 +12844,7 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -14755,8 +14755,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -14832,8 +14832,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -14909,8 +14909,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
                         let custom_from_rs_string =
-                            |s: String| -> Result<libparsec::InvitationToken, _> {
-                                libparsec::InvitationToken::from_hex(s.as_str())
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
@@ -15318,7 +15318,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -15353,7 +15353,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -15388,7 +15388,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
-                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
@@ -21298,7 +21298,10 @@ pub fn accountListInvitations(account: u32) -> Promise {
                             let js_value = JsValue::from_str(x2.as_ref());
                             js_array.set(1, js_value);
                             let js_value = JsValue::from_str({
-                                let custom_to_rs_string = |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                                let custom_to_rs_string =
+                                    |x: libparsec::AccessToken| -> Result<String, &'static str> {
+                                        Ok(x.hex())
+                                    };
                                 match custom_to_rs_string(x3) {
                                     Ok(ok) => ok,
                                     Err(err) => {
@@ -22655,8 +22658,8 @@ pub fn clientAcceptTos(client: u32, tos_updated_on: f64) -> Promise {
 pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let token = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
         }?;
@@ -23970,8 +23973,8 @@ pub fn clientStart(config: Object, access: Object) -> Promise {
 pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let token = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
         }?;
@@ -24001,8 +24004,8 @@ pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
 pub fn clientStartShamirRecoveryInvitationGreet(client: u32, token: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let token = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
         }?;
@@ -24033,8 +24036,8 @@ pub fn clientStartShamirRecoveryInvitationGreet(client: u32, token: String) -> P
 pub fn clientStartUserInvitationGreet(client: u32, token: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let token = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
         }?;

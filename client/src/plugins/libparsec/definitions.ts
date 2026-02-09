@@ -82,6 +82,7 @@ export enum UserProfile {
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
 }
+export type AccessToken = string
 export type AccountAuthMethodID = string
 export type AccountVaultItemOpaqueKeyID = string
 export type AnyhowError = string
@@ -93,7 +94,6 @@ export type EmailAddress = string
 export type EntryName = string
 export type FsPath = string
 export type GreetingAttemptID = string
-export type AccessToken = string
 export type OrganizationID = string
 export type PKIEncryptionAlgorithm = string
 export type PKIEnrollmentID = string
