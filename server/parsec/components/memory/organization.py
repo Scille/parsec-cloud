@@ -31,6 +31,7 @@ from parsec.components.organization import (
     OrganizationCreateBadOutcome,
     OrganizationDump,
     OrganizationDumpTopics,
+    OrganizationEraseBadOutcome,
     OrganizationGetBadOutcome,
     OrganizationGetTosBadOutcome,
     OrganizationStats,
@@ -384,6 +385,16 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             await self._event_bus.send(EventOrganizationTosUpdated(organization_id=id))
 
     @override
+    async def erase(
+        self,
+        id: OrganizationID,
+    ) -> None | OrganizationEraseBadOutcome:
+        try:
+            del self._data.organizations[id]
+        except KeyError:
+            return OrganizationEraseBadOutcome.ORGANIZATION_NOT_FOUND
+
+    @override
     async def get_tos(
         self, id: OrganizationID
     ) -> TermsOfService | None | OrganizationGetTosBadOutcome:
@@ -436,10 +447,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             },
             shamir_recovery=org.per_topic_last_timestamp.get("shamir_recovery"),
         )
-
-    @override
-    async def test_drop_organization(self, id: OrganizationID) -> None:
-        self._data.organizations.pop(id, None)
 
     @override
     async def test_duplicate_organization(

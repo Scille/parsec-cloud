@@ -13,3 +13,4 @@ Server Administration
     stats_organization
     freeze_users
     shared_recovery
+    erase_organization
