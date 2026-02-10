@@ -59,7 +59,12 @@ export default defineConfig({
         // Allow mixed content for testbed communication in CI
         ...(IN_CI && {
           launchOptions: {
-            args: ['--disable-web-security', '--allow-running-insecure-content'],
+            args: [
+              '--disable-web-security',
+              '--allow-running-insecure-content',
+              '--disable-features=BlockInsecurePrivateNetworkRequests',
+              `--unsafely-treat-insecure-origin-as-secure=http://parsec-testbed-server:6777`,
+            ],
           },
         }),
       },
