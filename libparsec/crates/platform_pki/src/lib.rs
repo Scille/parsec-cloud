@@ -110,9 +110,6 @@ pub use platform::encrypt_message;
 pub use errors::DecryptMessageError;
 pub use platform::decrypt_message;
 
-pub use errors::CreateLocalPendingError;
-pub use shared::create_local_pending;
-
 pub use platform::is_available;
 
 pub use shared::verify_certificate;
