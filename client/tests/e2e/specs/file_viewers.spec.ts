@@ -334,6 +334,12 @@ msTest.describe(() => {
   });
 
   msTest('Video viewer', async ({ documents }, testInfo: TestInfo) => {
+    console.log(testInfo.project.name);
+    // Codecs are not included in chromium
+    if (testInfo.project.name.toLocaleLowerCase() === 'chromium') {
+      return;
+    }
+
     msTest.setTimeout(60_000);
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp4, false);
 
