@@ -21,9 +21,6 @@ from .test_invite_new_user import *
 from .test_list_frozen_users import *
 from .test_organization_info import *
 from .test_ping import *
-from .test_pki_enrollment_accept import *
-from .test_pki_enrollment_list import *
-from .test_pki_enrollment_reject import *
 from .test_realm_create import *
 from .test_realm_get_keys_bundle import *
 from .test_realm_rename import *

@@ -59,7 +59,6 @@ from parsec.components.account import ValidationCodeInfo
 from parsec.components.async_enrollment import AsyncEnrollmentPayloadSignature
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
-from parsec.components.pki import MAX_INTERMEDIATE_CERTIFICATES_DEPTH, PkiCertificate
 from parsec.components.sequester import SequesterServiceType
 from parsec.locks import AdvisoryLock
 
@@ -160,8 +159,6 @@ class MemoryOrganization:
     devices: dict[DeviceID, MemoryDevice] = field(default_factory=dict)
     invitations: dict[AccessToken, MemoryInvitation] = field(default_factory=dict)
     greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
-    pki_enrollments: dict[PKIEnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
-    pki_certificates: dict[bytes, MemoryPkiCertificate] = field(default_factory=dict)
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
@@ -472,49 +469,6 @@ class MemoryOrganization:
         # This should be enough to detect typical improper use of the primary key as
         # a list offset.
         return enumerate(all_vlob_atoms, start=200)
-
-    async def save_trustchain(self, trustchain: list[PkiCertificate]):
-        for cert in trustchain:
-            if cert.fingerprint_sha256 not in self.pki_certificates:
-                self.pki_certificates[cert.fingerprint_sha256] = MemoryPkiCertificate(
-                    sha256_fingerprint=cert.fingerprint_sha256,
-                    der_content=cert.content,
-                    signed_by=cert.signed_by,
-                )
-
-    async def get_trustchain(
-        self, leaf_fingerprint: bytes
-    ) -> tuple[MemoryPkiCertificate, list[MemoryPkiCertificate]] | None:
-        """
-        return (leaf cert, list ordered by leaf.signed_by -> last known cert of the trustchain)
-        leaf cert is not in trustchain
-        """
-        try:
-            leaf = self.pki_certificates[leaf_fingerprint]
-        except KeyError:
-            return None
-        current = leaf
-        sorted_trustchain = [current]
-        for _ in range(MAX_INTERMEDIATE_CERTIFICATES_DEPTH):
-            # check circular trustchain (allows to stop iteration)
-            if current.signed_by is None or current.signed_by in map(
-                lambda x: x.sha256_fingerprint, sorted_trustchain
-            ):
-                return (leaf, sorted_trustchain[1:])
-            try:
-                cert = self.pki_certificates[current.signed_by]
-            # the last signer is not in DB
-            except ValueError:
-                return (leaf, sorted_trustchain[1:])
-            # add signer to trustchain
-            sorted_trustchain.append(cert)
-            current = cert
-        # Raise error trustchain too long ?
-        # in theory it should not have been stored if too long
-        return (leaf, sorted_trustchain[1:])
-
-    async def get_cert(self, fingerprint: bytes) -> MemoryPkiCertificate | None:
-        return self.pki_certificates.get(fingerprint)
 
 
 @dataclass(slots=True)

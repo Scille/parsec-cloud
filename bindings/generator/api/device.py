@@ -172,11 +172,3 @@ async def update_device_overwrite_server_addr(
     new_server_addr: ParsecAddr,
 ) -> Result[ParsecAddr, UpdateDeviceError]:
     raise NotImplementedError
-
-
-class RemoveDeviceError(ErrorVariant):
-    class StorageNotAvailable: ...
-
-    class NotFound: ...
-
-    class Internal: ...

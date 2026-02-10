@@ -6,5 +6,3 @@ from .test_async_enrollment_info import *
 from .test_async_enrollment_submit import *
 from .test_organization_bootstrap import *
 from .test_ping import *
-from .test_pki_enrollment_info import *
-from .test_pki_enrollment_submit import *

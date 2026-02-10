@@ -36,7 +36,6 @@ from parsec.components.memory import components_factory as mocked_components_fac
 from parsec.components.memory.datamodel import MemoryDatamodel
 from parsec.components.organization import BaseOrganizationComponent
 from parsec.components.ping import BasePingComponent
-from parsec.components.pki import BasePkiEnrollmentComponent
 from parsec.components.postgresql import components_factory as postgresql_components_factory
 from parsec.components.realm import BaseRealmComponent
 from parsec.components.sequester import BaseSequesterComponent, SequesterServiceType
@@ -84,7 +83,6 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
             ping=components["ping"],
             blockstore=components["blockstore"],
             block=components["block"],
-            pki=components["pki"],
             sequester=components["sequester"],
             events=components["events"],
             shamir=components["shamir"],
@@ -110,7 +108,6 @@ class Backend:
     ping: BasePingComponent
     blockstore: BaseBlockStoreComponent
     block: BaseBlockComponent
-    pki: BasePkiEnrollmentComponent
     sequester: BaseSequesterComponent
     events: BaseEventsComponent
     shamir: BaseShamirComponent
@@ -132,7 +129,6 @@ class Backend:
             self.ping,
             self.blockstore,
             self.block,
-            self.pki,
             self.events,
             self.shamir,
             self.account,
