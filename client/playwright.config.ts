@@ -52,7 +52,10 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // We use chrome over chromium because we need some media codec during e2e test for the file viewer feature.
-        channel: 'chrome',
+        // NOTE: To simplify CI configuration, we use chromium instead
+        ...(!IN_CI && {
+          channel: 'chrome',
+        }),
         // Allow mixed content for testbed communication in CI
         ...(IN_CI && {
           launchOptions: {
