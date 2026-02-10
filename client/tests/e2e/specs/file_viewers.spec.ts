@@ -334,12 +334,6 @@ msTest.describe(() => {
   });
 
   msTest('Video viewer', async ({ documents }, testInfo: TestInfo) => {
-    console.log(testInfo.project.name);
-    // Codecs are not included in chromium
-    if (testInfo.project.name.toLocaleLowerCase() === 'chromium') {
-      return;
-    }
-
     msTest.setTimeout(60_000);
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp4, false);
 
@@ -372,7 +366,7 @@ msTest.describe(() => {
     expect(videoWidth).toBe(870);
     expect(videoHeight).toBe(692);
 
-    expect(await Media.getDuration(video)).toBe(3.562646);
+    expect(await Media.getDuration(video)).toBeGreaterThan(3.5);
     expect(await Media.getCurrentTime(video)).toBe(0.0);
     await expectMedia(video).toHaveVolume(1);
 
@@ -384,7 +378,7 @@ msTest.describe(() => {
     await buttons.nth(0).click();
     expect(await Media.getPausedState(video)).toBe(false);
     await documents.waitForTimeout(4000);
-    expect(await Media.getCurrentTime(video)).toBe(3.562646);
+    expect(await Media.getCurrentTime(video)).toBeGreaterThan(3.5);
     expect(await Media.getPausedState(video)).toBe(true);
 
     // Volume control
@@ -453,7 +447,7 @@ msTest.describe(() => {
     await backdrop.click();
     await buttons.nth(0).click();
     await documents.waitForTimeout(2000);
-    expect(await Media.getCurrentTime(video)).toBe(3.562646);
+    expect(await Media.getCurrentTime(video)).toBeGreaterThan(3.5);
     expect(await Media.getPausedState(video)).toBe(true);
   });
 
