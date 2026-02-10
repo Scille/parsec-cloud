@@ -1,14 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::{
-    encrypt_message,
     errors::{
         GetRootCertificateInfoFromTrustchainError, GetValidationPathForCertError,
         ListCertificatesError, LoadAnswerPayloadError, ValidatePayloadError, VerifyMessageError,
         VerifySignatureError,
     },
-    get_der_encoded_certificate, CreateLocalPendingError, EncryptMessageError,
-    GetDerEncodedCertificateError, PkiSignatureAlgorithm,
+    get_der_encoded_certificate, GetDerEncodedCertificateError, PkiSignatureAlgorithm,
 };
 
 use bytes::Bytes;
@@ -78,42 +76,6 @@ pub fn verify_message<'message, 'a>(
         .verify_signature(verifier, &signed_message.message, &signed_message.signature)
         .map(|_| signed_message.message.as_ref())
         .map_err(VerifySignatureError::InvalidSignature)
-}
-
-pub async fn create_local_pending(
-    cert_ref: &X509CertificateReference,
-    addr: ParsecPkiEnrollmentAddr,
-    enrollment_id: PKIEnrollmentID,
-    submitted_on: DateTime,
-    payload: PkiEnrollmentSubmitPayload,
-    private_parts: PrivateParts,
-) -> Result<PKILocalPendingEnrollment, CreateLocalPendingError> {
-    let key = SecretKey::generate();
-    let (algo, encrypted_key) = encrypt_message(key.as_ref(), cert_ref)
-        .await
-        .map_err(|err| match err {
-            EncryptMessageError::CannotOpenStore(err) => {
-                CreateLocalPendingError::CannotOpenStore(err)
-            }
-            EncryptMessageError::NotFound => CreateLocalPendingError::NotFound,
-            EncryptMessageError::CannotAcquireKeypair(err) => {
-                CreateLocalPendingError::CannotAcquireKeypair(err)
-            }
-            EncryptMessageError::CannotEncrypt(err) => CreateLocalPendingError::CannotEncrypt(err),
-        })?;
-    let ciphered_private_parts = key.encrypt(&private_parts.dump()).into();
-
-    let local_pending = PKILocalPendingEnrollment {
-        cert_ref: cert_ref.to_owned(),
-        addr,
-        submitted_on,
-        enrollment_id,
-        payload,
-        encrypted_key,
-        encrypted_key_algo: algo,
-        ciphertext: ciphered_private_parts,
-    };
-    Ok(local_pending)
 }
 
 // Internal API, but `pub` is needed by `examples/verify_certificate.rs`
