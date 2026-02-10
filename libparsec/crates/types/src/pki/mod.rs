@@ -4,92 +4,10 @@ mod cert_ref;
 
 use std::{fmt::Display, str::FromStr};
 
-use serde::{Deserialize, Serialize};
-
-use libparsec_crypto::{PublicKey, VerifyKey};
-use libparsec_serialization_format::parsec_data;
-
-use crate::{
-    self as libparsec_types, impl_transparent_data_format_conversion,
-    serialization::{format_v0_dump, format_vx_load},
-    DataResult, DeviceID, DeviceLabel, UserID, UserProfile,
-};
 pub use cert_ref::{
     X509CertificateHash, X509CertificateReference, X509Pkcs11URI, X509URIFlavorValue,
     X509WindowsCngURI,
 };
-
-/*
- * PkiEnrollmentAnswerPayload
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(
-    into = "PkiEnrollmentAnswerPayloadData",
-    from = "PkiEnrollmentAnswerPayloadData"
-)]
-pub struct PkiEnrollmentAnswerPayload {
-    pub user_id: UserID,
-    pub device_id: DeviceID,
-    pub device_label: DeviceLabel,
-    pub profile: UserProfile,
-    pub root_verify_key: VerifyKey,
-}
-
-parsec_data!("schema/pki/pki_enrollment_answer_payload.json5");
-
-impl_transparent_data_format_conversion!(
-    PkiEnrollmentAnswerPayload,
-    PkiEnrollmentAnswerPayloadData,
-    user_id,
-    device_id,
-    device_label,
-    profile,
-    root_verify_key,
-);
-
-impl PkiEnrollmentAnswerPayload {
-    pub fn load(raw: &[u8]) -> DataResult<Self> {
-        format_vx_load(raw)
-    }
-    pub fn dump(&self) -> Vec<u8> {
-        format_v0_dump(&self)
-    }
-}
-
-/*
- * PkiEnrollmentSubmitPayload
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(
-    into = "PkiEnrollmentSubmitPayloadData",
-    from = "PkiEnrollmentSubmitPayloadData"
-)]
-pub struct PkiEnrollmentSubmitPayload {
-    pub verify_key: VerifyKey,
-    pub public_key: PublicKey,
-    pub device_label: DeviceLabel,
-}
-
-parsec_data!("schema/pki/pki_enrollment_submit_payload.json5");
-
-impl_transparent_data_format_conversion!(
-    PkiEnrollmentSubmitPayload,
-    PkiEnrollmentSubmitPayloadData,
-    verify_key,
-    public_key,
-    device_label,
-);
-
-impl PkiEnrollmentSubmitPayload {
-    pub fn load(raw: &[u8]) -> DataResult<Self> {
-        format_vx_load(raw)
-    }
-    pub fn dump(&self) -> Vec<u8> {
-        format_v0_dump(&self)
-    }
-}
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, serde_with::DeserializeFromStr, serde_with::SerializeDisplay,

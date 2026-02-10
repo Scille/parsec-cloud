@@ -16,11 +16,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 from parsec._parsec import (
-    DeviceLabel,
-    PkiEnrollmentSubmitPayload,
     PkiSignatureAlgorithm,
-    PrivateKey,
-    SigningKey,
     X509CertificateInformation,
 )
 from tests.common.postgresql import clear_postgresql_pki_certificate_data
@@ -185,12 +181,3 @@ def sign_message(key: Key, message: bytes) -> tuple[PkiSignatureAlgorithm, bytes
             return (PkiSignatureAlgorithm.RSASSA_PSS_SHA256, signature)
         case _:
             raise ValueError("Unsupported key")
-
-
-@pytest.fixture(scope="session")
-def submit_payload() -> bytes:
-    return PkiEnrollmentSubmitPayload(
-        verify_key=SigningKey.generate().verify_key,
-        public_key=PrivateKey.generate().public_key,
-        device_label=DeviceLabel("Dev1"),
-    ).dump()
