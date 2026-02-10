@@ -118,12 +118,6 @@ pub use webpki::KeyUsage;
 pub use errors::VerifyMessageError;
 pub use shared::verify_message2;
 
-pub use errors::LoadSubmitPayloadError;
-pub use shared::load_submit_payload;
-
-pub use errors::LoadAnswerPayloadError;
-pub use shared::load_answer_payload;
-
 pub use errors::GetValidationPathForCertError;
 pub use shared::{get_validation_path_for_cert, ValidationPathOwned};
 

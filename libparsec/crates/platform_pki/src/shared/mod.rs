@@ -3,8 +3,7 @@
 use crate::{
     errors::{
         GetRootCertificateInfoFromTrustchainError, GetValidationPathForCertError,
-        ListCertificatesError, LoadAnswerPayloadError, ValidatePayloadError, VerifyMessageError,
-        VerifySignatureError,
+        ListCertificatesError, VerifyMessageError, VerifySignatureError,
     },
     get_der_encoded_certificate, GetDerEncodedCertificateError, PkiSignatureAlgorithm,
 };
@@ -144,63 +143,6 @@ pub fn verify_message2<'a>(
         .map_err(VerifyMessageError::InvalidSignature)?;
 
     Ok(())
-}
-
-pub fn load_submit_payload<'cert>(
-    signed_message: &SignedMessage,
-    der_certificate: &[u8],
-    intermediate_certs: impl Iterator<Item = &'cert [u8]>,
-    trusted_roots: &[TrustAnchor<'_>],
-    now: DateTime,
-) -> Result<PkiEnrollmentSubmitPayload, crate::errors::LoadSubmitPayloadError> {
-    let validated_payload = validate_payload(
-        der_certificate,
-        signed_message,
-        trusted_roots,
-        intermediate_certs,
-        now,
-    )?;
-    PkiEnrollmentSubmitPayload::load(validated_payload).map_err(Into::into)
-}
-
-fn validate_payload<'message, 'cert>(
-    der_certificate: &[u8],
-    signed_message: &'message SignedMessage,
-    trusted_roots: &[TrustAnchor<'_>],
-    intermediate_certs: impl Iterator<Item = &'cert [u8]>,
-    now: DateTime,
-) -> Result<&'message [u8], ValidatePayloadError> {
-    let intermediate_certs: Vec<_> = intermediate_certs.map(CertificateDer::from).collect();
-    let binding = Certificate::from_der(der_certificate);
-
-    let untrusted_cert = binding
-        .to_end_certificate()
-        .map_err(ValidatePayloadError::InvalidCertificateDer)?;
-    let verified_path =
-        verify_certificate(&untrusted_cert, trusted_roots, &intermediate_certs, now)
-            .map_err(ValidatePayloadError::Untrusted)?;
-    let trusted_cert = verified_path.end_entity();
-
-    verify_message(signed_message, trusted_cert).map_err(|err| match err {
-        VerifySignatureError::InvalidSignature(e) => ValidatePayloadError::InvalidSignature(e),
-    })
-}
-
-pub fn load_answer_payload<'cert>(
-    signed_message: &SignedMessage,
-    der_certificate: &[u8],
-    intermediate_certs: impl Iterator<Item = &'cert [u8]>,
-    trusted_roots: &[TrustAnchor<'_>],
-    now: DateTime,
-) -> Result<PkiEnrollmentAnswerPayload, LoadAnswerPayloadError> {
-    let validated_payload = validate_payload(
-        der_certificate,
-        signed_message,
-        trusted_roots,
-        intermediate_certs,
-        now,
-    )?;
-    PkiEnrollmentAnswerPayload::load(validated_payload).map_err(Into::into)
 }
 
 pub struct ValidationPathOwned {
