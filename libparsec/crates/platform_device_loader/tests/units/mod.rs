@@ -7,7 +7,6 @@ mod archive;
 mod async_enrollment;
 mod list;
 mod load;
-mod pki;
 mod recovery;
 mod remove;
 mod save;

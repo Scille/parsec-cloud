@@ -5,7 +5,7 @@ use std::{path::Path, sync::Arc};
 use crate::config::ClientConfig;
 pub use libparsec_platform_device_loader::{
     ArchiveDeviceError, AvailableDevice, AvailableDeviceType, ListAvailableDeviceError,
-    ListPkiLocalPendingError, UpdateDeviceError,
+    UpdateDeviceError,
 };
 pub use libparsec_platform_storage::RemoveDeviceDataError;
 use libparsec_types::prelude::*;
@@ -434,10 +434,4 @@ pub async fn update_device_overwrite_server_addr(
         new_server_addr,
     )
     .await
-}
-
-pub async fn list_pki_local_pending_enrollments(
-    config_dir: &Path,
-) -> Result<Vec<PKILocalPendingEnrollment>, ListPkiLocalPendingError> {
-    libparsec_platform_device_loader::list_pki_local_pending(config_dir).await
 }

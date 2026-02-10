@@ -4,7 +4,6 @@ mod cert_ref;
 
 use std::{fmt::Display, str::FromStr};
 
-use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
 use libparsec_crypto::{PublicKey, VerifyKey};
@@ -13,8 +12,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataResult, DateTime, DeviceID, DeviceLabel, PKIEnrollmentID, ParsecPkiEnrollmentAddr, UserID,
-    UserProfile,
+    DataResult, DeviceID, DeviceLabel, UserID, UserProfile,
 };
 pub use cert_ref::{
     X509CertificateHash, X509CertificateReference, X509Pkcs11URI, X509URIFlavorValue,
@@ -85,75 +83,6 @@ impl_transparent_data_format_conversion!(
 );
 
 impl PkiEnrollmentSubmitPayload {
-    pub fn load(raw: &[u8]) -> DataResult<Self> {
-        format_vx_load(raw)
-    }
-    pub fn dump(&self) -> Vec<u8> {
-        format_v0_dump(&self)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(
-    into = "PKILocalPendingEnrollmentData",
-    try_from = "PKILocalPendingEnrollmentData"
-)]
-pub struct PKILocalPendingEnrollment {
-    pub cert_ref: X509CertificateReference,
-    pub addr: ParsecPkiEnrollmentAddr,
-    pub submitted_on: DateTime,
-    pub enrollment_id: PKIEnrollmentID,
-    pub payload: PkiEnrollmentSubmitPayload,
-    pub encrypted_key: Bytes,
-    pub encrypted_key_algo: PKIEncryptionAlgorithm,
-    pub ciphertext: Bytes,
-}
-
-impl PKILocalPendingEnrollment {
-    pub fn load(raw: &[u8]) -> DataResult<Self> {
-        format_vx_load(raw)
-    }
-
-    pub fn dump(&self) -> Vec<u8> {
-        format_v0_dump(&self)
-    }
-}
-
-parsec_data!("schema/pki/local_pending_enrollment.json5");
-
-impl From<PKILocalPendingEnrollmentData> for PKILocalPendingEnrollment {
-    fn from(data: PKILocalPendingEnrollmentData) -> Self {
-        Self {
-            addr: ParsecPkiEnrollmentAddr::new(data.server_url, data.organization_id),
-            cert_ref: data.x509_certificate_ref,
-            submitted_on: data.submitted_on,
-            enrollment_id: data.enrollment_id,
-            payload: data.payload,
-            encrypted_key: data.encrypted_key,
-            encrypted_key_algo: data.encrypted_key_algo,
-            ciphertext: data.ciphertext,
-        }
-    }
-}
-
-impl From<PKILocalPendingEnrollment> for PKILocalPendingEnrollmentData {
-    fn from(obj: PKILocalPendingEnrollment) -> Self {
-        Self {
-            ty: Default::default(),
-            server_url: obj.addr.clone().into(),
-            organization_id: obj.addr.organization_id().clone(),
-            x509_certificate_ref: obj.cert_ref,
-            submitted_on: obj.submitted_on,
-            enrollment_id: obj.enrollment_id,
-            payload: obj.payload,
-            encrypted_key: obj.encrypted_key,
-            encrypted_key_algo: obj.encrypted_key_algo,
-            ciphertext: obj.ciphertext,
-        }
-    }
-}
-
-impl PrivateParts {
     pub fn load(raw: &[u8]) -> DataResult<Self> {
         format_vx_load(raw)
     }

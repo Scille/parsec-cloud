@@ -2,12 +2,10 @@
 
 mod async_enrollment;
 mod device;
-mod pki;
 mod strategy;
 pub use device::*;
 
 pub use async_enrollment::*;
-pub use pki::*;
 pub use strategy::*;
 
 #[cfg(not(target_arch = "wasm32"))]
