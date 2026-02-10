@@ -14,8 +14,6 @@ from parsec._parsec import (
     EmailAddress,
     GreetingAttemptID,
     HashDigest,
-    PKIEnrollmentID,
-    PkiSignatureAlgorithm,
     SecretKey,
     SequesterServiceID,
     UntrustedPasswordAlgorithm,
@@ -92,35 +90,6 @@ class BaseAnonymousRpcClient:
         req = anonymous_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump(), "anonymous")
         return anonymous_cmds.latest.ping.Rep.load(raw_rep)
-
-    async def pki_enrollment_info(
-        self, enrollment_id: PKIEnrollmentID
-    ) -> anonymous_cmds.latest.pki_enrollment_info.Rep:
-        req = anonymous_cmds.latest.pki_enrollment_info.Req(enrollment_id=enrollment_id)
-        raw_rep = await self._do_request(req.dump(), "anonymous")
-        return anonymous_cmds.latest.pki_enrollment_info.Rep.load(raw_rep)
-
-    async def pki_enrollment_submit(
-        self,
-        enrollment_id: PKIEnrollmentID,
-        force: bool,
-        der_x509_certificate: bytes,
-        intermediate_der_x509_certificates: list[bytes],
-        payload_signature: bytes,
-        payload_signature_algorithm: PkiSignatureAlgorithm,
-        payload: bytes,
-    ) -> anonymous_cmds.latest.pki_enrollment_submit.Rep:
-        req = anonymous_cmds.latest.pki_enrollment_submit.Req(
-            enrollment_id=enrollment_id,
-            force=force,
-            der_x509_certificate=der_x509_certificate,
-            intermediate_der_x509_certificates=intermediate_der_x509_certificates,
-            payload_signature=payload_signature,
-            payload_signature_algorithm=payload_signature_algorithm,
-            payload=payload,
-        )
-        raw_rep = await self._do_request(req.dump(), "anonymous")
-        return anonymous_cmds.latest.pki_enrollment_submit.Rep.load(raw_rep)
 
 
 class BaseAnonymousServerRpcClient:
@@ -371,48 +340,6 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.ping.Rep.load(raw_rep)
-
-    async def pki_enrollment_accept(
-        self,
-        enrollment_id: PKIEnrollmentID,
-        payload: bytes,
-        payload_signature: bytes,
-        payload_signature_algorithm: PkiSignatureAlgorithm,
-        accepter_der_x509_certificate: bytes,
-        accepter_intermediate_der_x509_certificates: list[bytes],
-        submitter_user_certificate: bytes,
-        submitter_device_certificate: bytes,
-        submitter_redacted_user_certificate: bytes,
-        submitter_redacted_device_certificate: bytes,
-    ) -> authenticated_cmds.latest.pki_enrollment_accept.Rep:
-        req = authenticated_cmds.latest.pki_enrollment_accept.Req(
-            enrollment_id=enrollment_id,
-            payload=payload,
-            payload_signature=payload_signature,
-            payload_signature_algorithm=payload_signature_algorithm,
-            accepter_der_x509_certificate=accepter_der_x509_certificate,
-            accepter_intermediate_der_x509_certificates=accepter_intermediate_der_x509_certificates,
-            submitter_user_certificate=submitter_user_certificate,
-            submitter_device_certificate=submitter_device_certificate,
-            submitter_redacted_user_certificate=submitter_redacted_user_certificate,
-            submitter_redacted_device_certificate=submitter_redacted_device_certificate,
-        )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
-        return authenticated_cmds.latest.pki_enrollment_accept.Rep.load(raw_rep)
-
-    async def pki_enrollment_list(
-        self,
-    ) -> authenticated_cmds.latest.pki_enrollment_list.Rep:
-        req = authenticated_cmds.latest.pki_enrollment_list.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated")
-        return authenticated_cmds.latest.pki_enrollment_list.Rep.load(raw_rep)
-
-    async def pki_enrollment_reject(
-        self, enrollment_id: PKIEnrollmentID
-    ) -> authenticated_cmds.latest.pki_enrollment_reject.Rep:
-        req = authenticated_cmds.latest.pki_enrollment_reject.Req(enrollment_id=enrollment_id)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
-        return authenticated_cmds.latest.pki_enrollment_reject.Rep.load(raw_rep)
 
     async def realm_create(
         self, realm_role_certificate: bytes

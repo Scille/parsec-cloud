@@ -303,45 +303,6 @@ export interface OrganizationInfo {
 }
 
 
-export interface PKILocalPendingEnrollment {
-    certRef: X509CertificateReference
-    addr: string
-    submittedOn: number
-    enrollmentId: string
-    payload: PkiEnrollmentSubmitPayload
-    encryptedKey: Uint8Array
-    encryptedKeyAlgo: string
-    ciphertext: Uint8Array
-}
-
-
-export interface PkiEnrollmentAnswerPayload {
-    userId: string
-    deviceId: string
-    deviceLabel: string
-    profile: UserProfile
-    rootVerifyKey: Uint8Array
-}
-
-
-export interface PkiEnrollmentSubmitPayload {
-    verifyKey: Uint8Array
-    publicKey: Uint8Array
-    deviceLabel: string
-}
-
-
-export interface RawPkiEnrollmentListItem {
-    enrollmentId: string
-    submittedOn: number
-    derX509Certificate: Uint8Array
-    intermediateDerX509Certificates: Array<Uint8Array>
-    payloadSignature: Uint8Array
-    payloadSignatureAlgorithm: string
-    payload: Uint8Array
-}
-
-
 export interface ServerConfig {
     account: AccountConfig
     organizationBootstrap: OrganizationBootstrapConfig
@@ -2789,46 +2750,6 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 
-// InvalidityReason
-export interface InvalidityReasonCannotGetCertificateInfo {
-    tag: "InvalidityReasonCannotGetCertificateInfo"
-}
-export interface InvalidityReasonCannotOpenStore {
-    tag: "InvalidityReasonCannotOpenStore"
-}
-export interface InvalidityReasonDataError {
-    tag: "InvalidityReasonDataError"
-}
-export interface InvalidityReasonInvalidCertificateDer {
-    tag: "InvalidityReasonInvalidCertificateDer"
-}
-export interface InvalidityReasonInvalidRootCertificate {
-    tag: "InvalidityReasonInvalidRootCertificate"
-}
-export interface InvalidityReasonInvalidSignature {
-    tag: "InvalidityReasonInvalidSignature"
-}
-export interface InvalidityReasonInvalidUserInformation {
-    tag: "InvalidityReasonInvalidUserInformation"
-}
-export interface InvalidityReasonNotFound {
-    tag: "InvalidityReasonNotFound"
-}
-export interface InvalidityReasonUntrusted {
-    tag: "InvalidityReasonUntrusted"
-}
-export type InvalidityReason =
-  | InvalidityReasonCannotGetCertificateInfo
-  | InvalidityReasonCannotOpenStore
-  | InvalidityReasonDataError
-  | InvalidityReasonInvalidCertificateDer
-  | InvalidityReasonInvalidRootCertificate
-  | InvalidityReasonInvalidSignature
-  | InvalidityReasonInvalidUserInformation
-  | InvalidityReasonNotFound
-  | InvalidityReasonUntrusted
-
-
 // InviteInfoInvitationCreatedBy
 export interface InviteInfoInvitationCreatedByExternalService {
     tag: "InviteInfoInvitationCreatedByExternalService"
@@ -2919,20 +2840,6 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
-
-
-// ListPkiLocalPendingError
-export interface ListPkiLocalPendingErrorInternal {
-    tag: "ListPkiLocalPendingErrorInternal"
-    error: string
-}
-export interface ListPkiLocalPendingErrorStorageNotAvailable {
-    tag: "ListPkiLocalPendingErrorStorageNotAvailable"
-    error: string
-}
-export type ListPkiLocalPendingError =
-  | ListPkiLocalPendingErrorInternal
-  | ListPkiLocalPendingErrorStorageNotAvailable
 
 
 // MountpointMountStrategy
@@ -3093,34 +3000,6 @@ export type OtherShamirRecoveryInfo =
   | OtherShamirRecoveryInfoSetupWithRevokedRecipients
 
 
-// PKIInfoItem
-export interface PKIInfoItemAccepted {
-    tag: "PKIInfoItemAccepted"
-    answer: PkiEnrollmentAnswerPayload
-    submitted_on: number
-    accepted_on: number
-}
-export interface PKIInfoItemCancelled {
-    tag: "PKIInfoItemCancelled"
-    submitted_on: number
-    cancelled_on: number
-}
-export interface PKIInfoItemRejected {
-    tag: "PKIInfoItemRejected"
-    submitted_on: number
-    rejected_on: number
-}
-export interface PKIInfoItemSubmitted {
-    tag: "PKIInfoItemSubmitted"
-    submitted_on: number
-}
-export type PKIInfoItem =
-  | PKIInfoItemAccepted
-  | PKIInfoItemCancelled
-  | PKIInfoItemRejected
-  | PKIInfoItemSubmitted
-
-
 // ParseParsecAddrError
 export interface ParseParsecAddrErrorInvalidUrl {
     tag: "ParseParsecAddrErrorInvalidUrl"
@@ -3248,211 +3127,6 @@ export type PendingAsyncEnrollmentInfo =
   | PendingAsyncEnrollmentInfoSubmitted
 
 
-// PkiEnrollmentAcceptError
-export interface PkiEnrollmentAcceptErrorActiveUsersLimitReached {
-    tag: "PkiEnrollmentAcceptErrorActiveUsersLimitReached"
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorAuthorNotAllowed {
-    tag: "PkiEnrollmentAcceptErrorAuthorNotAllowed"
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable {
-    tag: "PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable"
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorEnrollmentNotFound {
-    tag: "PkiEnrollmentAcceptErrorEnrollmentNotFound"
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken {
-    tag: "PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken"
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorInternal {
-    tag: "PkiEnrollmentAcceptErrorInternal"
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorOffline {
-    tag: "PkiEnrollmentAcceptErrorOffline"
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorPkiOperationError {
-    tag: "PkiEnrollmentAcceptErrorPkiOperationError"
-    error: string
-}
-export type PkiEnrollmentAcceptError =
-  | PkiEnrollmentAcceptErrorActiveUsersLimitReached
-  | PkiEnrollmentAcceptErrorAuthorNotAllowed
-  | PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable
-  | PkiEnrollmentAcceptErrorEnrollmentNotFound
-  | PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken
-  | PkiEnrollmentAcceptErrorInternal
-  | PkiEnrollmentAcceptErrorOffline
-  | PkiEnrollmentAcceptErrorPkiOperationError
-
-
-// PkiEnrollmentFinalizeError
-export interface PkiEnrollmentFinalizeErrorInternal {
-    tag: "PkiEnrollmentFinalizeErrorInternal"
-    error: string
-}
-export interface PkiEnrollmentFinalizeErrorSaveError {
-    tag: "PkiEnrollmentFinalizeErrorSaveError"
-    error: string
-}
-export type PkiEnrollmentFinalizeError =
-  | PkiEnrollmentFinalizeErrorInternal
-  | PkiEnrollmentFinalizeErrorSaveError
-
-
-// PkiEnrollmentInfoError
-export interface PkiEnrollmentInfoErrorEnrollmentNotFound {
-    tag: "PkiEnrollmentInfoErrorEnrollmentNotFound"
-    error: string
-}
-export interface PkiEnrollmentInfoErrorInternal {
-    tag: "PkiEnrollmentInfoErrorInternal"
-    error: string
-}
-export interface PkiEnrollmentInfoErrorInvalidAcceptPayload {
-    tag: "PkiEnrollmentInfoErrorInvalidAcceptPayload"
-    error: string
-}
-export interface PkiEnrollmentInfoErrorOffline {
-    tag: "PkiEnrollmentInfoErrorOffline"
-    error: string
-}
-export type PkiEnrollmentInfoError =
-  | PkiEnrollmentInfoErrorEnrollmentNotFound
-  | PkiEnrollmentInfoErrorInternal
-  | PkiEnrollmentInfoErrorInvalidAcceptPayload
-  | PkiEnrollmentInfoErrorOffline
-
-
-// PkiEnrollmentListError
-export interface PkiEnrollmentListErrorAuthorNotAllowed {
-    tag: "PkiEnrollmentListErrorAuthorNotAllowed"
-    error: string
-}
-export interface PkiEnrollmentListErrorInternal {
-    tag: "PkiEnrollmentListErrorInternal"
-    error: string
-}
-export interface PkiEnrollmentListErrorOffline {
-    tag: "PkiEnrollmentListErrorOffline"
-    error: string
-}
-export type PkiEnrollmentListError =
-  | PkiEnrollmentListErrorAuthorNotAllowed
-  | PkiEnrollmentListErrorInternal
-  | PkiEnrollmentListErrorOffline
-
-
-// PkiEnrollmentListItem
-export interface PkiEnrollmentListItemInvalid {
-    tag: "PkiEnrollmentListItemInvalid"
-    human_handle: HumanHandle | null
-    enrollment_id: string
-    submitted_on: number
-    reason: InvalidityReason
-    details: string
-}
-export interface PkiEnrollmentListItemValid {
-    tag: "PkiEnrollmentListItemValid"
-    human_handle: HumanHandle
-    enrollment_id: string
-    submitted_on: number
-    submitter_der_cert: Uint8Array
-    payload: PkiEnrollmentSubmitPayload
-}
-export type PkiEnrollmentListItem =
-  | PkiEnrollmentListItemInvalid
-  | PkiEnrollmentListItemValid
-
-
-// PkiEnrollmentRejectError
-export interface PkiEnrollmentRejectErrorAuthorNotAllowed {
-    tag: "PkiEnrollmentRejectErrorAuthorNotAllowed"
-    error: string
-}
-export interface PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable {
-    tag: "PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable"
-    error: string
-}
-export interface PkiEnrollmentRejectErrorEnrollmentNotFound {
-    tag: "PkiEnrollmentRejectErrorEnrollmentNotFound"
-    error: string
-}
-export interface PkiEnrollmentRejectErrorInternal {
-    tag: "PkiEnrollmentRejectErrorInternal"
-    error: string
-}
-export interface PkiEnrollmentRejectErrorOffline {
-    tag: "PkiEnrollmentRejectErrorOffline"
-    error: string
-}
-export type PkiEnrollmentRejectError =
-  | PkiEnrollmentRejectErrorAuthorNotAllowed
-  | PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable
-  | PkiEnrollmentRejectErrorEnrollmentNotFound
-  | PkiEnrollmentRejectErrorInternal
-  | PkiEnrollmentRejectErrorOffline
-
-
-// PkiEnrollmentSubmitError
-export interface PkiEnrollmentSubmitErrorAlreadyEnrolled {
-    tag: "PkiEnrollmentSubmitErrorAlreadyEnrolled"
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorAlreadySubmitted {
-    tag: "PkiEnrollmentSubmitErrorAlreadySubmitted"
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorEmailAlreadyUsed {
-    tag: "PkiEnrollmentSubmitErrorEmailAlreadyUsed"
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorIdAlreadyUsed {
-    tag: "PkiEnrollmentSubmitErrorIdAlreadyUsed"
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorInternal {
-    tag: "PkiEnrollmentSubmitErrorInternal"
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorInvalidPayload {
-    tag: "PkiEnrollmentSubmitErrorInvalidPayload"
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorOffline {
-    tag: "PkiEnrollmentSubmitErrorOffline"
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorPkiOperationError {
-    tag: "PkiEnrollmentSubmitErrorPkiOperationError"
-    error: string
-}
-export type PkiEnrollmentSubmitError =
-  | PkiEnrollmentSubmitErrorAlreadyEnrolled
-  | PkiEnrollmentSubmitErrorAlreadySubmitted
-  | PkiEnrollmentSubmitErrorEmailAlreadyUsed
-  | PkiEnrollmentSubmitErrorIdAlreadyUsed
-  | PkiEnrollmentSubmitErrorInternal
-  | PkiEnrollmentSubmitErrorInvalidPayload
-  | PkiEnrollmentSubmitErrorOffline
-  | PkiEnrollmentSubmitErrorPkiOperationError
-
-
-// PkiGetAddrError
-export interface PkiGetAddrErrorInternal {
-    tag: "PkiGetAddrErrorInternal"
-    error: string
-}
-export type PkiGetAddrError =
-  | PkiGetAddrErrorInternal
-
-
 // RemoveDeviceDataError
 export interface RemoveDeviceDataErrorFailedToRemoveData {
     tag: "RemoveDeviceDataErrorFailedToRemoveData"
@@ -3460,25 +3134,6 @@ export interface RemoveDeviceDataErrorFailedToRemoveData {
 }
 export type RemoveDeviceDataError =
   | RemoveDeviceDataErrorFailedToRemoveData
-
-
-// RemoveDeviceError
-export interface RemoveDeviceErrorInternal {
-    tag: "RemoveDeviceErrorInternal"
-    error: string
-}
-export interface RemoveDeviceErrorNotFound {
-    tag: "RemoveDeviceErrorNotFound"
-    error: string
-}
-export interface RemoveDeviceErrorStorageNotAvailable {
-    tag: "RemoveDeviceErrorStorageNotAvailable"
-    error: string
-}
-export type RemoveDeviceError =
-  | RemoveDeviceErrorInternal
-  | RemoveDeviceErrorNotFound
-  | RemoveDeviceErrorStorageNotAvailable
 
 
 // SelfShamirRecoveryInfo
@@ -5456,29 +5111,6 @@ export function clientNewUserInvitation(
 export function clientOrganizationInfo(
     client_handle: number
 ): Promise<Result<OrganizationInfo, ClientOrganizationInfoError>>
-export function clientPkiEnrollmentAccept(
-    client_handle: number,
-    profile: UserProfile,
-    enrollment_id: string,
-    accepter_cert_ref: X509CertificateReference,
-    submitter_der_cert: Uint8Array,
-    submit_payload: PkiEnrollmentSubmitPayload
-): Promise<Result<null, PkiEnrollmentAcceptError>>
-export function clientPkiEnrollmentReject(
-    client_handle: number,
-    enrollment_id: string
-): Promise<Result<null, PkiEnrollmentRejectError>>
-export function clientPkiGetAddr(
-    client: number
-): Promise<Result<string, PkiGetAddrError>>
-export function clientPkiListEnrollmentsUntrusted(
-    client_handle: number
-): Promise<Result<Array<RawPkiEnrollmentListItem>, PkiEnrollmentListError>>
-export function clientPkiListVerifyItems(
-    client_handle: number,
-    cert_ref: X509CertificateReference,
-    untrusted_items: Array<RawPkiEnrollmentListItem>
-): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
 export function clientRejectAsyncEnrollment(
     client: number,
     enrollment_id: string
@@ -5639,9 +5271,6 @@ export function libparsecInitSetOnEventCallback(
 export function listAvailableDevices(
     path: string
 ): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>>
-export function listPkiLocalPendingEnrollments(
-    config_dir: string
-): Promise<Result<Array<PKILocalPendingEnrollment>, ListPkiLocalPendingError>>
 export function listStartedAccounts(
 ): Promise<Array<number>>
 export function listStartedClients(
@@ -5681,29 +5310,6 @@ export function pathParent(
 export function pathSplit(
     path: string
 ): Promise<Array<string>>
-export function pkiEnrollmentFinalize(
-    config: ClientConfig,
-    save_strategy: DeviceSaveStrategy,
-    accepted: PkiEnrollmentAnswerPayload,
-    local_pending: PKILocalPendingEnrollment
-): Promise<Result<AvailableDevice, PkiEnrollmentFinalizeError>>
-export function pkiEnrollmentInfo(
-    config: ClientConfig,
-    addr: string,
-    cert_ref: X509CertificateReference,
-    enrollment_id: string
-): Promise<Result<PKIInfoItem, PkiEnrollmentInfoError>>
-export function pkiEnrollmentSubmit(
-    config: ClientConfig,
-    addr: string,
-    cert_ref: X509CertificateReference,
-    device_label: string,
-    force: boolean
-): Promise<Result<number, PkiEnrollmentSubmitError>>
-export function pkiRemoveLocalPending(
-    config: ClientConfig,
-    id: string
-): Promise<Result<null, RemoveDeviceError>>
 export function removeDeviceData(
     config: ClientConfig,
     device_id: string

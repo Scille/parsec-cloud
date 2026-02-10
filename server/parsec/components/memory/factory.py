@@ -18,7 +18,6 @@ from parsec.components.memory.events import MemoryEventsComponent, event_bus_fac
 from parsec.components.memory.invite import MemoryInviteComponent
 from parsec.components.memory.organization import MemoryOrganizationComponent
 from parsec.components.memory.ping import MemoryPingComponent
-from parsec.components.memory.pki import MemoryPkiEnrollmentComponent
 from parsec.components.memory.realm import MemoryRealmComponent
 from parsec.components.memory.sequester import MemorySequesterComponent
 from parsec.components.memory.shamir import MemoryShamirComponent
@@ -46,7 +45,6 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             realm = MemoryRealmComponent(data, event_bus, webhooks)
             vlob = MemoryVlobComponent(data, event_bus, webhooks)
             ping = MemoryPingComponent(event_bus)
-            pki = MemoryPkiEnrollmentComponent(config, data, event_bus)
             sequester = MemorySequesterComponent(data, event_bus)
             shamir = MemoryShamirComponent(data, event_bus)
             blockstore = blockstore_factory(config.blockstore_config, mocked_data=data)
@@ -67,7 +65,6 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "realm": realm,
                 "vlob": vlob,
                 "ping": ping,
-                "pki": pki,
                 "sequester": sequester,
                 "block": block,
                 "blockstore": blockstore,

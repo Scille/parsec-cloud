@@ -4,12 +4,6 @@
 
 mod list_frozen_users;
 mod organization_info;
-mod pki_enrollment_accept;
-mod pki_enrollment_finalize;
-mod pki_enrollment_info;
-mod pki_enrollment_list;
-mod pki_enrollment_reject;
-mod pki_enrollment_submit;
 mod pki_get_addr;
 mod recovery_device;
 mod shamir_recovery_delete;
@@ -37,15 +31,6 @@ use std::{
 
 pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
-    pki_enrollment_accept::PkiEnrollmentAcceptError,
-    pki_enrollment_finalize::{finalize as pki_enrollment_finalize, PkiEnrollmentFinalizeError},
-    pki_enrollment_info::{info as pki_enrollment_info, PKIInfoItem, PkiEnrollmentInfoError},
-    pki_enrollment_list::{
-        verify_untrusted_items as pki_list_verify_items, InvalidityReason, PkiEnrollmentListError,
-        PkiEnrollmentListItem,
-    },
-    pki_enrollment_reject::PkiEnrollmentRejectError,
-    pki_enrollment_submit::{pki_enrollment_submit, PkiEnrollmentSubmitError},
     start_invitation_greet::ClientStartShamirRecoveryInvitationGreetError,
     tos::{ClientAcceptTosError, ClientGetTosError, Tos},
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
@@ -71,7 +56,6 @@ use crate::{
 };
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
-pub use libparsec_protocol::authenticated_cmds::latest::pki_enrollment_list::PkiEnrollmentListItem as RawPkiEnrollmentListItem;
 
 use libparsec_types::prelude::*;
 pub use organization_info::{
@@ -705,46 +689,6 @@ impl Client {
 
     pub async fn pki_get_addr(&self) -> ParsecPkiEnrollmentAddr {
         pki_get_addr::get_addr(self).await
-    }
-
-    pub async fn pki_list_enrollments_untrusted(
-        &self,
-    ) -> Result<Vec<RawPkiEnrollmentListItem>, PkiEnrollmentListError> {
-        pki_enrollment_list::list_enrollments_untrusted(&self.cmds).await
-    }
-
-    pub async fn pki_list_verify_items(
-        &self,
-        cert_ref: X509CertificateReference,
-        untrusted_items: Vec<RawPkiEnrollmentListItem>,
-    ) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
-        pki_enrollment_list::verify_untrusted_items(&self.cmds, cert_ref, untrusted_items).await
-    }
-
-    pub async fn pki_enrollment_reject(
-        &self,
-        enrollment_id: PKIEnrollmentID,
-    ) -> Result<(), PkiEnrollmentRejectError> {
-        pki_enrollment_reject::reject(&self.cmds, enrollment_id).await
-    }
-
-    pub async fn pki_enrollment_accept(
-        &self,
-        profile: UserProfile,
-        enrollment_id: PKIEnrollmentID,
-        accepter_cert_ref: &X509CertificateReference,
-        submitter_der_cert: &[u8],
-        submit_payload: PkiEnrollmentSubmitPayload,
-    ) -> Result<(), PkiEnrollmentAcceptError> {
-        pki_enrollment_accept::accept(
-            self,
-            profile,
-            enrollment_id,
-            accepter_cert_ref,
-            submitter_der_cert,
-            submit_payload,
-        )
-        .await
     }
 
     pub fn get_async_enrollment_addr(&self) -> ParsecAsyncEnrollmentAddr {

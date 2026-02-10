@@ -4,134 +4,136 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use crate::{
-    test_register_low_level_send_hook, test_register_low_level_send_hook_default,
-    test_register_low_level_send_hook_multicall, test_register_send_hook, AnonymousCmds, Bytes,
-    ConnectionError, HeaderMap, ProxyConfig, ResponseMock, StatusCode,
-};
-use libparsec_protocol::anonymous_cmds::latest as anonymous_cmds;
-use libparsec_tests_fixtures::prelude::*;
-use libparsec_types::prelude::*;
+// TODO: why is this pki specific ?
 
-#[parsec_test(testbed = "empty")]
-async fn low_level_send_hook(env: &TestbedEnv) {
-    test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
-        Ok(ResponseMock::Mocked((
-            StatusCode::IM_A_TEAPOT,
-            HeaderMap::new(),
-            Bytes::new(),
-        )))
-    });
+// use crate::{
+//     test_register_low_level_send_hook, test_register_low_level_send_hook_default,
+//     test_register_low_level_send_hook_multicall, test_register_send_hook, AnonymousCmds, Bytes,
+//     ConnectionError, HeaderMap, ProxyConfig, ResponseMock, StatusCode,
+// };
+// use libparsec_protocol::anonymous_cmds::latest as anonymous_cmds;
+// use libparsec_tests_fixtures::prelude::*;
+// use libparsec_types::prelude::*;
 
-    let addr =
-        ParsecPkiEnrollmentAddr::new(env.server_addr.clone(), env.organization_id.to_owned());
-    let cmds =
-        AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
+// #[parsec_test(testbed = "empty")]
+// async fn low_level_send_hook(env: &TestbedEnv) {
+//     test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
+//         Ok(ResponseMock::Mocked((
+//             StatusCode::IM_A_TEAPOT,
+//             HeaderMap::new(),
+//             Bytes::new(),
+//         )))
+//     });
 
-    let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
-        })
-        .await;
-    assert!(
-        matches!(
-            rep,
-            Err(ConnectionError::InvalidResponseStatus(
-                StatusCode::IM_A_TEAPOT
-            )),
-        ),
-        "expected a teapot, but got {rep:?}"
-    );
+//     let addr =
+//         ParsecPkiEnrollmentAddr::new(env.server_addr.clone(), env.organization_id.to_owned());
+//     let cmds =
+//         AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
 
-    // Hook should have been reset to the default now
+//     let rep = cmds
+//         .send(anonymous_cmds::pki_enrollment_info::Req {
+//             enrollment_id: PKIEnrollmentID::default(),
+//         })
+//         .await;
+//     assert!(
+//         matches!(
+//             rep,
+//             Err(ConnectionError::InvalidResponseStatus(
+//                 StatusCode::IM_A_TEAPOT
+//             )),
+//         ),
+//         "expected a teapot, but got {rep:?}"
+//     );
 
-    let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
-        })
-        .await;
-    assert!(
-        matches!(rep, Err(ConnectionError::NoResponse(None))),
-        r#"expected a `NoResponse`, but got {rep:?}"#
-    );
+//     // Hook should have been reset to the default now
 
-    // Test the multicall hook
+//     let rep = cmds
+//         .send(anonymous_cmds::pki_enrollment_info::Req {
+//             enrollment_id: PKIEnrollmentID::default(),
+//         })
+//         .await;
+//     assert!(
+//         matches!(rep, Err(ConnectionError::NoResponse(None))),
+//         r#"expected a `NoResponse`, but got {rep:?}"#
+//     );
 
-    test_register_low_level_send_hook_multicall(&env.discriminant_dir, |_request_builder| async {
-        Ok(ResponseMock::Mocked((
-            StatusCode::IM_A_TEAPOT,
-            HeaderMap::new(),
-            Bytes::new(),
-        )))
-    });
-    for _ in 0..3 {
-        let rep = cmds
-            .send(anonymous_cmds::pki_enrollment_info::Req {
-                enrollment_id: PKIEnrollmentID::default(),
-            })
-            .await;
-        assert!(
-            matches!(
-                rep,
-                Err(ConnectionError::InvalidResponseStatus(
-                    StatusCode::IM_A_TEAPOT
-                )),
-            ),
-            "expected a teapot, but got {rep:?}"
-        );
-    }
+//     // Test the multicall hook
 
-    // Finally switch back to default
+//     test_register_low_level_send_hook_multicall(&env.discriminant_dir, |_request_builder| async {
+//         Ok(ResponseMock::Mocked((
+//             StatusCode::IM_A_TEAPOT,
+//             HeaderMap::new(),
+//             Bytes::new(),
+//         )))
+//     });
+//     for _ in 0..3 {
+//         let rep = cmds
+//             .send(anonymous_cmds::pki_enrollment_info::Req {
+//                 enrollment_id: PKIEnrollmentID::default(),
+//             })
+//             .await;
+//         assert!(
+//             matches!(
+//                 rep,
+//                 Err(ConnectionError::InvalidResponseStatus(
+//                     StatusCode::IM_A_TEAPOT
+//                 )),
+//             ),
+//             "expected a teapot, but got {rep:?}"
+//         );
+//     }
 
-    test_register_low_level_send_hook_default(&env.discriminant_dir);
+//     // Finally switch back to default
 
-    let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
-        })
-        .await;
-    assert!(
-        matches!(rep, Err(ConnectionError::NoResponse(None))),
-        r#"expected a `NoResponse`, but got {rep:?}"#
-    );
-}
+//     test_register_low_level_send_hook_default(&env.discriminant_dir);
 
-#[parsec_test(testbed = "empty")]
-async fn high_level_send_hook(env: &TestbedEnv) {
-    test_register_send_hook(
-        &env.discriminant_dir,
-        |_req: anonymous_cmds::pki_enrollment_info::Req| {
-            anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound
-        },
-    );
+//     let rep = cmds
+//         .send(anonymous_cmds::pki_enrollment_info::Req {
+//             enrollment_id: PKIEnrollmentID::default(),
+//         })
+//         .await;
+//     assert!(
+//         matches!(rep, Err(ConnectionError::NoResponse(None))),
+//         r#"expected a `NoResponse`, but got {rep:?}"#
+//     );
+// }
 
-    let addr =
-        ParsecPkiEnrollmentAddr::new(env.server_addr.clone(), env.organization_id.to_owned());
-    let cmds =
-        AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
+// #[parsec_test(testbed = "empty")]
+// async fn high_level_send_hook(env: &TestbedEnv) {
+//     test_register_send_hook(
+//         &env.discriminant_dir,
+//         |_req: anonymous_cmds::pki_enrollment_info::Req| {
+//             anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound
+//         },
+//     );
 
-    let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
-        })
-        .await;
-    assert!(
-        matches!(
-            rep,
-            Ok(anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound)
-        ),
-        r#"expected a `NotFound`, but got {rep:?}"#
-    );
+//     let addr =
+//         ParsecPkiEnrollmentAddr::new(env.server_addr.clone(), env.organization_id.to_owned());
+//     let cmds =
+//         AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
 
-    // Hook should have been reset to the default now
+//     let rep = cmds
+//         .send(anonymous_cmds::pki_enrollment_info::Req {
+//             enrollment_id: PKIEnrollmentID::default(),
+//         })
+//         .await;
+//     assert!(
+//         matches!(
+//             rep,
+//             Ok(anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound)
+//         ),
+//         r#"expected a `NotFound`, but got {rep:?}"#
+//     );
 
-    let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
-        })
-        .await;
-    assert!(
-        matches!(rep, Err(ConnectionError::NoResponse(None))),
-        r#"expected a `NoResponse`, but got {rep:?}"#
-    );
-}
+//     // Hook should have been reset to the default now
+
+//     let rep = cmds
+//         .send(anonymous_cmds::pki_enrollment_info::Req {
+//             enrollment_id: PKIEnrollmentID::default(),
+//         })
+//         .await;
+//     assert!(
+//         matches!(rep, Err(ConnectionError::NoResponse(None))),
+//         r#"expected a `NoResponse`, but got {rep:?}"#
+//     );
+// }
