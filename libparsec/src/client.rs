@@ -10,11 +10,9 @@ pub use libparsec_client::{
     ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
     ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
     ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
-    ClientUserUpdateProfileError, DeviceInfo, InvalidityReason, OrganizationInfo,
-    OtherShamirRecoveryInfo, PKIInfoItem, PkiEnrollmentAcceptError, PkiEnrollmentInfoError,
-    PkiEnrollmentListError, PkiEnrollmentListItem, PkiEnrollmentRejectError,
-    RawPkiEnrollmentListItem, SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo,
-    WorkspaceInfo, WorkspaceUserAccessInfo,
+    ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo,
+    SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo,
+    WorkspaceUserAccessInfo,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -703,24 +701,6 @@ pub async fn client_get_organization_bootstrap_date(
     client.get_organization_bootstrap_date().await
 }
 
-pub async fn client_pki_list_enrollments_untrusted(
-    client: Handle,
-) -> Result<Vec<RawPkiEnrollmentListItem>, PkiEnrollmentListError> {
-    let client = borrow_client(client)?;
-    client.pki_list_enrollments_untrusted().await
-}
-
-pub async fn client_pki_list_verify_items(
-    client: Handle,
-    cert_ref: X509CertificateReference,
-    untrusted_items: Vec<RawPkiEnrollmentListItem>,
-) -> Result<Vec<PkiEnrollmentListItem>, PkiEnrollmentListError> {
-    let client = borrow_client(client)?;
-    client
-        .pki_list_verify_items(cert_ref, untrusted_items)
-        .await
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum PkiGetAddrError {
     #[error(transparent)]
@@ -732,32 +712,4 @@ pub async fn client_pki_get_addr(
 ) -> Result<ParsecPkiEnrollmentAddr, PkiGetAddrError> {
     let client = borrow_client(client)?;
     Ok(client.pki_get_addr().await)
-}
-
-pub async fn client_pki_enrollment_reject(
-    client: Handle,
-    enrollment_id: PKIEnrollmentID,
-) -> Result<(), PkiEnrollmentRejectError> {
-    let client = borrow_client(client)?;
-    client.pki_enrollment_reject(enrollment_id).await
-}
-
-pub async fn client_pki_enrollment_accept(
-    client: Handle,
-    profile: UserProfile,
-    enrollment_id: PKIEnrollmentID,
-    accepter_cert_ref: &X509CertificateReference,
-    submitter_der_cert: &[u8],
-    submit_payload: PkiEnrollmentSubmitPayload,
-) -> Result<(), PkiEnrollmentAcceptError> {
-    let client = borrow_client(client)?;
-    client
-        .pki_enrollment_accept(
-            profile,
-            enrollment_id,
-            accepter_cert_ref,
-            submitter_der_cert,
-            submit_payload,
-        )
-        .await
 }

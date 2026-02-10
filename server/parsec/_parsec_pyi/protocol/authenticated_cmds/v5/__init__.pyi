@@ -25,9 +25,6 @@ from . import (
     list_frozen_users,
     organization_info,
     ping,
-    pki_enrollment_accept,
-    pki_enrollment_list,
-    pki_enrollment_reject,
     realm_create,
     realm_get_keys_bundle,
     realm_rename,
@@ -71,9 +68,6 @@ class AnyCmdReq:
         | list_frozen_users.Req
         | organization_info.Req
         | ping.Req
-        | pki_enrollment_accept.Req
-        | pki_enrollment_list.Req
-        | pki_enrollment_reject.Req
         | realm_create.Req
         | realm_get_keys_bundle.Req
         | realm_rename.Req
@@ -114,9 +108,6 @@ __all__ = [
     "list_frozen_users",
     "organization_info",
     "ping",
-    "pki_enrollment_accept",
-    "pki_enrollment_list",
-    "pki_enrollment_reject",
     "realm_create",
     "realm_get_keys_bundle",
     "realm_rename",

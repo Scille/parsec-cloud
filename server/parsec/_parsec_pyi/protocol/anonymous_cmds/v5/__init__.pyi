@@ -10,8 +10,6 @@ from . import (
     async_enrollment_submit,
     organization_bootstrap,
     ping,
-    pki_enrollment_info,
-    pki_enrollment_submit,
 )
 
 class AnyCmdReq:
@@ -24,8 +22,6 @@ class AnyCmdReq:
         | async_enrollment_submit.Req
         | organization_bootstrap.Req
         | ping.Req
-        | pki_enrollment_info.Req
-        | pki_enrollment_submit.Req
     ): ...
 
 __all__ = [
@@ -35,6 +31,4 @@ __all__ = [
     "async_enrollment_submit",
     "organization_bootstrap",
     "ping",
-    "pki_enrollment_info",
-    "pki_enrollment_submit",
 ]

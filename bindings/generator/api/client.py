@@ -4,7 +4,6 @@
 from .addr import ParsecOrganizationAddr
 from .common import (
     U64,
-    Bytes,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -17,7 +16,6 @@ from .common import (
     NonZeroU8,
     OrganizationID,
     Path,
-    PKIEnrollmentID,
     RealmRole,
     Ref,
     Result,
@@ -32,17 +30,6 @@ from .common import (
 )
 from .config import ClientConfig
 from .device import AvailableDevice, DeviceAccessStrategy, DeviceSaveStrategy
-from .pki import (
-    ParsecPkiEnrollmentAddr,
-    PkiEnrollmentAcceptError,
-    PkiEnrollmentListError,
-    PkiEnrollmentListItem,
-    PkiEnrollmentRejectError,
-    PkiEnrollmentSubmitPayload,
-    PkiGetAddrError,
-    RawPkiEnrollmentListItem,
-    X509CertificateReference,
-)
 
 
 def list_started_clients() -> list[tuple[Handle, DeviceID]]:
@@ -818,41 +805,4 @@ class ClientGetOrganizationBootstrapDateError(ErrorVariant):
 async def client_get_organization_bootstrap_date(
     client_handle: Handle,
 ) -> Result[DateTime, ClientGetOrganizationBootstrapDateError]:
-    raise NotImplementedError
-
-
-async def client_pki_get_addr(
-    client: Handle,
-) -> Result[ParsecPkiEnrollmentAddr, PkiGetAddrError]:
-    raise NotImplementedError
-
-
-async def client_pki_enrollment_reject(
-    client_handle: Handle, enrollment_id: PKIEnrollmentID
-) -> Result[None, PkiEnrollmentRejectError]:
-    raise NotImplementedError
-
-
-async def client_pki_enrollment_accept(
-    client_handle: Handle,
-    profile: UserProfile,
-    enrollment_id: PKIEnrollmentID,
-    accepter_cert_ref: Ref[X509CertificateReference],
-    submitter_der_cert: Ref[Bytes],
-    submit_payload: PkiEnrollmentSubmitPayload,
-) -> Result[None, PkiEnrollmentAcceptError]:
-    raise NotImplementedError
-
-
-async def client_pki_list_enrollments_untrusted(
-    client_handle: Handle,
-) -> Result[list[RawPkiEnrollmentListItem], PkiEnrollmentListError]:
-    raise NotImplementedError
-
-
-async def client_pki_list_verify_items(
-    client_handle: Handle,
-    cert_ref: X509CertificateReference,
-    untrusted_items: list[RawPkiEnrollmentListItem],
-) -> Result[list[PkiEnrollmentListItem], PkiEnrollmentListError]:
     raise NotImplementedError

@@ -95,7 +95,6 @@ export type EntryName = string
 export type FsPath = string
 export type GreetingAttemptID = string
 export type OrganizationID = string
-export type PKIEncryptionAlgorithm = string
 export type PKIEnrollmentID = string
 export type ParsecAddr = string
 export type ParsecAsyncEnrollmentAddr = string
@@ -107,7 +106,6 @@ export type ParsecTOTPResetAddr = string
 export type ParsecWorkspacePathAddr = string
 export type Password = string
 export type Path = string
-export type PkiSignatureAlgorithm = string
 export type SASCode = string
 export type SequesterServiceID = string
 export type UserID = string
@@ -116,11 +114,9 @@ export type X509CertificateHash = string
 export type Bytes = Uint8Array
 export type BytesVec = Uint8Array
 export type KeyDerivation = Uint8Array
-export type PublicKey = Uint8Array
 export type SecretKey = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
 export type Sha256BoxData = Uint8Array
-export type VerifyKey = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
 export type U16 = number
@@ -325,41 +321,6 @@ export interface OpenOptions {
 export interface OrganizationInfo {
     totalBlockBytes: SizeInt
     totalMetadataBytes: SizeInt
-}
-
-export interface PKILocalPendingEnrollment {
-    certRef: X509CertificateReference
-    addr: ParsecPkiEnrollmentAddr
-    submittedOn: DateTime
-    enrollmentId: PKIEnrollmentID
-    payload: PkiEnrollmentSubmitPayload
-    encryptedKey: Bytes
-    encryptedKeyAlgo: PKIEncryptionAlgorithm
-    ciphertext: Bytes
-}
-
-export interface PkiEnrollmentAnswerPayload {
-    userId: UserID
-    deviceId: DeviceID
-    deviceLabel: DeviceLabel
-    profile: UserProfile
-    rootVerifyKey: VerifyKey
-}
-
-export interface PkiEnrollmentSubmitPayload {
-    verifyKey: VerifyKey
-    publicKey: PublicKey
-    deviceLabel: DeviceLabel
-}
-
-export interface RawPkiEnrollmentListItem {
-    enrollmentId: PKIEnrollmentID
-    submittedOn: DateTime
-    derX509Certificate: Bytes
-    intermediateDerX509Certificates: Array<Bytes>
-    payloadSignature: Bytes
-    payloadSignatureAlgorithm: PkiSignatureAlgorithm
-    payload: Bytes
 }
 
 export interface ServerConfig {
@@ -3297,57 +3258,6 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorStopped
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
-// InvalidityReason
-export enum InvalidityReasonTag {
-    CannotGetCertificateInfo = 'InvalidityReasonCannotGetCertificateInfo',
-    CannotOpenStore = 'InvalidityReasonCannotOpenStore',
-    DataError = 'InvalidityReasonDataError',
-    InvalidCertificateDer = 'InvalidityReasonInvalidCertificateDer',
-    InvalidRootCertificate = 'InvalidityReasonInvalidRootCertificate',
-    InvalidSignature = 'InvalidityReasonInvalidSignature',
-    InvalidUserInformation = 'InvalidityReasonInvalidUserInformation',
-    NotFound = 'InvalidityReasonNotFound',
-    Untrusted = 'InvalidityReasonUntrusted',
-}
-
-export interface InvalidityReasonCannotGetCertificateInfo {
-    tag: InvalidityReasonTag.CannotGetCertificateInfo
-}
-export interface InvalidityReasonCannotOpenStore {
-    tag: InvalidityReasonTag.CannotOpenStore
-}
-export interface InvalidityReasonDataError {
-    tag: InvalidityReasonTag.DataError
-}
-export interface InvalidityReasonInvalidCertificateDer {
-    tag: InvalidityReasonTag.InvalidCertificateDer
-}
-export interface InvalidityReasonInvalidRootCertificate {
-    tag: InvalidityReasonTag.InvalidRootCertificate
-}
-export interface InvalidityReasonInvalidSignature {
-    tag: InvalidityReasonTag.InvalidSignature
-}
-export interface InvalidityReasonInvalidUserInformation {
-    tag: InvalidityReasonTag.InvalidUserInformation
-}
-export interface InvalidityReasonNotFound {
-    tag: InvalidityReasonTag.NotFound
-}
-export interface InvalidityReasonUntrusted {
-    tag: InvalidityReasonTag.Untrusted
-}
-export type InvalidityReason =
-  | InvalidityReasonCannotGetCertificateInfo
-  | InvalidityReasonCannotOpenStore
-  | InvalidityReasonDataError
-  | InvalidityReasonInvalidCertificateDer
-  | InvalidityReasonInvalidRootCertificate
-  | InvalidityReasonInvalidSignature
-  | InvalidityReasonInvalidUserInformation
-  | InvalidityReasonNotFound
-  | InvalidityReasonUntrusted
-
 // InviteInfoInvitationCreatedBy
 export enum InviteInfoInvitationCreatedByTag {
     ExternalService = 'InviteInfoInvitationCreatedByExternalService',
@@ -3460,24 +3370,6 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
-
-// ListPkiLocalPendingError
-export enum ListPkiLocalPendingErrorTag {
-    Internal = 'ListPkiLocalPendingErrorInternal',
-    StorageNotAvailable = 'ListPkiLocalPendingErrorStorageNotAvailable',
-}
-
-export interface ListPkiLocalPendingErrorInternal {
-    tag: ListPkiLocalPendingErrorTag.Internal
-    error: string
-}
-export interface ListPkiLocalPendingErrorStorageNotAvailable {
-    tag: ListPkiLocalPendingErrorTag.StorageNotAvailable
-    error: string
-}
-export type ListPkiLocalPendingError =
-  | ListPkiLocalPendingErrorInternal
-  | ListPkiLocalPendingErrorStorageNotAvailable
 
 // MountpointMountStrategy
 export enum MountpointMountStrategyTag {
@@ -3677,40 +3569,6 @@ export type OtherShamirRecoveryInfo =
   | OtherShamirRecoveryInfoSetupButUnusable
   | OtherShamirRecoveryInfoSetupWithRevokedRecipients
 
-// PKIInfoItem
-export enum PKIInfoItemTag {
-    Accepted = 'PKIInfoItemAccepted',
-    Cancelled = 'PKIInfoItemCancelled',
-    Rejected = 'PKIInfoItemRejected',
-    Submitted = 'PKIInfoItemSubmitted',
-}
-
-export interface PKIInfoItemAccepted {
-    tag: PKIInfoItemTag.Accepted
-    answer: PkiEnrollmentAnswerPayload
-    submittedOn: DateTime
-    acceptedOn: DateTime
-}
-export interface PKIInfoItemCancelled {
-    tag: PKIInfoItemTag.Cancelled
-    submittedOn: DateTime
-    cancelledOn: DateTime
-}
-export interface PKIInfoItemRejected {
-    tag: PKIInfoItemTag.Rejected
-    submittedOn: DateTime
-    rejectedOn: DateTime
-}
-export interface PKIInfoItemSubmitted {
-    tag: PKIInfoItemTag.Submitted
-    submittedOn: DateTime
-}
-export type PKIInfoItem =
-  | PKIInfoItemAccepted
-  | PKIInfoItemCancelled
-  | PKIInfoItemRejected
-  | PKIInfoItemSubmitted
-
 // ParseParsecAddrError
 export enum ParseParsecAddrErrorTag {
     InvalidUrl = 'ParseParsecAddrErrorInvalidUrl',
@@ -3870,260 +3728,6 @@ export type PendingAsyncEnrollmentInfo =
   | PendingAsyncEnrollmentInfoRejected
   | PendingAsyncEnrollmentInfoSubmitted
 
-// PkiEnrollmentAcceptError
-export enum PkiEnrollmentAcceptErrorTag {
-    ActiveUsersLimitReached = 'PkiEnrollmentAcceptErrorActiveUsersLimitReached',
-    AuthorNotAllowed = 'PkiEnrollmentAcceptErrorAuthorNotAllowed',
-    EnrollmentNoLongerAvailable = 'PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable',
-    EnrollmentNotFound = 'PkiEnrollmentAcceptErrorEnrollmentNotFound',
-    HumanHandleAlreadyTaken = 'PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken',
-    Internal = 'PkiEnrollmentAcceptErrorInternal',
-    Offline = 'PkiEnrollmentAcceptErrorOffline',
-    PkiOperationError = 'PkiEnrollmentAcceptErrorPkiOperationError',
-}
-
-export interface PkiEnrollmentAcceptErrorActiveUsersLimitReached {
-    tag: PkiEnrollmentAcceptErrorTag.ActiveUsersLimitReached
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorAuthorNotAllowed {
-    tag: PkiEnrollmentAcceptErrorTag.AuthorNotAllowed
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable {
-    tag: PkiEnrollmentAcceptErrorTag.EnrollmentNoLongerAvailable
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorEnrollmentNotFound {
-    tag: PkiEnrollmentAcceptErrorTag.EnrollmentNotFound
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken {
-    tag: PkiEnrollmentAcceptErrorTag.HumanHandleAlreadyTaken
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorInternal {
-    tag: PkiEnrollmentAcceptErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorOffline {
-    tag: PkiEnrollmentAcceptErrorTag.Offline
-    error: string
-}
-export interface PkiEnrollmentAcceptErrorPkiOperationError {
-    tag: PkiEnrollmentAcceptErrorTag.PkiOperationError
-    error: string
-}
-export type PkiEnrollmentAcceptError =
-  | PkiEnrollmentAcceptErrorActiveUsersLimitReached
-  | PkiEnrollmentAcceptErrorAuthorNotAllowed
-  | PkiEnrollmentAcceptErrorEnrollmentNoLongerAvailable
-  | PkiEnrollmentAcceptErrorEnrollmentNotFound
-  | PkiEnrollmentAcceptErrorHumanHandleAlreadyTaken
-  | PkiEnrollmentAcceptErrorInternal
-  | PkiEnrollmentAcceptErrorOffline
-  | PkiEnrollmentAcceptErrorPkiOperationError
-
-// PkiEnrollmentFinalizeError
-export enum PkiEnrollmentFinalizeErrorTag {
-    Internal = 'PkiEnrollmentFinalizeErrorInternal',
-    SaveError = 'PkiEnrollmentFinalizeErrorSaveError',
-}
-
-export interface PkiEnrollmentFinalizeErrorInternal {
-    tag: PkiEnrollmentFinalizeErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentFinalizeErrorSaveError {
-    tag: PkiEnrollmentFinalizeErrorTag.SaveError
-    error: string
-}
-export type PkiEnrollmentFinalizeError =
-  | PkiEnrollmentFinalizeErrorInternal
-  | PkiEnrollmentFinalizeErrorSaveError
-
-// PkiEnrollmentInfoError
-export enum PkiEnrollmentInfoErrorTag {
-    EnrollmentNotFound = 'PkiEnrollmentInfoErrorEnrollmentNotFound',
-    Internal = 'PkiEnrollmentInfoErrorInternal',
-    InvalidAcceptPayload = 'PkiEnrollmentInfoErrorInvalidAcceptPayload',
-    Offline = 'PkiEnrollmentInfoErrorOffline',
-}
-
-export interface PkiEnrollmentInfoErrorEnrollmentNotFound {
-    tag: PkiEnrollmentInfoErrorTag.EnrollmentNotFound
-    error: string
-}
-export interface PkiEnrollmentInfoErrorInternal {
-    tag: PkiEnrollmentInfoErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentInfoErrorInvalidAcceptPayload {
-    tag: PkiEnrollmentInfoErrorTag.InvalidAcceptPayload
-    error: string
-}
-export interface PkiEnrollmentInfoErrorOffline {
-    tag: PkiEnrollmentInfoErrorTag.Offline
-    error: string
-}
-export type PkiEnrollmentInfoError =
-  | PkiEnrollmentInfoErrorEnrollmentNotFound
-  | PkiEnrollmentInfoErrorInternal
-  | PkiEnrollmentInfoErrorInvalidAcceptPayload
-  | PkiEnrollmentInfoErrorOffline
-
-// PkiEnrollmentListError
-export enum PkiEnrollmentListErrorTag {
-    AuthorNotAllowed = 'PkiEnrollmentListErrorAuthorNotAllowed',
-    Internal = 'PkiEnrollmentListErrorInternal',
-    Offline = 'PkiEnrollmentListErrorOffline',
-}
-
-export interface PkiEnrollmentListErrorAuthorNotAllowed {
-    tag: PkiEnrollmentListErrorTag.AuthorNotAllowed
-    error: string
-}
-export interface PkiEnrollmentListErrorInternal {
-    tag: PkiEnrollmentListErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentListErrorOffline {
-    tag: PkiEnrollmentListErrorTag.Offline
-    error: string
-}
-export type PkiEnrollmentListError =
-  | PkiEnrollmentListErrorAuthorNotAllowed
-  | PkiEnrollmentListErrorInternal
-  | PkiEnrollmentListErrorOffline
-
-// PkiEnrollmentListItem
-export enum PkiEnrollmentListItemTag {
-    Invalid = 'PkiEnrollmentListItemInvalid',
-    Valid = 'PkiEnrollmentListItemValid',
-}
-
-export interface PkiEnrollmentListItemInvalid {
-    tag: PkiEnrollmentListItemTag.Invalid
-    humanHandle: HumanHandle | null
-    enrollmentId: PKIEnrollmentID
-    submittedOn: DateTime
-    reason: InvalidityReason
-    details: string
-}
-export interface PkiEnrollmentListItemValid {
-    tag: PkiEnrollmentListItemTag.Valid
-    humanHandle: HumanHandle
-    enrollmentId: PKIEnrollmentID
-    submittedOn: DateTime
-    submitterDerCert: Bytes
-    payload: PkiEnrollmentSubmitPayload
-}
-export type PkiEnrollmentListItem =
-  | PkiEnrollmentListItemInvalid
-  | PkiEnrollmentListItemValid
-
-// PkiEnrollmentRejectError
-export enum PkiEnrollmentRejectErrorTag {
-    AuthorNotAllowed = 'PkiEnrollmentRejectErrorAuthorNotAllowed',
-    EnrollmentNoLongerAvailable = 'PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable',
-    EnrollmentNotFound = 'PkiEnrollmentRejectErrorEnrollmentNotFound',
-    Internal = 'PkiEnrollmentRejectErrorInternal',
-    Offline = 'PkiEnrollmentRejectErrorOffline',
-}
-
-export interface PkiEnrollmentRejectErrorAuthorNotAllowed {
-    tag: PkiEnrollmentRejectErrorTag.AuthorNotAllowed
-    error: string
-}
-export interface PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable {
-    tag: PkiEnrollmentRejectErrorTag.EnrollmentNoLongerAvailable
-    error: string
-}
-export interface PkiEnrollmentRejectErrorEnrollmentNotFound {
-    tag: PkiEnrollmentRejectErrorTag.EnrollmentNotFound
-    error: string
-}
-export interface PkiEnrollmentRejectErrorInternal {
-    tag: PkiEnrollmentRejectErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentRejectErrorOffline {
-    tag: PkiEnrollmentRejectErrorTag.Offline
-    error: string
-}
-export type PkiEnrollmentRejectError =
-  | PkiEnrollmentRejectErrorAuthorNotAllowed
-  | PkiEnrollmentRejectErrorEnrollmentNoLongerAvailable
-  | PkiEnrollmentRejectErrorEnrollmentNotFound
-  | PkiEnrollmentRejectErrorInternal
-  | PkiEnrollmentRejectErrorOffline
-
-// PkiEnrollmentSubmitError
-export enum PkiEnrollmentSubmitErrorTag {
-    AlreadyEnrolled = 'PkiEnrollmentSubmitErrorAlreadyEnrolled',
-    AlreadySubmitted = 'PkiEnrollmentSubmitErrorAlreadySubmitted',
-    EmailAlreadyUsed = 'PkiEnrollmentSubmitErrorEmailAlreadyUsed',
-    IdAlreadyUsed = 'PkiEnrollmentSubmitErrorIdAlreadyUsed',
-    Internal = 'PkiEnrollmentSubmitErrorInternal',
-    InvalidPayload = 'PkiEnrollmentSubmitErrorInvalidPayload',
-    Offline = 'PkiEnrollmentSubmitErrorOffline',
-    PkiOperationError = 'PkiEnrollmentSubmitErrorPkiOperationError',
-}
-
-export interface PkiEnrollmentSubmitErrorAlreadyEnrolled {
-    tag: PkiEnrollmentSubmitErrorTag.AlreadyEnrolled
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorAlreadySubmitted {
-    tag: PkiEnrollmentSubmitErrorTag.AlreadySubmitted
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorEmailAlreadyUsed {
-    tag: PkiEnrollmentSubmitErrorTag.EmailAlreadyUsed
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorIdAlreadyUsed {
-    tag: PkiEnrollmentSubmitErrorTag.IdAlreadyUsed
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorInternal {
-    tag: PkiEnrollmentSubmitErrorTag.Internal
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorInvalidPayload {
-    tag: PkiEnrollmentSubmitErrorTag.InvalidPayload
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorOffline {
-    tag: PkiEnrollmentSubmitErrorTag.Offline
-    error: string
-}
-export interface PkiEnrollmentSubmitErrorPkiOperationError {
-    tag: PkiEnrollmentSubmitErrorTag.PkiOperationError
-    error: string
-}
-export type PkiEnrollmentSubmitError =
-  | PkiEnrollmentSubmitErrorAlreadyEnrolled
-  | PkiEnrollmentSubmitErrorAlreadySubmitted
-  | PkiEnrollmentSubmitErrorEmailAlreadyUsed
-  | PkiEnrollmentSubmitErrorIdAlreadyUsed
-  | PkiEnrollmentSubmitErrorInternal
-  | PkiEnrollmentSubmitErrorInvalidPayload
-  | PkiEnrollmentSubmitErrorOffline
-  | PkiEnrollmentSubmitErrorPkiOperationError
-
-// PkiGetAddrError
-export enum PkiGetAddrErrorTag {
-    Internal = 'PkiGetAddrErrorInternal',
-}
-
-export interface PkiGetAddrErrorInternal {
-    tag: PkiGetAddrErrorTag.Internal
-    error: string
-}
-export type PkiGetAddrError =
-  | PkiGetAddrErrorInternal
-
 // RemoveDeviceDataError
 export enum RemoveDeviceDataErrorTag {
     FailedToRemoveData = 'RemoveDeviceDataErrorFailedToRemoveData',
@@ -4135,30 +3739,6 @@ export interface RemoveDeviceDataErrorFailedToRemoveData {
 }
 export type RemoveDeviceDataError =
   | RemoveDeviceDataErrorFailedToRemoveData
-
-// RemoveDeviceError
-export enum RemoveDeviceErrorTag {
-    Internal = 'RemoveDeviceErrorInternal',
-    NotFound = 'RemoveDeviceErrorNotFound',
-    StorageNotAvailable = 'RemoveDeviceErrorStorageNotAvailable',
-}
-
-export interface RemoveDeviceErrorInternal {
-    tag: RemoveDeviceErrorTag.Internal
-    error: string
-}
-export interface RemoveDeviceErrorNotFound {
-    tag: RemoveDeviceErrorTag.NotFound
-    error: string
-}
-export interface RemoveDeviceErrorStorageNotAvailable {
-    tag: RemoveDeviceErrorTag.StorageNotAvailable
-    error: string
-}
-export type RemoveDeviceError =
-  | RemoveDeviceErrorInternal
-  | RemoveDeviceErrorNotFound
-  | RemoveDeviceErrorStorageNotAvailable
 
 // SelfShamirRecoveryInfo
 export enum SelfShamirRecoveryInfoTag {
@@ -6523,29 +6103,6 @@ export interface LibParsecPlugin {
     clientOrganizationInfo(
         client_handle: Handle
     ): Promise<Result<OrganizationInfo, ClientOrganizationInfoError>>
-    clientPkiEnrollmentAccept(
-        client_handle: Handle,
-        profile: UserProfile,
-        enrollment_id: PKIEnrollmentID,
-        accepter_cert_ref: X509CertificateReference,
-        submitter_der_cert: Bytes,
-        submit_payload: PkiEnrollmentSubmitPayload
-    ): Promise<Result<null, PkiEnrollmentAcceptError>>
-    clientPkiEnrollmentReject(
-        client_handle: Handle,
-        enrollment_id: PKIEnrollmentID
-    ): Promise<Result<null, PkiEnrollmentRejectError>>
-    clientPkiGetAddr(
-        client: Handle
-    ): Promise<Result<ParsecPkiEnrollmentAddr, PkiGetAddrError>>
-    clientPkiListEnrollmentsUntrusted(
-        client_handle: Handle
-    ): Promise<Result<Array<RawPkiEnrollmentListItem>, PkiEnrollmentListError>>
-    clientPkiListVerifyItems(
-        client_handle: Handle,
-        cert_ref: X509CertificateReference,
-        untrusted_items: Array<RawPkiEnrollmentListItem>
-    ): Promise<Result<Array<PkiEnrollmentListItem>, PkiEnrollmentListError>>
     clientRejectAsyncEnrollment(
         client: Handle,
         enrollment_id: AsyncEnrollmentID
@@ -6706,9 +6263,6 @@ export interface LibParsecPlugin {
     listAvailableDevices(
         path: Path
     ): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>>
-    listPkiLocalPendingEnrollments(
-        config_dir: Path
-    ): Promise<Result<Array<PKILocalPendingEnrollment>, ListPkiLocalPendingError>>
     listStartedAccounts(
     ): Promise<Array<Handle>>
     listStartedClients(
@@ -6748,29 +6302,6 @@ export interface LibParsecPlugin {
     pathSplit(
         path: FsPath
     ): Promise<Array<EntryName>>
-    pkiEnrollmentFinalize(
-        config: ClientConfig,
-        save_strategy: DeviceSaveStrategy,
-        accepted: PkiEnrollmentAnswerPayload,
-        local_pending: PKILocalPendingEnrollment
-    ): Promise<Result<AvailableDevice, PkiEnrollmentFinalizeError>>
-    pkiEnrollmentInfo(
-        config: ClientConfig,
-        addr: ParsecPkiEnrollmentAddr,
-        cert_ref: X509CertificateReference,
-        enrollment_id: PKIEnrollmentID
-    ): Promise<Result<PKIInfoItem, PkiEnrollmentInfoError>>
-    pkiEnrollmentSubmit(
-        config: ClientConfig,
-        addr: ParsecPkiEnrollmentAddr,
-        cert_ref: X509CertificateReference,
-        device_label: DeviceLabel,
-        force: boolean
-    ): Promise<Result<DateTime, PkiEnrollmentSubmitError>>
-    pkiRemoveLocalPending(
-        config: ClientConfig,
-        id: PKIEnrollmentID
-    ): Promise<Result<null, RemoveDeviceError>>
     removeDeviceData(
         config: ClientConfig,
         device_id: DeviceID
