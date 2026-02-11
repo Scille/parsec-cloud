@@ -5,11 +5,7 @@ pub mod errors;
 #[path = "windows/mod.rs"]
 mod platform;
 mod shared;
-#[cfg(any(test, feature = "test-fixture"))]
-pub mod test_fixture;
 pub mod x509;
-#[cfg(any(test, feature = "test-fixture"))]
-pub use test_fixture::*;
 
 #[cfg(test)]
 #[path = "../tests/units/mod.rs"]
