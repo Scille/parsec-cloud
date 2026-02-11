@@ -1,0 +1,36 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "totp_setup_confirm",
+        "req": {
+            "fields": [
+                {
+                    // Value obtained from the authenticator app storing the TOTP secret
+                    "name": "one_time_password",
+                    "type": "String"
+                }
+            ]
+        },
+        "reps": [
+            {
+                // Once `ok` status has been returned, the TOTP setup is considered
+                // completed and any further attempt at calling `totp_setup_*` will
+                // return `already_setup`.
+                "status": "ok"
+            },
+            {
+                "status": "invalid_one_time_password"
+            },
+            {
+                // The TOTP has already been setup.
+                // Note if the end user no longer has access to the TOTP secret (e.g.
+                // he has lost his phone containing his authenticator app), then
+                // he should contact a server admin that can then do a TOTP reset so
+                // that `totp_setup_get_secret` can be called again.
+                "status": "already_setup"
+            }
+        ]
+    }
+]
