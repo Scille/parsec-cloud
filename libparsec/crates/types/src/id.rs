@@ -256,6 +256,7 @@ new_uuid_type!(pub PKIEnrollmentID);
 new_uuid_type!(pub GreetingAttemptID);
 new_uuid_type!(pub AccountAuthMethodID);
 new_uuid_type!(pub AccountVaultItemOpaqueKeyID);
+new_uuid_type!(pub TOTPOpaqueKeyID);
 
 impl_from_maybe!(std::collections::HashSet<VlobID>);
 
