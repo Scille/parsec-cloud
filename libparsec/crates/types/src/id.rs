@@ -257,6 +257,7 @@ new_uuid_type!(pub GreetingAttemptID);
 new_uuid_type!(pub AccountAuthMethodID);
 new_uuid_type!(pub AccountVaultItemOpaqueKeyID);
 new_uuid_type!(pub TOTPOpaqueKeyID);
+impl_from_maybe!(Option<TOTPOpaqueKeyID>);
 
 impl_from_maybe!(std::collections::HashSet<VlobID>);
 
@@ -681,7 +682,7 @@ impl From<HumanHandle> for (String, String) {
     }
 }
 
-crate::impl_from_maybe!(Option<HumanHandle>);
+impl_from_maybe!(Option<HumanHandle>);
 
 /// An email address, nothing fancy... or is it ?
 /// Email basically exists since the dawn of humanity,

@@ -70,6 +70,7 @@ pub(crate) async fn save_device_keyring(
         keyring_service: KEYRING_SERVICE.into(),
         keyring_user,
         ciphertext,
+        totp_opaque_key_id: None,
     });
 
     let file_content = file_content.dump();
