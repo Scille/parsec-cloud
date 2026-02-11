@@ -383,63 +383,79 @@ def process_greeter_step(
             return (
                 0,
                 step.public_key.encode(),
-                lambda data: authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber0WaitPeer(
-                    PublicKey(data)
+                lambda data: (
+                    authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber0WaitPeer(
+                        PublicKey(data)
+                    )
                 ),
             )
         case authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber1GetHashedNonce():
             return (
                 1,
                 b"",
-                lambda data: authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber1SendHashedNonce(
-                    HashDigest(data)
+                lambda data: (
+                    authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber1SendHashedNonce(
+                        HashDigest(data)
+                    )
                 ),
             )
         case authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber2SendNonce():
             return (
                 2,
                 step.greeter_nonce,
-                lambda data: authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber2GetNonce(),
+                lambda data: (
+                    authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber2GetNonce()
+                ),
             )
         case authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber3GetNonce():
             return (
                 3,
                 b"",
-                lambda data: authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber3SendNonce(
-                    data
+                lambda data: (
+                    authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber3SendNonce(data)
                 ),
             )
         case authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber4WaitPeerTrust():
             return (
                 4,
                 b"",
-                lambda data: authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber4SignifyTrust(),
+                lambda data: (
+                    authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber4SignifyTrust()
+                ),
             )
         case authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber5SignifyTrust():
             return (
                 5,
                 b"",
-                lambda data: authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber5WaitPeerTrust(),
+                lambda data: (
+                    authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber5WaitPeerTrust()
+                ),
             )
         case authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber6GetPayload():
             return (
                 6,
                 b"",
-                lambda data: authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber6SendPayload(
-                    data
+                lambda data: (
+                    authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber6SendPayload(
+                        data
+                    )
                 ),
             )
         case authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber7SendPayload():
             return (
                 7,
                 step.greeter_payload,
-                lambda data: authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber7GetPayload(),
+                lambda data: (
+                    authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber7GetPayload()
+                ),
             )
         case authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber8WaitPeerAcknowledgment():
             return (
                 8,
                 b"",
-                lambda data: authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber8Acknowledge(),
+                lambda data: (
+                    authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber8Acknowledge()
+                ),
             )
         case authenticated_cmds.latest.invite_greeter_step.GreeterStep():
             pass
@@ -462,7 +478,9 @@ def process_claimer_step(
             return (
                 1,
                 step.hashed_nonce.digest,
-                lambda data: invited_cmds.latest.invite_claimer_step.GreeterStepNumber1GetHashedNonce(),
+                lambda data: (
+                    invited_cmds.latest.invite_claimer_step.GreeterStepNumber1GetHashedNonce()
+                ),
             )
         case invited_cmds.latest.invite_claimer_step.ClaimerStepNumber2GetNonce():
             return (
@@ -482,13 +500,17 @@ def process_claimer_step(
             return (
                 4,
                 b"",
-                lambda data: invited_cmds.latest.invite_claimer_step.GreeterStepNumber4WaitPeerTrust(),
+                lambda data: (
+                    invited_cmds.latest.invite_claimer_step.GreeterStepNumber4WaitPeerTrust()
+                ),
             )
         case invited_cmds.latest.invite_claimer_step.ClaimerStepNumber5WaitPeerTrust():
             return (
                 5,
                 b"",
-                lambda data: invited_cmds.latest.invite_claimer_step.GreeterStepNumber5SignifyTrust(),
+                lambda data: (
+                    invited_cmds.latest.invite_claimer_step.GreeterStepNumber5SignifyTrust()
+                ),
             )
         case invited_cmds.latest.invite_claimer_step.ClaimerStepNumber6SendPayload():
             return (
@@ -508,7 +530,9 @@ def process_claimer_step(
             return (
                 8,
                 b"",
-                lambda data: invited_cmds.latest.invite_claimer_step.GreeterStepNumber8WaitPeerAcknowledgment(),
+                lambda data: (
+                    invited_cmds.latest.invite_claimer_step.GreeterStepNumber8WaitPeerAcknowledgment()
+                ),
             )
         case invited_cmds.latest.invite_claimer_step.ClaimerStep():
             pass

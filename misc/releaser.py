@@ -71,7 +71,7 @@ DESCRIPTION = f"""TL,DR:
 Create release commit&tag: {COLOR_GREEN}./misc/releaser.py build v1.2.3{COLOR_END}
 Oops I've made a mistake: {COLOR_GREEN}./misc/releaser.py rollback{COLOR_END}
     """ + (
-    __doc__ if __doc__ else ""
+    __doc__ or ""
 )  # __doc__ is "str | None", see https://github.com/microsoft/pyright/discussions/3820
 
 PRERELEASE_EXPR = r"(?P<pre_l>(a|b|rc))\.?(?P<pre_n>[0-9]+)"

@@ -239,7 +239,7 @@ def _table_q_factory(
     ) -> str:
         # Use table alias if specified
         from_table = f"{table} AS {table_alias}" if table_alias else table
-        select_table = table_alias if table_alias else table
+        select_table = table_alias or table
 
         # Use either internal ID (_id) or public ID for the WHERE condition
         if _id is not None:
