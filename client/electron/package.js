@@ -13,6 +13,7 @@ const PARSEC_SCHEME = 'parsec3';
  *   export: boolean,
  *   nightly: boolean,
  *   sign: boolean,
+ *   hardened: boolean,
  * }}
  */
 function cli() {
@@ -31,6 +32,7 @@ function cli() {
   program.addOption(new Option('--export', 'Export the configuration to JSON'));
   program.addOption(new Option('--nightly', 'The current build is a nightly build').default(false));
   program.addOption(new Option('--sign', 'Sign the package').default(false));
+  program.addOption(new Option('--hardened', 'The current build is hardened').default(false));
   program.argument('[target...]', 'Targets to build');
 
   program.parse();
@@ -104,10 +106,21 @@ const MACOS_SIGN_OPTIONS = {
   },
 };
 
-const UNSIGNED_ARTIFACT_NAME =
-  OPTS.sign || OPTS.platform === 'linux'
-    ? 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.${ext}'
-    : 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.unsigned.${ext}';
+function buildArtifactName() {
+  const buildName = OPTS.hardened
+    ? 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.hardened'
+    : 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}';
+
+  if (OPTS.sign || OPTS.platform === 'linux') {
+    // eslint-disable-next-line prefer-template
+    return buildName + '.${ext}';
+  }
+  // eslint-disable-next-line prefer-template
+  return buildName + '.unsigned.${ext}';
+}
+
+const ARTIFACT_NAME = buildArtifactName();
+console.log(`Using artifact name: ${ARTIFACT_NAME}`);
 
 /**
  * @type {import('electron-builder').Configuration}
@@ -128,7 +141,7 @@ const options = {
   /* eslint-enable max-len */
   appId: 'ParsecCloud.Parsec.Parsec.3',
   productName: 'Parsec',
-  artifactName: UNSIGNED_ARTIFACT_NAME,
+  artifactName: ARTIFACT_NAME,
   buildVersion: '3.7.2-a.0+dev',
   protocols: {
     name: 'Parsec-v3',

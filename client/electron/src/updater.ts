@@ -10,6 +10,7 @@ import { parseUpdateInfo, type ProviderRuntimeOptions } from 'electron-updater/o
 import { getChannelFilename, newUrlFromBase } from 'electron-updater/out/util';
 import * as semver from 'semver';
 import type { CustomPublishOptions as CustomGitHubOptions } from '../assets/publishConfig';
+import { Env } from './envVariables';
 
 // Greatly inspired by (it isn't exported by `electron-updater`)
 // https://github.com/electron-userland/electron-builder/blob/77f977435c99247d5db395895618b150f5006e8f/packages/electron-updater/src/providers/GitHubProvider.ts#L11-L13
@@ -95,16 +96,16 @@ class CustomGithubProvider extends GitHubProvider {
     const { machine } = require('node:os');
     const arch = process.env['TEST_UPDATER_ARCH'] || this.options.buildMachineArch || machine();
 
+    let platform: string = this.runtimeOptions.platform;
+    // rename "special" platforms to a more meaningful name
     switch (this.runtimeOptions.platform) {
-      case 'linux':
-        return `-linux-${arch}`;
       case 'darwin':
-        return `-mac-${arch}`;
+        platform = 'mac';
       case 'win32':
-        return `-win-${arch}`;
-      default:
-        return `-${this.runtimeOptions.platform}-${arch}`;
+        platform = 'win';
     }
+    const base = Env.HARDENED ? '-hardened' : '';
+    return `${base}-${platform}-${arch}`;
   }
 
   async getLatestVersion(): Promise<GithubUpdateInfo> {
