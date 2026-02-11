@@ -410,7 +410,7 @@ def _parse_blockstore_params(raw_params: Iterable[str]) -> BaseBlockStoreConfig:
         raid_configs[raid_mode].append((raid_node, node_param))
 
     if len(raid_configs) != 1:
-        config_types = [k if k else v[0][1] for k, v in raid_configs.items()]
+        config_types = [k or v[0][1] for k, v in raid_configs.items()]
         raise click.BadParameter(
             f"Multiple blockstore config with different types: {'/'.join(config_types)}"
         )

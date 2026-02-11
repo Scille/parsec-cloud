@@ -662,11 +662,9 @@ async def _do_export_certificates(
         case RealmExportCertificates() as certificates:
             pass
         case (
-            (
-                RealmExportDoCertificatesBadOutcome.ORGANIZATION_NOT_FOUND
-                | RealmExportDoCertificatesBadOutcome.REALM_NOT_FOUND
-            ) as error
-        ):
+            RealmExportDoCertificatesBadOutcome.ORGANIZATION_NOT_FOUND
+            | RealmExportDoCertificatesBadOutcome.REALM_NOT_FOUND
+        ) as error:
             # Organization&realm existence has already been checked, so this shouldn't occur
             raise RealmExporterInputError(f"Unexpect outcome when exporting certificates: {error}")
 
@@ -793,11 +791,9 @@ async def _do_export_vlobs(
             case RealmExportVlobsBatch() as batch:
                 pass
             case (
-                (
-                    RealmExportDoVlobsBatchBadOutcome.ORGANIZATION_NOT_FOUND
-                    | RealmExportDoVlobsBatchBadOutcome.REALM_NOT_FOUND
-                ) as error
-            ):
+                RealmExportDoVlobsBatchBadOutcome.ORGANIZATION_NOT_FOUND
+                | RealmExportDoVlobsBatchBadOutcome.REALM_NOT_FOUND
+            ) as error:
                 # Organization&realm existence has already been checked, so this shouldn't occur
                 raise RealmExporterInputError(f"Unexpect outcome when exporting vlobs: {error}")
 
@@ -940,11 +936,9 @@ async def _do_export_blocks_metadata(
             case RealmExportBlocksMetadataBatch() as batch:
                 pass
             case (
-                (
-                    RealmExportDoBlocksBatchMetadataBadOutcome.ORGANIZATION_NOT_FOUND
-                    | RealmExportDoBlocksBatchMetadataBadOutcome.REALM_NOT_FOUND
-                ) as error
-            ):
+                RealmExportDoBlocksBatchMetadataBadOutcome.ORGANIZATION_NOT_FOUND
+                | RealmExportDoBlocksBatchMetadataBadOutcome.REALM_NOT_FOUND
+            ) as error:
                 # Organization&realm existence has already been checked, so this shouldn't occur
                 raise RealmExporterInputError(
                     f"Unexpect outcome when exporting certificates: {error}"

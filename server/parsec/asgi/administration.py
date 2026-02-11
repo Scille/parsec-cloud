@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import csv
 from collections.abc import Awaitable, Callable
-from enum import Enum
+from enum import StrEnum
 from functools import wraps
 from io import StringIO
 from typing import (
@@ -377,7 +377,7 @@ def _convert_server_stats_results_as_csv(stats: dict[OrganizationID, Organizatio
         return memory_file.getvalue()
 
 
-class StatsFormat(str, Enum):
+class StatsFormat(StrEnum):
     CSV = "csv"
     JSON = "json"
 
