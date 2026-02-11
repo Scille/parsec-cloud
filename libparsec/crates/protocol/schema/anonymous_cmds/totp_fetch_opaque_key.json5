@@ -1,0 +1,78 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "totp_fetch_opaque_key",
+        "req": {
+            "fields": [
+                {
+                    "name": "user_id",
+                    "type": "UserID"
+                },
+                {
+                    "name": "opaque_key_id",
+                    "type": "TOTPOpaqueKeyID"
+                },
+                {
+                    // Value obtained from the authenticator app storing the TOTP secret
+                    "name": "one_time_password",
+                    "type": "String"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // Note the server knows about this key as it is not encrypted!
+                        //
+                        // This is because TOTP's goal is to protect against unauthorized
+                        // access *from the client*.
+                        //
+                        // Obviously this means this opaque key should always be used in
+                        // conjunction with another key only known by the end-user.
+                        //
+                        // Similarly, it is no big deal to transmit the key to the client
+                        // (instead of doing all the encryption/decryption operations on
+                        // the server). The only risk is for a malicious client to remember
+                        // the key, however the client can also just remember the decrypted
+                        // data!
+                        "name": "opaque_key",
+                        "type": "SecretKey"
+                    }
+                ]
+            },
+            {
+                // This status is returned if:
+                // - The one-time-password is invalid (obviously)
+                // - The user is revoked or frozen
+                // - No opaque key exists with the provided ID
+                // - TOTP setup hasn't been completed (or has been reset)
+                "status": "invalid_one_time_password"
+            },
+            {
+                // Too many attempts with an invalid one time password have
+                // been done this opaque key ID.
+                // Throttling follow a simple `wait_time_in_seconds = 2 ^ number_of_failed_attemps`
+                // The absence of higher bound makes it very aggressive (e.g. after
+                // 20 errors you have to wait 12 days for the next attempt...),
+                // this is by design:
+                // - Throttling is done per-opaque-key ID, which is only known by
+                //   the machine containing the device keys file to decrypt.
+                // - So there is no risk for an external attacker doing a deny of service
+                //   by with the throttling to prevent user from login.
+                // - A legitimate user can still reset the throttle by asking the server
+                //   admin to reset his TOTP setup.
+                "status": "throttled",
+                "fields": [
+                    {
+                        "name": "wait_until",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]
