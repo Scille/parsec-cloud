@@ -78,6 +78,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<AccessToken>()?;
     m.add_class::<GreetingAttemptID>()?;
     m.add_class::<AccountAuthMethodID>()?;
+    m.add_class::<TOTPOpaqueKeyID>()?;
 
     // Time
     m.add_class::<DateTime>()?;
