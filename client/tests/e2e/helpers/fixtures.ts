@@ -68,7 +68,6 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.enableUpdateEvent) {
         (window as any).TESTING_ENABLE_UPDATE_EVENT = options.enableUpdateEvent;
       }
-      (window as any).TESTING_PKI = true;
       if (options.openBaoServer) {
         (window as any).TESTING_OPEN_BAO_SERVER = options.openBaoServer;
       }
@@ -443,7 +442,7 @@ export const msTest = debugTest.extend<{
 
   invitationsPage: async ({ connected }, use) => {
     await connected.locator('.sidebar').locator('#sidebar-invitations').click();
-    await expect(connected).toHavePageTitle('Invitations');
+    await expect(connected).toHavePageTitle('Invitations & Requests');
     await expect(connected).toBeInvitationPage();
     use(connected);
   },

@@ -1290,7 +1290,8 @@
             "sso": {
                 "title": "Authentification unique (SSO)",
                 "description": "S'authentifier avec un compte externe",
-                "connected": "Connecté"
+                "connected": "Connecté",
+                "unavailable": "Cette méthode n'est pas autorisée par ce serveur."
             }
         },
         "methodChosen": "Méthode choisie :",

@@ -88,11 +88,8 @@ msTest('Export and use recovery files', async ({ myProfilePage }) => {
   await expect(authNext).toHaveText('Confirm');
 
   const authRadio = authContainer.locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(2);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: true });
+  await authRadio.nth(0).click();
 
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
@@ -195,11 +192,8 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     await expect(authNext).toHaveText('Confirm');
 
     const authRadio = authContainer.locator('.radio-list-item:visible');
-    await expect(authRadio).toHaveCount(2);
-    await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-    await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-    await expect(authRadio.nth(1)).toHaveText('Password');
-    await authRadio.nth(1).click();
+    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: true });
+    await authRadio.nth(0).click();
 
     await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
     await expect(authNext).toHaveDisabledAttribute();

@@ -40,13 +40,8 @@ msTest('Go through custom org creation process, auth SSO', async ({ home }) => {
   await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Single Sign-On');
-  await expect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
-  await authRadio.nth(2).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(3).click();
   await expect(authContainer.locator('.proconnect-button')).toBeVisible();
   await expect(modal.locator('.proconnect-group--connected')).toBeHidden();
   await expect(authNext).toBeTrulyDisabled();
@@ -156,13 +151,8 @@ for (const error of ['timeout', '400', 'popup']) {
     await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
 
     const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-    await expect(authRadio).toHaveCount(3);
-    await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-    await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-    await expect(authRadio.nth(1)).toHaveText('Password');
-    await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Single Sign-On');
-    await expect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
-    await authRadio.nth(2).click();
+    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+    await authRadio.nth(3).click();
     await expect(authContainer.locator('.proconnect-button')).toBeVisible();
     await expect(modal.locator('.proconnect-group--connected')).toBeHidden();
     await expect(authNext).toBeTrulyDisabled();
@@ -222,10 +212,8 @@ msTest('Check ProConnect link', async ({ home }) => {
   await expect(authContainer).toBeVisible();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Single Sign-On');
-  await expect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
-  await authRadio.nth(2).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(3).click();
   const card = authContainer.locator('.sso-provider-card');
   await expect(card).toHaveCount(1);
   await expect(card.locator('a')).toHaveText("What's ProConnect?");

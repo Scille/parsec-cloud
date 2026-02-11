@@ -122,6 +122,7 @@ const methodConfig: Record<
     imageAlt: 'OpenBao',
     methodName: 'Authentication.method.sso.title',
     description: 'Authentication.method.sso.description',
+    unavailableExplanation: 'Authentication.method.sso.unavailable',
   },
 };
 

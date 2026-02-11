@@ -1290,7 +1290,8 @@
             "sso": {
                 "title": "Single Sign-On",
                 "description": "Login with an external account",
-                "connected": "Connected"
+                "connected": "Connected",
+                "unavailable": "This method is not allowed by this server."
             }
         },
         "methodChosen": "Method chosen:",

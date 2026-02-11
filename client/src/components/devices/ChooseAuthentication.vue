@@ -25,6 +25,18 @@
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
+          :value="DeviceSaveStrategyTag.Password"
+        >
+          <authentication-card
+            @click="onMethodSelected(DeviceSaveStrategyTag.Password)"
+            :state="getAuthCardState(AvailableDeviceTypeTag.Password)"
+            :auth-method="DeviceSaveStrategyTag.Password"
+          />
+        </ion-radio>
+        <ion-radio
+          class="item-radio radio-list-item"
+          label-placement="end"
+          justify="start"
           :value="DeviceSaveStrategyTag.Keyring"
           :disabled="!keyringAvailable || activeAuth === AvailableDeviceTypeTag.Keyring"
         >
@@ -32,18 +44,6 @@
             :auth-method="DeviceSaveStrategyTag.Keyring"
             :state="getAuthCardState(AvailableDeviceTypeTag.Keyring)"
             :disabled="!keyringAvailable"
-          />
-        </ion-radio>
-        <ion-radio
-          class="item-radio radio-list-item"
-          label-placement="end"
-          justify="start"
-          :value="DeviceSaveStrategyTag.Password"
-        >
-          <authentication-card
-            @click="onMethodSelected(DeviceSaveStrategyTag.Password)"
-            :state="getAuthCardState(AvailableDeviceTypeTag.Password)"
-            :auth-method="DeviceSaveStrategyTag.Password"
           />
         </ion-radio>
 
@@ -58,21 +58,22 @@
             @click="onMethodSelected(DeviceSaveStrategyTag.PKI)"
             :state="getAuthCardState(AvailableDeviceTypeTag.PKI)"
             :auth-method="DeviceSaveStrategyTag.PKI"
+            :disabled="!smartcardAvailable"
           />
         </ion-radio>
 
         <ion-radio
-          v-show="showOpenBaoAuth"
           class="item-radio radio-list-item"
           label-placement="end"
           :value="DeviceSaveStrategyTag.OpenBao"
           justify="start"
-          :disabled="activeAuth === AvailableDeviceTypeTag.OpenBao"
+          :disabled="!openBaoAuthAvailable || activeAuth === AvailableDeviceTypeTag.OpenBao"
         >
           <authentication-card
             :state="getAuthCardState(AvailableDeviceTypeTag.OpenBao)"
             @click="onMethodSelected(DeviceSaveStrategyTag.OpenBao)"
             :auth-method="DeviceSaveStrategyTag.OpenBao"
+            :disabled="!openBaoAuthAvailable"
           />
         </ion-radio>
       </ion-radio-group>
@@ -122,7 +123,7 @@
         <choose-certificate ref="chooseCertificate" />
       </div>
 
-      <div v-if="authentication === DeviceSaveStrategyTag.OpenBao && serverConfig?.openbao && showOpenBaoAuth">
+      <div v-if="authentication === DeviceSaveStrategyTag.OpenBao && serverConfig?.openbao && openBaoAuthAvailable">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
@@ -190,7 +191,7 @@ const querying = ref(false);
 
 const error = ref('');
 
-const showOpenBaoAuth = computed(() => {
+const openBaoAuthAvailable = computed(() => {
   return props.serverConfig?.openbao && props.serverConfig?.openbao.auths.some((auth) => isSSOProviderHandled(auth.tag));
 });
 
@@ -236,6 +237,9 @@ function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState
       }
       return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
     case AvailableDeviceTypeTag.OpenBao:
+      if (!openBaoAuthAvailable.value) {
+        return AuthenticationCardState.Unavailable;
+      }
       return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
     default:
       return AuthenticationCardState.Default;
