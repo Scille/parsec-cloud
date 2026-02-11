@@ -81,6 +81,7 @@ from parsec._parsec_pyi.ids import (
     OrganizationID,
     PKIEnrollmentID,
     SequesterServiceID,
+    TOTPOpaqueKeyID,
     UserID,
     VlobID,
 )
@@ -192,6 +193,7 @@ __all__ = [
     "InvitationToken",
     "OrganizationID",
     "SequesterServiceID",
+    "TOTPOpaqueKeyID",
     "UserID",
     "VlobID",
     "VlobID",

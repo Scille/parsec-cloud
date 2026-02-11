@@ -236,6 +236,7 @@ generate_field_type_enum!(
     SequesterServiceID => libparsec_types::SequesterServiceID,
     AccountAuthMethodID => libparsec_types::AccountAuthMethodID,
     AccountVaultItemOpaqueKeyID => libparsec_types::AccountVaultItemOpaqueKeyID,
+    TOTPOpaqueKeyID => libparsec_types::TOTPOpaqueKeyID,
     DeviceLabel => libparsec_types::DeviceLabel,
     HumanHandle => libparsec_types::HumanHandle,
     EmailAddress => libparsec_types::EmailAddress,
