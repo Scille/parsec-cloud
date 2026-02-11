@@ -8,7 +8,8 @@ use libparsec_serialization_format::parsec_data;
 use crate::{self as libparsec_types, PKIEncryptionAlgorithm, X509CertificateReference};
 use crate::{
     impl_transparent_data_format_conversion, AccountVaultItemOpaqueKeyID, DateTime, DeviceID,
-    DeviceLabel, HumanHandle, OrganizationID, ParsecAddr, PasswordAlgorithm, UserID,
+    DeviceLabel, HumanHandle, OrganizationID, ParsecAddr, PasswordAlgorithm, TOTPOpaqueKeyID,
+    UserID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -122,6 +123,7 @@ pub struct DeviceFilePKI {
     pub algorithm: PKIEncryptionAlgorithm,
     pub encrypted_key: Bytes,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_pki.json5");
@@ -141,6 +143,7 @@ impl_transparent_data_format_conversion!(
     algorithm,
     encrypted_key,
     ciphertext,
+    totp_opaque_key_id,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

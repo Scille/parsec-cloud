@@ -120,6 +120,7 @@ pub(crate) async fn save_device_pki(
         encrypted_key,
         ciphertext,
         algorithm,
+        totp_opaque_key_id: None,
     });
 
     let file_content = file_content.dump();
