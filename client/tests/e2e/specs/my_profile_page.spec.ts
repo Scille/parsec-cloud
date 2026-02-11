@@ -98,17 +98,13 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
 
   const authRadio = changePasswordModal.locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
 
   await expect(changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button')).toHaveText('Update');
   await changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button').click();
   await expect(changePasswordModal.locator('.method-chosen')).toBeHidden();
-  await changePasswordModal.locator('.authentication-card').nth(1).click();
+  await changePasswordModal.locator('.authentication-card').nth(0).click();
   const passwordInputs = changePasswordModal.locator('.input-container').locator('ion-input');
   await fillIonInput(passwordInputs.nth(1), newPassword);
   await fillIonInput(passwordInputs.nth(2), 'no match');
@@ -167,9 +163,8 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
 
   const authRadio = changePasswordModal.locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
-  await authRadio.nth(2).click();
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
+  await authRadio.nth(3).click();
 
   await expect(changePasswordModal.locator('#next-button')).toHaveText('Update');
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();

@@ -484,4 +484,49 @@ export const expect = baseExpect.extend({
       pass: true,
     };
   },
+
+  async toHaveAuthentication(
+    authRadio: Locator,
+    state?: { passwordDisabled?: boolean; ssoDisabled?: boolean; pkiDisabled?: boolean; keyringDisabled?: boolean },
+  ): Promise<AssertReturnType> {
+    await baseExpect(authRadio).toHaveCount(4);
+    await baseExpect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('Password');
+    await baseExpect(authRadio.nth(1).locator('.authentication-card-text__title')).toHaveText('System authentication');
+    await baseExpect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Smartcard');
+    await baseExpect(authRadio.nth(3).locator('.authentication-card-text__title')).toHaveText('Single Sign-On');
+
+    if (state?.passwordDisabled) {
+      await baseExpect(authRadio.nth(0)).toHaveClass(/radio-disabled/);
+    } else {
+      await baseExpect(authRadio.nth(0)).not.toHaveClass(/radio-disabled/);
+    }
+    if (state?.keyringDisabled) {
+      await baseExpect(authRadio.nth(1)).toHaveClass(/radio-disabled/);
+      await baseExpect(authRadio.nth(1).locator('.authentication-card-text__description')).toHaveText('Unavailable on web');
+    } else {
+      await baseExpect(authRadio.nth(1)).not.toHaveClass(/radio-disabled/);
+    }
+    if (state?.pkiDisabled) {
+      await baseExpect(authRadio.nth(2)).toHaveClass(/radio-disabled/);
+      await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText(
+        'Smartcard authentication is unavailable.',
+      );
+    } else {
+      await baseExpect(authRadio.nth(2)).not.toHaveClass(/radio-disabled/);
+      await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
+    }
+    if (state?.ssoDisabled) {
+      await baseExpect(authRadio.nth(3)).toHaveClass(/radio-disabled/);
+      await baseExpect(authRadio.nth(3).locator('.authentication-card-text__description')).toHaveText(
+        'This method is not allowed by this server.',
+      );
+    } else {
+      await baseExpect(authRadio.nth(3)).not.toHaveClass(/radio-disabled/);
+      await baseExpect(authRadio.nth(3).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
 });

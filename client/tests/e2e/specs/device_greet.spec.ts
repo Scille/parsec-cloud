@@ -148,11 +148,8 @@ msTest('Greet device whole process on small display', async ({ myProfilePage }) 
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -243,12 +240,8 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');

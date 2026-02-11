@@ -139,11 +139,9 @@ msTest('Go through custom org creation process', { tag: '@important' }, async ({
   await expect(authNext).toHaveDisabledAttribute();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveCount(4);
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
 
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
@@ -280,11 +278,8 @@ msTest('Go through custom org creation process from bootstrap link', async ({ co
   await expect(authNext).toHaveDisabledAttribute();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+  await authRadio.nth(0).click();
 
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
@@ -418,11 +413,8 @@ for (const displaySize of ['small', 'large']) {
     await expect(authNext).toHaveDisabledAttribute();
 
     const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-    await expect(authRadio).toHaveCount(3);
-    await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-    await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-    await expect(authRadio.nth(1)).toHaveText('Password');
-    await authRadio.nth(1).click();
+    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+    await authRadio.nth(0).click();
     await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
     await expect(authNext).toHaveDisabledAttribute();
     await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
@@ -554,11 +546,8 @@ for (const displaySize of ['small', 'large']) {
       await expect(authNext).toHaveDisabledAttribute();
 
       const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-      await expect(authRadio).toHaveCount(3);
-      await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-      await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-      await expect(authRadio.nth(1)).toHaveText('Password');
-      await authRadio.nth(1).click();
+      await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+      await authRadio.nth(0).click();
       await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
       await expect(authNext).toHaveDisabledAttribute();
       await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
@@ -655,11 +644,8 @@ for (const displaySize of ['small', 'large']) {
       await expect(authNext).toHaveDisabledAttribute();
 
       const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-      await expect(authRadio).toHaveCount(3);
-      await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-      await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-      await expect(authRadio.nth(1)).toHaveText('Password');
-      await authRadio.nth(1).click();
+      await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+      await authRadio.nth(0).click();
       await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
       await expect(authNext).toHaveDisabledAttribute();
       await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
@@ -775,11 +761,7 @@ msTest.skip('Go through custom org creation process with smartcard auth', async 
   await expect(authNext).toHaveDisabledAttribute();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Smartcard');
+  await expect(authRadio).toHaveAuthentication({ pkiDisabled: false, keyringDisabled: true });
   const certBtn = authContainer.locator('.choose-certificate-button');
   await expect(certBtn).toBeHidden();
   await authRadio.nth(2).click();
@@ -793,7 +775,6 @@ msTest.skip('Go through custom org creation process with smartcard auth', async 
 
   await expect(authNext).toNotHaveDisabledAttribute();
   await authNext.click();
-
   const summaryContainer = modal.locator('.summary-page');
   const summaryPrevious = modal.locator('.summary-page-footer').locator('ion-button').nth(0);
   const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);

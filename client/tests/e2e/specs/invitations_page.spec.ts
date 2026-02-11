@@ -3,15 +3,6 @@
 import { answerQuestion, expect, fillIonInput, getClipboardText, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
 
 msTest('Email invitations default state', async ({ invitationsPage }) => {
-  // const viewToggle = invitationsPage.locator('.toggle-view-container');
-
-  // await expect(viewToggle.locator('.email-button')).toHaveText('Email invitation1');
-  // await expect(viewToggle.locator('.pki-button')).toHaveText('PKI requests3');
-  // await expect(viewToggle.locator('.email-button')).toBeTrulyDisabled();
-  // await expect(viewToggle.locator('.pki-button')).toBeTrulyEnabled();
-  // await expect(viewToggle.locator('#invite-user-button')).toBeVisible();
-  // await expect(viewToggle.locator('#invite-user-button')).toHaveText('Invite a user');
-  // await expect(viewToggle.locator('#update-root-certificate-button')).toBeHidden();
   await expect(invitationsPage.locator('.invitations-container-list').locator('.invitations-list-header__label')).toHaveText([
     'Email',
     'Sent on',

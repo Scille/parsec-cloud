@@ -102,11 +102,8 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
 
   // Joiner sets password
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
+  await authRadio.nth(0).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -225,12 +222,8 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
 
   // Joiner sets password
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2)).toHaveText('Single Sign-OnLogin with an external account');
-  await authRadio.nth(1).click();
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
+  await authRadio.nth(0).click();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
@@ -651,11 +644,7 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   ]);
 
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveCount(3);
-  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
-  await expect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('System authentication');
-  await expect(authRadio.nth(1)).toHaveText('Password');
-  await expect(authRadio.nth(2).locator('.authentication-card-text__title')).toHaveText('Smartcard');
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true });
   const certBtn = joinData.content.locator('.choose-certificate-button');
   await expect(certBtn).toBeHidden();
   await authRadio.nth(2).click();
