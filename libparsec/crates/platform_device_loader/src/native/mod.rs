@@ -427,6 +427,7 @@ pub(super) async fn save_device(
                 encrypted_key: encrypted_message.ciphered,
                 ciphertext,
                 algorithm: encrypted_message.algo,
+                totp_opaque_key_id: None,
             });
 
             let file_content = file_content.dump();

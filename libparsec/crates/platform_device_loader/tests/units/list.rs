@@ -179,6 +179,7 @@ async fn list_devices(tmp_path: TmpPath) {
             .as_ref()
             .into(),
         ciphertext: b"<ciphertext>".as_ref().into(),
+        totp_opaque_key_id: None,
     };
     println!(
         "***expected: {:?}",
@@ -202,8 +203,9 @@ async fn list_devices(tmp_path: TmpPath) {
     //   algorithm: 'RSAES-OAEP-SHA256'
     //   encrypted_key: 0xde5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a
     //   ciphertext: 0x3c636970686572746578743e
+    //   totp_opaque_key_id: None
     let pki_raw: &[u8] = hex!(
-        "8da474797065a3706b69aa637265617465645f6f6ed70100035d013b37e000ac70726f"
+        "8ea474797065a3706b69aa637265617465645f6f6ed70100035d013b37e000ac70726f"
         "7465637465645f6f6ed70100035d013b472240aa7365727665725f75726cb768747470"
         "733a2f2f7061727365632e696e76616c69642faf6f7267616e697a6174696f6e5f6964"
         "a7436f6f6c4f7267a7757365725f6964d8023a11031c001000000000000000000000a9"
@@ -216,7 +218,7 @@ async fn list_devices(tmp_path: TmpPath) {
         "41414141414141414141414141414141413da9616c676f726974686db152534145532d"
         "4f4145502d534841323536ad656e637279707465645f6b6579c420de5c59cfcc0c52bf"
         "997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19aaa63697068657274657874"
-        "c40c3c636970686572746578743e"
+        "c40c3c636970686572746578743eb2746f74705f6f70617175655f6b65795f6964c0"
     )
     .as_ref();
 
