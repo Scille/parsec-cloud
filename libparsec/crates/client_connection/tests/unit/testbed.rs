@@ -29,8 +29,8 @@ async fn low_level_send_hook(env: &TestbedEnv) {
         AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
 
     let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
+        .send(anonymous_cmds::ping::Req {
+            ping: "ping".to_owned(),
         })
         .await;
     assert!(
@@ -46,8 +46,8 @@ async fn low_level_send_hook(env: &TestbedEnv) {
     // Hook should have been reset to the default now
 
     let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
+        .send(anonymous_cmds::ping::Req {
+            ping: "ping".to_owned(),
         })
         .await;
     assert!(
@@ -66,8 +66,8 @@ async fn low_level_send_hook(env: &TestbedEnv) {
     });
     for _ in 0..3 {
         let rep = cmds
-            .send(anonymous_cmds::pki_enrollment_info::Req {
-                enrollment_id: PKIEnrollmentID::default(),
+            .send(anonymous_cmds::ping::Req {
+                ping: "ping".to_owned(),
             })
             .await;
         assert!(
@@ -86,8 +86,8 @@ async fn low_level_send_hook(env: &TestbedEnv) {
     test_register_low_level_send_hook_default(&env.discriminant_dir);
 
     let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
+        .send(anonymous_cmds::ping::Req {
+            ping: "ping".to_owned(),
         })
         .await;
     assert!(
@@ -98,12 +98,10 @@ async fn low_level_send_hook(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn high_level_send_hook(env: &TestbedEnv) {
-    test_register_send_hook(
-        &env.discriminant_dir,
-        |_req: anonymous_cmds::pki_enrollment_info::Req| {
-            anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound
-        },
-    );
+    let pong = "pong".to_owned();
+    test_register_send_hook(&env.discriminant_dir, |_req: anonymous_cmds::ping::Req| {
+        anonymous_cmds::ping::Rep::Ok { pong }
+    });
 
     let addr =
         ParsecPkiEnrollmentAddr::new(env.server_addr.clone(), env.organization_id.to_owned());
@@ -111,23 +109,20 @@ async fn high_level_send_hook(env: &TestbedEnv) {
         AnonymousCmds::new(&env.discriminant_dir, addr.into(), ProxyConfig::default()).unwrap();
 
     let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
+        .send(anonymous_cmds::ping::Req {
+            ping: "ping".to_owned(),
         })
         .await;
     assert!(
-        matches!(
-            rep,
-            Ok(anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound)
-        ),
-        r#"expected a `NotFound`, but got {rep:?}"#
+        matches!(rep, Ok(anonymous_cmds::ping::Rep::Ok { .. })),
+        r#"expected a `Ok`, but got {rep:?}"#
     );
 
     // Hook should have been reset to the default now
 
     let rep = cmds
-        .send(anonymous_cmds::pki_enrollment_info::Req {
-            enrollment_id: PKIEnrollmentID::default(),
+        .send(anonymous_cmds::ping::Req {
+            ping: "ping".to_owned(),
         })
         .await;
     assert!(
