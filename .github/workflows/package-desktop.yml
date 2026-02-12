@@ -189,6 +189,7 @@ jobs:
             extensions: exe
             os_alias: win
             artifact_tag: windows-exe
+            cspn: false
           - name: 🍎 macOS x86
             platform: macos
             os: macos-15-intel
@@ -210,6 +211,14 @@ jobs:
             os_alias: linux
             extensions: AppImage
             artifact_tag: linux-appimage
+          - name: 🏁 Windows-CSPN
+            platform: windows
+            os: windows-2022
+            raw_latest_file: latest.yml
+            extensions: exe
+            os_alias: win
+            artifact_tag: windows-exe
+            cspn: true
     name: "${{ matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -369,6 +378,7 @@ jobs:
             ${{ matrix.platform == 'linux-gnu' && 'appimage' || '' }} \
             ${{ inputs.nightly_build && '--nightly' || '' }} \
             ${{ matrix.platform == 'macos' && '--sign' || ''}}
+            ${{ (matrix.platform == 'windows' && matrix.cspn == 'true') && '--cspn' || '' }}
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron

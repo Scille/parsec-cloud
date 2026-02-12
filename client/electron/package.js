@@ -13,6 +13,7 @@ const PARSEC_SCHEME = 'parsec3';
  *   export: boolean,
  *   nightly: boolean,
  *   sign: boolean,
+ *   cspn: boolean,
  * }}
  */
 function cli() {
@@ -31,6 +32,7 @@ function cli() {
   program.addOption(new Option('--export', 'Export the configuration to JSON'));
   program.addOption(new Option('--nightly', 'The current build is a nightly build').default(false));
   program.addOption(new Option('--sign', 'Sign the package').default(false));
+  program.addOption(new Option('--cspn', 'The current build is for CSPN').default(false));
   program.argument('[target...]', 'Targets to build');
 
   program.parse();
