@@ -21,6 +21,7 @@ from parsec.components.memory.ping import MemoryPingComponent
 from parsec.components.memory.realm import MemoryRealmComponent
 from parsec.components.memory.sequester import MemorySequesterComponent
 from parsec.components.memory.shamir import MemoryShamirComponent
+from parsec.components.memory.totp import MemoryTOTPComponent
 from parsec.components.memory.user import MemoryUserComponent
 from parsec.components.memory.vlob import MemoryVlobComponent
 from parsec.config import BackendConfig
@@ -52,6 +53,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             events = MemoryEventsComponent(data, config, event_bus)
             account = MemoryAccountComponent(data, config, event_bus)
             async_enrollment = MemoryAsyncEnrollmentComponent(data, event_bus)
+            totp = MemoryTOTPComponent(data, config)
 
             components = {
                 "mocked_data": data,
@@ -71,6 +73,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "shamir": shamir,
                 "account": account,
                 "async_enrollment": async_enrollment,
+                "totp": totp,
             }
 
             yield components

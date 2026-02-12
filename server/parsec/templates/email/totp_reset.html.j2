@@ -1,0 +1,31 @@
+{% extends "email/base.html.j2" %}
+{% block document_title %}Parsec TOTP Reset{% endblock %}
+
+{% block preheader %}Your TOTP authentication has been reset.{% endblock %}
+
+{% block title %}
+TOTP authentication reset for {{ organization_id }}
+{% endblock %}
+
+{% block description %}
+<p style="line-height: 28.9px; color: #51517B; font-size: 16px;">
+Your TOTP authentication has been reset for the <b>{{ organization_id }}</b> organization on Parsec.
+You can now set up a new TOTP device by following the link below.
+</p>
+{% endblock %}
+
+{% block main_content %}
+{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link %}
+{{
+  gen_contents([
+    namespace(
+      title="Set up TOTP",
+      text="To set up a new TOTP device, please open the following link in the Parsec application:",
+      extras=[
+        render_link(totp_reset_url, "Set up TOTP"),
+        render_fallback_link(totp_reset_url)
+      ]
+    )
+  ])
+}}
+{% endblock %}
