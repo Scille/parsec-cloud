@@ -1,0 +1,31 @@
+{% extends "email/base.html.j2" %}
+{% block document_title %}Your MFA has been reset in Parsec{% endblock %}
+
+{% block preheader %}Your MFA has been reset for the {{ organization_id }} organization in Parsec.{% endblock %}
+
+{% block title %}
+Your MFA has been reset for <b>{{ organization_id }}</b>
+{% endblock %}
+
+{% block description %}
+<p style="line-height: 28.9px; color: #51517B; font-size: 16px;">
+Your MFA (Multi-Factor Authentication) has been reset for the <b>{{ organization_id }}</b> organization in Parsec.
+</p>
+{% endblock %}
+
+{% block main_content %}
+{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link %}
+{{
+  gen_contents([
+    namespace(
+      title="Re-enable MFA",
+      text="Use the link below to re-enable MFA:",
+      extras=[
+        render_link(totp_reset_url, "Enable MFA"),
+        render_fallback_link(totp_reset_url)
+      ]
+    )
+  ])
+}}
+{% endblock %}
+{# TODO: Add a link to MFA documentation once available (see https://github.com/Scille/parsec-cloud/issues/12251) #}

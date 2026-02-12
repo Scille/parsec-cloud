@@ -47,6 +47,7 @@ from parsec._parsec import (
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryDeletionCertificate,
     ShamirRecoveryShareCertificate,
+    TOTPOpaqueKeyID,
     UntrustedPasswordAlgorithm,
     UserCertificate,
     UserID,
@@ -60,6 +61,7 @@ from parsec.components.async_enrollment import AsyncEnrollmentPayloadSignature
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
+from parsec.components.totp import compute_wait_until
 from parsec.locks import AdvisoryLock
 
 type CommonTopicCertificate = (
@@ -493,6 +495,24 @@ class MemoryUserProfileUpdate:
 
 
 @dataclass(slots=True)
+class MemoryTOTPThrottle:
+    last_attempt: DateTime | None = None
+    failed_attemps: int = 0
+
+    @property
+    def wait_until(self) -> None | DateTime:
+        return compute_wait_until(self.failed_attemps, self.last_attempt)
+
+    def register_failed_attempt(self, now: DateTime) -> None:
+        self.last_attempt = now
+        self.failed_attemps += 1
+
+    def reset(self) -> None:
+        self.last_attempt = None
+        self.failed_attemps = 0
+
+
+@dataclass(slots=True)
 class MemoryUser:
     cooked: UserCertificate
     user_certificate: bytes = field(repr=False)
@@ -506,6 +526,13 @@ class MemoryUser:
     is_frozen: bool = False
     # None if not yet accepted (or nothing to accept)
     tos_accepted_on: DateTime | None = None
+    # TOTP config
+    totp_setup_completed: bool = False
+    totp_secret: bytes | None = None
+    totp_reset_token: AccessToken | None = None
+    totp_opaque_keys: dict[TOTPOpaqueKeyID, tuple[SecretKey, MemoryTOTPThrottle]] = field(
+        default_factory=dict
+    )
 
     @property
     def current_profile(self) -> UserProfile:
