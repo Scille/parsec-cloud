@@ -29,6 +29,7 @@ msTest.skip('Files options tab menu display', async ({ documents }) => {
   // With 1 folder selected
   await entryFolder.hover();
   await entryFolder.locator('.ms-checkbox').check();
+  await expect(entryFolder.locator('.ms-checkbox')).toBeChecked();
   await expect(optionsTab).toBeVisible();
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveCount(4);
   await expect(optionsTab.locator('.tab-bar-menu-button')).toHaveText(['Rename', 'Move', 'Delete', 'More']);

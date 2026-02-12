@@ -513,7 +513,9 @@ export const expect = baseExpect.extend({
       );
     } else {
       await baseExpect(authRadio.nth(2)).not.toHaveClass(/radio-disabled/);
-      await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText('Login with an external account');
+      await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText(
+        'The smartcard should be plugged in and ready to use.',
+      );
     }
     if (state?.ssoDisabled) {
       await baseExpect(authRadio.nth(3)).toHaveClass(/radio-disabled/);
