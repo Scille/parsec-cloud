@@ -10,6 +10,9 @@ from . import (
     async_enrollment_submit,
     organization_bootstrap,
     ping,
+    totp_fetch_opaque_key,
+    totp_setup_confirm,
+    totp_setup_get_secret,
 )
 
 class AnyCmdReq:
@@ -22,6 +25,9 @@ class AnyCmdReq:
         | async_enrollment_submit.Req
         | organization_bootstrap.Req
         | ping.Req
+        | totp_fetch_opaque_key.Req
+        | totp_setup_confirm.Req
+        | totp_setup_get_secret.Req
     ): ...
 
 __all__ = [
@@ -31,4 +37,7 @@ __all__ = [
     "async_enrollment_submit",
     "organization_bootstrap",
     "ping",
+    "totp_fetch_opaque_key",
+    "totp_setup_confirm",
+    "totp_setup_get_secret",
 ]
