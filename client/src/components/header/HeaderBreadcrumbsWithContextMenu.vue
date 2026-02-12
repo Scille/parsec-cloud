@@ -12,7 +12,7 @@
     >
       <ion-breadcrumb
         v-for="path in pathNodes"
-        @click="navigateTo(path)"
+        @click="path.display !== currentFolderName ? navigateTo(path) : breadcrumbOptionClick(path, $event)"
         :path="path"
         class="breadcrumb-element breadcrumb-normal"
         :class="{
@@ -30,17 +30,22 @@
         <div class="breadcrumb-text">
           {{ path.display ? path.display : $msTranslate(path.title) }}
         </div>
+        <ion-icon
+          v-if="currentFolderName === path.display"
+          :icon="ellipsisHorizontal"
+          class="option-icon"
+        />
       </ion-breadcrumb>
     </ion-breadcrumbs>
     <div
       v-if="isSmallDisplay && props.pathNodes.length > 0"
       class="breadcrumb-file-mobile"
-      :class="{ is_browsing: props.pathNodes.length > 1 }"
-      @click="props.pathNodes.length > 1 ? openPopover($event) : null"
+      :class="{ is_browsing: props.pathNodes.length > 2 }"
+      @click="props.pathNodes.length > 2 ? openPopover($event) : null"
     >
       <ion-text class="breadcrumb-file-mobile__title title-h3">{{ currentFolderName }}</ion-text>
       <ion-icon
-        v-if="props.pathNodes.length > 1"
+        v-if="props.pathNodes.length > 2"
         class="breadcrumb-file-mobile__icon"
         :icon="chevronDown"
       />
@@ -51,28 +56,35 @@
 <script setup lang="ts">
 import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
 import { RouterPathNode } from '@/components/header/utils';
-import { WorkspaceName } from '@/parsec';
+import { WorkspaceInfo, WorkspaceRole } from '@/parsec';
+import { EventDistributor } from '@/services/eventDistributor';
+import { InformationManager } from '@/services/informationManager';
+import { StorageManager } from '@/services/storageManager';
+import { WorkspaceAttributes } from '@/services/workspaceAttributes';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon, IonText, popoverController } from '@ionic/vue';
-import { chevronDown } from 'ionicons/icons';
+import { chevronDown, ellipsisHorizontal } from 'ionicons/icons';
 import { useWindowSize } from 'megashark-lib';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{
-    workspaceName: WorkspaceName;
     pathNodes: RouterPathNode[];
     itemsBeforeCollapse?: number;
     itemsAfterCollapse?: number;
     maxShown?: number;
+    workspaceAttributes: WorkspaceAttributes;
+    workspace: WorkspaceInfo | undefined;
+    ownRole: WorkspaceRole | undefined;
+    eventDistributor: EventDistributor;
+    informationManager: InformationManager;
+    storageManager: StorageManager;
     availableWidth?: number;
-    showParentNode?: boolean;
   }>(),
   {
     itemsBeforeCollapse: 2,
     itemsAfterCollapse: 1,
     maxShown: 3,
     availableWidth: 0,
-    showParentNode: true,
   },
 );
 
@@ -94,6 +106,8 @@ const watchNodeSizeCancel = watch(
 
 const emits = defineEmits<{
   (e: 'change', node: RouterPathNode): void;
+  (e: 'openWorkspaceContextMenu', event: Event): void;
+  (e: 'openFolderContextMenu', event: Event): void;
 }>();
 
 onMounted(() => {
@@ -111,16 +125,24 @@ const currentFolderName = computed(() => {
   }
 
   if (props.pathNodes.length === 1) {
-    return props.workspaceName;
+    return props.workspace ? props.workspace.currentName : '';
   }
 
   const lastNode = props.pathNodes[props.pathNodes.length - 1];
-  return lastNode.display || props.workspaceName;
+  return lastNode.display || (props.workspace ? props.workspace.currentName : '');
 });
+
+async function breadcrumbOptionClick(path: RouterPathNode, event: Event): Promise<void> {
+  if (path.display === (props.workspace ? props.workspace.currentName : '')) {
+    emits('openWorkspaceContextMenu', event);
+  } else {
+    emits('openFolderContextMenu', event);
+  }
+}
 
 function setBreadcrumbWidth(): void {
   if (props.availableWidth > 0 && breadcrumbRef.value) {
-    const visibleNodes = Math.min(props.pathNodes.length, props.maxShown);
+    let visibleNodes = Math.min(props.pathNodes.length, props.maxShown);
     let breadcrumbWidth = props.availableWidth - 1;
 
     if (props.pathNodes.length > props.maxShown || (isSmallDisplay.value && props.pathNodes.length !== 1)) {
@@ -133,6 +155,9 @@ function setBreadcrumbWidth(): void {
         // Deduce separator(s) width if present, 1.25 rem / separator
         breadcrumbWidth -= props.pathNodes.length === 2 ? 1.25 : 2.5;
       }
+
+      visibleNodes -= 1;
+      breadcrumbWidth -= 2.4;
       // Small display only has one element so this division is done only on large display
       breadcrumbWidth /= visibleNodes;
     }
@@ -182,6 +207,23 @@ function navigateTo(path: RouterPathNode): void {
 .breadcrumb-element {
   &::part(native) {
     max-width: calc(v-bind(breadcrumbWidthProperty));
+  }
+
+  .option-icon {
+    font-size: 1.25rem;
+    padding: 0.25rem;
+    color: var(--parsec-color-light-secondary-text);
+    margin-left: 0.25rem;
+    opacity: 0.3;
+    pointer-events: all;
+    flex-shrink: 0;
+  }
+
+  &:hover:not(.breadcrumb-collapsed) {
+    .option-icon {
+      color: var(--parsec-color-light-primary-700);
+      opacity: 1;
+    }
   }
 }
 </style>

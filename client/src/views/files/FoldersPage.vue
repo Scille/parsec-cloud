@@ -262,6 +262,7 @@ import {
   Events,
   MenuActionData,
   OpenContextualMenuData,
+  OpenFolderBreadcrumbContextMenuData,
 } from '@/services/eventDistributor';
 import {
   FileEventRegistrationCanceller,
@@ -287,6 +288,7 @@ import {
   FileDetailsModal,
   FolderGlobalAction,
   openEntryContextMenu as _openEntryContextMenu,
+  openFolderBreadcrumbContextMenu as _openFolderBreadcrumbContextMenu,
   openGlobalContextMenu as _openGlobalContextMenu,
   downloadArchive,
   downloadEntry,
@@ -635,6 +637,8 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
     }
   } else if (event === Events.OpenContextMenu) {
     await openGlobalContextMenu((data as OpenContextualMenuData).event);
+  } else if (event === Events.OpenFolderBreadcrumbContextMenu) {
+    await openFolderBreadcrumbContextMenu((data as OpenFolderBreadcrumbContextMenuData).event, ownRole.value);
   }
 }
 
@@ -668,7 +672,9 @@ onMounted(async () => {
       Events.EntrySyncStarted |
       Events.MenuAction |
       Events.EntrySyncProgress |
-      Events.OpenContextMenu,
+      Events.OpenContextMenu |
+      Events.OpenFolderBreadcrumbContextMenu,
+
     handleEvents,
   );
 
@@ -1124,7 +1130,8 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
   if (!newName) {
     return;
   }
-  const filePath = await parsec.Path.join(currentPath.value, entry.name);
+  const filePath = entry.path === currentPath.value ? currentPath.value : await parsec.Path.join(currentPath.value, entry.name);
+  const isRenamingCurrentFolder = entry.path === currentPath.value;
   const result = await parsec.rename(workspaceInfo.value.handle, filePath, newName);
   if (!result.ok) {
     let message: Translatable = '';
@@ -1154,6 +1161,16 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
 
     entry.name = newName;
     entry.path = result.value;
+
+    if (isRenamingCurrentFolder) {
+      await navigateTo(Routes.Documents, {
+        query: {
+          workspaceHandle: workspaceInfo.value.handle,
+          documentPath: result.value,
+        },
+      });
+      return;
+    }
   }
   await onSelectionCancel();
 }
@@ -1391,6 +1408,48 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
     return;
   }
   await performFolderAction(data.action);
+}
+
+async function getCurrentFolderEntry(): Promise<FolderModel | null> {
+  if (!workspaceInfo.value || currentPath.value === '/') {
+    return null;
+  }
+
+  const result = await entryStat(workspaceInfo.value.handle, currentPath.value);
+
+  if (!result.ok || result.value.isFile()) {
+    return null;
+  }
+
+  return result.value as FolderModel;
+}
+
+async function openFolderBreadcrumbContextMenu(event: Event, role: WorkspaceRole): Promise<void> {
+  const data = await _openFolderBreadcrumbContextMenu(event, role);
+
+  if (!data) {
+    return;
+  }
+
+  const currentFolderEntry = currentPath.value ? await getCurrentFolderEntry() : null;
+
+  if (!currentFolderEntry) {
+    window.electronAPI.log('error', 'No current folder entry found when opening breadcrumb context menu');
+    return;
+  }
+
+  const actions = new Map<FileAction, () => Promise<void>>([
+    [FileAction.Rename, async (): Promise<void> => await renameEntries([currentFolderEntry])],
+    [FileAction.ShowHistory, async (): Promise<void> => await showHistory([currentFolderEntry])],
+    [FileAction.ShowDetails, async (): Promise<void> => await showDetails([currentFolderEntry])],
+    [FileAction.CopyLink, async (): Promise<void> => await copyLink([currentFolderEntry])],
+    [FileAction.SeeInExplorer, async (): Promise<void> => await seeInExplorer([currentFolderEntry])],
+  ]);
+
+  const fn = actions.get(data.action);
+  if (fn) {
+    await fn();
+  }
 }
 
 async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {

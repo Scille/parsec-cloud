@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import { RouterPathNode } from '@/components/header/utils';
 import { IonContent, IonIcon, IonItem, IonList, IonText, popoverController } from '@ionic/vue';
 import { returnDownForward } from 'ionicons/icons';
 
@@ -60,6 +60,7 @@ async function onClick(breadcrumb: RouterPathNode): Promise<void> {
       font-size: 1rem;
       color: var(--parsec-color-light-secondary-grey);
       margin-right: 0.625rem;
+      flex-shrink: 0;
     }
 
     &--disabled {

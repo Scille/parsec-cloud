@@ -1,5 +1,6 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
+<!-- eslint-disable vue/html-indent -->
 <template>
   <ion-page>
     <ion-header
@@ -56,11 +57,17 @@
             class="topbar-left__breadcrumb"
             v-if="(currentRouteIsFileRoute() && isLargeDisplay) || (!currentRouteIs(Routes.Workspaces) && isSmallDisplay)"
           >
-            <header-breadcrumbs
-              :workspace-name="workspaceName"
+            <header-breadcrumbs-with-context-menu
               :path-nodes="fullPath"
               @change="onNodeSelected"
-              :from-header-page="true"
+              @open-folder-context-menu="openFolderContextualMenu"
+              @open-workspace-context-menu="openWorkspaceContextualMenu($event)"
+              :workspace="currentWorkspace ? currentWorkspace : undefined"
+              :workspace-attributes="workspaceAttributes"
+              :event-distributor="eventDistributor"
+              :information-manager="informationManager"
+              :storage-manager="storageManager"
+              :own-role="currentWorkspace ? currentWorkspace.currentSelfRole : undefined"
               :available-width="breadcrumbsWidth"
             />
           </div>
@@ -184,11 +191,23 @@
 <script setup lang="ts">
 import { pxToRem } from '@/common/utils';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
-import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import HeaderBreadcrumbsWithContextMenu from '@/components/header/HeaderBreadcrumbsWithContextMenu.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
+import { RouterPathNode } from '@/components/header/utils';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile } from '@/parsec';
+import { openWorkspaceContextMenu } from '@/components/workspaces';
+import {
+  ClientInfo,
+  Path,
+  UserProfile,
+  WorkspaceInfo,
+  WorkspaceRole,
+  getClientInfo,
+  getWorkspaceName,
+  isMobile,
+  listWorkspaces,
+} from '@/parsec';
 import {
   ProfilePages,
   Routes,
@@ -212,11 +231,14 @@ import {
   Events,
   OpenContextualMenuData,
   WorkspaceRoleUpdateData,
+  WorkspaceUpdatedData,
 } from '@/services/eventDistributor';
 import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
@@ -240,10 +262,13 @@ import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } fr
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
+const workspaceAttributes = useWorkspaceAttributes();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 let eventDistributorCbId: string | null = null;
 const workspaceName = ref('');
+const workspace = ref<Array<WorkspaceInfo>>([]);
+const currentWorkspace = ref<WorkspaceInfo>();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
 const { isHeaderVisible } = useHeaderControl();
 const userInfo: Ref<ClientInfo | null> = ref(null);
@@ -251,6 +276,7 @@ const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
 const securityWarnings = ref<SecurityWarnings | undefined>();
 const securityWarningsCount = computed(() => {
@@ -324,6 +350,11 @@ async function updateRoute(): Promise<void> {
   } else if (currentRouteIs(Routes.Documents)) {
     const workspaceHandle = getWorkspaceHandle();
     if (workspaceHandle) {
+      const workspacesResult = await listWorkspaces();
+      if (workspacesResult.ok) {
+        workspace.value = workspacesResult.value;
+      }
+      currentWorkspace.value = workspace.value.find((wk) => wk.handle === workspaceHandle);
       workspaceName.value = await getWorkspaceName(workspaceHandle, true);
     }
 
@@ -376,6 +407,8 @@ onMounted(async () => {
     async () => await notificationCenterButtonRef.value?.$el.click(),
   );
 
+  await storageManager.retrieveConfig();
+
   const result = await getClientInfo();
   if (result.ok) {
     userInfo.value = result.value;
@@ -402,7 +435,13 @@ onMounted(async () => {
       } else if (event === Events.Online) {
         securityWarnings.value = await getSecurityWarnings();
       } else if (event === Events.WorkspaceUpdated) {
-        await updateRoute();
+        const updateData = data as WorkspaceUpdatedData;
+        if (updateData?.newName && currentWorkspace.value && updateData.workspaceId === currentWorkspace.value.id) {
+          workspaceName.value = updateData.newName;
+          await updateRoute();
+        } else {
+          await updateRoute();
+        }
       }
     },
   );
@@ -449,6 +488,31 @@ async function openContextualMenu(event: Event): Promise<void> {
     await eventDistributor.dispatchEvent(Events.OpenContextMenu, {
       event,
     } as OpenContextualMenuData);
+  }
+}
+
+async function openWorkspaceContextualMenu(event: Event): Promise<void> {
+  event.stopPropagation();
+
+  if (!currentWorkspace.value) {
+    return;
+  }
+
+  await openWorkspaceContextMenu(
+    event,
+    currentWorkspace.value,
+    workspaceAttributes,
+    eventDistributor,
+    informationManager,
+    storageManager,
+    true,
+  );
+}
+
+async function openFolderContextualMenu(event: Event): Promise<void> {
+  event.stopPropagation();
+  if (currentRouteIs(Routes.Documents)) {
+    await eventDistributor.dispatchEvent(Events.OpenFolderBreadcrumbContextMenu, { event } as OpenContextualMenuData);
   }
 }
 

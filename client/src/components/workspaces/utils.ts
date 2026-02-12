@@ -19,7 +19,7 @@ import {
   unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
-import { EventDistributor, Events } from '@/services/eventDistributor';
+import { EventDistributor, Events, WorkspaceUpdatedData } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager } from '@/services/storageManager';
@@ -185,7 +185,7 @@ export async function openWorkspaceContextMenu(
         await seeInExplorer(workspace, informationManager, workspaceAttributes, eventDistributor);
         break;
       case WorkspaceAction.Rename:
-        await openRenameWorkspaceModal(workspace, informationManager, isLargeDisplay);
+        await openRenameWorkspaceModal(workspace, informationManager, eventDistributor, isLargeDisplay);
         break;
       case WorkspaceAction.Favorite:
         workspaceAttributes.toggleFavorite(workspace.id);
@@ -352,7 +352,12 @@ async function seeInExplorer(
   }
 }
 
-async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName, informationManager: InformationManager): Promise<void> {
+async function renameWorkspace(
+  workspace: WorkspaceInfo,
+  newName: WorkspaceName,
+  informationManager: InformationManager,
+  eventDistributor: EventDistributor,
+): Promise<void> {
   const result = await parsecRenameWorkspace(newName, workspace.id);
   if (result.ok) {
     informationManager.present(
@@ -363,6 +368,10 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
       PresentationMode.Toast,
     );
     recentDocumentManager.updateWorkspace(workspace.id, { currentName: newName });
+    await eventDistributor.dispatchEvent(Events.WorkspaceUpdated, {
+      workspaceId: workspace.id,
+      newName: newName,
+    } as WorkspaceUpdatedData);
   } else {
     let message: Translatable = '';
     switch (result.error.tag) {
@@ -429,6 +438,7 @@ async function unmountWorkspaceConfirmation(
 async function openRenameWorkspaceModal(
   workspace: WorkspaceInfo,
   informationManager: InformationManager,
+  eventDistributor: EventDistributor,
   isLargeDisplay: boolean,
 ): Promise<void> {
   const newWorkspaceName = await getTextFromUser(
@@ -446,7 +456,7 @@ async function openRenameWorkspaceModal(
   );
 
   if (newWorkspaceName) {
-    await renameWorkspace(workspace, newWorkspaceName, informationManager);
+    await renameWorkspace(workspace, newWorkspaceName, informationManager, eventDistributor);
   }
 }
 

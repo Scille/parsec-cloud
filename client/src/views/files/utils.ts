@@ -9,7 +9,14 @@ import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager } from '@/services/fileOperation/manager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
-import { FileAction, FileContextMenu, FileOperationConflictsModal, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
+import {
+  FileAction,
+  FileContextMenu,
+  FileOperationConflictsModal,
+  FolderBreadcrumbContextMenu,
+  FolderGlobalAction,
+  FolderGlobalContextMenu,
+} from '@/views/files';
 import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { Answer, askQuestion, I18n, MsModalResult } from 'megashark-lib';
@@ -62,6 +69,31 @@ export async function openGlobalContextMenu(
     data = (await modal.onWillDismiss()).data;
     await modal.dismiss();
   }
+  return data;
+}
+
+export async function openFolderBreadcrumbContextMenu(event: Event, ownRole: WorkspaceRole): Promise<{ action: FileAction } | undefined> {
+  if (ownRole === WorkspaceRole.Reader) {
+    return;
+  }
+
+  const popover = await popoverController.create({
+    component: FolderBreadcrumbContextMenu,
+    cssClass: 'folder-breadcrumb-context-menu',
+    event: event,
+    reference: 'trigger',
+    translucent: true,
+    showBackdrop: false,
+    dismissOnSelect: true,
+    alignment: 'start',
+    componentProps: {
+      role: ownRole,
+    },
+  });
+  await popover.present();
+  const data: { action: FileAction } | undefined = (await popover.onWillDismiss()).data;
+
+  await popover.dismiss();
   return data;
 }
 
