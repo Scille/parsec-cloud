@@ -99,7 +99,7 @@ pub use platform::list_intermediate_certificates;
 pub use errors::SignMessageError;
 pub use platform::sign_message;
 
-pub use shared::{verify_message, Certificate, SignedMessage, X509EndCertificate};
+pub use shared::{Certificate, SignedMessage, X509EndCertificate};
 
 pub use errors::EncryptMessageError;
 pub use platform::encrypt_message;
