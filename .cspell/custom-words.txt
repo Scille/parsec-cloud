@@ -151,6 +151,7 @@ headerpage
 Hexagone
 HKCR
 homoglyph
+HOTP
 htmlcov
 humantime
 ilbm
@@ -266,6 +267,7 @@ perflint
 PERSONALBYTES
 pgdg
 PGINSTALLATION
+PGTOTP
 picasa
 platex
 pluginmanager

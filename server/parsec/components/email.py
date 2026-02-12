@@ -48,10 +48,14 @@ def _smtp_send_email(
                 server.login(email_config.host_user, email_config.host_password)
             server.sendmail(email_config.sender.str, to_addr.str, message.as_string())
 
-    except smtplib.SMTPConnectError:
-        return SendEmailBadOutcome.SERVER_UNAVAILABLE
     except smtplib.SMTPRecipientsRefused:
+        # Don't log this error since the email address is controlled by the end-user
         return SendEmailBadOutcome.RECIPIENT_REFUSED
+    except smtplib.SMTPConnectError as exc:
+        logger.warning(
+            "SMTP server unavailable", exc_info=exc, to_addr=to_addr, subject=message["Subject"]
+        )
+        return SendEmailBadOutcome.SERVER_UNAVAILABLE
     except smtplib.SMTPException as exc:
         logger.warning("SMTP error", exc_info=exc, to_addr=to_addr, subject=message["Subject"])
         return SendEmailBadOutcome.BAD_SMTP_CONFIG
