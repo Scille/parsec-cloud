@@ -29,6 +29,9 @@ from .test_realm_share import *
 from .test_realm_unshare import *
 from .test_shamir_recovery_delete import *
 from .test_shamir_recovery_setup import *
+from .test_totp_create_opaque_key import *
+from .test_totp_setup_confirm import *
+from .test_totp_setup_get_secret import *
 from .test_user_create import *
 from .test_user_revoke import *
 from .test_user_update import *
