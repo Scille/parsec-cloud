@@ -5,7 +5,8 @@ import { getDefaultProvideConfig, mockRouter, resetRoutesCalled } from '@tests/c
 // Before importing anything else
 mockRouter();
 
-import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
+import { RouterPathNode } from '@/components/header/utils';
 import { Routes } from '@/router';
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it } from 'vitest';

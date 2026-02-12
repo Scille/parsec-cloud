@@ -180,7 +180,8 @@
 <script setup lang="ts">
 import { pxToRem } from '@/common/utils';
 import { HistoryFileListItem, WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel } from '@/components/files';
-import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
+import { RouterPathNode } from '@/components/header/utils';
 import { SortProperty } from '@/components/users';
 import { EntryName, FsPath, getWorkspaceInfo, Path, StartedWorkspaceInfo, WorkspaceHistory } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';

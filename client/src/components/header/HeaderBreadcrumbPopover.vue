@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import { RouterPathNode } from '@/components/header/utils';
 import { IonContent, IonIcon, IonItem, IonList, IonText, popoverController } from '@ionic/vue';
 import { returnDownForward } from 'ionicons/icons';
 

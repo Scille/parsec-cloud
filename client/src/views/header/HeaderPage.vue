@@ -57,22 +57,17 @@
             class="topbar-left__breadcrumb"
             v-if="(currentRouteIsFileRoute() && isLargeDisplay) || (!currentRouteIs(Routes.Workspaces) && isSmallDisplay)"
           >
-            <header-breadcrumbs
-              :workspace-name="workspaceName"
+            <header-breadcrumbs-with-context-menu
               :path-nodes="fullPath"
               @change="onNodeSelected"
-              :from-header-page="
-                currentWorkspace
-                  ? {
-                      workspace: currentWorkspace,
-                      workspaceAttributes,
-                      eventDistributor,
-                      informationManager,
-                      storageManager: storageManager,
-                      ownRole: currentWorkspace.currentSelfRole,
-                    }
-                  : undefined
-              "
+              @open-folder-context-menu="openFolderContextualMenu"
+              @open-workspace-context-menu="openWorkspaceContextualMenu($event)"
+              :workspace="currentWorkspace ? currentWorkspace : undefined"
+              :workspace-attributes="workspaceAttributes"
+              :event-distributor="eventDistributor"
+              :information-manager="informationManager"
+              :storage-manager="storageManager"
+              :own-role="currentWorkspace ? currentWorkspace.currentSelfRole : undefined"
               :available-width="breadcrumbsWidth"
             />
           </div>
@@ -196,10 +191,12 @@
 <script setup lang="ts">
 import { pxToRem } from '@/common/utils';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
-import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import HeaderBreadcrumbsWithContextMenu from '@/components/header/HeaderBreadcrumbsWithContextMenu.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
+import { RouterPathNode } from '@/components/header/utils';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
+import { openWorkspaceContextMenu } from '@/components/workspaces';
 import {
   ClientInfo,
   Path,
@@ -491,6 +488,31 @@ async function openContextualMenu(event: Event): Promise<void> {
     await eventDistributor.dispatchEvent(Events.OpenContextMenu, {
       event,
     } as OpenContextualMenuData);
+  }
+}
+
+async function openWorkspaceContextualMenu(event: Event): Promise<void> {
+  event.stopPropagation();
+
+  if (!currentWorkspace.value) {
+    return;
+  }
+
+  await openWorkspaceContextMenu(
+    event,
+    currentWorkspace.value,
+    workspaceAttributes,
+    eventDistributor,
+    informationManager,
+    storageManager,
+    true,
+  );
+}
+
+async function openFolderContextualMenu(event: Event): Promise<void> {
+  event.stopPropagation();
+  if (currentRouteIs(Routes.Documents)) {
+    await eventDistributor.dispatchEvent(Events.OpenFolderBreadcrumbContextMenu, { event } as OpenContextualMenuData);
   }
 }
 

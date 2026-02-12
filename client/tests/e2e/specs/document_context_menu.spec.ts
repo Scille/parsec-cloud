@@ -858,7 +858,7 @@ msTest.describe(() => {
 });
 
 msTest('Rename current folder from breadcrumbs', async ({ documents }) => {
-  const optionFolder = documents.locator('.topbar-left').locator('.breadcrumb-element--active').locator('.option-icon');
+  const optionFolder = documents.locator('.topbar-left').locator('.breadcrumb-element--active');
 
   await expect(documents).toHaveHeader(['wksp1'], true, true);
   await documents.locator('.folder-container').getByRole('listitem').nth(0).locator('.label-name').click();

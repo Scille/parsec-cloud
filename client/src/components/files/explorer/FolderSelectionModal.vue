@@ -47,13 +47,13 @@
       </div>
       <header-breadcrumbs
         v-if="workspaceInfo"
+        :workspace-name="workspaceInfo.currentName"
         :path-nodes="headerPath"
         @change="onPathChange"
         class="navigation-breadcrumb"
         :items-before-collapse="1"
         :items-after-collapse="2"
         :available-width="breadcrumbsWidth"
-        :workspace-name="workspaceInfo.currentName"
       />
       <div
         v-if="isSmallDisplay"
@@ -203,7 +203,8 @@ import NewFolder from '@/assets/images/folder-new.svg?raw';
 import { getFileIcon } from '@/common/file';
 import { pxToRem } from '@/common/utils';
 import { FolderSelectionOptions } from '@/components/files';
-import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
+import { RouterPathNode } from '@/components/header/utils';
 import {
   EntryStat,
   FsPath,
