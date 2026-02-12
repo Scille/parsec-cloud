@@ -50,6 +50,7 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
     }
   } else {
     await page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(page).toBeDocumentPage();
     await page.locator('.topbar-left').locator('.breadcrumb-element--active').click();
   }
 }
