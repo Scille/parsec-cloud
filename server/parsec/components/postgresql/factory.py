@@ -22,6 +22,7 @@ from parsec.components.postgresql.ping import PGPingComponent
 from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.sequester import PGSequesterComponent
 from parsec.components.postgresql.shamir import PGShamirComponent
+from parsec.components.postgresql.totp import PGTOTPComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.vlob import PGVlobComponent
 from parsec.config import BackendConfig, PostgreSQLDatabaseConfig
@@ -61,6 +62,7 @@ async def components_factory(
                 sequester = PGSequesterComponent(pool=pool)
                 account = PGAccountComponent(pool=pool, config=config)
                 async_enrollment = PGAsyncEnrollmentComponent(pool=pool)
+                totp = PGTOTPComponent(pool=pool, config=config)
 
                 components = {
                     "event_bus": event_bus,
@@ -79,6 +81,7 @@ async def components_factory(
                     "shamir": shamir,
                     "account": account,
                     "async_enrollment": async_enrollment,
+                    "totp": totp,
                 }
                 for component in components.values():
                     method = getattr(component, "register_components", None)
