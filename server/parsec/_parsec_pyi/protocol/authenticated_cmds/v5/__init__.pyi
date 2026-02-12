@@ -33,6 +33,9 @@ from . import (
     realm_unshare,
     shamir_recovery_delete,
     shamir_recovery_setup,
+    totp_create_opaque_key,
+    totp_setup_confirm,
+    totp_setup_get_secret,
     user_create,
     user_revoke,
     user_update,
@@ -76,6 +79,9 @@ class AnyCmdReq:
         | realm_unshare.Req
         | shamir_recovery_delete.Req
         | shamir_recovery_setup.Req
+        | totp_create_opaque_key.Req
+        | totp_setup_confirm.Req
+        | totp_setup_get_secret.Req
         | user_create.Req
         | user_revoke.Req
         | user_update.Req
@@ -116,6 +122,9 @@ __all__ = [
     "realm_unshare",
     "shamir_recovery_delete",
     "shamir_recovery_setup",
+    "totp_create_opaque_key",
+    "totp_setup_confirm",
+    "totp_setup_get_secret",
     "user_create",
     "user_revoke",
     "user_update",

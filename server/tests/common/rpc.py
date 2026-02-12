@@ -16,6 +16,7 @@ from parsec._parsec import (
     HashDigest,
     SecretKey,
     SequesterServiceID,
+    TOTPOpaqueKeyID,
     UntrustedPasswordAlgorithm,
     UserID,
     ValidationCode,
@@ -90,6 +91,31 @@ class BaseAnonymousRpcClient:
         req = anonymous_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump(), "anonymous")
         return anonymous_cmds.latest.ping.Rep.load(raw_rep)
+
+    async def totp_fetch_opaque_key(
+        self, user_id: UserID, opaque_key_id: TOTPOpaqueKeyID, one_time_password: str
+    ) -> anonymous_cmds.latest.totp_fetch_opaque_key.Rep:
+        req = anonymous_cmds.latest.totp_fetch_opaque_key.Req(
+            user_id=user_id, opaque_key_id=opaque_key_id, one_time_password=one_time_password
+        )
+        raw_rep = await self._do_request(req.dump(), "anonymous")
+        return anonymous_cmds.latest.totp_fetch_opaque_key.Rep.load(raw_rep)
+
+    async def totp_setup_confirm(
+        self, user_id: UserID, token: AccessToken, one_time_password: str
+    ) -> anonymous_cmds.latest.totp_setup_confirm.Rep:
+        req = anonymous_cmds.latest.totp_setup_confirm.Req(
+            user_id=user_id, token=token, one_time_password=one_time_password
+        )
+        raw_rep = await self._do_request(req.dump(), "anonymous")
+        return anonymous_cmds.latest.totp_setup_confirm.Rep.load(raw_rep)
+
+    async def totp_setup_get_secret(
+        self, user_id: UserID, token: AccessToken
+    ) -> anonymous_cmds.latest.totp_setup_get_secret.Rep:
+        req = anonymous_cmds.latest.totp_setup_get_secret.Req(user_id=user_id, token=token)
+        raw_rep = await self._do_request(req.dump(), "anonymous")
+        return anonymous_cmds.latest.totp_setup_get_secret.Rep.load(raw_rep)
 
 
 class BaseAnonymousServerRpcClient:
@@ -428,6 +454,27 @@ class BaseAuthenticatedRpcClient:
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.shamir_recovery_setup.Rep.load(raw_rep)
+
+    async def totp_create_opaque_key(
+        self,
+    ) -> authenticated_cmds.latest.totp_create_opaque_key.Rep:
+        req = authenticated_cmds.latest.totp_create_opaque_key.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.totp_create_opaque_key.Rep.load(raw_rep)
+
+    async def totp_setup_confirm(
+        self, one_time_password: str
+    ) -> authenticated_cmds.latest.totp_setup_confirm.Rep:
+        req = authenticated_cmds.latest.totp_setup_confirm.Req(one_time_password=one_time_password)
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.totp_setup_confirm.Rep.load(raw_rep)
+
+    async def totp_setup_get_secret(
+        self,
+    ) -> authenticated_cmds.latest.totp_setup_get_secret.Rep:
+        req = authenticated_cmds.latest.totp_setup_get_secret.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.totp_setup_get_secret.Rep.load(raw_rep)
 
     async def user_create(
         self,
