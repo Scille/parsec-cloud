@@ -19,6 +19,7 @@ from parsec._parsec import (
     GreetingAttemptID,
     PKIEnrollmentID,
     SequesterServiceID,
+    TOTPOpaqueKeyID,
     UserID,
     VlobID,
 )
@@ -46,6 +47,7 @@ SqlQueryParam = (
     | VlobID
     | AccountAuthMethodID
     | AsyncEnrollmentID
+    | TOTPOpaqueKeyID
     | Iterable["SqlQueryParam"]
 )
 

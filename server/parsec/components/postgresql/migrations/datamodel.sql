@@ -46,7 +46,7 @@ CREATE TABLE vault_item (
 );
 
 
-CREATE TYPE PASSWORD_ALGORITHM AS ENUM ('ARGON2ID');
+CREATE TYPE password_algorithm AS ENUM ('ARGON2ID');
 
 
 CREATE TABLE vault_authentication_method (
@@ -147,7 +147,7 @@ CREATE TABLE organization (
 -------------------------------------------------------
 -- Sequester
 -------------------------------------------------------
-CREATE TYPE SEQUESTER_SERVICE_TYPE AS ENUM ('STORAGE', 'WEBHOOK');
+CREATE TYPE sequester_service_type AS ENUM ('STORAGE', 'WEBHOOK');
 
 CREATE TABLE sequester_service (
     _id SERIAL PRIMARY KEY,
@@ -181,7 +181,7 @@ CREATE TABLE human (
 );
 
 
-CREATE TYPE USER_PROFILE AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
+CREATE TYPE user_profile AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
 
 
 CREATE TABLE user_ (
@@ -214,6 +214,16 @@ CREATE TABLE user_ (
     current_profile USER_PROFILE NOT NULL,
     -- NULL if no End User License Agreement has been accepted
     tos_accepted_on TIMESTAMPTZ,
+    totp_setup_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    -- Cannot be NULL if `totp_setup_completed` is TRUE
+    totp_secret BYTEA,
+    -- NULL if no reset token is active
+    -- Must be NULL if `totp_setup_completed` is TRUE
+    totp_reset_token VARCHAR(32),
+    CONSTRAINT check_totp_secret_when_setup_completed CHECK (totp_setup_completed = FALSE OR totp_secret IS NOT NULL),
+    CONSTRAINT check_totp_reset_token_when_setup_completed CHECK (
+        totp_setup_completed = FALSE OR totp_reset_token IS NULL
+    ),
 
     UNIQUE (organization, user_id)
 );
@@ -310,12 +320,12 @@ ALTER TABLE user_ ADD FOREIGN KEY (
 --  Invitation
 -------------------------------------------------------
 
-CREATE TYPE INVITATION_TYPE AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
-CREATE TYPE INVITATION_DELETED_REASON AS ENUM (
+CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
+CREATE TYPE invitation_deleted_reason AS ENUM (
     'FINISHED', 'CANCELLED', 'ROTTEN'
 );
 
-CREATE TYPE CANCELLED_GREETING_ATTEMPT_REASON AS ENUM (
+CREATE TYPE cancelled_greeting_attempt_reason AS ENUM (
     'MANUALLY_CANCELLED',
     'INVALID_NONCE_HASH',
     'INVALID_SAS_CODE',
@@ -325,7 +335,7 @@ CREATE TYPE CANCELLED_GREETING_ATTEMPT_REASON AS ENUM (
     'AUTOMATICALLY_CANCELLED'
 );
 
-CREATE TYPE GREETER_OR_CLAIMER AS ENUM (
+CREATE TYPE greeter_or_claimer AS ENUM (
     'GREETER',
     'CLAIMER'
 );
@@ -428,16 +438,16 @@ CREATE TABLE pki_certificate (
     der_content BYTEA NOT NULL
 );
 
-CREATE TYPE ENROLLMENT_STATE AS ENUM (
+CREATE TYPE enrollment_state AS ENUM (
     'SUBMITTED',
     'ACCEPTED',
     'REJECTED',
     'CANCELLED'
 );
 
-CREATE TYPE PKI_SIGNATURE_ALGORITHM AS ENUM ('RSASSA_PSS_SHA256');
+CREATE TYPE pki_signature_algorithm AS ENUM ('RSASSA_PSS_SHA256');
 
-CREATE TYPE PKI_ENROLLMENT_INFO_ACCEPTED AS (
+CREATE TYPE pki_enrollment_info_accepted AS (
     accepted_on TIMESTAMPTZ,
     accept_payload_signature BYTEA,
     accept_payload BYTEA,
@@ -448,11 +458,11 @@ CREATE TYPE PKI_ENROLLMENT_INFO_ACCEPTED AS (
     accepter_x509_cert_sha256_fingerprint BYTEA
 );
 
-CREATE TYPE PKI_ENROLLMENT_INFO_REJECTED AS (
+CREATE TYPE pki_enrollment_info_rejected AS (
     rejected_on TIMESTAMPTZ
 );
 
-CREATE TYPE PKI_ENROLLMENT_INFO_CANCELLED AS (
+CREATE TYPE pki_enrollment_info_cancelled AS (
     cancelled_on TIMESTAMPTZ
 );
 
@@ -501,9 +511,9 @@ CREATE TABLE pki_x509_certificate (
     der_content BYTEA NOT NULL
 );
 
-CREATE TYPE ASYNC_ENROLLMENT_SIGNATURE_TYPE AS ENUM ('PKI', 'OPENBAO');
+CREATE TYPE async_enrollment_signature_type AS ENUM ('PKI', 'OPENBAO');
 
-CREATE TYPE ASYNC_ENROLLMENT_STATE AS ENUM ('SUBMITTED', 'ACCEPTED', 'REJECTED', 'CANCELLED');
+CREATE TYPE async_enrollment_state AS ENUM ('SUBMITTED', 'ACCEPTED', 'REJECTED', 'CANCELLED');
 
 CREATE TABLE async_enrollment (
     _id SERIAL PRIMARY KEY,
@@ -548,7 +558,7 @@ CREATE TABLE async_enrollment (
 -------------------------------------------------------
 
 
-CREATE TYPE MAINTENANCE_TYPE AS ENUM ('REENCRYPTION', 'GARBAGE_COLLECTION');
+CREATE TYPE maintenance_type AS ENUM ('REENCRYPTION', 'GARBAGE_COLLECTION');
 
 
 CREATE TABLE realm (
@@ -562,7 +572,7 @@ CREATE TABLE realm (
 );
 
 
-CREATE TYPE REALM_ROLE AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
+CREATE TYPE realm_role AS ENUM ('OWNER', 'MANAGER', 'CONTRIBUTOR', 'READER');
 
 
 CREATE TABLE realm_user_role (
@@ -576,7 +586,7 @@ CREATE TABLE realm_user_role (
     certified_on TIMESTAMPTZ NOT NULL
 );
 
-CREATE TYPE REALM_ARCHIVING_CONFIGURATION AS ENUM (
+CREATE TYPE realm_archiving_configuration AS ENUM (
     'AVAILABLE', 'ARCHIVED', 'DELETION_PLANNED'
 );
 
@@ -780,6 +790,22 @@ CREATE TABLE realm_topic (
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE (organization, realm)
+);
+
+
+-------------------------------------------------------
+--  TOTP
+-------------------------------------------------------
+
+
+CREATE TABLE totp_opaque_key (
+    _id SERIAL PRIMARY KEY,
+    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    opaque_key_id UUID NOT NULL UNIQUE,
+    opaque_key BYTEA NOT NULL,
+    -- Throttle fields for rate-limiting OTP attempts
+    last_failed_attempt TIMESTAMPTZ,
+    failed_attempts INTEGER NOT NULL DEFAULT 0
 );
 
 

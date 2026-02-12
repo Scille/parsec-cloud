@@ -26,6 +26,7 @@ from parsec.components.postgresql.handler import (
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.ping import PGPingComponent
 from parsec.components.postgresql.realm import PGRealmComponent
+from parsec.components.postgresql.totp import PGTOTPComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.vlob import PGVlobComponent
 
@@ -35,6 +36,7 @@ __all__ = [
     "PGOrganizationComponent",
     "PGPingComponent",
     "PGRealmComponent",
+    "PGTOTPComponent",
     "PGUserComponent",
     "PGVlobComponent",
     "apply_migrations",
