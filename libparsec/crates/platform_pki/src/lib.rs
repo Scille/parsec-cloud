@@ -113,7 +113,7 @@ pub use shared::verify_certificate;
 pub use webpki::KeyUsage;
 
 pub use errors::VerifyMessageError;
-pub use shared::verify_message2;
+pub use shared::verify_message;
 
 pub use errors::GetValidationPathForCertError;
 pub use shared::{get_validation_path_for_cert, ValidationPathOwned};

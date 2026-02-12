@@ -94,7 +94,7 @@ pub fn verify_certificate<'der>(
 
 // TODO: rename to `verify_message` once pki-enrollment specific code is removed
 // see https://github.com/Scille/parsec-cloud/issues/12054
-pub fn verify_message2<'a>(
+pub fn verify_message<'a>(
     message: &[u8],
     signature: &[u8],
     algorithm: PkiSignatureAlgorithm,

@@ -19,7 +19,7 @@ async fn sign_and_verify(certificates: &InstalledCertificates) {
         .await
         .unwrap();
 
-    crate::verify_message2(
+    crate::verify_message(
         payload.as_ref(),
         &signature,
         algo,
@@ -53,7 +53,7 @@ async fn verify(certificates: &InstalledCertificates) {
         .await
         .unwrap();
 
-    crate::verify_message2(
+    crate::verify_message(
         payload.as_ref(),
         &signature,
         algo,
@@ -103,7 +103,7 @@ async fn verify_message_ko_outdated_certificate(certificates: &InstalledCertific
     let (algo, signature, validation_path) = certificates.alice_sign_message(payload).await;
 
     p_assert_matches!(
-        crate::verify_message2(
+        crate::verify_message(
             payload.as_ref(),
             &signature,
             algo,
@@ -128,7 +128,7 @@ async fn verify_message_ko_different_certificate(certificates: &InstalledCertifi
             .unwrap();
 
     p_assert_matches!(
-        crate::verify_message2(
+        crate::verify_message(
             payload.as_ref(),
             &signature,
             algo,
@@ -149,7 +149,7 @@ async fn verify_message_ko_different_payload(certificates: &InstalledCertificate
     let (algo, signature, validation_path) = certificates.alice_sign_message(payload).await;
 
     p_assert_matches!(
-        crate::verify_message2(
+        crate::verify_message(
             b"Different payload",
             &signature,
             algo,
