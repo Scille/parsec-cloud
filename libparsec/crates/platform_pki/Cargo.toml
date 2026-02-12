@@ -19,7 +19,7 @@ bytes = { workspace = true }
 error_set = { workspace = true }
 rustls-webpki = { workspace = true, features = ["std", "ring"] }
 rustls-pki-types = { workspace = true }
-rsa = { workspace = true }
+rsa = { workspace = true, features = ["sha2"] }
 sha2 = { workspace = true }
 libparsec_types = { workspace = true }
 # Use to decode subject & issuer fields of used x509 certificate.

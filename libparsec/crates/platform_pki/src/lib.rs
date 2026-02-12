@@ -23,7 +23,7 @@ pub(crate) use windows as platform;
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use crate::{
-        errors::ListTrustedRootCertificatesError, DecryptMessageError, EncryptMessageError,
+        errors::ListTrustedRootCertificatesError, DecryptMessageError,
         GetDerEncodedCertificateError, ListIntermediateCertificatesError,
         ShowCertificateSelectionDialogError, SignMessageError,
     };
@@ -53,14 +53,6 @@ mod platform {
     ) -> Result<(PkiSignatureAlgorithm, Bytes), SignMessageError> {
         let _ = message;
         let _ = certificate_ref;
-        unimplemented!("platform not supported")
-    }
-
-    pub async fn encrypt_message(
-        message: &[u8],
-        certificate_ref: &X509CertificateReference,
-    ) -> Result<(PKIEncryptionAlgorithm, Bytes), EncryptMessageError> {
-        let _ = (message, certificate_ref);
         unimplemented!("platform not supported")
     }
 
@@ -104,14 +96,12 @@ pub use platform::sign_message;
 
 pub use shared::{verify_message, Certificate, SignedMessage, X509EndCertificate};
 
-pub use errors::EncryptMessageError;
-pub use platform::encrypt_message;
+pub use shared::{encrypt_message, EncryptMessageError};
 
 pub use errors::DecryptMessageError;
 pub use platform::decrypt_message;
 
-pub use errors::CreateLocalPendingError;
-pub use shared::create_local_pending;
+pub use shared::{create_local_pending, CreateLocalPendingError};
 
 pub use platform::is_available;
 

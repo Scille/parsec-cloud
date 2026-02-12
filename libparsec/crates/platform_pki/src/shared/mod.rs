@@ -1,14 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::{
-    encrypt_message,
     errors::{
         GetRootCertificateInfoFromTrustchainError, GetValidationPathForCertError,
         ListCertificatesError, LoadAnswerPayloadError, ValidatePayloadError, VerifyMessageError,
         VerifySignatureError,
     },
-    get_der_encoded_certificate, CreateLocalPendingError, EncryptMessageError,
-    GetDerEncodedCertificateError, PkiSignatureAlgorithm,
+    get_der_encoded_certificate, GetDerEncodedCertificateError, PkiSignatureAlgorithm,
 };
 
 use bytes::Bytes;
@@ -80,6 +78,25 @@ pub fn verify_message<'message, 'a>(
         .map_err(VerifySignatureError::InvalidSignature)
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum CreateLocalPendingError {
+    #[error("Cannot open certificate store: {0}")]
+    CannotOpenStore(std::io::Error),
+    #[error("Cannot find certificate")]
+    NotFound,
+    #[error(transparent)]
+    EncryptionError(#[from] EncryptMessageError),
+}
+
+impl From<GetDerEncodedCertificateError> for CreateLocalPendingError {
+    fn from(value: GetDerEncodedCertificateError) -> Self {
+        match value {
+            GetDerEncodedCertificateError::CannotOpenStore(error) => Self::CannotOpenStore(error),
+            GetDerEncodedCertificateError::NotFound => Self::NotFound,
+        }
+    }
+}
+
 pub async fn create_local_pending(
     cert_ref: &X509CertificateReference,
     addr: ParsecPkiEnrollmentAddr,
@@ -89,18 +106,8 @@ pub async fn create_local_pending(
     private_parts: PrivateParts,
 ) -> Result<PKILocalPendingEnrollment, CreateLocalPendingError> {
     let key = SecretKey::generate();
-    let (algo, encrypted_key) = encrypt_message(key.as_ref(), cert_ref)
-        .await
-        .map_err(|err| match err {
-            EncryptMessageError::CannotOpenStore(err) => {
-                CreateLocalPendingError::CannotOpenStore(err)
-            }
-            EncryptMessageError::NotFound => CreateLocalPendingError::NotFound,
-            EncryptMessageError::CannotAcquireKeypair(err) => {
-                CreateLocalPendingError::CannotAcquireKeypair(err)
-            }
-            EncryptMessageError::CannotEncrypt(err) => CreateLocalPendingError::CannotEncrypt(err),
-        })?;
+    let der = crate::get_der_encoded_certificate(cert_ref).await?;
+    let (algo, encrypted_key) = encrypt_message(der.as_ref(), key.as_ref()).await?;
     let ciphered_private_parts = key.encrypt(&private_parts.dump()).into();
 
     let local_pending = PKILocalPendingEnrollment {
@@ -352,4 +359,30 @@ pub fn get_root_certificate_info_from_trustchain<'cert>(
         subject,
         common_name,
     })
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum EncryptMessageError {
+    #[error("Cannot acquire public key: {0}")]
+    CannotAcquirePubkey(#[from] crate::x509::GetCertificatePublicKeyError),
+    #[error("Cannot encrypt message: {0}")]
+    CannotEncrypt(#[from] rsa::errors::Error),
+}
+
+pub async fn encrypt_message(
+    certificate: impl AsRef<[u8]>,
+    message: &[u8],
+) -> Result<(PKIEncryptionAlgorithm, Bytes), EncryptMessageError> {
+    let pubkey = crate::x509::get_certificate_public_key(certificate.as_ref())?;
+    match pubkey {
+        crate::x509::PublicKey::Rsa(rsa_public_key) => {
+            use rsa::traits::RandomizedEncryptor;
+
+            let enc_key = rsa::oaep::EncryptingKey::<rsa::sha2::Sha256>::new(rsa_public_key);
+            enc_key
+                .encrypt_with_rng(&mut rsa::rand_core::OsRng, message)
+                .map_err(Into::into)
+                .map(|v| (PKIEncryptionAlgorithm::RsaesOaepSha256, Bytes::from(v)))
+        }
+    }
 }

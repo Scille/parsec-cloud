@@ -39,7 +39,6 @@ mod strategy {
     use libparsec_platform_async::{pretend_future_is_send_on_web, PinBoxFutureResult};
     use libparsec_platform_pki::{
         DecryptMessageError as PKIDecryptMessageError,
-        EncryptMessageError as PKIEncryptMessageError,
         GetValidationPathForCertError as PKIGetValidationPathForCertError,
         SignMessageError as PKISignMessageError,
     };
@@ -287,21 +286,28 @@ mod strategy {
                 // 1. Generate a random secret key
                 let key = SecretKey::generate();
 
+                let der = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)
+                    .await
+                    .map_err(|e| match e {
+                        libparsec_platform_pki::GetDerEncodedCertificateError::CannotOpenStore(
+                            error,
+                        ) => {
+                            SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(error.into())
+                        }
+                        libparsec_platform_pki::GetDerEncodedCertificateError::NotFound => {
+                            SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                e.into(),
+                            )
+                        }
+                    })?;
                 // 2. Encrypt it with the PKI certificate's public key
                 let (algorithm, encrypted_key) =
-                    libparsec_platform_pki::encrypt_message(key.as_ref(), &cert_ref)
+                    libparsec_platform_pki::encrypt_message(der.as_ref(), key.as_ref())
                         .await
-                        .map_err(|err| match err {
-                            err @ (PKIEncryptMessageError::NotFound
-                            | PKIEncryptMessageError::CannotAcquireKeypair(_)
-                            | PKIEncryptMessageError::CannotEncrypt(_)) => {
-                                SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                    err.into(),
-                                )
-                            }
-                            PKIEncryptMessageError::CannotOpenStore(e) => {
-                                SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                            }
+                        .map_err(|err| {
+                            SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                err.into(),
+                            )
                         })?;
 
                 // 3. Create the identity system metadata

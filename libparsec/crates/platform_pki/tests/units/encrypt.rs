@@ -1,27 +1,35 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use super::utils::{certificates, InstalledCertificates};
+#[cfg_attr(not(target_os = "windows"), expect(unused))]
 use crate::{
     DecryptMessageError, EncryptMessageError, X509CertificateHash, X509CertificateReference,
 };
 use libparsec_tests_lite::prelude::*;
+#[cfg_attr(not(target_os = "windows"), expect(unused))]
 use libparsec_types::prelude::*;
 
 #[parsec_test]
 async fn encrypt_decrypt(certificates: &InstalledCertificates) {
     // Alice key is 2048 bits (i.e. 256 bytes), so we use the maximum allowed payload size here.
     let payload = [b'x'; 256 - 66]; // 66 bytes is the OAEP SHA-256 overhead
-    let certificate_ref = certificates.alice_cert_ref().await;
-    let (algo, encrypted_message) = crate::encrypt_message(payload.as_ref(), &certificate_ref)
+    let certificate_der = certificates.alice_der_cert();
+    #[cfg_attr(not(target_os = "windows"), expect(unused))]
+    let (algo, encrypted_message) = crate::encrypt_message(certificate_der, payload.as_ref())
         .await
         .unwrap();
 
-    let decrypted_message = crate::decrypt_message(algo, &encrypted_message, &certificate_ref)
-        .await
-        .unwrap();
-    assert_eq!(*decrypted_message, payload);
+    #[cfg(target_os = "windows")] // TODO: decrypt only supported by Windows so far
+    {
+        let cert_ref = certificates.alice_cert_ref().await;
+        let decrypted_message = crate::decrypt_message(algo, &encrypted_message, &cert_ref)
+            .await
+            .unwrap();
+        assert_eq!(*decrypted_message, payload);
+    }
 }
 
+#[cfg(target_os = "windows")] // TODO: decrypt only supported by Windows so far
 #[parsec_test]
 async fn decrypt(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
@@ -44,16 +52,6 @@ async fn decrypt(certificates: &InstalledCertificates) {
     assert_eq!(*decrypted_message, *payload);
 }
 
-#[parsec_test]
-async fn encrypt_ko_not_found() {
-    let payload = b"The cake is a lie!";
-    let dummy_certificate_ref: X509CertificateReference = X509CertificateHash::fake_sha256().into();
-    p_assert_matches!(
-        crate::encrypt_message(payload.as_ref(), &dummy_certificate_ref).await,
-        Err(EncryptMessageError::NotFound)
-    );
-}
-
 // TODO: Support `KeyUsage` field in X509 certificate
 //       see https://github.com/Scille/parsec-cloud/issues/12087
 // #[parsec_test]
@@ -67,12 +65,12 @@ async fn encrypt_ko_not_found() {
 // }
 
 #[parsec_test]
-async fn encrypt_ko_cannot_use_root_certificate(certificates: &InstalledCertificates) {
+async fn encrypt_ok_use_root_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let certificate_ref = certificates.black_mesa_cert_ref();
+    let certificate_der = certificates.black_mesa_der_cert();
     p_assert_matches!(
-        crate::encrypt_message(payload.as_ref(), &certificate_ref).await,
-        Err(EncryptMessageError::NotFound)
+        crate::encrypt_message(certificate_der, payload.as_ref()).await,
+        Ok(_)
     );
 }
 
@@ -80,13 +78,14 @@ async fn encrypt_ko_cannot_use_root_certificate(certificates: &InstalledCertific
 async fn encrypt_payload_too_big(certificates: &InstalledCertificates) {
     // Alice key is 2048 bits (i.e. 256 bytes), and 66 bytes is the OAEP SHA-256 overhead
     let payload = [b'x'; 256 - 66 + 1];
-    let certificate_ref = certificates.alice_cert_ref().await;
+    let certificate_der = certificates.alice_der_cert();
     p_assert_matches!(
-        crate::encrypt_message(payload.as_ref(), &certificate_ref).await,
+        crate::encrypt_message(certificate_der, payload.as_ref()).await,
         Err(EncryptMessageError::CannotEncrypt(_))
     );
 }
 
+#[cfg(target_os = "windows")] // TODO: decrypt only supported by Windows so far
 #[parsec_test]
 async fn decrypt_ko_not_found(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
@@ -103,6 +102,7 @@ async fn decrypt_ko_not_found(certificates: &InstalledCertificates) {
     );
 }
 
+#[cfg(target_os = "windows")] // TODO: decrypt only supported by Windows so far
 #[parsec_test]
 async fn decrypt_ko_cannot_decrypt(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
