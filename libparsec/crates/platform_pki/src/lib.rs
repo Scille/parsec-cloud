@@ -171,7 +171,7 @@ pub use platform::list_intermediate_certificates;
 pub use errors::SignMessageError;
 pub use platform::sign_message;
 
-pub use shared::{verify_message, DerCertificate, SignedMessage, X509EndCertificate};
+pub use shared::{DerCertificate, SignedMessage, X509EndCertificate};
 
 pub use shared::{encrypt_message, EncryptMessageError};
 
