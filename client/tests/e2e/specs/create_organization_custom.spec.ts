@@ -9,7 +9,6 @@ import {
   fillIonInput,
   getServerAddr,
   getTestbedBootstrapAddr,
-  mockLibParsec,
   MsPage,
   msTest,
   setupNewPage,
@@ -703,19 +702,10 @@ for (const displaySize of ['small', 'large']) {
   );
 }
 
-msTest.skip('Go through custom org creation process with smartcard auth', async ({ home }) => {
-  await mockLibParsec(home, [
-    {
-      name: 'showCertificateSelectionDialogWindowsOnly',
-      result: {
-        ok: true,
-        value: {
-          hash: 'ABCD',
-          uris: [{ tag: 'X509URIFlavorValueWindowsCNG', x1: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]) }],
-        },
-      },
-    },
-  ]);
+msTest('Go through custom org creation process with smartcard auth', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { mockPki: true });
+
   const modal = await openCreateOrganizationModal(home);
 
   const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
@@ -761,7 +751,7 @@ msTest.skip('Go through custom org creation process with smartcard auth', async 
   await expect(authNext).toHaveDisabledAttribute();
 
   const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
-  await expect(authRadio).toHaveAuthentication({ pkiDisabled: false, keyringDisabled: true });
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true });
   const certBtn = authContainer.locator('.choose-certificate-button');
   await expect(certBtn).toBeHidden();
   await authRadio.nth(2).click();
