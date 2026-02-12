@@ -378,6 +378,7 @@ jobs:
             ${{ matrix.platform == 'linux-gnu' && 'appimage' || '' }} \
             ${{ inputs.nightly_build && '--nightly' || '' }} \
             ${{ matrix.platform == 'macos' && '--sign' || ''}}
+            ${{ (matrix.platform == 'windows' && matrix.cspn == 'true') && '--cspn' || '' }}
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
