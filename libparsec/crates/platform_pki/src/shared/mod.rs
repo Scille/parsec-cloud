@@ -3,7 +3,7 @@
 use crate::{
     errors::{
         GetRootCertificateInfoFromTrustchainError, GetValidationPathForCertError,
-        ListCertificatesError, ListUserCertificatesError, VerifyMessageError, VerifySignatureError,
+        ListCertificatesError, ListUserCertificatesError, VerifyMessageError,
     },
     get_der_encoded_certificate,
     platform::list_user_certificates_der,
@@ -73,20 +73,6 @@ pub struct SignedMessage {
     pub algo: PkiSignatureAlgorithm,
     pub signature: Bytes,
     pub message: Bytes,
-}
-
-// Internal API, but `pub` is needed by `examples/verify_message.rs`
-pub fn verify_message<'message, 'a>(
-    signed_message: &'message SignedMessage,
-    certificate: &'a X509EndCertificate<'a>,
-) -> Result<&'message [u8], VerifySignatureError> {
-    let verifier = match signed_message.algo {
-        PkiSignatureAlgorithm::RsassaPssSha256 => webpki::ring::RSA_PSS_2048_8192_SHA256_LEGACY_KEY,
-    };
-    certificate
-        .verify_signature(verifier, &signed_message.message, &signed_message.signature)
-        .map(|_| signed_message.message.as_ref())
-        .map_err(VerifySignatureError::InvalidSignature)
 }
 
 // Internal API, but `pub` is needed by `examples/verify_certificate.rs`
