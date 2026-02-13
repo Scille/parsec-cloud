@@ -501,6 +501,8 @@ async def administration_organization_users_freeze(
             raise HTTPException(status_code=404, detail="Organization not found")
         case UserFreezeUserBadOutcome.USER_NOT_FOUND:
             raise HTTPException(status_code=404, detail="User not found")
+        case UserFreezeUserBadOutcome.USER_REVOKED:
+            raise HTTPException(status_code=404, detail="User has been revoked")
         case UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL:
             raise HTTPException(
                 status_code=400, detail="Both `user_id` and `user_email` fields are provided"

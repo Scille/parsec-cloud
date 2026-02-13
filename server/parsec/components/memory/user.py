@@ -781,7 +781,8 @@ class MemoryUserComponent(BaseUserComponent):
                 except KeyError:
                     return UserFreezeUserBadOutcome.USER_NOT_FOUND
             case (None, EmailAddress() as user_email):
-                for user in org.users.values():
+                # Multiple user can have the same email, but at most one of them is active
+                for user in org.active_users():
                     if user.cooked.human_handle.email == user_email:
                         break
                 else:
@@ -790,6 +791,9 @@ class MemoryUserComponent(BaseUserComponent):
                 return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
             case never:  # pyright: ignore [reportUnnecessaryComparison]
                 assert_never(never)
+
+        if user.revoked_on:
+            return UserFreezeUserBadOutcome.USER_REVOKED
 
         user.is_frozen = frozen
         if user.is_frozen:

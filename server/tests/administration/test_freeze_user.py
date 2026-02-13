@@ -8,7 +8,13 @@ import pytest
 
 from parsec._parsec import authenticated_cmds
 from parsec.events import EventUserRevokedOrFrozen, EventUserUnfrozen
-from tests.common import AdminUnauthErrorsTester, Backend, CoolorgRpcClients, RpcTransportError
+from tests.common import (
+    AdminUnauthErrorsTester,
+    Backend,
+    CoolorgRpcClients,
+    RpcTransportError,
+    alice_gives_profile,
+)
 
 
 async def test_bad_auth(
@@ -174,6 +180,7 @@ async def test_unknown_organization(
         json={"user_id": coolorg.alice.user_id.hex, "frozen": True},
     )
     assert response.status_code == 404, response.content
+    assert response.json() == {"detail": "Organization not found"}
 
 
 async def test_unknown_user_id(
@@ -186,6 +193,7 @@ async def test_unknown_user_id(
         json={"user_id": "d51589e233c0451e9d2fa1c7b9a8b08b", "frozen": True},
     )
     assert response.status_code == 404, response.content
+    assert response.json() == {"detail": "User not found"}
 
 
 async def test_unknown_email(
@@ -198,3 +206,29 @@ async def test_unknown_email(
         json={"user_email": "dummy@example.invalid", "frozen": True},
     )
     assert response.status_code == 404, response.content
+    assert response.json() == {"detail": "User not found"}
+
+
+async def test_revoked_user(
+    administration_client: httpx.AsyncClient,
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    await alice_gives_profile(coolorg, backend, recipient=coolorg.bob.user_id, new_profile=None)
+    url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/users/freeze"
+
+    # Access by user ID
+    response = await administration_client.post(
+        url,
+        json={"user_id": coolorg.bob.user_id.hex, "frozen": True},
+    )
+    assert response.status_code == 404, response.content
+    assert response.json() == {"detail": "User has been revoked"}
+
+    # Access by email
+    response = await administration_client.post(
+        url,
+        json={"user_email": coolorg.bob.human_handle.email.str, "frozen": True},
+    )
+    assert response.status_code == 404, response.content
+    assert response.json() == {"detail": "User not found"}

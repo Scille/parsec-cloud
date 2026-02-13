@@ -23,93 +23,59 @@ from parsec.events import (
     EventUserUnfrozen,
 )
 
-_q_freeze_from_user_id = Q("""
-WITH my_organization AS (
-    SELECT
-        _id,
-        is_expired
-    FROM organization
-    WHERE
-        organization_id = $organization_id
-        -- Only consider bootstrapped organizations
-        AND root_verify_key IS NOT NULL
-    LIMIT 1
-),
-
-updated_user AS (
-    UPDATE user_ SET
-        frozen = $frozen
-    WHERE
-        organization = (SELECT my_organization._id FROM my_organization)
-        AND user_id = $user_id
-    RETURNING
-        user_.user_id,
-        (
-            SELECT human.email
-            FROM human
-            WHERE human._id = user_.human
-        ),
-        (
-            SELECT human.label
-            FROM human
-            WHERE human._id = user_.human
-        )
-)
-
+_q_get_organization = Q("""
 SELECT
-    (
-        COALESCE(
-            (SELECT TRUE FROM my_organization),
-            FALSE
-        )
-    ) AS organization_exists,
-    (SELECT user_id FROM updated_user) AS user_id,
-    (SELECT email FROM updated_user) AS human_handle_email,
-    (SELECT label FROM updated_user) AS human_handle_label
+    _id AS organization_internal_id,
+    is_expired AS organization_expired
+FROM organization
+WHERE
+    organization_id = $organization_id
+    -- Only consider bootstrapped organizations
+    AND root_verify_key IS NOT NULL
+LIMIT 1
 """)
 
 
-_q_freeze_from_email = Q("""
-WITH my_organization AS (
-    SELECT
-        _id,
-        is_expired
-    FROM organization
-    WHERE
-        organization_id = $organization_id
-        -- Only consider bootstrapped organizations
-        AND root_verify_key IS NOT NULL
-    LIMIT 1
-),
+_q_get_user_id_from_email = Q("""
+SELECT user_.user_id
+FROM user_
+LEFT JOIN human ON user_.human = human._id
+WHERE
+    human.organization = $organization_internal_id
+    AND human.email = $email
+    AND user_.revoked_on IS NULL
+""")
 
-my_human AS (
-    SELECT
-        _id,
-        email,
-        label
-    FROM human
-    WHERE
-        organization = (SELECT my_organization._id FROM my_organization)
-        AND email = $user_email
-),
 
-updated_user AS (
-    UPDATE user_ SET
-        frozen = $frozen
-    WHERE user_.human = (SELECT my_human._id FROM my_human)
-    RETURNING user_.user_id
-)
-
+_q_get_user = Q("""
 SELECT
+    _id AS user_internal_id,
+    (revoked_on IS NOT NULL) AS is_revoked
+FROM user_
+WHERE
+    organization = $organization_internal_id
+    AND user_id = $user_id
+LIMIT 1
+FOR UPDATE
+""")
+
+
+_q_freeze_from_user_id = Q("""
+UPDATE user_ SET
+    frozen = $frozen
+WHERE
+    _id = $user_internal_id
+RETURNING
     (
-        COALESCE(
-            (SELECT TRUE FROM my_organization),
-            FALSE
-        )
-    ) AS organization_exists,
-    (SELECT user_id FROM updated_user) AS user_id,
-    (SELECT email FROM my_human) AS human_handle_email,
-    (SELECT label FROM my_human) AS human_handle_label
+        SELECT human.email
+        FROM human
+        WHERE human._id = user_.human
+    ) AS human_handle_email,
+    (
+        SELECT human.label
+        FROM human
+        WHERE human._id = user_.human
+    ) AS human_handle_label
 """)
 
 
@@ -123,40 +89,71 @@ async def user_freeze_user(
     # Note we don't need to lock the `common` topic here given setting the `frozen`
     # flag is totally unrelated to certificates.
 
+    row = await conn.fetchrow(
+        *_q_get_organization(
+            organization_id=organization_id.str,
+        )
+    )
+    if row is None:
+        return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
+
+    match row["organization_internal_id"]:
+        case int() as organization_internal_id:
+            pass
+        case _:
+            assert False, row
+
     match (user_id, user_email):
         case (None, None):
             return UserFreezeUserBadOutcome.NO_USER_ID_NOR_EMAIL
-        case (UserID() as user_id, None):
-            q = _q_freeze_from_user_id(
-                organization_id=organization_id.str, user_id=user_id, frozen=frozen
+
+        case (user_id, None):
+            pass
+
+        case (None, user_email):
+            val = await conn.fetchval(
+                *_q_get_user_id_from_email(
+                    organization_internal_id=organization_internal_id, email=user_email.str
+                )
             )
-        case (None, EmailAddress() as user_email):
-            q = _q_freeze_from_email(
-                organization_id=organization_id.str, user_email=str(user_email), frozen=frozen
-            )
+            match val:
+                case None:
+                    return UserFreezeUserBadOutcome.USER_NOT_FOUND
+                case str() as raw_user_id:
+                    user_id = UserID.from_hex(raw_user_id)
+                case _:
+                    assert False, val
+
         case (UserID(), EmailAddress()):
             return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
+
         case never:  # pyright: ignore [reportUnnecessaryComparison]
             assert_never(never)
 
-    row = await conn.fetchrow(*q)
-    assert row is not None
+    row = await conn.fetchrow(
+        *_q_get_user(organization_internal_id=organization_internal_id, user_id=user_id)
+    )
+    if row is None:
+        return UserFreezeUserBadOutcome.USER_NOT_FOUND
 
-    match row["organization_exists"]:
-        case True:
+    match row["user_internal_id"]:
+        case int() as user_internal_id:
             pass
-        case False:
-            return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
         case _:
             assert False, row
 
-    match row["user_id"]:
-        case str() as raw_user_id:
-            user_id = UserID.from_hex(raw_user_id)
-        case None:
-            return UserFreezeUserBadOutcome.USER_NOT_FOUND
+    match row["is_revoked"]:
+        case False:
+            pass
+        case True:
+            return UserFreezeUserBadOutcome.USER_REVOKED
         case _:
             assert False, row
+
+    row = await conn.fetchrow(
+        *_q_freeze_from_user_id(user_internal_id=user_internal_id, frozen=frozen)
+    )
+    assert row is not None  # `_q_get_user` has just locked the row for update
 
     match row["human_handle_email"]:
         case str() as raw_human_handle_email:
@@ -185,7 +182,7 @@ async def user_freeze_user(
             conn,
             EventUserRevokedOrFrozen(
                 organization_id=organization_id,
-                user_id=info.user_id,
+                user_id=user_id,
             ),
         )
     else:
@@ -193,7 +190,7 @@ async def user_freeze_user(
             conn,
             EventUserUnfrozen(
                 organization_id=organization_id,
-                user_id=info.user_id,
+                user_id=user_id,
             ),
         )
 
