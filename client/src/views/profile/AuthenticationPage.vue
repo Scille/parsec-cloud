@@ -59,7 +59,7 @@ import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
 import { inject, onMounted, Ref, ref } from 'vue';
 
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const error = ref('');
 
 async function openChangeAuthentication(): Promise<void> {
@@ -92,7 +92,7 @@ async function openChangeAuthentication(): Promise<void> {
     cssClass: 'change-authentication-modal',
     componentProps: {
       currentDevice: currentDevice.value,
-      informationManager: informationManager,
+      informationManager: informationManager.value,
       serverConfig: configResult.ok ? configResult.value : undefined,
     },
   });
@@ -114,7 +114,7 @@ onMounted(async () => {
   const deviceResult = await getCurrentAvailableDevice();
 
   if (!deviceResult.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'MyProfilePage.errors.failedToRetrieveInformation',
         level: InformationLevel.Error,

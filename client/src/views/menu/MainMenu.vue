@@ -445,9 +445,9 @@ const emits = defineEmits<{
 
 const workspaceAttributes = useWorkspaceAttributes();
 const customTabBar = useCustomTabBar();
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const { width: sidebarWidth, isVisible: isSidebarVisible, setWidth: setSidebarWidth } = useSidebarMenu();
 const sidebarWidthProperty = ref('');
@@ -599,7 +599,7 @@ const watchRouteCancel = watchRoute(async () => {
 });
 
 onMounted(async () => {
-  eventDistributorCbId = await eventDistributor.registerCallback(
+  eventDistributorCbId = await eventDistributor.value.registerCallback(
     Events.WorkspaceCreated |
       Events.WorkspaceUpdated |
       Events.ExpiredOrganization |
@@ -644,7 +644,7 @@ onMounted(async () => {
             if (result.ok) {
               await copyToClipboard(
                 result.value,
-                informationManager,
+                informationManager.value,
                 'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
                 'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
               );
@@ -704,7 +704,7 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   if (eventDistributorCbId) {
-    eventDistributor.removeCallback(eventDistributorCbId);
+    eventDistributor.value.removeCallback(eventDistributorCbId);
   }
 
   // Clean up any pending resize timeout
@@ -726,7 +726,7 @@ async function onCategoryMenuChange(menu: WorkspaceMenu): Promise<void> {
 }
 
 async function onActionClicked(action: MenuAction): Promise<void> {
-  await eventDistributor.dispatchEvent(Events.MenuAction, { action: action });
+  await eventDistributor.value.dispatchEvent(Events.MenuAction, { action: action });
 }
 
 async function goToWorkspace(workspace: WorkspaceInfo): Promise<void> {
@@ -795,7 +795,7 @@ async function openRecentFile(file: RecentFile): Promise<void> {
   }
   const config = await storageManager.retrieveConfig();
 
-  await pathOpener.openPath(file.workspaceHandle, file.path, informationManager, { skipViewers: config.skipViewers });
+  await pathOpener.openPath(file.workspaceHandle, file.path, informationManager.value, { skipViewers: config.skipViewers });
 }
 
 async function removeRecentFile(file: RecentFile): Promise<void> {
@@ -803,7 +803,15 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event): Promise<void> {
-  await openWorkspaceContextMenu(event, workspace, workspaceAttributes, eventDistributor, informationManager, storageManager, true);
+  await openWorkspaceContextMenu(
+    event,
+    workspace,
+    workspaceAttributes,
+    eventDistributor.value,
+    informationManager.value,
+    storageManager,
+    true,
+  );
 }
 
 async function onOrganizationMenuVisibilityChanged(visible: boolean): Promise<void> {

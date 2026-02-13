@@ -280,8 +280,8 @@ import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 
 const { isLargeDisplay, windowWidth } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
 const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
@@ -498,7 +498,7 @@ async function loadFile(): Promise<void> {
   if (!info) {
     contentInfo.value = undefined;
     handlerComponent.value = null;
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'fileViewers.errors.titles.genericError',
         level: InformationLevel.Error,
@@ -634,7 +634,7 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
   const result = await getSystemPath(workspaceHandle, path);
 
   if (!result.ok) {
-    await informationManager.present(
+    await informationManager.value.present(
       new Information({
         message: fileName ? { key: 'FoldersPage.open.fileFailed', data: { name: fileName } } : 'FoldersPage.open.fileFailedGeneric',
         level: InformationLevel.Error,
@@ -654,7 +654,7 @@ async function copyLink(path: FsPath): Promise<void> {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
     return;
   }
-  copyPathLinkToClipboard(path, workspaceHandle, informationManager);
+  copyPathLinkToClipboard(path, workspaceHandle, informationManager.value);
 }
 
 async function showDetails(): Promise<void> {
@@ -662,7 +662,7 @@ async function showDetails(): Promise<void> {
   if (workspaceHandle) {
     const entry = await entryStat(workspaceHandle, getDocumentPath());
     if (!entry.ok) {
-      await informationManager.present(
+      await informationManager.value.present(
         new Information({
           message: 'fileViewers.errors.statsFailed',
           level: InformationLevel.Error,
@@ -688,7 +688,7 @@ async function showDetails(): Promise<void> {
 async function openEditor(path: FsPath): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
-    await pathOpener.openPath(workspaceHandle, path, informationManager, { readOnly: false });
+    await pathOpener.openPath(workspaceHandle, path, informationManager.value, { readOnly: false });
   }
 }
 
@@ -758,8 +758,8 @@ async function downloadFile(): Promise<void> {
     entry: entryResult.value as EntryStatFile,
     workspaceHandle: workspaceHandle,
     workspaceId: workspaceInfoResult.value.id,
-    informationManager: informationManager,
-    fileOperationManager: fileOperationManager,
+    informationManager: informationManager.value,
+    fileOperationManager: fileOperationManager.value,
   });
 }
 

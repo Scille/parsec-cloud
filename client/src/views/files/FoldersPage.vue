@@ -418,11 +418,11 @@ const routeWatchCancel = watchRoute(async () => {
   await listFolder({ selectFile: query.selectFile, sameFolder: samePath });
 });
 
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
+const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 
 const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 
@@ -661,7 +661,7 @@ onMounted(async () => {
 
   await defineShortcuts();
 
-  eventCbId = await eventDistributor.registerCallback(
+  eventCbId = await eventDistributor.value.registerCallback(
     Events.EntryUpdated |
       Events.WorkspaceUpdated |
       Events.EntrySynced |
@@ -687,7 +687,7 @@ onMounted(async () => {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
 
-  fileOpCanceller = await fileOperationManager.registerCallback(onFileOperationEvent);
+  fileOpCanceller = await fileOperationManager.value.registerCallback(onFileOperationEvent);
   currentPath.value = getDocumentPath();
   const query = getCurrentRouteQuery();
   await listFolder({ selectFile: query.selectFile });
@@ -705,7 +705,7 @@ onUnmounted(async () => {
   headerWatchCancel();
   selectedCountWatchCancel();
   if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
+    eventDistributor.value.removeCallback(eventCbId);
   }
 });
 
@@ -716,7 +716,7 @@ async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
     const wInfo = workspacesResult.value.find((wi) => wi.id === workspaceId);
     if (!wInfo) {
       // Not found, probably means that we've been excluded from the workspace
-      await informationManager.present(
+      await informationManager.value.present(
         new Information({
           message: {
             key: 'FoldersPage.events.workspaceUnshared',
@@ -732,7 +732,7 @@ async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
     } else {
       // display a toast if the role has been changed in a significant manner: Reader to something else, or something else to Reader
       if (workspaceInfo.value?.currentSelfRole === WorkspaceRole.Reader && wInfo.currentSelfRole !== WorkspaceRole.Reader) {
-        await informationManager.present(
+        await informationManager.value.present(
           new Information({
             message: {
               key: 'FoldersPage.events.roleUpdateNoLongerReader',
@@ -742,7 +742,7 @@ async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
           PresentationMode.Toast,
         );
       } else if (workspaceInfo.value?.currentSelfRole !== WorkspaceRole.Reader && wInfo.currentSelfRole === WorkspaceRole.Reader) {
-        await informationManager.present(
+        await informationManager.value.present(
           new Information({
             message: {
               key: 'FoldersPage.events.roleUpdateNowReader',
@@ -761,7 +761,7 @@ async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
     }
   } else {
     // Don't really know what to do in this case, just move the user back to workspaces list
-    await informationManager.present(
+    await informationManager.value.present(
       new Information({
         message: {
           key: 'FoldersPage.errors.failedToListWorkspaces',
@@ -862,7 +862,7 @@ async function startImportFiles(files: Array<File>, destinationFolder?: EntryNam
     return;
   }
 
-  await fileOperationManager.import(
+  await fileOperationManager.value.import(
     workspaceInfo.value.handle,
     files,
     destinationFolder ? await Path.join(currentPath.value, destinationFolder) : currentPath.value,
@@ -977,7 +977,7 @@ async function createFolder(): Promise<void> {
       default:
         break;
     }
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: message,
         level: InformationLevel.Error,
@@ -1036,7 +1036,7 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       ? await parsec.deleteFile(workspaceInfo.value.handle, path)
       : await parsec.deleteFolder(workspaceInfo.value.handle, path);
     if (!result.ok) {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: { key: 'FoldersPage.errors.deleteFailed', data: { name: entry.name } },
           level: InformationLevel.Error,
@@ -1044,7 +1044,7 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
         PresentationMode.Toast,
       );
     } else {
-      await eventDistributor.dispatchEvent(Events.EntryDeleted, {
+      await eventDistributor.value.dispatchEvent(Events.EntryDeleted, {
         workspaceHandle: workspaceInfo.value.handle,
         entryId: entry.id,
         path: entry.path,
@@ -1077,7 +1077,7 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       if (!result.ok) {
         errorsEncountered += 1;
       } else {
-        await eventDistributor.dispatchEvent(Events.EntryDeleted, {
+        await eventDistributor.value.dispatchEvent(Events.EntryDeleted, {
           workspaceHandle: workspaceInfo.value.handle,
           entryId: entry.id,
           path: entry.path,
@@ -1085,7 +1085,7 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       }
     }
     if (errorsEncountered > 0) {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message:
             errorsEncountered === entries.length
@@ -1135,7 +1135,7 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
       default:
         message = { key: 'FoldersPage.errors.renameFailed', data: { name: entry.name } };
     }
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: message,
         level: InformationLevel.Error,
@@ -1143,7 +1143,7 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
       PresentationMode.Toast,
     );
   } else {
-    await eventDistributor.dispatchEvent(Events.EntryRenamed, {
+    await eventDistributor.value.dispatchEvent(Events.EntryRenamed, {
       workspaceHandle: workspaceInfo.value.handle,
       entryId: entry.id,
       oldPath: entry.path,
@@ -1166,7 +1166,7 @@ async function copyLink(entries: EntryModel[]): Promise<void> {
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
   const workspaceHandle = workspaceInfo.value.handle;
 
-  copyPathLinkToClipboard(filePath, workspaceHandle, informationManager);
+  copyPathLinkToClipboard(filePath, workspaceHandle, informationManager.value);
 }
 
 async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
@@ -1203,7 +1203,7 @@ async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
     return;
   }
 
-  await fileOperationManager.move(workspaceInfo.value.handle, entries, folder, dupPolicy);
+  await fileOperationManager.value.move(workspaceInfo.value.handle, entries, folder, dupPolicy);
   selectionEnabled.value = false;
 }
 
@@ -1262,7 +1262,7 @@ async function copyEntries(entries: EntryModel[]): Promise<void> {
     return;
   }
 
-  await fileOperationManager.copy(workspaceInfo.value.handle, entries, folder, dupPolicy);
+  await fileOperationManager.value.copy(workspaceInfo.value.handle, entries, folder, dupPolicy);
   selectionEnabled.value = false;
 }
 
@@ -1285,8 +1285,8 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
       entry: entries[0] as EntryStatFile,
       workspaceHandle: workspaceInfo.value.handle,
       workspaceId: workspaceInfo.value.id,
-      informationManager: informationManager,
-      fileOperationManager: fileOperationManager,
+      informationManager: informationManager.value,
+      fileOperationManager: fileOperationManager.value,
     });
   } else {
     await downloadArchive({
@@ -1294,8 +1294,8 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
       archiveName: `${workspaceInfo.value.currentName}_${currentFolder.value === '/' ? 'ROOT' : currentFolder.value}.zip`,
       workspaceHandle: workspaceInfo.value.handle,
       workspaceId: workspaceInfo.value.id,
-      informationManager: informationManager,
-      fileOperationManager: fileOperationManager,
+      informationManager: informationManager.value,
+      fileOperationManager: fileOperationManager.value,
       relativePath: currentPath.value ?? '/',
     });
   }
@@ -1346,14 +1346,14 @@ async function openEntry(entryToOpen: EntryModel, options: OpenPathOptions): Pro
       return;
     }
 
-    const result = await showWorkspace(workspaceInfo.value, workspaceAttributes, informationManager, eventDistributor);
+    const result = await showWorkspace(workspaceInfo.value, workspaceAttributes, informationManager.value, eventDistributor.value);
 
     if (!result) {
       return;
     }
   }
 
-  await pathOpener.openPath(workspaceHandle, entry.path, informationManager, options);
+  await pathOpener.openPath(workspaceHandle, entry.path, informationManager.value, options);
   selectionEnabled.value = false;
 }
 
@@ -1369,7 +1369,7 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
     case FolderGlobalAction.ImportFolder:
       return await fileInputsRef.value?.importFolder();
     case FolderGlobalAction.OpenInExplorer:
-      return await pathOpener.openPath(workspaceInfo.value.handle, currentPath.value, informationManager, { skipViewers: true });
+      return await pathOpener.openPath(workspaceInfo.value.handle, currentPath.value, informationManager.value, { skipViewers: true });
     case FolderGlobalAction.ToggleSelect:
       return await toggleSelection();
     case FolderGlobalAction.SelectAll:
@@ -1471,7 +1471,7 @@ async function shareEntries(): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
-  copyPathLinkToClipboard(currentPath.value, workspaceInfo.value.handle, informationManager);
+  copyPathLinkToClipboard(currentPath.value, workspaceInfo.value.handle, informationManager.value);
 }
 
 async function seeInExplorer(entries: EntryModel[]): Promise<void> {
@@ -1492,18 +1492,18 @@ async function seeInExplorer(entries: EntryModel[]): Promise<void> {
       return;
     }
 
-    const result = await showWorkspace(workspaceInfo.value, workspaceAttributes, informationManager, eventDistributor);
+    const result = await showWorkspace(workspaceInfo.value, workspaceAttributes, informationManager.value, eventDistributor.value);
 
     if (!result) {
       return;
     }
   }
 
-  await pathOpener.showInExplorer(workspaceInfo.value.handle, entries[0].path, informationManager);
+  await pathOpener.showInExplorer(workspaceInfo.value.handle, entries[0].path, informationManager.value);
 }
 
 async function onDropAsReader(): Promise<void> {
-  await informationManager.present(
+  await informationManager.value.present(
     new Information({
       message: 'FoldersPage.ImportFile.noDropForReader',
       level: InformationLevel.Error,

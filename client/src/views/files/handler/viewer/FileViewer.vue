@@ -22,7 +22,7 @@ import {
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { inject, onMounted, onUnmounted, ref, Ref, shallowRef, type Component } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const viewerComponent: Ref<Component | null> = shallowRef(null);
 const contentInfoRef: Ref<FileContentInfo | undefined> = ref(undefined);
 
@@ -79,7 +79,7 @@ async function getComponent(fileInfo: DetectedFileType): Promise<Component | und
 
 function emitError(message: string): void {
   window.electronAPI.log('error', message);
-  informationManager.present(
+  informationManager.value.present(
     new Information({
       message: 'fileViewers.errors.titles.genericError',
       level: InformationLevel.Error,

@@ -300,10 +300,10 @@ const searchFilterContent = ref('');
 const workspaceFilters = ref<WorkspacesPageFilters>({ owner: true, manager: true, contributor: true, reader: true });
 const querying = ref(true);
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 
 let eventCbId: string | null = null;
 
@@ -355,7 +355,7 @@ onMounted(async (): Promise<void> => {
     },
   );
 
-  eventCbId = await eventDistributor.registerCallback(
+  eventCbId = await eventDistributor.value.registerCallback(
     Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction | Events.WorkspaceMountpointsSync,
     async (event: Events, data?: EventData) => {
       switch (event) {
@@ -408,7 +408,7 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
   if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
+    eventDistributor.value.removeCallback(eventCbId);
   }
 });
 
@@ -416,7 +416,7 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
   const parseResult = await parseFileLink(fileLink);
 
   if (!parseResult.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'link.invalidFileLink',
         level: InformationLevel.Error,
@@ -428,7 +428,7 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
 
   const workspace = workspaceList.value.find((w) => w.id === parseResult.value.workspaceId);
   if (!workspace) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'link.workspaceNotFound',
         level: InformationLevel.Error,
@@ -440,7 +440,7 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
 
   const decryptResult = await decryptFileLink(workspace.handle, fileLink);
   if (!decryptResult.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'link.invalidFileLink',
         level: InformationLevel.Error,
@@ -452,7 +452,7 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
 
   const fileInfoResult = await entryStat(workspace.handle, decryptResult.value);
   if (!fileInfoResult.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'link.fileNotFound',
         level: InformationLevel.Error,
@@ -522,8 +522,7 @@ async function refreshWorkspacesList(): Promise<void> {
     }
     await recentDocumentManager.saveToStorage(storageManager);
   } else {
-    window.electronAPI.log('error', 'Error listing workspaces');
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'WorkspacesPage.listError',
         level: InformationLevel.Error,
@@ -605,7 +604,7 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
   }
   const result = await parsecCreateWorkspace(name);
   if (result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: {
           key: 'WorkspacesPage.newWorkspaceSuccess',
@@ -618,7 +617,7 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
       PresentationMode.Toast,
     );
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'WorkspacesPage.newWorkspaceError',
         level: InformationLevel.Error,
@@ -693,7 +692,7 @@ async function onWorkspaceFavoriteClick(workspace: WorkspaceInfo): Promise<void>
 }
 
 async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
-  await workspaceShareClick(workspace, informationManager, eventDistributor, isLargeDisplay.value);
+  await workspaceShareClick(workspace, informationManager.value, eventDistributor.value, isLargeDisplay.value);
   await refreshWorkspacesList();
 }
 
@@ -708,8 +707,8 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
     event,
     workspace,
     workspaceAttributes,
-    eventDistributor,
-    informationManager,
+    eventDistributor.value,
+    informationManager.value,
     storageManager,
     false,
     isLargeDisplay.value,

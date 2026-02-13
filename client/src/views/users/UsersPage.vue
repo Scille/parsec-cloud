@@ -190,10 +190,10 @@ import { Ref, computed, inject, onMounted, onUnmounted, ref, toRaw, watch } from
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const selectionEnabled = ref<boolean>(false);
 
 let hotkeys: HotkeyGroup | null = null;
@@ -318,7 +318,7 @@ async function revokeUser(user: UserInfo): Promise<void> {
   const result = await parsecRevokeUser(user.id);
 
   if (!result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: { key: 'UsersPage.revocation.revokeFailed', count: 1 },
         level: InformationLevel.Error,
@@ -326,7 +326,7 @@ async function revokeUser(user: UserInfo): Promise<void> {
       PresentationMode.Toast,
     );
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: { key: 'UsersPage.revocation.revokeSuccess', data: { user: user.humanHandle.label }, count: 1 },
         level: InformationLevel.Success,
@@ -370,7 +370,7 @@ async function revokeSelectedUsers(): Promise<void> {
     }
   }
   if (errorCount === 0) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: {
           key: 'UsersPage.revocation.revokeSuccess',
@@ -382,7 +382,7 @@ async function revokeSelectedUsers(): Promise<void> {
       PresentationMode.Toast,
     );
   } else if (errorCount < selectedUsers.length) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'UsersPage.revocation.revokeSomeFailed',
         level: InformationLevel.Error,
@@ -390,7 +390,7 @@ async function revokeSelectedUsers(): Promise<void> {
       PresentationMode.Toast,
     );
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: { key: 'UsersPage.revocation.revokeFailed', count: selectedUsers.length },
         level: InformationLevel.Error,
@@ -408,7 +408,7 @@ async function openUserDetails(user: UserInfo): Promise<void> {
     cssClass: 'user-details-modal',
     componentProps: {
       user: user,
-      informationManager: informationManager,
+      informationManager: informationManager.value,
     },
   });
   await modal.present();
@@ -563,7 +563,7 @@ async function updateUserProfiles(selectedUsers: Array<UserInfo>): Promise<void>
         break;
     }
   }
-  informationManager.present(
+  informationManager.value.present(
     new Information({
       message: { key: message, count: affectedUsers.length },
       level: firstError === undefined ? InformationLevel.Success : InformationLevel.Error,
@@ -582,7 +582,7 @@ async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
     componentProps: {
       sourceUser: user,
       currentUser: users.value.getCurrentUser(),
-      informationManager: informationManager,
+      informationManager: informationManager.value,
     },
   });
   await modal.present();
@@ -604,7 +604,7 @@ async function refreshUserList(): Promise<void> {
     }
     users.value.replace(newUsers);
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'UsersPage.listUsersFailed',
         level: InformationLevel.Error,
@@ -643,7 +643,7 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
 }
 
 onMounted(async (): Promise<void> => {
-  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated | Events.OpenContextMenu, handleEvents);
+  eventCbId = await eventDistributor.value.registerCallback(Events.InvitationUpdated | Events.OpenContextMenu, handleEvents);
   await restoreComponentData();
 
   hotkeys = hotkeyManager.newHotkeys();
@@ -671,7 +671,7 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
   if (eventCbId) {
-    await eventDistributor.removeCallback(eventCbId);
+    await eventDistributor.value.removeCallback(eventCbId);
   }
   selectionEnabled.value = false;
   customTabBar.hide();
@@ -692,24 +692,21 @@ const actionBarOptionsUsersPage = computed(() => {
       },
     });
 
-    if (false) {
-      // TODO enable with PKI support
-      actionArray.push({
-        label: 'InvitationsPage.asyncEnrollmentRequest.copyLink',
-        icon: link,
-        onClick: async (): Promise<void> => {
-          const result = await getAsyncEnrollmentAddr();
-          if (result.ok) {
-            await copyToClipboard(
-              result.value,
-              informationManager,
-              'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
-              'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
-            );
-          }
-        },
-      });
-    }
+    actionArray.push({
+      label: 'InvitationsPage.asyncEnrollmentRequest.copyLink',
+      icon: link,
+      onClick: async (): Promise<void> => {
+        const result = await getAsyncEnrollmentAddr();
+        if (result.ok) {
+          await copyToClipboard(
+            result.value,
+            informationManager.value,
+            'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
+            'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
+          );
+        }
+      },
+    });
   }
 
   if (users.value.selectedCount() >= 1 && isAdmin.value) {

@@ -51,8 +51,8 @@ import { IonButton, IonItem, IonList, IonText, modalController } from '@ionic/vu
 import { MsModalResult } from 'megashark-lib';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
 
 const routeWatchCancel = watchRoute(async () => {
@@ -75,7 +75,7 @@ async function refreshDevicesList(): Promise<void> {
   if (result.ok) {
     devices.value = result.value.filter((d) => !d.isRecovery && !d.isShamir && !d.isRegistration).sort((d) => (d.isCurrent ? -1 : 1));
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'DevicesPage.greet.errors.retrieveDeviceInfoFailed',
         level: InformationLevel.Error,
@@ -89,7 +89,7 @@ async function refreshDevicesList(): Promise<void> {
 async function onAddDeviceClick(): Promise<void> {
   const result = await createDeviceInvitation(false);
   if (!result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'DevicesPage.greet.errors.startFailed',
         level: InformationLevel.Error,
@@ -105,7 +105,7 @@ async function onAddDeviceClick(): Promise<void> {
     backdropDismiss: false,
     cssClass: 'greet-organization-modal',
     componentProps: {
-      informationManager: informationManager,
+      informationManager: informationManager.value,
       invitationLink: result.value.addr,
       token: result.value.token,
     },
@@ -117,7 +117,7 @@ async function onAddDeviceClick(): Promise<void> {
     await refreshDevicesList();
     const lastDevice = devices.value.toSorted((d1, d2) => (d1.createdOn > d2.createdOn ? -1 : 1))[0];
     if (lastDevice) {
-      eventDistributor.dispatchEvent(Events.DeviceCreated, { info: lastDevice });
+      eventDistributor.value.dispatchEvent(Events.DeviceCreated, { info: lastDevice });
     }
   }
 }
