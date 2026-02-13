@@ -15164,6 +15164,98 @@ fn variant_parsed_parsec_addr_js_to_rs(
                 use_ssl,
             })
         }
+        "ParsedParsecAddrTOTPReset" => {
+            let hostname = {
+                let js_val = Reflect::get(&obj, &"hostname".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let port = {
+                let js_val = Reflect::get(&obj, &"port".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u16::MIN as f64) || (u16::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u16 number")));
+                    }
+                    let v = v as u16;
+                    v
+                }
+            };
+            let is_default_port = {
+                let js_val = Reflect::get(&obj, &"isDefaultPort".into())?;
+                js_val
+                    .dyn_into::<Boolean>()
+                    .map_err(|_| TypeError::new("Not a boolean"))?
+                    .value_of()
+            };
+            let use_ssl = {
+                let js_val = Reflect::get(&obj, &"useSsl".into())?;
+                js_val
+                    .dyn_into::<Boolean>()
+                    .map_err(|_| TypeError::new("Not a boolean"))?
+                    .value_of()
+            };
+            let organization_id = {
+                let js_val = Reflect::get(&obj, &"organizationId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::OrganizationID::try_from(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let user_id = {
+                let js_val = Reflect::get(&obj, &"userId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let token = {
+                let js_val = Reflect::get(&obj, &"token".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::AccessToken, _> {
+                                libparsec::AccessToken::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::ParsedParsecAddr::TOTPReset {
+                hostname,
+                port,
+                is_default_port,
+                use_ssl,
+                organization_id,
+                user_id,
+                token,
+            })
+        }
         "ParsedParsecAddrWorkspacePath" => {
             let hostname = {
                 let js_val = Reflect::get(&obj, &"hostname".into())?;
@@ -15491,6 +15583,48 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"isDefaultPort".into(), &js_is_default_port)?;
             let js_use_ssl = use_ssl.into();
             Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
+        }
+        libparsec::ParsedParsecAddr::TOTPReset {
+            hostname,
+            port,
+            is_default_port,
+            use_ssl,
+            organization_id,
+            user_id,
+            token,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ParsedParsecAddrTOTPReset".into())?;
+            let js_hostname = hostname.into();
+            Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
+            let js_port = JsValue::from(port);
+            Reflect::set(&js_obj, &"port".into(), &js_port)?;
+            let js_is_default_port = is_default_port.into();
+            Reflect::set(&js_obj, &"isDefaultPort".into(), &js_is_default_port)?;
+            let js_use_ssl = use_ssl.into();
+            Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
+            let js_organization_id = JsValue::from_str(organization_id.as_ref());
+            Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+            let js_user_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+            let js_token = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
         libparsec::ParsedParsecAddr::WorkspacePath {
             hostname,

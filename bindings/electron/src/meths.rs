@@ -13841,6 +13841,76 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
                 use_ssl,
             })
         }
+        "ParsedParsecAddrTOTPReset" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u16::MIN as f64) || (u16::MAX as f64) < v {
+                        cx.throw_type_error("Not an u16 number")?
+                    }
+                    let v = v as u16;
+                    v
+                }
+            };
+            let is_default_port = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "isDefaultPort")?;
+                js_val.value(cx)
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let token = {
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
+                        libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ParsedParsecAddr::TOTPReset {
+                hostname,
+                port,
+                is_default_port,
+                use_ssl,
+                organization_id,
+                user_id,
+                token,
+            })
+        }
         "ParsedParsecAddrWorkspacePath" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
@@ -14129,6 +14199,49 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             js_obj.set(cx, "isDefaultPort", js_is_default_port)?;
             let js_use_ssl = JsBoolean::new(cx, use_ssl);
             js_obj.set(cx, "useSsl", js_use_ssl)?;
+        }
+        libparsec::ParsedParsecAddr::TOTPReset {
+            hostname,
+            port,
+            is_default_port,
+            use_ssl,
+            organization_id,
+            user_id,
+            token,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "ParsedParsecAddrTOTPReset").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_is_default_port = JsBoolean::new(cx, is_default_port);
+            js_obj.set(cx, "isDefaultPort", js_is_default_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+            let js_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "userId", js_user_id)?;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "token", js_token)?;
         }
         libparsec::ParsedParsecAddr::WorkspacePath {
             hostname,

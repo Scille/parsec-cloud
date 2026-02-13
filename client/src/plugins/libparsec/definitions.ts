@@ -103,6 +103,7 @@ export type ParsecInvitationAddr = string
 export type ParsecOrganizationAddr = string
 export type ParsecOrganizationBootstrapAddr = string
 export type ParsecPkiEnrollmentAddr = string
+export type ParsecTOTPResetAddr = string
 export type ParsecWorkspacePathAddr = string
 export type Password = string
 export type Path = string
@@ -3732,6 +3733,7 @@ export enum ParsedParsecAddrTag {
     OrganizationBootstrap = 'ParsedParsecAddrOrganizationBootstrap',
     PkiEnrollment = 'ParsedParsecAddrPkiEnrollment',
     Server = 'ParsedParsecAddrServer',
+    TOTPReset = 'ParsedParsecAddrTOTPReset',
     WorkspacePath = 'ParsedParsecAddrWorkspacePath',
 }
 
@@ -3802,6 +3804,16 @@ export interface ParsedParsecAddrServer {
     isDefaultPort: boolean
     useSsl: boolean
 }
+export interface ParsedParsecAddrTOTPReset {
+    tag: ParsedParsecAddrTag.TOTPReset
+    hostname: string
+    port: U16
+    isDefaultPort: boolean
+    useSsl: boolean
+    organizationId: OrganizationID
+    userId: UserID
+    token: AccessToken
+}
 export interface ParsedParsecAddrWorkspacePath {
     tag: ParsedParsecAddrTag.WorkspacePath
     hostname: string
@@ -3822,6 +3834,7 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrOrganizationBootstrap
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
+  | ParsedParsecAddrTOTPReset
   | ParsedParsecAddrWorkspacePath
 
 // PendingAsyncEnrollmentInfo
