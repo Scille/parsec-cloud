@@ -2251,6 +2251,7 @@ dependencies = [
  "libparsec_serialization_format",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
+ "libparsec_totp",
  "libparsec_types",
  "log",
  "thiserror 2.0.18",
