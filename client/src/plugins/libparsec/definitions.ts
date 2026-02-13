@@ -108,6 +108,7 @@ export type Password = string
 export type Path = string
 export type SASCode = string
 export type SequesterServiceID = string
+export type TOTPOpaqueKeyID = string
 export type UserID = string
 export type VlobID = string
 export type X509CertificateHash = string
@@ -630,6 +631,7 @@ export enum AccountCreateRegistrationDeviceErrorTag {
     LoadDeviceDecryptionFailed = 'AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed',
     LoadDeviceInvalidData = 'AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData',
     LoadDeviceInvalidPath = 'AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath',
+    LoadDeviceTOTPDecryptionFailed = 'AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed',
     Offline = 'AccountCreateRegistrationDeviceErrorOffline',
     RemoteOpaqueKeyFetchFailed = 'AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed',
     RemoteOpaqueKeyFetchOffline = 'AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline',
@@ -656,6 +658,10 @@ export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath {
     tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceInvalidPath
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed {
+    tag: AccountCreateRegistrationDeviceErrorTag.LoadDeviceTOTPDecryptionFailed
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorOffline {
     tag: AccountCreateRegistrationDeviceErrorTag.Offline
     error: string
@@ -678,6 +684,7 @@ export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
+  | AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed
   | AccountCreateRegistrationDeviceErrorOffline
   | AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed
   | AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline
@@ -1205,6 +1212,7 @@ export enum AvailableDeviceTypeTag {
     PKI = 'AvailableDeviceTypePKI',
     Password = 'AvailableDeviceTypePassword',
     Recovery = 'AvailableDeviceTypeRecovery',
+    TOTP = 'AvailableDeviceTypeTOTP',
 }
 
 export interface AvailableDeviceTypeAccountVault {
@@ -1228,6 +1236,11 @@ export interface AvailableDeviceTypePassword {
 export interface AvailableDeviceTypeRecovery {
     tag: AvailableDeviceTypeTag.Recovery
 }
+export interface AvailableDeviceTypeTOTP {
+    tag: AvailableDeviceTypeTag.TOTP
+    totpOpaqueKeyId: TOTPOpaqueKeyID
+    next: AvailableDeviceType
+}
 export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
@@ -1235,6 +1248,7 @@ export type AvailableDeviceType =
   | AvailableDeviceTypePKI
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
+  | AvailableDeviceTypeTOTP
 
 // AvailablePendingAsyncEnrollmentIdentitySystem
 export enum AvailablePendingAsyncEnrollmentIdentitySystemTag {
@@ -2729,6 +2743,7 @@ export enum ClientStartErrorTag {
     LoadDeviceInvalidPath = 'ClientStartErrorLoadDeviceInvalidPath',
     LoadDeviceRemoteOpaqueKeyFetchFailed = 'ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed',
     LoadDeviceRemoteOpaqueKeyFetchOffline = 'ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline',
+    LoadDeviceTOTPDecryptionFailed = 'ClientStartErrorLoadDeviceTOTPDecryptionFailed',
 }
 
 export interface ClientStartErrorDeviceUsedByAnotherProcess {
@@ -2759,6 +2774,10 @@ export interface ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline {
     tag: ClientStartErrorTag.LoadDeviceRemoteOpaqueKeyFetchOffline
     error: string
 }
+export interface ClientStartErrorLoadDeviceTOTPDecryptionFailed {
+    tag: ClientStartErrorTag.LoadDeviceTOTPDecryptionFailed
+    error: string
+}
 export type ClientStartError =
   | ClientStartErrorDeviceUsedByAnotherProcess
   | ClientStartErrorInternal
@@ -2767,6 +2786,7 @@ export type ClientStartError =
   | ClientStartErrorLoadDeviceInvalidPath
   | ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed
   | ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline
+  | ClientStartErrorLoadDeviceTOTPDecryptionFailed
 
 // ClientStartInvitationGreetError
 export enum ClientStartInvitationGreetErrorTag {
@@ -2870,6 +2890,72 @@ export interface ClientStopErrorInternal {
 export type ClientStopError =
   | ClientStopErrorInternal
 
+// ClientTOTPSetupConfirmError
+export enum ClientTOTPSetupConfirmErrorTag {
+    AlreadySetup = 'ClientTOTPSetupConfirmErrorAlreadySetup',
+    Internal = 'ClientTOTPSetupConfirmErrorInternal',
+    InvalidOneTimePassword = 'ClientTOTPSetupConfirmErrorInvalidOneTimePassword',
+    Offline = 'ClientTOTPSetupConfirmErrorOffline',
+}
+
+export interface ClientTOTPSetupConfirmErrorAlreadySetup {
+    tag: ClientTOTPSetupConfirmErrorTag.AlreadySetup
+    error: string
+}
+export interface ClientTOTPSetupConfirmErrorInternal {
+    tag: ClientTOTPSetupConfirmErrorTag.Internal
+    error: string
+}
+export interface ClientTOTPSetupConfirmErrorInvalidOneTimePassword {
+    tag: ClientTOTPSetupConfirmErrorTag.InvalidOneTimePassword
+    error: string
+}
+export interface ClientTOTPSetupConfirmErrorOffline {
+    tag: ClientTOTPSetupConfirmErrorTag.Offline
+    error: string
+}
+export type ClientTOTPSetupConfirmError =
+  | ClientTOTPSetupConfirmErrorAlreadySetup
+  | ClientTOTPSetupConfirmErrorInternal
+  | ClientTOTPSetupConfirmErrorInvalidOneTimePassword
+  | ClientTOTPSetupConfirmErrorOffline
+
+// ClientTotpCreateOpaqueKeyError
+export enum ClientTotpCreateOpaqueKeyErrorTag {
+    Internal = 'ClientTotpCreateOpaqueKeyErrorInternal',
+    Offline = 'ClientTotpCreateOpaqueKeyErrorOffline',
+}
+
+export interface ClientTotpCreateOpaqueKeyErrorInternal {
+    tag: ClientTotpCreateOpaqueKeyErrorTag.Internal
+    error: string
+}
+export interface ClientTotpCreateOpaqueKeyErrorOffline {
+    tag: ClientTotpCreateOpaqueKeyErrorTag.Offline
+    error: string
+}
+export type ClientTotpCreateOpaqueKeyError =
+  | ClientTotpCreateOpaqueKeyErrorInternal
+  | ClientTotpCreateOpaqueKeyErrorOffline
+
+// ClientTotpSetupStatusError
+export enum ClientTotpSetupStatusErrorTag {
+    Internal = 'ClientTotpSetupStatusErrorInternal',
+    Offline = 'ClientTotpSetupStatusErrorOffline',
+}
+
+export interface ClientTotpSetupStatusErrorInternal {
+    tag: ClientTotpSetupStatusErrorTag.Internal
+    error: string
+}
+export interface ClientTotpSetupStatusErrorOffline {
+    tag: ClientTotpSetupStatusErrorTag.Offline
+    error: string
+}
+export type ClientTotpSetupStatusError =
+  | ClientTotpSetupStatusErrorInternal
+  | ClientTotpSetupStatusErrorOffline
+
 // ClientUserUpdateProfileError
 export enum ClientUserUpdateProfileErrorTag {
     AuthorNotAllowed = 'ClientUserUpdateProfileErrorAuthorNotAllowed',
@@ -2937,6 +3023,7 @@ export enum DeviceAccessStrategyTag {
     OpenBao = 'DeviceAccessStrategyOpenBao',
     PKI = 'DeviceAccessStrategyPKI',
     Password = 'DeviceAccessStrategyPassword',
+    TOTP = 'DeviceAccessStrategyTOTP',
 }
 
 export interface DeviceAccessStrategyAccountVault {
@@ -2963,8 +3050,13 @@ export interface DeviceAccessStrategyPKI {
 }
 export interface DeviceAccessStrategyPassword {
     tag: DeviceAccessStrategyTag.Password
-    password: Password
     keyFile: Path
+    password: Password
+}
+export interface DeviceAccessStrategyTOTP {
+    tag: DeviceAccessStrategyTag.TOTP
+    totpOpaqueKey: SecretKey
+    next: DeviceAccessStrategy
 }
 export type DeviceAccessStrategy =
   | DeviceAccessStrategyAccountVault
@@ -2972,6 +3064,7 @@ export type DeviceAccessStrategy =
   | DeviceAccessStrategyOpenBao
   | DeviceAccessStrategyPKI
   | DeviceAccessStrategyPassword
+  | DeviceAccessStrategyTOTP
 
 // DeviceSaveStrategy
 export enum DeviceSaveStrategyTag {
@@ -2980,6 +3073,7 @@ export enum DeviceSaveStrategyTag {
     OpenBao = 'DeviceSaveStrategyOpenBao',
     PKI = 'DeviceSaveStrategyPKI',
     Password = 'DeviceSaveStrategyPassword',
+    TOTP = 'DeviceSaveStrategyTOTP',
 }
 
 export interface DeviceSaveStrategyAccountVault {
@@ -3006,12 +3100,19 @@ export interface DeviceSaveStrategyPassword {
     tag: DeviceSaveStrategyTag.Password
     password: Password
 }
+export interface DeviceSaveStrategyTOTP {
+    tag: DeviceSaveStrategyTag.TOTP
+    totpOpaqueKeyId: TOTPOpaqueKeyID
+    totpOpaqueKey: SecretKey
+    next: DeviceSaveStrategy
+}
 export type DeviceSaveStrategy =
   | DeviceSaveStrategyAccountVault
   | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyOpenBao
   | DeviceSaveStrategyPKI
   | DeviceSaveStrategyPassword
+  | DeviceSaveStrategyTOTP
 
 // EntryStat
 export enum EntryStatTag {
@@ -4249,6 +4350,23 @@ export type SubmitterListLocalAsyncEnrollmentsError =
   | SubmitterListLocalAsyncEnrollmentsErrorInternal
   | SubmitterListLocalAsyncEnrollmentsErrorStorageNotAvailable
 
+// TOTPSetupStatus
+export enum TOTPSetupStatusTag {
+    Confirmed = 'TOTPSetupStatusConfirmed',
+    Unconfirmed = 'TOTPSetupStatusUnconfirmed',
+}
+
+export interface TOTPSetupStatusConfirmed {
+    tag: TOTPSetupStatusTag.Confirmed
+}
+export interface TOTPSetupStatusUnconfirmed {
+    tag: TOTPSetupStatusTag.Unconfirmed
+    base32TotpSecret: string
+}
+export type TOTPSetupStatus =
+  | TOTPSetupStatusConfirmed
+  | TOTPSetupStatusUnconfirmed
+
 // TestbedError
 export enum TestbedErrorTag {
     Disabled = 'TestbedErrorDisabled',
@@ -4267,6 +4385,90 @@ export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
 
+// TotpFetchOpaqueKeyError
+export enum TotpFetchOpaqueKeyErrorTag {
+    Internal = 'TotpFetchOpaqueKeyErrorInternal',
+    InvalidOneTimePassword = 'TotpFetchOpaqueKeyErrorInvalidOneTimePassword',
+    Offline = 'TotpFetchOpaqueKeyErrorOffline',
+    Throttled = 'TotpFetchOpaqueKeyErrorThrottled',
+}
+
+export interface TotpFetchOpaqueKeyErrorInternal {
+    tag: TotpFetchOpaqueKeyErrorTag.Internal
+    error: string
+}
+export interface TotpFetchOpaqueKeyErrorInvalidOneTimePassword {
+    tag: TotpFetchOpaqueKeyErrorTag.InvalidOneTimePassword
+    error: string
+}
+export interface TotpFetchOpaqueKeyErrorOffline {
+    tag: TotpFetchOpaqueKeyErrorTag.Offline
+    error: string
+}
+export interface TotpFetchOpaqueKeyErrorThrottled {
+    tag: TotpFetchOpaqueKeyErrorTag.Throttled
+    error: string
+}
+export type TotpFetchOpaqueKeyError =
+  | TotpFetchOpaqueKeyErrorInternal
+  | TotpFetchOpaqueKeyErrorInvalidOneTimePassword
+  | TotpFetchOpaqueKeyErrorOffline
+  | TotpFetchOpaqueKeyErrorThrottled
+
+// TotpSetupConfirmAnonymousError
+export enum TotpSetupConfirmAnonymousErrorTag {
+    BadToken = 'TotpSetupConfirmAnonymousErrorBadToken',
+    Internal = 'TotpSetupConfirmAnonymousErrorInternal',
+    InvalidOneTimePassword = 'TotpSetupConfirmAnonymousErrorInvalidOneTimePassword',
+    Offline = 'TotpSetupConfirmAnonymousErrorOffline',
+}
+
+export interface TotpSetupConfirmAnonymousErrorBadToken {
+    tag: TotpSetupConfirmAnonymousErrorTag.BadToken
+    error: string
+}
+export interface TotpSetupConfirmAnonymousErrorInternal {
+    tag: TotpSetupConfirmAnonymousErrorTag.Internal
+    error: string
+}
+export interface TotpSetupConfirmAnonymousErrorInvalidOneTimePassword {
+    tag: TotpSetupConfirmAnonymousErrorTag.InvalidOneTimePassword
+    error: string
+}
+export interface TotpSetupConfirmAnonymousErrorOffline {
+    tag: TotpSetupConfirmAnonymousErrorTag.Offline
+    error: string
+}
+export type TotpSetupConfirmAnonymousError =
+  | TotpSetupConfirmAnonymousErrorBadToken
+  | TotpSetupConfirmAnonymousErrorInternal
+  | TotpSetupConfirmAnonymousErrorInvalidOneTimePassword
+  | TotpSetupConfirmAnonymousErrorOffline
+
+// TotpSetupStatusAnonymousError
+export enum TotpSetupStatusAnonymousErrorTag {
+    BadToken = 'TotpSetupStatusAnonymousErrorBadToken',
+    Internal = 'TotpSetupStatusAnonymousErrorInternal',
+    Offline = 'TotpSetupStatusAnonymousErrorOffline',
+}
+
+export interface TotpSetupStatusAnonymousErrorBadToken {
+    tag: TotpSetupStatusAnonymousErrorTag.BadToken
+    error: string
+}
+export interface TotpSetupStatusAnonymousErrorInternal {
+    tag: TotpSetupStatusAnonymousErrorTag.Internal
+    error: string
+}
+export interface TotpSetupStatusAnonymousErrorOffline {
+    tag: TotpSetupStatusAnonymousErrorTag.Offline
+    error: string
+}
+export type TotpSetupStatusAnonymousError =
+  | TotpSetupStatusAnonymousErrorBadToken
+  | TotpSetupStatusAnonymousErrorInternal
+  | TotpSetupStatusAnonymousErrorOffline
+
 // UpdateDeviceError
 export enum UpdateDeviceErrorTag {
     DecryptionFailed = 'UpdateDeviceErrorDecryptionFailed',
@@ -4276,6 +4478,7 @@ export enum UpdateDeviceErrorTag {
     NoSpaceAvailable = 'UpdateDeviceErrorNoSpaceAvailable',
     RemoteOpaqueKeyOperationFailed = 'UpdateDeviceErrorRemoteOpaqueKeyOperationFailed',
     RemoteOpaqueKeyOperationOffline = 'UpdateDeviceErrorRemoteOpaqueKeyOperationOffline',
+    TOTPDecryptionFailed = 'UpdateDeviceErrorTOTPDecryptionFailed',
 }
 
 export interface UpdateDeviceErrorDecryptionFailed {
@@ -4306,6 +4509,10 @@ export interface UpdateDeviceErrorRemoteOpaqueKeyOperationOffline {
     tag: UpdateDeviceErrorTag.RemoteOpaqueKeyOperationOffline
     error: string
 }
+export interface UpdateDeviceErrorTOTPDecryptionFailed {
+    tag: UpdateDeviceErrorTag.TOTPDecryptionFailed
+    error: string
+}
 export type UpdateDeviceError =
   | UpdateDeviceErrorDecryptionFailed
   | UpdateDeviceErrorInternal
@@ -4314,6 +4521,7 @@ export type UpdateDeviceError =
   | UpdateDeviceErrorNoSpaceAvailable
   | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
   | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline
+  | UpdateDeviceErrorTOTPDecryptionFailed
 
 // UserClaimListInitialInfosError
 export enum UserClaimListInitialInfosErrorTag {
@@ -6159,6 +6367,16 @@ export interface LibParsecPlugin {
     clientStop(
         client: Handle
     ): Promise<Result<null, ClientStopError>>
+    clientTotpCreateOpaqueKey(
+        client: Handle
+    ): Promise<Result<[TOTPOpaqueKeyID, SecretKey], ClientTotpCreateOpaqueKeyError>>
+    clientTotpSetupConfirm(
+        client: Handle,
+        one_time_password: string
+    ): Promise<Result<null, ClientTOTPSetupConfirmError>>
+    clientTotpSetupStatus(
+        client: Handle
+    ): Promise<Result<TOTPSetupStatus, ClientTotpSetupStatusError>>
     clientUpdateUserProfile(
         client_handle: Handle,
         user: UserID,
@@ -6359,6 +6577,23 @@ export interface LibParsecPlugin {
         template: string,
         test_server: ParsecAddr | null
     ): Promise<Result<Path, TestbedError>>
+    totpFetchOpaqueKey(
+        config: ClientConfig,
+        server_addr: ParsecAddr,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        opaque_key_id: TOTPOpaqueKeyID,
+        one_time_password: string
+    ): Promise<Result<SecretKey, TotpFetchOpaqueKeyError>>
+    totpSetupConfirmAnonymous(
+        config: ClientConfig,
+        addr: ParsecTOTPResetAddr,
+        one_time_password: string
+    ): Promise<Result<null, TotpSetupConfirmAnonymousError>>
+    totpSetupStatusAnonymous(
+        config: ClientConfig,
+        addr: ParsecTOTPResetAddr
+    ): Promise<Result<TOTPSetupStatus, TotpSetupStatusAnonymousError>>
     updateDeviceChangeAuthentication(
         config_dir: Path,
         current_auth: DeviceAccessStrategy,

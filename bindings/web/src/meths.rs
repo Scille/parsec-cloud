@@ -5519,6 +5519,15 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath".into(),
             )?;
         }
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceTOTPDecryptionFailed {
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed".into(),
+            )?;
+        }
         libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6836,6 +6845,32 @@ fn variant_available_device_type_js_to_rs(
         }
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
+        "AvailableDeviceTypeTOTP" => {
+            let totp_opaque_key_id = {
+                let js_val = Reflect::get(&obj, &"totpOpaqueKeyId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                                libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let next = {
+                let js_val = Reflect::get(&obj, &"next".into())?;
+                Box::new(variant_available_device_type_js_to_rs(js_val)?)
+            };
+            Ok(libparsec::AvailableDeviceType::TOTP {
+                totp_opaque_key_id,
+                next,
+            })
+        }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a AvailableDeviceType",
         ))),
@@ -6893,6 +6928,25 @@ fn variant_available_device_type_rs_to_js(
                 &"tag".into(),
                 &"AvailableDeviceTypeRecovery".into(),
             )?;
+        }
+        libparsec::AvailableDeviceType::TOTP {
+            totp_opaque_key_id,
+            next,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeTOTP".into())?;
+            let js_totp_opaque_key_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(totp_opaque_key_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"totpOpaqueKeyId".into(), &js_totp_opaque_key_id)?;
+            let js_next = variant_available_device_type_rs_to_js(*next)?;
+            Reflect::set(&js_obj, &"next".into(), &js_next)?;
         }
     }
     Ok(js_obj)
@@ -10080,6 +10134,13 @@ fn variant_client_start_error_rs_to_js(
                 &"ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline".into(),
             )?;
         }
+        libparsec::ClientStartError::LoadDeviceTOTPDecryptionFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorLoadDeviceTOTPDecryptionFailed".into(),
+            )?;
+        }
     }
     Ok(js_obj)
 }
@@ -10228,6 +10289,104 @@ fn variant_client_stop_error_rs_to_js(
     match rs_obj {
         libparsec::ClientStopError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientStopErrorInternal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientTOTPSetupConfirmError
+
+#[allow(dead_code)]
+fn variant_client_totp_setup_confirm_error_rs_to_js(
+    rs_obj: libparsec::ClientTOTPSetupConfirmError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientTOTPSetupConfirmError::AlreadySetup { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientTOTPSetupConfirmErrorAlreadySetup".into(),
+            )?;
+        }
+        libparsec::ClientTOTPSetupConfirmError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientTOTPSetupConfirmErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientTOTPSetupConfirmError::InvalidOneTimePassword { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientTOTPSetupConfirmErrorInvalidOneTimePassword".into(),
+            )?;
+        }
+        libparsec::ClientTOTPSetupConfirmError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientTOTPSetupConfirmErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientTotpCreateOpaqueKeyError
+
+#[allow(dead_code)]
+fn variant_client_totp_create_opaque_key_error_rs_to_js(
+    rs_obj: libparsec::ClientTotpCreateOpaqueKeyError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientTotpCreateOpaqueKeyError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientTotpCreateOpaqueKeyErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientTotpCreateOpaqueKeyError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientTotpCreateOpaqueKeyErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientTotpSetupStatusError
+
+#[allow(dead_code)]
+fn variant_client_totp_setup_status_error_rs_to_js(
+    rs_obj: libparsec::ClientTotpSetupStatusError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientTotpSetupStatusError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientTotpSetupStatusErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientTotpSetupStatusError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientTotpSetupStatusErrorOffline".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -10454,19 +10613,6 @@ fn variant_device_access_strategy_js_to_rs(
             Ok(libparsec::DeviceAccessStrategy::PKI { key_file })
         }
         "DeviceAccessStrategyPassword" => {
-            let password = {
-                let js_val = Reflect::get(&obj, &"password".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: String| -> Result<_, String> { Ok(s.into()) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
             let key_file = {
                 let js_val = Reflect::get(&obj, &"keyFile".into())?;
                 js_val
@@ -10481,7 +10627,42 @@ fn variant_device_access_strategy_js_to_rs(
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })?
             };
-            Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
+            let password = {
+                let js_val = Reflect::get(&obj, &"password".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<_, String> { Ok(s.into()) };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            Ok(libparsec::DeviceAccessStrategy::Password { key_file, password })
+        }
+        "DeviceAccessStrategyTOTP" => {
+            let totp_opaque_key = {
+                let js_val = Reflect::get(&obj, &"totpOpaqueKey".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let xx: &[u8] = &x;
+                        xx.try_into()
+                            .map_err(|_| TypeError::new("Not a valid SecretKey"))
+                    })?
+            };
+            let next = {
+                let js_val = Reflect::get(&obj, &"next".into())?;
+                Box::new(variant_device_access_strategy_js_to_rs(js_val)?)
+            };
+            Ok(libparsec::DeviceAccessStrategy::TOTP {
+                totp_opaque_key,
+                next,
+            })
         }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a DeviceAccessStrategy",
@@ -10604,15 +10785,13 @@ fn variant_device_access_strategy_rs_to_js(
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
         libparsec::DeviceAccessStrategy::Password {
-            password, key_file, ..
+            key_file, password, ..
         } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"DeviceAccessStrategyPassword".into(),
             )?;
-            let js_password = JsValue::from_str(password.as_ref());
-            Reflect::set(&js_obj, &"password".into(), &js_password)?;
             let js_key_file = JsValue::from_str({
                 let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
                     path.into_os_string()
@@ -10626,6 +10805,19 @@ fn variant_device_access_strategy_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
+            let js_password = JsValue::from_str(password.as_ref());
+            Reflect::set(&js_obj, &"password".into(), &js_password)?;
+        }
+        libparsec::DeviceAccessStrategy::TOTP {
+            totp_opaque_key,
+            next,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"DeviceAccessStrategyTOTP".into())?;
+            let js_totp_opaque_key = JsValue::from(Uint8Array::from(totp_opaque_key.as_ref()));
+            Reflect::set(&js_obj, &"totpOpaqueKey".into(), &js_totp_opaque_key)?;
+            let js_next = variant_device_access_strategy_rs_to_js(*next)?;
+            Reflect::set(&js_obj, &"next".into(), &js_next)?;
         }
     }
     Ok(js_obj)
@@ -10659,7 +10851,7 @@ fn variant_device_save_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceSaveStrategy::AccountVault { account_handle })
         }
-        "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
+        "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring),
         "DeviceSaveStrategyOpenBao" => {
             let openbao_server_url = {
                 let js_val = Reflect::get(&obj, &"openbaoServerUrl".into())?;
@@ -10741,6 +10933,45 @@ fn variant_device_save_strategy_js_to_rs(
             };
             Ok(libparsec::DeviceSaveStrategy::Password { password })
         }
+        "DeviceSaveStrategyTOTP" => {
+            let totp_opaque_key_id = {
+                let js_val = Reflect::get(&obj, &"totpOpaqueKeyId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                                libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let totp_opaque_key = {
+                let js_val = Reflect::get(&obj, &"totpOpaqueKey".into())?;
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let xx: &[u8] = &x;
+                        xx.try_into()
+                            .map_err(|_| TypeError::new("Not a valid SecretKey"))
+                    })?
+            };
+            let next = {
+                let js_val = Reflect::get(&obj, &"next".into())?;
+                Box::new(variant_device_save_strategy_js_to_rs(js_val)?)
+            };
+            Ok(libparsec::DeviceSaveStrategy::TOTP {
+                totp_opaque_key_id,
+                totp_opaque_key,
+                next,
+            })
+        }
         _ => Err(JsValue::from(TypeError::new(
             "Object is not a DeviceSaveStrategy",
         ))),
@@ -10762,7 +10993,7 @@ fn variant_device_save_strategy_rs_to_js(
             let js_account_handle = JsValue::from(account_handle);
             Reflect::set(&js_obj, &"accountHandle".into(), &js_account_handle)?;
         }
-        libparsec::DeviceSaveStrategy::Keyring { .. } => {
+        libparsec::DeviceSaveStrategy::Keyring => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyKeyring".into())?;
         }
         libparsec::DeviceSaveStrategy::OpenBao {
@@ -10811,6 +11042,28 @@ fn variant_device_save_strategy_rs_to_js(
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyPassword".into())?;
             let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
+        }
+        libparsec::DeviceSaveStrategy::TOTP {
+            totp_opaque_key_id,
+            totp_opaque_key,
+            next,
+            ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyTOTP".into())?;
+            let js_totp_opaque_key_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(totp_opaque_key_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"totpOpaqueKeyId".into(), &js_totp_opaque_key_id)?;
+            let js_totp_opaque_key = JsValue::from(Uint8Array::from(totp_opaque_key.as_ref()));
+            Reflect::set(&js_obj, &"totpOpaqueKey".into(), &js_totp_opaque_key)?;
+            let js_next = variant_device_save_strategy_rs_to_js(*next)?;
+            Reflect::set(&js_obj, &"next".into(), &js_next)?;
         }
     }
     Ok(js_obj)
@@ -17046,6 +17299,53 @@ fn variant_submitter_list_local_async_enrollments_error_rs_to_js(
     Ok(js_obj)
 }
 
+// TOTPSetupStatus
+
+#[allow(dead_code)]
+fn variant_totp_setup_status_js_to_rs(obj: JsValue) -> Result<libparsec::TOTPSetupStatus, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "TOTPSetupStatusConfirmed" => Ok(libparsec::TOTPSetupStatus::Confirmed),
+        "TOTPSetupStatusUnconfirmed" => {
+            let base32_totp_secret = {
+                let js_val = Reflect::get(&obj, &"base32TotpSecret".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::TOTPSetupStatus::Unconfirmed { base32_totp_secret })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a TOTPSetupStatus",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_totp_setup_status_rs_to_js(
+    rs_obj: libparsec::TOTPSetupStatus,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::TOTPSetupStatus::Confirmed => {
+            Reflect::set(&js_obj, &"tag".into(), &"TOTPSetupStatusConfirmed".into())?;
+        }
+        libparsec::TOTPSetupStatus::Unconfirmed {
+            base32_totp_secret, ..
+        } => {
+            Reflect::set(&js_obj, &"tag".into(), &"TOTPSetupStatusUnconfirmed".into())?;
+            let js_base32_totp_secret = base32_totp_secret.into();
+            Reflect::set(&js_obj, &"base32TotpSecret".into(), &js_base32_totp_secret)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // TestbedError
 
 #[allow(dead_code)]
@@ -17059,6 +17359,125 @@ fn variant_testbed_error_rs_to_js(rs_obj: libparsec::TestbedError) -> Result<JsV
         }
         libparsec::TestbedError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"TestbedErrorInternal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// TotpFetchOpaqueKeyError
+
+#[allow(dead_code)]
+fn variant_totp_fetch_opaque_key_error_rs_to_js(
+    rs_obj: libparsec::TotpFetchOpaqueKeyError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::TotpFetchOpaqueKeyError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpFetchOpaqueKeyErrorInternal".into(),
+            )?;
+        }
+        libparsec::TotpFetchOpaqueKeyError::InvalidOneTimePassword { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpFetchOpaqueKeyErrorInvalidOneTimePassword".into(),
+            )?;
+        }
+        libparsec::TotpFetchOpaqueKeyError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpFetchOpaqueKeyErrorOffline".into(),
+            )?;
+        }
+        libparsec::TotpFetchOpaqueKeyError::Throttled { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpFetchOpaqueKeyErrorThrottled".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// TotpSetupConfirmAnonymousError
+
+#[allow(dead_code)]
+fn variant_totp_setup_confirm_anonymous_error_rs_to_js(
+    rs_obj: libparsec::TotpSetupConfirmAnonymousError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::TotpSetupConfirmAnonymousError::BadToken { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpSetupConfirmAnonymousErrorBadToken".into(),
+            )?;
+        }
+        libparsec::TotpSetupConfirmAnonymousError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpSetupConfirmAnonymousErrorInternal".into(),
+            )?;
+        }
+        libparsec::TotpSetupConfirmAnonymousError::InvalidOneTimePassword { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpSetupConfirmAnonymousErrorInvalidOneTimePassword".into(),
+            )?;
+        }
+        libparsec::TotpSetupConfirmAnonymousError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpSetupConfirmAnonymousErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// TotpSetupStatusAnonymousError
+
+#[allow(dead_code)]
+fn variant_totp_setup_status_anonymous_error_rs_to_js(
+    rs_obj: libparsec::TotpSetupStatusAnonymousError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::TotpSetupStatusAnonymousError::BadToken { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpSetupStatusAnonymousErrorBadToken".into(),
+            )?;
+        }
+        libparsec::TotpSetupStatusAnonymousError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpSetupStatusAnonymousErrorInternal".into(),
+            )?;
+        }
+        libparsec::TotpSetupStatusAnonymousError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"TotpSetupStatusAnonymousErrorOffline".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -17117,6 +17536,13 @@ fn variant_update_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"UpdateDeviceErrorRemoteOpaqueKeyOperationOffline".into(),
+            )?;
+        }
+        libparsec::UpdateDeviceError::TOTPDecryptionFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorTOTPDecryptionFailed".into(),
             )?;
         }
     }
@@ -22638,6 +23064,105 @@ pub fn clientStop(client: u32) -> Promise {
     }))
 }
 
+// client_totp_create_opaque_key
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientTotpCreateOpaqueKey(client: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_totp_create_opaque_key(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(2);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> {
+                                Ok(x.hex())
+                            };
+                        match custom_to_rs_string(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(0, js_value);
+                    let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
+                    js_array.set(1, js_value);
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_totp_create_opaque_key_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_totp_setup_confirm
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientTotpSetupConfirm(client: u32, one_time_password: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_totp_setup_confirm(client, one_time_password).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_totp_setup_confirm_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_totp_setup_status
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientTotpSetupStatus(client: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_totp_setup_status(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_totp_setup_status_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_totp_setup_status_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // client_update_user_profile
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -24332,6 +24857,150 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_testbed_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// totp_fetch_opaque_key
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn totpFetchOpaqueKey(
+    config: Object,
+    server_addr: String,
+    organization_id: String,
+    user_id: String,
+    opaque_key_id: String,
+    one_time_password: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let server_addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(server_addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let organization_id = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(organization_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let user_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(user_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let opaque_key_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                libparsec::TOTPOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(opaque_key_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::totp_fetch_opaque_key(
+            config,
+            server_addr,
+            organization_id,
+            user_id,
+            opaque_key_id,
+            one_time_password,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(Uint8Array::from(value.as_ref()));
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_totp_fetch_opaque_key_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// totp_setup_confirm_anonymous
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn totpSetupConfirmAnonymous(
+    config: Object,
+    addr: String,
+    one_time_password: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::totp_setup_confirm_anonymous(config, addr, one_time_password).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_totp_setup_confirm_anonymous_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// totp_setup_status_anonymous
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn totpSetupStatusAnonymous(config: Object, addr: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::totp_setup_status_anonymous(config, addr).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_totp_setup_status_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_totp_setup_status_anonymous_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
