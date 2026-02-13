@@ -2688,6 +2688,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_totp"
+version = "3.7.2-a.0+dev"
+dependencies = [
+ "data-encoding",
+ "libparsec_client_connection",
+ "libparsec_protocol",
+ "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
+ "libparsec_types",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "libparsec_types"
 version = "3.7.2-a.0+dev"
 dependencies = [
