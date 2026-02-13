@@ -78,9 +78,9 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { IonButton, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { copy } from 'ionicons/icons';
 import { Clipboard } from 'megashark-lib';
-import { inject, ref } from 'vue';
+import { inject, ref, Ref } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const addressCopiedToClipboard = ref(false);
 
 defineProps<{
@@ -95,7 +95,7 @@ async function copyAddress(address: string): Promise<void> {
       addressCopiedToClipboard.value = false;
     }, 5000);
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'OrganizationPage.configuration.copyFailed',
         level: InformationLevel.Error,

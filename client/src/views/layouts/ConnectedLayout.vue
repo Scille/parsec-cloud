@@ -32,9 +32,9 @@ import {
   Events,
   UpdateAvailabilityData,
 } from '@/services/eventDistributor';
-import { FileOperationManagerKey } from '@/services/fileOperation/manager';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useUploadMenu from '@/services/fileUploadMenu';
-import { Information, InformationLevel, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/injectionProvider';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import useRefreshWarning from '@/services/refreshWarning';
@@ -59,6 +59,14 @@ const lastAccepted: Ref<DateTime | null> = ref(null);
 
 const refreshWarning = useRefreshWarning();
 
+const fileOperationManager = ref<FileOperationManager | null>(null);
+const eventDistributor = ref<EventDistributor | null>(null);
+const informationManager = ref<InformationManager | null>(null);
+
+provide(FileOperationManagerKey, fileOperationManager);
+provide(InformationManagerKey, informationManager);
+provide(EventDistributorKey, eventDistributor);
+
 onMounted(async () => {
   const handle = getConnectionHandle();
 
@@ -69,17 +77,10 @@ onMounted(async () => {
     return;
   }
 
-  // Vue wants `provide` to be the absolute first thing.
   if (!injectionProvider.hasInjections(handle)) {
     const eventDistributor = new EventDistributor();
     injectionProvider.createNewInjections(handle, eventDistributor);
   }
-  injections = injectionProvider.getInjections(handle);
-
-  // Provide the injections to children
-  provide(FileOperationManagerKey, injections.fileOperationManager);
-  provide(InformationManagerKey, injections.informationManager);
-  provide(EventDistributorKey, injections.eventDistributor);
   const clientInfoResult = await getClientInfo(handle);
   // The handle is invalid
   if (!clientInfoResult.ok) {
@@ -87,6 +88,11 @@ onMounted(async () => {
     await navigateTo(Routes.Home, { replace: true, skipHandle: true });
     return;
   }
+
+  injections = injectionProvider.getInjections(handle);
+  fileOperationManager.value = injections.fileOperationManager;
+  informationManager.value = injections.informationManager;
+  eventDistributor.value = injections.eventDistributor;
 
   callbackId = await injections.eventDistributor.registerCallback(
     Events.TOSAcceptRequired |

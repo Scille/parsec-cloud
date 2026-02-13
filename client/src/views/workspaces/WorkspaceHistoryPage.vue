@@ -195,8 +195,8 @@ import { DateTime } from 'luxon';
 import { Answer, askQuestion, Folder, I18n, MsDatetimePicker, MsImage, MsSearchInput, MsSpinner, useWindowSize } from 'megashark-lib';
 import { computed, inject, onBeforeUnmount, onMounted, onUnmounted, ref, Ref, useTemplateRef, watch } from 'vue';
 
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 const selectedDateTime = ref(DateTime.now().toJSDate());
 const backStack: FsPath[] = [];
@@ -402,7 +402,7 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
       return;
     }
 
-    await pathOpener.openPath(workspaceInfo.value.handle, entry.path, informationManager, {
+    await pathOpener.openPath(workspaceInfo.value.handle, entry.path, informationManager.value, {
       disallowSystem: true,
       atTime: DateTime.fromJSDate(selectedDateTime.value),
     });
@@ -452,7 +452,7 @@ async function onRestoreClicked(): Promise<void> {
     return;
   }
   const dateTime = DateTime.fromJSDate(selectedDateTime.value);
-  await fileOperationManager.restore(workspaceInfo.value.handle, selectedEntries, dateTime, DuplicatePolicy.Replace);
+  await fileOperationManager.value.restore(workspaceInfo.value.handle, selectedEntries, dateTime, DuplicatePolicy.Replace);
   entries.value.selectAll(false);
 }
 </script>

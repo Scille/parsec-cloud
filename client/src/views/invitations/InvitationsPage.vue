@@ -231,12 +231,12 @@ import {
   useWindowSize,
   WindowSizeBreakpoints,
 } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, ref, toRaw } from 'vue';
+import { inject, onMounted, onUnmounted, Ref, ref, toRaw } from 'vue';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
 const view = ref(InvitationView.EmailInvitation);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const invitations = ref<Array<UserInvitation>>([]);
 const asyncEnrollmentRequests = ref<Array<AsyncEnrollmentUntrusted>>([]);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
@@ -266,7 +266,7 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 onMounted(async (): Promise<void> => {
-  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, data?: EventData) => {
+  eventCbId = await eventDistributor.value.registerCallback(Events.InvitationUpdated, async (event: Events, data?: EventData) => {
     if (event === Events.InvitationUpdated && data) {
       await refreshInvitationList();
     }
@@ -293,7 +293,7 @@ onMounted(async (): Promise<void> => {
 
 onUnmounted(async () => {
   if (eventCbId) {
-    await eventDistributor.removeCallback(eventCbId);
+    await eventDistributor.value.removeCallback(eventCbId);
   }
   routeWatchCancel();
 });
@@ -335,7 +335,7 @@ async function inviteUser(): Promise<void> {
   if (!lastError) {
     // All emails were sent
     if (noEmailCount === 0) {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: {
             key: 'UsersPage.invitation.inviteSuccessMailSent',
@@ -351,7 +351,7 @@ async function inviteUser(): Promise<void> {
       );
     } else {
       // All invitations were successful but not all emails were sent
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: {
             key: 'UsersPage.invitation.inviteSuccessNoMail',
@@ -384,7 +384,7 @@ async function inviteUser(): Promise<void> {
       message = 'UsersPage.invitation.inviteFailedSome';
     }
     window.electronAPI.log('error', `Failed to create invitations: ${lastError.tag} (${lastError.error})`);
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message,
         level: lastError.tag === ClientNewUserInvitationErrorTag.AlreadyMember ? InformationLevel.Warning : InformationLevel.Error,
@@ -433,7 +433,7 @@ async function onInvitationGreetClicked(inv: UserInvitation): Promise<void> {
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
       invitation: inv,
-      informationManager: informationManager,
+      informationManager: informationManager.value,
     },
   });
   await modal.present();
@@ -452,7 +452,7 @@ async function onSendInvitationEmailClicked(inv: UserInvitation): Promise<void> 
   }
   const result = await parsecInviteUser(inv.claimerEmail);
   if (result.ok && result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: {
           key: 'UsersPage.invitation.inviteSuccessMailSent',
@@ -486,7 +486,7 @@ async function onSendInvitationEmailClicked(inv: UserInvitation): Promise<void> 
           break;
       }
     }
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message,
         level: InformationLevel.Error,
@@ -499,7 +499,7 @@ async function onSendInvitationEmailClicked(inv: UserInvitation): Promise<void> 
 async function onCopyInvitationLinkClicked(inv: UserInvitation): Promise<void> {
   await copyToClipboard(
     inv.addr,
-    informationManager,
+    informationManager.value,
     'UsersPage.invitation.linkCopiedToClipboard',
     'UsersPage.invitation.linkNotCopiedToClipboard',
   );
@@ -523,7 +523,7 @@ async function onDeleteInvitationClicked(inv: UserInvitation): Promise<void> {
   const result = await cancelInvitation(inv.token);
 
   if (result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'UsersPage.invitation.cancelSuccess',
         level: InformationLevel.Success,
@@ -542,7 +542,7 @@ async function onDeleteInvitationClicked(inv: UserInvitation): Promise<void> {
     ) {
       await refreshInvitationList();
     } else {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: 'UsersPage.invitation.cancelFailed',
           level: InformationLevel.Error,
@@ -558,12 +558,12 @@ async function onCopyJoinLinkClicked(): Promise<void> {
   if (result.ok) {
     await copyToClipboard(
       result.value,
-      informationManager,
+      informationManager.value,
       'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
       'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
     );
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',
         level: InformationLevel.Error,
@@ -633,7 +633,7 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
 
   const result = await acceptAsyncEnrollment(request, data.profile, strategy);
   if (result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'InvitationsPage.asyncEnrollmentRequest.validationModal.acceptedSuccess',
         level: InformationLevel.Success,
@@ -664,7 +664,7 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
         message = 'InvitationsPage.asyncEnrollmentRequest.validationModal.acceptedFailed';
       }
     }
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: message,
         level: InformationLevel.Error,
@@ -677,7 +677,7 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
 async function onRejectAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUntrusted): Promise<void> {
   const result = await rejectAsyncEnrollment(request);
   if (result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'InvitationsPage.asyncEnrollmentRequest.validationModal.rejectedSuccess',
         level: InformationLevel.Info,
@@ -685,7 +685,7 @@ async function onRejectAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
       PresentationMode.Toast,
     );
   } else {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'InvitationsPage.asyncEnrollmentRequest.validationModal.rejectedFailed',
         level: InformationLevel.Error,

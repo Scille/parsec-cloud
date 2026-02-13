@@ -83,12 +83,12 @@ import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
 const documentType = ref<CryptpadEditors>(CryptpadEditors.Unsupported);
 const error = ref('');
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let eventCbId: null | string = null;
 const loadFinished = ref(false);
 let abortController: AbortController | undefined = undefined;
@@ -123,7 +123,7 @@ onMounted(async () => {
 
   await loadEditor();
 
-  eventCbId = await eventDistributor.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
+  eventCbId = await eventDistributor.value.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
     if (event === Events.Offline) {
       window.electronAPI.log('warn', 'Network connection lost while editing');
       emits('onSaveStateChange', SaveState.Offline);
@@ -142,7 +142,7 @@ onUnmounted(() => {
   }
 
   if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
+    eventDistributor.value.removeCallback(eventCbId);
   }
 });
 

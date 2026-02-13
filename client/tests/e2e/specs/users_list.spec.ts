@@ -775,7 +775,6 @@ msTest('No context menu with standard users and multiple selected', async ({ wor
   await expect(menu).toBeHidden();
 });
 
-// TODO: restore / replace commented code when PKI will be re-enabled
 msTest('Check in UsersPage if action bar updates after resized', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
   const actionsBarButtons = actionBar.locator('.ms-action-bar-button:visible');
@@ -783,19 +782,12 @@ msTest('Check in UsersPage if action bar updates after resized', async ({ usersP
 
   await resizePage(usersPage, 1600);
   await expect(actionBar).toBeVisible();
-  await expect(actionsBarButtons).toHaveCount(1);
-  await expect(actionsBarButtons).toHaveText(['Invite a user']);
-  // await expect(actionsBarButtons).toHaveCount(2);
-  // await expect(actionsBarButtons).toHaveText(['Invite a user', 'Copy link (PKI)']);
+  await expect(actionsBarButtons).toHaveCount(2);
+  await expect(actionsBarButtons).toHaveText(['Invite a user', 'Copy link (PKI/SSO)']);
   await expect(actionBarMoreButton).toBeHidden();
 
   await resizePage(usersPage, 1240);
   await expect(actionsBarButtons).toHaveText(['Invite a user']);
-  // await expect(actionBarMoreButton).toBeVisible();
-  // await actionBarMoreButton.click();
-  // await expect(usersPage.locator('.popover-viewport').getByRole('listitem')).toHaveText(['Copy link (PKI)']);
-  // await usersPage.keyboard.press('Escape');
-  // await expect(usersPage.locator('.popover-viewport')).toBeHidden();
 
   const firstUserEntry = usersPage.locator('.users-container').locator('.user-list-item').nth(1);
   await firstUserEntry.hover();

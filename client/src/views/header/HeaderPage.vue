@@ -249,8 +249,8 @@ const { isHeaderVisible } = useHeaderControl();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const notificationCenterButtonRef = useTemplateRef('notificationCenterButton');
 const securityWarnings = ref<SecurityWarnings | undefined>();
 const securityWarningsCount = computed(() => {
@@ -384,7 +384,7 @@ onMounted(async () => {
   }
   await updateRoute();
 
-  eventDistributorCbId = await eventDistributor.registerCallback(
+  eventDistributorCbId = await eventDistributor.value.registerCallback(
     Events.WorkspaceCreated | Events.MenuAction | Events.WorkspaceRoleUpdate | Events.DeviceCreated | Events.WorkspaceUpdated,
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
@@ -414,7 +414,7 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
   if (eventDistributorCbId) {
-    eventDistributor.removeCallback(eventDistributorCbId);
+    eventDistributor.value.removeCallback(eventDistributorCbId);
   }
   routeWatchCancel();
   topbarWidthWatchCancel();
@@ -446,7 +446,7 @@ async function openContextualMenu(event: Event): Promise<void> {
   event.stopPropagation();
 
   if (currentRouteIs(Routes.Documents) || currentRouteIs(Routes.Users)) {
-    await eventDistributor.dispatchEvent(Events.OpenContextMenu, {
+    await eventDistributor.value.dispatchEvent(Events.OpenContextMenu, {
       event,
     } as OpenContextualMenuData);
   }
@@ -464,8 +464,8 @@ async function openNotificationCenter(event: Event): Promise<void> {
       cssClass: 'notification-center-popover',
       showBackdrop: false,
       componentProps: {
-        notificationManager: informationManager.notificationManager,
-        eventDistributor: eventDistributor,
+        notificationManager: informationManager.value.notificationManager,
+        eventDistributor: eventDistributor.value,
       },
     });
     await popover.present();
@@ -482,8 +482,8 @@ async function openNotificationCenter(event: Event): Promise<void> {
       expandToScroll: false,
       initialBreakpoint: isLargeDisplay.value ? undefined : 0.5,
       componentProps: {
-        notificationManager: informationManager.notificationManager,
-        eventDistributor: eventDistributor,
+        notificationManager: informationManager.value.notificationManager,
+        eventDistributor: eventDistributor.value,
       },
     });
     await modal.present();

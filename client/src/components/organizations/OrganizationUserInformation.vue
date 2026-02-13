@@ -141,7 +141,7 @@ import { EventData, EventDistributor, EventDistributorKey, Events } from '@/serv
 import { InvitationView } from '@/views/invitations/types';
 import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { link, mailUnread, personAdd } from 'ionicons/icons';
-import { inject, onMounted, onUnmounted, ref } from 'vue';
+import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 defineProps<{
   userInfo: ClientInfo;
@@ -150,11 +150,11 @@ defineProps<{
 
 const invitationCount = ref(0);
 const asyncEnrollmentsCount = ref(0);
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let cbId: string | undefined = undefined;
 
 onMounted(async () => {
-  cbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
+  cbId = await eventDistributor.value.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
     if (event === Events.InvitationUpdated) {
       await refresh();
     }
@@ -164,7 +164,7 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   if (cbId) {
-    await eventDistributor.removeCallback(cbId);
+    await eventDistributor.value.removeCallback(cbId);
     cbId = undefined;
   }
 });

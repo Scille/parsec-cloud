@@ -58,15 +58,15 @@ import { InformationManager, InformationManagerKey } from '@/services/informatio
 import { handleParsecLink } from '@/services/linkHandler';
 import { IonButton, IonPage, IonText } from '@ionic/vue';
 import { LogoIconGradient, MsImage } from 'megashark-lib';
-import { inject } from 'vue';
+import { inject, Ref } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 
 const query = getCurrentRouteQuery();
 const redirectLink = query.webRedirectUrl ?? '';
 
 async function openLinkInWeb(): Promise<void> {
-  await handleParsecLink(redirectLink, informationManager);
+  await handleParsecLink(redirectLink, informationManager.value);
 }
 </script>
 

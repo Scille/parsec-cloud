@@ -56,9 +56,9 @@ import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 const isOnline = ref(false);
 const isPopoverOpen = ref(false);
 
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const updateAvailability: Ref<UpdateAvailabilityData> = ref({ updateAvailable: false });
 let eventCbId: null | string = null;
 
@@ -69,7 +69,7 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
-  eventCbId = await eventDistributor.registerCallback(
+  eventCbId = await eventDistributor.value.registerCallback(
     Events.Offline | Events.Online | Events.UpdateAvailability,
     async (event: Events, data?: EventData) => {
       if (event === Events.Offline) {
@@ -92,7 +92,7 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
+    eventDistributor.value.removeCallback(eventCbId);
   }
 });
 
@@ -134,13 +134,13 @@ async function openOrganizationPopover(event: Event): Promise<void> {
     await modal.dismiss();
 
     if (role === MsModalResult.Confirm) {
-      await eventDistributor.dispatchEvent(Events.LogoutRequested);
+      await eventDistributor.value.dispatchEvent(Events.LogoutRequested);
       window.electronAPI.prepareUpdate();
     }
   } else if (data.option === ProfilePopoverOption.LogOut) {
     const answer = await askQuestion(
       'HomePage.topbar.logoutConfirmTitle',
-      fileOperationManager.hasOperations() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
+      fileOperationManager.value.hasOperations() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
       {
         yesText: 'HomePage.topbar.logoutYes',
         noText: 'HomePage.topbar.logoutNo',
@@ -148,7 +148,7 @@ async function openOrganizationPopover(event: Event): Promise<void> {
     );
 
     if (answer === Answer.Yes) {
-      await eventDistributor.dispatchEvent(Events.LogoutRequested);
+      await eventDistributor.value.dispatchEvent(Events.LogoutRequested);
     }
   } else if (data.option === ProfilePopoverOption.Settings) {
     await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Settings } });
@@ -167,7 +167,7 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   } else if (data.option === ProfilePopoverOption.ReportBug) {
     const result = await openBugReportModal();
     if (result === MsModalResult.Confirm) {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: 'bugReport.sent',
           level: InformationLevel.Success,

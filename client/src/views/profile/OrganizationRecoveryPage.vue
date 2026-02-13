@@ -131,7 +131,7 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle, informationCircle, reload } from 'ionicons/icons';
 import { Answer, DownloadIcon, I18n, MsImage, Translatable, askQuestion } from 'megashark-lib';
-import { computed, inject, onMounted, ref, useTemplateRef } from 'vue';
+import { Ref, computed, inject, onMounted, ref, useTemplateRef } from 'vue';
 
 let code = '';
 let content: Uint8Array = new Uint8Array();
@@ -140,8 +140,8 @@ const recoveryKeyDownloaded = ref(false);
 const recoveryFileDownloaded = ref(false);
 const disableFileDownload = ref(false);
 const disableKeyDownload = ref(false);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const orgId = ref('');
 const recoveryDeviceTemplate = ref(false);
 const hasRecoveryDevice = ref(false);
@@ -178,7 +178,7 @@ async function goToExportRecoveryDevice(): Promise<void> {
 
   const exportResult = await exportRecoveryDevice();
   if (!exportResult.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'ExportRecoveryDevicePage.errors.exportFailed',
         level: InformationLevel.Error,
@@ -198,7 +198,7 @@ async function sendRecoveryDeviceCreatedEvent(): Promise<void> {
     if (devicesResult.ok) {
       const lastDevice = devicesResult.value.toSorted((d1, d2) => (d1.createdOn > d2.createdOn ? -1 : 1))[0];
       if (lastDevice) {
-        eventDistributor.dispatchEvent(Events.DeviceCreated, { info: lastDevice });
+        eventDistributor.value.dispatchEvent(Events.DeviceCreated, { info: lastDevice });
       }
     }
   }
@@ -213,7 +213,7 @@ async function downloadRecoveryKey(): Promise<void> {
   setTimeout(() => {
     disableKeyDownload.value = false;
     recoveryKeyDownloaded.value = true;
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'ExportRecoveryDevicePage.toasts.keyDownloadOk',
         level: InformationLevel.Success,
@@ -233,7 +233,7 @@ async function downloadRecoveryFile(): Promise<void> {
   setTimeout(() => {
     disableFileDownload.value = false;
     recoveryFileDownloaded.value = true;
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'ExportRecoveryDevicePage.toasts.fileDownloadOk',
         level: InformationLevel.Success,

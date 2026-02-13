@@ -44,6 +44,7 @@ onMounted(async () => {
 
   if (
     !import.meta.env.PARSEC_APP_TESTBED_SERVER ||
+    !window.TESTBED_SERVER_URL ||
     (await getClientInfo(handle)).ok === true ||
     import.meta.env.PARSEC_APP_TESTBED_AUTO_LOGIN !== 'true'
   ) {
@@ -63,6 +64,7 @@ onMounted(async () => {
       `Use "${DEFAULT_HANDLE}" or "${DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT}" (if using ParsecAccount)
 as the default handle when not connecting properly`,
     );
+    await navigateTo(Routes.Home);
     return;
   }
   window.electronAPI.log('info', 'Page was refreshed, login in a default device');

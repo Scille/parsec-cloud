@@ -54,8 +54,8 @@ import { mail, mailUnread } from 'ionicons/icons';
 import { Answer, MsModalResult, askQuestion, useWindowSize } from 'megashark-lib';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
 const { isLargeDisplay } = useWindowSize();
@@ -65,7 +65,7 @@ defineProps<{
 }>();
 
 onMounted(async () => {
-  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
+  eventCbId = await eventDistributor.value.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
     if (event === Events.InvitationUpdated) {
       await updateInvitations();
     }
@@ -75,7 +75,7 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   if (eventCbId) {
-    await eventDistributor.removeCallback(eventCbId);
+    await eventDistributor.value.removeCallback(eventCbId);
   }
 });
 
@@ -98,7 +98,7 @@ async function openInvitationsMenu(event: Event): Promise<void> {
       cssClass: 'invitations-list-popover',
       showBackdrop: false,
       componentProps: {
-        informationManager: informationManager,
+        informationManager: informationManager.value,
       },
     });
     await popover.present();
@@ -115,7 +115,7 @@ async function openInvitationsMenu(event: Event): Promise<void> {
       expandToScroll: false,
       initialBreakpoint: isLargeDisplay.value ? undefined : 0.5,
       componentProps: {
-        informationManager: informationManager,
+        informationManager: informationManager.value,
       },
     });
     await modal.present();
@@ -151,7 +151,7 @@ async function cancelUserInvitation(invitation: UserInvitation): Promise<void> {
   const result = await cancelInvitation(invitation.token);
 
   if (result.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'UsersPage.invitation.cancelSuccess',
         level: InformationLevel.Success,
@@ -170,7 +170,7 @@ async function cancelUserInvitation(invitation: UserInvitation): Promise<void> {
     ) {
       await updateInvitations();
     } else {
-      informationManager.present(
+      informationManager.value.present(
         new Information({
           message: 'UsersPage.invitation.cancelFailed',
           level: InformationLevel.Error,
@@ -194,7 +194,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
       invitation: invitation,
-      informationManager: informationManager,
+      informationManager: informationManager.value,
     },
   });
   await modal.present();

@@ -102,7 +102,7 @@ import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
 import { MsImage, NoImportInProgress } from 'megashark-lib';
 import type { Component } from 'vue';
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 interface OperationItem {
   operationData: FileOperationData;
@@ -118,7 +118,7 @@ enum OperationFilter {
 
 const menu = useUploadMenu();
 
-const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
+const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
 
 const items = ref<Array<OperationItem>>([]);
 
@@ -182,7 +182,7 @@ function getOperationComponent(item: OperationItem): Component {
 }
 
 onMounted(async () => {
-  canceller = await fileOperationManager.registerCallback(onFileOperationEvent);
+  canceller = await fileOperationManager.value.registerCallback(onFileOperationEvent);
 });
 
 onUnmounted(async () => {
@@ -275,7 +275,7 @@ async function onOperationClick(
 }
 
 async function onOperationCancelClick(operation: FileOperationData): Promise<void> {
-  await fileOperationManager.cancelOperation(operation.id);
+  await fileOperationManager.value.cancelOperation(operation.id);
 }
 
 function scrollToTop(): void {

@@ -288,10 +288,10 @@ import { Answer, askQuestion, MsImage, OpenIcon, Translatable, useWindowSize } f
 import { inject, onMounted, onUnmounted, Ref, ref } from 'vue';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const myProfileTab = ref(isSmallDisplay ? undefined : ProfilePages.Settings);
 
 const routeUnwatch = watchRoute(async () => {
@@ -307,7 +307,7 @@ async function logout(): Promise<void> {
     noText: 'HomePage.topbar.logoutNo',
   });
   if (answer === Answer.Yes) {
-    await eventDistributor.dispatchEvent(Events.LogoutRequested);
+    await eventDistributor.value.dispatchEvent(Events.LogoutRequested);
   }
 }
 
@@ -384,7 +384,7 @@ onMounted(async () => {
   const result = await getClientInfo();
 
   if (!result.ok || !deviceResult.ok) {
-    informationManager.present(
+    informationManager.value.present(
       new Information({
         message: 'MyProfilePage.errors.failedToRetrieveInformation',
         level: InformationLevel.Error,

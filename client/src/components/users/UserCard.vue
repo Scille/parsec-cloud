@@ -104,12 +104,12 @@ import { InformationManager, InformationManagerKey } from '@/services/informatio
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { checkmark, copy, ellipsisHorizontal } from 'ionicons/icons';
 import { formatTimeSince, LockClosedIcon, MsCheckbox, MsImage } from 'megashark-lib';
-import { inject, ref } from 'vue';
+import { inject, ref, Ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
 const emailCopied = ref(false);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 
 const emits = defineEmits<{
   (e: 'click', event: Event, user: UserModel): void;
@@ -142,7 +142,7 @@ async function onCopyEmailClicked(email: string): Promise<void> {
     emailCopied.value = false;
   }, 5000);
 
-  await copyToClipboard(email, informationManager, 'UsersPage.copyEmail.success', 'UsersPage.copyEmail.failed');
+  await copyToClipboard(email, informationManager.value, 'UsersPage.copyEmail.success', 'UsersPage.copyEmail.failed');
 }
 </script>
 
