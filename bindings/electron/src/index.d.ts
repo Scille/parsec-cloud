@@ -3198,6 +3198,16 @@ export interface ParsedParsecAddrServer {
     is_default_port: boolean
     use_ssl: boolean
 }
+export interface ParsedParsecAddrTOTPReset {
+    tag: "ParsedParsecAddrTOTPReset"
+    hostname: string
+    port: number
+    is_default_port: boolean
+    use_ssl: boolean
+    organization_id: string
+    user_id: string
+    token: string
+}
 export interface ParsedParsecAddrWorkspacePath {
     tag: "ParsedParsecAddrWorkspacePath"
     hostname: string
@@ -3218,6 +3228,7 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrOrganizationBootstrap
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
+  | ParsedParsecAddrTOTPReset
   | ParsedParsecAddrWorkspacePath
 
 
