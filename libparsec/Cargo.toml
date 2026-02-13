@@ -38,6 +38,7 @@ libparsec_platform_device_loader = { workspace = true }
 libparsec_platform_pki = { workspace = true }
 libparsec_platform_storage = { workspace = true }
 libparsec_serialization_format = { workspace = true }
+libparsec_totp = { workspace = true }
 
 libparsec_testbed = { workspace = true, optional = true }
 libparsec_tests_fixtures = { workspace = true, optional = true }
