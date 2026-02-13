@@ -13,6 +13,7 @@ from parsec._parsec_pyi.addrs import (
     ParsecOrganizationAddr,
     ParsecOrganizationBootstrapAddr,
     ParsecPkiEnrollmentAddr,
+    ParsecTOTPResetAddr,
     ParsecWorkspacePathAddr,
 )
 from parsec._parsec_pyi.async_enrollment import (
@@ -204,6 +205,7 @@ __all__ = [
     "ParsecOrganizationAddr",
     "ParsecOrganizationBootstrapAddr",
     "ParsecPkiEnrollmentAddr",
+    "ParsecTOTPResetAddr",
     "ParsecWorkspacePathAddr",
     # Manifest
     "BlockAccess",

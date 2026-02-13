@@ -7,6 +7,7 @@ from parsec._parsec_pyi.enumerate import InvitationType
 from parsec._parsec_pyi.ids import (
     AccessToken,
     OrganizationID,
+    UserID,
     VlobID,
 )
 
@@ -75,6 +76,7 @@ class ParsecActionAddr:
         | ParsecWorkspacePathAddr
         | ParsecInvitationAddr
         | ParsecPkiEnrollmentAddr
+        | ParsecTOTPResetAddr
     ): ...
 
 class ParsecOrganizationBootstrapAddr(ParsecAddr):
@@ -262,3 +264,42 @@ class ParsecAsyncEnrollmentAddr(ParsecAddr):
     def build(
         cls, server_addr: ParsecAddr, organization_id: OrganizationID
     ) -> ParsecAsyncEnrollmentAddr: ...
+
+class ParsecTOTPResetAddr(ParsecAddr):
+    def __init__(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        token: AccessToken,
+        hostname: str,
+        port: int | None,
+        use_ssl: bool = True,
+    ) -> None: ...
+    def __hash__(self) -> int: ...
+    @property
+    def hostname(self) -> str: ...
+    @property
+    def port(self) -> int: ...
+    @property
+    def use_ssl(self) -> bool: ...
+    @property
+    def netloc(self) -> str: ...
+    @property
+    def organization_id(self) -> OrganizationID: ...
+    @property
+    def user_id(self) -> UserID: ...
+    @property
+    def token(self) -> AccessToken: ...
+    def get_server_addr(self) -> ParsecAddr: ...
+    def to_url(self) -> str: ...
+    def to_http_redirection_url(self) -> str: ...
+    @classmethod
+    def from_url(cls, url: str, allow_http_redirection: bool = False) -> ParsecTOTPResetAddr: ...
+    @classmethod
+    def build(
+        cls,
+        server_addr: ParsecAddr,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        token: AccessToken,
+    ) -> ParsecTOTPResetAddr: ...
