@@ -10,6 +10,7 @@ from .common import (
     Ref,
     Result,
     StrBasedType,
+    UserID,
     Variant,
     VlobID,
 )
@@ -50,6 +51,11 @@ class ParsecPkiEnrollmentAddr(StrBasedType):
 class ParsecAsyncEnrollmentAddr(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string()) }"
     custom_to_rs_string = "|addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+
+
+class ParsecTOTPResetAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::ParsecTOTPResetAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
 class ParseParsecAddrError(ErrorVariant):
@@ -126,6 +132,15 @@ class ParsedParsecAddr(Variant):
         is_default_port: bool
         use_ssl: bool
         organization_id: OrganizationID
+
+    class TOTPReset:
+        hostname: str
+        port: U16
+        is_default_port: bool
+        use_ssl: bool
+        organization_id: OrganizationID
+        user_id: UserID
+        token: AccessToken
 
 
 def parse_parsec_addr(url: Ref[str]) -> Result[ParsedParsecAddr, ParseParsecAddrError]:
