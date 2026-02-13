@@ -49,6 +49,7 @@ from parsec.components.sequester import (
     SequesterUpdateConfigForServiceStoreBadOutcome,
     WebhookSequesterService,
 )
+from parsec.components.totp import TOTPResetBadOutcome
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListActiveUsersBadOutcome
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
@@ -519,6 +520,66 @@ async def administration_organization_users_freeze(
             "user_email": str(user.human_handle.email),
             "user_name": user.human_handle.label,
             "frozen": user.frozen,
+        },
+    )
+
+
+class UserResetTOTPIn(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    user_email: EmailAddressField | None = None
+    user_id: UserIDField | None = None
+    send_email: bool = False
+
+
+@administration_router.post("/administration/organizations/{raw_organization_id}/users/reset_totp")
+@log_request
+async def administration_organization_users_reset_totp(
+    raw_organization_id: str,
+    auth: Annotated[None, Depends(check_administration_auth)],
+    body: UserResetTOTPIn,
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    organization_id = parse_organization_id_or_die(raw_organization_id)
+
+    outcome = await backend.totp.reset(
+        organization_id,
+        user_id=body.user_id,
+        user_email=body.user_email,
+        send_email=body.send_email,
+    )
+    match outcome:
+        case (user_id, user_email, totp_reset_url, None):
+            if body.send_email:
+                email_sent_status = "SENT_AS_REQUESTED"
+            else:
+                email_sent_status = "NOT_SENT_AS_REQUESTED"
+        case (user_id, user_email, totp_reset_url, email_sent_status):
+            email_sent_status = email_sent_status.name
+        case TOTPResetBadOutcome.ORGANIZATION_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Organization not found")
+        case TOTPResetBadOutcome.USER_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="User not found")
+        case TOTPResetBadOutcome.USER_REVOKED:
+            raise HTTPException(status_code=404, detail="User has been revoked")
+        case TOTPResetBadOutcome.BOTH_USER_ID_AND_EMAIL:
+            raise HTTPException(
+                status_code=400, detail="Both `user_id` and `user_email` fields are provided"
+            )
+        case TOTPResetBadOutcome.NO_USER_ID_NOR_EMAIL:
+            raise HTTPException(
+                status_code=400, detail="Missing either `user_id` or `user_email` field"
+            )
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "user_id": user_id.hex,
+            "user_email": user_email.str,
+            "totp_reset_url": totp_reset_url.to_url(),
+            "totp_reset_url_as_http_redirection": totp_reset_url.to_http_redirection_url(),
+            "email_sent_status": email_sent_status,
         },
     )
 
