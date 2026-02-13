@@ -44,7 +44,7 @@ onMounted(async () => {
 
   if (
     !import.meta.env.PARSEC_APP_TESTBED_SERVER ||
-    !window.TESTBED_SERVER_URL ||
+    window.isTesting() ||
     (await getClientInfo(handle)).ok === true ||
     import.meta.env.PARSEC_APP_TESTBED_AUTO_LOGIN !== 'true'
   ) {

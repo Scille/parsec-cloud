@@ -24,6 +24,7 @@
         class="download-warning-image"
       />
       <i18n-t
+        scope="global"
         keypath="FoldersPage.DownloadFile.downloadWarningDocMessage"
         tag="label"
         for="FoldersPage.DownloadFile.downloadWarningDoc"
