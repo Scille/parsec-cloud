@@ -206,6 +206,13 @@ class PKIEnrollmentID(StrBasedType):
     )
 
 
+class TOTPOpaqueKeyID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> { libparsec::TOTPOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
+
+
 class DeviceLabel(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string()) }"
 
