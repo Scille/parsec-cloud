@@ -347,6 +347,7 @@ class UserFreezeUserBadOutcome(BadOutcomeEnum):
     # command is used by the administration.
     ORGANIZATION_NOT_FOUND = auto()
     USER_NOT_FOUND = auto()
+    USER_REVOKED = auto()
     BOTH_USER_ID_AND_EMAIL = auto()
     NO_USER_ID_NOR_EMAIL = auto()
 
