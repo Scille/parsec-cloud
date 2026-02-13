@@ -1113,6 +1113,7 @@ impl ParsecAsyncEnrollmentAddr {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParsecAnonymousAddr {
+    Organization(ParsecOrganizationAddr),
     OrganizationBootstrap(ParsecOrganizationBootstrapAddr),
     PkiEnrollment(ParsecPkiEnrollmentAddr),
     AsyncEnrollment(ParsecAsyncEnrollmentAddr),
@@ -1121,7 +1122,12 @@ pub enum ParsecAnonymousAddr {
 impl ParsecAnonymousAddr {
     /// Return an [Url] that points to the server endpoint for anonymous commands.
     pub fn to_anonymous_http_url(&self) -> Url {
-        let (ParsecAnonymousAddr::OrganizationBootstrap(ParsecOrganizationBootstrapAddr {
+        let (ParsecAnonymousAddr::Organization(ParsecOrganizationAddr {
+            base,
+            organization_id,
+            ..
+        })
+        | ParsecAnonymousAddr::OrganizationBootstrap(ParsecOrganizationBootstrapAddr {
             base,
             organization_id,
             ..
@@ -1139,10 +1145,17 @@ impl ParsecAnonymousAddr {
 
     pub fn organization_id(&self) -> &OrganizationID {
         match self {
+            ParsecAnonymousAddr::Organization(addr) => addr.organization_id(),
             ParsecAnonymousAddr::OrganizationBootstrap(addr) => addr.organization_id(),
             ParsecAnonymousAddr::PkiEnrollment(addr) => addr.organization_id(),
             ParsecAnonymousAddr::AsyncEnrollment(addr) => addr.organization_id(),
         }
+    }
+}
+
+impl From<ParsecOrganizationAddr> for ParsecAnonymousAddr {
+    fn from(addr: ParsecOrganizationAddr) -> Self {
+        Self::Organization(addr)
     }
 }
 
@@ -1167,6 +1180,7 @@ impl From<ParsecAsyncEnrollmentAddr> for ParsecAnonymousAddr {
 impl From<ParsecAnonymousAddr> for ParsecAddr {
     fn from(addr: ParsecAnonymousAddr) -> Self {
         let base = match addr {
+            ParsecAnonymousAddr::Organization(addr) => addr.base,
             ParsecAnonymousAddr::OrganizationBootstrap(addr) => addr.base,
             ParsecAnonymousAddr::PkiEnrollment(addr) => addr.base,
             ParsecAnonymousAddr::AsyncEnrollment(addr) => addr.base,

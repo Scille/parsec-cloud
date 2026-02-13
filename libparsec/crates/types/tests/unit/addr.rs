@@ -1186,6 +1186,7 @@ macro_rules! test_anonymous_addr {
 
 #[rstest]
 fn anonymous_addr() {
+    test_anonymous_addr!(OrganizationAddrTestbed {}, ParsecOrganizationAddr);
     test_anonymous_addr!(
         OrganizationBootstrapAddrTestbed {},
         ParsecOrganizationBootstrapAddr
