@@ -2,9 +2,10 @@
 
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
 
-Contributing to Parsec is welcome! We love open source and community collaboration. All of Parsec development is fully open here on GitHub and there are no private, closed areas that exclude you and the Parsec community.
+Contributing to Parsec is welcome! We love open source and community collaboration.
+All of Parsec development is fully open here on GitHub and there are no private, closed areas that exclude you and the Parsec community.
 
-The guidelines here give some tips on how to best contribute. Please try to follow these. It's short, quick and easy. This will ensure a smooth process. Thanks again for contributing!
+The guidelines here give some tips on how to best contribute. Please try to follow these. It's short, quick, and easy. This will ensure a smooth process. Thanks again for contributing!
 
 ## Summary
 
@@ -30,7 +31,8 @@ Use the following link to [Create a bug report](https://github.com/Scille/parsec
 
 Please fill in the required fields and add any extra information that might help us understand the issue.
 
-> A bug issue should also be only about **one thing** - if you have found multiple related things, please file multiple issues and link the issues (cross-referencing by mentioning the related issues in the descriptions - that will make GitHub automatically add respective links).
+> A bug issue should also be only about **one thing** - if you have found multiple related things,
+> please file multiple issues and link the issues (cross-referencing by mentioning the related issues in the descriptions - that will make GitHub automatically add respective links).
 
 ### Filing Features
 
@@ -38,7 +40,8 @@ Submit your feature request [here](https://github.com/Scille/parsec-cloud/issues
 
 Take your time when filling the form.
 There are usually many ways to solve a problem: try describing your use case and goals before jumping into specific, concrete proposal for a solution.
-This helps us seeing the big picture. If you "only" propose a concrete solution, and we consider it doesn't fit in, we will need to guess what is your actual use case before coming up with a solution that fits.
+This helps us seeing the big picture. If you "only" propose a concrete solution,
+and we consider it doesn't fit in, we will need to guess what is your actual use case before coming up with a solution that fits.
 
 ## Contributing Code
 
@@ -72,7 +75,8 @@ We use the Fork & Pull Model. This means that you fork the repo, make changes to
 
    > Since we use the rebase strategy to merge branch, you merge commit that fix the conflict will be removed during the rebase.
 
-6. If your branch doesn't run green on our CI, or your branch becomes stale, because other things were merged in between, you are responsible for fixing thing on your branch first.
+6. If your branch doesn't run green on our CI, or your branch becomes stale, because other things were merged in between,
+   you are responsible for fixing thing on your branch first.
 
 [pull request]: https://help.github.com/articles/using-pull-requests
 [Github Flow]: https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-a-branch-for-an-issue
@@ -82,7 +86,9 @@ We use the Fork & Pull Model. This means that you fork the repo, make changes to
 
 Before you can contribute any changes to the Parsec project, we need a CAA (Contributor Assignment Agreement) from you.
 
-The CAA gives us the rights to your code, which we need e.g. to react to license violations by others, for possible future license changes and for dual-licensing of the code. The CAA closely follows a template established by the [Harmony project](http://harmonyagreements.org/), and CAAs are required by almost all open source projects which are non-trivial in scope.
+The CAA gives us the rights to your code, which we need e.g. to react to license violations by others, for possible future license changes and for dual-licensing of the code.
+The CAA closely follows a template established by the [Harmony project](http://harmonyagreements.org/),
+and CAAs are required by almost all open source projects which are non-trivial in scope.
 
 #### What we need you to do
 
@@ -95,7 +101,8 @@ The CAA gives us the rights to your code, which we need e.g. to react to license
 
 ## Contributing Documentation
 
-Contributions to the documentation are highly welcome! Parsec is a complex software, users have varying degrees of background and experience and we have limited resources. Also, developers of Parsec usually don't have a **user perspective** (anymore) - but docs should be for users.
+Contributions to the documentation are highly welcome! Parsec is a complex software, users have varying degrees of background and experience and we have limited resources.
+Also, developers of Parsec usually don't have a **user perspective** (anymore) - but docs should be for users.
 
 All Parsec documentation is contained in this repository [here](https://github.com/Scille/parsec-cloud/tree/master/docs).
 
