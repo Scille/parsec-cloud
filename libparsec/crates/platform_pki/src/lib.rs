@@ -99,7 +99,7 @@ pub use platform::list_intermediate_certificates;
 pub use errors::SignMessageError;
 pub use platform::sign_message;
 
-pub use shared::{verify_message, Certificate, SignedMessage, X509EndCertificate};
+pub use shared::{Certificate, SignedMessage, X509EndCertificate};
 
 pub use errors::EncryptMessageError;
 pub use platform::encrypt_message;
@@ -113,7 +113,7 @@ pub use shared::verify_certificate;
 pub use webpki::KeyUsage;
 
 pub use errors::VerifyMessageError;
-pub use shared::verify_message2;
+pub use shared::verify_message;
 
 pub use errors::GetValidationPathForCertError;
 pub use shared::{get_validation_path_for_cert, ValidationPathOwned};
