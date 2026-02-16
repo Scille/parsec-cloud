@@ -148,6 +148,9 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         locked
             .exp_string(&format!("Select code provided by claimer: {sas_code}"))
             .unwrap();
+        locked
+            .exp_string("Waiting for claimer information")
+            .unwrap();
     }
 
     // device creation

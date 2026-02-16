@@ -201,12 +201,24 @@ async fn step3_shamir(
 
 /// Step 4: get claim requests
 async fn step4_user(ctx: UserGreetInProgress3Ctx) -> anyhow::Result<UserGreetInProgress4Ctx> {
-    Ok(ctx.do_get_claim_requests().await?)
+    let mut handle = start_spinner("Waiting for claimer information".into());
+
+    let ctx = ctx.do_get_claim_requests().await?;
+
+    handle.stop_with_symbol(GREEN_CHECKMARK);
+
+    Ok(ctx)
 }
 
 /// Step 4: get claim requests
 async fn step4_device(ctx: DeviceGreetInProgress3Ctx) -> anyhow::Result<DeviceGreetInProgress4Ctx> {
-    Ok(ctx.do_get_claim_requests().await?)
+    let mut handle = start_spinner("Waiting for claimer information".into());
+
+    let ctx = ctx.do_get_claim_requests().await?;
+
+    handle.stop_with_symbol(GREEN_CHECKMARK);
+
+    Ok(ctx)
 }
 
 /// Step 4: send shares
