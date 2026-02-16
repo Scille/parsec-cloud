@@ -1,0 +1,1 @@
+CLI: Add spinner for greeter after code exchange in invitations, to indicate we wait for claimer information
