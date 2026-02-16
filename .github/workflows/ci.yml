@@ -192,7 +192,7 @@ jobs:
           diff --unified .pre-commit-config.yaml $TEMP_FILE || true
           echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
-      - uses: taiki-e/install-action@509565405a8a987e73cf742e26b26dcc72c4b01a # pin v2.67.26
+      - uses: taiki-e/install-action@288875dd3d64326724fa6d9593062d9f8ba0b131 # pin v2.67.30
         with:
           tool: taplo-cli@0.9.3
 
