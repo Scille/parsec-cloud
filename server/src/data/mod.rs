@@ -47,12 +47,10 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(child_manifest_verify_and_load, m)?)?;
 
     // Pki
-
     m.add_class::<PkiSignatureAlgorithm>()?;
     m.add_class::<X509Certificate>()?;
     m.add_class::<X509CertificateInformation>()?;
     m.add_class::<TrustAnchor>()?;
-
     crate::binding_utils::export_exception!(m, py, PkiInvalidSignature);
     crate::binding_utils::export_exception!(m, py, PkiInvalidCertificateDER);
     crate::binding_utils::export_exception!(m, py, PkiUntrusted);

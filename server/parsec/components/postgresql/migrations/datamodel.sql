@@ -415,76 +415,12 @@ CREATE TABLE greeting_step (
     UNIQUE (greeting_attempt, step)
 );
 
--------------------------------------------------------
---  PKI enrollment
--------------------------------------------------------
-
-CREATE TABLE pki_certificate (
-    sha256_fingerprint BYTEA PRIMARY KEY,
-    -- Fingerprint of a certificate that signed this certificate
-    -- Maybe null if not signed by an other known certificate or self-signed.
-    signed_by BYTEA REFERENCES pki_certificate (sha256_fingerprint),
-    -- The DER content of the certificate
-    der_content BYTEA NOT NULL
-);
-
-CREATE TYPE ENROLLMENT_STATE AS ENUM (
-    'SUBMITTED',
-    'ACCEPTED',
-    'REJECTED',
-    'CANCELLED'
-);
-
-CREATE TYPE PKI_SIGNATURE_ALGORITHM AS ENUM ('RSASSA_PSS_SHA256');
-
-CREATE TYPE PKI_ENROLLMENT_INFO_ACCEPTED AS (
-    accepted_on TIMESTAMPTZ,
-    accept_payload_signature BYTEA,
-    accept_payload BYTEA,
-
-    -- Added in migration 0016
-    accept_payload_signature_algorithm PKI_SIGNATURE_ALGORITHM,
-    -- Added in migration 0019
-    accepter_x509_cert_sha256_fingerprint BYTEA
-);
-
-CREATE TYPE PKI_ENROLLMENT_INFO_REJECTED AS (
-    rejected_on TIMESTAMPTZ
-);
-
-CREATE TYPE PKI_ENROLLMENT_INFO_CANCELLED AS (
-    cancelled_on TIMESTAMPTZ
-);
-
-CREATE TABLE pki_enrollment (
-    _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-
-    enrollment_id UUID NOT NULL,
-
-    submit_payload_signature BYTEA NOT NULL,
-    submit_payload BYTEA NOT NULL,
-    submitted_on TIMESTAMPTZ NOT NULL,
-
-    accepter INTEGER REFERENCES device (_id),
-    submitter_accepted_device INTEGER REFERENCES device (_id),
-
-    enrollment_state ENROLLMENT_STATE NOT NULL DEFAULT 'SUBMITTED',
-    info_accepted PKI_ENROLLMENT_INFO_ACCEPTED,
-    info_rejected PKI_ENROLLMENT_INFO_REJECTED,
-    info_cancelled PKI_ENROLLMENT_INFO_CANCELLED,
-
-    -- Added in migration 0016
-    submit_payload_signature_algorithm PKI_SIGNATURE_ALGORITHM NOT NULL,
-    -- Added in migration 0019
-    submitter_x509_cert_sha256_fingerprint BYTEA REFERENCES pki_certificate (sha256_fingerprint) NOT NULL,
-
-    UNIQUE (organization, enrollment_id)
-);
 
 -------------------------------------------------------
 --  Async Enrollment
 -------------------------------------------------------
+
+CREATE TYPE PKI_SIGNATURE_ALGORITHM AS ENUM ('RSASSA_PSS_SHA256');
 
 -- Note this table only store leaf and intermediate certificates, since the
 -- root certificates are supposed to be already known (and trusted!) by the
