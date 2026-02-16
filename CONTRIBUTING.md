@@ -89,7 +89,7 @@ The CAA gives us the rights to your code, which we need e.g. to react to license
 1. Download the [Contributor agreement CAA (PDF)](https://github.com/scille/parsec-cloud/raw/master/docs/legal/contributor_agreement.pdf).
 2. Fill in the required information that identifies you and sign the CAA.
 3. Scan the CAA to PNG, JPG or TIFF, or take a photo of the box on page 2 (the **entire box**, including the information identifying the document).
-4. Email the scan or photo to `contact@scille.fr` with the subject line "Parsec project contributor assignment agreement"
+4. Email the scan or photo to [dev@parsec.cloud](mailto:dev@parsec.cloud) with the subject line "Parsec project contributor assignment agreement"
 
 **You only need to do this once - all future contributions are covered!**
 
