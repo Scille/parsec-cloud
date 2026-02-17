@@ -4,6 +4,8 @@
 {%- macro render_type(t) %}
 {%- if t.kind == "ref" -%}
 {{ render_type(t.elem) }}
+{%- elif t.kind == "box" -%}
+{{ render_type(t.elem) }}
 {%- elif t.kind == "optional" -%}
 {{ render_type(t.elem) }} | null
 {%- elif t.kind == "result" -%}
