@@ -120,7 +120,10 @@
             @update-clicked="changeAuthenticationMethod"
           />
         </div>
-        <choose-certificate ref="chooseCertificate" />
+        <certificate-selection
+          :purpose="CertificatePurpose.Encrypt"
+          @certificate-selected="certif = $event"
+        />
       </div>
 
       <div v-if="authentication === DevicePrimaryProtectionStrategyTag.OpenBao && serverConfig?.openbao && openBaoAuthAvailable">
@@ -159,19 +162,20 @@
 </template>
 
 <script setup lang="ts">
-import ChooseCertificate from '@/components/devices/ChooseCertificate.vue';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
 import SsoProviderCard from '@/components/devices/SsoProviderCard.vue';
+import CertificateSelection from '@/components/misc/CertificateSelection.vue';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
 import {
   AvailableDeviceTypeTag,
+  CertificatePurpose,
+  CertificateWithDetailsValid,
   DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
   OpenBaoAuthConfigTag,
   PrimaryProtectionStrategy,
   ServerConfig,
-  X509CertificateReference,
   constructSaveStrategy,
   isKeyringAvailable,
   isSmartcardAvailable,
@@ -185,7 +189,7 @@ import { computed, onMounted, ref, toRaw, useTemplateRef } from 'vue';
 const authentication = ref<DevicePrimaryProtectionStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);
 const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
-const chooseCertificateRef = useTemplateRef<InstanceType<typeof ChooseCertificate>>('chooseCertificate');
+const certif = ref<CertificateWithDetailsValid | undefined>(undefined);
 const openBaoClient = ref<undefined | OpenBaoClient>(undefined);
 const smartcardAvailable = ref(false);
 const querying = ref(false);
@@ -254,6 +258,7 @@ async function onMethodSelected(method: DevicePrimaryProtectionStrategyTag): Pro
 
 async function changeAuthenticationMethod(): Promise<void> {
   authentication.value = undefined;
+  certif.value = undefined;
   error.value = '';
 }
 
@@ -267,10 +272,8 @@ function getSaveStrategy(): DeviceSaveStrategy | undefined {
     }
     return constructSaveStrategy(PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()));
   } else if (authentication.value === DevicePrimaryProtectionStrategyTag.PKI) {
-    if (chooseCertificateRef.value && chooseCertificateRef.value.getCertificate()) {
-      return constructSaveStrategy(
-        PrimaryProtectionStrategy.useSmartcard(toRaw(chooseCertificateRef.value.getCertificate() as X509CertificateReference)),
-      );
+    if (certif.value) {
+      return constructSaveStrategy(PrimaryProtectionStrategy.useSmartcard(toRaw(certif.value.handle)));
     }
     return undefined;
   } else if (choosePasswordRef.value?.password) {
@@ -286,8 +289,8 @@ async function areFieldsCorrect(): Promise<boolean> {
     return await choosePasswordRef.value.areFieldsCorrect();
   } else if (authentication.value === DevicePrimaryProtectionStrategyTag.OpenBao && openBaoClient.value !== undefined) {
     return true;
-  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.PKI && chooseCertificateRef.value) {
-    return chooseCertificateRef.value.getCertificate() !== undefined;
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.PKI) {
+    return certif.value !== undefined;
   }
   return false;
 }
@@ -341,6 +344,12 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
     color: var(--parsec-color-light-primary-700);
     margin-bottom: 1rem;
     display: block;
+  }
+
+  .radio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   // eslint-disable-next-line vue-scoped-css/no-unused-selector
