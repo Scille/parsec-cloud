@@ -3,7 +3,10 @@
 use std::{path::Path, sync::Arc};
 
 use super::utils::{MockedAccountVaultOperations, MockedOpenBaoOperations};
-use crate::{load_available_device, load_device, save_device, AvailableDevice, DeviceSaveStrategy};
+use crate::{
+    load_available_device, load_device, save_device, AvailableDevice, AvailableDeviceType,
+    DeviceAccessStrategy, DeviceSaveStrategy,
+};
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
@@ -15,7 +18,7 @@ use libparsec_types::prelude::*;
 #[case("openbao")]
 // TODO #11269
 // #[cfg_attr(target_os = "windows", case("pki"))]
-async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
+async fn save_load(#[case] kind: &str, #[values(false, true)] with_totp: bool, tmp_path: TmpPath) {
     use crate::tests::utils::key_present_in_system;
 
     let key_file = tmp_path.join("devices/keyring_file.keys");
@@ -38,6 +41,33 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
         None,
     );
 
+    macro_rules! wrap_if_with_totp {
+        ($access_strategy: expr, $save_strategy: expr, $expected_available_device:expr) => {
+            if with_totp {
+                let totp_opaque_key_id =
+                    TOTPOpaqueKeyID::from_hex("8fdb73524fdd495194e877a5fafbe0a1").unwrap();
+                let totp_opaque_key = SecretKey::generate();
+                let access_strategy = DeviceAccessStrategy::TOTP {
+                    totp_opaque_key: totp_opaque_key.clone(),
+                    next: Box::new($access_strategy),
+                };
+                let save_strategy = DeviceSaveStrategy::TOTP {
+                    totp_opaque_key_id,
+                    totp_opaque_key: totp_opaque_key.clone(),
+                    next: Box::new($save_strategy),
+                };
+                let mut expected_available_device = $expected_available_device;
+                expected_available_device.ty = AvailableDeviceType::TOTP {
+                    totp_opaque_key_id,
+                    next: Box::new(expected_available_device.ty),
+                };
+                (access_strategy, save_strategy, expected_available_device)
+            } else {
+                ($access_strategy, $save_strategy, $expected_available_device)
+            }
+        };
+    }
+
     let (access_strategy, save_strategy, expected_available_device) = match kind {
         "keyring" => {
             let save_strategy = DeviceSaveStrategy::Keyring;
@@ -54,7 +84,7 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 device_label: device.device_label.clone(),
                 ty: save_strategy.ty(),
             };
-            (access_strategy, save_strategy, expected_available_device)
+            wrap_if_with_totp!(access_strategy, save_strategy, expected_available_device)
         }
 
         "password" => {
@@ -74,7 +104,7 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 device_label: device.device_label.clone(),
                 ty: save_strategy.ty(),
             };
-            (access_strategy, save_strategy, expected_available_device)
+            wrap_if_with_totp!(access_strategy, save_strategy, expected_available_device)
         }
 
         "account_vault" => {
@@ -96,7 +126,7 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 device_label: device.device_label.clone(),
                 ty: save_strategy.ty(),
             };
-            (access_strategy, save_strategy, expected_available_device)
+            wrap_if_with_totp!(access_strategy, save_strategy, expected_available_device)
         }
 
         "openbao" => {
@@ -118,7 +148,7 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 device_label: device.device_label.clone(),
                 ty: save_strategy.ty(),
             };
-            (access_strategy, save_strategy, expected_available_device)
+            wrap_if_with_totp!(access_strategy, save_strategy, expected_available_device)
         }
 
         "pki" => todo!(),

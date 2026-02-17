@@ -217,6 +217,11 @@ mod strategy {
             openbao_auth_token: String,
             openbao_preferred_auth_id: String,
         },
+        TOTP {
+            totp_opaque_key_id: TOTPOpaqueKeyID,
+            totp_opaque_key: SecretKey,
+            next: Box<DeviceSaveStrategy>,
+        },
     }
 
     impl DeviceSaveStrategy {
@@ -275,6 +280,18 @@ mod strategy {
                         }),
                     }
                 }
+                DeviceSaveStrategy::TOTP {
+                    totp_opaque_key_id,
+                    totp_opaque_key,
+                    next,
+                } => {
+                    let next = Box::new(next.convert_with_side_effects()?);
+                    libparsec_platform_device_loader::DeviceSaveStrategy::TOTP {
+                        totp_opaque_key_id,
+                        totp_opaque_key,
+                        next,
+                    }
+                }
             })
         }
     }
@@ -307,6 +324,10 @@ mod strategy {
             openbao_transit_mount_path: String,
             openbao_entity_id: String,
             openbao_auth_token: String,
+        },
+        TOTP {
+            totp_opaque_key: SecretKey,
+            next: Box<DeviceAccessStrategy>,
         },
     }
 
@@ -366,6 +387,16 @@ mod strategy {
                     libparsec_platform_device_loader::DeviceAccessStrategy::OpenBao {
                         key_file,
                         operations: Arc::new(OpenBaoDeviceAccessOperations { cmds }),
+                    }
+                }
+                DeviceAccessStrategy::TOTP {
+                    totp_opaque_key,
+                    next,
+                } => {
+                    let next = Box::new(next.convert_with_side_effects()?);
+                    libparsec_platform_device_loader::DeviceAccessStrategy::TOTP {
+                        totp_opaque_key,
+                        next,
                     }
                 }
             })

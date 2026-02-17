@@ -281,6 +281,16 @@ pub async fn load_and_unlock_device(
                 device.ty,
             ));
         }
+
+        AvailableDeviceType::TOTP { .. } => {
+            // In theory we should support this authentication method here,
+            // however:
+            // - It is cumbersome since it requires a TOTP challenge involving the server.
+            // - In practice it is a niche usage that will most likely only be used in the GUI.
+            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
+                device.ty,
+            ));
+        }
     };
 
     let device = libparsec::load_device(config_dir, &access_strategy).await?;

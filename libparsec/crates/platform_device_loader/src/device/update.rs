@@ -22,6 +22,8 @@ pub enum UpdateDeviceError {
     InvalidData,
     #[error("Failed to decrypt file content")]
     DecryptionFailed,
+    #[error("Decryption failed with the key obtained from TOTP challenge")]
+    TOTPDecryptionFailed,
     /// Note only a subset of load/save strategies requires server access to
     /// fetch/upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -113,7 +115,7 @@ pub async fn update_device_change_authentication(
     let file_content = load_file(current_key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
-    let ciphertext_key = load_ciphertext_key(current_access, &device_file)
+    let keys = load_ciphertext_key(current_access, &device_file)
         .await
         .map_err(|err| match err {
             LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
@@ -126,8 +128,9 @@ pub async fn update_device_change_authentication(
                 UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
             }
         })?;
-    let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
+    let device = decrypt_device_file(&device_file, &keys).map_err(|err| match err {
         DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
+        DecryptDeviceFileError::TOTPDecrypt(_) => UpdateDeviceError::TOTPDecryptionFailed,
         DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
     })?;
 
@@ -182,25 +185,24 @@ pub async fn update_device_overwrite_server_addr(
     let file_content = load_file(key_file).await?;
     let device_file =
         DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
-    let ciphertext_key =
-        load_ciphertext_key(strategy, &device_file)
-            .await
-            .map_err(|err| match err {
-                LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
-                LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
-                LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
-                LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
-                    UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
-                }
-                LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
-                    UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
-                }
-            })?;
-    let mut device =
-        decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
-            DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
-            DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
+    let keys = load_ciphertext_key(strategy, &device_file)
+        .await
+        .map_err(|err| match err {
+            LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
+            LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
+            LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
+            }
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
+            }
         })?;
+    let mut device = decrypt_device_file(&device_file, &keys).map_err(|err| match err {
+        DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
+        DecryptDeviceFileError::TOTPDecrypt(_) => UpdateDeviceError::TOTPDecryptionFailed,
+        DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
+    })?;
 
     let old_server_addr: ParsecAddr = device.organization_addr.clone().into();
     device.organization_addr = ParsecOrganizationAddr::new(
