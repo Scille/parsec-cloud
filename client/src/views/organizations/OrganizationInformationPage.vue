@@ -223,10 +223,8 @@ onUnmounted(() => {
     display: flex;
     gap: 2rem;
     height: fit-content;
-
-    @include ms.responsive-breakpoint('xl') {
-      flex-wrap: wrap;
-    }
+    max-width: 80rem;
+    flex-wrap: wrap;
 
     @include ms.responsive-breakpoint('sm') {
       width: 100%;

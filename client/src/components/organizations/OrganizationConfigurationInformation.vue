@@ -38,6 +38,22 @@
             {{ orgInfo.hasUserLimit ? orgInfo.userLimit : $msTranslate('OrganizationPage.configuration.unlimited') }}
           </div>
         </div>
+        <!-- MFA requirement -->
+        <div class="info-list-item">
+          <ion-label class="info-list-item__title body">
+            {{ $msTranslate('OrganizationPage.configuration.mfaRequired') }}
+          </ion-label>
+          <div
+            class="info-list-item__value cell-title"
+            :class="orgInfo.mfaRequired ? 'success' : 'warning'"
+          >
+            {{
+              orgInfo.mfaRequired
+                ? $msTranslate('OrganizationPage.configuration.allowed')
+                : $msTranslate('OrganizationPage.configuration.forbidden')
+            }}
+          </div>
+        </div>
         <!-- Server addr -->
         <div class="info-list-item server-address">
           <ion-text class="info-list-item__title server-address__title body">
@@ -115,7 +131,7 @@ async function copyAddress(address: string): Promise<void> {
   gap: 1rem;
   width: 100%;
   max-width: 30rem;
-  border-radius: var(--parsec-radius-12);
+  border-radius: var(--parsec-radius-18);
   height: fit-content;
   box-shadow: var(--parsec-shadow-input);
   padding: 1.5rem;
