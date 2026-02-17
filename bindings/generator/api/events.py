@@ -73,6 +73,9 @@ class ClientEvent(Variant):
         token: AccessToken
         status: InvitationStatus
 
+    class AsyncEnrollmentUpdated:
+        pass
+
     class GreetingAttemptReady:
         token: AccessToken
         greeting_attempt: GreetingAttemptID
