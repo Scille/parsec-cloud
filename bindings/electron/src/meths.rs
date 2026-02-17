@@ -7192,6 +7192,9 @@ fn variant_client_event_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ClientEvent> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
+        "ClientEventAsyncEnrollmentUpdated" => {
+            Ok(libparsec::ClientEvent::AsyncEnrollmentUpdated {})
+        }
         "ClientEventClientErrorResponse" => {
             let error_type = {
                 let js_val: Handle<JsString> = obj.get(cx, "errorType")?;
@@ -7686,6 +7689,10 @@ fn variant_client_event_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
+        libparsec::ClientEvent::AsyncEnrollmentUpdated { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventAsyncEnrollmentUpdated").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientEvent::ClientErrorResponse { error_type, .. } => {
             let js_tag = JsString::try_new(cx, "ClientEventClientErrorResponse").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;

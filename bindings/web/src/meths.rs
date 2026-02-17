@@ -7719,6 +7719,9 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
+        "ClientEventAsyncEnrollmentUpdated" => {
+            Ok(libparsec::ClientEvent::AsyncEnrollmentUpdated {})
+        }
         "ClientEventClientErrorResponse" => {
             let error_type = {
                 let js_val = Reflect::get(&obj, &"errorType".into())?;
@@ -8283,6 +8286,13 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
 fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        libparsec::ClientEvent::AsyncEnrollmentUpdated { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventAsyncEnrollmentUpdated".into(),
+            )?;
+        }
         libparsec::ClientEvent::ClientErrorResponse { error_type, .. } => {
             Reflect::set(
                 &js_obj,

@@ -1519,6 +1519,9 @@ export type ClientDeleteShamirRecoveryError =
 
 
 // ClientEvent
+export interface ClientEventAsyncEnrollmentUpdated {
+    tag: "ClientEventAsyncEnrollmentUpdated"
+}
 export interface ClientEventClientErrorResponse {
     tag: "ClientEventClientErrorResponse"
     error_type: string
@@ -1649,6 +1652,7 @@ export interface ClientEventWorkspacesSelfListChanged {
     tag: "ClientEventWorkspacesSelfListChanged"
 }
 export type ClientEvent =
+  | ClientEventAsyncEnrollmentUpdated
   | ClientEventClientErrorResponse
   | ClientEventClientStarted
   | ClientEventClientStopped
