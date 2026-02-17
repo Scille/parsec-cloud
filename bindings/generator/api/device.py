@@ -2,6 +2,7 @@
 
 from .addr import ParsecAddr
 from .common import (
+    Box,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -13,7 +14,9 @@ from .common import (
     Path,
     Ref,
     Result,
+    SecretKey,
     Structure,
+    TOTPOpaqueKeyID,
     UserID,
     Variant,
     VariantItemUnit,
@@ -36,10 +39,13 @@ class AvailableDeviceType(Variant):
         openbao_preferred_auth_id: str
         openbao_entity_id: str
 
+    class TOTP:
+        totp_opaque_key_id: TOTPOpaqueKeyID
+        next: Box["AvailableDeviceType"]
+
 
 class DeviceSaveStrategy(Variant):
-    class Keyring:
-        pass
+    Keyring = VariantItemUnit()
 
     class Password:
         password: Password
@@ -58,14 +64,19 @@ class DeviceSaveStrategy(Variant):
         openbao_auth_token: str
         openbao_preferred_auth_id: str
 
+    class TOTP:
+        totp_opaque_key_id: TOTPOpaqueKeyID
+        totp_opaque_key: SecretKey
+        next: Box["DeviceSaveStrategy"]
+
 
 class DeviceAccessStrategy(Variant):
     class Keyring:
         key_file: Path
 
     class Password:
-        password: Password
         key_file: Path
+        password: Password
 
     class PKI:
         key_file: Path
@@ -81,6 +92,10 @@ class DeviceAccessStrategy(Variant):
         openbao_transit_mount_path: str
         openbao_entity_id: str
         openbao_auth_token: str
+
+    class TOTP:
+        totp_opaque_key: SecretKey
+        next: Box["DeviceAccessStrategy"]
 
 
 class AvailableDevice(Structure):
@@ -143,6 +158,9 @@ class UpdateDeviceError(ErrorVariant):
         pass
 
     class InvalidData:
+        pass
+
+    class TOTPDecryptionFailed:
         pass
 
     class DecryptionFailed:

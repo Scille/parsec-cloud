@@ -144,6 +144,16 @@ pub enum DeviceSaveStrategy {
     OpenBao {
         operations: Arc<dyn OpenBaoDeviceSaveOperations>,
     },
+    /// TOTP consists of an opaque key stored server-side and only accessible
+    /// through a TOTP-challenge.
+    /// However this security cannot be used alone (otherwise the server would
+    /// be able to decrypt the device!), hence the `next` field to combine with
+    /// another layer of security.
+    TOTP {
+        totp_opaque_key_id: TOTPOpaqueKeyID,
+        totp_opaque_key: SecretKey,
+        next: Box<DeviceSaveStrategy>,
+    },
 }
 
 impl DeviceSaveStrategy {
@@ -162,12 +172,20 @@ impl DeviceSaveStrategy {
                 key_file,
                 operations: operations.to_access_operations(),
             },
+            DeviceSaveStrategy::TOTP {
+                totp_opaque_key,
+                next,
+                ..
+            } => DeviceAccessStrategy::TOTP {
+                totp_opaque_key,
+                next: Box::new(next.into_access(key_file)),
+            },
         }
     }
 
     pub fn ty(&self) -> AvailableDeviceType {
         match self {
-            Self::Keyring { .. } => AvailableDeviceType::Keyring,
+            Self::Keyring => AvailableDeviceType::Keyring,
             Self::Password { .. } => AvailableDeviceType::Password,
             Self::PKI {
                 certificate_ref, ..
@@ -175,9 +193,17 @@ impl DeviceSaveStrategy {
                 certificate_ref: certificate_ref.to_owned(),
             },
             Self::AccountVault { .. } => AvailableDeviceType::AccountVault,
-            Self::OpenBao { operations } => AvailableDeviceType::OpenBao {
+            Self::OpenBao { operations, .. } => AvailableDeviceType::OpenBao {
                 openbao_entity_id: operations.openbao_entity_id().to_owned(),
                 openbao_preferred_auth_id: operations.openbao_preferred_auth_id().to_owned(),
+            },
+            Self::TOTP {
+                totp_opaque_key_id,
+                next,
+                ..
+            } => AvailableDeviceType::TOTP {
+                totp_opaque_key_id: *totp_opaque_key_id,
+                next: Box::new(next.ty()),
             },
         }
     }
@@ -208,16 +234,26 @@ pub enum DeviceAccessStrategy {
         key_file: PathBuf,
         operations: Arc<dyn OpenBaoDeviceAccessOperations>,
     },
+    /// TOTP consists of an opaque key stored server-side and only accessible
+    /// through a TOTP-challenge.
+    /// However this security cannot be used alone (otherwise the server would
+    /// be able to decrypt the device!), hence the `next` field to combine with
+    /// another layer of security.
+    TOTP {
+        totp_opaque_key: SecretKey,
+        next: Box<DeviceAccessStrategy>,
+    },
 }
 
 impl DeviceAccessStrategy {
     pub fn key_file(&self) -> &Path {
         match self {
-            Self::Keyring { key_file } => key_file,
+            Self::Keyring { key_file, .. } => key_file,
             Self::Password { key_file, .. } => key_file,
             Self::PKI { key_file, .. } => key_file,
             Self::AccountVault { key_file, .. } => key_file,
             Self::OpenBao { key_file, .. } => key_file,
+            Self::TOTP { next, .. } => next.key_file(),
         }
     }
 
@@ -229,27 +265,28 @@ impl DeviceAccessStrategy {
         // to be updated).
         match self {
             DeviceAccessStrategy::Keyring { .. } => {
-                if matches!(extra_info, AvailableDeviceType::Keyring) {
+                if let AvailableDeviceType::Keyring = extra_info {
                     Some(DeviceSaveStrategy::Keyring)
                 } else {
                     None
                 }
             }
             DeviceAccessStrategy::Password { password, .. } => {
-                if matches!(extra_info, AvailableDeviceType::Password) {
+                if let AvailableDeviceType::Password = extra_info {
                     Some(DeviceSaveStrategy::Password { password })
                 } else {
                     None
                 }
             }
-            DeviceAccessStrategy::PKI { .. } => match extra_info {
-                AvailableDeviceType::PKI { certificate_ref } => {
+            DeviceAccessStrategy::PKI { .. } => {
+                if let AvailableDeviceType::PKI { certificate_ref } = extra_info {
                     Some(DeviceSaveStrategy::PKI { certificate_ref })
+                } else {
+                    None
                 }
-                _ => None,
-            },
+            }
             DeviceAccessStrategy::AccountVault { operations, .. } => {
-                if matches!(extra_info, AvailableDeviceType::AccountVault) {
+                if let AvailableDeviceType::AccountVault = extra_info {
                     Some(DeviceSaveStrategy::AccountVault { operations })
                 } else {
                     None
@@ -263,6 +300,23 @@ impl DeviceAccessStrategy {
                     Some(DeviceSaveStrategy::OpenBao {
                         operations: operations.to_save_operations(openbao_preferred_auth_id),
                     })
+                }
+                _ => None,
+            },
+            DeviceAccessStrategy::TOTP {
+                totp_opaque_key,
+                next,
+            } => match extra_info {
+                AvailableDeviceType::TOTP {
+                    totp_opaque_key_id,
+                    next: extra_info_next,
+                } => {
+                    next.into_save_strategy(*extra_info_next)
+                        .map(|next| DeviceSaveStrategy::TOTP {
+                            totp_opaque_key_id,
+                            totp_opaque_key,
+                            next: Box::new(next),
+                        })
                 }
                 _ => None,
             },
@@ -286,6 +340,15 @@ pub enum AvailableDeviceType {
     OpenBao {
         openbao_entity_id: String,
         openbao_preferred_auth_id: String,
+    },
+    /// TOTP consists of an opaque key stored server-side and only accessible
+    /// through a TOTP-challenge.
+    /// However this security cannot be used alone (otherwise the server would
+    /// be able to decrypt the device!), hence the `next` field to combine with
+    /// another layer of security.
+    TOTP {
+        totp_opaque_key_id: TOTPOpaqueKeyID,
+        next: Box<AvailableDeviceType>,
     },
 }
 

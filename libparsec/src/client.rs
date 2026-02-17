@@ -97,6 +97,10 @@ pub enum ClientStartError {
     LoadDeviceInvalidData,
     #[error("Cannot load device file: decryption failed")]
     LoadDeviceDecryptionFailed,
+    #[error(
+        "Cannot load device file: decryption failed with the key obtained from TOTP challenge"
+    )]
+    LoadDeviceTOTPDecryptionFailed,
     /// Client start is a fully offline operation, except for some device
     /// access strategies (e.g. account vault), where the ciphertext key
     /// protecting the device is itself encrypted by an opaque key that
@@ -129,6 +133,7 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
             LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
             LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
             LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
+            LoadDeviceError::TOTPDecryptionFailed => Self::LoadDeviceTOTPDecryptionFailed,
             LoadDeviceError::Internal(e) => Self::Internal(e),
             LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
                 Self::LoadDeviceRemoteOpaqueKeyFetchOffline { server, error }

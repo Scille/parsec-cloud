@@ -319,6 +319,63 @@ pub(crate) fn maybe_load_device(
                 .already_accessed_key_files
                 .lock()
                 .expect("Mutex is poisoned");
+
+            fn check_access_and_save_strategy_match(
+                access: &DeviceAccessStrategy,
+                c_save_strategy: &DeviceSaveStrategy,
+            ) -> bool {
+                match (access, c_save_strategy) {
+                    (
+                        DeviceAccessStrategy::Password { password: pwd, .. },
+                        DeviceSaveStrategy::Password { password: c_pwd },
+                    ) => c_pwd == pwd,
+                    (DeviceAccessStrategy::Keyring { .. }, DeviceSaveStrategy::Keyring) => true,
+                    (
+                        DeviceAccessStrategy::AccountVault { operations, .. },
+                        DeviceSaveStrategy::AccountVault {
+                            operations: c_operations,
+                        },
+                    ) => operations.account_email() == c_operations.account_email(),
+                    (
+                        DeviceAccessStrategy::OpenBao { operations, .. },
+                        DeviceSaveStrategy::OpenBao {
+                            operations: c_operations,
+                        },
+                    ) => operations.openbao_entity_id() == c_operations.openbao_entity_id(),
+                    (DeviceAccessStrategy::PKI { .. }, DeviceSaveStrategy::PKI { .. }) => true,
+                    (
+                        DeviceAccessStrategy::TOTP {
+                            totp_opaque_key,
+                            next,
+                        },
+                        DeviceSaveStrategy::TOTP {
+                            totp_opaque_key: c_totp_opaque_key,
+                            next: c_next,
+                            ..
+                        },
+                    ) => {
+                        c_totp_opaque_key == totp_opaque_key
+                            && check_access_and_save_strategy_match(next, c_next)
+                    }
+                    // Don't use a `_ => None` fallthrough match here to avoid
+                    // silent bug whenever a new variant is added :/
+                    (
+                        DeviceAccessStrategy::Password { .. }
+                        | DeviceAccessStrategy::PKI { .. }
+                        | DeviceAccessStrategy::Keyring { .. }
+                        | DeviceAccessStrategy::AccountVault { .. }
+                        | DeviceAccessStrategy::OpenBao { .. }
+                        | DeviceAccessStrategy::TOTP { .. },
+                        DeviceSaveStrategy::Password { .. }
+                        | DeviceSaveStrategy::PKI { .. }
+                        | DeviceSaveStrategy::Keyring
+                        | DeviceSaveStrategy::AccountVault { .. }
+                        | DeviceSaveStrategy::OpenBao { .. }
+                        | DeviceSaveStrategy::TOTP { .. },
+                    ) => false,
+                }
+            }
+
             let found =
                 cache
                     .available
@@ -327,63 +384,10 @@ pub(crate) fn maybe_load_device(
                         if access.key_file() != c_key_file {
                             return None;
                         }
-                        match (access, c_save_strategy) {
-                            (
-                                DeviceAccessStrategy::Password { password: pwd, .. },
-                                DeviceSaveStrategy::Password { password: c_pwd },
-                            ) => {
-                                if c_pwd == pwd {
-                                    Some(Ok(c_device.to_owned()))
-                                } else {
-                                    Some(Err(LoadDeviceError::DecryptionFailed))
-                                }
-                            }
-                            (DeviceAccessStrategy::Keyring { .. }, DeviceSaveStrategy::Keyring) => {
-                                Some(Ok(c_device.to_owned()))
-                            }
-                            (
-                                DeviceAccessStrategy::AccountVault { operations, .. },
-                                DeviceSaveStrategy::AccountVault {
-                                    operations: c_operations,
-                                },
-                            ) => {
-                                if operations.account_email() == c_operations.account_email() {
-                                    Some(Ok(c_device.to_owned()))
-                                } else {
-                                    Some(Err(LoadDeviceError::DecryptionFailed))
-                                }
-                            }
-                            (
-                                DeviceAccessStrategy::OpenBao { operations, .. },
-                                DeviceSaveStrategy::OpenBao {
-                                    operations: c_operations,
-                                },
-                            ) => {
-                                if operations.openbao_entity_id()
-                                    == c_operations.openbao_entity_id()
-                                {
-                                    Some(Ok(c_device.to_owned()))
-                                } else {
-                                    Some(Err(LoadDeviceError::DecryptionFailed))
-                                }
-                            }
-                            (DeviceAccessStrategy::PKI { .. }, DeviceSaveStrategy::PKI { .. }) => {
-                                Some(Ok(c_device.to_owned()))
-                            }
-                            // Don't use a `_ => None` fallthrough match here to avoid
-                            // silent bug whenever a new variant is added :/
-                            (
-                                DeviceAccessStrategy::Password { .. }
-                                | DeviceAccessStrategy::PKI { .. }
-                                | DeviceAccessStrategy::Keyring { .. }
-                                | DeviceAccessStrategy::AccountVault { .. }
-                                | DeviceAccessStrategy::OpenBao { .. },
-                                DeviceSaveStrategy::Password { .. }
-                                | DeviceSaveStrategy::PKI { .. }
-                                | DeviceSaveStrategy::Keyring
-                                | DeviceSaveStrategy::AccountVault { .. }
-                                | DeviceSaveStrategy::OpenBao { .. },
-                            ) => None,
+                        if check_access_and_save_strategy_match(access, c_save_strategy) {
+                            Some(Ok(c_device.to_owned()))
+                        } else {
+                            Some(Err(LoadDeviceError::DecryptionFailed))
                         }
                     });
 
@@ -396,14 +400,16 @@ pub(crate) fn maybe_load_device(
                 // 2) Try to load from the template
 
                 let decryption_success = match access {
-                    DeviceAccessStrategy::Keyring { .. } => true,
                     DeviceAccessStrategy::Password { password, .. } => {
                         let decryption_success = password.as_str() == KEY_FILE_PASSWORD;
                         decryption_success
                     }
-                    DeviceAccessStrategy::PKI { .. } => true,
-                    DeviceAccessStrategy::AccountVault { .. } => true,
-                    DeviceAccessStrategy::OpenBao { .. } => true,
+                    // We consider all device created from the template are password-protected.
+                    DeviceAccessStrategy::Keyring { .. } => false,
+                    DeviceAccessStrategy::PKI { .. } => false,
+                    DeviceAccessStrategy::AccountVault { .. } => false,
+                    DeviceAccessStrategy::OpenBao { .. } => false,
+                    DeviceAccessStrategy::TOTP { .. } => false,
                 };
                 // We don't try to resolve the path of `key_file` into an absolute one here !
                 // This is because in practice the path is always provided absolute given it
@@ -415,21 +421,10 @@ pub(crate) fn maybe_load_device(
                 }
                 // Save strategy contains more informations than access strategy, so we have
                 // to mock the missing stuff here.
-                let save_strategy = {
-                    let extra_info = match access {
-                        DeviceAccessStrategy::Keyring { .. } => AvailableDeviceType::Keyring,
-                        DeviceAccessStrategy::Password { .. } => AvailableDeviceType::Password,
-                        DeviceAccessStrategy::PKI { .. } => todo!(), // TODO #11269
-                        DeviceAccessStrategy::AccountVault { .. } => {
-                            AvailableDeviceType::AccountVault
-                        }
-                        DeviceAccessStrategy::OpenBao { .. } => todo!(),
-                    };
-                    access
-                        .clone()
-                        .into_save_strategy(extra_info)
-                        .expect("valid variant")
-                };
+                let save_strategy = access
+                    .clone()
+                    .into_save_strategy(AvailableDeviceType::Password)
+                    .expect("valid variant");
                 cache.available.push((
                     access.key_file().to_owned(),
                     save_strategy,
@@ -504,6 +499,9 @@ pub(crate) fn maybe_update_device(
                     LoadDeviceError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
                     LoadDeviceError::InvalidData => UpdateDeviceError::InvalidData,
                     LoadDeviceError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
+                    LoadDeviceError::TOTPDecryptionFailed => {
+                        UpdateDeviceError::TOTPDecryptionFailed
+                    }
                     LoadDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
                     LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
                         UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
