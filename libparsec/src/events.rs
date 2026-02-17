@@ -67,6 +67,8 @@ pub enum ClientEvent {
         status: InvitationStatus,
     },
 
+    AsyncEnrollmentUpdated,
+
     GreetingAttemptReady {
         token: AccessToken,
         greeting_attempt: GreetingAttemptID,
@@ -146,6 +148,8 @@ pub(crate) struct OnEventCallbackPlugged {
     _workspace_ops_inbound_sync_done:
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsInboundSyncDone>,
     _invitation_changed: EventBusConnectionLifetime<libparsec_client::EventInvitationChanged>,
+    _async_enrollment_updated:
+        EventBusConnectionLifetime<libparsec_client::EventAsyncEnrollmentUpdated>,
     _greeting_attempt_ready:
         EventBusConnectionLifetime<libparsec_client::EventGreetingAttemptReady>,
     _greeting_attempt_cancelled:
@@ -325,6 +329,12 @@ impl OnEventCallbackPlugged {
                         status: e.status,
                     },
                 );
+            })
+        };
+        let async_enrollment_updated = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |_: &libparsec_client::EventAsyncEnrollmentUpdated| {
+                (on_event_callback)(handle, ClientEvent::AsyncEnrollmentUpdated);
             })
         };
         let greeting_attempt_ready = {
@@ -515,6 +525,7 @@ impl OnEventCallbackPlugged {
             _workspace_ops_outbound_sync_done: workspace_ops_outbound_sync_done,
             _workspace_ops_inbound_sync_done: workspace_ops_inbound_sync_done,
             _invitation_changed: invitation_changed,
+            _async_enrollment_updated: async_enrollment_updated,
             _greeting_attempt_ready: greeting_attempt_ready,
             _greeting_attempt_cancelled: greeting_attempt_cancelled,
             _greeting_attempt_joined: greeting_attempt_joined,
