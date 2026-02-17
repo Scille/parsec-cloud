@@ -222,18 +222,18 @@
 </template>
 
 <script setup lang="ts">
+import PersonCheck from '@/assets/images/person-check.svg?raw';
+import PersonFreeze from '@/assets/images/person-freeze.svg?raw';
+import PersonRemove from '@/assets/images/person-remove.svg?raw';
+import ShieldCancel from '@/assets/images/shield-cancel.svg?raw';
 import { ClientInfo, listAsyncEnrollments, listUserInvitations, OrganizationInfo, UserProfile } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { InvitationView } from '@/views/invitations/types';
 import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { flower, idCard, link, mailUnread, personAdd, personCircle, shieldCheckmark } from 'ionicons/icons';
-import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
-import PersonCheck from '@/assets/images/person-check.svg?raw';
-import PersonFreeze from '@/assets/images/person-freeze.svg?raw';
-import PersonRemove from '@/assets/images/person-remove.svg?raw';
-import ShieldCancel from '@/assets/images/shield-cancel.svg?raw';
 import { MsImage, useWindowSize } from 'megashark-lib';
+import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 defineProps<{
   userInfo: ClientInfo;
