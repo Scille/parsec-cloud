@@ -266,11 +266,16 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 onMounted(async (): Promise<void> => {
-  eventCbId = await eventDistributor.value.registerCallback(Events.InvitationUpdated, async (event: Events, data?: EventData) => {
-    if (event === Events.InvitationUpdated && data) {
-      await refreshInvitationList();
-    }
-  });
+  eventCbId = await eventDistributor.value.registerCallback(
+    Events.InvitationUpdated | Events.AsyncEnrollmentUpdated,
+    async (event: Events, data?: EventData) => {
+      if (event === Events.InvitationUpdated && data) {
+        await refreshInvitationList();
+      } else if (event === Events.AsyncEnrollmentUpdated) {
+        await refreshAsyncEnrollmentRequestList();
+      }
+    },
+  );
   pkiAvailable.value = await isSmartcardAvailable();
   const configResult = await getCurrentServerConfig();
   if (configResult.ok) {

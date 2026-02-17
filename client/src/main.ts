@@ -143,6 +143,8 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
       case ClientEventTag.FrozenSelfUser:
         distributor.dispatchEvent(Events.ClientFrozen, undefined, { delay: 1000 });
         break;
+      case ClientEventTag.AsyncEnrollmentUpdated:
+        distributor.dispatchEvent(Events.AsyncEnrollmentUpdated);
       // Ignore this for now;
       case ClientEventTag.ServerConfigChanged:
         break;
