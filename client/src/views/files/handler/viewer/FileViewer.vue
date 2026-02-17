@@ -10,15 +10,7 @@
 <script setup lang="ts">
 import { DetectedFileType, FileContentType } from '@/common/fileTypes';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import {
-  AudioViewer,
-  DocumentViewer,
-  ImageViewer,
-  PdfViewer,
-  SpreadsheetViewer,
-  TextViewer,
-  VideoViewer,
-} from '@/views/files/handler/viewer';
+import { AudioViewer, ImageViewer, PdfViewer, VideoViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { inject, onMounted, onUnmounted, ref, Ref, shallowRef, type Component } from 'vue';
 
@@ -64,14 +56,8 @@ async function getComponent(fileInfo: DetectedFileType): Promise<Component | und
       return ImageViewer;
     case FileContentType.Video:
       return VideoViewer;
-    case FileContentType.Spreadsheet:
-      return SpreadsheetViewer;
     case FileContentType.Audio:
       return AudioViewer;
-    case FileContentType.Document:
-      return DocumentViewer;
-    case FileContentType.Text:
-      return TextViewer;
     case FileContentType.PdfDocument:
       return PdfViewer;
   }
