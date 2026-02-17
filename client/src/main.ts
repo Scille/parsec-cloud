@@ -48,6 +48,8 @@ enum AppState {
   Initializing = 'initializing',
 }
 
+(window as any).TESTING_PKI = true;
+
 async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent): Promise<void> {
   const injections = injectionProvider.getInjections(handle);
   // Event might fire a bit to fast, before we get a chance to create the injections for this handle

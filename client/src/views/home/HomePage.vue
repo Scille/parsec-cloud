@@ -12,6 +12,12 @@
             class="homepage-content"
             :class="{ 'login-fullscreen': state === HomePageState.Login }"
           >
+            <span
+              @click="openCertificateSelectionModal"
+              style="background-color: red"
+              >OPEN THE TEST MODAL</span
+            >
+
             <!-- topbar -->
             <home-page-header
               class="homepage-header"
@@ -89,6 +95,7 @@ import {
   claimDeviceLinkValidator,
   claimUserLinkValidator,
 } from '@/common/validators';
+import CertificateSelectionModal from '@/components/misc/CertificateSelectionModal.vue';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import {
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
@@ -304,6 +311,16 @@ async function openCreateOrJoin(event: Event): Promise<void> {
   } else if (result.data.action === HomePageAction.JoinOrganization) {
     await onJoinOrganizationClicked();
   }
+}
+
+async function openCertificateSelectionModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: CertificateSelectionModal,
+    cssClass: 'certificate-selection-modal',
+  });
+  await modal.present();
+  await modal.onWillDismiss();
+  await modal.dismiss();
 }
 
 async function refreshInvitationList(): Promise<void> {

@@ -378,6 +378,46 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
   },
 };
 
+export interface Certificate {
+  id: string;
+  name: string;
+  emails: Array<string>;
+  createdOn: DateTime;
+  expireOn: DateTime;
+  isExpired: () => boolean;
+}
+
+async function listCertificates(): Promise<Array<Certificate>> {
+  const certs = [
+    {
+      id: 'abcdef',
+      name: 'Gordon Freeman',
+      emails: ['gordon.freeman@blackmesa.nm', 'gordon.freeman@wanadoo.fr'],
+      createdOn: DateTime.fromISO('1998-11-19T08:00:00'),
+      expireOn: DateTime.fromISO('2056-12-31T10:30:00'),
+    },
+    {
+      id: 'ghijkl',
+      name: 'Eli Vance',
+      emails: ['eli.vance@blackmesa.nm'],
+      createdOn: DateTime.fromISO('1998-11-19T08:00:00'),
+      expireOn: DateTime.fromISO('2007-10-10T10:30:00'),
+    },
+    {
+      id: 'mnopqr',
+      name: 'Isaac Kleiner',
+      emails: ['isaac.kleiner@blackmesa.nm'],
+      createdOn: DateTime.fromISO('1998-11-19T08:00:00'),
+      expireOn: DateTime.fromISO('2032-08-08T11:45:00'),
+    },
+  ];
+
+  return certs.map((cert) => {
+    (cert as Certificate).isExpired = () => cert.expireOn < DateTime.utc();
+    return cert as Certificate;
+  });
+}
+
 async function getAsyncEnrollmentAddr(): Promise<Result<ParsecAsyncEnrollmentAddr, ClientGetAsyncEnrollmentAddrError>> {
   const handle = getConnectionHandle();
 
@@ -482,6 +522,7 @@ export {
   getOpenBaoEmails,
   isSmartcardAvailable,
   listAsyncEnrollments,
+  listCertificates,
   listJoinRequests,
   makeAcceptOpenBaoIdentityStrategy,
   makeAcceptPkiIdentityStrategy,

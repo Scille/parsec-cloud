@@ -59,7 +59,7 @@
         "file-type": "^21.3.0",
         "fs-extra": "^11.3.3",
         "luxon": "^3.5.0",
-        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#0a3fcd5c02e296c9ff8238fe1c222034decb7ad4",
+        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#8c979fa6c8a041b6996edc4ef7d5c7bb0d8e58cf",
         "monaco-editor": "^0.55.1",
         "native-file-system-adapter": "^3.0.1",
         "pdfjs-dist": "^5.4.624",
