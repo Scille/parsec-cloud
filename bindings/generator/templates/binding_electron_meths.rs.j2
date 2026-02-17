@@ -9,6 +9,8 @@
 {%- macro ts_type(type) -%}
 {%- if type.kind == "ref" -%}
 {{ ts_type(type.elem) }}
+{%- elif type.kind == "box" -%}
+{{ ts_type(type.elem) }}
 {%- elif type.kind == "dict" -%}
 {# JsMap is not available in neon bindings so we use its parent class... #}
 JsObject
@@ -68,6 +70,8 @@ JsString
 {%- macro render_downcasted_js_to_rs(js_val, type, mut_cx_ref="&mut cx") -%}
 {%- if type.kind == "ref" -%}
 {{ render_downcasted_js_to_rs(js_val, type.elem, mut_cx_ref) }}
+{%- elif type.kind == "box" -%}
+Box::new({{ render_downcasted_js_to_rs(js_val, type.elem, mut_cx_ref) }})
 {%- elif type.kind == "dict" -%}
 {
     {# `js_value` is a `JsMap` (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) typed as a `JsObject` #}
@@ -368,6 +372,8 @@ std::sync::Arc::new(
 {%- macro render_rs_to_js(rs_value, type, mut_cx_ref="&mut cx") -%}
 {%- if type.kind == "ref" -%}
 {{ render_rs_to_js(rs_value, type.elem, mut_cx_ref) }}
+{%- elif type.kind == "box" -%}
+{{ render_rs_to_js("*" + rs_value, type.elem, mut_cx_ref) }}
 {%- elif type.kind == "dict" -%}
 {
     {# TODO: neon bindings doesn't expose Map, so we need to rely on eval here ! #}
