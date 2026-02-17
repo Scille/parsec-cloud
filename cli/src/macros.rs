@@ -278,8 +278,8 @@ macro_rules! clap_parser_with_shared_opts_builder {
             )*
         }
     ) => {
-        $(#[$struct_attr])*
         #[derive(clap::Parser)]
+        $(#[$struct_attr])*
         $visibility struct $name {
             $(
                 $(#[$field_attr])*

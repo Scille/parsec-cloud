@@ -8,9 +8,7 @@ use libparsec_types::prelude::*;
 pub enum TOTPSetupStatus {
     /// TOTP setup is not yet set up: the TOTP secret should be displayed so that
     /// the end-user's authenticator app can be configured.
-    Unconfirmed {
-        base32_totp_secret: String,
-    },
+    Unconfirmed { base32_totp_secret: String },
     /// TOTP setup is done (i.e. the server had the confirmation the end-user
     /// is able to generate one-time passwords).
     /// Now the TOTP secret can no longer be obtained (unless a TOTP setup reset
