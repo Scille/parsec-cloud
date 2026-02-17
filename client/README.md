@@ -119,6 +119,8 @@ ionic cap add ios
 
 ## Variables
 
+### Environment variables
+
 | Name                                    | Type                      | Description                                                                             | Remark                                                                                                                  |
 | --------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `PARSEC_APP_DEV_BMS_CREDENTIALS`        | `<email>:<password>`      | Used as default login credentials for the BMS                                           | Only for development purposes! Avoid using `:` in your password as it will mess up the parsing.                         |
@@ -138,3 +140,24 @@ ionic cap add ios
 | `PARSEC_APP_ENABLE_CUSTOM_BRANDING`     | `boolean`                 | Enable the custom branding                                                              |                                                                                                                         |
 | `PARSEC_APP_ENABLE_EDITICS`             | `boolean`                 | Enable Parsec Editics poc                                                               |                                                                                                                         |
 | `PARSEC_APP_DEFAULT_CRYPTPAD_SERVER`    | `url`                     | Cryptpad server to use                                                                  |                                                                                                                         |
+
+### Testing variables
+
+Those variables are used when testing the app in Playwright. They will mostly be used to enable or disable or configure features (for example, we do not need to load Stripe for most tests). They can be toggled per test.
+
+| Name                             | Type                                              | Description                                                                                                    |
+| -------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `TESTING`                        | `boolean`                                         | Place the app in testing mode (reduce the logs, disable Sentry, does not setup the testbed automatically, ...) |
+| `TESTING_PKI`                    | `boolean`                                         | Use mocks for PKI                                                                                              |
+| `TESTING_DISABLE_STRIPE`         | `boolean`                                         | Disable Stripe                                                                                                 |
+| `TESTING_OPEN_BAO_SERVER`        | `url`                                             | Sets the OpenBao server to use                                                                                 |
+| `TESTING_ACCOUNT_AUTO_LOGIN`     | `boolean`                                         | Automatically logs into Parsec Account                                                                         |
+| `TESTING_ENABLE_ACCOUNT`         | `boolean`                                         | Enables Parsec Account                                                                                         |
+| `TESTING_ACCOUNT_SERVER`         | `url`                                             | Sets the Parsec Account server                                                                                 |
+| `TESTING_ENABLE_EDITICS`         | `boolean`                                         | Enables Cryptpad integration                                                                                   |
+| `TESTING_CRYPTPAD_SERVER`        | `url`                                             | Cryptpad server                                                                                                |
+| `TESTING_EDITICS_SAVE_TIMEOUT`   | `number`                                          | Timeout before Cryptpad auto-save                                                                              |
+| `TESTING_ENABLE_CUSTOM_BRANDING` | `boolean`                                         | Enabled custom branding                                                                                        |
+| `TESTING_MOCK_BROWSER`           | `Chrome\|Firefox\|Safari\|Edge\|\Brave\|Chromium` | Simulates navigating with a specific browser                                                                   |
+| `TESTING_SAAS_SERVERS`           | `server1;server2;server3;...`                     | Servers recognized as Saas                                                                                     |
+| `TESTING_TRIAL_SERVERS`          | `server1;server2;server3;...`                     | Servers recognized as trial                                                                                    |
