@@ -346,6 +346,7 @@ export interface Query {
   readOnly?: boolean;
   webRedirectUrl?: string;
   workspaceMenu?: WorkspaceMenu;
+  userFilter?: string;
 }
 
 export interface ClientAreaQuery {
