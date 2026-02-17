@@ -64,6 +64,19 @@ pub(crate) async fn save_device(
 ) -> Result<AvailableDevice, SaveDeviceError> {
     let protected_on = device.now();
     let server_addr: ParsecAddr = device.organization_addr.clone().into();
+    let available_device_type = strategy.ty();
+
+    // TOTP is always a secondary protection combined with a primary strategy
+    let (strategy, totp_opaque_key) = if let DeviceSaveStrategy::TOTP {
+        totp_opaque_key_id,
+        totp_opaque_key,
+        next,
+    } = strategy
+    {
+        (next.as_ref(), Some((*totp_opaque_key_id, totp_opaque_key)))
+    } else {
+        (strategy, None)
+    };
 
     match strategy {
         DeviceSaveStrategy::Keyring => {
@@ -73,6 +86,7 @@ pub(crate) async fn save_device(
                 &key_file,
                 &server_addr,
                 &protected_on,
+                totp_opaque_key,
             )
             .await?;
         }
@@ -84,7 +98,7 @@ pub(crate) async fn save_device(
                 .compute_secret_key(password)
                 .expect("Failed to derive key from password");
 
-            let ciphertext = encrypt_device(device, &key);
+            let ciphertext = encrypt_device(device, &key, totp_opaque_key.map(|(_, key)| key));
 
             let file_content = DeviceFile::Password(DeviceFilePassword {
                 created_on,
@@ -97,7 +111,7 @@ pub(crate) async fn save_device(
                 device_label: device.device_label.to_owned(),
                 algorithm: key_algo,
                 ciphertext,
-                totp_opaque_key_id: None,
+                totp_opaque_key_id: totp_opaque_key.map(|(id, _)| id),
             });
 
             let file_content = file_content.dump();
@@ -113,6 +127,7 @@ pub(crate) async fn save_device(
                 &server_addr,
                 &protected_on,
                 certificate_ref,
+                totp_opaque_key,
             )
             .await?;
         }
@@ -137,7 +152,8 @@ pub(crate) async fn save_device(
                     }
                 })?;
 
-            let ciphertext = encrypt_device(device, &ciphertext_key);
+            let ciphertext =
+                encrypt_device(device, &ciphertext_key, totp_opaque_key.map(|(_, key)| key));
 
             let file_content = DeviceFile::AccountVault(DeviceFileAccountVault {
                 created_on,
@@ -150,7 +166,7 @@ pub(crate) async fn save_device(
                 device_label: device.device_label.to_owned(),
                 ciphertext_key_id,
                 ciphertext,
-                totp_opaque_key_id: None,
+                totp_opaque_key_id: totp_opaque_key.map(|(id, _)| id),
             });
 
             let file_content = file_content.dump();
@@ -178,7 +194,8 @@ pub(crate) async fn save_device(
                     }
                 })?;
 
-            let ciphertext = encrypt_device(device, &ciphertext_key);
+            let ciphertext =
+                encrypt_device(device, &ciphertext_key, totp_opaque_key.map(|(_, key)| key));
 
             let file_content = DeviceFile::OpenBao(DeviceFileOpenBao {
                 created_on,
@@ -193,13 +210,14 @@ pub(crate) async fn save_device(
                 openbao_entity_id: operations.openbao_entity_id().to_owned(),
                 openbao_ciphertext_key_path,
                 ciphertext,
-                totp_opaque_key_id: None,
+                totp_opaque_key_id: totp_opaque_key.map(|(id, _)| id),
             });
 
             let file_content = file_content.dump();
 
             save_content(&key_file, &file_content).await?;
         }
+        DeviceSaveStrategy::TOTP { .. } => unreachable!(),
     }
 
     Ok(AvailableDevice {
@@ -212,6 +230,6 @@ pub(crate) async fn save_device(
         device_id: device.device_id,
         device_label: device.device_label.clone(),
         human_handle: device.human_handle.clone(),
-        ty: strategy.ty(),
+        ty: available_device_type,
     })
 }

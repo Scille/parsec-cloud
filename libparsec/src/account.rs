@@ -365,6 +365,10 @@ pub enum AccountCreateRegistrationDeviceError {
     LoadDeviceInvalidData,
     #[error("Cannot load device file: decryption failed")]
     LoadDeviceDecryptionFailed,
+    #[error(
+        "Cannot load device file: decryption failed with the key obtained from TOTP challenge"
+    )]
+    LoadDeviceTOTPDecryptionFailed,
     #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
@@ -406,6 +410,7 @@ impl From<LoadDeviceError> for AccountCreateRegistrationDeviceError {
             LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
             LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
             LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
+            LoadDeviceError::TOTPDecryptionFailed => Self::LoadDeviceTOTPDecryptionFailed,
             LoadDeviceError::Internal(e) => Self::Internal(e),
             LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
                 Self::RemoteOpaqueKeyFetchOffline { server, error }

@@ -77,6 +77,8 @@ pub enum LoadDeviceError {
     InvalidPath(anyhow::Error),
     #[error("Invalid data")]
     InvalidData,
+    #[error("Decryption failed with the key obtained from TOTP challenge")]
+    TOTPDecryptionFailed,
     #[error("Decryption failed")]
     DecryptionFailed,
     /// Note only a subset of load strategies requires server access to
@@ -128,21 +130,22 @@ pub async fn load_device(
 
     let file_content = load_file(access.key_file()).await?;
     let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
-    let ciphertext_key =
-        load_ciphertext_key(access, &device_file)
-            .await
-            .map_err(|err| match err {
-                LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
-                LoadCiphertextKeyError::DecryptionFailed => LoadDeviceError::DecryptionFailed,
-                LoadCiphertextKeyError::Internal(err) => LoadDeviceError::Internal(err),
-                LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
-                    LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error }
-                }
-                LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
-                    LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error }
-                }
-            })?;
-    let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
+    let keys = load_ciphertext_key(access, &device_file)
+        .await
+        .map_err(|err| match err {
+            LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
+            LoadCiphertextKeyError::DecryptionFailed => LoadDeviceError::DecryptionFailed,
+            LoadCiphertextKeyError::Internal(err) => LoadDeviceError::Internal(err),
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error }
+            }
+            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error }
+            }
+        })?;
+
+    let device = decrypt_device_file(&device_file, &keys).map_err(|err| match err {
+        DecryptDeviceFileError::TOTPDecrypt(_) => LoadDeviceError::TOTPDecryptionFailed,
         DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
         DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
     })?;
@@ -156,6 +159,20 @@ fn load_available_device_from_blob(
 ) -> Result<AvailableDevice, libparsec_types::RmpDecodeError> {
     let device_file = DeviceFile::load(blob)?;
 
+    macro_rules! handle_totp_wrapping {
+        ($device:expr, $base_protection:expr) => {{
+            let base_protection = $base_protection;
+            if let Some(totp_opaque_key_id) = $device.totp_opaque_key_id {
+                AvailableDeviceType::TOTP {
+                    totp_opaque_key_id,
+                    next: Box::new(base_protection),
+                }
+            } else {
+                base_protection
+            }
+        }};
+    }
+
     let (
         ty,
         created_on,
@@ -168,7 +185,7 @@ fn load_available_device_from_blob(
         device_label,
     ) = match device_file {
         DeviceFile::Keyring(device) => (
-            AvailableDeviceType::Keyring,
+            handle_totp_wrapping!(device, AvailableDeviceType::Keyring),
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -179,7 +196,7 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::Password(device) => (
-            AvailableDeviceType::Password,
+            handle_totp_wrapping!(device, AvailableDeviceType::Password),
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -190,7 +207,7 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::Recovery(device) => (
-            AvailableDeviceType::Recovery,
+            AvailableDeviceType::Recovery, // Recovery is never protected by TOTP
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -201,9 +218,12 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::PKI(device) => (
-            AvailableDeviceType::PKI {
-                certificate_ref: device.certificate_ref,
-            },
+            handle_totp_wrapping!(
+                device,
+                AvailableDeviceType::PKI {
+                    certificate_ref: device.certificate_ref,
+                }
+            ),
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -214,7 +234,7 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::AccountVault(device) => (
-            AvailableDeviceType::AccountVault,
+            handle_totp_wrapping!(device, AvailableDeviceType::AccountVault),
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -225,10 +245,13 @@ fn load_available_device_from_blob(
             device.device_label,
         ),
         DeviceFile::OpenBao(device) => (
-            AvailableDeviceType::OpenBao {
-                openbao_entity_id: device.openbao_entity_id,
-                openbao_preferred_auth_id: device.openbao_preferred_auth_id,
-            },
+            handle_totp_wrapping!(
+                device,
+                AvailableDeviceType::OpenBao {
+                    openbao_entity_id: device.openbao_entity_id,
+                    openbao_preferred_auth_id: device.openbao_preferred_auth_id,
+                }
+            ),
             device.created_on,
             device.protected_on,
             device.server_url,

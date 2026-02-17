@@ -99,8 +99,13 @@ async fn same_key_file(tmp_path: TmpPath) {
 async fn different_key_file(tmp_path: TmpPath) {
     let key_file = tmp_path.join("devices/alice@dev1.keys");
 
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
+    let save_strategy = DeviceSaveStrategy::TOTP {
+        totp_opaque_key_id: TOTPOpaqueKeyID::from_hex("f054cb94-b1f5-41e1-8fdb-80c9934b945a")
+            .unwrap(),
+        totp_opaque_key: SecretKey::generate(),
+        next: Box::new(DeviceSaveStrategy::Password {
+            password: "P@ssw0rd.".to_owned().into(),
+        }),
     };
     let access_strategy = save_strategy.clone().into_access(key_file.clone());
     let url = ParsecOrganizationAddr::from_any(
@@ -211,8 +216,13 @@ async fn testbed_different_key_file(env: &TestbedEnv) {
         password: "P@ssw0rd.".to_owned().into(),
     };
 
-    let new_save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
+    let new_save_strategy = DeviceSaveStrategy::TOTP {
+        totp_opaque_key_id: TOTPOpaqueKeyID::from_hex("f054cb94-b1f5-41e1-8fdb-80c9934b945a")
+            .unwrap(),
+        totp_opaque_key: SecretKey::generate(),
+        next: Box::new(DeviceSaveStrategy::Password {
+            password: "P@ssw0rd.".to_owned().into(),
+        }),
     };
     let new_access_strategy = new_save_strategy.clone().into_access(new_key_file.clone());
 

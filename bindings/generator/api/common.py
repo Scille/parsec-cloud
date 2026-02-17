@@ -77,6 +77,10 @@ class Ref[REFERENCED]:
     pass
 
 
+class Box[INNER]:
+    pass
+
+
 # A type that should be converted from/into string
 class StrBasedType:
     pass
