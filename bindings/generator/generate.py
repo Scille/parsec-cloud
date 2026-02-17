@@ -14,6 +14,7 @@ from types import ModuleType, UnionType
 from typing import (  # noqa: UP035
     Any,
     Dict,
+    ForwardRef,
     List,
     Set,
     Tuple,
@@ -31,6 +32,7 @@ BASEDIR = Path(__file__).parent
 META_TYPES = [
     "Result",
     "Ref",
+    "Box",
     "StrBasedType",
     "BytesBasedType",
     "F64BasedType",
@@ -55,6 +57,9 @@ class Result: ...
 
 
 class Ref: ...
+
+
+class Box: ...
 
 
 class StrBasedType(str): ...
@@ -200,6 +205,12 @@ class BaseTypeInUse:
         assert not isinstance(param, str), (
             f"Bad param `{param!r}`, passing type as string is not supported"
         )
+        if isinstance(param, ForwardRef):
+            assert isinstance(param.__forward_arg__, str), (
+                "Only forward reference on str is supported"
+            )
+            return LazyTypeInUse(param.__forward_arg__)
+
         origin = getattr(param, "__origin__", None)
         args = get_args(param)
         if origin is Union or isinstance(
@@ -238,6 +249,10 @@ class BaseTypeInUse:
         elif origin is Ref:
             assert len(args) == 1
             return RefTypeInUse(elem=BaseTypeInUse.parse(args[0]))
+
+        elif origin is Box:
+            assert len(args) == 1
+            return BoxTypeInUse(elem=BaseTypeInUse.parse(args[0]))
 
         elif param is OnClientEventCallback:
             spec = OpaqueSpec(kind="OnClientEventCallback")
@@ -322,6 +337,36 @@ class BaseTypeInUse:
                 f"Bad param `{param!r}`, not a scalar/variant/struct/enum (bases={param.__bases__})"
             )
             return typespec
+
+
+@dataclass
+class LazyTypeInUse(BaseTypeInUse):
+    """
+    Type needed to implement ForwardRef used in recursive structures
+    """
+
+    type_name: str
+    _resolved: BaseTypeInUse | None = None
+
+    def __repr__(self) -> str:
+        try:
+            resolved = repr(self.resolve())
+        except AssertionError:
+            resolved = "<not available yet>"
+        return f"LazyTypeInUse(type_name={self.type_name!r}, resolved={resolved})"
+
+    def resolve(self) -> BaseTypeInUse:
+        if self._resolved:
+            return self._resolved
+        for k, v in TYPES_DB.items():
+            if k.__name__ == self.type_name:
+                self._resolved = v
+                return v
+        else:
+            assert False, f"No type named `{self.type_name}` !"
+
+    def __getattr__(self, name):
+        return getattr(self.resolve(), name)
 
 
 @dataclass
@@ -418,6 +463,12 @@ class ResultTypeInUse(BaseTypeInUse):
 @dataclass
 class RefTypeInUse(BaseTypeInUse):
     kind = "ref"
+    elem: BaseTypeInUse
+
+
+@dataclass
+class BoxTypeInUse(BaseTypeInUse):
+    kind = "box"
     elem: BaseTypeInUse
 
 
