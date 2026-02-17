@@ -191,6 +191,7 @@ const joinRequests = ref<Array<AsyncEnrollmentRequest>>([]);
 const invitationList = ref<Array<AccountInvitation>>([]);
 const activeTab = ref(AccountSettingsTabs.Settings);
 let eventCallbackId!: string;
+let intervalId: any = null;
 
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
 const showBackButton = computed(() => {
@@ -264,6 +265,10 @@ onUnmounted(() => {
   routeWatchCancel();
   stateWatchCancel();
   injectionProvider.getDefault().eventDistributor.removeCallback(eventCallbackId);
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
 });
 
 async function openCreateOrJoin(event: Event): Promise<void> {
@@ -352,6 +357,20 @@ async function refreshJoinRequestsList(): Promise<void> {
     joinRequests.value = [];
   }
   queryInProgress.value = false;
+  // If we haven't set the interval yet and there's at least one join request or if
+  // the function returned an error, we set the interval to try again in a minute.
+  if (intervalId === null && (joinRequests.value.length > 0 || !result.ok)) {
+    window.electronAPI.log('info', 'Polling the join request list');
+    intervalId = setInterval(() => {
+      refreshJoinRequestsList();
+    }, 30000);
+  }
+  // If there's no requests, no point in polling
+  if (intervalId !== null && joinRequests.value.length === 0 && result.ok) {
+    window.electronAPI.log('info', 'Stopping the poll for the join request list');
+    clearInterval(intervalId);
+    intervalId = null;
+  }
 }
 
 async function handleQuery(): Promise<void> {

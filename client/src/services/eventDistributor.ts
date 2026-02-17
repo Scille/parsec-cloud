@@ -50,6 +50,7 @@ enum Events {
   EntrySyncProgress = 1 << 27,
   WorkspaceMountpointsSync = 1 << 28,
   OpenContextMenu = 1 << 28,
+  AsyncEnrollmentUpdated = 1 << 29,
 }
 
 interface WorkspaceCreatedData {
