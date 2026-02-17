@@ -16,13 +16,15 @@
           alt="Certificate Icon"
           class="async-authentication-modal-header__icon"
         />
-        <ion-text class="async-authentication-modal-header__title subtitles-lg">
-          {{ $msTranslate(texts.title) }}
-        </ion-text>
+        <div class="async-authentication-modal-header-text">
+          <ion-text class="async-authentication-modal-header-text__title title-h4">
+            {{ $msTranslate(texts.title) }}
+          </ion-text>
+          <ion-text class="async-authentication-modal-header-text__description body">
+            {{ $msTranslate(texts.message) }}
+          </ion-text>
+        </div>
       </div>
-      <ion-text class="async-authentication-modal-text body-lg">
-        {{ $msTranslate(texts.message) }}
-      </ion-text>
       <connect-sso
         class="async-authentication-modal-sso"
         :server-config="serverConfig"

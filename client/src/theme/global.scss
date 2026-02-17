@@ -171,22 +171,6 @@ svg {
   }
 }
 
-// hiding keyring option in web for the recovery device
-.recovery-content {
-  .web-authentication {
-    .radio-list {
-      display: none !important;
-    }
-
-    .choose-password {
-      padding: 0 !important;
-      border: none !important;
-      background: transparent !important;
-      box-shadow: none !important;
-    }
-  }
-}
-
 .homepage-scroll {
   overflow-y: auto;
   width: 100%;

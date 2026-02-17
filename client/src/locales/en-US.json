@@ -393,6 +393,14 @@
                     "next": "Continue",
                     "previous": "Previous",
                     "cancel": "Cancel"
+                },
+                "certificate": {
+                    "selectCertificate": "Select a certificate to join the organization",
+                    "noEmail": "No email linked.",
+                    "expired": "Expired",
+                    "serialNb": "Serial number: {serial}",
+                    "showExpired": "Show expired certificates",
+                    "noCertificates": "No certificates available"
                 }
             }
         }
@@ -1348,7 +1356,8 @@
                 "errors": {
                     "noCertificate": "No certificate was selected.",
                     "invalidCertificate": "The selected certificate is invalid. Please choose another one.",
-                    "globalError": "An error has occurred while selecting the certificate. Please try again."
+                    "globalError": "An error has occurred while selecting the certificate. Please try again.",
+                    "listCertificatesFailed": "Failed to list the certificates."
                 }
             },
             "sso": {
@@ -1904,8 +1913,9 @@
             },
             "pkiRequests": {
                 "modal": {
-                    "title": "A certificate is required to accept the request",
-                    "description": "A certificate is required to validate requests received by PKI. For security reasons, it must be provided each time the organization is reopened.",
+                    "title": "Select a certificate",
+                    "info": "A certificate is required to accept the PKI request",
+                    "description": "For security reasons, it must be provided each time the organization is reopened.",
                     "next": "Continue",
                     "cancel": "Cancel",
                     "setRootCertificate": "Set your certificate",

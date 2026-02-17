@@ -392,6 +392,14 @@
                     "next": "Continuer",
                     "previous": "Précédent",
                     "cancel": "Annuler"
+                },
+                "certificate": {
+                    "selectCertificate": "Sélectionnez un certificat pour rejoindre l'organisation",
+                    "noEmail": "Aucun email lié.",
+                    "expired": "Expiré",
+                    "serialNb": "Numéro de série : {serial}",
+                    "showExpired": "Afficher les certificats expirés",
+                    "noCertificates": "Aucun certificat disponible"
                 }
             }
         }
@@ -1348,7 +1356,8 @@
                 "errors": {
                     "noCertificate": "Aucun certificat n'a été sélectionné.",
                     "invalidCertificate": "Le certificat sélectionné est invalide. Veuillez en choisir un autre.",
-                    "globalError": "Une erreur est survenue lors de la sélection du certificat. Veuillez réessayer."
+                    "globalError": "Une erreur est survenue lors de la sélection du certificat. Veuillez réessayer.",
+                    "listCertificatesFailed": "Impossible de lister les certificats."
                 }
             },
             "sso": {
@@ -1903,7 +1912,8 @@
             },
             "pkiRequests": {
                 "modal": {
-                    "title": "Un certificat est requis pour accepter la demande",
+                    "title": "Sélectionner un certificat",
+                    "info": "Un certificat est requis pour accepter la demande",
                     "description": "Un certificat est nécessaire pour valider les demandes à rejoindre l'organisation via PKI. Pour des raisons de sécurité, nous ne sauvegardons pas le certificat, il vous sera demandé à chaque connexion à votre organisation.",
                     "next": "Continuer",
                     "cancel": "Annuler",
