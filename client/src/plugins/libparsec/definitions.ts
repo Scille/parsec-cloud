@@ -1748,6 +1748,7 @@ export type ClientDeleteShamirRecoveryError =
 
 // ClientEvent
 export enum ClientEventTag {
+    AsyncEnrollmentUpdated = 'ClientEventAsyncEnrollmentUpdated',
     ClientErrorResponse = 'ClientEventClientErrorResponse',
     ClientStarted = 'ClientEventClientStarted',
     ClientStopped = 'ClientEventClientStopped',
@@ -1781,6 +1782,9 @@ export enum ClientEventTag {
     WorkspacesSelfListChanged = 'ClientEventWorkspacesSelfListChanged',
 }
 
+export interface ClientEventAsyncEnrollmentUpdated {
+    tag: ClientEventTag.AsyncEnrollmentUpdated
+}
 export interface ClientEventClientErrorResponse {
     tag: ClientEventTag.ClientErrorResponse
     errorType: string
@@ -1911,6 +1915,7 @@ export interface ClientEventWorkspacesSelfListChanged {
     tag: ClientEventTag.WorkspacesSelfListChanged
 }
 export type ClientEvent =
+  | ClientEventAsyncEnrollmentUpdated
   | ClientEventClientErrorResponse
   | ClientEventClientStarted
   | ClientEventClientStopped
