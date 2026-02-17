@@ -24,6 +24,7 @@ export {
   AvailablePendingAsyncEnrollmentIdentitySystemTag,
   BootstrapOrganizationErrorTag,
   CancelledGreetingAttemptReason,
+  CertificateWithDetailsTag,
   ClaimerRetrieveInfoErrorTag,
   ClaimFinalizeErrorTag,
   ClaimInProgressErrorTag,
@@ -57,6 +58,7 @@ export {
   GetServerConfigErrorTag,
   GreetInProgressErrorTag,
   ImportRecoveryDeviceErrorTag,
+  InvalidCertificateReasonTag,
   InvitationEmailSentStatus,
   InvitationStatus,
   InviteListInvitationCreatedByTag,
@@ -140,6 +142,7 @@ export type {
   AvailablePendingAsyncEnrollmentIdentitySystem,
   AvailablePendingAsyncEnrollmentIdentitySystemPKI,
   BootstrapOrganizationError,
+  CertificateWithDetails,
   ClaimerRetrieveInfoError,
   ClaimFinalizeError,
   ClaimInProgressError,
@@ -212,6 +215,7 @@ export type {
   InviteListItem,
   ListAvailableDeviceError,
   ListInvitationsError,
+  ListUserCertificatesError,
   MountpointToOsPathError,
   NewInvitationInfo,
   OpenBaoAuthConfig,
@@ -302,6 +306,7 @@ import type {
   HumanHandle,
   OrganizationID,
   AuthMethodInfo as ParsecAuthMethodInfo,
+  CertificateWithDetailsValid as ParsecCertificateWithDetailsValid,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
   ParsecInvitationAddrAndRedirectionURL,
@@ -477,12 +482,26 @@ interface AsyncEnrollmentRequest {
   organizationId: OrganizationID;
 }
 
+interface CertificateWithDetailsValid extends ParsecCertificateWithDetailsValid {
+  getName: () => string;
+  isExpired: () => boolean;
+  getSerial: () => string;
+}
+
+enum CertificatePurpose {
+  Sign = 'certificate-sign',
+  Encrypt = 'certificate-encrypt',
+  Both = 'certificate-sign-encrypt',
+}
+
 export {
   AccessToken,
   AccountHandle,
   AccountInvitation,
   AsyncEnrollmentRequest,
   AuthMethodInfo,
+  CertificatePurpose,
+  CertificateWithDetailsValid,
   ConnectionHandle,
   DateTime,
   EntryID,

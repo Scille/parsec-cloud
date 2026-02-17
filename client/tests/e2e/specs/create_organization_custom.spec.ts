@@ -755,13 +755,7 @@ msTest('Go through custom org creation process with smartcard auth', async ({ co
   const certBtn = authContainer.locator('.choose-certificate-button');
   await expect(certBtn).toBeHidden();
   await authRadio.nth(2).click();
-  await expect(certBtn).toBeVisible();
-  await expect(certBtn).toHaveText('Add a certificate');
-  await expect(authContainer.locator('.choose-certificate-selected__text')).toBeHidden();
-  await certBtn.click();
-  await expect(authContainer.locator('.choose-certificate-selected__text')).toBeVisible();
-  await expect(authContainer.locator('.choose-certificate-selected__text')).toHaveText('Certificate selected');
-  await expect(certBtn).toHaveText('Update');
+  await authContainer.locator('.certificate-card').nth(0).click();
 
   await expect(authNext).toNotHaveDisabledAttribute();
   await authNext.click();
