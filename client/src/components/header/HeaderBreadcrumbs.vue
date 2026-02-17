@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="header-breadcrumbs">
+  <div
+    class="header-breadcrumbs"
+    ref="breadcrumbContainer"
+  >
     <ion-breadcrumbs
       v-if="isLargeDisplay"
       class="breadcrumb-container"
@@ -12,7 +15,7 @@
     >
       <ion-breadcrumb
         v-for="path in pathNodes"
-        @click="navigateTo(path)"
+        @click="hasContextMenu && path.display === currentFolderName ? breadcrumbOptionClick(path, $event) : navigateTo(path)"
         :path="path"
         class="breadcrumb-element breadcrumb-normal"
         :class="{
@@ -30,17 +33,24 @@
         <div class="breadcrumb-text">
           {{ path.display ? path.display : $msTranslate(path.title) }}
         </div>
+        <ion-icon
+          v-if="hasContextMenu && currentFolderName === path.display"
+          :icon="caretDown"
+          class="option-icon"
+        />
       </ion-breadcrumb>
     </ion-breadcrumbs>
     <div
       v-if="isSmallDisplay && props.pathNodes.length > 0"
       class="breadcrumb-file-mobile"
-      :class="{ is_browsing: props.pathNodes.length > 1 }"
-      @click="props.pathNodes.length > 1 ? openPopover($event) : null"
+      :class="{ is_browsing: hasContextMenu ? props.pathNodes.length > 2 : props.pathNodes.length > 1 }"
+      @click="
+        hasContextMenu ? (props.pathNodes.length > 2 ? openPopover($event) : null) : props.pathNodes.length > 1 ? openPopover($event) : null
+      "
     >
       <ion-text class="breadcrumb-file-mobile__title title-h3">{{ currentFolderName }}</ion-text>
       <ion-icon
-        v-if="props.pathNodes.length > 1"
+        v-if="hasContextMenu ? props.pathNodes.length > 2 : props.pathNodes.length > 1"
         class="breadcrumb-file-mobile__icon"
         :icon="chevronDown"
       />
@@ -51,21 +61,32 @@
 <script setup lang="ts">
 import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
 import { RouterPathNode } from '@/components/header/utils';
-import { WorkspaceName } from '@/parsec';
+import { WorkspaceInfo, WorkspaceName, WorkspaceRole } from '@/parsec';
+import { EventDistributor } from '@/services/eventDistributor';
+import { InformationManager } from '@/services/informationManager';
+import { StorageManager } from '@/services/storageManager';
+import { WorkspaceAttributes } from '@/services/workspaceAttributes';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon, IonText, popoverController } from '@ionic/vue';
-import { chevronDown } from 'ionicons/icons';
+import { caretDown, chevronDown } from 'ionicons/icons';
 import { useWindowSize } from 'megashark-lib';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{
-    workspaceName: WorkspaceName;
+    workspaceName?: WorkspaceName;
     pathNodes: RouterPathNode[];
     itemsBeforeCollapse?: number;
     itemsAfterCollapse?: number;
     maxShown?: number;
     availableWidth?: number;
     showParentNode?: boolean;
+    // Optional props for context menu functionality
+    workspaceAttributes?: WorkspaceAttributes;
+    workspace?: WorkspaceInfo;
+    ownRole?: WorkspaceRole;
+    eventDistributor?: EventDistributor;
+    informationManager?: InformationManager;
+    storageManager?: StorageManager;
   }>(),
   {
     itemsBeforeCollapse: 2,
@@ -73,13 +94,27 @@ const props = withDefaults(
     maxShown: 3,
     availableWidth: 0,
     showParentNode: true,
+    workspaceName: undefined,
+    workspaceAttributes: undefined,
+    workspace: undefined,
+    ownRole: undefined,
+    eventDistributor: undefined,
+    informationManager: undefined,
+    storageManager: undefined,
   },
 );
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const breadcrumbRef = useTemplateRef<HTMLIonBreadcrumbElement>('breadcrumb');
+const breadcrumbContainerRef = useTemplateRef<HTMLDivElement>('breadcrumbContainer');
 const breadcrumbWidthProperty = ref('');
+const isContextMenuOpen = ref(false);
 let ignoreNextEvent = false;
+
+// Check if context menu is enabled
+const hasContextMenu = computed(() => {
+  return !!(props.workspaceAttributes && props.workspace && props.eventDistributor && props.informationManager && props.storageManager);
+});
 
 const watchWindowWidthCancel = watch(windowWidth, () => {
   setBreadcrumbWidth();
@@ -94,6 +129,8 @@ const watchNodeSizeCancel = watch(
 
 const emits = defineEmits<{
   (e: 'change', node: RouterPathNode): void;
+  (e: 'openWorkspaceContextMenu', event: Event): void;
+  (e: 'openFolderContextMenu', event: Event): void;
 }>();
 
 onMounted(() => {
@@ -105,22 +142,56 @@ onUnmounted(() => {
   watchNodeSizeCancel();
 });
 
+// Handle clicks outside when context menu is open
+watch(isContextMenuOpen, (isOpen) => {
+  if (!hasContextMenu.value) return;
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (breadcrumbContainerRef.value && !breadcrumbContainerRef.value.contains(event.target as Node)) {
+      isContextMenuOpen.value = false;
+    }
+  };
+
+  if (isOpen) {
+    document.addEventListener('click', handleClickOutside);
+  } else {
+    document.removeEventListener('click', handleClickOutside);
+  }
+});
+
 const currentFolderName = computed(() => {
   if (props.pathNodes.length === 0) {
     return '';
   }
 
   if (props.pathNodes.length === 1) {
-    return props.workspaceName;
+    if (hasContextMenu.value && props.workspace) {
+      return props.workspace.currentName;
+    }
+    return props.workspaceName || '';
   }
 
   const lastNode = props.pathNodes[props.pathNodes.length - 1];
-  return lastNode.display || props.workspaceName;
+  if (hasContextMenu.value && props.workspace) {
+    return lastNode.display || props.workspace.currentName;
+  }
+  return lastNode.display || props.workspaceName || '';
 });
+
+async function breadcrumbOptionClick(path: RouterPathNode, event: Event): Promise<void> {
+  if (!hasContextMenu.value) return;
+
+  isContextMenuOpen.value = true;
+  if (path.display === (props.workspace ? props.workspace.currentName : '')) {
+    emits('openWorkspaceContextMenu', event);
+  } else {
+    emits('openFolderContextMenu', event);
+  }
+}
 
 function setBreadcrumbWidth(): void {
   if (props.availableWidth > 0 && breadcrumbRef.value) {
-    const visibleNodes = Math.min(props.pathNodes.length, props.maxShown);
+    let visibleNodes = Math.min(props.pathNodes.length, props.maxShown);
     let breadcrumbWidth = props.availableWidth - 1;
 
     if (props.pathNodes.length > props.maxShown || (isSmallDisplay.value && props.pathNodes.length !== 1)) {
@@ -133,6 +204,13 @@ function setBreadcrumbWidth(): void {
         // Deduce separator(s) width if present, 1.25 rem / separator
         breadcrumbWidth -= props.pathNodes.length === 2 ? 1.25 : 2.5;
       }
+
+      if (hasContextMenu.value) {
+        // Reserve space for the context menu icon on the current breadcrumb
+        visibleNodes -= 1;
+        breadcrumbWidth -= 2.4;
+      }
+
       // Small display only has one element so this division is done only on large display
       breadcrumbWidth /= visibleNodes;
     }
@@ -182,6 +260,25 @@ function navigateTo(path: RouterPathNode): void {
 .breadcrumb-element {
   &::part(native) {
     max-width: calc(v-bind(breadcrumbWidthProperty));
+  }
+
+  .option-icon {
+    font-size: 1rem;
+    padding: 0.25rem;
+    color: var(--parsec-color-light-secondary-text);
+    margin-left: 0.125rem;
+    opacity: 0.3;
+    pointer-events: all;
+    flex-shrink: 0;
+    display: none;
+  }
+
+  &:hover:not(.breadcrumb-collapsed) {
+    .option-icon {
+      color: var(--parsec-color-light-primary-700);
+      opacity: 1;
+      display: block;
+    }
   }
 }
 </style>

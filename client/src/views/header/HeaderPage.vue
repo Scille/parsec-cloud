@@ -57,7 +57,7 @@
             class="topbar-left__breadcrumb"
             v-if="(currentRouteIsFileRoute() && isLargeDisplay) || (!currentRouteIs(Routes.Workspaces) && isSmallDisplay)"
           >
-            <header-breadcrumbs-with-context-menu
+            <header-breadcrumbs
               :path-nodes="fullPath"
               @change="onNodeSelected"
               @open-folder-context-menu="openFolderContextualMenu"
@@ -191,7 +191,7 @@
 <script setup lang="ts">
 import { pxToRem } from '@/common/utils';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
-import HeaderBreadcrumbsWithContextMenu from '@/components/header/HeaderBreadcrumbsWithContextMenu.vue';
+import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
 import { RouterPathNode } from '@/components/header/utils';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';

@@ -236,8 +236,7 @@ async function onOptionsClick(event: Event): Promise<void> {
     }
 
     &.disable-avatar {
-      filter: grayscale(100%);
-      opacity: 0.6;
+      opacity: 0;
     }
   }
 
@@ -251,8 +250,9 @@ async function onOptionsClick(event: Event): Promise<void> {
     }
 
     &__you {
-      color: var(--parsec-color-light-primary-600);
-      margin-left: 0.25rem;
+      color: var(--parsec-color-light-secondary-text);
+      font-weight: 700;
+      margin-left: 0.5rem;
     }
 
     &__email {
