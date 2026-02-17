@@ -4,7 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use super::utils::MockedAccountVaultOperations;
 use crate::{
@@ -58,7 +58,7 @@ async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind) {
 
 #[parsec_test]
 async fn bad_file_content(tmp_path: TmpPath) {
-    let key_file = tmp_path.join("devices/my_device.keys");
+    let key_file: PathBuf = tmp_path.join("devices/my_device.keys");
     crate::tests::utils::create_device_file(&key_file, b"dummy").await;
 
     let access = DeviceAccessStrategy::Password {
@@ -92,7 +92,7 @@ async fn invalid_salt_size(tmp_path: TmpPath) {
     .as_ref();
 
     // Store it in a path compatible with the legacy format
-    let key_file =
+    let key_file: PathBuf =
         tmp_path.join("devices/c17fc4c8bf#corp#alice@laptop/c17fc4c8bf#corp#alice@laptop.keys");
     crate::tests::utils::create_device_file(&key_file, content).await;
 
@@ -141,16 +141,27 @@ async fn testbed(env: &TestbedEnv) {
 
     // Ok (new device for an existing user)
 
+    let alice2_access = DeviceAccessStrategy::Password {
+        key_file: alice2_key_file.clone(),
+        password: "P@ssw0rd.".to_owned().into(),
+    };
+    let device = load_device(&env.discriminant_dir, &alice2_access)
+        .await
+        .unwrap();
+    p_assert_eq!(device.device_id, "alice@dev2".parse().unwrap());
+
+    // Bad access strategy (only password is supported by design)
+
     let alice2_access = DeviceAccessStrategy::AccountVault {
         key_file: alice2_key_file.clone(),
         operations: Arc::new(MockedAccountVaultOperations::new(
             alice.human_handle.email().to_owned(),
         )),
     };
-    let device = load_device(&env.discriminant_dir, &alice2_access)
-        .await
-        .unwrap();
-    p_assert_eq!(device.device_id, "alice@dev2".parse().unwrap());
+    p_assert_matches!(
+        load_device(&env.discriminant_dir, &alice2_access).await,
+        Err(LoadDeviceError::DecryptionFailed)
+    );
 
     // Bad password
 

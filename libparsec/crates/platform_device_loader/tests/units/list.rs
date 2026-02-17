@@ -4,7 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use crate::{
     archive_device, list_available_devices, load_available_device, load_device, remove_device,
@@ -376,13 +376,13 @@ async fn list_devices(tmp_path: TmpPath) {
 
     // 2. Store the raws in files
 
-    let keyring_path = tmp_path.join("devices/94a8691e9765497984d63aad3c7df9e0.keys");
+    let keyring_path: PathBuf = tmp_path.join("devices/94a8691e9765497984d63aad3c7df9e0.keys");
     // Device must have a .keys extension, but can be in nested directories with a random name
-    let password_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
-    let pki_path = tmp_path.join("devices/foo/bar/spam/whatever3.keys");
-    let recovery_path = tmp_path.join("devices/foo/whatever.keys");
-    let account_vault_path = tmp_path.join("devices/whatever.keys");
-    let openbao_path = tmp_path.join("devices/whatever2.keys");
+    let password_path: PathBuf = tmp_path.join("devices/foo/bar/spam/whatever.keys");
+    let pki_path: PathBuf = tmp_path.join("devices/foo/bar/spam/whatever3.keys");
+    let recovery_path: PathBuf = tmp_path.join("devices/foo/whatever.keys");
+    let account_vault_path: PathBuf = tmp_path.join("devices/whatever.keys");
+    let openbao_path: PathBuf = tmp_path.join("devices/whatever2.keys");
 
     for (path, raw) in [
         (&keyring_path, keyring_raw),
@@ -410,7 +410,11 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: keyring_expected.device_id,
             human_handle: keyring_expected.human_handle,
             device_label: keyring_expected.device_label,
-            ty: AvailableDeviceType::Keyring,
+            ty: AvailableDeviceType::TOTP {
+                totp_opaque_key_id: TOTPOpaqueKeyID::from_hex("8fdb73524fdd495194e877a5fafbe0a1")
+                    .unwrap(),
+                next: Box::new(AvailableDeviceType::Keyring),
+            },
         },
         AvailableDevice {
             key_file_path: password_path,

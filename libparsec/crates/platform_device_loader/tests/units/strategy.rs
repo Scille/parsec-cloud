@@ -34,28 +34,67 @@ fn available_device() {
 fn conversions() {
     let password: Password = "P@ssw0rd.".to_string().into();
     let key_file = PathBuf::from("/foo/bar");
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: password.clone(),
+    let totp_opaque_key_id =
+        TOTPOpaqueKeyID::from_hex("f054cb94-b1f5-41e1-8fdb-80c9934b945a").unwrap();
+    let totp_opaque_key = SecretKey::generate();
+    let save_strategy = DeviceSaveStrategy::TOTP {
+        totp_opaque_key_id,
+        totp_opaque_key: totp_opaque_key.clone(),
+        next: Box::new(DeviceSaveStrategy::Password {
+            password: password.clone(),
+        }),
     };
     let access_strategy = save_strategy.clone().into_access(key_file.clone());
 
-    p_assert_matches!(save_strategy.ty(), AvailableDeviceType::Password);
+    p_assert_matches!(save_strategy.ty(), AvailableDeviceType::TOTP {
+        totp_opaque_key_id: c_totp_id,
+        next,
+    } if c_totp_id == totp_opaque_key_id && matches!(*next, AvailableDeviceType::Password));
 
     p_assert_matches!(
         &access_strategy,
-        DeviceAccessStrategy::Password { key_file: c_kf, password: c_p }
-        if *c_kf == key_file && *c_p == password
+        DeviceAccessStrategy::TOTP {
+            totp_opaque_key: c_totp_key,
+            next,
+        } if *c_totp_key == totp_opaque_key && matches!(
+            next.as_ref(),
+            DeviceAccessStrategy::Password { key_file: c_kf, password: c_p }
+            if *c_kf == key_file && *c_p == password
+        )
     );
 
     p_assert_eq!(access_strategy.key_file(), key_file);
     p_assert_matches!(
-        access_strategy.clone().into_save_strategy(AvailableDeviceType::Password),
-        Some(DeviceSaveStrategy::Password { password: c_p })
-        if c_p == password
+        access_strategy.clone().into_save_strategy(AvailableDeviceType::TOTP {
+            totp_opaque_key_id,
+            next: Box::new(AvailableDeviceType::Password),
+        }),
+        Some(DeviceSaveStrategy::TOTP {
+            totp_opaque_key_id: c_totp_id,
+            totp_opaque_key: c_totp_key,
+            next,
+        })
+        if c_totp_id == totp_opaque_key_id && c_totp_key == totp_opaque_key && matches!(
+            next.as_ref(),
+            DeviceSaveStrategy::Password { password: c_p }
+            if *c_p == password
+        )
     );
 
+    // Bad type for extra info
     p_assert_matches!(
-        access_strategy.into_save_strategy(AvailableDeviceType::Keyring),
+        access_strategy
+            .clone()
+            .into_save_strategy(AvailableDeviceType::Password),
+        None,
+    );
+
+    // Good TOTP extra info wrapping bad next extra info
+    p_assert_matches!(
+        access_strategy.into_save_strategy(AvailableDeviceType::TOTP {
+            totp_opaque_key_id,
+            next: Box::new(AvailableDeviceType::Keyring),
+        }),
         None,
     );
 }

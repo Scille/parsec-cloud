@@ -115,26 +115,58 @@ pub fn is_keyring_available() -> bool {
     platform::is_keyring_available()
 }
 
-fn encrypt_device(device: &LocalDevice, key: &SecretKey) -> Bytes {
+fn encrypt_device(
+    device: &LocalDevice,
+    ciphertext_key: &SecretKey,
+    totp_opaque_key: Option<&SecretKey>,
+) -> Bytes {
     let cleartext = zeroize::Zeroizing::new(device.dump());
-    key.encrypt(&cleartext).into()
+    let ciphertext = ciphertext_key.encrypt(&cleartext);
+    if let Some(totp_opaque_key) = totp_opaque_key {
+        totp_opaque_key.encrypt(&ciphertext).into()
+    } else {
+        ciphertext.into()
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum DecryptDeviceFileError {
+    #[error("Failed to decrypt device file with the key obtained from TOTP challenge: {0}")]
+    TOTPDecrypt(CryptoError),
     #[error("Failed to decrypt device file: {0}")]
     Decrypt(CryptoError),
     #[error("Failed to load device: {0}")]
     Load(&'static str),
 }
 
+pub(crate) struct DeviceCiphertextKeys {
+    pub ciphertext_key: SecretKey,
+    /// This key has been obtained from the server after a TOTP challenge,
+    /// hence can never be used alone (otherwise the server would be able to
+    /// decrypt the device keys file !).
+    pub totp_opaque_key: Option<SecretKey>,
+}
+
 fn decrypt_device_file(
     device_file: &DeviceFile,
-    ciphertext_key: &SecretKey,
+    keys: &DeviceCiphertextKeys,
 ) -> Result<LocalDevice, DecryptDeviceFileError> {
-    let cleartext = ciphertext_key
-        .decrypt(device_file.ciphertext())
-        .map_err(DecryptDeviceFileError::Decrypt)
-        .map(zeroize::Zeroizing::new)?;
+    let ciphertext = device_file.ciphertext();
+    let cleartext = if let Some(totp_opaque_key) = &keys.totp_opaque_key {
+        let intermediate_ciphertext = totp_opaque_key
+            .decrypt(ciphertext)
+            .map_err(DecryptDeviceFileError::TOTPDecrypt)?;
+
+        keys.ciphertext_key
+            .decrypt(&intermediate_ciphertext)
+            .map_err(DecryptDeviceFileError::Decrypt)
+            .map(zeroize::Zeroizing::new)?
+    } else {
+        keys.ciphertext_key
+            .decrypt(ciphertext)
+            .map_err(DecryptDeviceFileError::Decrypt)
+            .map(zeroize::Zeroizing::new)?
+    };
+
     LocalDevice::load(&cleartext).map_err(DecryptDeviceFileError::Load)
 }

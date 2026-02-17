@@ -61,6 +61,9 @@ class ClientStartError(ErrorVariant):
     class LoadDeviceDecryptionFailed:
         pass
 
+    class LoadDeviceTOTPDecryptionFailed:
+        pass
+
     class LoadDeviceRemoteOpaqueKeyFetchOffline:
         pass
 

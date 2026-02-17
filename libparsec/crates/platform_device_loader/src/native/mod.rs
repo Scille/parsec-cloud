@@ -33,6 +33,7 @@ pub(crate) async fn save_device_keyring(
     key_file: &Path,
     server_addr: &ParsecAddr,
     protected_on: &DateTime,
+    totp_opaque_key: Option<(TOTPOpaqueKeyID, &SecretKey)>,
 ) -> Result<(), SaveDeviceError> {
     let keyring_user_path = crate::get_default_data_base_dir().join("keyring_user.txt");
 
@@ -56,7 +57,7 @@ pub(crate) async fn save_device_keyring(
         None => generate_keyring_user(&keyring_user_path).await?,
     };
 
-    let ciphertext = super::encrypt_device(device, &key);
+    let ciphertext = encrypt_device(device, &key, totp_opaque_key.map(|(_, key)| key));
 
     let file_content = DeviceFile::Keyring(DeviceFileKeyring {
         created_on: *created_on,
@@ -70,7 +71,7 @@ pub(crate) async fn save_device_keyring(
         keyring_service: KEYRING_SERVICE.into(),
         keyring_user,
         ciphertext,
-        totp_opaque_key_id: None,
+        totp_opaque_key_id: totp_opaque_key.map(|(id, _)| id),
     });
 
     let file_content = file_content.dump();
@@ -86,6 +87,7 @@ pub(crate) async fn save_device_pki(
     server_addr: &ParsecAddr,
     protected_on: &DateTime,
     certificate_ref: &X509CertificateReference,
+    totp_opaque_key: Option<(TOTPOpaqueKeyID, &SecretKey)>,
 ) -> Result<(), SaveDeviceError> {
     // Generate a random key
     let secret_key = SecretKey::generate();
@@ -105,7 +107,7 @@ pub(crate) async fn save_device_pki(
     );
 
     // Use the generated key to encrypt the device content
-    let ciphertext = encrypt_device(device, &secret_key);
+    let ciphertext = encrypt_device(device, &secret_key, totp_opaque_key.map(|(_, key)| key));
 
     // Save
     let file_content = DeviceFile::PKI(DeviceFilePKI {
@@ -121,7 +123,7 @@ pub(crate) async fn save_device_pki(
         encrypted_key,
         ciphertext,
         algorithm,
-        totp_opaque_key_id: None,
+        totp_opaque_key_id: totp_opaque_key.map(|(id, _)| id),
     });
 
     let file_content = file_content.dump();

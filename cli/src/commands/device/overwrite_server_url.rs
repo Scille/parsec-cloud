@@ -65,6 +65,14 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             // - In practice it is a niche usage that will most likely only be used in the GUI.
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
         }
+
+        AvailableDeviceType::TOTP { .. } => {
+            // In theory we should support this authentication method here,
+            // however:
+            // - It is cumbersome since it requires a TOTP challenge involving the server.
+            // - In practice it is a niche usage that will most likely only be used in the GUI.
+            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
+        }
     };
 
     let short_id = &device.device_id.hex()[..3];

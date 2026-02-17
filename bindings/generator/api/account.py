@@ -304,6 +304,9 @@ class AccountCreateRegistrationDeviceError(ErrorVariant):
     class LoadDeviceDecryptionFailed:
         pass
 
+    class LoadDeviceTOTPDecryptionFailed:
+        pass
+
     class BadVaultKeyAccess:
         pass
 
