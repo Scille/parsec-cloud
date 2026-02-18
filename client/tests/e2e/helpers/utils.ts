@@ -446,3 +446,18 @@ export async function sendUpdateEvent(page: MsPage): Promise<void> {
     window.electronAPI.getUpdateAvailability(true);
   });
 }
+
+type Events = 'ClientEventMustAcceptTos' | 'ClientEventIncompatibleServer' | 'ClientEventRevokedSelfUser';
+
+export async function sendEvent(page: MsPage, event: Events): Promise<void> {
+  const url = new URL(page.url());
+  const segments = url.pathname.split('/').filter((s) => s !== '');
+  const handle = Number(segments[0]);
+  expect(Number.isNaN(handle)).toBe(false);
+  await page.evaluate(
+    ([handle, event]) => {
+      (window as any).testingEventCallback(handle, { tag: event });
+    },
+    [handle, event],
+  );
+}
