@@ -263,7 +263,7 @@ async def test_conn_closed_on_bad_outcome(
             )
         )
 
-    await backend.organization.test_drop_organization(minimalorg.organization_id)
+    await backend.organization.erase(minimalorg.organization_id)
 
     with pytest.raises(StopAsyncIteration):
         async with minimalorg.alice.events_listen() as alice_sse:

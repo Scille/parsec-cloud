@@ -8,6 +8,7 @@ from typing import Any
 
 import click
 
+from parsec.cli.erase_organization import erase_organization
 from parsec.cli.export import export_realm
 from parsec.cli.export_email import export_email
 from parsec.cli.inspect import human_accesses
@@ -45,6 +46,7 @@ def cli() -> None:
     pass
 
 
+cli.add_command(erase_organization, "erase_organization")
 cli.add_command(run_cmd, "run")
 cli.add_command(migrate, "migrate")
 cli.add_command(export_realm, "export_realm")

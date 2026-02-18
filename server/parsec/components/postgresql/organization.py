@@ -24,6 +24,7 @@ from parsec.components.organization import (
     OrganizationCreateBadOutcome,
     OrganizationDump,
     OrganizationDumpTopics,
+    OrganizationEraseBadOutcome,
     OrganizationGetBadOutcome,
     OrganizationGetTosBadOutcome,
     OrganizationStats,
@@ -37,6 +38,7 @@ from parsec.components.organization import (
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization_bootstrap import organization_bootstrap
 from parsec.components.postgresql.organization_create import organization_create
+from parsec.components.postgresql.organization_erase import organization_erase
 from parsec.components.postgresql.organization_get_tos import organization_get_tos
 from parsec.components.postgresql.organization_stats import (
     organization_server_stats,
@@ -48,7 +50,6 @@ from parsec.components.postgresql.organization_test_dump_organizations import (
 from parsec.components.postgresql.organization_test_dump_topics import organization_test_dump_topics
 from parsec.components.postgresql.organization_update import organization_update
 from parsec.components.postgresql.test_queries import (
-    q_test_drop_organization,
     q_test_duplicate_organization,
 )
 from parsec.components.postgresql.user import PGUserComponent
@@ -343,6 +344,15 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         )
 
     @override
+    @transaction
+    async def erase(
+        self,
+        conn: AsyncpgConnection,
+        id: OrganizationID,
+    ) -> None | OrganizationEraseBadOutcome:
+        return await organization_erase(conn, id)
+
+    @override
     @no_transaction
     async def get_tos(
         self, conn: AsyncpgConnection, id: OrganizationID
@@ -362,11 +372,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self, conn: AsyncpgConnection, id: OrganizationID
     ) -> OrganizationDumpTopics:
         return await organization_test_dump_topics(conn, id)
-
-    @override
-    @transaction
-    async def test_drop_organization(self, conn: AsyncpgConnection, id: OrganizationID) -> None:
-        await conn.execute(*q_test_drop_organization(organization_id=id.str))
 
     @override
     @transaction
