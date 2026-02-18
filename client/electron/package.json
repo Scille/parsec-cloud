@@ -43,7 +43,7 @@
         "axios": "^1.8.2",
         "commander": "^13.1.0",
         "electron": "^40.2.1",
-        "electron-builder": "~25.1.8",
+        "electron-builder": "~26.7.0",
         "typescript": "~5.8.2"
     },
     "keywords": [
