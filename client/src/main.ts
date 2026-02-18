@@ -269,6 +269,11 @@ async function setupApp(): Promise<void> {
     throw Error('Cannot retrieve #app');
   }
 
+  // Used to send fake events in e2e tests
+  if (window.isTesting()) {
+    (window as any).testingEventCallback = parsecEventCallback;
+  }
+
   // nextStage() finally mounts the app using the configPath provided
   // Note this function cause a deadlock on `router.isReady` if it is awaited
   // from within `setupApp`, so instead it should be called in fire-and-forget

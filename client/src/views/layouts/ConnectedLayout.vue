@@ -299,7 +299,7 @@ async function showTOSModal(): Promise<void> {
   if (!result.ok) {
     return;
   }
-  if (result.value.perLocaleUrls.size === 0) {
+  if (!result.value.perLocaleUrls.size) {
     window.electronAPI.log('warn', 'Received empty Terms of Service dictionary');
     return;
   }

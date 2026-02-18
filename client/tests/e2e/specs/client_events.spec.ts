@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, expect, login, logout, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, expect, login, logout, mockLibParsec, msTest, sendEvent } from '@tests/e2e/helpers';
 
 msTest('Revoked event', async ({ usersPage }) => {
   msTest.setTimeout(60_000);
@@ -65,4 +65,51 @@ msTest('Revoked event', async ({ usersPage }) => {
   await expect(usersPage).toBeHomePage();
   await expect(modal).not.toBeVisible();
   await expect(cards).toHaveCount(1);
+});
+
+msTest('Test must accept TOS event', async ({ connected }) => {
+  await mockLibParsec(connected, [
+    {
+      name: 'clientGetTos',
+      result: {
+        ok: true,
+        value: { perLocaleUrls: [['en', 'http://invalid']], updatedOn: 1337 },
+      },
+      valueConverter: [['perLocaleUrls', 'toMap']],
+    },
+  ]);
+
+  const modal = connected.locator('.modal-tos');
+  await expect(modal).toBeHidden();
+  await sendEvent(connected, 'ClientEventMustAcceptTos');
+  await expect(modal).toBeVisible();
+  await expect(modal.locator('#next-button')).toBeTrulyDisabled();
+  await modal.locator('.ms-checkbox').check();
+  await expect(modal.locator('#next-button')).toBeTrulyEnabled();
+  await modal.locator('#next-button').click();
+  await expect(modal).toBeHidden();
+});
+
+msTest('Test incompatible server event', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventIncompatibleServer');
+  await connected.waitForTimeout(2000);
+  await expect(connected).toShowInformationModal(
+    'Your application and the server are not compatible. \
+Online features will not be available. \
+Please check that your application is up-to-date, \
+and if so, contact an administrator.',
+    'Error',
+  );
+});
+
+msTest('Test revoked self user event', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventRevokedSelfUser');
+  await connected.waitForTimeout(2000);
+  await expect(connected).toShowInformationModal(
+    "You have been revoked from this organization. \
+You will be logged out and won't be able to access it anymore. \
+If you think this is a mistake or have any issues, please contact an administrator.",
+    'Error',
+  );
+  await expect(connected).toBeHomePage();
 });
