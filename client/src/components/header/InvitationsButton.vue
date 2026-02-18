@@ -65,7 +65,7 @@ defineProps<{
 }>();
 
 onMounted(async () => {
-  eventCbId = await eventDistributor.value.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
+  eventCbId = await eventDistributor.value.registerCallback([Events.InvitationUpdated], async (event: Events, _data?: EventData) => {
     if (event === Events.InvitationUpdated) {
       await updateInvitations();
     }

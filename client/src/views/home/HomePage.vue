@@ -242,7 +242,7 @@ onMounted(async () => {
   eventCallbackId = await injectionProvider
     .getDefault()
     .eventDistributor.registerCallback(
-      Events.ClientStarted | Events.ClientStopped | Events.InvitationUpdated,
+      [Events.ClientStarted, Events.ClientStopped, Events.InvitationUpdated],
       async (event: Events, _data?: EventData): Promise<void> => {
         if (event === Events.InvitationUpdated) {
           refreshInvitationList();

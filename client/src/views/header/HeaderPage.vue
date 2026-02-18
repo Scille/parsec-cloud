@@ -385,7 +385,7 @@ onMounted(async () => {
   await updateRoute();
 
   eventDistributorCbId = await eventDistributor.value.registerCallback(
-    Events.WorkspaceCreated | Events.MenuAction | Events.WorkspaceRoleUpdate | Events.DeviceCreated | Events.WorkspaceUpdated,
+    [Events.WorkspaceCreated, Events.MenuAction, Events.WorkspaceRoleUpdate, Events.DeviceCreated, Events.WorkspaceUpdated],
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
         securityWarnings.value = await getSecurityWarnings();

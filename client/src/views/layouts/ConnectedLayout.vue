@@ -95,16 +95,18 @@ onMounted(async () => {
   eventDistributor.value = injections.eventDistributor;
 
   callbackId = await injections.eventDistributor.registerCallback(
-    Events.TOSAcceptRequired |
-      Events.LogoutRequested |
-      Events.EntryDeleted |
-      Events.EntryRenamed |
-      Events.OrganizationNotFound |
-      Events.IncompatibleServer |
-      Events.ExpiredOrganization |
-      Events.ClientRevoked |
-      Events.ClientFrozen |
+    [
+      Events.TOSAcceptRequired,
+      Events.LogoutRequested,
+      Events.EntryDeleted,
+      Events.EntryRenamed,
+      Events.OrganizationNotFound,
+      Events.IncompatibleServer,
+      Events.ExpiredOrganization,
+      Events.ClientRevoked,
+      Events.ClientFrozen,
       Events.UpdateAvailability,
+    ],
     eventCallback,
   );
 

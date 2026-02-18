@@ -600,13 +600,15 @@ const watchRouteCancel = watchRoute(async () => {
 
 onMounted(async () => {
   eventDistributorCbId = await eventDistributor.value.registerCallback(
-    Events.WorkspaceCreated |
-      Events.WorkspaceUpdated |
-      Events.ExpiredOrganization |
-      Events.MenuAction |
-      Events.WorkspaceRoleUpdate |
-      Events.DeviceCreated |
+    [
+      Events.WorkspaceCreated,
+      Events.WorkspaceUpdated,
+      Events.ExpiredOrganization,
+      Events.MenuAction,
+      Events.WorkspaceRoleUpdate,
+      Events.DeviceCreated,
       Events.WorkspaceMountpointsSync,
+    ],
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
         await loadAll();

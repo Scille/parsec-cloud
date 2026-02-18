@@ -123,7 +123,7 @@ onMounted(async () => {
 
   await loadEditor();
 
-  eventCbId = await eventDistributor.value.registerCallback(Events.Online | Events.Offline, async (event: Events) => {
+  eventCbId = await eventDistributor.value.registerCallback([Events.Online, Events.Offline], async (event: Events) => {
     if (event === Events.Offline) {
       window.electronAPI.log('warn', 'Network connection lost while editing');
       emits('onSaveStateChange', SaveState.Offline);

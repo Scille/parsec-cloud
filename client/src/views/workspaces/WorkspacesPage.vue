@@ -356,7 +356,7 @@ onMounted(async (): Promise<void> => {
   );
 
   eventCbId = await eventDistributor.value.registerCallback(
-    Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction | Events.WorkspaceMountpointsSync,
+    [Events.WorkspaceUpdated, Events.WorkspaceCreated, Events.MenuAction, Events.WorkspaceMountpointsSync],
     async (event: Events, data?: EventData) => {
       switch (event) {
         case Events.WorkspaceUpdated:

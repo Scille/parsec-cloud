@@ -154,7 +154,7 @@ const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let cbId: string | undefined = undefined;
 
 onMounted(async () => {
-  cbId = await eventDistributor.value.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
+  cbId = await eventDistributor.value.registerCallback([Events.InvitationUpdated], async (event: Events, _data?: EventData) => {
     if (event === Events.InvitationUpdated) {
       await refresh();
     }
