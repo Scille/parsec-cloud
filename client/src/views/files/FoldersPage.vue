@@ -662,13 +662,15 @@ onMounted(async () => {
   await defineShortcuts();
 
   eventCbId = await eventDistributor.value.registerCallback(
-    Events.EntryUpdated |
-      Events.WorkspaceUpdated |
-      Events.EntrySynced |
-      Events.EntrySyncStarted |
-      Events.MenuAction |
-      Events.EntrySyncProgress |
+    [
+      Events.EntryUpdated,
+      Events.WorkspaceUpdated,
+      Events.EntrySynced,
+      Events.EntrySyncStarted,
+      Events.MenuAction,
+      Events.EntrySyncProgress,
       Events.OpenContextMenu,
+    ],
     handleEvents,
   );
 

@@ -186,7 +186,7 @@ onMounted(async () => {
   hotkeys.add({ key: ',', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true }, openSettingsModal);
   hotkeys.add({ key: 'a', modifiers: Modifiers.Ctrl | Modifiers.Alt, platforms: Platforms.Desktop, disableIfModal: true }, openAboutModal);
 
-  eventCbId = await eventDistributor.registerCallback(Events.UpdateAvailability, async (event: Events, data?: EventData) => {
+  eventCbId = await eventDistributor.registerCallback([Events.UpdateAvailability], async (event: Events, data?: EventData) => {
     if (event === Events.UpdateAvailability) {
       updateAvailability.value = data as UpdateAvailabilityData;
       if (isUpdatePromptAllowed()) {

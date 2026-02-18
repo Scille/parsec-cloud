@@ -267,7 +267,7 @@ const routeWatchCancel = watchRoute(async () => {
 
 onMounted(async (): Promise<void> => {
   eventCbId = await eventDistributor.value.registerCallback(
-    Events.InvitationUpdated | Events.AsyncEnrollmentUpdated,
+    [Events.InvitationUpdated, Events.AsyncEnrollmentUpdated],
     async (event: Events, data?: EventData) => {
       if (event === Events.InvitationUpdated && data) {
         await refreshInvitationList();

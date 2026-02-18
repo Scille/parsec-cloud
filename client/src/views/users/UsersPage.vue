@@ -643,7 +643,7 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
 }
 
 onMounted(async (): Promise<void> => {
-  eventCbId = await eventDistributor.value.registerCallback(Events.InvitationUpdated | Events.OpenContextMenu, handleEvents);
+  eventCbId = await eventDistributor.value.registerCallback([Events.InvitationUpdated, Events.OpenContextMenu], handleEvents);
   await restoreComponentData();
 
   hotkeys = hotkeyManager.newHotkeys();

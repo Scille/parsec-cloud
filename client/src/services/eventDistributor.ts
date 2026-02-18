@@ -21,36 +21,36 @@ import { v4 as uuid4 } from 'uuid';
 export const EventDistributorKey = 'eventDistributor';
 
 enum Events {
-  WorkspaceCreated = 1 << 0,
-  Online = 1 << 2,
-  Offline = 1 << 3,
-  InvitationUpdated = 1 << 4,
-  IncompatibleServer = 1 << 5,
-  ClientRevoked = 1 << 6,
-  ExpiredOrganization = 1 << 7,
-  UpdateAvailability = 1 << 8,
-  WorkspaceUpdated = 1 << 9,
-  EntryUpdated = 1 << 10,
-  EntrySynced = 1 << 11,
-  TOSAcceptRequired = 1 << 12,
-  LogoutRequested = 1 << 13,
-  EntrySyncStarted = 1 << 14,
-  GreetingAttemptReady = 1 << 15,
-  GreetingAttemptCancelled = 1 << 16,
-  GreetingAttemptJoined = 1 << 17,
-  ClientStarted = 1 << 18,
-  ClientStopped = 1 << 19,
-  MenuAction = 1 << 20,
-  ClientFrozen = 1 << 21,
-  OrganizationNotFound = 1 << 22,
-  DeviceCreated = 1 << 23,
-  WorkspaceRoleUpdate = 1 << 24,
-  EntryRenamed = 1 << 25,
-  EntryDeleted = 1 << 26,
-  EntrySyncProgress = 1 << 27,
-  WorkspaceMountpointsSync = 1 << 28,
-  OpenContextMenu = 1 << 28,
-  AsyncEnrollmentUpdated = 1 << 29,
+  WorkspaceCreated = 'workspace-created',
+  Online = 'online',
+  Offline = 'offline',
+  InvitationUpdated = 'invitation-updated',
+  IncompatibleServer = 'incompatible-server',
+  ClientRevoked = 'client-revoked',
+  ExpiredOrganization = 'expired-organization',
+  UpdateAvailability = 'update-availability',
+  WorkspaceUpdated = 'workspace-updated',
+  EntryUpdated = 'entry-updated',
+  EntrySynced = 'entry-synced',
+  TOSAcceptRequired = 'tos-accept-required',
+  LogoutRequested = 'logout-requested',
+  EntrySyncStarted = 'entry-sync-started',
+  GreetingAttemptReady = 'greeting-attempt-ready',
+  GreetingAttemptCancelled = 'greeting-attempt-cancelled',
+  GreetingAttemptJoined = 'greeting-attempt-joined',
+  ClientStarted = 'client-started',
+  ClientStopped = 'client-stopped',
+  MenuAction = 'menu-action',
+  ClientFrozen = 'client-frozen',
+  OrganizationNotFound = 'organization-not-found',
+  DeviceCreated = 'device-created',
+  WorkspaceRoleUpdate = 'workspace-role-update',
+  EntryRenamed = 'entry-renamed',
+  EntryDeleted = 'entry-deleted',
+  EntrySyncProgress = 'entry-sync-progress',
+  WorkspaceMountpointsSync = 'workspace-mountpoints-sync',
+  OpenContextMenu = 'open-context-menu',
+  AsyncEnrollmentUpdated = 'async-enrollment-updated',
 }
 
 interface WorkspaceCreatedData {
@@ -156,7 +156,7 @@ type EventData =
 
 interface Callback {
   id: string;
-  events: number;
+  events: Array<Events>;
   funct: (event: Events, data?: EventData) => Promise<void>;
 }
 
@@ -166,7 +166,7 @@ class EventDistributor {
 
   constructor() {
     this.callbacks = [];
-    this.timeouts = new Map<number, Events>();
+    this.timeouts = new Map<Events, number>();
   }
 
   async dispatchEvent(
@@ -176,7 +176,7 @@ class EventDistributor {
   ): Promise<void> {
     async function sendToAll(callbacks: Array<Callback>, event: Events, data?: EventData): Promise<void> {
       for (const cb of callbacks) {
-        if (event & cb.events) {
+        if (cb.events.includes(event)) {
           cb.funct(event, data);
         }
       }
@@ -220,7 +220,7 @@ class EventDistributor {
     }
   }
 
-  async registerCallback(events: number, funct: (event: Events, data?: EventData) => Promise<void>): Promise<string> {
+  async registerCallback(events: Array<Events>, funct: (event: Events, data?: EventData) => Promise<void>): Promise<string> {
     const id = uuid4();
     this.callbacks.push({ id: id, events: events, funct: funct });
     return id;
