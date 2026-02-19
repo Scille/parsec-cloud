@@ -13,9 +13,12 @@ pub use libparsec_client::workspace::{
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
 
-use crate::handle::{
-    borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
-    FilterCloseHandle, Handle, HandleItem,
+use crate::{
+    handle::{
+        borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
+        FilterCloseHandle, Handle, HandleItem,
+    },
+    ParsecWorkspacePathAddrAndRedirectionURL,
 };
 
 fn borrow_workspace(workspace: Handle) -> anyhow::Result<Arc<libparsec_client::WorkspaceOps>> {
@@ -728,10 +731,11 @@ pub async fn workspace_fd_write_start_eof(
 pub async fn workspace_generate_path_addr(
     workspace: Handle,
     path: &FsPath,
-) -> Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError> {
+) -> Result<ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError> {
     let workspace = borrow_workspace(workspace)?;
 
-    workspace.generate_path_addr(path).await
+    let addr = workspace.generate_path_addr(path).await?;
+    Ok((addr.clone(), addr.to_http_redirection_url()))
 }
 
 pub async fn workspace_decrypt_path_addr(
