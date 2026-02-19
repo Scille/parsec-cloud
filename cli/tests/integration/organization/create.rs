@@ -20,5 +20,7 @@ async fn create_organization(tmp_path: TmpPath) {
         "--token",
         DEFAULT_ADMINISTRATION_TOKEN
     )
-    .stdout(predicates::str::contains("Organization bootstrap url:"));
+    .stdout(
+        predicates::str::is_match("Organization bootstrap URL: .*https?://.*/redirect/.*").unwrap(),
+    );
 }
