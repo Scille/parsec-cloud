@@ -119,3 +119,19 @@ async fn create_shared_recovery_default(tmp_path: TmpPath) {
         .unwrap();
     p.exp_eof().unwrap();
 }
+
+#[rstest::rstest]
+#[tokio::test]
+async fn create_shared_recovery_no_recipient(tmp_path: TmpPath) {
+    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+
+    // Alice is the only admin
+    crate::assert_cmd_failure!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "shared-recovery",
+        "create",
+        "--device",
+        &alice.device_id.hex()
+    )
+    .stderr(predicates::str::contains("No default recipient available"));
+}

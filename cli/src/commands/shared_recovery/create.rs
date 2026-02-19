@@ -62,13 +62,15 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
             .map(|human| *recipient_info.get(human).expect("human should be here"))
             .collect()
     } else {
-        users
+        let admins: Vec<_> = users
             .iter()
             .filter(|info| {
                 info.current_profile == UserProfile::Admin && info.id != client.user_id()
             })
             .map(|info| info.id)
-            .collect()
+            .collect();
+        anyhow::ensure!(!admins.is_empty(), "No default recipient available");
+        admins
     };
 
     let per_recipient_shares: HashMap<UserID, NonZeroU8> = if let Some(weights) = weights {
