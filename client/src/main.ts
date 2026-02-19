@@ -362,6 +362,10 @@ async function setupApp(): Promise<void> {
         }
       });
       window.electronAPI.receive('parsec-open-link', async (link: string) => {
+        // Don't try to handle empty links
+        if (!link || link === 'parsec3://') {
+          return;
+        }
         await handleParsecLink(link, getCurrentInformationManager(injectionProvider));
       });
       window.electronAPI.receive('parsec-open-path-failed', async (path: string, _error: string) => {
