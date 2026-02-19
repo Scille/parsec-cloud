@@ -157,8 +157,10 @@ async def test_ok(
     )
     assert response.status_code == 200, response.content
     body = response.json()
-    assert body == {"bootstrap_url": ANY}
-    bootstrap_token = ParsecOrganizationBootstrapAddr.from_url(body["bootstrap_url"]).token
+    assert body == {"bootstrap_url": ANY, "bootstrap_url_as_http_redirection": ANY}
+    addr = ParsecOrganizationBootstrapAddr.from_url(body["bootstrap_url"])
+    assert body["bootstrap_url_as_http_redirection"] == addr.to_http_redirection_url()
+    bootstrap_token = addr.token
 
     # Expected active_users_limit
     match args.get("active_users_limit", UnsetType.Unset):
@@ -251,7 +253,7 @@ async def test_overwrite_existing(
     )
     assert response.status_code == 200, response.content
     body = response.json()
-    assert body == {"bootstrap_url": ANY}
+    assert body == {"bootstrap_url": ANY, "bootstrap_url_as_http_redirection": ANY}
     new_bootstrap_token = ParsecOrganizationBootstrapAddr.from_url(body["bootstrap_url"]).token
     assert new_bootstrap_token != bootstrap_token.hex
 
