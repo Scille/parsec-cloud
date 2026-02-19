@@ -23,21 +23,21 @@ import { modalController, popoverController } from '@ionic/vue';
 import { Base64 } from 'megashark-lib';
 
 async function handleJoinLink(link: string): Promise<void> {
-  if (!currentRouteIs(Routes.Home)) {
+  if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
     await switchOrganization(null, true);
   }
   await navigateTo(Routes.Home, { query: { claimLink: link } });
 }
 
 async function handleBootstrapLink(link: string): Promise<void> {
-  if (!currentRouteIs(Routes.Home)) {
+  if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
     await switchOrganization(null, true);
   }
   await navigateTo(Routes.Home, { query: { bootstrapLink: link } });
 }
 
 async function handleAsyncEnrollmentLink(link: string): Promise<void> {
-  if (!currentRouteIs(Routes.Home)) {
+  if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
     await switchOrganization(null, true);
   }
   await navigateTo(Routes.Home, { query: { asyncEnrollmentLink: link } });

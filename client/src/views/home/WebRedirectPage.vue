@@ -35,7 +35,6 @@
           {{ $msTranslate('WebRedirectPage.web') }}
         </ion-button>
       </div>
-
       <div class="redirect-download">
         <ion-text class="redirect-download__text body">
           {{ $msTranslate('WebRedirectPage.downloadText') }}
@@ -53,20 +52,50 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentRouteQuery } from '@/router';
-import { InformationManager, InformationManagerKey } from '@/services/informationManager';
-import { handleParsecLink } from '@/services/linkHandler';
+import { ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
+import { getCurrentRouteQuery, navigateTo, Routes } from '@/router';
 import { IonButton, IonPage, IonText } from '@ionic/vue';
 import { LogoIconGradient, MsImage } from 'megashark-lib';
-import { inject, Ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
-const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const redirectLink = ref<string>('');
+const linkType = ref<ParsedParsecAddrTag | undefined>(undefined);
 
-const query = getCurrentRouteQuery();
-const redirectLink = query.webRedirectUrl ?? '';
+onMounted(async () => {
+  const query = getCurrentRouteQuery();
+  redirectLink.value = query.webRedirectUrl || '';
+
+  if (!redirectLink.value) {
+    return;
+  }
+  const result = await parseParsecAddr(redirectLink.value);
+  if (!result.ok) {
+    // If the link is invalid, we convert it to parsec3:// to still open the app, but
+    // without giving it any link to process
+    redirectLink.value = 'parsec3://';
+  } else {
+    linkType.value = result.value.tag;
+  }
+});
 
 async function openLinkInWeb(): Promise<void> {
-  await handleParsecLink(redirectLink, informationManager.value);
+  switch (linkType.value) {
+    case ParsedParsecAddrTag.AsyncEnrollment:
+      await navigateTo(Routes.Home, { skipHandle: true, query: { asyncEnrollmentLink: redirectLink.value } });
+      break;
+    case ParsedParsecAddrTag.OrganizationBootstrap:
+      await navigateTo(Routes.Home, { skipHandle: true, query: { bootstrapLink: redirectLink.value } });
+      break;
+    case ParsedParsecAddrTag.InvitationUser:
+    case ParsedParsecAddrTag.InvitationDevice:
+      await navigateTo(Routes.Home, { skipHandle: true, query: { claimLink: redirectLink.value } });
+      break;
+    case ParsedParsecAddrTag.WorkspacePath:
+      await navigateTo(Routes.Home, { skipHandle: true, query: { fileLink: redirectLink.value } });
+      break;
+    default:
+      await navigateTo(Routes.Home, { skipHandle: true });
+  }
 }
 </script>
 

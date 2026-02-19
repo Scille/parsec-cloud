@@ -322,6 +322,45 @@ export function getTestbedBootstrapAddr(orgName: string): string {
   return `${url.protocol}//${url.hostname}${port}/${orgName}${search}`;
 }
 
+export function generateOrganizationLink(
+  orgName: string,
+  linkType: 'async_enrollment' | 'claim_user' | 'claim_device' | 'path' | 'bootstrap_organization',
+): string {
+  const url = new URL(process.env.TESTBED_SERVER ?? '');
+  const port = url.port ? `:${url.port}` : '';
+
+  let search = '';
+  switch (linkType) {
+    case 'async_enrollment':
+      search = '?a=async_enrollment';
+      break;
+    case 'claim_device':
+      // cspell:disable-next-line
+      search = '?a=claim_device&p=xBDgAAAAAAAAAAAAAAAAAAAC';
+      break;
+    case 'claim_user':
+      // cspell:disable-next-line
+      search = '?a=claim_user&p=xBDgAAAAAAAAAAAAAAAAAAAB';
+      break;
+    case 'path':
+      search =
+        // cspell:disable-next-line
+        '?a=path&p=k9gC8AAAAAAAAAAAAAAAAAAABAHcADlNK2rMiczKZcz6QCdzTip7YmH' +
+        // cspell:disable-next-line
+        'M4XrMrszBBBnM-SfMm3QJzO0NzMkDIXDMzGvMg0jM2szwW8z1zLPM81R4zITMiGnMgTnMiBd2BsyDzPR0Ew';
+      break;
+    case 'bootstrap_organization':
+      search = '?a=bootstrap_organization&p=wA';
+      break;
+    default:
+      break;
+  }
+  for (const [key, val] of url.searchParams.entries()) {
+    search = `${search}&${key}=${val}`;
+  }
+  return `${url.protocol}//${url.hostname}${port}/${orgName}${search}`;
+}
+
 export function getOrganizationAddr(orgName: string): string {
   const url = new URL(process.env.TESTBED_SERVER ?? '');
   const port = url.port ? `:${url.port}` : '';

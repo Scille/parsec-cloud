@@ -132,6 +132,7 @@ import { EventData, EventDistributor, Events } from '@/services/eventDistributor
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { handleParsecLink } from '@/services/linkHandler';
 import { OpenBaoClient } from '@/services/openBao';
 import { ServerType, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
@@ -379,12 +380,14 @@ async function handleQuery(): Promise<void> {
   }
   queryInProgress.value = true;
   const query = getCurrentRouteQuery();
-  if (query.claimLink) {
-    await openJoinByLinkModal(query.claimLink);
+  if (query.fileLink) {
+    handleParsecLink(query.fileLink, informationManager);
+  } else if (query.claimLink) {
+    openJoinByLinkModal(query.claimLink);
   } else if (query.bootstrapLink) {
-    await openCreateOrganizationModal(query.bootstrapLink);
+    openCreateOrganizationModal(query.bootstrapLink);
   } else if (query.asyncEnrollmentLink) {
-    await handleAsyncEnrollment(query.asyncEnrollmentLink);
+    handleAsyncEnrollment(query.asyncEnrollmentLink);
   } else if (query.deviceId) {
     const availableDevices = await listAvailableDevices();
     const device = availableDevices.find((d) => d.deviceId === query.deviceId);
