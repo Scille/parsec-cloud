@@ -4,6 +4,8 @@
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
  */
 
+/* eslint-disable max-len */
+
 export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
@@ -82,6 +84,35 @@ export enum UserProfile {
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
 }
+export type ParsecAsyncEnrollmentAddrAndRedirectionURL = [
+    ParsecAsyncEnrollmentAddr,
+    ParsecAsyncEnrollmentRedirectionURL,
+]
+
+export type ParsecInvitationAddrAndRedirectionURL = [
+    ParsecInvitationAddr,
+    ParsecInvitationRedirectionURL,
+]
+
+export type ParsecOrganizationBootstrapAddrAndRedirectionURL = [
+    ParsecOrganizationBootstrapAddr,
+    ParsecOrganizationBootstrapRedirectionURL,
+]
+
+export type ParsecPkiEnrollmentAddrAndRedirectionURL = [
+    ParsecPkiEnrollmentAddr,
+    ParsecPkiEnrollmentRedirectionURL,
+]
+
+export type ParsecTOTPResetAddrAndRedirectionURL = [
+    ParsecTOTPResetAddr,
+    ParsecTOTPResetRedirectionURL,
+]
+
+export type ParsecWorkspacePathAddrAndRedirectionURL = [
+    ParsecWorkspacePathAddr,
+    ParsecWorkspacePathRedirectionURL,
+]
 export type AccessToken = string
 export type AccountAuthMethodID = string
 export type AccountVaultItemOpaqueKeyID = string
@@ -98,12 +129,18 @@ export type OrganizationID = string
 export type PKIEnrollmentID = string
 export type ParsecAddr = string
 export type ParsecAsyncEnrollmentAddr = string
+export type ParsecAsyncEnrollmentRedirectionURL = string
 export type ParsecInvitationAddr = string
+export type ParsecInvitationRedirectionURL = string
 export type ParsecOrganizationAddr = string
 export type ParsecOrganizationBootstrapAddr = string
+export type ParsecOrganizationBootstrapRedirectionURL = string
 export type ParsecPkiEnrollmentAddr = string
+export type ParsecPkiEnrollmentRedirectionURL = string
 export type ParsecTOTPResetAddr = string
+export type ParsecTOTPResetRedirectionURL = string
 export type ParsecWorkspacePathAddr = string
+export type ParsecWorkspacePathRedirectionURL = string
 export type Password = string
 export type Path = string
 export type SASCode = string
@@ -298,7 +335,7 @@ export interface HumanHandle {
 }
 
 export interface NewInvitationInfo {
-    addr: ParsecInvitationAddr
+    addr: ParsecInvitationAddrAndRedirectionURL
     token: AccessToken
     emailSentStatus: InvitationEmailSentStatus
 }
@@ -3310,7 +3347,7 @@ export enum InviteListItemTag {
 
 export interface InviteListItemDevice {
     tag: InviteListItemTag.Device
-    addr: ParsecInvitationAddr
+    addr: ParsecInvitationAddrAndRedirectionURL
     token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
@@ -3318,7 +3355,7 @@ export interface InviteListItemDevice {
 }
 export interface InviteListItemShamirRecovery {
     tag: InviteListItemTag.ShamirRecovery
-    addr: ParsecInvitationAddr
+    addr: ParsecInvitationAddrAndRedirectionURL
     token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
@@ -3328,7 +3365,7 @@ export interface InviteListItemShamirRecovery {
 }
 export interface InviteListItemUser {
     tag: InviteListItemTag.User
-    addr: ParsecInvitationAddr
+    addr: ParsecInvitationAddrAndRedirectionURL
     token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
@@ -5854,7 +5891,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>>
     accountListInvitations(
         account: Handle
-    ): Promise<Result<Array<[ParsecInvitationAddr, OrganizationID, AccessToken, InvitationType]>, AccountListInvitationsError>>
+    ): Promise<Result<Array<[ParsecInvitationAddrAndRedirectionURL, OrganizationID, AccessToken, InvitationType]>, AccountListInvitationsError>>
     accountListOrganizations(
         account: Handle
     ): Promise<Result<AccountOrganizations, AccountListOrganizationsError>>
@@ -6043,7 +6080,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ClientForgetAllCertificatesError>>
     clientGetAsyncEnrollmentAddr(
         client: Handle
-    ): Promise<Result<ParsecAsyncEnrollmentAddr, ClientGetAsyncEnrollmentAddrError>>
+    ): Promise<Result<ParsecAsyncEnrollmentAddrAndRedirectionURL, ClientGetAsyncEnrollmentAddrError>>
     clientGetOrganizationBootstrapDate(
         client_handle: Handle
     ): Promise<Result<DateTime, ClientGetOrganizationBootstrapDateError>>
@@ -6454,7 +6491,7 @@ export interface LibParsecPlugin {
     workspaceGeneratePathAddr(
         workspace: Handle,
         path: FsPath
-    ): Promise<Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError>>
+    ): Promise<Result<ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError>>
     workspaceHistoryFdClose(
         workspace_history: Handle,
         fd: FileDescriptor
