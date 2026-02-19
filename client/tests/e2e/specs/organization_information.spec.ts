@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, DisplaySize, expect, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, DisplaySize, expect, getClipboardText, msTest } from '@tests/e2e/helpers';
 
 for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
   msTest(`Org info default state on ${displaySize} display`, async ({ organizationPage }) => {
@@ -10,7 +10,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     const inviteButton = usersContainer.locator('.user-invite-button');
     const storageContainer = container.locator('.organization-storage');
     const emailInvitationCard = usersContainer.locator('.invitation-card-list-item').nth(0);
-    // const PkiRequestCard = usersContainer.locator('.invitation-card-list-item').nth(1);
+    const linkRequestCard = usersContainer.locator('.invitation-card-list-item').nth(1);
     await usersContainer.locator('#invitations-button').isVisible();
 
     if (displaySize === DisplaySize.Small) {
@@ -20,9 +20,9 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await expect(emailInvitationCard).toBeVisible();
     await expect(emailInvitationCard.locator('.invitation-card-list-item__title')).toContainText('Email invitations');
     await expect(emailInvitationCard.locator('.invitation-card-list-item__number')).toHaveText('1');
-    // await expect(PkiRequestCard).toBeVisible();
-    // await expect(PkiRequestCard.locator('.invitation-card-list-item__title')).toContainText('PKI requests');
-    // await expect(PkiRequestCard.locator('.invitation-card-list-item__number')).toHaveText('3');
+    await expect(linkRequestCard).toBeVisible();
+    await expect(linkRequestCard.locator('.invitation-card-list-item__title')).toContainText('Link requests');
+    await expect(linkRequestCard.locator('.invitation-card-list-item__number')).toHaveText('0');
     await expect(inviteButton).toBeVisible();
 
     if (displaySize === DisplaySize.Small) {
@@ -143,25 +143,25 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     }
     await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
     await expect(usersContainer.locator('.invitation-card-list-item__title').nth(0)).toHaveText('Email invitations');
-    // await expect(usersContainer.locator('.invitation-card-list-item__title').nth(1)).toHaveText('PKI requests');
+    await expect(usersContainer.locator('.invitation-card-list-item__title').nth(1)).toHaveText('Link requests');
     await usersContainer.locator('.invitation-card-list-item').nth(0).click();
     await expect(connected).toBeInvitationPage();
 
-    // if (displaySize === DisplaySize.Small) {
-    //   await expect(connected.locator('.switch-view-button')).toContainText('Email invitation');
-    //   await connected.locator('#tab-bar').locator('.tab-bar-menu-button').nth(2).click();
-    //   await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
-    //   await usersContainer.locator('.invitation-card-list-item').nth(1).click();
-    //   await expect(connected).toBeInvitationPage();
-    //   await expect(connected.locator('.switch-view-button')).toContainText('PKI requests');
-    // } else {
-    //   await expect(connected.locator('.toggle-view').locator('.email-button')).toHaveTheClass('active');
-    //   await sidebar.locator('.sidebar-content-organization-button').nth(2).click();
-    //   await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
-    //   await usersContainer.locator('.invitation-card-list-item').nth(1).click();
-    //   await expect(connected).toBeInvitationPage();
-    //   await expect(connected.locator('.toggle-view').locator('.pki-button')).toHaveTheClass('active');
-    // }
+    if (displaySize === DisplaySize.Small) {
+      await expect(connected.locator('.switch-view-button')).toContainText('Email invitation');
+      await connected.locator('#tab-bar').locator('.tab-bar-menu-button').nth(2).click();
+      await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
+      await usersContainer.locator('.invitation-card-list-item').nth(1).click();
+      await expect(connected).toBeInvitationPage();
+      await expect(connected.locator('.switch-view-button')).toContainText('Link requests');
+    } else {
+      await expect(connected.locator('.toggle-view').locator('.email-button')).toHaveTheClass('active');
+      await sidebar.locator('.sidebar-content-organization-button').nth(2).click();
+      await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
+      await usersContainer.locator('.invitation-card-list-item').nth(1).click();
+      await expect(connected).toBeInvitationPage();
+      await expect(connected.locator('.toggle-view').locator('.pki-button')).toHaveTheClass('active');
+    }
   });
 }
 
@@ -171,4 +171,21 @@ msTest('No access to organization info as external', async ({ workspacesExternal
   const tabBarButtons = workspacesExternal.locator('#tab-bar').locator('.tab-bar-menu-button');
   await expect(tabBarButtons.nth(2)).toHaveText('Organization');
   await expect(tabBarButtons.nth(2)).toBeHidden();
+});
+
+msTest('Copy server address', async ({ organizationPage }) => {
+  const btn = organizationPage.locator('.organization-info').locator('#copy-link-btn');
+  await btn.click();
+  await expect(organizationPage).toShowToast(
+    'Failed to copy the organization address. Your browser or device does not seem to support copy/paste.',
+    'Error',
+  );
+  // Try again with permissions
+  await organizationPage.context().grantPermissions(['clipboard-write']);
+  await btn.click();
+  await expect(btn).toBeHidden();
+  await expect(organizationPage.locator('.organization-info').locator('.server-address-value__copied')).toBeVisible();
+  await expect(organizationPage.locator('.organization-info').locator('.server-address-value__copied')).toHaveText('Copied');
+
+  expect(await getClipboardText(organizationPage)).toMatch(/^parsec3:\/\/.+$/);
 });

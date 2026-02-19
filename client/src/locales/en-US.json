@@ -1728,8 +1728,8 @@
                 "pkiCorrupted": "PKI (corrupted)"
             },
             "linkCopiedToClipboard": {
-                "success": "PKI link has been copied to clipboard.",
-                "failed": "Failed to copy the PKI link. Your browser or device does not seem to support copy/paste."
+                "success": "Invitation link has been copied to clipboard.",
+                "failed": "Failed to copy the invitation link. Your browser or device does not seem to support copy/paste."
             },
             "tooltips": {
                 "reject": "Reject request"
