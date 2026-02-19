@@ -4,6 +4,8 @@
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
  */
 
+/* eslint-disable max-len */
+
 export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
@@ -82,6 +84,35 @@ export enum UserProfile {
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
 }
+export type ParsecAsyncEnrollmentAddrAndRedirectionURL = [
+    ParsecAsyncEnrollmentAddr,
+    Url,
+]
+
+export type ParsecInvitationAddrAndRedirectionURL = [
+    ParsecInvitationAddr,
+    Url,
+]
+
+export type ParsecOrganizationBootstrapAddrAndRedirectionURL = [
+    ParsecOrganizationBootstrapAddr,
+    Url,
+]
+
+export type ParsecPkiEnrollmentAddrAndRedirectionURL = [
+    ParsecPkiEnrollmentAddr,
+    Url,
+]
+
+export type ParsecTOTPResetAddrAndRedirectionURL = [
+    ParsecTOTPResetAddr,
+    Url,
+]
+
+export type ParsecWorkspacePathAddrAndRedirectionURL = [
+    ParsecWorkspacePathAddr,
+    Url,
+]
 export type AccessToken = string
 export type AccountAuthMethodID = string
 export type AccountVaultItemOpaqueKeyID = string
@@ -108,6 +139,7 @@ export type Password = string
 export type Path = string
 export type SASCode = string
 export type SequesterServiceID = string
+export type Url = string
 export type UserID = string
 export type VlobID = string
 export type X509CertificateHash = string
@@ -298,7 +330,7 @@ export interface HumanHandle {
 }
 
 export interface NewInvitationInfo {
-    addr: ParsecInvitationAddr
+    addr: ParsecInvitationAddrAndRedirectionURL
     token: AccessToken
     emailSentStatus: InvitationEmailSentStatus
 }
@@ -3310,7 +3342,7 @@ export enum InviteListItemTag {
 
 export interface InviteListItemDevice {
     tag: InviteListItemTag.Device
-    addr: ParsecInvitationAddr
+    addr: ParsecInvitationAddrAndRedirectionURL
     token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
@@ -3318,7 +3350,7 @@ export interface InviteListItemDevice {
 }
 export interface InviteListItemShamirRecovery {
     tag: InviteListItemTag.ShamirRecovery
-    addr: ParsecInvitationAddr
+    addr: ParsecInvitationAddrAndRedirectionURL
     token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
@@ -3328,7 +3360,7 @@ export interface InviteListItemShamirRecovery {
 }
 export interface InviteListItemUser {
     tag: InviteListItemTag.User
-    addr: ParsecInvitationAddr
+    addr: ParsecInvitationAddrAndRedirectionURL
     token: AccessToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
@@ -5854,7 +5886,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>>
     accountListInvitations(
         account: Handle
-    ): Promise<Result<Array<[ParsecInvitationAddr, OrganizationID, AccessToken, InvitationType]>, AccountListInvitationsError>>
+    ): Promise<Result<Array<[ParsecInvitationAddrAndRedirectionURL, OrganizationID, AccessToken, InvitationType]>, AccountListInvitationsError>>
     accountListOrganizations(
         account: Handle
     ): Promise<Result<AccountOrganizations, AccountListOrganizationsError>>
@@ -6043,7 +6075,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ClientForgetAllCertificatesError>>
     clientGetAsyncEnrollmentAddr(
         client: Handle
-    ): Promise<Result<ParsecAsyncEnrollmentAddr, ClientGetAsyncEnrollmentAddrError>>
+    ): Promise<Result<ParsecAsyncEnrollmentAddrAndRedirectionURL, ClientGetAsyncEnrollmentAddrError>>
     clientGetOrganizationBootstrapDate(
         client_handle: Handle
     ): Promise<Result<DateTime, ClientGetOrganizationBootstrapDateError>>
@@ -6454,7 +6486,7 @@ export interface LibParsecPlugin {
     workspaceGeneratePathAddr(
         workspace: Handle,
         path: FsPath
-    ): Promise<Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError>>
+    ): Promise<Result<ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError>>
     workspaceHistoryFdClose(
         workspace_history: Handle,
         fd: FileDescriptor
