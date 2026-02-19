@@ -1,5 +1,4 @@
 Adamy
-rustsec
 Alicey
 Alicy
 ANSSI
@@ -26,6 +25,7 @@ fuser
 Glados
 Goku
 Hundt
+Idopte
 Kryza
 Leblond
 lhotari
@@ -51,9 +51,11 @@ rechiffrer
 Reynholm
 riri
 rustcrypto
+rustsec
 samuelmeuli
 scalingo
 Scille
+SCWS
 sitx
 Swatinem
 taplo
