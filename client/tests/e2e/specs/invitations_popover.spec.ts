@@ -32,7 +32,7 @@ msTest('Copy invitation link', async ({ connected }) => {
   await inv.hover();
   await inv.locator('.copy-link').click();
   await expect(connected).toShowToast('Invitation link has been copied to clipboard.', 'Info');
-  expect(await getClipboardText(connected)).toMatch(/^parsec3:\/\/.+$/);
+  expect(await getClipboardText(connected)).toMatch(/^https?:\/\/.+\/redirect\/.+a=claim_user&p=.+$/);
 });
 
 msTest('Resend email', async ({ connected }) => {

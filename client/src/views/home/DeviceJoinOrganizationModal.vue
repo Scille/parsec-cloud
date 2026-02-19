@@ -166,6 +166,7 @@ import {
   parseParsecAddr,
   ServerConfig,
 } from '@/parsec';
+import { ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
@@ -202,7 +203,7 @@ const cancelled = ref(false);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
 
 const props = defineProps<{
-  invitationLink: string;
+  invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
   informationManager: InformationManager;
 }>();
 

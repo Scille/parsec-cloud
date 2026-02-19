@@ -10,7 +10,7 @@
 import * as parsec from '@/parsec';
 import { getClientInfo } from '@/parsec';
 import { getClientConfig } from '@/parsec/internals';
-import { libparsec } from '@/plugins/libparsec';
+import { libparsec, ParsecInvitationAddr } from '@/plugins/libparsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
@@ -180,13 +180,14 @@ async function addUser(
     .catch((err: string) => {
       window.electronAPI.log('error', `Greet failed: ${err}`);
     });
-  claimUser(email, label, invResult.value.addr).catch((err: string) => {
+  const [invitationAddr, _] = invResult.value.addr;
+  claimUser(email, label, invitationAddr).catch((err: string) => {
     window.electronAPI.log('error', `Claim failed: ${err}`);
   });
 }
 
-async function claimUser(email: string, label: string, link: string): Promise<void> {
-  const retResult = await libparsec.claimerRetrieveInfo(getClientConfig(), link);
+async function claimUser(email: string, label: string, invitationAddr: ParsecInvitationAddr): Promise<void> {
+  const retResult = await libparsec.claimerRetrieveInfo(getClientConfig(), invitationAddr);
   if (!retResult.ok) {
     throw new Error(`claimerRetrieveInfo failed: ${retResult.error.error}`);
   }

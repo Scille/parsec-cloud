@@ -698,8 +698,9 @@ const actionBarOptionsUsersPage = computed(() => {
       onClick: async (): Promise<void> => {
         const result = await getAsyncEnrollmentAddr();
         if (result.ok) {
+          const [_, invitationAddrAsHttpRedirection] = result.value;
           await copyToClipboard(
-            result.value,
+            invitationAddrAsHttpRedirection,
             informationManager.value,
             'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
             'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',

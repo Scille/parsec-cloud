@@ -264,6 +264,7 @@ import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepMod
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { CancelledGreetingAttemptReason, DeviceGreet, DevicePurpose, GreetInProgressErrorTag } from '@/parsec';
+import { ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
@@ -296,7 +297,7 @@ enum GreetDeviceStep {
 
 const props = defineProps<{
   informationManager: InformationManager;
-  invitationLink: string;
+  invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
   token: string;
 }>();
 

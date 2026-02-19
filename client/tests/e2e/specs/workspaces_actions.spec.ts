@@ -142,7 +142,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(contextMenu.getByRole('group').nth(1).getByRole('listitem').nth(1)).toHaveText('Copy link');
     await contextMenu.getByRole('group').nth(1).getByRole('listitem').nth(1).click();
     await expect(workspaces).toShowToast('Workspace link has been copied to clipboard.', 'Info');
-    expect(await getClipboardText(workspaces)).toMatch(/^parsec3:\/\/.+$/);
+    expect(await getClipboardText(workspaces)).toMatch(/^https?:\/\/.+\/redirect\/.+a=path&p=.+$/);
   });
 
   msTest(`Check copy link workspace action without permission ${mode}`, async ({ workspaces }) => {

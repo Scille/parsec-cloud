@@ -54,7 +54,7 @@ for (const hasPerms in [true, false]) {
     await actions.nth(1).click();
     if (hasPerms) {
       await expect(invitationsPage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
-      expect(await getClipboardText(invitationsPage)).toMatch(/^parsec3:\/\/.+$/);
+      expect(await getClipboardText(invitationsPage)).toMatch(/^https?:\/\/.+\/redirect\/.+$/);
     } else {
       await expect(invitationsPage).toShowToast(
         'Failed to copy the link. Your browser or device does not seem to support copy/paste.',

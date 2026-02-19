@@ -32,7 +32,7 @@ import {
   WorkspaceRole,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { MountpointUnmountError, WorkspaceStopError, libparsec } from '@/plugins/libparsec';
+import { MountpointUnmountError, ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceStopError, libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
@@ -269,7 +269,7 @@ export async function getPathLink(
   workspaceHandle: WorkspaceHandle,
   path: string,
   timestamp: DateTime | null = null,
-): Promise<Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError>> {
+): Promise<Result<ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError>> {
   if (timestamp) {
     window.electronAPI.log('warn', 'Parameter `timestamp` is ignored');
   }
