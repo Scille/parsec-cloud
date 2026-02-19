@@ -47,7 +47,8 @@ export async function copyPathLinkToClipboard(
   const result = await getPathLink(workspaceHandle, path);
 
   if (result.ok) {
-    if (!(await Clipboard.writeText(result.value))) {
+    const [_, invitationAddrAsHttpRedirection] = result.value;
+    if (!(await Clipboard.writeText(invitationAddrAsHttpRedirection))) {
       informationManager.present(
         new Information({
           message: 'FoldersPage.linkNotCopiedToClipboard',

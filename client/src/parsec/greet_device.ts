@@ -81,7 +81,8 @@ export class DeviceGreet {
     const result = await createDeviceInvitation(sendEmail);
 
     if (result.ok) {
-      this.invitationLink = result.value.addr;
+      const [invitationAddr, _] = result.value.addr;
+      this.invitationLink = invitationAddr;
       this.token = result.value.token;
     }
     return result;

@@ -502,8 +502,9 @@ async function onSendInvitationEmailClicked(inv: UserInvitation): Promise<void> 
 }
 
 async function onCopyInvitationLinkClicked(inv: UserInvitation): Promise<void> {
+  const [_, invitationAddrAsHttpRedirection] = inv.addr;
   await copyToClipboard(
-    inv.addr,
+    invitationAddrAsHttpRedirection,
     informationManager.value,
     'UsersPage.invitation.linkCopiedToClipboard',
     'UsersPage.invitation.linkNotCopiedToClipboard',
@@ -561,8 +562,9 @@ async function onDeleteInvitationClicked(inv: UserInvitation): Promise<void> {
 async function onCopyJoinLinkClicked(): Promise<void> {
   const result = await getAsyncEnrollmentAddr();
   if (result.ok) {
+    const [_, invitationAddrAsHttpRedirection] = result.value;
     await copyToClipboard(
-      result.value,
+      invitationAddrAsHttpRedirection,
       informationManager.value,
       'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
       'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',

@@ -48,6 +48,7 @@ import {
   ClientAcceptAsyncEnrollmentErrorTag,
   ClientRejectAsyncEnrollmentErrorTag,
   libparsec,
+  ParsecAsyncEnrollmentAddrAndRedirectionURL,
   SubmitAsyncEnrollmentErrorTag,
 } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
@@ -378,7 +379,7 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
   },
 };
 
-async function getAsyncEnrollmentAddr(): Promise<Result<ParsecAsyncEnrollmentAddr, ClientGetAsyncEnrollmentAddrError>> {
+async function getAsyncEnrollmentAddr(): Promise<Result<ParsecAsyncEnrollmentAddrAndRedirectionURL, ClientGetAsyncEnrollmentAddrError>> {
   const handle = getConnectionHandle();
 
   if (!handle) {

@@ -455,7 +455,8 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo, informationManager:
   const result = await parsecGetPathLink(workspace.handle, '/');
 
   if (result.ok) {
-    if (!(await Clipboard.writeText(result.value))) {
+    const [_, invitationAddrAsHttpRedirection] = result.value;
+    if (!(await Clipboard.writeText(invitationAddrAsHttpRedirection))) {
       informationManager.present(
         new Information({
           message: 'WorkspacesPage.linkNotCopiedToClipboard',
