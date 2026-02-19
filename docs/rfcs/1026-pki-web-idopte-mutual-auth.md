@@ -19,7 +19,7 @@ The process will authenticate both parties, The backend server & the middleware 
 
 - **Server**: The Parsec backend server
 - **Client**: The Parsec web application
-- **Middleware**: The Idopte middleware/driver installed on the client device.
+- **Service**: The Idopte SCWS middleware/driver installed on the client device.
 
 ## Goals and Non-Goals
 
@@ -27,12 +27,12 @@ We want to define the required API and approach to authenticate with the middlew
 
 ## Design
 
-Below is the workflow to authenticate with Idopte:
+Below is the workflow to authenticate with SCWS:
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant M as Middleware
+  participant M as SCWS
   participant C as Client
   participant S as Server
 
@@ -57,7 +57,7 @@ sequenceDiagram
 
 ### Configuring the Server to Work with Idopte
 
-We want the configuration of Idopte to be optional (to not require every on-prem clients to be forced to have a contract with Idopte).
+We want the configuration of SCWS to be optional (to not require every on-prem clients to be forced to have a contract with Idopte).
 
 The server needs to have 2 things:
 
@@ -67,8 +67,8 @@ The server needs to have 2 things:
 Naturally, we would add 2 options on the server CLI:
 
 ```
---idopte-public-keys <PEM_FILE>
---idopte-service-key <PEM_FILE>
+--scws-public-keys <PEM_FILE>
+--scws-service-key <PEM_FILE>
 ```
 
 > [!IMPORTANT]
@@ -84,7 +84,7 @@ Since the support of Idopte should be optional and the certificate can expire, t
 Following previous section, we would add the following option on the server CLI:
 
 ```
---idopte-service-cert <FILE>
+--scws-service-cert <FILE>
 ```
 
 > [!NOTE]
@@ -94,7 +94,7 @@ Following previous section, we would add the following option on the server CLI:
 The client would then retrieve the certificate using the following anonymous command:
 
 ```yaml
-cmd: idopte_certificate
+cmd: scws_service_certificate
 req: {}
 reps:
   - status: ok
@@ -113,7 +113,7 @@ If the middleware accepts the certificate it would then respond with the signed 
 The client would then need to pass those data to the server with the following anonymous command:
 
 ```yaml
-cmd: idopte_challenge
+cmd: scws_service_challenge
 req:
   fields:
     - name: middleware_challenge
@@ -130,8 +130,8 @@ reps:
       - name: server_signature
         type: Bytes
   - status: not_available
-  - status: unknown_middleware_public_key
-  - status: invalid_middleware_signature
+  - status: unknown_service_public_key
+  - status: invalid_service_signature
 ```
 
 With the OK response, the client would just have to finish the authentication process by calling [`SCWS.createEnvironment`].
