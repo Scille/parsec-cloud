@@ -114,7 +114,6 @@
         </div>
 
         <div
-          v-if="false"
           button
           class="invitation-card-list-item"
           @click="goToInvitations(InvitationView.AsyncEnrollmentRequest)"

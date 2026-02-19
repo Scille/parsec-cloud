@@ -1727,8 +1727,8 @@
                 "pkiCorrupted": "PKI (corrompu)"
             },
             "linkCopiedToClipboard": {
-                "success": "Le lien PKI a été copié dans le presse-papiers.",
-                "failed": "Échec de la copie du lien PKI. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
+                "success": "Le lien d'enrôlement a été copié dans le presse-papiers.",
+                "failed": "Échec de la copie du lien d'enrôlement. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
             },
             "tooltips": {
                 "reject": "Refuser la demande"
