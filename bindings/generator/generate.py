@@ -202,7 +202,9 @@ class BaseTypeInUse:
             f"Bad param `{param!r}`, passing type as string is not supported"
         )
 
+        alias_param = None
         if isinstance(param, TypeAliasType):
+            alias_param = param
             param = param.__value__
 
         origin = getattr(param, "__origin__", None)
@@ -230,7 +232,10 @@ class BaseTypeInUse:
             )
 
         elif origin is tuple:
-            return TupleTypeInUse([BaseTypeInUse.parse(x) for x in args])
+            values = [BaseTypeInUse.parse(x) for x in args]
+            return TupleTypeInUse(
+                values=values, alias_name=alias_param.__name__ if alias_param else None
+            )
 
         elif origin is Result:
             assert len(args) == 2
@@ -363,6 +368,7 @@ class SetTypeInUse(BaseTypeInUse):
 class TupleTypeInUse(BaseTypeInUse):
     kind = "tuple"
     values: list[BaseTypeInUse]
+    alias_name: str | None
 
 
 @dataclass
@@ -393,6 +399,13 @@ class UnitStructSpec(StructSpec):
 
     def list_attributes(self) -> str:
         return ""
+
+
+@dataclass
+class TupleAliasSpec(BaseTypeInUse):
+    kind = "tuple"
+    name: str
+    elems: list[BaseTypeInUse]
 
 
 @dataclass
@@ -564,6 +577,7 @@ class ApiSpecs:
     u64_based_types: list[BasedTypeSpec]
     meths: list[MethSpec]
     structs: list[StructSpec]
+    tuple_aliases: list[TupleAliasSpec]
     variants: list[VariantSpec]
     enums: list[EnumSpec]
     rust_code_to_inject: str | None  # Hack for the dummy test api
@@ -573,7 +587,7 @@ class ApiSpecs:
 # be used in template generation.
 # For instance, if we have `def foo() -> Bar: ...` in the api:
 # The `Bar` object is going to be a key in TYPES_DB, and the value will be the `StructSpec` built by introspecting `Bar`
-TYPES_DB: dict[type, OpaqueSpec | StructSpec | VariantSpec | EnumSpec] = {
+TYPES_DB: dict[type | TypeAliasType, OpaqueSpec | StructSpec | VariantSpec | EnumSpec] = {
     bool: OpaqueSpec(kind="bool"),
     float: OpaqueSpec(kind="float"),
     str: OpaqueSpec(kind="str"),
@@ -608,12 +622,15 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
         pass
 
     for item_name, item in api_items.items():
-        if isclass(item) and issubclass(item, (Variant, Structure, Enum)):
+        if (isclass(item) and issubclass(item, (Variant, Structure, Enum))) or isinstance(
+            item, TypeAliasType
+        ):
             TYPES_DB[item] = ParsingPlaceholder()  # type: ignore[assignment]
 
     # Second pass
     variants: list[VariantSpec] = []
     structs: list[StructSpec] = []
+    tuple_aliases: list[TupleAliasSpec] = []
     enums: list[EnumSpec] = []
     for item_name, item in api_items.items():
         if isclass(item) and issubclass(item, Variant):
@@ -694,6 +711,16 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             placeholder.__class__ = enum.__class__  # type: ignore[assignment]
             enums.append(placeholder)  # type: ignore[arg-type]
 
+        elif isinstance(item, TypeAliasType):
+            assert item.__value__.__origin__ is tuple, "Only `type Foo = tuple[...]` is supported"
+            placeholder = TYPES_DB[item]
+            tuple_alias = TupleAliasSpec(
+                name=item.__name__, elems=[BaseTypeInUse.parse(x) for x in item.__value__.__args__]
+            )
+            placeholder.__dict__ = tuple_alias.__dict__
+            placeholder.__class__ = tuple_alias.__class__  # type: ignore[assignment]
+            tuple_aliases.append(placeholder)  # type: ignore[arg-type]
+
     # Make sure all types have a unique name, this is not strictly required but it is very convenient when testing type in the template
     reserved: dict[Any, OpaqueSpec | StructSpec | VariantSpec | EnumSpec] = {}
     for v in TYPES_DB.values():
@@ -723,7 +750,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
                 )
             )
 
-    T = TypeVar("T", BasedTypeSpec, EnumSpec, VariantSpec, StructSpec, MethSpec)
+    T = TypeVar("T", BasedTypeSpec, EnumSpec, VariantSpec, StructSpec, TupleAliasSpec, MethSpec)
 
     def sorted_by_name(items: Iterable[T]) -> list[T]:
         return sorted(items, key=lambda x: x.name)
@@ -777,6 +804,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
         enums=sorted_by_name(enums),
         variants=sorted_by_name(variants),
         structs=sorted_by_name(structs),
+        tuple_aliases=sorted_by_name(tuple_aliases),
         meths=sorted_by_name(meths),
         rust_code_to_inject=getattr(api_module, "BINDING_ELECTRON_METHS_INJECT_RUST_CODE", None),
     )

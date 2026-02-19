@@ -17,11 +17,15 @@ Array<{{ render_type(t.elem) }}>
 {%- elif t.kind == "set" -%}
 Array<{{ render_type(t.elem) }}>
 {%- elif t.kind == "tuple" -%}
+{%-   if t.alias_name -%}
+{{ t.alias_name }}
+{%-   else -%}
 [
     {%- for value in t.values -%}
         {{- render_type(value) }}{{ ", " if not loop.last else "" }}
     {%- endfor -%}
 ]
+{%-   endif -%}
 {%- elif t.kind == "none" -%}
 null
 {%- elif t.kind == "bool" -%}
@@ -61,6 +65,17 @@ export enum {{ enum.name }} {
     {{ variant_name }} = '{{ enum.name + variant_name }}',
 {% endfor -%}
 }
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}
+{# Simple enum #}
+{% for tuple_alias in api.tuple_aliases %}
+export type {{ tuple_alias.name }} = [
+{% for elem_type in tuple_alias.elems %}
+    {{ render_type(elem_type) }},
+{% endfor %}
+]
 {% if not loop.last %}
 
 {% endif %}
