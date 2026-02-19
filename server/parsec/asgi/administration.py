@@ -121,6 +121,7 @@ class CreateOrganizationIn(BaseModel):
 
 class CreateOrganizationOut(BaseModel):
     bootstrap_url: str
+    bootstrap_url_as_http_redirection: str
 
 
 def log_request[**P, T: BaseModel | Response](
@@ -201,7 +202,10 @@ async def administration_create_organizations(
         port=request.url.port,
         use_ssl=request.url.scheme == "https",
     )
-    return CreateOrganizationOut(bootstrap_url=bootstrap_url.to_url())
+    return CreateOrganizationOut(
+        bootstrap_url=bootstrap_url.to_url(),
+        bootstrap_url_as_http_redirection=bootstrap_url.to_http_redirection_url(),
+    )
 
 
 class GetOrganizationOutTos(BaseModel):
