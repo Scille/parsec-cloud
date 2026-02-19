@@ -2559,17 +2559,36 @@ fn struct_new_invitation_info_js_to_rs(
 ) -> Result<libparsec::NewInvitationInfo, JsValue> {
     let addr = {
         let js_val = Reflect::get(&obj, &"addr".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
+        (
+            {
+                let js_x1 = Reflect::get_u32(&js_val, 1)?;
+                js_x1
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            },
+            {
+                let js_x2 = Reflect::get_u32(&js_val, 2)?;
+                js_x2
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            },
+        )
     };
     let token = {
         let js_val = Reflect::get(&obj, &"token".into())?;
@@ -2608,17 +2627,34 @@ fn struct_new_invitation_info_rs_to_js(
     rs_obj: libparsec::NewInvitationInfo,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_addr = JsValue::from_str({
-        let custom_to_rs_string =
-            |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                Ok(addr.to_url().into())
-            };
-        match custom_to_rs_string(rs_obj.addr) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-        }
-        .as_ref()
-    });
+    let js_addr = {
+        let (x1, x2) = rs_obj.addr;
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(2);
+        let js_value = JsValue::from_str({
+            let custom_to_rs_string =
+                |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                    Ok(addr.to_url().into())
+                };
+            match custom_to_rs_string(x1) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
+            .as_ref()
+        });
+        js_array.set(0, js_value);
+        let js_value = JsValue::from_str({
+            let custom_to_rs_string =
+                |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
+            match custom_to_rs_string(x2) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+            }
+            .as_ref()
+        });
+        js_array.set(1, js_value);
+        js_array.into()
+    };
     Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
     let js_token = JsValue::from_str({
         let custom_to_rs_string =
@@ -11837,17 +11873,37 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
         "InviteListItemDevice" => {
             let addr = {
                 let js_val = Reflect::get(&obj, &"addr".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
+                (
+                    {
+                        let js_x1 = Reflect::get_u32(&js_val, 1)?;
+                        js_x1
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                    libparsec::ParsecInvitationAddr::from_any(&s)
+                                        .map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })?
+                    },
+                    {
+                        let js_x2 = Reflect::get_u32(&js_val, 2)?;
+                        js_x2
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                    libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })?
+                    },
+                )
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -11903,17 +11959,37 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
         "InviteListItemShamirRecovery" => {
             let addr = {
                 let js_val = Reflect::get(&obj, &"addr".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
+                (
+                    {
+                        let js_x1 = Reflect::get_u32(&js_val, 1)?;
+                        js_x1
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                    libparsec::ParsecInvitationAddr::from_any(&s)
+                                        .map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })?
+                    },
+                    {
+                        let js_x2 = Reflect::get_u32(&js_val, 2)?;
+                        js_x2
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                    libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })?
+                    },
+                )
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -11997,17 +12073,37 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
         "InviteListItemUser" => {
             let addr = {
                 let js_val = Reflect::get(&obj, &"addr".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
+                (
+                    {
+                        let js_x1 = Reflect::get_u32(&js_val, 1)?;
+                        js_x1
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                    libparsec::ParsecInvitationAddr::from_any(&s)
+                                        .map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })?
+                    },
+                    {
+                        let js_x2 = Reflect::get_u32(&js_val, 2)?;
+                        js_x2
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                    libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })?
+                    },
+                )
             };
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -12096,17 +12192,36 @@ fn variant_invite_list_item_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"InviteListItemDevice".into())?;
-            let js_addr = JsValue::from_str({
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                }
-                .as_ref()
-            });
+            let js_addr = {
+                let (x1, x2) = addr;
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                let js_array = Array::new_with_length(2);
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                js_array.set(0, js_value);
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x2) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                js_array.set(1, js_value);
+                js_array.into()
+            };
             Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
@@ -12149,17 +12264,36 @@ fn variant_invite_list_item_rs_to_js(
                 &"tag".into(),
                 &"InviteListItemShamirRecovery".into(),
             )?;
-            let js_addr = JsValue::from_str({
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                }
-                .as_ref()
-            });
+            let js_addr = {
+                let (x1, x2) = addr;
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                let js_array = Array::new_with_length(2);
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                js_array.set(0, js_value);
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x2) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                js_array.set(1, js_value);
+                js_array.into()
+            };
             Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
@@ -12222,17 +12356,36 @@ fn variant_invite_list_item_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"InviteListItemUser".into())?;
-            let js_addr = JsValue::from_str({
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                }
-                .as_ref()
-            });
+            let js_addr = {
+                let (x1, x2) = addr;
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                let js_array = Array::new_with_length(2);
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                js_array.set(0, js_value);
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x2) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                js_array.set(1, js_value);
+                js_array.into()
+            };
             Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =
@@ -19985,16 +20138,41 @@ pub fn accountListInvitations(account: u32) -> Promise {
                             let (x1, x2, x3, x4) = elem;
                             // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                             let js_array = Array::new_with_length(4);
-                            let js_value = JsValue::from_str({
-                                let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                                match custom_to_rs_string(x1) {
-                                    Ok(ok) => ok,
-                                    Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            let js_value = {
+                                let (x1, x2) = x1;
+                                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                                let js_array = Array::new_with_length(2);
+                                let js_value = JsValue::from_str({
+                                    let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                                    match custom_to_rs_string(x1) {
+                                        Ok(ok) => ok,
+                                        Err(err) => {
+                                            return Err(JsValue::from(TypeError::new(
+                                                &err.to_string(),
+                                            )))
+                                        }
                                     }
-                                }
-                                .as_ref()
-                            });
+                                    .as_ref()
+                                });
+                                js_array.set(0, js_value);
+                                let js_value = JsValue::from_str({
+                                    let custom_to_rs_string =
+                                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                                            Ok(addr.to_string())
+                                        };
+                                    match custom_to_rs_string(x2) {
+                                        Ok(ok) => ok,
+                                        Err(err) => {
+                                            return Err(JsValue::from(TypeError::new(
+                                                &err.to_string(),
+                                            )))
+                                        }
+                                    }
+                                    .as_ref()
+                                });
+                                js_array.set(1, js_value);
+                                js_array.into()
+                            };
                             js_array.set(0, js_value);
                             let js_value = JsValue::from_str(x2.as_ref());
                             js_array.set(1, js_value);
@@ -21532,14 +21710,37 @@ pub fn clientGetAsyncEnrollmentAddr(client: u32) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                    }
-                    .as_ref()
-                });
+                let js_value = {
+                    let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(2);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string = |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                        match custom_to_rs_string(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(0, js_value);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |addr: libparsec::Url| -> Result<String, &'static str> {
+                                Ok(addr.to_string())
+                            };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(1, js_value);
+                    js_array.into()
+                };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -24993,17 +25194,37 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> {
-                            Ok(addr.to_url().into())
-                        };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                    }
-                    .as_ref()
-                });
+                let js_value = {
+                    let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(2);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string = |addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                        match custom_to_rs_string(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(0, js_value);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |addr: libparsec::Url| -> Result<String, &'static str> {
+                                Ok(addr.to_string())
+                            };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            Err(err) => {
+                                return Err(JsValue::from(TypeError::new(&err.to_string())))
+                            }
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(1, js_value);
+                    js_array.into()
+                };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
