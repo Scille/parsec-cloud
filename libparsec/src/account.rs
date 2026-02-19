@@ -27,6 +27,7 @@ use crate::{
         HandleItem,
     },
     AvailableDevice, DeviceAccessStrategy, DeviceSaveStrategy,
+    ParsecInvitationAddrAndRedirectionURL,
 };
 
 // TODO: must reimplement this structure since the bindings doesn't support
@@ -247,7 +248,7 @@ pub async fn account_list_invitations(
     account: Handle,
 ) -> Result<
     Vec<(
-        ParsecInvitationAddr,
+        ParsecInvitationAddrAndRedirectionURL,
         OrganizationID,
         AccessToken,
         InvitationType,
@@ -263,7 +264,12 @@ pub async fn account_list_invitations(
             let organization_id = addr.organization_id().to_owned();
             let token = addr.token();
             let invitation_type = addr.invitation_type();
-            (addr, organization_id, token, invitation_type)
+            (
+                (addr.clone(), addr.to_http_redirection_url()),
+                organization_id,
+                token,
+                invitation_type,
+            )
         })
         .collect())
 }

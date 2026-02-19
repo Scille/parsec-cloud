@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
-from .addr import ParsecAsyncEnrollmentAddr
+from .addr import ParsecAsyncEnrollmentAddr, ParsecAsyncEnrollmentAddrAndRedirectionURL
 from .common import (
     AsyncEnrollmentID,
     DateTime,
@@ -29,7 +29,7 @@ class ClientGetAsyncEnrollmentAddrError(ErrorVariant):
 
 def client_get_async_enrollment_addr(
     client: Handle,
-) -> Result[ParsecAsyncEnrollmentAddr, ClientGetAsyncEnrollmentAddrError]:
+) -> Result[ParsecAsyncEnrollmentAddrAndRedirectionURL, ClientGetAsyncEnrollmentAddrError]:
     raise NotImplementedError
 
 

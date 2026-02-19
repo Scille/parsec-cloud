@@ -2,6 +2,13 @@
 
 use libparsec_types::prelude::*;
 
+pub type ParsecOrganizationBootstrapAddrAndRedirectionURL = (ParsecOrganizationBootstrapAddr, Url);
+pub type ParsecInvitationAddrAndRedirectionURL = (ParsecInvitationAddr, Url);
+pub type ParsecWorkspacePathAddrAndRedirectionURL = (ParsecWorkspacePathAddr, Url);
+pub type ParsecPkiEnrollmentAddrAndRedirectionURL = (ParsecPkiEnrollmentAddr, Url);
+pub type ParsecAsyncEnrollmentAddrAndRedirectionURL = (ParsecAsyncEnrollmentAddr, Url);
+pub type ParsecTOTPResetAddrAndRedirectionURL = (ParsecTOTPResetAddr, Url);
+
 #[derive(Debug, thiserror::Error)]
 pub enum ParseParsecAddrError {
     #[error("Invalid URL")]

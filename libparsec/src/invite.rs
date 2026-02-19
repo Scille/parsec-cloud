@@ -17,6 +17,7 @@ pub use libparsec_protocol::invited_cmds::latest::invite_info::{
 };
 use libparsec_types::prelude::*;
 
+use crate::ParsecInvitationAddrAndRedirectionURL;
 use crate::{
     handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
     listen_canceller, AvailableDevice, ClientConfig, DeviceSaveStrategy, OnEventCallbackPlugged,
@@ -1108,7 +1109,7 @@ pub async fn claimer_shamir_recovery_finalize_save_local_device(
  */
 
 pub struct NewInvitationInfo {
-    pub addr: ParsecInvitationAddr,
+    pub addr: ParsecInvitationAddrAndRedirectionURL,
     pub token: AccessToken,
     pub email_sent_status: InvitationEmailSentStatus,
 }
@@ -1126,14 +1127,14 @@ pub async fn client_new_user_invitation(
     let (token, email_sent_status) = client
         .new_user_invitation(claimer_email, send_email)
         .await?;
-
+    let addr = ParsecInvitationAddr::new(
+        client.organization_addr(),
+        client.organization_id().to_owned(),
+        InvitationType::User,
+        token,
+    );
     Ok(NewInvitationInfo {
-        addr: ParsecInvitationAddr::new(
-            client.organization_addr(),
-            client.organization_id().to_owned(),
-            InvitationType::User,
-            token,
-        ),
+        addr: (addr.clone(), addr.to_http_redirection_url()),
         token,
         email_sent_status,
     })
@@ -1150,13 +1151,14 @@ pub async fn client_new_device_invitation(
 
     let (token, email_sent_status) = client.new_device_invitation(send_email).await?;
 
+    let addr = ParsecInvitationAddr::new(
+        client.organization_addr(),
+        client.organization_id().to_owned(),
+        InvitationType::Device,
+        token,
+    );
     Ok(NewInvitationInfo {
-        addr: ParsecInvitationAddr::new(
-            client.organization_addr(),
-            client.organization_id().to_owned(),
-            InvitationType::Device,
-            token,
-        ),
+        addr: (addr.clone(), addr.to_http_redirection_url()),
         token,
         email_sent_status,
     })
@@ -1176,13 +1178,14 @@ pub async fn client_new_shamir_recovery_invitation(
         .new_shamir_recovery_invitation(claimer_user_id, send_email)
         .await?;
 
+    let addr = ParsecInvitationAddr::new(
+        client.organization_addr(),
+        client.organization_id().to_owned(),
+        InvitationType::ShamirRecovery,
+        token,
+    );
     Ok(NewInvitationInfo {
-        addr: ParsecInvitationAddr::new(
-            client.organization_addr(),
-            client.organization_id().to_owned(),
-            InvitationType::ShamirRecovery,
-            token,
-        ),
+        addr: (addr.clone(), addr.to_http_redirection_url()),
         token,
         email_sent_status,
     })
@@ -1204,7 +1207,7 @@ pub async fn client_cancel_invitation(
 
 pub enum InviteListItem {
     User {
-        addr: ParsecInvitationAddr,
+        addr: ParsecInvitationAddrAndRedirectionURL,
         token: AccessToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
@@ -1212,14 +1215,14 @@ pub enum InviteListItem {
         status: InvitationStatus,
     },
     Device {
-        addr: ParsecInvitationAddr,
+        addr: ParsecInvitationAddrAndRedirectionURL,
         token: AccessToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
         status: InvitationStatus,
     },
     ShamirRecovery {
-        addr: ParsecInvitationAddr,
+        addr: ParsecInvitationAddrAndRedirectionURL,
         token: AccessToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
@@ -1256,7 +1259,7 @@ pub async fn client_list_invitations(
                     token,
                 );
                 InviteListItem::User {
-                    addr,
+                    addr: (addr.clone(), addr.to_http_redirection_url()),
                     claimer_email,
                     created_on,
                     created_by,
@@ -1277,7 +1280,7 @@ pub async fn client_list_invitations(
                     token,
                 );
                 InviteListItem::Device {
-                    addr,
+                    addr: (addr.clone(), addr.to_http_redirection_url()),
                     created_on,
                     created_by,
                     status,
@@ -1299,7 +1302,7 @@ pub async fn client_list_invitations(
                     token,
                 );
                 InviteListItem::ShamirRecovery {
-                    addr,
+                    addr: (addr.clone(), addr.to_http_redirection_url()),
                     created_on,
                     created_by,
                     status,

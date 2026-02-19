@@ -3,6 +3,7 @@
 
 from .addr import (
     ParsecInvitationAddr,
+    ParsecInvitationAddrAndRedirectionURL,
     ParsecOrganizationBootstrapAddr,
 )
 from .common import (
@@ -591,7 +592,7 @@ class ClientNewUserInvitationError(ErrorVariant):
 
 
 class NewInvitationInfo(Structure):
-    addr: ParsecInvitationAddr
+    addr: ParsecInvitationAddrAndRedirectionURL
     token: AccessToken
     email_sent_status: InvitationEmailSentStatus
 
@@ -688,7 +689,7 @@ class InviteListInvitationCreatedBy(Variant):
 
 class InviteListItem(Variant):
     class User:
-        addr: ParsecInvitationAddr
+        addr: ParsecInvitationAddrAndRedirectionURL
         token: AccessToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
@@ -696,14 +697,14 @@ class InviteListItem(Variant):
         status: InvitationStatus
 
     class Device:
-        addr: ParsecInvitationAddr
+        addr: ParsecInvitationAddrAndRedirectionURL
         token: AccessToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
         status: InvitationStatus
 
     class ShamirRecovery:
-        addr: ParsecInvitationAddr
+        addr: ParsecInvitationAddrAndRedirectionURL
         token: AccessToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
