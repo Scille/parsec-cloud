@@ -18,6 +18,7 @@ pub use libparsec_protocol::invited_cmds::latest::invite_info::{
 };
 use libparsec_types::prelude::*;
 
+use crate::ParsecAsyncEnrollmentAddrAndRedirectionURL;
 use crate::{
     handle::{borrow_from_handle, Handle, HandleItem},
     ClientConfig, DeviceSaveStrategy,
@@ -850,13 +851,14 @@ pub enum ClientGetAsyncEnrollmentAddrError {
 
 pub fn client_get_async_enrollment_addr(
     client: Handle,
-) -> Result<ParsecAsyncEnrollmentAddr, ClientGetAsyncEnrollmentAddrError> {
+) -> Result<ParsecAsyncEnrollmentAddrAndRedirectionURL, ClientGetAsyncEnrollmentAddrError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })?;
 
-    Ok(client.get_async_enrollment_addr())
+    let addr = client.get_async_enrollment_addr();
+    Ok((addr.clone(), addr.to_http_redirection_url()))
 }
 
 pub async fn client_list_async_enrollments(

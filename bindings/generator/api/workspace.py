@@ -3,6 +3,7 @@
 
 from .addr import (
     ParsecWorkspacePathAddr,
+    ParsecWorkspacePathAddrAndRedirectionURL,
 )
 from .common import (
     U64,
@@ -735,7 +736,7 @@ class WorkspaceGeneratePathAddrError(ErrorVariant):
 async def workspace_generate_path_addr(
     workspace: Handle,
     path: Ref[FsPath],
-) -> Result[ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError]:
+) -> Result[ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError]:
     raise NotImplementedError
 
 

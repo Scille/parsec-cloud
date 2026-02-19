@@ -17,6 +17,7 @@ from typing import (  # noqa: UP035
     List,
     Set,
     Tuple,
+    TypeAliasType,
     TypeVar,
     Union,
     get_args,
@@ -200,6 +201,10 @@ class BaseTypeInUse:
         assert not isinstance(param, str), (
             f"Bad param `{param!r}`, passing type as string is not supported"
         )
+
+        if isinstance(param, TypeAliasType):
+            param = param.__value__
+
         origin = getattr(param, "__origin__", None)
         args = get_args(param)
         if origin is Union or isinstance(

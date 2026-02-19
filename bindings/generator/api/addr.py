@@ -58,6 +58,80 @@ class ParsecTOTPResetAddr(StrBasedType):
     custom_to_rs_string = "|addr: libparsec::ParsecTOTPResetAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
+class ParsecOrganizationBootstrapRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecInvitationRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecWorkspacePathRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecPkiEnrollmentRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecAsyncEnrollmentRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+class ParsecTOTPResetRedirectionURL(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+type ParsecOrganizationBootstrapAddrAndRedirectionURL = tuple[
+    ParsecOrganizationBootstrapAddr, ParsecOrganizationBootstrapRedirectionURL
+]
+type ParsecInvitationAddrAndRedirectionURL = tuple[
+    ParsecInvitationAddr, ParsecInvitationRedirectionURL
+]
+type ParsecWorkspacePathAddrAndRedirectionURL = tuple[
+    ParsecWorkspacePathAddr, ParsecWorkspacePathRedirectionURL
+]
+type ParsecPkiEnrollmentAddrAndRedirectionURL = tuple[
+    ParsecPkiEnrollmentAddr, ParsecPkiEnrollmentRedirectionURL
+]
+type ParsecAsyncEnrollmentAddrAndRedirectionURL = tuple[
+    ParsecAsyncEnrollmentAddr, ParsecAsyncEnrollmentRedirectionURL
+]
+type ParsecTOTPResetAddrAndRedirectionURL = tuple[
+    ParsecTOTPResetAddr, ParsecTOTPResetRedirectionURL
+]
+
+
 class ParseParsecAddrError(ErrorVariant):
     class InvalidUrl:
         pass
