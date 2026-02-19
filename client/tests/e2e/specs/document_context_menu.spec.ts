@@ -333,7 +333,7 @@ msTest.describe(() => {
       await clickAction(await openPopover(documents, 0), 'Copy link');
       await expect(documents).toShowToast('Link has been copied to clipboard.', 'Info');
       const filePath = await documents.evaluate(() => navigator.clipboard.readText());
-      expect(filePath).toMatch(/^parsec3:\/\/.+$/);
+      expect(filePath).toMatch(/^https?:\/\/.+\/redirect\/.+a=path&p=.+$/);
     });
 
     msTest(`Rename document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }, testInfo: TestInfo) => {
@@ -746,7 +746,7 @@ msTest.describe(() => {
       await clickAction(await openPopover(documents, 0), 'Copy link');
       await expect(documents).toShowToast('Link has been copied to clipboard.', 'Info');
       const filePath = await documents.evaluate(() => navigator.clipboard.readText());
-      expect(filePath).toMatch(/^parsec3:\/\/.+$/);
+      expect(filePath).toMatch(/^https?:\/\/.+\/redirect\/.+a=path&p=.+$/);
     });
 
     msTest(`Small display rename document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }, testInfo: TestInfo) => {

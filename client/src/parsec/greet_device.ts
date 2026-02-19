@@ -16,7 +16,7 @@ import {
   createDeviceInvitation,
 } from '@/parsec';
 import { generateNoHandleError } from '@/parsec/utils';
-import { AccessToken, ParsecInvitationAddr, SASCode, libparsec } from '@/plugins/libparsec';
+import { AccessToken, ParsecInvitationAddr, ParsecInvitationRedirectionURL, SASCode, libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 
 export class DeviceGreet {
@@ -27,7 +27,7 @@ export class DeviceGreet {
   SASCodeChoices: SASCode[];
   requestedDeviceLabel: DeviceLabel;
   token: AccessToken;
-  invitationLink: ParsecInvitationAddr;
+  invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
 
   constructor() {
     this.handle = null;
@@ -72,7 +72,7 @@ export class DeviceGreet {
     }
   }
 
-  setInvitationInformation(invitationLink: string, token: string): void {
+  setInvitationInformation(invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL, token: string): void {
     this.invitationLink = invitationLink;
     this.token = token;
   }
@@ -81,7 +81,8 @@ export class DeviceGreet {
     const result = await createDeviceInvitation(sendEmail);
 
     if (result.ok) {
-      this.invitationLink = result.value.addr;
+      const [invitationAddr, _] = result.value.addr;
+      this.invitationLink = invitationAddr;
       this.token = result.value.token;
     }
     return result;

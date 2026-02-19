@@ -644,8 +644,9 @@ onMounted(async () => {
           } else if (userAction === UserAction.CopyAsyncEnrollmentLink) {
             const result = await getAsyncEnrollmentAddr();
             if (result.ok) {
+              const [_, invitationAddrAsHttpRedirection] = result.value;
               await copyToClipboard(
-                result.value,
+                invitationAddrAsHttpRedirection,
                 informationManager.value,
                 'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.success',
                 'InvitationsPage.asyncEnrollmentRequest.linkCopiedToClipboard.failed',

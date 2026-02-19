@@ -99,6 +99,7 @@ async function onAddDeviceClick(): Promise<void> {
     return;
   }
 
+  const [invitationAddr, _] = result.value.addr;
   const modal = await modalController.create({
     component: GreetDeviceModal,
     canDismiss: true,
@@ -106,7 +107,7 @@ async function onAddDeviceClick(): Promise<void> {
     cssClass: 'greet-organization-modal',
     componentProps: {
       informationManager: informationManager.value,
-      invitationLink: result.value.addr,
+      invitationLink: invitationAddr,
       token: result.value.token,
     },
   });

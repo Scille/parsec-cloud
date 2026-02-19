@@ -225,6 +225,7 @@ import {
   getServerConfig,
   parseParsecAddr,
 } from '@/parsec';
+import { ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { close, personAdd } from 'ionicons/icons';
@@ -264,7 +265,7 @@ const serverConfig = ref<ServerConfig | undefined>(undefined);
 const claimer = ref(new UserClaim());
 
 const props = defineProps<{
-  invitationLink: string;
+  invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
   informationManager: InformationManager;
 }>();
 

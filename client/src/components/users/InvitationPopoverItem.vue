@@ -100,7 +100,8 @@ onMounted(async () => {
 });
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
-  const result = await Clipboard.writeText(invitation.addr);
+  const [_, invitationAddrAsHttpRedirection] = invitation.addr;
+  const result = await Clipboard.writeText(invitationAddrAsHttpRedirection);
   copyLinkActive.value = true;
   setTimeout(() => {
     copyLinkActive.value = false;

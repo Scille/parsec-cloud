@@ -127,6 +127,10 @@ msTest('Check join link', async ({ home }) => {
       // cspell:disable-next-line
       link: 'parsec3://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS',
     },
+    {
+      // cspell:disable-next-line
+      link: 'https://parsec.cloud/redirect/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS',
+    },
   ];
 
   await home.locator('#create-organization-button').click();

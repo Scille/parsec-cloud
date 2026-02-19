@@ -248,7 +248,7 @@ msTest.skip('Test files options tab menu', async ({ documents, context }) => {
   await expect(optionsTabModal).toBeHidden();
   await expect(documents).toShowToast('Link has been copied to clipboard.', 'Info');
   const filePath = await documents.evaluate(() => navigator.clipboard.readText());
-  expect(filePath).toMatch(/^parsec3:\/\/.+$/);
+  expect(filePath).toMatch(/^https?:\/\/.+\/redirect\/.+a=path&p=.+$/);
 
   // `History` button
   await tabItem.nth(3).click();

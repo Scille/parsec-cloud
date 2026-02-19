@@ -108,7 +108,7 @@ msTest.describe(() => {
         await parsecEditics.context().grantPermissions(['clipboard-write']);
         await topbarButtons.nth(1).click();
         await expect(parsecEditics).toShowToast('Link has been copied to clipboard.', 'Info');
-        expect(await getClipboardText(parsecEditics)).toMatch(/^parsec3:\/\/.+$/);
+        expect(await getClipboardText(parsecEditics)).toMatch(/^https?:\/\/.+\/redirect\/.+a=path&p=.+$/);
       } else if (action === 'edit') {
         await topbarButtons.nth(2).click();
         await expect(topbar.locator('.save-info')).toBeHidden();
