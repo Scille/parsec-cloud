@@ -11,7 +11,6 @@ use crate::{
     bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
-use parsec_cli::utils::YELLOW;
 
 #[rstest::rstest]
 #[tokio::test]
@@ -33,9 +32,7 @@ async fn invite_user(tmp_path: TmpPath) {
         "a@b.c"
     )
     .stdout(predicates::str::contains("Invitation token:"))
-    .stdout(predicates::str::contains(format!(
-        "Invitation URL: {YELLOW}{addr}"
-    )));
+    .stdout(predicates::str::is_match("Invitation URL: .*https?://.*/redirect/.*").unwrap());
 }
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows

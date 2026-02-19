@@ -23,6 +23,10 @@ enum CreateOrganizationRep {
 struct CreationOrganizationOk {
     #[serde(deserialize_with = "bootstrap_url_deserialize")]
     bootstrap_url: ParsecOrganizationBootstrapAddr,
+    // Note we ignore the field `bootstrap_url_as_http_redirection` here.
+    // This is for backward compatibility (it has been added in Parsec 3.8.0)
+    // since we can instead just compute the HTTP redirection URL ourself from
+    // the `bootstrap_url` field.
 }
 
 fn bootstrap_url_deserialize<'de, D>(
@@ -77,7 +81,8 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     let organization_addr = create_organization_req(&organization, &addr, &token).await?;
 
     handle.stop_with_message(format!(
-        "Organization bootstrap url: {YELLOW}{organization_addr}{RESET}"
+        "Organization bootstrap URL: {YELLOW}{}{RESET}",
+        organization_addr.to_http_redirection_url(),
     ));
 
     Ok(())

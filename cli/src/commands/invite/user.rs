@@ -31,16 +31,17 @@ pub async fn invite_user(args: Args, client: &StartedClient) -> anyhow::Result<(
         .await
         .context("Server refused to create user invitation")?;
 
-    let url = ParsecInvitationAddr::new(
+    let addr = ParsecInvitationAddr::new(
         client.organization_addr().clone(),
         client.organization_id().clone(),
         InvitationType::User,
         token,
-    )
-    .to_url();
+    );
 
     handle.stop_with_message(format!(
-        "Invitation token: {YELLOW}{token}{RESET}\nInvitation URL: {YELLOW}{url}{RESET}"
+        "Invitation token: {YELLOW}{token}{RESET}\n\
+        Invitation URL: {YELLOW}{}{RESET}",
+        addr.to_http_redirection_url(),
     ));
 
     Ok(())
