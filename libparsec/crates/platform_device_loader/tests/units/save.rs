@@ -9,7 +9,8 @@ use std::sync::Arc;
 use crate::{
     load_device, save_device, tests::utils::MockedAccountVaultOperations,
     AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, AvailableDeviceType,
-    DeviceAccessStrategy, DeviceSaveStrategy, LoadDeviceError, SaveDeviceError,
+    DeviceAccessStrategy, DevicePrimaryProtectionStrategy, DeviceSaveStrategy, LoadDeviceError,
+    SaveDeviceError,
 };
 use libparsec_client_connection::ConnectionError;
 use libparsec_tests_fixtures::prelude::*;
@@ -19,10 +20,9 @@ use libparsec_types::prelude::*;
 async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
     let key_file = tmp_path.join("a_devices.keys");
 
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
-    };
-    let access_strategy = save_strategy.clone().into_access(key_file.clone());
+    let access_strategy =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd.".to_owned().into());
+    let save_strategy = access_strategy.clone().into();
     let alice_device = env.local_device("alice@dev1");
     alice_device
         .time_provider
@@ -42,6 +42,7 @@ async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
             device_id: alice_device.device_id,
             human_handle: alice_device.human_handle.clone(),
             device_label: alice_device.device_label.clone(),
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::Password,
         }
     );
@@ -84,10 +85,9 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
         }
     };
 
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
-    };
-    let access_strategy = save_strategy.clone().into_access(key_file.clone());
+    let access_strategy =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd.".to_owned().into());
+    let save_strategy = access_strategy.clone().into();
     let alice_device = env.local_device("alice@dev1");
     alice_device
         .time_provider
@@ -107,6 +107,7 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
             device_id: alice_device.device_id,
             human_handle: alice_device.human_handle.clone(),
             device_label: alice_device.device_label.clone(),
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::Password,
         }
     );
@@ -128,8 +129,11 @@ async fn remote_error(
     let account_vault_operations = Arc::new(MockedAccountVaultOperations::new(
         alice_device.human_handle.email().to_owned(),
     ));
-    let save_strategy = DeviceSaveStrategy::AccountVault {
-        operations: account_vault_operations.clone(),
+    let save_strategy = DeviceSaveStrategy {
+        totp_protection: None,
+        primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
+            operations: account_vault_operations.clone(),
+        },
     };
 
     match kind {
@@ -177,19 +181,21 @@ async fn testbed(env: &TestbedEnv) {
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
 
     // Sanity check to ensure the key file is the one present in testbed
-    let old_access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
-        password: "P@ssw0rd.".to_owned().into(),
-    };
+    let old_access =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd.".to_owned().into());
     let device = load_device(&env.discriminant_dir, &old_access)
         .await
         .unwrap();
 
     // Now overwrite the key file in testbed
-    let new_save_strategy = DeviceSaveStrategy::Password {
-        password: "N3wP@ssw0rd.".to_owned().into(),
+    let new_access_strategy = DeviceAccessStrategy {
+        key_file: key_file.clone(),
+        totp_protection: Some((TOTPOpaqueKeyID::default(), SecretKey::generate())),
+        primary_protection: DevicePrimaryProtectionStrategy::Password {
+            password: "N3wP@ssw0rd.".to_owned().into(),
+        },
     };
-    let new_access_strategy = new_save_strategy.clone().into_access(key_file.clone());
+    let new_save_strategy = new_access_strategy.clone().into();
     save_device(&env.discriminant_dir, &new_save_strategy, &device, key_file)
         .await
         .unwrap();

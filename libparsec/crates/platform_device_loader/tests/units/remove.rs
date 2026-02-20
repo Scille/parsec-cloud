@@ -16,9 +16,7 @@ async fn remove_ok(tmp_path: TmpPath, env: &TestbedEnv) {
     // 1. Save device to filesystem.
     let device = env.local_device("alice@dev1");
     let key_file = tmp_path.join("alice.device");
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "FooBar".to_owned().into(),
-    };
+    let save_strategy = DeviceSaveStrategy::new_password("FooBar".to_owned().into());
     save_device(&tmp_path, &save_strategy, &device, key_file.clone())
         .await
         .unwrap();
@@ -45,10 +43,8 @@ async fn testbed(env: &TestbedEnv) {
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
 
     // Sanity check to ensure the key file is the one present in testbed
-    let access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
-        password: "P@ssw0rd.".to_owned().into(),
-    };
+    let access =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd.".to_owned().into());
     load_device(&env.discriminant_dir, &access).await.unwrap();
 
     remove_device(&env.discriminant_dir, &key_file)
