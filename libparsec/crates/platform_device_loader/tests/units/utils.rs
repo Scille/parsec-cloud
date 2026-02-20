@@ -1,15 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 pub use libparsec_platform_async::PinBoxFutureResult;
 pub use libparsec_types::prelude::*;
 
 pub use crate::{
     AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
-    AccountVaultOperationsUploadOpaqueKeyError, OpenBaoDeviceAccessOperations,
-    OpenBaoDeviceSaveOperations, OpenBaoOperationsFetchOpaqueKeyError,
-    OpenBaoOperationsUploadOpaqueKeyError,
+    AccountVaultOperationsUploadOpaqueKeyError, OpenBaoDeviceOperations,
+    OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
 };
 
 use libparsec_platform_filesystem::{load_file, save_content, LoadFileError};
@@ -199,7 +198,7 @@ fn openbao_entity_id_from_email(email: &EmailAddress) -> String {
     openbao_entity_id
 }
 
-impl OpenBaoDeviceSaveOperations for MockedOpenBaoOperations {
+impl OpenBaoDeviceOperations for MockedOpenBaoOperations {
     fn openbao_entity_id(&self) -> &str {
         &self.openbao_entity_id
     }
@@ -221,16 +220,6 @@ impl OpenBaoDeviceSaveOperations for MockedOpenBaoOperations {
         Box::pin(async move { Ok((key_path, key)) })
     }
 
-    fn to_access_operations(&self) -> Arc<dyn OpenBaoDeviceAccessOperations> {
-        Arc::new(self.to_owned())
-    }
-}
-
-impl OpenBaoDeviceAccessOperations for MockedOpenBaoOperations {
-    fn openbao_entity_id(&self) -> &str {
-        &self.openbao_entity_id
-    }
-
     fn fetch_opaque_key(
         &self,
         ciphertext_key_path: String,
@@ -245,13 +234,5 @@ impl OpenBaoDeviceAccessOperations for MockedOpenBaoOperations {
         };
 
         Box::pin(async move { outcome })
-    }
-
-    fn to_save_operations(
-        &self,
-        openbao_preferred_auth_id: String,
-    ) -> Arc<dyn OpenBaoDeviceSaveOperations> {
-        assert_eq!(self.openbao_preferred_auth_id(), openbao_preferred_auth_id);
-        Arc::new(self.clone())
     }
 }

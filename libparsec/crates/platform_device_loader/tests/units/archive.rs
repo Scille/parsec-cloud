@@ -8,7 +8,7 @@ use libparsec_tests_fixtures::prelude::*;
 
 use crate::{
     archive_device, load_device, save_device, tests::utils::key_is_archived, DeviceAccessStrategy,
-    DeviceSaveStrategy, LoadDeviceError,
+    DevicePrimaryProtectionStrategy, DeviceSaveStrategy, LoadDeviceError,
 };
 
 #[parsec_test(testbed = "minimal")]
@@ -16,8 +16,11 @@ async fn archive_ok(tmp_path: TmpPath, env: &TestbedEnv) {
     // 1. Save device to filesystem.
     let device = env.local_device("alice@dev1");
     let key_file = tmp_path.join("alice.device");
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "FooBar".to_owned().into(),
+    let save_strategy = DeviceSaveStrategy {
+        totp_protection: None,
+        primary_protection: DevicePrimaryProtectionStrategy::Password {
+            password: "FooBar".to_owned().into(),
+        },
     };
     save_device(&tmp_path, &save_strategy, &device, key_file.clone())
         .await
@@ -42,9 +45,12 @@ async fn testbed(env: &TestbedEnv) {
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
 
     // Sanity check to ensure the key file is the one present in testbed
-    let access = DeviceAccessStrategy::Password {
+    let access = DeviceAccessStrategy {
         key_file: key_file.clone(),
-        password: "P@ssw0rd.".to_owned().into(),
+        totp_protection: None,
+        primary_protection: DevicePrimaryProtectionStrategy::Password {
+            password: "P@ssw0rd.".to_owned().into(),
+        },
     };
     load_device(&env.discriminant_dir, &access).await.unwrap();
 

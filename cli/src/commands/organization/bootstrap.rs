@@ -3,8 +3,8 @@
 use std::{path::PathBuf, sync::Arc};
 
 use libparsec::{
-    AvailableDevice, ClientConfig, DeviceLabel, DeviceSaveStrategy, EmailAddress, HumanHandle,
-    ParsecOrganizationBootstrapAddr, Password,
+    AvailableDevice, ClientConfig, DeviceLabel, DevicePrimaryProtectionStrategy,
+    DeviceSaveStrategy, EmailAddress, HumanHandle, ParsecOrganizationBootstrapAddr, Password,
 };
 
 use crate::utils::*;
@@ -50,7 +50,10 @@ pub async fn bootstrap_organization_req(
     libparsec::bootstrap_organization(
         client_config,
         addr,
-        DeviceSaveStrategy::Password { password },
+        DeviceSaveStrategy {
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Password { password },
+        },
         human_handle,
         device_label,
         sequester_authority_verify_key_pem,
