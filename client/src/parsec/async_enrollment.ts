@@ -260,6 +260,7 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
           label: request.enrollment.requestedHumanHandle.label,
           email: request.enrollment.requestedHumanHandle.email,
         },
+        totpOpaqueKeyId: null,
         deviceLabel: request.enrollment.requestedDeviceLabel,
         ty: {
           tag: AvailableDeviceTypeTag.Keyring,

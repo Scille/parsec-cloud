@@ -37,14 +37,18 @@
       :error="currentError"
       :email="email"
       :name="name"
-      :save-strategy="saveStrategy.tag"
+      :protection-strategy="saveStrategy.primaryProtection.tag"
       :organization-name="organizationName"
       :server-type="ServerType.Custom"
-      :can-edit-email="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
-      :can-edit-name="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
+      :can-edit-email="
+        ![DevicePrimaryProtectionStrategyTag.AccountVault, DevicePrimaryProtectionStrategyTag.OpenBao].includes(
+          saveStrategy.primaryProtection.tag,
+        )
+      "
+      :can-edit-name="saveStrategy.primaryProtection.tag !== DevicePrimaryProtectionStrategyTag.AccountVault"
       :can-edit-organization-name="props.bootstrapLink === undefined"
       :can-edit-server-address="props.bootstrapLink === undefined"
-      :can-edit-save-strategy="saveStrategy.tag !== DeviceSaveStrategyTag.AccountVault"
+      :can-edit-save-strategy="saveStrategy.primaryProtection.tag !== DevicePrimaryProtectionStrategyTag.AccountVault"
       :use-sequester-key="sequesterKey !== undefined"
       @create-clicked="onCreateClicked"
       @update-email-clicked="onUpdatePersonalInformationClicked"
@@ -72,11 +76,13 @@
 <script setup lang="ts">
 import { getDefaultDeviceName } from '@/common/device';
 import {
+  AccountHandle,
   AvailableDevice,
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
+  constructSaveStrategy,
+  DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
-  DeviceSaveStrategyTag,
   forgeServerAddr,
   getServerConfig,
   isWeb,
@@ -86,8 +92,8 @@ import {
   createOrganization as parsecCreateOrganization,
   ParsedParsecAddrTag,
   parseParsecAddr,
+  PrimaryProtectionStrategy,
   Result,
-  SaveStrategy,
   ServerConfig,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
@@ -100,7 +106,7 @@ import OrganizationSummaryPage from '@/views/organizations/creation/Organization
 import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
 import { IonPage } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
-import { isProxy, onMounted, ref, toRaw } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 
 enum Steps {
   OrganizationNameAndServer,
@@ -166,7 +172,8 @@ async function onOrganizationNameAndServerChosen(
       name.value = infoResult.value.humanHandle.label;
       if (isWeb()) {
         // Create a new vault save strategy
-        const saveStrategy = SaveStrategy.useAccountVault();
+        const handle = ParsecAccount.getHandle() as AccountHandle;
+        const saveStrategy = constructSaveStrategy(PrimaryProtectionStrategy.useAccountVault(handle));
         // Skip the auth page
         await onAuthenticationChosen(saveStrategy);
       } else {
@@ -203,7 +210,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
     name.value,
     email.value,
     getDefaultDeviceName(),
-    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+    toRaw(saveStrategy.value),
     sequesterKey.value,
   );
   return result;
@@ -218,7 +225,7 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
     name.value,
     email.value,
     getDefaultDeviceName(),
-    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
+    toRaw(saveStrategy.value),
     sequesterKey.value,
   );
   return result;
@@ -272,7 +279,7 @@ async function onGoClicked(): Promise<void> {
     window.electronAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
     return;
   }
-  emits('organizationCreated', organizationName.value, availableDevice.value, saveStrategy.value);
+  emits('organizationCreated', organizationName.value, availableDevice.value, toRaw(saveStrategy.value));
 }
 
 async function onUpdatePersonalInformationClicked(): Promise<void> {

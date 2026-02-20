@@ -76,16 +76,16 @@
 import { SsoProviderCard } from '@/components/devices';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import {
-  AccessStrategy,
   AvailableDevice,
   AvailableDeviceTypeOpenBao,
   AvailableDeviceTypeTag,
   ClientStartError,
   ClientStartErrorTag,
-  DeviceAccessStrategyOpenBao,
-  DeviceAccessStrategyPassword,
+  constructAccessStrategy,
+  DeviceAccessStrategy,
   getServerConfig,
   OpenBaoAuthConfigTag,
+  PrimaryProtectionStrategy,
 } from '@/parsec';
 import { openBaoConnect, OpenBaoErrorType } from '@/services/openBao';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
@@ -98,7 +98,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'loginClick', device: AvailableDevice, access: DeviceAccessStrategyPassword | DeviceAccessStrategyOpenBao): void;
+  (e: 'loginClick', device: AvailableDevice, access: DeviceAccessStrategy): void;
   (e: 'forgottenPasswordClick', device: AvailableDevice): void;
 }>();
 
@@ -150,12 +150,16 @@ async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
   } else {
     isConnectWithSSO.value = true;
   }
-  emits('loginClick', props.device, AccessStrategy.useOpenBao(props.device, connResult.value.getConnectionInfo()));
+  emits(
+    'loginClick',
+    props.device,
+    constructAccessStrategy(props.device, PrimaryProtectionStrategy.useOpenBao(connResult.value.getConnectionInfo())),
+  );
 }
 
 async function onLoginClick(): Promise<void> {
   if (!props.loginInProgress) {
-    emits('loginClick', props.device, AccessStrategy.usePassword(props.device, password.value));
+    emits('loginClick', props.device, constructAccessStrategy(props.device, PrimaryProtectionStrategy.usePassword(password.value)));
   }
 }
 
