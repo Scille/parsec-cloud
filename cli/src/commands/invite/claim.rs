@@ -446,9 +446,9 @@ fn get_save_strategy(save_mode: SaveMode) -> anyhow::Result<DeviceSaveStrategy> 
                     prompt: "Enter password for the new device:",
                 }
             })?;
-            Ok(DeviceSaveStrategy::Password { password })
+            Ok(DeviceSaveStrategy::new_password(password))
         }
-        SaveMode::Keyring => Ok(DeviceSaveStrategy::Keyring),
+        SaveMode::Keyring => Ok(DeviceSaveStrategy::new_keyring()),
     }
 }
 

@@ -53,7 +53,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         &recovery_device,
         passphrase.to_string(),
         device_label.clone(),
-        libparsec_client::DeviceSaveStrategy::Password { password },
+        libparsec_client::DeviceSaveStrategy::new_password(password),
     )
     .await?;
 
