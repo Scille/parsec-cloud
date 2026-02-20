@@ -2,7 +2,6 @@
 
 from .addr import ParsecAddr
 from .common import (
-    Box,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -39,12 +38,8 @@ class AvailableDeviceType(Variant):
         openbao_preferred_auth_id: str
         openbao_entity_id: str
 
-    class TOTP:
-        totp_opaque_key_id: TOTPOpaqueKeyID
-        next: Box["AvailableDeviceType"]
 
-
-class DeviceSaveStrategy(Variant):
+class DevicePrimaryProtectionStrategy(Variant):
     Keyring = VariantItemUnit()
 
     class Password:
@@ -64,38 +59,16 @@ class DeviceSaveStrategy(Variant):
         openbao_auth_token: str
         openbao_preferred_auth_id: str
 
-    class TOTP:
-        totp_opaque_key_id: TOTPOpaqueKeyID
-        totp_opaque_key: SecretKey
-        next: Box["DeviceSaveStrategy"]
+
+class DeviceAccessStrategy(Structure):
+    key_file: Path
+    totp_protection: tuple[TOTPOpaqueKeyID, SecretKey] | None
+    primary_protection: DevicePrimaryProtectionStrategy
 
 
-class DeviceAccessStrategy(Variant):
-    class Keyring:
-        key_file: Path
-
-    class Password:
-        key_file: Path
-        password: Password
-
-    class PKI:
-        key_file: Path
-
-    class AccountVault:
-        key_file: Path
-        account_handle: Handle
-
-    class OpenBao:
-        key_file: Path
-        openbao_server_url: str
-        openbao_secret_mount_path: str
-        openbao_transit_mount_path: str
-        openbao_entity_id: str
-        openbao_auth_token: str
-
-    class TOTP:
-        totp_opaque_key: SecretKey
-        next: Box["DeviceAccessStrategy"]
+class DeviceSaveStrategy(Structure):
+    totp_protection: tuple[TOTPOpaqueKeyID, SecretKey] | None
+    primary_protection: DevicePrimaryProtectionStrategy
 
 
 class AvailableDevice(Structure):
@@ -108,6 +81,7 @@ class AvailableDevice(Structure):
     device_id: DeviceID
     human_handle: HumanHandle
     device_label: DeviceLabel
+    totp_opaque_key_id: TOTPOpaqueKeyID | None
     ty: AvailableDeviceType
 
 

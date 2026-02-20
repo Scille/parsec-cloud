@@ -82,7 +82,7 @@ async fn ok(env: &TestbedEnv) {
 
     // Part 2: import recovery device to get new device
     let new_device_label = DeviceLabel::try_from("new_device").unwrap();
-    let save_strategy = DeviceSaveStrategy::Keyring;
+    let save_strategy = DeviceSaveStrategy::new_keyring();
 
     let saved_device = libparsec_client::import_recovery_device(
         &config_dir,

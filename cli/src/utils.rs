@@ -9,7 +9,7 @@ use libparsec::{
     list_available_devices, AuthenticatedCmds, AvailableDevice, AvailableDeviceType, DeviceLabel,
     HumanHandle, LocalDevice, Password, ProxyConfig, SASCode, UserProfile,
 };
-use libparsec_client::DeviceAccessStrategy;
+use libparsec_client::{DeviceAccessStrategy, DevicePrimaryProtectionStrategy};
 use libparsec_platform_ipc::{
     lock_device_for_use, try_lock_device_for_use, InUseDeviceLockGuard, TryLockDeviceForUseError,
 };
@@ -178,6 +178,8 @@ pub enum LoadAndUnlockDeviceError {
     LoadDevice(LoadDeviceError),
     /// The device file authentication is not supported
     UnsupportedAuthentication(AvailableDeviceType),
+    /// The device file uses TOTP as secondary protection, which is not supported
+    UnsupportedTOTPAuthentication,
     /// Error while unlocking the device
     UnlockDevice(libparsec::LoadDeviceError),
     /// Internal error
@@ -192,6 +194,9 @@ impl Display for LoadAndUnlockDeviceError {
             LoadAndUnlockDeviceError::LoadDevice(e) => e.fmt(f),
             LoadAndUnlockDeviceError::UnsupportedAuthentication(ty) => {
                 write!(f, "Unsupported device file authentication `{ty:?}`")
+            }
+            LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication => {
+                write!(f, "Unsupported device file authentication `TOTP`")
             }
             LoadAndUnlockDeviceError::UnlockDevice(e) => e.fmt(f),
             LoadAndUnlockDeviceError::Internal(e) => e.fmt(f),
@@ -231,6 +236,14 @@ pub async fn load_and_unlock_device(
 
     log::debug!("Loading device {:?}", device.ty);
 
+    if device.totp_opaque_key_id.is_some() {
+        // In theory we should support this authentication method here,
+        // however:
+        // - It is cumbersome since it requires a TOTP challenge involving the server.
+        // - In practice it is a niche usage that will most likely only be used in the GUI.
+        return Err(LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication);
+    }
+
     let access_strategy = match device.ty {
         AvailableDeviceType::Password => {
             let password = read_password(if password_stdin {
@@ -241,9 +254,10 @@ pub async fn load_and_unlock_device(
                 }
             })?;
 
-            DeviceAccessStrategy::Password {
+            DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),
-                password,
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
             }
         }
         AvailableDeviceType::PKI { .. } => {
@@ -253,8 +267,10 @@ pub async fn load_and_unlock_device(
             //     key_file: device.key_file_path.clone(),
             // }
         }
-        AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
+        AvailableDeviceType::Keyring => DeviceAccessStrategy {
             key_file: device.key_file_path.clone(),
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
         },
         AvailableDeviceType::AccountVault => {
             // In theory we should support this authentication method here,
@@ -276,16 +292,6 @@ pub async fn load_and_unlock_device(
             // however:
             // - It is cumbersome since it requires opening a browser window for login
             //   and redirect its result to a server listening on localhost...
-            // - In practice it is a niche usage that will most likely only be used in the GUI.
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
-                device.ty,
-            ));
-        }
-
-        AvailableDeviceType::TOTP { .. } => {
-            // In theory we should support this authentication method here,
-            // however:
-            // - It is cumbersome since it requires a TOTP challenge involving the server.
             // - In practice it is a niche usage that will most likely only be used in the GUI.
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
                 device.ty,

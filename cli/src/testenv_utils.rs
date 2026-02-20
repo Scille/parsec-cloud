@@ -55,13 +55,10 @@ pub async fn initialize_test_organization(
     )
     .await?;
 
-    let access = DeviceAccessStrategy::Password {
-        key_file: libparsec::get_default_key_file(
-            &client_config.config_dir,
-            alice_device.device_id,
-        ),
-        password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
-    };
+    let key_file =
+        libparsec::get_default_key_file(&client_config.config_dir, alice_device.device_id);
+    let access =
+        DeviceAccessStrategy::new_password(key_file, DEFAULT_DEVICE_PASSWORD.to_string().into());
 
     let alice_device = libparsec::load_device(&client_config.config_dir, &access).await?;
 
@@ -151,9 +148,8 @@ async fn register_new_device(
 
     let key_file = libparsec::get_default_key_file(&client_config.config_dir, new_device.device_id);
 
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
-    };
+    let save_strategy =
+        DeviceSaveStrategy::new_password(DEFAULT_DEVICE_PASSWORD.to_string().into());
 
     libparsec::save_device(Path::new(""), &save_strategy, &new_device, key_file).await?;
 
@@ -212,9 +208,8 @@ async fn register_new_user(
 
     let key_file = libparsec::get_default_key_file(&client_config.config_dir, new_device.device_id);
 
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
-    };
+    let save_strategy =
+        DeviceSaveStrategy::new_password(DEFAULT_DEVICE_PASSWORD.to_string().into());
 
     libparsec::save_device(Path::new(""), &save_strategy, &new_device, key_file).await?;
 

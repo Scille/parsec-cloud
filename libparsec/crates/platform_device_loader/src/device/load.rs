@@ -122,33 +122,36 @@ pub async fn load_device(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
-    log::debug!("Loading device at {}", access.key_file().display());
+    log::debug!("Loading device at {}", access.key_file.display());
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) = testbed::maybe_load_device(config_dir, access) {
         return result;
     }
 
-    let file_content = load_file(access.key_file()).await?;
+    let file_content = load_file(&access.key_file).await?;
     let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
-    let keys = load_ciphertext_key(access, &device_file)
-        .await
-        .map_err(|err| match err {
-            LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
-            LoadCiphertextKeyError::DecryptionFailed => LoadDeviceError::DecryptionFailed,
-            LoadCiphertextKeyError::Internal(err) => LoadDeviceError::Internal(err),
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
-                LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error }
-            }
-            LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
-                LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error }
-            }
-        })?;
-
-    let device = decrypt_device_file(&device_file, &keys).map_err(|err| match err {
-        DecryptDeviceFileError::TOTPDecrypt(_) => LoadDeviceError::TOTPDecryptionFailed,
-        DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
-        DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
-    })?;
+    let ciphertext_key =
+        load_ciphertext_key(access, &device_file)
+            .await
+            .map_err(|err| match err {
+                LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
+                LoadCiphertextKeyError::DecryptionFailed => LoadDeviceError::DecryptionFailed,
+                LoadCiphertextKeyError::Internal(err) => LoadDeviceError::Internal(err),
+                LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
+                    LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error }
+                }
+                LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
+                    LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error }
+                }
+            })?;
+    let totp_opaque_key = access.totp_protection.as_ref().map(|(_, key)| key);
+    let device = decrypt_device_file(&device_file, &ciphertext_key, totp_opaque_key).map_err(
+        |err| match err {
+            DecryptDeviceFileError::TOTPDecrypt(_) => LoadDeviceError::TOTPDecryptionFailed,
+            DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
+            DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
+        },
+    )?;
 
     Ok(Arc::new(device))
 }
@@ -158,20 +161,6 @@ fn load_available_device_from_blob(
     blob: &[u8],
 ) -> Result<AvailableDevice, libparsec_types::RmpDecodeError> {
     let device_file = DeviceFile::load(blob)?;
-
-    macro_rules! handle_totp_wrapping {
-        ($device:expr, $base_protection:expr) => {{
-            let base_protection = $base_protection;
-            if let Some(totp_opaque_key_id) = $device.totp_opaque_key_id {
-                AvailableDeviceType::TOTP {
-                    totp_opaque_key_id,
-                    next: Box::new(base_protection),
-                }
-            } else {
-                base_protection
-            }
-        }};
-    }
 
     let (
         ty,
@@ -183,9 +172,10 @@ fn load_available_device_from_blob(
         device_id,
         human_handle,
         device_label,
+        totp_opaque_key_id,
     ) = match device_file {
         DeviceFile::Keyring(device) => (
-            handle_totp_wrapping!(device, AvailableDeviceType::Keyring),
+            AvailableDeviceType::Keyring,
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -194,9 +184,10 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
         DeviceFile::Password(device) => (
-            handle_totp_wrapping!(device, AvailableDeviceType::Password),
+            AvailableDeviceType::Password,
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -205,9 +196,10 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
         DeviceFile::Recovery(device) => (
-            AvailableDeviceType::Recovery, // Recovery is never protected by TOTP
+            AvailableDeviceType::Recovery,
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -216,14 +208,12 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            None, // Recovery is never protected by TOTP
         ),
         DeviceFile::PKI(device) => (
-            handle_totp_wrapping!(
-                device,
-                AvailableDeviceType::PKI {
-                    certificate_ref: device.certificate_ref,
-                }
-            ),
+            AvailableDeviceType::PKI {
+                certificate_ref: device.certificate_ref,
+            },
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -232,9 +222,10 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
         DeviceFile::AccountVault(device) => (
-            handle_totp_wrapping!(device, AvailableDeviceType::AccountVault),
+            AvailableDeviceType::AccountVault,
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -243,15 +234,13 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
         DeviceFile::OpenBao(device) => (
-            handle_totp_wrapping!(
-                device,
-                AvailableDeviceType::OpenBao {
-                    openbao_entity_id: device.openbao_entity_id,
-                    openbao_preferred_auth_id: device.openbao_preferred_auth_id,
-                }
-            ),
+            AvailableDeviceType::OpenBao {
+                openbao_entity_id: device.openbao_entity_id,
+                openbao_preferred_auth_id: device.openbao_preferred_auth_id,
+            },
             device.created_on,
             device.protected_on,
             device.server_url,
@@ -260,6 +249,7 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
     };
 
@@ -273,6 +263,7 @@ fn load_available_device_from_blob(
         device_id,
         human_handle,
         device_label,
+        totp_opaque_key_id,
         ty,
     })
 }

@@ -64,9 +64,7 @@ async fn ok_with_server(env: &TestbedEnv) {
             org_id.clone(),
             org_user_id,
             new_device_label.clone(),
-            DeviceSaveStrategy::Password {
-                password: "P@ssw0rd.".to_owned().into(),
-            },
+            DeviceSaveStrategy::new_password("P@ssw0rd.".to_owned().into()),
         )
         .await
         .unwrap();
@@ -83,6 +81,7 @@ async fn ok_with_server(env: &TestbedEnv) {
             device_id: available_device.device_id,
             human_handle: human_handle.clone(),
             device_label: new_device_label,
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::Password,
         }
     );
@@ -94,10 +93,10 @@ async fn ok_with_server(env: &TestbedEnv) {
 
     let new_device = libparsec_platform_device_loader::load_device(
         &env.discriminant_dir,
-        &DeviceAccessStrategy::Password {
-            key_file: available_device.key_file_path,
-            password: "P@ssw0rd.".to_owned().into(),
-        },
+        &DeviceAccessStrategy::new_password(
+            available_device.key_file_path,
+            "P@ssw0rd.".to_owned().into(),
+        ),
     )
     .await
     .unwrap();
@@ -168,9 +167,7 @@ async fn ok_mocked(env: &TestbedEnv) {
             alice.organization_id().to_owned(),
             alice.user_id,
             new_device_label.clone(),
-            DeviceSaveStrategy::Password {
-                password: "P@ssw0rd.".to_owned().into(),
-            },
+            DeviceSaveStrategy::new_password("P@ssw0rd.".to_owned().into()),
         )
         .await
         .unwrap();
@@ -187,6 +184,7 @@ async fn ok_mocked(env: &TestbedEnv) {
             device_id: available_device.device_id,
             human_handle: alice.human_handle.clone(),
             device_label: new_device_label,
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::Password,
         }
     );
@@ -218,7 +216,7 @@ async fn unknown_registration_device(env: &TestbedEnv) {
                 "Dummy".parse().unwrap(),
                 alice.user_id,
                 DeviceLabel::default(),
-                DeviceSaveStrategy::Keyring,
+                DeviceSaveStrategy::new_keyring(),
             )
             .await,
         Err(AccountRegisterNewDeviceError::UnknownRegistrationDevice)
@@ -237,7 +235,7 @@ async fn unknown_registration_device(env: &TestbedEnv) {
                 alice.organization_id().to_owned(),
                 UserID::default(),
                 DeviceLabel::default(),
-                DeviceSaveStrategy::Keyring,
+                DeviceSaveStrategy::new_keyring(),
             )
             .await,
         Err(AccountRegisterNewDeviceError::UnknownRegistrationDevice)
@@ -282,7 +280,7 @@ async fn offline(
                 alice.organization_id().to_owned(),
                 alice.user_id,
                 DeviceLabel::default(),
-                DeviceSaveStrategy::Keyring,
+                DeviceSaveStrategy::new_keyring(),
             )
             .await,
         Err(AccountRegisterNewDeviceError::Offline(_))
@@ -339,7 +337,7 @@ async fn unknown_server_response(
             alice.organization_id().to_owned(),
             alice.user_id,
             DeviceLabel::default(),
-            DeviceSaveStrategy::Keyring,
+            DeviceSaveStrategy::new_keyring(),
         ).await,
         Err(AccountRegisterNewDeviceError::Internal(err))
         if format!("{err}") == "Unexpected server response: UnknownStatus { unknown_status: \"unknown\", reason: None }"
@@ -377,7 +375,7 @@ async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
             alice.organization_id().to_owned(),
             alice.user_id,
             DeviceLabel::default(),
-            DeviceSaveStrategy::Keyring,
+            DeviceSaveStrategy::new_keyring(),
         ).await,
         Err(AccountRegisterNewDeviceError::TimestampOutOfBallpark { server_timestamp, client_timestamp, ballpark_client_early_offset, ballpark_client_late_offset })
         if

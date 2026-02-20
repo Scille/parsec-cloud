@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, ParsecAddr};
+use libparsec::{
+    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
+    ParsecAddr,
+};
 
 use crate::utils::*;
 
@@ -16,6 +19,14 @@ crate::clap_parser_with_shared_opts_builder!(
 pub async fn main(args: Args) -> anyhow::Result<()> {
     let device = load_device_file(&args.config_dir, args.device).await?;
 
+    if device.totp_opaque_key_id.is_some() {
+        // In theory we should support this authentication method here,
+        // however:
+        // - It is cumbersome since it requires a TOTP challenge involving the server.
+        // - In practice it is a niche usage that will most likely only be used in the GUI.
+        return Err(LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication.into());
+    }
+
     let access_strategy = match device.ty {
         AvailableDeviceType::Password => {
             let password = read_password(if args.password_stdin {
@@ -26,9 +37,10 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                 }
             })?;
 
-            DeviceAccessStrategy::Password {
+            DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),
-                password: password.clone(),
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
             }
         }
 
@@ -40,8 +52,10 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             // }
         }
 
-        AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
+        AvailableDeviceType::Keyring => DeviceAccessStrategy {
             key_file: device.key_file_path.clone(),
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
         },
 
         AvailableDeviceType::AccountVault => {
@@ -62,14 +76,6 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             // however:
             // - It is cumbersome since it requires opening a browser window for login
             //   and redirect its result to a server listening on localhost...
-            // - In practice it is a niche usage that will most likely only be used in the GUI.
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
-        }
-
-        AvailableDeviceType::TOTP { .. } => {
-            // In theory we should support this authentication method here,
-            // however:
-            // - It is cumbersome since it requires a TOTP challenge involving the server.
             // - In practice it is a niche usage that will most likely only be used in the GUI.
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
         }

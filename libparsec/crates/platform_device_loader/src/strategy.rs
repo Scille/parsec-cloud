@@ -1,9 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_crypto::{Password, SecretKey};
@@ -80,28 +77,17 @@ pub enum AccountVaultOperationsUploadOpaqueKeyError {
  * OpenBao operations
  */
 
-/// We need to split the OpenBao trait between save and access operations since
-/// `openbao_entity_id` & `openbao_preferred_auth_id` are only needed for save.
-pub trait OpenBaoDeviceSaveOperations: std::fmt::Debug + Send + Sync {
+pub trait OpenBaoDeviceOperations: std::fmt::Debug + Send + Sync {
     fn openbao_entity_id(&self) -> &str;
     fn openbao_preferred_auth_id(&self) -> &str;
     /// Returns `(<openbao_ciphertext_key_path>, <opaque_key>)`
     fn upload_opaque_key(
         &self,
     ) -> PinBoxFutureResult<(String, SecretKey), OpenBaoOperationsUploadOpaqueKeyError>;
-    fn to_access_operations(&self) -> Arc<dyn OpenBaoDeviceAccessOperations>;
-}
-
-pub trait OpenBaoDeviceAccessOperations: std::fmt::Debug + Send + Sync {
-    fn openbao_entity_id(&self) -> &str;
     fn fetch_opaque_key(
         &self,
         openbao_ciphertext_key_path: String,
     ) -> PinBoxFutureResult<SecretKey, OpenBaoOperationsFetchOpaqueKeyError>;
-    fn to_save_operations(
-        &self,
-        openbao_preferred_auth_id: String,
-    ) -> Arc<dyn OpenBaoDeviceSaveOperations>;
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -128,9 +114,8 @@ pub enum OpenBaoOperationsUploadOpaqueKeyError {
  * DeviceSaveStrategy
  */
 
-/// Represent how (not where) to save a device file
 #[derive(Debug, Clone)]
-pub enum DeviceSaveStrategy {
+pub enum DevicePrimaryProtectionStrategy {
     Keyring,
     Password {
         password: Password,
@@ -142,47 +127,11 @@ pub enum DeviceSaveStrategy {
         operations: Arc<dyn AccountVaultOperations>,
     },
     OpenBao {
-        operations: Arc<dyn OpenBaoDeviceSaveOperations>,
-    },
-    /// TOTP consists of an opaque key stored server-side and only accessible
-    /// through a TOTP-challenge.
-    /// However this security cannot be used alone (otherwise the server would
-    /// be able to decrypt the device!), hence the `next` field to combine with
-    /// another layer of security.
-    TOTP {
-        totp_opaque_key_id: TOTPOpaqueKeyID,
-        totp_opaque_key: SecretKey,
-        next: Box<DeviceSaveStrategy>,
+        operations: Arc<dyn OpenBaoDeviceOperations>,
     },
 }
 
-impl DeviceSaveStrategy {
-    pub fn into_access(self, key_file: PathBuf) -> DeviceAccessStrategy {
-        match self {
-            DeviceSaveStrategy::Keyring => DeviceAccessStrategy::Keyring { key_file },
-            DeviceSaveStrategy::Password { password } => {
-                DeviceAccessStrategy::Password { key_file, password }
-            }
-            DeviceSaveStrategy::PKI { .. } => DeviceAccessStrategy::PKI { key_file },
-            DeviceSaveStrategy::AccountVault { operations } => DeviceAccessStrategy::AccountVault {
-                key_file,
-                operations,
-            },
-            DeviceSaveStrategy::OpenBao { operations } => DeviceAccessStrategy::OpenBao {
-                key_file,
-                operations: operations.to_access_operations(),
-            },
-            DeviceSaveStrategy::TOTP {
-                totp_opaque_key,
-                next,
-                ..
-            } => DeviceAccessStrategy::TOTP {
-                totp_opaque_key,
-                next: Box::new(next.into_access(key_file)),
-            },
-        }
-    }
-
+impl DevicePrimaryProtectionStrategy {
     pub fn ty(&self) -> AvailableDeviceType {
         match self {
             Self::Keyring => AvailableDeviceType::Keyring,
@@ -197,14 +146,40 @@ impl DeviceSaveStrategy {
                 openbao_entity_id: operations.openbao_entity_id().to_owned(),
                 openbao_preferred_auth_id: operations.openbao_preferred_auth_id().to_owned(),
             },
-            Self::TOTP {
-                totp_opaque_key_id,
-                next,
-                ..
-            } => AvailableDeviceType::TOTP {
-                totp_opaque_key_id: *totp_opaque_key_id,
-                next: Box::new(next.ty()),
-            },
+        }
+    }
+}
+
+/// Represent how (not where) to save a device file
+#[derive(Debug, Clone)]
+pub struct DeviceSaveStrategy {
+    pub totp_protection: Option<(TOTPOpaqueKeyID, SecretKey)>,
+    pub primary_protection: DevicePrimaryProtectionStrategy,
+}
+
+impl DeviceSaveStrategy {
+    pub fn into_access(self, key_file: PathBuf) -> DeviceAccessStrategy {
+        DeviceAccessStrategy {
+            key_file,
+            totp_protection: self.totp_protection,
+            primary_protection: self.primary_protection,
+        }
+    }
+
+    // Convenient builders for keyring & password since they are the most
+    // commonly used in the tests.
+
+    pub fn new_keyring() -> Self {
+        Self {
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
+        }
+    }
+
+    pub fn new_password(password: Password) -> Self {
+        Self {
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Password { password },
         }
     }
 }
@@ -215,111 +190,38 @@ impl DeviceSaveStrategy {
 
 /// Represent how to load a device file
 #[derive(Debug, Clone)]
-pub enum DeviceAccessStrategy {
-    Keyring {
-        key_file: PathBuf,
-    },
-    Password {
-        key_file: PathBuf,
-        password: Password,
-    },
-    PKI {
-        key_file: PathBuf,
-    },
-    AccountVault {
-        key_file: PathBuf,
-        operations: Arc<dyn AccountVaultOperations>,
-    },
-    OpenBao {
-        key_file: PathBuf,
-        operations: Arc<dyn OpenBaoDeviceAccessOperations>,
-    },
-    /// TOTP consists of an opaque key stored server-side and only accessible
-    /// through a TOTP-challenge.
-    /// However this security cannot be used alone (otherwise the server would
-    /// be able to decrypt the device!), hence the `next` field to combine with
-    /// another layer of security.
-    TOTP {
-        totp_opaque_key: SecretKey,
-        next: Box<DeviceAccessStrategy>,
-    },
+pub struct DeviceAccessStrategy {
+    pub key_file: PathBuf,
+    pub totp_protection: Option<(TOTPOpaqueKeyID, SecretKey)>,
+    pub primary_protection: DevicePrimaryProtectionStrategy,
+}
+
+impl From<DeviceAccessStrategy> for DeviceSaveStrategy {
+    fn from(value: DeviceAccessStrategy) -> Self {
+        DeviceSaveStrategy {
+            totp_protection: value.totp_protection,
+            primary_protection: value.primary_protection,
+        }
+    }
 }
 
 impl DeviceAccessStrategy {
-    pub fn key_file(&self) -> &Path {
-        match self {
-            Self::Keyring { key_file, .. } => key_file,
-            Self::Password { key_file, .. } => key_file,
-            Self::PKI { key_file, .. } => key_file,
-            Self::AccountVault { key_file, .. } => key_file,
-            Self::OpenBao { key_file, .. } => key_file,
-            Self::TOTP { next, .. } => next.key_file(),
+    // Convenient builders for keyring & password since they are the most
+    // commonly used in the tests.
+
+    pub fn new_keyring(key_file: PathBuf) -> Self {
+        Self {
+            key_file,
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
         }
     }
 
-    /// Returns `None` if `extra_info`'s variant type doesn't match our strategy
-    pub fn into_save_strategy(self, extra_info: AvailableDeviceType) -> Option<DeviceSaveStrategy> {
-        // Don't do `match (self, extra_info)` since we would end up with a catch-all
-        // `(_, _) => return None` condition that would prevent this code from breaking
-        // whenever a new variant is introduced (hence hiding the fact this code has
-        // to be updated).
-        match self {
-            DeviceAccessStrategy::Keyring { .. } => {
-                if let AvailableDeviceType::Keyring = extra_info {
-                    Some(DeviceSaveStrategy::Keyring)
-                } else {
-                    None
-                }
-            }
-            DeviceAccessStrategy::Password { password, .. } => {
-                if let AvailableDeviceType::Password = extra_info {
-                    Some(DeviceSaveStrategy::Password { password })
-                } else {
-                    None
-                }
-            }
-            DeviceAccessStrategy::PKI { .. } => {
-                if let AvailableDeviceType::PKI { certificate_ref } = extra_info {
-                    Some(DeviceSaveStrategy::PKI { certificate_ref })
-                } else {
-                    None
-                }
-            }
-            DeviceAccessStrategy::AccountVault { operations, .. } => {
-                if let AvailableDeviceType::AccountVault = extra_info {
-                    Some(DeviceSaveStrategy::AccountVault { operations })
-                } else {
-                    None
-                }
-            }
-            DeviceAccessStrategy::OpenBao { operations, .. } => match extra_info {
-                AvailableDeviceType::OpenBao {
-                    openbao_entity_id,
-                    openbao_preferred_auth_id,
-                } if openbao_entity_id == operations.openbao_entity_id() => {
-                    Some(DeviceSaveStrategy::OpenBao {
-                        operations: operations.to_save_operations(openbao_preferred_auth_id),
-                    })
-                }
-                _ => None,
-            },
-            DeviceAccessStrategy::TOTP {
-                totp_opaque_key,
-                next,
-            } => match extra_info {
-                AvailableDeviceType::TOTP {
-                    totp_opaque_key_id,
-                    next: extra_info_next,
-                } => {
-                    next.into_save_strategy(*extra_info_next)
-                        .map(|next| DeviceSaveStrategy::TOTP {
-                            totp_opaque_key_id,
-                            totp_opaque_key,
-                            next: Box::new(next),
-                        })
-                }
-                _ => None,
-            },
+    pub fn new_password(key_file: PathBuf, password: Password) -> Self {
+        Self {
+            key_file,
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Password { password },
         }
     }
 }
@@ -341,15 +243,6 @@ pub enum AvailableDeviceType {
         openbao_entity_id: String,
         openbao_preferred_auth_id: String,
     },
-    /// TOTP consists of an opaque key stored server-side and only accessible
-    /// through a TOTP-challenge.
-    /// However this security cannot be used alone (otherwise the server would
-    /// be able to decrypt the device!), hence the `next` field to combine with
-    /// another layer of security.
-    TOTP {
-        totp_opaque_key_id: TOTPOpaqueKeyID,
-        next: Box<AvailableDeviceType>,
-    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -363,5 +256,11 @@ pub struct AvailableDevice {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
+    /// TOTP consists of an opaque key stored server-side and only accessible
+    /// through a TOTP-challenge.
+    /// However this security cannot be used alone (otherwise the server would
+    /// be able to decrypt the device!), hence the `next` field to combine with
+    /// another layer of security.
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
     pub ty: AvailableDeviceType,
 }

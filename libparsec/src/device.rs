@@ -103,17 +103,12 @@ mod strategy {
      */
 
     #[derive(Debug)]
-    struct OpenBaoDeviceAccessOperations {
-        cmds: Arc<libparsec_openbao::OpenBaoCmds>,
-    }
-
-    #[derive(Debug)]
-    struct OpenBaoDeviceSaveOperations {
+    struct OpenBaoDeviceOperations {
         cmds: Arc<libparsec_openbao::OpenBaoCmds>,
         openbao_preferred_auth_id: String,
     }
 
-    impl libparsec_platform_device_loader::OpenBaoDeviceSaveOperations for OpenBaoDeviceSaveOperations {
+    impl libparsec_platform_device_loader::OpenBaoDeviceOperations for OpenBaoDeviceOperations {
         fn openbao_entity_id(&self) -> &str {
             self.cmds.openbao_entity_id()
         }
@@ -143,22 +138,6 @@ mod strategy {
             }))
         }
 
-        fn to_access_operations(
-            &self,
-        ) -> Arc<dyn libparsec_platform_device_loader::OpenBaoDeviceAccessOperations> {
-            Arc::new(OpenBaoDeviceAccessOperations {
-                cmds: self.cmds.clone(),
-            })
-        }
-    }
-
-    impl libparsec_platform_device_loader::OpenBaoDeviceAccessOperations
-        for OpenBaoDeviceAccessOperations
-    {
-        fn openbao_entity_id(&self) -> &str {
-            self.cmds.openbao_entity_id()
-        }
-
         fn fetch_opaque_key(
             &self,
             openbao_ciphertext_key_path: String,
@@ -181,24 +160,14 @@ mod strategy {
                     })
             }))
         }
-
-        fn to_save_operations(
-            &self,
-            openbao_preferred_auth_id: String,
-        ) -> Arc<dyn libparsec_platform_device_loader::OpenBaoDeviceSaveOperations> {
-            Arc::new(OpenBaoDeviceSaveOperations {
-                cmds: self.cmds.clone(),
-                openbao_preferred_auth_id,
-            })
-        }
     }
 
     /*
-     * DeviceSaveStrategy
+     * DevicePrimaryProtectionStrategy
      */
 
     #[derive(Debug, Clone)]
-    pub enum DeviceSaveStrategy {
+    pub enum DevicePrimaryProtectionStrategy {
         Keyring,
         Password {
             password: Password,
@@ -217,11 +186,16 @@ mod strategy {
             openbao_auth_token: String,
             openbao_preferred_auth_id: String,
         },
-        TOTP {
-            totp_opaque_key_id: TOTPOpaqueKeyID,
-            totp_opaque_key: SecretKey,
-            next: Box<DeviceSaveStrategy>,
-        },
+    }
+
+    /*
+     * DeviceSaveStrategy
+     */
+
+    #[derive(Debug, Clone)]
+    pub struct DeviceSaveStrategy {
+        pub totp_protection: Option<(TOTPOpaqueKeyID, SecretKey)>,
+        pub primary_protection: DevicePrimaryProtectionStrategy,
     }
 
     impl DeviceSaveStrategy {
@@ -231,28 +205,32 @@ mod strategy {
         pub fn convert_with_side_effects(
             self,
         ) -> anyhow::Result<libparsec_platform_device_loader::DeviceSaveStrategy> {
-            Ok(match self {
-                DeviceSaveStrategy::Keyring => {
-                    libparsec_platform_device_loader::DeviceSaveStrategy::Keyring
+            let primary_protection = match self.primary_protection {
+                DevicePrimaryProtectionStrategy::Keyring => {
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::Keyring
                 }
-                DeviceSaveStrategy::Password { password } => {
-                    libparsec_platform_device_loader::DeviceSaveStrategy::Password { password }
+                DevicePrimaryProtectionStrategy::Password { password } => {
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::Password {
+                        password,
+                    }
                 }
-                DeviceSaveStrategy::PKI { certificate_ref } => {
-                    libparsec_platform_device_loader::DeviceSaveStrategy::PKI { certificate_ref }
+                DevicePrimaryProtectionStrategy::PKI { certificate_ref } => {
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::PKI {
+                        certificate_ref,
+                    }
                 }
-                DeviceSaveStrategy::AccountVault { account_handle } => {
+                DevicePrimaryProtectionStrategy::AccountVault { account_handle } => {
                     // Note `borrow_from_handle` does a side-effect here !
                     let account = borrow_from_handle(account_handle, |x| match x {
                         HandleItem::Account(account) => Some(account.clone()),
                         _ => None,
                     })?;
 
-                    libparsec_platform_device_loader::DeviceSaveStrategy::AccountVault {
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::AccountVault {
                         operations: Arc::new(AccountVaultOperations { account }),
                     }
                 }
-                DeviceSaveStrategy::OpenBao {
+                DevicePrimaryProtectionStrategy::OpenBao {
                     openbao_server_url,
                     openbao_secret_mount_path,
                     openbao_transit_mount_path,
@@ -273,25 +251,18 @@ mod strategy {
                         openbao_auth_token,
                     ));
 
-                    libparsec_platform_device_loader::DeviceSaveStrategy::OpenBao {
-                        operations: Arc::new(OpenBaoDeviceSaveOperations {
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::OpenBao {
+                        operations: Arc::new(OpenBaoDeviceOperations {
                             cmds,
                             openbao_preferred_auth_id,
                         }),
                     }
                 }
-                DeviceSaveStrategy::TOTP {
-                    totp_opaque_key_id,
-                    totp_opaque_key,
-                    next,
-                } => {
-                    let next = Box::new(next.convert_with_side_effects()?);
-                    libparsec_platform_device_loader::DeviceSaveStrategy::TOTP {
-                        totp_opaque_key_id,
-                        totp_opaque_key,
-                        next,
-                    }
-                }
+            };
+
+            Ok(libparsec_platform_device_loader::DeviceSaveStrategy {
+                totp_protection: self.totp_protection,
+                primary_protection,
             })
         }
     }
@@ -302,33 +273,10 @@ mod strategy {
 
     /// Represent how to load a device file
     #[derive(Debug, Clone)]
-    pub enum DeviceAccessStrategy {
-        Keyring {
-            key_file: PathBuf,
-        },
-        Password {
-            key_file: PathBuf,
-            password: Password,
-        },
-        PKI {
-            key_file: PathBuf,
-        },
-        AccountVault {
-            key_file: PathBuf,
-            account_handle: Handle,
-        },
-        OpenBao {
-            key_file: PathBuf,
-            openbao_server_url: String,
-            openbao_secret_mount_path: String,
-            openbao_transit_mount_path: String,
-            openbao_entity_id: String,
-            openbao_auth_token: String,
-        },
-        TOTP {
-            totp_opaque_key: SecretKey,
-            next: Box<DeviceAccessStrategy>,
-        },
+    pub struct DeviceAccessStrategy {
+        pub key_file: PathBuf,
+        pub totp_protection: Option<(TOTPOpaqueKeyID, SecretKey)>,
+        pub primary_protection: DevicePrimaryProtectionStrategy,
     }
 
     impl DeviceAccessStrategy {
@@ -338,41 +286,38 @@ mod strategy {
         pub fn convert_with_side_effects(
             self,
         ) -> anyhow::Result<libparsec_platform_device_loader::DeviceAccessStrategy> {
-            Ok(match self {
-                DeviceAccessStrategy::Keyring { key_file } => {
-                    libparsec_platform_device_loader::DeviceAccessStrategy::Keyring { key_file }
+            let primary_protection = match self.primary_protection {
+                DevicePrimaryProtectionStrategy::Keyring => {
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::Keyring
                 }
-                DeviceAccessStrategy::Password { key_file, password } => {
-                    libparsec_platform_device_loader::DeviceAccessStrategy::Password {
-                        key_file,
+                DevicePrimaryProtectionStrategy::Password { password } => {
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::Password {
                         password,
                     }
                 }
-                DeviceAccessStrategy::PKI { key_file } => {
-                    libparsec_platform_device_loader::DeviceAccessStrategy::PKI { key_file }
+                DevicePrimaryProtectionStrategy::PKI { certificate_ref } => {
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::PKI {
+                        certificate_ref,
+                    }
                 }
-                DeviceAccessStrategy::AccountVault {
-                    key_file,
-                    account_handle,
-                } => {
+                DevicePrimaryProtectionStrategy::AccountVault { account_handle } => {
                     // Note `borrow_from_handle` does a side-effect here !
                     let account = borrow_from_handle(account_handle, |x| match x {
                         HandleItem::Account(account) => Some(account.clone()),
                         _ => None,
                     })?;
 
-                    libparsec_platform_device_loader::DeviceAccessStrategy::AccountVault {
-                        key_file,
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::AccountVault {
                         operations: Arc::new(AccountVaultOperations { account }),
                     }
                 }
-                DeviceAccessStrategy::OpenBao {
-                    key_file,
+                DevicePrimaryProtectionStrategy::OpenBao {
                     openbao_server_url,
                     openbao_secret_mount_path,
                     openbao_transit_mount_path,
                     openbao_entity_id,
                     openbao_auth_token,
+                    openbao_preferred_auth_id,
                 } => {
                     let client = libparsec_client_connection::build_client()?;
                     let cmds = Arc::new(OpenBaoCmds::new(
@@ -384,26 +329,24 @@ mod strategy {
                         openbao_auth_token,
                     ));
 
-                    libparsec_platform_device_loader::DeviceAccessStrategy::OpenBao {
-                        key_file,
-                        operations: Arc::new(OpenBaoDeviceAccessOperations { cmds }),
+                    libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::OpenBao {
+                        operations: Arc::new(OpenBaoDeviceOperations {
+                            cmds,
+                            openbao_preferred_auth_id,
+                        }),
                     }
                 }
-                DeviceAccessStrategy::TOTP {
-                    totp_opaque_key,
-                    next,
-                } => {
-                    let next = Box::new(next.convert_with_side_effects()?);
-                    libparsec_platform_device_loader::DeviceAccessStrategy::TOTP {
-                        totp_opaque_key,
-                        next,
-                    }
-                }
+            };
+
+            Ok(libparsec_platform_device_loader::DeviceAccessStrategy {
+                key_file: self.key_file,
+                totp_protection: self.totp_protection,
+                primary_protection,
             })
         }
     }
 }
-pub use strategy::{DeviceAccessStrategy, DeviceSaveStrategy};
+pub use strategy::{DeviceAccessStrategy, DevicePrimaryProtectionStrategy, DeviceSaveStrategy};
 
 pub async fn list_available_devices(
     config_dir: &Path,
@@ -439,13 +382,13 @@ pub async fn update_device_change_authentication(
         .convert_with_side_effects()
         .map_err(UpdateDeviceError::Internal)?;
 
-    let key_file = current_auth.key_file().to_owned();
+    let key_file = &current_auth.key_file;
 
     libparsec_platform_device_loader::update_device_change_authentication(
         config_dir,
         &current_auth,
         &new_auth,
-        &key_file,
+        key_file,
     )
     .await
 }
