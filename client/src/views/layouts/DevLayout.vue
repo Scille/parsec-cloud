@@ -85,7 +85,10 @@ as the default handle when not connecting properly`,
     window.electronAPI.log('error', `Could not find Alice device, using ${device.humanHandle.label}`);
   }
 
-  const result = await parsec.login(device, parsec.AccessStrategy.usePassword(device, 'P@ssw0rd.'));
+  const result = await parsec.login(
+    device,
+    parsec.constructAccessStrategy(device, parsec.PrimaryProtectionStrategy.usePassword('P@ssw0rd.')),
+  );
   if (!result.ok) {
     window.electronAPI.log('error', `Failed to log in on a default device: ${JSON.stringify(result.error)}`);
   } else if (result.value !== getDevDefaultHandle()) {
@@ -215,10 +218,10 @@ async function claimUser(email: string, label: string, link: string): Promise<vo
     throw new Error(`claimerUserInProgress3DoClaim failed: ${claimResult.error.error}`);
   }
   handle = claimResult.value.handle;
-  const finalizeResult = await libparsec.claimerUserFinalizeSaveLocalDevice(handle, {
-    tag: parsec.DeviceSaveStrategyTag.Password,
-    password: 'P@ssw0rd.',
-  });
+  const finalizeResult = await libparsec.claimerUserFinalizeSaveLocalDevice(
+    handle,
+    parsec.constructSaveStrategy(parsec.PrimaryProtectionStrategy.usePassword('P@ssw0rd.')),
+  );
   if (!finalizeResult.ok) {
     throw new Error(`claimerUserFinalizeSaveLocalDevice failed: ${finalizeResult.error.error}`);
   }
@@ -318,11 +321,10 @@ async function addReadOnlyWorkspace(): Promise<void> {
     window.electronAPI.log('error', 'Could not find Alice or Bob device');
     return;
   }
-  const loginResult = await libparsec.clientStart(getClientConfig(), {
-    tag: parsec.DeviceAccessStrategyTag.Password,
-    password: 'P@ssw0rd.',
-    keyFile: bobDevice.keyFilePath,
-  });
+  const loginResult = await libparsec.clientStart(
+    getClientConfig(),
+    parsec.constructAccessStrategy(bobDevice, parsec.PrimaryProtectionStrategy.usePassword('P@ssw0rd.')),
+  );
   if (!loginResult.ok) {
     window.electronAPI.log('error', `Failed to login as Bob: ${loginResult.error.error}`);
     return;

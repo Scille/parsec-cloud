@@ -36,7 +36,14 @@
 </template>
 
 <script setup lang="ts">
-import { AccessStrategy, AvailableDevice, DeviceSaveStrategy, OrganizationID, ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
+import {
+  AvailableDevice,
+  constructAccessStrategy,
+  DeviceSaveStrategy,
+  OrganizationID,
+  ParsedParsecAddrTag,
+  parseParsecAddr,
+} from '@/parsec';
 import { InformationManager } from '@/services/informationManager';
 import { getServerTypeFromParsedParsecAddr, ServerType } from '@/services/parsecServers';
 import CreateOrganizationCustomServer from '@/views/organizations/creation/CreateOrganizationCustomServer.vue';
@@ -45,7 +52,7 @@ import CreateOrganizationTrial from '@/views/organizations/creation/CreateOrgani
 import ServerTypeChoice from '@/views/organizations/creation/ServerTypeChoice.vue';
 import { IonPage, modalController } from '@ionic/vue';
 import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 
 const props = defineProps<{
   informationManager: InformationManager;
@@ -91,7 +98,7 @@ async function onOrganizationCreated(
   device: AvailableDevice,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<void> {
-  const accessStrategy = await AccessStrategy.fromSaveStrategy(device, saveStrategy);
+  const accessStrategy = constructAccessStrategy(device, toRaw(saveStrategy.primaryProtection));
   await modalController.dismiss({ device: device, access: accessStrategy }, MsModalResult.Confirm);
 }
 
