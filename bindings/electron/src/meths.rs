@@ -1069,6 +1069,27 @@ fn struct_available_device_js_to_rs<'a>(
             }
         }
     };
+    let totp_opaque_key_id = {
+        let js_val: Handle<JsValue> = obj.get(cx, "totpOpaqueKeyId")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                            libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+            }
+        }
+    };
     let ty = {
         let js_val: Handle<JsObject> = obj.get(cx, "ty")?;
         variant_available_device_type_js_to_rs(cx, js_val)?
@@ -1083,6 +1104,7 @@ fn struct_available_device_js_to_rs<'a>(
         device_id,
         human_handle,
         device_label,
+        totp_opaque_key_id,
         ty,
     })
 }
@@ -1163,6 +1185,20 @@ fn struct_available_device_rs_to_js<'a>(
     js_obj.set(cx, "humanHandle", js_human_handle)?;
     let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
+    let js_totp_opaque_key_id = match rs_obj.totp_opaque_key_id {
+        Some(elem) => JsString::try_new(cx, {
+            let custom_to_rs_string =
+                |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err.to_string()),
+            }
+        })
+        .or_throw(cx)?
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "totpOpaqueKeyId", js_totp_opaque_key_id)?;
     let js_ty = variant_available_device_type_rs_to_js(cx, rs_obj.ty)?;
     js_obj.set(cx, "ty", js_ty)?;
     Ok(js_obj)
@@ -1625,6 +1661,124 @@ fn struct_client_info_rs_to_js<'a>(
     js_obj.set(cx, "isOrganizationExpired", js_is_organization_expired)?;
     let js_must_accept_tos = JsBoolean::new(cx, rs_obj.must_accept_tos);
     js_obj.set(cx, "mustAcceptTos", js_must_accept_tos)?;
+    Ok(js_obj)
+}
+
+// DeviceAccessStrategy
+
+#[allow(dead_code)]
+fn struct_device_access_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceAccessStrategy> {
+    let key_file = {
+        let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let totp_protection = {
+        let js_val: Handle<JsValue> = obj.get(cx, "totpProtection")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsArray, _>(cx)?;
+                Some((
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                                    libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsTypedArray<u8>> = js_val.get(cx, 1)?;
+                        {
+                            #[allow(clippy::unnecessary_mut_passed)]
+                            match js_item.as_slice(cx).try_into() {
+                                Ok(val) => val,
+                                // err can't infer type in some case, because of the previous `try_into`
+                                #[allow(clippy::useless_format)]
+                                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                            }
+                        }
+                    },
+                ))
+            }
+        }
+    };
+    let primary_protection = {
+        let js_val: Handle<JsObject> = obj.get(cx, "primaryProtection")?;
+        variant_device_primary_protection_strategy_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::DeviceAccessStrategy {
+        key_file,
+        totp_protection,
+        primary_protection,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_device_access_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceAccessStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_key_file = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.key_file) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "keyFile", js_key_file)?;
+    let js_totp_protection = match rs_obj.totp_protection {
+        Some(elem) => {
+            let (x0, x1) = elem;
+            let js_array = JsArray::new(cx, 2);
+            let js_value = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(x0) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_array.set(cx, 0, js_value)?;
+            let js_value = {
+                let rs_buff = { x1 };
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+                js_buff
+            };
+            js_array.set(cx, 1, js_value)?;
+            js_array
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "totpProtection", js_totp_protection)?;
+    let js_primary_protection =
+        variant_device_primary_protection_strategy_rs_to_js(cx, rs_obj.primary_protection)?;
+    js_obj.set(cx, "primaryProtection", js_primary_protection)?;
     Ok(js_obj)
 }
 
@@ -2219,6 +2373,99 @@ fn struct_device_info_rs_to_js<'a>(
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "createdBy", js_created_by)?;
+    Ok(js_obj)
+}
+
+// DeviceSaveStrategy
+
+#[allow(dead_code)]
+fn struct_device_save_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceSaveStrategy> {
+    let totp_protection = {
+        let js_val: Handle<JsValue> = obj.get(cx, "totpProtection")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsArray, _>(cx)?;
+                Some((
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                                    libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsTypedArray<u8>> = js_val.get(cx, 1)?;
+                        {
+                            #[allow(clippy::unnecessary_mut_passed)]
+                            match js_item.as_slice(cx).try_into() {
+                                Ok(val) => val,
+                                // err can't infer type in some case, because of the previous `try_into`
+                                #[allow(clippy::useless_format)]
+                                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                            }
+                        }
+                    },
+                ))
+            }
+        }
+    };
+    let primary_protection = {
+        let js_val: Handle<JsObject> = obj.get(cx, "primaryProtection")?;
+        variant_device_primary_protection_strategy_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::DeviceSaveStrategy {
+        totp_protection,
+        primary_protection,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_device_save_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceSaveStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_totp_protection = match rs_obj.totp_protection {
+        Some(elem) => {
+            let (x0, x1) = elem;
+            let js_array = JsArray::new(cx, 2);
+            let js_value = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(x0) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_array.set(cx, 0, js_value)?;
+            let js_value = {
+                let rs_buff = { x1 };
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+                js_buff
+            };
+            js_array.set(cx, 1, js_value)?;
+            js_array
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "totpProtection", js_totp_protection)?;
+    let js_primary_protection =
+        variant_device_primary_protection_strategy_rs_to_js(cx, rs_obj.primary_protection)?;
+    js_obj.set(cx, "primaryProtection", js_primary_protection)?;
     Ok(js_obj)
 }
 
@@ -6467,30 +6714,6 @@ fn variant_available_device_type_js_to_rs<'a>(
         }
         "AvailableDeviceTypePassword" => Ok(libparsec::AvailableDeviceType::Password {}),
         "AvailableDeviceTypeRecovery" => Ok(libparsec::AvailableDeviceType::Recovery {}),
-        "AvailableDeviceTypeTOTP" => {
-            let totp_opaque_key_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "totpOpaqueKeyId")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
-                            libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let next = {
-                let js_val: Handle<JsObject> = obj.get(cx, "next")?;
-                Box::new(variant_available_device_type_js_to_rs(cx, js_val)?)
-            };
-            Ok(libparsec::AvailableDeviceType::TOTP {
-                totp_opaque_key_id,
-                next,
-            })
-        }
         _ => cx.throw_type_error("Object is not a AvailableDeviceType"),
     }
 }
@@ -6539,26 +6762,6 @@ fn variant_available_device_type_rs_to_js<'a>(
         libparsec::AvailableDeviceType::Recovery { .. } => {
             let js_tag = JsString::try_new(cx, "AvailableDeviceTypeRecovery").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::AvailableDeviceType::TOTP {
-            totp_opaque_key_id,
-            next,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "AvailableDeviceTypeTOTP").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_totp_opaque_key_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(totp_opaque_key_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "totpOpaqueKeyId", js_totp_opaque_key_id)?;
-            let js_next = variant_available_device_type_rs_to_js(cx, *next)?;
-            js_obj.set(cx, "next", js_next)?;
         }
     }
     Ok(js_obj)
@@ -9640,27 +9843,16 @@ fn variant_client_user_update_profile_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// DeviceAccessStrategy
+// DevicePrimaryProtectionStrategy
 
 #[allow(dead_code)]
-fn variant_device_access_strategy_js_to_rs<'a>(
+fn variant_device_primary_protection_strategy_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceAccessStrategy> {
+) -> NeonResult<libparsec::DevicePrimaryProtectionStrategy> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "DeviceAccessStrategyAccountVault" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
+        "DevicePrimaryProtectionStrategyAccountVault" => {
             let account_handle = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "accountHandle")?;
                 {
@@ -9672,297 +9864,12 @@ fn variant_device_access_strategy_js_to_rs<'a>(
                     v
                 }
             };
-            Ok(libparsec::DeviceAccessStrategy::AccountVault {
-                key_file,
-                account_handle,
-            })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::AccountVault { account_handle })
         }
-        "DeviceAccessStrategyKeyring" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceAccessStrategy::Keyring { key_file })
+        "DevicePrimaryProtectionStrategyKeyring" => {
+            Ok(libparsec::DevicePrimaryProtectionStrategy::Keyring)
         }
-        "DeviceAccessStrategyOpenBao" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let openbao_server_url = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
-                js_val.value(cx)
-            };
-            let openbao_secret_mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoSecretMountPath")?;
-                js_val.value(cx)
-            };
-            let openbao_transit_mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoTransitMountPath")?;
-                js_val.value(cx)
-            };
-            let openbao_entity_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
-                js_val.value(cx)
-            };
-            let openbao_auth_token = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthToken")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::DeviceAccessStrategy::OpenBao {
-                key_file,
-                openbao_server_url,
-                openbao_secret_mount_path,
-                openbao_transit_mount_path,
-                openbao_entity_id,
-                openbao_auth_token,
-            })
-        }
-        "DeviceAccessStrategyPKI" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceAccessStrategy::PKI { key_file })
-        }
-        "DeviceAccessStrategyPassword" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let password = {
-                let js_val: Handle<JsString> = obj.get(cx, "password")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceAccessStrategy::Password { key_file, password })
-        }
-        "DeviceAccessStrategyTOTP" => {
-            let totp_opaque_key = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "totpOpaqueKey")?;
-                {
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match js_val.as_slice(cx).try_into() {
-                        Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
-                    }
-                }
-            };
-            let next = {
-                let js_val: Handle<JsObject> = obj.get(cx, "next")?;
-                Box::new(variant_device_access_strategy_js_to_rs(cx, js_val)?)
-            };
-            Ok(libparsec::DeviceAccessStrategy::TOTP {
-                totp_opaque_key,
-                next,
-            })
-        }
-        _ => cx.throw_type_error("Object is not a DeviceAccessStrategy"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_device_access_strategy_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceAccessStrategy,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::DeviceAccessStrategy::AccountVault {
-            key_file,
-            account_handle,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyAccountVault").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-            let js_account_handle = JsNumber::new(cx, account_handle as f64);
-            js_obj.set(cx, "accountHandle", js_account_handle)?;
-        }
-        libparsec::DeviceAccessStrategy::Keyring { key_file, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyKeyring").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-        }
-        libparsec::DeviceAccessStrategy::OpenBao {
-            key_file,
-            openbao_server_url,
-            openbao_secret_mount_path,
-            openbao_transit_mount_path,
-            openbao_entity_id,
-            openbao_auth_token,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyOpenBao").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-            let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
-            js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
-            let js_openbao_secret_mount_path =
-                JsString::try_new(cx, openbao_secret_mount_path).or_throw(cx)?;
-            js_obj.set(cx, "openbaoSecretMountPath", js_openbao_secret_mount_path)?;
-            let js_openbao_transit_mount_path =
-                JsString::try_new(cx, openbao_transit_mount_path).or_throw(cx)?;
-            js_obj.set(cx, "openbaoTransitMountPath", js_openbao_transit_mount_path)?;
-            let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
-            js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
-            let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
-            js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
-        }
-        libparsec::DeviceAccessStrategy::PKI { key_file, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyPKI").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-        }
-        libparsec::DeviceAccessStrategy::Password {
-            key_file, password, ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyPassword").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-            let js_password = JsString::try_new(cx, password).or_throw(cx)?;
-            js_obj.set(cx, "password", js_password)?;
-        }
-        libparsec::DeviceAccessStrategy::TOTP {
-            totp_opaque_key,
-            next,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyTOTP").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_totp_opaque_key = {
-                let rs_buff = { totp_opaque_key };
-                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-                js_buff
-            };
-            js_obj.set(cx, "totpOpaqueKey", js_totp_opaque_key)?;
-            let js_next = variant_device_access_strategy_rs_to_js(cx, *next)?;
-            js_obj.set(cx, "next", js_next)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// DeviceSaveStrategy
-
-#[allow(dead_code)]
-fn variant_device_save_strategy_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceSaveStrategy> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "DeviceSaveStrategyAccountVault" => {
-            let account_handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "accountHandle")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    let v = v as u32;
-                    v
-                }
-            };
-            Ok(libparsec::DeviceSaveStrategy::AccountVault { account_handle })
-        }
-        "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring),
-        "DeviceSaveStrategyOpenBao" => {
+        "DevicePrimaryProtectionStrategyOpenBao" => {
             let openbao_server_url = {
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
                 js_val.value(cx)
@@ -9987,7 +9894,7 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoPreferredAuthId")?;
                 js_val.value(cx)
             };
-            Ok(libparsec::DeviceSaveStrategy::OpenBao {
+            Ok(libparsec::DevicePrimaryProtectionStrategy::OpenBao {
                 openbao_server_url,
                 openbao_secret_mount_path,
                 openbao_transit_mount_path,
@@ -9996,14 +9903,14 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                 openbao_preferred_auth_id,
             })
         }
-        "DeviceSaveStrategyPKI" => {
+        "DevicePrimaryProtectionStrategyPKI" => {
             let certificate_ref = {
                 let js_val: Handle<JsObject> = obj.get(cx, "certificateRef")?;
                 struct_x509_certificate_reference_js_to_rs(cx, js_val)?
             };
-            Ok(libparsec::DeviceSaveStrategy::PKI { certificate_ref })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI { certificate_ref })
         }
-        "DeviceSaveStrategyPassword" => {
+        "DevicePrimaryProtectionStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
                 {
@@ -10014,67 +9921,32 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::DeviceSaveStrategy::Password { password })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::Password { password })
         }
-        "DeviceSaveStrategyTOTP" => {
-            let totp_opaque_key_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "totpOpaqueKeyId")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
-                            libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
-                                .map_err(|e| e.to_string())
-                        };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let totp_opaque_key = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "totpOpaqueKey")?;
-                {
-                    #[allow(clippy::unnecessary_mut_passed)]
-                    match js_val.as_slice(cx).try_into() {
-                        Ok(val) => val,
-                        // err can't infer type in some case, because of the previous `try_into`
-                        #[allow(clippy::useless_format)]
-                        Err(err) => return cx.throw_type_error(format!("{}", err)),
-                    }
-                }
-            };
-            let next = {
-                let js_val: Handle<JsObject> = obj.get(cx, "next")?;
-                Box::new(variant_device_save_strategy_js_to_rs(cx, js_val)?)
-            };
-            Ok(libparsec::DeviceSaveStrategy::TOTP {
-                totp_opaque_key_id,
-                totp_opaque_key,
-                next,
-            })
-        }
-        _ => cx.throw_type_error("Object is not a DeviceSaveStrategy"),
+        _ => cx.throw_type_error("Object is not a DevicePrimaryProtectionStrategy"),
     }
 }
 
 #[allow(dead_code)]
-fn variant_device_save_strategy_rs_to_js<'a>(
+fn variant_device_primary_protection_strategy_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceSaveStrategy,
+    rs_obj: libparsec::DevicePrimaryProtectionStrategy,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::DeviceSaveStrategy::AccountVault { account_handle, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyAccountVault").or_throw(cx)?;
+        libparsec::DevicePrimaryProtectionStrategy::AccountVault { account_handle, .. } => {
+            let js_tag = JsString::try_new(cx, "DevicePrimaryProtectionStrategyAccountVault")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_account_handle = JsNumber::new(cx, account_handle as f64);
             js_obj.set(cx, "accountHandle", js_account_handle)?;
         }
-        libparsec::DeviceSaveStrategy::Keyring => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyKeyring").or_throw(cx)?;
+        libparsec::DevicePrimaryProtectionStrategy::Keyring => {
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::DeviceSaveStrategy::OpenBao {
+        libparsec::DevicePrimaryProtectionStrategy::OpenBao {
             openbao_server_url,
             openbao_secret_mount_path,
             openbao_transit_mount_path,
@@ -10083,7 +9955,8 @@ fn variant_device_save_strategy_rs_to_js<'a>(
             openbao_preferred_auth_id,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyOpenBao").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyOpenBao").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
             js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
@@ -10101,47 +9974,22 @@ fn variant_device_save_strategy_rs_to_js<'a>(
                 JsString::try_new(cx, openbao_preferred_auth_id).or_throw(cx)?;
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
-        libparsec::DeviceSaveStrategy::PKI {
+        libparsec::DevicePrimaryProtectionStrategy::PKI {
             certificate_ref, ..
         } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPKI").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_certificate_ref =
                 struct_x509_certificate_reference_rs_to_js(cx, certificate_ref)?;
             js_obj.set(cx, "certificateRef", js_certificate_ref)?;
         }
-        libparsec::DeviceSaveStrategy::Password { password, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPassword").or_throw(cx)?;
+        libparsec::DevicePrimaryProtectionStrategy::Password { password, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyPassword").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
-        }
-        libparsec::DeviceSaveStrategy::TOTP {
-            totp_opaque_key_id,
-            totp_opaque_key,
-            next,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyTOTP").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_totp_opaque_key_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(totp_opaque_key_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "totpOpaqueKeyId", js_totp_opaque_key_id)?;
-            let js_totp_opaque_key = {
-                let rs_buff = { totp_opaque_key };
-                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-                js_buff
-            };
-            js_obj.set(cx, "totpOpaqueKey", js_totp_opaque_key)?;
-            let js_next = variant_device_save_strategy_rs_to_js(cx, *next)?;
-            js_obj.set(cx, "next", js_next)?;
         }
     }
     Ok(js_obj)
@@ -17148,7 +16996,7 @@ fn variant_workspace_history_realm_export_decryptor_js_to_rs<'a>(
         "WorkspaceHistoryRealmExportDecryptorUser" => {
             let access = {
                 let js_val: Handle<JsObject> = obj.get(cx, "access")?;
-                variant_device_access_strategy_js_to_rs(cx, js_val)?
+                struct_device_access_strategy_js_to_rs(cx, js_val)?
             };
             Ok(libparsec::WorkspaceHistoryRealmExportDecryptor::User { access })
         }
@@ -17202,7 +17050,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistoryRealmExportDecryptorUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_access = variant_device_access_strategy_rs_to_js(cx, access)?;
+            let js_access = struct_device_access_strategy_rs_to_js(cx, access)?;
             js_obj.set(cx, "access", js_access)?;
         }
     }
@@ -18465,7 +18313,7 @@ fn account_create_registration_device(mut cx: FunctionContext) -> JsResult<JsPro
     };
     let existing_local_device_access = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -19352,7 +19200,7 @@ fn account_register_new_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(4)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -19484,7 +19332,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let human_handle = {
         let js_val = cx.argument::<JsObject>(3)?;
@@ -19696,7 +19544,7 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -20242,7 +20090,7 @@ fn claimer_shamir_recovery_finalize_save_local_device(
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -20747,7 +20595,7 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -23312,7 +23160,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let access = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -25276,7 +25124,7 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(4)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -26231,7 +26079,7 @@ fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let new_device_save_strategy = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let identity_strategy = {
         let js_val = cx.argument::<JsObject>(3)?;
@@ -27038,11 +26886,11 @@ fn update_device_change_authentication(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let current_auth = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let new_auth = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -27098,7 +26946,7 @@ fn update_device_overwrite_server_addr(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let access = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let new_server_addr = {
         let js_val = cx.argument::<JsString>(2)?;
