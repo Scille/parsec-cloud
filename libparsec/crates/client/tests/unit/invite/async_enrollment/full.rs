@@ -92,9 +92,7 @@ async fn with_server(env: &TestbedEnv) {
 
     // 6) Submitter finalize the enrollment
 
-    let mike_save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
-    };
+    let mike_save_strategy = DeviceSaveStrategy::new_password("P@ssw0rd.".to_owned().into());
     let available_device = submitter_finalize_async_enrollment(
         config.clone(),
         &enrollment_file,

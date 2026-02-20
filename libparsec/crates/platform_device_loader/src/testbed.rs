@@ -13,10 +13,10 @@ use libparsec_types::prelude::*;
 
 use crate::{
     device::ArchiveDeviceError, AvailableDevice, AvailableDeviceType,
-    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DeviceSaveStrategy,
-    ListPendingAsyncEnrollmentsError, LoadDeviceError, LoadPendingAsyncEnrollmentError,
-    RemoveDeviceError, RemovePendingAsyncEnrollmentError, SaveAsyncEnrollmentLocalPendingError,
-    SaveDeviceError, UpdateDeviceError,
+    AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
+    DeviceSaveStrategy, ListPendingAsyncEnrollmentsError, LoadDeviceError,
+    LoadPendingAsyncEnrollmentError, RemoveDeviceError, RemovePendingAsyncEnrollmentError,
+    SaveAsyncEnrollmentLocalPendingError, SaveDeviceError, UpdateDeviceError,
 };
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
@@ -221,6 +221,7 @@ fn populate_template_available_devices(
                 device_id,
                 human_handle: human_handle.clone(),
                 device_label: device_label.clone(),
+                totp_opaque_key_id: None,
                 ty: AvailableDeviceType::Password,
             };
 
@@ -257,7 +258,8 @@ pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<Avai
                     device_id: device.device_id,
                     device_label: device.device_label.clone(),
                     human_handle: device.human_handle.clone(),
-                    ty: save_strategy.ty(),
+                    totp_opaque_key_id: save_strategy.totp_protection.as_ref().map(|(id, _)| *id),
+                    ty: save_strategy.primary_protection.ty(),
                 })
             }
 
@@ -324,54 +326,53 @@ pub(crate) fn maybe_load_device(
                 access: &DeviceAccessStrategy,
                 c_save_strategy: &DeviceSaveStrategy,
             ) -> bool {
-                match (access, c_save_strategy) {
+                match (&access.totp_protection, &c_save_strategy.totp_protection) {
+                    (None, None) => (),
+                    (Some((_, key)), Some((_, c_key))) if key == c_key => (),
+                    _ => return false,
+                }
+
+                match (
+                    &access.primary_protection,
+                    &c_save_strategy.primary_protection,
+                ) {
                     (
-                        DeviceAccessStrategy::Password { password: pwd, .. },
-                        DeviceSaveStrategy::Password { password: c_pwd },
+                        DevicePrimaryProtectionStrategy::Password { password: pwd, .. },
+                        DevicePrimaryProtectionStrategy::Password { password: c_pwd },
                     ) => c_pwd == pwd,
-                    (DeviceAccessStrategy::Keyring { .. }, DeviceSaveStrategy::Keyring) => true,
                     (
-                        DeviceAccessStrategy::AccountVault { operations, .. },
-                        DeviceSaveStrategy::AccountVault {
+                        DevicePrimaryProtectionStrategy::Keyring,
+                        DevicePrimaryProtectionStrategy::Keyring,
+                    ) => true,
+                    (
+                        DevicePrimaryProtectionStrategy::AccountVault { operations, .. },
+                        DevicePrimaryProtectionStrategy::AccountVault {
                             operations: c_operations,
                         },
                     ) => operations.account_email() == c_operations.account_email(),
                     (
-                        DeviceAccessStrategy::OpenBao { operations, .. },
-                        DeviceSaveStrategy::OpenBao {
+                        DevicePrimaryProtectionStrategy::OpenBao { operations, .. },
+                        DevicePrimaryProtectionStrategy::OpenBao {
                             operations: c_operations,
                         },
                     ) => operations.openbao_entity_id() == c_operations.openbao_entity_id(),
-                    (DeviceAccessStrategy::PKI { .. }, DeviceSaveStrategy::PKI { .. }) => true,
                     (
-                        DeviceAccessStrategy::TOTP {
-                            totp_opaque_key,
-                            next,
-                        },
-                        DeviceSaveStrategy::TOTP {
-                            totp_opaque_key: c_totp_opaque_key,
-                            next: c_next,
-                            ..
-                        },
-                    ) => {
-                        c_totp_opaque_key == totp_opaque_key
-                            && check_access_and_save_strategy_match(next, c_next)
-                    }
+                        DevicePrimaryProtectionStrategy::PKI { .. },
+                        DevicePrimaryProtectionStrategy::PKI { .. },
+                    ) => true,
                     // Don't use a `_ => None` fallthrough match here to avoid
                     // silent bug whenever a new variant is added :/
                     (
-                        DeviceAccessStrategy::Password { .. }
-                        | DeviceAccessStrategy::PKI { .. }
-                        | DeviceAccessStrategy::Keyring { .. }
-                        | DeviceAccessStrategy::AccountVault { .. }
-                        | DeviceAccessStrategy::OpenBao { .. }
-                        | DeviceAccessStrategy::TOTP { .. },
-                        DeviceSaveStrategy::Password { .. }
-                        | DeviceSaveStrategy::PKI { .. }
-                        | DeviceSaveStrategy::Keyring
-                        | DeviceSaveStrategy::AccountVault { .. }
-                        | DeviceSaveStrategy::OpenBao { .. }
-                        | DeviceSaveStrategy::TOTP { .. },
+                        DevicePrimaryProtectionStrategy::Password { .. }
+                        | DevicePrimaryProtectionStrategy::PKI { .. }
+                        | DevicePrimaryProtectionStrategy::Keyring
+                        | DevicePrimaryProtectionStrategy::AccountVault { .. }
+                        | DevicePrimaryProtectionStrategy::OpenBao { .. },
+                        DevicePrimaryProtectionStrategy::Password { .. }
+                        | DevicePrimaryProtectionStrategy::PKI { .. }
+                        | DevicePrimaryProtectionStrategy::Keyring
+                        | DevicePrimaryProtectionStrategy::AccountVault { .. }
+                        | DevicePrimaryProtectionStrategy::OpenBao { .. },
                     ) => false,
                 }
             }
@@ -381,7 +382,7 @@ pub(crate) fn maybe_load_device(
                     .available
                     .iter()
                     .find_map(|(c_key_file, c_save_strategy, c_device, _)| {
-                        if access.key_file() != c_key_file {
+                        if access.key_file != *c_key_file {
                             return None;
                         }
                         if check_access_and_save_strategy_match(access, c_save_strategy) {
@@ -395,38 +396,35 @@ pub(crate) fn maybe_load_device(
                 return found;
             }
 
-            let key_file = access.key_file().to_owned();
-            if !cache.destroyed.contains(&key_file) {
+            if !cache.destroyed.contains(&access.key_file) {
                 // 2) Try to load from the template
 
-                let decryption_success = match access {
-                    DeviceAccessStrategy::Password { password, .. } => {
+                let decryption_success = match (&access.totp_protection, &access.primary_protection)
+                {
+                    (None, DevicePrimaryProtectionStrategy::Password { password, .. }) => {
                         let decryption_success = password.as_str() == KEY_FILE_PASSWORD;
                         decryption_success
                     }
-                    // We consider all device created from the template are password-protected.
-                    DeviceAccessStrategy::Keyring { .. } => false,
-                    DeviceAccessStrategy::PKI { .. } => false,
-                    DeviceAccessStrategy::AccountVault { .. } => false,
-                    DeviceAccessStrategy::OpenBao { .. } => false,
-                    DeviceAccessStrategy::TOTP { .. } => false,
+                    // We consider all device created from the template are password-protected without TOTP.
+                    (Some(_), DevicePrimaryProtectionStrategy::Password { .. })
+                    | (_, DevicePrimaryProtectionStrategy::Keyring)
+                    | (_, DevicePrimaryProtectionStrategy::PKI { .. })
+                    | (_, DevicePrimaryProtectionStrategy::AccountVault { .. })
+                    | (_, DevicePrimaryProtectionStrategy::OpenBao { .. }) => false,
                 };
                 // We don't try to resolve the path of `key_file` into an absolute one here !
                 // This is because in practice the path is always provided absolute given it
                 // is obtained in the first place by `list_template_available_devices`.
                 let env = test_get_testbed(config_dir).expect("Must exist");
-                let (device, created_on) = load_local_device_from_template(&key_file, &env)?; // Short circuit if not found
+                let (device, created_on) = load_local_device_from_template(&access.key_file, &env)?; // Short circuit if not found
                 if !decryption_success {
                     return Some(Err(LoadDeviceError::DecryptionFailed));
                 }
                 // Save strategy contains more informations than access strategy, so we have
                 // to mock the missing stuff here.
-                let save_strategy = access
-                    .clone()
-                    .into_save_strategy(AvailableDeviceType::Password)
-                    .expect("valid variant");
+                let save_strategy = access.to_owned().into();
                 cache.available.push((
-                    access.key_file().to_owned(),
+                    access.key_file.clone(),
                     save_strategy,
                     device.to_owned(),
                     created_on,
@@ -478,7 +476,8 @@ pub(crate) fn maybe_save_device(
                 device_id: device.device_id,
                 device_label: device.device_label.clone(),
                 human_handle: device.human_handle.clone(),
-                ty: strategy.ty(),
+                totp_opaque_key_id: strategy.totp_protection.as_ref().map(|(id, _)| *id),
+                ty: strategy.primary_protection.ty(),
             })
         })
 }
@@ -538,7 +537,7 @@ pub(crate) fn maybe_update_device(
             Err(e) => return Some(Err(e.into())),
         };
 
-        let key_file = current_access.key_file();
+        let key_file = &current_access.key_file;
 
         if key_file != new_key_file {
             maybe_remove_device(config_dir, key_file)

@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{AvailableDeviceType, DeviceAccessStrategy, DeviceSaveStrategy};
+use libparsec::{
+    AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy, DeviceSaveStrategy,
+};
 
 use crate::utils::*;
 
@@ -37,6 +39,14 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         }
     };
 
+    if device.totp_opaque_key_id.is_some() {
+        // In theory we should support this authentication method here,
+        // however:
+        // - It is cumbersome since it requires a TOTP challenge involving the server.
+        // - In practice it is a niche usage that will most likely only be used in the GUI.
+        return Err(LoadAndUnlockDeviceError::UnsupportedTOTPAuthentication.into());
+    }
+
     let current_access_strategy = match device.ty {
         AvailableDeviceType::Password => {
             let password = read_password(if args.password_stdin {
@@ -47,9 +57,10 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                 }
             })?;
 
-            DeviceAccessStrategy::Password {
+            DeviceAccessStrategy {
                 key_file: device.key_file_path.clone(),
-                password,
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
             }
         }
 
@@ -61,8 +72,10 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             // }
         }
 
-        AvailableDeviceType::Keyring => DeviceAccessStrategy::Keyring {
+        AvailableDeviceType::Keyring => DeviceAccessStrategy {
             key_file: device.key_file_path.clone(),
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
         },
 
         AvailableDeviceType::AccountVault => {
@@ -86,14 +99,6 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             // - In practice it is a niche usage that will most likely only be used in the GUI.
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
         }
-
-        AvailableDeviceType::TOTP { .. } => {
-            // In theory we should support this authentication method here,
-            // however:
-            // - It is cumbersome since it requires a TOTP challenge involving the server.
-            // - In practice it is a niche usage that will most likely only be used in the GUI.
-            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(device.ty).into());
-        }
     };
 
     let new_save_strategy = match new_save_strategy_choice {
@@ -106,10 +111,16 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                 }
             })?;
 
-            DeviceSaveStrategy::Password { password }
+            DeviceSaveStrategy {
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
+            }
         }
 
-        NewAccessStrategyChoice::Keyring => DeviceSaveStrategy::Keyring,
+        NewAccessStrategyChoice::Keyring => DeviceSaveStrategy {
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
+        },
     };
 
     libparsec::update_device_change_authentication(
