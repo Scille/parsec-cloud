@@ -38,6 +38,20 @@ use libparsec_types::prelude::*;
 //     (we consider this acceptable though since the account APIs is not yet used in
 //     production).
 //   * Add `server_config` to anonymous server commands
+// - v5.4 (Parsec 3.8+)
+//   * Add `transit_mount_path` field to `server_config` response
+//   * Incompatible change to remove `pki_enrollment_submit/pki_enrollment_info/pki_enrollment_reject/pki_enrollment_accept/pki_enrollment_list`
+//     commands (we consider this acceptable though since those APIs have never been
+//     actually used in production).
+//   * Add `async_enrollment_cancel/async_enrollment_info/async_enrollment_submit` to
+//     anonymous commands.
+//   * Add `totp_fetch_opaque_key/totp_setup_confirm/totp_setup_get_secret` to anonymous
+//     commands.
+//   * Add `async_enrollment_accept/async_enrollment_list/async_enrollment_reject` to
+//     authenticated commands.
+//   * Add `totp_create_opaque_key/totp_setup_confirm/totp_setup_get_secret` to authenticated
+//     commands.
+
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
     revision: 3,
@@ -56,7 +70,7 @@ pub const API_V4_VERSION: &ApiVersion = &ApiVersion {
 };
 pub const API_V5_VERSION: &ApiVersion = &ApiVersion {
     version: 5,
-    revision: 3,
+    revision: 4,
 };
 pub const API_LATEST_VERSION: &ApiVersion = API_V5_VERSION;
 
