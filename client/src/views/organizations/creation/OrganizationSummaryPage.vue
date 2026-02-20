@@ -142,31 +142,31 @@
           </ion-text>
           <ion-text
             class="summary-item__text body-lg"
-            v-if="saveStrategy === DeviceSaveStrategyTag.Keyring"
+            v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.Keyring"
           >
             {{ $msTranslate('CreateOrganization.keyringChoice') }}
           </ion-text>
           <ion-text
             class="summary-item__text body-lg"
-            v-if="saveStrategy === DeviceSaveStrategyTag.Password"
+            v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.Password"
           >
             {{ $msTranslate('CreateOrganization.passwordChoice') }}
           </ion-text>
           <ion-text
             class="summary-item__text body-lg"
-            v-if="saveStrategy === DeviceSaveStrategyTag.AccountVault"
+            v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.AccountVault"
           >
             {{ $msTranslate('CreateOrganization.accountChoice') }}
           </ion-text>
           <ion-text
             class="summary-item__text body-lg"
-            v-if="saveStrategy === DeviceSaveStrategyTag.PKI"
+            v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.PKI"
           >
             {{ $msTranslate('CreateOrganization.smartcardChoice') }}
           </ion-text>
           <ion-text
             class="summary-item__text body-lg"
-            v-if="saveStrategy === DeviceSaveStrategyTag.OpenBao"
+            v-if="protectionStrategy === DevicePrimaryProtectionStrategyTag.OpenBao"
           >
             {{ $msTranslate('CreateOrganization.openBaoChoice') }}
           </ion-text>
@@ -245,7 +245,7 @@
 
 <script setup lang="ts">
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
-import { DeviceSaveStrategyTag, OrganizationID } from '@/parsec';
+import { DevicePrimaryProtectionStrategyTag, OrganizationID } from '@/parsec';
 import { ServerType } from '@/services/parsecServers';
 import { IonButton, IonFooter, IonIcon, IonItem, IonList, IonPage, IonText } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
@@ -256,7 +256,7 @@ defineProps<{
   organizationName: OrganizationID;
   email: string;
   name: string;
-  saveStrategy: DeviceSaveStrategyTag;
+  protectionStrategy: DevicePrimaryProtectionStrategyTag;
   canEditOrganizationName?: boolean;
   canEditServerAddress?: boolean;
   canEditEmail?: boolean;

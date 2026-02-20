@@ -5,22 +5,22 @@
     <template v-if="currentDevice">
       <div class="authentication-content">
         <authentication-card
-          :auth-method="DeviceSaveStrategyTag.Keyring"
+          :auth-method="DevicePrimaryProtectionStrategyTag.Keyring"
           :state="AuthenticationCardState.Current"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring"
         />
         <authentication-card
-          :auth-method="DeviceSaveStrategyTag.Password"
+          :auth-method="DevicePrimaryProtectionStrategyTag.Password"
           :state="AuthenticationCardState.Current"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.Password"
         />
         <authentication-card
-          :auth-method="DeviceSaveStrategyTag.PKI"
+          :auth-method="DevicePrimaryProtectionStrategyTag.PKI"
           :state="AuthenticationCardState.Current"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.PKI"
         />
         <authentication-card
-          :auth-method="DeviceSaveStrategyTag.OpenBao"
+          :auth-method="DevicePrimaryProtectionStrategyTag.OpenBao"
           :state="AuthenticationCardState.Current"
           v-show="currentDevice && currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao"
         />
@@ -50,7 +50,13 @@
 <script setup lang="ts">
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
-import { AvailableDevice, AvailableDeviceTypeTag, DeviceSaveStrategyTag, getCurrentAvailableDevice, getServerConfig } from '@/parsec';
+import {
+  AvailableDevice,
+  AvailableDeviceTypeTag,
+  DevicePrimaryProtectionStrategyTag,
+  getCurrentAvailableDevice,
+  getServerConfig,
+} from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
 import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';

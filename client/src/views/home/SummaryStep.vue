@@ -88,19 +88,19 @@
         </ion-label>
         <ion-text
           class="summary-item__text body"
-          v-if="authentication === DeviceSaveStrategyTag.Keyring"
+          v-if="authentication === DevicePrimaryProtectionStrategyTag.Keyring"
         >
           {{ $msTranslate('CreateOrganization.keyringChoice') }}
         </ion-text>
         <ion-text
           class="summary-item__text body"
-          v-if="authentication === DeviceSaveStrategyTag.Password"
+          v-if="authentication === DevicePrimaryProtectionStrategyTag.Password"
         >
           {{ $msTranslate('CreateOrganization.passwordChoice') }}
         </ion-text>
         <ion-text
           class="summary-item__text body"
-          v-if="authentication === DeviceSaveStrategyTag.OpenBao"
+          v-if="authentication === DevicePrimaryProtectionStrategyTag.OpenBao"
         >
           {{ $msTranslate('CreateOrganization.openBaoChoice') }}
         </ion-text>
@@ -128,7 +128,7 @@ export enum OrgInfo {
 
 <script setup lang="ts">
 import { ServerMode } from '@/components/organizations/ChooseServer.vue';
-import { DeviceSaveStrategyTag } from '@/parsec';
+import { DevicePrimaryProtectionStrategyTag } from '@/parsec';
 import { IonButton, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 
 defineEmits<{
@@ -145,7 +145,7 @@ defineProps<{
   email: string;
   serverMode: ServerMode;
   serverAddr: string;
-  authentication: DeviceSaveStrategyTag;
+  authentication: DevicePrimaryProtectionStrategyTag;
   bootstrapOnly?: boolean;
 }>();
 </script>
