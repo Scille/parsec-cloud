@@ -9,7 +9,7 @@ import type {
   Handle,
   Result,
 } from '@/plugins/libparsec/definitions';
-import { ClientStartErrorTag, DeviceAccessStrategyTag } from '@/plugins/libparsec/definitions';
+import { ClientStartErrorTag } from '@/plugins/libparsec/definitions';
 
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 // eslint-disable-next-line camelcase
@@ -230,16 +230,7 @@ async function withoutSharedWorker(): Promise<any> {
 
       if (name === 'clientStart') {
         return async (config: ClientConfig, access: DeviceAccessStrategy): Promise<Result<Handle, ClientStartError>> => {
-          let keyFile;
-          if (access.tag === DeviceAccessStrategyTag.TOTP) {
-            if (access.next.tag !== DeviceAccessStrategyTag.TOTP) {
-              keyFile = access.next.keyFile;
-            } else {
-              throw Error('Nested TOTP not allowed');
-            }
-          } else {
-            keyFile = access.keyFile;
-          }
+          const keyFile = access.keyFile;
           const onLockTaken = new Promise((onLockTakenResolve: (value: undefined | ClientStartError) => void) => {
             navigator.locks.request(
               keyFile,

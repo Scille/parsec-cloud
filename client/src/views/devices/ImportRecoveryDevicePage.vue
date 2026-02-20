@@ -154,11 +154,9 @@ import { secretKeyValidator } from '@/common/validators';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import {
-  AccessStrategy,
   AvailableDevice,
+  constructAccessStrategy,
   DeviceAccessStrategy,
-  DeviceSaveStrategyPassword,
-  DeviceSaveStrategyTag,
   importRecoveryDevice,
   ImportRecoveryDeviceErrorTag,
   isWeb,
@@ -266,10 +264,7 @@ async function createNewDevice(): Promise<void> {
   );
   if (result.ok) {
     newDevice = result.value;
-    accessStrategy =
-      saveStrategy.tag === DeviceSaveStrategyTag.Keyring
-        ? AccessStrategy.useKeyring(newDevice)
-        : AccessStrategy.usePassword(newDevice, (saveStrategy as DeviceSaveStrategyPassword).password);
+    accessStrategy = constructAccessStrategy(newDevice, saveStrategy.primaryProtection, saveStrategy.totpProtection);
     state.value = ImportDevicePageState.Done;
   } else {
     const notificationInfo = { message: '', level: InformationLevel.Error };
