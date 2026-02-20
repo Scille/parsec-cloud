@@ -2,10 +2,7 @@
 
 use std::path::Path;
 
-use crate::{
-    load_device, save_device, update_device_overwrite_server_addr, DeviceAccessStrategy,
-    DeviceSaveStrategy,
-};
+use crate::{load_device, save_device, update_device_overwrite_server_addr, DeviceAccessStrategy};
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;
@@ -33,10 +30,9 @@ async fn ok(tmp_path: TmpPath) {
         None,
         None,
     );
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
-    };
-    let access_strategy = save_strategy.clone().into_access(key_file.clone());
+    let access_strategy =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd.".to_owned().into());
+    let save_strategy = access_strategy.clone().into();
     save_device(Path::new(""), &save_strategy, &device, key_file)
         .await
         .unwrap();
@@ -99,10 +95,8 @@ async fn testbed(env: &TestbedEnv) {
         alice.organization_addr.root_verify_key().clone(),
     );
 
-    let access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
-        password: "P@ssw0rd.".to_owned().into(),
-    };
+    let access =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd.".to_owned().into());
 
     update_device_overwrite_server_addr(&env.discriminant_dir, &access, new_server_addr)
         .await

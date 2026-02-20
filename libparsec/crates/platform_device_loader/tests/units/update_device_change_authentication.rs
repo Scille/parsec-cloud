@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
+use super::utils::MockedAccountVaultOperations;
 use crate::{
     load_device, save_device, update_device_change_authentication, DeviceAccessStrategy,
-    DeviceSaveStrategy,
+    DevicePrimaryProtectionStrategy,
 };
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
@@ -16,10 +17,9 @@ use crate::tests::utils::key_present_in_system;
 #[parsec_test]
 async fn same_key_file(tmp_path: TmpPath) {
     let key_file = tmp_path.join("devices/alice@dev1.keys");
-    let save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
-    };
-    let access_strategy = save_strategy.clone().into_access(key_file.clone());
+    let access_strategy =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd.".to_owned().into());
+    let save_strategy = access_strategy.clone().into();
     let url = ParsecOrganizationAddr::from_any(
         // cspell:disable-next-line
         "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
@@ -59,10 +59,9 @@ async fn same_key_file(tmp_path: TmpPath) {
         "2000-01-01T00:00:00Z".parse().unwrap()
     );
 
-    let new_save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd1.".to_owned().into(),
-    };
-    let new_access_strategy = new_save_strategy.clone().into_access(key_file.clone());
+    let new_access_strategy =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd1.".to_owned().into());
+    let new_save_strategy = new_access_strategy.clone().into();
     TimeProvider::root_provider().mock_time_frozen("2000-01-02T00:00:00Z".parse().unwrap());
     let available2 = update_device_change_authentication(
         Path::new(""),
@@ -99,15 +98,14 @@ async fn same_key_file(tmp_path: TmpPath) {
 async fn different_key_file(tmp_path: TmpPath) {
     let key_file = tmp_path.join("devices/alice@dev1.keys");
 
-    let save_strategy = DeviceSaveStrategy::TOTP {
-        totp_opaque_key_id: TOTPOpaqueKeyID::from_hex("f054cb94-b1f5-41e1-8fdb-80c9934b945a")
-            .unwrap(),
-        totp_opaque_key: SecretKey::generate(),
-        next: Box::new(DeviceSaveStrategy::Password {
+    let access_strategy = DeviceAccessStrategy {
+        key_file: key_file.clone(),
+        totp_protection: Some((TOTPOpaqueKeyID::default(), SecretKey::generate())),
+        primary_protection: DevicePrimaryProtectionStrategy::Password {
             password: "P@ssw0rd.".to_owned().into(),
-        }),
+        },
     };
-    let access_strategy = save_strategy.clone().into_access(key_file.clone());
+    let save_strategy = access_strategy.clone().into();
     let url = ParsecOrganizationAddr::from_any(
         // cspell:disable-next-line
         "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
@@ -138,10 +136,16 @@ async fn different_key_file(tmp_path: TmpPath) {
     assert!(key_present_in_system(&key_file).await);
 
     let new_key_file = tmp_path.join("devices/alice@dev2.keys");
-    let new_save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd.".to_owned().into(),
+    let new_access_strategy = DeviceAccessStrategy {
+        key_file: new_key_file.clone(),
+        totp_protection: Some((TOTPOpaqueKeyID::default(), SecretKey::generate())),
+        primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
+            operations: Arc::new(MockedAccountVaultOperations::new(
+                device.human_handle.email().to_owned(),
+            )),
+        },
     };
-    let new_access_strategy = new_save_strategy.clone().into_access(new_key_file.clone());
+    let new_save_strategy = new_access_strategy.clone().into();
 
     update_device_change_authentication(
         Path::new(""),
@@ -176,15 +180,12 @@ async fn testbed_same_key_file(env: &TestbedEnv) {
     .await;
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
 
-    let current_access = DeviceAccessStrategy::Password {
-        key_file: key_file.clone(),
-        password: "P@ssw0rd.".to_owned().into(),
-    };
+    let current_access =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd.".to_owned().into());
 
-    let new_save_strategy = DeviceSaveStrategy::Password {
-        password: "P@ssw0rd1.".to_owned().into(),
-    };
-    let new_access_strategy = new_save_strategy.clone().into_access(key_file.clone());
+    let new_access_strategy =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd1.".to_owned().into());
+    let new_save_strategy = new_access_strategy.clone().into();
     update_device_change_authentication(
         &env.discriminant_dir,
         &current_access,
@@ -211,20 +212,19 @@ async fn testbed_different_key_file(env: &TestbedEnv) {
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
     let new_key_file = env.discriminant_dir.join("devices/alice@dev2.keys");
 
-    let current_access = DeviceAccessStrategy::Password {
-        key_file,
-        password: "P@ssw0rd.".to_owned().into(),
-    };
+    let current_access =
+        DeviceAccessStrategy::new_password(key_file.clone(), "P@ssw0rd.".to_owned().into());
 
-    let new_save_strategy = DeviceSaveStrategy::TOTP {
-        totp_opaque_key_id: TOTPOpaqueKeyID::from_hex("f054cb94-b1f5-41e1-8fdb-80c9934b945a")
-            .unwrap(),
-        totp_opaque_key: SecretKey::generate(),
-        next: Box::new(DeviceSaveStrategy::Password {
-            password: "P@ssw0rd.".to_owned().into(),
-        }),
+    let new_access_strategy = DeviceAccessStrategy {
+        key_file: new_key_file.clone(),
+        totp_protection: Some((TOTPOpaqueKeyID::default(), SecretKey::generate())),
+        primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
+            operations: Arc::new(MockedAccountVaultOperations::new(
+                "alice@example.com".parse().unwrap(),
+            )),
+        },
     };
-    let new_access_strategy = new_save_strategy.clone().into_access(new_key_file.clone());
+    let new_save_strategy = new_access_strategy.clone().into();
 
     update_device_change_authentication(
         &env.discriminant_dir,

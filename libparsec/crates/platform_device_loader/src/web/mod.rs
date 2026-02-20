@@ -10,7 +10,8 @@ pub(crate) async fn save_device_keyring(
     _: &Path,
     _: &ParsecAddr,
     _: &DateTime,
-    _: Option<(TOTPOpaqueKeyID, &SecretKey)>,
+    _: Option<TOTPOpaqueKeyID>,
+    _: Option<&SecretKey>,
 ) -> Result<(), SaveDeviceError> {
     panic!("Keyring not supported on Web")
 }
@@ -22,7 +23,8 @@ pub(crate) async fn save_device_pki(
     _: &ParsecAddr,
     _: &DateTime,
     _: &X509CertificateReference,
-    _: Option<(TOTPOpaqueKeyID, &SecretKey)>,
+    _: Option<TOTPOpaqueKeyID>,
+    _: Option<&SecretKey>,
 ) -> Result<(), SaveDeviceError> {
     panic!("PKI not supported on Web")
 }
