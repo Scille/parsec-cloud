@@ -3653,7 +3653,7 @@ fn struct_started_workspace_info_js_to_rs(
             for x in js_val.iter() {
                 let x_converted = (
                     {
-                        let js_x1 = Reflect::get_u32(&x, 1)?;
+                        let js_x1 = Reflect::get_u32(&x, 0)?;
                         {
                             let v = js_x1
                                 .dyn_into::<Number>()
@@ -3667,7 +3667,7 @@ fn struct_started_workspace_info_js_to_rs(
                         }
                     },
                     {
-                        let js_x2 = Reflect::get_u32(&x, 2)?;
+                        let js_x2 = Reflect::get_u32(&x, 1)?;
                         js_x2
                             .dyn_into::<JsString>()
                             .ok()
