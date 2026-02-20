@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
-from .addr import ParsecAddr, ParsecInvitationAddr
+from .addr import ParsecAddr, ParsecInvitationAddrAndRedirectionURL
 from .client import ActiveUsersLimit
 from .common import (
     AccessToken,
@@ -226,7 +226,14 @@ class AccountListInvitationsError(ErrorVariant):
 async def account_list_invitations(
     account: Handle,
 ) -> Result[
-    list[tuple[ParsecInvitationAddr, OrganizationID, AccessToken, InvitationType]],
+    list[
+        tuple[
+            ParsecInvitationAddrAndRedirectionURL,
+            OrganizationID,
+            AccessToken,
+            InvitationType,
+        ]
+    ],
     AccountListInvitationsError,
 ]:
     raise NotImplementedError

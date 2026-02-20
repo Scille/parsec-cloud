@@ -2428,16 +2428,33 @@ fn struct_new_invitation_info_js_to_rs<'a>(
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::NewInvitationInfo> {
     let addr = {
-        let js_val: Handle<JsString> = obj.get(cx, "addr")?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+        let js_val: Handle<JsArray> = obj.get(cx, "addr")?;
+        (
+            {
+                let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            },
+            {
+                let js_item: Handle<JsString> = js_val.get(cx, 1)?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            },
+        )
     };
     let token = {
         let js_val: Handle<JsString> = obj.get(cx, "token")?;
@@ -2471,17 +2488,33 @@ fn struct_new_invitation_info_rs_to_js<'a>(
     rs_obj: libparsec::NewInvitationInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_addr = JsString::try_new(cx, {
-        let custom_to_rs_string =
-            |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                Ok(addr.to_url().into())
-            };
-        match custom_to_rs_string(rs_obj.addr) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err.to_string()),
-        }
-    })
-    .or_throw(cx)?;
+    let js_addr = {
+        let (x0, x1) = rs_obj.addr;
+        let js_array = JsArray::new(cx, 2);
+        let js_value = JsString::try_new(cx, {
+            let custom_to_rs_string =
+                |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                    Ok(addr.to_url().into())
+                };
+            match custom_to_rs_string(x0) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err.to_string()),
+            }
+        })
+        .or_throw(cx)?;
+        js_array.set(cx, 0, js_value)?;
+        let js_value = JsString::try_new(cx, {
+            let custom_to_rs_string =
+                |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
+            match custom_to_rs_string(x1) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err.to_string()),
+            }
+        })
+        .or_throw(cx)?;
+        js_array.set(cx, 1, js_value)?;
+        js_array
+    };
     js_obj.set(cx, "addr", js_addr)?;
     let js_token = JsString::try_new(cx, {
         let custom_to_rs_string =
@@ -10770,16 +10803,34 @@ fn variant_invite_list_item_js_to_rs<'a>(
     match tag.as_str() {
         "InviteListItemDevice" => {
             let addr = {
-                let js_val: Handle<JsString> = obj.get(cx, "addr")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
+                let js_val: Handle<JsArray> = obj.get(cx, "addr")?;
+                (
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::ParsecInvitationAddr::from_any(&s)
+                                    .map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 1)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                )
             };
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
@@ -10828,16 +10879,34 @@ fn variant_invite_list_item_js_to_rs<'a>(
         }
         "InviteListItemShamirRecovery" => {
             let addr = {
-                let js_val: Handle<JsString> = obj.get(cx, "addr")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
+                let js_val: Handle<JsArray> = obj.get(cx, "addr")?;
+                (
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::ParsecInvitationAddr::from_any(&s)
+                                    .map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 1)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                )
             };
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
@@ -10914,16 +10983,34 @@ fn variant_invite_list_item_js_to_rs<'a>(
         }
         "InviteListItemUser" => {
             let addr = {
-                let js_val: Handle<JsString> = obj.get(cx, "addr")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
+                let js_val: Handle<JsArray> = obj.get(cx, "addr")?;
+                (
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::ParsecInvitationAddr::from_any(&s)
+                                    .map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 1)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                libparsec::Url::parse(&s).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                )
             };
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
@@ -11004,17 +11091,35 @@ fn variant_invite_list_item_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "InviteListItemDevice").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_addr = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
+            let js_addr = {
+                let (x0, x1) = addr;
+                let js_array = JsArray::new(cx, 2);
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(x0) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 0, js_value)?;
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 1, js_value)?;
+                js_array
+            };
             js_obj.set(cx, "addr", js_addr)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
@@ -11054,17 +11159,35 @@ fn variant_invite_list_item_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "InviteListItemShamirRecovery").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_addr = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
+            let js_addr = {
+                let (x0, x1) = addr;
+                let js_array = JsArray::new(cx, 2);
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(x0) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 0, js_value)?;
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 1, js_value)?;
+                js_array
+            };
             js_obj.set(cx, "addr", js_addr)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
@@ -11123,17 +11246,35 @@ fn variant_invite_list_item_rs_to_js<'a>(
         } => {
             let js_tag = JsString::try_new(cx, "InviteListItemUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_addr = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
+            let js_addr = {
+                let (x0, x1) = addr;
+                let js_array = JsArray::new(cx, 2);
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(x0) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 0, js_value)?;
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 1, js_value)?;
+                js_array
+            };
             js_obj.set(cx, "addr", js_addr)?;
             let js_token = JsString::try_new(cx, {
                 let custom_to_rs_string =
@@ -18295,6 +18436,9 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_elem = {
     let (x0, x1, x2, x3) = elem;
     let js_array = JsArray::new(&mut cx, 4);
+    let js_value = {
+    let (x0, x1) = x0;
+    let js_array = JsArray::new(&mut cx, 2);
     let js_value = JsString::try_new(&mut cx,{
     let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
     match custom_to_rs_string(x0) {
@@ -18302,6 +18446,17 @@ fn account_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
         Err(err) => return cx.throw_type_error(err.to_string()),
     }
 }).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 0, js_value)?;
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err.to_string()),
+    }
+}).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 1, js_value)?;
+    js_array
+};
     js_array.set(&mut cx, 0, js_value)?;
     let js_value = JsString::try_new(&mut cx,x1).or_throw(&mut cx)?;
     js_array.set(&mut cx, 1, js_value)?;
@@ -21173,17 +21328,31 @@ fn client_get_async_enrollment_addr(mut cx: FunctionContext) -> JsResult<JsPromi
             let js_obj = JsObject::new(&mut cx);
             let js_tag = JsBoolean::new(&mut cx, true);
             js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_value = JsString::try_new(&mut cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(ok) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(&mut cx)?;
+            let js_value = {
+                let (x0, x1) = ok;
+                let js_array = JsArray::new(&mut cx, 2);
+                let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(x0) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err.to_string()),
+    }
+}).or_throw(&mut cx)?;
+                js_array.set(&mut cx, 0, js_value)?;
+                let js_value = JsString::try_new(&mut cx, {
+                    let custom_to_rs_string =
+                        |addr: libparsec::Url| -> Result<String, &'static str> {
+                            Ok(addr.to_string())
+                        };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err.to_string()),
+                    }
+                })
+                .or_throw(&mut cx)?;
+                js_array.set(&mut cx, 1, js_value)?;
+                js_array
+            };
             js_obj.set(&mut cx, "value", js_value)?;
             js_obj
         }
@@ -27298,13 +27467,27 @@ fn workspace_generate_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> 
         let js_obj = JsObject::new(&mut cx);
         let js_tag = JsBoolean::new(&mut cx, true);
         js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_value = JsString::try_new(&mut cx,{
+        let js_value = {
+    let (x0, x1) = ok;
+    let js_array = JsArray::new(&mut cx, 2);
+    let js_value = JsString::try_new(&mut cx,{
     let custom_to_rs_string = |addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-    match custom_to_rs_string(ok) {
+    match custom_to_rs_string(x0) {
         Ok(ok) => ok,
         Err(err) => return cx.throw_type_error(err.to_string()),
     }
 }).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 0, js_value)?;
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
+    match custom_to_rs_string(x1) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err.to_string()),
+    }
+}).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 1, js_value)?;
+    js_array
+};
         js_obj.set(&mut cx, "value", js_value)?;
         js_obj
     }

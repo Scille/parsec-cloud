@@ -434,7 +434,8 @@ async function handleQuery(): Promise<void> {
 }
 
 async function onInvitationClicked(invitation: AccountInvitation): Promise<void> {
-  await openJoinByLinkModal(invitation.addr);
+  const [invitationAddr, _] = invitation.addr;
+  await openJoinByLinkModal(invitationAddr);
 }
 
 async function onJoinOrganizationClicked(): Promise<void> {

@@ -58,6 +58,23 @@ class ParsecTOTPResetAddr(StrBasedType):
     custom_to_rs_string = "|addr: libparsec::ParsecTOTPResetAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
+class Url(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { libparsec::Url::parse(&s).map_err(|e| e.to_string()) }"
+    )
+    custom_to_rs_string = (
+        "|addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) }"
+    )
+
+
+type ParsecOrganizationBootstrapAddrAndRedirectionURL = tuple[ParsecOrganizationBootstrapAddr, Url]
+type ParsecInvitationAddrAndRedirectionURL = tuple[ParsecInvitationAddr, Url]
+type ParsecWorkspacePathAddrAndRedirectionURL = tuple[ParsecWorkspacePathAddr, Url]
+type ParsecPkiEnrollmentAddrAndRedirectionURL = tuple[ParsecPkiEnrollmentAddr, Url]
+type ParsecAsyncEnrollmentAddrAndRedirectionURL = tuple[ParsecAsyncEnrollmentAddr, Url]
+type ParsecTOTPResetAddrAndRedirectionURL = tuple[ParsecTOTPResetAddr, Url]
+
+
 class ParseParsecAddrError(ErrorVariant):
     class InvalidUrl:
         pass

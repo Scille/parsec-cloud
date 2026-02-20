@@ -274,7 +274,7 @@ export interface HumanHandle {
 
 
 export interface NewInvitationInfo {
-    addr: string
+    addr: [string, string]
     token: string
     emailSentStatus: InvitationEmailSentStatus
 }
@@ -2787,7 +2787,7 @@ export type InviteListInvitationCreatedBy =
 // InviteListItem
 export interface InviteListItemDevice {
     tag: "InviteListItemDevice"
-    addr: string
+    addr: [string, string]
     token: string
     created_on: number
     created_by: InviteListInvitationCreatedBy
@@ -2795,7 +2795,7 @@ export interface InviteListItemDevice {
 }
 export interface InviteListItemShamirRecovery {
     tag: "InviteListItemShamirRecovery"
-    addr: string
+    addr: [string, string]
     token: string
     created_on: number
     created_by: InviteListInvitationCreatedBy
@@ -2805,7 +2805,7 @@ export interface InviteListItemShamirRecovery {
 }
 export interface InviteListItemUser {
     tag: "InviteListItemUser"
-    addr: string
+    addr: [string, string]
     token: string
     created_on: number
     created_by: InviteListInvitationCreatedBy
@@ -4872,7 +4872,7 @@ export function accountListAuthMethods(
 ): Promise<Result<Array<AuthMethodInfo>, AccountListAuthMethodsError>>
 export function accountListInvitations(
     account: number
-): Promise<Result<Array<[string, string, string, InvitationType]>, AccountListInvitationsError>>
+): Promise<Result<Array<[[string, string], string, string, InvitationType]>, AccountListInvitationsError>>
 export function accountListOrganizations(
     account: number
 ): Promise<Result<AccountOrganizations, AccountListOrganizationsError>>
@@ -5061,7 +5061,7 @@ export function clientForgetAllCertificates(
 ): Promise<Result<null, ClientForgetAllCertificatesError>>
 export function clientGetAsyncEnrollmentAddr(
     client: number
-): Promise<Result<string, ClientGetAsyncEnrollmentAddrError>>
+): Promise<Result<[string, string], ClientGetAsyncEnrollmentAddrError>>
 export function clientGetOrganizationBootstrapDate(
     client_handle: number
 ): Promise<Result<number, ClientGetOrganizationBootstrapDateError>>
@@ -5472,7 +5472,7 @@ export function workspaceFdWriteStartEof(
 export function workspaceGeneratePathAddr(
     workspace: number,
     path: string
-): Promise<Result<string, WorkspaceGeneratePathAddrError>>
+): Promise<Result<[string, string], WorkspaceGeneratePathAddrError>>
 export function workspaceHistoryFdClose(
     workspace_history: number,
     fd: number
