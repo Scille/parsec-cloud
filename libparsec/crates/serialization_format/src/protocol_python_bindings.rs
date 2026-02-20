@@ -980,7 +980,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         }
         FieldType::Set(nested) => {
             let nested = quote_type_as_fn_new_param(nested);
-            quote! { HashSet<#nested> }
+            quote! { std::collections::HashSet<#nested> }
         }
         FieldType::RequiredOption(nested) => {
             let nested = quote_type_as_fn_new_param(nested);
