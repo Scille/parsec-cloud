@@ -97,6 +97,7 @@ pub(crate) async fn save_device(
                 device_label: device.device_label.to_owned(),
                 algorithm: key_algo,
                 ciphertext,
+                totp_opaque_key_id: None,
             });
 
             let file_content = file_content.dump();
@@ -149,6 +150,7 @@ pub(crate) async fn save_device(
                 device_label: device.device_label.to_owned(),
                 ciphertext_key_id,
                 ciphertext,
+                totp_opaque_key_id: None,
             });
 
             let file_content = file_content.dump();
@@ -191,6 +193,7 @@ pub(crate) async fn save_device(
                 openbao_entity_id: operations.openbao_entity_id().to_owned(),
                 openbao_ciphertext_key_path,
                 ciphertext,
+                totp_opaque_key_id: None,
             });
 
             let file_content = file_content.dump();

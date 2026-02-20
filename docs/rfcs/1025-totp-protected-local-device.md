@@ -530,7 +530,7 @@ Anonymous API:
             },
             {
                 // Too many attempts with an invalid one time password have
-                // been done this opaque key ID.
+                // been done to this opaque key ID.
                 // Throttling follow a simple `wait_time_in_seconds = 2 ^ number_of_failed_attemps`
                 // The absence of higher bound makes it very aggressive (e.g. after
                 // 20 errors you have to wait 12 days for the next attempt...),
@@ -541,6 +541,9 @@ Anonymous API:
                 //   by with the throttling to prevent user from login.
                 // - A legitimate user can still reset the throttle by asking the server
                 //   admin to reset his TOTP setup.
+                // Also note returning the `throttled` status doesn't count as a failed
+                // attempt, so an attacker cannot overflow the wait time by just spamming
+                // attempts in a quick burst.
                 "status": "throttled",
                 "fields": [
                     {

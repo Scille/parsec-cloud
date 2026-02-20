@@ -26,6 +26,7 @@ pub struct DeviceFileKeyring {
     pub keyring_service: String,
     pub keyring_user: String,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_keyring.json5");
@@ -44,6 +45,7 @@ impl_transparent_data_format_conversion!(
     keyring_service,
     keyring_user,
     ciphertext,
+    totp_opaque_key_id,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -59,6 +61,7 @@ pub struct DeviceFilePassword {
     pub device_label: DeviceLabel,
     pub algorithm: PasswordAlgorithm,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_password.json5");
@@ -76,6 +79,7 @@ impl_transparent_data_format_conversion!(
     device_label,
     algorithm,
     ciphertext,
+    totp_opaque_key_id,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -162,6 +166,7 @@ pub struct DeviceFileAccountVault {
     pub device_label: DeviceLabel,
     pub ciphertext_key_id: AccountVaultItemOpaqueKeyID,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_account_vault.json5");
@@ -179,6 +184,7 @@ impl_transparent_data_format_conversion!(
     device_label,
     ciphertext_key_id,
     ciphertext,
+    totp_opaque_key_id,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -196,6 +202,7 @@ pub struct DeviceFileOpenBao {
     pub openbao_entity_id: String,
     pub openbao_ciphertext_key_path: String,
     pub ciphertext: Bytes,
+    pub totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
 }
 
 parsec_data!("schema/local_device/device_file_openbao.json5");
@@ -215,6 +222,7 @@ impl_transparent_data_format_conversion!(
     openbao_entity_id,
     openbao_ciphertext_key_path,
     ciphertext,
+    totp_opaque_key_id,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
