@@ -21,6 +21,7 @@ members = [
     "libparsec/crates/tests_fixtures",
     "libparsec/crates/tests_lite",
     "libparsec/crates/tests_macros",
+    "libparsec/crates/totp",
     "libparsec/crates/types",
     "libparsec/crates/zstd",
     "bindings/web",
@@ -51,6 +52,7 @@ default-members = [
     "libparsec/crates/tests_fixtures",
     "libparsec/crates/tests_lite",
     "libparsec/crates/tests_macros",
+    "libparsec/crates/totp",
     "libparsec/crates/types",
     "libparsec/crates/zstd",
     "cli",
@@ -114,6 +116,7 @@ libparsec_testbed = { path = "libparsec/crates/testbed", default-features = fals
 libparsec_tests_fixtures = { path = "libparsec/crates/tests_fixtures", default-features = false }
 libparsec_tests_lite = { path = "libparsec/crates/tests_lite", default-features = false }
 libparsec_tests_macros = { path = "libparsec/crates/tests_macros", default-features = false }
+libparsec_totp = { path = "libparsec/crates/totp", default-features = false }
 libparsec_types = { path = "libparsec/crates/types", default-features = false }
 libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 

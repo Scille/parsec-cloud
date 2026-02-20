@@ -12,7 +12,7 @@ mod update;
 pub use archive::*;
 pub use list::*;
 pub use load::*;
-pub use load_ciphertext_key::*;
+pub(crate) use load_ciphertext_key::*;
 pub use recovery::*;
 pub use remove::*;
 pub use save::*;

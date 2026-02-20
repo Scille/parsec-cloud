@@ -9,7 +9,7 @@ import type {
   Handle,
   Result,
 } from '@/plugins/libparsec/definitions';
-import { ClientStartErrorTag } from '@/plugins/libparsec/definitions';
+import { ClientStartErrorTag, DeviceAccessStrategyTag } from '@/plugins/libparsec/definitions';
 
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 // eslint-disable-next-line camelcase
@@ -230,9 +230,19 @@ async function withoutSharedWorker(): Promise<any> {
 
       if (name === 'clientStart') {
         return async (config: ClientConfig, access: DeviceAccessStrategy): Promise<Result<Handle, ClientStartError>> => {
+          let keyFile;
+          if (access.tag === DeviceAccessStrategyTag.TOTP) {
+            if (access.next.tag !== DeviceAccessStrategyTag.TOTP) {
+              keyFile = access.next.keyFile;
+            } else {
+              throw Error('Nested TOTP not allowed');
+            }
+          } else {
+            keyFile = access.keyFile;
+          }
           const onLockTaken = new Promise((onLockTakenResolve: (value: undefined | ClientStartError) => void) => {
             navigator.locks.request(
-              access.keyFile,
+              keyFile,
               {
                 mode: 'exclusive',
                 ifAvailable: true,
@@ -241,7 +251,7 @@ async function withoutSharedWorker(): Promise<any> {
               async (lock: Lock | null) => {
                 if (lock === null) {
                   // Lock already taken... but by whom ?
-                  if (isLockFromThisTab(access.keyFile)) {
+                  if (isLockFromThisTab(keyFile)) {
                     // Our tab has the lock, libparsec will handle this fine by
                     // going idempotent (i.e. returning the already start client).
                     onLockTakenResolve(undefined);
@@ -257,7 +267,7 @@ async function withoutSharedWorker(): Promise<any> {
 
                   // Register in the locks
                   const onDone = new Promise((resolve: (value: any) => void) => {
-                    registerTabLock(access.keyFile, () => resolve(null));
+                    registerTabLock(keyFile, () => resolve(null));
                   });
 
                   onLockTakenResolve(undefined);
@@ -276,9 +286,9 @@ async function withoutSharedWorker(): Promise<any> {
 
           if (!ret.ok) {
             // Release the lock since we failed to start the client !
-            releaseTabLock(access.keyFile, undefined);
+            releaseTabLock(keyFile, undefined);
           } else {
-            registerTabLockClientHandle(access.keyFile, ret.value);
+            registerTabLockClientHandle(keyFile, ret.value);
           }
 
           return ret;

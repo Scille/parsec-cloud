@@ -1237,6 +1237,13 @@ pub enum ParsecAnonymousAddr {
 }
 
 impl ParsecAnonymousAddr {
+    pub fn new(server_addr: ParsecAddr, organization_id: OrganizationID) -> Self {
+        // Small hack: we benefit from the fact a bootstrap organization can be
+        // constructed from the parameters we have at hand.
+        let addr = ParsecOrganizationBootstrapAddr::new(server_addr, organization_id, None);
+        Self::OrganizationBootstrap(addr)
+    }
+
     /// Return an [Url] that points to the server endpoint for anonymous commands.
     pub fn to_anonymous_http_url(&self) -> Url {
         let (ParsecAnonymousAddr::Organization(ParsecOrganizationAddr {

@@ -3,7 +3,10 @@
 use std::{path::Path, sync::Arc};
 
 use super::utils::{MockedAccountVaultOperations, MockedOpenBaoOperations};
-use crate::{load_available_device, load_device, save_device, AvailableDevice, DeviceSaveStrategy};
+use crate::{
+    load_available_device, load_device, save_device, AvailableDevice, AvailableDeviceType,
+    DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
+};
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
@@ -15,7 +18,7 @@ use libparsec_types::prelude::*;
 #[case("openbao")]
 // TODO #11269
 // #[cfg_attr(target_os = "windows", case("pki"))]
-async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
+async fn save_load(#[case] kind: &str, #[values(false, true)] with_totp: bool, tmp_path: TmpPath) {
     use crate::tests::utils::key_present_in_system;
 
     let key_file = tmp_path.join("devices/keyring_file.keys");
@@ -38,10 +41,13 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
         None,
     );
 
-    let (access_strategy, save_strategy, expected_available_device) = match kind {
+    let (mut access_strategy, mut expected_available_device) = match kind {
         "keyring" => {
-            let save_strategy = DeviceSaveStrategy::Keyring;
-            let access_strategy = save_strategy.clone().into_access(key_file.clone());
+            let access_strategy = DeviceAccessStrategy {
+                key_file: key_file.clone(),
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::Keyring,
+            };
             let expected_available_device = AvailableDevice {
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
@@ -52,16 +58,20 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: save_strategy.ty(),
+                totp_opaque_key_id: None,
+                ty: AvailableDeviceType::Keyring,
             };
-            (access_strategy, save_strategy, expected_available_device)
+            (access_strategy, expected_available_device)
         }
 
         "password" => {
-            let save_strategy = DeviceSaveStrategy::Password {
-                password: "P@ssw0rd.".to_string().into(),
+            let access_strategy = DeviceAccessStrategy {
+                key_file: key_file.clone(),
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::Password {
+                    password: "P@ssw0rd.".to_string().into(),
+                },
             };
-            let access_strategy = save_strategy.clone().into_access(key_file.clone());
             let expected_available_device = AvailableDevice {
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
@@ -72,18 +82,22 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: save_strategy.ty(),
+                totp_opaque_key_id: None,
+                ty: AvailableDeviceType::Password,
             };
-            (access_strategy, save_strategy, expected_available_device)
+            (access_strategy, expected_available_device)
         }
 
         "account_vault" => {
-            let save_strategy = DeviceSaveStrategy::AccountVault {
-                operations: Arc::new(MockedAccountVaultOperations::new(
-                    device.human_handle.email().to_owned(),
-                )),
+            let access_strategy = DeviceAccessStrategy {
+                key_file: key_file.clone(),
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
+                    operations: Arc::new(MockedAccountVaultOperations::new(
+                        device.human_handle.email().to_owned(),
+                    )),
+                },
             };
-            let access_strategy = save_strategy.clone().into_access(key_file.clone());
             let expected_available_device = AvailableDevice {
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
@@ -94,18 +108,22 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: save_strategy.ty(),
+                totp_opaque_key_id: None,
+                ty: AvailableDeviceType::AccountVault,
             };
-            (access_strategy, save_strategy, expected_available_device)
+            (access_strategy, expected_available_device)
         }
 
         "openbao" => {
-            let save_strategy = DeviceSaveStrategy::OpenBao {
-                operations: Arc::new(MockedOpenBaoOperations::new(
-                    device.human_handle.email().to_owned(),
-                )),
+            let access_strategy = DeviceAccessStrategy {
+                key_file: key_file.clone(),
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::OpenBao {
+                    operations: Arc::new(MockedOpenBaoOperations::new(
+                        device.human_handle.email().to_owned(),
+                    )),
+                },
             };
-            let access_strategy = save_strategy.clone().into_access(key_file.clone());
             let expected_available_device = AvailableDevice {
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
@@ -116,15 +134,27 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
                 device_id: device.device_id,
                 human_handle: device.human_handle.clone(),
                 device_label: device.device_label.clone(),
-                ty: save_strategy.ty(),
+                totp_opaque_key_id: None,
+                ty: access_strategy.primary_protection.ty(),
             };
-            (access_strategy, save_strategy, expected_available_device)
+            (access_strategy, expected_available_device)
         }
 
         "pki" => todo!(),
 
         unknown => panic!("Unknown kind: {unknown:?}"),
     };
+
+    if with_totp {
+        let totp_opaque_key_id =
+            TOTPOpaqueKeyID::from_hex("8fdb73524fdd495194e877a5fafbe0a1").unwrap();
+        let totp_opaque_key = SecretKey::generate();
+
+        access_strategy.totp_protection = Some((totp_opaque_key_id, totp_opaque_key));
+        expected_available_device.totp_opaque_key_id = Some(totp_opaque_key_id);
+    }
+
+    let save_strategy = access_strategy.clone().into();
 
     assert!(!key_present_in_system(&key_file).await);
 
@@ -145,9 +175,8 @@ async fn save_load(#[case] kind: &str, tmp_path: TmpPath) {
 
     // Also test `load_available_device`
 
-    let available_device =
-        load_available_device(Path::new(""), access_strategy.key_file().to_owned())
-            .await
-            .unwrap();
+    let available_device = load_available_device(Path::new(""), access_strategy.key_file.clone())
+        .await
+        .unwrap();
     p_assert_eq!(available_device, expected_available_device)
 }

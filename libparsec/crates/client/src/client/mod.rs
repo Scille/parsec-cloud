@@ -294,6 +294,10 @@ impl Client {
         &self.config
     }
 
+    pub fn cmds(&self) -> Arc<AuthenticatedCmds> {
+        self.cmds.clone()
+    }
+
     pub fn server_organization_config(&self) -> ServerOrganizationConfig {
         self.server_organization_config
             .lock()

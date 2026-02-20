@@ -4,13 +4,13 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use crate::{
     archive_device, list_available_devices, load_available_device, load_device, remove_device,
     save_device, tests::utils::MockedAccountVaultOperations, update_device_change_authentication,
     update_device_overwrite_server_addr, AvailableDevice, AvailableDeviceType,
-    DeviceAccessStrategy, DeviceSaveStrategy,
+    DeviceAccessStrategy, DevicePrimaryProtectionStrategy, DeviceSaveStrategy,
 };
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::prelude::*;
@@ -376,13 +376,13 @@ async fn list_devices(tmp_path: TmpPath) {
 
     // 2. Store the raws in files
 
-    let keyring_path = tmp_path.join("devices/94a8691e9765497984d63aad3c7df9e0.keys");
+    let keyring_path: PathBuf = tmp_path.join("devices/94a8691e9765497984d63aad3c7df9e0.keys");
     // Device must have a .keys extension, but can be in nested directories with a random name
-    let password_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
-    let pki_path = tmp_path.join("devices/foo/bar/spam/whatever3.keys");
-    let recovery_path = tmp_path.join("devices/foo/whatever.keys");
-    let account_vault_path = tmp_path.join("devices/whatever.keys");
-    let openbao_path = tmp_path.join("devices/whatever2.keys");
+    let password_path: PathBuf = tmp_path.join("devices/foo/bar/spam/whatever.keys");
+    let pki_path: PathBuf = tmp_path.join("devices/foo/bar/spam/whatever3.keys");
+    let recovery_path: PathBuf = tmp_path.join("devices/foo/whatever.keys");
+    let account_vault_path: PathBuf = tmp_path.join("devices/whatever.keys");
+    let openbao_path: PathBuf = tmp_path.join("devices/whatever2.keys");
 
     for (path, raw) in [
         (&keyring_path, keyring_raw),
@@ -410,6 +410,9 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: keyring_expected.device_id,
             human_handle: keyring_expected.human_handle,
             device_label: keyring_expected.device_label,
+            totp_opaque_key_id: Some(
+                TOTPOpaqueKeyID::from_hex("8fdb73524fdd495194e877a5fafbe0a1").unwrap(),
+            ),
             ty: AvailableDeviceType::Keyring,
         },
         AvailableDevice {
@@ -422,6 +425,7 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: password_expected.device_id,
             human_handle: password_expected.human_handle,
             device_label: password_expected.device_label,
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::Password,
         },
         AvailableDevice {
@@ -434,6 +438,7 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: pki_expected.device_id,
             human_handle: pki_expected.human_handle,
             device_label: pki_expected.device_label,
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::PKI {
                 certificate_ref: pki_expected.certificate_ref,
             },
@@ -448,6 +453,7 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: recovery_expected.device_id,
             human_handle: recovery_expected.human_handle,
             device_label: recovery_expected.device_label,
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::Recovery,
         },
         AvailableDevice {
@@ -460,6 +466,7 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: account_vault_expected.device_id,
             human_handle: account_vault_expected.human_handle,
             device_label: account_vault_expected.device_label,
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::AccountVault,
         },
         AvailableDevice {
@@ -472,6 +479,7 @@ async fn list_devices(tmp_path: TmpPath) {
             device_id: openbao_expected.device_id,
             human_handle: openbao_expected.human_handle,
             device_label: openbao_expected.device_label,
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::OpenBao {
                 openbao_preferred_auth_id: "HEXAGONE".to_string(),
                 openbao_entity_id: "65732d02-bb5f-7ce7-eae4-69067383b61d".to_string(),
@@ -539,9 +547,12 @@ async fn testbed(env: &TestbedEnv) {
     );
     load_device(
         &env.discriminant_dir,
-        &DeviceAccessStrategy::Password {
+        &DeviceAccessStrategy {
             key_file: alice2.key_file_path.clone(),
-            password: "P@ssw0rd.".to_string().into(),
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Password {
+                password: "P@ssw0rd.".to_string().into(),
+            },
         },
     )
     .await
@@ -565,10 +576,13 @@ async fn testbed(env: &TestbedEnv) {
     let zack_human_handle = HumanHandle::from_raw("zack@example.invalid", "Zack").unwrap();
     let zack = save_device(
         &env.discriminant_dir,
-        &DeviceSaveStrategy::AccountVault {
-            operations: Arc::new(MockedAccountVaultOperations::new(
-                zack_human_handle.email().to_owned(),
-            )),
+        &DeviceSaveStrategy {
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
+                operations: Arc::new(MockedAccountVaultOperations::new(
+                    zack_human_handle.email().to_owned(),
+                )),
+            },
         },
         &LocalDevice::generate_new_device(
             organization_addr.clone(),
@@ -590,9 +604,12 @@ async fn testbed(env: &TestbedEnv) {
 
     update_device_overwrite_server_addr(
         &env.discriminant_dir,
-        &DeviceAccessStrategy::Password {
+        &DeviceAccessStrategy {
             key_file: bob1.key_file_path.clone(),
-            password: "P@ssw0rd.".to_string().into(),
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Password {
+                password: "P@ssw0rd.".to_string().into(),
+            },
         },
         ParsecAddr::new("newhost.example.com".to_string(), None, true),
     )
@@ -602,14 +619,20 @@ async fn testbed(env: &TestbedEnv) {
     let bob2_new_key_file = env.discriminant_dir.join("bob2_new_device.keys");
     update_device_change_authentication(
         &env.discriminant_dir,
-        &DeviceAccessStrategy::Password {
+        &DeviceAccessStrategy {
             key_file: bob2.key_file_path.clone(),
-            password: "P@ssw0rd.".to_string().into(),
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::Password {
+                password: "P@ssw0rd.".to_string().into(),
+            },
         },
-        &DeviceSaveStrategy::AccountVault {
-            operations: Arc::new(MockedAccountVaultOperations::new(
-                bob2.human_handle.email().to_owned(),
-            )),
+        &DeviceSaveStrategy {
+            totp_protection: None,
+            primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
+                operations: Arc::new(MockedAccountVaultOperations::new(
+                    bob2.human_handle.email().to_owned(),
+                )),
+            },
         },
         &bob2_new_key_file,
     )

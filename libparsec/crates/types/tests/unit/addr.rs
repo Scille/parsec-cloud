@@ -1298,4 +1298,13 @@ fn anonymous_addr() {
     test_anonymous_addr!(PKIEnrollmentAddrTestbed {}, ParsecPkiEnrollmentAddr);
     test_anonymous_addr!(AsyncEnrollmentAddrTestbed {}, ParsecAsyncEnrollmentAddr);
     test_anonymous_addr!(TOTPResetAddrTestbed {}, ParsecTOTPResetAddr);
+
+    let server_addr: ParsecAddr = AddrTestbed {}.url().parse().unwrap();
+    let organization_id: OrganizationID = ORG.parse().unwrap();
+    let addr = ParsecAnonymousAddr::new(server_addr, organization_id.clone());
+    p_assert_eq!(addr.organization_id(), &organization_id);
+    p_assert_eq!(
+        addr.to_anonymous_http_url(),
+        format!("https://{DOMAIN}/anonymous/{ORG}").parse().unwrap()
+    );
 }

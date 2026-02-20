@@ -246,7 +246,7 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
     let new_local_device = alice_finalize_ctx.new_local_device.clone();
     let key_file = tmp_path.join("device.keys");
     let password: Password = "P@ssw0rd.".to_string().into();
-    let save_strategy = DeviceSaveStrategy::Password { password };
+    let save_strategy = DeviceSaveStrategy::new_password(password);
     let available_device = alice_finalize_ctx
         .save_local_device(&save_strategy.clone(), &key_file)
         .await
