@@ -110,20 +110,21 @@ import { SsoProviderCard } from '@/components/devices';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import {
-  AccessStrategy,
   AvailableDevice,
   AvailableDeviceTypeOpenBao,
   AvailableDeviceTypeTag,
-  DeviceAccessStrategyKeyring,
-  DeviceAccessStrategyOpenBao,
-  DeviceAccessStrategyPKI,
-  DeviceAccessStrategyPassword,
+  DevicePrimaryProtectionStrategy,
+  DevicePrimaryProtectionStrategyOpenBao,
+  DevicePrimaryProtectionStrategyPassword,
   OpenBaoAuthConfigTag,
+  PrimaryProtectionStrategy,
   ServerConfig,
   UpdateDeviceErrorTag,
+  constructAccessStrategy,
   isAuthenticationValid,
   updateDeviceChangeAuthentication,
 } from '@/parsec';
+import { AvailableDeviceTypePKI } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { OpenBaoClient, OpenBaoErrorType, openBaoConnect } from '@/services/openBao';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
@@ -182,15 +183,16 @@ onMounted(async () => {
 
 async function nextStep(): Promise<void> {
   if (pageStep.value === ChangeAuthenticationStep.CurrentAuthentication) {
-    let access!: DeviceAccessStrategyPassword | DeviceAccessStrategyOpenBao;
+    let primaryProtection!: DevicePrimaryProtectionStrategyPassword | DevicePrimaryProtectionStrategyOpenBao;
     if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password) {
-      access = AccessStrategy.usePassword(props.currentDevice, currentPassword.value);
+      primaryProtection = PrimaryProtectionStrategy.usePassword(currentPassword.value);
     } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao) {
       if (!openBaoClient.value) {
         return;
       }
-      access = AccessStrategy.useOpenBao(props.currentDevice, openBaoClient.value.getConnectionInfo());
+      primaryProtection = PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo());
     }
+    const access = constructAccessStrategy(props.currentDevice, primaryProtection);
     const result = await isAuthenticationValid(props.currentDevice, access);
     if (result) {
       pageStep.value = ChangeAuthenticationStep.ChooseNewAuthMethod;
@@ -262,20 +264,20 @@ async function onSSOLoginClicked(): Promise<void> {
 }
 
 async function changeAuthentication(): Promise<void> {
-  let accessStrategy: DeviceAccessStrategyKeyring | DeviceAccessStrategyPassword | DeviceAccessStrategyPKI | DeviceAccessStrategyOpenBao;
+  let protection!: DevicePrimaryProtectionStrategy;
 
   if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring) {
-    accessStrategy = AccessStrategy.useKeyring(props.currentDevice);
+    protection = PrimaryProtectionStrategy.useKeyring();
   } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password) {
-    accessStrategy = AccessStrategy.usePassword(props.currentDevice, currentPassword.value);
+    protection = PrimaryProtectionStrategy.usePassword(currentPassword.value);
   } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.PKI) {
-    accessStrategy = AccessStrategy.useSmartcard(props.currentDevice);
+    protection = PrimaryProtectionStrategy.useSmartcard((props.currentDevice as any as AvailableDeviceTypePKI).certificateRef);
   } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao) {
     if (!openBaoClient.value) {
       window.electronAPI.log('error', 'OpenBaoClient should not be undefined at this step');
       return;
     }
-    accessStrategy = AccessStrategy.useOpenBao(props.currentDevice, openBaoClient.value.getConnectionInfo());
+    protection = PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo());
   } else {
     // Should not happen
     window.electronAPI.log('error', `Unhandled authentication type for this device: ${props.currentDevice.ty.tag}`);
@@ -294,7 +296,7 @@ async function changeAuthentication(): Promise<void> {
     return;
   }
 
-  const result = await updateDeviceChangeAuthentication(accessStrategy, saveStrategy);
+  const result = await updateDeviceChangeAuthentication(constructAccessStrategy(props.currentDevice, protection), saveStrategy);
 
   if (result.ok) {
     props.informationManager.present(

@@ -25,23 +25,23 @@
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
-          :value="DeviceSaveStrategyTag.Password"
+          :value="DevicePrimaryProtectionStrategyTag.Password"
         >
           <authentication-card
-            @click="onMethodSelected(DeviceSaveStrategyTag.Password)"
+            @click="onMethodSelected(DevicePrimaryProtectionStrategyTag.Password)"
             :state="getAuthCardState(AvailableDeviceTypeTag.Password)"
-            :auth-method="DeviceSaveStrategyTag.Password"
+            :auth-method="DevicePrimaryProtectionStrategyTag.Password"
           />
         </ion-radio>
         <ion-radio
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
-          :value="DeviceSaveStrategyTag.Keyring"
+          :value="DevicePrimaryProtectionStrategyTag.Keyring"
           :disabled="!keyringAvailable || activeAuth === AvailableDeviceTypeTag.Keyring"
         >
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.Keyring"
+            :auth-method="DevicePrimaryProtectionStrategyTag.Keyring"
             :state="getAuthCardState(AvailableDeviceTypeTag.Keyring)"
             :disabled="!keyringAvailable"
           />
@@ -51,13 +51,13 @@
           class="item-radio radio-list-item"
           label-placement="end"
           justify="start"
-          :value="DeviceSaveStrategyTag.PKI"
+          :value="DevicePrimaryProtectionStrategyTag.PKI"
           :disabled="!smartcardAvailable"
         >
           <authentication-card
-            @click="onMethodSelected(DeviceSaveStrategyTag.PKI)"
+            @click="onMethodSelected(DevicePrimaryProtectionStrategyTag.PKI)"
             :state="getAuthCardState(AvailableDeviceTypeTag.PKI)"
-            :auth-method="DeviceSaveStrategyTag.PKI"
+            :auth-method="DevicePrimaryProtectionStrategyTag.PKI"
             :disabled="!smartcardAvailable"
           />
         </ion-radio>
@@ -65,14 +65,14 @@
         <ion-radio
           class="item-radio radio-list-item"
           label-placement="end"
-          :value="DeviceSaveStrategyTag.OpenBao"
+          :value="DevicePrimaryProtectionStrategyTag.OpenBao"
           justify="start"
           :disabled="!openBaoAuthAvailable || activeAuth === AvailableDeviceTypeTag.OpenBao"
         >
           <authentication-card
             :state="getAuthCardState(AvailableDeviceTypeTag.OpenBao)"
-            @click="onMethodSelected(DeviceSaveStrategyTag.OpenBao)"
-            :auth-method="DeviceSaveStrategyTag.OpenBao"
+            @click="onMethodSelected(DevicePrimaryProtectionStrategyTag.OpenBao)"
+            :auth-method="DevicePrimaryProtectionStrategyTag.OpenBao"
             :disabled="!openBaoAuthAvailable"
           />
         </ion-radio>
@@ -83,11 +83,11 @@
       class="choose-auth-choice"
       v-else
     >
-      <div v-if="authentication === DeviceSaveStrategyTag.Keyring">
+      <div v-if="authentication === DevicePrimaryProtectionStrategyTag.Keyring">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.Keyring"
+            :auth-method="DevicePrimaryProtectionStrategyTag.Keyring"
             :state="AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
@@ -95,11 +95,11 @@
         <keyring-information />
       </div>
 
-      <div v-if="authentication === DeviceSaveStrategyTag.Password">
+      <div v-if="authentication === DevicePrimaryProtectionStrategyTag.Password">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.Password"
+            :auth-method="DevicePrimaryProtectionStrategyTag.Password"
             :state="AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
@@ -111,11 +111,11 @@
         />
       </div>
 
-      <div v-if="authentication === DeviceSaveStrategyTag.PKI">
+      <div v-if="authentication === DevicePrimaryProtectionStrategyTag.PKI">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.PKI"
+            :auth-method="DevicePrimaryProtectionStrategyTag.PKI"
             :state="AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
@@ -123,11 +123,11 @@
         <choose-certificate ref="chooseCertificate" />
       </div>
 
-      <div v-if="authentication === DeviceSaveStrategyTag.OpenBao && serverConfig?.openbao && openBaoAuthAvailable">
+      <div v-if="authentication === DevicePrimaryProtectionStrategyTag.OpenBao && serverConfig?.openbao && openBaoAuthAvailable">
         <div class="method-chosen">
           <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
-            :auth-method="DeviceSaveStrategyTag.OpenBao"
+            :auth-method="DevicePrimaryProtectionStrategyTag.OpenBao"
             :state="AuthenticationCardState.Update"
             :disabled="querying"
             @update-clicked="changeAuthenticationMethod()"
@@ -166,12 +166,13 @@ import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
 import {
   AvailableDeviceTypeTag,
+  DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
-  DeviceSaveStrategyTag,
   OpenBaoAuthConfigTag,
-  SaveStrategy,
+  PrimaryProtectionStrategy,
   ServerConfig,
   X509CertificateReference,
+  constructSaveStrategy,
   isKeyringAvailable,
   isSmartcardAvailable,
   isWeb,
@@ -181,7 +182,7 @@ import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { MsChoosePasswordInput, MsSpinner } from 'megashark-lib';
 import { computed, onMounted, ref, toRaw, useTemplateRef } from 'vue';
 
-const authentication = ref<DeviceSaveStrategyTag | undefined>(undefined);
+const authentication = ref<DevicePrimaryProtectionStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);
 const choosePasswordRef = useTemplateRef<InstanceType<typeof MsChoosePasswordInput>>('choosePassword');
 const chooseCertificateRef = useTemplateRef<InstanceType<typeof ChooseCertificate>>('chooseCertificate');
@@ -217,7 +218,7 @@ onMounted(async () => {
 });
 
 async function onChange(_value: any): Promise<void> {
-  if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
+  if (authentication.value === DevicePrimaryProtectionStrategyTag.Password && choosePasswordRef.value) {
     await choosePasswordRef.value.setFocus();
   }
 }
@@ -246,7 +247,7 @@ function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState
   }
 }
 
-async function onMethodSelected(method: DeviceSaveStrategyTag): Promise<void> {
+async function onMethodSelected(method: DevicePrimaryProtectionStrategyTag): Promise<void> {
   authentication.value = method;
   error.value = '';
 }
@@ -257,34 +258,36 @@ async function changeAuthenticationMethod(): Promise<void> {
 }
 
 function getSaveStrategy(): DeviceSaveStrategy | undefined {
-  if (authentication.value === DeviceSaveStrategyTag.Keyring) {
-    return SaveStrategy.useKeyring();
-  } else if (authentication.value === DeviceSaveStrategyTag.OpenBao) {
+  if (authentication.value === DevicePrimaryProtectionStrategyTag.Keyring) {
+    return constructSaveStrategy(PrimaryProtectionStrategy.useKeyring());
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.OpenBao) {
     if (!openBaoClient.value) {
       window.electronAPI.log('error', 'Selected auth is openBao but no client available');
       return undefined;
     }
-    return SaveStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()) as any as DeviceSaveStrategy;
-  } else if (authentication.value === DeviceSaveStrategyTag.PKI) {
+    return constructSaveStrategy(PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()));
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.PKI) {
     if (chooseCertificateRef.value && chooseCertificateRef.value.getCertificate()) {
-      return SaveStrategy.useSmartCard(toRaw(chooseCertificateRef.value.getCertificate() as X509CertificateReference));
+      return constructSaveStrategy(
+        PrimaryProtectionStrategy.useSmartcard(toRaw(chooseCertificateRef.value.getCertificate() as X509CertificateReference)),
+      );
     }
     return undefined;
   }
   if (choosePasswordRef.value?.password) {
-    return SaveStrategy.usePassword(choosePasswordRef.value?.password);
+    return constructSaveStrategy(PrimaryProtectionStrategy.usePassword(choosePasswordRef.value?.password));
   }
   return undefined;
 }
 
 async function areFieldsCorrect(): Promise<boolean> {
-  if (keyringAvailable.value && authentication.value === DeviceSaveStrategyTag.Keyring) {
+  if (keyringAvailable.value && authentication.value === DevicePrimaryProtectionStrategyTag.Keyring) {
     return true;
-  } else if (authentication.value === DeviceSaveStrategyTag.Password && choosePasswordRef.value) {
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.Password && choosePasswordRef.value) {
     return await choosePasswordRef.value.areFieldsCorrect();
-  } else if (authentication.value === DeviceSaveStrategyTag.OpenBao && openBaoClient.value !== undefined) {
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.OpenBao && openBaoClient.value !== undefined) {
     return true;
-  } else if (authentication.value === DeviceSaveStrategyTag.PKI && chooseCertificateRef.value) {
+  } else if (authentication.value === DevicePrimaryProtectionStrategyTag.PKI && chooseCertificateRef.value) {
     return chooseCertificateRef.value.getCertificate() !== undefined;
   }
   return false;

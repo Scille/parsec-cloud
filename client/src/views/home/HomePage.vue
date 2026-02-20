@@ -92,7 +92,6 @@ import {
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import {
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
-  AccessStrategy,
   AccountInvitation,
   AsyncEnrollmentRequest,
   AvailableDevice,
@@ -102,16 +101,18 @@ import {
   ClientStartError,
   ClientStartErrorTag,
   DeviceAccessStrategy,
-  DeviceAccessStrategyTag,
-  DeviceSaveStrategy,
+  DevicePrimaryProtectionStrategy,
+  DevicePrimaryProtectionStrategyTag,
   ListAvailableDeviceErrorTag,
   ParsecAccount,
   ParsedParsecAddrTag,
   PendingAsyncEnrollmentInfoTag,
-  SaveStrategy,
+  PrimaryProtectionStrategy,
   archiveDevice,
   buildParsecAddr,
   confirmJoinRequest,
+  constructAccessStrategy,
+  constructSaveStrategy,
   deleteJoinRequest,
   getDeviceHandle,
   getOrganizationCreationDate,
@@ -127,6 +128,7 @@ import {
   parseParsecAddr,
   login as parsecLogin,
 } from '@/parsec';
+import { AvailableDeviceTypePKI } from '@/plugins/libparsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -576,7 +578,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
   }
 
   let identityStrategy!: AcceptFinalizeAsyncEnrollmentIdentityStrategy;
-  let saveStrategy!: DeviceSaveStrategy;
+  let primaryProtection!: DevicePrimaryProtectionStrategy;
 
   if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI) {
     if (!(await isSmartcardAvailable())) {
@@ -593,7 +595,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
     }
     const identitySystem = request.enrollment.identitySystem as AvailablePendingAsyncEnrollmentIdentitySystemPKI;
     identityStrategy = makeAcceptPkiIdentityStrategy(toRaw(identitySystem.certificateRef));
-    saveStrategy = SaveStrategy.useSmartCard(toRaw(identitySystem.certificateRef));
+    primaryProtection = PrimaryProtectionStrategy.useSmartcard(toRaw(identitySystem.certificateRef));
   } else if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.OpenBao) {
     const parsedAddrResult = await parseParsecAddr(request.enrollment.addr);
     if (!parsedAddrResult.ok) {
@@ -640,13 +642,13 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
       return;
     }
     identityStrategy = makeAcceptOpenBaoIdentityStrategy(data.openBaoClient as OpenBaoClient);
-    saveStrategy = SaveStrategy.useOpenBao((data.openBaoClient as OpenBaoClient).getConnectionInfo());
+    primaryProtection = PrimaryProtectionStrategy.useOpenBao((data.openBaoClient as OpenBaoClient).getConnectionInfo());
   } else {
     window.electronAPI.log('error', 'Unknown identity system');
     return;
   }
 
-  const confirmResult = await confirmJoinRequest(request, saveStrategy, identityStrategy);
+  const confirmResult = await confirmJoinRequest(request, constructSaveStrategy(primaryProtection), identityStrategy);
 
   if (confirmResult.ok) {
     informationManager.present(
@@ -656,8 +658,9 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
       }),
       PresentationMode.Toast,
     );
-    await refreshDeviceList();
-    await login(confirmResult.value, await AccessStrategy.fromSaveStrategy(confirmResult.value, saveStrategy));
+
+    await Promise.allSettled([refreshDeviceList(), refreshJoinRequestsList()]);
+    await login(confirmResult.value, constructAccessStrategy(confirmResult.value, primaryProtection));
   } else {
     informationManager.present(
       new Information({
@@ -690,7 +693,7 @@ async function openCreateOrganizationModal(bootstrapLink?: string, defaultServer
 
   if (role === MsModalResult.Confirm) {
     const creationData = data as { device: AvailableDevice; access: DeviceAccessStrategy };
-    if (creationData.access.tag === DeviceAccessStrategyTag.AccountVault && ParsecAccount.isLoggedIn()) {
+    if (creationData.access.primaryProtection.tag === DevicePrimaryProtectionStrategyTag.AccountVault && ParsecAccount.isLoggedIn()) {
       await ParsecAccount.createRegistrationDevice(data.access);
     }
     await login(creationData.device, creationData.access);
@@ -780,14 +783,20 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
     }
     if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
       window.electronAPI.log('debug', 'Logging in with Keyring');
-      await login(device, AccessStrategy.useKeyring(device));
+      await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useKeyring()));
     } else if (device.ty.tag === AvailableDeviceTypeTag.PKI) {
       window.electronAPI.log('debug', 'Logging in with Smartcard');
-      await login(device, AccessStrategy.useSmartcard(device));
+      await login(
+        device,
+        constructAccessStrategy(device, PrimaryProtectionStrategy.useSmartcard((device as any as AvailableDeviceTypePKI).certificateRef)),
+      );
     } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {
       try {
-        const strategy = await AccessStrategy.useAccountVault(device);
-        await login(device, strategy);
+        const handle = ParsecAccount.getHandle();
+        if (!handle) {
+          throw new Error('Not connected');
+        }
+        await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useAccountVault(handle)));
       } catch (e: any) {
         window.electronAPI.log('error', `Failed to log in with vault: ${e.toString()}`);
         informationManager.present(
