@@ -436,7 +436,7 @@ if {{ js_val }}.is_null() {
 {%- for value in type.values -%}
     {
         {% set value_var_name = "js_x" ~ loop.index %}
-        let {{ value_var_name }} = Reflect::get_u32(&{{ js_val }}, {{ loop.index }})?;
+        let {{ value_var_name }} = Reflect::get_u32(&{{ js_val }}, {{ loop.index0 }})?;
         {{ render_js_value_to_rs(value_var_name, value) }}
     }
     {{ ", " if not loop.last else "" -}}
