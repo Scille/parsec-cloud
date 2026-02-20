@@ -40,6 +40,7 @@ from parsec.components.postgresql import components_factory as postgresql_compon
 from parsec.components.realm import BaseRealmComponent
 from parsec.components.sequester import BaseSequesterComponent, SequesterServiceType
 from parsec.components.shamir import BaseShamirComponent
+from parsec.components.totp import BaseTOTPComponent
 from parsec.components.user import BaseUserComponent, UserInfo
 from parsec.components.vlob import BaseVlobComponent
 from parsec.config import BackendConfig
@@ -88,6 +89,7 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
             shamir=components["shamir"],
             account=components["account"],
             async_enrollment=components["async_enrollment"],
+            totp=components["totp"],
         )
 
 
@@ -113,6 +115,7 @@ class Backend:
     shamir: BaseShamirComponent
     account: BaseAccountComponent
     async_enrollment: BaseAsyncEnrollmentComponent
+    totp: BaseTOTPComponent
 
     # Only available if `config.db_config.type == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
@@ -133,6 +136,7 @@ class Backend:
             self.shamir,
             self.account,
             self.async_enrollment,
+            self.totp,
             # Ping command is only used in tests
             include_ping=self.config.debug,
         )

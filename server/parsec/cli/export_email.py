@@ -14,6 +14,7 @@ from parsec.components.account import (
     _generate_account_delete_validation_email,
 )
 from parsec.components.invite import generate_invite_email
+from parsec.components.totp import generate_totp_reset_email
 from parsec.templates import get_environment
 
 DEFAULT_SENDER_EMAIL = EmailAddress("parsec@example.com")
@@ -21,6 +22,7 @@ DEFAULT_RECIPIENT_EMAIL = EmailAddress("alice@example.com")
 DEFAULT_ORGANIZATION_ID = OrganizationID("CoolOrg")
 DEFAULT_INVITATION_URL = "https://invitation.parsec.example.com"
 DEFAULT_BASE_SERVER_URL = "https://parsec.example.com"
+DEFAULT_TOTP_RESET_URL = "https://totp_reset.parsec.example.com"
 # cspell: words DELC8D
 DEFAULT_VALIDATION_CODE = ValidationCode("DELC8D")
 
@@ -197,6 +199,38 @@ def account_delete(
         from_addr=sender,
         to_addr=recipient,
         validation_code=validation_code,
+        server_url=server_url,
+    )
+
+    write_mail_file_to_filesystem(message, output_dir, "account_delete_validation_email")
+
+
+@export_email.command(short_help="Export TOTP reset email")
+@mail_templates_shared_options
+@click.option(
+    "--organization-id", type=OrganizationID, default=DEFAULT_ORGANIZATION_ID, show_default=True
+)
+@click.option(
+    "--totp-reset-url",
+    default=DEFAULT_TOTP_RESET_URL,
+    show_default=True,
+)
+def totp_reset(
+    sender: EmailAddress,
+    recipient: EmailAddress,
+    organization_id: OrganizationID,
+    totp_reset_url: str,
+    server_url: str,
+    output_dir: Path,
+    template_dir: Path | None,
+):
+    jinja_env = get_environment(template_dir)
+    message = generate_totp_reset_email(
+        jinja_env=jinja_env,
+        from_addr=sender,
+        to_addr=recipient,
+        organization_id=organization_id,
+        totp_reset_url=totp_reset_url,
         server_url=server_url,
     )
 
