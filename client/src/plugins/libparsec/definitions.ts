@@ -193,6 +193,7 @@ export interface AvailableDevice {
     deviceId: DeviceID
     humanHandle: HumanHandle
     deviceLabel: DeviceLabel
+    totpOpaqueKeyId: TOTPOpaqueKeyID | null
     ty: AvailableDeviceType
 }
 
@@ -228,6 +229,12 @@ export interface ClientInfo {
     isServerOnline: boolean
     isOrganizationExpired: boolean
     mustAcceptTos: boolean
+}
+
+export interface DeviceAccessStrategy {
+    keyFile: Path
+    totpProtection: [TOTPOpaqueKeyID, SecretKey] | null
+    primaryProtection: DevicePrimaryProtectionStrategy
 }
 
 export interface DeviceClaimFinalizeInfo {
@@ -281,6 +288,11 @@ export interface DeviceInfo {
     deviceLabel: DeviceLabel
     createdOn: DateTime
     createdBy: DeviceID | null
+}
+
+export interface DeviceSaveStrategy {
+    totpProtection: [TOTPOpaqueKeyID, SecretKey] | null
+    primaryProtection: DevicePrimaryProtectionStrategy
 }
 
 export interface FileStat {
@@ -1212,7 +1224,6 @@ export enum AvailableDeviceTypeTag {
     PKI = 'AvailableDeviceTypePKI',
     Password = 'AvailableDeviceTypePassword',
     Recovery = 'AvailableDeviceTypeRecovery',
-    TOTP = 'AvailableDeviceTypeTOTP',
 }
 
 export interface AvailableDeviceTypeAccountVault {
@@ -1236,11 +1247,6 @@ export interface AvailableDeviceTypePassword {
 export interface AvailableDeviceTypeRecovery {
     tag: AvailableDeviceTypeTag.Recovery
 }
-export interface AvailableDeviceTypeTOTP {
-    tag: AvailableDeviceTypeTag.TOTP
-    totpOpaqueKeyId: TOTPOpaqueKeyID
-    next: AvailableDeviceType
-}
 export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
@@ -1248,7 +1254,6 @@ export type AvailableDeviceType =
   | AvailableDeviceTypePKI
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
-  | AvailableDeviceTypeTOTP
 
 // AvailablePendingAsyncEnrollmentIdentitySystem
 export enum AvailablePendingAsyncEnrollmentIdentitySystemTag {
@@ -3016,75 +3021,24 @@ export type ClientUserUpdateProfileError =
   | ClientUserUpdateProfileErrorUserNotFound
   | ClientUserUpdateProfileErrorUserRevoked
 
-// DeviceAccessStrategy
-export enum DeviceAccessStrategyTag {
-    AccountVault = 'DeviceAccessStrategyAccountVault',
-    Keyring = 'DeviceAccessStrategyKeyring',
-    OpenBao = 'DeviceAccessStrategyOpenBao',
-    PKI = 'DeviceAccessStrategyPKI',
-    Password = 'DeviceAccessStrategyPassword',
-    TOTP = 'DeviceAccessStrategyTOTP',
+// DevicePrimaryProtectionStrategy
+export enum DevicePrimaryProtectionStrategyTag {
+    AccountVault = 'DevicePrimaryProtectionStrategyAccountVault',
+    Keyring = 'DevicePrimaryProtectionStrategyKeyring',
+    OpenBao = 'DevicePrimaryProtectionStrategyOpenBao',
+    PKI = 'DevicePrimaryProtectionStrategyPKI',
+    Password = 'DevicePrimaryProtectionStrategyPassword',
 }
 
-export interface DeviceAccessStrategyAccountVault {
-    tag: DeviceAccessStrategyTag.AccountVault
-    keyFile: Path
+export interface DevicePrimaryProtectionStrategyAccountVault {
+    tag: DevicePrimaryProtectionStrategyTag.AccountVault
     accountHandle: Handle
 }
-export interface DeviceAccessStrategyKeyring {
-    tag: DeviceAccessStrategyTag.Keyring
-    keyFile: Path
+export interface DevicePrimaryProtectionStrategyKeyring {
+    tag: DevicePrimaryProtectionStrategyTag.Keyring
 }
-export interface DeviceAccessStrategyOpenBao {
-    tag: DeviceAccessStrategyTag.OpenBao
-    keyFile: Path
-    openbaoServerUrl: string
-    openbaoSecretMountPath: string
-    openbaoTransitMountPath: string
-    openbaoEntityId: string
-    openbaoAuthToken: string
-}
-export interface DeviceAccessStrategyPKI {
-    tag: DeviceAccessStrategyTag.PKI
-    keyFile: Path
-}
-export interface DeviceAccessStrategyPassword {
-    tag: DeviceAccessStrategyTag.Password
-    keyFile: Path
-    password: Password
-}
-export interface DeviceAccessStrategyTOTP {
-    tag: DeviceAccessStrategyTag.TOTP
-    totpOpaqueKey: SecretKey
-    next: DeviceAccessStrategy
-}
-export type DeviceAccessStrategy =
-  | DeviceAccessStrategyAccountVault
-  | DeviceAccessStrategyKeyring
-  | DeviceAccessStrategyOpenBao
-  | DeviceAccessStrategyPKI
-  | DeviceAccessStrategyPassword
-  | DeviceAccessStrategyTOTP
-
-// DeviceSaveStrategy
-export enum DeviceSaveStrategyTag {
-    AccountVault = 'DeviceSaveStrategyAccountVault',
-    Keyring = 'DeviceSaveStrategyKeyring',
-    OpenBao = 'DeviceSaveStrategyOpenBao',
-    PKI = 'DeviceSaveStrategyPKI',
-    Password = 'DeviceSaveStrategyPassword',
-    TOTP = 'DeviceSaveStrategyTOTP',
-}
-
-export interface DeviceSaveStrategyAccountVault {
-    tag: DeviceSaveStrategyTag.AccountVault
-    accountHandle: Handle
-}
-export interface DeviceSaveStrategyKeyring {
-    tag: DeviceSaveStrategyTag.Keyring
-}
-export interface DeviceSaveStrategyOpenBao {
-    tag: DeviceSaveStrategyTag.OpenBao
+export interface DevicePrimaryProtectionStrategyOpenBao {
+    tag: DevicePrimaryProtectionStrategyTag.OpenBao
     openbaoServerUrl: string
     openbaoSecretMountPath: string
     openbaoTransitMountPath: string
@@ -3092,27 +3046,20 @@ export interface DeviceSaveStrategyOpenBao {
     openbaoAuthToken: string
     openbaoPreferredAuthId: string
 }
-export interface DeviceSaveStrategyPKI {
-    tag: DeviceSaveStrategyTag.PKI
+export interface DevicePrimaryProtectionStrategyPKI {
+    tag: DevicePrimaryProtectionStrategyTag.PKI
     certificateRef: X509CertificateReference
 }
-export interface DeviceSaveStrategyPassword {
-    tag: DeviceSaveStrategyTag.Password
+export interface DevicePrimaryProtectionStrategyPassword {
+    tag: DevicePrimaryProtectionStrategyTag.Password
     password: Password
 }
-export interface DeviceSaveStrategyTOTP {
-    tag: DeviceSaveStrategyTag.TOTP
-    totpOpaqueKeyId: TOTPOpaqueKeyID
-    totpOpaqueKey: SecretKey
-    next: DeviceSaveStrategy
-}
-export type DeviceSaveStrategy =
-  | DeviceSaveStrategyAccountVault
-  | DeviceSaveStrategyKeyring
-  | DeviceSaveStrategyOpenBao
-  | DeviceSaveStrategyPKI
-  | DeviceSaveStrategyPassword
-  | DeviceSaveStrategyTOTP
+export type DevicePrimaryProtectionStrategy =
+  | DevicePrimaryProtectionStrategyAccountVault
+  | DevicePrimaryProtectionStrategyKeyring
+  | DevicePrimaryProtectionStrategyOpenBao
+  | DevicePrimaryProtectionStrategyPKI
+  | DevicePrimaryProtectionStrategyPassword
 
 // EntryStat
 export enum EntryStatTag {

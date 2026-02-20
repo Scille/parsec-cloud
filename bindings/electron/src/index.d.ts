@@ -152,6 +152,7 @@ export interface AvailableDevice {
     deviceId: string
     humanHandle: HumanHandle
     deviceLabel: string
+    totpOpaqueKeyId: string | null
     ty: AvailableDeviceType
 }
 
@@ -190,6 +191,13 @@ export interface ClientInfo {
     isServerOnline: boolean
     isOrganizationExpired: boolean
     mustAcceptTos: boolean
+}
+
+
+export interface DeviceAccessStrategy {
+    keyFile: string
+    totpProtection: [string, Uint8Array] | null
+    primaryProtection: DevicePrimaryProtectionStrategy
 }
 
 
@@ -253,6 +261,12 @@ export interface DeviceInfo {
     deviceLabel: string
     createdOn: number
     createdBy: string | null
+}
+
+
+export interface DeviceSaveStrategy {
+    totpProtection: [string, Uint8Array] | null
+    primaryProtection: DevicePrimaryProtectionStrategy
 }
 
 
@@ -1099,11 +1113,6 @@ export interface AvailableDeviceTypePassword {
 export interface AvailableDeviceTypeRecovery {
     tag: "AvailableDeviceTypeRecovery"
 }
-export interface AvailableDeviceTypeTOTP {
-    tag: "AvailableDeviceTypeTOTP"
-    totp_opaque_key_id: string
-    next: AvailableDeviceType
-}
 export type AvailableDeviceType =
   | AvailableDeviceTypeAccountVault
   | AvailableDeviceTypeKeyring
@@ -1111,7 +1120,6 @@ export type AvailableDeviceType =
   | AvailableDeviceTypePKI
   | AvailableDeviceTypePassword
   | AvailableDeviceTypeRecovery
-  | AvailableDeviceTypeTOTP
 
 
 // AvailablePendingAsyncEnrollmentIdentitySystem
@@ -2544,58 +2552,16 @@ export type ClientUserUpdateProfileError =
   | ClientUserUpdateProfileErrorUserRevoked
 
 
-// DeviceAccessStrategy
-export interface DeviceAccessStrategyAccountVault {
-    tag: "DeviceAccessStrategyAccountVault"
-    key_file: string
+// DevicePrimaryProtectionStrategy
+export interface DevicePrimaryProtectionStrategyAccountVault {
+    tag: "DevicePrimaryProtectionStrategyAccountVault"
     account_handle: number
 }
-export interface DeviceAccessStrategyKeyring {
-    tag: "DeviceAccessStrategyKeyring"
-    key_file: string
+export interface DevicePrimaryProtectionStrategyKeyring {
+    tag: "DevicePrimaryProtectionStrategyKeyring"
 }
-export interface DeviceAccessStrategyOpenBao {
-    tag: "DeviceAccessStrategyOpenBao"
-    key_file: string
-    openbao_server_url: string
-    openbao_secret_mount_path: string
-    openbao_transit_mount_path: string
-    openbao_entity_id: string
-    openbao_auth_token: string
-}
-export interface DeviceAccessStrategyPKI {
-    tag: "DeviceAccessStrategyPKI"
-    key_file: string
-}
-export interface DeviceAccessStrategyPassword {
-    tag: "DeviceAccessStrategyPassword"
-    key_file: string
-    password: string
-}
-export interface DeviceAccessStrategyTOTP {
-    tag: "DeviceAccessStrategyTOTP"
-    totp_opaque_key: Uint8Array
-    next: DeviceAccessStrategy
-}
-export type DeviceAccessStrategy =
-  | DeviceAccessStrategyAccountVault
-  | DeviceAccessStrategyKeyring
-  | DeviceAccessStrategyOpenBao
-  | DeviceAccessStrategyPKI
-  | DeviceAccessStrategyPassword
-  | DeviceAccessStrategyTOTP
-
-
-// DeviceSaveStrategy
-export interface DeviceSaveStrategyAccountVault {
-    tag: "DeviceSaveStrategyAccountVault"
-    account_handle: number
-}
-export interface DeviceSaveStrategyKeyring {
-    tag: "DeviceSaveStrategyKeyring"
-}
-export interface DeviceSaveStrategyOpenBao {
-    tag: "DeviceSaveStrategyOpenBao"
+export interface DevicePrimaryProtectionStrategyOpenBao {
+    tag: "DevicePrimaryProtectionStrategyOpenBao"
     openbao_server_url: string
     openbao_secret_mount_path: string
     openbao_transit_mount_path: string
@@ -2603,27 +2569,20 @@ export interface DeviceSaveStrategyOpenBao {
     openbao_auth_token: string
     openbao_preferred_auth_id: string
 }
-export interface DeviceSaveStrategyPKI {
-    tag: "DeviceSaveStrategyPKI"
+export interface DevicePrimaryProtectionStrategyPKI {
+    tag: "DevicePrimaryProtectionStrategyPKI"
     certificate_ref: X509CertificateReference
 }
-export interface DeviceSaveStrategyPassword {
-    tag: "DeviceSaveStrategyPassword"
+export interface DevicePrimaryProtectionStrategyPassword {
+    tag: "DevicePrimaryProtectionStrategyPassword"
     password: string
 }
-export interface DeviceSaveStrategyTOTP {
-    tag: "DeviceSaveStrategyTOTP"
-    totp_opaque_key_id: string
-    totp_opaque_key: Uint8Array
-    next: DeviceSaveStrategy
-}
-export type DeviceSaveStrategy =
-  | DeviceSaveStrategyAccountVault
-  | DeviceSaveStrategyKeyring
-  | DeviceSaveStrategyOpenBao
-  | DeviceSaveStrategyPKI
-  | DeviceSaveStrategyPassword
-  | DeviceSaveStrategyTOTP
+export type DevicePrimaryProtectionStrategy =
+  | DevicePrimaryProtectionStrategyAccountVault
+  | DevicePrimaryProtectionStrategyKeyring
+  | DevicePrimaryProtectionStrategyOpenBao
+  | DevicePrimaryProtectionStrategyPKI
+  | DevicePrimaryProtectionStrategyPassword
 
 
 // EntryStat
