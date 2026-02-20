@@ -212,7 +212,6 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import {
-  AccessStrategy,
   CancelledGreetingAttemptReason,
   ClaimInProgressErrorTag,
   ClaimerRetrieveInfoErrorTag,
@@ -221,6 +220,7 @@ import {
   ParsedParsecAddrTag,
   ServerConfig,
   UserClaim,
+  constructAccessStrategy,
   forgeServerAddr,
   getServerConfig,
   parseParsecAddr,
@@ -446,7 +446,7 @@ async function nextStep(): Promise<void> {
     props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
     const saveStrategy: DeviceSaveStrategy | undefined = authChoiceRef.value?.getSaveStrategy();
     if (!saveStrategy) return;
-    const accessStrategy = await AccessStrategy.fromSaveStrategy(claimer.value.device, saveStrategy);
+    const accessStrategy = constructAccessStrategy(claimer.value.device, saveStrategy.primaryProtection, saveStrategy.totpProtection);
     await modalController.dismiss({ device: claimer.value.device, access: accessStrategy }, MsModalResult.Confirm);
     return;
   }
