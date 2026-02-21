@@ -77,6 +77,10 @@ class Ref[REFERENCED]:
     pass
 
 
+class Box[INNER]:
+    pass
+
+
 # A type that should be converted from/into string
 class StrBasedType:
     pass
@@ -203,6 +207,13 @@ class PKIEnrollmentID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::PKIEnrollmentID, _> { libparsec::PKIEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
     custom_to_rs_string = (
         "|x: libparsec::PKIEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
+
+
+class TOTPOpaqueKeyID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> { libparsec::TOTPOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) }"
     )
 
 

@@ -1069,6 +1069,27 @@ fn struct_available_device_js_to_rs<'a>(
             }
         }
     };
+    let totp_opaque_key_id = {
+        let js_val: Handle<JsValue> = obj.get(cx, "totpOpaqueKeyId")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                            libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+            }
+        }
+    };
     let ty = {
         let js_val: Handle<JsObject> = obj.get(cx, "ty")?;
         variant_available_device_type_js_to_rs(cx, js_val)?
@@ -1083,6 +1104,7 @@ fn struct_available_device_js_to_rs<'a>(
         device_id,
         human_handle,
         device_label,
+        totp_opaque_key_id,
         ty,
     })
 }
@@ -1163,6 +1185,20 @@ fn struct_available_device_rs_to_js<'a>(
     js_obj.set(cx, "humanHandle", js_human_handle)?;
     let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
+    let js_totp_opaque_key_id = match rs_obj.totp_opaque_key_id {
+        Some(elem) => JsString::try_new(cx, {
+            let custom_to_rs_string =
+                |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+            match custom_to_rs_string(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err.to_string()),
+            }
+        })
+        .or_throw(cx)?
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "totpOpaqueKeyId", js_totp_opaque_key_id)?;
     let js_ty = variant_available_device_type_rs_to_js(cx, rs_obj.ty)?;
     js_obj.set(cx, "ty", js_ty)?;
     Ok(js_obj)
@@ -1625,6 +1661,124 @@ fn struct_client_info_rs_to_js<'a>(
     js_obj.set(cx, "isOrganizationExpired", js_is_organization_expired)?;
     let js_must_accept_tos = JsBoolean::new(cx, rs_obj.must_accept_tos);
     js_obj.set(cx, "mustAcceptTos", js_must_accept_tos)?;
+    Ok(js_obj)
+}
+
+// DeviceAccessStrategy
+
+#[allow(dead_code)]
+fn struct_device_access_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceAccessStrategy> {
+    let key_file = {
+        let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let totp_protection = {
+        let js_val: Handle<JsValue> = obj.get(cx, "totpProtection")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsArray, _>(cx)?;
+                Some((
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                                    libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsTypedArray<u8>> = js_val.get(cx, 1)?;
+                        {
+                            #[allow(clippy::unnecessary_mut_passed)]
+                            match js_item.as_slice(cx).try_into() {
+                                Ok(val) => val,
+                                // err can't infer type in some case, because of the previous `try_into`
+                                #[allow(clippy::useless_format)]
+                                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                            }
+                        }
+                    },
+                ))
+            }
+        }
+    };
+    let primary_protection = {
+        let js_val: Handle<JsObject> = obj.get(cx, "primaryProtection")?;
+        variant_device_primary_protection_strategy_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::DeviceAccessStrategy {
+        key_file,
+        totp_protection,
+        primary_protection,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_device_access_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceAccessStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_key_file = JsString::try_new(cx, {
+        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+            path.into_os_string()
+                .into_string()
+                .map_err(|_| "Path contains non-utf8 characters")
+        };
+        match custom_to_rs_string(rs_obj.key_file) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "keyFile", js_key_file)?;
+    let js_totp_protection = match rs_obj.totp_protection {
+        Some(elem) => {
+            let (x0, x1) = elem;
+            let js_array = JsArray::new(cx, 2);
+            let js_value = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(x0) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_array.set(cx, 0, js_value)?;
+            let js_value = {
+                let rs_buff = { x1 };
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+                js_buff
+            };
+            js_array.set(cx, 1, js_value)?;
+            js_array
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "totpProtection", js_totp_protection)?;
+    let js_primary_protection =
+        variant_device_primary_protection_strategy_rs_to_js(cx, rs_obj.primary_protection)?;
+    js_obj.set(cx, "primaryProtection", js_primary_protection)?;
     Ok(js_obj)
 }
 
@@ -2219,6 +2373,99 @@ fn struct_device_info_rs_to_js<'a>(
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "createdBy", js_created_by)?;
+    Ok(js_obj)
+}
+
+// DeviceSaveStrategy
+
+#[allow(dead_code)]
+fn struct_device_save_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::DeviceSaveStrategy> {
+    let totp_protection = {
+        let js_val: Handle<JsValue> = obj.get(cx, "totpProtection")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsArray, _>(cx)?;
+                Some((
+                    {
+                        let js_item: Handle<JsString> = js_val.get(cx, 0)?;
+                        {
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                                    libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsTypedArray<u8>> = js_val.get(cx, 1)?;
+                        {
+                            #[allow(clippy::unnecessary_mut_passed)]
+                            match js_item.as_slice(cx).try_into() {
+                                Ok(val) => val,
+                                // err can't infer type in some case, because of the previous `try_into`
+                                #[allow(clippy::useless_format)]
+                                Err(err) => return cx.throw_type_error(format!("{}", err)),
+                            }
+                        }
+                    },
+                ))
+            }
+        }
+    };
+    let primary_protection = {
+        let js_val: Handle<JsObject> = obj.get(cx, "primaryProtection")?;
+        variant_device_primary_protection_strategy_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::DeviceSaveStrategy {
+        totp_protection,
+        primary_protection,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_device_save_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::DeviceSaveStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_totp_protection = match rs_obj.totp_protection {
+        Some(elem) => {
+            let (x0, x1) = elem;
+            let js_array = JsArray::new(cx, 2);
+            let js_value = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(x0) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_array.set(cx, 0, js_value)?;
+            let js_value = {
+                let rs_buff = { x1 };
+                let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+                js_buff
+            };
+            js_array.set(cx, 1, js_value)?;
+            js_array
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "totpProtection", js_totp_protection)?;
+    let js_primary_protection =
+        variant_device_primary_protection_strategy_rs_to_js(cx, rs_obj.primary_protection)?;
+    js_obj.set(cx, "primaryProtection", js_primary_protection)?;
     Ok(js_obj)
 }
 
@@ -5226,6 +5473,16 @@ fn variant_account_create_registration_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(
                 cx,
                 "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceTOTPDecryptionFailed {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed",
             )
             .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -9249,6 +9506,11 @@ fn variant_client_start_error_rs_to_js<'a>(
                     .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClientStartError::LoadDeviceTOTPDecryptionFailed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientStartErrorLoadDeviceTOTPDecryptionFailed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
     }
     Ok(js_obj)
 }
@@ -9403,6 +9665,90 @@ fn variant_client_stop_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientTOTPSetupConfirmError
+
+#[allow(dead_code)]
+fn variant_client_totp_setup_confirm_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientTOTPSetupConfirmError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientTOTPSetupConfirmError::AlreadySetup { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTOTPSetupConfirmErrorAlreadySetup").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTOTPSetupConfirmError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTOTPSetupConfirmErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTOTPSetupConfirmError::InvalidOneTimePassword { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientTOTPSetupConfirmErrorInvalidOneTimePassword")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTOTPSetupConfirmError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTOTPSetupConfirmErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientTotpCreateOpaqueKeyError
+
+#[allow(dead_code)]
+fn variant_client_totp_create_opaque_key_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientTotpCreateOpaqueKeyError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientTotpCreateOpaqueKeyError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTotpCreateOpaqueKeyErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTotpCreateOpaqueKeyError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTotpCreateOpaqueKeyErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientTotpSetupStatusError
+
+#[allow(dead_code)]
+fn variant_client_totp_setup_status_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientTotpSetupStatusError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientTotpSetupStatusError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientTotpSetupStatusErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientTotpSetupStatusError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientTotpSetupStatusErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientUserUpdateProfileError
 
 #[allow(dead_code)]
@@ -9464,27 +9810,16 @@ fn variant_client_user_update_profile_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// DeviceAccessStrategy
+// DevicePrimaryProtectionStrategy
 
 #[allow(dead_code)]
-fn variant_device_access_strategy_js_to_rs<'a>(
+fn variant_device_primary_protection_strategy_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceAccessStrategy> {
+) -> NeonResult<libparsec::DevicePrimaryProtectionStrategy> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "DeviceAccessStrategyAccountVault" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
+        "DevicePrimaryProtectionStrategyAccountVault" => {
             let account_handle = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "accountHandle")?;
                 {
@@ -9496,259 +9831,12 @@ fn variant_device_access_strategy_js_to_rs<'a>(
                     v
                 }
             };
-            Ok(libparsec::DeviceAccessStrategy::AccountVault {
-                key_file,
-                account_handle,
-            })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::AccountVault { account_handle })
         }
-        "DeviceAccessStrategyKeyring" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceAccessStrategy::Keyring { key_file })
+        "DevicePrimaryProtectionStrategyKeyring" => {
+            Ok(libparsec::DevicePrimaryProtectionStrategy::Keyring)
         }
-        "DeviceAccessStrategyOpenBao" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let openbao_server_url = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
-                js_val.value(cx)
-            };
-            let openbao_secret_mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoSecretMountPath")?;
-                js_val.value(cx)
-            };
-            let openbao_transit_mount_path = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoTransitMountPath")?;
-                js_val.value(cx)
-            };
-            let openbao_entity_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoEntityId")?;
-                js_val.value(cx)
-            };
-            let openbao_auth_token = {
-                let js_val: Handle<JsString> = obj.get(cx, "openbaoAuthToken")?;
-                js_val.value(cx)
-            };
-            Ok(libparsec::DeviceAccessStrategy::OpenBao {
-                key_file,
-                openbao_server_url,
-                openbao_secret_mount_path,
-                openbao_transit_mount_path,
-                openbao_entity_id,
-                openbao_auth_token,
-            })
-        }
-        "DeviceAccessStrategyPKI" => {
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceAccessStrategy::PKI { key_file })
-        }
-        "DeviceAccessStrategyPassword" => {
-            let password = {
-                let js_val: Handle<JsString> = obj.get(cx, "password")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let key_file = {
-                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
-                {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            Ok(libparsec::DeviceAccessStrategy::Password { password, key_file })
-        }
-        _ => cx.throw_type_error("Object is not a DeviceAccessStrategy"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_device_access_strategy_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceAccessStrategy,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::DeviceAccessStrategy::AccountVault {
-            key_file,
-            account_handle,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyAccountVault").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-            let js_account_handle = JsNumber::new(cx, account_handle as f64);
-            js_obj.set(cx, "accountHandle", js_account_handle)?;
-        }
-        libparsec::DeviceAccessStrategy::Keyring { key_file, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyKeyring").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-        }
-        libparsec::DeviceAccessStrategy::OpenBao {
-            key_file,
-            openbao_server_url,
-            openbao_secret_mount_path,
-            openbao_transit_mount_path,
-            openbao_entity_id,
-            openbao_auth_token,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyOpenBao").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-            let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
-            js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
-            let js_openbao_secret_mount_path =
-                JsString::try_new(cx, openbao_secret_mount_path).or_throw(cx)?;
-            js_obj.set(cx, "openbaoSecretMountPath", js_openbao_secret_mount_path)?;
-            let js_openbao_transit_mount_path =
-                JsString::try_new(cx, openbao_transit_mount_path).or_throw(cx)?;
-            js_obj.set(cx, "openbaoTransitMountPath", js_openbao_transit_mount_path)?;
-            let js_openbao_entity_id = JsString::try_new(cx, openbao_entity_id).or_throw(cx)?;
-            js_obj.set(cx, "openbaoEntityId", js_openbao_entity_id)?;
-            let js_openbao_auth_token = JsString::try_new(cx, openbao_auth_token).or_throw(cx)?;
-            js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
-        }
-        libparsec::DeviceAccessStrategy::PKI { key_file, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyPKI").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-        }
-        libparsec::DeviceAccessStrategy::Password {
-            password, key_file, ..
-        } => {
-            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyPassword").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_password = JsString::try_new(cx, password).or_throw(cx)?;
-            js_obj.set(cx, "password", js_password)?;
-            let js_key_file = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "keyFile", js_key_file)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// DeviceSaveStrategy
-
-#[allow(dead_code)]
-fn variant_device_save_strategy_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::DeviceSaveStrategy> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "DeviceSaveStrategyAccountVault" => {
-            let account_handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "accountHandle")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    let v = v as u32;
-                    v
-                }
-            };
-            Ok(libparsec::DeviceSaveStrategy::AccountVault { account_handle })
-        }
-        "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
-        "DeviceSaveStrategyOpenBao" => {
+        "DevicePrimaryProtectionStrategyOpenBao" => {
             let openbao_server_url = {
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoServerUrl")?;
                 js_val.value(cx)
@@ -9773,7 +9861,7 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                 let js_val: Handle<JsString> = obj.get(cx, "openbaoPreferredAuthId")?;
                 js_val.value(cx)
             };
-            Ok(libparsec::DeviceSaveStrategy::OpenBao {
+            Ok(libparsec::DevicePrimaryProtectionStrategy::OpenBao {
                 openbao_server_url,
                 openbao_secret_mount_path,
                 openbao_transit_mount_path,
@@ -9782,14 +9870,14 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                 openbao_preferred_auth_id,
             })
         }
-        "DeviceSaveStrategyPKI" => {
+        "DevicePrimaryProtectionStrategyPKI" => {
             let certificate_ref = {
                 let js_val: Handle<JsObject> = obj.get(cx, "certificateRef")?;
                 struct_x509_certificate_reference_js_to_rs(cx, js_val)?
             };
-            Ok(libparsec::DeviceSaveStrategy::PKI { certificate_ref })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI { certificate_ref })
         }
-        "DeviceSaveStrategyPassword" => {
+        "DevicePrimaryProtectionStrategyPassword" => {
             let password = {
                 let js_val: Handle<JsString> = obj.get(cx, "password")?;
                 {
@@ -9800,30 +9888,32 @@ fn variant_device_save_strategy_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::DeviceSaveStrategy::Password { password })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::Password { password })
         }
-        _ => cx.throw_type_error("Object is not a DeviceSaveStrategy"),
+        _ => cx.throw_type_error("Object is not a DevicePrimaryProtectionStrategy"),
     }
 }
 
 #[allow(dead_code)]
-fn variant_device_save_strategy_rs_to_js<'a>(
+fn variant_device_primary_protection_strategy_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::DeviceSaveStrategy,
+    rs_obj: libparsec::DevicePrimaryProtectionStrategy,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::DeviceSaveStrategy::AccountVault { account_handle, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyAccountVault").or_throw(cx)?;
+        libparsec::DevicePrimaryProtectionStrategy::AccountVault { account_handle, .. } => {
+            let js_tag = JsString::try_new(cx, "DevicePrimaryProtectionStrategyAccountVault")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_account_handle = JsNumber::new(cx, account_handle as f64);
             js_obj.set(cx, "accountHandle", js_account_handle)?;
         }
-        libparsec::DeviceSaveStrategy::Keyring { .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyKeyring").or_throw(cx)?;
+        libparsec::DevicePrimaryProtectionStrategy::Keyring => {
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::DeviceSaveStrategy::OpenBao {
+        libparsec::DevicePrimaryProtectionStrategy::OpenBao {
             openbao_server_url,
             openbao_secret_mount_path,
             openbao_transit_mount_path,
@@ -9832,7 +9922,8 @@ fn variant_device_save_strategy_rs_to_js<'a>(
             openbao_preferred_auth_id,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyOpenBao").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyOpenBao").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_openbao_server_url = JsString::try_new(cx, openbao_server_url).or_throw(cx)?;
             js_obj.set(cx, "openbaoServerUrl", js_openbao_server_url)?;
@@ -9850,17 +9941,19 @@ fn variant_device_save_strategy_rs_to_js<'a>(
                 JsString::try_new(cx, openbao_preferred_auth_id).or_throw(cx)?;
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
-        libparsec::DeviceSaveStrategy::PKI {
+        libparsec::DevicePrimaryProtectionStrategy::PKI {
             certificate_ref, ..
         } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPKI").or_throw(cx)?;
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_certificate_ref =
                 struct_x509_certificate_reference_rs_to_js(cx, certificate_ref)?;
             js_obj.set(cx, "certificateRef", js_certificate_ref)?;
         }
-        libparsec::DeviceSaveStrategy::Password { password, .. } => {
-            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyPassword").or_throw(cx)?;
+        libparsec::DevicePrimaryProtectionStrategy::Password { password, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "DevicePrimaryProtectionStrategyPassword").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
@@ -15488,6 +15581,50 @@ fn variant_submitter_list_local_async_enrollments_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// TOTPSetupStatus
+
+#[allow(dead_code)]
+fn variant_totp_setup_status_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::TOTPSetupStatus> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "TOTPSetupStatusAlreadySetup" => Ok(libparsec::TOTPSetupStatus::AlreadySetup),
+        "TOTPSetupStatusStalled" => {
+            let base32_totp_secret = {
+                let js_val: Handle<JsString> = obj.get(cx, "base32TotpSecret")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::TOTPSetupStatus::Stalled { base32_totp_secret })
+        }
+        _ => cx.throw_type_error("Object is not a TOTPSetupStatus"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_totp_setup_status_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::TOTPSetupStatus,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::TOTPSetupStatus::AlreadySetup => {
+            let js_tag = JsString::try_new(cx, "TOTPSetupStatusAlreadySetup").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TOTPSetupStatus::Stalled {
+            base32_totp_secret, ..
+        } => {
+            let js_tag = JsString::try_new(cx, "TOTPSetupStatusStalled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_base32_totp_secret = JsString::try_new(cx, base32_totp_secret).or_throw(cx)?;
+            js_obj.set(cx, "base32TotpSecret", js_base32_totp_secret)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // TestbedError
 
 #[allow(dead_code)]
@@ -15505,6 +15642,104 @@ fn variant_testbed_error_rs_to_js<'a>(
         }
         libparsec::TestbedError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "TestbedErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// TotpFetchOpaqueKeyError
+
+#[allow(dead_code)]
+fn variant_totp_fetch_opaque_key_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::TotpFetchOpaqueKeyError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::TotpFetchOpaqueKeyError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "TotpFetchOpaqueKeyErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpFetchOpaqueKeyError::InvalidOneTimePassword { .. } => {
+            let js_tag = JsString::try_new(cx, "TotpFetchOpaqueKeyErrorInvalidOneTimePassword")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpFetchOpaqueKeyError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "TotpFetchOpaqueKeyErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpFetchOpaqueKeyError::Throttled { .. } => {
+            let js_tag = JsString::try_new(cx, "TotpFetchOpaqueKeyErrorThrottled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// TotpSetupConfirmAnonymousError
+
+#[allow(dead_code)]
+fn variant_totp_setup_confirm_anonymous_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::TotpSetupConfirmAnonymousError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::TotpSetupConfirmAnonymousError::BadToken { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupConfirmAnonymousErrorBadToken").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupConfirmAnonymousError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupConfirmAnonymousErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupConfirmAnonymousError::InvalidOneTimePassword { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupConfirmAnonymousErrorInvalidOneTimePassword")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupConfirmAnonymousError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupConfirmAnonymousErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// TotpSetupStatusAnonymousError
+
+#[allow(dead_code)]
+fn variant_totp_setup_status_anonymous_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::TotpSetupStatusAnonymousError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::TotpSetupStatusAnonymousError::BadToken { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupStatusAnonymousErrorBadToken").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupStatusAnonymousError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupStatusAnonymousErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TotpSetupStatusAnonymousError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "TotpSetupStatusAnonymousErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -15550,6 +15785,11 @@ fn variant_update_device_error_rs_to_js<'a>(
         libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationOffline { .. } => {
             let js_tag = JsString::try_new(cx, "UpdateDeviceErrorRemoteOpaqueKeyOperationOffline")
                 .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UpdateDeviceError::TOTPDecryptionFailed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UpdateDeviceErrorTOTPDecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -16615,7 +16855,7 @@ fn variant_workspace_history_realm_export_decryptor_js_to_rs<'a>(
         "WorkspaceHistoryRealmExportDecryptorUser" => {
             let access = {
                 let js_val: Handle<JsObject> = obj.get(cx, "access")?;
-                variant_device_access_strategy_js_to_rs(cx, js_val)?
+                struct_device_access_strategy_js_to_rs(cx, js_val)?
             };
             Ok(libparsec::WorkspaceHistoryRealmExportDecryptor::User { access })
         }
@@ -16669,7 +16909,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistoryRealmExportDecryptorUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_access = variant_device_access_strategy_rs_to_js(cx, access)?;
+            let js_access = struct_device_access_strategy_rs_to_js(cx, access)?;
             js_obj.set(cx, "access", js_access)?;
         }
     }
@@ -17932,7 +18172,7 @@ fn account_create_registration_device(mut cx: FunctionContext) -> JsResult<JsPro
     };
     let existing_local_device_access = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -18805,7 +19045,7 @@ fn account_register_new_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(4)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -18937,7 +19177,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let human_handle = {
         let js_val = cx.argument::<JsObject>(3)?;
@@ -19149,7 +19389,7 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -19695,7 +19935,7 @@ fn claimer_shamir_recovery_finalize_save_local_device(
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -20200,7 +20440,7 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -22751,7 +22991,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let access = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -23148,6 +23388,183 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_stop_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_totp_create_opaque_key
+fn client_totp_create_opaque_key(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
+
+        let ret = libparsec::client_totp_create_opaque_key(
+            client,
+        ).await;
+
+        deferred.settle_with(&channel, move |mut cx| {
+            let js_ret = match ret {
+    Ok(ok) => {
+        let js_obj = JsObject::new(&mut cx);
+        let js_tag = JsBoolean::new(&mut cx, true);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_value = {
+    let (x0, x1) = ok;
+    let js_array = JsArray::new(&mut cx, 2);
+    let js_value = JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
+    match custom_to_rs_string(x0) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err.to_string()),
+    }
+}).or_throw(&mut cx)?;
+    js_array.set(&mut cx, 0, js_value)?;
+    let js_value = {
+    let rs_buff = {x1};
+    let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
+    js_buff
+};
+    js_array.set(&mut cx, 1, js_value)?;
+    js_array
+};
+        js_obj.set(&mut cx, "value", js_value)?;
+        js_obj
+    }
+    Err(err) => {
+        let js_obj = cx.empty_object();
+        let js_tag = JsBoolean::new(&mut cx, false);
+        js_obj.set(&mut cx, "ok", js_tag)?;
+        let js_err = variant_client_totp_create_opaque_key_error_rs_to_js(&mut cx, err)?;
+        js_obj.set(&mut cx, "error", js_err)?;
+        js_obj
+    }
+};
+            Ok(js_ret)
+        });
+    });
+
+    Ok(promise)
+}
+
+// client_totp_setup_confirm
+fn client_totp_setup_confirm(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let one_time_password = {
+        let js_val = cx.argument::<JsString>(1)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_totp_setup_confirm(client, one_time_password).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_totp_setup_confirm_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_totp_setup_status
+fn client_totp_setup_status(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_totp_setup_status(client).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = variant_totp_setup_status_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_totp_setup_status_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -24538,7 +24955,7 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let save_strategy = {
         let js_val = cx.argument::<JsObject>(4)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -25493,7 +25910,7 @@ fn submitter_finalize_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let new_device_save_strategy = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let identity_strategy = {
         let js_val = cx.argument::<JsObject>(3)?;
@@ -26056,6 +26473,234 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// totp_fetch_opaque_key
+fn totp_fetch_opaque_key(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let server_addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let organization_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let user_id = {
+        let js_val = cx.argument::<JsString>(3)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let opaque_key_id = {
+        let js_val = cx.argument::<JsString>(4)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
+                libparsec::TOTPOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let one_time_password = {
+        let js_val = cx.argument::<JsString>(5)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::totp_fetch_opaque_key(
+                config,
+                server_addr,
+                organization_id,
+                user_id,
+                opaque_key_id,
+                one_time_password,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let rs_buff = { ok };
+                            let js_buff = JsTypedArray::from_slice(&mut cx, rs_buff.as_ref())?;
+                            js_buff
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_totp_fetch_opaque_key_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// totp_setup_confirm_anonymous
+fn totp_setup_confirm_anonymous(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let one_time_password = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::totp_setup_confirm_anonymous(config, addr, one_time_password).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_totp_setup_confirm_anonymous_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// totp_setup_status_anonymous
+fn totp_setup_status_anonymous(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::totp_setup_status_anonymous(config, addr).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = variant_totp_setup_status_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_totp_setup_status_anonymous_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // update_device_change_authentication
 fn update_device_change_authentication(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -26072,11 +26717,11 @@ fn update_device_change_authentication(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let current_auth = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let new_auth = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -26132,7 +26777,7 @@ fn update_device_overwrite_server_addr(mut cx: FunctionContext) -> JsResult<JsPr
     };
     let access = {
         let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+        struct_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let new_server_addr = {
         let js_val = cx.argument::<JsString>(2)?;
@@ -29958,6 +30603,9 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         client_start_workspace_history,
     )?;
     cx.export_function("clientStop", client_stop)?;
+    cx.export_function("clientTotpCreateOpaqueKey", client_totp_create_opaque_key)?;
+    cx.export_function("clientTotpSetupConfirm", client_totp_setup_confirm)?;
+    cx.export_function("clientTotpSetupStatus", client_totp_setup_status)?;
     cx.export_function("clientUpdateUserProfile", client_update_user_profile)?;
     cx.export_function("getDefaultConfigDir", get_default_config_dir)?;
     cx.export_function("getDefaultDataBaseDir", get_default_data_base_dir)?;
@@ -30093,6 +30741,9 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("testNewAccount", test_new_account)?;
     cx.export_function("testNewTestbed", test_new_testbed)?;
+    cx.export_function("totpFetchOpaqueKey", totp_fetch_opaque_key)?;
+    cx.export_function("totpSetupConfirmAnonymous", totp_setup_confirm_anonymous)?;
+    cx.export_function("totpSetupStatusAnonymous", totp_setup_status_anonymous)?;
     cx.export_function(
         "updateDeviceChangeAuthentication",
         update_device_change_authentication,

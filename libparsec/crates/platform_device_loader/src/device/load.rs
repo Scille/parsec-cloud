@@ -77,6 +77,8 @@ pub enum LoadDeviceError {
     InvalidPath(anyhow::Error),
     #[error("Invalid data")]
     InvalidData,
+    #[error("Decryption failed with the key obtained from TOTP challenge")]
+    TOTPDecryptionFailed,
     #[error("Decryption failed")]
     DecryptionFailed,
     /// Note only a subset of load strategies requires server access to
@@ -120,13 +122,13 @@ pub async fn load_device(
     #[cfg_attr(not(feature = "test-with-testbed"), expect(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
-    log::debug!("Loading device at {}", access.key_file().display());
+    log::debug!("Loading device at {}", access.key_file.display());
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) = testbed::maybe_load_device(config_dir, access) {
         return result;
     }
 
-    let file_content = load_file(access.key_file()).await?;
+    let file_content = load_file(&access.key_file).await?;
     let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
     let ciphertext_key =
         load_ciphertext_key(access, &device_file)
@@ -142,10 +144,14 @@ pub async fn load_device(
                     LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error }
                 }
             })?;
-    let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
-        DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
-        DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
-    })?;
+    let totp_opaque_key = access.totp_protection.as_ref().map(|(_, key)| key);
+    let device = decrypt_device_file(&device_file, &ciphertext_key, totp_opaque_key).map_err(
+        |err| match err {
+            DecryptDeviceFileError::TOTPDecrypt(_) => LoadDeviceError::TOTPDecryptionFailed,
+            DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
+            DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
+        },
+    )?;
 
     Ok(Arc::new(device))
 }
@@ -166,6 +172,7 @@ fn load_available_device_from_blob(
         device_id,
         human_handle,
         device_label,
+        totp_opaque_key_id,
     ) = match device_file {
         DeviceFile::Keyring(device) => (
             AvailableDeviceType::Keyring,
@@ -177,6 +184,7 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
         DeviceFile::Password(device) => (
             AvailableDeviceType::Password,
@@ -188,6 +196,7 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
         DeviceFile::Recovery(device) => (
             AvailableDeviceType::Recovery,
@@ -199,6 +208,7 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            None, // Recovery is never protected by TOTP
         ),
         DeviceFile::PKI(device) => (
             AvailableDeviceType::PKI {
@@ -212,6 +222,7 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
         DeviceFile::AccountVault(device) => (
             AvailableDeviceType::AccountVault,
@@ -223,6 +234,7 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
         DeviceFile::OpenBao(device) => (
             AvailableDeviceType::OpenBao {
@@ -237,6 +249,7 @@ fn load_available_device_from_blob(
             device.device_id,
             device.human_handle,
             device.device_label,
+            device.totp_opaque_key_id,
         ),
     };
 
@@ -250,6 +263,7 @@ fn load_available_device_from_blob(
         device_id,
         human_handle,
         device_label,
+        totp_opaque_key_id,
         ty,
     })
 }

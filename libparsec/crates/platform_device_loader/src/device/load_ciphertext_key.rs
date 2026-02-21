@@ -2,16 +2,17 @@
 
 use crate::{
     platform, AccountVaultOperationsFetchOpaqueKeyError, DeviceAccessStrategy,
-    OpenBaoOperationsFetchOpaqueKeyError, RemoteOperationServer,
+    DevicePrimaryProtectionStrategy, OpenBaoOperationsFetchOpaqueKeyError, RemoteOperationServer,
 };
 use libparsec_types::prelude::*;
 
 #[derive(Debug, thiserror::Error)]
-pub enum LoadCiphertextKeyError {
+pub(crate) enum LoadCiphertextKeyError {
     /// Typically returned if the access strategy doesn't match the device type
     #[error("Invalid data")]
     InvalidData,
     #[error("Decryption failed")]
+    #[cfg_attr(target_arch = "wasm32", expect(dead_code))]
     DecryptionFailed,
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
@@ -44,27 +45,31 @@ pub(super) async fn load_ciphertext_key(
     // `(_, _) => return <error>` condition that would prevent this code from breaking
     // whenever a new variant is introduced (hence hiding the fact this code has
     // to be updated).
-    match access {
-        DeviceAccessStrategy::Keyring { .. } => {
-            platform::load_ciphertext_key_keyring(device_file).await
+    match &access.primary_protection {
+        DevicePrimaryProtectionStrategy::Keyring => {
+            let ciphertext_key = platform::load_ciphertext_key_keyring(device_file).await?;
+            Ok(ciphertext_key)
         }
 
-        DeviceAccessStrategy::Password { password, .. } => {
+        DevicePrimaryProtectionStrategy::Password { password, .. } => {
             if let DeviceFile::Password(device) = device_file {
-                let key = device
+                let ciphertext_key = device
                     .algorithm
                     .compute_secret_key(password)
                     .map_err(|_| LoadCiphertextKeyError::InvalidData)?;
 
-                Ok(key)
+                Ok(ciphertext_key)
             } else {
                 Err(LoadCiphertextKeyError::InvalidData)
             }
         }
 
-        DeviceAccessStrategy::PKI { .. } => platform::load_ciphertext_key_pki(device_file).await,
+        DevicePrimaryProtectionStrategy::PKI { .. } => {
+            let ciphertext_key = platform::load_ciphertext_key_pki(device_file).await?;
+            Ok(ciphertext_key)
+        }
 
-        DeviceAccessStrategy::AccountVault { operations, .. } => {
+        DevicePrimaryProtectionStrategy::AccountVault { operations, .. } => {
             if let DeviceFile::AccountVault(device) = device_file {
                 let ciphertext_key = operations
                     .fetch_opaque_key(device.ciphertext_key_id)
@@ -94,7 +99,7 @@ pub(super) async fn load_ciphertext_key(
             }
         }
 
-        DeviceAccessStrategy::OpenBao { operations, .. } => {
+        DevicePrimaryProtectionStrategy::OpenBao { operations, .. } => {
             if let DeviceFile::OpenBao(device) = device_file {
                 let ciphertext_key = operations
                     .fetch_opaque_key(device.openbao_ciphertext_key_path.clone())
@@ -118,6 +123,18 @@ pub(super) async fn load_ciphertext_key(
             } else {
                 Err(LoadCiphertextKeyError::InvalidData)
             }
-        }
+        } // DevicePrimaryProtectionStrategy::TOTP {
+          //     totp_opaque_key,
+          //     next,
+          // } => {
+          //     let mut keys = Box::pin(load_ciphertext_key(next, device_file)).await?;
+          //     if keys.totp_opaque_key.is_some() {
+          //         return Err(LoadCiphertextKeyError::Internal(anyhow::anyhow!(
+          //             "Cannot have multiple nested TOTP protections"
+          //         )));
+          //     }
+          //     keys.totp_opaque_key = Some(totp_opaque_key.clone());
+          //     Ok(keys)
+          // }
     }
 }

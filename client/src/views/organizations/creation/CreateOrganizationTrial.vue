@@ -62,7 +62,7 @@ import OrganizationCreationPage from '@/views/organizations/creation/Organizatio
 import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
 import { IonPage, modalController } from '@ionic/vue';
 import { I18n, MsModalResult, Translatable } from 'megashark-lib';
-import { isProxy, onMounted, ref, toRaw } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 
 enum Steps {
   PersonalInformation,
@@ -127,7 +127,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
       name.value,
       email.value,
       getDefaultDeviceName(),
-      (isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value) as DeviceSaveStrategy,
+      toRaw(saveStrategy.value),
     );
     if (result.ok) {
       organizationName.value = orgName;
@@ -157,7 +157,7 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
     name.value,
     email.value,
     getDefaultDeviceName(),
-    (isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value) as DeviceSaveStrategy,
+    toRaw(saveStrategy.value),
   );
   return result;
 }
@@ -241,7 +241,7 @@ async function onGoClicked(): Promise<void> {
     window.electronAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
     return;
   }
-  emits('organizationCreated', organizationName.value, availableDevice.value, saveStrategy.value as DeviceSaveStrategy);
+  emits('organizationCreated', organizationName.value, availableDevice.value, toRaw(saveStrategy.value));
 }
 
 async function onGoBackRequested(): Promise<void> {

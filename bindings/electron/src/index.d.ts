@@ -152,6 +152,7 @@ export interface AvailableDevice {
     deviceId: string
     humanHandle: HumanHandle
     deviceLabel: string
+    totpOpaqueKeyId: string | null
     ty: AvailableDeviceType
 }
 
@@ -190,6 +191,13 @@ export interface ClientInfo {
     isServerOnline: boolean
     isOrganizationExpired: boolean
     mustAcceptTos: boolean
+}
+
+
+export interface DeviceAccessStrategy {
+    keyFile: string
+    totpProtection: [string, Uint8Array] | null
+    primaryProtection: DevicePrimaryProtectionStrategy
 }
 
 
@@ -253,6 +261,12 @@ export interface DeviceInfo {
     deviceLabel: string
     createdOn: number
     createdBy: string | null
+}
+
+
+export interface DeviceSaveStrategy {
+    totpProtection: [string, Uint8Array] | null
+    primaryProtection: DevicePrimaryProtectionStrategy
 }
 
 
@@ -632,6 +646,10 @@ export interface AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath {
     tag: "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath"
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed {
+    tag: "AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed"
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorOffline {
     tag: "AccountCreateRegistrationDeviceErrorOffline"
     error: string
@@ -654,6 +672,7 @@ export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
+  | AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed
   | AccountCreateRegistrationDeviceErrorOffline
   | AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed
   | AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline
@@ -2336,6 +2355,10 @@ export interface ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline {
     tag: "ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline"
     error: string
 }
+export interface ClientStartErrorLoadDeviceTOTPDecryptionFailed {
+    tag: "ClientStartErrorLoadDeviceTOTPDecryptionFailed"
+    error: string
+}
 export type ClientStartError =
   | ClientStartErrorDeviceUsedByAnotherProcess
   | ClientStartErrorInternal
@@ -2344,6 +2367,7 @@ export type ClientStartError =
   | ClientStartErrorLoadDeviceInvalidPath
   | ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed
   | ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline
+  | ClientStartErrorLoadDeviceTOTPDecryptionFailed
 
 
 // ClientStartInvitationGreetError
@@ -2427,6 +2451,58 @@ export type ClientStopError =
   | ClientStopErrorInternal
 
 
+// ClientTOTPSetupConfirmError
+export interface ClientTOTPSetupConfirmErrorAlreadySetup {
+    tag: "ClientTOTPSetupConfirmErrorAlreadySetup"
+    error: string
+}
+export interface ClientTOTPSetupConfirmErrorInternal {
+    tag: "ClientTOTPSetupConfirmErrorInternal"
+    error: string
+}
+export interface ClientTOTPSetupConfirmErrorInvalidOneTimePassword {
+    tag: "ClientTOTPSetupConfirmErrorInvalidOneTimePassword"
+    error: string
+}
+export interface ClientTOTPSetupConfirmErrorOffline {
+    tag: "ClientTOTPSetupConfirmErrorOffline"
+    error: string
+}
+export type ClientTOTPSetupConfirmError =
+  | ClientTOTPSetupConfirmErrorAlreadySetup
+  | ClientTOTPSetupConfirmErrorInternal
+  | ClientTOTPSetupConfirmErrorInvalidOneTimePassword
+  | ClientTOTPSetupConfirmErrorOffline
+
+
+// ClientTotpCreateOpaqueKeyError
+export interface ClientTotpCreateOpaqueKeyErrorInternal {
+    tag: "ClientTotpCreateOpaqueKeyErrorInternal"
+    error: string
+}
+export interface ClientTotpCreateOpaqueKeyErrorOffline {
+    tag: "ClientTotpCreateOpaqueKeyErrorOffline"
+    error: string
+}
+export type ClientTotpCreateOpaqueKeyError =
+  | ClientTotpCreateOpaqueKeyErrorInternal
+  | ClientTotpCreateOpaqueKeyErrorOffline
+
+
+// ClientTotpSetupStatusError
+export interface ClientTotpSetupStatusErrorInternal {
+    tag: "ClientTotpSetupStatusErrorInternal"
+    error: string
+}
+export interface ClientTotpSetupStatusErrorOffline {
+    tag: "ClientTotpSetupStatusErrorOffline"
+    error: string
+}
+export type ClientTotpSetupStatusError =
+  | ClientTotpSetupStatusErrorInternal
+  | ClientTotpSetupStatusErrorOffline
+
+
 // ClientUserUpdateProfileError
 export interface ClientUserUpdateProfileErrorAuthorNotAllowed {
     tag: "ClientUserUpdateProfileErrorAuthorNotAllowed"
@@ -2476,52 +2552,16 @@ export type ClientUserUpdateProfileError =
   | ClientUserUpdateProfileErrorUserRevoked
 
 
-// DeviceAccessStrategy
-export interface DeviceAccessStrategyAccountVault {
-    tag: "DeviceAccessStrategyAccountVault"
-    key_file: string
+// DevicePrimaryProtectionStrategy
+export interface DevicePrimaryProtectionStrategyAccountVault {
+    tag: "DevicePrimaryProtectionStrategyAccountVault"
     account_handle: number
 }
-export interface DeviceAccessStrategyKeyring {
-    tag: "DeviceAccessStrategyKeyring"
-    key_file: string
+export interface DevicePrimaryProtectionStrategyKeyring {
+    tag: "DevicePrimaryProtectionStrategyKeyring"
 }
-export interface DeviceAccessStrategyOpenBao {
-    tag: "DeviceAccessStrategyOpenBao"
-    key_file: string
-    openbao_server_url: string
-    openbao_secret_mount_path: string
-    openbao_transit_mount_path: string
-    openbao_entity_id: string
-    openbao_auth_token: string
-}
-export interface DeviceAccessStrategyPKI {
-    tag: "DeviceAccessStrategyPKI"
-    key_file: string
-}
-export interface DeviceAccessStrategyPassword {
-    tag: "DeviceAccessStrategyPassword"
-    password: string
-    key_file: string
-}
-export type DeviceAccessStrategy =
-  | DeviceAccessStrategyAccountVault
-  | DeviceAccessStrategyKeyring
-  | DeviceAccessStrategyOpenBao
-  | DeviceAccessStrategyPKI
-  | DeviceAccessStrategyPassword
-
-
-// DeviceSaveStrategy
-export interface DeviceSaveStrategyAccountVault {
-    tag: "DeviceSaveStrategyAccountVault"
-    account_handle: number
-}
-export interface DeviceSaveStrategyKeyring {
-    tag: "DeviceSaveStrategyKeyring"
-}
-export interface DeviceSaveStrategyOpenBao {
-    tag: "DeviceSaveStrategyOpenBao"
+export interface DevicePrimaryProtectionStrategyOpenBao {
+    tag: "DevicePrimaryProtectionStrategyOpenBao"
     openbao_server_url: string
     openbao_secret_mount_path: string
     openbao_transit_mount_path: string
@@ -2529,20 +2569,20 @@ export interface DeviceSaveStrategyOpenBao {
     openbao_auth_token: string
     openbao_preferred_auth_id: string
 }
-export interface DeviceSaveStrategyPKI {
-    tag: "DeviceSaveStrategyPKI"
+export interface DevicePrimaryProtectionStrategyPKI {
+    tag: "DevicePrimaryProtectionStrategyPKI"
     certificate_ref: X509CertificateReference
 }
-export interface DeviceSaveStrategyPassword {
-    tag: "DeviceSaveStrategyPassword"
+export interface DevicePrimaryProtectionStrategyPassword {
+    tag: "DevicePrimaryProtectionStrategyPassword"
     password: string
 }
-export type DeviceSaveStrategy =
-  | DeviceSaveStrategyAccountVault
-  | DeviceSaveStrategyKeyring
-  | DeviceSaveStrategyOpenBao
-  | DeviceSaveStrategyPKI
-  | DeviceSaveStrategyPassword
+export type DevicePrimaryProtectionStrategy =
+  | DevicePrimaryProtectionStrategyAccountVault
+  | DevicePrimaryProtectionStrategyKeyring
+  | DevicePrimaryProtectionStrategyOpenBao
+  | DevicePrimaryProtectionStrategyPKI
+  | DevicePrimaryProtectionStrategyPassword
 
 
 // EntryStat
@@ -3563,6 +3603,19 @@ export type SubmitterListLocalAsyncEnrollmentsError =
   | SubmitterListLocalAsyncEnrollmentsErrorStorageNotAvailable
 
 
+// TOTPSetupStatus
+export interface TOTPSetupStatusAlreadySetup {
+    tag: "TOTPSetupStatusAlreadySetup"
+}
+export interface TOTPSetupStatusStalled {
+    tag: "TOTPSetupStatusStalled"
+    base32_totp_secret: string
+}
+export type TOTPSetupStatus =
+  | TOTPSetupStatusAlreadySetup
+  | TOTPSetupStatusStalled
+
+
 // TestbedError
 export interface TestbedErrorDisabled {
     tag: "TestbedErrorDisabled"
@@ -3575,6 +3628,73 @@ export interface TestbedErrorInternal {
 export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
+
+
+// TotpFetchOpaqueKeyError
+export interface TotpFetchOpaqueKeyErrorInternal {
+    tag: "TotpFetchOpaqueKeyErrorInternal"
+    error: string
+}
+export interface TotpFetchOpaqueKeyErrorInvalidOneTimePassword {
+    tag: "TotpFetchOpaqueKeyErrorInvalidOneTimePassword"
+    error: string
+}
+export interface TotpFetchOpaqueKeyErrorOffline {
+    tag: "TotpFetchOpaqueKeyErrorOffline"
+    error: string
+}
+export interface TotpFetchOpaqueKeyErrorThrottled {
+    tag: "TotpFetchOpaqueKeyErrorThrottled"
+    error: string
+}
+export type TotpFetchOpaqueKeyError =
+  | TotpFetchOpaqueKeyErrorInternal
+  | TotpFetchOpaqueKeyErrorInvalidOneTimePassword
+  | TotpFetchOpaqueKeyErrorOffline
+  | TotpFetchOpaqueKeyErrorThrottled
+
+
+// TotpSetupConfirmAnonymousError
+export interface TotpSetupConfirmAnonymousErrorBadToken {
+    tag: "TotpSetupConfirmAnonymousErrorBadToken"
+    error: string
+}
+export interface TotpSetupConfirmAnonymousErrorInternal {
+    tag: "TotpSetupConfirmAnonymousErrorInternal"
+    error: string
+}
+export interface TotpSetupConfirmAnonymousErrorInvalidOneTimePassword {
+    tag: "TotpSetupConfirmAnonymousErrorInvalidOneTimePassword"
+    error: string
+}
+export interface TotpSetupConfirmAnonymousErrorOffline {
+    tag: "TotpSetupConfirmAnonymousErrorOffline"
+    error: string
+}
+export type TotpSetupConfirmAnonymousError =
+  | TotpSetupConfirmAnonymousErrorBadToken
+  | TotpSetupConfirmAnonymousErrorInternal
+  | TotpSetupConfirmAnonymousErrorInvalidOneTimePassword
+  | TotpSetupConfirmAnonymousErrorOffline
+
+
+// TotpSetupStatusAnonymousError
+export interface TotpSetupStatusAnonymousErrorBadToken {
+    tag: "TotpSetupStatusAnonymousErrorBadToken"
+    error: string
+}
+export interface TotpSetupStatusAnonymousErrorInternal {
+    tag: "TotpSetupStatusAnonymousErrorInternal"
+    error: string
+}
+export interface TotpSetupStatusAnonymousErrorOffline {
+    tag: "TotpSetupStatusAnonymousErrorOffline"
+    error: string
+}
+export type TotpSetupStatusAnonymousError =
+  | TotpSetupStatusAnonymousErrorBadToken
+  | TotpSetupStatusAnonymousErrorInternal
+  | TotpSetupStatusAnonymousErrorOffline
 
 
 // UpdateDeviceError
@@ -3606,6 +3726,10 @@ export interface UpdateDeviceErrorRemoteOpaqueKeyOperationOffline {
     tag: "UpdateDeviceErrorRemoteOpaqueKeyOperationOffline"
     error: string
 }
+export interface UpdateDeviceErrorTOTPDecryptionFailed {
+    tag: "UpdateDeviceErrorTOTPDecryptionFailed"
+    error: string
+}
 export type UpdateDeviceError =
   | UpdateDeviceErrorDecryptionFailed
   | UpdateDeviceErrorInternal
@@ -3614,6 +3738,7 @@ export type UpdateDeviceError =
   | UpdateDeviceErrorNoSpaceAvailable
   | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
   | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline
+  | UpdateDeviceErrorTOTPDecryptionFailed
 
 
 // UserClaimListInitialInfosError
@@ -5177,6 +5302,16 @@ export function clientStartWorkspaceHistory(
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
+export function clientTotpCreateOpaqueKey(
+    client: number
+): Promise<Result<[string, Uint8Array], ClientTotpCreateOpaqueKeyError>>
+export function clientTotpSetupConfirm(
+    client: number,
+    one_time_password: string
+): Promise<Result<null, ClientTOTPSetupConfirmError>>
+export function clientTotpSetupStatus(
+    client: number
+): Promise<Result<TOTPSetupStatus, ClientTotpSetupStatusError>>
 export function clientUpdateUserProfile(
     client_handle: number,
     user: string,
@@ -5377,6 +5512,23 @@ export function testNewTestbed(
     template: string,
     test_server: string | null
 ): Promise<Result<string, TestbedError>>
+export function totpFetchOpaqueKey(
+    config: ClientConfig,
+    server_addr: string,
+    organization_id: string,
+    user_id: string,
+    opaque_key_id: string,
+    one_time_password: string
+): Promise<Result<Uint8Array, TotpFetchOpaqueKeyError>>
+export function totpSetupConfirmAnonymous(
+    config: ClientConfig,
+    addr: string,
+    one_time_password: string
+): Promise<Result<null, TotpSetupConfirmAnonymousError>>
+export function totpSetupStatusAnonymous(
+    config: ClientConfig,
+    addr: string
+): Promise<Result<TOTPSetupStatus, TotpSetupStatusAnonymousError>>
 export function updateDeviceChangeAuthentication(
     config_dir: string,
     current_auth: DeviceAccessStrategy,

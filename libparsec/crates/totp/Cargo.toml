@@ -1,0 +1,24 @@
+[package]
+name = "libparsec_totp"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+libparsec_client_connection = { workspace = true }
+libparsec_protocol = { workspace = true }
+libparsec_types = { workspace = true }
+
+thiserror = { workspace = true }
+data-encoding = { workspace = true }
+
+[dev-dependencies]
+libparsec_tests_lite = { workspace = true }
+libparsec_tests_fixtures = { workspace = true, features = ["default"] }

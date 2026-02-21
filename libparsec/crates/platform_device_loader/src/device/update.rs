@@ -8,9 +8,9 @@ use libparsec_types::prelude::*;
 #[cfg(feature = "test-with-testbed")]
 use crate::testbed;
 use crate::{
-    decrypt_device_file, device::load_ciphertext_key::load_ciphertext_key, load_available_device,
-    AvailableDevice, DecryptDeviceFileError, DeviceAccessStrategy, DeviceSaveStrategy,
-    LoadAvailableDeviceError, LoadCiphertextKeyError, RemoteOperationServer, SaveDeviceError,
+    decrypt_device_file, device::load_ciphertext_key::load_ciphertext_key, AvailableDevice,
+    DecryptDeviceFileError, DeviceAccessStrategy, DeviceSaveStrategy, LoadCiphertextKeyError,
+    RemoteOperationServer, SaveDeviceError,
 };
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateDeviceError {
@@ -22,6 +22,8 @@ pub enum UpdateDeviceError {
     InvalidData,
     #[error("Failed to decrypt file content")]
     DecryptionFailed,
+    #[error("Decryption failed with the key obtained from TOTP challenge")]
+    TOTPDecryptionFailed,
     /// Note only a subset of load/save strategies requires server access to
     /// fetch/upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -106,7 +108,7 @@ pub async fn update_device_change_authentication(
         return result.map(|(available_device, _)| available_device);
     }
 
-    let current_key_file = current_access.key_file();
+    let current_key_file = &current_access.key_file;
 
     // 1. Load the current device keys file...
 
@@ -126,10 +128,14 @@ pub async fn update_device_change_authentication(
                 UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
             }
         })?;
-    let device = decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
-        DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
-        DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
-    })?;
+    let totp_opaque_key = current_access.totp_protection.as_ref().map(|(_, key)| key);
+    let device = decrypt_device_file(&device_file, &ciphertext_key, totp_opaque_key).map_err(
+        |err| match err {
+            DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
+            DecryptDeviceFileError::TOTPDecrypt(_) => UpdateDeviceError::TOTPDecryptionFailed,
+            DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
+        },
+    )?;
 
     // 2. ...and ask to overwrite it
 
@@ -151,20 +157,8 @@ pub async fn update_device_overwrite_server_addr(
     strategy: &DeviceAccessStrategy,
     new_server_addr: ParsecAddr,
 ) -> Result<ParsecAddr, UpdateDeviceError> {
-    let key_file = strategy.key_file();
-    let available_device = load_available_device(config_dir, key_file.to_owned())
-        .await
-        .map_err(|err| match err {
-            LoadAvailableDeviceError::StorageNotAvailable => UpdateDeviceError::NoSpaceAvailable,
-            LoadAvailableDeviceError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
-            LoadAvailableDeviceError::InvalidData => UpdateDeviceError::InvalidData,
-            LoadAvailableDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
-        })?;
-    let save_strategy = strategy
-        .clone()
-        .into_save_strategy(available_device.ty)
-        // Return error if the file exists but doesn't correspond to the save strategy
-        .ok_or(UpdateDeviceError::InvalidData)?;
+    let key_file = &strategy.key_file;
+    let save_strategy: DeviceSaveStrategy = strategy.to_owned().into();
 
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) = testbed::maybe_update_device(
@@ -196,11 +190,14 @@ pub async fn update_device_overwrite_server_addr(
                     UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
                 }
             })?;
-    let mut device =
-        decrypt_device_file(&device_file, &ciphertext_key).map_err(|err| match err {
+    let totp_opaque_key = strategy.totp_protection.as_ref().map(|(_, key)| key);
+    let mut device = decrypt_device_file(&device_file, &ciphertext_key, totp_opaque_key).map_err(
+        |err| match err {
             DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
+            DecryptDeviceFileError::TOTPDecrypt(_) => UpdateDeviceError::TOTPDecryptionFailed,
             DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
-        })?;
+        },
+    )?;
 
     let old_server_addr: ParsecAddr = device.organization_addr.clone().into();
     device.organization_addr = ParsecOrganizationAddr::new(

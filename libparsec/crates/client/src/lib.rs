@@ -28,7 +28,8 @@ pub use workspace_history::*;
 
 // Re-expose device save/access objects since they are part of this crate interface
 pub use libparsec_platform_device_loader::{
-    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DeviceSaveStrategy,
+    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
+    DeviceSaveStrategy,
 };
 
 // Testing on web requires this macro configuration to be present anywhere in

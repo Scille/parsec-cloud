@@ -66,9 +66,7 @@ async fn ok_with_server(env: &TestbedEnv) {
             org_id.clone(),
             org_user_id,
             "New PC".parse().unwrap(),
-            DeviceSaveStrategy::Password {
-                password: "P@ssw0rd.".to_string().into(),
-            },
+            DeviceSaveStrategy::new_password("P@ssw0rd.".to_string().into()),
         )
         .await
         .unwrap();

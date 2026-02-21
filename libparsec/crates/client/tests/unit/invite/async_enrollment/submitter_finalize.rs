@@ -104,7 +104,7 @@ async fn ok(env: &TestbedEnv) {
         },
     );
 
-    let new_device_save_strategy = DeviceSaveStrategy::Keyring;
+    let new_device_save_strategy = DeviceSaveStrategy::new_keyring();
 
     p_assert_matches!(submitter_finalize_async_enrollment(
             config.clone(),
@@ -123,6 +123,7 @@ async fn ok(env: &TestbedEnv) {
             device_id,
             human_handle,
             device_label,
+            totp_opaque_key_id: None,
             ty: AvailableDeviceType::Keyring,
         })
         if key_file_path == config.config_dir.join("devices").join(format!("{}.keys", accept_payload.device_id.hex()))
@@ -142,7 +143,7 @@ async fn offline(env: &TestbedEnv) {
 
     let (_, enrollment_file_path) = generate_submit(env, &identity_strategy).await;
 
-    let new_device_save_strategy = DeviceSaveStrategy::Keyring;
+    let new_device_save_strategy = DeviceSaveStrategy::new_keyring();
 
     p_assert_matches!(
         submitter_finalize_async_enrollment(
@@ -175,7 +176,7 @@ async fn server_info_rep_not_accepted(env: &TestbedEnv) {
         },
     );
 
-    let new_device_save_strategy = DeviceSaveStrategy::Keyring;
+    let new_device_save_strategy = DeviceSaveStrategy::new_keyring();
 
     p_assert_matches!(
         submitter_finalize_async_enrollment(
@@ -226,7 +227,7 @@ async fn bao_accept_payload(env: &TestbedEnv) {
         },
     );
 
-    let new_device_save_strategy = DeviceSaveStrategy::Keyring;
+    let new_device_save_strategy = DeviceSaveStrategy::new_keyring();
 
     p_assert_matches!(
         submitter_finalize_async_enrollment(
@@ -279,7 +280,7 @@ async fn identity_strategy_mismatch(env: &TestbedEnv) {
         },
     );
 
-    let new_device_save_strategy = DeviceSaveStrategy::Keyring;
+    let new_device_save_strategy = DeviceSaveStrategy::new_keyring();
 
     p_assert_matches!(
         submitter_finalize_async_enrollment(
@@ -299,7 +300,7 @@ async fn enrollment_file_invalid_path(env: &TestbedEnv) {
     let config = make_config(env);
     let identity_strategy = MockedAsyncEnrollmentIdentityStrategy::default();
 
-    let new_device_save_strategy = DeviceSaveStrategy::Keyring;
+    let new_device_save_strategy = DeviceSaveStrategy::new_keyring();
 
     p_assert_matches!(
         submitter_finalize_async_enrollment(
@@ -353,7 +354,7 @@ async fn enrollment_file_cannot_retrieve_ciphertext_key(env: &TestbedEnv) {
     .await
     .unwrap();
 
-    let new_device_save_strategy = DeviceSaveStrategy::Keyring;
+    let new_device_save_strategy = DeviceSaveStrategy::new_keyring();
 
     p_assert_matches!(
         submitter_finalize_async_enrollment(
@@ -418,7 +419,7 @@ async fn enrollment_file_invalid_data(env: &TestbedEnv) {
     .await
     .unwrap();
 
-    let new_device_save_strategy = DeviceSaveStrategy::Keyring;
+    let new_device_save_strategy = DeviceSaveStrategy::new_keyring();
 
     p_assert_matches!(
         submitter_finalize_async_enrollment(
@@ -447,7 +448,7 @@ async fn server_info_rep_enrollment_not_found(env: &TestbedEnv) {
         },
     );
 
-    let new_device_save_strategy = DeviceSaveStrategy::Keyring;
+    let new_device_save_strategy = DeviceSaveStrategy::new_keyring();
 
     p_assert_matches!(
         submitter_finalize_async_enrollment(

@@ -9,6 +9,8 @@
 {%- macro function_param_type(type) -%}
 {%- if type.kind == "ref" -%}
 {{ function_param_type(type.elem) }}
+{%- elif type.kind == "box" -%}
+{{ function_param_type(type.elem) }}
 {%- elif type.kind == "dict" -%}
 Object
 {%- elif type.kind == "list" -%}
@@ -63,6 +65,8 @@ String
 {%- macro render_function_param_cooking(param_name, type) -%}
 {% if type.kind == "ref" %}
 {{ render_function_param_cooking(param_name, type.elem) }}
+{% elif type.kind == "box" %}
+{{ render_function_param_cooking("*" + param_name, type.elem) }}
 {% elif type.kind == "optional" %}
 let {{ param_name }} = match {{ param_name }} {
     Some({{ param_name }}) => {
@@ -230,6 +234,8 @@ let {{ param_name }} = {{ enum_js_to_rs_function_name(type) }}(&{{ param_name }}
 {%- macro render_js_value_to_rs(js_val, type) -%}
 {%- if type.kind == "ref" -%}
 {{ render_js_value_to_rs(js_val, type.elem) }}
+{%- elif type.kind == "box" -%}
+Box::new({{ render_js_value_to_rs(js_val, type.elem) }})
 {%- elif type.kind == "optional" -%}
 if {{ js_val }}.is_null() {
     None
@@ -681,6 +687,8 @@ match {{ rs_value }} {
 {{ variant_rs_to_js_function_name(type) }}({{ rs_value }})?
 {%- elif type.kind == "enum" -%}
 JsValue::from_str({{ enum_rs_to_js_function_name(type) }}({{ rs_value }}))
+{%- elif type.kind == "box" -%}
+{{ variant_rs_to_js_function_name(type.elem) }}({{ "*" + rs_value }})?
 {%- else -%}
 {{ rs_value }}.into()
 {%- endif -%}
