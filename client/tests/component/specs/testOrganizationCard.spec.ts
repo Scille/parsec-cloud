@@ -21,6 +21,7 @@ describe('Organization Card', () => {
     organizationId: 'Black Mesa',
     userId: '5ada1b25e8904e9ba238834227a40abf',
     deviceId: '9700f0fd005e4752a13bcba0042d4703',
+    totpOpaqueKeyId: null,
     humanHandle: {
       label: 'Gordon Freeman',
       email: 'freeman.gordon@black-mesa.com',

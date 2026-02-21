@@ -55,7 +55,7 @@ import idCardGradient from '@/assets/images/id-card-gradient.svg';
 import KeypadGradient from '@/assets/images/keypad-gradient.svg';
 import personCircleGradient from '@/assets/images/person-circle-gradient.svg';
 import { AuthenticationCardState } from '@/components/profile/types';
-import { DeviceSaveStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
+import { DevicePrimaryProtectionStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
@@ -63,7 +63,7 @@ import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   state: AuthenticationCardState;
-  authMethod: DeviceSaveStrategyTag;
+  authMethod: DevicePrimaryProtectionStrategyTag;
   disabled?: boolean;
 }>();
 
@@ -84,7 +84,7 @@ defineEmits<{
 }>();
 
 const methodConfig: Record<
-  DeviceSaveStrategyTag,
+  DevicePrimaryProtectionStrategyTag,
   {
     imageSrc: string;
     imageAlt: string;
@@ -93,31 +93,31 @@ const methodConfig: Record<
     unavailableExplanation?: Translatable;
   }
 > = {
-  [DeviceSaveStrategyTag.Keyring]: {
+  [DevicePrimaryProtectionStrategyTag.Keyring]: {
     imageSrc: EllipsisGradient,
     imageAlt: 'Keyring',
     methodName: 'Authentication.method.system',
     unavailableExplanation: keyringUnavailableMessage(),
   },
-  [DeviceSaveStrategyTag.Password]: {
+  [DevicePrimaryProtectionStrategyTag.Password]: {
     imageSrc: KeypadGradient,
     imageAlt: 'Password',
     methodName: 'Authentication.method.password',
   },
-  [DeviceSaveStrategyTag.PKI]: {
+  [DevicePrimaryProtectionStrategyTag.PKI]: {
     imageSrc: idCardGradient,
     imageAlt: 'Smartcard',
     methodName: 'Authentication.method.smartcard.title',
     description: 'Authentication.method.smartcard.description',
     unavailableExplanation: 'Authentication.method.smartcard.unavailable',
   },
-  [DeviceSaveStrategyTag.AccountVault]: {
+  [DevicePrimaryProtectionStrategyTag.AccountVault]: {
     imageSrc: '',
     imageAlt: '',
     methodName: '',
     description: '',
   },
-  [DeviceSaveStrategyTag.OpenBao]: {
+  [DevicePrimaryProtectionStrategyTag.OpenBao]: {
     imageSrc: personCircleGradient,
     imageAlt: 'OpenBao',
     methodName: 'Authentication.method.sso.title',

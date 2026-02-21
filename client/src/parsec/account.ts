@@ -3,7 +3,7 @@
 import { getDefaultDeviceName } from '@/common/device';
 import { isWeb } from '@/parsec/environment';
 import { getClientConfig } from '@/parsec/internals';
-import { listAvailableDevices } from '@/parsec/login';
+import { constructSaveStrategy, listAvailableDevices, PrimaryProtectionStrategy } from '@/parsec/login';
 import {
   AccountAuthMethodStrategy,
   AccountAuthMethodStrategyTag,
@@ -35,7 +35,6 @@ import {
   AvailableDeviceTypeTag,
   DeviceAccessStrategy,
   DeviceSaveStrategy,
-  DeviceSaveStrategyTag,
   ParsecAddr,
   RegistrationDevice,
   Result,
@@ -279,9 +278,9 @@ class _ParsecAccount {
       }
       let saveStrategy!: DeviceSaveStrategy;
       if (isWeb()) {
-        saveStrategy = { tag: DeviceSaveStrategyTag.AccountVault, accountHandle: this.handle };
+        saveStrategy = constructSaveStrategy(PrimaryProtectionStrategy.useAccountVault(this.handle));
       } else {
-        saveStrategy = { tag: DeviceSaveStrategyTag.Keyring };
+        saveStrategy = constructSaveStrategy(PrimaryProtectionStrategy.useKeyring());
       }
 
       const regResult = await libparsec.accountRegisterNewDevice(
@@ -351,7 +350,7 @@ class _ParsecAccount {
       registrationDevice.organizationId,
       registrationDevice.userId,
       getAccountDefaultDeviceName(),
-      { tag: DeviceSaveStrategyTag.AccountVault, accountHandle: this.handle },
+      constructSaveStrategy(PrimaryProtectionStrategy.useAccountVault(this.handle)),
     );
     return regResult;
   }
