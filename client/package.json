@@ -99,6 +99,7 @@
         "globals": "^16.4.0",
         "happy-dom": "^20.0.7",
         "jiti": "^2.6.1",
+        "otplib": "^13.3.0",
         "prettier": "3.6.2",
         "prettier-plugin-organize-imports": "^4.3.0",
         "sass": "^1.93.2",

@@ -322,6 +322,9 @@
                 "rejected": "Rejetée",
                 "cancelled": "Annulée"
             },
+            "totp": {
+                "invalidLink": "Ce lien n'est pas un lien de réinitialisation d'authentification multifacteur valide."
+            },
             "requestSent": {
                 "success": "Votre demande pour rejoindre l'organisation a été envoyée.",
                 "failure": "Échec de l'envoi de la demande. Veuillez réessayer plus tard.",
@@ -1299,13 +1302,79 @@
         "changePasswordButton": "Modifier le mot de passe",
         "useKeyring": "Authentification du système",
         "usePassword": "Mot de passe",
+        "useSmartcard": "Carte à puce",
         "useSso": "Authentification unique (SSO)",
         "label": "Méthode d'authentification",
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
         "keyringUnavailableOnWeb": "Indisponible sur le web",
         "openBaoUnavailable": "L'authentification unique (SSO) n'est pas disponible sur ce serveur.",
         "invalidOpenBaoData": "La configuration SSO fournie par le serveur est invalide. Veuillez contacter un administrateur.",
-        "popupBlocked": "Veuillez vous assurer que votre navigateur autorise les pop-ups pour ce site."
+        "popupBlocked": "Veuillez vous assurer que votre navigateur autorise les pop-ups pour ce site.",
+        "mfa": {
+            "title": "Authentification multifacteur (MFA)",
+            "description": "Ajoutez une couche de sécurité lors de la connexion à cette organisation depuis tous vos appareils.",
+            "info": "L'organisation requiert une authentification multifacteur.",
+            "or": "ou",
+            "inactive": "Inactive",
+            "active": "Active",
+            "inactiveInfo": "L'authentification multifacteur est configurée mais pas activée sur cet appareil.",
+            "totpRequired": "Une authentification multifacteur est requise pour cette organisation.",
+            "totpRequiredSubtitle": "Veuillez saisir le code fourni par votre application d'authentification pour vous connecter à cette organisation.",
+            "step1": {
+                "title": "1. Installer une application d'authentification sur votre mobile",
+                "description": "Téléchargez et installez une application d'authentification, telle que FreeOTP ou Aegis Authenticator, sur votre appareil mobile."
+            },
+            "step2": {
+                "title": "2. Scanner le QR code ou copier la clé",
+                "description": "Scannez le QR code dans l'application d'authentification ou copiez/collez le code dans l'application.",
+                "buttonCopy": "Copier la clé",
+                "buttonCopied": "Clé copiée"
+            },
+            "step3": {
+                "title": "Saisir le code à 6 chiffres",
+                "description": "Après avoir scanné le QR code ou coller la clé, l'application d'authentification générera un code à 6 chiffres à saisir."
+            },
+            "buttons": {
+                "next": "Suivant",
+                "done": "Terminé",
+                "back": "Précédent",
+                "configure": "Configurer MFA",
+                "delete": "Supprimer MFA",
+                "activate": "Activer MFA"
+            },
+            "error": {
+                "invalidCode": "Le code que vous avez saisi est invalide. Veuillez réessayer.",
+                "emptyCode": "Veuillez saisir le code à 6 chiffres de votre application d'authentification.",
+                "emptyStatus": "Impossible d'obtenir le statut de l'authentification multifacteur. Vous êtes peut-être hors ligne ou le serveur ne supporte pas l'authentification multi-facteurs.",
+                "failedToRetrieveKey": "Impossible de récupérer la clé de configuration MFA. Veuillez vous assurer que vous êtes en ligne et réessayer.",
+                "failedToConfigure": "Impossible de configurer l'authentification multifacteur. Veuillez vous assurer que vous êtes en ligne et réessayer.",
+                "failedToActivate": "Impossible d'activer' l'authentification multifacteur. Veuillez vous assurer que vous êtes en ligne et réessayer.",
+                "failedToDelete": "Impossible de supprimer l'authentification multifacteur",
+                "failedToReset": "Impossible de reconfigurer l'authentification multifacteur."
+            },
+            "digitCode": {
+                "label": "Saisissez le code à 6 chiffres de votre application d'authentification",
+                "placeholder": "Code à 6 chiffres"
+            },
+            "mfaSuccess": {
+                "info": "Votre méthode d'authentification a été mise à jour avec succès.",
+                "description": "L'authentification multifacteur a été activée avec succès et sera désormais requise pour vous connecter à cette organisation.",
+                "deleteOk": "L'authentification multifacteur a été supprimée."
+            },
+            "delete": {
+                "title": "Supprimer l'authentification multifacteur",
+                "warning": "Vous êtes sur le point de supprimer l'authentification multifacteur. Cela réduira la sécurité de votre compte.",
+                "authenticationTitle": "Authentification actuelle",
+                "totpCodeTitle": "Code MFA",
+                "confirmButton": "Supprimer le MFA",
+                "cancelButton": "Annuler",
+                "success": "L'authentification multifacteur a été supprimée avec succès.",
+                "error": {
+                    "notSetup": "L'authentification multifacteur n'est pas configurée.",
+                    "wrongAuthentication": "L'authentification est incorrecte. Veuillez réessayer."
+                }
+            }
+        }
     },
     "PasswordInputModal": {
         "passwordNeeded": "Mot de passe requis",
@@ -1727,8 +1796,8 @@
                 "pkiCorrupted": "PKI (corrompu)"
             },
             "linkCopiedToClipboard": {
-                "success": "Le lien d'enrôlement a été copié dans le presse-papiers.",
-                "failed": "Échec de la copie du lien d'enrôlement. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
+                "success": "Le lien PKI a été copié dans le presse-papiers.",
+                "failed": "Échec de la copie du lien PKI. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
             },
             "tooltips": {
                 "reject": "Refuser la demande"
@@ -1881,6 +1950,7 @@
         "titleCurrentPassword": "Saisissez votre mot de passe",
         "titleCurrentOpenBao": "Connectez-vous à votre fournisseur de SSO",
         "titleNewAuthentication": "Changer de méthode d'authentification",
+        "titleTotp": "Code d'authentification multi-facteurs",
         "password": "Mot de passe",
         "systemAuthentication": "Votre session est gérée avec l'authentification votre appareil.",
         "cancelButton": "Annuler",
@@ -1906,7 +1976,10 @@
         "errors": {
             "wrongAuthentication": "Authentification invalide.",
             "cannotChangeAuthentication": "Impossible de changer l'authentification",
-            "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet."
+            "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
+            "invalidTotpCode": "Le code d'authentification multi-facteurs est invalide.",
+            "totpOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet.",
+            "totpError": "Une erreur est survenu lors de la tentative de valider votre authentification multi-facteurs."
         }
     },
     "OrganizationRecovery": {

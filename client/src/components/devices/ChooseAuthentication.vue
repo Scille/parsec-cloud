@@ -273,8 +273,7 @@ function getSaveStrategy(): DeviceSaveStrategy | undefined {
       );
     }
     return undefined;
-  }
-  if (choosePasswordRef.value?.password) {
+  } else if (choosePasswordRef.value?.password) {
     return constructSaveStrategy(PrimaryProtectionStrategy.usePassword(choosePasswordRef.value?.password));
   }
   return undefined;
