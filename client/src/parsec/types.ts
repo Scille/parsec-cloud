@@ -101,8 +101,15 @@ export {
   WorkspaceStatFolderChildrenErrorTag,
   WorkspaceStopErrorTag,
   X509URIFlavorValueTag,
+  TOTPSetupStatusTag,
 } from '@/plugins/libparsec';
 export type {
+  TOTPSetupStatus,
+  ClientTotpSetupStatusError,
+  TotpFetchOpaqueKeyError,
+  TOTPOpaqueKeyID,
+  ClientTotpCreateOpaqueKeyError,
+  ClientTOTPSetupConfirmError,
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
   AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao,
   AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI,

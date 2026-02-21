@@ -35,6 +35,21 @@
           </ion-text>
         </ion-button>
       </div>
+
+      <div>
+        <div v-if="totpStatus">
+          <span v-if="totpStatus.tag === TOTPSetupStatusTag.AlreadySetup">MFA IS SET UP</span>
+          <ion-button
+            v-if="totpStatus.tag === TOTPSetupStatusTag.Stalled"
+            @click="setupTotp"
+          >
+            SET UP MFA
+          </ion-button>
+        </div>
+        <div v-else>
+          CAN'T GET TOTP STATUS
+        </div>
+      </div>
     </template>
     <template v-if="error">
       <div class="device-not-found">
@@ -56,6 +71,9 @@ import {
   DevicePrimaryProtectionStrategyTag,
   getCurrentAvailableDevice,
   getServerConfig,
+  getTotpStatus,
+  TOTPSetupStatus,
+  TOTPSetupStatusTag,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
@@ -63,10 +81,12 @@ import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
 import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
 import { inject, onMounted, Ref, ref } from 'vue';
+import ActivateTotpModal from '@/views/totp/ActivateTotpModal.vue';
 
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const error = ref('');
+const totpStatus = ref<TOTPSetupStatus | undefined>(undefined);
 
 async function openChangeAuthentication(): Promise<void> {
   if (!currentDevice.value) {
@@ -117,6 +137,12 @@ async function openChangeAuthentication(): Promise<void> {
 }
 
 onMounted(async () => {
+  const totpStatusResult = await getTotpStatus();
+
+  if (totpStatusResult.ok) {
+    totpStatus.value = totpStatusResult.value;
+  }
+
   const deviceResult = await getCurrentAvailableDevice();
 
   if (!deviceResult.ok) {
@@ -133,6 +159,41 @@ onMounted(async () => {
     currentDevice.value = deviceResult.value;
   }
 });
+
+async function setupTotp(): Promise<void> {
+  if (!currentDevice.value) {
+    return;
+  }
+  const modal = await modalController.create({
+    component: ActivateTotpModal,
+    cssClass: 'activate-totp-modal',
+    componentProps: {
+      device: currentDevice.value,
+    },
+    canDismiss: true,
+    backdropDismiss: true,
+    showBackdrop: true,
+  });
+  await modal.present();
+  const { role } = await modal.onDidDismiss();
+  await modal.dismiss();
+
+  if (role !== MsModalResult.Confirm) {
+    return;
+  }
+  const totpStatusResult = await getTotpStatus();
+
+  if (totpStatusResult.ok) {
+    totpStatus.value = totpStatusResult.value;
+  }
+  informationManager.value.present(
+    new Information({
+      message: 'MFA IS SET UP',
+      level: InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
+}
 </script>
 
 <style scoped lang="scss">

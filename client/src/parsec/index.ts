@@ -20,3 +20,4 @@ export * from '@/parsec/types';
 export * from '@/parsec/user';
 export * from '@/parsec/validation';
 export * from '@/parsec/workspace';
+export * from '@/parsec/totp';

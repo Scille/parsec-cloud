@@ -1113,3 +1113,16 @@
     }
   }
 }
+
+.mfa-activation-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+
+  &:has(.modal-content-information),
+  &:has(.modal-content-finalization) {
+    .ms-modal-footer-buttons .button-default {
+      width: 100%;
+    }
+  }
+}

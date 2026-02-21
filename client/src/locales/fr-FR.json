@@ -1305,7 +1305,44 @@
         "keyringUnavailableOnWeb": "Indisponible sur le web",
         "openBaoUnavailable": "L'authentification unique (SSO) n'est pas disponible sur ce serveur.",
         "invalidOpenBaoData": "La configuration SSO fournie par le serveur est invalide. Veuillez contacter un administrateur.",
-        "popupBlocked": "Veuillez vous assurer que votre navigateur autorise les pop-ups pour ce site."
+        "popupBlocked": "Veuillez vous assurer que votre navigateur autorise les pop-ups pour ce site.",
+        "mfaModal": {
+            "title": "Authentification à facteurs multiples (MFA)",
+            "info": "L'organisation requiert une double authentification.",
+            "or": "ou",
+            "step1": {
+                "title": "1. Télécharger l'application d'authentification",
+                "description": "Nous vous recommandons d'installer l'application FreeOTP, Aegis Authenticator ou encore Google Authenticatior."
+            },
+            "step2": {
+                "title": "2. Scanner le QR code ou copier la clé",
+                "description": "Scannez le QR code dans l'application d'authentification ou copiez/collez le code dans l'application.",
+                "buttonCopy": "Copier la clé",
+                "buttonCopied": "Clé copiée dans le presse-papier"
+            },
+            "step3": {
+                "title": "3. Copier et saisir le code à 6 chiffres",
+                "description": "Après avoir scanné le QR code ou coller la clé, l'application d'authentification générera un code à 6 chiffres à saisir."
+            },
+            "buttons": {
+                "next": "Suivant",
+                "done": "Terminé",
+                "previous": "Précédent"
+            },
+            "error": {
+                "invalidCode": "Le code que vous avez saisi est invalide. Veuillez réessayer.",
+                "emptyCode": "Veuillez saisir le code à 6 chiffres de votre application d'authentification."
+            },
+            "digitCode": {
+                "label": "Code à 6 chiffres",
+                "description": "Saisissez le code à 6 chiffres généré par votre application d'authentification.",
+                "placeholder": "Saisissez le code de votre application d'authentification"
+            },
+            "mfaSuccess": {
+                "info": "Votre méthode d'authentification a été mise à jour avec succès.",
+                "description": "L'authentification à deux facteurs a été activée avec succès et sera désormais requise pour vous connecter à cette organisation."
+            }
+        }
     },
     "PasswordInputModal": {
         "passwordNeeded": "Mot de passe requis",
@@ -1727,8 +1764,8 @@
                 "pkiCorrupted": "PKI (corrompu)"
             },
             "linkCopiedToClipboard": {
-                "success": "Le lien d'enrôlement a été copié dans le presse-papiers.",
-                "failed": "Échec de la copie du lien d'enrôlement. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
+                "success": "Le lien PKI a été copié dans le presse-papiers.",
+                "failed": "Échec de la copie du lien PKI. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
             },
             "tooltips": {
                 "reject": "Refuser la demande"

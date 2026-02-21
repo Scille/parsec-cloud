@@ -114,6 +114,7 @@ import {
   constructAccessStrategy,
   constructSaveStrategy,
   deleteJoinRequest,
+  fetchTotpOpaqueKey,
   getDeviceHandle,
   getOrganizationCreationDate,
   getServerConfig,
@@ -788,7 +789,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       window.electronAPI.log('debug', 'Logging in with Smartcard');
       await login(
         device,
-        constructAccessStrategy(device, PrimaryProtectionStrategy.useSmartcard((device as any as AvailableDeviceTypePKI).certificateRef)),
+        constructAccessStrategy(device, PrimaryProtectionStrategy.useSmartcard((device.ty as AvailableDeviceTypePKI).certificateRef)),
       );
     } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {
       try {
@@ -907,6 +908,24 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   loginInProgress.value = true;
   window.electronAPI.log('debug', 'Starting Parsec login');
+
+  if (device.totpOpaqueKeyId !== null) {
+    const code = await getTextFromUser({
+      title: 'MFA required',
+      subtitle: 'This device is protected by MFA. Input the code given by your authenticator app.',
+      trim: true,
+    }, true);
+    if (!code) {
+      return;
+    }
+    const fetchTotpResult = await fetchTotpOpaqueKey(device.serverAddr, device.organizationId, device.userId, device.totpOpaqueKeyId, code);
+    if (!fetchTotpResult.ok) {
+      window.electronAPI.log('warn', `Failed to fetch TOTP opaque key: ${fetchTotpResult.error.tag}`);
+      return;
+    }
+    access.totpProtection = [device.totpOpaqueKeyId, fetchTotpResult.value];
+  }
+
   const result = await parsecLogin(device, access);
   if (result.ok) {
     window.electronAPI.log('debug', 'getOrganizationCreationDate');
