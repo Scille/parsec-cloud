@@ -322,13 +322,16 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
-    const deviceName = await getDefaultDeviceName();
+    const deviceName = getDefaultDeviceName();
+    const strategy = authChoiceRef.value?.getSaveStrategy();
+    if (!strategy) {
+      return;
+    }
+
     waitingForHost.value = true;
     const doClaimResult = await claimer.value.doClaim(deviceName);
+    waitingForHost.value = false;
     if (doClaimResult.ok) {
-      waitingForHost.value = false;
-      const strategy = authChoiceRef.value?.getSaveStrategy();
-      if (!strategy) return;
       const result = await claimer.value.finalize(strategy);
       if (!result.ok) {
         props.informationManager.present(
@@ -365,8 +368,8 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === DeviceJoinOrganizationStep.ProvideGuestCode) {
     waitingForHost.value = true;
     const result = await claimer.value.waitHostTrust();
+    waitingForHost.value = false;
     if (result.ok) {
-      waitingForHost.value = false;
       pageStep.value += 1;
     } else {
       let message: Translatable = '';

@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { BrowserContext, Locator, Page, TestInfo } from '@playwright/test';
+import { BrowserContext, Locator, Page, request, TestInfo } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { DisplaySize, ImportAllDocuments, ImportDocuments, MsPage } from '@tests/e2e/helpers/types';
 import { readFileSync } from 'fs';
+import { generate as otplibGenerate } from 'otplib';
 import path from 'path';
 
 interface QuestionOptions {
@@ -313,13 +314,12 @@ export async function dismissToast(page: Page): Promise<void> {
 
 export function getTestbedBootstrapAddr(orgName: string): string {
   const url = new URL(process.env.TESTBED_SERVER ?? '');
-  const port = url.port ? `:${url.port}` : '';
   let search = '?a=bootstrap_organization&p=wA';
 
   for (const [key, val] of url.searchParams.entries()) {
     search = `${search}&${key}=${val}`;
   }
-  return `${url.protocol}//${url.hostname}${port}/${orgName}${search}`;
+  return `${url.protocol}//${url.host}/${orgName}${search}`;
 }
 
 export function generateOrganizationLink(
@@ -327,7 +327,6 @@ export function generateOrganizationLink(
   linkType: 'async_enrollment' | 'claim_user' | 'claim_device' | 'path' | 'bootstrap_organization',
 ): string {
   const url = new URL(process.env.TESTBED_SERVER ?? '');
-  const port = url.port ? `:${url.port}` : '';
 
   let search = '';
   switch (linkType) {
@@ -358,18 +357,30 @@ export function generateOrganizationLink(
   for (const [key, val] of url.searchParams.entries()) {
     search = `${search}&${key}=${val}`;
   }
-  return `${url.protocol}//${url.hostname}${port}/${orgName}${search}`;
+  return `${url.protocol}//${url.host}/${orgName}${search}`;
 }
 
 export function getOrganizationAddr(orgName: string): string {
   const url = new URL(process.env.TESTBED_SERVER ?? '');
-  const port = url.port ? `:${url.port}` : '';
 
-  return `${url.protocol}//${url.hostname}${port}/${orgName}${url.search}`;
+  return `${url.protocol}//${url.host}/${orgName}${url.search}`;
 }
 
 export function getServerAddr(): string {
   return process.env.TESTBED_SERVER ?? '';
+}
+
+export function getServerHttpAddr(): string {
+  const server = getServerAddr();
+  if (!server) {
+    return server;
+  }
+  const url = new URL(server);
+  if (server.includes('no_ssl')) {
+    return `http://${url.host}`;
+  } else {
+    return `https://${url.host}`;
+  }
 }
 
 export async function login(homePage: Page, name: string): Promise<void> {
@@ -499,4 +510,24 @@ export async function sendEvent(page: MsPage, event: Events): Promise<void> {
     },
     [handle, event],
   );
+}
+
+export async function generateTotpCode(secret: string): Promise<string> {
+  return await otplibGenerate({ secret });
+}
+
+export async function resetTotp(server: string, orgName: string, email: string): Promise<string> {
+  const apiContext = await request.newContext();
+  const response = await apiContext.post(`${server}/administration/organizations/${orgName}/users/reset_totp`, {
+    headers: {
+      Authorization: 'Bearer s3cr3t',
+    },
+    data: {
+      // eslint-disable-next-line camelcase
+      user_email: email,
+    },
+  });
+  const body = await response.json();
+  await apiContext.dispose();
+  return body.totp_reset_url;
 }

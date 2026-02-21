@@ -88,8 +88,8 @@ msTest('Change password', async ({ myProfilePage }) => {
   await fillIonInput(currentPasswordContainer.locator('ion-input'), 'InvalidP@ssw0rd.');
   await expect(changePasswordModal.locator('#next-button')).toBeTrulyEnabled();
   await changePasswordModal.locator('#next-button').click();
-  await expect(currentPasswordContainer.locator('.form-error')).toBeVisible();
-  await expect(currentPasswordContainer.locator('.form-error')).toHaveText('Invalid authentication.');
+  await expect(changePasswordModal.locator('.ms-error')).toBeVisible();
+  await expect(changePasswordModal.locator('.ms-error')).toHaveText('Invalid authentication.');
 
   await fillIonInput(currentPasswordContainer.locator('ion-input'), 'P@ssw0rd.');
   await changePasswordModal.locator('#next-button').click();
@@ -106,11 +106,11 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(changePasswordModal.locator('.method-chosen')).toBeHidden();
   await changePasswordModal.locator('.authentication-card').nth(0).click();
   const passwordInputs = changePasswordModal.locator('.input-container').locator('ion-input');
-  await fillIonInput(passwordInputs.nth(1), newPassword);
-  await fillIonInput(passwordInputs.nth(2), 'no match');
+  await fillIonInput(passwordInputs.nth(2), newPassword);
+  await fillIonInput(passwordInputs.nth(3), 'no match');
   await expect(changePasswordModal.locator('.inputs-container-item').nth(1).getByText('Do not match')).toBeVisible();
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
-  await fillIonInput(passwordInputs.nth(2), newPassword);
+  await fillIonInput(passwordInputs.nth(3), newPassword);
   await expect(changePasswordModal.locator('#next-button')).toNotHaveDisabledAttribute();
   await changePasswordModal.locator('#next-button').click();
   await expect(changePasswordModal).toBeHidden();
