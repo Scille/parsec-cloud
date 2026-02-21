@@ -93,8 +93,13 @@ async function openLinkInWeb(): Promise<void> {
     case ParsedParsecAddrTag.WorkspacePath:
       await navigateTo(Routes.Home, { skipHandle: true, query: { fileLink: redirectLink.value } });
       break;
+    case ParsedParsecAddrTag.TOTPReset:
+      await navigateTo(Routes.Home, { skipHandle: true, query: { totpResetLink: redirectLink.value } });
+      break;
     default:
+      console.warn(`Unhandled link type '${linkType.value}', redirecting...`);
       await navigateTo(Routes.Home, { skipHandle: true });
+      break;
   }
 }
 </script>

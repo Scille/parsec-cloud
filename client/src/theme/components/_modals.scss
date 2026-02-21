@@ -30,7 +30,7 @@
 
   // global
   .modal {
-    padding: 2rem;
+    padding: 1.5rem;
 
     @include ms.responsive-breakpoint('sm') {
       padding: 0;
@@ -1110,6 +1110,53 @@
       color: var(--parsec-color-light-secondary-soft-text);
       line-height: 1.5rem;
       margin-bottom: 1.5rem;
+    }
+  }
+}
+
+.activate-totp-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-md);
+  }
+
+  &:has(.prompt-authentication) {
+    &::part(content) {
+      max-width: var(--parsec-modal-width-sm);
+    }
+  }
+
+  .information {
+    .ms-modal {
+      height: 100%;
+
+      @media only screen and (max-height: 800px) {
+        --height: 90vh;
+        height: 90vh;
+        overflow: auto;
+      }
+    }
+  }
+
+  &:has(.modal-content-information),
+  &:has(.modal-content-finalization) {
+    .ms-modal-footer-buttons .button-default {
+      width: 100%;
+    }
+  }
+}
+
+.delete-totp-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+
+  .ms-modal {
+    height: 100%;
+
+    @media only screen and (max-height: 400px) {
+      --height: 90vh;
+      height: 90vh;
+      overflow: auto;
     }
   }
 }

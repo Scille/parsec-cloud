@@ -43,6 +43,13 @@ async function handleAsyncEnrollmentLink(link: string): Promise<void> {
   await navigateTo(Routes.Home, { query: { asyncEnrollmentLink: link } });
 }
 
+async function handleTotpReset(link: string): Promise<void> {
+  if (!currentRouteIs(Routes.Home) && getConnectionHandle() !== null) {
+    await switchOrganization(null, true);
+  }
+  await navigateTo(Routes.Home, { query: { totpResetLink: link } });
+}
+
 async function handleFileLink(link: string, informationManager: InformationManager): Promise<void> {
   const result = await parseFileLink(link);
   if (!result.ok) {
@@ -144,5 +151,9 @@ export async function handleParsecLink(link: string, informationManager: Informa
     await handleBootstrapLink(link);
   } else if (result.value.tag === ParsedParsecAddrTag.AsyncEnrollment) {
     await handleAsyncEnrollmentLink(link);
+  } else if (result.value.tag === ParsedParsecAddrTag.TOTPReset) {
+    await handleTotpReset(link);
+  } else {
+    window.electronAPI.log('warn', `Unhandled link type '${result.value.tag}'`);
   }
 }
