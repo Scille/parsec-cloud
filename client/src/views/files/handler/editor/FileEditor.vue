@@ -70,6 +70,7 @@ import {
   CryptpadError,
   CryptpadErrorCodes,
   CryptpadOpenModes,
+  CryptpadSession,
   getCryptpadEditor,
   openDocument,
 } from '@/services/cryptpad';
@@ -91,8 +92,10 @@ const error = ref('');
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let eventCbId: null | string = null;
 const loadFinished = ref(false);
-let abortController: AbortController | undefined = undefined;
+let session: CryptpadSession | undefined = undefined;
 const frameReady = ref(false);
+let initialSaveDone = false;
+let pendingSaveResolve: ((success: boolean) => void) | null = null;
 
 const {
   contentInfo,
@@ -136,9 +139,9 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  if (abortController) {
-    abortController.abort();
-    abortController = undefined;
+  if (session) {
+    session.controller.abort();
+    session = undefined;
   }
 
   if (eventCbId) {
@@ -158,13 +161,13 @@ async function loadEditor(): Promise<void> {
     return;
   }
   frameReady.value = false;
-  if (abortController) {
-    abortController.abort();
-    abortController = undefined;
+  if (session) {
+    session.controller.abort();
+    session = undefined;
   }
 
   let isSaving = false;
-  abortController = await openDocument(
+  session = await openDocument(
     {
       documentContent: contentInfo.data,
       documentName: contentInfo.fileName,
@@ -225,6 +228,11 @@ async function loadEditor(): Promise<void> {
                 } else {
                   emits('onSaveStateChange', SaveState.Error);
                 }
+                // Resolve pending manual save promise
+                if (pendingSaveResolve) {
+                  pendingSaveResolve(!hasError);
+                  pendingSaveResolve = null;
+                }
               }
             },
             (window as any).TESTING === true ? 0 : Math.max(1000 - (end - start), 0),
@@ -234,6 +242,13 @@ async function loadEditor(): Promise<void> {
       onHasUnsavedChanges: (unsaved: boolean): void => {
         if (unsaved) {
           isSaving = false;
+          // Auto-save on initial unsaved changes (e.g. OO conversion artifacts)
+          if (!initialSaveDone) {
+            initialSaveDone = true;
+            window.electronAPI.log('info', 'Auto-saving initial unsaved changes');
+            save();
+            return;
+          }
           emits('onSaveStateChange', SaveState.Unsaved);
         }
       },
@@ -274,19 +289,6 @@ async function handleTimeout(): Promise<void> {
   // to ask the user if it wants to keep waiting or go back to files.
   const LOADING_TIMEOUT_MS = 30000;
   let shouldContinueWaiting = true;
-
-  // TODO: Fix timeout false positives - OnlyOffice doesn't reliably call onReady in some cases
-  // See: https://github.com/Scille/parsec-cloud/issues/11753
-  // For now, we ignore timeout for some files to avoid false positive "corrupted file" modals
-  const shouldSkipTimeout =
-    documentType.value === CryptpadEditors.Doc ||
-    documentType.value === CryptpadEditors.Presentation ||
-    (documentType.value === CryptpadEditors.Sheet && readOnly);
-
-  if (shouldSkipTimeout) {
-    window.electronAPI.log('info', 'Skipping timeout for DOCX and PPTX files');
-    return;
-  }
 
   // Wait for file to load with timeout and restart capability
   while (!loadFinished.value && shouldContinueWaiting) {
@@ -376,6 +378,31 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
   // Modal was dismissed (close button) - just close without navigating
   return 'close';
 }
+
+async function save(): Promise<boolean> {
+  if (!session) {
+    return false;
+  }
+  // If a save is already pending, resolve it as failed before starting a new one
+  if (pendingSaveResolve) {
+    pendingSaveResolve(false);
+    pendingSaveResolve = null;
+  }
+  return new Promise<boolean>((resolve) => {
+    const SAVE_TIMEOUT_MS = 5000;
+    pendingSaveResolve = resolve;
+    session!.save();
+    // Timeout in case save never completes
+    setTimeout(() => {
+      if (pendingSaveResolve === resolve) {
+        pendingSaveResolve = null;
+        resolve(false);
+      }
+    }, SAVE_TIMEOUT_MS);
+  });
+}
+
+defineExpose({ save });
 </script>
 
 <style scoped lang="scss">

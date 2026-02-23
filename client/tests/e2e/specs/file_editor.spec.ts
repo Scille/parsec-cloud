@@ -2,7 +2,6 @@
 
 import { TestInfo } from '@playwright/test';
 import {
-  answerQuestion,
   expect,
   fillInputModal,
   getClipboardText,
@@ -216,6 +215,9 @@ msTest.describe(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
         }, 300);
         setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
+        }, 450);
+        setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save', documentContent: new Blob([42, 42, 42, 42, 42, 42, 42], { type: 'application/octet-stream' }) });
         }, 800);
         setTimeout(() => {
@@ -238,11 +240,9 @@ msTest.describe(() => {
     await expect(frame.locator('#editor-container')).toHaveText('document.docx');
     await expect(parsecEditics.locator('.file-editor-error')).toBeHidden();
     const topbar = parsecEditics.locator('.file-handler-topbar');
-    await expect(topbar.locator('.save-info')).toBeVisible();
-    await expect(topbar.locator('.save-info-text')).toBeVisible();
+    await expect(parsecEditics.locator('#unsaved-changes')).toBeVisible();
     await expect(topbar.locator('.save-info-text')).toHaveText('Changes unsaved');
-    await parsecEditics.waitForTimeout(800);
-    await expect(topbar.locator('.save-info-text')).toHaveText('File saved');
+    await waitUntilSaved(parsecEditics);
   });
 
   msTest('Go back with unsaved status', async ({ parsecEditics }, testInfo: TestInfo) => {
@@ -256,6 +256,9 @@ msTest.describe(() => {
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
         }, 300);
+        setTimeout(() => {
+          sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
+        }, 450);
       `,
     });
     await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
@@ -277,12 +280,6 @@ msTest.describe(() => {
     await expect(topbar.locator('.save-info-text')).toBeVisible();
     await expect(topbar.locator('.save-info-text')).toHaveText('Changes unsaved');
     await topbar.locator('.back-button').click();
-    await answerQuestion(parsecEditics, true, {
-      expectedNegativeText: 'Stay on page',
-      expectedPositiveText: 'Discard changes',
-      expectedQuestionText: 'Some changes have not been saved yet. Do you want to discard them?',
-      expectedTitleText: 'Discard changes?',
-    });
     await expect(parsecEditics).toBeDocumentPage();
   });
 

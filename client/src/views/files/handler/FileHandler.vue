@@ -191,6 +191,7 @@
 
           <!-- file-handler sub-component -->
           <component
+            ref="handlerRef"
             v-if="detectedFileType"
             :is="handlerComponent"
             :content-info="contentInfo"
@@ -289,6 +290,7 @@ const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
 const { isVisible: isSidebarMenuVisible, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
 const handlerComponent: Ref<typeof FileEditor | typeof FileViewer | null> = shallowRef(null);
+const handlerRef = useTemplateRef<InstanceType<typeof FileEditor>>('handlerRef');
 const handlerMode = ref<FileHandlerMode | undefined>(undefined);
 const sidebarMenuVisibleOnMounted = ref(false);
 const userInfo: Ref<ClientInfo | undefined> = ref(undefined);
@@ -541,7 +543,18 @@ function loadComponent(): void {
 }
 
 async function checkSaved(): Promise<boolean> {
-  if (saveState.value !== SaveState.Saved && saveState.value !== SaveState.None) {
+  // Only attempt to save if the editor is active and the document was loaded
+  if (!isComponentEditor() || saveState.value === SaveState.None) {
+    return true;
+  }
+  // Always try to save when leaving the editor, since CryptPad
+  // may have unsaved changes not yet reported via onHasUnsavedChanges
+  if (handlerRef.value?.save) {
+    const saved = await handlerRef.value.save();
+    if (saved) {
+      return true;
+    }
+    // Save failed, ask the user
     const answer = await askQuestion('fileEditors.saving.notSavedTitle', 'fileEditors.saving.notSavedQuestion', {
       yesText: 'fileEditors.saving.notSavedDiscard',
       noText: 'fileEditors.saving.notSavedStay',
