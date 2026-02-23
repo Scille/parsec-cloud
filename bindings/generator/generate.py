@@ -427,9 +427,9 @@ class StrBasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_string/custom_to_rs_string contains a Rust closure snippet
     # `fn (String) -> Result<X, AsRef<str>>`
-    custom_from_rs_string: str | None = None
+    custom_from_rs_string: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<String, AsRef<str>>`
-    custom_to_rs_string: str | None = None
+    custom_to_rs_string: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -438,9 +438,9 @@ class BytesBasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_bytes/custom_to_rs_bytes contains a Rust closure snippet
     # `fn (&[u8]) -> Result<X, AsRef<str>>`
-    custom_from_rs_bytes: str | None = None
+    custom_from_rs_bytes: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
-    custom_to_rs_bytes: str | None = None
+    custom_to_rs_bytes: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -449,9 +449,9 @@ class F64BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_f64/custom_to_rs_f64 contains a Rust closure snippet
     # `fn (f64) -> Result<X, AsRef<str>>`
-    custom_from_rs_f64: str | None = None
+    custom_from_rs_f64: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<f64, AsRef<str>>`
-    custom_to_rs_f64: str | None = None
+    custom_to_rs_f64: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -460,9 +460,9 @@ class U8BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_u8/custom_to_rs_u8 contains a Rust closure snippet
     # `fn (u8) -> Result<X, AsRef<str>>`
-    custom_from_rs_u8: str | None = None
+    custom_from_rs_u8: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<u8, AsRef<str>>`
-    custom_to_rs_u8: str | None = None
+    custom_to_rs_u8: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -471,9 +471,9 @@ class U16BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_u16/custom_to_rs_u16 contains a Rust closure snippet
     # `fn (u16) -> Result<X, AsRef<str>>`
-    custom_from_rs_u16: str | None = None
+    custom_from_rs_u16: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<u16, AsRef<str>>`
-    custom_to_rs_u16: str | None = None
+    custom_to_rs_u16: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -482,9 +482,9 @@ class I32BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_i32/custom_to_rs_i32 contains a Rust closure snippet
     # `fn (&[u8]) -> Result<X, AsRef<str>>`
-    custom_from_rs_i32: str | None = None
+    custom_from_rs_i32: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
-    custom_to_rs_i32: str | None = None
+    custom_to_rs_i32: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -493,9 +493,9 @@ class U32BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_u32/custom_to_rs_u32 contains a Rust closure snippet
     # `fn (u32) -> Result<X, AsRef<str>>`
-    custom_from_rs_u32: str | None = None
+    custom_from_rs_u32: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<u32, AsRef<str>>`
-    custom_to_rs_u32: str | None = None
+    custom_to_rs_u32: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -504,9 +504,9 @@ class I64BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_i64/custom_to_rs_i64 contains a Rust closure snippet
     # `fn (i64) -> Result<X, AsRef<str>>`
-    custom_from_rs_i64: str | None = None
+    custom_from_rs_i64: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<i64, AsRef<str>>`
-    custom_to_rs_i64: str | None = None
+    custom_to_rs_i64: str | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -515,9 +515,9 @@ class U64BasedTypeInUse(BaseTypeInUse):
     name: str
     # If set, custom_from_rs_u64/custom_to_rs_u64 contains a Rust closure snippet
     # `fn (u64) -> Result<X, AsRef<str>>`
-    custom_from_rs_u64: str | None = None
+    custom_from_rs_u64: str | None = field(default=None, repr=False)
     # `fn (&X) -> Result<u64, AsRef<str>>`
-    custom_to_rs_u64: str | None = None
+    custom_to_rs_u64: str | None = field(default=None, repr=False)
 
 
 @dataclass
