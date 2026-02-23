@@ -14,6 +14,7 @@ namespace CryptpadCommAPI {
     Open = 'editics-open',
     OpenResult = 'editics-open-result',
     Event = 'editics-event',
+    Save = 'editics-save',
   }
 
   export enum Events {
@@ -135,11 +136,16 @@ function cryptpadLog(level: 'debug' | 'warn' | 'error' | 'info', message: string
   window.electronAPI.log(level, `[Cryptpad] ${message}`);
 }
 
+export interface CryptpadSession {
+  controller: AbortController;
+  save: () => void;
+}
+
 export async function openDocument(
   options: OpenDocumentOptions,
   handlers: CryptpadEventHandlers,
   frame: HTMLIFrameElement,
-): Promise<AbortController | undefined> {
+): Promise<CryptpadSession | undefined> {
   const CRYPTPAD_SERVER = Env.getDefaultCryptpadServer();
 
   function sendMessageToFrame(command: CryptpadCommAPI.Commands, data?: any): void {
@@ -260,5 +266,11 @@ export async function openDocument(
   cryptpadLog('debug', 'Initializing the frame');
   sendMessageToFrame(CryptpadCommAPI.Commands.Init);
 
-  return controller;
+  return {
+    controller,
+    save: () => {
+      cryptpadLog('debug', 'Triggering manual save');
+      sendMessageToFrame(CryptpadCommAPI.Commands.Save);
+    },
+  };
 }

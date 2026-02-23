@@ -59,8 +59,12 @@ function generateScriptContent(initFunction: string = DEFAULT_INIT_FUNCTION, ope
   return `
   (function () {
     let origin = undefined;
+    let lastSavedContent = null;
 
     function sendToParent(data) {
+      if (data.command === 'editics-event' && data.event === 'save') {
+        lastSavedContent = data.documentContent;
+      }
       window.parent.postMessage(data, origin);
     }
 
@@ -69,6 +73,7 @@ function generateScriptContent(initFunction: string = DEFAULT_INIT_FUNCTION, ope
     }
 
     function openFile(data) {
+      lastSavedContent = data.documentContent;
       ${openFunction}
     }
 
@@ -84,6 +89,15 @@ function generateScriptContent(initFunction: string = DEFAULT_INIT_FUNCTION, ope
         }
         case 'editics-open': {
           openFile(event.data);
+          break;
+        }
+        case 'editics-save': {
+          if (lastSavedContent) {
+            if (!(lastSavedContent instanceof Blob)) {
+              lastSavedContent = new Blob([lastSavedContent], { type: 'application/octet-stream' });
+            }
+            sendToParent({ command: 'editics-event', event: 'save', documentContent: lastSavedContent });
+          }
           break;
         }
       }
