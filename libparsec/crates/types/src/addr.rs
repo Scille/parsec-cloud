@@ -1228,7 +1228,10 @@ impl ParsecTOTPResetAddr {
  */
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ParsecAnonymousAddr {
+pub struct ParsecAnonymousAddr(ParsecAnonymousAddrInternal);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ParsecAnonymousAddrInternal {
     Organization(ParsecOrganizationAddr),
     OrganizationBootstrap(ParsecOrganizationBootstrapAddr),
     PkiEnrollment(ParsecPkiEnrollmentAddr),
@@ -1241,86 +1244,86 @@ impl ParsecAnonymousAddr {
         // Small hack: we benefit from the fact a bootstrap organization can be
         // constructed from the parameters we have at hand.
         let addr = ParsecOrganizationBootstrapAddr::new(server_addr, organization_id, None);
-        Self::OrganizationBootstrap(addr)
+        Self(ParsecAnonymousAddrInternal::OrganizationBootstrap(addr))
     }
 
     /// Return an [Url] that points to the server endpoint for anonymous commands.
     pub fn to_anonymous_http_url(&self) -> Url {
-        let (ParsecAnonymousAddr::Organization(ParsecOrganizationAddr {
+        let (ParsecAnonymousAddrInternal::Organization(ParsecOrganizationAddr {
             base,
             organization_id,
             ..
         })
-        | ParsecAnonymousAddr::OrganizationBootstrap(ParsecOrganizationBootstrapAddr {
+        | ParsecAnonymousAddrInternal::OrganizationBootstrap(ParsecOrganizationBootstrapAddr {
             base,
             organization_id,
             ..
         })
-        | ParsecAnonymousAddr::PkiEnrollment(ParsecPkiEnrollmentAddr {
+        | ParsecAnonymousAddrInternal::PkiEnrollment(ParsecPkiEnrollmentAddr {
             base,
             organization_id,
         })
-        | ParsecAnonymousAddr::AsyncEnrollment(ParsecAsyncEnrollmentAddr {
+        | ParsecAnonymousAddrInternal::AsyncEnrollment(ParsecAsyncEnrollmentAddr {
             base,
             organization_id,
         })
-        | ParsecAnonymousAddr::TOTPReset(ParsecTOTPResetAddr {
+        | ParsecAnonymousAddrInternal::TOTPReset(ParsecTOTPResetAddr {
             base,
             organization_id,
             ..
-        })) = self;
+        })) = &self.0;
         base.to_http_url(Some(&format!("/anonymous/{organization_id}")))
     }
 
     pub fn organization_id(&self) -> &OrganizationID {
-        match self {
-            ParsecAnonymousAddr::Organization(addr) => addr.organization_id(),
-            ParsecAnonymousAddr::OrganizationBootstrap(addr) => addr.organization_id(),
-            ParsecAnonymousAddr::PkiEnrollment(addr) => addr.organization_id(),
-            ParsecAnonymousAddr::AsyncEnrollment(addr) => addr.organization_id(),
-            ParsecAnonymousAddr::TOTPReset(addr) => addr.organization_id(),
+        match &self.0 {
+            ParsecAnonymousAddrInternal::Organization(addr) => addr.organization_id(),
+            ParsecAnonymousAddrInternal::OrganizationBootstrap(addr) => addr.organization_id(),
+            ParsecAnonymousAddrInternal::PkiEnrollment(addr) => addr.organization_id(),
+            ParsecAnonymousAddrInternal::AsyncEnrollment(addr) => addr.organization_id(),
+            ParsecAnonymousAddrInternal::TOTPReset(addr) => addr.organization_id(),
         }
     }
 }
 
 impl From<ParsecOrganizationAddr> for ParsecAnonymousAddr {
     fn from(addr: ParsecOrganizationAddr) -> Self {
-        Self::Organization(addr)
+        Self(ParsecAnonymousAddrInternal::Organization(addr))
     }
 }
 
 impl From<ParsecOrganizationBootstrapAddr> for ParsecAnonymousAddr {
     fn from(addr: ParsecOrganizationBootstrapAddr) -> Self {
-        Self::OrganizationBootstrap(addr)
+        Self(ParsecAnonymousAddrInternal::OrganizationBootstrap(addr))
     }
 }
 
 impl From<ParsecPkiEnrollmentAddr> for ParsecAnonymousAddr {
     fn from(addr: ParsecPkiEnrollmentAddr) -> Self {
-        Self::PkiEnrollment(addr)
+        Self(ParsecAnonymousAddrInternal::PkiEnrollment(addr))
     }
 }
 
 impl From<ParsecAsyncEnrollmentAddr> for ParsecAnonymousAddr {
     fn from(addr: ParsecAsyncEnrollmentAddr) -> Self {
-        Self::AsyncEnrollment(addr)
+        Self(ParsecAnonymousAddrInternal::AsyncEnrollment(addr))
     }
 }
 
 impl From<ParsecTOTPResetAddr> for ParsecAnonymousAddr {
     fn from(addr: ParsecTOTPResetAddr) -> Self {
-        Self::TOTPReset(addr)
+        Self(ParsecAnonymousAddrInternal::TOTPReset(addr))
     }
 }
 
 impl From<ParsecAnonymousAddr> for ParsecAddr {
     fn from(addr: ParsecAnonymousAddr) -> Self {
-        let base = match addr {
-            ParsecAnonymousAddr::Organization(addr) => addr.base,
-            ParsecAnonymousAddr::OrganizationBootstrap(addr) => addr.base,
-            ParsecAnonymousAddr::PkiEnrollment(addr) => addr.base,
-            ParsecAnonymousAddr::AsyncEnrollment(addr) => addr.base,
-            ParsecAnonymousAddr::TOTPReset(addr) => addr.base,
+        let base = match addr.0 {
+            ParsecAnonymousAddrInternal::Organization(addr) => addr.base,
+            ParsecAnonymousAddrInternal::OrganizationBootstrap(addr) => addr.base,
+            ParsecAnonymousAddrInternal::PkiEnrollment(addr) => addr.base,
+            ParsecAnonymousAddrInternal::AsyncEnrollment(addr) => addr.base,
+            ParsecAnonymousAddrInternal::TOTPReset(addr) => addr.base,
         };
         ParsecAddr { base }
     }
