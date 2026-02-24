@@ -88,6 +88,7 @@ import {
   claimAndBootstrapLinkValidator,
   claimDeviceLinkValidator,
   claimUserLinkValidator,
+  totpResetLinkValidator,
 } from '@/common/validators';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import {
@@ -114,6 +115,7 @@ import {
   constructAccessStrategy,
   constructSaveStrategy,
   deleteJoinRequest,
+  fetchTotpOpaqueKey,
   getDeviceHandle,
   getOrganizationCreationDate,
   getServerConfig,
@@ -150,6 +152,7 @@ import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
+import ActivateTotpModal from '@/views/totp/ActivateTotpModal.vue';
 import AsyncEnrollmentModal from '@/views/users/AsyncEnrollmentModal.vue';
 import AsyncEnrollmentOpenBaoAuthModal from '@/views/users/AsyncEnrollmentOpenBaoAuthModal.vue';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
@@ -390,6 +393,8 @@ async function handleQuery(): Promise<void> {
     openCreateOrganizationModal(query.bootstrapLink);
   } else if (query.asyncEnrollmentLink) {
     handleAsyncEnrollment(query.asyncEnrollmentLink);
+  } else if (query.totpResetLink) {
+    handleTotpReset(query.totpResetLink);
   } else if (query.deviceId) {
     const availableDevices = await listAvailableDevices();
     const device = availableDevices.find((d) => d.deviceId === query.deviceId);
@@ -454,14 +459,62 @@ async function onJoinOrganizationClicked(): Promise<void> {
   );
 
   if (link) {
+    const result = await parseParsecAddr(link);
+
+    if (!result.ok) {
+    }
     if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
       await openCreateOrganizationModal(link);
     } else if ((await asyncEnrollmentLinkValidator(link)).validity === Validity.Valid) {
       await handleAsyncEnrollment(link);
+    } else if ((await totpResetLinkValidator(link)).validity === Validity.Valid) {
+      await handleTotpReset(link);
     } else {
       await openJoinByLinkModal(link);
     }
   }
+}
+
+async function handleTotpReset(link: string): Promise<void> {
+  const addrResult = await parseParsecAddr(link);
+
+  if (!addrResult.ok || addrResult.value.tag !== ParsedParsecAddrTag.TOTPReset) {
+    informationManager.present(
+      new Information({
+        message: 'HomePage.organizationRequest.totp.invalidLink',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+  const modal = await modalController.create({
+    component: ActivateTotpModal,
+    cssClass: 'activate-totp-modal',
+    componentProps: {
+      params: {
+        mode: 'reset',
+        link: link,
+      },
+    },
+    canDismiss: true,
+    backdropDismiss: true,
+    showBackdrop: true,
+  });
+  await modal.present();
+  const { role } = await modal.onDidDismiss();
+  await modal.dismiss();
+
+  if (role !== MsModalResult.Confirm) {
+    return;
+  }
+  informationManager.present(
+    new Information({
+      message: 'Authentication.mfa.mfaSuccess.description',
+      level: InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
 }
 
 async function handleAsyncEnrollment(link: string): Promise<void> {
@@ -788,7 +841,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       window.electronAPI.log('debug', 'Logging in with Smartcard');
       await login(
         device,
-        constructAccessStrategy(device, PrimaryProtectionStrategy.useSmartcard((device as any as AvailableDeviceTypePKI).certificateRef)),
+        constructAccessStrategy(device, PrimaryProtectionStrategy.useSmartcard((device.ty as AvailableDeviceTypePKI).certificateRef)),
       );
     } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {
       try {
@@ -907,6 +960,35 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   loginInProgress.value = true;
   window.electronAPI.log('debug', 'Starting Parsec login');
+
+  if (device.totpOpaqueKeyId !== null) {
+    const code = await getTextFromUser(
+      {
+        title: 'Authentication.mfa.totpRequired',
+        subtitle: 'Authentication.mfa.totpRequiredSubtitle',
+        trim: true,
+      },
+      true,
+    );
+    if (!code) {
+      return;
+    }
+    const fetchTotpResult = await fetchTotpOpaqueKey(device.serverAddr, device.organizationId, device.userId, device.totpOpaqueKeyId, code);
+    if (!fetchTotpResult.ok) {
+      window.electronAPI.log('warn', `Failed to retrieve totp opaque key: '${fetchTotpResult.error.tag}'`);
+      informationManager.present(
+        new Information({
+          message: 'Authentication.mfa.error.failedToRetrieveKey',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      loginInProgress.value = false;
+      return;
+    }
+    access.totpProtection = [device.totpOpaqueKeyId, fetchTotpResult.value];
+  }
+
   const result = await parsecLogin(device, access);
   if (result.ok) {
     window.electronAPI.log('debug', 'getOrganizationCreationDate');

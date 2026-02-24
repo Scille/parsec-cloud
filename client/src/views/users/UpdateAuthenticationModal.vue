@@ -40,30 +40,11 @@
           v-show="pageStep === ChangeAuthenticationStep.CurrentAuthentication"
           class="step"
         >
-          <ms-password-input
-            v-if="currentDevice.ty.tag === AvailableDeviceTypeTag.Password"
-            v-model="currentPassword"
-            @change="updateError"
-            label="Password.currentPassword"
-            @on-enter-keyup="nextStep()"
-            :password-is-invalid="passwordIsInvalid"
-            :error-message="errorMessage"
-            ref="currentPasswordInput"
+          <prompt-current-authentication
+            :device="currentDevice"
+            @authentication-selected="onCurrentAuthenticationSelected"
+            @enter-pressed="nextStep"
           />
-          <div
-            class="provider-card"
-            v-if="currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao"
-          >
-            <sso-provider-card
-              :provider="(currentDevice.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId as OpenBaoAuthConfigTag"
-              :is-connected="openBaoClient !== undefined"
-              @sso-selected="onSSOLoginClicked"
-            />
-            <ms-spinner
-              v-if="querying"
-              class="provider-card-spinner"
-            />
-          </div>
         </div>
         <div
           v-show="pageStep === ChangeAuthenticationStep.ChooseNewAuthMethod"
@@ -76,6 +57,14 @@
           />
         </div>
       </div>
+
+      <ms-report-text
+        v-if="errorMessage"
+        :theme="MsReportTheme.Error"
+        class="modal-report-error"
+      >
+        {{ $msTranslate(errorMessage) }}
+      </ms-report-text>
 
       <ion-footer class="modal-footer">
         <div class="modal-footer-buttons">
@@ -91,13 +80,9 @@
             size="default"
             id="next-button"
             @click="nextStep"
-            :disabled="!canGoForward || querying"
+            :disabled="!canGoForward"
           >
             {{ $msTranslate(texts.button) }}
-            <ms-spinner
-              v-show="querying"
-              class="modal-footer-buttons-spinner"
-            />
           </ion-button>
         </div>
       </ion-footer>
@@ -106,31 +91,25 @@
 </template>
 
 <script setup lang="ts">
-import { SsoProviderCard } from '@/components/devices';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import {
   AvailableDevice,
-  AvailableDeviceTypeOpenBao,
   AvailableDeviceTypeTag,
   DevicePrimaryProtectionStrategy,
-  DevicePrimaryProtectionStrategyOpenBao,
-  DevicePrimaryProtectionStrategyPassword,
-  OpenBaoAuthConfigTag,
-  PrimaryProtectionStrategy,
   ServerConfig,
   UpdateDeviceErrorTag,
   constructAccessStrategy,
   isAuthenticationValid,
   updateDeviceChangeAuthentication,
 } from '@/parsec';
-import { AvailableDeviceTypePKI } from '@/plugins/libparsec';
+import { DevicePrimaryProtectionStrategyTag } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { OpenBaoClient, OpenBaoErrorType, openBaoConnect } from '@/services/openBao';
+import PromptCurrentAuthentication from '@/views/users/PromptCurrentAuthentication.vue';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { MsModalResult, MsPasswordInput, MsSpinner, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
-import { Ref, computed, onMounted, ref, useTemplateRef } from 'vue';
+import { MsModalResult, MsReportText, MsReportTheme, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
+import { Ref, computed, onMounted, ref, toRaw, useTemplateRef } from 'vue';
 
 enum ChangeAuthenticationStep {
   Undefined,
@@ -147,12 +126,8 @@ const props = defineProps<{
 const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(ChangeAuthenticationStep.Undefined);
 const chooseAuthRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('chooseAuth');
-const currentPassword = ref('');
 const errorMessage: Ref<Translatable> = ref('');
-const passwordIsInvalid = ref(false);
-const currentPasswordInputRef = useTemplateRef<InstanceType<typeof MsPasswordInput>>('currentPasswordInput');
-const querying = ref(false);
-const openBaoClient = ref<OpenBaoClient | undefined>(undefined);
+const currentAuth = ref<DevicePrimaryProtectionStrategy | undefined>(undefined);
 
 const texts = computed(() => {
   switch (pageStep.value) {
@@ -171,132 +146,52 @@ const texts = computed(() => {
 });
 
 onMounted(async () => {
-  if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password || props.currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao) {
-    pageStep.value = ChangeAuthenticationStep.CurrentAuthentication;
-    if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password) {
-      await currentPasswordInputRef.value?.setFocus();
-    }
-  } else {
-    pageStep.value = ChangeAuthenticationStep.ChooseNewAuthMethod;
-  }
+  pageStep.value = ChangeAuthenticationStep.CurrentAuthentication;
 });
 
 async function nextStep(): Promise<void> {
-  if (pageStep.value === ChangeAuthenticationStep.CurrentAuthentication) {
-    let primaryProtection!: DevicePrimaryProtectionStrategyPassword | DevicePrimaryProtectionStrategyOpenBao;
-    if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password) {
-      primaryProtection = PrimaryProtectionStrategy.usePassword(currentPassword.value);
-    } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao) {
-      if (!openBaoClient.value) {
-        return;
-      }
-      primaryProtection = PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo());
-    }
-    const access = constructAccessStrategy(props.currentDevice, primaryProtection);
+  if (pageStep.value === ChangeAuthenticationStep.CurrentAuthentication && currentAuth.value) {
+    const access = constructAccessStrategy(props.currentDevice, toRaw(currentAuth.value));
     const result = await isAuthenticationValid(props.currentDevice, access);
     if (result) {
+      errorMessage.value = '';
       pageStep.value = ChangeAuthenticationStep.ChooseNewAuthMethod;
     } else {
       errorMessage.value = 'MyProfilePage.errors.wrongAuthentication';
-      passwordIsInvalid.value = true;
     }
   } else if (pageStep.value === ChangeAuthenticationStep.ChooseNewAuthMethod) {
-    querying.value = true;
     await changeAuthentication();
-    querying.value = false;
   }
 }
 
 const canGoForward = asyncComputed(async () => {
-  if (pageStep.value === ChangeAuthenticationStep.CurrentAuthentication) {
-    if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password && currentPassword.value.length > 0) {
-      return true;
-    } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao && openBaoClient.value) {
-      return true;
-    }
+  if (pageStep.value === ChangeAuthenticationStep.CurrentAuthentication && currentAuth.value) {
+    return true;
   } else if (pageStep.value === ChangeAuthenticationStep.ChooseNewAuthMethod && chooseAuthRef.value) {
     return await chooseAuthRef.value.areFieldsCorrect();
   }
   return false;
 });
 
-async function onSSOLoginClicked(): Promise<void> {
-  if (querying.value) {
-    window.electronAPI.log('warn', 'Clicked on SSO login while already login in');
-    return;
-  }
-  if (!props.serverConfig || !props.serverConfig.openbao) {
-    window.electronAPI.log('error', 'Server config or current device not found');
-    return;
-  }
-  if (props.currentDevice.ty.tag !== AvailableDeviceTypeTag.OpenBao) {
-    window.electronAPI.log('error', 'Device is not OpenBao device');
-    return;
-  }
-  const provider = (props.currentDevice.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId;
-  const auth = props.serverConfig.openbao.auths.find((v) => v.tag === provider);
-  if (!auth) {
-    window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
-    return;
-  }
-  try {
-    querying.value = true;
-    const result = await openBaoConnect(
-      props.serverConfig.openbao.serverUrl,
-      auth.tag,
-      auth.mountPath,
-      props.serverConfig.openbao.secret.mountPath,
-      props.serverConfig.openbao.transitMountPath,
-    );
-    if (!result.ok) {
-      if (result.error.type === OpenBaoErrorType.PopupFailed) {
-        errorMessage.value = 'Authentication.popupBlocked';
-      } else {
-        errorMessage.value = 'Authentication.invalidOpenBaoData';
-      }
-      window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
-    } else {
-      openBaoClient.value = result.value;
+async function onCurrentAuthenticationSelected(protection?: DevicePrimaryProtectionStrategy): Promise<void> {
+  currentAuth.value = protection;
+  if (currentAuth.value) {
+    if ([DevicePrimaryProtectionStrategyTag.Keyring, DevicePrimaryProtectionStrategyTag.PKI].includes(currentAuth.value.tag)) {
+      pageStep.value = ChangeAuthenticationStep.ChooseNewAuthMethod;
     }
-  } finally {
-    querying.value = false;
   }
 }
 
 async function changeAuthentication(): Promise<void> {
-  let protection!: DevicePrimaryProtectionStrategy;
-
-  if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Keyring) {
-    protection = PrimaryProtectionStrategy.useKeyring();
-  } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.Password) {
-    protection = PrimaryProtectionStrategy.usePassword(currentPassword.value);
-  } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.PKI) {
-    protection = PrimaryProtectionStrategy.useSmartcard((props.currentDevice as any as AvailableDeviceTypePKI).certificateRef);
-  } else if (props.currentDevice.ty.tag === AvailableDeviceTypeTag.OpenBao) {
-    if (!openBaoClient.value) {
-      window.electronAPI.log('error', 'OpenBaoClient should not be undefined at this step');
-      return;
-    }
-    protection = PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo());
-  } else {
-    // Should not happen
-    window.electronAPI.log('error', `Unhandled authentication type for this device: ${props.currentDevice.ty.tag}`);
-    props.informationManager.present(
-      new Information({
-        message: 'MyProfilePage.errors.cannotChangeAuthentication',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
-
   const saveStrategy = chooseAuthRef.value?.getSaveStrategy();
-  if (!saveStrategy) {
+  if (!saveStrategy || !currentAuth.value) {
     return;
   }
 
-  const result = await updateDeviceChangeAuthentication(constructAccessStrategy(props.currentDevice, protection), saveStrategy);
+  const result = await updateDeviceChangeAuthentication(
+    constructAccessStrategy(props.currentDevice, toRaw(currentAuth.value)),
+    saveStrategy,
+  );
 
   if (result.ok) {
     props.informationManager.present(
@@ -325,11 +220,6 @@ async function changeAuthentication(): Promise<void> {
   }
 }
 
-function updateError(): void {
-  passwordIsInvalid.value = false;
-  errorMessage.value = '';
-}
-
 async function cancel(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Cancel);
 }
@@ -344,6 +234,10 @@ async function cancel(): Promise<boolean> {
   width: 1rem;
   height: 1rem;
   margin-left: 0.5rem;
+}
+
+.modal-report-error {
+  margin-top: 1rem;
 }
 
 .provider-card {

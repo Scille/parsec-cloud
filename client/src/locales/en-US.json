@@ -323,6 +323,9 @@
                 "rejected": "Rejected",
                 "cancelled": "Cancelled"
             },
+            "totp": {
+                "invalidLink": "This link is a not a valid Multi-Factor Authentication reset link."
+            },
             "requestSent": {
                 "success": "Your request to join the organization has been sent.",
                 "failure": "Failed to send the request. Please try again later.",
@@ -1305,7 +1308,69 @@
         "keyringUnavailableOnWeb": "Unavailable on web",
         "openBaoUnavailable": "Single Sign-On not available on this server.",
         "invalidOpenBaoData": "The SSO configuration provided by the server is invalid. Please contact an administrator.",
-        "popupBlocked": "Please make sure that your browser allows pop-ups for this website."
+        "popupBlocked": "Please make sure that your browser allows pop-ups for this website.",
+        "mfa": {
+            "title": "Multi-Factor Authentication (MFA)",
+            "description": "Add an additional layer of security when logging in to this organization from all your devices.",
+            "info": "The organization requires multi-factor authentication.",
+            "or": "Or",
+            "inactive": "Inactive",
+            "active": "Active",
+            "totpRequired": "Multi-factor authentication (MFA)",
+            "totpRequiredSubtitle": "Please enter the code provided by your authentication application to log in to this organisation.",
+            "step1": {
+                "title": "1. Install an authentication app on your mobile",
+                "description": "Download and install an authenticator app, such as FreeOTP or Aegis Authenticator, to your mobile device."
+            },
+            "step2": {
+                "title": "2. Scan the QR code or copy the key",
+                "description": "Scan the QR code in your authentication app or copy/paste the key in the app.",
+                "buttonCopy": "Copy key",
+                "buttonCopied": "Key copied"
+            },
+            "step3": {
+                "title": "Enter the 6-digit code",
+                "description": "After scanning the QR code or pasting the key, your authentication app will generate a 6-digit code to enter."
+            },
+            "buttons": {
+                "next": "Next",
+                "done": "Done",
+                "back": "Go back",
+                "configure": "Enable MFA",
+                "delete": "Delete MFA"
+            },
+            "error": {
+                "invalidCode": "The code you entered is invalid. Please try again.",
+                "getStatus": "Failed to get the status of multi-factor authentication. Please make sure you are online and try again.",
+                "emptyCode": "Please enter the 6-digit code from your authenticator app.",
+                "failedToRetrieveKey": "Failed to retrieve the MFA configuration key. Please make sure you are online and try again.",
+                "failedToConfigure": "Failed to configure multi-factor authentication. Please make sure you are online and try again.",
+                "failedToDelete": "Failed to delete multi-factor authentication.",
+                "failedToReset": "Failed to reconfigure your multi-factor authentication"
+            },
+            "digitCode": {
+                "label": "Enter the 6-digit code from your authenticator app",
+                "placeholder": "6-digit code"
+            },
+            "mfaSuccess": {
+                "info": "Your authentication method has been successfully updated.",
+                "description": "Multi-factor authentication has been successfully enabled and will now be required to log in to this organisation.",
+                "deleteOk": "Multi-factor authentication has been removed"
+            },
+            "delete": {
+                "title": "Delete Multi-Factor Authentication",
+                "warning": "You are about to delete multi-factor authentication. This will reduce the security of your account.",
+                "authenticationTitle": "Current authentication",
+                "totpCodeTitle": "MFA code",
+                "confirmButton": "Delete MFA",
+                "cancelButton": "Cancel",
+                "success": "Multi-factor authentication has been successfully deleted.",
+                "error": {
+                    "notSetup": "Multi-factor authentication is not set up.",
+                    "wrongAuthentication": "The authentication is incorrect. Please try again."
+                }
+            }
+        }
     },
     "PasswordInputModal": {
         "passwordNeeded": "Password needed",
@@ -1728,8 +1793,8 @@
                 "pkiCorrupted": "PKI (corrupted)"
             },
             "linkCopiedToClipboard": {
-                "success": "Invitation link has been copied to clipboard.",
-                "failed": "Failed to copy the invitation link. Your browser or device does not seem to support copy/paste."
+                "success": "PKI link has been copied to clipboard.",
+                "failed": "Failed to copy the PKI link. Your browser or device does not seem to support copy/paste."
             },
             "tooltips": {
                 "reject": "Reject request"
