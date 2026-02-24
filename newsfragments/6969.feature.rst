@@ -1,1 +1,0 @@
-User can show or hide a workspace from the list of workspaces. A hidden workspace will be not visible from the explorer (on desktop app) and can be toggled to be visible or not in Parsec.
