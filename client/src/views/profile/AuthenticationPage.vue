@@ -53,12 +53,13 @@
               {{ $msTranslate('Authentication.mfa.description') }}
             </ion-text>
           </div>
-          <ms-report-text
+          <div
+            class="authentication-item-text mfa-error"
             v-else
-            :theme="MsReportTheme.Error"
           >
-            {{ $msTranslate('Authentication.mfa.error.emptyStatus') }}
-          </ms-report-text>
+            <ion-text class="authentication-item-text__label title-h4">{{ $msTranslate('Authentication.mfa.title') }}</ion-text>
+            <ms-report-text :theme="MsReportTheme.Error">{{ $msTranslate('Authentication.mfa.error.emptyStatus') }}</ms-report-text>
+          </div>
           <ion-button
             v-if="totpStatus && totpStatus.tag === TOTPSetupStatusTag.Stalled"
             id="change-authentication-button"
@@ -406,5 +407,11 @@ async function deleteTotp(): Promise<void> {
   ion-icon {
     font-size: 1.25rem;
   }
+}
+
+.mfa-error {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 </style>

@@ -1317,7 +1317,7 @@
             "inactive": "Inactive",
             "active": "Active",
             "totpRequired": "Une authentification multifacteur est requise pour cette organisation.",
-                "totpRequiredSubtitle": "Veuillez saisir le code fourni par votre application d'authentification pour vous connecter à cette organisation.",
+            "totpRequiredSubtitle": "Veuillez saisir le code fourni par votre application d'authentification pour vous connecter à cette organisation.",
             "step1": {
                 "title": "1. Installer une application d'authentification sur votre mobile",
                 "description": "Téléchargez et installez une application d'authentification, telle que FreeOTP ou Aegis Authenticator, sur votre appareil mobile."
@@ -1342,7 +1342,7 @@
             "error": {
                 "invalidCode": "Le code que vous avez saisi est invalide. Veuillez réessayer.",
                 "emptyCode": "Veuillez saisir le code à 6 chiffres de votre application d'authentification.",
-                "getStatus": "Impossible d'obtenir le statut de l'authentification multifacteur. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
+                "emptyStatus": "Impossible d'obtenir le statut de l'authentification multifacteur. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
                 "failedToRetrieveKey": "Impossible de récupérer la clé de configuration MFA. Veuillez vous assurer que vous êtes en ligne et réessayer.",
                 "failedToConfigure": "Impossible de configurer l'authentification multifacteur. Veuillez vous assurer que vous êtes en ligne et réessayer.",
                 "failedToDelete": "Impossible de supprimer l'authentification multifacteur",

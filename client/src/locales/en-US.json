@@ -1341,7 +1341,7 @@
             },
             "error": {
                 "invalidCode": "The code you entered is invalid. Please try again.",
-                "getStatus": "Failed to get the status of multi-factor authentication. Please make sure you are online and try again.",
+                "emptyStatus": "Failed to get the status of multi-factor authentication. Please make sure you are online and try again.",
                 "emptyCode": "Please enter the 6-digit code from your authenticator app.",
                 "failedToRetrieveKey": "Failed to retrieve the MFA configuration key. Please make sure you are online and try again.",
                 "failedToConfigure": "Failed to configure multi-factor authentication. Please make sure you are online and try again.",
