@@ -964,8 +964,8 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
   if (device.totpOpaqueKeyId !== null) {
     const code = await getTextFromUser(
       {
-        title: 'Authentication.mfa.error.totpRequired',
-        subtitle: 'Authentication.mfa.error.totpRequiredSubtitle',
+        title: 'Authentication.mfa.totpRequired',
+        subtitle: 'Authentication.mfa.totpRequiredSubtitle',
         trim: true,
       },
       true,

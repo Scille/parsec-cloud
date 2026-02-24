@@ -1316,6 +1316,8 @@
             "or": "Or",
             "inactive": "Inactive",
             "active": "Active",
+            "totpRequired": "Multi-factor authentication (MFA)",
+            "totpRequiredSubtitle": "Please enter the code provided by your authentication application to log in to this organisation.",
             "step1": {
                 "title": "1. Install an authentication app on your mobile",
                 "description": "Download and install an authenticator app, such as FreeOTP or Aegis Authenticator, to your mobile device."
@@ -1344,9 +1346,7 @@
                 "failedToRetrieveKey": "Failed to retrieve the MFA configuration key. Please make sure you are online and try again.",
                 "failedToConfigure": "Failed to configure multi-factor authentication. Please make sure you are online and try again.",
                 "failedToDelete": "Failed to delete multi-factor authentication.",
-                "failedToReset": "Failed to reconfigure your multi-factor authentication",
-                "totpRequired": "Multi-factor authentication is required to log in to this organization.",
-                "totpRequiredSubtitle": "Please enter the 6-digit code from your authenticator app to continue."
+                "failedToReset": "Failed to reconfigure your multi-factor authentication"
             },
             "digitCode": {
                 "label": "Enter the 6-digit code from your authenticator app",
