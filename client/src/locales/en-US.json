@@ -1080,6 +1080,16 @@
             "invitations": {
                 "emailInvitations": "Email invitations",
                 "linkRequests": "Link requests"
+            },
+            "modal": {
+                "titleActive": "Active users",
+                "titleRevoked": "Revoked users",
+                "titleFrozen": "Frozen users",
+                "titleAdmins": "Administrator users",
+                "titleStandards": "Standard users",
+                "titleOutsiders": "External users",
+                "loading": "Loading users...",
+                "noUsers": "No users found in this category"
             }
         },
         "size": {

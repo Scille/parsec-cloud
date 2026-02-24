@@ -1080,6 +1080,16 @@
             "invitations": {
                 "emailInvitations": "Invitations par e-mail",
                 "linkRequests": "Demandes par lien"
+            },
+            "modal": {
+                "titleActive": "Utilisateurs actifs",
+                "titleRevoked": "Utilisateurs révoqués",
+                "titleFrozen": "Utilisateurs suspendus",
+                "titleAdmins": "Utilisateurs administrateurs",
+                "titleStandards": "Utilisateurs standards",
+                "titleOutsiders": "Utilisateurs externes",
+                "loading": "Chargement des utilisateurs...",
+                "noUsers": "Aucun utilisateur trouvé dans cette catégorie"
             }
         },
         "size": {

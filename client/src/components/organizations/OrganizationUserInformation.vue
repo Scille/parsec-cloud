@@ -19,7 +19,10 @@
           {{ $msTranslate('OrganizationPage.users.listTitle') }}
         </ion-text>
         <!-- Active users -->
-        <div class="users-list-item">
+        <div
+          class="users-list-item"
+          @click="openInformationUserModal(UserFilterType.Active)"
+        >
           <div class="icon-container">
             <ms-image
               :image="PersonCheck"
@@ -35,7 +38,10 @@
         </div>
 
         <!-- Revoked -->
-        <div class="users-list-item">
+        <div
+          class="users-list-item"
+          @click="openInformationUserModal(UserFilterType.Revoked)"
+        >
           <div class="icon-container">
             <ms-image
               :image="PersonRemove"
@@ -51,7 +57,10 @@
         </div>
 
         <!-- Frozen -->
-        <div class="users-list-item">
+        <div
+          class="users-list-item"
+          @click="openInformationUserModal(UserFilterType.Frozen)"
+        >
           <div class="icon-container">
             <ms-image
               :image="PersonFreeze"
@@ -72,7 +81,10 @@
           {{ $msTranslate('OrganizationPage.users.profileTitle') }}
         </ion-text>
         <!-- Active users -->
-        <div class="users-list-item">
+        <div
+          class="users-list-item"
+          @click="openInformationUserModal(UserFilterType.Admins)"
+        >
           <div class="icon-container">
             <ion-icon
               :icon="flower"
@@ -87,7 +99,10 @@
           </ion-text>
         </div>
 
-        <div class="users-list-item">
+        <div
+          class="users-list-item"
+          @click="openInformationUserModal(UserFilterType.Standards)"
+        >
           <div class="icon-container">
             <ion-icon
               :icon="personCircle"
@@ -105,6 +120,7 @@
         <div
           class="users-list-item"
           v-if="orgInfo.outsidersAllowed"
+          @click="openInformationUserModal(UserFilterType.Outsiders)"
         >
           <div class="icon-container">
             <ion-icon
@@ -226,6 +242,7 @@ import PersonCheck from '@/assets/images/person-check.svg?raw';
 import PersonFreeze from '@/assets/images/person-freeze.svg?raw';
 import PersonRemove from '@/assets/images/person-remove.svg?raw';
 import ShieldCancel from '@/assets/images/shield-cancel.svg?raw';
+import { UserFilterType } from '@/components/users/types';
 import { ClientInfo, listAsyncEnrollments, listUserInvitations, OrganizationInfo, UserProfile } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
@@ -275,6 +292,10 @@ async function goToInvitations(view: InvitationView): Promise<void> {
 
 async function inviteUser(): Promise<void> {
   await navigateTo(Routes.Invitations, { query: { openInvite: true } });
+}
+
+async function openInformationUserModal(filterType: UserFilterType): Promise<void> {
+  await navigateTo(Routes.Users, { query: { userFilter: filterType } });
 }
 </script>
 

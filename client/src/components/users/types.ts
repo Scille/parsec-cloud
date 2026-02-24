@@ -15,6 +15,15 @@ export enum InvitationAction {
   Invite = 'invite',
 }
 
+export enum UserFilterType {
+  Active = 'active',
+  Revoked = 'revoked',
+  Frozen = 'frozen',
+  Admins = 'admins',
+  Standards = 'standards',
+  Outsiders = 'outsiders',
+}
+
 export interface UserModel extends UserInfo {
   isSelected: boolean;
   isCurrent: boolean;

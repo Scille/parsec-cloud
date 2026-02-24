@@ -331,6 +331,7 @@ export interface Query {
   bmsLogin?: true;
   readOnly?: boolean;
   webRedirectUrl?: string;
+  userFilter?: string;
 }
 
 export interface ClientAreaQuery {
