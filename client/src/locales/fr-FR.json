@@ -387,6 +387,12 @@
                     "next": "Continuer",
                     "previous": "Précédent",
                     "cancel": "Annuler"
+                },
+                "certificate": {
+                    "selectCertificate": "Sélectionnez un certificat pour rejoindre l'organisation",
+                    "noEmail": "Aucun email lié.",
+                    "expired": "Expiré",
+                    "serialNb": "Serial : {serial}"
                 }
             }
         }

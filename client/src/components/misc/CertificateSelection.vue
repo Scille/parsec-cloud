@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div>
+  <div class="certificate-container">
     <certificate-card
       v-for="cert in certificates"
       :key="cert.id"
@@ -46,4 +46,10 @@ async function onCertificateClicked(cert: Certificate): Promise<void> {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.certificate-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+</style>

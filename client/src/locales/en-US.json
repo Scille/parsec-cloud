@@ -388,6 +388,12 @@
                     "next": "Continue",
                     "previous": "Previous",
                     "cancel": "Cancel"
+                },
+                "certificate": {
+                    "selectCertificate": "Select a certificate to join the organization",
+                    "noEmail": "No email linked.",
+                    "expired": "Expired",
+                    "serialNb": "Serial: {serial}"
                 }
             }
         }
