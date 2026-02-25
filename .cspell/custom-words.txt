@@ -133,6 +133,7 @@ fusepy
 fusermount
 generichash
 genindex
+getaegis
 getcapacitor
 getplugin
 getrandom
@@ -212,6 +213,7 @@ moduleauthor
 monomorphization
 monothreaded
 msiexec
+multifacteur
 multilines
 nacl
 napi
