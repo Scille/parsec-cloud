@@ -1038,18 +1038,24 @@ async def testbed_backend_factory(
 @click.option(
     "--with-postgresql",
     envvar="PARSEC_WITH_POSTGRESQL",
-    default=None,
-    show_default=True,
     metavar="WITH_POSTGRESQL",
     help="Use a postgresql database instead of the mocked one",
 )
 @click.option(
     "--stop-after-process",
     type=int,
-    default=None,
-    show_default=True,
     envvar="PARSEC_STOP_AFTER_PROCESS",
     help="Stop the server once the given process has terminated",
+)
+@click.option(
+    "--populate",
+    is_flag=False,
+    flag_value="coolorg",
+    multiple=True,
+    show_default=True,
+    metavar="[coolorg]",
+    envvar="PARSEC_POPULATE",
+    help="Populate the testbed server at startup with an organization created from a template (e.g. coolorg, minimal)",
 )
 # Add --log-level/--log-format/--log-file
 @logging_config_options(default_log_level="INFO")
@@ -1061,6 +1067,7 @@ def testbed_cmd(
     server_addr: str | None,
     with_postgresql: str | None,
     stop_after_process: int | None,
+    populate: tuple[str, ...],
     log_level: LogLevel,
     log_format: str,
     log_file: str | None,
@@ -1092,6 +1099,16 @@ def testbed_cmd(
             async with testbed_backend_factory(
                 server_addr=cooked_server_addr, with_postgresql=with_postgresql
             ) as testbed:
+                for template in populate:
+                    try:
+                        (new_org_id, _, _) = await testbed.new_organization(template)
+                    except UnknownTemplateError:
+                        raise RuntimeError(f"Unknown testbed template {template!r}")
+
+                    click.echo(
+                        f"Populated organization `{click.style(new_org_id, fg='yellow')}` (template: `{template}`)"
+                    )
+
                 click.secho("All set !", fg="yellow")
                 click.echo("Don't forget to export `TESTBED_SERVER` environ variable:")
                 click.secho(
