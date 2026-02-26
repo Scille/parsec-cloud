@@ -45,7 +45,7 @@ rand = { workspace = true, features = ["std", "std_rng"] }
 thiserror = { workspace = true, features = ["std"] }
 email-address-parser = { workspace = true }
 anyhow = { workspace = true, features = ["std", "backtrace"] }
-fnmatch-regex = { workspace = true }
+fnmatch-regex = { workspace = true, features = ["regex"] }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
 blahaj = { workspace = true }
