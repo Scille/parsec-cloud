@@ -227,6 +227,10 @@ class OrganizationUpdateBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
 
 
+class OrganizationEraseBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+
+
 @dataclass(slots=True)
 class OrganizationDumpTopics:
     common: DateTime
@@ -316,6 +320,12 @@ class BaseOrganizationComponent:
     ) -> None | OrganizationUpdateBadOutcome:
         raise NotImplementedError
 
+    async def erase(
+        self,
+        id: OrganizationID,
+    ) -> None | OrganizationEraseBadOutcome:
+        raise NotImplementedError
+
     async def get_tos(
         self, id: OrganizationID
     ) -> TermsOfService | None | OrganizationGetTosBadOutcome:
@@ -327,9 +337,6 @@ class BaseOrganizationComponent:
         raise NotImplementedError
 
     async def test_dump_topics(self, id: OrganizationID) -> OrganizationDumpTopics:
-        raise NotImplementedError
-
-    async def test_drop_organization(self, id: OrganizationID) -> None:
         raise NotImplementedError
 
     async def test_duplicate_organization(
