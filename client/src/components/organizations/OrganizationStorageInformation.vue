@@ -76,7 +76,7 @@ defineProps<{
   gap: 1rem;
   width: 100%;
   max-width: 30rem;
-  border-radius: var(--parsec-radius-12);
+  border-radius: var(--parsec-radius-18);
   height: fit-content;
   box-shadow: var(--parsec-shadow-input);
   padding: 1.5rem;
