@@ -1,2 +1,0 @@
-Action links (e.g. invitation, file path etc.) are now always displayed in their `http://` format
-(since the `parsec3://` format is not supported by the Parsec web client).
