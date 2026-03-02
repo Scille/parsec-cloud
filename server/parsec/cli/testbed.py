@@ -179,9 +179,10 @@ class TestbedBackend:
         cooked_customization = testbed.test_load_testbed_customization(template, customization)  # pyright: ignore [reportPossiblyUnboundVariable]
         await self.backend.test_customize_organization(id, template, cooked_customization)
 
-    async def drop_organization(self, id: OrganizationID) -> None:
-        await self.backend.test_drop_organization(id)
-        del self.template_per_org[id]
+    async def drop_organization_idempotent(self, id: OrganizationID) -> None:
+        # Ignore errors (in case the organization doesn't exist) to be idempotent
+        await self.backend.organization.erase(id)
+        self.template_per_org.pop(id, None)
 
 
 testbed_router = APIRouter(tags=["testbed"])
@@ -244,8 +245,7 @@ async def test_new(template: str, request: Request, background_tasks: Background
         async def _organization_garbage_collector():
             await asyncio.sleep(orga_life_limit)
             logger.info("Dropping testbed org due to time limit", organization=new_org_id.str)
-            # Dropping is idempotent, so no need for error handling
-            await testbed.backend.test_drop_organization(new_org_id)
+            await testbed.drop_organization_idempotent(new_org_id)
 
         background_tasks.add_task(_organization_garbage_collector)
 
@@ -279,8 +279,7 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
     except ValueError:
         return Response(status_code=400, content=b"")
 
-    # Dropping is idempotent, so no need for error handling
-    await testbed.drop_organization(organization_id)
+    await testbed.drop_organization_idempotent(organization_id)
 
     return Response(status_code=200, content=b"")
 
