@@ -118,6 +118,7 @@ jobs:
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # pin v8.0.0
         with:
           path: artifacts
+          digest-mismatch: error
         timeout-minutes: 5
 
       - name: List downloaded artifacts
