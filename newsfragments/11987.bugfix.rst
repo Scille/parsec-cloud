@@ -1,1 +1,1 @@
-User can reduce the height of the organization creation modal on small height screens.
+User can now reduce the height of the organization creation modal on small screens.
