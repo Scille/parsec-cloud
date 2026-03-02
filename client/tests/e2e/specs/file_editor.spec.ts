@@ -222,7 +222,7 @@ msTest.describe(() => {
         }, 800);
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: true });
-          }, 1000);
+          }, 1200);
       `,
     });
     /* eslint-enable max-len */
