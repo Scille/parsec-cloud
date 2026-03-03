@@ -105,11 +105,27 @@ as the default handle when not connecting properly`,
 });
 
 async function populate(handle: parsec.ConnectionHandle): Promise<void> {
-  if (import.meta.env.PARSEC_APP_POPULATE_DEFAULT_WORKSPACE === 'true') {
-    await populateFiles();
+  const workspaces = await parsec.listWorkspaces(getConnectionHandle());
+  if (!workspaces.ok) {
+    window.electronAPI.log('error', 'Failed to list workspaces');
+    return;
+  }
+
+  for (const workspace of workspaces.value) {
+    if (workspace.currentName === 'wksp1') {
+      if (import.meta.env.PARSEC_APP_DEV_POPULATE_REAL_FILES === 'true') {
+        await populateRealFiles(workspace);
+      }
+      if (import.meta.env.PARSEC_APP_DEV_POPULATE_MANY_FILES) {
+        await populateManyFiles(workspace, import.meta.env.PARSEC_APP_DEV_POPULATE_MANY_FILES.split(';'));
+      }
+    }
+  }
+  if (import.meta.env.PARSEC_APP_DEV_ADD_READONLY_WORKSPACE === 'true') {
     await addReadOnlyWorkspace();
   }
-  if (import.meta.env.PARSEC_APP_POPULATE_USERS === 'true') {
+
+  if (import.meta.env.PARSEC_APP_DEV_POPULATE_USERS === 'true') {
     await populateUsers(handle);
   }
 }
@@ -271,42 +287,62 @@ async function greetUser(connHandle: parsec.ConnectionHandle, token: string, pro
   }
 }
 
-async function populateFiles(): Promise<void> {
+async function populateManyFiles(workspace: parsec.WorkspaceInfo, treeDefinition = [2, 8, 10]): Promise<void> {
+  // Avoid importing if unnecessary
+  const { uniqueNamesGenerator, adjectives, colors, animals } = await import('unique-names-generator');
+
+  let filesCreated = 0;
+
+  window.electronAPI.log('debug', 'Creating mock arborescence');
+  for (let i = 0; i < treeDefinition[0]; i++) {
+    const folder1Name = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    await parsec.createFolder(workspace.handle, `/${folder1Name}`);
+    const fileName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+    await parsec.createFile(workspace.handle, `/${fileName}.png`);
+    for (let j = 0; j < treeDefinition[1]; j++) {
+      const folder2Name = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+      await parsec.createFolder(workspace.handle, `/${folder1Name}/${folder2Name}`);
+      for (let k = 0; k < treeDefinition[2]; k++) {
+        const file2Name = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
+        await parsec.createFile(workspace.handle, `/${folder1Name}/${folder2Name}/${file2Name}.png`);
+        filesCreated += 1;
+        if (filesCreated % 20 === 0) {
+          window.electronAPI.log('debug', `${filesCreated}/${treeDefinition[0] * treeDefinition[1] * treeDefinition[2]}`);
+        }
+      }
+    }
+  }
+}
+
+async function populateRealFiles(workspace: parsec.WorkspaceInfo): Promise<void> {
   // Avoid importing files if unnecessary
   const mockFiles = await import('@/parsec/mock_files');
 
   window.electronAPI.log('debug', 'Creating mock files');
-  const workspaces = await parsec.listWorkspaces(getConnectionHandle());
-  if (!workspaces.ok) {
-    window.electronAPI.log('error', 'Failed to list workspaces');
-    return;
-  }
-  for (const workspace of workspaces.value) {
-    await parsec.createFolder(workspace.handle, '/Folder_éèñÑ');
+  await parsec.createFolder(workspace.handle, '/Folder_éèñÑ');
 
-    for (const fileType in mockFiles.MockFileType) {
-      const fileName = `document_${fileType}.${fileType.toLocaleLowerCase()}`;
-      const openResult = await parsec.openFile(workspace.handle, `/${fileName}`, {
-        write: true,
-        truncate: true,
-        create: true,
-        createNew: true,
-      });
+  for (const fileType in mockFiles.MockFileType) {
+    const fileName = `document_${fileType}.${fileType.toLocaleLowerCase()}`;
+    const openResult = await parsec.openFile(workspace.handle, `/${fileName}`, {
+      write: true,
+      truncate: true,
+      create: true,
+      createNew: true,
+    });
 
-      if (!openResult.ok) {
-        window.electronAPI.log('error', `Could not open file ${fileName}`);
+    if (!openResult.ok) {
+      window.electronAPI.log('error', `Could not open file ${fileName}`);
+      continue;
+    }
+    try {
+      const content = await mockFiles.getMockFileContent(fileType as any);
+      const writeResult = await parsec.writeFile(workspace.handle, openResult.value, 0, content);
+      if (!writeResult.ok) {
+        window.electronAPI.log('error', `Failed to write file ${fileName}`);
         continue;
       }
-      try {
-        const content = await mockFiles.getMockFileContent(fileType as any);
-        const writeResult = await parsec.writeFile(workspace.handle, openResult.value, 0, content);
-        if (!writeResult.ok) {
-          window.electronAPI.log('error', `Failed to write file ${fileName}`);
-          continue;
-        }
-      } finally {
-        await parsec.closeFile(workspace.handle, openResult.value);
-      }
+    } finally {
+      await parsec.closeFile(workspace.handle, openResult.value);
     }
   }
 }
