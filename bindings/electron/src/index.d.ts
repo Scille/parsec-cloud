@@ -501,12 +501,28 @@ export interface WorkspaceHistoryFileStat {
 }
 
 
+export interface WorkspaceHistorySearchMatch {
+    path: string
+    stat: WorkspaceHistoryEntryStat
+    score: number
+    matchPositions: Array<number>
+}
+
+
 export interface WorkspaceInfo {
     id: string
     currentName: string
     currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
+}
+
+
+export interface WorkspaceSearchMatch {
+    path: string
+    stat: EntryStat
+    score: number
+    matchPositions: Array<number>
 }
 
 
@@ -4289,6 +4305,33 @@ export type WorkspaceHistoryRealmExportDecryptor =
   | WorkspaceHistoryRealmExportDecryptorUser
 
 
+// WorkspaceHistorySearchCloseError
+export interface WorkspaceHistorySearchCloseErrorInternal {
+    tag: "WorkspaceHistorySearchCloseErrorInternal"
+    error: string
+}
+export type WorkspaceHistorySearchCloseError =
+  | WorkspaceHistorySearchCloseErrorInternal
+
+
+// WorkspaceHistorySearchError
+export interface WorkspaceHistorySearchErrorInternal {
+    tag: "WorkspaceHistorySearchErrorInternal"
+    error: string
+}
+export type WorkspaceHistorySearchError =
+  | WorkspaceHistorySearchErrorInternal
+
+
+// WorkspaceHistorySearchGetNextError
+export interface WorkspaceHistorySearchGetNextErrorInternal {
+    tag: "WorkspaceHistorySearchGetNextErrorInternal"
+    error: string
+}
+export type WorkspaceHistorySearchGetNextError =
+  | WorkspaceHistorySearchGetNextErrorInternal
+
+
 // WorkspaceHistorySetTimestampOfInterestError
 export interface WorkspaceHistorySetTimestampOfInterestErrorEntryNotFound {
     tag: "WorkspaceHistorySetTimestampOfInterestErrorEntryNotFound"
@@ -4777,6 +4820,33 @@ export type WorkspaceRemoveEntryError =
   | WorkspaceRemoveEntryErrorOffline
   | WorkspaceRemoveEntryErrorReadOnlyRealm
   | WorkspaceRemoveEntryErrorStopped
+
+
+// WorkspaceSearchCloseError
+export interface WorkspaceSearchCloseErrorInternal {
+    tag: "WorkspaceSearchCloseErrorInternal"
+    error: string
+}
+export type WorkspaceSearchCloseError =
+  | WorkspaceSearchCloseErrorInternal
+
+
+// WorkspaceSearchError
+export interface WorkspaceSearchErrorInternal {
+    tag: "WorkspaceSearchErrorInternal"
+    error: string
+}
+export type WorkspaceSearchError =
+  | WorkspaceSearchErrorInternal
+
+
+// WorkspaceSearchGetNextError
+export interface WorkspaceSearchGetNextErrorInternal {
+    tag: "WorkspaceSearchGetNextErrorInternal"
+    error: string
+}
+export type WorkspaceSearchGetNextError =
+  | WorkspaceSearchGetNextErrorInternal
 
 
 // WorkspaceStatEntryError
@@ -5660,6 +5730,17 @@ export function workspaceHistoryOpenFileById(
     workspace_history: number,
     entry_id: string
 ): Promise<Result<number, WorkspaceHistoryOpenFileError>>
+export function workspaceHistorySearch(
+    workspace_history: number,
+    path: string,
+    query: string
+): Promise<Result<number, WorkspaceHistorySearchError>>
+export function workspaceHistorySearchClose(
+    search: number
+): Promise<Result<null, WorkspaceHistorySearchCloseError>>
+export function workspaceHistorySearchGetNext(
+    search: number
+): Promise<Result<WorkspaceHistorySearchMatch | null, WorkspaceHistorySearchGetNextError>>
 export function workspaceHistorySetTimestampOfInterest(
     workspace_history: number,
     toi: number
@@ -5742,6 +5823,17 @@ export function workspaceRenameEntryById(
     dst_name: string,
     mode: MoveEntryMode
 ): Promise<Result<null, WorkspaceMoveEntryError>>
+export function workspaceSearch(
+    workspace: number,
+    path: string,
+    query: string
+): Promise<Result<number, WorkspaceSearchError>>
+export function workspaceSearchClose(
+    search: number
+): Promise<Result<null, WorkspaceSearchCloseError>>
+export function workspaceSearchGetNext(
+    search: number
+): Promise<Result<WorkspaceSearchMatch | null, WorkspaceSearchGetNextError>>
 export function workspaceStatEntry(
     workspace: number,
     path: string

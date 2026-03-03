@@ -530,12 +530,26 @@ export interface WorkspaceHistoryFileStat {
     size: SizeInt
 }
 
+export interface WorkspaceHistorySearchMatch {
+    path: FsPath
+    stat: WorkspaceHistoryEntryStat
+    score: U32
+    matchPositions: Array<U32>
+}
+
 export interface WorkspaceInfo {
     id: VlobID
     currentName: EntryName
     currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
+}
+
+export interface WorkspaceSearchMatch {
+    path: FsPath
+    stat: EntryStat
+    score: U32
+    matchPositions: Array<U32>
 }
 
 export interface WorkspaceUserAccessInfo {
@@ -5185,6 +5199,42 @@ export type WorkspaceHistoryRealmExportDecryptor =
   | WorkspaceHistoryRealmExportDecryptorSequesterService
   | WorkspaceHistoryRealmExportDecryptorUser
 
+// WorkspaceHistorySearchCloseError
+export enum WorkspaceHistorySearchCloseErrorTag {
+    Internal = 'WorkspaceHistorySearchCloseErrorInternal',
+}
+
+export interface WorkspaceHistorySearchCloseErrorInternal {
+    tag: WorkspaceHistorySearchCloseErrorTag.Internal
+    error: string
+}
+export type WorkspaceHistorySearchCloseError =
+  | WorkspaceHistorySearchCloseErrorInternal
+
+// WorkspaceHistorySearchError
+export enum WorkspaceHistorySearchErrorTag {
+    Internal = 'WorkspaceHistorySearchErrorInternal',
+}
+
+export interface WorkspaceHistorySearchErrorInternal {
+    tag: WorkspaceHistorySearchErrorTag.Internal
+    error: string
+}
+export type WorkspaceHistorySearchError =
+  | WorkspaceHistorySearchErrorInternal
+
+// WorkspaceHistorySearchGetNextError
+export enum WorkspaceHistorySearchGetNextErrorTag {
+    Internal = 'WorkspaceHistorySearchGetNextErrorInternal',
+}
+
+export interface WorkspaceHistorySearchGetNextErrorInternal {
+    tag: WorkspaceHistorySearchGetNextErrorTag.Internal
+    error: string
+}
+export type WorkspaceHistorySearchGetNextError =
+  | WorkspaceHistorySearchGetNextErrorInternal
+
 // WorkspaceHistorySetTimestampOfInterestError
 export enum WorkspaceHistorySetTimestampOfInterestErrorTag {
     EntryNotFound = 'WorkspaceHistorySetTimestampOfInterestErrorEntryNotFound',
@@ -5784,6 +5834,42 @@ export type WorkspaceRemoveEntryError =
   | WorkspaceRemoveEntryErrorOffline
   | WorkspaceRemoveEntryErrorReadOnlyRealm
   | WorkspaceRemoveEntryErrorStopped
+
+// WorkspaceSearchCloseError
+export enum WorkspaceSearchCloseErrorTag {
+    Internal = 'WorkspaceSearchCloseErrorInternal',
+}
+
+export interface WorkspaceSearchCloseErrorInternal {
+    tag: WorkspaceSearchCloseErrorTag.Internal
+    error: string
+}
+export type WorkspaceSearchCloseError =
+  | WorkspaceSearchCloseErrorInternal
+
+// WorkspaceSearchError
+export enum WorkspaceSearchErrorTag {
+    Internal = 'WorkspaceSearchErrorInternal',
+}
+
+export interface WorkspaceSearchErrorInternal {
+    tag: WorkspaceSearchErrorTag.Internal
+    error: string
+}
+export type WorkspaceSearchError =
+  | WorkspaceSearchErrorInternal
+
+// WorkspaceSearchGetNextError
+export enum WorkspaceSearchGetNextErrorTag {
+    Internal = 'WorkspaceSearchGetNextErrorInternal',
+}
+
+export interface WorkspaceSearchGetNextErrorInternal {
+    tag: WorkspaceSearchGetNextErrorTag.Internal
+    error: string
+}
+export type WorkspaceSearchGetNextError =
+  | WorkspaceSearchGetNextErrorInternal
 
 // WorkspaceStatEntryError
 export enum WorkspaceStatEntryErrorTag {
@@ -6709,6 +6795,17 @@ export interface LibParsecPlugin {
         workspace_history: Handle,
         entry_id: VlobID
     ): Promise<Result<FileDescriptor, WorkspaceHistoryOpenFileError>>
+    workspaceHistorySearch(
+        workspace_history: Handle,
+        path: FsPath,
+        query: string
+    ): Promise<Result<Handle, WorkspaceHistorySearchError>>
+    workspaceHistorySearchClose(
+        search: Handle
+    ): Promise<Result<null, WorkspaceHistorySearchCloseError>>
+    workspaceHistorySearchGetNext(
+        search: Handle
+    ): Promise<Result<WorkspaceHistorySearchMatch | null, WorkspaceHistorySearchGetNextError>>
     workspaceHistorySetTimestampOfInterest(
         workspace_history: Handle,
         toi: DateTime
@@ -6791,6 +6888,17 @@ export interface LibParsecPlugin {
         dst_name: EntryName,
         mode: MoveEntryMode
     ): Promise<Result<null, WorkspaceMoveEntryError>>
+    workspaceSearch(
+        workspace: Handle,
+        path: FsPath,
+        query: string
+    ): Promise<Result<Handle, WorkspaceSearchError>>
+    workspaceSearchClose(
+        search: Handle
+    ): Promise<Result<null, WorkspaceSearchCloseError>>
+    workspaceSearchGetNext(
+        search: Handle
+    ): Promise<Result<WorkspaceSearchMatch | null, WorkspaceSearchGetNextError>>
     workspaceStatEntry(
         workspace: Handle,
         path: FsPath

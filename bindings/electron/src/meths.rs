@@ -4888,6 +4888,100 @@ fn struct_workspace_history_file_stat_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceHistorySearchMatch
+
+#[allow(dead_code)]
+fn struct_workspace_history_search_match_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceHistorySearchMatch> {
+    let path = {
+        let js_val: Handle<JsString> = obj.get(cx, "path")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let stat = {
+        let js_val: Handle<JsObject> = obj.get(cx, "stat")?;
+        variant_workspace_history_entry_stat_js_to_rs(cx, js_val)?
+    };
+    let score = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "score")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let match_positions = {
+        let js_val: Handle<JsArray> = obj.get(cx, "matchPositions")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsNumber> = js_val.get(cx, i)?;
+                v.push({
+                    let v = js_item.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                });
+            }
+            v
+        }
+    };
+    Ok(libparsec::WorkspaceHistorySearchMatch {
+        path,
+        stat,
+        score,
+        match_positions,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_history_search_match_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceHistorySearchMatch,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_path = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.path) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "path", js_path)?;
+    let js_stat = variant_workspace_history_entry_stat_rs_to_js(cx, rs_obj.stat)?;
+    js_obj.set(cx, "stat", js_stat)?;
+    let js_score = JsNumber::new(cx, rs_obj.score as f64);
+    js_obj.set(cx, "score", js_score)?;
+    let js_match_positions = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.match_positions.len());
+        for (i, elem) in rs_obj.match_positions.into_iter().enumerate() {
+            let js_elem = JsNumber::new(cx, elem as f64);
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "matchPositions", js_match_positions)?;
+    Ok(js_obj)
+}
+
 // WorkspaceInfo
 
 #[allow(dead_code)]
@@ -4968,6 +5062,100 @@ fn struct_workspace_info_rs_to_js<'a>(
     js_obj.set(cx, "isStarted", js_is_started)?;
     let js_is_bootstrapped = JsBoolean::new(cx, rs_obj.is_bootstrapped);
     js_obj.set(cx, "isBootstrapped", js_is_bootstrapped)?;
+    Ok(js_obj)
+}
+
+// WorkspaceSearchMatch
+
+#[allow(dead_code)]
+fn struct_workspace_search_match_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceSearchMatch> {
+    let path = {
+        let js_val: Handle<JsString> = obj.get(cx, "path")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let stat = {
+        let js_val: Handle<JsObject> = obj.get(cx, "stat")?;
+        variant_entry_stat_js_to_rs(cx, js_val)?
+    };
+    let score = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "score")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let match_positions = {
+        let js_val: Handle<JsArray> = obj.get(cx, "matchPositions")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsNumber> = js_val.get(cx, i)?;
+                v.push({
+                    let v = js_item.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                });
+            }
+            v
+        }
+    };
+    Ok(libparsec::WorkspaceSearchMatch {
+        path,
+        stat,
+        score,
+        match_positions,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_search_match_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceSearchMatch,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_path = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.path) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err.to_string()),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "path", js_path)?;
+    let js_stat = variant_entry_stat_rs_to_js(cx, rs_obj.stat)?;
+    js_obj.set(cx, "stat", js_stat)?;
+    let js_score = JsNumber::new(cx, rs_obj.score as f64);
+    js_obj.set(cx, "score", js_score)?;
+    let js_match_positions = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.match_positions.len());
+        for (i, elem) in rs_obj.match_positions.into_iter().enumerate() {
+            let js_elem = JsNumber::new(cx, elem as f64);
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "matchPositions", js_match_positions)?;
     Ok(js_obj)
 }
 
@@ -17057,6 +17245,66 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceHistorySearchCloseError
+
+#[allow(dead_code)]
+fn variant_workspace_history_search_close_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceHistorySearchCloseError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceHistorySearchCloseError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistorySearchCloseErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistorySearchError
+
+#[allow(dead_code)]
+fn variant_workspace_history_search_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceHistorySearchError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceHistorySearchError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistorySearchErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistorySearchGetNextError
+
+#[allow(dead_code)]
+fn variant_workspace_history_search_get_next_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceHistorySearchGetNextError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceHistorySearchGetNextError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistorySearchGetNextErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceHistorySetTimestampOfInterestError
 
 #[allow(dead_code)]
@@ -17686,6 +17934,64 @@ fn variant_workspace_remove_entry_error_rs_to_js<'a>(
         }
         libparsec::WorkspaceRemoveEntryError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceRemoveEntryErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceSearchCloseError
+
+#[allow(dead_code)]
+fn variant_workspace_search_close_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceSearchCloseError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceSearchCloseError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSearchCloseErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceSearchError
+
+#[allow(dead_code)]
+fn variant_workspace_search_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceSearchError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceSearchError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSearchErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceSearchGetNextError
+
+#[allow(dead_code)]
+fn variant_workspace_search_get_next_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceSearchGetNextError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceSearchGetNextError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSearchGetNextErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -28741,6 +29047,171 @@ fn workspace_history_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsProm
     Ok(promise)
 }
 
+// workspace_history_search
+fn workspace_history_search(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace_history = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let query = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_history_search(workspace_history, path, &query).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_history_search_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_history_search_close
+fn workspace_history_search_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let search = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let ret = libparsec::workspace_history_search_close(search);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = {
+                #[allow(clippy::let_unit_value)]
+                let _ = ok;
+                JsNull::new(&mut cx)
+            };
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_workspace_history_search_close_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// workspace_history_search_get_next
+fn workspace_history_search_get_next(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let search = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_history_search_get_next(search).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = match ok {
+                            Some(elem) => {
+                                struct_workspace_history_search_match_rs_to_js(&mut cx, elem)?
+                                    .as_value(&mut cx)
+                            }
+                            None => JsNull::new(&mut cx).as_value(&mut cx),
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_workspace_history_search_get_next_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_history_set_timestamp_of_interest
 fn workspace_history_set_timestamp_of_interest(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -30099,6 +30570,169 @@ fn workspace_rename_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> 
     Ok(promise)
 }
 
+// workspace_search
+fn workspace_search(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let query = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_search(workspace, path, &query).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_search_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// workspace_search_close
+fn workspace_search_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let search = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let ret = libparsec::workspace_search_close(search);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = {
+                #[allow(clippy::let_unit_value)]
+                let _ = ok;
+                JsNull::new(&mut cx)
+            };
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_workspace_search_close_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// workspace_search_get_next
+fn workspace_search_get_next(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let search = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_search_get_next(search).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = match ok {
+                            Some(elem) => struct_workspace_search_match_rs_to_js(&mut cx, elem)?
+                                .as_value(&mut cx),
+                            None => JsNull::new(&mut cx).as_value(&mut cx),
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_workspace_search_get_next_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_stat_entry
 fn workspace_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -30983,6 +31617,15 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "workspaceHistoryOpenFileById",
         workspace_history_open_file_by_id,
     )?;
+    cx.export_function("workspaceHistorySearch", workspace_history_search)?;
+    cx.export_function(
+        "workspaceHistorySearchClose",
+        workspace_history_search_close,
+    )?;
+    cx.export_function(
+        "workspaceHistorySearchGetNext",
+        workspace_history_search_get_next,
+    )?;
     cx.export_function(
         "workspaceHistorySetTimestampOfInterest",
         workspace_history_set_timestamp_of_interest,
@@ -31020,6 +31663,9 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("workspaceRemoveFolder", workspace_remove_folder)?;
     cx.export_function("workspaceRemoveFolderAll", workspace_remove_folder_all)?;
     cx.export_function("workspaceRenameEntryById", workspace_rename_entry_by_id)?;
+    cx.export_function("workspaceSearch", workspace_search)?;
+    cx.export_function("workspaceSearchClose", workspace_search_close)?;
+    cx.export_function("workspaceSearchGetNext", workspace_search_get_next)?;
     cx.export_function("workspaceStatEntry", workspace_stat_entry)?;
     cx.export_function("workspaceStatEntryById", workspace_stat_entry_by_id)?;
     cx.export_function(

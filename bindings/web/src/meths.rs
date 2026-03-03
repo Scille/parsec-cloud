@@ -5114,6 +5114,108 @@ fn struct_workspace_history_file_stat_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceHistorySearchMatch
+
+#[allow(dead_code)]
+fn struct_workspace_history_search_match_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceHistorySearchMatch, JsValue> {
+    let path = {
+        let js_val = Reflect::get(&obj, &"path".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let stat = {
+        let js_val = Reflect::get(&obj, &"stat".into())?;
+        variant_workspace_history_entry_stat_js_to_rs(js_val)?
+    };
+    let score = {
+        let js_val = Reflect::get(&obj, &"score".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let match_positions = {
+        let js_val = Reflect::get(&obj, &"matchPositions".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = {
+                    let v = x
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                };
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::WorkspaceHistorySearchMatch {
+        path,
+        stat,
+        score,
+        match_positions,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_history_search_match_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistorySearchMatch,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_path = JsValue::from_str({
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.path) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"path".into(), &js_path)?;
+    let js_stat = variant_workspace_history_entry_stat_rs_to_js(rs_obj.stat)?;
+    Reflect::set(&js_obj, &"stat".into(), &js_stat)?;
+    let js_score = JsValue::from(rs_obj.score);
+    Reflect::set(&js_obj, &"score".into(), &js_score)?;
+    let js_match_positions = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.match_positions.len() as u32);
+        for (i, elem) in rs_obj.match_positions.into_iter().enumerate() {
+            let js_elem = JsValue::from(elem);
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"matchPositions".into(), &js_match_positions)?;
+    Ok(js_obj)
+}
+
 // WorkspaceInfo
 
 #[allow(dead_code)]
@@ -5202,6 +5304,108 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
     Reflect::set(&js_obj, &"isStarted".into(), &js_is_started)?;
     let js_is_bootstrapped = rs_obj.is_bootstrapped.into();
     Reflect::set(&js_obj, &"isBootstrapped".into(), &js_is_bootstrapped)?;
+    Ok(js_obj)
+}
+
+// WorkspaceSearchMatch
+
+#[allow(dead_code)]
+fn struct_workspace_search_match_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceSearchMatch, JsValue> {
+    let path = {
+        let js_val = Reflect::get(&obj, &"path".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let stat = {
+        let js_val = Reflect::get(&obj, &"stat".into())?;
+        variant_entry_stat_js_to_rs(js_val)?
+    };
+    let score = {
+        let js_val = Reflect::get(&obj, &"score".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let match_positions = {
+        let js_val = Reflect::get(&obj, &"matchPositions".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = {
+                    let v = x
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                };
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::WorkspaceSearchMatch {
+        path,
+        stat,
+        score,
+        match_positions,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_search_match_rs_to_js(
+    rs_obj: libparsec::WorkspaceSearchMatch,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_path = JsValue::from_str({
+        let custom_to_rs_string =
+            |v| -> Result<_, std::convert::Infallible> { Ok(std::string::ToString::to_string(&v)) };
+        match custom_to_rs_string(rs_obj.path) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"path".into(), &js_path)?;
+    let js_stat = variant_entry_stat_rs_to_js(rs_obj.stat)?;
+    Reflect::set(&js_obj, &"stat".into(), &js_stat)?;
+    let js_score = JsValue::from(rs_obj.score);
+    Reflect::set(&js_obj, &"score".into(), &js_score)?;
+    let js_match_positions = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.match_positions.len() as u32);
+        for (i, elem) in rs_obj.match_positions.into_iter().enumerate() {
+            let js_elem = JsValue::from(elem);
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"matchPositions".into(), &js_match_positions)?;
     Ok(js_obj)
 }
 
@@ -18831,6 +19035,69 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceHistorySearchCloseError
+
+#[allow(dead_code)]
+fn variant_workspace_history_search_close_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistorySearchCloseError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistorySearchCloseError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistorySearchCloseErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistorySearchError
+
+#[allow(dead_code)]
+fn variant_workspace_history_search_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistorySearchError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistorySearchError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistorySearchErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistorySearchGetNextError
+
+#[allow(dead_code)]
+fn variant_workspace_history_search_get_next_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistorySearchGetNextError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistorySearchGetNextError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistorySearchGetNextErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceHistorySetTimestampOfInterestError
 
 #[allow(dead_code)]
@@ -19591,6 +19858,69 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceRemoveEntryErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceSearchCloseError
+
+#[allow(dead_code)]
+fn variant_workspace_search_close_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceSearchCloseError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceSearchCloseError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSearchCloseErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceSearchError
+
+#[allow(dead_code)]
+fn variant_workspace_search_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceSearchError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceSearchError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSearchErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceSearchGetNextError
+
+#[allow(dead_code)]
+fn variant_workspace_search_get_next_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceSearchGetNextError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceSearchGetNextError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSearchGetNextErrorInternal".into(),
             )?;
         }
     }
@@ -26034,6 +26364,94 @@ pub fn workspaceHistoryOpenFileById(workspace_history: u32, entry_id: String) ->
     }))
 }
 
+// workspace_history_search
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistorySearch(workspace_history: u32, path: String, query: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_history_search(workspace_history, path, &query).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history_search_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_history_search_close
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistorySearchClose(search: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::workspace_history_search_close(search);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history_search_close_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_history_search_get_next
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistorySearchGetNext(search: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::workspace_history_search_get_next(search).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = match value {
+                    Some(val) => struct_workspace_history_search_match_rs_to_js(val)?,
+                    None => JsValue::NULL,
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history_search_get_next_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
 // workspace_history_set_timestamp_of_interest
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -26794,6 +27212,94 @@ pub fn workspaceRenameEntryById(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_move_entry_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_search
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceSearch(workspace: u32, path: String, query: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_search(workspace, path, &query).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_search_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_search_close
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceSearchClose(search: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::workspace_search_close(search);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_search_close_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_search_get_next
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceSearchGetNext(search: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::workspace_search_get_next(search).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = match value {
+                    Some(val) => struct_workspace_search_match_rs_to_js(val)?,
+                    None => JsValue::NULL,
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_search_get_next_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
