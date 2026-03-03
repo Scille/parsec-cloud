@@ -11,6 +11,7 @@ enum CspDirective {
   FontSrc = 'font-src',
   FrameSrc = 'frame-src',
   WorkerSrc = 'worker-src',
+  MediaSrc = 'media-src',
 }
 
 // Set a CSP up for our application based on the custom scheme
@@ -20,12 +21,13 @@ export function setupContentSecurityPolicy(customScheme: string): void {
   const CspRules: Array<[CspDirective, Array<string>]> = [
     [CspDirective.DefaultSrc, [customProtocol, 'devtools:']],
     [CspDirective.ScriptSrc, [customProtocol, "'unsafe-inline'", 'https://*.stripe.com']],
-    [CspDirective.ImgSrc, [customProtocol, 'data:', 'https:', 'http:']],
+    [CspDirective.ImgSrc, [customProtocol, 'blob:', 'data:', 'https:', 'http:']],
     [CspDirective.StyleSrc, [customProtocol, "'unsafe-inline'", 'data:', 'https:', 'http:']],
     [CspDirective.FontSrc, [customProtocol, 'data:', 'https:*', 'http:*']],
     [CspDirective.ConnectSrc, [customProtocol, 'https:', 'http:', 'wss:', 'ws:']],
     [CspDirective.WorkerSrc, [customProtocol, 'https:', 'http:']],
     [CspDirective.FrameSrc, [customProtocol, 'https:', 'http:']],
+    [CspDirective.MediaSrc, [customProtocol, 'blob:', 'data:', 'https:', 'http:']],
   ];
 
   const rules: Array<string> = [];
