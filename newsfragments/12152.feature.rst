@@ -1,1 +1,0 @@
-Added a bug report button on the home page.
