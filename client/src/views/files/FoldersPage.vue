@@ -12,6 +12,13 @@
         :buttons="actionBarOptionsFoldersPage"
       >
         <div class="right-side">
+          <ms-search-input
+            v-if="false"
+            :debounce="1000"
+            @change="startSearch"
+            id="search-files"
+          />
+
           <workspace-role-tag
             :role="ownRole"
             class="workspace-role-tag"
@@ -140,7 +147,7 @@
           </file-drop-zone>
         </div>
         <div
-          v-else-if="!querying && !showErrorListPage"
+          v-else-if="!querying && !showErrorListPage && !search"
           class="grid-list-container"
         >
           <div v-if="displayView === DisplayState.List && userInfo">
@@ -178,6 +185,12 @@
             />
           </div>
         </div>
+        <div v-if="search">
+          <file-search-results
+            :search-results="search.results"
+            :active="search.active"
+          />
+        </div>
       </div>
       <tab-bar-options
         v-if="customTabBar.isVisible.value"
@@ -204,6 +217,7 @@ import {
   MsOptions,
   MsReportText,
   MsReportTheme,
+  MsSearchInput,
   MsSorter,
   MsSorterChangeEvent,
   MsSpinner,
@@ -225,6 +239,7 @@ import {
   FileInputs,
   FileListDisplay,
   FileModel,
+  FileSearchResults,
   FolderDefaultData,
   FolderModel,
   FoldersPageSavedData,
@@ -316,6 +331,13 @@ const msSorterLabels = {
   asc: 'FoldersPage.sort.asc',
   desc: 'FoldersPage.sort.desc',
 };
+
+interface Search {
+  results: Array<parsec.SearchResult>;
+  pattern: string;
+  aborter: AbortController;
+  active: boolean;
+}
 
 const tabBarActions = computed(() => {
   const selectedEntries = getSelectedEntries();
@@ -437,6 +459,7 @@ const currentFolder: Ref<EntryName> = ref('/');
 const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
+const search = ref<Search | undefined>(undefined);
 const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
 // Init at true to avoid blinking while we're mounting the component
 // but we're not loading the files yet.
@@ -1652,6 +1675,26 @@ const actionBarOptionsFoldersPage = computed(() => {
 
   return actionArray;
 });
+
+async function startSearch(pattern: string): Promise<void> {
+  if (search.value) {
+    search.value.aborter.abort();
+    search.value = undefined;
+  }
+  if (pattern.length < 3 || !workspaceInfo.value) {
+    return;
+  }
+  search.value = {
+    results: [],
+    pattern: pattern,
+    aborter: new AbortController(),
+    active: true,
+  };
+  await parsec.fileSearch(workspaceInfo.value.handle, currentPath.value, pattern, search.value.results, search.value.aborter.signal);
+  if (search.value) {
+    search.value.active = false;
+  }
+}
 </script>
 
 <style scoped lang="scss">
