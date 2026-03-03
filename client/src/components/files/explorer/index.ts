@@ -10,6 +10,7 @@ import FileInputs from '@/components/files/explorer/FileInputs.vue';
 import FileListDisplay from '@/components/files/explorer/FileListDisplay.vue';
 import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/explorer/FileListItemProcessing.vue';
+import FileSearchResults from '@/components/files/explorer/FileSearchResults.vue';
 import FolderSelectionModal from '@/components/files/explorer/FolderSelectionModal.vue';
 import HistoryFileListItem from '@/components/files/explorer/HistoryFileListItem.vue';
 
@@ -24,6 +25,7 @@ export {
   FileListDisplay,
   FileListItem,
   FileListItemProcessing,
+  FileSearchResults,
   FolderSelectionModal,
   HistoryFileListItem,
 };

@@ -14,6 +14,7 @@ export * from '@/parsec/invitation';
 export * from '@/parsec/login';
 export * from '@/parsec/organization';
 export * from '@/parsec/path';
+export * from '@/parsec/search';
 export * from '@/parsec/server';
 export * from '@/parsec/terms_of_service';
 export * from '@/parsec/totp';
