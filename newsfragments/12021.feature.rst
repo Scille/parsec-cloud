@@ -1,1 +1,0 @@
-CLI: Add option ``--update`` to ``workspace import`` to control how to update existing files

@@ -1,1 +1,0 @@
-Added a button to create a folder during copy and move operations.
