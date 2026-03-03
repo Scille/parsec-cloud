@@ -5,6 +5,7 @@ import {
   FileDescriptor,
   FsPath,
   Result,
+  SearchHandle,
   WorkspaceHistoryEntryStat,
   WorkspaceHistoryEntryStatFile,
   WorkspaceHistoryEntryStatFolder,
@@ -18,6 +19,11 @@ import {
   WorkspaceHistoryInternalOnlyErrorTag,
   WorkspaceHistoryOpenFileError,
   WorkspaceHistoryOpenFileErrorTag,
+  WorkspaceHistorySearchCloseError,
+  WorkspaceHistorySearchError,
+  WorkspaceHistorySearchErrorTag,
+  WorkspaceHistorySearchGetNextError,
+  WorkspaceHistorySearchMatch,
   WorkspaceHistorySetTimestampOfInterestError,
   WorkspaceHistorySetTimestampOfInterestErrorTag,
   WorkspaceHistoryStartError,
@@ -197,6 +203,21 @@ export class WorkspaceHistory {
       return { ok: false, error: { tag: WorkspaceHistoryFdReadErrorTag.Internal, error: 'Not started' } };
     }
     return await libparsec.workspaceHistoryFdRead(this.handle, fd, BigInt(offset), BigInt(size));
+  }
+
+  async search(path: FsPath, query: string): Promise<Result<SearchHandle, WorkspaceHistorySearchError>> {
+    if (this.handle === undefined) {
+      return { ok: false, error: { tag: WorkspaceHistorySearchErrorTag.Internal, error: 'Not started' } };
+    }
+    return await libparsec.workspaceHistorySearch(this.handle, path, query);
+  }
+
+  async searchGetNext(searchHandle: SearchHandle): Promise<Result<WorkspaceHistorySearchMatch | null, WorkspaceHistorySearchGetNextError>> {
+    return await libparsec.workspaceHistorySearchGetNext(searchHandle);
+  }
+
+  async searchClose(searchHandle: SearchHandle): Promise<Result<null, WorkspaceHistorySearchCloseError>> {
+    return await libparsec.workspaceHistorySearchClose(searchHandle);
   }
 }
 

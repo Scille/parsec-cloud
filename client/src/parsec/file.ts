@@ -16,6 +16,7 @@ import {
   ParsedParsecAddrTag,
   ParsedParsecAddrWorkspacePath,
   Result,
+  SearchHandle,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
   WorkspaceFdCloseError,
@@ -26,6 +27,10 @@ import {
   WorkspaceMoveEntryError,
   WorkspaceOpenFileError,
   WorkspaceRemoveEntryError,
+  WorkspaceSearchCloseError,
+  WorkspaceSearchError,
+  WorkspaceSearchGetNextError,
+  WorkspaceSearchMatch,
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
 } from '@/parsec/types';
@@ -333,4 +338,22 @@ export async function isFileContentAvailable(workspaceHandle: WorkspaceHandle, p
   const result = await libparsec.workspaceIsFileContentLocal(workspaceHandle, path);
 
   return result.ok && result.value;
+}
+
+export async function startWorkspaceSearch(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  query: string,
+): Promise<Result<SearchHandle, WorkspaceSearchError>> {
+  return await libparsec.workspaceSearch(workspaceHandle, path, query);
+}
+
+export async function getNextWorkspaceSearchResult(
+  searchHandle: SearchHandle,
+): Promise<Result<WorkspaceSearchMatch | null, WorkspaceSearchGetNextError>> {
+  return await libparsec.workspaceSearchGetNext(searchHandle);
+}
+
+export async function closeWorkspaceSearch(searchHandle: SearchHandle): Promise<Result<null, WorkspaceSearchCloseError>> {
+  return await libparsec.workspaceSearchClose(searchHandle);
 }

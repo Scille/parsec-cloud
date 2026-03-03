@@ -11,6 +11,13 @@
         v-if="isLargeDisplay"
         :buttons="actionBarOptionsFoldersPage"
       >
+        <ms-search-input
+          v-model="searchQuery"
+          :placeholder="'FoldersPage.search.placeholder'"
+          :debounce="300"
+          @change="onSearchChange"
+          class="search-input"
+        />
         <div class="right-side">
           <workspace-role-tag
             :role="ownRole"
@@ -70,7 +77,7 @@
           @files-added="startImportFiles"
         />
         <div
-          v-show="querying"
+          v-show="querying && searchQuery.length < 3"
           class="body-lg"
         >
           <div class="no-files-content">
@@ -104,7 +111,22 @@
         </div>
 
         <div
-          v-if="!querying && itemsToShow === 0"
+          v-if="searchQuery.length > 0 && searchQuery.length < 3 && !querying"
+          class="no-files-content body-lg"
+        >
+          <ion-text>{{ $msTranslate('FoldersPage.search.minChars') }}</ion-text>
+        </div>
+
+        <workspace-search-result-list
+          v-if="searchQuery.length >= 3"
+          :results="searchResults"
+          :is-searching="isSearching"
+          @result-click="onSearchResultClick"
+          class="search-result-list"
+        />
+
+        <div
+          v-if="searchQuery.length < 3 && !querying && itemsToShow === 0"
           class="no-files body-lg"
         >
           <file-drop-zone
@@ -140,7 +162,7 @@
           </file-drop-zone>
         </div>
         <div
-          v-else-if="!querying && !showErrorListPage"
+          v-else-if="!searchQuery && !querying && !showErrorListPage"
           class="grid-list-container"
         >
           <div v-if="displayView === DisplayState.List && userInfo">
@@ -204,6 +226,7 @@ import {
   MsOptions,
   MsReportText,
   MsReportTheme,
+  MsSearchInput,
   MsSorter,
   MsSorterChangeEvent,
   MsSpinner,
@@ -230,6 +253,7 @@ import {
   FoldersPageSavedData,
   ImportType,
   SortProperty,
+  WorkspaceSearchResultList,
   copyPathLinkToClipboard,
   selectFolder,
 } from '@/components/files';
@@ -241,16 +265,22 @@ import {
   ClientInfo,
   EntryName,
   EntryStatFile,
+  FileType,
   FsPath,
   Path,
+  SearchHandle,
   WorkspaceCreateFolderErrorTag,
   WorkspaceID,
   WorkspaceRole,
+  WorkspaceSearchMatch,
+  closeWorkspaceSearch,
   entryStat,
   getClientInfo,
+  getNextWorkspaceSearchResult,
   isDesktop,
   isWeb,
   listWorkspaces,
+  startWorkspaceSearch,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { isFileEditable } from '@/services/cryptpad';
@@ -446,6 +476,20 @@ const fileGridDisplayRef = useTemplateRef<InstanceType<typeof FileGridDisplay>>(
 
 const fileInputsRef = useTemplateRef<InstanceType<typeof FileInputs>>('fileInputs');
 let eventCbId: string | null = null;
+
+const searchQuery = ref('');
+const searchResults = ref<WorkspaceSearchMatch[]>([]);
+const isSearching = ref(false);
+let currentSearchHandle: SearchHandle | null = null;
+
+watch(searchQuery, (newQuery) => {
+  searchResults.value = [];
+  if (newQuery) {
+    isSearching.value = true;
+  } else {
+    isSearching.value = false;
+  }
+});
 
 const selectedFilesCount = computed(() => {
   return files.value.selectedCount() + folders.value.selectedCount();
@@ -709,6 +753,7 @@ onUnmounted(async () => {
   if (eventCbId) {
     eventDistributor.value.removeCallback(eventCbId);
   }
+  await cancelCurrentSearch();
 });
 
 async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
@@ -1514,6 +1559,72 @@ async function onDropAsReader(): Promise<void> {
   );
 }
 
+async function cancelCurrentSearch(): Promise<void> {
+  if (currentSearchHandle !== null) {
+    const handle = currentSearchHandle;
+    currentSearchHandle = null;
+    await closeWorkspaceSearch(handle);
+  }
+}
+
+async function onSearchChange(query: string): Promise<void> {
+  await cancelCurrentSearch();
+  searchResults.value = [];
+
+  if (!query || !workspaceInfo.value) {
+    isSearching.value = false;
+    return;
+  }
+
+  isSearching.value = true;
+  const startResult = await startWorkspaceSearch(workspaceInfo.value.handle, currentPath.value, query);
+  if (!startResult.ok) {
+    isSearching.value = false;
+    return;
+  }
+
+  const handle = startResult.value;
+  currentSearchHandle = handle;
+
+  while (currentSearchHandle === handle) {
+    const nextResult = await getNextWorkspaceSearchResult(handle);
+    if (!nextResult.ok || nextResult.value === null) {
+      break;
+    }
+    if (currentSearchHandle === handle) {
+      searchResults.value.push(nextResult.value);
+    }
+  }
+
+  if (currentSearchHandle === handle) {
+    isSearching.value = false;
+    currentSearchHandle = null;
+    await closeWorkspaceSearch(handle);
+  }
+}
+
+async function onSearchResultClick(match: WorkspaceSearchMatch): Promise<void> {
+  if (!workspaceInfo.value) {
+    return;
+  }
+  await cancelCurrentSearch();
+  searchQuery.value = '';
+  searchResults.value = [];
+
+  const isFile = match.stat.tag === FileType.File;
+  if (isFile) {
+    const parentPath = await parsec.Path.parent(match.path);
+    const filename = await parsec.Path.filename(match.path);
+    navigateTo(Routes.Documents, {
+      query: { documentPath: parentPath, workspaceHandle: workspaceInfo.value.handle, selectFile: filename ?? undefined },
+    });
+  } else {
+    navigateTo(Routes.Documents, {
+      query: { documentPath: match.path, workspaceHandle: workspaceInfo.value.handle },
+    });
+  }
+}
+
 const actionBarOptionsFoldersPage = computed(() => {
   const actionArray = [];
   const selectedEntries = getSelectedEntries();
@@ -1712,6 +1823,17 @@ const actionBarOptionsFoldersPage = computed(() => {
       border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
     }
   }
+}
+
+.search-input {
+  flex-shrink: 1;
+  min-width: 10rem;
+  max-width: 20rem;
+}
+
+.search-result-list {
+  flex-grow: 1;
+  overflow-y: auto;
 }
 
 .workspace-role-tag {

@@ -852,6 +852,13 @@
             "actionUnselectAll": "Tout désélectionner",
             "actionShare": "Partager"
         },
+        "search": {
+            "placeholder": "Rechercher des fichiers...",
+            "searching": "Recherche en cours...",
+            "searchingIn": "Recherche dans {folder}",
+            "noResults": "Aucun résultat trouvé.",
+            "minChars": "Veuillez entrer au moins 3 caractères pour effectuer une recherche."
+        },
         "importModal": {
             "title": "Importer vos fichiers",
             "dragAndDrop": "Glisser/Déposer vos fichiers ici",
@@ -2636,7 +2643,13 @@
         "error": "Impossible de récupérer l'historique de l'espace de travail pour la date sélectionnée",
         "loading": "Chargement...",
         "workspace": "Espace de travail :",
-        "date": "Date de prévisualisation :"
+        "date": "Date de prévisualisation :",
+        "searchMinChars": "Veuillez entrer au moins 3 caractères pour effectuer une recherche.",
+        "search": {
+            "placeholder": "Rechercher des fichiers...",
+            "searching": "Recherche en cours...",
+            "noResults": "Aucun résultat trouvé."
+        }
     },
     "fileViewers": {
         "openWithDefault": "Ouvrir avec l'app par défaut",

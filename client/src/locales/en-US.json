@@ -853,6 +853,13 @@
             "actionUnselectAll": "Unselect all",
             "actionShare": "Share"
         },
+        "search": {
+            "placeholder": "Search files...",
+            "searching": "Searching...",
+            "searchingIn": "Searching in {folder}",
+            "noResults": "No results found.",
+            "minChars": "Please enter at least 3 characters to search."
+        },
         "importModal": {
             "title": "Upload your files",
             "dragAndDrop": "Drag and drop your files here",
@@ -2637,7 +2644,13 @@
         "error": "Failed to retrieve workspace history for the selected date.",
         "loading": "Loading...",
         "workspace": "Workspace:",
-        "date": "Preview date:"
+        "date": "Preview date:",
+        "searchMinChars": "Please enter at least 3 characters to search.",
+        "search": {
+            "placeholder": "Search files...",
+            "searching": "Searching...",
+            "noResults": "No results found."
+        }
     },
     "fileViewers": {
         "openWithDefault": "Open with default app",

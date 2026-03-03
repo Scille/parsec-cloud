@@ -12,6 +12,8 @@ import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/explorer/FileListItemProcessing.vue';
 import FolderSelectionModal from '@/components/files/explorer/FolderSelectionModal.vue';
 import HistoryFileListItem from '@/components/files/explorer/HistoryFileListItem.vue';
+import WorkspaceHistorySearchResultList from '@/components/files/explorer/WorkspaceHistorySearchResultList.vue';
+import WorkspaceSearchResultList from '@/components/files/explorer/WorkspaceSearchResultList.vue';
 
 export {
   FileCard,
@@ -26,4 +28,6 @@ export {
   FileListItemProcessing,
   FolderSelectionModal,
   HistoryFileListItem,
+  WorkspaceHistorySearchResultList,
+  WorkspaceSearchResultList,
 };

@@ -88,6 +88,9 @@ export {
   WorkspaceHistoryFdReadErrorTag,
   WorkspaceHistoryInternalOnlyErrorTag,
   WorkspaceHistoryOpenFileErrorTag,
+  WorkspaceHistorySearchCloseErrorTag,
+  WorkspaceHistorySearchErrorTag,
+  WorkspaceHistorySearchGetNextErrorTag,
   WorkspaceHistorySetTimestampOfInterestErrorTag,
   WorkspaceHistoryStatEntryErrorTag,
   WorkspaceHistoryStatFolderChildrenErrorTag,
@@ -97,6 +100,9 @@ export {
   WorkspaceMoveEntryErrorTag,
   WorkspaceOpenFileErrorTag,
   WorkspaceRemoveEntryErrorTag,
+  WorkspaceSearchCloseErrorTag,
+  WorkspaceSearchErrorTag,
+  WorkspaceSearchGetNextErrorTag,
   WorkspaceStatEntryErrorTag,
   WorkspaceStatFolderChildrenErrorTag,
   WorkspaceStopErrorTag,
@@ -259,6 +265,10 @@ export type {
   WorkspaceHistoryFdReadError,
   WorkspaceHistoryInternalOnlyError,
   WorkspaceHistoryOpenFileError,
+  WorkspaceHistorySearchCloseError,
+  WorkspaceHistorySearchError,
+  WorkspaceHistorySearchGetNextError,
+  WorkspaceHistorySearchMatch,
   WorkspaceHistorySetTimestampOfInterestError,
   WorkspaceHistoryStartError,
   WorkspaceHistoryStatEntryError,
@@ -270,6 +280,10 @@ export type {
   WorkspaceMoveEntryError,
   WorkspaceOpenFileError,
   WorkspaceRemoveEntryError,
+  WorkspaceSearchCloseError,
+  WorkspaceSearchError,
+  WorkspaceSearchGetNextError,
+  WorkspaceSearchMatch,
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
   WorkspaceStopError,
@@ -307,6 +321,7 @@ import { InvitationType, RealmRole as WorkspaceRole } from '@/plugins/libparsec'
 
 type WorkspaceHistoryHandle = Handle;
 type WorkspaceHandle = Handle;
+type SearchHandle = Handle;
 type EntryID = VlobID;
 type WorkspaceName = EntryName;
 type ConnectionHandle = Handle;
@@ -490,6 +505,7 @@ export {
   OwnDeviceInfo,
   ParsecOrganizationAddr,
   RegistrationDevice,
+  SearchHandle,
   StartedWorkspaceInfo,
   SystemPath,
   UserID,

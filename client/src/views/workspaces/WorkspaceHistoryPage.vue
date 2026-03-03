@@ -86,22 +86,25 @@
               class="folder-header__actions"
               ref="topbarRight"
             >
+              <ms-search-input
+                v-model="searchQuery"
+                :placeholder="'workspaceHistory.search.placeholder'"
+                :debounce="300"
+                @change="onSearchChanged"
+                :disabled="querying && searchQuery.length < 3"
+                class="search-input"
+              />
               <ion-button
                 class="select-button button-medium button-default"
                 @click="entries.selectAll(!allSelected)"
-                v-if="isLargeDisplay && entries.entriesCount() > 0"
+                v-if="isLargeDisplay && entries.entriesCount() > 0 && !resultFromSearch"
               >
                 <span v-if="!allSelected">{{ $msTranslate('workspaceHistory.actions.selectAll') }}</span>
                 <span v-else>{{ $msTranslate('workspaceHistory.actions.deselectAll') }}</span>
               </ion-button>
-              <ms-search-input
-                v-show="false"
-                @change="onSearchChanged"
-                :debounce="1000"
-                :disabled="querying"
-              />
               <ion-button
                 id="restore-button"
+                v-if="!resultFromSearch"
                 :disabled="!someSelected || querying"
                 @click="onRestoreClicked"
                 class="button-default button-medium"
@@ -139,26 +142,34 @@
           </div>
           <div class="folder-content">
             <div
-              v-show="querying"
+              v-show="querying && searchQuery.length === 0"
               class="folder-content__loading"
             >
               <ion-text class="subtitles-sm">{{ $msTranslate('workspaceHistory.loading') }}</ion-text>
             </div>
             <div
-              v-show="!querying && entries.entriesCount() === 0 && !error"
+              v-show="!querying && entries.entriesCount() === 0 && !error && searchQuery.length === 0"
               class="body-lg folder-content__empty"
             >
               {{ $msTranslate('workspaceHistory.empty') }}
             </div>
             <div
               class="body-lg folder-content__empty"
-              v-show="!querying && error"
+              v-show="!querying && error && searchQuery.length === 0"
             >
               <ion-icon :icon="warning" />
               {{ $msTranslate(error) }}
             </div>
+            <workspace-history-search-result-list
+              v-if="searchQuery.length > 0"
+              :results="searchResults"
+              :is-searching="isSearching"
+              :min-chars-needed="searchQuery.length < 3"
+              @result-click="onSearchResultClick"
+              class="search-result-list"
+            />
             <div
-              v-show="!querying && entries.entriesCount() > 0"
+              v-show="!querying && entries.entriesCount() > 0 && searchQuery.length === 0"
               class="folder-list"
             >
               <ion-list class="folder-list-main ion-no-padding">
@@ -180,10 +191,25 @@
 
 <script setup lang="ts">
 import { pxToRem } from '@/common/utils';
-import { HistoryFileListItem, WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel } from '@/components/files';
+import {
+  HistoryFileListItem,
+  WorkspaceHistoryEntryCollection,
+  WorkspaceHistoryEntryModel,
+  WorkspaceHistorySearchResultList,
+} from '@/components/files';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { SortProperty } from '@/components/users';
-import { EntryName, FsPath, getWorkspaceInfo, Path, StartedWorkspaceInfo, WorkspaceHistory } from '@/parsec';
+import {
+  EntryName,
+  FsPath,
+  getWorkspaceInfo,
+  Path,
+  SearchHandle,
+  StartedWorkspaceInfo,
+  WorkspaceHistory,
+  WorkspaceHistoryEntryStatTag,
+  WorkspaceHistorySearchMatch,
+} from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
 import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
@@ -215,8 +241,12 @@ const entries: Ref<WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>> 
   new WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>(),
 );
 const querying = ref(false);
-let timeoutId: number | null = null;
 const resultFromSearch = ref(false);
+const searchQuery = ref('');
+const searchResults = ref<WorkspaceHistorySearchMatch[]>([]);
+const isSearching = ref(false);
+let currentSearchHistory: WorkspaceHistory | null = null;
+let currentSearchHandle: SearchHandle | null = null;
 const error = ref('');
 const selectEntry: Ref<EntryName> = ref('');
 // Not adding too much of a constraint while we're initializing
@@ -272,10 +302,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(async () => {
-  if (timeoutId !== null) {
-    window.clearTimeout(timeoutId);
-    timeoutId = null;
-  }
+  await cancelCurrentSearch();
 });
 
 onUnmounted(async () => {
@@ -284,6 +311,10 @@ onUnmounted(async () => {
 });
 
 async function onDateTimeChange(): Promise<void> {
+  await cancelCurrentSearch();
+  searchQuery.value = '';
+  searchResults.value = [];
+  resultFromSearch.value = false;
   await listCurrentPath();
 }
 
@@ -414,27 +445,85 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
   }
 }
 
-async function onSearchChanged(value: string): Promise<void> {
-  // If querying, delay
-  if (querying.value) {
-    // Clearing the previous timeout
-    if (timeoutId !== null) {
-      window.clearTimeout(timeoutId);
+async function cancelCurrentSearch(): Promise<void> {
+  if (currentSearchHandle !== null && currentSearchHistory !== null) {
+    const handle = currentSearchHandle;
+    currentSearchHandle = null;
+    await currentSearchHistory.searchClose(handle);
+  }
+  if (currentSearchHistory !== null) {
+    const history = currentSearchHistory;
+    currentSearchHistory = null;
+    if (history.isStarted()) {
+      await history.stop();
     }
-    // Add a timeout with the new value
-    window.setTimeout(async () => {
-      await onSearchChanged(value);
-    }, 500);
+  }
+}
+
+async function onSearchChanged(value: string): Promise<void> {
+  await cancelCurrentSearch();
+  searchResults.value = [];
+  resultFromSearch.value = value.length > 0;
+
+  if (!value || value.length < 3 || !workspaceInfo.value) {
+    isSearching.value = false;
     return;
   }
 
-  if (!value) {
-    await listCurrentPath();
-    resultFromSearch.value = false;
-  } else {
-    await listCurrentPath();
-    resultFromSearch.value = true;
+  isSearching.value = true;
+  const history = new WorkspaceHistory(workspaceInfo.value.id);
+  const startResult = await history.start(DateTime.fromJSDate(selectedDateTime.value));
+  if (!startResult.ok) {
+    isSearching.value = false;
+    return;
   }
+  currentSearchHistory = history;
+
+  const searchResult = await history.search(currentPath.value, value);
+  if (!searchResult.ok) {
+    isSearching.value = false;
+    await cancelCurrentSearch();
+    return;
+  }
+
+  const searchHandle = searchResult.value;
+  currentSearchHandle = searchHandle;
+
+  while (currentSearchHandle === searchHandle) {
+    const nextResult = await history.searchGetNext(searchHandle);
+    if (!nextResult.ok || nextResult.value === null) {
+      break;
+    }
+    if (currentSearchHandle === searchHandle) {
+      searchResults.value.push(nextResult.value);
+    }
+  }
+
+  if (currentSearchHandle === searchHandle) {
+    isSearching.value = false;
+    currentSearchHandle = null;
+    await history.searchClose(searchHandle);
+    if (history.isStarted()) {
+      await history.stop();
+    }
+    currentSearchHistory = null;
+  }
+}
+
+async function onSearchResultClick(match: WorkspaceHistorySearchMatch): Promise<void> {
+  await cancelCurrentSearch();
+  searchQuery.value = '';
+  searchResults.value = [];
+  resultFromSearch.value = false;
+
+  if (match.stat.tag === WorkspaceHistoryEntryStatTag.File) {
+    currentPath.value = await Path.parent(match.path);
+    selectEntry.value = (await Path.filename(match.path)) ?? '';
+  } else {
+    currentPath.value = match.path;
+    selectEntry.value = '';
+  }
+  await listCurrentPath();
 }
 
 async function onRestoreClicked(): Promise<void> {
@@ -679,5 +768,14 @@ async function onRestoreClicked(): Promise<void> {
     overflow-y: auto;
     overflow-x: hidden;
   }
+}
+
+.search-input {
+  max-width: 16rem;
+}
+
+.search-result-list {
+  flex-grow: 1;
+  overflow-y: auto;
 }
 </style>
