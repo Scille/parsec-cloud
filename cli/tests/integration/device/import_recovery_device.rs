@@ -25,7 +25,6 @@ async fn import_recovery_device(tmp_path: TmpPath) {
         with_password = format!("{}\n{DEFAULT_DEVICE_PASSWORD}", *passphrase),
         "device",
         "import-recovery-device",
-        "--input",
         &input.to_string_lossy(),
         "--label",
         "new_device"

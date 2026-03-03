@@ -6,8 +6,11 @@ use libparsec_client::remove_device;
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device]
-    pub struct Args {}
+    #[with = config_dir]
+    pub struct Args {
+        /// Short id of the device to remove
+        device: Option<String>,
+    }
 );
 
 pub async fn main(args: Args) -> anyhow::Result<()> {

@@ -22,7 +22,6 @@ async fn status_organization(tmp_path: TmpPath) {
     crate::assert_cmd_success!(
         "organization",
         "status",
-        "--organization",
         org_id.as_ref(),
         "--addr",
         &url.to_string(),
