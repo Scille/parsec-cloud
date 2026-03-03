@@ -266,7 +266,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
             case None:
                 pass  # No throttle needed
             case wait_until if now > wait_until:
-                pass  # Throttle needed, but we are already passed it
+                pass  # Throttle needed, but we have already passed it
             case wait_until:
                 return TOTPFetchOpaqueKeyThrottled(wait_until=wait_until)
 
@@ -303,7 +303,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
                 except KeyError:
                     return TOTPResetBadOutcome.USER_NOT_FOUND
             case (None, EmailAddress() as user_email):
-                # Multiple user can have the same email, but at most one of them is active
+                # Multiple users may have the same email, but only one of them can be active
                 for user in org.active_users():
                     if user.cooked.human_handle.email == user_email:
                         user_id = user.cooked.user_id
