@@ -84,9 +84,9 @@ pub async fn totp_setup_status_anonymous(
 
 #[derive(Debug, thiserror::Error)]
 pub enum TotpSetupConfirmAuthenticatedError {
-    #[error("The one-time-password is invalid")]
+    #[error("The one-time password is invalid")]
     InvalidOneTimePassword,
-    #[error("The TOTP has already been setup")]
+    #[error("The TOTP has already been set up")]
     AlreadySetup,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
@@ -119,7 +119,7 @@ pub async fn totp_setup_confirm_authenticated(
 
 #[derive(Debug, thiserror::Error)]
 pub enum TotpSetupConfirmAnonymousError {
-    #[error("The one-time-password is invalid")]
+    #[error("The one-time password is invalid")]
     InvalidOneTimePassword,
     #[error("The authentication token is invalid")]
     BadToken,
