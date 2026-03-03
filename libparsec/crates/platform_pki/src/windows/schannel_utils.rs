@@ -26,7 +26,8 @@ pub(super) fn cert_context_to_raw(cert_context: &CertContext) -> *const Cryptogr
 }
 
 pub(super) fn ncrypt_key_to_ptr(ncrypt_key: &NcryptKey) -> Cryptography::NCRYPT_KEY_HANDLE {
-    // SAFETY: NcryptKey is obtain from an NCRYPT_KEY_HANDLE, here we retrieve the underlying
-    // handle.
-    (unsafe { RawPointer::as_ptr(ncrypt_key) }) as Cryptography::NCRYPT_KEY_HANDLE
+    // SAFETY: NcryptKey is obtained from an NCRYPT_KEY_HANDLE. RawPointer::as_ptr() returns
+    // a *mut c_void pointing to the inner handle field. We cast to *mut usize to read the
+    // actual handle value without moving the non-Copy c_void.
+    unsafe { *(RawPointer::as_ptr(ncrypt_key) as *mut Cryptography::NCRYPT_KEY_HANDLE) }
 }
