@@ -8,6 +8,7 @@ mod open_file_by_id;
 // Realm export database support is not available on web.
 #[cfg(not(target_arch = "wasm32"))]
 mod realm_export_access_sequester_decryptor;
+mod search;
 mod start;
 mod stat_entry;
 mod stat_entry_by_id;

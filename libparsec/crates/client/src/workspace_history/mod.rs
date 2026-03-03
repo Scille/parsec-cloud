@@ -8,8 +8,9 @@ pub use transactions::{
     WorkspaceHistoryEntryStat, WorkspaceHistoryFdCloseError, WorkspaceHistoryFdReadError,
     WorkspaceHistoryFdStatError, WorkspaceHistoryFileStat, WorkspaceHistoryFolderReader,
     WorkspaceHistoryFolderReaderStatEntryError, WorkspaceHistoryFolderReaderStatNextOutcome,
-    WorkspaceHistoryOpenFileError, WorkspaceHistoryOpenFolderReaderError,
-    WorkspaceHistoryStatEntryError, WorkspaceHistoryStatFolderChildrenError,
+    WorkspaceHistoryOpenFileError, WorkspaceHistoryOpenFolderReaderError, WorkspaceHistorySearch,
+    WorkspaceHistorySearchMatch, WorkspaceHistoryStatEntryError,
+    WorkspaceHistoryStatFolderChildrenError,
 };
 
 use std::{
@@ -285,6 +286,16 @@ impl WorkspaceHistoryOps {
     ) -> Result<Vec<(EntryName, WorkspaceHistoryEntryStat)>, WorkspaceHistoryStatFolderChildrenError>
     {
         transactions::stat_folder_children_by_id(self, self.timestamp_of_interest(), entry_id).await
+    }
+
+    /// Fuzzy-search all entries in the workspace history by name/path.
+    ///
+    /// The workspace tree is crawled in a breadth-first way (i.e. a subdirectory of
+    /// depth n will only be searched after all item of depth n-1).
+    ///
+    /// The timestamp of interest is captured at the time this method is called.
+    pub fn search(self: Arc<Self>, path: FsPath, query: &str) -> WorkspaceHistorySearch {
+        transactions::search(self, path, query)
     }
 
     pub async fn open_file(

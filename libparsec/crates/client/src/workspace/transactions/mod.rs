@@ -15,6 +15,7 @@ mod open_file;
 mod outbound_sync;
 mod read_folder;
 mod remove_entry;
+mod search;
 mod stat_entry;
 mod watch_entry;
 
@@ -33,5 +34,6 @@ pub use open_file::*;
 pub use outbound_sync::*;
 pub use read_folder::*;
 pub use remove_entry::*;
+pub use search::*;
 pub use stat_entry::*;
 pub use watch_entry::*;

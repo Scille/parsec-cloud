@@ -25,6 +25,7 @@ libparsec_types = { workspace = true }
 
 paste = { workspace = true }
 log = { workspace = true }
+unicode-normalization = { workspace = true, features = ["std"] }
 blahaj = { workspace = true }
 smallvec = { workspace = true }
 thiserror = { workspace = true }

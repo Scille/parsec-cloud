@@ -5,6 +5,7 @@ mod fd_read;
 mod fd_stat;
 mod open_file;
 mod read_folder;
+mod search;
 mod stat_entry;
 
 pub use fd_close::*;
@@ -12,6 +13,7 @@ pub use fd_read::*;
 pub use fd_stat::*;
 pub use open_file::*;
 pub use read_folder::*;
+pub use search::*;
 pub use stat_entry::*;
 
 // pub use transactions::{

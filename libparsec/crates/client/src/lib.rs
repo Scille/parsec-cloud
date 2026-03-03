@@ -9,6 +9,7 @@ mod device;
 mod event_bus;
 mod invite;
 mod monitors;
+mod search;
 mod server_fetch;
 mod user;
 mod utils;

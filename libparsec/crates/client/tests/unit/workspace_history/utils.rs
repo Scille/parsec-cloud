@@ -154,7 +154,7 @@ pub enum DataAccessStrategy {
 }
 
 pub struct WorkspaceHistoryOpsWithMaybeTmpPath {
-    ops: WorkspaceHistoryOps,
+    ops: Arc<WorkspaceHistoryOps>,
     /// Must be kept here since the temporary path is removed on drop
     _tmp_path: Option<TmpPath>,
 }
@@ -166,7 +166,7 @@ impl WorkspaceHistoryOpsWithMaybeTmpPath {
 }
 
 impl std::ops::Deref for WorkspaceHistoryOpsWithMaybeTmpPath {
-    type Target = WorkspaceHistoryOps;
+    type Target = Arc<WorkspaceHistoryOps>;
     fn deref(&self) -> &Self::Target {
         &self.ops
     }
@@ -224,7 +224,7 @@ impl DataAccessStrategy {
                 )
                 .await;
                 WorkspaceHistoryOpsWithMaybeTmpPath {
-                    ops,
+                    ops: Arc::new(ops),
                     _tmp_path: Some(tmp_path),
                 }
             }
@@ -235,7 +235,7 @@ impl DataAccessStrategy {
                 let ops =
                     workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
                 WorkspaceHistoryOpsWithMaybeTmpPath {
-                    ops,
+                    ops: Arc::new(ops),
                     _tmp_path: None,
                 }
             }

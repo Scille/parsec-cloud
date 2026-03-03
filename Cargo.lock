@@ -2356,6 +2356,7 @@ dependencies = [
  "smallvec",
  "thiserror 2.0.18",
  "tokio",
+ "unicode-normalization",
  "zeroize",
 ]
 

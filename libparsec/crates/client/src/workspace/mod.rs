@@ -26,8 +26,9 @@ pub use transactions::{
     WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
     WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,
     WorkspaceIsFileContentLocalError, WorkspaceMoveEntryError, WorkspaceOpenFileError,
-    WorkspaceOpenFolderReaderError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
-    WorkspaceStatFolderChildrenError, WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
+    WorkspaceOpenFolderReaderError, WorkspaceRemoveEntryError, WorkspaceSearch,
+    WorkspaceSearchMatch, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
+    WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
 };
 
 use self::{store::FileUpdater, transactions::FdWriteStrategy};
@@ -386,6 +387,14 @@ impl WorkspaceOps {
         entry_id: VlobID,
     ) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
         transactions::stat_folder_children_by_id(self, entry_id).await
+    }
+
+    /// Fuzzy-search all entries in the workspace by name/path.
+    ///
+    /// The workspace tree is crawled in a breadth-first way (i.e. a subdirectory of
+    /// depth n will only be searched after all item of depth n-1).
+    pub fn search(self: Arc<Self>, path: FsPath, query: &str) -> WorkspaceSearch {
+        transactions::search(self, path, query)
     }
 
     pub async fn move_entry(
