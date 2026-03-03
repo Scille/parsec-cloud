@@ -1,6 +1,7 @@
 # cspell:words inotify
 
-FROM python:3.12-slim
+# Using bookworm because it provides the same version of gettext (v0.21) used in the CI.
+FROM python:3.12-slim-bookworm
 
 SHELL [ "/bin/bash", "-c" ]
 
