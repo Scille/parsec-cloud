@@ -242,7 +242,7 @@ fn ncrypt_sign_message_with_rsa(
     const ALGO: PkiSignatureAlgorithm = PkiSignatureAlgorithm::RsassaPssSha256;
     let hash = sha2::Sha256::digest(message);
     let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
-    log::trace!("Using the following ncrypt handle: {raw_handle:x}");
+    log::trace!("Using the following ncrypt handle: {raw_handle:#x}");
 
     // SAFETY: We follow the windows documentation by correctly passing the correct flags according
     // to padding_info type, and the other pointer are either coming from allocated buffer or null
