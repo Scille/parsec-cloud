@@ -1,1 +1,0 @@
-User can copy email addresses to clipboard by clicking on them from the user list.
