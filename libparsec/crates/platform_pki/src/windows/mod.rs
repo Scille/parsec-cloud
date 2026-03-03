@@ -277,7 +277,7 @@ fn ncrypt_sign_message_with_rsa(
         );
 
         if res != 0 {
-            return Err(std::io::Error::last_os_error());
+            return Err(std::io::Error::from_raw_os_error(res));
         }
 
         // 2. Fill the actual signature in a buffer
@@ -294,7 +294,7 @@ fn ncrypt_sign_message_with_rsa(
         );
 
         if res != 0 {
-            return Err(std::io::Error::last_os_error());
+            return Err(std::io::Error::from_raw_os_error(res));
         }
         Ok((ALGO, buff))
     }
@@ -360,7 +360,7 @@ fn ncrypt_encrypt_message_with_rsa(
             flags,
         );
         if res != 0 {
-            return Err(std::io::Error::last_os_error());
+            return Err(std::io::Error::from_raw_os_error(res));
         }
 
         // 2. Actually perform the encryption.
@@ -376,7 +376,7 @@ fn ncrypt_encrypt_message_with_rsa(
             flags,
         );
         if res != 0 {
-            return Err(std::io::Error::last_os_error());
+            return Err(std::io::Error::from_raw_os_error(res));
         }
         Ok((ALGO, buff))
     }
