@@ -2,6 +2,7 @@
 
 from .client import ClientConfig, DeviceAccessStrategy
 from .common import (
+    U32,
     U64,
     DateTime,
     DeviceID,
@@ -407,4 +408,46 @@ async def workspace_history_fd_stat(
     workspace_history: Handle,
     fd: FileDescriptor,
 ) -> Result[WorkspaceHistoryFileStat, WorkspaceHistoryFdStatError]:
+    raise NotImplementedError
+
+
+class WorkspaceHistorySearchMatch(Structure):
+    path: FsPath
+    stat: WorkspaceHistoryEntryStat
+    score: U32
+    match_positions: list[U32]
+
+
+class WorkspaceHistorySearchError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def workspace_history_search(
+    workspace_history: Handle,
+    path: FsPath,
+    query: Ref[str],
+) -> Result[Handle, WorkspaceHistorySearchError]:
+    raise NotImplementedError
+
+
+class WorkspaceHistorySearchGetNextError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def workspace_history_search_get_next(
+    search: Handle,
+) -> Result[WorkspaceHistorySearchMatch | None, WorkspaceHistorySearchGetNextError]:
+    raise NotImplementedError
+
+
+class WorkspaceHistorySearchCloseError(ErrorVariant):
+    class Internal:
+        pass
+
+
+def workspace_history_search_close(
+    search: Handle,
+) -> Result[None, WorkspaceHistorySearchCloseError]:
     raise NotImplementedError

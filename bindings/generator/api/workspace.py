@@ -6,6 +6,7 @@ from .addr import (
     ParsecWorkspacePathAddrAndRedirectionURL,
 )
 from .common import (
+    U32,
     U64,
     DateTime,
     DeviceID,
@@ -773,4 +774,46 @@ async def workspace_decrypt_path_addr(
     workspace: Handle,
     link: Ref[ParsecWorkspacePathAddr],
 ) -> Result[FsPath, WorkspaceDecryptPathAddrError]:
+    raise NotImplementedError
+
+
+class WorkspaceSearchMatch(Structure):
+    path: FsPath
+    stat: EntryStat
+    score: U32
+    match_positions: list[U32]
+
+
+class WorkspaceSearchError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def workspace_search(
+    workspace: Handle,
+    path: FsPath,
+    query: Ref[str],
+) -> Result[Handle, WorkspaceSearchError]:
+    raise NotImplementedError
+
+
+class WorkspaceSearchGetNextError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def workspace_search_get_next(
+    search: Handle,
+) -> Result[WorkspaceSearchMatch | None, WorkspaceSearchGetNextError]:
+    raise NotImplementedError
+
+
+class WorkspaceSearchCloseError(ErrorVariant):
+    class Internal:
+        pass
+
+
+def workspace_search_close(
+    search: Handle,
+) -> Result[None, WorkspaceSearchCloseError]:
     raise NotImplementedError

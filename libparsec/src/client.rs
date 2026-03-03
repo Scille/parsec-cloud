@@ -341,6 +341,13 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
                 client: Some(x_client),
                 ..
             }
+            | HandleItem::WorkspaceSearch {
+                client: x_client, ..
+            }
+            | HandleItem::WorkspaceHistorySearch {
+                client: Some(x_client),
+                ..
+            }
             | HandleItem::Mountpoint {
                 client: x_client, ..
             } if *x_client == client_handle => FilterCloseHandle::Close,

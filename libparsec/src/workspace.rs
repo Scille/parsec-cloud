@@ -8,7 +8,8 @@ pub use libparsec_client::workspace::{
     WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
     WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError,
     WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
-    WorkspaceStatEntryError, WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
+    WorkspaceSearchMatch, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
+    WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -177,7 +178,11 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
     loop {
         let mut maybe_wait = None;
         filter_close_handles(client_handle, |x| match x {
-            HandleItem::Mountpoint {
+            HandleItem::WorkspaceSearch {
+                workspace: x_workspace,
+                ..
+            }
+            | HandleItem::Mountpoint {
                 workspace: x_workspace,
                 ..
             } if *x_workspace == workspace_handle => FilterCloseHandle::Close,
@@ -745,4 +750,88 @@ pub async fn workspace_decrypt_path_addr(
     let workspace = borrow_workspace(workspace)?;
 
     workspace.decrypt_path_addr(link).await
+}
+
+/*
+ * Workspace search
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceSearchError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+/// Start a fuzzy search over the workspace and return a handle.
+///
+/// Matched entries can be retrieved one at a time with [`workspace_search_get_next`].
+/// Call [`workspace_search_close`] to abort the search and release the handle.
+pub async fn workspace_search(
+    workspace: Handle,
+    path: FsPath,
+    query: &str,
+) -> Result<Handle, WorkspaceSearchError> {
+    let workspace_handle = workspace;
+    let (client_handle, workspace) = borrow_from_handle(workspace_handle, |x| match x {
+        HandleItem::Workspace {
+            client,
+            workspace_ops,
+            ..
+        } => Some((*client, workspace_ops.clone())),
+        _ => None,
+    })?;
+
+    let search = workspace.search(path, query);
+
+    let search_handle = crate::handle::register_handle(HandleItem::WorkspaceSearch {
+        client: client_handle,
+        workspace: workspace_handle,
+        search,
+    });
+
+    Ok(search_handle)
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceSearchGetNextError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+/// Retrieve the next fuzzy-search result.
+///
+/// Returns `Ok(Some(…))` when a match is available, `Ok(None)` when the
+/// search has finished (all entries visited) or has been aborted via
+/// [`workspace_search_close`].
+pub async fn workspace_search_get_next(
+    search: Handle,
+) -> Result<Option<WorkspaceSearchMatch>, WorkspaceSearchGetNextError> {
+    let search_receiver = borrow_from_handle(search, |x| match x {
+        HandleItem::WorkspaceSearch { search, .. } => Some(search.results.clone()),
+        _ => None,
+    })?;
+
+    match search_receiver.recv_async().await {
+        Ok(item) => Ok(Some(item)),
+        // No more items (seach completed or has been aborted)
+        Err(_) => Ok(None),
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceSearchCloseError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub fn workspace_search_close(search: Handle) -> Result<(), WorkspaceSearchCloseError> {
+    let search = take_and_close_handle(search, |x| match *x {
+        HandleItem::WorkspaceSearch { search, .. } => Ok(search),
+        _ => Err(x),
+    })?;
+
+    // Drop aborts the underlying task
+    drop(search);
+
+    Ok(())
 }

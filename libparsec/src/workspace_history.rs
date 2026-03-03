@@ -6,8 +6,8 @@ pub use libparsec_client::{
     workspace_history::{
         WorkspaceHistoryEntryStat, WorkspaceHistoryFdCloseError, WorkspaceHistoryFdReadError,
         WorkspaceHistoryFdStatError, WorkspaceHistoryFileStat, WorkspaceHistoryOpenFileError,
-        WorkspaceHistorySetTimestampOfInterestError, WorkspaceHistoryStatEntryError,
-        WorkspaceHistoryStatFolderChildrenError,
+        WorkspaceHistorySearchMatch, WorkspaceHistorySetTimestampOfInterestError,
+        WorkspaceHistoryStatEntryError, WorkspaceHistoryStatFolderChildrenError,
     },
     WorkspaceHistoryOpsStartError as WorkspaceHistoryStartError,
 };
@@ -16,7 +16,8 @@ use libparsec_types::prelude::*;
 use crate::{
     device::DeviceAccessStrategy,
     handle::{
-        borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
+        borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
+        FilterCloseHandle, Handle, HandleItem,
     },
 };
 
@@ -218,7 +219,19 @@ pub fn workspace_history_stop(
         }
         _ => Err(x),
     })
-    .map_err(|err| err.into())
+    .map_err(WorkspaceHistoryInternalOnlyError::Internal)?;
+
+    // Cleanup any open search handles related to this workspace history
+    // (dropping a WorkspaceHistorySearch aborts its underlying task).
+    filter_close_handles(workspace_history, |x| match x {
+        HandleItem::WorkspaceHistorySearch {
+            workspace_history: x_workspace_history,
+            ..
+        } if *x_workspace_history == workspace_history => FilterCloseHandle::Close,
+        _ => FilterCloseHandle::Keep,
+    });
+
+    Ok(())
 }
 
 /*
@@ -352,4 +365,91 @@ pub async fn workspace_history_fd_stat(
     let workspace_history = borrow_workspace_history(workspace_history)?;
 
     workspace_history.fd_stat(fd).await
+}
+
+/*
+ * Workspace history search
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceHistorySearchError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+/// Start a fuzzy search over the workspace history and return a handle.
+///
+/// Matched entries can be retrieved one at a time with [`workspace_history_search_get_next`].
+/// Call [`workspace_history_search_close`] to abort the search and release the handle.
+pub async fn workspace_history_search(
+    workspace_history: Handle,
+    path: FsPath,
+    query: &str,
+) -> Result<Handle, WorkspaceHistorySearchError> {
+    let workspace_history_handle = workspace_history;
+
+    let (client, workspace_history_ops) = borrow_from_handle(workspace_history, |x| match x {
+        HandleItem::WorkspaceHistory {
+            client,
+            workspace_history_ops,
+            ..
+        } => Some((client.to_owned(), workspace_history_ops.clone())),
+        _ => None,
+    })?;
+
+    let search = workspace_history_ops.search(path, query);
+
+    let search_handle = crate::handle::register_handle(HandleItem::WorkspaceHistorySearch {
+        client,
+        workspace_history: workspace_history_handle,
+        search,
+    });
+
+    Ok(search_handle)
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceHistorySearchGetNextError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+/// Retrieve the next fuzzy-search result.
+///
+/// Returns `Ok(Some(…))` when a match is available, `Ok(None)` when the
+/// search has finished (all entries visited) or has been aborted via
+/// [`workspace_history_search_close`].
+pub async fn workspace_history_search_get_next(
+    search: Handle,
+) -> Result<Option<WorkspaceHistorySearchMatch>, WorkspaceHistorySearchGetNextError> {
+    let search_receiver = borrow_from_handle(search, |x| match x {
+        HandleItem::WorkspaceHistorySearch { search, .. } => Some(search.results.clone()),
+        _ => None,
+    })?;
+
+    match search_receiver.recv_async().await {
+        Ok(item) => Ok(Some(item)),
+        // No more items (search completed or has been aborted)
+        Err(_) => Ok(None),
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceHistorySearchCloseError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub fn workspace_history_search_close(
+    search: Handle,
+) -> Result<(), WorkspaceHistorySearchCloseError> {
+    let search = take_and_close_handle(search, |x| match *x {
+        HandleItem::WorkspaceHistorySearch { search, .. } => Ok(search),
+        _ => Err(x),
+    })?;
+
+    // Drop aborts the underlying task
+    drop(search);
+
+    Ok(())
 }

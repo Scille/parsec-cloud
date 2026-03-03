@@ -71,6 +71,19 @@ pub(crate) enum HandleItem {
         workspace_history_ops: Arc<libparsec_client::WorkspaceHistoryOps>,
     },
 
+    WorkspaceSearch {
+        client: Handle,
+        workspace: Handle,
+        search: libparsec_client::workspace::WorkspaceSearch,
+    },
+
+    WorkspaceHistorySearch {
+        /// `None` if the workspace history uses a realm export database
+        client: Option<Handle>,
+        workspace_history: Handle,
+        search: libparsec_client::workspace_history::WorkspaceHistorySearch,
+    },
+
     Account(Arc<libparsec_account::Account>),
 
     UserGreetInitial(libparsec_client::UserGreetInitialCtx),
