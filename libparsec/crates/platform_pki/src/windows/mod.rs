@@ -244,6 +244,52 @@ fn ncrypt_sign_message_with_rsa(
     let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
     log::trace!("Using the following ncrypt handle: {raw_handle:#x}");
 
+    log::trace!(
+        "Key usage flags: {key_usage:#010x}",
+        key_usage = {
+            let mut key_usage = 0u32;
+            let mut bytes_needed = 0u32;
+            #[expect(clippy::undocumented_unsafe_blocks)]
+            let res = unsafe {
+                windows_sys::Win32::Security::Cryptography::NCryptGetProperty(
+                    raw_handle,
+                    windows_sys::Win32::Security::Cryptography::NCRYPT_KEY_USAGE_PROPERTY,
+                    &mut key_usage as *mut u32 as *mut u8,
+                    4,
+                    &mut bytes_needed,
+                    0,
+                )
+            };
+            if res != 0 {
+                return Err(std::io::Error::from_raw_os_error(res));
+            }
+            key_usage
+        }
+    );
+
+    log::trace!(
+        "Impl type: {impl_type:#010x}",
+        impl_type = {
+            let mut impl_type = 0u32;
+            let mut bytes_needed = 0u32;
+            #[expect(clippy::undocumented_unsafe_blocks)]
+            let res = unsafe {
+                windows_sys::Win32::Security::Cryptography::NCryptGetProperty(
+                    raw_handle,
+                    windows_sys::Win32::Security::Cryptography::NCRYPT_IMPL_TYPE_PROPERTY,
+                    &mut impl_type as *mut u32 as *mut u8,
+                    4,
+                    &mut bytes_needed,
+                    0,
+                )
+            };
+            if res != 0 {
+                return Err(std::io::Error::from_raw_os_error(res));
+            }
+            impl_type
+        }
+    );
+
     // SAFETY: We follow the windows documentation by correctly passing the correct flags according
     // to padding_info type, and the other pointer are either coming from allocated buffer or null
     // pointer with their correct associated sizes.
