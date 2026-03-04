@@ -14,7 +14,8 @@ Your MFA (Multi-Factor Authentication) has been reset for the <b>{{ organization
 {% endblock %}
 
 {% block main_content %}
-{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link %}
+{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_note %}
+
 {{
   gen_contents([
     namespace(
@@ -27,5 +28,13 @@ Your MFA (Multi-Factor Authentication) has been reset for the <b>{{ organization
     )
   ])
 }}
+
+{% call render_note() %}
+<p style="font-size: 14px; color: #51517B; padding-bottom: 8px;">
+  <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+  origin page using window.opener unless link type noopener or noreferrer is specified. -->
+  For more information please refer to the User Guide:
+  <a style="color: #0058CC;" href="https://docs.parsec.cloud/en/stable/userguide/mfa.html" rel="noopener noreferrer" target="_blank">Multi-factor Authentication (MFA)</a>.
+</p>
+{% endcall %}
 {% endblock %}
-{# TODO: Add a link to MFA documentation once available (see https://github.com/Scille/parsec-cloud/issues/12251) #}
