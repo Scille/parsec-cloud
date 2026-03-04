@@ -213,16 +213,10 @@ pub async fn sign_message(
     let store = open_store().map_err(SignMessageError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
-    let keypair = get_keypair(&cert_context).map_err(SignMessageError::CannotAcquireKeypair)?;
-    let (algo, signature) = match keypair {
-        // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
-        PrivateKey::CryptProv(..) => {
-            todo!("Use CryptGetUserKey to get the keypair")
-        }
-        // Handle to a CryptoGraphy Next Generation (CNG) API
-        PrivateKey::NcryptKey(handle) => ncrypt_sign_message_with_rsa(message, &handle),
-    }
-    .map_err(SignMessageError::CannotSign)?;
+    let pkey = schannel_utils::acquire_private_key(&cert_context)
+        .map_err(SignMessageError::CannotAcquireKeypair)?;
+    let (algo, signature) =
+        ncrypt_sign_message_with_rsa(message, pkey).map_err(SignMessageError::CannotSign)?;
 
     Ok((algo, signature.into()))
 }
@@ -237,11 +231,11 @@ fn get_keypair(context: &CertContext) -> Result<PrivateKey, std::io::Error> {
 
 fn ncrypt_sign_message_with_rsa(
     message: &[u8],
-    handle: &NcryptKey,
+    pkey: schannel_utils::PrivateKey,
 ) -> std::io::Result<(PkiSignatureAlgorithm, Vec<u8>)> {
     const ALGO: PkiSignatureAlgorithm = PkiSignatureAlgorithm::RsassaPssSha256;
     let hash = sha2::Sha256::digest(message);
-    let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
+    let raw_handle = pkey.handle();
     log::trace!("Using the following ncrypt handle: {raw_handle:#x}");
 
     log::trace!(
@@ -356,26 +350,20 @@ pub async fn encrypt_message(
     let store = open_store().map_err(EncryptMessageError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(EncryptMessageError::NotFound)?;
-    let keypair = get_keypair(&cert_context).map_err(EncryptMessageError::CannotAcquireKeypair)?;
-    let (algo, ciphered) = match keypair {
-        // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
-        PrivateKey::CryptProv(..) => {
-            todo!("Use CryptGetUserKey to get the keypair")
-        }
-        // Handle to a CryptoGraphy Next Generation (CNG) API
-        PrivateKey::NcryptKey(handle) => ncrypt_encrypt_message_with_rsa(message, &handle),
-    }
-    .map_err(EncryptMessageError::CannotEncrypt)?;
+    let pkey = schannel_utils::acquire_private_key(&cert_context)
+        .map_err(EncryptMessageError::CannotAcquireKeypair)?;
+    let (algo, ciphered) = ncrypt_encrypt_message_with_rsa(message, pkey)
+        .map_err(EncryptMessageError::CannotEncrypt)?;
 
     Ok((algo, ciphered.into()))
 }
 
 fn ncrypt_encrypt_message_with_rsa(
     message: &[u8],
-    handle: &NcryptKey,
+    pkey: schannel_utils::PrivateKey,
 ) -> std::io::Result<(PKIEncryptionAlgorithm, Vec<u8>)> {
     const ALGO: PKIEncryptionAlgorithm = PKIEncryptionAlgorithm::RsaesOaepSha256;
-    let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
+    let raw_handle = pkey.handle();
 
     // SAFETY: We follow the windows documentation by correctly passing the correct flags according
     // to padding_info type, and the other pointer are either coming from allocated buffer or null

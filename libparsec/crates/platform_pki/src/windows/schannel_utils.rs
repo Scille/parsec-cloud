@@ -33,3 +33,73 @@ pub(super) fn ncrypt_key_to_ptr(ncrypt_key: &NcryptKey) -> Cryptography::NCRYPT_
     log::trace!("ptr  (address of handle field) : {:p}", ptr);
     ptr as Cryptography::NCRYPT_KEY_HANDLE
 }
+
+pub(super) struct PrivateKey {
+    handle: Cryptography::NCRYPT_KEY_HANDLE,
+    must_free: bool,
+}
+
+impl Drop for PrivateKey {
+    fn drop(&mut self) {
+        if self.must_free {
+            // TODO:
+            #[expect(clippy::undocumented_unsafe_blocks)]
+            unsafe {
+                Cryptography::NCryptFreeObject(self.handle);
+            }
+        }
+    }
+}
+
+impl PrivateKey {
+    pub fn handle(&self) -> Cryptography::NCRYPT_KEY_HANDLE {
+        self.handle
+    }
+}
+
+/// Return a private key handle from a certificate context
+pub(super) fn acquire_private_key(context: &CertContext) -> std::io::Result<PrivateKey> {
+    // TODO:
+    #[expect(clippy::undocumented_unsafe_blocks)]
+    let raw_context = unsafe { RawPointer::as_ptr(context) as *const Cryptography::CERT_CONTEXT };
+    let mut handle = Cryptography::NCRYPT_KEY_HANDLE::default();
+    let flags = Cryptography::CRYPT_ACQUIRE_COMPARE_KEY_FLAG // Ensure that the private key correspond to the
+    // certificate
+    | Cryptography::CRYPT_ACQUIRE_ONLY_NCRYPT_KEY_FLAG // Only return a Ncrypt key handle (since we
+    // do not cater to Windows SRV 2003 nor Windows XP)
+    ;
+    let mut spec = 0;
+    let mut must_free = windows_sys::core::BOOL::default();
+    // TODO:
+    #[expect(clippy::undocumented_unsafe_blocks)]
+    // Doc: https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptacquirecertificateprivatekey
+    let res = unsafe {
+        Cryptography::CryptAcquireCertificatePrivateKey(
+            raw_context,
+            flags,
+            std::ptr::null_mut(),
+            &mut handle,
+            &mut spec,
+            &mut must_free,
+        )
+    };
+
+    if res == 0 {
+        // `res` correspond to `BOOL`, and is set to `FALSE` on failure and the error reason is
+        // obtain by a call to `GetLastError`.
+        return Err(std::io::Error::last_os_error());
+    }
+
+    // Check if the returned key is of expected spec
+    if spec != Cryptography::CERT_NCRYPT_KEY_SPEC {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("invalid returned key spec ({spec:#x})"),
+        ));
+    }
+
+    Ok(PrivateKey {
+        handle,
+        must_free: must_free == 1,
+    })
+}
