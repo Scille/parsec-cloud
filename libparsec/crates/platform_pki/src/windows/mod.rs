@@ -261,6 +261,7 @@ fn ncrypt_sign_message_with_rsa(
                 )
             };
             if res != 0 {
+                log::error!("Cannot get key usage for handle");
                 return Err(std::io::Error::from_raw_os_error(res));
             }
             key_usage
@@ -284,6 +285,7 @@ fn ncrypt_sign_message_with_rsa(
                 )
             };
             if res != 0 {
+                log::error!("Cannot get impl type for handle");
                 return Err(std::io::Error::from_raw_os_error(res));
             }
             impl_type
