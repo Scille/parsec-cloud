@@ -99,9 +99,8 @@ const WIN_SIGN_OPTIONS = {
  * @type {Partial<import('app-builder-lib').MacConfiguration>}
  */
 const MACOS_SIGN_OPTIONS = {
-  notarize: {
-    teamId: process.env.APPLE_TEAM_ID,
-  },
+  // See https://www.electron.build/mac#notarize
+  notarize: true,
 };
 
 const UNSIGNED_ARTIFACT_NAME =
@@ -187,11 +186,13 @@ const options = {
   },
 
   linux: {
-    synopsis: 'Secure cloud framework',
-    description: 'Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file hosting.',
+    synopsis: 'Secure file sharing in the cloud',
+    description: 'Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file sharing.',
     category: 'Office Network FileTransfer FileSystem Security',
     desktop: {
-      MimeType: `x-scheme-handler/${PARSEC_SCHEME}`,
+      entry: {
+        MimeType: `x-scheme-handler/${PARSEC_SCHEME}`,
+      },
     },
     target: 'snap',
   },
