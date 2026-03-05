@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.staticfiles import PathLike
 from starlette.types import Receive, Scope, Send
 from structlog import get_logger
 
@@ -40,21 +41,43 @@ tags_metadata = [
 ]
 
 WEB_APP_BASE_URL = "/client/"
+WEB_APP_ASSETS_URL = "/client/assets/"
+WEB_APP_CUSTOM_ASSETS_URL = "/client/custom/"
+# We use a very aggressive one-size-fits-all cache config here since all our
+# static resources (including the optional web app) are designed to use
+# cache-busting naming (i.e. having content hash in their name, e.g. `base-jFjh9D00.css`).
+STATIC_ASSETS_CACHE_CONTROL = "max-age=31536000, public, immutable"
+
+
+class StaticFilesWithCacheControl(StaticFiles):
+    def file_response(
+        self,
+        full_path: PathLike,
+        stat_result: os.stat_result,
+        scope: Scope,
+        status_code: int = 200,
+    ) -> Response:
+        response = super().file_response(
+            full_path,
+            stat_result,
+            scope,
+            status_code,
+        )
+        response.headers["Cache-Control"] = STATIC_ASSETS_CACHE_CONTROL
+        return response
 
 
 # This class is used to serve the static files of the web app (SPA)
 # and redirect to the index.html if file not found on server.
 # Useful when the user refresh the page or access a route directly.
+# Note we don't use cache-control for this resource as `index.html` is the
+# entry point from where the other resources are loaded (i.e. it is the
+# one providing the cache-busting info!).
 class StaticFilesWithSPARedirect(StaticFiles):
     def lookup_path(self, path: str) -> tuple[str, os.stat_result | None]:
         match super().lookup_path(path):
             case (_, None):
-                # The "assets" and "custom" folders should not be allowed to
-                # redirect to index.html
-                if path.startswith("assets/") or path.startswith("custom/"):
-                    raise HTTPException(status_code=404)
-                else:
-                    return super().lookup_path("index.html")
+                return super().lookup_path("index.html")
             case found:
                 return found
 
@@ -81,13 +104,38 @@ def app_factory(
     templates = Jinja2Templates(env=backend.config.jinja_env)
 
     if with_client_web_app:
+        # Note we must declare `/client/` route *after* `/client/assets/` & `/client/custom/`
+        # given the router tries each route according to their order of declaration!
+        # (See `Route priority` in https://starlette.dev/routing/)
 
-        def root(request: Request) -> Response:
-            return RedirectResponse(url=WEB_APP_BASE_URL, status_code=301)
+        app.mount(
+            WEB_APP_ASSETS_URL,
+            StaticFilesWithCacheControl(directory=with_client_web_app / "assets"),
+        )
+
+        custom_assets_dir = with_client_web_app / "custom"
+        if custom_assets_dir.is_dir():
+            custom_assets_app = StaticFilesWithCacheControl(
+                directory=with_client_web_app / "custom"
+            )
+        else:
+            # No customization, we still need a specific handler to ensure we return 404,
+            # otherwise the SPA redirect (with status 200) will be triggered which
+            # may trick the client into thinking a customization is present!
+            class NoCustomDirAlways404:
+                async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+                    raise HTTPException(status_code=404)
+
+            custom_assets_app = NoCustomDirAlways404()
+        app.mount(WEB_APP_CUSTOM_ASSETS_URL, custom_assets_app)
 
         app.mount(
             WEB_APP_BASE_URL, StaticFilesWithSPARedirect(directory=with_client_web_app, html=True)
         )
+
+        def root(request: Request) -> Response:
+            return RedirectResponse(url=WEB_APP_BASE_URL, status_code=301)
+
     else:
 
         def root(request: Request) -> Response:
@@ -95,7 +143,7 @@ def app_factory(
 
     app.get("/")(root)
 
-    app.mount("/static", StaticFiles(packages=[("parsec", "static")]))
+    app.mount("/static", StaticFilesWithCacheControl(packages=[("parsec", "static")]))
 
     async def page_not_found(scope: Scope, receive: Receive, send: Send) -> None:
         request = Request(scope)
