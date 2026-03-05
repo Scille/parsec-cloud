@@ -514,7 +514,6 @@ async function cancel(): Promise<boolean> {
   --background: var(--parsec-color-light-secondary-white);
   cursor: pointer;
   position: relative;
-  overflow: visible;
 
   &::part(native) {
     --padding-start: 0px;
@@ -538,6 +537,9 @@ async function cancel(): Promise<boolean> {
   &__name {
     color: var(--parsec-color-light-secondary-text);
     margin-left: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   &-image {
