@@ -56,6 +56,15 @@ repos:
             scss,
           ]
 
+      - id: static-assets-hash
+        name: static_assets_hash
+        alias: static-assets-hash
+        entry: python ./misc/update_server_static_assets_hash_prefix.py --check
+        language: python
+        language_version: python3
+        pass_filenames: false
+        files: ^server/parsec/static/
+
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.37.1
     hooks:
