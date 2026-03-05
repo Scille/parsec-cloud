@@ -2015,7 +2015,8 @@
             "tooLong": "Workspace name is too long, limit is {limit} characters."
         },
         "fileName": {
-            "tooLong": "File name is too long, limit is {limit} characters."
+            "fileTooLong": "File name is too long, limit is {limit} characters.",
+            "folderTooLong": "Folder name is too long, limit is {limit} characters."
         },
         "claimLink": {
             "invalidProtocol": "Link should start with 'parsec3://'.",

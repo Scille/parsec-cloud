@@ -49,15 +49,22 @@ export const workspaceNameValidator: IValidator = async function (value: string)
   return (await isValidWorkspaceName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
 };
 
-export const entryNameValidator: IValidator = async function (value: string) {
-  value = value.trim();
-  if (value.length === 0) {
-    return { validity: Validity.Intermediate };
-  } else if (value.length > ENTRY_NAME_LIMIT) {
-    return { validity: Validity.Invalid, reason: { key: 'validators.fileName.tooLong', data: { limit: ENTRY_NAME_LIMIT } } };
-  }
-  return (await isValidEntryName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
-};
+export const entryNameValidator = (isFile: boolean): IValidator =>
+  async function (value: string) {
+    value = value.trim();
+    if (value.length === 0) {
+      return { validity: Validity.Intermediate };
+    } else if (value.length > ENTRY_NAME_LIMIT) {
+      return {
+        validity: Validity.Invalid,
+        reason: {
+          key: isFile ? 'validators.fileName.fileTooLong' : 'validators.fileName.folderTooLong',
+          data: { limit: ENTRY_NAME_LIMIT },
+        },
+      };
+    }
+    return (await isValidEntryName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+  };
 
 export const parsecAddrValidator: IValidator = async function (value: string) {
   value = value.trim();
