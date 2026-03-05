@@ -369,7 +369,9 @@
                     "description": "Log in with SSO to access the organization.",
                     "noEmail": "No email registered on OpenBAO.",
                     "join": "Join with Single Sign-On",
-                    "connected": "You are connected with ProConnect."
+                    "connected": "You are connected with ProConnect.",
+                    "finalizeTitle": "Log in to join the organization",
+                    "finalizeMessage": "To join the organization, you must log in using your Single Sign-On authentication."
                 },
                 "pki": {
                     "label": "Continue with PKI",
@@ -1313,6 +1315,8 @@
         "label": "Authentication method",
         "keyringUnavailableOnSystem": "Unavailable on your system",
         "keyringUnavailableOnWeb": "Unavailable on web",
+        "openBaoOffline": "Could not reach the server. Make sure you are online.",
+        "openBaoUnknown": "An unknown error occurred, preventing us from retrieving your login information.",
         "openBaoUnavailable": "Single Sign-On not available on this server.",
         "invalidOpenBaoData": "The SSO configuration provided by the server is invalid. Please contact an administrator.",
         "popupBlocked": "Please make sure that your browser allows pop-ups for this website.",
@@ -1845,7 +1849,7 @@
                 "connectWithSSO": "Connect with SSO",
                 "modal": {
                     "title": "You must be logged in to accept the request",
-                    "description": "The user has requested to join the organization using SSO. Please log in below for accepting the request.",
+                    "description": "The user has requested to join the organization using SSO. Please log in below to accept the request.",
                     "next": "Continue",
                     "cancel": "Cancel"
                 }

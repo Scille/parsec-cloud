@@ -120,6 +120,12 @@ for (const identitySystem of ['pki', 'openbao']) {
       );
       await acceptModal.locator('.choose-certificate-button').click();
     } else {
+      await expect(acceptModal.locator('.async-authentication-modal-header__title')).toHaveText(
+        'You must be logged in to accept the request',
+      );
+      await expect(acceptModal.locator('.async-authentication-modal-text')).toHaveText(
+        'The user has requested to join the organization using SSO. Please log in below to accept the request.',
+      );
       await acceptModal.locator('.proconnect-button').click();
       await expect(acceptModal.locator('.proconnect-group--connected')).toBeVisible();
       await expect(acceptModal.locator('.proconnect-group--connected')).toHaveText('Connected');
@@ -155,6 +161,10 @@ for (const identitySystem of ['pki', 'openbao']) {
     if (identitySystem !== 'pki') {
       const finalizeModal = page.locator('.async-enrollment-openbao-modal');
       await expect(finalizeModal).toBeVisible();
+      await expect(finalizeModal.locator('.async-authentication-modal-header__title')).toHaveText('Log in to join the organization');
+      await expect(finalizeModal.locator('.async-authentication-modal-text')).toHaveText(
+        'To join the organization, you must log in using your Single Sign-On authentication.',
+      );
       await finalizeModal.locator('.proconnect-button').click();
       await expect(finalizeModal.locator('#next-button')).toBeVisible();
       await finalizeModal.locator('#next-button').click();

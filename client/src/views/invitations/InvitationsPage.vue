@@ -608,6 +608,7 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
       cssClass: 'async-enrollment-openbao-modal',
       componentProps: {
         serverConfig: serverConfig.value,
+        action: 'accept',
       },
     });
     await ssoModal.present();
