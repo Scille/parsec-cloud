@@ -146,8 +146,36 @@ function isAccountAutoLoginEnabled(): boolean {
 
 const CUSTOM_BRANDING_ENV_VARIABLE = 'PARSEC_APP_ENABLE_CUSTOM_BRANDING';
 
-function isCustomBrandingEnabled(): boolean {
-  return import.meta.env[CUSTOM_BRANDING_ENV_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_CUSTOM_BRANDING === true;
+function isCustomBrandingEnabled(): [boolean, string] {
+  // On non-web platforms, custom branding is enabled/disabled at build time
+  // (and always without cache busting suffix). The rational being that:
+  // - Unlike for web, the meta flag in `index.html` cannot easily be modified
+  //   in the released version of Parsec.
+  // - It is no big deal to have the application always looking for custom
+  //   branding files in a config folder at startup.
+  // - We don't always enable custom branding on non-web platform since we
+  //   want to exclude it from hardened build (see CSPN build).
+  if ((!isWeb() && import.meta.env[CUSTOM_BRANDING_ENV_VARIABLE] === 'true') || (window as any).TESTING_ENABLE_CUSTOM_BRANDING === true) {
+    return [true, ''];
+  }
+
+  const obj = document.querySelector('meta[name="custom-branding"]') as HTMLMetaElement | null;
+  // Allowed values:
+  // - `false`: Custom branding is disabled
+  // - `true,cacheBustingSuffix=...`: Custom branding is enabled, note the mandatory cache
+  //   busting suffix parameter that will be added to the resources names (e.g. using
+  //   `cacheBustingSuffix=-xxx` means `custom_en-US-xxx.json` will be fetched).
+  if (obj === null || obj.content === 'false') {
+    return [false, ''];
+  }
+  const expectedPrefix = 'true,cacheBustingSuffix=';
+  if (!obj.content.startsWith(expectedPrefix)) {
+    throw Error(
+      `Invalid value for \`meta[name="custom-branding"]\`, expected \`false\` or \`${expectedPrefix}...\`, got \`${obj.content}\``,
+    );
+  }
+  const suffix = obj.content.substring(expectedPrefix.length);
+  return [true, suffix];
 }
 
 const OPEN_BAO_SERVER_ENV_VARIABLE = 'PARSEC_APP_OPEN_BAO_SERVER';
