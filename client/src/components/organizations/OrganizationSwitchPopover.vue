@@ -193,6 +193,9 @@ async function goToLogin(): Promise<void> {
 }
 
 .connected-organization {
+  max-height: 20%;
+  max-height: 30vh;
+  overflow-y: auto;
   gap: 0.5rem;
 
   &-title {
@@ -284,6 +287,9 @@ async function goToLogin(): Promise<void> {
       }
 
       &__email {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
         color: var(--parsec-color-light-secondary-grey);
       }
     }

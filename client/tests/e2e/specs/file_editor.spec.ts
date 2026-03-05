@@ -66,7 +66,7 @@ msTest.describe(() => {
         await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
       } else {
         await expect(topbar.locator('.save-info')).toBeVisible();
-        await expect(topbar.locator('.save-info')).toHaveText('Read only document');
+        await expect(topbar.locator('.save-info')).toHaveText('Read only');
         await expect(topbarButtons).toHaveCount(5);
         await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Show menu']);
       }
@@ -96,7 +96,7 @@ msTest.describe(() => {
       const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
       await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Edit', 'Download', 'Show menu']);
       await expect(topbar.locator('.save-info')).toBeVisible();
-      await expect(topbar.locator('.save-info')).toHaveText('Read only document');
+      await expect(topbar.locator('.save-info')).toHaveText('Read only');
 
       if (action === 'details') {
         const modal = parsecEditics.locator('.file-details-modal');
