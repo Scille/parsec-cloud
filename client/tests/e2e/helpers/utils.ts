@@ -289,6 +289,8 @@ export async function createWorkspace(workspacesPage: MsPage, name: string): Pro
     } else {
       await expect(workspacesPage.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(workspacesCount + 1);
     }
+
+    await expect(workspacesPage.locator('.workspace-categories-menu-item').nth(0)).toContainClass('active');
   }
   await dismissToast(workspacesPage);
 }
