@@ -213,6 +213,7 @@ pub async fn sign_message(
     let store = open_store().map_err(SignMessageError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
+    log::debug!("Certificate found, acquiring private key handle now");
     let pkey = schannel_utils::acquire_private_key(&cert_context)
         .map_err(SignMessageError::CannotAcquireKeypair)?;
     let (algo, signature) =
