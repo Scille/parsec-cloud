@@ -51,13 +51,13 @@ impl PrivateKey {
 /// Return a private key handle from a certificate context
 pub(super) fn acquire_private_key(context: &CertContext) -> std::io::Result<PrivateKey> {
     let raw_context = cert_context_to_raw(context);
-    let mut handle = Cryptography::NCRYPT_KEY_HANDLE::default();
+    let mut handle = Cryptography::HCRYPTPROV_OR_NCRYPT_KEY_HANDLE::default();
     let flags = Cryptography::CRYPT_ACQUIRE_COMPARE_KEY_FLAG // Ensure that the private key correspond to the
     // certificate
-    | Cryptography::CRYPT_ACQUIRE_ONLY_NCRYPT_KEY_FLAG // Only return a Ncrypt key handle (since we
-    // do not cater to Windows SRV 2003 nor Windows XP)
+    | Cryptography::CRYPT_ACQUIRE_PREFER_NCRYPT_KEY_FLAG // Prefer Ncrypt key handle for legacy
+    // handle, we will try to convert them to Ncrypt.
     ;
-    let mut spec = 0;
+    let mut spec = Cryptography::CERT_KEY_SPEC::default();
     let mut must_free = windows_sys::core::BOOL::default();
     // SAFETY: We pass the expected parameters following the documentation.
     // The certificate context handle is a valid handle obtained by converting `CertContext`.
@@ -79,16 +79,54 @@ pub(super) fn acquire_private_key(context: &CertContext) -> std::io::Result<Priv
         return Err(std::io::Error::last_os_error());
     }
 
+    let must_free = must_free == 1;
     // Check if the returned key is of expected spec
-    if spec != Cryptography::CERT_NCRYPT_KEY_SPEC {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("invalid returned key spec ({spec:#x})"),
-        ));
+    if spec == Cryptography::CERT_NCRYPT_KEY_SPEC {
+        Ok(PrivateKey { handle, must_free })
+    } else {
+        convert_legacy_hcryptprov_to_ncrypt_key(handle, spec, must_free)
+    }
+}
+
+/// Function that convert a legacy hcryptprov to ncrypt key handle.
+///
+/// This is a best effort conversion to try to support legacy smartcard reader not implementing
+/// CNG API.
+fn convert_legacy_hcryptprov_to_ncrypt_key(
+    handle: Cryptography::HCRYPTPROV_LEGACY,
+    spec: Cryptography::CERT_KEY_SPEC,
+    must_free: bool,
+) -> std::io::Result<PrivateKey> {
+    log::trace!("Trying to convert HCRYPTPROV to NCRYPT_KEY_HANDLE (spec: {spec:#x})");
+    let mut ncrypt_handle = Cryptography::NCRYPT_KEY_HANDLE::default();
+    // SAFETY: Outside of `handle` & `spec` the parameters are correct according to the
+    // documentation.
+    // Doc: https://learn.microsoft.com/en-us/windows/win32/api/ncrypt/nf-ncrypt-ncrypttranslatehandle
+    let res = unsafe {
+        Cryptography::NCryptTranslateHandle(
+            std::ptr::null_mut(), // We do not need a handle to the NCrypt provider.
+            &mut ncrypt_handle,
+            handle,
+            0, // We do not have a handle to HCRYPTKEY.
+            spec,
+            0,
+        )
+    };
+
+    if must_free {
+        // SAFETY: We free the handle that we tried to translate.
+        // Error or not it's no longer needed.
+        // Doc: https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptreleasecontext
+        unsafe { Cryptography::CryptReleaseContext(handle, 0) };
+    }
+
+    if res != 0 {
+        log::warn!("Failed to translate legacy handle to NCRYPT");
+        return Err(std::io::Error::from_raw_os_error(res));
     }
 
     Ok(PrivateKey {
-        handle,
-        must_free: must_free == 1,
+        handle: ncrypt_handle,
+        must_free: true,
     })
 }
