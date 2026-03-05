@@ -2007,14 +2007,15 @@
     "validators": {
         "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
         "organizationName": {
-            "tooLong": "Le nom est trop long, la limite est de 32 symboles.",
-            "forbiddenCharacters": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 symboles."
+            "tooLong": "Le nom est trop long, la limite est de 32 caractères.",
+            "forbiddenCharacters": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 caractères."
         },
         "workspaceName": {
-            "tooLong": "Le nom de l'espace est trop long, la limite est de {limit} symboles."
+            "tooLong": "Le nom de l'espace est trop long, la limite est de {limit} caractères."
         },
         "fileName": {
-            "tooLong": "Le nom du fichier est trop long, la limite est de {limit} symboles."
+            "fileTooLong": "Le nom du fichier est trop long, la limite est de {limit} caractères.",
+            "folderTooLong": "Le nom du dossier est trop long, la limite est de {limit} caractères."
         },
         "claimLink": {
             "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",

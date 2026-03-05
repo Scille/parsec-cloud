@@ -979,7 +979,7 @@ async function createFolder(): Promise<void> {
     {
       title: 'FoldersPage.CreateFolderModal.title',
       trim: true,
-      validator: entryNameValidator,
+      validator: entryNameValidator(false),
       inputLabel: 'FoldersPage.CreateFolderModal.label',
       placeholder: 'FoldersPage.CreateFolderModal.placeholder',
       okButtonText: 'FoldersPage.CreateFolderModal.create',
@@ -1136,7 +1136,7 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
     {
       title: entry.isFile() ? 'FoldersPage.RenameModal.fileTitle' : 'FoldersPage.RenameModal.folderTitle',
       trim: true,
-      validator: entryNameValidator,
+      validator: entryNameValidator(entry.isFile()),
       inputLabel: entry.isFile() ? 'FoldersPage.RenameModal.fileLabel' : 'FoldersPage.RenameModal.folderLabel',
       placeholder: entry.isFile() ? 'FoldersPage.RenameModal.filePlaceholder' : 'FoldersPage.RenameModal.folderPlaceholder',
       okButtonText: 'FoldersPage.RenameModal.rename',
