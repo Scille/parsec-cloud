@@ -12,7 +12,6 @@
     >
       <ion-breadcrumb
         v-for="path in pathNodes"
-        @click="navigateTo(path)"
         :path="path"
         class="breadcrumb-element breadcrumb-normal"
         :key="path.id"
@@ -22,8 +21,12 @@
           class="main-icon"
           v-if="path.icon"
           :icon="path.icon"
+          @click="$emit('change', path)"
         />
-        <div class="breadcrumb-text">
+        <div
+          class="breadcrumb-text"
+          @click="$emit('change', path)"
+        >
           {{ path.display ? path.display : $msTranslate(path.title) }}
         </div>
       </ion-breadcrumb>
@@ -90,7 +93,6 @@ const props = withDefaults(
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const breadcrumbRef = useTemplateRef<HTMLIonBreadcrumbElement>('breadcrumb');
 const breadcrumbWidthProperty = ref('');
-let ignoreNextEvent = false;
 
 const watchWindowWidthCancel = watch(windowWidth, () => {
   setBreadcrumbWidth();
@@ -164,7 +166,6 @@ function getCollapsedItems(): Array<RouterPathNode> {
 }
 
 async function openPopover(event: Event): Promise<void> {
-  ignoreNextEvent = true;
   const popover = await popoverController.create({
     component: HeaderBreadcrumbPopover,
     cssClass: 'breadcrumbs-popover',
@@ -179,18 +180,8 @@ async function openPopover(event: Event): Promise<void> {
   const result = await popover.onDidDismiss();
   await popover.dismiss();
   if (result.data && result.data.breadcrumb) {
-    navigateTo(result.data.breadcrumb);
+    emits('change', result.data.breadcrumb);
   }
-}
-
-function navigateTo(path: RouterPathNode): void {
-  // ignoreNextEvent is used so that when "..." is clicked, we
-  // don't try to travel. Didn't find a better way to do this.
-  if (isLargeDisplay.value && ignoreNextEvent) {
-    ignoreNextEvent = false;
-    return;
-  }
-  emits('change', path);
 }
 </script>
 
@@ -227,7 +218,6 @@ function navigateTo(path: RouterPathNode): void {
     &::part(separator) {
       margin-inline: 0;
       color: var(--parsec-color-light-secondary-grey);
-      cursor: default;
     }
 
     &::part(collapsed-indicator) {
