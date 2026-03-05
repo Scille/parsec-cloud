@@ -213,16 +213,11 @@ pub async fn sign_message(
     let store = open_store().map_err(SignMessageError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
-    let keypair = get_keypair(&cert_context).map_err(SignMessageError::CannotAcquireKeypair)?;
-    let (algo, signature) = match keypair {
-        // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
-        PrivateKey::CryptProv(..) => {
-            todo!("Use CryptGetUserKey to get the keypair")
-        }
-        // Handle to a CryptoGraphy Next Generation (CNG) API
-        PrivateKey::NcryptKey(handle) => ncrypt_sign_message_with_rsa(message, &handle),
-    }
-    .map_err(SignMessageError::CannotSign)?;
+    log::debug!("Certificate found, acquiring private key handle now");
+    let pkey = schannel_utils::acquire_private_key(&cert_context)
+        .map_err(SignMessageError::CannotAcquireKeypair)?;
+    let (algo, signature) =
+        ncrypt_sign_message_with_rsa(message, pkey).map_err(SignMessageError::CannotSign)?;
 
     Ok((algo, signature.into()))
 }
@@ -237,11 +232,64 @@ fn get_keypair(context: &CertContext) -> Result<PrivateKey, std::io::Error> {
 
 fn ncrypt_sign_message_with_rsa(
     message: &[u8],
-    handle: &NcryptKey,
+    pkey: schannel_utils::PrivateKey,
 ) -> std::io::Result<(PkiSignatureAlgorithm, Vec<u8>)> {
     const ALGO: PkiSignatureAlgorithm = PkiSignatureAlgorithm::RsassaPssSha256;
     let hash = sha2::Sha256::digest(message);
-    let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
+    let raw_handle = pkey.handle();
+    log::trace!("Using the following ncrypt handle: {raw_handle:#x}");
+
+    log::trace!(
+        "Key usage flags: {key_usage:#010x}",
+        key_usage = {
+            let mut key_usage = 0u32;
+            let mut bytes_needed = 0u32;
+            #[expect(clippy::undocumented_unsafe_blocks)]
+            let res = unsafe {
+                windows_sys::Win32::Security::Cryptography::NCryptGetProperty(
+                    raw_handle,
+                    windows_sys::Win32::Security::Cryptography::NCRYPT_KEY_USAGE_PROPERTY,
+                    &mut key_usage as *mut u32 as *mut u8,
+                    4,
+                    &mut bytes_needed,
+                    0,
+                )
+            };
+            if res != 0 {
+                log::error!(
+                    "Cannot get key usage for handle: {}",
+                    std::io::Error::from_raw_os_error(res)
+                );
+            }
+            key_usage
+        }
+    );
+
+    log::trace!(
+        "Impl type: {impl_type:#010x}",
+        impl_type = {
+            let mut impl_type = 0u32;
+            let mut bytes_needed = 0u32;
+            #[expect(clippy::undocumented_unsafe_blocks)]
+            let res = unsafe {
+                windows_sys::Win32::Security::Cryptography::NCryptGetProperty(
+                    raw_handle,
+                    windows_sys::Win32::Security::Cryptography::NCRYPT_IMPL_TYPE_PROPERTY,
+                    &mut impl_type as *mut u32 as *mut u8,
+                    4,
+                    &mut bytes_needed,
+                    0,
+                )
+            };
+            if res != 0 {
+                log::error!(
+                    "Cannot get impl type for handle: {}",
+                    std::io::Error::from_raw_os_error(res)
+                );
+            }
+            impl_type
+        }
+    );
 
     // SAFETY: We follow the windows documentation by correctly passing the correct flags according
     // to padding_info type, and the other pointer are either coming from allocated buffer or null
@@ -307,26 +355,20 @@ pub async fn encrypt_message(
     let store = open_store().map_err(EncryptMessageError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(EncryptMessageError::NotFound)?;
-    let keypair = get_keypair(&cert_context).map_err(EncryptMessageError::CannotAcquireKeypair)?;
-    let (algo, ciphered) = match keypair {
-        // We do not support a CryptoAPI provider as its API is marked for depreciation by windows.
-        PrivateKey::CryptProv(..) => {
-            todo!("Use CryptGetUserKey to get the keypair")
-        }
-        // Handle to a CryptoGraphy Next Generation (CNG) API
-        PrivateKey::NcryptKey(handle) => ncrypt_encrypt_message_with_rsa(message, &handle),
-    }
-    .map_err(EncryptMessageError::CannotEncrypt)?;
+    let pkey = schannel_utils::acquire_private_key(&cert_context)
+        .map_err(EncryptMessageError::CannotAcquireKeypair)?;
+    let (algo, ciphered) = ncrypt_encrypt_message_with_rsa(message, pkey)
+        .map_err(EncryptMessageError::CannotEncrypt)?;
 
     Ok((algo, ciphered.into()))
 }
 
 fn ncrypt_encrypt_message_with_rsa(
     message: &[u8],
-    handle: &NcryptKey,
+    pkey: schannel_utils::PrivateKey,
 ) -> std::io::Result<(PKIEncryptionAlgorithm, Vec<u8>)> {
     const ALGO: PKIEncryptionAlgorithm = PKIEncryptionAlgorithm::RsaesOaepSha256;
-    let raw_handle = schannel_utils::ncrypt_key_to_ptr(handle);
+    let raw_handle = pkey.handle();
 
     // SAFETY: We follow the windows documentation by correctly passing the correct flags according
     // to padding_info type, and the other pointer are either coming from allocated buffer or null
