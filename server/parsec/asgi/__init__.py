@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.staticfiles import PathLike
 from starlette.types import Receive, Scope, Send
 from structlog import get_logger
 
@@ -42,9 +43,33 @@ tags_metadata = [
 WEB_APP_BASE_URL = "/client/"
 
 
+class StaticFilesWithCacheControl(StaticFiles):
+    def file_response(
+        self,
+        full_path: PathLike,
+        stat_result: os.stat_result,
+        scope: Scope,
+        status_code: int = 200,
+    ) -> Response:
+        response = super().file_response(
+            full_path,
+            stat_result,
+            scope,
+            status_code,
+        )
+        # We consider all resources to support cache-busting (typically by adding
+        # a content hash in the file name, e.g. `base-jFjh9D00.css`), so we can
+        # apply a one-size-fits-all configuration here.
+        response.headers["Cache-Control"] = "max-age=31536000, public, immutable"
+        return response
+
+
 # This class is used to serve the static files of the web app (SPA)
 # and redirect to the index.html if file not found on server.
 # Useful when the user refresh the page or access a route directly.
+# Note we don't use cache-control for this resource as `index.html` is the
+# entry point from where the other resources are loaded (i.e. it is the
+# one providing the cache-busting info!).
 class StaticFilesWithSPARedirect(StaticFiles):
     def lookup_path(self, path: str) -> tuple[str, os.stat_result | None]:
         match super().lookup_path(path):
@@ -95,7 +120,7 @@ def app_factory(
 
     app.get("/")(root)
 
-    app.mount("/static", StaticFiles(packages=[("parsec", "static")]))
+    app.mount("/static", StaticFilesWithCacheControl(packages=[("parsec", "static")]))
 
     async def page_not_found(scope: Scope, receive: Receive, send: Send) -> None:
         request = Request(scope)
