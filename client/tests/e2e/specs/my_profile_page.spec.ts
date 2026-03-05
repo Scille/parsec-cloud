@@ -130,7 +130,7 @@ msTest('Change password', async ({ myProfilePage }) => {
   await fillIonInput(input, 'P@ssw0rd.');
   await expect(loginButton).toNotHaveDisabledAttribute();
   await loginButton.click();
-  const error = home.locator('#password-input').locator('.form-error');
+  const error = home.locator('.login-card-footer').locator('.container-textinfo');
   await expect(error).toBeVisible();
   await expect(error).toHaveText('Incorrect password.');
   await expect(home).toBeHomePage();
