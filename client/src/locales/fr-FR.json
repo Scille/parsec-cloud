@@ -368,7 +368,9 @@
                     "description": "Connectez-vous avec le SSO pour accéder à l'organisation.",
                     "noEmail": "Aucun email enregistré sur OpenBAO.",
                     "join": "Rejoindre avec SSO",
-                    "connected": "Vous êtes connecté avec ProConnect."
+                    "connected": "Vous êtes connecté avec ProConnect.",
+                    "finalizeTitle": "Connectez-vous pour rejoindre l'organisation",
+                    "finalizeMessage": "Pour rejoindre l'organisation, vous devez vous connecter en utilisant votre authentification Single Sign-On (SSO)."
                 },
                 "pki": {
                     "label": "Continuer avec PKI",
@@ -1307,6 +1309,8 @@
         "label": "Méthode d'authentification",
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
         "keyringUnavailableOnWeb": "Indisponible sur le web",
+        "openBaoOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
+        "openBaoUnknown": "Une erreur inconnue est survenue, nous empêchant de récupérer vos informations de connexion.",
         "openBaoUnavailable": "L'authentification unique (SSO) n'est pas disponible sur ce serveur.",
         "invalidOpenBaoData": "La configuration SSO fournie par le serveur est invalide. Veuillez contacter un administrateur.",
         "popupBlocked": "Veuillez vous assurer que votre navigateur autorise les pop-ups pour ce site.",

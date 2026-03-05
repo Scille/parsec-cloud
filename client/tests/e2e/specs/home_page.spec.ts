@@ -173,13 +173,14 @@ msTest('Login with invalid password', async ({ home }) => {
   await home.locator('.organization-list').locator('.organization-card').nth(0).click();
   const loginButton = home.locator('.login-card-footer').locator('.login-button');
   await expect(loginButton).toHaveDisabledAttribute();
-  await expect(home.locator('#password-input').locator('.form-error')).toBeHidden();
+  const errorLabel = home.locator('.login-card-footer').locator('.container-textinfo');
+  await expect(errorLabel).toBeHidden();
   const input = home.locator('#password-input').locator('ion-input');
   await fillIonInput(input, 'InvalidP@ssw0rd.');
   await expect(loginButton).toNotHaveDisabledAttribute();
   await loginButton.click();
-  await expect(home.locator('#password-input').locator('.form-error')).toBeVisible();
-  await expect(home.locator('#password-input').locator('.form-error')).toHaveText('Incorrect password.');
+  await expect(errorLabel).toBeVisible();
+  await expect(errorLabel).toHaveText('Incorrect password.');
   await expect(home).toBeHomePage();
 });
 

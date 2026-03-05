@@ -17,11 +17,11 @@
           class="async-authentication-modal-header__icon"
         />
         <ion-text class="async-authentication-modal-header__title subtitles-lg">
-          {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.ssoRequests.modal.title') }}
+          {{ $msTranslate(texts.title) }}
         </ion-text>
       </div>
       <ion-text class="async-authentication-modal-text body-lg">
-        {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.ssoRequests.modal.description') }}
+        {{ $msTranslate(texts.message) }}
       </ion-text>
       <connect-sso
         class="async-authentication-modal-sso"
@@ -39,13 +39,27 @@ import { ServerConfig } from '@/parsec';
 import { OpenBaoClient } from '@/services/openBao';
 import { IonPage, IonText, modalController } from '@ionic/vue';
 import { MsImage, MsModal, MsModalResult } from 'megashark-lib';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const openBaoClient = ref<OpenBaoClient | undefined>(undefined);
 
-defineProps<{
+const props = defineProps<{
   serverConfig: ServerConfig;
+  action: 'finalize' | 'accept';
 }>();
+
+const texts = computed(() => {
+  if (props.action === 'accept') {
+    return {
+      title: 'InvitationsPage.asyncEnrollmentRequest.ssoRequests.modal.title',
+      message: 'InvitationsPage.asyncEnrollmentRequest.ssoRequests.modal.description',
+    };
+  }
+  return {
+    title: 'HomePage.organizationRequest.asyncEnrollmentModal.sso.finalizeTitle',
+    message: 'HomePage.organizationRequest.asyncEnrollmentModal.sso.finalizeMessage',
+  };
+});
 
 async function onOpenBaoConnected(client: OpenBaoClient): Promise<void> {
   openBaoClient.value = client;

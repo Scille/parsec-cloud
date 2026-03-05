@@ -815,6 +815,9 @@ async function onFileOperationEvent(
       fileOperations.value.push(operationData);
       break;
     case FileOperationEvents.Progress:
+      if (fileOperations.value.find((op) => op.id === operationData.id) === undefined) {
+        fileOperations.value.push(operationData);
+      }
       break;
     case FileOperationEvents.Cancelled:
     case FileOperationEvents.Failed: {
