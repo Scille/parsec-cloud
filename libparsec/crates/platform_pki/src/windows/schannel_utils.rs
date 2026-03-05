@@ -65,7 +65,7 @@ pub(super) fn acquire_private_key(context: &CertContext) -> std::io::Result<Priv
     let mut handle = Cryptography::NCRYPT_KEY_HANDLE::default();
     let flags = Cryptography::CRYPT_ACQUIRE_COMPARE_KEY_FLAG // Ensure that the private key correspond to the
     // certificate
-    | Cryptography::CRYPT_ACQUIRE_ONLY_NCRYPT_KEY_FLAG // Only return a Ncrypt key handle (since we
+    | Cryptography::CRYPT_ACQUIRE_PREFER_NCRYPT_KEY_FLAG // Only return a Ncrypt key handle (since we
     // do not cater to Windows SRV 2003 nor Windows XP)
     ;
     let mut spec = 0;
@@ -91,15 +91,43 @@ pub(super) fn acquire_private_key(context: &CertContext) -> std::io::Result<Priv
     }
 
     // Check if the returned key is of expected spec
-    if spec != Cryptography::CERT_NCRYPT_KEY_SPEC {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("invalid returned key spec ({spec:#x})"),
-        ));
-    }
+    if spec == Cryptography::CERT_NCRYPT_KEY_SPEC {
+        Ok(PrivateKey {
+            handle,
+            must_free: must_free == 1,
+        })
+    } else {
+        log::debug!("Got an HCRYPTPROV handle, trying to translate it");
+        let mut ncrypt_handle = Cryptography::NCRYPT_KEY_HANDLE::default();
+        // TODO:
+        #[expect(clippy::undocumented_unsafe_blocks)]
+        let res = unsafe {
+            Cryptography::NCryptTranslateHandle(
+                std::ptr::null_mut(),
+                &mut ncrypt_handle,
+                handle,
+                0, // We do not have an handle to HCRYPTKEY
+                spec,
+                0,
+            )
+        };
 
-    Ok(PrivateKey {
-        handle,
-        must_free: must_free == 1,
-    })
+        if must_free != 0 {
+            // TODO:
+            #[expect(clippy::undocumented_unsafe_blocks)]
+            unsafe {
+                Cryptography::CryptReleaseContext(handle, 0)
+            };
+        }
+
+        if res != 0 {
+            log::warn!("Failed to translate legacy handle to NCRYPT");
+            return Err(std::io::Error::from_raw_os_error(res));
+        }
+
+        Ok(PrivateKey {
+            handle: ncrypt_handle,
+            must_free: true,
+        })
+    }
 }
