@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from pathlib import Path
+
 import httpx
 
 from parsec._parsec import DateTime, DeviceID, FileManifest, OrganizationID, VlobID
@@ -21,7 +23,10 @@ async def test_404(client: httpx.AsyncClient) -> None:
 
 
 async def test_static(client: httpx.AsyncClient) -> None:
-    response = await client.get("http://parsec.invalid/static/favicon.ico")
+    favicon_name = next(
+        (Path(__file__).parent.parent / "parsec/static/").glob("favicon-*.ico")
+    ).name
+    response = await client.get(f"http://parsec.invalid/static/{favicon_name}")
     assert response.status_code == 200
     assert response.headers["Cache-Control"] == "max-age=31536000, public, immutable"
     assert response.content.startswith(b"\x89PNG")

@@ -41,6 +41,12 @@ tags_metadata = [
 ]
 
 WEB_APP_BASE_URL = "/client/"
+WEB_APP_ASSETS_URL = "/client/assets/"
+WEB_APP_CUSTOM_ASSETS_URL = "/client/custom/"
+# We use a very aggressive one-size-fits-all cache config here since all our
+# static resources (including the optional web app) are designed to use
+# cache-busting naming (i.e. having content hash in their name, e.g. `base-jFjh9D00.css`).
+STATIC_ASSETS_CACHE_CONTROL = "max-age=31536000, public, immutable"
 
 
 class StaticFilesWithCacheControl(StaticFiles):
@@ -57,10 +63,7 @@ class StaticFilesWithCacheControl(StaticFiles):
             scope,
             status_code,
         )
-        # We consider all resources to support cache-busting (typically by adding
-        # a content hash in the file name, e.g. `base-jFjh9D00.css`), so we can
-        # apply a one-size-fits-all configuration here.
-        response.headers["Cache-Control"] = "max-age=31536000, public, immutable"
+        response.headers["Cache-Control"] = STATIC_ASSETS_CACHE_CONTROL
         return response
 
 
@@ -74,12 +77,7 @@ class StaticFilesWithSPARedirect(StaticFiles):
     def lookup_path(self, path: str) -> tuple[str, os.stat_result | None]:
         match super().lookup_path(path):
             case (_, None):
-                # The "assets" and "custom" folders should not be allowed to
-                # redirect to index.html
-                if path.startswith("assets/") or path.startswith("custom/"):
-                    raise HTTPException(status_code=404)
-                else:
-                    return super().lookup_path("index.html")
+                return super().lookup_path("index.html")
             case found:
                 return found
 
@@ -106,13 +104,38 @@ def app_factory(
     templates = Jinja2Templates(env=backend.config.jinja_env)
 
     if with_client_web_app:
+        # Note we must declare `/client/` route *after* `/client/assets/` & `/client/custom/`
+        # given the router tries each route according to their order of declaration!
+        # (See `Route priority` in https://starlette.dev/routing/)
 
-        def root(request: Request) -> Response:
-            return RedirectResponse(url=WEB_APP_BASE_URL, status_code=301)
+        app.mount(
+            WEB_APP_ASSETS_URL,
+            StaticFilesWithCacheControl(directory=with_client_web_app / "assets"),
+        )
+
+        custom_assets_dir = with_client_web_app / "custom"
+        if custom_assets_dir.is_dir():
+            custom_assets_app = StaticFilesWithCacheControl(
+                directory=with_client_web_app / "custom"
+            )
+        else:
+            # No customization, we still need a specific handler to ensure we return 404,
+            # otherwise the SPA redirect (with status 200) will be triggered which
+            # may trick the client into thinking a customization is present!
+            class NoCustomDirAlways404:
+                async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+                    raise HTTPException(status_code=404)
+
+            custom_assets_app = NoCustomDirAlways404()
+        app.mount(WEB_APP_CUSTOM_ASSETS_URL, custom_assets_app)
 
         app.mount(
             WEB_APP_BASE_URL, StaticFilesWithSPARedirect(directory=with_client_web_app, html=True)
         )
+
+        def root(request: Request) -> Response:
+            return RedirectResponse(url=WEB_APP_BASE_URL, status_code=301)
+
     else:
 
         def root(request: Request) -> Response:
