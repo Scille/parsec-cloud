@@ -33,7 +33,6 @@
             @on-enter-keyup="onLoginClick()"
             id="password-input"
             @change="onPasswordChange"
-            :error-message="errorMessage"
             :password-is-invalid="passwordIsInvalid"
           />
           <ion-button
@@ -47,6 +46,13 @@
         </div>
       </ion-card-content>
       <ion-footer class="login-card-footer">
+        <ms-report-text
+          :theme="MsReportTheme.Error"
+          v-if="errorMessage"
+          class="error"
+        >
+          {{ $msTranslate(errorMessage) }}
+        </ms-report-text>
         <sso-provider-card
           v-if="device.ty.tag === AvailableDeviceTypeTag.OpenBao"
           :provider="(device.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId as OpenBaoAuthConfigTag"
@@ -84,12 +90,13 @@ import {
   constructAccessStrategy,
   DeviceAccessStrategy,
   getServerConfig,
+  GetServerConfigErrorTag,
   OpenBaoAuthConfigTag,
   PrimaryProtectionStrategy,
 } from '@/parsec';
 import { openBaoConnect, OpenBaoErrorType } from '@/services/openBao';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonText } from '@ionic/vue';
-import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
+import { MsInput, MsPasswordInput, MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
 import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
@@ -119,15 +126,27 @@ async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
   }
   const serverConfigResult = await getServerConfig(props.device.serverAddr);
 
-  if (!serverConfigResult.ok || !serverConfigResult.value.openbao) {
+  if (!serverConfigResult.ok) {
+    if (serverConfigResult.error.tag === GetServerConfigErrorTag.Offline) {
+      errorMessage.value = 'Authentication.openBaoOffline';
+    } else {
+      errorMessage.value = 'Authentication.openBaoUnknown';
+    }
+    window.electronAPI.log(
+      'error',
+      `Error while retrieving server config: ${serverConfigResult.error.tag} (${serverConfigResult.error.error})`,
+    );
+    return;
+  }
+  if (!serverConfigResult.value.openbao) {
+    window.electronAPI.log('error', 'Device has OpenBao auth but OpenBao is not configured on this server');
     errorMessage.value = 'Authentication.openBaoUnavailable';
-    window.electronAPI.log('error', 'OpenBao not available on this server');
     return;
   }
   const provInfo = serverConfigResult.value.openbao.auths.find((v) => v.tag === provider);
   if (!provInfo) {
     errorMessage.value = 'Authentication.invalidOpenBaoData';
-    window.electronAPI.log('error', `Provider '${provider}' not handled by this server.`);
+    window.electronAPI.log('error', `Device has provider '${provider}' configured, but it's not handled by this server.`);
     return;
   }
 
@@ -218,85 +237,90 @@ defineExpose({
   @include ms.responsive-breakpoint('sm') {
     margin: 0 auto;
   }
+}
 
-  .login-header__title {
-    background: var(--parsec-color-light-gradient-background);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.login-header__title {
+  background: var(--parsec-color-light-gradient-background);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.login-card {
+  background: var(--parsec-color-light-secondary-white);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  padding: 2em;
+  margin: 0;
+  border-radius: var(--parsec-radius-12);
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  transition: box-shadow 150ms ease-in-out;
+  overflow-y: auto;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1.5rem;
   }
 
-  .login-card {
-    background: var(--parsec-color-light-secondary-white);
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    padding: 2em;
-    margin: 0;
-    border-radius: var(--parsec-radius-12);
-    box-shadow: none;
+  &:has(.has-focus) {
+    box-shadow: var(--parsec-shadow-light);
+  }
+
+  &-header {
+    padding: 0;
+  }
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0;
+
+    &__password {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 0;
+    }
+
+    #password-input {
+      margin: 0;
+    }
+
+    #forgotten-password-button {
+      margin: 0;
+      position: relative;
+      width: fit-content;
+      color: var(--parsec-color-light-secondary-grey);
+
+      &::part(native) {
+        --background-hover: none;
+        padding: 0 0 0 2px;
+      }
+
+      &:hover {
+        color: var(--parsec-color-light-secondary-text);
+      }
+    }
+  }
+
+  &-footer {
+    padding: 0;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    width: 100%;
-    transition: box-shadow 150ms ease-in-out;
-    overflow-y: auto;
+    align-items: center;
 
-    @include ms.responsive-breakpoint('sm') {
-      padding: 1.5rem;
-    }
-
-    &:has(.has-focus) {
-      box-shadow: var(--parsec-shadow-light);
-    }
-
-    &-header {
-      padding: 0;
-    }
-
-    &-content {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      padding: 0;
-
-      &__password {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin: 0;
-      }
-
-      #password-input {
-        margin: 0;
-      }
-
-      #forgotten-password-button {
-        margin: 0;
-        position: relative;
-        width: fit-content;
-        color: var(--parsec-color-light-secondary-grey);
-
-        &::part(native) {
-          --background-hover: none;
-          padding: 0 0 0 2px;
-        }
-
-        &:hover {
-          color: var(--parsec-color-light-secondary-text);
-        }
-      }
-    }
-
-    &-footer {
-      padding: 0;
+    .login-button {
       width: 100%;
-      display: flex;
-      gap: 1.5rem;
-      align-items: center;
-
-      .login-button {
-        width: 100%;
-      }
     }
+  }
+  .error {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 0.625rem;
   }
 }
 </style>

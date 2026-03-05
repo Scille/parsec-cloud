@@ -687,6 +687,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
       cssClass: 'async-enrollment-openbao-modal',
       componentProps: {
         serverConfig: serverConfigResult.value,
+        action: 'finalize',
       },
     });
     await ssoModal.present();
