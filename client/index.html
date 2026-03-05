@@ -6,6 +6,34 @@
 
     <base href="%BASE_URL%" />
 
+    <!--
+      Custom branding support on Web.
+      Allowed values for the `content` field:
+      - `false`: Custom branding is disabled
+      - `true,cacheBustingSuffix=...`: Custom branding is enabled.
+
+      Notes:
+        - This flag is only used on Web, on native platform the custom branding is
+          always enabled (without cache busting suffix). The rational being that:
+          - Unlike for web, this flag cannot easily be modified in the released
+            version of Parsec.
+          - It is no big deal to have the application always looking for custom
+            branding files in a config folder at startup.
+        - `cacheBustingSuffix` is a mandatory cache busting suffix parameter that
+          will be added to the resources names (e.g. using `cacheBustingSuffix=-xxx`
+          means `custom_en-US-xxx.json` will be fetched).
+        - `cacheBustingSuffix` can be set to anything (typically the timestamp of
+          last modification of the custom branding files), but it must be changed
+          every time the custom branding files get modified.
+
+      Also note in development mode, Vite is configured to serve the content of the
+      `client/dist/custom/` directory as the custom resources.
+    -->
+    <meta
+      name="custom-branding"
+      content="false"
+    />
+
     <meta
       name="color-scheme"
       content="light dark"
