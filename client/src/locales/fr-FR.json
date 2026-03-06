@@ -1824,6 +1824,14 @@
                     "noProfile": "Vous devez sélectionner un profil."
                 }
             },
+            "rejectModal": {
+                "title": "Refuser la demande",
+                "message": "Êtes-vous sûr(e) de vouloir refuser cette demande ? L'utilisateur devra soumettre une nouvelle demande pour rejoindre l'organisation.",
+                "actions": {
+                    "confirm": "Refuser la demande",
+                    "cancel": "Annuler"
+                }
+            },
             "validationModal": {
                 "button": {
                     "cancel": "Annuler",

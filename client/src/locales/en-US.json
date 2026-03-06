@@ -1825,6 +1825,14 @@
                     "noProfile": "You must select a profile."
                 }
             },
+            "rejectModal": {
+                "title": "Refuse request",
+                "message": "Are you sure you want to refuse this request? The user will have to submit a new request to join the organization.",
+                "actions": {
+                    "confirm": "Refuse request",
+                    "cancel": "Cancel"
+                }
+            },
             "validationModal": {
                 "button": {
                     "cancel": "Cancel",

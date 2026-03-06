@@ -31,8 +31,9 @@
         <ion-icon
           v-if="request.info.tag !== PendingAsyncEnrollmentInfoTag.Accepted"
           @click="$emit('deleteRequest', request)"
-          :icon="closeCircle"
+          :icon="trash"
           class="organization-request-icon"
+          ref="trashIconEl"
         />
         <ion-button
           v-if="request.info.tag === PendingAsyncEnrollmentInfoTag.Accepted"
@@ -50,11 +51,12 @@
 <script lang="ts" setup>
 import { AsyncEnrollmentRequest, PendingAsyncEnrollmentInfoTag } from '@/parsec';
 import { IonButton, IonCardContent, IonIcon, IonText } from '@ionic/vue';
-import { closeCircle } from 'ionicons/icons';
+import { trash } from 'ionicons/icons';
 import { attachMouseOverTooltip } from 'megashark-lib';
 import { computed, onMounted, useTemplateRef, watch } from 'vue';
 
 const statusTextRef = useTemplateRef<InstanceType<typeof IonText>>('statusTextEl');
+const trashIconRef = useTemplateRef<InstanceType<typeof IonIcon>>('trashIconEl');
 
 const props = defineProps<{
   request: AsyncEnrollmentRequest;
@@ -62,6 +64,7 @@ const props = defineProps<{
 
 onMounted(async () => {
   attachTooltip(statusTextRef.value?.$el, props.request.info.tag);
+  attachMouseOverTooltip(trashIconRef.value?.$el, 'HomePage.organizationRequest.rejected.yes');
 });
 
 watch(
