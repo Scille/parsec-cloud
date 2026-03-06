@@ -2717,6 +2717,7 @@
     },
     "fileViewers": {
         "openWithDefault": "Ouvrir avec l'app par défaut",
+        "cancel": "Annuler",
         "details": "Détails",
         "copyLink": "Copier le lien",
         "openInEditor": "Éditer",
@@ -2734,7 +2735,8 @@
                 "editionNotAvailable": "L'édition de documents n'est pas disponible"
             },
             "informationEditDownload": "Si vous souhaitez modifier ce fichier, vous pouvez le télécharger et l'ouvrir localement sur votre appareil.",
-            "informationPreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le faire dans Parsec ou le télécharger pour l'ouvrir localement sur votre appareil.",
+            "informationPreviewDownload": "Si vous souhaitez prévisualiser ce fichier, vous pouvez le télécharger pour l'ouvrir localement sur votre appareil.",
+            "informationPreviewDefaultApp": "Si vous souhaitez visualiser ce fichier, vous pouvez l'ouvrir dans l'application par défaut de votre système.",
             "unknownFileExtension": "L'extension de ce fichier n'a pas pu être reconnue. Veuillez vérifier qu'elle est correctement écrite (.txt, .pdf, .doc, etc.).",
             "noContentFileType": "Impossible d'ouvrir ce fichier, son type n'ayant pas pu être reconnu dans l'éditeur de Parsec.",
             "noFolderPreview": "Impossible d'afficher l'aperçu d'un dossier.",
