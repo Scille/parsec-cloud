@@ -301,6 +301,11 @@ pub(super) async fn get_user_device(
                 }
             };
 
+            let device_created_by = match &device_certif.author {
+                CertificateSigner::User(author) => Some(author.to_owned()),
+                CertificateSigner::Root => None,
+            };
+
             let user_id = device_certif.user_id;
             let user_certif = match store.get_user_certificate(UpTo::Current, user_id).await {
                 Ok(certif) => certif,
@@ -347,22 +352,6 @@ pub(super) async fn get_user_device(
                 created_by: user_created_by,
                 revoked_on,
                 revoked_by,
-            };
-
-            let device_certif = match store.get_device_certificate(UpTo::Current, device_id).await {
-                Ok(certif) => certif,
-                Err(GetCertificateError::ExistButTooRecent { .. }) => unreachable!(),
-                Err(GetCertificateError::NonExisting) => {
-                    return Err(CertifGetUserDeviceError::NonExisting)
-                }
-                Err(GetCertificateError::Internal(err)) => {
-                    return Err(CertifGetUserDeviceError::Internal(err))
-                }
-            };
-
-            let device_created_by = match &device_certif.author {
-                CertificateSigner::User(author) => Some(author.to_owned()),
-                CertificateSigner::Root => None,
             };
 
             let device_info = DeviceInfo {
