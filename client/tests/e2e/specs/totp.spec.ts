@@ -59,6 +59,8 @@ msTest('Setup totp modal', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
 
   const totpStatus = myProfilePage.locator('.mfa');
+  await expect(totpStatus.locator('ion-toggle')).toBeHidden();
+
   await expect(totpStatus).toBeVisible();
   await expect(totpStatus.locator('ion-button')).toBeVisible();
   await expect(totpStatus.locator('ion-button')).toHaveText('Enable MFA');
@@ -131,6 +133,9 @@ msTest('Setup totp modal', async ({ myProfilePage }) => {
     'Multi-factor authentication has been successfully enabled and will now be required to log in to this organization.',
     'Success',
   );
+  await expect(totpStatus.locator('ion-toggle')).toBeVisible();
+  await expect(totpStatus.locator('ion-toggle')).toHaveAttribute('aria-checked', 'true');
+
   await logout(myProfilePage);
 
   await myProfilePage.locator('.organization-card').first().click();
@@ -271,4 +276,98 @@ msTest('Change auth with TOTP active', async ({ myProfilePage }) => {
   await fillInputModal(home, await generateTotpCode(totpSecret));
   await expect(home).toBeWorkspacePage();
   await expect(home).toHaveHeader(['My workspaces'], false, false);
+});
+
+msTest('Remove and re-add TOTP', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.menu-list__item').nth(2)).toHaveText('Authentication');
+  await myProfilePage.locator('.menu-list__item').nth(2).click();
+  await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
+  const totp = myProfilePage.locator('.mfa');
+  await expect(totp.locator('ion-toggle')).toBeHidden();
+
+  const totpSecret = await setupTotp(myProfilePage);
+
+  await expect(totp.locator('ion-toggle')).toBeVisible();
+  await expect(totp.locator('ion-toggle')).toHaveAttribute('aria-checked', 'true');
+
+  const removeTotpModal = myProfilePage.locator('.delete-totp');
+  await expect(removeTotpModal).toBeHidden();
+  await totp.locator('ion-toggle').click();
+  await expect(removeTotpModal).toBeVisible();
+  await expect(removeTotpModal.locator('.ms-modal-header__title')).toHaveText('Disable multi-factor authentication on this device');
+  await expect(removeTotpModal.locator('.authentication-section')).toBeVisible();
+  await expect(removeTotpModal.locator('.totp-section')).toBeHidden();
+  await fillIonInput(removeTotpModal.locator('.authentication-section').locator('ion-input'), 'P@ssw0rd.');
+  await removeTotpModal.locator('#next-button').click();
+  await expect(removeTotpModal.locator('.authentication-section')).toBeHidden();
+  await expect(removeTotpModal.locator('.totp-section')).toBeVisible();
+  await fillIonInput(removeTotpModal.locator('.totp-section').locator('ion-input'), await generateTotpCode(totpSecret));
+  await expect(removeTotpModal.locator('#next-button')).toHaveText('Delete MFA');
+  await removeTotpModal.locator('#next-button').click();
+  await expect(myProfilePage).toShowToast('Multi-factor authentication has been removed', 'Success');
+  await expect(removeTotpModal).toBeHidden();
+  await expect(totp.locator('ion-toggle')).toHaveAttribute('aria-checked', 'false');
+  await logout(myProfilePage);
+  // Alias for clarity
+  const home = myProfilePage;
+
+  await home.locator('.organization-card').first().click();
+  await expect(home.locator('#password-input')).toBeVisible();
+
+  await expect(home.locator('.login-button')).toHaveDisabledAttribute();
+
+  await home.locator('#password-input').locator('input').fill('P@ssw0rd.');
+  await expect(home.locator('.login-button')).toBeEnabled();
+  await home.locator('.login-button').click();
+  await expect(home.locator('#connected-header')).toContainText('My workspaces');
+  await expect(home).toBeWorkspacePage();
+
+  await myProfilePage.locator('.topbar').locator('.profile-header').click();
+  const myProfileButton = myProfilePage.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0);
+  await expect(myProfileButton).toHaveText('Settings');
+  await myProfileButton.click();
+  await expect(myProfilePage).toHavePageTitle('My profile');
+  await expect(myProfilePage).toBeMyProfilePage();
+
+  await expect(myProfilePage.locator('.menu-list__item').nth(2)).toHaveText('Authentication');
+  await myProfilePage.locator('.menu-list__item').nth(2).click();
+  await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
+  await expect(totp.locator('ion-toggle')).toHaveAttribute('aria-checked', 'false');
+  const activateTotpModal = myProfilePage.locator('.activate-totp-modal');
+  await expect(activateTotpModal).toBeHidden();
+  await totp.locator('ion-toggle').click();
+  await expect(activateTotpModal).toBeVisible();
+  await expect(activateTotpModal.locator('.prompt-authentication')).toBeVisible();
+  await expect(activateTotpModal.locator('.enter-code')).toBeHidden();
+  await fillIonInput(activateTotpModal.locator('.prompt-authentication').locator('ion-input'), 'P@ssw0rd.');
+  await activateTotpModal.locator('#next-button').click();
+  await expect(activateTotpModal.locator('.prompt-authentication')).toBeHidden();
+  await expect(activateTotpModal.locator('.enter-code')).toBeVisible();
+  await fillIonInput(activateTotpModal.locator('.enter-code').locator('ion-input'), await generateTotpCode(totpSecret));
+  await expect(activateTotpModal.locator('#next-button')).toHaveText('Next');
+  await activateTotpModal.locator('#next-button').click();
+  await expect(activateTotpModal.locator('.modal-content-finalization')).toBeVisible();
+  await expect(activateTotpModal.locator('.modal-content-finalization').locator('.container-textinfo')).toHaveText(
+    'Your authentication method has been successfully updated.',
+  );
+  await activateTotpModal.locator('#next-button').click();
+  await expect(myProfilePage).toShowToast(
+    'Multi-factor authentication has been successfully enabled and will now be required to log in to this organization.',
+    'Success',
+  );
+  await expect(activateTotpModal).toBeHidden();
+  await expect(totp.locator('ion-toggle')).toHaveAttribute('aria-checked', 'true');
+  await logout(myProfilePage);
+
+  await home.locator('.organization-card').first().click();
+  await expect(home.locator('#password-input')).toBeVisible();
+
+  await expect(home.locator('.login-button')).toHaveDisabledAttribute();
+
+  await home.locator('#password-input').locator('input').fill('P@ssw0rd.');
+  await expect(home.locator('.login-button')).toBeEnabled();
+  await home.locator('.login-button').click();
+  await fillInputModal(home, await generateTotpCode(totpSecret));
+  await expect(home.locator('#connected-header')).toContainText('My workspaces');
+  await expect(home).toBeWorkspacePage();
 });

@@ -219,7 +219,8 @@ type Pages =
   | 'parsec_workspaces'
   | 'manage_files'
   | 'manage_devices'
-  | 'security';
+  | 'security'
+  | 'mfa';
 
 async function openDocumentationUserGuideLink(page: Pages, anchor = ''): Promise<void> {
   await openUrl(
