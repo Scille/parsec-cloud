@@ -1576,7 +1576,7 @@
         "emptyList": "Aucun utilisateur à afficher.",
         "noMatch": "Aucun utilisateur ne correspond à vos filtres.",
         "listUsersFailed": "Impossible d'obtenir les utilisateurs de l'organisation. Veuillez vérifier votre connexion internet.",
-        "userSelectedCount": "Aucun utilisateur sélectionné | Un utilisateur sélectionné | {count} utilisateurs sélectionnés",
+        "userSelectedCount": "Aucun utilisateur sélectionné | 1 utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
             "titleDetails": "Détails de l'utilisateur",

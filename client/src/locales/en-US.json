@@ -1576,7 +1576,7 @@
         "emptyList": "No user to display.",
         "noMatch": "No users matching your filters.",
         "listUsersFailed": "Failed to retrieve users for this organization. Please make sure you are online.",
-        "userSelectedCount": "No user selected | One user selected | {count} users selected",
+        "userSelectedCount": "No user selected | 1 user selected | {count} users selected",
         "userContextMenu": {
             "titleRemove": "Deletion",
             "titleDetails": "User details",
