@@ -1362,10 +1362,11 @@
                 "deleteOk": "Multi-factor authentication has been removed"
             },
             "delete": {
-                "title": "Delete Multi-Factor Authentication",
-                "warning": "You are about to delete multi-factor authentication. This will reduce the security of your account.",
+                "title": "Disable multi-factor authentication on this device",
+                "subtitle": "Multi-factor authentication will be disabled on this device but will remain configured for the organisation. You can decide to re-enable it at any time.",
+                "warning": "Disable multi-factor authentication from this device will reduce security.",
                 "authenticationTitle": "Current authentication",
-                "totpCodeTitle": "MFA code",
+                "totpCodeTitle": "Enter the 6-digit code from your authenticator app",
                 "confirmButton": "Delete MFA",
                 "cancelButton": "Cancel",
                 "success": "Multi-factor authentication has been successfully deleted.",

@@ -1362,8 +1362,9 @@
                 "deleteOk": "L'authentification multifacteur a été supprimée."
             },
             "delete": {
-                "title": "Supprimer l'authentification multifacteur",
-                "warning": "Vous êtes sur le point de supprimer l'authentification multifacteur. Cela réduira la sécurité de votre compte.",
+                "title": "Désactiver l'authentification multifacteur",
+                "subtitle": "L'authentification multifactorielle sera désactivée sur cet appareil, mais restera configurée pour l'organisation. Vous pouvez décider de la réactiver à tout moment.",
+                "warning": "Vous êtes sur le point de supprimer l'authentification multifacteur de cet appareil. Cela réduira se sécurité.",
                 "authenticationTitle": "Authentification actuelle",
                 "totpCodeTitle": "Code MFA",
                 "confirmButton": "Supprimer le MFA",

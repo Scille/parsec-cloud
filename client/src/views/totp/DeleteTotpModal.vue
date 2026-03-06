@@ -4,6 +4,7 @@
   <ion-page class="delete-totp-modal">
     <ms-modal
       title="Authentication.mfa.delete.title"
+      subtitle="Authentication.mfa.delete.subtitle"
       :close-button="{ visible: true }"
       :confirm-button="{
         disabled: !canConfirm || querying,
@@ -12,6 +13,7 @@
         queryingSpinner: querying,
       }"
       :cancel-button="cancelButton"
+      :class="currentStep"
     >
       <div class="modal-content">
         <ms-report-text
@@ -157,7 +159,7 @@ async function onConfirmButtonClicked(): Promise<boolean> {
         verifyCode.value,
       );
       if (!totpResult.ok) {
-        error.value = 'Authentication.mfa.failedToRetrieveKey';
+        error.value = 'Authentication.mfa.error.failedToRetrieveKey';
         return false;
       }
       const accessStrategy = constructAccessStrategy(props.device, toRaw(primaryProtection.value), [
