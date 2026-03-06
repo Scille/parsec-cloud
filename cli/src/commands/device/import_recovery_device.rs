@@ -10,7 +10,6 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, password_stdin]
     pub struct Args {
         /// Path where encrypted recovery device data is
-        #[arg(short, long)]
         input: PathBuf,
         /// new device label
         #[arg(short, long)]
