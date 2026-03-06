@@ -1039,7 +1039,8 @@
         }
     },
     "FileDetails": {
-        "title": "Détails de {name}",
+        "fileTitle": "Détails du fichier",
+        "folderTitle": "Détails du dossier",
         "stats": {
             "generalInfo": "Informations générales",
             "lastUpdate": "Dernière modification",
