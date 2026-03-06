@@ -40,6 +40,7 @@ pub(super) async fn get_current_self_realms_role(
 
     let mut roles = Vec::with_capacity(certifs.len());
     for certif in certifs {
+        // Note this O(n) operation is fine since we expect `certifs` to be small
         let maybe_exists = roles
             .iter()
             .position(|(realm_id, _, _)| *realm_id == certif.realm_id);
