@@ -22,7 +22,7 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { FileHandlerMode } from '@/views/files/handler';
 import { DateTime } from 'luxon';
-import { Base64 } from 'megashark-lib';
+import { Answer, askQuestion, Base64 } from 'megashark-lib';
 import { Ref, ref } from 'vue';
 
 const currentlyOpening = ref(false);
@@ -252,7 +252,13 @@ async function openPath(
   if (contentType.type === FileContentType.Unknown) {
     // Couldn't detect the file type, try with the system if allowed/available, otherwise display a message
     if (isDesktop() && !options.disallowSystem) {
-      await _openWithSystem(workspaceHandle, entry, informationManager);
+      const answer = await askQuestion('fileViewers.errors.titles.unsupportedFileType', 'fileViewers.errors.informationPreviewDefaultApp', {
+        yesText: 'fileViewers.openWithDefault',
+        noText: 'fileViewers.cancel',
+      });
+      if (answer === Answer.Yes) {
+        await _openWithSystem(workspaceHandle, entry, informationManager);
+      }
     } else {
       await informationManager.present(
         new Information({
@@ -269,7 +275,13 @@ async function openPath(
   if ((entry as any).size > OPEN_FILE_SIZE_LIMIT) {
     // Too big to open, display try with the system if allowed/available, otherwise display a message
     if (isDesktop() && !options.disallowSystem) {
-      await _openWithSystem(workspaceHandle, entry, informationManager);
+      const answer = await askQuestion('fileViewers.errors.titles.fileTooBig', 'fileViewers.errors.informationPreviewDefaultApp', {
+        yesText: 'fileViewers.openWithDefault',
+        noText: 'fileViewers.cancel',
+      });
+      if (answer === Answer.Yes) {
+        await _openWithSystem(workspaceHandle, entry, informationManager);
+      }
     } else {
       await informationManager.present(
         new Information({
