@@ -21,7 +21,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await expect(emailInvitationCard.locator('.invitation-card-list-item__title')).toContainText('Email invitations');
     await expect(emailInvitationCard.locator('.invitation-card-list-item__number')).toHaveText('1');
     await expect(linkRequestCard).toBeVisible();
-    await expect(linkRequestCard.locator('.invitation-card-list-item__title')).toContainText('Link requests');
+    await expect(linkRequestCard.locator('.invitation-card-list-item__title')).toContainText('Join Requests');
     await expect(linkRequestCard.locator('.invitation-card-list-item__number')).toHaveText('0');
     await expect(inviteButton).toBeVisible();
 
@@ -143,7 +143,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     }
     await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
     await expect(usersContainer.locator('.invitation-card-list-item__title').nth(0)).toHaveText('Email invitations');
-    await expect(usersContainer.locator('.invitation-card-list-item__title').nth(1)).toHaveText('Link requests');
+    await expect(usersContainer.locator('.invitation-card-list-item__title').nth(1)).toHaveText('Join Requests');
     await usersContainer.locator('.invitation-card-list-item').nth(0).click();
     await expect(connected).toBeInvitationPage();
 
@@ -153,7 +153,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       await expect(usersContainer.locator('.invitation-card-list')).toBeVisible();
       await usersContainer.locator('.invitation-card-list-item').nth(1).click();
       await expect(connected).toBeInvitationPage();
-      await expect(connected.locator('.switch-view-button')).toContainText('Link requests');
+      await expect(connected.locator('.switch-view-button')).toContainText('Join requests');
     } else {
       await expect(connected.locator('.toggle-view').locator('.email-button')).toHaveTheClass('active');
       await sidebar.locator('.sidebar-content-organization-button').nth(2).click();
