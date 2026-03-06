@@ -557,7 +557,7 @@
         "titles": {
             "workspaces": "My workspaces",
             "about": "About",
-            "invitationsRequests": "Invitations & Requests",
+            "invitationsRequests": "Invitations & Join Requests",
             "users": "Users",
             "organization": {
                 "storage": "Storage",
@@ -1081,7 +1081,7 @@
             "addUser": "Add a user",
             "invitations": {
                 "emailInvitations": "Email invitations",
-                "linkRequests": "Link requests"
+                "linkRequests": "Join Requests"
             }
         },
         "size": {
@@ -1138,7 +1138,7 @@
         "hidden": "Hidden",
         "noWorkspace": "No workspaces",
         "users": "Users",
-        "invitationsRequests": "Invitations & Requests",
+        "invitationsRequests": "Invitations & Join Requests",
         "storage": "Storage",
         "information": "Information",
         "goToHome": "My workspaces",
@@ -1790,9 +1790,9 @@
             }
         },
         "asyncEnrollmentRequest": {
-            "tab": "Link requests",
-            "emptyState": "No pending link requests. These requests are for PKI or SSO users.",
-            "copyLink": "Copy link (PKI/SSO)",
+            "tab": "Join requests (PKI/SSO)",
+            "emptyState": "No pending join requests. Users requesting to join the organization with a SmartCard (PKI) or a ProConnect account (SSO) will be listed here.",
+            "copyLink": "Copy join request link (PKI/SSO)",
             "accept": "Accept",
             "reject": "Reject request",
             "listDisplayTitles": {
@@ -1807,11 +1807,12 @@
                 "pkiCorrupted": "PKI (corrupted)"
             },
             "linkCopiedToClipboard": {
-                "success": "PKI link has been copied to clipboard.",
-                "failed": "Failed to copy the PKI link. Your browser or device does not seem to support copy/paste."
+                "success": "The link to join the organization with PKI/SSO has been copied to clipboard.",
+                "failed": "Failed to copy the Join Request link. Your browser or device does not seem to support copy/paste."
             },
             "tooltips": {
-                "reject": "Reject request"
+                "reject": "Reject request",
+                "copyLinkInfo": "Share this link to users wanting to join the organization with a SmartCard (PKI) or a ProConnect account (SSO)"
             },
             "selectProfileModal": {
                 "title": "Complete user information",
@@ -1863,7 +1864,7 @@
                 }
             },
             "errors": {
-                "failToListRequests": "Failed to retrieve link requests. Please make sure you are online.",
+                "failToListRequests": "Failed to retrieve join requests. Please make sure you are online.",
                 "noSsoConfigured": "SSO is not configured.",
                 "pkiNotAvailable": "PKI is not available on this organization.",
                 "unknownIdentitySystem": "The identity system used for this request is unknown.",

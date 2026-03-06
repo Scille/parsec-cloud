@@ -1790,8 +1790,8 @@
             }
         },
         "asyncEnrollmentRequest": {
-            "tab": "Demandes par lien",
-            "emptyState": "Aucune invitation en attente. Ces demandes concernent les utilisateurs utilisant la PKI ou le service SSO.",
+            "tab": "Demandes par lien (PKI/SSO)",
+            "emptyState": "Aucune demande par lien en attente. Les demandes d'utilisateurs pour rejoindre l'organisation avec une carte à puce (PKI) ou un compte ProConnect (SSO) seront répertoriées ici.",
             "copyLink": "Copier le lien (PKI/SSO)",
             "accept": "Accepter",
             "listDisplayTitles": {
@@ -1806,11 +1806,12 @@
                 "pkiCorrupted": "PKI (corrompu)"
             },
             "linkCopiedToClipboard": {
-                "success": "Le lien PKI a été copié dans le presse-papiers.",
-                "failed": "Échec de la copie du lien PKI. Votre navigateur ou appareil ne semble pas prendre en charge le copier/coller."
+                "success": "Le lien pour rejoindre l'organisation via PKI/SSO a été copié dans le presse-papier.",
+                "failed": "Impossible de copier le lien. Votre navigateur ou votre appareil ne semble pas prendre en charge le copier-coller."
             },
             "tooltips": {
-                "reject": "Refuser la demande"
+                "reject": "Refuser la demande",
+                "copyLinkInfo": "Partagez ce lien avec les utilisateurs souhaitant rejoindre l'organisation avec une carte à puce (PKI) ou un compte ProConnect (SSO)."
             },
             "selectProfileModal": {
                 "title": "Compléter les informations de l'utilisateur",

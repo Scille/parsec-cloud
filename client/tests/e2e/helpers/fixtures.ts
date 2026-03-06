@@ -445,7 +445,7 @@ export const msTest = debugTest.extend<{
 
   invitationsPage: async ({ connected }, use) => {
     await connected.locator('.sidebar').locator('#sidebar-invitations').click();
-    await expect(connected).toHavePageTitle('Invitations & Requests');
+    await expect(connected).toHavePageTitle('Invitations & Join Requests');
     await expect(connected).toBeInvitationPage();
     use(connected);
   },
