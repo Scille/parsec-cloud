@@ -154,7 +154,7 @@ msgstr ""
 "Installez une **application d'authentification** compatible TOTP sur votre "
 "téléphone (telle que `FreeOTP <https://freeotp.github.io/>`_, `Aegis "
 "Authenticator <https://getaegis.app/>`_ ou toute autre application "
-"d'authentification compatible TOTP <https://fr.wikipedia.org/wiki/"
+"d'authentification `compatible TOTP <https://fr.wikipedia.org/wiki/"
 "Mot_de_passe_%C3%A0_usage_unique_bas%C3%A9_sur_le_temps>`_)."
 
 #: ../../userguide/mfa.rst:64
