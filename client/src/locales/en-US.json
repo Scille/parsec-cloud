@@ -650,8 +650,8 @@
             "open": "Open in explorer"
         },
         "skipViewers": {
-            "label": "Do not use file preview",
-            "description": "Always open files in your system's default application"
+            "label": "Use system's applications to open files",
+            "description": "When enabled, files will be opened with the system's default applications instead of Parsec's built-in viewers and editors"
         },
         "language": {
             "label": "Language",
