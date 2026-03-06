@@ -351,7 +351,7 @@ async function onAuthenticationSelected(authentication?: DevicePrimaryProtection
     (primaryProtection.value.tag === DevicePrimaryProtectionStrategyTag.Keyring ||
       primaryProtection.value.tag === DevicePrimaryProtectionStrategyTag.PKI)
   ) {
-    currentStep.value = Steps.Information;
+    await onNextButtonClicked();
   }
 }
 

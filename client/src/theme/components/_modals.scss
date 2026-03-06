@@ -1150,6 +1150,11 @@
     max-width: var(--parsec-modal-width-sm);
   }
 
+  .closeBtn {
+    top: 1rem;
+    right: 1rem;
+  }
+
   .ms-modal {
     height: 100%;
 
@@ -1157,6 +1162,22 @@
       --height: 90vh;
       height: 90vh;
       overflow: auto;
+    }
+  }
+
+  .ms-modal-footer-buttons {
+    .button-clear {
+      --background-hover: var(--parsec-color-light-secondary-premiere);
+      --color: var(--parsec-color-light-secondary-text);
+    }
+  }
+
+  &:has(.enter-code) {
+    .ms-modal-footer-buttons {
+      .button-solid {
+        --background: var(--parsec-color-light-danger-500);
+        --background-hover: var(--parsec-color-light-danger-700);
+      }
     }
   }
 }
