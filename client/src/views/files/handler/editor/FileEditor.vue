@@ -84,7 +84,7 @@ import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
+import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef } from 'vue';
 
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
 const documentType = ref<CryptpadEditors>(CryptpadEditors.Unsupported);
@@ -253,8 +253,6 @@ async function loadEditor(): Promise<void> {
         }
       },
       onError: async (err: unknown): Promise<void> => {
-        emits('fileError');
-        loadFinished.value = true;
         error.value = 'fileViewers.errors.titles.genericError';
 
         if (err instanceof CryptpadError) {
@@ -270,72 +268,37 @@ async function loadEditor(): Promise<void> {
             case CryptpadErrorCodes.FrameNotLoaded:
               error.value = 'fileEditors.errors.titles.frameLoadFailed';
               break;
+            case CryptpadErrorCodes.EventError:
+              if (err.details && err.details.toString() === 'ready-timeout') {
+                error.value = '';
+                await openTimeoutModal();
+                // Don't process it as a normal error
+                return;
+              } else {
+                window.electronAPI.log('error', `Unhandled event error: ${err.details}`);
+              }
+              break;
           }
         } else {
           window.electronAPI.log('error', `Unhandled error: ${err} `);
         }
+        emits('fileError');
+        loadFinished.value = true;
       },
     },
     editorFrame.value,
   );
   frameReady.value = true;
-
-  await handleTimeout();
-}
-
-async function handleTimeout(): Promise<void> {
-  // Set up timeout for loading files
-  // If the file does not open before timeout, a dialog is displayed
-  // to ask the user if it wants to keep waiting or go back to files.
-  const LOADING_TIMEOUT_MS = 30000;
-  let shouldContinueWaiting = true;
-
-  // Wait for file to load with timeout and restart capability
-  while (!loadFinished.value && shouldContinueWaiting) {
-    // Wait for timeout or file load
-    const timeoutOccurred = await new Promise<boolean>((resolve) => {
-      const timeoutId = window.setTimeout(() => {
-        resolve(true); // Timeout occurred
-      }, LOADING_TIMEOUT_MS);
-
-      // Watch for file loaded to resolve immediately
-      const stopWatch = watch(loadFinished, (loaded) => {
-        if (loaded) {
-          window.clearTimeout(timeoutId);
-          stopWatch();
-          resolve(false); // File loaded
-        }
-      });
-    });
-
-    // If file loaded, exit successfully
-    if (!timeoutOccurred) {
-      window.electronAPI.log('info', 'CryptPad editor initialized successfully');
-      return;
-    }
-
-    // Timeout occurred - show modal
-    window.electronAPI.log('warn', 'CryptPad loading timeout - file appears to be corrupted or too large');
-    const result = await openTimeoutModal();
-
-    // Check if file loaded while modal was open
-    if (loadFinished.value) {
-      window.electronAPI.log('info', 'File loaded while modal was open');
-      return;
-    }
-
-    // Continue waiting if user clicked wait, stop if they clicked close
-    shouldContinueWaiting = result === 'wait';
-    if (shouldContinueWaiting) {
-      window.electronAPI.log('info', 'User chose to wait - restarting timeout');
-    }
-  }
 }
 
 async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = true): Promise<MsModalResult> {
   // Safety check: only show modal if we're still on the file handler/editor route
-  if (!currentRouteIs(Routes.FileHandler) || getFileHandlerMode() !== FileHandlerMode.Edit) {
+  if (!currentRouteIs(Routes.FileHandler) || (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() !== FileHandlerMode.Edit)) {
     window.electronAPI.log('info', 'Skipping modal - user navigated away from editor');
+    return MsModalResult.Cancel;
+  }
+  if (await modalController.getTop()) {
+    window.electronAPI.log('warn', 'A modal is already opened, skipping...');
     return MsModalResult.Cancel;
   }
 
@@ -361,6 +324,11 @@ async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = 
 }
 
 async function openTimeoutModal(): Promise<'wait' | 'close'> {
+  const WAIT_TIMEOUT = 15000;
+
+  if (loadFinished.value) {
+    return 'close';
+  }
   const role = await openIssueModal(EditorIssueStatus.LoadingTimeout, false);
 
   // If user clicks primary button (close/dismiss)
@@ -368,6 +336,10 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
     if (loadFinished.value) {
       return 'close';
     } else {
+      window.electronAPI.log('info', `User chose to wait, ask them again in ${WAIT_TIMEOUT}ms`);
+      setTimeout(() => {
+        openTimeoutModal();
+      }, WAIT_TIMEOUT);
       return 'wait';
     }
   } else if (role === MsModalResult.Cancel) {
