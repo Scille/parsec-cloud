@@ -7,12 +7,40 @@ Parsec application can be partially customized to better fit your brand.
 
 Customization is done by adding specific files in certain locations. If Parsec detects the presence of these files, it will use them instead of the regular ones.
 
-- In web mode, the files have to be placed inside a ``custom`` folder in the server's static files directory. A file should be reachable by doing ``/custom/<file>`` on the server.
-- In desktop mode, the files have to be placed inside a ``custom`` folder in the configuration directory. The configuration directory will depend on the OS.
+Native app
+~~~~~~~~~~
 
-    - Windows: ``%APPDATA%/parsec3/app``
-    - Linux ``~/.config/parsec3/app``
-    - MacOS ``~/Library/Application Support/parsec3/app``
+The Parsec desktop application always looks for custom branding files at startup.
+The files have to be placed inside a ``custom`` folder in the configuration directory.
+The configuration directory will depend on the OS:
+
+- Windows: ``%APPDATA%/parsec3/app``
+- Linux: ``~/.config/parsec3/app``
+- MacOS: ``~/Library/Application Support/parsec3/app``
+
+Web app
+~~~~~~~
+
+In web mode, the files have to be placed inside a ``custom`` folder in the server's static files directory.
+A file should be reachable by doing ``/custom/<file>`` on the server.
+
+Additionally, the server must enable custom branding by setting the ``content``
+attribute of the ``<meta name="custom-branding">`` tag in the served ``index.html`` to:
+
+.. code-block:: html
+
+   <meta name="custom-branding" content="true,cacheBustingSuffix=<suffix>" />
+
+Where ``<suffix>`` is an arbitrary string (typically a timestamp of the last
+modification of the custom branding files) that is appended to the resource filenames
+for cache busting (e.g. ``cacheBustingSuffix=-20240101`` means ``logo-20240101.svg`` will be fetched).
+**This suffix must be updated every time the custom branding files are modified.**
+
+By default (i.e. without modification), the tag is set to ``false``, which disables custom branding:
+
+.. code-block:: html
+
+   <meta name="custom-branding" content="false" />
 
 
 Images
