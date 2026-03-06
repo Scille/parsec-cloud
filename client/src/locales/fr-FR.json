@@ -1312,7 +1312,7 @@
         "popupBlocked": "Veuillez vous assurer que votre navigateur autorise les pop-ups pour ce site.",
         "mfa": {
             "title": "Authentification multifacteur (MFA)",
-            "description": "Ajoutez une couche de sécurité lors de la connexion à cette organisation depuis tous vos appareils.",
+            "description": "Ajoutez une couche de sécurité lors de la connexion à cette organisation depuis votre appareil.",
             "info": "L'organisation requiert une authentification multifacteur.",
             "or": "ou",
             "inactive": "Inactive",
@@ -1362,8 +1362,10 @@
                 "deleteOk": "L'authentification multifacteur a été supprimée."
             },
             "delete": {
-                "title": "Supprimer l'authentification multifacteur",
-                "warning": "Vous êtes sur le point de supprimer l'authentification multifacteur. Cela réduira la sécurité de votre compte.",
+                "title": "Désactiver l'authentification multifacteur",
+                "subtitle": "L'authentification multifacteur sera désactivée sur cet appareil, mais restera configurée pour l'organisation. Vous pouvez décider de la réactiver à tout moment.",
+                "moreInformation": "Plus d'informations",
+                "warning": "La désactivation de l'authentification multifacteur sur cet appareil réduira la sécurité.",
                 "authenticationTitle": "Authentification actuelle",
                 "totpCodeTitle": "Code MFA",
                 "confirmButton": "Supprimer le MFA",
