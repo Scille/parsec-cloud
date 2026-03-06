@@ -92,6 +92,7 @@
           @click="onCopyJoinLinkClicked"
           id="copy-link-pki-request-button"
           class="button-medium button-default"
+          ref="copyJoinRequestLink"
         >
           <ion-icon
             :icon="copy"
@@ -222,6 +223,7 @@ import { caretDown, copy, link, mailUnread, personAdd } from 'ionicons/icons';
 import {
   Answer,
   askQuestion,
+  attachMouseOverTooltip,
   MsImage,
   MsModalResult,
   MsReportText,
@@ -231,7 +233,7 @@ import {
   useWindowSize,
   WindowSizeBreakpoints,
 } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, Ref, ref, toRaw } from 'vue';
+import { inject, onMounted, onUnmounted, Ref, ref, toRaw, useTemplateRef, watch } from 'vue';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
 const view = ref(InvitationView.EmailInvitation);
@@ -244,6 +246,8 @@ const pkiAvailable = ref(false);
 const openBaoClient = ref<OpenBaoClient | undefined>(undefined);
 const certificate = ref<X509CertificateReference | undefined>(undefined);
 const asyncListError = ref('');
+
+const copyJoinRequestLinkRef = useTemplateRef<InstanceType<typeof IonButton>>('copyJoinRequestLink');
 
 let eventCbId: string | null = null;
 
@@ -294,6 +298,14 @@ onMounted(async (): Promise<void> => {
     await inviteUser();
     await navigateTo(Routes.Invitations, { replace: true, query: { invitationView: InvitationView.EmailInvitation } });
   }
+
+  watch(copyJoinRequestLinkRef, (button) => {
+    if (button?.$el) {
+      setTimeout(() => {
+        attachMouseOverTooltip(button.$el, 'InvitationsPage.asyncEnrollmentRequest.tooltips.copyLinkInfo');
+      }, 500);
+    }
+  });
 });
 
 onUnmounted(async () => {
@@ -755,9 +767,12 @@ async function refreshAll(): Promise<void> {
   border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
   padding: 0.75rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+
+  @include ms.responsive-breakpoint('lg') {
+    flex-wrap: wrap;
+  }
 
   @include ms.responsive-breakpoint('sm') {
     padding: 0.75rem 1rem;
@@ -783,7 +798,6 @@ async function refreshAll(): Promise<void> {
       --color: var(--parsec-color-light-secondary-hard-grey);
       --background: none;
       --background-hover: var(--parsec-color-light-secondary-disabled);
-      --border-radius: var(--parsec-radius-6);
       display: contents;
 
       &:hover {
@@ -864,14 +878,21 @@ async function refreshAll(): Promise<void> {
 
   #copy-link-pki-request-button,
   #invite-user-button {
-    --background: var(--parsec-color-light-secondary-inversed-contrast);
-    --background-hover: var(--parsec-color-light-secondary-medium);
-    color: var(--parsec-color-light-primary-700);
+    --background: var(--parsec-color-light-secondary-text);
+    --background-hover: var(--parsec-color-light-secondary-contrast);
+    border-radius: var(--parsec-radius-6);
+    color: var(--parsec-color-light-secondary-white);
     box-shadow: var(--parsec-shadow-input);
+    margin-left: auto;
+    transition: all 0.1s ease-in-out;
+
+    &:active {
+      scale: 0.98;
+      box-shadow: none;
+    }
 
     &::part(native) {
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      padding: 0.5rem 1rem;
+      padding: 0.625rem 1rem;
 
       @include ms.responsive-breakpoint('sm') {
         padding: 0.5rem;
@@ -879,36 +900,7 @@ async function refreshAll(): Promise<void> {
     }
 
     .button-icon {
-      font-size: 1.125rem;
-      margin-right: 0.5rem;
-    }
-  }
-
-  .certificate-button {
-    display: flex;
-    margin-left: auto;
-    --background-hover: var(--parsec-color-light-secondary-medium);
-
-    &::part(native) {
-      padding: 0.5rem 0.5rem;
-      position: relative;
-    }
-
-    &__badge {
-      position: absolute;
-      bottom: -0.375rem;
-      right: -0.125rem;
-      width: 1.25rem;
-      height: 1.25rem;
-      color: var(--parsec-color-light-secondary-white);
-      background: var(--parsec-color-light-secondary-white);
-      padding: 0.125rem;
-      border-radius: var(--parsec-radius-circle);
-    }
-
-    &__icon {
-      color: var(--parsec-color-light-primary-600);
-      font-size: 1.375rem;
+      font-size: 1rem;
       margin-right: 0.5rem;
     }
   }
@@ -917,6 +909,7 @@ async function refreshAll(): Promise<void> {
 .no-active {
   width: 100%;
   height: 100%;
+  max-width: 50rem;
   color: var(--parsec-color-light-secondary-grey);
   display: flex;
   margin: auto;

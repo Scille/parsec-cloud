@@ -87,10 +87,10 @@ for (const identitySystem of ['pki', 'openbao']) {
     await login(page, 'Alicey McAliceFace');
 
     await page.locator('.sidebar').locator('#sidebar-invitations').click();
-    await expect(page).toHavePageTitle('Invitations & Requests');
+    await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
-      'Link requests',
+      'Join requests (PKI/SSO)',
     );
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
     await page.locator('.toggle-view-container').locator('.pki-button').click();
@@ -201,10 +201,10 @@ for (const identitySystem of ['pki', 'openbao']) {
     await login(page, 'Alicey McAliceFace');
 
     await page.locator('.sidebar').locator('#sidebar-invitations').click();
-    await expect(page).toHavePageTitle('Invitations & Requests');
+    await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
-      'Link requests',
+      'Join requests (PKI/SSO)',
     );
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('0');
     await page.locator('.toggle-view-container').locator('.pki-button').click();
@@ -214,9 +214,9 @@ for (const identitySystem of ['pki', 'openbao']) {
 
     await expect(page.locator('.invitations-container').locator('.no-active-content')).toBeVisible();
     await expect(page.locator('.invitations-container').locator('.no-active-content')).toHaveText(
-      'No pending link requests. These requests are for PKI or SSO users.',
+      // eslint-disable-next-line max-len
+      'No pending join requests. Users requesting to join the organization with a SmartCard (PKI) or a ProConnect account (SSO) will be listed here.',
     );
-
     await page.release();
   });
 
@@ -231,10 +231,10 @@ for (const identitySystem of ['pki', 'openbao']) {
     await login(page, 'Alicey McAliceFace');
 
     await page.locator('.sidebar').locator('#sidebar-invitations').click();
-    await expect(page).toHavePageTitle('Invitations & Requests');
+    await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
-      'Link requests',
+      'Join requests (PKI/SSO)',
     );
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
     await page.locator('.toggle-view-container').locator('.pki-button').click();
@@ -259,8 +259,9 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(page).toShowToast('This request has been rejected', 'Info');
     await expect(linkRequests).toHaveCount(0);
     await expect(page.locator('.invitations-container').locator('.no-active-content')).toBeVisible();
-    await expect(page.locator('.invitations-container').locator('.no-active-content')).toHaveText(
-      'No pending link requests. These requests are for PKI or SSO users.',
+    await expect(page.locator('.invitations-container').locator('.no-active-content').locator('ion-text')).toHaveText(
+      'No pending join requests. Users requesting to join the organization with a SmartCard (PKI) or a ' +
+        'ProConnect account (SSO) will be listed here.',
     );
 
     await logout(page);

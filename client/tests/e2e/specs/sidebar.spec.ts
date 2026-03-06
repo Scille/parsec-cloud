@@ -29,7 +29,7 @@ msTest('Sidebar in organization management', async ({ organizationPage }) => {
   await expect(mainButtons).toHaveText(['Organization', 'Workspaces', 'Recent documents']);
 
   const items = sidebar.locator('#sidebar-organization').locator('.sidebar-content-organization-button__text');
-  await expect(items).toHaveText(['Users', 'Invitations & Requests', 'Information']);
+  await expect(items).toHaveText(['Users', 'Invitations & Join Requests', 'Information']);
 });
 
 msTest('Sidebar in workspaces page', async ({ workspaces }) => {
@@ -452,7 +452,7 @@ msTest('Trying to navigate through the workspace content, profile, invitations, 
   const sidebar = connected.locator('.sidebar');
 
   await sidebar.locator('#sidebar-invitations').click();
-  await expect(connected).toHavePageTitle('Invitations & Requests');
+  await expect(connected).toHavePageTitle('Invitations & Join Requests');
   await expect(connected).toBeInvitationPage();
 
   const allWorkspacesButton = connected.locator('#sidebar-all-workspaces');
