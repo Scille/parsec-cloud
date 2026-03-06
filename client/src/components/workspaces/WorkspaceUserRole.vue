@@ -101,6 +101,10 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
   }
 }
 
+.dropdown {
+  flex-shrink: 0;
+}
+
 .content-user {
   text-overflow: ellipsis;
   white-space: nowrap;

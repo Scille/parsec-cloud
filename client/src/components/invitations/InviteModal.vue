@@ -3,7 +3,6 @@
 <template>
   <ms-modal
     title="UsersPage.CreateUserInvitationModal.pageTitle"
-    subtitle="UsersPage.CreateUserInvitationModal.subtitle"
     :close-button="{ visible: true }"
     :cancel-button="{
       disabled: false,
@@ -17,13 +16,18 @@
     }"
     :class="emails.length > 5 ? 'has-multiple-emails' : ''"
   >
-    <ms-input
-      @change="onInputChange"
-      v-model="textModel"
-      placeholder="UsersPage.CreateUserInvitationModal.placeholder"
-      label="UsersPage.CreateUserInvitationModal.label"
-      id="email-input"
-    />
+    <div class="email-input-container">
+      <ms-report-text :theme="MsReportTheme.Info">
+        <ion-text>{{ $msTranslate('UsersPage.CreateUserInvitationModal.subtitle') }}</ion-text>
+      </ms-report-text>
+      <ms-input
+        @change="onInputChange"
+        v-model="textModel"
+        placeholder="UsersPage.CreateUserInvitationModal.placeholder"
+        label="UsersPage.CreateUserInvitationModal.label"
+        id="email-input"
+      />
+    </div>
     <div
       class="email-list-container"
       v-if="emails.length > 1"
@@ -47,7 +51,7 @@
 <script setup lang="ts">
 import { emailValidator } from '@/common/validators';
 import { IonText, modalController } from '@ionic/vue';
-import { MsInput, MsModal, MsModalResult, MsReportTheme, Validity } from 'megashark-lib';
+import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, Validity } from 'megashark-lib';
 import { ref } from 'vue';
 
 const textModel = ref('');
@@ -80,6 +84,12 @@ async function onConfirmClicked(): Promise<boolean> {
   @include ms.responsive-breakpoint('sm') {
     margin-top: 1rem;
   }
+}
+
+.email-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .email-list-container {
