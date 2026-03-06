@@ -616,6 +616,8 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+
+    workspaceMenuState.value = WorkspaceMenu.All;
   } else {
     informationManager.value.present(
       new Information({
