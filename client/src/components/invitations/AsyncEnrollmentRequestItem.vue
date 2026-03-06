@@ -146,7 +146,7 @@
           ref="rejectButton"
         >
           <ion-icon
-            :icon="closeCircle"
+            :icon="trash"
             class="button-icon"
           />
         </ion-button>
@@ -159,7 +159,7 @@
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { AsyncEnrollmentIdentitySystemTag, AsyncEnrollmentUntrusted, HumanHandle, ServerConfig } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
-import { closeCircle, warning } from 'ionicons/icons';
+import { trash, warning } from 'ionicons/icons';
 import { attachMouseOverTooltip, formatTimeSince, I18n, Translatable, useWindowSize } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 

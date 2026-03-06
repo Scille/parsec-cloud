@@ -29,7 +29,7 @@
       :pki-available="pkiAvailable"
       :server-config="serverConfig"
       @accept-click="$emit('acceptClick', request)"
-      @reject-click="$emit('rejectClick', request)"
+      @reject-click="onRejectClick(request)"
     />
   </ion-list>
 </template>
@@ -38,7 +38,7 @@
 import AsyncEnrollmentRequestItem from '@/components/invitations/AsyncEnrollmentRequestItem.vue';
 import { AsyncEnrollmentUntrusted, ServerConfig } from '@/parsec';
 import { IonList, IonListHeader, IonText } from '@ionic/vue';
-import { useWindowSize } from 'megashark-lib';
+import { Answer, askQuestion, useWindowSize } from 'megashark-lib';
 
 const { isLargeDisplay } = useWindowSize();
 
@@ -48,7 +48,21 @@ defineProps<{
   serverConfig?: ServerConfig;
 }>();
 
-defineEmits<{
+async function onRejectClick(request: AsyncEnrollmentUntrusted): Promise<void> {
+  const answer = await askQuestion(
+    'InvitationsPage.asyncEnrollmentRequest.rejectModal.title',
+    'InvitationsPage.asyncEnrollmentRequest.rejectModal.message',
+    {
+      yesText: 'InvitationsPage.asyncEnrollmentRequest.rejectModal.actions.confirm',
+      noText: 'InvitationsPage.asyncEnrollmentRequest.rejectModal.actions.cancel',
+    },
+  );
+  if (answer === Answer.Yes) {
+    emits('rejectClick', request);
+  }
+}
+
+const emits = defineEmits<{
   (e: 'acceptClick', invitation: AsyncEnrollmentUntrusted): void;
   (e: 'rejectClick', invitation: AsyncEnrollmentUntrusted): void;
   (e: 'copyJoinLinkClick'): void;

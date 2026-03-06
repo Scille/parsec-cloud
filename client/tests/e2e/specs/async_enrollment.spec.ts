@@ -249,6 +249,13 @@ for (const identitySystem of ['pki', 'openbao']) {
 
     const rejectButton = linkRequests.nth(0).locator('.request-actions').locator('ion-button').nth(1);
     await rejectButton.click();
+    await answerQuestion(page, true, {
+      expectedNegativeText: 'Cancel',
+      expectedPositiveText: 'Refuse request',
+      expectedQuestionText:
+        'Are you sure you want to refuse this request? The user will have to submit a new request to join the organization.',
+      expectedTitleText: 'Refuse request',
+    });
     await expect(page).toShowToast('This request has been rejected', 'Info');
     await expect(linkRequests).toHaveCount(0);
     await expect(page.locator('.invitations-container').locator('.no-active-content')).toBeVisible();
