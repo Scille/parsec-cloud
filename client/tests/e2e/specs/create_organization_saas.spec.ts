@@ -81,6 +81,10 @@ msTest('Go through saas org creation process', { tag: '@important' }, async ({ c
   const orgNameError = orgNameContainer.locator('#org-name-input').locator('.form-error');
   await expect(orgNameError).toBeVisible();
   await expect(orgNameError).toHaveText('Only letters, digits, underscores and hyphens. No spaces.');
+  await fillIonInput(orgNameContainer.locator('ion-input').nth(0), 'A'.repeat(34));
+  await expect(orgNameNext).toHaveDisabledAttribute();
+  await expect(orgNameError).toBeVisible();
+  await expect(orgNameError).toHaveText('Name is too long, limit is 32 characters.');
 
   // Back to good name
   await fillIonInput(orgNameContainer.locator('ion-input'), uniqueOrgName);

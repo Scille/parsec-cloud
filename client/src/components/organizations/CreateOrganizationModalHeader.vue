@@ -77,8 +77,8 @@ defineEmits<{
   display: flex;
   flex-direction: column;
   text-wrap: wrap;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
+  margin-bottom: 1rem;
+  gap: 0.625rem;
 
   @include ms.responsive-breakpoint('sm') {
     padding: 1.5rem;

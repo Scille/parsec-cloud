@@ -350,7 +350,7 @@ msTest.describe(() => {
     const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
     await fillIonInput(modal.locator('ion-input'), 'A'.repeat(132));
     await expect(modal.locator('.form-error')).toBeVisible();
-    await expect(modal.locator('.form-error')).toHaveText('File name is too long, limit is 128 characters.');
+    await expect(modal.locator('.form-error')).toHaveText('Folder name is too long, limit is 128 characters.');
     await fillIonInput(modal.locator('ion-input'), 'A'.repeat(64));
     await expect(modal.locator('.form-error')).toBeHidden();
     await expect(okButton).toBeTrulyEnabled();
@@ -359,6 +359,27 @@ msTest.describe(() => {
     await expect(entries).toHaveCount(1);
     await expect(entries.locator('.file-name').locator('.label-name').nth(0)).toHaveText('A'.repeat(64));
   });
+
+  for (const file of [true, false]) {
+    msTest(`Rename a ${file ? 'file' : 'folder'} with a name too long`, async ({ documents }, testInfo: TestInfo) => {
+      await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
+      const entries = documents.locator('.folder-container').locator('.file-list-item');
+      await expect(entries).toHaveCount(2);
+
+      const entry = file ? entries.nth(1) : entries.nth(0);
+      await entry.click({ button: 'right' });
+      await expect(documents.locator('.file-context-menu')).toBeVisible();
+      await documents.locator('.file-context-menu').getByRole('listitem').filter({ hasText: 'Rename' }).click();
+
+      const modal = documents.locator('.text-input-modal');
+      await expect(modal).toBeVisible();
+      const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
+      await fillIonInput(modal.locator('ion-input'), 'A'.repeat(132));
+      await expect(modal.locator('.form-error')).toBeVisible();
+      await expect(modal.locator('.form-error')).toHaveText(`${file ? 'File' : 'Folder'} name is too long, limit is 128 characters.`);
+      await expect(okButton).toBeTrulyDisabled();
+    });
+  }
 
   msTest('Import context menu', async ({ documents }) => {
     await expect(documents.locator('.import-popover')).toBeHidden();
