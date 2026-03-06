@@ -4,6 +4,7 @@
   <ion-page class="delete-totp-modal">
     <ms-modal
       title="Authentication.mfa.delete.title"
+      subtitle="Authentication.mfa.delete.subtitle"
       :close-button="{ visible: true }"
       :confirm-button="{
         disabled: !canConfirm || querying,
@@ -12,8 +13,16 @@
         queryingSpinner: querying,
       }"
       :cancel-button="cancelButton"
+      :class="currentStep"
     >
       <div class="modal-content">
+        <a
+          class="userguide-link"
+          @click="Env.Links.openDocumentationUserGuideLink('mfa')"
+        >
+          {{ $msTranslate('Authentication.mfa.delete.moreInformation') }}
+        </a>
+
         <ms-report-text
           v-if="currentStep === Steps.PromptAuthentication"
           :theme="MsReportTheme.Warning"
@@ -70,6 +79,7 @@ import {
   TOTPSetupStatusTag,
   updateDeviceChangeAuthentication,
 } from '@/parsec';
+import { Env } from '@/services/environment';
 import PromptCurrentAuthentication from '@/views/users/PromptCurrentAuthentication.vue';
 import { IonPage, IonText, modalController } from '@ionic/vue';
 import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
@@ -157,7 +167,7 @@ async function onConfirmButtonClicked(): Promise<boolean> {
         verifyCode.value,
       );
       if (!totpResult.ok) {
-        error.value = 'Authentication.mfa.failedToRetrieveKey';
+        error.value = 'Authentication.mfa.error.failedToRetrieveKey';
         return false;
       }
       const accessStrategy = constructAccessStrategy(props.device, toRaw(primaryProtection.value), [
@@ -205,5 +215,9 @@ async function onPreviousClicked(): Promise<boolean> {
 
 .section-title {
   color: var(--parsec-color-light-secondary-text);
+}
+
+.userguide-link {
+  cursor: pointer;
 }
 </style>
