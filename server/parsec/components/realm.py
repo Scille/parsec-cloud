@@ -75,7 +75,6 @@ class KeysBundle:
 
 class RealmCreateValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
     INVALID_ROLE = auto()
     USER_ID_MISMATCH = auto()
 
@@ -114,7 +113,6 @@ def realm_create_validate(
 
 class RealmShareValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
     INVALID_ROLE = auto()
     CANNOT_SELF_SHARE = auto()
 
@@ -153,7 +151,6 @@ def realm_share_validate(
 
 class RealmUnshareValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
     INVALID_ROLE = auto()
     CANNOT_SELF_UNSHARE = auto()
 
@@ -192,7 +189,6 @@ def realm_unshare_validate(
 
 class RealmRenameValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
 
 
 def realm_rename_validate(
@@ -222,7 +218,6 @@ def realm_rename_validate(
 
 class RealmRotateKeyValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
-    TIMESTAMP_MISMATCH = auto()
     ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
