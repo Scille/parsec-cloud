@@ -26,7 +26,6 @@ members = [
     "libparsec/crates/zstd",
     "bindings/web",
     "bindings/electron",
-    "bindings/android/libparsec/rust",
     "cli",
 ]
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies
@@ -121,7 +120,6 @@ libparsec_types = { path = "libparsec/crates/types", default-features = false }
 libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
-android_logger = { version = "0.15", default-features = false }
 anyhow = { version = "1.0.101", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.1.2", default-features = false }
@@ -161,7 +159,6 @@ hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "1.1.0", default-features = false }
 indexed-db = { version = "0.5.0-alpha.1", default-features = false }
 itertools = { version = "0.14.0", default-features = false }
-jni = { version = "0.22.3", default-features = false }
 js-sys = { version = "0.3.78", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
