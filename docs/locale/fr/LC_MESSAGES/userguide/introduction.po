@@ -6,11 +6,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.4.1-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-16 11:44+0200\n"
-"PO-Revision-Date: 2023-03-02 12:00+0100\n"
+"POT-Creation-Date: 2026-03-10 12:01+0100\n"
+"PO-Revision-Date: 2026-03-09 16:07+0100\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -21,65 +21,194 @@ msgstr ""
 msgid "Introduction"
 msgstr "Introduction"
 
-#: ../../userguide/introduction.rst:10
+#: ../../userguide/introduction.rst:9
 msgid ""
-"Parsec allows you to easily share your work and data in the cloud in total "
-"privacy thanks to end-to-end cryptographic security."
+"Parsec allows you to easily and securely share your data in the cloud with "
+"complete confidentiality thanks to client-side end-to-end encryption and "
+"zero-trust security."
 msgstr ""
-"Parsec vous permet de partager votre travail et vos données dans le cloud en "
-"toute confidentialité via une technologie de chiffrement de bout en bout."
+"Parsec vous permet de partager facilement et en toute sécurité vos données "
+"dans le cloud en toute confidentialité grâce à un chiffrement de bout en "
+"bout côté client et à une sécurité zéro-trust."
+
+#: ../../userguide/introduction.rst:16
+msgid "Who is Parsec for?"
+msgstr "À qui s'adresse Parsec ?"
 
 #: ../../userguide/introduction.rst:18
-msgid "Key features:"
-msgstr "Principales fonctionnalités:"
-
-#: ../../userguide/introduction.rst:20
 msgid ""
-"Works as a virtual drive on you computer. You can access and modify all the "
-"data stored in Parsec with your regular software just like you would on your "
-"local hard-drive."
+"Parsec is designed for organizations and individuals seeking to build secure "
+"workspaces to share sensitive and confidential data via a private or public "
+"cloud on the Internet."
 msgstr ""
-"Fonctionne comme un disque virtuel sur votre ordinateur. Vous pouvez accéder "
-"et modifier les données stockées dans Parsec avec vos logiciels habituels de "
-"la même façon que vous le feriez avec des données présentes sur votre disque "
-"dur."
+"Parsec est conçu pour les organisations et les particuliers qui cherchent à "
+"créer des espaces de travail sécurisés afin de partager des données "
+"sensibles et confidentielles via un cloud privé ou public sur Internet."
 
-#: ../../userguide/introduction.rst:23
+#: ../../userguide/introduction.rst:21
 msgid ""
-"Never lose any data. Encrypted data are synchronized with the remote server "
-"that never destroys anything, hence you can browse data history and recover "
-"from any point in time."
+"Parsec can be used by government agencies, SMEs, start-ups, consulting "
+"firms, R&D entities, or independent professionals, providing zero-trust data "
+"sharing with a guarantee of confidentiality, integrity, authenticity and "
+"data history."
 msgstr ""
-"Ne perdez jamais la moindre donnée ! Les données chiffrées sont "
-"synchronisées avec le serveur distant qui ne supprime jamais rien. Vous "
-"pouvez donc consulter l'historique de vos données et revenir à n'importe "
-"quel moment dans le passé."
+"Parsec peut être utilisé par les agences gouvernementales, les PME, les "
+"start-ups, les cabinets de conseil, les entités de R&D ou les professionnels "
+"indépendants, offrant un partage de données « zero trust » avec une garantie "
+"de confidentialité, d'intégrité, d'authenticité et d'historisation."
 
 #: ../../userguide/introduction.rst:26
-msgid ""
-"Client-side cryptographic security. Data and metadata are only visible by "
-"you and the ones you choose to share with."
-msgstr ""
-"Chiffrement effectué côté client. Les données et méta-données ne sont "
-"lisibles que par vous et ceux avec qui vous avez décidé de les partager."
+msgid "The Zero-Trust model"
+msgstr "Le modèle Zero Trust"
 
 #: ../../userguide/introduction.rst:28
-msgid ""
-"Cryptographic signature. Each modification is signed by its author making "
-"its identification trivial."
-msgstr ""
-"Signature cryptographique. Chaque modification est signée par son auteur, "
-"rendant triviale son identification."
+msgid "Parsec is the result of a strategic vision:"
+msgstr "Parsec est le résultat d'une vision stratégique :"
 
 #: ../../userguide/introduction.rst:30
 msgid ""
-"Simplified enrollment. New user enrollment is as simple as sharing a link "
-"and a token code."
+"*Secure data sharing is a major challenge for the coming years and network "
+"perimeter protection alone is no longer sufficient to meet data security "
+"needs, which are much broader in scope: mobility of actors, security in the "
+"cloud, integrity & confidentiality guarantees and accountability.*"
 msgstr ""
-"Inscription des nouveaux utilisateurs facilitée. Il suffit de partager un "
-"lien d'invitation ainsi qu'un code token au nouveau venu pour l'ajouter au "
-"système."
+"*Le partage sécurisé des données est un défi majeur pour les années à venir "
+"et la protection du périmètre réseau seule ne suffit plus à répondre aux "
+"besoins en matière de sécurité des données, dont la portée est beaucoup plus "
+"large : mobilité des acteurs, sécurité dans le cloud, garanties d'intégrité "
+"et de confidentialité, et responsabilité.*"
 
-#: ../../userguide/introduction.rst:32
-msgid "Easy to self-host."
-msgstr "Simple à auto-héberger."
+#: ../../userguide/introduction.rst:34
+msgid ""
+"The security strategy must become **Zero-Trust**, essentially meaning that "
+"no trust is placed in the server to allow secure data access and sharing."
+msgstr ""
+"La stratégie de sécurité doit devenir **Zéro-Trust**, ce qui signifie "
+"essentiellement qu'aucune confiance n'est accordée au serveur pour permettre "
+"un accès et un partage sécurisés des données."
+
+#: ../../userguide/introduction.rst:37
+msgid ""
+"Every user, every terminal and every network flow must be authenticated and "
+"authorized at all times. Your data is secured *before* it is stored in the "
+"cloud with a multi-step process involving file splitting, data & metadata "
+"encryption."
+msgstr ""
+"Chaque utilisateur, chaque terminal et chaque flux réseau doivent être "
+"authentifiés et autorisés à tout moment. Vos données sont sécurisées *avant* "
+"d'être stockées dans le cloud grâce à un processus en plusieurs étapes "
+"comprenant le fractionnement des fichiers et le chiffrement des données et "
+"des métadonnées."
+
+#: ../../userguide/introduction.rst:43
+msgid ""
+"Parsec guarantees data integrity & confidentiality even though it does not "
+"guarantee that users will have access to the latest version of the data."
+msgstr ""
+"Parsec garantit l'intégrité et la confidentialité des données, même s'il ne "
+"garantit pas que les utilisateurs auront accès à la dernière version des "
+"données."
+
+#: ../../userguide/introduction.rst:46
+msgid ""
+"In the event of a server compromise, an attacker taking control of Parsec "
+"server has little control over what they can do with your data. For example, "
+"they can roll back the database without users realizing that they are not "
+"seeing the latest version. However, Parsec guarantees that the data cannot "
+"be accessed or altered in any way by the attacker or by anyone who has "
+"access to the server."
+msgstr ""
+"En cas de compromission du serveur, un attaquant qui prend le contrôle du "
+"serveur Parsec n'a que peu de contrôle sur ce qu'il peut faire avec vos "
+"données. Il peut par exemple restaurer une version antérieure de la base de "
+"données sans que les utilisateurs ne se rendent compte qu'ils ne voient pas "
+"la dernière version. Cependant, Parsec garantit que les données ne peuvent "
+"être consultées ou modifiées d'aucune manière que ce soit par un attaquant "
+"ou par toute personne ayant accès au serveur."
+
+#: ../../userguide/introduction.rst:52
+msgid "Key features"
+msgstr "Principales fonctionnalités"
+
+#: ../../userguide/introduction.rst:55
+msgid "📂 Secure virtual drive on your computer"
+msgstr "📂 Disque virtuel sécurisé sur votre ordinateur"
+
+#: ../../userguide/introduction.rst:57
+msgid ""
+"A secure virtual drive on your computer allows you to access your data "
+"stored in Parsec using your usual software, just as you would on your local "
+"hard drive."
+msgstr ""
+"Un lecteur virtuel sécurisé sur votre ordinateur vous permet d'accéder à vos "
+"données stockées dans Parsec à l'aide de vos logiciels habituels, comme vous "
+"le feriez sur votre disque dur local."
+
+#: ../../userguide/introduction.rst:62
+msgid "🗓️ Never lose your data"
+msgstr "🗓️ Ne perdez jamais vos données"
+
+#: ../../userguide/introduction.rst:64
+msgid ""
+"Your data is encrypted and synchronized with Parsec regularly and "
+"incrementally. You can browse data history and restore previous versions at "
+"any time."
+msgstr ""
+"Vos données sont chiffrées et synchronisées régulièrement et progressivement "
+"avec Parsec. Vous pouvez consulter l'historique des données et restaurer les "
+"versions précédentes à tout moment."
+
+#: ../../userguide/introduction.rst:68
+msgid "🔐 Client-side cryptographic security"
+msgstr "🔐 Sécurité cryptographique côté client"
+
+#: ../../userguide/introduction.rst:70
+msgid ""
+"Client-side `E2EE <https://en.wikipedia.org/wiki/End-to-end_encryption>`_ "
+"ensures your data is only accessed by you and the people you share it with. "
+"Encryption key rotation is also managed automatically on the client side to "
+"ensure that users whose access has been revoked cannot decrypt future data."
+msgstr ""
+"Le `cryptage de bout en bout <https://fr.wikipedia.org/wiki/"
+"Chiffrement_de_bout_en_bout>`_ côté client garantit que vos données ne sont "
+"accessibles qu'à vous et aux personnes avec lesquelles vous les partagez.La "
+"rotation des clés de chiffrement est également gérée automatiquement côté "
+"client afin de garantir que les utilisateurs dont l'accès a été révoqué ne "
+"puissent pas déchiffrer les données futures."
+
+#: ../../userguide/introduction.rst:76
+msgid "✒️ Cryptographic signatures"
+msgstr "✒️ Signatures cryptographiques"
+
+#: ../../userguide/introduction.rst:78
+msgid ""
+"Each change is automatically signed by its author enabling identification in "
+"an unforgeable manner."
+msgstr ""
+"Chaque modification est automatiquement signée par son auteur, ce qui permet "
+"une identification infalsifiable."
+
+#: ../../userguide/introduction.rst:82
+msgid "🤝 Simplified enrollment"
+msgstr "🤝 Enrôlement simplifié"
+
+#: ../../userguide/introduction.rst:84
+msgid ""
+"Invite users to securely join your organization via link and token code "
+"exchange. Leverage your existing SSO or PKI to enable secure join requests."
+msgstr ""
+"Invitez les utilisateurs à rejoindre votre organisation en toute sécurité "
+"via un lien et un échange de token. Tirez parti de votre SSO ou PKI existant "
+"pour permettre des demandes d'adhésion sécurisées."
+
+#: ../../userguide/introduction.rst:88
+msgid "🧑‍💻 Easy to self-host"
+msgstr "🧑‍💻 Facile à héberger soi-même."
+
+#: ../../userguide/introduction.rst:90
+msgid ""
+"You can easily deploy Parsec on your own infrastructure. Take a look at the :"
+"ref:`Hosting guide <doc_hosting_intro>`."
+msgstr ""
+"Vous pouvez facilement déployer Parsec sur votre propre infrastructure. "
+"Consultez le :ref:`Guide d'Hébergement <doc_hosting_intro>`."
