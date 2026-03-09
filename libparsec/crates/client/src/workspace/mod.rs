@@ -69,9 +69,11 @@ struct OpenedFile {
     bytes_written_since_last_flush: u64,
     /// Chunks no longer used since the last flush. They should be removed from
     /// the database  on the next flush.
+    /// Note we don't use a `HashSet` since this should contain a small number of items.
     removed_chunks: Vec<ChunkID>,
     /// Chunks created since the last flush. They currently live in memory and should
     /// be written in the database on the next flush.
+    /// Note we don't use a `HashMap` since this should contain a small number of items.
     new_chunks: Vec<(ChunkID, Vec<u8>)>,
     /// In theory we could deduce from `removed_chunks`&`new_chunks` if the flush
     /// is needed, but (at least for now) we instead value the simplicity of setting

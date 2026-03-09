@@ -83,12 +83,18 @@ pub async fn fd_read(
 
     // Note since zero-filled blocks are not stored, we cannot just use
     // `manifest.blocksize` to determine the range of indexes of involved blocks.
-    let involved_blocks = manifest
-        .blocks
-        .iter()
-        // TODO: use binary search to avoid O(n) complexity
-        .skip_while(|block| block.offset + block.size.get() <= offset)
-        .take_while(|block| block.offset < end);
+    let involved_blocks = {
+        let start_idx = manifest
+            .blocks
+            .partition_point(|block| block.offset + block.size.get() <= offset);
+        // In practice, a big read operation is always split into multiple calls of `fd_read`
+        // to avoid having ending up with the whole file in memory.
+        // Hence why we don't use a binary search here: we are practically certain that we
+        // are reading a very small number of blocks.
+        manifest.blocks[start_idx..]
+            .iter()
+            .take_while(|b| b.offset < end)
+    };
 
     let mut current_position = offset;
     for block_access in involved_blocks {
