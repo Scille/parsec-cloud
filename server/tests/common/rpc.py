@@ -428,6 +428,15 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.realm_rotate_key.Rep.load(raw_rep)
 
+    async def realm_self_promote_to_owner(
+        self, realm_role_certificate: bytes
+    ) -> authenticated_cmds.latest.realm_self_promote_to_owner.Rep:
+        req = authenticated_cmds.latest.realm_self_promote_to_owner.Req(
+            realm_role_certificate=realm_role_certificate
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.realm_self_promote_to_owner.Rep.load(raw_rep)
+
     async def realm_share(
         self, realm_role_certificate: bytes, recipient_keys_bundle_access: bytes, key_index: int
     ) -> authenticated_cmds.latest.realm_share.Rep:

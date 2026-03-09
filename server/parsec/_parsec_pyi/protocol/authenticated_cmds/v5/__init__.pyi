@@ -29,6 +29,7 @@ from . import (
     realm_get_keys_bundle,
     realm_rename,
     realm_rotate_key,
+    realm_self_promote_to_owner,
     realm_share,
     realm_unshare,
     realm_update_archiving,
@@ -76,6 +77,7 @@ class AnyCmdReq:
         | realm_get_keys_bundle.Req
         | realm_rename.Req
         | realm_rotate_key.Req
+        | realm_self_promote_to_owner.Req
         | realm_share.Req
         | realm_unshare.Req
         | realm_update_archiving.Req
@@ -120,6 +122,7 @@ __all__ = [
     "realm_get_keys_bundle",
     "realm_rename",
     "realm_rotate_key",
+    "realm_self_promote_to_owner",
     "realm_share",
     "realm_unshare",
     "realm_update_archiving",
