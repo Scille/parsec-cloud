@@ -57,6 +57,7 @@ use libparsec_types::prelude::*;
 //   * Add `realm_update_archiving` to authenticated commands.
 //   * Add `realm_minimum_archiving_period_before_deletion` field to `OrganizationConfig` event in `events_listen`
 //   * Add `send_email` field to async_enrollment_accept req and `email_sent` status to ok rep
+//   * Add `realm_self_promote_to_owner` to authenticated commands.
 
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
