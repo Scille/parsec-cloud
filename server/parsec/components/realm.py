@@ -187,6 +187,44 @@ def realm_unshare_validate(
     return data
 
 
+class RealmSelfPromoteToOwnerValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    INVALID_ROLE = auto()
+    MUST_SELF_PROMOTE = auto()
+
+
+def realm_self_promote_to_owner_validate(
+    now: DateTime,
+    expected_author_user_id: UserID,
+    expected_author_device_id: DeviceID,
+    author_verify_key: VerifyKey,
+    realm_role_certificate: bytes,
+) -> RealmRoleCertificate | TimestampOutOfBallpark | RealmSelfPromoteToOwnerValidateBadOutcome:
+    try:
+        data = RealmRoleCertificate.verify_and_load(
+            realm_role_certificate,
+            author_verify_key=author_verify_key,
+            expected_author=expected_author_device_id,
+        )
+
+    except ValueError:
+        return RealmSelfPromoteToOwnerValidateBadOutcome.INVALID_CERTIFICATE
+
+    match timestamps_in_the_ballpark(data.timestamp, now):
+        case TimestampOutOfBallpark() as error:
+            return error
+        case _:
+            pass
+
+    if expected_author_user_id != data.user_id:
+        return RealmSelfPromoteToOwnerValidateBadOutcome.MUST_SELF_PROMOTE
+
+    if data.role != RealmRole.OWNER:
+        return RealmSelfPromoteToOwnerValidateBadOutcome.INVALID_ROLE
+
+    return data
+
+
 class RealmRenameValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
 
@@ -293,6 +331,20 @@ class RealmRotateKeyStoreBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     ORGANIZATION_NOT_SEQUESTERED = auto()
+
+
+@dataclass(slots=True)
+class RealmSelfPromoteToOwnerActiveOwnerAlreadyExists(BadOutcome):
+    last_realm_certificate_timestamp: DateTime
+
+
+class RealmSelfPromoteToOwnerStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
 
 
 class RealmGetKeysBundleBadOutcome(BadOutcomeEnum):
@@ -487,6 +539,23 @@ class BaseRealmComponent:
         | RealmUnshareValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmUnshareStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        raise NotImplementedError
+
+    async def self_promote_to_owner(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_role_certificate: bytes,
+    ) -> (
+        RealmRoleCertificate
+        | RealmSelfPromoteToOwnerActiveOwnerAlreadyExists
+        | RealmSelfPromoteToOwnerValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmSelfPromoteToOwnerStoreBadOutcome
         | RequireGreaterTimestamp
     ):
         raise NotImplementedError
@@ -742,6 +811,54 @@ class BaseRealmComponent:
             case RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND:
                 client_ctx.author_not_found_abort()
             case RealmUnshareStoreBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+
+    @api
+    async def api_realm_self_promote_to_owner(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.realm_self_promote_to_owner.Req,
+    ) -> authenticated_cmds.latest.realm_self_promote_to_owner.Rep:
+        outcome = await self.self_promote_to_owner(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
+            realm_role_certificate=req.realm_role_certificate,
+        )
+        match outcome:
+            case RealmRoleCertificate():
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepOk()
+            case RequireGreaterTimestamp() as error:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepRequireGreaterTimestamp(
+                    strictly_greater_than=error.strictly_greater_than
+                )
+            case TimestampOutOfBallpark() as error:
+                return (
+                    authenticated_cmds.latest.realm_self_promote_to_owner.RepTimestampOutOfBallpark(
+                        server_timestamp=error.server_timestamp,
+                        client_timestamp=error.client_timestamp,
+                        ballpark_client_early_offset=error.ballpark_client_early_offset,
+                        ballpark_client_late_offset=error.ballpark_client_late_offset,
+                    )
+                )
+            case RealmSelfPromoteToOwnerValidateBadOutcome():
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepInvalidCertificate()
+            case RealmSelfPromoteToOwnerActiveOwnerAlreadyExists() as error:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepActiveOwnerAlreadyExists(
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp
+                )
+            case RealmSelfPromoteToOwnerStoreBadOutcome.REALM_NOT_FOUND:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepRealmNotFound()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepAuthorNotAllowed()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
 
     @api
