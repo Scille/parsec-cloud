@@ -799,6 +799,12 @@
             },
             "actionConfirm": "Make this workspace visible",
             "actionCancel": "Cancel"
+        },
+        "openFile": {
+            "title": "Workspace is hidden",
+            "description": "You must make this workspace visible in order to open your file with your default application.",
+            "actionConfirm": "Make this workspace visible",
+            "actionCancel": "Cancel"
         }
     },
     "FoldersPage": {

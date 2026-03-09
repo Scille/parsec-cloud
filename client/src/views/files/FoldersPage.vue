@@ -1358,15 +1358,11 @@ async function openEntry(entryToOpen: EntryModel, options: OpenPathOptions): Pro
   const entry = entryToOpen as EntryStatFile;
   const workspaceHandle = workspaceInfo.value.handle;
 
-  if (workspaceAttributes.isHidden(workspaceInfo.value.id)) {
-    const answer = await askQuestion(
-      'WorkspacesPage.openInExplorerModal.file.title',
-      'WorkspacesPage.openInExplorerModal.file.description',
-      {
-        yesText: 'WorkspacesPage.openInExplorerModal.actionConfirm',
-        noText: 'WorkspacesPage.openInExplorerModal.actionCancel',
-      },
-    );
+  if (workspaceAttributes.isHidden(workspaceInfo.value.id) && isDesktop() && options.skipViewers) {
+    const answer = await askQuestion('WorkspacesPage.openFile.title', 'WorkspacesPage.openFile.description', {
+      yesText: 'WorkspacesPage.openFile.actionConfirm',
+      noText: 'WorkspacesPage.openFile.actionCancel',
+    });
     if (answer === Answer.No) {
       return;
     }

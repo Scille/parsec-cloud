@@ -798,6 +798,12 @@
             },
             "actionConfirm": "Rendre cet espace de travail visible",
             "actionCancel": "Annuler"
+        },
+        "openFile": {
+            "title": "Espace de travail masqué",
+            "description": "Vous devez rendre cet espace de travail visible afin de pouvoir ouvrir votre fichier avec votre application par défaut.",
+            "actionConfirm": "Rendre cet espace de travail visible",
+            "actionCancel": "Annuler"
         }
     },
     "FoldersPage": {
