@@ -71,7 +71,7 @@
         >
           <information-join-device />
           <ms-report-text :theme="MsReportTheme.Info">
-            {{ $msTranslate('DevicesPage.greet.subtitles.waitForGuestVersionInfo') }}
+            {{ $msTranslate('DevicesPage.greet.step1.info') }}
           </ms-report-text>
         </div>
 

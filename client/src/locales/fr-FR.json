@@ -1214,13 +1214,18 @@
                 "getGuestCode": "Cliquez sur le code ci-dessous correspondant à celui affiché sur l'appareil invité.",
                 "summary": "L'appareil {label} a été ajouté à votre profil.",
                 "getDeviceInfo": "En attente des informations de l'appareil invité.",
-                "waitForGuest": "Vous devez avoir Parsec ouvert sur les deux appareils pendant la durée du processus d'ajout.",
-                "waitForGuestVersionInfo": "Avant de commencer, assurez-vous d'utiliser la version la plus récente de Parsec sur vos deux appareils.",
-                "scanOrShare1": "Scanner le QR Code ",
                 "scanOrShare2": "ou ",
-                "scanOrShare3": "partager le lien",
                 "cancelGreet": "Êtes-vous sûr(e) de vouloir annuler le processus d'ajout d'appareil ?",
                 "copiedToClipboard": "Copié dans le presse-papier"
+            },
+            "step1": {
+                "title": "Ouvrez Parsec sur le nouvel appareil",
+                "description": "Vous devez avoir Parsec ouvert sur les deux appareils pendant la durée du processus d'ajout.",
+                "info": "Avant de commencer, assurez-vous d'utiliser la version la plus récente de Parsec sur vos deux appareils."
+            },
+            "step2": {
+                "title": "Scannez le code QR ou copiez le lien",
+                "description": "Scannez le code QR avec votre nouvel appareil ou copiez le lien et ouvrez-le sur le nouvel appareil."
             },
             "errors": {
                 "retrieveDeviceInfoFailed": "Impossible de récupérer les informations.",
@@ -1241,9 +1246,10 @@
                 "finish": "Terminer",
                 "start": "Démarrer",
                 "copyLink": "Copier le lien",
+                "copied": "Copié",
                 "sendEmail": "Envoyer le lien par email",
                 "reSendEmail": "Renvoyer l'email",
-                "waitBeforeResending": "Attendez {seconds}s",
+                "waitBeforeResending": "Attendez {seconds}s avant de renvoyer",
                 "cancelGreet": {
                     "yes": "Annuler le processus",
                     "no": "Reprendre"
@@ -1253,6 +1259,7 @@
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
             "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
             "emailSent": "L'email a été envoyé !",
+            "emailSentToast": "L'email a été envoyé à votre adresse email.",
             "cancelled": "Le processus a été annulé.",
             "waiting": "En attente de l'invité..."
         }

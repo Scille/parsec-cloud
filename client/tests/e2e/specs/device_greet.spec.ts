@@ -33,22 +33,19 @@ async function initModals(hostPage: MsPage, guestPage: MsPage): Promise<[ModalDa
   await hostPage.locator('.profile-content-item').locator('#add-device-button').click();
   const greetModal = hostPage.locator('.greet-organization-modal');
   await expect(greetModal.locator('.modal-header__title')).toHaveText('Create a new device');
-  await expect(greetModal.locator('.first-step').locator('.container-textinfo__text').nth(0)).toHaveText(
-    'Parsec must be open on both devices during the onboarding process.',
-  );
-  await expect(greetModal.locator('.first-step').locator('.container-textinfo__text').nth(1)).toHaveText(
+  await expect(greetModal.locator('.first-step').locator('.container-textinfo__text')).toHaveText(
     'Before you start, make sure you are using the latest version of Parsec on both devices.',
+  );
+  await expect(greetModal.locator('.first-step').locator('.step-info__title')).toHaveText('Open Parsec on the new device');
+  await expect(greetModal.locator('.first-step').locator('.step-info__subtitle')).toHaveText(
+    'Parsec must be open on both devices during the onboarding process.',
   );
   await expect(greetModal.locator('#next-button')).toHaveText('Start');
   await expect(greetModal.locator('.closeBtn')).toBeVisible();
 
   await setWriteClipboardPermission(hostPage.context(), true);
 
-  if (displaySize === DisplaySize.Small) {
-    await greetModal.locator('#copy-link-btn-small').click();
-  } else {
-    await greetModal.locator('#copy-link-btn').click();
-  }
+  await greetModal.locator('#copy-link-btn').click();
   await expect(hostPage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
   const invitationLink = await getClipboardText(hostPage);
 
@@ -563,4 +560,22 @@ msTest('Guest closes greet process', async ({ myProfilePage }) => {
   await expect(myProfilePage).toShowToast('The process has been cancelled from the other device.', 'Error');
   await expect(greetData.title).toHaveText('Create a new device');
   await expect(greetData.nextButton).toHaveText('Start');
+});
+
+msTest('Trying copy/paste link for adding a new device', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
+  await myProfilePage.locator('.menu-list__item').nth(1).click();
+
+  await myProfilePage.locator('.profile-content-item').locator('#add-device-button').click();
+  const greetModal = myProfilePage.locator('.greet-organization-modal');
+  await expect(greetModal.locator('.modal-header__title')).toHaveText('Create a new device');
+
+  await greetModal.locator('#copy-link-btn').click();
+  await expect(greetModal.locator('.step-link-copy-error')).toHaveText(
+    'Failed to copy the link. Your browser or device does not seem to support copy/paste.',
+  );
+
+  await setWriteClipboardPermission(myProfilePage.context(), true);
+  await greetModal.locator('#copy-link-btn').click();
+  await expect(myProfilePage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
 });

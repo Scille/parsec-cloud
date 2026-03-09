@@ -1214,13 +1214,18 @@
                 "getGuestCode": "Click on the code that appears on the guest device.",
                 "summary": "The device {label} has been added to your profile.",
                 "getDeviceInfo": "Waiting for you to fill the information on the guest device.",
-                "waitForGuest": "Parsec must be open on both devices during the onboarding process.",
-                "waitForGuestVersionInfo": "Before you start, make sure you are using the latest version of Parsec on both devices.",
-                "scanOrShare1": "Scan the QR Code ",
                 "scanOrShare2": "or ",
-                "scanOrShare3": "share the link",
                 "cancelGreet": "Are you sure you want to cancel the onboarding process?",
                 "copiedToClipboard": "Link has been copied to clipboard"
+            },
+            "step1": {
+                "title": "Open Parsec on the new device",
+                "description": "Parsec must be open on both devices during the onboarding process.",
+                "info": "Before you start, make sure you are using the latest version of Parsec on both devices."
+            },
+            "step2": {
+                "title": "Scan the QR code or copy the link",
+                "description": "Scan the QR code with your new device or copy the link and open it on the new device."
             },
             "errors": {
                 "retrieveDeviceInfoFailed": "Failed to retrieve device information.",
@@ -1241,9 +1246,10 @@
                 "finish": "Finish",
                 "start": "Start",
                 "copyLink": "Copy link",
+                "copied": "Copied",
                 "sendEmail": "Send link by email",
                 "reSendEmail": "Resend email",
-                "waitBeforeResending": "Wait {seconds}s",
+                "waitBeforeResending": "Wait {seconds}s to resend",
                 "cancelGreet": {
                     "yes": "Cancel process",
                     "no": "Resume"
@@ -1253,6 +1259,7 @@
             "linkCopiedToClipboard": "Invitation link has been copied to clipboard.",
             "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste.",
             "emailSent": "Email sent!",
+            "emailSentToast": "The email has been sent to your email address.",
             "cancelled": "The process has been cancelled.",
             "waiting": "Waiting for the guest..."
         }
