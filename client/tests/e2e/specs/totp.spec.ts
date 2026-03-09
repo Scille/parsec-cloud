@@ -103,13 +103,22 @@ msTest('Setup totp modal', async ({ myProfilePage }) => {
   await expect(thirdPage).toBeVisible();
   await expect(fourthPage).toBeHidden();
 
+  // Incorrect code first
+  await expect(nextButton).toBeTrulyDisabled();
+  await fillIonInput(thirdPage.locator('ion-input'), 'ABCDEF');
+  await expect(nextButton).toBeTrulyEnabled();
+  await nextButton.click();
+
+  await expect(thirdPage).toBeVisible();
+  await expect(modal.locator('.container-textinfo')).toBeVisible();
+  await expect(modal.locator('.container-textinfo')).toHaveText('The code you entered is invalid. Please try again.');
+
   const totpCode = await generateTotpCode(totpSecret);
 
   expect(totpCode).toMatch(/^\d{6}$/);
-
-  await expect(nextButton).toBeTrulyDisabled();
   await fillIonInput(thirdPage.locator('ion-input'), totpCode);
   await expect(nextButton).toBeTrulyEnabled();
+  await expect(modal.locator('.container-textinfo')).toBeHidden();
   await nextButton.click();
   await expect(firstPage).toBeHidden();
   await expect(secondPage).toBeHidden();
@@ -130,6 +139,13 @@ msTest('Setup totp modal', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.login-button')).toHaveDisabledAttribute();
 
   await myProfilePage.locator('#password-input').locator('input').fill('P@ssw0rd.');
+  await expect(myProfilePage.locator('.login-button')).toBeEnabled();
+  await myProfilePage.locator('.login-button').click();
+
+  await fillInputModal(myProfilePage, 'ABCDEF');
+  await expect(myProfilePage).toShowToast('The code you entered is invalid. Please try again.', 'Error');
+  await expect(myProfilePage).toBeHomePage();
+
   await expect(myProfilePage.locator('.login-button')).toBeEnabled();
   await myProfilePage.locator('.login-button').click();
   await fillInputModal(myProfilePage, await generateTotpCode(totpSecret));

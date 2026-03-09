@@ -130,7 +130,7 @@ import {
   parseParsecAddr,
   login as parsecLogin,
 } from '@/parsec';
-import { AvailableDeviceTypePKI } from '@/plugins/libparsec';
+import { AvailableDeviceTypePKI, TotpFetchOpaqueKeyErrorTag } from '@/plugins/libparsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -981,9 +981,13 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     const fetchTotpResult = await fetchTotpOpaqueKey(device.serverAddr, device.organizationId, device.userId, device.totpOpaqueKeyId, code);
     if (!fetchTotpResult.ok) {
       window.electronAPI.log('warn', `Failed to retrieve totp opaque key: '${fetchTotpResult.error.tag}'`);
+      let message = 'Authentication.mfa.error.failedToRetrieveKey';
+      if (fetchTotpResult.error.tag === TotpFetchOpaqueKeyErrorTag.InvalidOneTimePassword) {
+        message = 'Authentication.mfa.error.invalidCode';
+      }
       informationManager.present(
         new Information({
-          message: 'Authentication.mfa.error.failedToRetrieveKey',
+          message: message,
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
