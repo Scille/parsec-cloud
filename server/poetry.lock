@@ -795,14 +795,14 @@ unicode-backport = ["unicodedata2"]
 
 [[package]]
 name = "cibuildwheel"
-version = "3.3.1"
+version = "3.4.0"
 description = "Build Python wheels on CI with minimal configuration."
 optional = false
 python-versions = ">=3.11"
 groups = ["dev"]
 files = [
-    {file = "cibuildwheel-3.3.1-py3-none-any.whl", hash = "sha256:6d3c387e77c5850819294863eeee4e57fb7e8ecdf87b7412e763222c16e26424"},
-    {file = "cibuildwheel-3.3.1.tar.gz", hash = "sha256:ae6eafe6f7ed3bab38919e08bf3eb92085f6387c5f7a746b40cc4775a8462f9a"},
+    {file = "cibuildwheel-3.4.0-py3-none-any.whl", hash = "sha256:dcb193155a067e1b7405da4432347277a74c30d44f0dfae8c44fe7f26824183f"},
+    {file = "cibuildwheel-3.4.0.tar.gz", hash = "sha256:aae9fa8e3716e4b5cca76c92f8d4c704361618424d23814c0cea0e229d624862"},
 ]
 
 [package.dependencies]
