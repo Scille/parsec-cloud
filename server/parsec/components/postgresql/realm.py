@@ -40,6 +40,7 @@ from parsec.components.postgresql.realm_get_current_realms_for_user import (
 from parsec.components.postgresql.realm_get_keys_bundle import realm_get_keys_bundle
 from parsec.components.postgresql.realm_rename import realm_rename
 from parsec.components.postgresql.realm_rotate_key import realm_rotate_key
+from parsec.components.postgresql.realm_self_promote_to_owner import realm_self_promote_to_owner
 from parsec.components.postgresql.realm_share import realm_share
 from parsec.components.postgresql.realm_unshare import realm_unshare
 from parsec.components.postgresql.utils import (
@@ -71,6 +72,9 @@ from parsec.components.realm import (
     RealmRenameValidateBadOutcome,
     RealmRotateKeyStoreBadOutcome,
     RealmRotateKeyValidateBadOutcome,
+    RealmSelfPromoteToOwnerActiveOwnerAlreadyExists,
+    RealmSelfPromoteToOwnerStoreBadOutcome,
+    RealmSelfPromoteToOwnerValidateBadOutcome,
     RealmShareStoreBadOutcome,
     RealmShareValidateBadOutcome,
     RealmUnshareStoreBadOutcome,
@@ -165,6 +169,33 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         return await realm_unshare(
+            conn,
+            now,
+            organization_id,
+            author,
+            author_verify_key,
+            realm_role_certificate,
+        )
+
+    @override
+    @transaction
+    async def self_promote_to_owner(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_role_certificate: bytes,
+    ) -> (
+        RealmRoleCertificate
+        | RealmSelfPromoteToOwnerActiveOwnerAlreadyExists
+        | RealmSelfPromoteToOwnerValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmSelfPromoteToOwnerStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        return await realm_self_promote_to_owner(
             conn,
             now,
             organization_id,

@@ -53,6 +53,9 @@ from parsec.components.realm import (
     RealmRole,
     RealmRotateKeyStoreBadOutcome,
     RealmRotateKeyValidateBadOutcome,
+    RealmSelfPromoteToOwnerActiveOwnerAlreadyExists,
+    RealmSelfPromoteToOwnerStoreBadOutcome,
+    RealmSelfPromoteToOwnerValidateBadOutcome,
     RealmShareStoreBadOutcome,
     RealmShareValidateBadOutcome,
     RealmUnshareStoreBadOutcome,
@@ -63,6 +66,7 @@ from parsec.components.realm import (
     realm_create_validate,
     realm_rename_validate,
     realm_rotate_key_validate,
+    realm_self_promote_to_owner_validate,
     realm_share_validate,
     realm_unshare_validate,
 )
@@ -418,6 +422,130 @@ class MemoryRealmComponent(BaseRealmComponent):
                         realm_id=certif.realm_id,
                         user_id=certif.user_id,
                         role_removed=True,
+                    )
+                )
+
+                return certif
+
+    @override
+    async def self_promote_to_owner(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_role_certificate: bytes,
+    ) -> (
+        RealmRoleCertificate
+        | RealmSelfPromoteToOwnerActiveOwnerAlreadyExists
+        | RealmSelfPromoteToOwnerValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmSelfPromoteToOwnerStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
+
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_REVOKED
+
+            assert author_verify_key == author_device.cooked.verify_key
+            match realm_self_promote_to_owner_validate(
+                now=now,
+                expected_author_user_id=author_user_id,
+                expected_author_device_id=author,
+                author_verify_key=author_verify_key,
+                realm_role_certificate=realm_role_certificate,
+            ):
+                case RealmRoleCertificate() as certif:
+                    pass
+                case error:
+                    return error
+
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmSelfPromoteToOwnerStoreBadOutcome.REALM_NOT_FOUND
+
+            realm_topic = ("realm", certif.realm_id)
+
+            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
+
+                def _role_to_priority(role: RealmRole) -> int:
+                    match role:
+                        case RealmRole.READER:
+                            return 1
+                        case RealmRole.CONTRIBUTOR:
+                            return 2
+                        case RealmRole.MANAGER:
+                            return 3
+                        case RealmRole.OWNER:
+                            return 4
+                        case unknown:
+                            # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                            assert False, unknown
+
+                author_current_role: RealmRole | None = None
+                highest_active_priority: int = 0
+                for user in org.active_users():
+                    role = realm.get_current_role_for(user.cooked.user_id)
+                    if role is None:
+                        continue
+                    if role == RealmRole.OWNER:
+                        return RealmSelfPromoteToOwnerActiveOwnerAlreadyExists(
+                            last_realm_certificate_timestamp=realm_topic_last_timestamp
+                        )
+                    highest_active_priority = max(highest_active_priority, _role_to_priority(role))
+                    if user.cooked.user_id == author_user_id:
+                        author_current_role = role
+                if (
+                    author_current_role is None
+                    or _role_to_priority(author_current_role) < highest_active_priority
+                ):
+                    return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
+                # Ensure we are not breaking causality by adding a newer timestamp.
+
+                if realm.last_vlob_timestamp is not None:
+                    last_timestamp = max(
+                        common_topic_last_timestamp,
+                        realm_topic_last_timestamp,
+                        realm.last_vlob_timestamp,
+                    )
+                else:
+                    last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_timestamp >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
+
+                # All checks are good, now we do the actual insertion
+
+                org.per_topic_last_timestamp[realm_topic] = certif.timestamp
+
+                realm.roles.append(
+                    MemoryRealmUserRole(
+                        cooked=certif, realm_role_certificate=realm_role_certificate
+                    )
+                )
+
+                await self._event_bus.send(
+                    EventRealmCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                        realm_id=certif.realm_id,
+                        user_id=certif.user_id,
+                        role_removed=False,
                     )
                 )
 
