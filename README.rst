@@ -9,7 +9,7 @@
       <img src="https://github.com/Scille/parsec-cloud/actions/workflows/ci.yml/badge.svg" alt="CI">
       <img src="https://github.com/Scille/parsec-cloud/actions/workflows/package-server.yml/badge.svg" alt="Latest Server Packaging CI">
       <img src="https://github.com/Scille/parsec-cloud/actions/workflows/package-desktop.yml/badge.svg" alt="Latest Desktop App Packaging CI">
-      <img src="https://github.com/Scille/parsec-cloud/actions/workflows/package-webapp.yml/badge.svg" alt="Latest Web App Packaging CI"
+      <img src="https://github.com/Scille/parsec-cloud/actions/workflows/package-webapp.yml/badge.svg" alt="Latest Web App Packaging CI">
       <img src="https://app.readthedocs.org/projects/parsec-cloud/badge/?version=latest">
       <img src="https://img.shields.io/badge/code%20style-ruff-D7FF64">
     </p>
@@ -29,7 +29,8 @@ Parsec is a cloud-based application for simple and cryptographically secure file
 Getting started
 ===============
 
-Take a look at the `First steps with Parsec <https://docs.parsec.cloud/en/latest/userguide/first_steps.html>`_.
+Take a look at the :ref:`Introduction <https://docs.parsec.cloud/en/latest/userguide/introduction.html>`
+to get an overview of what Parsec can do for you and to learn about what security guarantees it provides for your data.
 
 Install
 =======
