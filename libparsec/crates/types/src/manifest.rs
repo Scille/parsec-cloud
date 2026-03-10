@@ -3,7 +3,6 @@
 use std::{collections::HashMap, num::NonZeroU64, ops::Deref, sync::Arc};
 
 use serde::{Deserialize, Serialize};
-use serde_with::*;
 
 use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;

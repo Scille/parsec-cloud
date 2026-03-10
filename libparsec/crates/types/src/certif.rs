@@ -7,7 +7,6 @@ use std::sync::Arc;
 use bytes::Bytes;
 use paste::paste;
 use serde::{Deserialize, Serialize};
-use serde_with::*;
 
 use libparsec_crypto::{
     CryptoError, PublicKey, SecretKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey,

@@ -315,7 +315,7 @@ async fn generate_realm_rotate_key_req(
                                 .into(),
                         })?;
 
-                sequester_blob.map(|sequester_blob| HashMap::from_iter(sequester_blob.into_iter()))
+                sequester_blob.map(HashMap::from_iter)
             };
 
             // 5) Now we have everything we need to build the request object !

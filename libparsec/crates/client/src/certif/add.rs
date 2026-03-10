@@ -360,8 +360,8 @@ pub(super) async fn add_certificates_batch(
             initial_stored_last_timestamps.shamir_recovery
         },
         realm_new_since: realm_certificates
-            .iter()
-            .filter_map(|(realm_id, _)| {
+            .keys()
+            .filter_map(|realm_id| {
                 initial_stored_last_timestamps
                     .realm
                     .get(realm_id)
