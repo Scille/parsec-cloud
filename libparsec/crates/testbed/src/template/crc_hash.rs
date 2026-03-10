@@ -50,6 +50,18 @@ impl CrcHash for bool {
     }
 }
 
+impl<T: CrcHash> CrcHash for Maybe<T> {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        match self {
+            Maybe::Absent => hasher.update(b"Absent"),
+            Maybe::Present(x) => {
+                hasher.update(b"Present");
+                x.crc_hash(hasher);
+            }
+        }
+    }
+}
+
 impl<T: CrcHash> CrcHash for Option<T> {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         match self {

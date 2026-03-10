@@ -163,6 +163,8 @@ pub enum Maybe<T> {
     Absent,
 }
 
+impl<T: Copy> Copy for Maybe<T> {}
+
 impl<T> Maybe<T> {
     pub fn is_absent(&self) -> bool {
         matches!(self, Self::Absent)
