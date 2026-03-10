@@ -5,8 +5,10 @@ use serde_json::Value;
 use libparsec::{OrganizationID, ParsecAddr};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = addr, token, organization]
+    #[with = addr, token]
     pub struct Args {
+        /// Organization ID
+        organization: OrganizationID,
     }
 );
 
