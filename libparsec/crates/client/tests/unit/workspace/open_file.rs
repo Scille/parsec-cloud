@@ -675,6 +675,7 @@ async fn close_on_workspace_ops_stop(
                 name_origin: CertificateBasedInfoOrigin::Placeholder,
                 role: RealmRole::Owner,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
+                can_self_promote_to_owner: false.into(),
             },
             workspace_index: 0,
             total_workspaces: 1,

@@ -33,6 +33,7 @@ async fn sync_non_placeholder(
                 name_origin: CertificateBasedInfoOrigin::Placeholder,
                 role: RealmRole::Owner,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
+                can_self_promote_to_owner: false.into(),
             }];
         } else {
             user_manifest_mut.local_workspaces.clear();

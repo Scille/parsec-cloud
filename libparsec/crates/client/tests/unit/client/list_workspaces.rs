@@ -63,6 +63,7 @@ async fn ok(env: &TestbedEnv) {
                             name_origin: CertificateBasedInfoOrigin::Placeholder,
                             role: RealmRole::Owner,
                             role_origin: CertificateBasedInfoOrigin::Placeholder,
+                            can_self_promote_to_owner: false.into(),
                         });
 
                     // Correct placeholder name for wksp5

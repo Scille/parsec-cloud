@@ -119,6 +119,22 @@ pub async fn refresh_workspaces_list(
             },
         }?;
 
+        let can_self_promote_to_owner = if *self_role == RealmRole::Owner {
+            // No need to promote ourself if we are already OWNER!
+            false
+        } else {
+            client
+                .certificates_ops
+                .get_realm_can_self_promote_to_owner(*workspace_id)
+                .await
+                .map_err(|err| match err {
+                    CertifStoreError::Stopped => ClientRefreshWorkspacesListError::Stopped,
+                    CertifStoreError::Internal(err) => {
+                        err.context("Cannot update the local user manifest").into()
+                    }
+                })?
+        };
+
         local_workspaces.push(LocalUserManifestWorkspaceEntry {
             id: *workspace_id,
             name,
@@ -127,6 +143,7 @@ pub async fn refresh_workspaces_list(
             role_origin: CertificateBasedInfoOrigin::Certificate {
                 timestamp: *role_certificate_timestamp,
             },
+            can_self_promote_to_owner: can_self_promote_to_owner.into(),
         });
     }
 
@@ -181,6 +198,7 @@ pub async fn refresh_workspaces_list(
                     name_origin: CertificateBasedInfoOrigin::Placeholder,
                     role: old_entry.role,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
+                    can_self_promote_to_owner: false.into(),
                 });
             }
         }

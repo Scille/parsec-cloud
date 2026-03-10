@@ -52,6 +52,7 @@ async fn ok_with_changes(
                             name_origin: CertificateBasedInfoOrigin::Placeholder,
                             role: RealmRole::Owner,
                             role_origin: CertificateBasedInfoOrigin::Placeholder,
+                            can_self_promote_to_owner: false.into(),
                         });
                 });
 
