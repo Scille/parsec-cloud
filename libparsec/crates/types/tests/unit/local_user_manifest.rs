@@ -11,6 +11,71 @@ use libparsec_tests_lite::prelude::*;
 type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUserManifest)>;
 
 #[rstest]
+#[case::with_can_self_promote_to_owner(Box::new(|alice: &Device| {
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
+    (
+    // Generated from Parsec 3.7.2-a.0+dev
+    // Content:
+    //   type: 'local_user_manifest'
+    //   base: {
+    //     type: 'user_manifest',
+    //     author: ext(2, 0xde10a11cec0010000000000000000000),
+    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+    //     version: 42,
+    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //   }
+    //   need_sync: False
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   local_workspaces: [
+    //     {
+    //       can_self_promote_to_owner: True,
+    //       id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+    //       name: 'wksp1',
+    //       name_origin: { type: 'PLACEHOLDER', },
+    //       role: 'CONTRIBUTOR',
+    //       role_origin: { type: 'PLACEHOLDER', },
+    //     },
+    //   ]
+    //   speculative: False
+     &hex!(
+        "979b111737f7cfed003215300ad384b4fc0f5520d8c592973fc4fe26e084cf2987b3e9"
+        "136b0965f1712b83368e6555077e1edd7ac0bf7bd3019f258bc0159b3efa20551cf37e"
+        "bc246a31e607eb82bdbf3acbc9ae82d4647bccbd80080a0fc116b67cf8f036ae548dfa"
+        "3fe07704e5b0994097055057d221b5e7c50ce9f29694cc83d0eb3ea2b81d97c744fe7f"
+        "9116430c93637682280a7f975f49c534a34f73fcf06fa0cf3779c027e90f707fc7ba0e"
+        "a2d5bd40051b059303fa33f32db42c0ce30476baa1ca30114369fe79aa42a4442971ed"
+        "be072bcc1210a431dcc785571d7d48da193f017b7c99d5b6cb7873df4f3bb6f004ce3e"
+        "117fef26cdabf8fd6fe037018d60b0c020eb39647422480574b6ad1fe6046a941f227a"
+        "9639cdb46c05a37fb4946e099cf788139e0e1758b0118bba77bd2907b7c2b693d660a9"
+        "a1785087901343456fc00e"
+    )[..],
+        LocalUserManifest {
+            updated: now,
+            need_sync: false,
+            speculative: false,
+            base: UserManifest {
+                author: alice.device_id,
+                timestamp: now,
+                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                version: 42,
+                created: now,
+                updated: now,
+            },
+            local_workspaces: vec![
+                LocalUserManifestWorkspaceEntry {
+                    name: "wksp1".parse().unwrap(),
+                    id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                    name_origin: CertificateBasedInfoOrigin::Placeholder,
+                    role: RealmRole::Contributor,
+                    role_origin: CertificateBasedInfoOrigin::Placeholder,
+                    can_self_promote_to_owner: Maybe::Present(true),
+                }
+            ],
+        }
+    )
+}))]
 #[case::need_sync(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
@@ -83,6 +148,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     name_origin: CertificateBasedInfoOrigin::Certificate { timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap() },
                     role: RealmRole::Contributor,
                     role_origin: CertificateBasedInfoOrigin::Certificate { timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap() },
+                    can_self_promote_to_owner: Maybe::Absent,
                 },
                 LocalUserManifestWorkspaceEntry {
                     name: "wksp2".parse().unwrap(),
@@ -90,6 +156,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     name_origin: CertificateBasedInfoOrigin::Placeholder,
                     role: RealmRole::Contributor,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
+                    can_self_promote_to_owner: Maybe::Absent,
                 },
             ],
         }
@@ -152,6 +219,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     name_origin: CertificateBasedInfoOrigin::Placeholder,
                     role: RealmRole::Contributor,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
+                    can_self_promote_to_owner: Maybe::Absent,
                 }
             ],
         }
@@ -209,6 +277,7 @@ fn serde_local_user_manifest(
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
+    println!("***expected: {:?}", expected.dump_and_encrypt(&key));
 
     let manifest = LocalUserManifest::decrypt_and_load(data, &key).unwrap();
 
@@ -375,6 +444,7 @@ fn local_user_manifest_get_local_workspace_entry(timestamp: DateTime) {
                 role_origin: CertificateBasedInfoOrigin::Certificate {
                     timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 },
+                can_self_promote_to_owner: Maybe::Absent,
             },
             LocalUserManifestWorkspaceEntry {
                 name: "wksp2".parse().unwrap(),
@@ -382,6 +452,7 @@ fn local_user_manifest_get_local_workspace_entry(timestamp: DateTime) {
                 name_origin: CertificateBasedInfoOrigin::Placeholder,
                 role: RealmRole::Contributor,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
+                can_self_promote_to_owner: Maybe::Absent,
             },
         ],
         speculative: false,
