@@ -12,6 +12,7 @@ mod process_workspaces_needs;
 mod recovery;
 mod rename_workspace;
 mod revoke_user;
+mod self_promote_to_workspace_owner;
 mod shamir_recovery_delete;
 mod shamir_recovery_get_self;
 mod shamir_recovery_list_others;

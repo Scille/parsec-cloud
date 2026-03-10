@@ -20,6 +20,10 @@ pub struct WorkspaceInfo {
     ///
     /// Note that this is unrelated with the synchronization of the workspace's data (i.e. vlob/blob).
     pub is_bootstrapped: bool,
+    /// If all OWNERs have been revoked, it is up to a user with the highest role
+    /// to self-promote themselves to OWNER.
+    /// If `true`, we are among those users and can call `self_promote_to_workspace_owner`.
+    pub can_self_promote_to_owner: bool,
 }
 
 pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
@@ -51,6 +55,7 @@ pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
                 current_self_role: entry.role,
                 is_started,
                 is_bootstrapped,
+                can_self_promote_to_owner: entry.can_self_promote_to_owner.unwrap_or(false),
             }
         })
         .collect();

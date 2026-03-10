@@ -386,6 +386,64 @@ pub struct WorkspaceUserAccessInfo {
     pub current_role: RealmRole,
 }
 
+fn role_to_priority(role: RealmRole) -> u8 {
+    match role {
+        RealmRole::Reader => 0,
+        RealmRole::Contributor => 1,
+        RealmRole::Manager => 2,
+        RealmRole::Owner => 3,
+    }
+}
+
+/// Returns `true` if all OWNERs of the workspace are revoked and the current
+/// user has the highest remaining role (so they can self-promote to OWNER).
+pub(super) async fn get_realm_can_self_promote_to_owner(
+    ops: &CertificateOps,
+    realm_id: VlobID,
+) -> Result<bool, CertifStoreError> {
+    ops.store
+        .for_read(async |store| {
+            let current_roles = store
+                .get_realm_current_users_roles(UpTo::Current, realm_id)
+                .await?;
+
+            if current_roles.is_empty() {
+                // Local-only realm (not bootstrapped yet), we should already be its only OWNER
+                return Ok(false);
+            }
+
+            let mut highest_role_priority = 0;
+            let mut our_role_priority = 0;
+
+            for (user_id, certif) in &current_roles {
+                let role = certif.role.expect("unshared user should not be listed");
+                let revoked = store
+                    .get_revoked_user_certificate(UpTo::Current, *user_id)
+                    .await?;
+
+                if revoked.is_some() {
+                    continue;
+                }
+
+                // Quick exit if a non-revoked OWNER already exists
+                if role == RealmRole::Owner {
+                    return Ok(false);
+                }
+
+                highest_role_priority =
+                    std::cmp::max(highest_role_priority, role_to_priority(role));
+
+                if *user_id == ops.device.user_id {
+                    our_role_priority = role_to_priority(role);
+                }
+            }
+
+            return Ok(our_role_priority == highest_role_priority);
+        })
+        .await?
+        .map_err(|err: anyhow::Error| CertifStoreError::Internal(err))
+}
+
 /// List users currently part of the given workspace (i.e. user not revoked
 /// and with a valid role)
 pub(super) async fn list_workspace_users(

@@ -19,6 +19,7 @@ mod workspace_list;
 mod workspace_needs;
 mod workspace_refresh_list;
 mod workspace_rename;
+mod workspace_self_promote_to_owner;
 mod workspace_share;
 mod workspace_start;
 
@@ -39,6 +40,7 @@ pub use self::{
     workspace_needs::ClientProcessWorkspacesNeedsError,
     workspace_refresh_list::ClientRefreshWorkspacesListError,
     workspace_rename::ClientRenameWorkspaceError,
+    workspace_self_promote_to_owner::ClientSelfPromoteToWorkspaceOwnerError,
     workspace_share::ClientShareWorkspaceError,
     workspace_start::ClientStartWorkspaceError,
 };
@@ -439,6 +441,18 @@ impl Client {
         role: Option<RealmRole>,
     ) -> Result<(), ClientShareWorkspaceError> {
         workspace_share::share_workspace(self, realm_id, recipient, role).await
+    }
+
+    /// Self-promote to OWNER of the given workspace.
+    ///
+    /// This is only allowed when all existing OWNERs of the workspace have been revoked
+    /// and the current user holds the highest remaining role. The `can_self_promote_to_owner`
+    /// field in `WorkspaceInfo` (from `list_workspaces`) indicates when this is applicable.
+    pub async fn self_promote_to_workspace_owner(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<(), ClientSelfPromoteToWorkspaceOwnerError> {
+        workspace_self_promote_to_owner::self_promote_to_workspace_owner(self, realm_id).await
     }
 
     /// Ensure all workspaces are bootstrapped.

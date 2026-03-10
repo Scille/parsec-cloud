@@ -1504,12 +1504,17 @@ async fn check_realm_role_certificate_consistency(
                 let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
-            // Only an Owner can give/remove Owner/Manager roles
+            // Only an Owner can give/remove Owner/Manager roles.
+            // Exception: self-promotion to Owner is allowed (RFC 1026) when all previous
+            // owners are revoked — the certificate is self-signed (author == user) with
+            // role = Owner, and the server is responsible for verifying eligibility.
             (Some(RealmRole::Owner), _)
             | (Some(RealmRole::Manager), _)
             | (_, Some(RealmRole::Owner))
             | (_, Some(RealmRole::Manager)) => {
-                if author_current_role != RealmRole::Owner {
+                let is_self_promotion =
+                    author_user_id == cooked.user_id && cooked.role == Some(RealmRole::Owner);
+                if author_current_role != RealmRole::Owner && !is_self_promotion {
                     let hint = mk_hint();
                     let what = Box::new(InvalidCertificateError::RealmAuthorNotOwner {
                         hint,
