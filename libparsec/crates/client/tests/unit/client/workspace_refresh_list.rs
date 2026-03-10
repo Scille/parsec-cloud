@@ -34,6 +34,7 @@ async fn ok_with_changes(
                 current_self_role: RealmRole::Owner,
                 is_started: false,
                 is_bootstrapped: true,
+                can_self_promote_to_owner: false,
             });
 
             // ...provide Alice's client with an additional local-only workspace.
@@ -60,6 +61,7 @@ async fn ok_with_changes(
                 current_self_role: RealmRole::Owner,
                 is_started: false,
                 is_bootstrapped: false,
+                can_self_promote_to_owner: false,
             });
 
             builder.certificates_storage_fetch_certificates("alice@dev1");
@@ -77,6 +79,7 @@ async fn ok_with_changes(
                         current_self_role: RealmRole::Manager,
                         is_started: false,
                         is_bootstrapped: true,
+                        can_self_promote_to_owner: false,
                     });
                 }
                 "unsharing" => {

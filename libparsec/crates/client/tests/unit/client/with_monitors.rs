@@ -63,12 +63,14 @@ async fn multi_devices(env: &TestbedEnv) {
                 current_self_role,
                 is_started,
                 is_bootstrapped,
+                can_self_promote_to_owner,
             } = entry;
             p_assert_eq!(id, wid);
             p_assert_eq!(current_name, "new workspace".parse().unwrap());
             p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
+            p_assert_eq!(can_self_promote_to_owner, false);
             break;
         }
         // Not found, wait a bit and retry
@@ -185,12 +187,14 @@ async fn sharing(env: &TestbedEnv) {
                 current_self_role,
                 is_started,
                 is_bootstrapped,
+                can_self_promote_to_owner,
             } = entry;
             p_assert_eq!(id, wid);
             p_assert_eq!(current_name, "new workspace".parse().unwrap());
             p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
+            p_assert_eq!(can_self_promote_to_owner, false);
             break;
         }
         // Not found, wait a bit and retry
@@ -323,12 +327,14 @@ async fn multi_devices_with_confinement(env: &TestbedEnv) {
                 current_self_role,
                 is_started,
                 is_bootstrapped,
+                can_self_promote_to_owner,
             } = entry;
             p_assert_eq!(id, wid);
             p_assert_eq!(current_name, "new workspace".parse().unwrap());
             p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
+            p_assert_eq!(can_self_promote_to_owner, false);
             break;
         }
         // Not found, wait a bit and retry
@@ -515,12 +521,14 @@ async fn multi_devices_with_move_out_of_confinement(env: &TestbedEnv) {
                 current_self_role,
                 is_started,
                 is_bootstrapped,
+                can_self_promote_to_owner,
             } = entry;
             p_assert_eq!(id, wid);
             p_assert_eq!(current_name, "new workspace".parse().unwrap());
             p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
+            p_assert_eq!(can_self_promote_to_owner, false);
             break;
         }
         // Not found, wait a bit and retry

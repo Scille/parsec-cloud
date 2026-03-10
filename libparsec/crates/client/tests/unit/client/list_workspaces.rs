@@ -108,12 +108,14 @@ async fn ok(env: &TestbedEnv) {
             current_self_role,
             is_started,
             is_bootstrapped,
+            can_self_promote_to_owner,
         } = wksp1_info;
         p_assert_eq!(*id, wksp1_id);
         p_assert_eq!(*current_name, "wksp1".parse().unwrap());
         p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_bootstrapped, true);
         p_assert_eq!(*is_started, false);
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 
     // wksp2
@@ -124,12 +126,15 @@ async fn ok(env: &TestbedEnv) {
             current_self_role,
             is_started,
             is_bootstrapped,
+            can_self_promote_to_owner,
         } = wksp2_info;
         p_assert_eq!(*id, wksp2_id, "{:?}", wksp2_info);
         p_assert_eq!(*current_name, "wksp2".parse().unwrap());
         p_assert_eq!(*current_self_role, RealmRole::Contributor);
         p_assert_eq!(*is_bootstrapped, true);
         p_assert_eq!(*is_started, false);
+        // Bob (owner) is not revoked, so Alice cannot self-promote
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 
     // wksp3
@@ -140,12 +145,14 @@ async fn ok(env: &TestbedEnv) {
             current_self_role,
             is_started,
             is_bootstrapped,
+            can_self_promote_to_owner,
         } = wksp3_info;
         p_assert_eq!(*id, wksp3_id);
         p_assert_eq!(*current_name, "wksp3".parse().unwrap());
         p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_bootstrapped, false);
         p_assert_eq!(*is_started, false);
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 
     // wksp4 is never listed as we are no longer part of it
@@ -158,12 +165,14 @@ async fn ok(env: &TestbedEnv) {
             current_self_role,
             is_started,
             is_bootstrapped,
+            can_self_promote_to_owner,
         } = wksp5_info;
         p_assert_eq!(*id, wksp5_id);
         p_assert_eq!(*current_name, "wksp5".parse().unwrap());
         p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_bootstrapped, false);
         p_assert_eq!(*is_started, false);
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 
     // wksp6
@@ -174,12 +183,14 @@ async fn ok(env: &TestbedEnv) {
             current_self_role,
             is_started,
             is_bootstrapped,
+            can_self_promote_to_owner,
         } = wksp6_info;
         p_assert_eq!(*id, wksp6_id);
         p_assert_eq!(*current_name, "wksp6".parse().unwrap());
         p_assert_eq!(*current_self_role, RealmRole::Reader);
         p_assert_eq!(*is_bootstrapped, false);
         p_assert_eq!(*is_started, false);
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 }
 
