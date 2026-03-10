@@ -7,12 +7,12 @@ use super::{
     CertificateOps, UpTo,
 };
 
-pub use super::store::CertifStoreError as CertifGetCurrentSelfProfileError;
-pub use super::store::CertifStoreError as CertifGetCurrentSelfRealmsRoleError;
-pub use super::store::CertifStoreError as CertifGetCurrentSelfRealmRoleError;
-pub use super::store::CertifStoreError as CertifListUsersError;
-pub use super::store::CertifStoreError as CertifListUserDevicesError;
-pub use super::store::CertifStoreError as CertifListWorkspaceUsersError;
+pub type CertifGetCurrentSelfProfileError = super::store::CertifStoreError;
+pub type CertifGetCurrentSelfRealmsRoleError = super::store::CertifStoreError;
+pub type CertifGetCurrentSelfRealmRoleError = super::store::CertifStoreError;
+pub type CertifListUsersError = super::store::CertifStoreError;
+pub type CertifListUserDevicesError = super::store::CertifStoreError;
+pub type CertifListWorkspaceUsersError = super::store::CertifStoreError;
 
 pub(super) async fn get_current_self_profile(
     ops: &CertificateOps,

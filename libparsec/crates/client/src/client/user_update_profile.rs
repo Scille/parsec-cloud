@@ -5,7 +5,7 @@ use libparsec_types::prelude::*;
 
 use crate::certif::{CertifPollServerError, CertificateBasedActionOutcome};
 
-pub use crate::certif::CertifUpdateUserProfileError as ClientUserUpdateProfileError;
+pub type ClientUserUpdateProfileError = crate::certif::CertifUpdateUserProfileError;
 
 use super::Client;
 

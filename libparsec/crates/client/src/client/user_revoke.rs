@@ -5,7 +5,7 @@ use libparsec_types::prelude::*;
 
 use crate::certif::{CertifPollServerError, CertificateBasedActionOutcome};
 
-pub use crate::certif::CertifRevokeUserError as ClientRevokeUserError;
+pub type ClientRevokeUserError = crate::certif::CertifRevokeUserError;
 
 use super::Client;
 
