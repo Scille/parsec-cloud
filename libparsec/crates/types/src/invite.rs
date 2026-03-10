@@ -3,7 +3,6 @@
 use std::{fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Serialize};
-use serde_with::*;
 
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;

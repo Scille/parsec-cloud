@@ -3,7 +3,6 @@
 use bytes::Bytes;
 use paste::paste;
 use serde::{Deserialize, Serialize};
-use serde_with::*;
 
 use libparsec_crypto::{KeyDerivation, SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;

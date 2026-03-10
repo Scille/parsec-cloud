@@ -156,16 +156,11 @@ pub mod maybe_field {
     // serialize is not needed given we never omit fields
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Maybe<T> {
     Present(T),
+    #[default]
     Absent,
-}
-
-impl<T> Default for Maybe<T> {
-    fn default() -> Self {
-        Self::Absent
-    }
 }
 
 impl<T> Maybe<T> {

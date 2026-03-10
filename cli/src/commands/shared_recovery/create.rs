@@ -78,10 +78,7 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
             return Err(anyhow::anyhow!("incoherent weights count"));
         }
 
-        recipients_ids
-            .into_iter()
-            .zip(weights.into_iter())
-            .collect()
+        recipients_ids.into_iter().zip(weights).collect()
     } else {
         let weight = NonZeroU8::new(1).expect("always valid");
         recipients_ids

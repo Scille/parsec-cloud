@@ -508,10 +508,8 @@ impl WorkspaceHistoryStoreCache {
                         return CacheResolvedEntry::NotFound;
                     }
                 }
-                ManifestAtResolution::NotFound { at: resolution_at } => {
-                    if at <= resolution_at {
-                        return CacheResolvedEntry::NotFound;
-                    }
+                ManifestAtResolution::NotFound { at: resolution_at } if at <= resolution_at => {
+                    return CacheResolvedEntry::NotFound;
                 }
                 _ => (),
             }
