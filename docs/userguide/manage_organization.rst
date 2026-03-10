@@ -17,8 +17,29 @@ connected to the Parsec server at the same time.
 Invite a user
 -------------
 
+Parsec provides two ways to invite users:
+
+- **Invite by email address**: the user will receive an email with a link to join your organization.
+  Both you and the user have to be available at the same time and go through the process together
+  in order to verify the user's identity.
+
+- **Invite by join request**: the user will request to join the organization using a generic link.
+  The user identity is verified with an external identity provider. You can then *accept* or
+  *reject* the request at any time.
+
+  .. important::
+
+    An identity provider is required to use this option. Those currently supported are:
+
+      - a **Public Key Infrastructure** (PKI). Supported only on Windows.
+      - a **Single-Sign On** (SSO) provider. Only **ProConnect** is supported at the moment.
+
+
+Invite a user by email address
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 1. In the sidebar, go to ``Users``
-2. Click ``Invite a user`` and enter its email address to send an **invitation link**
+2. Click ``Invite a user`` and enter an email address to send the **invitation link**
 
   - A blue button will appear at the top, informing you that you have an
     invitation waiting to be validated.
@@ -27,13 +48,34 @@ Invite a user
       :align: center
       :alt: Pending invitations
 
-3. Ask the guest to open the invitation link and follow the steps to
-   :ref:`Join an organization <doc_userguide_join_organization>`.
+3. Ask the user to open the invitation link and follow the steps to
+   :ref:`start the invitation process <doc_userguide_join_organization_start_invitation>`.
 
-4. Click on ``Greet`` and wait for the guest to proceed to the
-   :ref:`Token exchange <doc_userguide_join_organization_token_exchange>`.
+4. Click on ``Greet`` and wait for the guest to proceed to
+   :ref:`verify your identity with a code exchange <doc_userguide_join_organization_token_exchange>`.
 
-5. Confirm the user details and set its :ref:`user profile <doc_userguide_manage_organization_profiles>`.
+5. Confirm the user details and set the :ref:`user profile <doc_userguide_manage_organization_profiles>`.
+
+6. The user can now login to your organization.
+
+
+Invite a user by join request
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. In the sidebar, go to ``Invitations & Join Requests`` and then ``Join requests (PKI/SSO)``
+2. Click ``Copy join request link (PKI/SSO)`` and share the link with the users.
+   Note that this link is not specific to a single user, you can share it with anyone wanting to
+   join your organization.
+
+3. Ask the user to open the link and follow the steps to
+   :ref:`request to join the organization <doc_userguide_join_organization_request>`.
+
+4. A pending join request will appear in the list. Click ``Accept`` to accept the request to join your
+   organization or ``Reject`` to discard it.
+
+5. If you accepted the request, confirm the user details and set the :ref:`user profile <doc_userguide_manage_organization_profiles>`.
+
+6. The user can now login to your organization.
 
 
 Revoke a user
