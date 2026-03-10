@@ -5,6 +5,7 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import vue from '@vitejs/plugin-vue';
+import fs from 'fs';
 import path from 'path';
 import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -140,7 +141,25 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
       toFake: ['setTimeout', 'clearTimeout', 'Date'],
     },
   },
-  plugins: plugins,
+  plugins: [
+    ...plugins,
+    {
+      // Serve `dist/custom/*` at `/custom/*` in dev mode.
+      // This folder is optional and may not be present.
+      name: 'serve-dist-custom',
+      configureServer(server) {
+        server.middlewares.use('/custom', async (req, res, _next) => {
+          const filePath = path.join(__dirname, 'dist/custom', req.url ?? '/');
+          try {
+            res.end(await fs.promises.readFile(filePath));
+          } catch {
+            res.statusCode = 404;
+            res.end();
+          }
+        });
+      },
+    },
+  ],
   build: {
     sourcemap: true,
   },
