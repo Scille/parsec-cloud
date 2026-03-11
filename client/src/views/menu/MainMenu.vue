@@ -143,11 +143,15 @@
             >
               <ion-icon
                 class="sidebar-content-organization-button__icon"
-                :icon="mailUnread"
+                :icon="pendingRequestsCount > 0 ? mailUnread : mail"
               />
               <span class="sidebar-content-organization-button__text">
                 {{ $msTranslate('SideMenu.invitationsRequests') }}
               </span>
+              <span
+                v-if="pendingRequestsCount > 0"
+                class="request-notification"
+              />
             </ion-text>
 
             <!-- organization information -->
@@ -351,6 +355,7 @@ import {
   getLoggedInDevices,
   getOrganizationCreationDate,
   getWorkspaceInfo,
+  listAsyncEnrollments,
   listWorkspaces,
   LoggedInDeviceInfo,
   UserProfile,
@@ -421,6 +426,7 @@ import {
   folderOpen,
   informationCircle,
   link,
+  mail,
   mailUnread,
   people,
   personAdd,
@@ -460,6 +466,7 @@ const menusVisible = ref({ organization: true, workspaces: true, recentFiles: tr
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isTrialOrg = ref(false);
 const pathOpener = usePathOpener();
+const pendingRequestsCount = ref(0);
 
 const securityWarnings = ref<SecurityWarnings | undefined>();
 const securityWarningsCount = computed(() => {
@@ -498,6 +505,21 @@ const currentWorkspace = computed(() => {
   return undefined;
 });
 
+async function refreshPendingJoinRequests(): Promise<void> {
+  if (props.userInfo.currentProfile !== UserProfile.Admin) {
+    pendingRequestsCount.value = 0;
+    return;
+  }
+
+  const asyncEnrollmentsResult = await listAsyncEnrollments();
+  if (asyncEnrollmentsResult.ok) {
+    pendingRequestsCount.value = asyncEnrollmentsResult.value.length;
+  } else {
+    window.electronAPI.log('error', `Failed to list async enrollments: ${asyncEnrollmentsResult.error.tag}`);
+    pendingRequestsCount.value = 0;
+  }
+}
+
 async function loadAll(): Promise<void> {
   await workspaceAttributes.load();
 
@@ -518,6 +540,7 @@ async function loadAll(): Promise<void> {
   }
 
   loggedInDevices.value = await getLoggedInDevices();
+  await refreshPendingJoinRequests();
 }
 
 function onMove(detail: GestureDetail): void {
@@ -608,6 +631,8 @@ onMounted(async () => {
       Events.WorkspaceRoleUpdate,
       Events.DeviceCreated,
       Events.WorkspaceMountpointsSync,
+      Events.InvitationUpdated,
+      Events.AsyncEnrollmentUpdated,
     ],
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
@@ -667,6 +692,8 @@ onMounted(async () => {
         }
       } else if (event === Events.Online) {
         securityWarnings.value = await getSecurityWarnings();
+      } else if (event === Events.InvitationUpdated || event === Events.AsyncEnrollmentUpdated) {
+        await refreshPendingJoinRequests();
       }
     },
   );
@@ -1022,8 +1049,6 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     color: var(--parsec-color-light-secondary-medium);
     border-radius: var(--parsec-radius-8);
     border: 1px solid transparent;
-    font-size: 0.9375rem;
-    font-weight: 600;
 
     &.active {
       background: var(--parsec-color-light-primary-30-opacity15);
@@ -1044,6 +1069,19 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
       overflow: hidden;
       text-overflow: ellipsis;
     }
+  }
+
+  .request-notification {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--parsec-color-light-secondary-white);
+    border: 1px solid var(--parsec-color-light-secondary-white);
+    box-shadow: var(--parsec-shadow-light);
+    border-radius: var(--parsec-radius-12);
+    min-width: 0.5rem;
+    height: 0.5rem;
+    margin-left: auto;
   }
 }
 
