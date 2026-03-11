@@ -251,10 +251,13 @@ import {
   askQuestion,
   asyncComputed,
   getTextFromUser,
+  openSpinnerModal,
   useWindowSize,
 } from 'megashark-lib';
 
+import DocumentNew from '@/assets/images/add-document.svg?raw';
 import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
+import { FileContentType } from '@/common/fileTypes';
 import {
   EntryCollection,
   EntryModel,
@@ -269,6 +272,7 @@ import {
   FolderModel,
   FoldersPageSavedData,
   ImportType,
+  NewFilePopover,
   SortProperty,
   copyPathLinkToClipboard,
   selectFolder,
@@ -1022,6 +1026,88 @@ async function onSearchResultClick(entry: parsec.SearchResult): Promise<void> {
   await onEntryClick({ ...entry.stats, isSelected: false });
 }
 
+// Create a complex file requires a template (an empty .docx is a zip containing XMLs, not an empty file).
+interface CreateTemplateFileParams {
+  useTemplate: true;
+  type: FileContentType.Spreadsheet | FileContentType.Document | FileContentType.Presentation;
+}
+
+// Create an arbitrary empty file with the given extension (an empty .txt is just an empty file)
+interface CreateRawFileParams {
+  useTemplate: false;
+  ext: string;
+}
+
+async function createNewFile(name: EntryName, fileParams: CreateTemplateFileParams | CreateRawFileParams): Promise<void> {
+  if (!workspaceInfo.value) {
+    return;
+  }
+  const modal = await openSpinnerModal();
+  try {
+    if (fileParams.useTemplate) {
+      let ext: string = '';
+      let template: Uint8Array;
+      switch (fileParams.type) {
+        case FileContentType.Document:
+          ext = 'docx';
+          template = (await import('@/parsec/file_templates/docx_template')).default;
+          break;
+        case FileContentType.Spreadsheet:
+          ext = 'xlsx';
+          template = (await import('@/parsec/file_templates/xlsx_template')).default;
+          break;
+        case FileContentType.Presentation:
+          ext = 'pptx';
+          template = (await import('@/parsec/file_templates/pptx_template')).default;
+          break;
+        default:
+          fileParams.type satisfies never;
+          return;
+      }
+      const path = await parsec.Path.join(currentPath.value, `${name}.${ext}`);
+      const fdResult = await parsec.openFile(workspaceInfo.value.handle, path, { createNew: true, create: true, write: true });
+      if (!fdResult.ok) {
+        informationManager.value.present(
+          new Information({
+            message: 'FoldersPage.errors.createFileFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+        return;
+      }
+      try {
+        const writeResult = await parsec.writeFile(workspaceInfo.value.handle, fdResult.value, 0, template);
+        if (!writeResult.ok) {
+          informationManager.value.present(
+            new Information({
+              message: 'FoldersPage.errors.createFileFailed',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Toast,
+          );
+        }
+      } finally {
+        await parsec.closeFile(workspaceInfo.value.handle, fdResult.value);
+      }
+    } else {
+      const path = await parsec.Path.join(currentPath.value, `${name}.${fileParams.ext}`);
+      const createResult = await parsec.createFile(workspaceInfo.value.handle, path);
+      if (!createResult.ok) {
+        informationManager.value.present(
+          new Information({
+            message: 'FoldersPage.errors.createFileFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+      }
+    }
+  } finally {
+    await modal.dismiss();
+  }
+}
+
 async function onEntryClick(entry: EntryModel): Promise<void> {
   if (!workspaceInfo.value) {
     return;
@@ -1084,7 +1170,7 @@ async function onImportClicked(event: Event): Promise<void> {
     component: FileImportPopover,
     cssClass: 'import-popover',
     event: event,
-    alignment: 'end',
+    alignment: 'start',
     showBackdrop: false,
   });
   await popover.present();
@@ -1097,6 +1183,74 @@ async function onImportClicked(event: Event): Promise<void> {
     await fileInputsRef.value?.importFiles();
   } else if (result.data.type === ImportType.Folder) {
     await fileInputsRef.value?.importFolder();
+  }
+}
+
+async function getNewFileName(fileType: FileContentType): Promise<string | null> {
+  let defaultNewName = '';
+
+  switch (fileType) {
+    case FileContentType.Document:
+      defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.document');
+      break;
+    case FileContentType.Spreadsheet:
+      defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.spreadsheet');
+      break;
+    case FileContentType.Presentation:
+      defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.presentation');
+      break;
+    case FileContentType.Text:
+      defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.text');
+      break;
+    default:
+      break;
+  }
+  if (!defaultNewName) {
+    window.electronAPI.log('warn', 'No default name for file');
+    return null;
+  }
+
+  const newName = await getTextFromUser(
+    {
+      title: 'FoldersPage.createFile.fileName',
+      trim: true,
+      validator: entryNameValidator(true),
+      inputLabel: 'FoldersPage.createFile.label',
+      placeholder: 'FoldersPage.createFile.placeholder',
+      okButtonText: 'FoldersPage.createFile.create',
+      defaultValue: defaultNewName,
+      selectionRange: [0, defaultNewName.length],
+    },
+    isLargeDisplay.value,
+  );
+  if (!newName) {
+    return null;
+  }
+  return newName;
+}
+
+async function onCreateNewFileClicked(event: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: NewFilePopover,
+    cssClass: 'new-file-popover',
+    event: event,
+    alignment: 'start',
+    showBackdrop: false,
+  });
+  await popover.present();
+  const result = await popover.onDidDismiss();
+  await popover.dismiss();
+  if (result.role !== MsModalResult.Confirm) {
+    return;
+  }
+  const name = await getNewFileName(result.data.fileType);
+  if (!name) {
+    return;
+  }
+  if (result.data.fileType === FileContentType.Text) {
+    await createNewFile(name, { useTemplate: false, ext: 'txt' });
+  } else {
+    await createNewFile(name, { useTemplate: true, type: result.data.fileType });
   }
 }
 
@@ -1493,6 +1647,36 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
       return await selectAll();
     case FolderGlobalAction.Share:
       return await shareEntries();
+    case FolderGlobalAction.CreateFileDocument: {
+      const name = await getNewFileName(FileContentType.Document);
+      if (name) {
+        await createNewFile(name, { useTemplate: true, type: FileContentType.Document });
+      }
+      break;
+    }
+    case FolderGlobalAction.CreateFileSpreadsheet: {
+      const name = await getNewFileName(FileContentType.Spreadsheet);
+      if (name) {
+        await createNewFile(name, { useTemplate: true, type: FileContentType.Spreadsheet });
+      }
+      break;
+    }
+    case FolderGlobalAction.CreateFilePresentation: {
+      const name = await getNewFileName(FileContentType.Presentation);
+      if (name) {
+        await createNewFile(name, { useTemplate: true, type: FileContentType.Presentation });
+      }
+      break;
+    }
+    case FolderGlobalAction.CreateFileText: {
+      const name = await getNewFileName(FileContentType.Text);
+      if (name) {
+        await createNewFile(name, { useTemplate: false, ext: 'txt' });
+      }
+      break;
+    }
+    default:
+      break;
   }
 }
 
@@ -1673,6 +1857,13 @@ const actionBarOptionsFoldersPage = computed(() => {
         icon: folderOpen,
         onClick: async () => {
           await createFolder();
+        },
+      },
+      {
+        label: 'FoldersPage.createFile.button',
+        image: DocumentNew,
+        onClick: async (event: MouseEvent) => {
+          await onCreateNewFileClicked(event);
         },
       },
       {

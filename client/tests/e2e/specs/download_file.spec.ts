@@ -209,13 +209,14 @@ msTest.describe(() => {
     await expect(documents).toHaveHeader(['wksp1'], true, true);
     await expect(entries).toHaveCount(1);
 
-    await documents.waitForTimeout(300);
+    await documents.waitForTimeout(500);
     await entries.nth(0).hover();
     await documents.waitForTimeout(300);
     await entries.nth(0).locator('.ms-checkbox').check();
     await documents.waitForTimeout(300);
-
+    await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
     await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
+
     await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(7);
 
     await expect(actionBarMoreButton).toBeVisible();
