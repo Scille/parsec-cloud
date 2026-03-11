@@ -20,6 +20,7 @@ mod realm_decrypt_name;
 mod realm_key_rotation;
 mod realm_keys_bundle;
 mod realm_rename;
+mod realm_self_promote_to_owner;
 mod realm_share;
 mod realms_needs;
 mod shamir_recovery_delete;
@@ -50,6 +51,7 @@ pub use realm_keys_bundle::{
     CertifDecryptForRealmError, CertifEncryptForRealmError, EncrytionUsage, InvalidKeysBundleError,
 };
 pub use realm_rename::CertifRenameRealmError;
+pub use realm_self_promote_to_owner::CertifSelfPromoteToOwnerError;
 pub use realm_share::CertifShareRealmError;
 pub use realms_needs::{CertifGetRealmNeedsError, RealmNeeds};
 pub use shamir_recovery_delete::CertifDeleteShamirRecoveryError;
@@ -538,6 +540,26 @@ impl CertificateOps {
         new_name: EntryName,
     ) -> Result<CertificateBasedActionOutcome, CertifRenameRealmError> {
         realm_rename::rename_realm(self, realm_id, new_name).await
+    }
+
+    /// Returns `true` if all OWNERs of the workspace are revoked and the current
+    /// user has the highest remaining role (so they can self-promote to OWNER).
+    pub async fn get_realm_can_self_promote_to_owner(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<bool, CertifStoreError> {
+        realm_self_promote_to_owner::get_realm_can_self_promote_to_owner(self, realm_id).await
+    }
+
+    /// Self-promote the current user to OWNER of the given realm.
+    ///
+    /// This is only allowed when all existing OWNERs have been revoked and the
+    /// current user holds the highest remaining role.
+    pub async fn self_promote_to_owner(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<CertificateBasedActionOutcome, CertifSelfPromoteToOwnerError> {
+        realm_self_promote_to_owner::self_promote_to_owner(self, realm_id).await
     }
 
     /// Returns the timestamp of the uploaded certificate
