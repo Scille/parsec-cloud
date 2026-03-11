@@ -4,6 +4,7 @@
   <div
     v-if="state === ImportDevicePageState.Start"
     class="recovery-content"
+    id="recovery-import-step"
   >
     <!-- step 1: recovery file -->
     <div class="recovery-header">
@@ -106,6 +107,7 @@
   <div
     v-else-if="state === ImportDevicePageState.Authentication"
     class="recovery-content password-input"
+    id="recovery-auth-step"
   >
     <div class="recovery-header">
       <ion-text class="recovery-header__title title-h1">
@@ -114,12 +116,15 @@
       </ion-text>
     </div>
     <ion-card class="recovery-card">
-      <choose-authentication ref="chooseAuth" />
+      <choose-authentication
+        ref="chooseAuth"
+        :server-config="serverConfig"
+      />
       <ion-button
         id="validate-password-btn"
         class="validate-button"
         :disabled="!changeButtonIsEnabled"
-        @click="createNewDevice"
+        @click="finishRecovery"
       >
         {{ $msTranslate('ImportRecoveryDevicePage.actions.validateAuth') }}
       </ion-button>
@@ -128,7 +133,7 @@
   <!-- step 3: done -->
   <div
     v-else-if="state === ImportDevicePageState.Done"
-    id="success-step"
+    id="recovery-success-step"
     class="recovery-content"
   >
     <ion-card class="recovery-card success-card">
@@ -156,10 +161,16 @@ import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import {
   AvailableDevice,
   constructAccessStrategy,
+  constructSaveStrategy,
   DeviceAccessStrategy,
+  DevicePrimaryProtectionStrategy,
+  getServerConfig,
   importRecoveryDevice,
   ImportRecoveryDeviceErrorTag,
   isWeb,
+  PrimaryProtectionStrategy,
+  ServerConfig,
+  updateDeviceChangeAuthentication,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
@@ -182,8 +193,10 @@ const recoveryFile: Ref<File | null> = ref(null);
 const isSecretKeyValid = ref(false);
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
+const serverConfig = ref<ServerConfig | undefined>(undefined);
+let tmpDeviceProtection: DevicePrimaryProtectionStrategy | undefined;
 let accessStrategy: DeviceAccessStrategy | undefined;
-let newDevice: AvailableDevice;
+let newDevice: AvailableDevice | undefined;
 
 const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
   if (!chooseAuthRef.value) {
@@ -217,14 +230,7 @@ async function checkSecretKeyValidity(): Promise<void> {
 }
 
 async function goToPasswordChange(): Promise<void> {
-  state.value = ImportDevicePageState.Authentication;
-}
-
-async function createNewDevice(): Promise<void> {
-  if (!recoveryFile.value) {
-    return;
-  }
-  if (!(await chooseAuthRef.value!.areFieldsCorrect())) {
+  if (!recoveryFile.value || !secretKey.value.trim()) {
     return;
   }
 
@@ -239,6 +245,48 @@ async function createNewDevice(): Promise<void> {
   }
   if (buffer.value) {
     content.set(buffer.value, offset);
+  }
+
+  tmpDeviceProtection = PrimaryProtectionStrategy.usePassword(window.crypto.randomUUID());
+
+  const result = await importRecoveryDevice(
+    props.device ? props.device.deviceLabel : getDefaultDeviceName(),
+    content,
+    secretKey.value.trim(),
+    constructSaveStrategy(tmpDeviceProtection),
+  );
+  if (result.ok) {
+    newDevice = result.value;
+    const serverConfigResult = await getServerConfig(newDevice.serverAddr);
+    if (serverConfigResult.ok) {
+      serverConfig.value = serverConfigResult.value;
+    }
+    state.value = ImportDevicePageState.Authentication;
+  } else {
+    const notificationInfo = { message: '', level: InformationLevel.Error };
+
+    switch (result.error.tag) {
+      case ImportRecoveryDeviceErrorTag.InvalidPassphrase:
+        notificationInfo.message = 'ImportRecoveryDevicePage.errors.keyErrorMessage';
+        break;
+      case ImportRecoveryDeviceErrorTag.InvalidData:
+        notificationInfo.message = 'ImportRecoveryDevicePage.errors.fileErrorMessage';
+        break;
+      default:
+        notificationInfo.message = 'ImportRecoveryDevicePage.errors.internalErrorMessage';
+        break;
+    }
+    informationManager.present(new Information(notificationInfo), PresentationMode.Toast);
+  }
+}
+
+async function finishRecovery(): Promise<void> {
+  if (!(await chooseAuthRef.value!.areFieldsCorrect())) {
+    return;
+  }
+  if (!newDevice || !tmpDeviceProtection) {
+    window.electronAPI.log('warn', 'Should have a device and a tmp primary protection at this stage');
+    return;
   }
 
   if (!chooseAuthRef.value) {
@@ -256,37 +304,24 @@ async function createNewDevice(): Promise<void> {
   if (!saveStrategy) {
     return;
   }
-  const result = await importRecoveryDevice(
-    props.device ? props.device.deviceLabel : getDefaultDeviceName(),
-    content,
-    secretKey.value.trim(),
-    saveStrategy,
-  );
+  const access = constructAccessStrategy(newDevice, tmpDeviceProtection);
+  const result = await updateDeviceChangeAuthentication(access, saveStrategy);
   if (result.ok) {
     newDevice = result.value;
     accessStrategy = constructAccessStrategy(newDevice, saveStrategy.primaryProtection, saveStrategy.totpProtection);
     state.value = ImportDevicePageState.Done;
   } else {
-    const notificationInfo = { message: '', level: InformationLevel.Error };
-
-    switch (result.error.tag) {
-      case ImportRecoveryDeviceErrorTag.InvalidPassphrase:
-        notificationInfo.message = 'ImportRecoveryDevicePage.errors.keyErrorMessage';
-        break;
-      case ImportRecoveryDeviceErrorTag.InvalidData:
-        notificationInfo.message = 'ImportRecoveryDevicePage.errors.fileErrorMessage';
-        break;
-      default:
-        notificationInfo.message = 'ImportRecoveryDevicePage.errors.internalErrorMessage';
-        break;
-    }
+    const notificationInfo = { message: 'ImportRecoveryDevicePage.errors.internalErrorMessage', level: InformationLevel.Error };
     informationManager.present(new Information(notificationInfo), PresentationMode.Toast);
     state.value = ImportDevicePageState.Start;
   }
 }
 
 async function onLoginClick(): Promise<void> {
-  emits('organizationSelected', newDevice, accessStrategy as DeviceAccessStrategy);
+  if (!newDevice || !accessStrategy) {
+    return;
+  }
+  emits('organizationSelected', newDevice, accessStrategy);
 }
 </script>
 
