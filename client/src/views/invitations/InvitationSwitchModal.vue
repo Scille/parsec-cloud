@@ -12,7 +12,7 @@
         :class="{ 'radio-checked': invitationView === InvitationView.EmailInvitation }"
       >
         <ion-icon
-          :icon="mailUnread"
+          :icon="invitationsCount > 0 ? mailUnread : mail"
           class="switch-item__icon"
         />
         <ion-text class="subtitles-normal">{{ $msTranslate('InvitationsPage.emailInvitation.tab') }}</ion-text>
@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import { InvitationView } from '@/views/invitations/types';
 import { IonButton, IonIcon, IonRadio, IonRadioGroup, IonText, modalController } from '@ionic/vue';
-import { checkmarkCircle, idCard, mailUnread } from 'ionicons/icons';
+import { checkmarkCircle, idCard, mail, mailUnread } from 'ionicons/icons';
 import { MsModalResult } from 'megashark-lib';
 import { ref } from 'vue';
 
