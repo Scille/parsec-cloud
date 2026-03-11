@@ -78,7 +78,11 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
 for (const identitySystem of ['pki', 'openbao']) {
   msTest(`Async enrollment using ${identitySystem}`, async ({ context }) => {
     const page = (await context.newPage()) as MsPage;
+    const sidebar = page.locator('.sidebar');
+
     await setupNewPage(page, { mockPki: identitySystem === 'pki' });
+
+    await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeHidden();
 
     await addRequest(page, identitySystem as 'pki' | 'openbao');
 
@@ -88,6 +92,11 @@ for (const identitySystem of ['pki', 'openbao']) {
 
     await page.locator('.sidebar').locator('#sidebar-invitations').click();
     await expect(page).toHavePageTitle('Invitations & Join Requests');
+    await sidebar.locator('#sidebar-invitations').click();
+
+    await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeVisible();
+
+    await expect(page).toHavePageTitle('Invitations & Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
       'Join requests (PKI/SSO)',
@@ -150,6 +159,8 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(selectProfileModal.locator('#next-button')).toBeTrulyEnabled();
     await selectProfileModal.locator('#next-button').click();
     await expect(page).toShowToast('This request has been accepted', 'Success');
+
+    await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeHidden();
 
     await logout(page);
 
