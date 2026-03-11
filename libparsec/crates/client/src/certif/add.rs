@@ -84,11 +84,11 @@ pub enum InvalidCertificateError {
         hint: String,
         user_timestamp: DateTime,
     },
-    #[error("Certificate `{hint}` breaks consistency: as first certificate for the realm, author must give the role to itself")]
+    #[error("Certificate `{hint}` breaks consistency: as first certificate for the realm, author must give the role to themselves")]
     RealmFirstRoleMustBeSelfSigned { hint: String },
     #[error("Certificate `{hint}` breaks consistency: as first certificate for the realm it was expected to be a role certificate")]
     RealmFirstCertificateMustBeRole { hint: String },
-    #[error("Certificate `{hint}` breaks consistency: author cannot change it own role")]
+    #[error("Certificate `{hint}` breaks consistency: author cannot change their own role")]
     RealmCannotChangeOwnRole { hint: String },
     #[error("Certificate `{hint}` breaks consistency: as first certificate for the realm, it must have Owner role")]
     RealmFirstRoleMustBeOwner { hint: String },
