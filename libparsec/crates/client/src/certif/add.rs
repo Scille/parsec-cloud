@@ -92,6 +92,10 @@ pub enum InvalidCertificateError {
     RealmCannotChangeOwnRole { hint: String },
     #[error("Certificate `{hint}` breaks consistency: as first certificate for the realm, it must have Owner role")]
     RealmFirstRoleMustBeOwner { hint: String },
+    #[error("Certificate `{hint}` breaks consistency: as self-promotion certificate for the realm, it is prevented by another non-revoked user with a higher role")]
+    RealmSelfPromotionHigherActiveRoleAlreadyExists { hint: String },
+    #[error("Certificate `{hint}` breaks consistency: as self-promotion certificate for the realm, it must have Owner role")]
+    RealmSelfPromotionRoleMustBeOwner { hint: String },
     #[error("Certificate `{hint}` breaks consistency: author is not part of the realm, so it cannot give access to it")]
     RealmAuthorHasNoRole { hint: String },
     #[error("Certificate `{hint}` breaks consistency: author is expected to have Owner role in the realm, but only has {author_role:?}")]
@@ -1464,8 +1468,88 @@ async fn check_realm_role_certificate_consistency(
             let what = Box::new(InvalidCertificateError::RealmFirstRoleMustBeOwner { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
+    } else if author_user_id == cooked.user_id {
+        // 2.b) The realm already exists, and this is a self-promotion certificate:
+        // - Author must not already be OWNER
+        // - Author must have the higher role among the non-revoked & non-OUTSIDER members of the workspace
+        // - Author must not have OUTSIDER profile (checked at step 5)
+
+        if cooked.role != Some(RealmRole::Owner) {
+            let hint = mk_hint();
+            let what =
+                Box::new(InvalidCertificateError::RealmSelfPromotionRoleMustBeOwner { hint });
+            return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+        }
+
+        let mut current_roles = HashMap::new();
+        for certif in realm_roles {
+            match certif.role {
+                Some(role) => {
+                    current_roles.insert(certif.user_id, role);
+                }
+                None => {
+                    current_roles.remove(&certif.user_id);
+                }
+            }
+        }
+        let author_current_role = match current_roles.get(&author_user_id) {
+            // As expected, author currently has a role :)
+            Some(role) => *role,
+            // Author never had role, or its role got revoked :(
+            _ => {
+                let hint = mk_hint();
+                let what = Box::new(InvalidCertificateError::RealmAuthorHasNoRole { hint });
+                return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+            }
+        };
+
+        // The certificate must provide a new role !
+        if author_current_role == RealmRole::Owner {
+            let hint = mk_hint();
+            let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
+            return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+        }
+
+        let role_to_priority = |role: RealmRole| match role {
+            RealmRole::Reader => 1u8,
+            RealmRole::Contributor => 2,
+            RealmRole::Manager => 3,
+            RealmRole::Owner => 4,
+        };
+
+        let author_role_priority = role_to_priority(author_current_role);
+        let more_senior_members = current_roles.into_iter().filter_map(|(user_id, role)| {
+            if role_to_priority(role) > author_role_priority {
+                Some(user_id)
+            } else {
+                None
+            }
+        });
+        for more_senior_member in more_senior_members {
+            let is_revoked = store
+                .get_revoked_user_certificate(UpTo::Timestamp(cooked.timestamp), more_senior_member)
+                .await?
+                .is_some();
+            if is_revoked {
+                continue;
+            }
+
+            let profile =
+                get_user_profile(store, cooked.timestamp, more_senior_member, mk_hint, None)
+                    .await?;
+            if profile == UserProfile::Outsider {
+                continue;
+            }
+
+            // The workspace still contains a non-revoked member with a higher role than ours
+            let hint = mk_hint();
+            let what = Box::new(
+                InvalidCertificateError::RealmSelfPromotionHigherActiveRoleAlreadyExists { hint },
+            );
+            return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+        }
     } else {
-        // 2.b) The realm already exists, so certificate cannot be self-signed and
+        // 2.c) The realm already exists, so certificate cannot be self-signed and
         // author must have a sufficient role.
 
         let author_current_role = match realm_roles
