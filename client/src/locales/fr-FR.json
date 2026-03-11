@@ -819,6 +819,23 @@
         "noFilesToImport": "Aucun fichier à importer.",
         "noFilesToMove": "Aucun fichier à déplacer.",
         "noFilesToCopy": "Aucun fichier à copier.",
+        "createFile": {
+            "button": "Nouveau fichier",
+            "fileName": "Nom du fichier",
+            "label": "Choisissez le nom du fichier",
+            "placeholder": "Nom du fichier",
+            "create": "Créer le nouveau fichier",
+            "createDocument": "Document",
+            "createSpreadsheet": "Feuille de calcul",
+            "createPresentation": "Présentation",
+            "createText": "Texte",
+            "defaultName": {
+                "document": "Nouveau document",
+                "spreadsheet": "Nouvelle feuille de calcul",
+                "presentation": "Nouvelle présentation",
+                "text": "Nouveau fichier texte"
+            }
+        },
         "actions": {
             "select": "Tout sélect.",
             "unselect": "Déselect.",
@@ -895,7 +912,8 @@
             "copyFailedOneFailed": "Un ou plusieurs éléments n'ont pas pu être copiés.",
             "copyFailedSourceDoesNotExist": "L'élément {source} n'existe pas.",
             "seeInExplorerFailed": "Impossible d'ouvrir le chemin sélectionné dans l'explorateur de fichiers.",
-            "failedToListContent": "Impossible de lister le contenu de ce dossier."
+            "failedToListContent": "Impossible de lister le contenu de ce dossier.",
+            "createFileFailed": "Failed to create the file."
         },
         "CreateFolderModal": {
             "title": "Créer un nouveau dossier",

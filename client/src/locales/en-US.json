@@ -820,6 +820,23 @@
         "noFilesToImport": "No files to import.",
         "noFilesToMove": "No files to move.",
         "noFilesToCopy": "No files to copy.",
+        "createFile": {
+            "button": "New file",
+            "fileName": "File name",
+            "label": "Choose the new file name",
+            "placeholder": "File name",
+            "create": "Create the new file",
+            "createDocument": "Document",
+            "createSpreadsheet": "Spreadsheet",
+            "createPresentation": "Presentation",
+            "createText": "Text",
+            "defaultName": {
+                "document": "New document",
+                "spreadsheet": "New spreadsheet",
+                "presentation": "New presentation",
+                "text": "New text file"
+            }
+        },
         "actions": {
             "select": "Select all",
             "unselect": "Unselect",
@@ -896,7 +913,8 @@
             "copyFailedOneFailed": "One or more entries could not be copied.",
             "copyFailedSourceDoesNotExist": "Entry {source} does not exist.",
             "seeInExplorerFailed": "Failed to open the selected entry in file explorer.",
-            "failedToListContent": "Failed to list the content of this folder."
+            "failedToListContent": "Failed to list the content of this folder.",
+            "createFileFailed": "Failed to create the file."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",

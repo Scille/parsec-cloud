@@ -50,6 +50,63 @@
 
         <ion-item
           button
+          v-if="role !== WorkspaceRole.Reader"
+          @click="onClick(FolderGlobalAction.CreateFileDocument)"
+          class="ion-no-padding list-group-item"
+        >
+          <ms-image
+            class="list-group-item__icon"
+            :image="File.Word"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('FoldersPage.createFile.createDocument') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          v-if="role !== WorkspaceRole.Reader"
+          @click="onClick(FolderGlobalAction.CreateFileSpreadsheet)"
+          class="ion-no-padding list-group-item"
+        >
+          <ms-image
+            class="list-group-item__icon"
+            :image="File.Excel"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('FoldersPage.createFile.createSpreadsheet') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          v-if="role !== WorkspaceRole.Reader"
+          @click="onClick(FolderGlobalAction.CreateFilePresentation)"
+          class="ion-no-padding list-group-item"
+        >
+          <ms-image
+            class="list-group-item__icon"
+            :image="File.Powerpoint"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('FoldersPage.createFile.createPresentation') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          v-if="role !== WorkspaceRole.Reader"
+          @click="onClick(FolderGlobalAction.CreateFileText)"
+          class="ion-no-padding list-group-item"
+        >
+          <ms-image
+            class="list-group-item__icon"
+            :image="File.Text"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('FoldersPage.createFile.createText') }}
+          </ion-text>
+        </ion-item>
+
+        <ion-item
+          button
           v-if="isDesktop()"
           @click="onClick(FolderGlobalAction.OpenInExplorer)"
           class="ion-no-padding list-group-item"
@@ -72,6 +129,7 @@ import { WorkspaceRole, isDesktop } from '@/parsec';
 import { FolderGlobalAction } from '@/views/files/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
 import { cloudUpload, folderOpen, open } from 'ionicons/icons';
+import { File, MsImage } from 'megashark-lib';
 
 defineProps<{
   role: WorkspaceRole;

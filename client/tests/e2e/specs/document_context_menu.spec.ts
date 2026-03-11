@@ -313,8 +313,16 @@ msTest.describe(() => {
       await expect(documents.locator('.folder-global-context-menu')).toBeVisible();
       const popover = documents.locator('.folder-global-context-menu');
       await expect(popover.getByRole('group')).toHaveCount(1);
-      await expect(popover.getByRole('listitem')).toHaveCount(3);
-      await expect(popover.getByRole('listitem')).toHaveText(['New folder', 'Import files', 'Import a folder']);
+      await expect(popover.getByRole('listitem')).toHaveCount(7);
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'New folder',
+        'Import files',
+        'Import a folder',
+        'Document',
+        'Spreadsheet',
+        'Presentation',
+        'Text',
+      ]);
     });
 
     msTest(`Get document link in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents, context }, testInfo: TestInfo) => {

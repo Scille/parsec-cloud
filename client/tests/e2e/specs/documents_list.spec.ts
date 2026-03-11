@@ -59,7 +59,7 @@ msTest.describe(() => {
         await expect(entries.nth(2).locator('.options-button')).toBeVisible();
       } else {
         const actionBar = documents.locator('#folders-ms-action-bar');
-        await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
+        await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'New file', 'Import']);
         await expect(actionBar.locator('.counter')).toHaveText('3 items', { useInnerText: true });
         await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
         await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
@@ -384,7 +384,7 @@ msTest.describe(() => {
   msTest('Import context menu', async ({ documents }) => {
     await expect(documents.locator('.import-popover')).toBeHidden();
     const actionBar = documents.locator('#folders-ms-action-bar');
-    await actionBar.locator('.ms-action-bar-button:visible').nth(1).click();
+    await actionBar.locator('.ms-action-bar-button:visible').nth(2).click();
 
     const popover = documents.locator('.import-popover');
     await expect(popover).toBeVisible();
@@ -473,8 +473,8 @@ msTest.describe(() => {
 
     await resizePage(documents, 1600);
     await expect(actionBar).toBeVisible();
-    await expect(actionsBarButtons).toHaveCount(2);
-    await expect(actionsBarButtons).toHaveText(['New folder', 'Import']);
+    await expect(actionsBarButtons).toHaveCount(3);
+    await expect(actionsBarButtons).toHaveText(['New folder', 'New file', 'Import']);
     await expect(actionBarMoreButton).toBeHidden();
 
     await resizePage(documents, 820);
@@ -482,6 +482,8 @@ msTest.describe(() => {
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
     await expect(documents.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('New folder');
+    await expect(documents.locator('.popover-viewport').getByRole('listitem').nth(1)).toHaveText('New file');
+    await expect(documents.locator('.popover-viewport').getByRole('listitem').nth(2)).toHaveText('Import');
     await documents.keyboard.press('Escape');
     await expect(documents.locator('.popover-viewport')).toBeHidden();
 

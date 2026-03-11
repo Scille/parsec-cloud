@@ -256,3 +256,47 @@
   --offset-x: 1.5rem;
   --width: 22.5rem;
 }
+
+.new-file-popover,
+.import-popover {
+  --offset-y: 0.5rem;
+
+  .import-container {
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .option {
+      --background-hover: none;
+      --color: var(--parsec-color-light-secondary-soft-text);
+      padding: 0.375rem 0.75rem;
+      --background: none;
+      border-radius: var(--parsec-radius-6);
+      --min-height: 0;
+      --inner-padding-end: 0;
+      position: relative;
+      z-index: 2;
+      pointer-events: auto;
+
+      &::part(native) {
+        padding: 0;
+      }
+
+      &:hover:not(.item-disabled) {
+        background: var(--parsec-color-light-primary-50);
+        --background-hover: var(--parsec-color-light-primary-50);
+        cursor: pointer;
+      }
+
+      &__icon {
+        margin-right: 0.5rem;
+        width: 1.5rem;
+      }
+
+      .item-label {
+        margin: 0;
+      }
+    }
+  }
+}
