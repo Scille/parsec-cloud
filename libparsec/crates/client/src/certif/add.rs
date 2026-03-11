@@ -88,7 +88,7 @@ pub enum InvalidCertificateError {
     RealmFirstRoleMustBeSelfSigned { hint: String },
     #[error("Certificate `{hint}` breaks consistency: as first certificate for the realm it was expected to be a role certificate")]
     RealmFirstCertificateMustBeRole { hint: String },
-    #[error("Certificate `{hint}` breaks consistency: author cannot change it own role")]
+    #[error("Certificate `{hint}` breaks consistency: author cannot change its own role")]
     RealmCannotChangeOwnRole { hint: String },
     #[error("Certificate `{hint}` breaks consistency: as first certificate for the realm, it must have Owner role")]
     RealmFirstRoleMustBeOwner { hint: String },
