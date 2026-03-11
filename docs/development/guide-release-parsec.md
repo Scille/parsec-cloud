@@ -2,8 +2,30 @@
 
 # Release Cheat-Sheet
 
+## Prerequisites
+
+### Access & permissions
+
+- **GitHub team `Parsec-Deploy`** membership: required to push to `releases/X.Y` branches and create tags.
+  Without it, the push step of `releaser.py` will be rejected.
+  Ask a `Parsec-deploy` team admin to add you before starting a release.
+
+### Tools
+
+- **Python 3.12+** — used by `misc/releaser.py` and `misc/sign_windows_release.py`
+- **Git**
+- **GPG key** — must be configured locally *and* linked to your GitHub account (release commits and tags are annotated & signed).
+  Generate one with `gpg --gen-key` if needed, then check your git config:
+  ```shell
+  git config --global user.signingkey
+  ```
+- **GitHub CLI (`gh`)** — must be installed and authenticated (`gh auth login`).
+  Required by `misc/sign_windows_release.py` (download/upload artifacts) and by `releaser.py acknowledge` (draft PR creation).
+
+---
+
+- [Prerequisites](#prerequisites)
 - [Major/minor vs patch versions](#majorminor-vs-patch-versions)
-- [Release Checklist](#release-checklist)
 - [Release major/minor version](#release-majorminor-version)
   - [Create release candidate version](#create-release-candidate-version)
   - [Create the release](#create-the-release)
@@ -19,10 +41,6 @@
   - [Preparing the patched version](#preparing-the-patched-version)
   - [Follow the major/minor guide](#follow-the-majorminor-guide)
   - [All done](#all-done)
-
-> [!IMPORTANT]
-> If you need to create a release (i.e. create a release branch and a tag),
-> you need to be a part of `Parsec-Deploy` GitHub team else you will get blocked when trying to push the branch and tag.
 
 ## Major/minor vs patch versions
 
@@ -48,20 +66,9 @@ flowchart TD
 In other words, the patch bump should only be used to cherry-pick a subset of
 changes present on the master on a previous version.
 
-## Release Checklist
-
-For each release types, apply the following checklist:
-
-- The newsfragment were squashed to generate the block added to [`HISTORY.rst`](/HISTORY.rst).
-- The updated [`HISTORY.rst`](/HISTORY.rst) is correctly formatted (Some news fragment may introduce invalid syntax that can break the RST file).
-- The translations are up-to-date (check the translations in [`client/src/locales/en-US.json`](/client/src/locales/en-US.json) and [`client/src/locales/fr-FR.json`](/client/src/locales/fr-FR.json)).
-- The `releaser.py` correctly update the version in the expected files (Non-exhaustive list: `server/pyproject.toml`, `LICENSE`, `server/parsec/_version.py`, `npm` `package.json` files, `Cargo.toml` files).
-
-> Most of the work can be done using the `misc/releaser.py` script (It won't check if the translation are up-to-date).
-
 ## Release major/minor version
 
-In the following we will consider we want to release version `v3.2.0` from `3.1.1-a.0+dev`.
+In the following we will consider we want to release version `vX.Y.Z`.
 
 ### Create release candidate version
 
@@ -74,7 +81,7 @@ if you already have a release candidate that doesn't need any correction.
 Yes, even this ultra small 1 line typo fix. We've all been there, we all
 know how it ends up ;-)
 
-Release candidate versions must have the naming `3.2.0-rc.0`, `3.2.0-rc.1`, etc.
+Release candidate versions must have the naming `X.Y.Z-rc.0`, `X.Y.Z-rc.1`, etc.
 
 > The important part is pre-release part `-rc.N`.
 > You can start the release candidate numbering to either 0 or 1, depends on your taste.
@@ -90,7 +97,7 @@ To create a new release, simply execute:
 
 ```shell
 git fetch
-python misc/releaser.py build --base=origin/master --version 3.2.0-rc.0
+python misc/releaser.py build --base=origin/master --version X.Y.Z-rc.0
 ```
 
 > `git fetch` is used to update the remote ref, that is used to get the latest remote change on `master`.
@@ -100,27 +107,31 @@ The script will:
 
 - Ensure the release version is greater than the current version.
 - Ensure _git env_ is clean (no changes to be committed).
-- Create the release branch `releases/3.2` (and switch to it).
+- Create the release branch `releases/X.Y` (and switch to it).
 - Update the license Date & version.
 - Update the parsec version across different files in our repository.
+  Check that the version was correctly updated in the expected file(non-exhaustive list: server/pyproject.toml, LICENSE, server/parsec/_version.py, npm package.json files, Cargo.toml files).
 - Update `HISTORY.rst` with a new block generated using the news fragments found in `newsfragments/`.
 
-  At this step, the script will ask you to review the changes made so far (mostly to check if [`HISTORY.rst`](/HISTORY.rst) was correctly generated).
+> [!IMPORTANT]
+> At this step, the script will ask you to review the changes made so far. Check that:
+> - The newsfragments were all squashed into the block added to [`HISTORY.rst`](/HISTORY.rst).
+> - The updated [`HISTORY.rst`](/HISTORY.rst) is correctly formatted — some news fragments may introduce invalid RST syntax.
+> - If some release candidate versions have been released before this one, now is the time to merge back the corresponding release notes.
+>
+> These are easy to miss and cannot be fixed once the version tag is pushed.
 
-  For instance, if some release candidate versions have been released before this one,
-  now is the time to merge back the corresponding release notes.
-
-- Create the release commit with the message `Bump version 3.1.1-a.0+dev -> v3.2.0-rc.0`.
+- Create the release commit with the message `Bump version <dev-version> -> vX.Y.Z-rc.0`.
 
   The commit will contains the change made to `HISTORY.rst`, the various files referencing the parsec version, the updated license and the removed news fragments.
 
-- Create the release tag `v3.2.0-rc.0`.
+- Create the release tag `vX.Y.Z-rc.0`.
 
   The script will display the tag information, it needs to be reviewed before proceeding (check the tag signature).
 
-- Create the dev commit with the message `Bump version v3.2.0-rc.0 -> v3.2.0-rc.1+dev`.
+- Create the dev commit with the message `Bump version vX.Y.Z-rc.0 -> vX.Y.Z-rc.1+dev`.
 
-- Push the branch `releases/3.2` & the tag `v3.2.0-rc.0`
+- Push the branch `releases/X.Y` & the tag `vX.Y.Z-rc.0`
 
   The script will require confirmation before pushing.
 
@@ -135,14 +146,21 @@ this will trigger the `releaser` workflow that will:
 
 #### After the release build script: Windows signing
 
-Once the workflow done Windows builds require to be manually signed. This is done by running a script:
+> [!IMPORTANT]
+> This step requires specific access that not all team members have. Before proceeding, make sure you have:
+> - **Windows** OS
+> - **SimplySign Desktop (proCertum)** — installed and configured
+> - A **signing token** delivered by an authorized (sworn) team member
+>
+> If you don't have these, delegate this step to a team member who does.
+
+Once the workflow is done, Windows builds require to be manually signed. This is done by running a script:
 
 ```shell
-python misc/sign_windows_release.py --version 3.2.0
+python misc/sign_windows_release.py --version X.Y.Z
 ```
 
-This command will download the GUI & CLI artifacts, sign them (you obviously need to have
-the signing certificate on your machine !), and finally re-upload the result on the release.
+This command will download the GUI & CLI artifacts, sign them, and re-upload the result on the release.
 
 #### After the release build script: publishing
 
@@ -155,7 +173,7 @@ Once a pre-release is published, it goes through a test campaign to assess its s
 
 If the tests suite reveal that the current release candidate is stable, you can go to next step [Once the release is stable](#once-the-release-is-stable)
 
-Else, you will need to add fixes to the release branch (cf [Preparing the patched version](#preparing-the-patched-version)) and create the next release candidate.
+Else, you will need to add fixes to the release branch (see [Preparing the patched version](#preparing-the-patched-version) — that section describes how to add commits to a release branch, whether for a major/minor or a patch release) and create the next release candidate.
 
 To create the next RC once you've added the fixes you wanted, you execute the following command:
 
@@ -164,41 +182,43 @@ python misc/releaser.py build --current
 ```
 
 > [!NOTE]
-> We don't specify the version here but use the `--current` flag as the current version of the release branch at this step is `v3.2.0-rc.1+dev`
+> We don't specify the version here but use the `--current` flag. `releaser.py` reads the current version from the repository files (e.g. `server/pyproject.toml`) and automatically derives the next pre-release version from it. At this step the current version is `vX.Y.Z-rc.1+dev`, so it will produce `vX.Y.Z-rc.1`.
 
-Like in [create the release](#create-the-release), follow the steps in [after the release build script](#after-the-release-build-script)
+Like in [create the release](#create-the-release), follow the steps in [after the release build script](#after-the-release-build-script-outcome)
 
 ### Once the release is stable
 
 Once the release candidate is considered stable and ready for a stable (that the public can use) release
 
 ```shell
-python misc/releaser.py build --version 3.2.0
+python misc/releaser.py build --version X.Y.Z
 ```
 
-Then follow the remaining steps described in [after the release build script](#after-the-release-build-script)
+Then follow the remaining steps described in [after the release build script](#after-the-release-build-script-outcome)
+
+Once the stable release is published, [acknowledging it](#acknowledge-the-release) is **mandatory**.
 
 ### Acknowledge the release
 
-Acknowledge (or "ack") is the process of merging changes from a release branch (`releases/3.2`)
-back into the base branch (`master`). This is particularily important when there are hotfix commits
-in the release branch and those changes are not yet in `master`.
+Acknowledge (or "ack") is the process of merging changes from a release branch (`releases/X.Y`)
+back into the base branch (`master`). This is **mandatory after every stable release** and particularly important when there are hotfix commits
+in the release branch that are not yet in `master`.
 
-1. Make sure your local branches `master` and `releases/3.2` are up to date
+1. Make sure your local branches `master` and `releases/X.Y` are up to date
 
     ```shell
-    git fetch origin master:master releases/3.2:releases/3.2
+    git fetch origin master:master releases/X.Y:releases/X.Y
     ```
 
 2. Acknowledge the release with the following command:
 
     ```shell
-    python misc/releaser.py acknowledge 3.2.0
+    python misc/releaser.py acknowledge X.Y.Z
     ```
 
     This command will:
       - Ensure the version to acknowledge is indeed a release version (no pre-release, dev or local part).
-      - Create a local branch `acknowledges/3.2.0`.
+      - Create a local branch `acknowledges/X.Y.Z`.
       - Push the acknowledge branch to the remote server.
       - Create a draft pull-request for the acknowledge (using [`Github cli`](https://cli.github.com/))
 
@@ -212,9 +232,9 @@ in the release branch and those changes are not yet in `master`.
 
     ⚠️ Fix merge conflicts carefully. If in doubt, do not hesitate to ask the commit authors.
 
-4. (PATCH release) In case you acknowledge a patch version, e.g. `3.2.5`, it is likely that previous versions
-   (`3.2.0`-`3.2.4`) have already been acknowledge. In that case, ensure to remove commits from the PR that have already
-   been acknowledge. Look for the previous ack PRs and compare descriptions to identify which commits to remove from
+4. (PATCH release) In case you acknowledge a patch version (e.g. `X.Y.Z` with Z > 0), it is likely that one or more
+   previous patch versions of the same minor (e.g. `X.Y.0`, `X.Y.1`, ...) have already been acknowledged. In that case, ensure to remove commits from the PR that have already
+   been acknowledged. Look for the previous ack PRs and compare descriptions to identify which commits to remove from
    your current ack PR.
 
 5. You may need to add new commits to your ack PR:
@@ -237,27 +257,27 @@ flowchart TD;
   F["The python wheels are published on <code>pypi</code>"]
   G(Acknowledge the release)
 
-  A-->B-->manual-->F-.->G
+  A-->B-->manual-->F-->G
 
   click B "https://github.com/Scille/parsec-cloud/releases?q=draft%3Atrue" "Parsec drafted releases"
 ```
 
 ## Release patch version
 
-In the following we will consider we want to release version ``v3.2.1`` from `v3.2.1-a.0+dev`.
+In the following we will consider we want to release version `vX.Y.Z` from `vX.Y.Z-a.0+dev`.
 
 ### (Re)create the version branch
 
-If the release branch ``releases/3.2`` used for the ``3.2.0`` release has been
+If the release branch `releases/X.Y` used for the `vX.Y.0` release has been
 removed, it needs to be recreated.
 
 > [!IMPORTANT]
 > The release branch should live on their own and should not be deleted
 
-In that case, use the git tag `v3.2.0` and push it to the branch `releases/3.2`
+In that case, use the git tag `vX.Y.0` and push it to the branch `releases/X.Y`
 
 Of course the version branch should be reused if a previous patch release has
-already been done (e.g. you're planning to release ``v3.2.2``).
+already been done (e.g. you're planning to release `vX.Y.Z`).
 
 ### Preparing the patched version
 
@@ -265,7 +285,7 @@ To include some fixes for the patch version, you can do that in 2 different ways
 
 - Using a Pull-Request:
 
-  Directly open a PR with the changes you want to include in the patch version targeting the branch `release/3.2`.
+  Directly open a PR with the changes you want to include in the patch version targeting the branch `releases/X.Y`.
 
   You're not required to open 2 PR (one for master and one for the release branch)
 
@@ -283,12 +303,12 @@ To include some fixes for the patch version, you can do that in 2 different ways
 You know the drill, creating the release:
 
 > [!CAUTION]
-> For the following steps, your current git branch **MUST** be `releases/3.2`.
+> For the following steps, your current git branch **MUST** be `releases/X.Y`.
 
 - Creating the first release candidate:
 
   ```shell
-  python misc/releaser.py build --version 3.2.1-rc.0
+  python misc/releaser.py build --version X.Y.Z-rc.0
   ```
 
 - Iterating on the release candidates:
@@ -300,7 +320,7 @@ You know the drill, creating the release:
 - Finally, releasing the patch version:
 
   ```shell
-  python misc/releaser.py build --version 3.2.1
+  python misc/releaser.py build --version X.Y.Z
   ```
 
 ### All done

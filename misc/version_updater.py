@@ -324,6 +324,9 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.License: [JSON_LICENSE_FIELD],
         Tool.Parsec: [JSON_VERSION_FIELD],
     },
+    ROOT_DIR / "docs/development/guide-release-parsec.md": {
+        Tool.Python: [ReplaceRegex(r"Python .*\+", hide_patch_version("Python {version}+"))]
+    },
     ROOT_DIR / "docs/development/README.md": {
         Tool.Rust: [
             ReplaceRegex(r"Rust v[0-9.]+", "Rust v{version}"),
