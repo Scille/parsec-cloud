@@ -824,3 +824,271 @@ async fn member_trying_to_give_role(
         )
     )
 }
+
+#[parsec_test(testbed = "minimal")]
+async fn self_promote_ok(
+    #[values("as_manager", "as_contributor", "as_reader")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let realm_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let realm_id = builder
+                .new_realm("bob")
+                .then_do_initial_key_rotation_and_naming("wksp1")
+                .map(|e| e.realm);
+            let alice_wksp1_role = match kind {
+                "as_manager" => RealmRole::Manager,
+                "as_contributor" => RealmRole::Contributor,
+                "as_reader" => RealmRole::Reader,
+                unknown => panic!("Unknown kind: {unknown}"),
+            };
+            builder.share_realm(realm_id, "alice", alice_wksp1_role);
+            builder.revoke_user("bob");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            realm_id
+        })
+        .await;
+
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let timestamp = DateTime::from_ymd_hms_us(2000, 1, 20, 0, 0, 0, 0).unwrap();
+    let certif = RealmRoleCertificate {
+        author: alice.device_id,
+        timestamp,
+        realm_id,
+        user_id: alice.user_id,
+        role: Some(RealmRole::Owner),
+    };
+    let certif_signed = Bytes::from(certif.dump_and_sign(&alice.signing_key));
+
+    let switch = ops
+        .add_certificates_batch(
+            &[],
+            &[],
+            &[],
+            &HashMap::from([(realm_id, vec![certif_signed])]),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
+}
+
+#[parsec_test(testbed = "minimal")]
+#[case(Some(RealmRole::Manager))]
+#[case(Some(RealmRole::Contributor))]
+#[case(Some(RealmRole::Reader))]
+#[case(None)]
+async fn self_promote_role_must_be_owner(#[case] role: Option<RealmRole>, env: &TestbedEnv) {
+    let realm_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let realm_id = builder
+                .new_realm("bob")
+                .then_do_initial_key_rotation_and_naming("wksp1")
+                .map(|e| e.realm);
+            builder.share_realm(realm_id, "alice", RealmRole::Manager);
+            builder.revoke_user("bob");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            realm_id
+        })
+        .await;
+
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let timestamp = DateTime::from_ymd_hms_us(2000, 1, 20, 0, 0, 0, 0).unwrap();
+    let certif = RealmRoleCertificate {
+        author: alice.device_id,
+        timestamp,
+        realm_id,
+        user_id: alice.user_id,
+        role,
+    };
+    let certif_signed = Bytes::from(certif.dump_and_sign(&alice.signing_key));
+
+    let err = ops
+        .add_certificates_batch(
+            &[],
+            &[],
+            &[],
+            &HashMap::from([(realm_id, vec![certif_signed])]),
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(*boxed, InvalidCertificateError::RealmSelfPromotionRoleMustBeOwner { .. })
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn self_promote_higher_active_role_already_exists(
+    #[values("with_owner", "without_owner")] kind: &str,
+    env: &TestbedEnv,
+) {
+    // "with_owner": a non-revoked OWNER (Bob) still exists, so Alice (MANAGER) can't self-promote
+    // "without_owner": no OWNER left (Bob revoked), but Mallory (MANAGER) > Alice (CONTRIBUTOR)
+    let realm_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let realm_id = builder
+                .new_realm("bob")
+                .then_do_initial_key_rotation_and_naming("wksp1")
+                .map(|e| e.realm);
+            match kind {
+                "with_owner" => {
+                    builder.share_realm(realm_id, "alice", RealmRole::Manager);
+                    // Bob is NOT revoked; he is the more senior non-revoked member
+                }
+                "without_owner" => {
+                    builder.new_user("mallory");
+                    builder.share_realm(realm_id, "alice", RealmRole::Contributor);
+                    builder.share_realm(realm_id, "mallory", RealmRole::Manager);
+                    builder.revoke_user("bob");
+                    // Mallory (MANAGER) is the more senior non-revoked member over Alice (CONTRIBUTOR)
+                }
+                unknown => panic!("Unknown kind: {unknown}"),
+            }
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            realm_id
+        })
+        .await;
+
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let timestamp = DateTime::from_ymd_hms_us(2000, 1, 20, 0, 0, 0, 0).unwrap();
+    let certif = RealmRoleCertificate {
+        author: alice.device_id,
+        timestamp,
+        realm_id,
+        user_id: alice.user_id,
+        role: Some(RealmRole::Owner),
+    };
+    let certif_signed = Bytes::from(certif.dump_and_sign(&alice.signing_key));
+
+    let err = ops
+        .add_certificates_batch(
+            &[],
+            &[],
+            &[],
+            &HashMap::from([(realm_id, vec![certif_signed])]),
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::RealmSelfPromotionHigherActiveRoleAlreadyExists { .. }
+        )
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn self_promote_already_owner(env: &TestbedEnv) {
+    let realm_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let realm_id = builder
+                .new_realm("bob")
+                .then_do_initial_key_rotation_and_naming("wksp1")
+                .map(|e| e.realm);
+            builder.share_realm(realm_id, "alice", RealmRole::Owner);
+            builder.revoke_user("bob");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            realm_id
+        })
+        .await;
+
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let timestamp = DateTime::from_ymd_hms_us(2000, 1, 20, 0, 0, 0, 0).unwrap();
+    let certif = RealmRoleCertificate {
+        author: alice.device_id,
+        timestamp,
+        realm_id,
+        user_id: alice.user_id,
+        role: Some(RealmRole::Owner),
+    };
+    let certif_signed = Bytes::from(certif.dump_and_sign(&alice.signing_key));
+
+    let err = ops
+        .add_certificates_batch(
+            &[],
+            &[],
+            &[],
+            &HashMap::from([(realm_id, vec![certif_signed])]),
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(*boxed, InvalidCertificateError::ContentAlreadyExists { .. })
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn self_promote_outsider(env: &TestbedEnv) {
+    let realm_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            builder
+                .new_user("mallory")
+                .with_initial_profile(UserProfile::Outsider);
+            // Bob creates a realm...
+            let realm_id = builder
+                .new_realm("bob")
+                .then_do_initial_key_rotation_and_naming("wksp1")
+                .map(|e| e.realm);
+            // ...then shares it with the OUTSIDER Mallory...
+            builder.share_realm(realm_id, "mallory", RealmRole::Contributor);
+            // ...and finally gets revoked by Alice!
+            builder.revoke_user("bob");
+            builder.certificates_storage_fetch_certificates("mallory@dev1");
+            realm_id
+        })
+        .await;
+
+    let mallory = env.local_device("mallory@dev1");
+    let ops = certificates_ops_factory(env, &mallory).await;
+
+    let timestamp = DateTime::from_ymd_hms_us(2000, 1, 20, 0, 0, 0, 0).unwrap();
+    let certif = RealmRoleCertificate {
+        author: mallory.device_id,
+        timestamp,
+        realm_id,
+        user_id: mallory.user_id,
+        role: Some(RealmRole::Owner),
+    };
+    let certif_signed = Bytes::from(certif.dump_and_sign(&mallory.signing_key));
+
+    let err = ops
+        .add_certificates_batch(
+            &[],
+            &[],
+            &[],
+            &HashMap::from([(realm_id, vec![certif_signed])]),
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { .. }
+        )
+    );
+}
