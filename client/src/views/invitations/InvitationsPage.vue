@@ -12,7 +12,7 @@
         @click="openInvitationSwitchModal"
       >
         <ion-icon
-          :icon="mailUnread"
+          :icon="invitations.length > 0 ? mailUnread : mail"
           class="switch-view-button__icon"
         />
         {{ $msTranslate('InvitationsPage.emailInvitation.tab') }}
@@ -56,7 +56,7 @@
             :disabled="view === InvitationView.EmailInvitation"
           >
             <ion-icon
-              :icon="mailUnread"
+              :icon="invitations.length > 0 ? mailUnread : mail"
               class="toggle-view-button__icon"
             />
             <ion-text class="toggle-view-button__label">
@@ -219,7 +219,7 @@ import AsyncEnrollmentOpenBaoAuthModal from '@/views/users/AsyncEnrollmentOpenBa
 import AsyncEnrollmentPkiAuthModal from '@/views/users/AsyncEnrollmentPkiAuthModal.vue';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
-import { caretDown, copy, link, mailUnread, personAdd } from 'ionicons/icons';
+import { caretDown, copy, link, mail, mailUnread, personAdd } from 'ionicons/icons';
 import {
   Answer,
   askQuestion,
