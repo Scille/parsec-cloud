@@ -128,3 +128,12 @@ error_set::error_set! {
     LoadSubmitPayloadError := ValidatePayloadError || DataError
     LoadAnswerPayloadError := ValidatePayloadError || DataError
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum ListUserCertificatesError {}
+
+impl From<cryptoki::error::Error> for ListUserCertificatesError {
+    fn from(value: cryptoki::error::Error) -> Self {
+        todo!()
+    }
+}

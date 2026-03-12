@@ -440,3 +440,8 @@ fn ncrypt_decrypt_message_with_rsa(
         Ok(buff)
     }
 }
+
+pub async fn list_user_certificates_with_details(
+) -> Result<Vec<CertificateWithDetails>, ListUserCertificatesError> {
+    todo!()
+}
