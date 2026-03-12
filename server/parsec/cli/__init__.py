@@ -69,7 +69,7 @@ def patched_cli_main(args: Sequence[str] | None = None, **kwargs: Any) -> Any:
     raw_extra_args = os.environ.get("PARSEC_CMD_ARGS", "")
     args_list += [os.path.expandvars(x) for x in raw_extra_args.split()]
 
-    return vanilla_cli_main(args=args_list[:], **kwargs)
+    return vanilla_cli_main(args=args_list, **kwargs)
 
 
 cli.main = patched_cli_main  # pyright: ignore[reportAttributeAccessIssue]
