@@ -32,7 +32,11 @@ msTest.describe(() => {
       }
       await expect(documents.locator('.file-details-modal')).toBeVisible();
       const modal = documents.locator('.file-details-modal');
-      await expect(modal.locator('.ms-modal-header__title ')).toHaveText(new RegExp(`^Details on ${nameMatcher}$`));
+      if (isFile) {
+        await expect(modal.locator('.ms-modal-header__title ')).toHaveText('Details on the file');
+      } else {
+        await expect(modal.locator('.ms-modal-header__title ')).toHaveText('Details on the folder');
+      }
 
       const generalDetails = modal.locator('.file-info-details-content').nth(0);
       const generalDetailsItem = generalDetails.locator('.file-info-details-item');
@@ -91,6 +95,6 @@ msTest.describe(() => {
     await documents.locator('.file-context-menu').getByRole('listitem').nth(7).click();
     await expect(documents.locator('.file-details-modal')).toBeVisible();
     const modal = documents.locator('.file-details-modal');
-    await expect(modal.locator('.ms-modal-header__title ')).toHaveText(/^Details on [a-z0-9._]+$/);
+    await expect(modal.locator('.ms-modal-header__title ')).toHaveText('Details on the file');
   });
 });

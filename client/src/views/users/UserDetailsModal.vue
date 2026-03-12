@@ -157,12 +157,16 @@ onMounted(async () => {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
+      overflow: hidden;
 
       &__title {
         color: var(--parsec-color-light-secondary-text);
       }
 
       &__text {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
         color: var(--parsec-color-light-primary-800);
       }
     }

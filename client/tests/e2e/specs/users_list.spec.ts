@@ -197,7 +197,7 @@ msTest('Selection in grid mode', async ({ usersPage }) => {
   await expect(actionBar.getByText('Revoke this user')).toBeVisible();
   await expect(actionBar.getByText('Revoke this user')).toHaveText('Revoke this user');
   await expect(actionBar.getByText('Details')).toBeVisible();
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('1 user selected', { useInnerText: true });
 });
 
 msTest('Test users selection in list mode', async ({ usersPage }) => {
@@ -212,7 +212,7 @@ msTest('Test users selection in list mode', async ({ usersPage }) => {
   await expect(actionBar.getByText('Revoke this user')).toBeVisible();
   await expect(actionBar.getByText('Revoke this user')).toHaveText('Revoke this user');
   await expect(actionBar.getByText('Details')).toBeVisible();
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('1 user selected', { useInnerText: true });
 
   const headerCheckbox = usersPage.locator('.user-list-header').locator('.ms-checkbox');
   // Header checkbox should be indeterminate since not all users are selected
@@ -294,7 +294,7 @@ msTest('Maintain selection between modes', async ({ usersPage }) => {
   }
   // Uncheck one
   await usersPage.locator('.users-container-grid').locator('.user-card-item').nth(2).locator('.ms-checkbox').uncheck();
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('1 user selected', { useInnerText: true });
   for (const [index, user] of USERS.entries()) {
     if (user.active && !user.currentUser) {
       const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(index);
@@ -393,7 +393,7 @@ msTest('Remove selection on filtering', async ({ usersPage }) => {
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item.hover();
   await item.locator('.ms-checkbox').check();
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('1 user selected', { useInnerText: true });
   await toggleFilter(usersPage, 'Member');
   await expect(actionBar.locator('.counter')).toHaveText('2 users', { useInnerText: true });
 });
@@ -490,9 +490,9 @@ msTest('Search user list', async ({ usersPage }) => {
   await usersPage.locator('.user-list-header').locator('.ms-checkbox').check();
   await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
   await fillIonInput(searchInput, 'Bob');
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('1 user selected', { useInnerText: true });
   await fillIonInput(searchInput, '');
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('1 user selected', { useInnerText: true });
   await expect(items).toHaveCount(3);
   await expect(items.nth(1).locator('.user-name')).toContainText('Boby McBobFace');
   await expect(items.nth(1).locator('.ms-checkbox')).toBeChecked();
@@ -556,9 +556,9 @@ msTest('Search user grid', async ({ usersPage }) => {
   await items.nth(2).locator('.ms-checkbox').check();
   await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
   await fillIonInput(searchInput, 'Bob');
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('1 user selected', { useInnerText: true });
   await fillIonInput(searchInput, '');
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('1 user selected', { useInnerText: true });
 
   await expect(items.nth(1).locator('.user-card-info__name')).toContainText('Boby McBobFace');
   await expect(items.nth(1).locator('.ms-checkbox')).toBeChecked();
@@ -704,7 +704,7 @@ msTest('Small display selection', async ({ usersPage }) => {
   await expect(user2.locator('.ms-checkbox')).toBeChecked();
   await user1.locator('.ms-checkbox').uncheck();
   await expect(user1.locator('.ms-checkbox')).not.toBeChecked();
-  await expect(headerSelection.locator('.title__text')).toContainText('One user selected');
+  await expect(headerSelection.locator('.title__text')).toContainText('1 user selected');
   await user1.locator('.ms-checkbox').check();
   await expect(headerSelection.locator('.title__text')).toContainText('2 users selected');
   await headerSelection.locator('.title__button').nth(0).click();
