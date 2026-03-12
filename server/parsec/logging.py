@@ -488,7 +488,12 @@ def configure_logging(log_level: LogLevel, log_format: LogFormat, log_stream: Te
     )
 
 
-def enable_sentry_logging(dsn: str, environment: str) -> None:
+def enable_sentry_logging(
+    dsn: str,
+    environment: str,
+    traces_sample_rate: float | None,
+    profiles_sample_rate: float | None,
+) -> None:
     sentry_sdk.init(
         dsn=dsn,
         environment=environment,
@@ -505,18 +510,10 @@ def enable_sentry_logging(dsn: str, environment: str) -> None:
             # See https://docs.sentry.io/platforms/python/integrations/asyncio/
             AsyncioIntegration(),
         ],
-        # Set traces_sample_rate to 1.0 to capture 100% of transactions for tracing.
-        # Changing the error sample rate requires re-deployment, so instead of
-        # dropping events here, it may be better to sate a rate limit at
-        # project-level on https://scille.sentry.io/
-        # See https://docs.sentry.io/platforms/python/configuration/sampling/
-        traces_sample_rate=1.0,
-        # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
-        # With profiling, Sentry tracks performance by sampling the program's
-        # call stack. This function-level information can help to improve
-        # performance as Sentry highlights areas that can be optimized.
+        # See https://docs.sentry.io/platforms/python/tracing/
+        traces_sample_rate=traces_sample_rate,
         # See https://docs.sentry.io/platforms/python/profiling/
-        profiles_sample_rate=1.0,
+        profiles_sample_rate=profiles_sample_rate,
     )
 
 

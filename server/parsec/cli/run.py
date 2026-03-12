@@ -571,6 +571,8 @@ async def run_cmd(
     log_file: str | None,
     sentry_dsn: str | None,
     sentry_environment: str,
+    sentry_traces_sample_rate: float | None,
+    sentry_profiles_sample_rate: float | None,
     configure_sentry: Callable[[], Coroutine[Any, Any, None]],
     sse_keepalive: int | None,
     with_client_web_app: Path | None,

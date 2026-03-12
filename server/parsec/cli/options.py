@@ -123,7 +123,9 @@ def asyncio_run[**P, R](
     return wrapper
 
 
-def sentry_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[str, str, P], R]:
+def sentry_config_options[**P, R](
+    fn: Callable[P, R],
+) -> Callable[Concatenate[str, str, float | None, float | None, P], R]:
     # Sentry SKD uses 3 environ variables during it configuration phase:
     # - `SENTRY_DSN`
     # - `SENTRY_ENVIRONMENT`
@@ -149,9 +151,46 @@ def sentry_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[st
         show_default=True,
         help="Sentry environment for telemetry report",
     )
+    @click.option(
+        "--sentry-traces-sample-rate",
+        metavar="RATE",
+        envvar="PARSEC_SENTRY_TRACES_SAMPLE_RATE",
+        show_envvar=True,
+        type=click.FloatRange(min=0, max=1),
+        default=None,
+        show_default=True,
+        help="""Enable traces in Sentry.
+
+`0` represents 0% of the transactions will be sent to Sentry while `1` represents 100%.
+
+See https://docs.sentry.io/platforms/python/tracing/
+""",
+    )
+    @click.option(
+        "--sentry-profiles-sample-rate",
+        metavar="RATE",
+        envvar="PARSEC_SENTRY_PROFILES_SAMPLE_RATE",
+        show_envvar=True,
+        type=click.FloatRange(min=0, max=1),
+        default=None,
+        show_default=True,
+        help="""Enable profiling in Sentry.
+
+`0` represents 0% of the sampled transaction will be profiled while `1` represents 100%.
+This is relative to the tracing sample rate - e.g. `0.5` means 50% of sampled transactions will be
+profiled.
+
+See https://docs.sentry.io/platforms/python/sampling/
+""",
+    )
     @wraps(fn)
     def wrapper(
-        sentry_dsn: str | None, sentry_environment: str, *args: P.args, **kwargs: P.kwargs
+        sentry_dsn: str | None,
+        sentry_environment: str,
+        sentry_traces_sample_rate: float | None,
+        sentry_profiles_sample_rate: float | None,
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> R:
         # We cannot initialize Sentry right now since we haven't entered the asyncio event loop yet!
         # (cf. the `There is no running asyncio loop so there is nothing Sentry can patch.` warning
@@ -162,11 +201,18 @@ def sentry_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[st
         # is itself an async function that can call `configure_sentry` right away).
         async def configure_sentry():
             if sentry_dsn:
-                enable_sentry_logging(dsn=sentry_dsn, environment=sentry_environment)
+                enable_sentry_logging(
+                    dsn=sentry_dsn,
+                    environment=sentry_environment,
+                    traces_sample_rate=sentry_traces_sample_rate,
+                    profiles_sample_rate=sentry_profiles_sample_rate,
+                )
 
+        kwargs["configure_sentry"] = configure_sentry
         kwargs["sentry_dsn"] = sentry_dsn
         kwargs["sentry_environment"] = sentry_environment
-        kwargs["configure_sentry"] = configure_sentry
+        kwargs["sentry_traces_sample_rate"] = sentry_traces_sample_rate
+        kwargs["sentry_profiles_sample_rate"] = sentry_profiles_sample_rate
 
         return fn(*args, **kwargs)
 
