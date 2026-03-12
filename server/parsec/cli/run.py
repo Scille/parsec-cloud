@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable, Coroutine
 from hashlib import blake2b
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,7 @@ from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
 from parsec.cli.options import (
     _split_with_escaping,
+    asyncio_run,
     blockstore_server_options,
     db_server_options,
     debug_config_options,
@@ -476,8 +478,8 @@ for any given email address).
 )
 # Add --log-level/--log-format/--log-file
 @logging_config_options(default_log_level="INFO")
-# Add --sentry-url
-@sentry_config_options(configure_sentry=True)
+# Add --sentry-environment/--sentry-dsn
+@sentry_config_options
 @click.option(
     "--sse-keepalive",
     default=30,
@@ -524,7 +526,8 @@ for any given email address).
 )
 # Add --debug & --version
 @debug_config_options
-def run_cmd(
+@asyncio_run
+async def run_cmd(
     host: str,
     port: int,
     db: BaseDatabaseConfig,
@@ -568,6 +571,7 @@ def run_cmd(
     log_file: str | None,
     sentry_dsn: str | None,
     sentry_environment: str,
+    configure_sentry: Callable[[], Coroutine[Any, Any, None]],
     sse_keepalive: int | None,
     with_client_web_app: Path | None,
     cors_allow_origins: list[str],
@@ -575,6 +579,8 @@ def run_cmd(
     dev: bool,
 ) -> None:
     # Start a local server
+
+    await configure_sentry()
 
     with cli_exception_handler(debug):
         if not skip_database_migrations_check:
@@ -673,18 +679,16 @@ def run_cmd(
             retry_policy = RetryPolicy(
                 maximum_database_connection_attempts, pause_before_retry_database_connection
             )
-            asyncio.run(
-                _run_backend(
-                    host=host,
-                    port=port,
-                    ssl_certfile=ssl_certfile,
-                    ssl_keyfile=ssl_keyfile,
-                    ssl_ciphers=ssl_ciphers,
-                    retry_policy=retry_policy,
-                    with_client_web_app=with_client_web_app,
-                    cors_allow_origins=cors_allow_origins,
-                    app_config=app_config,
-                )
+            await _run_backend(
+                host=host,
+                port=port,
+                ssl_certfile=ssl_certfile,
+                ssl_keyfile=ssl_keyfile,
+                ssl_ciphers=ssl_ciphers,
+                retry_policy=retry_policy,
+                with_client_web_app=with_client_web_app,
+                cors_allow_origins=cors_allow_origins,
+                app_config=app_config,
             )
         # Ignore some noisy cancellation
         # Note that this is no longer necessary with the latest anyio version (version 4.6)
