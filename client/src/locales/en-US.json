@@ -811,6 +811,7 @@
     },
     "FoldersPage": {
         "createFolder": "New folder",
+        "createFile": "New file",
         "copyHere": "Copy here",
         "import": "Import",
         "itemCount": "No items | 1 item | {count} items",
@@ -892,7 +893,8 @@
             "copyFailedOneFailed": "One or more entries could not be copied.",
             "copyFailedSourceDoesNotExist": "Entry {source} does not exist.",
             "seeInExplorerFailed": "Failed to open the selected entry in file explorer.",
-            "failedToListContent": "Failed to list the content of this folder."
+            "failedToListContent": "Failed to list the content of this folder.",
+            "createFileFailed": "Failed to create the file."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",

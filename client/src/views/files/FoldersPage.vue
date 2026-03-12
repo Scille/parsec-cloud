@@ -226,10 +226,12 @@ import {
   askQuestion,
   asyncComputed,
   getTextFromUser,
+  openSpinnerModal,
   useWindowSize,
 } from 'megashark-lib';
 
 import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
+import { FileContentType } from '@/common/fileTypes';
 import {
   EntryCollection,
   EntryModel,
@@ -958,6 +960,84 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
   }
 }
 
+interface CreateTemplateFileParams {
+  useTemplate: true;
+  type: FileContentType.Spreadsheet | FileContentType.Document | FileContentType.Presentation;
+}
+
+interface CreateRawFileParams {
+  useTemplate: false;
+  ext: string;
+}
+
+async function createNewFile(name: EntryName, fileParams: CreateTemplateFileParams | CreateRawFileParams): Promise<void> {
+  if (!workspaceInfo.value) {
+    return;
+  }
+  const modal = await openSpinnerModal();
+  try {
+    if (fileParams.useTemplate) {
+      let ext: string = '';
+      let template: Uint8Array;
+      switch (fileParams.type) {
+        case FileContentType.Document:
+          ext = 'docx';
+          template = (await import('@/parsec/file_templates/docx_template')).default;
+          break;
+        case FileContentType.Spreadsheet:
+          ext = 'xlsx';
+          template = (await import('@/parsec/file_templates/xlsx_template')).default;
+          break;
+        case FileContentType.Presentation:
+          ext = 'pptx';
+          template = (await import('@/parsec/file_templates/pptx_template')).default;
+          break;
+        default:
+          fileParams.type satisfies never;
+          return;
+      }
+      const path = await parsec.Path.join(currentPath.value, `${name}.${ext}`);
+      const fdResult = await parsec.openFile(workspaceInfo.value.handle, path, { createNew: true, create: true, write: true });
+      if (!fdResult.ok) {
+        informationManager.value.present(
+          new Information({
+            message: 'FoldersPage.errors.createFileFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+        return;
+      }
+      const writeResult = await parsec.writeFile(workspaceInfo.value.handle, fdResult.value, 0, template);
+      if (!writeResult.ok) {
+        informationManager.value.present(
+          new Information({
+            message: 'FoldersPage.errors.createFileFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+        return;
+      }
+      await parsec.closeFile(workspaceInfo.value.handle, fdResult.value);
+    } else {
+      const path = await parsec.Path.join(currentPath.value, name);
+      const createResult = await parsec.createFile(workspaceInfo.value.handle, path);
+      if (!createResult.ok) {
+        informationManager.value.present(
+          new Information({
+            message: 'FoldersPage.errors.createFileFailed',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+      }
+    }
+  } finally {
+    await modal.dismiss();
+  }
+}
+
 async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
   if (!workspaceInfo.value) {
     return;
@@ -1400,6 +1480,8 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
       return await selectAll();
     case FolderGlobalAction.Share:
       return await shareEntries();
+    case FolderGlobalAction.CreateFile:
+      return await createNewFile(window.crypto.randomUUID(), { useTemplate: true, type: FileContentType.Document });
   }
 }
 
@@ -1549,6 +1631,13 @@ const actionBarOptionsFoldersPage = computed(() => {
           await createFolder();
         },
       },
+      // {
+      //   label: 'FoldersPage.createFile',
+      //   icon: create,
+      //   onClick: async () => {
+      //     await createNewFile(window.crypto.randomUUID(), { useTemplate: true, type: FileContentType.Document });
+      //   },
+      // },
       {
         label: 'FoldersPage.import',
         image: DocumentImport,

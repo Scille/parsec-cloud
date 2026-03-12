@@ -6,6 +6,20 @@
       <ion-item-group class="list-group">
         <ion-item
           button
+          v-if="false && role !== WorkspaceRole.Reader"
+          @click="onClick(FolderGlobalAction.CreateFile)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="create"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('FoldersPage.createFile') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
           v-if="role !== WorkspaceRole.Reader"
           @click="onClick(FolderGlobalAction.CreateFolder)"
           class="ion-no-padding list-group-item"
@@ -71,7 +85,7 @@
 import { WorkspaceRole, isDesktop } from '@/parsec';
 import { FolderGlobalAction } from '@/views/files/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
-import { cloudUpload, folderOpen, open } from 'ionicons/icons';
+import { cloudUpload, create, folderOpen, open } from 'ionicons/icons';
 
 defineProps<{
   role: WorkspaceRole;

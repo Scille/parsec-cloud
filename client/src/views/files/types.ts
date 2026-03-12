@@ -9,6 +9,7 @@ enum FolderGlobalAction {
   ToggleSelect = 'folder-toggle-select',
   SelectAll = 'folder-select-all',
   Share = 'folder-share',
+  CreateFile = 'folder-create-file',
 }
 
 enum FileAction {
