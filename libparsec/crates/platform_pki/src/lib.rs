@@ -23,9 +23,10 @@ pub type X509CertificateDer<'a> = rustls_pki_types::CertificateDer<'a>;
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use crate::{
-        errors::ListTrustedRootCertificatesError, DecryptMessageError,
-        GetDerEncodedCertificateError, ListIntermediateCertificatesError,
-        ShowCertificateSelectionDialogError, SignMessageError, X509CertificateDer,
+        errors::{ListTrustedRootCertificatesError, ListUserCertificatesError},
+        DecryptMessageError, DerCertificate, GetDerEncodedCertificateError,
+        ListIntermediateCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
+        X509CertificateDer,
     };
     use libparsec_types::prelude::*;
     use rustls_pki_types::CertificateDer;
@@ -72,6 +73,11 @@ mod platform {
 
     pub fn is_available() -> bool {
         false
+    }
+
+    pub async fn list_user_certificates_der(
+    ) -> Result<Vec<DerCertificate<'static>>, ListUserCertificatesError> {
+        unimplemented!("platform not supported")
     }
 
     pub struct PkiSystem;
@@ -156,6 +162,7 @@ pub use errors::GetValidationPathForCertError;
 pub use shared::{get_validation_path_for_cert, ValidationPathOwned};
 
 pub use shared::get_root_certificate_info_from_trustchain;
+pub use shared::list_user_certificates_with_details;
 
 /// Configuration that may be useful for initializing a PKI system
 pub struct PkiConfig<'a> {

@@ -3,18 +3,23 @@
 use crate::{
     errors::{
         GetRootCertificateInfoFromTrustchainError, GetValidationPathForCertError,
-        ListCertificatesError, VerifyMessageError, VerifySignatureError,
+        ListCertificatesError, ListUserCertificatesError, VerifyMessageError, VerifySignatureError,
     },
-    get_der_encoded_certificate, GetDerEncodedCertificateError, PkiSignatureAlgorithm,
-    X509CertificateDer,
+    get_der_encoded_certificate,
+    platform::list_user_certificates_der,
+    x509::{DistinguishedNameValue, X509CertificateInformation, X509LoadError},
+    GetDerEncodedCertificateError, PkiSignatureAlgorithm, X509CertificateDer,
 };
 
 use bytes::Bytes;
 use rustls_pki_types::{pem::PemObject, TrustAnchor};
+use sha2::Digest;
 pub use webpki::EndEntityCert as X509EndCertificate;
 use webpki::{Error as WebPkiError, KeyUsage};
 
 use libparsec_types::prelude::*;
+use std::str::FromStr;
+use x509_cert::time::Time;
 
 #[derive(Clone)]
 pub struct DerCertificate<'a> {
@@ -289,4 +294,110 @@ pub async fn encrypt_message(
                 .map(|v| (PKIEncryptionAlgorithm::RsaesOaepSha256, Bytes::from(v)))
         }
     }
+}
+
+pub enum InvalidCertificateReason {
+    UnableToParseTime,
+    UnableToParseCert(X509LoadError),
+    UnableToGetAttribute(String),
+    InvalidEmail,
+}
+
+pub enum CertificateWithDetails {
+    Valid {
+        handle: X509CertificateReference,
+        friendly_name: Option<String>, // May be different that CertificateWithDetails.name
+        details: CertificateDetails,
+    },
+    Invalid {
+        handle: X509CertificateReference,
+        friendly_name: Option<String>,
+        invalid_reason: InvalidCertificateReason,
+    },
+}
+
+pub struct CertificateDetails {
+    pub name: Option<String>, // Common name of the certificate
+    pub subject: Vec<DistinguishedNameValue>,
+    pub issuer: Vec<DistinguishedNameValue>,
+    pub not_before: DateTime,
+    pub not_after: DateTime,
+    pub serial: Bytes,
+    pub emails: Vec<EmailAddress>,
+    pub can_sign: bool,
+    pub can_encrypt: bool,
+}
+
+pub fn get_cert_details(cert: &[u8]) -> Result<CertificateDetails, InvalidCertificateReason> {
+    let info: X509CertificateInformation = X509CertificateInformation::load_der(cert)
+        .map_err(InvalidCertificateReason::UnableToParseCert)?;
+    let emails = info
+        .emails()
+        .map(EmailAddress::from_str)
+        .collect::<Result<_, _>>()
+        .map_err(|_| InvalidCertificateReason::InvalidEmail)?;
+
+    let name = info.common_name().map(|v| v.to_string());
+    let subject = info.subject;
+    let issuer = info.issuer;
+
+    let can_encrypt = info.extensions.can_encrypt();
+    let can_sign = info.extensions.can_sign();
+    let serial = info.serial;
+
+    let not_before = time_to_datetime(info.validity.not_before)?;
+    let not_after = time_to_datetime(info.validity.not_after)?;
+
+    Ok(CertificateDetails {
+        name,
+        subject,
+        issuer,
+        not_before,
+        not_after,
+        serial,
+        emails,
+        can_sign,
+        can_encrypt,
+    })
+}
+
+fn time_to_datetime(time: Time) -> Result<DateTime, InvalidCertificateReason> {
+    let time = time.to_date_time();
+    DateTime::from_ymd_hms_us(
+        time.year().into(),
+        time.month().into(),
+        time.day().into(),
+        time.hour().into(),
+        time.minutes().into(),
+        time.seconds().into(),
+        0,
+    )
+    .map_err(|_| InvalidCertificateReason::UnableToParseTime)
+}
+
+pub async fn list_user_certificates_with_details(
+) -> Result<Vec<CertificateWithDetails>, ListUserCertificatesError> {
+    Ok(list_user_certificates_der()
+        .await?
+        .into_iter()
+        .map(|cert| {
+            let digest = sha2::Sha256::digest(&cert);
+            let hash = X509CertificateHash::SHA256(Box::new(digest.into()));
+
+            let cert_handle: X509CertificateReference = hash.into();
+            let friendly_name = None; // TODO
+            match get_cert_details(cert.as_ref()) {
+                Ok(details) => CertificateWithDetails::Valid {
+                    handle: cert_handle,
+                    friendly_name,
+                    details,
+                },
+                Err(invalid_reason) => CertificateWithDetails::Invalid {
+                    handle: cert_handle,
+                    friendly_name,
+                    invalid_reason,
+                },
+            }
+        })
+        .collect())
 }

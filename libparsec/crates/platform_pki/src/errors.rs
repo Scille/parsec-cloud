@@ -100,3 +100,9 @@ error_set::error_set! {
     LoadSubmitPayloadError := ValidatePayloadError || DataError
     LoadAnswerPayloadError := ValidatePayloadError || DataError
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum ListUserCertificatesError {
+    #[error("cannot open certificate store")]
+    CannotOpenStore,
+}
