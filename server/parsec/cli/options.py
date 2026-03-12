@@ -1,9 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+import asyncio
 import sys
 from collections import defaultdict
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Coroutine, Iterable, Iterator
 from contextlib import contextmanager
 from functools import wraps
 from itertools import count
@@ -109,50 +110,67 @@ def logging_config_options(
     return _logging_config_options
 
 
-def sentry_config_options(
-    configure_sentry: bool,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    def _sentry_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[str, str, P], R]:
-        # Sentry SKD uses 3 environ variables during it configuration phase:
-        # - `SENTRY_DSN`
-        # - `SENTRY_ENVIRONMENT`
-        # - `SENTRY_RELEASE`
-        # Those variables are only used if the corresponding parameter is not
-        # explicitly provided while calling `sentry_init(**config)`.
-        # Hence we make sure we provide the three parameters (note the release
-        # is determined from Parsec's version) so those `PARSEC_*` env vars
-        # are never read and don't clash with the `PARSEC_SENTRY_*` ones.
-        @click.option(
-            "--sentry-dsn",
-            metavar="URL",
-            envvar="PARSEC_SENTRY_DSN",
-            show_envvar=True,
-            help="Sentry Data Source Name for telemetry report",
-        )
-        @click.option(
-            "--sentry-environment",
-            metavar="NAME",
-            envvar="PARSEC_SENTRY_ENVIRONMENT",
-            show_envvar=True,
-            default="production",
-            show_default=True,
-            help="Sentry environment for telemetry report",
-        )
-        @wraps(fn)
-        def wrapper(
-            sentry_dsn: str | None, sentry_environment: str, *args: P.args, **kwargs: P.kwargs
-        ) -> R:
-            if configure_sentry and sentry_dsn:
+def asyncio_run[**P, R](
+    fn: Callable[P, Coroutine[Any, Any, R]],
+) -> Callable[P, R]:
+    @wraps(fn)
+    def wrapper(
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ):
+        return asyncio.run(fn(*args, **kwargs))
+
+    return wrapper
+
+
+def sentry_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[str, str, P], R]:
+    # Sentry SKD uses 3 environ variables during it configuration phase:
+    # - `SENTRY_DSN`
+    # - `SENTRY_ENVIRONMENT`
+    # - `SENTRY_RELEASE`
+    # Those variables are only used if the corresponding parameter is not
+    # explicitly provided while calling `sentry_init(**config)`.
+    # Hence we make sure we provide the three parameters (note the release
+    # is determined from Parsec's version) so those `PARSEC_*` env vars
+    # are never read and don't clash with the `PARSEC_SENTRY_*` ones.
+    @click.option(
+        "--sentry-dsn",
+        metavar="URL",
+        envvar="PARSEC_SENTRY_DSN",
+        show_envvar=True,
+        help="Sentry Data Source Name for telemetry report",
+    )
+    @click.option(
+        "--sentry-environment",
+        metavar="NAME",
+        envvar="PARSEC_SENTRY_ENVIRONMENT",
+        show_envvar=True,
+        default="production",
+        show_default=True,
+        help="Sentry environment for telemetry report",
+    )
+    @wraps(fn)
+    def wrapper(
+        sentry_dsn: str | None, sentry_environment: str, *args: P.args, **kwargs: P.kwargs
+    ) -> R:
+        # We cannot initialize Sentry right now since we haven't entered the asyncio event loop yet!
+        # (cf. the `There is no running asyncio loop so there is nothing Sentry can patch.` warning
+        # displayed when Sentry is initialized in debug mode).
+        #
+        # So instead it is the command function responsibility to call `configure_sentry` as early
+        # as possible (typically by decorating the command function with `@asyncio_run` so that it
+        # is itself an async function that can call `configure_sentry` right away).
+        async def configure_sentry():
+            if sentry_dsn:
                 enable_sentry_logging(dsn=sentry_dsn, environment=sentry_environment)
 
-            kwargs["sentry_dsn"] = sentry_dsn
-            kwargs["sentry_environment"] = sentry_environment
+        kwargs["sentry_dsn"] = sentry_dsn
+        kwargs["sentry_environment"] = sentry_environment
+        kwargs["configure_sentry"] = configure_sentry
 
-            return fn(*args, **kwargs)
+        return fn(*args, **kwargs)
 
-        return wrapper
-
-    return _sentry_config_options
+    return wrapper
 
 
 def version_option[**P, R](fn: Callable[P, R]) -> Callable[P, R]:
