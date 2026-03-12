@@ -664,6 +664,7 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
     .dropdown {
       border: 1px solid var(--parsec-color-light-secondary-medium);
       border-radius: var(--parsec-radius-8);
+      flex-shrink: 0;
     }
 
     #batch-activate-button {

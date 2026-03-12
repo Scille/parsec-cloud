@@ -5,17 +5,20 @@
     class="provider-card"
     v-if="serverConfig.openbao"
   >
-    <sso-provider-card
-      v-for="auth in serverConfig.openbao.auths.filter((auth) => isSSOProviderHandled(auth.tag))"
-      :key="auth.tag"
-      :provider="auth.tag"
-      :is-connected="openBaoClient !== undefined && openBaoClient.getConnectionInfo().provider === auth.tag"
-      @sso-selected="onSSOLoginClicked"
-    />
-    <ms-spinner
-      v-if="querying"
-      class="provider-card-spinner"
-    />
+    <div class="provider-card-content">
+      <sso-provider-card
+        v-for="auth in serverConfig.openbao.auths.filter((auth) => isSSOProviderHandled(auth.tag))"
+        :key="auth.tag"
+        :provider="auth.tag"
+        :is-connected="openBaoClient !== undefined && openBaoClient.getConnectionInfo().provider === auth.tag"
+        @sso-selected="onSSOLoginClicked"
+        :class="{ disabled: querying }"
+      />
+      <ms-spinner
+        v-if="querying"
+        class="provider-card-spinner"
+      />
+    </div>
     <ms-report-text
       v-if="error"
       :theme="MsReportTheme.Error"
@@ -99,12 +102,27 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  position: relative;
+
+  &-content {
+    display: flex;
+    gap: 1rem;
+    position: relative;
+    align-items: center;
+
+    .disabled {
+      pointer-events: none;
+      opacity: 0.2;
+    }
+  }
 
   &-spinner {
     position: absolute;
-    top: 1.125rem;
-    right: 2rem;
+    top: 1.75rem;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--parsec-color-light-secondary-white);
+    border-radius: 50%;
+    padding: 0.125rem;
   }
 }
 </style>
