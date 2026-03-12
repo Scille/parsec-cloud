@@ -5,12 +5,12 @@ mod find_in_store;
 mod private_key;
 mod schannel_utils;
 
+use crate::errors::ListUserCertificatesError;
 use crate::{
-    DecryptMessageError, GetDerEncodedCertificateError, ListIntermediateCertificatesError,
-    ListTrustedRootCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
-    X509CertificateDer,
+    DecryptMessageError, DerCertificate, GetDerEncodedCertificateError,
+    ListIntermediateCertificatesError, ListTrustedRootCertificatesError,
+    ShowCertificateSelectionDialogError, SignMessageError, X509CertificateDer,
 };
-
 use bytes::Bytes;
 use schannel::{
     cert_context::{CertContext, HashAlgorithm},
@@ -412,4 +412,15 @@ fn ncrypt_decrypt_message_with_rsa(
         }
         Ok(buff)
     }
+}
+
+pub async fn list_user_certificates_der(
+) -> Result<Vec<DerCertificate<'static>>, ListUserCertificatesError> {
+    let store = CertStore::open_current_user("MY")
+        .map_err(|_| ListUserCertificatesError::CannotOpenStore)?;
+
+    Ok(store
+        .certs()
+        .map(|ctx| DerCertificate::from_der_owned(ctx.to_der().to_owned()))
+        .collect())
 }

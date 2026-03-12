@@ -6,6 +6,7 @@ mod extensions;
 use rsa::pkcs8::DecodePublicKey;
 use x509_cert::{
     der::{Decode, Encode, Error as DERError, SliceReader},
+    time::Validity,
     Version,
 };
 
@@ -38,6 +39,8 @@ pub enum HandleFromCertInfoError {
 pub struct X509CertificateInformation {
     pub subject: Vec<DistinguishedNameValue>,
     pub issuer: Vec<DistinguishedNameValue>,
+    pub validity: Validity,
+    pub serial: Bytes,
     pub extensions: Extensions,
 }
 
@@ -104,6 +107,12 @@ impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
         let issuer = extract_dn_list_from_rnd_seq(value.tbs_certificate.issuer);
         log::trace!("Collected issuer: {issuer:?}");
 
+        let serial = value.tbs_certificate.serial_number;
+        log::trace!("Collected serial: {serial:?}");
+
+        let validity = value.tbs_certificate.validity;
+        log::trace!("Collected validity: {validity:?}");
+
         // Extensions are only available on V3 certificate
         let extensions: Extensions = if value.tbs_certificate.version == Version::V3 {
             value
@@ -119,6 +128,8 @@ impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
             subject,
             issuer,
             extensions,
+            validity,
+            serial: Bytes::copy_from_slice(serial.as_bytes()),
         })
     }
 }
