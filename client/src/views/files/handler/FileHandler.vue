@@ -51,8 +51,12 @@
             </div>
             <div
               v-if="isComponentEditor() && readOnly"
-              class="save-info"
+              class="save-info read-only subtitles-sm"
             >
+              <ion-icon
+                :icon="eye"
+                class="read-only-icon"
+              />
               {{ $msTranslate('fileEditors.saving.readOnly') }}
             </div>
             <div
@@ -259,7 +263,19 @@ import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayView
 import { FileViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
-import { alert, chevronDown, chevronUp, create, ellipsisHorizontal, informationCircle, link, open, save, warning } from 'ionicons/icons';
+import {
+  alert,
+  chevronDown,
+  chevronUp,
+  create,
+  ellipsisHorizontal,
+  eye,
+  informationCircle,
+  link,
+  open,
+  save,
+  warning,
+} from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import {
   Answer,
@@ -1019,6 +1035,20 @@ async function openSmallDisplayActionMenu(): Promise<void> {
           width: 1.125rem;
           font-size: 1.125rem;
           margin-right: 0;
+        }
+
+        &.read-only {
+          background: var(--parsec-color-light-secondary-medium);
+          color: var(--parsec-color-light-secondary-text);
+          padding: 0.25rem 0.75rem;
+          border-radius: var(--parsec-radius-12);
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          &-icon {
+            font-size: 1rem;
+          }
         }
 
         &-text {

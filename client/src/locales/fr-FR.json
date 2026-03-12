@@ -651,8 +651,8 @@
             "open": "Ouvrir dans l'explorateur"
         },
         "skipViewers": {
-            "label": "Ne pas utiliser l'aperçu des fichiers",
-            "description": "Toujours ouvrir les fichiers dans l'application par défaut de votre système"
+            "label": "Utiliser les applications du système pour ouvrir les fichiers",
+            "description": "Lorsque cette option est activée, les fichiers seront ouverts avec les applications par défaut du système plutôt qu'avec l'aperçu et l'éditeur intégrés à Parsec."
         },
         "language": {
             "label": "Langue",
@@ -1093,7 +1093,8 @@
         }
     },
     "FileDetails": {
-        "title": "Détails de {name}",
+        "fileTitle": "Détails du fichier",
+        "folderTitle": "Détails du dossier",
         "stats": {
             "generalInfo": "Informations générales",
             "lastUpdate": "Dernière modification",
@@ -1641,7 +1642,7 @@
         "emptyList": "Aucun utilisateur à afficher.",
         "noMatch": "Aucun utilisateur ne correspond à vos filtres.",
         "listUsersFailed": "Impossible d'obtenir les utilisateurs de l'organisation. Veuillez vérifier votre connexion internet.",
-        "userSelectedCount": "Aucun utilisateur sélectionné | Un utilisateur sélectionné | {count} utilisateurs sélectionnés",
+        "userSelectedCount": "Aucun utilisateur sélectionné | 1 utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
             "titleDetails": "Détails de l'utilisateur",
@@ -2903,7 +2904,7 @@
             "tooltipUnsaved": "Les modifications ne sont pas encore sauvegardées.",
             "tooltipError": "Les modifications n'ont pas été sauvegardées.",
             "tooltipOffline": "Vous êtes hors-ligne, les changements ne peuvent pas être sauvegardés.",
-            "readOnly": "Document en lecture seule",
+            "readOnly": "Lecture seule",
             "notSavedTitle": "Abandonner les modifications ?",
             "notSavedQuestion": "Certaines modifications n'ont pas encore été enregistrées. Voulez-vous abandonner les modifications ?",
             "notSavedDiscard": "Abandonner les modifications",

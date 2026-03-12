@@ -652,8 +652,8 @@
             "open": "Open in explorer"
         },
         "skipViewers": {
-            "label": "Do not use file preview",
-            "description": "Always open files in your system's default application"
+            "label": "Use system's applications to open files",
+            "description": "When enabled, files will be opened with the system's default applications instead of Parsec's built-in viewers and editors"
         },
         "language": {
             "label": "Language",
@@ -1093,7 +1093,8 @@
         }
     },
     "FileDetails": {
-        "title": "Details on {name}",
+        "fileTitle": "Details on the file",
+        "folderTitle": "Details on the folder",
         "stats": {
             "generalInfo": "General information",
             "lastUpdate": "Last updated",
@@ -1641,7 +1642,7 @@
         "emptyList": "No user to display.",
         "noMatch": "No users matching your filters.",
         "listUsersFailed": "Failed to retrieve users for this organization. Please make sure you are online.",
-        "userSelectedCount": "No user selected | One user selected | {count} users selected",
+        "userSelectedCount": "No user selected | 1 user selected | {count} users selected",
         "userContextMenu": {
             "titleRemove": "Deletion",
             "titleDetails": "User details",
@@ -2904,7 +2905,7 @@
             "tooltipUnsaved": "Changes haven't been saved yet.",
             "tooltipError": "Failed to save the changes.",
             "tooltipOffline": "You are offline, changes cannot be saved.",
-            "readOnly": "Read only document",
+            "readOnly": "Read only",
             "notSavedTitle": "Discard changes?",
             "notSavedQuestion": "Some changes have not been saved yet. Do you want to discard them?",
             "notSavedDiscard": "Discard changes",

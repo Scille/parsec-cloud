@@ -210,6 +210,12 @@ async function onCopyEmailClicked(email: string): Promise<void> {
       display: flex;
       gap: 0.5rem;
 
+      span {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
       .name-you {
         color: var(--parsec-color-light-secondary-text);
         font-weight: 700;

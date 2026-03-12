@@ -3,7 +3,7 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="{ key: 'FileDetails.title', data: { name: entry.name } }"
+      :title="entry.isFile() ? 'FileDetails.fileTitle' : 'FileDetails.folderTitle'"
       :close-button="{ visible: true }"
     >
       <div class="file-info-container">
@@ -236,10 +236,15 @@ async function copyPath(): Promise<void> {
     display: flex;
     width: 3rem;
     height: 3rem;
+    flex-shrink: 0;
   }
 
   &__name {
     color: var(--parsec-color-light-secondary-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-height: 1.5rem;
   }
 
   &-details {
