@@ -96,7 +96,7 @@ for (const identitySystem of ['pki', 'openbao']) {
 
     await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeVisible();
 
-    await expect(page).toHavePageTitle('Invitations & Requests');
+    await expect(page).toHavePageTitle('Invitations & Join Requests');
 
     await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__label')).toHaveText(
       'Join requests (PKI/SSO)',

@@ -140,7 +140,6 @@
         </settings-option>
         <!-- skip file viewers -->
         <settings-option
-          v-if="isDesktop()"
           class="settings-list__item"
           title="SettingsModal.skipViewers.label"
           description="SettingsModal.skipViewers.description"

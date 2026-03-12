@@ -134,6 +134,7 @@ const statusText = computed(() => {
     flex-direction: column;
     gap: 0.25rem;
     width: 100%;
+    overflow: hidden;
 
     .organization-request-organization {
       color: var(--parsec-color-light-secondary-text);
