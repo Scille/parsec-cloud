@@ -67,6 +67,7 @@ async fn ok(env: &TestbedEnv) {
                             archiving_configuration: RealmArchivingConfiguration::Available.into(),
                             archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder
                                 .into(),
+                            can_self_promote_to_owner: false.into(),
                         });
 
                     // Correct placeholder name for wksp5
@@ -116,6 +117,7 @@ async fn ok(env: &TestbedEnv) {
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = wksp1_info;
         p_assert_eq!(*id, wksp1_id);
         p_assert_eq!(*is_bootstrapped, true);
@@ -144,6 +146,7 @@ async fn ok(env: &TestbedEnv) {
                 timestamp: "2000-01-07T00:00:00Z".parse().unwrap()
             }
         );
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 
     // wksp2
@@ -158,6 +161,7 @@ async fn ok(env: &TestbedEnv) {
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = wksp2_info;
         p_assert_eq!(*id, wksp2_id, "{:?}", wksp2_info);
         p_assert_eq!(*is_bootstrapped, true);
@@ -184,6 +188,7 @@ async fn ok(env: &TestbedEnv) {
             *archiving_configuration_origin,
             CertificateBasedInfoOrigin::Placeholder
         );
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 
     // wksp3
@@ -198,6 +203,7 @@ async fn ok(env: &TestbedEnv) {
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = wksp3_info;
         p_assert_eq!(*id, wksp3_id);
         p_assert_eq!(*is_bootstrapped, false);
@@ -214,6 +220,7 @@ async fn ok(env: &TestbedEnv) {
             *archiving_configuration_origin,
             CertificateBasedInfoOrigin::Placeholder
         );
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 
     // wksp4 is never listed as we are no longer part of it
@@ -230,6 +237,7 @@ async fn ok(env: &TestbedEnv) {
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = wksp5_info;
         p_assert_eq!(*id, wksp5_id);
         p_assert_eq!(*is_bootstrapped, false);
@@ -251,6 +259,7 @@ async fn ok(env: &TestbedEnv) {
             *archiving_configuration_origin,
             CertificateBasedInfoOrigin::Placeholder
         );
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 
     // wksp6
@@ -265,6 +274,7 @@ async fn ok(env: &TestbedEnv) {
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = wksp6_info;
         p_assert_eq!(*id, wksp6_id);
         p_assert_eq!(*is_bootstrapped, false);
@@ -286,6 +296,7 @@ async fn ok(env: &TestbedEnv) {
             *archiving_configuration_origin,
             CertificateBasedInfoOrigin::Placeholder
         );
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 }
 

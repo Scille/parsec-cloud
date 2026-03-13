@@ -88,6 +88,7 @@ async fn ok(env: &TestbedEnv) {
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = wksp1_info;
         p_assert_eq!(id, wksp1_id);
         p_assert_eq!(is_bootstrapped, true);
@@ -109,6 +110,7 @@ async fn ok(env: &TestbedEnv) {
             archiving_configuration_origin,
             CertificateBasedInfoOrigin::Placeholder
         );
+        p_assert_eq!(can_self_promote_to_owner, false);
     }
 }
 
@@ -194,6 +196,7 @@ async fn realm_not_bootstrapped_missing_initial_rename(env: &TestbedEnv) {
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = wksp1_info;
         p_assert_eq!(id, wksp1_id);
         p_assert_eq!(is_bootstrapped, true);
@@ -215,6 +218,7 @@ async fn realm_not_bootstrapped_missing_initial_rename(env: &TestbedEnv) {
             archiving_configuration_origin,
             CertificateBasedInfoOrigin::Placeholder
         );
+        p_assert_eq!(can_self_promote_to_owner, false);
     }
 }
 
@@ -361,6 +365,7 @@ async fn realm_not_bootstrapped_missing_initial_key_rotation(env: &TestbedEnv) {
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = wksp1_info;
         p_assert_eq!(id, wksp1_id);
         p_assert_eq!(is_bootstrapped, true);
@@ -382,6 +387,7 @@ async fn realm_not_bootstrapped_missing_initial_key_rotation(env: &TestbedEnv) {
             archiving_configuration_origin,
             CertificateBasedInfoOrigin::Placeholder
         );
+        p_assert_eq!(can_self_promote_to_owner, false);
     }
 }
 
