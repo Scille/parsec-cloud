@@ -1012,6 +1012,7 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                             name_origin: CertificateBasedInfoOrigin::Placeholder,
                             role: RealmRole::Owner,
                             role_origin: CertificateBasedInfoOrigin::Placeholder,
+                            can_self_promote_to_owner: false.into(),
                         });
                 }
             }
@@ -1083,6 +1084,7 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                         role_origin: CertificateBasedInfoOrigin::Certificate {
                             timestamp: event.timestamp,
                         },
+                        can_self_promote_to_owner: false.into(),
                     });
                 }
                 TestbedEvent::ShareRealm(event) if event.user == user_id => match event.role {
@@ -1104,6 +1106,7 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                                     role_origin: CertificateBasedInfoOrigin::Certificate {
                                         timestamp: event.timestamp,
                                     },
+                                    can_self_promote_to_owner: false.into(),
                                 });
                             }
                             Some(entry) => {

@@ -328,6 +328,7 @@ impl CrcHash for LocalUserManifestWorkspaceEntry {
             name_origin,
             role,
             role_origin,
+            can_self_promote_to_owner,
         } = self;
 
         id.crc_hash(hasher);
@@ -335,6 +336,7 @@ impl CrcHash for LocalUserManifestWorkspaceEntry {
         name_origin.crc_hash(hasher);
         role.crc_hash(hasher);
         role_origin.crc_hash(hasher);
+        can_self_promote_to_owner.crc_hash(hasher);
     }
 }
 
