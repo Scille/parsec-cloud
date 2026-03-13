@@ -4,6 +4,42 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.8.1 (2026-03-17)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Added option to toggle on or off Multi-Factor Authentication
+  (`#12328 <https://github.com/Scille/parsec-cloud/issues/12328>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed file and workspace link opening on desktop app
+  (`#12400 <https://github.com/Scille/parsec-cloud/issues/12400>`__)
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Added documentation for the async enrollment feature
+  (`#12359 <https://github.com/Scille/parsec-cloud/issues/12359>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Changed the Invitations & Join Requests sidebar element to more explicitly
+  display pending invitations
+  (`#12291 <https://github.com/Scille/parsec-cloud/issues/12291>`__)
+
+* Various style issues fixed
+  (`#12292 <https://github.com/Scille/parsec-cloud/issues/12292>`__)
+
+
+
 Parsec v3.8.0 (2026-03-09)
 --------------------------
 
