@@ -81,26 +81,11 @@
                 {{ $msTranslate('Authentication.mfa.buttons.configure') }}
               </ion-text>
             </ion-button>
-            <ion-button
-              v-if="totpStatus && totpStatus.tag === TOTPSetupStatusTag.Confirmed && !currentDevice.totpOpaqueKeyId"
-              id="totp-activate-button"
-              class="authentication-item-button button-default button-large primary-button"
-              fill="clear"
-              @click="activateTotp"
-            >
-              <ion-text class="authentication-item-button__label">
-                {{ $msTranslate('Authentication.mfa.buttons.activate') }}
-              </ion-text>
-            </ion-button>
-            <ion-button
-              v-if="totpStatus && totpStatus.tag === TOTPSetupStatusTag.Confirmed && currentDevice.totpOpaqueKeyId && false"
-              id="totp-delete-button"
-              class="authentication-item-button button-default button-large secondary-button"
-              fill="clear"
-              @click="deleteTotp"
-            >
-              <ion-text class="authentication-item-button__label">{{ $msTranslate('Authentication.mfa.buttons.delete') }}</ion-text>
-            </ion-button>
+            <ion-toggle
+              v-model="totpActivated"
+              @ion-change="toggleTotp"
+              v-if="totpStatus && totpStatus.tag === TOTPSetupStatusTag.Confirmed"
+            />
           </div>
         </div>
       </div>
@@ -130,7 +115,7 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import ActivateTotpModal from '@/views/totp/ActivateTotpModal.vue';
 import DeleteTotpModal from '@/views/totp/DeleteTotpModal.vue';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
-import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
+import { IonButton, IonIcon, IonText, IonToggle, modalController, ToggleCustomEvent } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
 import { Answer, askQuestion, MsModalResult, MsReportText, MsReportTheme, Translatable } from 'megashark-lib';
 import { computed, inject, onMounted, Ref, ref } from 'vue';
@@ -139,6 +124,7 @@ const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const error = ref('');
 const totpStatus = ref<TOTPSetupStatus | undefined>(undefined);
+const totpActivated = ref(false);
 
 const authMethodLabel = computed(() => {
   if (!currentDevice.value) return '';
@@ -226,7 +212,19 @@ async function refresh(): Promise<void> {
   } else {
     error.value = '';
     currentDevice.value = deviceResult.value;
+    totpActivated.value = currentDevice.value.totpOpaqueKeyId !== null;
   }
+}
+
+async function toggleTotp(event: ToggleCustomEvent): Promise<void> {
+  // The event has the new value of the toggle: when checked is false, it means
+  // it was true and was just switched to false.
+  if (!event.detail.checked) {
+    await deleteTotp();
+  } else {
+    await activateTotp();
+  }
+  await refresh();
 }
 
 async function activateTotp(): Promise<void> {
@@ -303,7 +301,7 @@ async function deleteTotp(): Promise<void> {
   }
   const modal = await modalController.create({
     component: DeleteTotpModal,
-    cssClass: 'delete-totp-modal',
+    cssClass: 'delete-totp',
     componentProps: {
       device: currentDevice.value,
     },

@@ -1317,7 +1317,7 @@
         "popupBlocked": "Please make sure that your browser allows pop-ups for this website.",
         "mfa": {
             "title": "Multi-Factor Authentication (MFA)",
-            "description": "Add an additional layer of security when logging in to this organization from all your devices.",
+            "description": "Add an additional layer of security when logging in to this organization from this device.",
             "info": "The organization requires multi-factor authentication.",
             "or": "Or",
             "inactive": "Inactive",
@@ -1367,10 +1367,12 @@
                 "deleteOk": "Multi-factor authentication has been removed"
             },
             "delete": {
-                "title": "Delete Multi-Factor Authentication",
-                "warning": "You are about to delete multi-factor authentication. This will reduce the security of your account.",
+                "title": "Disable multi-factor authentication on this device",
+                "subtitle": "Multi-factor authentication will be disabled on this device but will remain configured for the organization. You can enable it again at any time.",
+                "moreInformation": "More information",
+                "warning": "Disabling multi-factor authentication from this device will reduce security.",
                 "authenticationTitle": "Current authentication",
-                "totpCodeTitle": "MFA code",
+                "totpCodeTitle": "Enter the 6-digit code from your authenticator app",
                 "confirmButton": "Delete MFA",
                 "cancelButton": "Cancel",
                 "success": "Multi-factor authentication has been successfully deleted.",
