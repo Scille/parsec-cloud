@@ -14,6 +14,7 @@ pub use webpki::EndEntityCert as X509EndCertificate;
 use webpki::{Error as WebPkiError, KeyUsage};
 
 use libparsec_types::prelude::*;
+use x509_cert::{attr::AttributeType, name::DistinguishedName};
 
 #[derive(Clone)]
 pub struct Certificate<'a> {
@@ -256,4 +257,33 @@ pub fn get_root_certificate_info_from_trustchain<'cert>(
         subject,
         common_name,
     })
+}
+
+pub enum InvalidCertificateReason {
+    UnableToParseTime,
+    UnableToGetAttribute(String),
+}
+pub enum CertificateWithDetails {
+    Valid {
+        handle: X509CertificateReference,
+        friendly_name: Option<String>, // May be different that CertificateWithDetails.name
+        details: CertificateDetails,
+    },
+    Invalid {
+        handle: X509CertificateReference,
+        friendly_name: Option<String>,
+        invalid_reason: InvalidCertificateReason,
+    },
+}
+
+pub struct CertificateDetails {
+    pub name: Option<String>, // Common name of the certificate
+    pub subject: Vec<DistinguishedName>,
+    pub issuer: Vec<DistinguishedName>,
+    pub not_before: DateTime,
+    pub not_after: DateTime,
+    pub serial: Bytes,
+    pub emails: Vec<EmailAddress>,
+    pub can_sign: bool,
+    pub can_encrypt: bool,
 }

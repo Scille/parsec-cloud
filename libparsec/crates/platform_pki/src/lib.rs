@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 pub mod errors;
+#[cfg(not(target_os = "windows"))]
+mod pkcs11;
 mod shared;
 #[cfg(any(test, feature = "test-fixture"))]
 pub mod test_fixture;
@@ -19,69 +21,8 @@ use libparsec_types::prelude::*;
 #[cfg(target_os = "windows")]
 pub(crate) use windows as platform;
 
-// Mock module for unsupported platform
 #[cfg(not(target_os = "windows"))]
-mod platform {
-    use crate::{
-        errors::ListTrustedRootCertificatesError, DecryptMessageError, EncryptMessageError,
-        GetDerEncodedCertificateError, ListIntermediateCertificatesError,
-        ShowCertificateSelectionDialogError, SignMessageError,
-    };
-    use libparsec_types::prelude::*;
-
-    pub async fn get_der_encoded_certificate(
-        certificate_ref: &X509CertificateReference,
-    ) -> Result<Bytes, GetDerEncodedCertificateError> {
-        let _ = certificate_ref;
-        unimplemented!("platform not supported")
-    }
-
-    pub async fn list_trusted_root_certificate_anchors(
-    ) -> Result<Vec<rustls_pki_types::TrustAnchor<'static>>, ListTrustedRootCertificatesError> {
-        unimplemented!("platform not supported")
-    }
-
-    pub async fn list_intermediate_certificates(
-    ) -> Result<Vec<rustls_pki_types::CertificateDer<'static>>, ListIntermediateCertificatesError>
-    {
-        unimplemented!("platform not supported")
-    }
-
-    pub async fn sign_message(
-        message: &[u8],
-        certificate_ref: &X509CertificateReference,
-    ) -> Result<(PkiSignatureAlgorithm, Bytes), SignMessageError> {
-        let _ = message;
-        let _ = certificate_ref;
-        unimplemented!("platform not supported")
-    }
-
-    pub async fn encrypt_message(
-        message: &[u8],
-        certificate_ref: &X509CertificateReference,
-    ) -> Result<(PKIEncryptionAlgorithm, Bytes), EncryptMessageError> {
-        let _ = (message, certificate_ref);
-        unimplemented!("platform not supported")
-    }
-
-    pub async fn decrypt_message(
-        algo: PKIEncryptionAlgorithm,
-        encrypted_message: &[u8],
-        certificate_ref: &X509CertificateReference,
-    ) -> Result<Bytes, DecryptMessageError> {
-        let _ = (algo, encrypted_message, certificate_ref);
-        unimplemented!("platform not supported")
-    }
-
-    pub fn show_certificate_selection_dialog_windows_only(
-    ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
-        unimplemented!("platform not supported")
-    }
-
-    pub fn is_available() -> bool {
-        false
-    }
-}
+pub(crate) use pkcs11 as platform;
 
 // TODO: https://github.com/Scille/parsec-cloud/issues/11215
 // This is specific to windows, it cannot be replicated on other platform.
