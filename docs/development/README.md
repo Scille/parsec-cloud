@@ -130,14 +130,14 @@ In addition to the [shared requirements](#shared-requirements), for working with
 
 ### Base requirement
 
-1. Install [`Node 22.14.0`](https://nodejs.org/en/download/releases).
+1. Install [`Node 22.22.1`](https://nodejs.org/en/download/releases).
 
    We recommend using [`nvm`](https://github.com/nvm-sh/nvm) to manage multiple node versions:
 
    > [`nvm-windows`](https://github.com/coreybutler/nvm-windows) for `Windows`
 
    ```shell
-   nvm install 22.14.0
+   nvm install 22.22.1
    ```
 
 2. Install `wasm-pack`
