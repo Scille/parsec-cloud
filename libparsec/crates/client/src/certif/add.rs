@@ -1471,7 +1471,7 @@ async fn check_realm_role_certificate_consistency(
     } else if author_user_id == cooked.user_id {
         // 2.b) The realm already exists, and this is a self-promotion certificate:
         // - Author must not already be OWNER
-        // - Author must have the higher role among the non-revoked members of the workspace
+        // - Author must have the higher role among the non-revoked & non-OUTSIDER members of the workspace
         // - Author must not have OUTSIDER profile (checked at step 5)
 
         if cooked.role != Some(RealmRole::Owner) {
@@ -1533,6 +1533,14 @@ async fn check_realm_role_certificate_consistency(
             if is_revoked {
                 continue;
             }
+
+            let profile =
+                get_user_profile(store, cooked.timestamp, more_senior_member, mk_hint, None)
+                    .await?;
+            if profile == UserProfile::Outsider {
+                continue;
+            }
+
             // The workspace still contains a non-revoked member with a higher role than ours
             let hint = mk_hint();
             let what = Box::new(

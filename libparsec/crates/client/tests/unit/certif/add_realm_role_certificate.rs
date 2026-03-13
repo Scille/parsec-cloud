@@ -827,9 +827,25 @@ async fn member_trying_to_give_role(
 
 #[parsec_test(testbed = "minimal")]
 async fn self_promote_ok(
-    #[values("as_manager", "as_contributor", "as_reader")] kind: &str,
+    #[values(
+        "as_manager",
+        "as_contributor",
+        "as_reader",
+        // OUTSIDER cannot self-promote, so we should be allowed to
+        // self-promote even if we don't have the highest role!
+        "as_reader_with_a_outsider_contributor"
+    )]
+    kind: &str,
     env: &TestbedEnv,
 ) {
+    let (alice_wksp1_role, with_outsider_contributor_mallory) = match kind {
+        "as_manager" => (RealmRole::Manager, false),
+        "as_contributor" => (RealmRole::Contributor, false),
+        "as_reader" => (RealmRole::Reader, false),
+        "as_reader_with_a_outsider_contributor" => (RealmRole::Reader, true),
+        unknown => panic!("Unknown kind: {unknown}"),
+    };
+
     let realm_id = env
         .customize(|builder| {
             builder.new_user("bob");
@@ -837,13 +853,13 @@ async fn self_promote_ok(
                 .new_realm("bob")
                 .then_do_initial_key_rotation_and_naming("wksp1")
                 .map(|e| e.realm);
-            let alice_wksp1_role = match kind {
-                "as_manager" => RealmRole::Manager,
-                "as_contributor" => RealmRole::Contributor,
-                "as_reader" => RealmRole::Reader,
-                unknown => panic!("Unknown kind: {unknown}"),
-            };
             builder.share_realm(realm_id, "alice", alice_wksp1_role);
+            if with_outsider_contributor_mallory {
+                builder
+                    .new_user("mallory")
+                    .with_initial_profile(UserProfile::Outsider);
+                builder.share_realm(realm_id, "mallory", RealmRole::Contributor);
+            }
             builder.revoke_user("bob");
             builder.certificates_storage_fetch_certificates("alice@dev1");
             realm_id
