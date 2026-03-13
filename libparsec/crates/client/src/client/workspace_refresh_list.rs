@@ -172,6 +172,7 @@ pub async fn refresh_workspaces_list(
             },
             archiving_configuration: archiving_configuration.into(),
             archiving_configuration_origin: archiving_configuration_origin.into(),
+            can_self_promote_to_owner: false.into(), // TODO: `CertificateOps::get_realm_can_self_promote_to_owner` not implemented yet
         });
     }
 
@@ -241,6 +242,7 @@ pub async fn refresh_workspaces_list(
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
                     archiving_configuration: old_entry.archiving_configuration,
                     archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+                    can_self_promote_to_owner: false.into(),
                 });
             }
         }

@@ -60,6 +60,7 @@ async fn ok(#[values(false, true)] restart_client: bool, env: &TestbedEnv) {
                     self_role_origin,
                     archiving_configuration,
                     archiving_configuration_origin,
+                    can_self_promote_to_owner,
                 } = workspaces.pop().unwrap();
                 p_assert_eq!(id, wid);
                 p_assert_eq!(is_started, false);
@@ -76,6 +77,7 @@ async fn ok(#[values(false, true)] restart_client: bool, env: &TestbedEnv) {
                     archiving_configuration_origin,
                     CertificateBasedInfoOrigin::Placeholder
                 );
+                p_assert_eq!(can_self_promote_to_owner, false);
             }
         };
     }
@@ -148,6 +150,7 @@ async fn duplicated_name_is_allowed(
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = &workspaces[0];
         p_assert_eq!(*id, wksp1_id);
         p_assert_eq!(*is_started, false);
@@ -182,6 +185,7 @@ async fn duplicated_name_is_allowed(
             *archiving_configuration_origin,
             CertificateBasedInfoOrigin::Placeholder
         );
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 
     // wksp1
@@ -196,6 +200,7 @@ async fn duplicated_name_is_allowed(
             self_role_origin,
             archiving_configuration,
             archiving_configuration_origin,
+            can_self_promote_to_owner,
         } = &workspaces[1];
         p_assert_eq!(*id, wksp2_id);
         p_assert_eq!(*is_started, false);
@@ -212,6 +217,7 @@ async fn duplicated_name_is_allowed(
             *archiving_configuration_origin,
             CertificateBasedInfoOrigin::Placeholder
         );
+        p_assert_eq!(*can_self_promote_to_owner, false);
     }
 }
 
