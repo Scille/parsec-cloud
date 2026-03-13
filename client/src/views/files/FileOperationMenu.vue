@@ -246,13 +246,27 @@ async function onOperationClick(
   }
   if (operation.type === FileOperationDataType.Import) {
     const op = operation as FileOperationImportData;
-    await navigateTo(Routes.Documents, {
-      query: {
-        workspaceHandle: operation.workspaceHandle,
-        documentPath: op.destination,
-        selectFile: op.files.length === 1 ? op.files.at(0)?.name : undefined,
-      },
-    });
+
+    if (op.files.length === 1) {
+      const file = op.files.at(0) as File;
+      const fullPath = await Path.joinPaths(op.destination, (file as any).relativePath);
+      const parent = await Path.parent(fullPath);
+      await navigateTo(Routes.Documents, {
+        query: {
+          workspaceHandle: operation.workspaceHandle,
+          documentPath: parent,
+          selectFile: file.name,
+        },
+      });
+    } else {
+      await navigateTo(Routes.Documents, {
+        query: {
+          workspaceHandle: operation.workspaceHandle,
+          documentPath: op.destination,
+          selectFile: op.files.length === 1 ? op.files.at(0)?.name : undefined,
+        },
+      });
+    }
   } else if (operation.type === FileOperationDataType.Move || operation.type === FileOperationDataType.Copy) {
     const op = operation as FileOperationMoveData | FileOperationCopyData;
     await navigateTo(Routes.Documents, {
