@@ -279,6 +279,7 @@ import {
   OpenContextualMenuData,
 } from '@/services/eventDistributor';
 import {
+  DuplicatePolicy,
   FileEventRegistrationCanceller,
   FileOperationCopyData,
   FileOperationData,
@@ -863,7 +864,7 @@ async function onFileOperationEvent(
 }
 
 async function startImportFiles(files: Array<File>, destinationFolder?: EntryName): Promise<void> {
-  const existing: Array<File> = [];
+  const existing = new Set<File>();
 
   if (!workspaceInfo.value) {
     return;
@@ -880,7 +881,7 @@ async function startImportFiles(files: Array<File>, destinationFolder?: EntryNam
     const importPath = await Path.joinPaths(destination, (file as any).relativePath);
     const result = await entryStat(workspaceInfo.value.handle, importPath);
     if (result.ok && result.value.isFile()) {
-      existing.push(file);
+      existing.add(file);
     }
   }
 
@@ -888,6 +889,20 @@ async function startImportFiles(files: Array<File>, destinationFolder?: EntryNam
 
   if (!dupPolicy) {
     return;
+  }
+
+  if (dupPolicy === DuplicatePolicy.Ignore) {
+    files = files.filter((file) => !existing.has(file));
+    if (files.length === 0) {
+      informationManager.value.present(
+        new Information({
+          message: 'FoldersPage.noFilesToImport',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
+      return;
+    }
   }
 
   await fileOperationManager.value.import(
@@ -1217,18 +1232,32 @@ async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
     return;
   }
 
-  const existing: Array<EntryModel> = [];
+  const existing = new Set<EntryModel>();
 
   for (const entry of entries) {
     const destPath = await Path.join(folder, entry.name);
     const result = await entryStat(workspaceInfo.value.handle, destPath);
     if (result.ok) {
-      existing.push(entry);
+      existing.add(entry);
     }
   }
   const dupPolicy = await getDuplicatePolicy(existing);
   if (!dupPolicy) {
     return;
+  }
+
+  if (dupPolicy === DuplicatePolicy.Ignore) {
+    entries = entries.filter((entry) => !existing.has(entry));
+    if (entries.length === 0) {
+      informationManager.value.present(
+        new Information({
+          message: 'FoldersPage.noFilesToMove',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
+      return;
+    }
   }
 
   await fileOperationManager.value.move(workspaceInfo.value.handle, entries, folder, dupPolicy);
@@ -1276,18 +1305,32 @@ async function copyEntries(entries: EntryModel[]): Promise<void> {
     return;
   }
 
-  const existing: Array<EntryModel> = [];
+  const existing = new Set<EntryModel>();
 
   for (const entry of entries) {
     const destPath = await Path.join(folder, entry.name);
     const result = await entryStat(workspaceInfo.value.handle, destPath);
     if (result.ok) {
-      existing.push(entry);
+      existing.add(entry);
     }
   }
   const dupPolicy = await getDuplicatePolicy(existing);
   if (!dupPolicy) {
     return;
+  }
+
+  if (dupPolicy === DuplicatePolicy.Ignore) {
+    entries = entries.filter((entry) => !existing.has(entry));
+    if (entries.length === 0) {
+      informationManager.value.present(
+        new Information({
+          message: 'FoldersPage.noFilesToCopy',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
+      return;
+    }
   }
 
   await fileOperationManager.value.copy(workspaceInfo.value.handle, entries, folder, dupPolicy);

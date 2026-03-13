@@ -817,6 +817,9 @@
         "itemSelectedCount": "No selected items | 1 selected item | {count} selected items",
         "emptyFolder": "This folder is empty.",
         "loading": "Loading the folder...",
+        "noFilesToImport": "No files to import.",
+        "noFilesToMove": "No files to move.",
+        "noFilesToCopy": "No files to copy.",
         "actions": {
             "select": "Select all",
             "unselect": "Unselect",

@@ -816,6 +816,9 @@
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
         "loading": "Chargement du dossier...",
+        "noFilesToImport": "Aucun fichier à importer.",
+        "noFilesToMove": "Aucun fichier à déplacer.",
+        "noFilesToCopy": "Aucun fichier à copier.",
         "actions": {
             "select": "Tout sélect.",
             "unselect": "Déselect.",

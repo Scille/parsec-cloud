@@ -271,17 +271,20 @@ for (const dupPolicy of ['replace', 'ignore', 'addCount']) {
       await expect(entries).toHaveCount(1);
       await expect(entries.nth(0).locator('.label-name')).toHaveText('file.txt');
       await expect(entries.nth(0).locator('.label-size')).toHaveText('5 B');
+      await checkFilesUploaded(documents, 2, 1);
     } else if (dupPolicy === 'ignore') {
       await buttons.nth(0).click();
+      await expect(workspaces).toShowToast('No files to import.', 'Info');
       await expect(entries).toHaveCount(1);
       await expect(entries.nth(0).locator('.label-name')).toHaveText('file.txt');
       await expect(entries.nth(0).locator('.label-size')).toHaveText('1 B');
+      await checkFilesUploaded(documents, 1, 1);
     } else {
       await buttons.nth(2).click();
       await expect(entries).toHaveCount(2);
       await expect(entries.locator('.label-name')).toHaveText(['file (2).txt', 'file.txt']);
       await expect(entries.locator('.label-size')).toHaveText(['5 B', '1 B']);
+      await checkFilesUploaded(documents, 2, 1);
     }
-    await checkFilesUploaded(documents, 2, 1);
   });
 }
