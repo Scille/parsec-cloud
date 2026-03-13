@@ -236,9 +236,8 @@ msTest.describe(() => {
       } else if (dupPolicy === 'ignore') {
         await buttons.nth(0).click();
         await expect(dupModal).toBeHidden();
-        await expect(uploadMenu).toBeVisible();
-        await expect(opItems).toHaveCount(3);
-        await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving file.txt');
+        await expect(documents).toShowToast('No files left to move.', 'Info');
+        await expect(uploadMenu).toBeHidden();
         await expect(entries).toHaveCount(2);
         await expect(entries.locator('.label-name')).toHaveText(['Folder', 'file.txt']);
         await entries.nth(0).dblclick();
@@ -335,13 +334,15 @@ msTest.describe(() => {
       }
 
       await expect(dupModal).toBeHidden();
-      await expect(uploadMenu).toBeVisible();
-      await expect(opItems).toHaveCount(3);
-      await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving Folder');
       // Folder is not here anymore for replace and count
       if (dupPolicy === 'replace' || dupPolicy === 'addCount') {
         await expect(entries).toHaveCount(0);
+        await expect(uploadMenu).toBeVisible();
+        await expect(opItems).toHaveCount(3);
+        await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Moving Folder');
       } else {
+        await expect(documents).toShowToast('No files left to move.', 'Info');
+        await expect(uploadMenu).toBeHidden();
         await expect(entries.locator('.label-name')).toHaveText('Folder');
       }
 
