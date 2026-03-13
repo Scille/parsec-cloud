@@ -5,10 +5,12 @@ use libparsec_platform_storage::certificates::UpTo;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
-use crate::{certif::store::LastShamirRecovery, CertificateOps, EventTooMuchDriftWithServerClock};
+use crate::{CertificateOps, EventTooMuchDriftWithServerClock};
 
 use super::{
-    greater_timestamp, CertifStoreError, CertificateBasedActionOutcome, GreaterTimestampOffset,
+    greater_timestamp,
+    store::{CertifStoreError, LastShamirRecovery},
+    CertificateBasedActionOutcome, GreaterTimestampOffset,
 };
 
 #[derive(Debug, thiserror::Error)]
