@@ -75,6 +75,7 @@ async fn ok_with_changes(
                             archiving_configuration: RealmArchivingConfiguration::Available.into(),
                             archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder
                                 .into(),
+                            can_self_promote_to_owner: false.into(),
                         });
                 });
 

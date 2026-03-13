@@ -94,6 +94,7 @@ async fn ok(
         self_role_origin,
         archiving_configuration,
         archiving_configuration_origin,
+        can_self_promote_to_owner,
     } = wksp1_info;
     p_assert_eq!(id, wksp1_id);
     p_assert_eq!(is_bootstrapped, true);
@@ -112,6 +113,7 @@ async fn ok(
             timestamp: "2000-01-09T00:00:00Z".parse().unwrap()
         }
     );
+    p_assert_eq!(can_self_promote_to_owner, false);
 
     let archiving_configuration_origin_timestamp =
         if let CertificateBasedInfoOrigin::Certificate { timestamp } =
