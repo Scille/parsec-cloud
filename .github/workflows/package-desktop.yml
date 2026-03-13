@@ -61,7 +61,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  node-version: 22.14.0
+  node-version: 22.22.1
   WINFSP_VERSION: 2.1.25156
 
 permissions:
