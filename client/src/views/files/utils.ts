@@ -299,8 +299,8 @@ export async function downloadArchive(options: DownloadEntriesOptions): Promise<
   }
 }
 
-export async function getDuplicatePolicy(files: Array<EntryStat | File>): Promise<DuplicatePolicy | undefined> {
-  if (files.length === 0) {
+export async function getDuplicatePolicy(files: Set<EntryStat | File>): Promise<DuplicatePolicy | undefined> {
+  if (files.size === 0) {
     return DuplicatePolicy.AddCounter;
   }
   const modal = await modalController.create({
