@@ -606,6 +606,10 @@ async function openDocumentation(): Promise<void> {
     gap: 1rem;
     position: relative;
     z-index: 100;
+    // Reserve space for overlay scrollbar on Firefox
+    @supports (-moz-appearance: none) {
+      padding-right: 0.75rem;
+    }
 
     @include ms.responsive-breakpoint('md') {
       width: 100%;
