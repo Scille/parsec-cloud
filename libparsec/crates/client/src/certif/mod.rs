@@ -5,6 +5,8 @@ use std::{collections::HashMap, num::NonZeroU8, sync::Arc};
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
+// Re-expose for convenience
+pub use libparsec_platform_storage::certificates::UpTo;
 
 mod add;
 mod block_validate;
@@ -58,7 +60,7 @@ pub use shamir_recovery_list::{
 pub use shamir_recovery_setup::{
     CertifSetupShamirRecoveryError, ShamirRecoverySetupCertificateTimestamps,
 };
-pub use store::{CertifStoreError, UpTo};
+use store::CertifStoreError;
 pub use user_revoke::CertifRevokeUserError;
 pub use user_update_profile::CertifUpdateUserProfileError;
 pub use workspace_bootstrap::CertifBootstrapWorkspaceError;
