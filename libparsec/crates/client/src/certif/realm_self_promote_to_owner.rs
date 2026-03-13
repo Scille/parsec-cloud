@@ -7,8 +7,10 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    greater_timestamp, store::CertifStoreError, CertificateBasedActionOutcome, CertificateOps,
-    GreaterTimestampOffset, InvalidCertificateError, UpTo,
+    greater_timestamp,
+    store::{CertifStoreError, GetCertificateError},
+    CertificateBasedActionOutcome, CertificateOps, GreaterTimestampOffset, InvalidCertificateError,
+    UpTo,
 };
 use crate::EventTooMuchDriftWithServerClock;
 
@@ -24,6 +26,10 @@ pub(super) async fn get_realm_can_self_promote_to_owner(
             if store.get_current_self_profile().await? == UserProfile::Outsider {
                 return Ok(false);
             }
+
+            // The following code is very similar to what is in `add.rs`'s `check_realm_role_certificate_consistency`.
+            // However we cannot factorize them easily since the `store` object is of different types
+            // (`CertificatesStoreReadGuard` vs `CertificatesStoreWriteGuard`).
 
             let realm_roles = store.get_realm_roles(UpTo::Current, realm_id).await?;
 
@@ -68,6 +74,34 @@ pub(super) async fn get_realm_can_self_promote_to_owner(
                 if is_revoked {
                     continue;
                 }
+
+                // Must also exclude OUTSIDERs, as they are not allowed to self-promote
+                let more_senior_member_profile = {
+                    // Updates overwrite each others, so last one contains the current profile
+                    let maybe_update = store
+                        .get_last_user_update_certificate(UpTo::Current, more_senior_member)
+                        .await?;
+                    if let Some(last_update) = maybe_update {
+                        last_update.new_profile
+                    } else {
+                        match store
+                            .get_user_certificate(UpTo::Current, more_senior_member)
+                            .await {
+                                Ok(certif) => Ok(certif.profile),
+                                Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => {
+                                    Err(CertifGetRealmCanSelfPromoteToOwnerError::Internal(anyhow::anyhow!(
+                                        "Local storage of certificates seems corrupted: User {} is member of workspace {}, but its user certificate doesn't exist", more_senior_member, realm_id,
+                                    )))
+                                },
+                                // D'oh :/
+                                Err(err @ GetCertificateError::Internal(_)) => Err(CertifGetRealmCanSelfPromoteToOwnerError::Internal(err.into())),
+                            }?
+                    }
+                };
+                if more_senior_member_profile == UserProfile::Outsider {
+                    continue;
+                }
+
                 // The workspace still contains a non-revoked member with a higher role than ours
                 return Ok(false);
             }
