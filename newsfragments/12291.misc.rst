@@ -1,0 +1,1 @@
+Changed the Invitations & Join Requests sidebar element to more explicitly display pending invitations
