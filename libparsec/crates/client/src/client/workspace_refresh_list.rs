@@ -6,8 +6,8 @@ use libparsec_types::prelude::*;
 use super::Client;
 use crate::{
     certif::{
-        CertifDecryptCurrentRealmNameError, CertifStoreError, InvalidEncryptedRealmNameError,
-        InvalidKeysBundleError,
+        CertifDecryptCurrentRealmNameError, CertifGetCurrentSelfRealmsRoleError,
+        InvalidEncryptedRealmNameError, InvalidKeysBundleError,
     },
     event_bus::EventWorkspacesSelfListChanged,
     user::UserStoreUpdateError,
@@ -61,8 +61,10 @@ pub async fn refresh_workspaces_list(
         .get_current_self_realms_role()
         .await
         .map_err(|e| match e {
-            CertifStoreError::Stopped => ClientRefreshWorkspacesListError::Stopped,
-            CertifStoreError::Internal(err) => {
+            CertifGetCurrentSelfRealmsRoleError::Stopped => {
+                ClientRefreshWorkspacesListError::Stopped
+            }
+            CertifGetCurrentSelfRealmsRoleError::Internal(err) => {
                 err.context("Cannot retrieve self realms role").into()
             }
         })?;

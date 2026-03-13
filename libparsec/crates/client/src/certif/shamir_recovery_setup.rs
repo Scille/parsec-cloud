@@ -7,12 +7,12 @@ use libparsec_platform_storage::certificates::{PerTopicLastTimestamps, UpTo};
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
-use crate::{
-    certif::store::{LastShamirRecovery, LastUserExistAndRevokedInfo},
-    CertificateOps, EventTooMuchDriftWithServerClock, InvalidCertificateError,
+use super::{
+    greater_timestamp,
+    store::{CertifStoreError, LastShamirRecovery, LastUserExistAndRevokedInfo},
+    CertifPollServerError, GreaterTimestampOffset,
 };
-
-use super::{greater_timestamp, CertifPollServerError, CertifStoreError, GreaterTimestampOffset};
+use crate::{CertificateOps, EventTooMuchDriftWithServerClock, InvalidCertificateError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifSetupShamirRecoveryError {
