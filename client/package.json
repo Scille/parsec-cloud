@@ -54,7 +54,7 @@
         "@zip.js/zip.js": "^2.8.8",
         "axios": "^1.13.5",
         "detectincognitojs": "^1.5.0",
-        "file-type": "^21.3.1",
+        "file-type": "^21.3.2",
         "fs-extra": "^11.3.3",
         "luxon": "^3.5.0",
         "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#0a3fcd5c02e296c9ff8238fe1c222034decb7ad4",
