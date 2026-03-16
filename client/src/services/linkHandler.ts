@@ -50,7 +50,7 @@ async function handleTotpReset(link: string): Promise<void> {
   await navigateTo(Routes.Home, { query: { totpResetLink: link } });
 }
 
-async function handleFileLink(link: string, informationManager: InformationManager): Promise<void> {
+export async function handleFileLink(link: string, informationManager: InformationManager): Promise<boolean> {
   const result = await parseFileLink(link);
   if (!result.ok) {
     informationManager.present(
@@ -60,7 +60,7 @@ async function handleFileLink(link: string, informationManager: InformationManag
       }),
       PresentationMode.Toast,
     );
-    return;
+    return false;
   }
   const linkData = result.value;
   // Check if the org we want is already logged in
@@ -108,13 +108,14 @@ async function handleFileLink(link: string, informationManager: InformationManag
         }),
         PresentationMode.Modal,
       );
-      return;
+      return false;
     }
     if (!currentRouteIs(Routes.Home)) {
       await backupCurrentOrganization();
     }
     await navigateTo(Routes.Home, { replace: true, skipHandle: true, query: { deviceId: matchingDevice.deviceId, fileLink: link } });
   }
+  return true;
 }
 
 export async function handleParsecLink(link: string, informationManager: InformationManager): Promise<void> {
