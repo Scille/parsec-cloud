@@ -42,7 +42,7 @@
               class="topbar-left-text__title title-h2"
               :class="hasHistory() || isLargeDisplay ? 'align-center' : 'align-left'"
             >
-              {{ $msTranslate(getTitleForRoute()) }}
+              {{ $msTranslate(routeTitle) }}
             </ion-label>
             <ion-text
               v-if="currentRouteIs(Routes.History) && workspaceName && isSmallDisplay"
@@ -282,6 +282,28 @@ const showSecurityChecklistSmallDisplay = computed(() => {
   return isSmallDisplay.value && securityWarningsCount.value > 0 && securityWarnings.value;
 });
 
+const routeTitle = computed((): Translatable => {
+  switch (getCurrentRouteName()) {
+    case Routes.Users:
+      return 'HeaderPage.titles.users';
+    case Routes.Invitations:
+      return 'HeaderPage.titles.invitationsRequests';
+    case Routes.Storage:
+      return 'HeaderPage.titles.organization.storage';
+    case Routes.Organization:
+      return 'HeaderPage.titles.organization.information';
+    case Routes.About:
+      return 'HeaderPage.titles.about';
+    case Routes.MyProfile:
+      return 'HeaderPage.titles.myProfile';
+    case Routes.History:
+      return 'HeaderPage.titles.history';
+    case null:
+      return '';
+  }
+  return '';
+});
+
 const topbarWidthWatchCancel = watch([windowWidth, fullPath], () => {
   if (topbarLeftRef.value?.offsetWidth && backBlockRef.value?.offsetWidth) {
     breadcrumbsWidth.value = pxToRem(topbarLeftRef.value.offsetWidth - backBlockRef.value.offsetWidth);
@@ -419,28 +441,6 @@ onUnmounted(async () => {
   routeWatchCancel();
   topbarWidthWatchCancel();
 });
-
-function getTitleForRoute(): Translatable {
-  switch (getCurrentRouteName()) {
-    case Routes.Users:
-      return 'HeaderPage.titles.users';
-    case Routes.Invitations:
-      return 'HeaderPage.titles.invitationsRequests';
-    case Routes.Storage:
-      return 'HeaderPage.titles.organization.storage';
-    case Routes.Organization:
-      return 'HeaderPage.titles.organization.information';
-    case Routes.About:
-      return 'HeaderPage.titles.about';
-    case Routes.MyProfile:
-      return 'HeaderPage.titles.myProfile';
-    case Routes.History:
-      return 'HeaderPage.titles.history';
-    case null:
-      return '';
-  }
-  return '';
-}
 
 async function openContextualMenu(event: Event): Promise<void> {
   event.stopPropagation();

@@ -62,7 +62,7 @@
       >
         <client-area-header
           v-if="loggedIn && !querying"
-          :title="getTitleByPage()"
+          :title="pageTitle"
           :organizations="organizations"
           :current-organization="currentOrganization"
           @page-selected="switchPage"
@@ -162,7 +162,7 @@ import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
 import { ClientAreaPages, DefaultBmsOrganization, isDefaultOrganization } from '@/views/client-area/types';
 import { createGesture, GestureDetail, IonContent, IonMenu, IonPage, IonSkeletonText, IonSplitPane } from '@ionic/vue';
 import { Translatable, useWindowSize } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
@@ -181,6 +181,34 @@ const watchSidebarWidthCancel = watch(sidebarWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
   // set toast offset
   setToastOffset(value);
+});
+
+const pageTitle = computed((): Translatable => {
+  switch (currentPage.value) {
+    case ClientAreaPages.BillingDetails:
+      return 'clientArea.header.titles.billingDetails';
+    case ClientAreaPages.Contracts:
+      return 'clientArea.header.titles.contract';
+    case ClientAreaPages.Dashboard:
+      return 'clientArea.header.titles.dashboard';
+    case ClientAreaPages.Invoices:
+    case ClientAreaPages.CustomOrderInvoices:
+      return 'clientArea.header.titles.invoices';
+    case ClientAreaPages.PaymentMethods:
+      return 'clientArea.header.titles.paymentMethods';
+    case ClientAreaPages.PersonalData:
+      return 'clientArea.header.titles.personalData';
+    case ClientAreaPages.Statistics:
+      return 'clientArea.header.titles.statistics';
+    case ClientAreaPages.Orders:
+      return 'clientArea.header.titles.orders';
+    case ClientAreaPages.CustomOrderStatistics:
+      return 'clientArea.header.titles.customOrderStatistics';
+    case ClientAreaPages.CustomOrderBillingDetails:
+      return 'clientArea.header.titles.customOrderBillingDetails';
+    default:
+      return '';
+  }
 });
 
 function setToastOffset(width: number): void {
@@ -310,34 +338,6 @@ async function onOrganizationSelected(organization: BmsOrganization): Promise<vo
   });
   currentOrganization.value = organization;
   refresh.value += 1;
-}
-
-function getTitleByPage(): Translatable {
-  switch (currentPage.value) {
-    case ClientAreaPages.BillingDetails:
-      return 'clientArea.header.titles.billingDetails';
-    case ClientAreaPages.Contracts:
-      return 'clientArea.header.titles.contract';
-    case ClientAreaPages.Dashboard:
-      return 'clientArea.header.titles.dashboard';
-    case ClientAreaPages.Invoices:
-    case ClientAreaPages.CustomOrderInvoices:
-      return 'clientArea.header.titles.invoices';
-    case ClientAreaPages.PaymentMethods:
-      return 'clientArea.header.titles.paymentMethods';
-    case ClientAreaPages.PersonalData:
-      return 'clientArea.header.titles.personalData';
-    case ClientAreaPages.Statistics:
-      return 'clientArea.header.titles.statistics';
-    case ClientAreaPages.Orders:
-      return 'clientArea.header.titles.orders';
-    case ClientAreaPages.CustomOrderStatistics:
-      return 'clientArea.header.titles.customOrderStatistics';
-    case ClientAreaPages.CustomOrderBillingDetails:
-      return 'clientArea.header.titles.customOrderBillingDetails';
-    default:
-      return '';
-  }
 }
 </script>
 

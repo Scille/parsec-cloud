@@ -24,10 +24,10 @@
             class="header-selected-item__back"
           />
           <ion-text class="header-selected-item__title title-h2">
-            {{ $msTranslate(getTitleProfileMenu().tab) }}
+            {{ $msTranslate(profileMenuTitle.tab) }}
           </ion-text>
           <ion-text class="header-selected-item__subtitle body">
-            {{ $msTranslate(getTitleProfileMenu().subtitle) }}
+            {{ $msTranslate(profileMenuTitle.subtitle) }}
           </ion-text>
         </div>
       </ion-header>
@@ -285,7 +285,7 @@ import {
   phonePortrait,
 } from 'ionicons/icons';
 import { Answer, askQuestion, MsImage, OpenIcon, Translatable, useWindowSize } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, Ref, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, Ref, ref } from 'vue';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
@@ -311,12 +311,7 @@ async function logout(): Promise<void> {
   }
 }
 
-interface TitleProfile {
-  tab: Translatable;
-  subtitle: Translatable;
-}
-
-function getTitleProfileMenu(): TitleProfile {
+const profileMenuTitle = computed((): { tab: Translatable; subtitle: Translatable } => {
   switch (myProfileTab.value) {
     case ProfilePages.Settings:
       return {
@@ -349,7 +344,7 @@ function getTitleProfileMenu(): TitleProfile {
         subtitle: '',
       };
   }
-}
+});
 
 async function openDocumentationPopover(): Promise<void> {
   await Env.Links.openDocumentationLink();
