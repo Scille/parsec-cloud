@@ -1282,10 +1282,10 @@ Configure to use email as entity alias name (considering the authentication meth
 is mounted at `my_oidc`, and the user request the `default` ACL policy).
 
 ```bash
-bao write -address $OPENBAO_SERVER_URL$ auth/my_oidc/role/default user_claim="email"
+bao write -address $OPENBAO_SERVER_URL auth/my_oidc/role/default user_claim="email"
 ```
 
-ACL policy (considering the authentication method has for accessor `auth_oidc_e99f8297`):
+ACL policy:
 
 ```hcl
 #
