@@ -247,8 +247,10 @@ NSPHINXOPTS
 ntics
 ntns
 nvlobs
+OIDC
 onlyoffice
 openbao
+openid
 opensc
 ops*
 opses
