@@ -138,13 +138,13 @@ The test functions should test the serialization process, essentially:
 > - execute `$ cargo nextest run -p libparsec_protocol 2>&1 | python ./misc/test_expected_payload_cooker.py`
 > - copy paste the output
 
-Make sure all serialization tests from the protocol create pass before continuint.
+Make sure all serialization tests from the protocol create pass before continuing.
 
 ## 4. Server-side implementation
 
 In almost all cases, the RPC command will be implemented somewhere in [`./server/parsec/components`](../../server/parsec/components).
 
-You will find a "base" components and two main implmentations:
+You will find a "base" components and two main implementations:
 
 - [`./server/parsec/components/memory`](../../server/parsec/components/memory)
 - [`./server/parsec/components/postgresql`](../../server/parsec/components/postgresql)
