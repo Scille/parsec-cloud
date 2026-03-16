@@ -136,7 +136,6 @@ import { EventData, EventDistributor, Events } from '@/services/eventDistributor
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { handleParsecLink } from '@/services/linkHandler';
 import { OpenBaoClient } from '@/services/openBao';
 import { ServerType, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
@@ -385,9 +384,7 @@ async function handleQuery(): Promise<void> {
   }
   queryInProgress.value = true;
   const query = getCurrentRouteQuery();
-  if (query.fileLink) {
-    handleParsecLink(query.fileLink, informationManager);
-  } else if (query.claimLink) {
+  if (query.claimLink) {
     openJoinByLinkModal(query.claimLink);
   } else if (query.bootstrapLink) {
     openCreateOrganizationModal(query.bootstrapLink);
