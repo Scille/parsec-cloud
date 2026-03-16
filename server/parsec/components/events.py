@@ -535,8 +535,16 @@ class BaseEventsComponent:
                 ],
             )
 
+        if self._config.cryptpad_config is None:
+            cryptpad = anonymous_server_cmds.latest.server_config.CryptPadConfigDisabled()
+        else:
+            cryptpad = anonymous_server_cmds.latest.server_config.CryptPadConfigEnabled(
+                server_url=self._config.cryptpad_config.server_url,
+            )
+
         return anonymous_server_cmds.latest.server_config.RepOk(
             account=account,
             organization_bootstrap=organization_bootstrap,
+            cryptpad=cryptpad,
             openbao=openbao,
         )

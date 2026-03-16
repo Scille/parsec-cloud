@@ -100,11 +100,14 @@ pub struct OpenBaoConfig {
     pub transit_mount_path: String,
     pub auths: Vec<OpenBaoAuthConfig>,
 }
-
+pub struct CryptPadConfig {
+    pub server_url: String,
+}
 pub struct ServerConfig {
     pub account: AccountConfig,
     pub organization_bootstrap: OrganizationBootstrapConfig,
     pub openbao: Option<OpenBaoConfig>,
+    pub cryptpad: Option<CryptPadConfig>,
 }
 
 pub async fn get_server_config(
@@ -122,9 +125,15 @@ pub async fn get_server_config(
             account,
             organization_bootstrap,
             openbao,
+            cryptpad,
         } => Ok(ServerConfig {
             account,
             organization_bootstrap,
+            cryptpad: match cryptpad {
+                None => None,
+                Some(libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Disabled) => None,
+                Some(libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Enabled { server_url }) => Some(CryptPadConfig{ server_url }),
+            },
             openbao: match openbao {
                 libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Disabled => None,
                 libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Enabled {

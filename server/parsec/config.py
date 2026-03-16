@@ -252,6 +252,11 @@ class OpenBaoConfig:
     auths: list[OpenBaoAuthConfig]
 
 
+@dataclass(slots=True)
+class CryptPadConfig:
+    server_url: str
+
+
 @dataclass(slots=True, kw_only=True)
 class BackendConfig:
     debug: bool
@@ -296,6 +301,8 @@ class BackendConfig:
     proxy_trusted_addresses: str | None = None
 
     account_config: AccountConfig = AccountConfig.DISABLED
+
+    cryptpad_config: CryptPadConfig | None = None
 
     openbao_config: OpenBaoConfig | None = None
 

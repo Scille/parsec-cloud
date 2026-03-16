@@ -3,7 +3,7 @@
 import pytest
 
 from parsec._parsec import OpenBaoAuthType, anonymous_server_cmds
-from parsec.config import AccountConfig, OpenBaoAuthConfig, OpenBaoConfig
+from parsec.config import AccountConfig, CryptPadConfig, OpenBaoAuthConfig, OpenBaoConfig
 from tests.common import AnonymousServerRpcClient, Backend, HttpCommonErrorsTester
 
 
@@ -18,12 +18,16 @@ async def test_anonymous_server_server_config_ok(
             expected_rep = anonymous_server_cmds.latest.server_config.RepOk(
                 account=anonymous_server_cmds.latest.server_config.AccountConfig.DISABLED,
                 organization_bootstrap=anonymous_server_cmds.latest.server_config.OrganizationBootstrapConfig.WITH_BOOTSTRAP_TOKEN,
+                cryptpad=anonymous_server_cmds.latest.server_config.CryptPadConfigDisabled(),
                 openbao=anonymous_server_cmds.latest.server_config.OpenBaoConfigDisabled(),
             )
 
         case "custom":
             backend.config.organization_spontaneous_bootstrap = True
             backend.config.account_config = AccountConfig.ENABLED_WITH_VAULT
+            backend.config.cryptpad_config = CryptPadConfig(
+                server_url="https://cryptpad.parsec.invalid",
+            )
             backend.config.openbao_config = OpenBaoConfig(
                 server_url="https://openbao.parsec.invalid",
                 secret_mount_path="secret",
@@ -44,6 +48,9 @@ async def test_anonymous_server_server_config_ok(
             expected_rep = anonymous_server_cmds.latest.server_config.RepOk(
                 account=anonymous_server_cmds.latest.server_config.AccountConfig.ENABLED_WITH_VAULT,
                 organization_bootstrap=anonymous_server_cmds.latest.server_config.OrganizationBootstrapConfig.SPONTANEOUS,
+                cryptpad=anonymous_server_cmds.latest.server_config.CryptPadConfigEnabled(
+                    server_url="https://cryptpad.parsec.invalid"
+                ),
                 openbao=anonymous_server_cmds.latest.server_config.OpenBaoConfigEnabled(
                     server_url="https://openbao.parsec.invalid",
                     secret=anonymous_server_cmds.latest.server_config.OpenBaoSecretConfigKV2(
