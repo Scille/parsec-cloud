@@ -20,6 +20,11 @@
                     {
                         "name": "openbao",
                         "type": "OpenBaoConfig"
+                    },
+                    {
+                        "name": "cryptpad",
+                        "type": "NonRequiredOption<CryptPadConfig>",
+                        "introduced_in": "3.9"
                     }
                 ]
             }
@@ -164,6 +169,26 @@
                         // see https://openbao.org/api-docs/auth/jwt/#oidc-authorization-url-request
                         "name": "mount_path",
                         "type": "String"
+                    }
+                ]
+            },
+            {
+                "name": "CryptPadConfig",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "Disabled",
+                        "discriminant_value": "DISABLED"
+                    },
+                    {
+                        "name": "Enabled",
+                        "discriminant_value": "ENABLED",
+                        "fields": [
+                            {
+                                "name": "server_url",
+                                "type": "String"
+                            }
+                        ]
                     }
                 ]
             }

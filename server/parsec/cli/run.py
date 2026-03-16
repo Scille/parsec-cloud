@@ -32,6 +32,7 @@ from parsec.config import (
     BackendConfig,
     BaseBlockStoreConfig,
     BaseDatabaseConfig,
+    CryptPadConfig,
     EmailConfig,
     LogLevel,
     MockedEmailConfig,
@@ -191,6 +192,12 @@ password to gain access to his vault).
 """,
     type=click.Choice(AccountConfig),
     default=AccountConfig.DISABLED,
+)
+@click.option(
+    "--cryptpad-server-url",
+    envvar="PARSEC_CRYPTPAD_SERVER_URL",
+    show_envvar=True,
+    help="The CryptPad server URL to enable secure document viewing and editing",
 )
 @click.option(
     "--openbao-server-url",
@@ -539,6 +546,7 @@ async def run_cmd(
     blockstore: BaseBlockStoreConfig,
     administration_token: str,
     account_config: AccountConfig,
+    cryptpad_server_url: str | None,
     openbao_server_url: str | None,
     openbao_secret_mount_path: str,
     openbao_transit_mount_path: str,
@@ -610,6 +618,11 @@ async def run_cmd(
 
         jinja_env = get_environment(template_dir)
 
+        if cryptpad_server_url is None:
+            cryptpad_config = None
+        else:
+            cryptpad_config = CryptPadConfig(server_url=cryptpad_server_url)
+
         if openbao_server_url is None:
             openbao_config = None
         else:
@@ -652,6 +665,7 @@ async def run_cmd(
             server_addr=server_addr,
             debug=debug,
             account_config=account_config,
+            cryptpad_config=cryptpad_config,
             openbao_config=openbao_config,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,

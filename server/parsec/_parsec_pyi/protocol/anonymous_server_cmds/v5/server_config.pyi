@@ -65,6 +65,19 @@ class OpenBaoAuthConfig:
     @property
     def mount_path(self) -> str: ...
 
+class CryptPadConfig:
+    pass
+
+class CryptPadConfigDisabled(CryptPadConfig):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class CryptPadConfigEnabled(CryptPadConfig):
+    def __init__(self, server_url: str) -> None: ...
+    @property
+    def server_url(self) -> str: ...
+
 class Req:
     def __init__(
         self,
@@ -89,9 +102,12 @@ class RepOk(Rep):
         account: AccountConfig,
         organization_bootstrap: OrganizationBootstrapConfig,
         openbao: OpenBaoConfig,
+        cryptpad: CryptPadConfig | None,
     ) -> None: ...
     @property
     def account(self) -> AccountConfig: ...
+    @property
+    def cryptpad(self) -> CryptPadConfig | None: ...
     @property
     def openbao(self) -> OpenBaoConfig: ...
     @property
