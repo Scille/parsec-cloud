@@ -84,6 +84,9 @@ boto3-stubs = "^1.40.45"
 types-requests = "^2.32.4"
 # other dependencies
 poetry-lock-package = "^0.5.2"
+# used only for request/response serialization tests in libparsec 'protocol' crate
+# see misc/test_expected_payload_cooker.py
+msgpack = "^1.1.2"
 
 [tool.poetry.group.testbed-server]
 optional = true
