@@ -25,7 +25,7 @@ export function setupContentSecurityPolicy(customScheme: string): void {
     [CspDirective.StyleSrc, [customProtocol, "'unsafe-inline'", 'data:', 'https:', 'http:']],
     [CspDirective.FontSrc, [customProtocol, 'data:', 'https:*', 'http:*']],
     [CspDirective.ConnectSrc, [customProtocol, 'https:', 'http:', 'wss:', 'ws:']],
-    [CspDirective.WorkerSrc, [customProtocol, 'https:', 'http:']],
+    [CspDirective.WorkerSrc, [customProtocol, 'blob:', 'https:', 'http:']],
     [CspDirective.FrameSrc, [customProtocol, 'https:', 'http:']],
     [CspDirective.MediaSrc, [customProtocol, 'blob:', 'data:', 'https:', 'http:']],
   ];

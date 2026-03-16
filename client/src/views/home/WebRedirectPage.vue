@@ -54,6 +54,8 @@
 <script setup lang="ts">
 import { ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
 import { getCurrentRouteQuery, navigateTo, Routes } from '@/router';
+import { InformationManager } from '@/services/informationManager';
+import { handleFileLink } from '@/services/linkHandler';
 import { IonButton, IonPage, IonText } from '@ionic/vue';
 import { LogoIconGradient, MsImage } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
@@ -66,6 +68,7 @@ onMounted(async () => {
   redirectLink.value = query.webRedirectUrl || '';
 
   if (!redirectLink.value) {
+    redirectLink.value = 'parsec3://';
     return;
   }
   const result = await parseParsecAddr(redirectLink.value);
@@ -91,7 +94,11 @@ async function openLinkInWeb(): Promise<void> {
       await navigateTo(Routes.Home, { skipHandle: true, query: { claimLink: redirectLink.value } });
       break;
     case ParsedParsecAddrTag.WorkspacePath:
-      await navigateTo(Routes.Home, { skipHandle: true, query: { fileLink: redirectLink.value } });
+      const informationManager = new InformationManager();
+      const navigationOk = await handleFileLink(redirectLink.value, informationManager);
+      if (!navigationOk) {
+        await navigateTo(Routes.Home, { skipHandle: true });
+      }
       break;
     case ParsedParsecAddrTag.TOTPReset:
       await navigateTo(Routes.Home, { skipHandle: true, query: { totpResetLink: redirectLink.value } });

@@ -17,12 +17,14 @@ for (const [action, link] of [
     await expect(page.locator('.redirect-text__title')).toHaveText('Launching Parsec App');
     await expect(page.locator('.redirect-buttons__item')).toHaveText(['Open in Parsec app', 'Continue in browser']);
     await page.locator('.redirect-buttons__item').nth(1).click();
-    await expect(page).toBeHomePage();
     if (action === 'async_enrollment') {
+      await expect(page).toBeHomePage();
       await expect(page.locator('.async-enrollment-modal')).toBeVisible();
     } else if (action === 'claim_user') {
+      await expect(page).toBeHomePage();
       await expect(page.locator('.join-organization-modal')).toBeVisible();
     } else if (action === 'claim_device') {
+      await expect(page).toBeHomePage();
       await expect(page.locator('.join-organization-modal')).toBeVisible();
     } else if (action === 'path') {
       await expect(page).toShowInformationModal(
@@ -30,6 +32,7 @@ for (const [action, link] of [
         'Error',
       );
     } else if (action === 'bootstrap_organization') {
+      await expect(page).toBeHomePage();
       await expect(page.locator('.create-organization-modal')).toBeVisible();
     }
   });
