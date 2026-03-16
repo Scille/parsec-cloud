@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Download every artifact generated (and uploaded)
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # pin v8.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # pin v8.0.1
         with:
           path: artifacts
           digest-mismatch: error
@@ -318,7 +318,7 @@ jobs:
 
       - name: Create release
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # pin v2.5.0
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # pin v2.6.1
         with:
           draft: ${{ env.NIGHTLY_RELEASE != 'true' }}
           tag_name: ${{ steps.info.outputs.tag_name }}
