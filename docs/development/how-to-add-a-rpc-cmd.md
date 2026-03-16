@@ -1,27 +1,41 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
-# How to add an API RPC command to Parsec
+# How to add (or update) an RPC command
 
-The goal of this document is to cover all the necessary steps to add an API RPC command to Parsec.
+The goal of this document is to cover the necessary steps to add (or update) an RPC command to Parsec.
 
-> Client-to-server RPC API routes are also called "commands" in Parsec. There are three command families: `anonymous_cmds` (authentication not required), `authenticated_cmds` (authentication required) and `invited_cmds` (invitation required).
->
-> Note there is another unrelated API for administration purpose that uses REST instead of RPC (as it is expected to be used by admin using curl), this documentation doesn't cover it.
+## Quick introduction
 
-In summary:
+Parsec server exposes the following APIs:
 
-1. Add the schema describing the new API RPC command
-2. Generate binding code and serialization tests
-3. Implement server-side code (In-memory & PostgreSQL) and tests
-4. Implement client-side code and tests
+- Administration API (REST): for server administration, not covered here.
+- Client-Server API (RPC): for business-logic, client-server communication.
+
+RPC routes are also called "commands" are grouped into "command families":
+
+- `anonymous_cmds`: authentication not required
+- `anonymous_server_cmds`: authentication not required, server-related commands
+- `authenticated_cmds`: (authentication required
+- `invited_cmds`: (invitation required).
+- `tos_cmds`: (invitation required).
+
+In summary, to add or update an existing command you need to:
+
+1. Add or update the schema describing the RPC command
+2. Generate binding code
+3. Generate serialization tests
+4. Implement server-side code (memory & PostgreSQL) and tests
+5. Implement client-side code and tests
 
 > Note that you will need a working development environment. See (./README.md).
 
-## Schema generation
+## 1. Schema generation
 
-Let's add a new `dummy` route to `invited_cmds`.
+You will find command schemas in [./libparsec/crates/protocol/schema](../../libparsec/crates/protocol/schema) directory.
 
-In [this folder](../../misc/libparsec/crates/protocol/schema/invited_cmds/) add a `dummy.json5` schema describing the API RPC command.
+Let's add a new `dummy` route to the `invited_cmds` family.
+
+Add a `dummy.json5` schema describing the RPC command in [./libparsec/crates/protocol/schema/invited_cmds/](../../libparsec/crates/protocol/schema/invited_cmds/).
 
 ```json5
 [
@@ -57,30 +71,50 @@ In [this folder](../../misc/libparsec/crates/protocol/schema/invited_cmds/) add 
 
 ```
 
-For a full description of the accepted format see [the parsing/generating script](../../misc/gen_protocol_typings.py).
+For a full description of the accepted format see [./misc/gen_protocol_typings.py](../../misc/gen_protocol_typings.py).
 
-> Note that the files are .json5. This is to allow for comments inside these files. But the parser we are using only supports .json files and we're removing the comments ourselves. So don't use any other specific feature of the json5 format (trailing commas, I'm looking at you 👀).
+Note that the files are `.json5`. This is to allow for comments inside these files, but currently the parser only
+supports `.json` files (we're removing the comments ourselves). So don't use any other specific feature of the `json5`
+format (trailing commas, I'm looking at you 👀).
 
-Then from the root directory, run the following scripts.
+## 2. (Re)generate bindings
+
+From the root directory, run the following scripts:
 
 ```shell
-python make.py python-dev-rebuild # short option `r`
+python make.py python-dev-install  # or python make.py i, to install or upgrade requirements
+python make.py python-dev-rebuild  # or python make.py r, to (re)build bindings
+```
+
+> Bindings are built in `server/parsec/_parsec.cpython-312-x86_64-linux-gnu.so`.
+
+Now run the following command:
+
+```shell
 python misc/gen_protocol_typings.py
 ```
 
-The `gen_protocol_typing` will only generate typing and modify the following files, that must be committed:
-    - `server/parsec/_parsec_pyi/protocol/__init__.pyi`
-    - `server/parsec/_parsec_pyi/protocol/xxxxxx_cmds/v4/__init__.pyi`
-    - `server/tests/common/rpc.py`
+This will generate typing and modify some files in the [`./server`](../../server) directory that must be committed.
 
+For example:
 
-`python-dev-rebuild` will rebuild the bindings in `server/parsec/_parsec.cpython-312-x86_64-linux-gnu.so`. Use can use `python-dev-install` to install before building the bindings (short option `i`).
+- `server/parsec/_parsec_pyi/protocol/__init__.pyi`
+- `server/parsec/_parsec_pyi/protocol/xxxxxx_cmds/v4/__init__.pyi`
+- `server/tests/common/rpc.py`
 
-## Serialization tests
+## 3. Serialization tests
 
-After bindings generation, the serialization tests become required.
+Once bindings are generated, the serialization tests (from libparsec `protocol` crate) will become required.
 
-In `libparsec/crates/protocol/tests/xxxxx_cmds/v4/dummy.rs` for each req and rep variant, there must be a public function named `req` or `rep_{variant name}`. Otherwise, you'll have this kind of error:
+You can run serialization tests with:
+
+```shell
+cargo nextest run -p libparsec_protocol
+```
+
+In the corresponding test file (e.g. `libparsec/crates/protocol/tests/xxxxx_cmds/v4/dummy.rs`) there must be public
+functions named `req` and `rep_{variant name}` for each `req` (request) and `rep` (response) variant declared in the
+command schema. Otherwise, you'll have this kind of error:
 
 ```shell
 error[E0425]: cannot find function `rep_dummy_rep_without_fields` in module `dummy`
@@ -90,28 +124,54 @@ error[E0425]: cannot find function `rep_dummy_rep_without_fields` in module `dum
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `dummy`
 ```
 
-As for the content, the goal of these serialization tests is to go from bytes to the tested type, assert it's OK and back to bytes and assert it's adding up.
+The test functions should test the serialization process, essentially:
 
-On how to generate the bytes you can use [this script](../../misc/test_expected_payload_cooker.py)
+- Convert from bytes to the tested type.
+- Assert is OK.
+- Convert tested type back to bytes.
+- Assert is OK.
 
-> TLDR :
+> You can use [this script](../../misc/test_expected_payload_cooker.py) to generate the bytes correspond to the command.
+> TLDR:
+>
 > - add `println!("***expected: {:?}", expected.dump().unwrap());` in each new test
 > - execute `$ cargo nextest run -p libparsec_protocol 2>&1 | python ./misc/test_expected_payload_cooker.py`
 > - copy paste the output
 
-## Server-side implementation
+Make sure all serialization tests from the protocol create pass before continuint.
 
-### Optional: the route introduces a new component
+## 4. Server-side implementation
 
-In `server/parsec/components` you define a base component. It will need to have a corresponding memory and postgresql components in their respective folder.
+In almost all cases, the RPC command will be implemented somewhere in [`./server/parsec/components`](../../server/parsec/components).
 
-Add your component to `class Backend` in `server/parsec/backend.py`
+You will find a "base" components and two main implmentations:
 
-Add it to the `components_factory` both in `server/parsec/components/memory/factory.py` and `server/parsec/components/postgresql/factory.py`
+- [`./server/parsec/components/memory`](../../server/parsec/components/memory)
+- [`./server/parsec/components/postgresql`](../../server/parsec/components/postgresql)
 
-### Defining the route
+### If you updated an existing RPC command
 
-In a component (maybe the one defined just before), you'll need to define this kind of function.
+Find where the command is implemented and update implementation accordingly.
+
+### If you introduced a new RPC command related to an existing component
+
+Add the command to the existing base component and then complete memory and postgresql implementations.
+
+See "Command implementation" below.
+
+### If you introduced a new RPC command unrelated to an existing component
+
+1. In `server/parsec/components` add a new base component and the corresponding memory and postgresql implementations.
+
+2. Add your component to `class Backend` in [`./server/parsec/backend.py`](../../server/parsec/backend.py)
+
+3. Add your component to the `components_factory` both in [`server/parsec/components/memory/factory.py`](../../server/parsec/components/memory/factory.py) and [`server/parsec/components/postgresql/factory.py`](../../server/parsec/components/postgresql/factory.py).
+
+See "Command implementation" below.
+
+### Command implementation
+
+In a component (like the one defined just before), you'll need to define this kind of function.
 
 ```python
     @api
@@ -129,7 +189,8 @@ In a component (maybe the one defined just before), you'll need to define this k
                 client_ctx.organization_not_found_abort()
 ```
 
-This function will mostly contain error management logic. The component will also contain a generic method, that will be overridden in the memory and postgresql implementations.
+This function will mostly contain error management logic. The component will also contain a generic
+method, that will be overridden in the memory and postgresql implementations.
 
 > Note that some common errors, like organization not found, have helpers that return the appropriate error.
 
@@ -162,11 +223,21 @@ class MemoryDummyComponent(BaseDummyComponent):
 
 ### Server tests
 
-Add the new test file `server/tests/api_v4/xxxxx/dummy.py`. It should contain a test function for each response status (see other command's tests as a guide on how to write them).
+In any case, tests should be updated to match the updated or added command.
 
-Import the new test file in `server/tests/api_v4/xxxxx/__init__.py`. It must be named `test_{new command name}` (e.g. `test_dummy`).
+If you added a new command:
 
-Start a new testbed :
+1. Add a new test file `server/tests/api_v4/xxxxx/dummy.py`.
+   It should contain a test function for each response status
+   (see other command's tests as a guide on how to write them).
+
+2. Import the new test file in `server/tests/api_v4/xxxxx/__init__.py`.
+   It must be named `test_{new command name}` (e.g. `test_dummy`).
+
+3. Run tests (see [`./server/README.md`](../../server/README.md)).
+   > The test `test_each_cmd_req_rep_has_dedicated_test` will fail if a test function is missing
+
+4. If needed, you can start a new testbed:
 
 ```shell
 python make.py run-testbed-server # short option `rts`
@@ -174,8 +245,7 @@ python make.py run-testbed-server # short option `rts`
 
 For more information on se testbed see [here](README.md/#starting-the-testbed-server).
 
-`test_each_cmd_req_rep_has_dedicated_test` will fail if a test function is missing
 
-## Client-side implementation
+## 5. Client-side implementation
 
 TODO
