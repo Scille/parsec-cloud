@@ -243,8 +243,10 @@ NSPHINXOPTS
 ntics
 ntns
 nvlobs
+OIDC
 onlyoffice
 openbao
+openid
 ops*
 opses
 opslimit
