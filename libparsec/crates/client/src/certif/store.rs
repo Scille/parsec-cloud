@@ -133,6 +133,12 @@ impl CurrentViewCache {
 }
 
 #[derive(Debug)]
+struct CurrentViewCacheAndStorage {
+    current_view_cache: CurrentViewCache,
+    storage: Option<CertificatesStorage>,
+}
+
+#[derive(Debug)]
 pub(super) struct CertificatesStore {
     device: Arc<LocalDevice>,
     // Why 3 locks here ?
@@ -144,10 +150,7 @@ pub(super) struct CertificatesStore {
     // On top of that, the cache must be behind its own lock (and not behind the main
     // read-write lock) so that it can be updated on cache miss even if we are in a
     // read operation.
-    lock: RwLock<()>,
-    current_view_cache: Mutex<CurrentViewCache>,
-    // Set to `None` once stopped
-    storage: AsyncMutex<Option<CertificatesStorage>>,
+    data: AsyncMutex<CurrentViewCacheAndStorage>,
 }
 
 impl CertificatesStore {
@@ -156,15 +159,16 @@ impl CertificatesStore {
 
         Ok(Self {
             device,
-            lock: RwLock::default(),
-            storage: AsyncMutex::new(Some(storage)),
-            current_view_cache: Mutex::default(),
+            data: AsyncMutex::new(CurrentViewCacheAndStorage {
+                current_view_cache: CurrentViewCache::default(),
+                storage: Some(storage),
+            }),
         })
     }
 
     pub async fn stop(&self) -> anyhow::Result<()> {
-        let mut mutex = self.storage.lock().await;
-        let maybe_storage = mutex.take();
+        let mut guard = self.data.lock().await;
+        let maybe_storage = guard.storage.take();
         // Go idempotent if the storage is already stopped
         if let Some(storage) = maybe_storage {
             // Note the cache is never ahead of storage (i.e. it strictly contains
@@ -180,13 +184,12 @@ impl CertificatesStore {
     pub async fn debug_dump(&self) -> anyhow::Result<String> {
         let mut output = "{\n".to_owned();
 
-        {
-            let cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-            output += &format!("Cache: {:?}\n", *cache);
-        }
+        let mut guard = self.data.lock().await;
 
-        let mut maybe_storage = self.storage.lock().await;
-        if let Some(storage) = &mut *maybe_storage {
+        output += &format!("Cache: {:?}\n", guard.current_view_cache);
+
+        let mut maybe_storage = &mut guard.storage;
+        if let Some(storage) = maybe_storage {
             let dump = storage.debug_dump().await?;
             output += &format!("Storage: {dump}\n");
         } else {
@@ -204,20 +207,19 @@ impl CertificatesStore {
         &self,
         cb: impl AsyncFnOnce(&mut CertificatesStoreWriteGuard<'_>) -> Result<T, E>,
     ) -> Result<Result<T, E>, CertifStoreError> {
-        let _guard = self.lock.write().await;
+        let mut guard = self.data.lock().await;
 
-        let mut maybe_storage = self.storage.lock().await;
-        let storage = match &mut *maybe_storage {
+        let storage = match &mut guard.storage {
             None => return Err(CertifStoreError::Stopped),
             Some(storage) => storage,
         };
 
         let outcome = storage
             .for_update(async |updater| {
-                let mut write_guard = CertificatesStoreWriteGuard {
-                    store: self,
-                    storage: updater,
-                };
+                let mut write_guard = CertificatesStoreWriteGuard(CertificatesStoreReadGuard {
+                    storage,
+                    current_view_cache: &mut guard.current_view_cache,
+                });
 
                 cb(&mut write_guard).await
             })
@@ -229,11 +231,8 @@ impl CertificatesStore {
         // the database, thus making the cache inconsistent with the database.
         // Hence we must clear the cache in case of error.
 
-        let reset_cache = || {
-            self.current_view_cache
-                .lock()
-                .expect("Mutex is poisoned !")
-                .clear();
+        let mut reset_cache = || {
+            guard.current_view_cache.clear();
         };
 
         match outcome {
@@ -260,10 +259,9 @@ impl CertificatesStore {
         &self,
         cb: impl AsyncFnOnce(&mut CertificatesStoreReadGuard) -> Result<T, E>,
     ) -> Result<Result<T, E>, CertifStoreError> {
-        let _guard = self.lock.read().await;
+        let mut guard = self.data.lock().await;
 
-        let mut maybe_storage = self.storage.lock().await;
-        let storage = match &mut *maybe_storage {
+        let storage = match &mut guard.storage {
             None => return Err(CertifStoreError::Stopped),
             Some(storage) => storage,
         };
@@ -1492,7 +1490,7 @@ macro_rules! impl_read_methods {
 }
 
 pub(super) struct CertificatesStoreReadGuard<'a> {
-    store: &'a CertificatesStore,
+    current_view_cache: &'a mut CurrentViewCache,
     storage: &'a mut CertificatesStorage,
 }
 
@@ -1501,10 +1499,7 @@ impl CertificatesStoreReadGuard<'_> {
 }
 
 #[clippy::has_significant_drop]
-pub(super) struct CertificatesStoreWriteGuard<'a> {
-    store: &'a CertificatesStore,
-    storage: CertificatesStorageUpdater<'a>,
-}
+pub(super) struct CertificatesStoreWriteGuard<'a>(CertificatesStoreReadGuard<'a>);
 
 impl CertificatesStoreWriteGuard<'_> {
     pub async fn forget_all_certificates(&mut self) -> anyhow::Result<()> {
