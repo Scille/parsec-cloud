@@ -34,6 +34,6 @@ export class DataCache<K, V> {
   }
 
   has(key: K): boolean {
-    return this.data.has(key);
+    return this.get(key) !== undefined;
   }
 }
