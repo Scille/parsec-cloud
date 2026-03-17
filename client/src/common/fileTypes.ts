@@ -20,55 +20,67 @@ interface DetectedFileType {
   extension: string;
 }
 
-const IMAGES = ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif'];
-const SPREADSHEETS = ['xlsx', 'xls', 'ods'];
-const DOCUMENTS = ['docx', 'odt'];
-const PDF_DOCUMENTS = ['pdf'];
-const AUDIOS = ['wav', 'mp3', 'ogg'];
-const VIDEOS = ['mp4', 'mpeg', 'webm'];
-// TODO: enable ODP when supported: https://github.com/Scille/parsec-cloud/issues/12110
-const PRESENTATIONS = ['pptx']; // , 'odp'];
+const OPENABLE_FILES = {
+  IMAGES: ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif'],
+  SPREADSHEETS: ['xlsx', 'xls', 'ods'],
+  DOCUMENTS: ['docx', 'odt'],
+  PDF_DOCUMENTS: ['pdf'],
+  AUDIOS: ['wav', 'mp3', 'ogg'],
+  VIDEOS: ['mp4', 'mpeg', 'webm'],
+  // TODO: enable ODP when supported: https://github.com/Scille/parsec-cloud/issues/12110
+  PRESENTATIONS: ['pptx'], // , 'odp']
+  // For generic text/plain
+  TEXTS: [
+    'xml',
+    'json',
+    'js',
+    'html',
+    'htm',
+    'xhtml',
+    'sh',
+    'csv',
+    'css',
+    'py',
+    'php',
+    'sh',
+    'tex',
+    'txt',
+    'h',
+    'hpp',
+    'c',
+    'cpp',
+    'rs',
+    'java',
+    'ts',
+    'ini',
+    'cs',
+    'vb',
+    'swift',
+    'lua',
+    'rb',
+    'vbs',
+    'md',
+    'log',
+    'rst',
+    'toml',
+    'po',
+    'vue',
+    'kt',
+    'yml',
+    'yaml',
+  ],
+};
 
-// For generic text/plain
-const TEXTS = [
-  'xml',
-  'json',
-  'js',
-  'html',
-  'htm',
-  'xhtml',
-  'sh',
-  'csv',
-  'css',
-  'py',
-  'php',
-  'sh',
-  'tex',
-  'txt',
-  'h',
-  'hpp',
-  'c',
-  'cpp',
-  'rs',
-  'java',
-  'ts',
-  'ini',
-  'cs',
-  'vb',
-  'swift',
-  'lua',
-  'rb',
-  'vbs',
-  'md',
-  'log',
-  'rst',
-  'toml',
-  'po',
-  'vue',
-  'kt',
-  'yml',
-  'yaml',
-];
+const DETECTABLE_FILES = {
+  IMAGES: [...OPENABLE_FILES.IMAGES, 'avif', 'heic', 'heif', 'raw', 'dng', 'cr2', 'nef', 'arw', 'ps', 'xcf', 'ai', 'eps', 'tiff', 'tif'],
+  SPREADSHEETS: [...OPENABLE_FILES.SPREADSHEETS],
+  DOCUMENTS: [...OPENABLE_FILES.DOCUMENTS, 'doc'],
+  PDF_DOCUMENTS: [...OPENABLE_FILES.PDF_DOCUMENTS],
+  AUDIOS: [...OPENABLE_FILES.AUDIOS, 'flac', 'aac', 'm4a', 'opus', 'oga', 'alac', 'aiff', 'wma', 'amr', 'mid', 'midi'],
+  VIDEOS: ['mp4', 'mpeg', 'webm', ...OPENABLE_FILES.VIDEOS, 'mkv', 'mov', 'avi', 'ts', 'm2ts', 'mts', 'flv', 'wmv', '3gp', 'mpg', 'mpeg'],
+  PRESENTATIONS: [...OPENABLE_FILES.PRESENTATIONS, 'odp', 'ppt'],
+  TEXTS: [...OPENABLE_FILES.TEXTS],
+};
 
 async function getMimeTypeFromBuffer(data: Uint8Array): Promise<string | undefined> {
   try {
@@ -83,34 +95,42 @@ async function getMimeTypeFromBuffer(data: Uint8Array): Promise<string | undefin
   }
 }
 
-function detectFileContentType(name: EntryName): DetectedFileType {
+function detectFile(name: EntryName, matcher: any): DetectedFileType {
   const ext = Path.getFileExtension(name);
 
-  if (IMAGES.includes(ext)) {
+  if (matcher.IMAGES.includes(ext)) {
     return { type: FileContentType.Image, extension: ext };
   }
-  if (DOCUMENTS.includes(ext)) {
+  if (matcher.DOCUMENTS.includes(ext)) {
     return { type: FileContentType.Document, extension: ext };
   }
-  if (PDF_DOCUMENTS.includes(ext)) {
+  if (matcher.PDF_DOCUMENTS.includes(ext)) {
     return { type: FileContentType.PdfDocument, extension: ext };
   }
-  if (SPREADSHEETS.includes(ext)) {
+  if (matcher.SPREADSHEETS.includes(ext)) {
     return { type: FileContentType.Spreadsheet, extension: ext };
   }
-  if (AUDIOS.includes(ext)) {
+  if (matcher.AUDIOS.includes(ext)) {
     return { type: FileContentType.Audio, extension: ext };
   }
-  if (VIDEOS.includes(ext)) {
+  if (matcher.VIDEOS.includes(ext)) {
     return { type: FileContentType.Video, extension: ext };
   }
-  if (TEXTS.includes(ext)) {
+  if (matcher.TEXTS.includes(ext)) {
     return { type: FileContentType.Text, extension: ext };
   }
-  if (PRESENTATIONS.includes(ext)) {
+  if (matcher.PRESENTATIONS.includes(ext)) {
     return { type: FileContentType.Presentation, extension: ext };
   }
   return { type: FileContentType.Unknown, extension: ext };
 }
 
-export { DetectedFileType, detectFileContentType, FileContentType, getMimeTypeFromBuffer };
+function detectOpenableFile(name: EntryName): DetectedFileType {
+  return detectFile(name, OPENABLE_FILES);
+}
+
+function detectFileContentType(name: EntryName): DetectedFileType {
+  return detectFile(name, DETECTABLE_FILES);
+}
+
+export { DetectedFileType, detectFileContentType, detectOpenableFile, FileContentType, getMimeTypeFromBuffer };
