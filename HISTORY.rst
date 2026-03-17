@@ -4,7 +4,7 @@ History
 .. towncrier release notes start
 
 
-Parsec v3.8.1-rc.0 (2026-03-13)
+Parsec v3.8.1-rc.1 (2026-03-17)
 -------------------------------
 
 Features
@@ -12,6 +12,13 @@ Features
 
 * Added option to toggle on or off Multi-Factor Authentication
   (`#12328 <https://github.com/Scille/parsec-cloud/issues/12328>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed file and workspace link opening on desktop app
+  (`#12400 <https://github.com/Scille/parsec-cloud/issues/12400>`__)
 
 
 Improved Documentation
