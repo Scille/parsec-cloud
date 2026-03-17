@@ -1664,6 +1664,31 @@ fn struct_client_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// CryptPadConfig
+
+#[allow(dead_code)]
+fn struct_crypt_pad_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::CryptPadConfig> {
+    let server_url = {
+        let js_val: Handle<JsString> = obj.get(cx, "serverUrl")?;
+        js_val.value(cx)
+    };
+    Ok(libparsec::CryptPadConfig { server_url })
+}
+
+#[allow(dead_code)]
+fn struct_crypt_pad_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CryptPadConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_server_url = JsString::try_new(cx, rs_obj.server_url).or_throw(cx)?;
+    js_obj.set(cx, "serverUrl", js_server_url)?;
+    Ok(js_obj)
+}
+
 // DeviceAccessStrategy
 
 #[allow(dead_code)]
@@ -2956,6 +2981,17 @@ fn struct_server_config_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "account")?;
         variant_account_config_js_to_rs(cx, js_val)?
     };
+    let cryptpad = {
+        let js_val: Handle<JsValue> = obj.get(cx, "cryptpad")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_crypt_pad_config_js_to_rs(cx, js_val)?)
+            }
+        }
+    };
     let organization_bootstrap = {
         let js_val: Handle<JsObject> = obj.get(cx, "organizationBootstrap")?;
         variant_organization_bootstrap_config_js_to_rs(cx, js_val)?
@@ -2973,6 +3009,7 @@ fn struct_server_config_js_to_rs<'a>(
     };
     Ok(libparsec::ServerConfig {
         account,
+        cryptpad,
         organization_bootstrap,
         openbao,
     })
@@ -2986,6 +3023,11 @@ fn struct_server_config_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_account = variant_account_config_rs_to_js(cx, rs_obj.account)?;
     js_obj.set(cx, "account", js_account)?;
+    let js_cryptpad = match rs_obj.cryptpad {
+        Some(elem) => struct_crypt_pad_config_rs_to_js(cx, elem)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "cryptpad", js_cryptpad)?;
     let js_organization_bootstrap =
         variant_organization_bootstrap_config_rs_to_js(cx, rs_obj.organization_bootstrap)?;
     js_obj.set(cx, "organizationBootstrap", js_organization_bootstrap)?;
