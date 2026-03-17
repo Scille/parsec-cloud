@@ -1,0 +1,48 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "scws_service_challenge",
+        "req": {
+            "fields": [
+                {
+                    "name": "middleware_challenge",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "middleware_signature",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "server_challenge",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "pubkey_id",
+                    "type": "Index"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "server_signature",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                "status": "not_available"
+            },
+            {
+                "status": "unknown_service_public_key"
+            },
+            {
+                "status": "invalid_service_signature"
+            }
+        ]
+    }
+]

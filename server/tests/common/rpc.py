@@ -178,6 +178,29 @@ class BaseAnonymousServerRpcClient:
         raw_rep = await self._do_request(req.dump(), "anonymous_server")
         return anonymous_server_cmds.latest.ping.Rep.load(raw_rep)
 
+    async def scws_service_certificate(
+        self,
+    ) -> anonymous_server_cmds.latest.scws_service_certificate.Rep:
+        req = anonymous_server_cmds.latest.scws_service_certificate.Req()
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.scws_service_certificate.Rep.load(raw_rep)
+
+    async def scws_service_challenge(
+        self,
+        middleware_challenge: bytes,
+        middleware_signature: bytes,
+        server_challenge: bytes,
+        pubkey_id: int,
+    ) -> anonymous_server_cmds.latest.scws_service_challenge.Rep:
+        req = anonymous_server_cmds.latest.scws_service_challenge.Req(
+            middleware_challenge=middleware_challenge,
+            middleware_signature=middleware_signature,
+            server_challenge=server_challenge,
+            pubkey_id=pubkey_id,
+        )
+        raw_rep = await self._do_request(req.dump(), "anonymous_server")
+        return anonymous_server_cmds.latest.scws_service_challenge.Rep.load(raw_rep)
+
     async def server_config(
         self,
     ) -> anonymous_server_cmds.latest.server_config.Rep:
