@@ -25,6 +25,7 @@ concurrency:
 permissions:
   contents: read
   security-events: write
+  pull-requests: read # Needed by `dorny/paths-filter` action
 
 jobs:
   python-analyze:
