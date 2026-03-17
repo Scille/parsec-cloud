@@ -67,6 +67,7 @@ export enum CryptpadErrorCodes {
   InitFailed = CryptpadCommAPI.ErrorCodes.InitFailed,
   FrameNotLoaded = 'frame-not-loaded',
   FrameLoadFailed = 'frame-load-failed',
+  NotAvailable = 'cryptpad-not-available',
   EventError = 'event-error',
 }
 
@@ -143,13 +144,18 @@ export async function openDocument(
   handlers: CryptpadEventHandlers,
   frame: HTMLIFrameElement,
 ): Promise<CryptpadSession | undefined> {
-  const CRYPTPAD_SERVER = Env.getDefaultCryptpadServer();
+  const CRYPTPAD_SERVER = await Env.getCryptpadServer();
+
+  if (!CRYPTPAD_SERVER) {
+    handlers.onError(new CryptpadError(CryptpadErrorCodes.NotAvailable));
+    return undefined;
+  }
 
   function sendMessageToFrame(command: CryptpadCommAPI.Commands, data?: any): void {
     if (!frame.contentWindow) {
       throw new CryptpadError(CryptpadErrorCodes.FrameNotLoaded);
     }
-    frame.contentWindow.postMessage({ command: command, ...data }, CRYPTPAD_SERVER);
+    frame.contentWindow.postMessage({ command: command, ...data }, CRYPTPAD_SERVER as string);
   }
 
   try {

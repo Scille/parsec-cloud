@@ -39,7 +39,10 @@
       </div>
     </div>
 
-    <div class="error-advices">
+    <div
+      class="error-advices"
+      v-show="showErrorTips"
+    >
       <ion-text class="error-advices__title title-h4">{{ $msTranslate('fileEditors.advices.title') }}</ion-text>
       <ion-list class="error-advices-list ion-no-padding">
         <ion-item class="error-advices-list__item ion-no-padding body">
@@ -89,6 +92,7 @@ import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef } from 'vue';
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
 const documentType = ref<CryptpadEditors>(CryptpadEditors.Unsupported);
 const error = ref('');
+const showErrorTips = ref(false);
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 let eventCbId: null | string = null;
 const loadFinished = ref(false);
@@ -254,6 +258,7 @@ async function loadEditor(): Promise<void> {
       },
       onError: async (err: unknown): Promise<void> => {
         error.value = 'fileViewers.errors.titles.genericError';
+        showErrorTips.value = true;
 
         if (err instanceof CryptpadError) {
           switch (err.code) {
@@ -277,6 +282,10 @@ async function loadEditor(): Promise<void> {
               } else {
                 window.electronAPI.log('error', `Unhandled event error: ${err.details}`);
               }
+              break;
+            case CryptpadErrorCodes.NotAvailable:
+              showErrorTips.value = false;
+              error.value = 'fileEditors.errors.titles.cryptpadNotAvailable';
               break;
           }
         } else {

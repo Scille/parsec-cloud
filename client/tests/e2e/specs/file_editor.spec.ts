@@ -9,7 +9,9 @@ import {
   ImportDocuments,
   login,
   mockCryptpadServer,
+  MsPage,
   msTest,
+  setupNewPage,
   waitUntilSaved,
 } from '@tests/e2e/helpers';
 
@@ -173,6 +175,40 @@ msTest.describe(() => {
       }
     });
   }
+
+  msTest('File editor failing because not server configured', async ({ context }, testInfo: TestInfo) => {
+    const page = (await context.newPage()) as MsPage;
+    await setupNewPage(page, {
+      withParsecAccount: false,
+      withEditics: true,
+      location: '/home',
+      cryptpadServer: undefined,
+      expectTimeout: 15000,
+    });
+    await login(page, 'Alicey McAliceFace');
+
+    await expect(page).toBeWorkspacePage();
+    await page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(page).toHaveHeader(['wksp1'], true, true);
+
+    await importDefaultFiles(page, testInfo, ImportDocuments.Docx, false);
+
+    const entry = page.locator('.folder-container').locator('.file-list-item').nth(0);
+
+    await entry.click({ button: 'right' });
+    const menu = page.locator('#file-context-menu');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
+    await menu.getByRole('listitem').nth(1).click();
+
+    await expect(page.locator('.file-editor')).toBeHidden();
+    const errorContainer = page.locator('.file-editor-error');
+    await expect(errorContainer).toBeVisible();
+    await expect(errorContainer.locator('.error-content-text__title')).toHaveText('Cannot open file');
+    await expect(errorContainer.locator('.error-content-text__message')).toHaveText(
+      'Document editing is not available for your organization.',
+    );
+  });
 
   msTest('Error after load', async ({ parsecEditics }, testInfo: TestInfo) => {
     await mockCryptpadServer(parsecEditics, {

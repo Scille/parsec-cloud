@@ -2825,7 +2825,8 @@
                 "networkOffline": "Connexion réseau perdue",
                 "tooLongToOpen": "Le fichier semble mettre trop de temps à s'ouvrir",
                 "frameLoadFailed": "Impossible de charger l'éditeur. Veuillez vérifier votre connexion.",
-                "openFailed": "Impossible d'ouvrir ce fichier."
+                "openFailed": "Impossible d'ouvrir ce fichier.",
+                "cryptpadNotAvailable": "La fonction d'édition de documents n'est pas disponible pour votre organisation."
             },
             "networkOfflineMessage": "Votre connexion réseau a été perdue. Veuillez vérifier votre connexion internet et réessayer. Les modifications non enregistrées peuvent être perdues.",
             "tooLongToOpenOnWeb": "Vous pouvez essayer de le télécharger et de l'ouvrir avec l'application par défaut (clic droit sur le fichier > 'Télécharger').",

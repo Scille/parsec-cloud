@@ -2826,7 +2826,8 @@
                 "networkOffline": "Network connection lost",
                 "tooLongToOpen": "The file seems to be taking too long to open",
                 "frameLoadFailed": "Could not load the editor. Please check your network connection.",
-                "openFailed": "Could not open the file."
+                "openFailed": "Could not open the file.",
+                "cryptpadNotAvailable": "Document editing is not available for your organization."
             },
             "networkOfflineMessage": "Your network connection has been lost. Please check your internet connection and try again. Any unsaved changes may be lost.",
             "tooLongToOpenOnWeb": "You can try downloading it and opening with default app (right click on file > 'Download').",
