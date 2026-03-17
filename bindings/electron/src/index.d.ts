@@ -194,6 +194,11 @@ export interface ClientInfo {
 }
 
 
+export interface CryptPadConfig {
+    serverUrl: string
+}
+
+
 export interface DeviceAccessStrategy {
     keyFile: string
     totpProtection: [string, Uint8Array] | null
@@ -319,6 +324,7 @@ export interface OrganizationInfo {
 
 export interface ServerConfig {
     account: AccountConfig
+    cryptpad: CryptPadConfig | null
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
 }

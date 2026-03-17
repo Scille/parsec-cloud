@@ -1749,6 +1749,29 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
     Ok(js_obj)
 }
 
+// CryptPadConfig
+
+#[allow(dead_code)]
+fn struct_crypt_pad_config_js_to_rs(obj: JsValue) -> Result<libparsec::CryptPadConfig, JsValue> {
+    let server_url = {
+        let js_val = Reflect::get(&obj, &"serverUrl".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    Ok(libparsec::CryptPadConfig { server_url })
+}
+
+#[allow(dead_code)]
+fn struct_crypt_pad_config_rs_to_js(rs_obj: libparsec::CryptPadConfig) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_server_url = rs_obj.server_url.into();
+    Reflect::set(&js_obj, &"serverUrl".into(), &js_server_url)?;
+    Ok(js_obj)
+}
+
 // DeviceAccessStrategy
 
 #[allow(dead_code)]
@@ -3090,6 +3113,14 @@ fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig
         let js_val = Reflect::get(&obj, &"account".into())?;
         variant_account_config_js_to_rs(js_val)?
     };
+    let cryptpad = {
+        let js_val = Reflect::get(&obj, &"cryptpad".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(struct_crypt_pad_config_js_to_rs(js_val)?)
+        }
+    };
     let organization_bootstrap = {
         let js_val = Reflect::get(&obj, &"organizationBootstrap".into())?;
         variant_organization_bootstrap_config_js_to_rs(js_val)?
@@ -3104,6 +3135,7 @@ fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig
     };
     Ok(libparsec::ServerConfig {
         account,
+        cryptpad,
         organization_bootstrap,
         openbao,
     })
@@ -3114,6 +3146,11 @@ fn struct_server_config_rs_to_js(rs_obj: libparsec::ServerConfig) -> Result<JsVa
     let js_obj = Object::new().into();
     let js_account = variant_account_config_rs_to_js(rs_obj.account)?;
     Reflect::set(&js_obj, &"account".into(), &js_account)?;
+    let js_cryptpad = match rs_obj.cryptpad {
+        Some(val) => struct_crypt_pad_config_rs_to_js(val)?,
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"cryptpad".into(), &js_cryptpad)?;
     let js_organization_bootstrap =
         variant_organization_bootstrap_config_rs_to_js(rs_obj.organization_bootstrap)?;
     Reflect::set(

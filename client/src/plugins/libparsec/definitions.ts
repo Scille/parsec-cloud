@@ -268,6 +268,10 @@ export interface ClientInfo {
     mustAcceptTos: boolean
 }
 
+export interface CryptPadConfig {
+    serverUrl: string
+}
+
 export interface DeviceAccessStrategy {
     keyFile: Path
     totpProtection: [TOTPOpaqueKeyID, SecretKey] | null
@@ -375,6 +379,7 @@ export interface OrganizationInfo {
 
 export interface ServerConfig {
     account: AccountConfig
+    cryptpad: CryptPadConfig | null
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
 }

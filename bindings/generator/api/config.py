@@ -74,6 +74,10 @@ class AccountConfig(Variant):
     EnabledWithoutVault = VariantItemUnit()
 
 
+class CryptPadConfig(Structure):
+    server_url: str
+
+
 class OrganizationBootstrapConfig(Variant):
     WithBootstrapToken = VariantItemUnit()
     Spontaneous = VariantItemUnit()
@@ -101,6 +105,7 @@ class OpenBaoConfig(Structure):
 
 class ServerConfig(Structure):
     account: AccountConfig
+    cryptpad: CryptPadConfig | None
     organization_bootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | None
 
