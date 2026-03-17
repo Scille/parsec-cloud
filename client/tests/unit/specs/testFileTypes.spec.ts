@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { detectFileContentType, FileContentType } from '@/common/fileTypes';
+import { detectFileContentType, detectOpenableFile, FileContentType } from '@/common/fileTypes';
 import { describe, expect, it } from 'vitest';
 
 describe('File types detection', async () => {
@@ -9,9 +9,40 @@ describe('File types detection', async () => {
     ['bmp', FileContentType.Image],
     ['gif', FileContentType.Image],
     ['jpg', FileContentType.Image],
+    ['ps', FileContentType.Image],
     ['webp', FileContentType.Image],
     ['docx', FileContentType.Document],
     ['odt', FileContentType.Document],
+    ['doc', FileContentType.Document],
+    ['xlsx', FileContentType.Spreadsheet],
+    ['ods', FileContentType.Spreadsheet],
+    ['pdf', FileContentType.PdfDocument],
+    ['mp3', FileContentType.Audio],
+    ['mp4', FileContentType.Video],
+    ['odp', FileContentType.Presentation],
+  ])('Detect file content type %s', async (extension, expectedFileType) => {
+    const entryName = `example.${extension}`;
+    const detected = detectFileContentType(entryName);
+
+    expect(detected).to.not.equal(undefined);
+    if (detected !== undefined) {
+      expect(detected.type).to.equal(expectedFileType);
+      expect(detected.extension).to.equal(extension);
+    }
+  });
+});
+
+describe('Openable file types detection', async () => {
+  it.each([
+    ['png', FileContentType.Image],
+    ['bmp', FileContentType.Image],
+    ['gif', FileContentType.Image],
+    ['jpg', FileContentType.Image],
+    ['ps', FileContentType.Unknown],
+    ['webp', FileContentType.Image],
+    ['docx', FileContentType.Document],
+    ['odt', FileContentType.Document],
+    ['doc', FileContentType.Unknown],
     ['xlsx', FileContentType.Spreadsheet],
     ['ods', FileContentType.Spreadsheet],
     ['pdf', FileContentType.PdfDocument],
@@ -20,7 +51,7 @@ describe('File types detection', async () => {
     ['odp', FileContentType.Unknown],
   ])('Detect file content type %s', async (extension, expectedFileType) => {
     const entryName = `example.${extension}`;
-    const detected = detectFileContentType(entryName);
+    const detected = detectOpenableFile(entryName);
 
     expect(detected).to.not.equal(undefined);
     if (detected !== undefined) {

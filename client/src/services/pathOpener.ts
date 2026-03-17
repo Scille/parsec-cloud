@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DetectedFileType, detectFileContentType, FileContentType } from '@/common/fileTypes';
+import { DetectedFileType, detectOpenableFile, FileContentType } from '@/common/fileTypes';
 import {
   entryStat,
   EntryStat,
@@ -247,7 +247,7 @@ async function openPath(
     return;
   }
 
-  const contentType = detectFileContentType(entry.name);
+  const contentType = detectOpenableFile(entry.name);
 
   if (contentType.type === FileContentType.Unknown) {
     // Couldn't detect the file type, try with the system if allowed/available, otherwise display a message
