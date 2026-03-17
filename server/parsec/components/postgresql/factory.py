@@ -25,6 +25,7 @@ from parsec.components.postgresql.shamir import PGShamirComponent
 from parsec.components.postgresql.totp import PGTOTPComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.vlob import PGVlobComponent
+from parsec.components.scws import ScwsComponent
 from parsec.config import BackendConfig, PostgreSQLDatabaseConfig
 from parsec.webhooks import WebhooksComponent
 
@@ -46,42 +47,45 @@ async def components_factory(
         async with event_bus_factory(pool) as event_bus:
             async with httpx.AsyncClient(verify=SSL_CONTEXT) as http_client:
                 webhooks = WebhooksComponent(config, http_client)
-                events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
-                ping = PGPingComponent(pool=pool)
-                organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
-                auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
-                invite = PGInviteComponent(pool=pool, config=config)
-                user = PGUserComponent(pool=pool)
-                vlob = PGVlobComponent(pool=pool, webhooks=webhooks)
-                realm = PGRealmComponent(pool=pool, webhooks=webhooks)
                 blockstore = blockstore_factory(
                     config=config.blockstore_config, postgresql_pool=pool
                 )
-                block = PGBlockComponent(pool=pool, blockstore=blockstore)
-                shamir = PGShamirComponent(pool=pool)
-                sequester = PGSequesterComponent(pool=pool)
+
                 account = PGAccountComponent(pool=pool, config=config)
                 async_enrollment = PGAsyncEnrollmentComponent(pool=pool)
+                auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
+                block = PGBlockComponent(pool=pool, blockstore=blockstore)
+                events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
+                invite = PGInviteComponent(pool=pool, config=config)
+                organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
+                ping = PGPingComponent(pool=pool)
+                realm = PGRealmComponent(pool=pool, webhooks=webhooks)
+                scws = ScwsComponent(config)
+                sequester = PGSequesterComponent(pool=pool)
+                shamir = PGShamirComponent(pool=pool)
                 totp = PGTOTPComponent(pool=pool, config=config)
+                user = PGUserComponent(pool=pool)
+                vlob = PGVlobComponent(pool=pool, webhooks=webhooks)
 
                 components = {
-                    "event_bus": event_bus,
-                    "events": events,
-                    "webhooks": webhooks,
-                    "organization": organization,
-                    "user": user,
-                    "auth": auth,
-                    "invite": invite,
-                    "realm": realm,
-                    "vlob": vlob,
-                    "ping": ping,
-                    "block": block,
-                    "blockstore": blockstore,
-                    "sequester": sequester,
-                    "shamir": shamir,
                     "account": account,
                     "async_enrollment": async_enrollment,
+                    "auth": auth,
+                    "block": block,
+                    "blockstore": blockstore,
+                    "event_bus": event_bus,
+                    "events": events,
+                    "invite": invite,
+                    "organization": organization,
+                    "ping": ping,
+                    "realm": realm,
+                    "scws": scws,
+                    "sequester": sequester,
+                    "shamir": shamir,
                     "totp": totp,
+                    "user": user,
+                    "vlob": vlob,
+                    "webhooks": webhooks,
                 }
                 for component in components.values():
                     method = getattr(component, "register_components", None)

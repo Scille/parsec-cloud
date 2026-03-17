@@ -24,6 +24,7 @@ from parsec.components.memory.shamir import MemoryShamirComponent
 from parsec.components.memory.totp import MemoryTOTPComponent
 from parsec.components.memory.user import MemoryUserComponent
 from parsec.components.memory.vlob import MemoryVlobComponent
+from parsec.components.scws import ScwsComponent
 from parsec.config import BackendConfig
 from parsec.webhooks import WebhooksComponent
 
@@ -39,41 +40,44 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
     async with event_bus_factory() as event_bus:
         async with httpx.AsyncClient(verify=SSL_CONTEXT) as http_client:
             webhooks = WebhooksComponent(config, http_client)
-            auth = MemoryAuthComponent(data, event_bus, config)
-            organization = MemoryOrganizationComponent(data, event_bus, webhooks, config)
-            user = MemoryUserComponent(data, event_bus)
-            invite = MemoryInviteComponent(data, event_bus, config)
-            realm = MemoryRealmComponent(data, event_bus, webhooks)
-            vlob = MemoryVlobComponent(data, event_bus, webhooks)
-            ping = MemoryPingComponent(event_bus)
-            sequester = MemorySequesterComponent(data, event_bus)
-            shamir = MemoryShamirComponent(data, event_bus)
             blockstore = blockstore_factory(config.blockstore_config, mocked_data=data)
-            block = MemoryBlockComponent(data, blockstore)
-            events = MemoryEventsComponent(data, config, event_bus)
+
             account = MemoryAccountComponent(data, config, event_bus)
             async_enrollment = MemoryAsyncEnrollmentComponent(data, event_bus)
+            auth = MemoryAuthComponent(data, event_bus, config)
+            block = MemoryBlockComponent(data, blockstore)
+            events = MemoryEventsComponent(data, config, event_bus)
+            invite = MemoryInviteComponent(data, event_bus, config)
+            organization = MemoryOrganizationComponent(data, event_bus, webhooks, config)
+            ping = MemoryPingComponent(event_bus)
+            realm = MemoryRealmComponent(data, event_bus, webhooks)
+            scws = ScwsComponent(config)
+            sequester = MemorySequesterComponent(data, event_bus)
+            shamir = MemoryShamirComponent(data, event_bus)
             totp = MemoryTOTPComponent(data, config)
+            user = MemoryUserComponent(data, event_bus)
+            vlob = MemoryVlobComponent(data, event_bus, webhooks)
 
             components = {
-                "mocked_data": data,
-                "event_bus": event_bus,
-                "events": events,
-                "webhooks": webhooks,
-                "auth": auth,
-                "organization": organization,
-                "user": user,
-                "invite": invite,
-                "realm": realm,
-                "vlob": vlob,
-                "ping": ping,
-                "sequester": sequester,
-                "block": block,
-                "blockstore": blockstore,
-                "shamir": shamir,
                 "account": account,
                 "async_enrollment": async_enrollment,
+                "auth": auth,
+                "block": block,
+                "blockstore": blockstore,
+                "event_bus": event_bus,
+                "events": events,
+                "invite": invite,
+                "mocked_data": data,
+                "organization": organization,
+                "ping": ping,
+                "realm": realm,
+                "scws": scws,
+                "sequester": sequester,
+                "shamir": shamir,
                 "totp": totp,
+                "user": user,
+                "vlob": vlob,
+                "webhooks": webhooks,
             }
 
             yield components

@@ -1,12 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import pytest
 
 from parsec._parsec import anonymous_server_cmds
 from tests.common import AnonymousServerRpcClient, Backend, HttpCommonErrorsTester
 
 
-@pytest.mark.xfail()
 async def test_anonymous_server_scws_service_certificate_ok(
     backend: Backend, anonymous_server: AnonymousServerRpcClient
 ):
@@ -17,7 +15,6 @@ async def test_anonymous_server_scws_service_certificate_ok(
     assert rep == anonymous_server_cmds.latest.scws_service_certificate.RepOk(certificate=fake_cert)
 
 
-@pytest.mark.xfail()
 async def test_anonymous_server_scws_service_certificate_not_available(
     backend: Backend, anonymous_server: AnonymousServerRpcClient
 ):
