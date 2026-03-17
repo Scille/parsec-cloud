@@ -21,6 +21,7 @@ concurrency:
 permissions:
   contents: read
   packages: read
+  pull-requests: read # Needed by `dorny/paths-filter` action
 
 jobs:
   dispatch:
