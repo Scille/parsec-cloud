@@ -800,7 +800,6 @@ async function openSecurityWarningsModal(): Promise<void> {
 }
 
 #trigger-checklist-button {
-  padding: 0.5rem 0.825rem 1rem 0.825rem;
   background: var(--parsec-color-light-secondary-background);
   cursor: pointer;
 

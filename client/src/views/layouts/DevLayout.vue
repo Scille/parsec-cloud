@@ -8,7 +8,6 @@
 
 <script setup lang="ts">
 import * as parsec from '@/parsec';
-import { getClientInfo } from '@/parsec';
 import { getClientConfig } from '@/parsec/internals';
 import { libparsec, ParsecInvitationAddr } from '@/plugins/libparsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
@@ -45,7 +44,7 @@ onMounted(async () => {
   if (
     !import.meta.env.PARSEC_APP_TESTBED_SERVER ||
     window.isTesting() ||
-    (await getClientInfo(handle)).ok === true ||
+    // (await getClientInfo(handle)).ok === true ||
     import.meta.env.PARSEC_APP_TESTBED_AUTO_LOGIN !== 'true'
   ) {
     initialized.value = true;
@@ -292,19 +291,22 @@ async function populateManyFiles(workspace: parsec.WorkspaceInfo, treeDefinition
   const { uniqueNamesGenerator, adjectives, colors, animals } = await import('unique-names-generator');
 
   let filesCreated = 0;
+  const AVAILABLE_EXTENSIONS = ['png', 'docx', 'xlsx', 'mp4', 'mp3', 'pdf', 'txt', 'pptx'];
 
   window.electronAPI.log('debug', 'Creating mock arborescence');
   for (let i = 0; i < treeDefinition[0]; i++) {
     const folder1Name = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
     await parsec.createFolder(workspace.handle, `/${folder1Name}`);
     const fileName = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
-    await parsec.createFile(workspace.handle, `/${fileName}.png`);
+    const extension1 = AVAILABLE_EXTENSIONS[Math.floor(Math.random() * AVAILABLE_EXTENSIONS.length)];
+    await parsec.createFile(workspace.handle, `/${fileName}.${extension1}`);
     for (let j = 0; j < treeDefinition[1]; j++) {
       const folder2Name = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
       await parsec.createFolder(workspace.handle, `/${folder1Name}/${folder2Name}`);
       for (let k = 0; k < treeDefinition[2]; k++) {
         const file2Name = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
-        await parsec.createFile(workspace.handle, `/${folder1Name}/${folder2Name}/${file2Name}.png`);
+        const extension2 = AVAILABLE_EXTENSIONS[Math.floor(Math.random() * AVAILABLE_EXTENSIONS.length)];
+        await parsec.createFile(workspace.handle, `/${folder1Name}/${folder2Name}/${file2Name}.${extension2}`);
         filesCreated += 1;
         if (filesCreated % 20 === 0) {
           window.electronAPI.log('debug', `${filesCreated}/${treeDefinition[0] * treeDefinition[1] * treeDefinition[2]}`);

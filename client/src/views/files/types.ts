@@ -24,6 +24,7 @@ enum FileAction {
   ShowDetails = 'file-show-details',
   CopyLink = 'file-copy-link',
   SeeInExplorer = 'file-see-in-explorer',
+  ShowEnclosingFolder = 'file-show-enclosing-folder',
 }
 
 enum FileHandlerAction {

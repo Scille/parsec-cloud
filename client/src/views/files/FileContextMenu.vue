@@ -99,6 +99,21 @@
 
         <ion-item
           button
+          v-if="!multipleFiles && navigateFromAnywhere"
+          @click="onClick(FileAction.ShowEnclosingFolder)"
+          class="ion-no-padding list-group-item"
+        >
+          <ms-image
+            :image="FolderParentIcon"
+            class="list-group-item__icon"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionShowEnclosingFolder') }}
+          </ion-text>
+        </ion-item>
+
+        <ion-item
+          button
           v-if="!multipleFiles && isDesktop()"
           @click="onClick(FileAction.SeeInExplorer)"
           class="ion-no-padding list-group-item"
@@ -201,6 +216,7 @@
 </template>
 
 <script setup lang="ts">
+import FolderParentIcon from '@/assets/images/folder-parent.svg?raw';
 import { isDesktop, WorkspaceRole } from '@/parsec';
 import { FileAction } from '@/views/files/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
@@ -212,6 +228,7 @@ defineProps<{
   multipleFiles?: boolean;
   isFile: boolean;
   isEditable?: boolean;
+  navigateFromAnywhere?: boolean;
 }>();
 
 async function onClick(action: FileAction): Promise<boolean> {

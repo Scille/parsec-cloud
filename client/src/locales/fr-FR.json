@@ -864,7 +864,8 @@
             "actionSelect": "Sélection",
             "actionSelectAll": "Tout sélectionner",
             "actionUnselectAll": "Tout désélectionner",
-            "actionShare": "Partager"
+            "actionShare": "Partager",
+            "actionShowEnclosingFolder": "Voir dans le dossier"
         },
         "importModal": {
             "title": "Importer vos fichiers",
@@ -1047,6 +1048,30 @@
             "seeInExplorer": "Afficher dans l'explorateur",
             "details": "Détails",
             "edit": "Éditer"
+        },
+        "search": {
+            "title": "Résultats de la recherche",
+            "resultsCount": "{count} résultat | {count} résultats",
+            "currentWorkspaceOnly": "Résultats uniquement dans l’espace de travail actuel.",
+            "onlyMatchTitles": "Correspondance sur le titre uniquement",
+            "filterButtonDefault": "Types de documents",
+            "applyFilters": "Appliquer",
+            "filters": {
+                "folders": "Dossier",
+                "documents": "Document",
+                "spreadsheets": "Feuille de calcul",
+                "presentations": "Présentation",
+                "pdfDocuments": "PDF",
+                "audios": "Audio",
+                "videos": "Vidéo",
+                "images": "Image",
+                "texts": "Texte"
+            },
+            "placeholder": "Rechercher un fichier dans cet espace",
+            "noResults": {
+                "title": "Aucun résultat ne correspond à votre recherche dans cet espace",
+                "subtitle": "Vérifier l'orthographe ou essayez d'utiliser des termes de recherche plus simples, puis de filtrer les résultats. Vous ne trouvez toujours pas ce que vous cherchez ?"
+            }
         }
     },
     "FileDetails": {

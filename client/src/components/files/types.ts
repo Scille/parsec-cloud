@@ -11,6 +11,46 @@ import {
 import { FileOperationDataType } from '@/services/fileOperation';
 import { Translatable } from 'megashark-lib';
 
+export interface DocumentFilters {
+  Folders: boolean;
+  Documents: boolean;
+  Spreadsheets: boolean;
+  Presentations: boolean;
+  PdfDocuments: boolean;
+  Texts: boolean;
+  Images: boolean;
+  Videos: boolean;
+  Audios: boolean;
+}
+
+export const DocumentFiltersIncludeAll = (): DocumentFilters => {
+  return structuredClone({
+    Folders: true,
+    Documents: true,
+    Spreadsheets: true,
+    Presentations: true,
+    PdfDocuments: true,
+    Texts: true,
+    Images: true,
+    Videos: true,
+    Audios: true,
+  });
+};
+
+export const DocumentFiltersIncludeNone = (): DocumentFilters => {
+  return structuredClone({
+    Folders: false,
+    Documents: false,
+    Spreadsheets: false,
+    Presentations: false,
+    PdfDocuments: false,
+    Texts: false,
+    Images: false,
+    Videos: false,
+    Audios: false,
+  });
+};
+
 export enum SortProperty {
   Name,
   Size,

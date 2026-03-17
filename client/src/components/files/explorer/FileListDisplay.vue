@@ -252,8 +252,4 @@ async function scrollToSelected(): Promise<void> {
 .file-list-mobile {
   padding-top: 1rem;
 }
-
-.folder-list-header__label {
-  padding: 0.75rem 1rem;
-}
 </style>

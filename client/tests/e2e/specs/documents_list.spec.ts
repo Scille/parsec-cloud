@@ -478,10 +478,10 @@ msTest.describe(() => {
     await expect(actionBarMoreButton).toBeHidden();
 
     await resizePage(documents, 820);
-    await expect(actionsBarButtons).toContainText(['New folder']);
+    await expect(actionsBarButtons).toContainText([]);
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
-    await expect(documents.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Import');
+    await expect(documents.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('New folder');
     await documents.keyboard.press('Escape');
     await expect(documents.locator('.popover-viewport')).toBeHidden();
 
@@ -504,28 +504,36 @@ msTest.describe(() => {
 
     // Resize to 1500px
     await resizePage(documents, 1500);
-    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy', 'Delete', 'Download']);
+    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy']);
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
-    await expect(documents.locator('.popover-viewport').getByRole('listitem')).toHaveText(['Details', 'Copy link']);
+    await expect(documents.locator('.popover-viewport').getByRole('listitem')).toHaveText(['Delete', 'Download', 'Details', 'Copy link']);
     await documents.keyboard.press('Escape');
 
     // Resize to 1200px (to be sure the "more" button works)
     await resizePage(documents, 1200);
-    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to']);
+    await expect(actionsBarButtons).toHaveText(['Preview']);
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
-    await expect(popover.getByRole('listitem')).toHaveText(['Make a copy', 'Delete', 'Download', 'Details', 'Copy link']);
+    await expect(popover.getByRole('listitem')).toHaveText([
+      'Rename',
+      'Move to',
+      'Make a copy',
+      'Delete',
+      'Download',
+      'Details',
+      'Copy link',
+    ]);
     await documents.keyboard.press('Escape');
 
     // Finally, check if action bar is checkable after toggling the sidebar menu
     const topbarButton = documents.locator('#connected-header').locator('#trigger-toggle-menu-button');
     await expect(topbarButton).toBeVisible();
     await topbarButton.click();
-    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy', 'Delete', 'Download']);
+    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy']);
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
-    await expect(popover.getByRole('listitem')).toHaveText(['Details', 'Copy link']);
+    await expect(popover.getByRole('listitem')).toHaveText(['Delete', 'Download', 'Details', 'Copy link']);
   });
 
   for (const gridMode of [false, true]) {
