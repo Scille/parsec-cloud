@@ -25,6 +25,7 @@ from .test_realm_create import *
 from .test_realm_get_keys_bundle import *
 from .test_realm_rename import *
 from .test_realm_rotate_key import *
+from .test_realm_self_promote_to_owner import *
 from .test_realm_share import *
 from .test_realm_unshare import *
 from .test_shamir_recovery_delete import *
