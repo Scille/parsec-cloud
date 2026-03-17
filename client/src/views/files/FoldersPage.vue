@@ -5,6 +5,7 @@
     <ion-content
       :fullscreen="true"
       class="content-scroll folder-content"
+      :class="{ searching: searchInputValue.length > 0 }"
     >
       <ms-action-bar
         id="folders-ms-action-bar"
@@ -13,18 +14,21 @@
       >
         <div class="right-side">
           <ms-search-input
-            v-if="false"
-            :debounce="1000"
-            @change="startSearch"
-            id="search-files"
+            :placeholder="'FoldersPage.search.placeholder'"
+            id="search-input-files"
+            :debounce="300"
+            @change="onSearchValueChange"
+            v-model="searchPattern"
           />
-
           <workspace-role-tag
             :role="ownRole"
             class="workspace-role-tag"
           />
 
-          <div class="counter">
+          <div
+            class="counter"
+            v-show="!search"
+          >
             <ion-text
               class="body"
               v-if="selectedFilesCount === 0"
@@ -46,6 +50,7 @@
           </div>
 
           <ms-sorter
+            v-show="!search"
             :sort-ascending="currentSortOrder"
             :key="`${currentSortProperty}-${currentSortOrder}`"
             label="FoldersPage.sort.byName"
@@ -57,6 +62,7 @@
           />
 
           <ms-grid-list-toggle
+            v-show="!search"
             v-model="displayView"
             @update:model-value="onDisplayStateChange"
           />
@@ -94,6 +100,7 @@
         >
           <div class="mobile-filters-buttons">
             <ms-sorter
+              v-if="!search"
               :key="`${currentSortProperty}-${currentSortOrder}`"
               :label="'FoldersPage.sort.byName'"
               :options="msSorterOptions"
@@ -108,6 +115,20 @@
               @update:model-value="onDisplayStateChange"
             />
           </div>
+        </div>
+
+        <div
+          v-if="isSmallDisplay"
+          class="search-mobile-container"
+        >
+          <ms-search-input
+            :placeholder="'FoldersPage.search.placeholder'"
+            :debounce="300"
+            @change="onSearchValueChange"
+            v-model="searchPattern"
+            id="search-input-files"
+            class="search-input-mobile"
+          />
         </div>
 
         <div
@@ -185,12 +206,16 @@
             />
           </div>
         </div>
-        <div v-if="search">
+        <template v-if="search">
           <file-search-results
+            :pattern="search.pattern"
             :search-results="search.results"
             :active="search.active"
+            @item-click="onSearchResultClick"
+            @menu-item-click="onSearchResultContextMenu"
+            @update-pattern="search.pattern = $event"
           />
-        </div>
+        </template>
       </div>
       <tab-bar-options
         v-if="customTabBar.isVisible.value"
@@ -461,6 +486,8 @@ const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
 const search = ref<Search | undefined>(undefined);
+const searchPattern = ref('');
+const searchInputValue = ref('');
 const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
 // Init at true to avoid blinking while we're mounting the component
 // but we're not loading the files yet.
@@ -943,7 +970,7 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
         (childStat as FileModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
         newFiles.push(childStat as FileModel);
       } else {
-        (childStat as FolderModel).isSelected = false;
+        (childStat as FolderModel).isSelected = Boolean(options && options.selectFile && options.selectFile === childName);
         (childStat as FolderModel).syncStatus = !childStat.needSync ? EntrySyncStatus.Synced : undefined;
         newFolders.push(childStat as FolderModel);
       }
@@ -973,15 +1000,36 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
   }
 }
 
-async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
+async function showEnclosingFolder(entries: EntryModel[]): Promise<void> {
+  if (entries.length !== 1 || !workspaceInfo.value) {
+    return;
+  }
+  const entry = entries[0];
+  searchPattern.value = '';
+  await cancelSearch();
+  const parent = await parsec.Path.parent(entry.path);
+  await navigateTo(Routes.Documents, {
+    query: { documentPath: parent, workspaceHandle: workspaceInfo.value?.handle, selectFile: entry.name },
+  });
+}
+
+async function onSearchResultClick(entry: parsec.SearchResult): Promise<void> {
+  await onSelectionCancel();
+  if (!entry.stats.isFile()) {
+    searchPattern.value = '';
+    await cancelSearch();
+  }
+  await onEntryClick({ ...entry.stats, isSelected: false });
+}
+
+async function onEntryClick(entry: EntryModel): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
 
   if (!entry.isFile()) {
-    const newPath = await parsec.Path.join(currentPath.value, entry.name);
     navigateTo(Routes.Documents, {
-      query: { documentPath: newPath, workspaceHandle: workspaceInfo.value?.handle },
+      query: { documentPath: entry.path, workspaceHandle: workspaceInfo.value?.handle },
     });
   } else {
     const config = await storageManager.retrieveConfig();
@@ -1074,10 +1122,9 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
     if (answer === Answer.No) {
       return;
     }
-    const path = await parsec.Path.join(currentPath.value, entry.name);
     const result = entry.isFile()
-      ? await parsec.deleteFile(workspaceInfo.value.handle, path)
-      : await parsec.deleteFolder(workspaceInfo.value.handle, path);
+      ? await parsec.deleteFile(workspaceInfo.value.handle, entry.path)
+      : await parsec.deleteFolder(workspaceInfo.value.handle, entry.path);
     if (!result.ok) {
       informationManager.value.present(
         new Information({
@@ -1087,6 +1134,9 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
         PresentationMode.Toast,
       );
     } else {
+      if (search.value) {
+        await startSearch(searchPattern.value);
+      }
       await eventDistributor.value.dispatchEvent(Events.EntryDeleted, {
         workspaceHandle: workspaceInfo.value.handle,
         entryId: entry.id,
@@ -1113,10 +1163,9 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
     }
     let errorsEncountered = 0;
     for (const entry of entries) {
-      const path = await parsec.Path.join(currentPath.value, entry.name);
       const result = entry.isFile()
-        ? await parsec.deleteFile(workspaceInfo.value.handle, path)
-        : await parsec.deleteFolder(workspaceInfo.value.handle, path);
+        ? await parsec.deleteFile(workspaceInfo.value.handle, entry.path)
+        : await parsec.deleteFolder(workspaceInfo.value.handle, entry.path);
       if (!result.ok) {
         errorsEncountered += 1;
       } else {
@@ -1167,8 +1216,7 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
   if (!newName) {
     return;
   }
-  const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const result = await parsec.rename(workspaceInfo.value.handle, filePath, newName);
+  const result = await parsec.rename(workspaceInfo.value.handle, entry.path, newName);
   if (!result.ok) {
     let message: Translatable = '';
     switch (result.error.tag) {
@@ -1197,6 +1245,9 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
 
     entry.name = newName;
     entry.path = result.value;
+    if (search.value) {
+      await startSearch(searchPattern.value);
+    }
   }
   await onSelectionCancel();
 }
@@ -1206,10 +1257,9 @@ async function copyLink(entries: EntryModel[]): Promise<void> {
     return;
   }
   const entry = entries[0];
-  const filePath = await parsec.Path.join(currentPath.value, entry.name);
   const workspaceHandle = workspaceInfo.value.handle;
 
-  copyPathLinkToClipboard(filePath, workspaceHandle, informationManager.value);
+  copyPathLinkToClipboard(entry.path, workspaceHandle, informationManager.value);
 }
 
 async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
@@ -1460,17 +1510,7 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
   await performFolderAction(data.action);
 }
 
-async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
-  const selectedEntries = getSelectedEntries();
-  const data = await _openEntryContextMenu(event, entry, selectedEntries, ownRole.value, isLargeDisplay.value);
-
-  if (!data) {
-    if (onFinished) {
-      onFinished();
-    }
-    return;
-  }
-
+async function dispatchContextMenuAction(action: FileAction, entry: EntryModel, selectedEntries: Array<EntryModel>): Promise<void> {
   const actions = new Map<FileAction, (file: EntryModel[]) => Promise<void>>([
     [
       FileAction.Preview,
@@ -1492,9 +1532,10 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
     [FileAction.CopyLink, copyLink],
     [FileAction.Delete, deleteEntries],
     [FileAction.SeeInExplorer, seeInExplorer],
+    [FileAction.ShowEnclosingFolder, showEnclosingFolder],
   ]);
 
-  const fn = actions.get(data.action);
+  const fn = actions.get(action);
   if (fn) {
     if (!selectedEntries.includes(entry)) {
       await fn([entry]);
@@ -1502,6 +1543,35 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
       await fn(selectedEntries);
     }
   }
+}
+
+async function onSearchResultContextMenu(event: Event, entry: parsec.SearchResult, onFinished?: () => void): Promise<void> {
+  await onSelectionCancel();
+  const data = await _openEntryContextMenu(event, { ...entry.stats, isSelected: false }, [], ownRole.value, isLargeDisplay.value, true);
+
+  if (!data) {
+    if (onFinished) {
+      onFinished();
+    }
+    return;
+  }
+  await dispatchContextMenuAction(data.action, { ...entry.stats, isSelected: false }, []);
+  if (onFinished) {
+    onFinished();
+  }
+}
+
+async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
+  const selectedEntries = getSelectedEntries();
+  const data = await _openEntryContextMenu(event, entry, selectedEntries, ownRole.value, isLargeDisplay.value);
+
+  if (!data) {
+    if (onFinished) {
+      onFinished();
+    }
+    return;
+  }
+  await dispatchContextMenuAction(data.action, entry, selectedEntries);
   if (onFinished) {
     onFinished();
   }
@@ -1579,9 +1649,22 @@ async function onDropAsReader(): Promise<void> {
   );
 }
 
+// Use megashark's typing when available
+interface MsActionBarAction {
+  label: Translatable;
+  icon?: string;
+  image?: string;
+  isDropdown?: boolean;
+  onClick?: (event: MouseEvent) => Promise<void>;
+}
+
 const actionBarOptionsFoldersPage = computed(() => {
-  const actionArray = [];
+  const actionArray: Array<MsActionBarAction> = [];
   const selectedEntries = getSelectedEntries();
+
+  if (search.value) {
+    return actionArray;
+  }
 
   if (selectedFilesCount.value === 0 && ownRole.value !== parsec.WorkspaceRole.Reader) {
     actionArray.push(
@@ -1718,11 +1801,21 @@ const actionBarOptionsFoldersPage = computed(() => {
   return actionArray;
 });
 
-async function startSearch(pattern: string): Promise<void> {
+function onSearchValueChange(pattern: string): void {
+  searchInputValue.value = pattern;
+  startSearch(pattern);
+}
+
+async function cancelSearch(): Promise<void> {
   if (search.value) {
     search.value.aborter.abort();
     search.value = undefined;
   }
+}
+
+async function startSearch(pattern: string): Promise<void> {
+  await cancelSearch();
+  await onSelectionCancel();
   if (pattern.length < 3 || !workspaceInfo.value) {
     return;
   }
@@ -1732,7 +1825,7 @@ async function startSearch(pattern: string): Promise<void> {
     aborter: new AbortController(),
     active: true,
   };
-  await parsec.fileSearch(workspaceInfo.value.handle, currentPath.value, pattern, search.value.results, search.value.aborter.signal);
+  await parsec.fileSearch(workspaceInfo.value.handle, '/', pattern, search.value.results, search.value.aborter.signal);
   if (search.value) {
     search.value.active = false;
   }
@@ -1795,6 +1888,20 @@ async function startSearch(pattern: string): Promise<void> {
       width: 100%;
       justify-content: flex-end;
       border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    }
+  }
+}
+
+.search-mobile-container {
+  height: auto !important;
+  padding: 1.5rem 1rem 0.5rem 1rem !important;
+
+  .search-input-mobile {
+    height: auto !important;
+    background: var(--parsec-color-light-secondary-background);
+
+    &.input-content:focus-within:not(.form-input-disabled) {
+      background: var(--parsec-color-light-secondary-white);
     }
   }
 }

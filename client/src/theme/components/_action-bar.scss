@@ -12,7 +12,8 @@
   }
 
   #search-input-workspace,
-  #search-input-users {
+  #search-input-users,
+  #search-input-files {
     height: auto;
     border: none;
     padding: 0.5rem 0 0.5rem 0.75rem !important;
@@ -44,6 +45,19 @@
     .input-clear-icon {
       height: auto;
       margin-inline-end: 0 !important;
+    }
+  }
+
+  #search-input-files {
+    min-width: 20rem;
+
+    @include ms.responsive-breakpoint('xl') {
+      min-width: fit-content;
+    }
+
+    @include ms.responsive-breakpoint('md') {
+      min-width: auto;
+      max-width: 10rem;
     }
   }
 

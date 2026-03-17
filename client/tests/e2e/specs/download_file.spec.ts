@@ -168,6 +168,8 @@ msTest.describe(() => {
     msTest.setTimeout(45_000);
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     const actionBar = documents.locator('#folders-ms-action-bar');
+    const actionBarMoreButton = actionBar.locator('#action-bar-more-button');
+    const actionBarPopover = documents.locator('.action-bar-more-popover');
 
     // Sort by size to make the renaming easier
     const sorterPopoverButton = actionBar.locator('#select-popover-button');
@@ -207,13 +209,22 @@ msTest.describe(() => {
     await expect(documents).toHaveHeader(['wksp1'], true, true);
     await expect(entries).toHaveCount(1);
 
+    await documents.waitForTimeout(300);
     await entries.nth(0).hover();
+    await documents.waitForTimeout(300);
     await entries.nth(0).locator('.ms-checkbox').check();
+    await documents.waitForTimeout(300);
 
     await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
     await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(7);
-    await expect(actionBar.locator('.ms-action-bar-button').nth(4)).toHaveText('Download');
-    await actionBar.locator('.ms-action-bar-button').nth(4).click();
+
+    await expect(actionBarMoreButton).toBeVisible();
+    await actionBarMoreButton.click();
+    await expect(actionBarPopover).toBeVisible();
+    await expect(actionBarPopover.getByRole('listitem').nth(0)).toHaveText('Download');
+    await actionBarPopover.getByRole('listitem').nth(0).click();
+    await expect(actionBarPopover).toBeHidden();
+
     await confirmDownload(documents, true);
     await answerQuestion(documents, true);
 
@@ -244,6 +255,9 @@ msTest.describe(() => {
   msTest('Download archive too many recursion', async ({ documents }, testInfo: TestInfo) => {
     msTest.setTimeout(45_000);
     const entries = documents.locator('.folder-container').locator('.file-list-item');
+    const actionBar = documents.locator('#folders-ms-action-bar');
+    const actionBarMoreButton = actionBar.locator('#action-bar-more-button');
+    const actionBarPopover = documents.locator('.action-bar-more-popover');
 
     for (let i = 0; i < 15; i++) {
       await createFolder(documents, `Folder${i}`);
@@ -267,16 +281,20 @@ msTest.describe(() => {
     await expect(documents).toHaveHeader(['wksp1'], true, true);
     await expect(entries).toHaveCount(1);
 
+    await documents.waitForTimeout(300);
     await entries.nth(0).hover();
+    await documents.waitForTimeout(300);
     await entries.nth(0).locator('.ms-checkbox').check();
+    await documents.waitForTimeout(300);
     await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
-
-    const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
-    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(7);
-    await documents.waitForTimeout(100);
-    await expect(actionBar.locator('.ms-action-bar-button').nth(4)).toHaveText('Download');
-    await actionBar.locator('.ms-action-bar-button').nth(4).click();
+
+    await expect(actionBarMoreButton).toBeVisible();
+    await actionBarMoreButton.click();
+    await expect(actionBarPopover).toBeVisible();
+    await expect(actionBarPopover.getByRole('listitem').nth(0)).toHaveText('Download');
+    await actionBarPopover.getByRole('listitem').nth(0).click();
+    await expect(actionBarPopover).toBeHidden();
     await confirmDownload(documents, true);
     await expect(documents).toShowToast('Maximum subfolder depth reached, cannot download', 'Error');
     await expect(opItems).toHaveCount(1);

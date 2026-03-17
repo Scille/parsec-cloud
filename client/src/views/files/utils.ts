@@ -71,6 +71,7 @@ export async function openEntryContextMenu(
   selectedEntries: EntryModel[],
   ownRole: WorkspaceRole,
   isLargeDisplay: boolean,
+  navigateFromAnywhere?: boolean,
 ): Promise<{ action: FileAction } | undefined> {
   let data: { action: FileAction } | undefined;
 
@@ -89,6 +90,7 @@ export async function openEntryContextMenu(
         multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
         isFile: entry.isFile(),
         isEditable: isFileEditable(entry.name),
+        navigateFromAnywhere: navigateFromAnywhere,
       },
     });
 
@@ -108,6 +110,7 @@ export async function openEntryContextMenu(
         multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
         isFile: entry.isFile(),
         isEditable: isFileEditable(entry.name),
+        navigateFromAnywhere: navigateFromAnywhere,
       },
     });
 

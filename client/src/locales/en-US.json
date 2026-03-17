@@ -865,7 +865,8 @@
             "actionSelect": "Selection",
             "actionSelectAll": "Select all",
             "actionUnselectAll": "Unselect all",
-            "actionShare": "Share"
+            "actionShare": "Share",
+            "actionShowEnclosingFolder": "Show enclosing folder"
         },
         "importModal": {
             "title": "Upload your files",
@@ -1047,6 +1048,30 @@
             "seeInExplorer": "Show in explorer",
             "details": "Details",
             "edit": "Edit"
+        },
+        "search": {
+            "title": "Search results",
+            "resultsCount": "{count} result | {count} results",
+            "currentWorkspaceOnly": "Results only in the current workspace.",
+            "onlyMatchTitles": "Only match titles",
+            "filterButtonDefault": "Document types",
+            "applyFilters": "Apply",
+            "filters": {
+                "folders": "Folder",
+                "documents": "Document",
+                "spreadsheets": "Spreadsheet",
+                "presentations": "Presentation",
+                "pdfDocuments": "PDF",
+                "audios": "Audio",
+                "videos": "Video",
+                "images": "Image",
+                "texts": "Text"
+            },
+            "placeholder": "Search a file in this workspace",
+            "noResults": {
+                "title": "No results match your search in this workspace",
+                "subtitle": "Check the orthography or try using simpler search terms, then filter the results."
+            }
         }
     },
     "FileDetails": {

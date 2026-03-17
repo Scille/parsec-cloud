@@ -97,14 +97,19 @@ export async function statFolderChildren(
   workspaceHandle: WorkspaceHandle,
   path: FsPath,
   excludeConfined = true,
+  noWatcher = false,
 ): Promise<Result<Array<EntryStat>, WorkspaceStatFolderChildrenError>> {
-  const watchResult = await libparsec.workspaceWatchEntryOneshot(workspaceHandle, path);
-
-  let result;
-  if (!watchResult.ok) {
+  let result = undefined;
+  if (!noWatcher) {
+    const watchResult = await libparsec.workspaceWatchEntryOneshot(workspaceHandle, path);
+    if (watchResult.ok) {
+      result = await libparsec.workspaceStatFolderChildrenById(workspaceHandle, watchResult.value);
+    } else {
+      result = await libparsec.workspaceStatFolderChildren(workspaceHandle, path);
+    }
+  }
+  if (result === undefined) {
     result = await libparsec.workspaceStatFolderChildren(workspaceHandle, path);
-  } else {
-    result = await libparsec.workspaceStatFolderChildrenById(workspaceHandle, watchResult.value);
   }
 
   if (!result.ok) {

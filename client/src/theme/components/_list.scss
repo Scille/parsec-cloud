@@ -171,16 +171,30 @@
 
   .header-label-selected,
   .header-label-name,
+  .header-label-updated-by,
   .header-label-last-update,
   .header-label-creation-date,
   .header-label-size {
-    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.375rem;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    padding: 0.5rem 1rem;
+
+    // "Updated by" column is not sortable
+    &:not(.header-label-updated-by) {
+      cursor: pointer;
+
+      &:hover {
+        color: var(--parsec-color-light-secondary-soft-text);
+
+        ion-icon {
+          display: block;
+        }
+      }
+    }
 
     &__text {
       overflow: hidden;
@@ -192,14 +206,6 @@
       display: none;
       flex-shrink: 0;
       font-size: 0.875rem;
-    }
-
-    &:hover {
-      color: var(--parsec-color-light-secondary-soft-text);
-
-      ion-icon {
-        display: block;
-      }
     }
 
     &-sorted {
@@ -279,6 +285,16 @@
     }
   }
 
+  .header-label-name-results,
+  .file-name-results {
+    flex-basis: 40rem;
+    padding: 0.5rem 1rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.75rem 1rem;
+    }
+  }
+
   .header-label-updated-by,
   .file-updated-by {
     flex-basis: var(--width-cell-updated-by);
@@ -291,6 +307,7 @@
   .header-label-last-update,
   .file-last-update {
     flex-basis: var(--width-cell-last-update);
+    min-width: 6rem;
 
     @include ms.responsive-breakpoint('sm') {
       display: none;
@@ -327,6 +344,7 @@
     flex-basis: var(--width-cell-options);
     position: sticky;
     right: 0;
+    margin-left: auto;
   }
 
   // Set special drop zone style when dragging elements on folder
@@ -338,6 +356,94 @@
     background: hsla(214, 100%, 60%, 0.3);
   }
 
+  // for FileSearchResultItem and FileListItem components
+  // --- start ---
+  .drop-zone-item {
+    height: fit-content;
+  }
+
+  .file-name {
+    position: relative;
+    display: flex;
+    gap: 1rem;
+
+    .file-icon {
+      width: 2rem;
+      height: 2rem;
+      flex-shrink: 0;
+    }
+
+    .label-name {
+      color: var(--parsec-color-light-secondary-text);
+
+      &:not(.selection):hover {
+        text-decoration: underline;
+        cursor: pointer !important;
+      }
+    }
+
+    .cloud-overlay {
+      font-size: 1rem;
+      flex-shrink: 0;
+      margin-left: auto;
+      position: absolute;
+      right: 0;
+
+      @include ms.responsive-breakpoint('sm') {
+        display: none;
+      }
+
+      &-ok {
+        color: var(--parsec-color-light-primary-500);
+      }
+
+      &-ko {
+        color: var(--parsec-color-light-secondary-grey);
+      }
+    }
+  }
+
+  .file-list-item-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0 0.5rem;
+    border-radius: var(--parsec-radius-8);
+
+    .file-mobile-content {
+      gap: 1rem;
+      width: 100%;
+    }
+
+    .file-selected {
+      max-width: 2.5rem;
+      overflow: visible;
+    }
+  }
+
+  .file-mobile-text {
+    flex-grow: 1;
+    overflow: hidden;
+    color: var(--parsec-color-light-secondary-grey);
+    display: flex;
+    gap: 0.125rem;
+    flex-direction: column;
+
+    &__data {
+      display: flex;
+      gap: 0.5rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
   .file-list-item.file-hovered,
   .file-card-item.file-hovered {
     .file-list-item-container:has(.label-name:not(.selection):hover) .ms-checkbox,
@@ -345,10 +451,21 @@
       outline: none;
     }
   }
+  // --- end ----
 
   .history-file-list-item {
     .list-item-container:has(.label-name:not(.selection):hover) .ms-checkbox {
       outline: none;
+    }
+  }
+
+  &:has(.file-search-results) {
+    background: var(--parsec-color-light-secondary-background);
+    padding: 1.5rem;
+    overflow: hidden;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0;
     }
   }
 }

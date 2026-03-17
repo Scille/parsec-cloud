@@ -20,6 +20,22 @@
   }
 }
 
+.checklist-security-container {
+  padding: 0.5rem 0.825rem 1rem 0.825rem;
+  transition:
+    max-height 0.3s ease-out,
+    visibility 0.3s ease-out,
+    padding 0.3s ease-out;
+  overflow: hidden;
+}
+
+.split-pane-main:has(.searching) .checklist-security-container,
+.split-pane-main:has(#search-input-files:focus-within) .checklist-security-container {
+  max-height: 0;
+  visibility: hidden;
+  padding: 0 !important;
+}
+
 ion-title {
   padding: 0;
 }
@@ -71,6 +87,10 @@ svg {
     background: var(--parsec-color-light-secondary-light);
     border-radius: var(--parsec-radius-8);
   }
+}
+
+.searching .counter::after {
+  margin-left: 0;
 }
 
 // temporary fix for password input
