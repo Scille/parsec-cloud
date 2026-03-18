@@ -44,7 +44,7 @@ fn simple() {
         version: 1,
         certificate: Bytes::from_static(b"whatever"),
     };
-    let dumped = rmp_serde::to_vec_named(&data).unwrap();
+    let dumped = data.dump().unwrap();
     let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
     assert_eq!(reloaded, data,);
 }
@@ -126,11 +126,11 @@ fn introduce_in_field() {
 
     // Check round-trip serialize/deserialize
 
-    let dumped_with = rmp_serde::to_vec_named(&data_with).unwrap();
+    let dumped_with = data_with.dump().unwrap();
     let reloaded_with: FooManifestData = rmp_serde::from_slice(&dumped_with).unwrap();
     assert_eq!(reloaded_with, data_with);
 
-    let dumped_without = rmp_serde::to_vec_named(&data_without).unwrap();
+    let dumped_without = data_without.dump().unwrap();
     let reloaded_without: FooManifestData = rmp_serde::from_slice(&dumped_without).unwrap();
     assert_eq!(reloaded_without, data_without);
 }
@@ -172,7 +172,7 @@ fn deprecate_in_field() {
 
     // Check round-trip serialize/deserialize
 
-    let dumped = rmp_serde::to_vec_named(&data).unwrap();
+    let dumped = data.dump().unwrap();
     let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
     assert_eq!(reloaded, data);
 }
@@ -215,7 +215,7 @@ fn introduce_then_deprecate_in_field() {
 
     // Check round-trip serialize/deserialize
 
-    let dumped = rmp_serde::to_vec_named(&data).unwrap();
+    let dumped = data.dump().unwrap();
     let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
     assert_eq!(reloaded, data);
 }
@@ -309,7 +309,7 @@ fn nested_type() {
 
     // Check round-trip serialize/deserialize
 
-    let dumped = rmp_serde::to_vec_named(&data).unwrap();
+    let dumped = data.dump().unwrap();
     let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
     assert_eq!(reloaded, data);
 }

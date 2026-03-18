@@ -10,7 +10,17 @@ use quote::{format_ident, quote};
 use crate::types::FieldType;
 
 pub(crate) fn generate_data(data: JsonData) -> TokenStream {
-    quote_data(GenData::new(data))
+    quote_data(GenData::new(data), SerializationImpl::Serde)
+}
+
+pub(crate) fn generate_data_with_dynamic_serialization(data: JsonData) -> TokenStream {
+    quote_data(GenData::new(data), SerializationImpl::DynamicRmp)
+}
+
+#[derive(Clone, Copy)]
+enum SerializationImpl {
+    Serde,
+    DynamicRmp,
 }
 
 //
@@ -202,7 +212,7 @@ enum GenDataNestedType {
 // Code generation
 //
 
-pub(crate) fn quote_data(data: GenData) -> TokenStream {
+fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStream {
     let name = format_ident!("{}Data", data.label);
     let name_type = format_ident!("{}DataType", data.label);
     let ty = &data.ty;
@@ -211,14 +221,54 @@ pub(crate) fn quote_data(data: GenData) -> TokenStream {
         .iter()
         .filter_map(|f| quote_field(f, true))
         .collect();
-    let nested_types = quote_data_nested_types(&data.nested_types);
+    let nested_types = quote_data_nested_types(&data.nested_types, serialization_impl);
+
+    let data_derive = match serialization_impl {
+        SerializationImpl::Serde => {
+            quote! { #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)] }
+        }
+        SerializationImpl::DynamicRmp => {
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
+        }
+    };
 
     if let Some(ty) = ty {
+        let data_serialize_impl = match serialization_impl {
+            SerializationImpl::Serde => quote! {},
+            SerializationImpl::DynamicRmp => {
+                quote_dynamic_struct_serialize_impl(&name, &data.fields, true, true)
+            }
+        };
+
+        let data_type_serialize_impl = match serialization_impl {
+            SerializationImpl::Serde => {
+                quote! {
+                    impl ::serde::Serialize for #name_type {
+                        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                        where
+                            S: ::serde::ser::Serializer,
+                        {
+                            serializer.serialize_str(#ty)
+                        }
+                    }
+                }
+            }
+            SerializationImpl::DynamicRmp => {
+                quote! {
+                    impl libparsec_types::rmp_serialize::Serialize for #name_type {
+                        fn begin(&self) -> libparsec_types::rmp_serialize::Fragment<'_> {
+                            libparsec_types::rmp_serialize::Fragment::Str(#ty)
+                        }
+                    }
+                }
+            }
+        };
+
         quote! {
             #(#nested_types)*
 
             #[serde_with::serde_as]
-            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            #data_derive
             pub struct #name {
                 #[serde(rename="type")]
                 pub ty: #name_type,
@@ -228,14 +278,9 @@ pub(crate) fn quote_data(data: GenData) -> TokenStream {
             #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
             pub struct #name_type;
 
-            impl ::serde::Serialize for #name_type {
-                fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-                where
-                    S: ::serde::ser::Serializer,
-                {
-                    serializer.serialize_str(#ty)
-                }
-            }
+            #data_type_serialize_impl
+
+            #data_serialize_impl
 
             impl<'de> ::serde::Deserialize<'de> for #name_type {
                 fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -271,14 +316,23 @@ pub(crate) fn quote_data(data: GenData) -> TokenStream {
             }
         }
     } else {
+        let data_serialize_impl = match serialization_impl {
+            SerializationImpl::Serde => quote! {},
+            SerializationImpl::DynamicRmp => {
+                quote_dynamic_struct_serialize_impl(&name, &data.fields, false, true)
+            }
+        };
+
         quote! {
             #(#nested_types)*
 
             #[serde_with::serde_as]
-            #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)]
+            #data_derive
             pub struct #name {
                 #(#fields),*
             }
+
+            #data_serialize_impl
         }
     }
 }
@@ -287,18 +341,19 @@ fn quote_custom_struct_union(
     name: &str,
     variants: &[GenDataNestedTypeVariant],
     discriminant_field: &str,
+    serialization_impl: SerializationImpl,
 ) -> TokenStream {
     let name = format_ident!("{}", name);
-    let variants = variants.iter().map(|variant| {
+    let variants_def = variants.iter().map(|variant| {
         let variant_name = format_ident!("{}", variant.name);
         let value_literal = &variant.discriminant_value;
-        if variant.fields.is_empty() {
+        let variant_fields = quote_fields(&variant.fields, false);
+        if variant_fields.is_empty() {
             quote! {
                 #[serde(rename = #value_literal)]
                 #variant_name
             }
         } else {
-            let variant_fields = quote_fields(&variant.fields, false);
             quote! {
                 #[serde(rename = #value_literal)]
                 #variant_name {
@@ -307,19 +362,81 @@ fn quote_custom_struct_union(
             }
         }
     });
+
+    let derive = match serialization_impl {
+        SerializationImpl::Serde => {
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
+        }
+        SerializationImpl::DynamicRmp => {
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
+        }
+    };
+
+    let serialize_impl = match serialization_impl {
+        SerializationImpl::Serde => quote! {},
+        SerializationImpl::DynamicRmp => {
+            let variant_serializers = variants.iter().map(|variant| {
+                let variant_name = format_ident!("{}", variant.name);
+                let value_literal = &variant.discriminant_value;
+                let (field_pushes, field_count) =
+                    quote_dynamic_struct_field_pushes_from_bindings(&variant.fields);
+
+                if field_count == 0 {
+                    quote! {
+                        Self::#variant_name => {
+                            let mut fields = Vec::<(&'static str, &dyn libparsec_types::rmp_serialize::Serialize)>::with_capacity(1);
+                            fields.push((#discriminant_field, &#value_literal as &dyn libparsec_types::rmp_serialize::Serialize));
+                            libparsec_types::rmp_serialize::Fragment::Map(Box::new(libparsec_types::rmp_serialize::MapEntries::new(fields)))
+                        }
+                    }
+                } else {
+                    let field_names = serializable_fields(&variant.fields)
+                        .iter()
+                        .map(|field| field_name_to_ident(field.name.as_str()))
+                        .collect::<Vec<_>>();
+                    let map_capacity = 1 + field_count;
+                    quote! {
+                        Self::#variant_name { #(#field_names),* } => {
+                            let mut fields = Vec::<(&'static str, &dyn libparsec_types::rmp_serialize::Serialize)>::with_capacity(#map_capacity);
+                            fields.push((#discriminant_field, &#value_literal as &dyn libparsec_types::rmp_serialize::Serialize));
+                            #(#field_pushes)*
+                            libparsec_types::rmp_serialize::Fragment::Map(Box::new(libparsec_types::rmp_serialize::MapEntries::new(fields)))
+                        }
+                    }
+                }
+            });
+
+            quote! {
+                impl libparsec_types::rmp_serialize::Serialize for #name {
+                    fn begin(&self) -> libparsec_types::rmp_serialize::Fragment<'_> {
+                        match self {
+                            #(#variant_serializers),*
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     quote! {
         #[::serde_with::serde_as]
-        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
+        #derive
         #[serde(tag = #discriminant_field)]
         pub enum #name {
-            #(#variants),*
+            #(#variants_def),*
         }
+
+        #serialize_impl
     }
 }
 
-fn quote_custom_literal_union(name: &str, variants: &[(String, String)]) -> TokenStream {
+fn quote_custom_literal_union(
+    name: &str,
+    variants: &[(String, String)],
+    serialization_impl: SerializationImpl,
+) -> TokenStream {
     let name = format_ident!("{}", name);
-    let variants = variants.iter().map(|(name, value)| {
+    let variants_def = variants.iter().map(|(name, value)| {
         let variant_name = format_ident!("{}", name);
         let value_literal = &value;
         quote! {
@@ -328,28 +445,84 @@ fn quote_custom_literal_union(name: &str, variants: &[(String, String)]) -> Toke
         }
     });
 
+    let derive = match serialization_impl {
+        SerializationImpl::Serde => {
+            quote! { #[derive(Debug, Clone, Copy, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq, Hash)] }
+        }
+        SerializationImpl::DynamicRmp => {
+            quote! { #[derive(Debug, Clone, Copy, ::serde::Deserialize, PartialEq, Eq, Hash)] }
+        }
+    };
+
+    let serialize_impl = match serialization_impl {
+        SerializationImpl::Serde => quote! {},
+        SerializationImpl::DynamicRmp => {
+            let variants_serialize = variants.iter().map(|(name, value)| {
+                let variant_name = format_ident!("{}", name);
+                quote! { Self::#variant_name => libparsec_types::rmp_serialize::Fragment::Str(#value) }
+            });
+
+            quote! {
+                impl libparsec_types::rmp_serialize::Serialize for #name {
+                    fn begin(&self) -> libparsec_types::rmp_serialize::Fragment<'_> {
+                        match self {
+                            #(#variants_serialize),*
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     quote! {
         #[::serde_with::serde_as]
-        #[derive(Debug, Clone, Copy, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq, Hash)]
+        #derive
         pub enum #name {
-            #(#variants),*
+            #(#variants_def),*
         }
+
+        #serialize_impl
     }
 }
 
-fn quote_custom_struct(name: &str, fields: &[GenDataField]) -> TokenStream {
+fn quote_custom_struct(
+    name: &str,
+    fields: &[GenDataField],
+    serialization_impl: SerializationImpl,
+) -> TokenStream {
     let name = format_ident!("{}", name);
-    let fields = quote_fields(fields, true);
+    let fields_def = quote_fields(fields, true);
+    let derive = match serialization_impl {
+        SerializationImpl::Serde => {
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
+        }
+        SerializationImpl::DynamicRmp => {
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
+        }
+    };
+
+    let serialize_impl = match serialization_impl {
+        SerializationImpl::Serde => quote! {},
+        SerializationImpl::DynamicRmp => {
+            quote_dynamic_struct_serialize_impl(&name, fields, false, false)
+        }
+    };
+
     quote! {
         #[::serde_with::serde_as]
-        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)]
+        #derive
         pub struct #name {
-            #(#fields),*
+            #(#fields_def),*
         }
+
+        #serialize_impl
     }
 }
 
-fn quote_data_nested_types(nested_types: &[GenDataNestedType]) -> Vec<TokenStream> {
+fn quote_data_nested_types(
+    nested_types: &[GenDataNestedType],
+    serialization_impl: SerializationImpl,
+) -> Vec<TokenStream> {
     nested_types
         .iter()
         .map(|nested_type| match nested_type {
@@ -358,15 +531,130 @@ fn quote_data_nested_types(nested_types: &[GenDataNestedType]) -> Vec<TokenStrea
                 discriminant_field,
                 variants,
                 ..
-            } => quote_custom_struct_union(name, variants.as_ref(), discriminant_field),
+            } => quote_custom_struct_union(
+                name,
+                variants.as_ref(),
+                discriminant_field,
+                serialization_impl,
+            ),
             GenDataNestedType::LiteralsUnion { name, variants, .. } => {
-                quote_custom_literal_union(name, variants.as_ref())
+                quote_custom_literal_union(name, variants.as_ref(), serialization_impl)
             }
             GenDataNestedType::Struct { name, fields, .. } => {
-                quote_custom_struct(name, fields.as_ref())
+                quote_custom_struct(name, fields.as_ref(), serialization_impl)
             }
         })
         .collect()
+}
+
+fn serializable_fields(fields: &[GenDataField]) -> Vec<&GenDataField> {
+    fields
+        .iter()
+        .sorted_by(|a, b| a.name.cmp(&b.name))
+        .filter(|field| field.deprecated_in_revision.is_none())
+        .collect()
+}
+
+fn field_name_to_ident(name: &str) -> proc_macro2::Ident {
+    match name {
+        "type" => format_ident!("ty"),
+        _ => format_ident!("{}", name),
+    }
+}
+
+fn quote_dynamic_struct_field_pushes_from_self(
+    fields: &[GenDataField],
+) -> (Vec<TokenStream>, usize) {
+    let fields = serializable_fields(fields);
+    let count = fields.len();
+    let pushes = fields
+        .iter()
+        .map(|field| {
+            let field_name = field.name.as_str();
+            let field_ident = field_name_to_ident(field_name);
+            if field.introduced_in_revision.is_some() {
+                quote! {
+                    if let libparsec_types::Maybe::Present(value) = &self.#field_ident {
+                        fields.push((#field_name, value as &dyn libparsec_types::rmp_serialize::Serialize));
+                    }
+                }
+            } else {
+                quote! {
+                    fields.push((#field_name, &self.#field_ident as &dyn libparsec_types::rmp_serialize::Serialize));
+                }
+            }
+        })
+        .collect();
+    (pushes, count)
+}
+
+fn quote_dynamic_struct_field_pushes_from_bindings(
+    fields: &[GenDataField],
+) -> (Vec<TokenStream>, usize) {
+    let fields = serializable_fields(fields);
+    let count = fields.len();
+    let pushes = fields
+        .iter()
+        .map(|field| {
+            let field_name = field.name.as_str();
+            let field_ident = field_name_to_ident(field_name);
+            if field.introduced_in_revision.is_some() {
+                quote! {
+                    if let libparsec_types::Maybe::Present(value) = #field_ident {
+                        fields.push((#field_name, value as &dyn libparsec_types::rmp_serialize::Serialize));
+                    }
+                }
+            } else {
+                quote! {
+                    fields.push((#field_name, #field_ident as &dyn libparsec_types::rmp_serialize::Serialize));
+                }
+            }
+        })
+        .collect();
+    (pushes, count)
+}
+
+fn quote_dynamic_struct_serialize_impl(
+    name: &proc_macro2::Ident,
+    fields: &[GenDataField],
+    has_data_type_field: bool,
+    add_dump_method: bool,
+) -> TokenStream {
+    let (field_pushes, field_count) = quote_dynamic_struct_field_pushes_from_self(fields);
+    let max_fields_count = field_count + usize::from(has_data_type_field);
+
+    let data_type_field_push = if has_data_type_field {
+        quote! {
+            fields.push(("type", &self.ty as &dyn libparsec_types::rmp_serialize::Serialize));
+        }
+    } else {
+        quote! {}
+    };
+
+    let dump_method = if add_dump_method {
+        quote! {
+            impl #name {
+                pub fn dump(&self) -> Result<Vec<u8>, libparsec_types::rmp_serialize::Error> {
+                    libparsec_types::rmp_serialize::to_vec(self)
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
+    quote! {
+        impl libparsec_types::rmp_serialize::Serialize for #name {
+            fn begin(&self) -> libparsec_types::rmp_serialize::Fragment<'_> {
+                let mut fields = Vec::<(&'static str, &dyn libparsec_types::rmp_serialize::Serialize)>::with_capacity(#max_fields_count);
+                #data_type_field_push
+                #(#field_pushes)*
+                libparsec_types::rmp_serialize::Fragment::Map(Box::new(libparsec_types::rmp_serialize::MapEntries::new(fields)))
+            }
+        }
+
+        #dump_method
+    }
 }
 
 fn quote_fields(fields: &[GenDataField], with_pub: bool) -> Vec<TokenStream> {

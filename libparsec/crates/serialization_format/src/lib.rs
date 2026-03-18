@@ -194,5 +194,5 @@ pub fn parsec_data(path: TokenStream) -> TokenStream {
 pub fn parsec_data_from_contents(json_contents: TokenStream) -> TokenStream {
     let content = parse_macro_input!(json_contents as LitStr).value();
     let data: data::JsonData = miniserde::json::from_str(&content).expect("Data is not valid");
-    TokenStream::from(data::generate_data(data))
+    TokenStream::from(data::generate_data_with_dynamic_serialization(data))
 }

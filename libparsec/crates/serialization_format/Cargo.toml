@@ -36,5 +36,6 @@ pretty_assertions = { workspace = true, features = ["std"] }
 serde = { workspace = true, features = ["derive"] }
 serde_with = { workspace = true, features = ["std", "macros"] }
 rmp-serde = { workspace = true }
+rmp = "0.8"
 hex-literal = { workspace = true }
 bytes = { workspace = true, features = ["serde"] }
