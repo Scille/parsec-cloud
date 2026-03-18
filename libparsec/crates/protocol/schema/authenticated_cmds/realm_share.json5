@@ -27,6 +27,9 @@
                 "status": "ok"
             },
             {
+                // User is not part of the realm, or has a role too low:
+                // - Giving READER/CONTRIBUTOR role requires to be MANAGER/OWNER
+                // - Giving MANAGER/OWNER role requires to be OWNER
                 "status": "author_not_allowed"
             },
             {
@@ -39,6 +42,7 @@
                 "status": "recipient_revoked"
             },
             {
+                // Recipient has an OUTSIDER profile, which prevents from being given a MANAGER/OWNER role
                 "status": "role_incompatible_with_outsider"
             },
             {
@@ -61,6 +65,9 @@
                 ]
             },
             {
+                // - Corrupted certificate (bad serialization or signature)
+                // - Certificate without role (i.e. unsharing certificate)
+                // - Recipient and author are the same user (i.e. self-share)
                 "status": "invalid_certificate"
             },
             {

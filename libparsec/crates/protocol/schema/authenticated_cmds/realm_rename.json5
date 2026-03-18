@@ -34,7 +34,7 @@
                 ]
             },
             {
-                // Realm doesn't exist, or user has no access on it
+                // User is not part of the realm, or has no OWNER role in it
                 "status": "author_not_allowed"
             },
             {

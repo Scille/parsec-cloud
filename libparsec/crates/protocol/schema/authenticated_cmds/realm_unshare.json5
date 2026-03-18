@@ -18,6 +18,9 @@
                 "status": "ok"
             },
             {
+                // User is not part of the realm, or has a role too low:
+                // - Removing role to READER/CONTRIBUTOR requires to be MANAGER/OWNER
+                // - Removing role to MANAGER/OWNER requires to be OWNER
                 "status": "author_not_allowed"
             },
             {
@@ -36,6 +39,9 @@
                 ]
             },
             {
+                // - Corrupted certificate (bad serialization or signature)
+                // - Certificate with non-None role (i.e. not a unsharing certificate)
+                // - Recipient and author are the same user (i.e. self-unshare)
                 "status": "invalid_certificate"
             },
             {
