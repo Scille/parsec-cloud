@@ -65,10 +65,9 @@ def logging_config_options(
         @click.option(
             "--log-file",
             "-o",
-            default=None,
             envvar="PARSEC_LOG_FILE",
             show_envvar=True,
-            help="[default: stderr]",
+            show_default="stderr",
         )
         @wraps(fn)
         def wrapper(
@@ -157,8 +156,7 @@ def sentry_config_options[**P, R](
         envvar="PARSEC_SENTRY_TRACES_SAMPLE_RATE",
         show_envvar=True,
         type=click.FloatRange(min=0, max=1),
-        default=None,
-        show_default=True,
+        show_default="disabled",
         help="""Enable traces in Sentry.
 
 `0` represents 0% of the transactions will be sent to Sentry while `1` represents 100%.
@@ -172,8 +170,7 @@ See https://docs.sentry.io/platforms/python/tracing/
         envvar="PARSEC_SENTRY_PROFILES_SAMPLE_RATE",
         show_envvar=True,
         type=click.FloatRange(min=0, max=1),
-        default=None,
-        show_default=True,
+        show_default="disabled",
         help="""Enable profiling in Sentry.
 
 `0` represents 0% of the sampled transaction will be profiled while `1` represents 100%.
