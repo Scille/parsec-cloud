@@ -292,14 +292,15 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--organization-initial-active-users-limit",
     envvar="PARSEC_ORGANIZATION_INITIAL_ACTIVE_USERS_LIMIT",
     show_envvar=True,
-    help="Non-revoked users limit used to configure newly created organizations (default: no limit)",
+    help="Non-revoked users limit used to configure newly created organizations",
+    show_default="no limit",
     type=int,
 )
 @click.option(
     "--organization-initial-user-profile-outsider-allowed",
     envvar="PARSEC_ORGANIZATION_INITIAL_USER_PROFILE_OUTSIDER_ALLOWED",
     show_envvar=True,
-    help="Allow the outsider profiles for the newly created organizations (default: True)",
+    help="Allow the outsider profiles for the newly created organizations",
     default=True,
     type=bool,
 )
@@ -308,14 +309,14 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     envvar="PARSEC_ORGANIZATION_INITIAL_TOS",
     show_envvar=True,
     callback=lambda ctx, param, value: _parse_organization_initial_tos_url(value),
-    help="""Terms Of Service (TOS) used to configure newly created organizations (default: no TOS)
+    help="""Terms Of Service (TOS) used to configure newly created organizations
 
 The TOS should be provided as a comma-separated list of `<locale>:<url>` (with any comma
 in the URL escaped with a backslash).
 
 For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr`.
 """,
-    default=None,
+    show_default="no TOS",
 )
 @pki_server_options
 @click.option(
@@ -502,10 +503,8 @@ for any given email address).
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
     envvar="PARSEC_WITH_CLIENT_WEB_APP",
     show_envvar=True,
-    help=(
-        "Host the client web app (default: disabled)."
-        " When enabled, the server landing page serves the content of the given directory."
-    ),
+    help="Host the client web app. When enabled, the server landing page serves the content of the given directory.",
+    show_default="disabled",
 )
 @click.option(
     "--cors-allow-origins",

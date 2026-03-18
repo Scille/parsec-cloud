@@ -1031,9 +1031,8 @@ async def testbed_backend_factory(
     "--server-addr",
     envvar="PARSEC_SERVER_ADDR",
     metavar="URL",
-    help="""URL to reach this server (typically used in invitation emails)
-[default: parsec3://localhost:$PORT?no_ssl=True]
-""",
+    help="URL to reach this server (typically used in invitation emails)",
+    show_default="parsec3://localhost:$PORT?no_ssl=True",
 )
 @click.option(
     "--with-postgresql",
