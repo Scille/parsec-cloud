@@ -305,6 +305,15 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     type=bool,
 )
 @click.option(
+    "--organization-initial-minimum-archiving-period",
+    envvar="PARSEC_ORGANIZATION_INITIAL_MINIMUM_ARCHIVING_PERIOD",
+    show_envvar=True,
+    help="Minimum archiving period in seconds used to configure newly created organizations",
+    default=3600 * 24 * 30,
+    show_default="2592000 seconds i.e. 30 days",
+    type=int,
+)
+@click.option(
     "--organization-initial-tos",
     envvar="PARSEC_ORGANIZATION_INITIAL_TOS",
     show_envvar=True,
@@ -555,6 +564,7 @@ async def run_cmd(
     organization_bootstrap_webhook: str | None,
     organization_initial_active_users_limit: int | None,
     organization_initial_user_profile_outsider_allowed: bool,
+    organization_initial_minimum_archiving_period: int,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
     trusted_x509_root_dir: list[TrustAnchor],
     # (cooldown in seconds, max number of email per hour)
@@ -675,6 +685,7 @@ async def run_cmd(
             if organization_initial_active_users_limit is not None
             else ActiveUsersLimit.NO_LIMIT,
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
+            organization_initial_minimum_archiving_period=organization_initial_minimum_archiving_period,
             organization_initial_tos=organization_initial_tos,
             email_rate_limit_cooldown_delay=max(validation_email_rate_limit[0], 0),
             email_rate_limit_max_per_hour=max(validation_email_rate_limit[1], 0),
