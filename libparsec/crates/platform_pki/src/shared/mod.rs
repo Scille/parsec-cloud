@@ -7,7 +7,7 @@ use crate::{
     },
     get_der_encoded_certificate,
     platform::list_user_certificates_der,
-    x509::{DistinguishedNameValue, X509CertificateInformation, X509LoadError},
+    x509::{DistinguishedNameValue, X509CertificateInformation},
     GetDerEncodedCertificateError, PkiSignatureAlgorithm, X509CertificateDer,
 };
 
@@ -298,7 +298,7 @@ pub async fn encrypt_message(
 
 pub enum InvalidCertificateReason {
     UnableToParseTime,
-    UnableToParseCert(X509LoadError),
+    UnableToParseCert,
     UnableToGetAttribute(String),
     InvalidEmail,
 }
@@ -330,7 +330,7 @@ pub struct CertificateDetails {
 
 pub fn get_cert_details(cert: &[u8]) -> Result<CertificateDetails, InvalidCertificateReason> {
     let info: X509CertificateInformation = X509CertificateInformation::load_der(cert)
-        .map_err(InvalidCertificateReason::UnableToParseCert)?;
+        .map_err(|_| InvalidCertificateReason::UnableToParseCert)?;
     let emails = info
         .emails()
         .map(EmailAddress::from_str)
