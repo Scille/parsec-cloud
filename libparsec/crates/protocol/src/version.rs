@@ -53,6 +53,7 @@ use libparsec_types::prelude::*;
 //     commands.
 // - v5.5 (Parsec 3.9+)
 //   * Add `cryptpad` field to `server_config` request
+//   * Add `realm_update_archiving` to authenticated commands.
 
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
