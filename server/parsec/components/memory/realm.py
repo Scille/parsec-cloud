@@ -7,6 +7,8 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
+    RealmArchivingCertificate,
+    RealmArchivingConfiguration,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRoleCertificate,
@@ -21,6 +23,7 @@ from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
     MemoryDatamodel,
     MemoryRealm,
+    MemoryRealmArchiving,
     MemoryRealmKeyRotation,
     MemoryRealmRename,
     MemoryRealmUserRole,
@@ -57,6 +60,8 @@ from parsec.components.realm import (
     RealmShareValidateBadOutcome,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
+    RealmUpdateArchivingStoreBadOutcome,
+    RealmUpdateArchivingValidateBadOutcome,
     RejectedBySequesterService,
     SequesterServiceMismatch,
     SequesterServiceUnavailable,
@@ -65,6 +70,7 @@ from parsec.components.realm import (
     realm_rotate_key_validate,
     realm_share_validate,
     realm_unshare_validate,
+    realm_update_archiving_validate,
 )
 from parsec.components.sequester import SequesterServiceType
 from parsec.events import EventRealmCertificate
@@ -505,6 +511,111 @@ class MemoryRealmComponent(BaseRealmComponent):
                     MemoryRealmRename(
                         cooked=certif,
                         realm_name_certificate=realm_name_certificate,
+                    )
+                )
+
+                await self._event_bus.send(
+                    EventRealmCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                        realm_id=certif.realm_id,
+                        user_id=author_user_id,
+                        role_removed=False,
+                    )
+                )
+
+                return certif
+
+    @override
+    async def update_archiving(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_archiving_certificate: bytes,
+    ) -> (
+        RealmArchivingCertificate
+        | RealmUpdateArchivingValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmUpdateArchivingStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
+
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return RealmUpdateArchivingStoreBadOutcome.AUTHOR_REVOKED
+
+            assert author_verify_key == author_device.cooked.verify_key
+            match realm_update_archiving_validate(
+                now=now,
+                expected_author=author,
+                author_verify_key=author_verify_key,
+                realm_archiving_certificate=realm_archiving_certificate,
+            ):
+                case RealmArchivingCertificate() as certif:
+                    pass
+                case error:
+                    return error
+
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmUpdateArchivingStoreBadOutcome.REALM_NOT_FOUND
+
+            realm_topic = ("realm", certif.realm_id)
+
+            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
+                if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
+                    return RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
+                # Check if realm is already deleted (DeletionPlanned with past deletion date)
+                if realm.archivings:
+                    current_config = realm.archivings[-1].cooked.configuration
+                    if (
+                        current_config != RealmArchivingConfiguration.AVAILABLE
+                        and current_config != RealmArchivingConfiguration.ARCHIVED
+                        and current_config.deletion_date <= now
+                    ):
+                        return RealmUpdateArchivingStoreBadOutcome.REALM_DELETED
+
+                # Check minimum archiving period for DeletionPlanned configuration
+                if (
+                    certif.configuration != RealmArchivingConfiguration.AVAILABLE
+                    and certif.configuration != RealmArchivingConfiguration.ARCHIVED
+                ):
+                    deletion_date = certif.configuration.deletion_date
+                    min_deletion_date = now.add(seconds=org.minimum_archiving_period)
+                    if deletion_date < min_deletion_date:
+                        return RealmUpdateArchivingStoreBadOutcome.ARCHIVING_PERIOD_TOO_SHORT
+
+                # Ensure we are not breaking causality by adding a newer timestamp.
+
+                last_certificate = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_certificate >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
+
+                # All checks are good, now we do the actual insertion
+
+                org.per_topic_last_timestamp[realm_topic] = certif.timestamp
+
+                realm.archivings.append(
+                    MemoryRealmArchiving(
+                        cooked=certif,
+                        realm_archiving_certificate=realm_archiving_certificate,
                     )
                 )
 

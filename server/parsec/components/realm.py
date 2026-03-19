@@ -9,6 +9,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
+    RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRole,
@@ -295,6 +296,46 @@ class RealmRotateKeyStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
+class RealmUpdateArchivingValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+
+
+def realm_update_archiving_validate(
+    now: DateTime,
+    expected_author: DeviceID,
+    author_verify_key: VerifyKey,
+    realm_archiving_certificate: bytes,
+) -> RealmArchivingCertificate | TimestampOutOfBallpark | RealmUpdateArchivingValidateBadOutcome:
+    try:
+        data = RealmArchivingCertificate.verify_and_load(
+            realm_archiving_certificate,
+            author_verify_key=author_verify_key,
+            expected_author=expected_author,
+        )
+
+    except ValueError:
+        return RealmUpdateArchivingValidateBadOutcome.INVALID_CERTIFICATE
+
+    match timestamps_in_the_ballpark(data.timestamp, now):
+        case TimestampOutOfBallpark() as error:
+            return error
+        case _:
+            pass
+
+    return data
+
+
+class RealmUpdateArchivingStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    ARCHIVING_PERIOD_TOO_SHORT = auto()
+
+
 class RealmGetKeysBundleBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
@@ -532,6 +573,22 @@ class BaseRealmComponent:
         | SequesterServiceMismatch
         | SequesterServiceUnavailable
         | RejectedBySequesterService
+    ):
+        raise NotImplementedError
+
+    async def update_archiving(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_archiving_certificate: bytes,
+    ) -> (
+        RealmArchivingCertificate
+        | RealmUpdateArchivingValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmUpdateArchivingStoreBadOutcome
+        | RequireGreaterTimestamp
     ):
         raise NotImplementedError
 
@@ -860,6 +917,52 @@ class BaseRealmComponent:
             case RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND:
                 client_ctx.author_not_found_abort()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+
+    @api
+    async def api_realm_update_archiving(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.realm_update_archiving.Req,
+    ) -> authenticated_cmds.latest.realm_update_archiving.Rep:
+        outcome = await self.update_archiving(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
+            realm_archiving_certificate=req.archiving_certificate,
+        )
+        match outcome:
+            case RealmArchivingCertificate():
+                return authenticated_cmds.latest.realm_update_archiving.RepOk()
+            case RequireGreaterTimestamp() as error:
+                return authenticated_cmds.latest.realm_update_archiving.RepRequireGreaterTimestamp(
+                    strictly_greater_than=error.strictly_greater_than
+                )
+            case TimestampOutOfBallpark() as error:
+                return authenticated_cmds.latest.realm_update_archiving.RepTimestampOutOfBallpark(
+                    server_timestamp=error.server_timestamp,
+                    client_timestamp=error.client_timestamp,
+                    ballpark_client_early_offset=error.ballpark_client_early_offset,
+                    ballpark_client_late_offset=error.ballpark_client_late_offset,
+                )
+            case RealmUpdateArchivingValidateBadOutcome():
+                return authenticated_cmds.latest.realm_update_archiving.RepInvalidCertificate()
+            case RealmUpdateArchivingStoreBadOutcome.REALM_NOT_FOUND:
+                return authenticated_cmds.latest.realm_update_archiving.RepRealmNotFound()
+            case RealmUpdateArchivingStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_update_archiving.RepRealmDeleted()
+            case RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.realm_update_archiving.RepAuthorNotAllowed()
+            case RealmUpdateArchivingStoreBadOutcome.ARCHIVING_PERIOD_TOO_SHORT:
+                return authenticated_cmds.latest.realm_update_archiving.RepArchivingPeriodTooShort()
+            case RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case RealmUpdateArchivingStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
 
     @api
