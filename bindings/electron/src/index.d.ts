@@ -168,6 +168,19 @@ export interface AvailablePendingAsyncEnrollment {
 }
 
 
+export interface CertificateDetails {
+    name: string | null
+    subject: Array<DistinguishedNameValue>
+    issuer: Array<DistinguishedNameValue>
+    notBefore: number
+    notAfter: number
+    serial: Uint8Array
+    emails: Array<string>
+    canSign: boolean
+    canEncrypt: boolean
+}
+
+
 export interface ClientConfig {
     configDir: string
     dataBaseDir: string
@@ -1218,6 +1231,24 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
+
+
+// CertificateWithDetails
+export interface CertificateWithDetailsInvalid {
+    tag: "CertificateWithDetailsInvalid"
+    handle: X509CertificateReference
+    friendly_name: string | null
+    invalid_reason: InvalidCertificateReason
+}
+export interface CertificateWithDetailsValid {
+    tag: "CertificateWithDetailsValid"
+    handle: X509CertificateReference
+    friendly_name: string | null
+    details: CertificateDetails
+}
+export type CertificateWithDetails =
+  | CertificateWithDetailsInvalid
+  | CertificateWithDetailsValid
 
 
 // ClaimFinalizeError
@@ -2591,6 +2622,20 @@ export type DevicePrimaryProtectionStrategy =
   | DevicePrimaryProtectionStrategyPassword
 
 
+// DistinguishedNameValue
+export interface DistinguishedNameValueCommonName {
+    tag: "DistinguishedNameValueCommonName"
+    x1: string
+}
+export interface DistinguishedNameValueEmailAddress {
+    tag: "DistinguishedNameValueEmailAddress"
+    x1: string
+}
+export type DistinguishedNameValue =
+  | DistinguishedNameValueCommonName
+  | DistinguishedNameValueEmailAddress
+
+
 // EntryStat
 export interface EntryStatFile {
     tag: "EntryStatFile"
@@ -2800,6 +2845,22 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 
+// InvalidCertificateReason
+export interface InvalidCertificateReasonInvalidEmail {
+    tag: "InvalidCertificateReasonInvalidEmail"
+}
+export interface InvalidCertificateReasonUnableToParseCert {
+    tag: "InvalidCertificateReasonUnableToParseCert"
+}
+export interface InvalidCertificateReasonUnableToParseTime {
+    tag: "InvalidCertificateReasonUnableToParseTime"
+}
+export type InvalidCertificateReason =
+  | InvalidCertificateReasonInvalidEmail
+  | InvalidCertificateReasonUnableToParseCert
+  | InvalidCertificateReasonUnableToParseTime
+
+
 // InviteInfoInvitationCreatedBy
 export interface InviteInfoInvitationCreatedByExternalService {
     tag: "InviteInfoInvitationCreatedByExternalService"
@@ -2890,6 +2951,15 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
+
+
+// ListUserCertificatesError
+export interface ListUserCertificatesErrorCannotOpenStore {
+    tag: "ListUserCertificatesErrorCannotOpenStore"
+    error: string
+}
+export type ListUserCertificatesError =
+  | ListUserCertificatesErrorCannotOpenStore
 
 
 // MountpointMountStrategy
@@ -5431,6 +5501,8 @@ export function listStartedAccounts(
 ): Promise<Array<number>>
 export function listStartedClients(
 ): Promise<Array<[number, string]>>
+export function listUserCertificatesWithDetails(
+): Promise<Result<Array<CertificateWithDetails>, ListUserCertificatesError>>
 export function mountpointToOsPath(
     mountpoint: number,
     parsec_path: string

@@ -194,7 +194,13 @@ pub use errors::GetValidationPathForCertError;
 pub use shared::{get_validation_path_for_cert, ValidationPathOwned};
 
 pub use shared::get_root_certificate_info_from_trustchain;
-pub use shared::list_user_certificates_with_details;
+
+pub use errors::ListUserCertificatesError;
+pub use shared::{
+    list_user_certificates_with_details, CertificateDetails, CertificateWithDetails,
+    InvalidCertificateReason,
+};
+pub use x509::DistinguishedNameValue;
 
 /// Configuration that may be useful for initializing a PKI system
 pub struct PkiConfig<'a> {

@@ -299,7 +299,6 @@ pub async fn encrypt_message(
 pub enum InvalidCertificateReason {
     UnableToParseTime,
     UnableToParseCert,
-    UnableToGetAttribute(String),
     InvalidEmail,
 }
 
