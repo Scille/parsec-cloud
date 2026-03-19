@@ -221,6 +221,8 @@ async fn real_io_provides_a_starting_event(env: &TestbedEnv) {
                     name_origin: CertificateBasedInfoOrigin::Placeholder,
                     role: RealmRole::Owner,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
+                    archiving_configuration:
+                        LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
                 },
                 workspace_index: 0,
                 total_workspaces: 1,

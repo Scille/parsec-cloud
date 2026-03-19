@@ -28,7 +28,10 @@ pub use file::{
 };
 pub use folder::{LocalFolderManifest, UnconfinedLocalFolderManifest};
 use serde::Deserialize;
-pub use user::{CertificateBasedInfoOrigin, LocalUserManifest, LocalUserManifestWorkspaceEntry};
+pub use user::{
+    CertificateBasedInfoOrigin, LocalUserManifest,
+    LocalUserManifestWorkspaceArchivingConfiguration, LocalUserManifestWorkspaceEntry,
+};
 
 macro_rules! impl_local_manifest_dump {
     ($name:ident) => {
