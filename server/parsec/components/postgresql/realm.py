@@ -7,6 +7,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
+    RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRole,
@@ -42,6 +43,7 @@ from parsec.components.postgresql.realm_rename import realm_rename
 from parsec.components.postgresql.realm_rotate_key import realm_rotate_key
 from parsec.components.postgresql.realm_share import realm_share
 from parsec.components.postgresql.realm_unshare import realm_unshare
+from parsec.components.postgresql.realm_update_archiving import realm_update_archiving
 from parsec.components.postgresql.utils import (
     no_transaction,
     transaction,
@@ -75,6 +77,8 @@ from parsec.components.realm import (
     RealmShareValidateBadOutcome,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
+    RealmUpdateArchivingStoreBadOutcome,
+    RealmUpdateArchivingValidateBadOutcome,
     RejectedBySequesterService,
     SequesterServiceMismatch,
     SequesterServiceUnavailable,
@@ -239,6 +243,32 @@ class PGRealmComponent(BaseRealmComponent):
             per_participant_keys_bundle_access,
             keys_bundle,
             per_sequester_service_keys_bundle_access,
+        )
+
+    @override
+    @transaction
+    async def update_archiving(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        realm_archiving_certificate: bytes,
+    ) -> (
+        RealmArchivingCertificate
+        | RealmUpdateArchivingValidateBadOutcome
+        | TimestampOutOfBallpark
+        | RealmUpdateArchivingStoreBadOutcome
+        | RequireGreaterTimestamp
+    ):
+        return await realm_update_archiving(
+            conn,
+            now,
+            organization_id,
+            author,
+            author_verify_key,
+            realm_archiving_certificate,
         )
 
     @override
