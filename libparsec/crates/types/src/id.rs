@@ -342,6 +342,7 @@ mod user_device_ids {
         }
     }
 
+    // Only needed for tests as a helper
     impl FromStr for UserID {
         type Err = String;
 
@@ -350,6 +351,7 @@ mod user_device_ids {
         }
     }
 
+    // Only needed for tests as a helper
     impl TryFrom<&str> for UserID {
         type Error = String;
 
@@ -386,6 +388,7 @@ mod user_device_ids {
         }
     }
 
+    // Only needed for tests as a helper
     impl FromStr for DeviceID {
         type Err = String;
 
@@ -394,6 +397,7 @@ mod user_device_ids {
         }
     }
 
+    // Only needed for tests as a helper
     impl TryFrom<&str> for DeviceID {
         type Error = String;
 
@@ -561,6 +565,7 @@ pub enum HumanHandleParseError {
     InvalidLabel,
 }
 
+// Only needed for tests as a helper
 impl TryFrom<&str> for HumanHandle {
     type Error = HumanHandleParseError;
 
@@ -577,7 +582,7 @@ impl TryFrom<&str> for HumanHandle {
     }
 }
 
-// Note: FromStr is used for Deserialization !
+// Only needed for tests as a helper
 impl FromStr for HumanHandle {
     type Err = HumanHandleParseError;
 
