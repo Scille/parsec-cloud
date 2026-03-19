@@ -31,6 +31,7 @@ from . import (
     realm_rotate_key,
     realm_share,
     realm_unshare,
+    realm_update_archiving,
     shamir_recovery_delete,
     shamir_recovery_setup,
     totp_create_opaque_key,
@@ -77,6 +78,7 @@ class AnyCmdReq:
         | realm_rotate_key.Req
         | realm_share.Req
         | realm_unshare.Req
+        | realm_update_archiving.Req
         | shamir_recovery_delete.Req
         | shamir_recovery_setup.Req
         | totp_create_opaque_key.Req
@@ -120,6 +122,7 @@ __all__ = [
     "realm_rotate_key",
     "realm_share",
     "realm_unshare",
+    "realm_update_archiving",
     "shamir_recovery_delete",
     "shamir_recovery_setup",
     "totp_create_opaque_key",
