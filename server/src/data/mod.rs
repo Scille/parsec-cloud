@@ -27,6 +27,7 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<RealmRoleCertificate>()?;
     m.add_class::<RealmNameCertificate>()?;
     m.add_class::<RealmArchivingCertificate>()?;
+    m.add_class::<RealmArchivingConfiguration>()?;
     m.add_class::<SecretKeyAlgorithm>()?;
     m.add_class::<HashAlgorithm>()?;
     m.add_class::<RealmKeyRotationCertificate>()?;
