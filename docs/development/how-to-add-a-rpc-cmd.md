@@ -11,15 +11,9 @@ Parsec server exposes the following APIs:
 - Administration API (REST): for server administration, not covered here.
 - Client-Server API (RPC): for business-logic, client-server communication.
 
-RPC routes are also called "commands" are grouped into "command families":
+See [`libparsec_protocol` crate's README](../../libparsec/crates/protocol/README.md) for more info on RPC command.
 
-- `anonymous_cmds`: authentication not required
-- `anonymous_server_cmds`: authentication not required, server-related commands
-- `authenticated_cmds`: (authentication required
-- `invited_cmds`: (invitation required).
-- `tos_cmds`: (invitation required).
-
-In summary, to add or update an existing command you need to:
+In summary, to add or update an existing RPC command you need to:
 
 1. Add or update the schema describing the RPC command
 2. Generate binding code
@@ -27,7 +21,7 @@ In summary, to add or update an existing command you need to:
 4. Implement server-side code (memory & PostgreSQL) and tests
 5. Implement client-side code and tests
 
-> Note that you will need a working development environment. See (./README.md).
+> Note that you will need a working development environment. See ([README.md](./README.md)).
 
 ## 1. Schema generation
 
@@ -99,7 +93,8 @@ This will generate typing and modify some files in the [`./server`](../../server
 For example:
 
 - `server/parsec/_parsec_pyi/protocol/__init__.pyi`
-- `server/parsec/_parsec_pyi/protocol/xxxxxx_cmds/v4/__init__.pyi`
+- `server/parsec/_parsec_pyi/protocol/invited_cmds/v5/__init__.pyi`
+- `server/parsec/_parsec_pyi/protocol/invited_cmds/v5/dummy.pyi`
 - `server/tests/common/rpc.py`
 
 ## 3. Serialization tests
@@ -112,7 +107,7 @@ You can run serialization tests with:
 cargo nextest run -p libparsec_protocol
 ```
 
-In the corresponding test file (e.g. `libparsec/crates/protocol/tests/xxxxx_cmds/v4/dummy.rs`) there must be public
+In the corresponding test file (e.g. `libparsec/crates/protocol/tests/invited_cmds/v5/dummy.rs`) there must be public
 functions named `req` and `rep_{variant name}` for each `req` (request) and `rep` (response) variant declared in the
 command schema. Otherwise, you'll have this kind of error:
 
@@ -120,7 +115,7 @@ command schema. Otherwise, you'll have this kind of error:
 error[E0425]: cannot find function `rep_dummy_rep_without_fields` in module `dummy`
   --> libparsec/crates/protocol/tests/serialization.rs:15:1
    |
-15 | protocol_cmds_tests!("schema/xxxxx_cmds");
+15 | protocol_cmds_tests!("schema/invited_cmds");
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `dummy`
 ```
 
@@ -177,9 +172,9 @@ In a component (like the one defined just before), you'll need to define this ki
     @api
     async def api_dummy(
         self,
-        client_ctx: xxxxxClientContext,
-        req: xxxxx_cmds.latest.dummy.Req,
-    ) -> xxxxx.latest.dummy.Rep:
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.dummy.Req,
+    ) -> invited_cmds.latest.dummy.Rep:
         match await self.do_dummy():
             case None:
                 return invited_cmds.latest.dummy.Rep()
@@ -227,12 +222,12 @@ In any case, tests should be updated to match the updated or added command.
 
 If you added a new command:
 
-1. Add a new test file `server/tests/api_v4/xxxxx/dummy.py`.
-   It should contain a test function for each response status
+1. Add a new test file `server/tests/api_v5/invited/test_dummy.py`.
+   It must be named `test_{new command name}.py`.
+   It must contain a test function for each response status
    (see other command's tests as a guide on how to write them).
 
-2. Import the new test file in `server/tests/api_v4/xxxxx/__init__.py`.
-   It must be named `test_{new command name}` (e.g. `test_dummy`).
+2. Expose the tests from the new test file in `server/tests/api_v5/invited/__init__.py` (i.e. `from .test_dummy import *`).
 
 3. Run tests (see [`./server/README.md`](../../server/README.md)).
    > The test `test_each_cmd_req_rep_has_dedicated_test` will fail if a test function is missing
@@ -243,8 +238,7 @@ If you added a new command:
 python make.py run-testbed-server # short option `rts`
 ```
 
-For more information on se testbed see [here](README.md/#starting-the-testbed-server).
-
+See the [README for more information on the testbed](./README.md/#starting-the-testbed-server).
 
 ## 5. Client-side implementation
 
