@@ -29,6 +29,7 @@ chrono = { workspace = true }
 thiserror = { workspace = true }
 
 libparsec_tests_lite = { workspace = true, optional = true }
+libparsec_platform_http_proxy = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }
