@@ -15,6 +15,8 @@ pub mod rmp_serialize {
     use std::collections::{HashMap, HashSet};
     use std::hash::Hash;
 
+    pub use rmp::encode; // Re-expose for convenience
+
     #[derive(Debug)]
     pub enum SerializeError {
         Io(std::io::Error),
@@ -50,31 +52,6 @@ pub mod rmp_serialize {
         }
     }
 
-    fn usize_to_u32(kind: &'static str, len: usize) -> Result<u32, SerializeError> {
-        u32::try_from(len).map_err(|_| SerializeError::LengthOverflow { kind, len })
-    }
-
-    pub fn write_map_len(writer: &mut Vec<u8>, len: u32) -> Result<(), SerializeError> {
-        let _ = rmp::encode::write_map_len(writer, len)?;
-        Ok(())
-    }
-
-    pub fn write_array_len(writer: &mut Vec<u8>, len: u32) -> Result<(), SerializeError> {
-        let _ = rmp::encode::write_array_len(writer, len)?;
-        Ok(())
-    }
-
-    pub fn write_str(writer: &mut Vec<u8>, value: &str) -> Result<(), SerializeError> {
-        let _ = rmp::encode::write_str(writer, value)?;
-        Ok(())
-    }
-
-    pub fn to_vec(value: &dyn Serialize) -> Result<Vec<u8>, SerializeError> {
-        let mut output = Vec::new();
-        value.serialize(&mut output)?;
-        Ok(output)
-    }
-
     impl<T: Serialize + ?Sized> Serialize for &T {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
             (*self).serialize(writer)
@@ -93,7 +70,7 @@ pub mod rmp_serialize {
             $(
                 impl Serialize for $ty {
                     fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
-                        let _ = rmp::encode::write_sint(writer, (*self).into())?;
+                        rmp::encode::write_sint(writer, (*self).into())?;
                         Ok(())
                     }
                 }
@@ -106,7 +83,7 @@ pub mod rmp_serialize {
             $(
                 impl Serialize for $ty {
                     fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
-                        let _ = rmp::encode::write_uint(writer, (*self).into())?;
+                        rmp::encode::write_uint(writer, (*self).into())?;
                         Ok(())
                     }
                 }
@@ -119,27 +96,29 @@ pub mod rmp_serialize {
 
     impl Serialize for f32 {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
-            let _ = rmp::encode::write_f64(writer, (*self).into())?;
+            rmp::encode::write_f32(writer, *self)?;
             Ok(())
         }
     }
 
     impl Serialize for f64 {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
-            let _ = rmp::encode::write_f64(writer, *self)?;
+            rmp::encode::write_f64(writer, *self)?;
             Ok(())
         }
     }
 
     impl Serialize for str {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
-            write_str(writer, self)
+            rmp::encode::write_str(writer, self)?;
+            Ok(())
         }
     }
 
     impl Serialize for String {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
-            write_str(writer, self)
+            rmp::encode::write_str(writer, self)?;
+            Ok(())
         }
     }
 
@@ -165,12 +144,17 @@ pub mod rmp_serialize {
         }
     }
 
+    fn usize_to_u32(kind: &'static str, len: usize) -> Result<u32, SerializeError> {
+        u32::try_from(len).map_err(|_| SerializeError::LengthOverflow { kind, len })
+    }
+
     impl<T> Serialize for Vec<T>
     where
         T: Serialize,
     {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
-            write_array_len(writer, usize_to_u32("array", self.len())?)?;
+            let len = usize_to_u32("array", self.len())?;
+            rmp::encode::write_array_len(writer, len)?;
             for item in self {
                 item.serialize(writer)?;
             }
@@ -183,7 +167,8 @@ pub mod rmp_serialize {
         T: Serialize + Eq + Hash,
     {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
-            write_array_len(writer, usize_to_u32("array", self.len())?)?;
+            let len = usize_to_u32("array", self.len())?;
+            rmp::encode::write_array_len(writer, len)?;
             for item in self {
                 item.serialize(writer)?;
             }
@@ -196,9 +181,10 @@ pub mod rmp_serialize {
         T: Serialize,
     {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
-            write_map_len(writer, usize_to_u32("map", self.len())?)?;
+            let len = usize_to_u32("map", self.len())?;
+            rmp::encode::write_map_len(writer, len)?;
             for (key, value) in self {
-                write_str(writer, key)?;
+                rmp::encode::write_str(writer, key)?;
                 value.serialize(writer)?;
             }
             Ok(())
