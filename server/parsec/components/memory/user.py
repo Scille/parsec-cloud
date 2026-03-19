@@ -582,7 +582,10 @@ class MemoryUserComponent(BaseUserComponent):
             realm_certificates_unordered += [
                 (role.cooked.timestamp, role.realm_name_certificate) for role in realm.renames
             ]
-            # TODO #6092: support archiving here !
+            realm_certificates_unordered += [
+                (archiving.cooked.timestamp, archiving.realm_archiving_certificate)
+                for archiving in realm.archivings
+            ]
 
             if last_role.role is None:
                 # User used to have access to the realm, only provide the certificate that
