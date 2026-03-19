@@ -138,6 +138,15 @@ sql_fragment_all_realm_certificates = """
             realm_name_certificate AS certificate
         FROM realm_name
     )
+    UNION
+    -- Realm archiving certificate
+    (
+        SELECT
+            realm,
+            certified_on AS certificate_timestamp,
+            certificate
+        FROM realm_archiving
+    )
 """
 
 

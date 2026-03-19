@@ -27,6 +27,7 @@ from .test_realm_rename import *
 from .test_realm_rotate_key import *
 from .test_realm_share import *
 from .test_realm_unshare import *
+from .test_realm_update_archiving import *
 from .test_shamir_recovery_delete import *
 from .test_shamir_recovery_setup import *
 from .test_totp_create_opaque_key import *

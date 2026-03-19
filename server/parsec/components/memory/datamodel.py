@@ -411,7 +411,10 @@ class MemoryOrganization:
             (role.cooked.timestamp, role.realm_name_certificate, role.cooked)
             for role in realm.renames
         ]
-        # TODO #6092: support archiving here !
+        realm_certificates_unordered += [
+            (archiving.cooked.timestamp, archiving.realm_archiving_certificate, archiving.cooked)
+            for archiving in realm.archivings
+        ]
 
         yield from sorted(realm_certificates_unordered, key=lambda x: x[0])
 

@@ -11,6 +11,8 @@ from parsec._parsec import (
     HashAlgorithm,
     HumanHandle,
     PrivateKey,
+    RealmArchivingCertificate,
+    RealmArchivingConfiguration,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRole,
@@ -371,6 +373,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
     t4 = DateTime(2001, 1, 4)
     t5 = DateTime(2001, 1, 5)
     t6 = DateTime(2001, 1, 6)
+    t7 = DateTime(2001, 1, 7)
 
     # Create two realms with certificates
     wksp2_id = VlobID.new()
@@ -507,7 +510,26 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
 
     wksp2_certificates.append((certif_timestamp, certif))
 
-    # TODO #6092: add RealmArchiving certificate once implemented !
+    # 6) Archive realm wksp2
+
+    certif_timestamp = t6
+    certif = RealmArchivingCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=wksp2_id,
+        configuration=RealmArchivingConfiguration.ARCHIVED,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.update_archiving(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        realm_archiving_certificate=certif,
+    )
+    assert isinstance(outcome, RealmArchivingCertificate)
+
+    wksp2_certificates.append((certif_timestamp, certif))
 
     # 1) Get all certificates
 
@@ -557,7 +579,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         common_after=None,
         sequester_after=None,
         shamir_recovery_after=None,
-        realm_after={wksp2_id: t6},
+        realm_after={wksp2_id: t7},
     )
     assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates == {
