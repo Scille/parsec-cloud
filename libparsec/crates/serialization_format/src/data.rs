@@ -256,8 +256,11 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             SerializationImpl::DynamicRmp => {
                 quote! {
                     impl libparsec_types::rmp_serialize::Serialize for #name_type {
-                        fn begin(&self) -> libparsec_types::rmp_serialize::Fragment<'_> {
-                            libparsec_types::rmp_serialize::Fragment::Str(#ty)
+                        fn serialize(
+                            &self,
+                            writer: &mut ::std::vec::Vec<u8>,
+                        ) -> Result<(), libparsec_types::rmp_serialize::SerializeError> {
+                            libparsec_types::rmp_serialize::write_str(writer, #ty)
                         }
                     }
                 }
@@ -378,15 +381,17 @@ fn quote_custom_struct_union(
             let variant_serializers = variants.iter().map(|variant| {
                 let variant_name = format_ident!("{}", variant.name);
                 let value_literal = &variant.discriminant_value;
-                let (field_pushes, field_count) =
-                    quote_dynamic_struct_field_pushes_from_bindings(&variant.fields);
+                let field_writes = quote_dynamic_struct_field_writes_from_bindings(&variant.fields);
+                let field_count_expr =
+                    quote_dynamic_struct_field_count_expr_from_bindings(&variant.fields);
 
-                if field_count == 0 {
+                if serializable_fields(&variant.fields).is_empty() {
                     quote! {
                         Self::#variant_name => {
-                            let mut fields = Vec::<(&'static str, &dyn libparsec_types::rmp_serialize::Serialize)>::with_capacity(1);
-                            fields.push((#discriminant_field, &#value_literal as &dyn libparsec_types::rmp_serialize::Serialize));
-                            libparsec_types::rmp_serialize::Fragment::Map(Box::new(libparsec_types::rmp_serialize::MapEntries::new(fields)))
+                            libparsec_types::rmp_serialize::write_map_len(writer, 1)?;
+                            libparsec_types::rmp_serialize::write_str(writer, #discriminant_field)?;
+                            libparsec_types::rmp_serialize::write_str(writer, #value_literal)?;
+                            Ok(())
                         }
                     }
                 } else {
@@ -394,13 +399,19 @@ fn quote_custom_struct_union(
                         .iter()
                         .map(|field| field_name_to_ident(field.name.as_str()))
                         .collect::<Vec<_>>();
-                    let map_capacity = 1 + field_count;
                     quote! {
                         Self::#variant_name { #(#field_names),* } => {
-                            let mut fields = Vec::<(&'static str, &dyn libparsec_types::rmp_serialize::Serialize)>::with_capacity(#map_capacity);
-                            fields.push((#discriminant_field, &#value_literal as &dyn libparsec_types::rmp_serialize::Serialize));
-                            #(#field_pushes)*
-                            libparsec_types::rmp_serialize::Fragment::Map(Box::new(libparsec_types::rmp_serialize::MapEntries::new(fields)))
+                            let map_len = (1usize + #field_count_expr)
+                                .try_into()
+                                .map_err(|_| libparsec_types::rmp_serialize::SerializeError::LengthOverflow {
+                                    kind: "map",
+                                    len: 1usize + #field_count_expr,
+                                })?;
+                            libparsec_types::rmp_serialize::write_map_len(writer, map_len)?;
+                            libparsec_types::rmp_serialize::write_str(writer, #discriminant_field)?;
+                            libparsec_types::rmp_serialize::write_str(writer, #value_literal)?;
+                            #(#field_writes)*
+                            Ok(())
                         }
                     }
                 }
@@ -408,7 +419,10 @@ fn quote_custom_struct_union(
 
             quote! {
                 impl libparsec_types::rmp_serialize::Serialize for #name {
-                    fn begin(&self) -> libparsec_types::rmp_serialize::Fragment<'_> {
+                    fn serialize(
+                        &self,
+                        writer: &mut ::std::vec::Vec<u8>,
+                    ) -> Result<(), libparsec_types::rmp_serialize::SerializeError> {
                         match self {
                             #(#variant_serializers),*
                         }
@@ -459,12 +473,17 @@ fn quote_custom_literal_union(
         SerializationImpl::DynamicRmp => {
             let variants_serialize = variants.iter().map(|(name, value)| {
                 let variant_name = format_ident!("{}", name);
-                quote! { Self::#variant_name => libparsec_types::rmp_serialize::Fragment::Str(#value) }
+                quote! {
+                    Self::#variant_name => libparsec_types::rmp_serialize::write_str(writer, #value)
+                }
             });
 
             quote! {
                 impl libparsec_types::rmp_serialize::Serialize for #name {
-                    fn begin(&self) -> libparsec_types::rmp_serialize::Fragment<'_> {
+                    fn serialize(
+                        &self,
+                        writer: &mut ::std::vec::Vec<u8>,
+                    ) -> Result<(), libparsec_types::rmp_serialize::SerializeError> {
                         match self {
                             #(#variants_serialize),*
                         }
@@ -562,12 +581,8 @@ fn field_name_to_ident(name: &str) -> proc_macro2::Ident {
     }
 }
 
-fn quote_dynamic_struct_field_pushes_from_self(
-    fields: &[GenDataField],
-) -> (Vec<TokenStream>, usize) {
-    let fields = serializable_fields(fields);
-    let count = fields.len();
-    let pushes = fields
+fn quote_dynamic_struct_field_writes_from_self(fields: &[GenDataField]) -> Vec<TokenStream> {
+    serializable_fields(fields)
         .iter()
         .map(|field| {
             let field_name = field.name.as_str();
@@ -575,25 +590,40 @@ fn quote_dynamic_struct_field_pushes_from_self(
             if field.introduced_in_revision.is_some() {
                 quote! {
                     if let libparsec_types::Maybe::Present(value) = &self.#field_ident {
-                        fields.push((#field_name, value as &dyn libparsec_types::rmp_serialize::Serialize));
+                        libparsec_types::rmp_serialize::write_str(writer, #field_name)?;
+                        libparsec_types::rmp_serialize::Serialize::serialize(value, writer)?;
                     }
                 }
             } else {
                 quote! {
-                    fields.push((#field_name, &self.#field_ident as &dyn libparsec_types::rmp_serialize::Serialize));
+                    libparsec_types::rmp_serialize::write_str(writer, #field_name)?;
+                    libparsec_types::rmp_serialize::Serialize::serialize(&self.#field_ident, writer)?;
                 }
             }
         })
-        .collect();
-    (pushes, count)
+        .collect()
 }
 
-fn quote_dynamic_struct_field_pushes_from_bindings(
-    fields: &[GenDataField],
-) -> (Vec<TokenStream>, usize) {
+fn quote_dynamic_struct_field_count_expr_from_bindings(fields: &[GenDataField]) -> TokenStream {
     let fields = serializable_fields(fields);
-    let count = fields.len();
-    let pushes = fields
+    let terms = fields.into_iter().map(|field| {
+        let field_ident = field_name_to_ident(field.name.as_str());
+        if field.introduced_in_revision.is_some() {
+            quote! {
+                match #field_ident {
+                    libparsec_types::Maybe::Present(_) => 1usize,
+                    libparsec_types::Maybe::Absent => 0usize,
+                }
+            }
+        } else {
+            quote! { 1usize }
+        }
+    });
+    quote! { 0usize #(+ #terms)* }
+}
+
+fn quote_dynamic_struct_field_writes_from_bindings(fields: &[GenDataField]) -> Vec<TokenStream> {
+    serializable_fields(fields)
         .iter()
         .map(|field| {
             let field_name = field.name.as_str();
@@ -601,17 +631,18 @@ fn quote_dynamic_struct_field_pushes_from_bindings(
             if field.introduced_in_revision.is_some() {
                 quote! {
                     if let libparsec_types::Maybe::Present(value) = #field_ident {
-                        fields.push((#field_name, value as &dyn libparsec_types::rmp_serialize::Serialize));
+                        libparsec_types::rmp_serialize::write_str(writer, #field_name)?;
+                        libparsec_types::rmp_serialize::Serialize::serialize(value, writer)?;
                     }
                 }
             } else {
                 quote! {
-                    fields.push((#field_name, #field_ident as &dyn libparsec_types::rmp_serialize::Serialize));
+                    libparsec_types::rmp_serialize::write_str(writer, #field_name)?;
+                    libparsec_types::rmp_serialize::Serialize::serialize(#field_ident, writer)?;
                 }
             }
         })
-        .collect();
-    (pushes, count)
+        .collect()
 }
 
 fn quote_dynamic_struct_serialize_impl(
@@ -620,12 +651,29 @@ fn quote_dynamic_struct_serialize_impl(
     has_data_type_field: bool,
     add_dump_method: bool,
 ) -> TokenStream {
-    let (field_pushes, field_count) = quote_dynamic_struct_field_pushes_from_self(fields);
-    let max_fields_count = field_count + usize::from(has_data_type_field);
+    let field_writes = quote_dynamic_struct_field_writes_from_self(fields);
+    let dynamic_count_terms = serializable_fields(fields)
+        .iter()
+        .filter(|field| field.introduced_in_revision.is_some())
+        .map(|field| {
+            let field_ident = field_name_to_ident(field.name.as_str());
+            quote! {
+                if matches!(self.#field_ident, libparsec_types::Maybe::Present(_)) {
+                    map_len += 1;
+                }
+            }
+        })
+        .collect::<Vec<_>>();
+    let static_count = serializable_fields(fields)
+        .iter()
+        .filter(|field| field.introduced_in_revision.is_none())
+        .count()
+        + usize::from(has_data_type_field);
 
-    let data_type_field_push = if has_data_type_field {
+    let type_field_write = if has_data_type_field {
         quote! {
-            fields.push(("type", &self.ty as &dyn libparsec_types::rmp_serialize::Serialize));
+            libparsec_types::rmp_serialize::write_str(writer, "type")?;
+            libparsec_types::rmp_serialize::Serialize::serialize(&self.ty, writer)?;
         }
     } else {
         quote! {}
@@ -634,7 +682,7 @@ fn quote_dynamic_struct_serialize_impl(
     let dump_method = if add_dump_method {
         quote! {
             impl #name {
-                pub fn dump(&self) -> Result<Vec<u8>, libparsec_types::rmp_serialize::Error> {
+                pub fn dump(&self) -> Result<Vec<u8>, libparsec_types::rmp_serialize::SerializeError> {
                     libparsec_types::rmp_serialize::to_vec(self)
                 }
             }
@@ -645,11 +693,22 @@ fn quote_dynamic_struct_serialize_impl(
 
     quote! {
         impl libparsec_types::rmp_serialize::Serialize for #name {
-            fn begin(&self) -> libparsec_types::rmp_serialize::Fragment<'_> {
-                let mut fields = Vec::<(&'static str, &dyn libparsec_types::rmp_serialize::Serialize)>::with_capacity(#max_fields_count);
-                #data_type_field_push
-                #(#field_pushes)*
-                libparsec_types::rmp_serialize::Fragment::Map(Box::new(libparsec_types::rmp_serialize::MapEntries::new(fields)))
+            fn serialize(
+                &self,
+                writer: &mut ::std::vec::Vec<u8>,
+            ) -> Result<(), libparsec_types::rmp_serialize::SerializeError> {
+                let mut map_len = #static_count;
+                #(#dynamic_count_terms)*
+                let map_len: u32 = map_len.try_into().map_err(|_| {
+                    libparsec_types::rmp_serialize::SerializeError::LengthOverflow {
+                        kind: "map",
+                        len: map_len,
+                    }
+                })?;
+                libparsec_types::rmp_serialize::write_map_len(writer, map_len)?;
+                #type_field_write
+                #(#field_writes)*
+                Ok(())
             }
         }
 

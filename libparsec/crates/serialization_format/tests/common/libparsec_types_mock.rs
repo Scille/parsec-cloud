@@ -16,161 +16,75 @@ pub mod rmp_serialize {
     use std::hash::Hash;
 
     #[derive(Debug)]
-    pub enum Error {
+    pub enum SerializeError {
         Io(std::io::Error),
-        Encode(rmp::encode::ValueWriteError<std::io::Error>),
-        LengthOverflow { kind: &'static str, len: usize },
+        LengthOverflow {
+            kind: &'static str,
+            len: usize,
+        },
+        /// `Maybe::Absent` only exist to represent a missing field when deserializing
+        /// a payload generated with an older version of the schema.
+        /// Hence it should never be serialized (besides, skipping a field during
+        /// deserialization complexifies structure serialization since it number
+        /// of fields must be known before each field is actually serialized).
+        MaybeFieldCannotBeAbsent,
     }
 
     pub trait Serialize {
-        fn begin(&self) -> Fragment<'_>;
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError>;
     }
 
-    pub enum Fragment<'a> {
-        Null,
-        Bool(bool),
-        I64(i64),
-        U64(u64),
-        F64(f64),
-        Str(&'a str),
-        Bytes(&'a [u8]),
-        Seq(Box<dyn Seq + 'a>),
-        Map(Box<dyn Map + 'a>),
-    }
-
-    pub trait Seq {
-        fn len(&self) -> usize;
-
-        fn next(&mut self) -> Option<&dyn Serialize>;
-    }
-
-    pub trait Map {
-        fn len(&self) -> usize;
-
-        fn next(&mut self) -> Option<(&str, &dyn Serialize)>;
-    }
-
-    pub struct SeqEntries<'a> {
-        entries: Vec<&'a dyn Serialize>,
-        cursor: usize,
-    }
-
-    impl<'a> SeqEntries<'a> {
-        pub fn new(entries: Vec<&'a dyn Serialize>) -> Self {
-            Self { entries, cursor: 0 }
-        }
-    }
-
-    impl Seq for SeqEntries<'_> {
-        fn len(&self) -> usize {
-            self.entries.len()
-        }
-
-        fn next(&mut self) -> Option<&dyn Serialize> {
-            let value = self.entries.get(self.cursor).copied();
-            self.cursor += usize::from(value.is_some());
-            value
-        }
-    }
-
-    pub struct MapEntries<'a> {
-        entries: Vec<(&'a str, &'a dyn Serialize)>,
-        cursor: usize,
-    }
-
-    impl<'a> MapEntries<'a> {
-        pub fn new(entries: Vec<(&'a str, &'a dyn Serialize)>) -> Self {
-            Self { entries, cursor: 0 }
-        }
-    }
-
-    impl Map for MapEntries<'_> {
-        fn len(&self) -> usize {
-            self.entries.len()
-        }
-
-        fn next(&mut self) -> Option<(&str, &dyn Serialize)> {
-            let value = self.entries.get(self.cursor).copied();
-            self.cursor += usize::from(value.is_some());
-            value
-        }
-    }
-
-    impl From<rmp::encode::ValueWriteError<std::io::Error>> for Error {
+    impl From<rmp::encode::ValueWriteError<std::io::Error>> for SerializeError {
         fn from(value: rmp::encode::ValueWriteError<std::io::Error>) -> Self {
-            Self::Encode(value)
+            // We don't care where the IO error occurred
+            match value {
+                rmp::encode::ValueWriteError::InvalidMarkerWrite(err) => Self::Io(err),
+                rmp::encode::ValueWriteError::InvalidDataWrite(err) => Self::Io(err),
+            }
         }
     }
 
-    impl From<std::io::Error> for Error {
+    impl From<std::io::Error> for SerializeError {
         fn from(value: std::io::Error) -> Self {
             Self::Io(value)
         }
     }
 
-    pub fn to_vec(value: &dyn Serialize) -> Result<Vec<u8>, Error> {
-        let mut output = Vec::new();
-        write_value(&mut output, value)?;
-        Ok(output)
+    fn usize_to_u32(kind: &'static str, len: usize) -> Result<u32, SerializeError> {
+        u32::try_from(len).map_err(|_| SerializeError::LengthOverflow { kind, len })
     }
 
-    fn usize_to_u32(kind: &'static str, len: usize) -> Result<u32, Error> {
-        u32::try_from(len).map_err(|_| Error::LengthOverflow { kind, len })
-    }
-
-    fn write_value(writer: &mut Vec<u8>, value: &dyn Serialize) -> Result<(), Error> {
-        write_fragment(writer, value.begin())
-    }
-
-    fn write_fragment(writer: &mut Vec<u8>, fragment: Fragment<'_>) -> Result<(), Error> {
-        match fragment {
-            Fragment::Null => {
-                rmp::encode::write_nil(writer)?;
-            }
-            Fragment::Bool(value) => {
-                rmp::encode::write_bool(writer, value)?;
-            }
-            Fragment::I64(value) => {
-                let _ = rmp::encode::write_sint(writer, value)?;
-            }
-            Fragment::U64(value) => {
-                let _ = rmp::encode::write_uint(writer, value)?;
-            }
-            Fragment::F64(value) => {
-                let _ = rmp::encode::write_f64(writer, value)?;
-            }
-            Fragment::Str(value) => {
-                let _ = rmp::encode::write_str(writer, value)?;
-            }
-            Fragment::Bytes(value) => {
-                rmp::encode::write_bin(writer, value)?;
-            }
-            Fragment::Seq(mut seq) => {
-                let _ = rmp::encode::write_array_len(writer, usize_to_u32("array", seq.len())?)?;
-                while let Some(item) = seq.next() {
-                    write_value(writer, item)?;
-                }
-            }
-            Fragment::Map(mut map) => {
-                let _ = rmp::encode::write_map_len(writer, usize_to_u32("map", map.len())?)?;
-                while let Some((key, value)) = map.next() {
-                    let _ = rmp::encode::write_str(writer, key)?;
-                    write_value(writer, value)?;
-                }
-            }
-        }
+    pub fn write_map_len(writer: &mut Vec<u8>, len: u32) -> Result<(), SerializeError> {
+        let _ = rmp::encode::write_map_len(writer, len)?;
         Ok(())
     }
 
+    pub fn write_array_len(writer: &mut Vec<u8>, len: u32) -> Result<(), SerializeError> {
+        let _ = rmp::encode::write_array_len(writer, len)?;
+        Ok(())
+    }
+
+    pub fn write_str(writer: &mut Vec<u8>, value: &str) -> Result<(), SerializeError> {
+        let _ = rmp::encode::write_str(writer, value)?;
+        Ok(())
+    }
+
+    pub fn to_vec(value: &dyn Serialize) -> Result<Vec<u8>, SerializeError> {
+        let mut output = Vec::new();
+        value.serialize(&mut output)?;
+        Ok(output)
+    }
+
     impl<T: Serialize + ?Sized> Serialize for &T {
-        fn begin(&self) -> Fragment<'_> {
-            (*self).begin()
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            (*self).serialize(writer)
         }
     }
 
     impl Serialize for bool {
-        fn begin(&self) -> Fragment<'_> {
-            Fragment::Bool(*self)
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            rmp::encode::write_bool(writer, *self)?;
+            Ok(())
         }
     }
 
@@ -178,8 +92,9 @@ pub mod rmp_serialize {
         ($($ty:ty),+ $(,)?) => {
             $(
                 impl Serialize for $ty {
-                    fn begin(&self) -> Fragment<'_> {
-                        Fragment::I64((*self).into())
+                    fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+                        let _ = rmp::encode::write_sint(writer, (*self).into())?;
+                        Ok(())
                     }
                 }
             )+
@@ -190,8 +105,9 @@ pub mod rmp_serialize {
         ($($ty:ty),+ $(,)?) => {
             $(
                 impl Serialize for $ty {
-                    fn begin(&self) -> Fragment<'_> {
-                        Fragment::U64((*self).into())
+                    fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+                        let _ = rmp::encode::write_uint(writer, (*self).into())?;
+                        Ok(())
                     }
                 }
             )+
@@ -202,32 +118,35 @@ pub mod rmp_serialize {
     impl_unsigned_serialize!(u8, u16, u32, u64);
 
     impl Serialize for f32 {
-        fn begin(&self) -> Fragment<'_> {
-            Fragment::F64((*self).into())
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            let _ = rmp::encode::write_f64(writer, (*self).into())?;
+            Ok(())
         }
     }
 
     impl Serialize for f64 {
-        fn begin(&self) -> Fragment<'_> {
-            Fragment::F64(*self)
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            let _ = rmp::encode::write_f64(writer, *self)?;
+            Ok(())
         }
     }
 
     impl Serialize for str {
-        fn begin(&self) -> Fragment<'_> {
-            Fragment::Str(self)
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            write_str(writer, self)
         }
     }
 
     impl Serialize for String {
-        fn begin(&self) -> Fragment<'_> {
-            Fragment::Str(self.as_str())
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            write_str(writer, self)
         }
     }
 
     impl Serialize for bytes::Bytes {
-        fn begin(&self) -> Fragment<'_> {
-            Fragment::Bytes(self.as_ref())
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            rmp::encode::write_bin(writer, self.as_ref())?;
+            Ok(())
         }
     }
 
@@ -235,10 +154,13 @@ pub mod rmp_serialize {
     where
         T: Serialize,
     {
-        fn begin(&self) -> Fragment<'_> {
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
             match self {
-                Some(value) => value.begin(),
-                None => Fragment::Null,
+                Some(value) => value.serialize(writer),
+                None => {
+                    rmp::encode::write_nil(writer)?;
+                    Ok(())
+                }
             }
         }
     }
@@ -247,12 +169,12 @@ pub mod rmp_serialize {
     where
         T: Serialize,
     {
-        fn begin(&self) -> Fragment<'_> {
-            let entries = self
-                .iter()
-                .map(|item| item as &dyn Serialize)
-                .collect::<Vec<_>>();
-            Fragment::Seq(Box::new(SeqEntries::new(entries)))
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            write_array_len(writer, usize_to_u32("array", self.len())?)?;
+            for item in self {
+                item.serialize(writer)?;
+            }
+            Ok(())
         }
     }
 
@@ -260,12 +182,12 @@ pub mod rmp_serialize {
     where
         T: Serialize + Eq + Hash,
     {
-        fn begin(&self) -> Fragment<'_> {
-            let entries = self
-                .iter()
-                .map(|item| item as &dyn Serialize)
-                .collect::<Vec<_>>();
-            Fragment::Seq(Box::new(SeqEntries::new(entries)))
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            write_array_len(writer, usize_to_u32("array", self.len())?)?;
+            for item in self {
+                item.serialize(writer)?;
+            }
+            Ok(())
         }
     }
 
@@ -273,12 +195,13 @@ pub mod rmp_serialize {
     where
         T: Serialize,
     {
-        fn begin(&self) -> Fragment<'_> {
-            let entries = self
-                .iter()
-                .map(|(key, value)| (key.as_str(), value as &dyn Serialize))
-                .collect::<Vec<_>>();
-            Fragment::Map(Box::new(MapEntries::new(entries)))
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            write_map_len(writer, usize_to_u32("map", self.len())?)?;
+            for (key, value) in self {
+                write_str(writer, key)?;
+                value.serialize(writer)?;
+            }
+            Ok(())
         }
     }
 
@@ -286,18 +209,18 @@ pub mod rmp_serialize {
     where
         T: Serialize,
     {
-        fn begin(&self) -> Fragment<'_> {
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
             match self {
-                super::Maybe::Present(value) => value.begin(),
-                super::Maybe::Absent => Fragment::Null,
+                super::Maybe::Present(value) => value.serialize(writer),
+                super::Maybe::Absent => Err(SerializeError::MaybeFieldCannotBeAbsent),
             }
         }
     }
 }
 
 impl rmp_serialize::Serialize for DeviceID {
-    fn begin(&self) -> rmp_serialize::Fragment<'_> {
-        rmp_serialize::Serialize::begin(self.0.as_str())
+    fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), rmp_serialize::SerializeError> {
+        rmp_serialize::Serialize::serialize(self.0.as_str(), writer)
     }
 }
 
