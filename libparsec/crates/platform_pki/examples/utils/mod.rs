@@ -8,7 +8,7 @@ use clap::{
     builder::{NonEmptyStringValueParser, TypedValueParser},
     error::{Error, ErrorKind},
 };
-use libparsec_platform_pki::{x509::DistinguishedNameValue, Certificate};
+use libparsec_platform_pki::{x509::DistinguishedNameValue, DerCertificate};
 use libparsec_types::X509CertificateHash;
 use x509_cert::der::{DecodeValue, Header, SliceReader, Tag};
 
@@ -129,23 +129,23 @@ pub struct CertificateOrRef {
 impl CertificateOrRef {
     // Not all examples uses `CertificateOrRef` so `get_certificate` is not always used.
     #[allow(dead_code)]
-    pub async fn get_certificate(&self) -> anyhow::Result<Certificate<'static>> {
+    pub async fn get_certificate(&self) -> anyhow::Result<DerCertificate<'static>> {
         let cert = if let Some(hash) = self.certificate_hash.clone() {
             let cert_ref: libparsec_types::X509CertificateReference = hash.into();
             let certificate =
                 libparsec_platform_pki::get_der_encoded_certificate(&cert_ref).await?;
-            Certificate::from_der_owned(certificate.into())
+            DerCertificate::from_der_owned(certificate.into())
         } else if let Some(der_file) = &self.der_file {
             let raw = std::fs::read(der_file).context("Failed to read file")?;
-            Certificate::from_der_owned(raw)
+            DerCertificate::from_der_owned(raw)
         } else if let Some(pem_file) = &self.pem_file {
             let raw = std::fs::read(pem_file).context("Failed to read file")?;
-            Certificate::try_from_pem(&r#raw)?.into_owned()
+            DerCertificate::try_from_pem(&r#raw)?.into_owned()
         } else if let Some(pem) = self.pem.as_deref() {
             let raw = data_encoding::BASE64
                 .decode(pem.as_bytes())
                 .context("Invalid pem base64")?;
-            Certificate::from_der_owned(raw)
+            DerCertificate::from_der_owned(raw)
         } else {
             unreachable!("Should be handle by clap")
         };

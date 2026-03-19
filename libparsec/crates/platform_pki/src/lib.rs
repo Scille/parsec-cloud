@@ -26,6 +26,7 @@ mod platform {
         ShowCertificateSelectionDialogError, SignMessageError,
     };
     use libparsec_types::prelude::*;
+    use rustls_pki_types::CertificateDer;
 
     pub async fn get_der_encoded_certificate(
         certificate_ref: &X509CertificateReference,
@@ -80,6 +81,16 @@ mod platform {
             anyhow::bail!("Platform not supported")
         }
     }
+
+    pub struct Certificate;
+
+    impl Certificate {
+        pub async fn get_der(
+            &self,
+        ) -> Result<CertificateDer<'static>, crate::GetCertificateDerError> {
+            unimplemented!("platform not supported")
+        }
+    }
 }
 
 // TODO: https://github.com/Scille/parsec-cloud/issues/11215
@@ -101,7 +112,7 @@ pub use platform::list_intermediate_certificates;
 pub use errors::SignMessageError;
 pub use platform::sign_message;
 
-pub use shared::{verify_message, Certificate, SignedMessage, X509EndCertificate};
+pub use shared::{verify_message, DerCertificate, SignedMessage, X509EndCertificate};
 
 pub use shared::{encrypt_message, EncryptMessageError};
 
@@ -128,4 +139,10 @@ pub struct PkiConfig<'a> {
     pub proxy: &'a libparsec_platform_http_proxy::ProxyConfig,
 }
 
-pub use platform::PkiSystem;
+pub use platform::{Certificate, PkiSystem};
+
+#[derive(Debug, thiserror::Error)]
+pub enum GetCertificateDerError {
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
