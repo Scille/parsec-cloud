@@ -20,7 +20,7 @@ fn test_verify_cert_ok(certificates: &InstalledCertificates) {
             .unwrap()
             .to_owned(),
         ];
-    let binding = crate::shared::Certificate::from_der(&der_certificate);
+    let binding = crate::shared::DerCertificate::from_der(&der_certificate);
 
     let untrusted_cert = binding
         .to_end_certificate()
@@ -32,7 +32,7 @@ fn test_verify_cert_ok(certificates: &InstalledCertificates) {
 #[rstest]
 fn test_verify_unknown_issuer(certificates: &InstalledCertificates) {
     let der_certificate = certificates.bob_der_cert();
-    let binding = crate::shared::Certificate::from_der(&der_certificate);
+    let binding = crate::shared::DerCertificate::from_der(&der_certificate);
 
     let untrusted_cert = binding
         .to_end_certificate()
@@ -65,7 +65,7 @@ fn test_verify_with_intermediate(certificates: &InstalledCertificates) {
     let intermediate_certs = [rustls_pki_types::CertificateDer::from_slice(
         &glados_dev_team_der_cert,
     )];
-    let binding = crate::shared::Certificate::from_der(&der_certificate);
+    let binding = crate::shared::DerCertificate::from_der(&der_certificate);
 
     let untrusted_cert = binding
         .to_end_certificate()

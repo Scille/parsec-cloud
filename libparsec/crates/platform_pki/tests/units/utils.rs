@@ -26,7 +26,7 @@ const APERTURE_SCIENCE_PEM: &[u8] = include_bytes!("../../test-pki/Root/aperture
 const BLACK_MESA_PEM: &[u8] = include_bytes!("../../test-pki/Root/black_mesa.crt");
 
 fn load_pem_and_return_der(pem: &[u8]) -> Bytes {
-    crate::Certificate::try_from_pem(pem)
+    crate::DerCertificate::try_from_pem(pem)
         .map(|cert| Bytes::copy_from_slice(cert.as_ref()))
         .unwrap_or_else(|e| panic!("Failed to read PEM certificate: {e}"))
 }

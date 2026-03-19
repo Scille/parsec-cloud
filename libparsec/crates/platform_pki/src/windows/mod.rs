@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+mod certificate;
 mod find_in_store;
 mod schannel_utils;
 
@@ -20,6 +21,7 @@ use windows_sys::Win32::Security::Cryptography::{
     UI::CryptUIDlgSelectCertificateFromStore,
 };
 
+pub use certificate::Certificate;
 use libparsec_types::prelude::*;
 
 pub struct PkiSystem {

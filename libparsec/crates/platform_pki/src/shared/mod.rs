@@ -16,11 +16,11 @@ use webpki::{Error as WebPkiError, KeyUsage};
 use libparsec_types::prelude::*;
 
 #[derive(Clone)]
-pub struct Certificate<'a> {
+pub struct DerCertificate<'a> {
     internal: CertificateDer<'a>,
 }
 
-impl<'a> Certificate<'a> {
+impl<'a> DerCertificate<'a> {
     pub fn try_from_pem(raw: &'a [u8]) -> anyhow::Result<Self> {
         CertificateDer::from_pem_slice(raw)
             .map(Self::new)
@@ -35,8 +35,8 @@ impl<'a> Certificate<'a> {
         Self { internal: cert }
     }
 
-    pub fn into_owned(&self) -> Certificate<'static> {
-        Certificate::new(self.internal.clone().into_owned())
+    pub fn into_owned(&self) -> DerCertificate<'static> {
+        DerCertificate::new(self.internal.clone().into_owned())
     }
 
     pub fn to_end_certificate(&self) -> Result<X509EndCertificate<'_>, WebPkiError> {
@@ -44,13 +44,13 @@ impl<'a> Certificate<'a> {
     }
 }
 
-impl Certificate<'static> {
+impl DerCertificate<'static> {
     pub fn from_der_owned(raw: Vec<u8>) -> Self {
         Self::new(raw.into())
     }
 }
 
-impl AsRef<[u8]> for Certificate<'_> {
+impl AsRef<[u8]> for DerCertificate<'_> {
     fn as_ref(&self) -> &[u8] {
         self.internal.as_ref()
     }
