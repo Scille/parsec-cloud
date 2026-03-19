@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 pub mod errors;
+#[cfg(target_os = "windows")]
+#[path = "windows/mod.rs"]
+mod platform;
 mod shared;
 #[cfg(any(test, feature = "test-fixture"))]
 pub mod test_fixture;
-#[cfg(target_os = "windows")]
-mod windows;
 pub mod x509;
 #[cfg(any(test, feature = "test-fixture"))]
 pub use test_fixture::*;
@@ -15,9 +16,6 @@ pub use test_fixture::*;
 mod test;
 
 use libparsec_types::prelude::*;
-
-#[cfg(target_os = "windows")]
-pub(crate) use windows as platform;
 
 // Mock module for unsupported platform
 #[cfg(not(target_os = "windows"))]
@@ -73,6 +71,15 @@ mod platform {
     pub fn is_available() -> bool {
         false
     }
+
+    pub struct PkiSystem;
+
+    impl PkiSystem {
+        /// Function to initialize the PKI System.
+        pub async fn init(_config: crate::PkiConfig<'_>) -> anyhow::Result<Self> {
+            anyhow::bail!("Platform not supported")
+        }
+    }
 }
 
 // TODO: https://github.com/Scille/parsec-cloud/issues/11215
@@ -113,3 +120,12 @@ pub use errors::GetValidationPathForCertError;
 pub use shared::{get_validation_path_for_cert, ValidationPathOwned};
 
 pub use shared::get_root_certificate_info_from_trustchain;
+
+/// Configuration that may be useful for initializing a PKI system
+pub struct PkiConfig<'a> {
+    pub config_dir: &'a std::path::Path,
+    pub addr: &'a libparsec_types::ParsecAddr,
+    pub proxy: &'a libparsec_platform_http_proxy::ProxyConfig,
+}
+
+pub use platform::PkiSystem;

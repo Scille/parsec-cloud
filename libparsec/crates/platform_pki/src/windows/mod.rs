@@ -22,6 +22,21 @@ use windows_sys::Win32::Security::Cryptography::{
 
 use libparsec_types::prelude::*;
 
+pub struct PkiSystem {
+    #[expect(dead_code)]
+    my_cert_store: CertStore,
+}
+
+impl PkiSystem {
+    pub async fn init(_config: crate::PkiConfig<'_>) -> anyhow::Result<Self> {
+        CertStore::open_current_user("My")
+            .map(|store| Self {
+                my_cert_store: store,
+            })
+            .context("Cannot open windows cert store")
+    }
+}
+
 pub fn is_available() -> bool {
     open_store().is_ok()
 }

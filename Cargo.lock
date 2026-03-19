@@ -2502,6 +2502,7 @@ dependencies = [
  "env_logger",
  "error_set",
  "hex-literal",
+ "libparsec_platform_http_proxy",
  "libparsec_tests_lite",
  "libparsec_types",
  "log",
