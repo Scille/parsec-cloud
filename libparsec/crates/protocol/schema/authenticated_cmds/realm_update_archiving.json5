@@ -1,0 +1,74 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "realm_update_archiving",
+        "req": {
+            "fields": [
+                {
+                    // Signed `RealmArchivingCertificate`
+                    "name": "archiving_certificate",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // User is not part of the realm, or has no OWNER role in it
+                "status": "author_not_allowed"
+            },
+            {
+                "status": "invalid_certificate"
+            },
+            {
+                "status": "realm_not_found"
+            },
+            {
+                "status": "realm_deleted"
+            },
+            {
+                // `deletion_date` in a `DeletionPlanned` configuration does
+                // not satisfy the minimum archiving period.
+                "status": "archiving_period_too_short"
+            },
+            {
+                // Returned if another certificate in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]
