@@ -45,7 +45,7 @@ fn simple() {
         certificate: Bytes::from_static(b"whatever"),
     };
     let dumped = data.dump().unwrap();
-    let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
+    let reloaded: FooManifestData = FooManifestData::load(&dumped).unwrap();
     assert_eq!(reloaded, data,);
 }
 
@@ -74,7 +74,7 @@ fn with_default_field() {
 
     // `{"type": "foo_manifest", "version": 42}` in msgpack
     let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a776657273696f6e2a");
-    let data: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
+    let data: FooManifestData = FooManifestData::load(&raw).unwrap();
     let expected = FooManifestData {
         ty: FooManifestDataType,
         author: libparsec_types::DeviceID("default".to_owned()),
@@ -116,22 +116,22 @@ fn introduce_in_field() {
 
     // `{"type": "foo_manifest", "author": "alice@pc1"}` in msgpack
     let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331");
-    let loaded_without: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
+    let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data_without);
 
     // `{"type": "foo_manifest", "author": "alice@pc1", "is_cool_guy": true}` in msgpack
     let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3");
-    let loaded_without: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
+    let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data_with);
 
     // Check round-trip serialize/deserialize
 
     let dumped_with = data_with.dump().unwrap();
-    let reloaded_with: FooManifestData = rmp_serde::from_slice(&dumped_with).unwrap();
+    let reloaded_with: FooManifestData = FooManifestData::load(&dumped_with).unwrap();
     assert_eq!(reloaded_with, data_with);
 
     let dumped_without = data_without.dump().unwrap();
-    let reloaded_without: FooManifestData = rmp_serde::from_slice(&dumped_without).unwrap();
+    let reloaded_without: FooManifestData = FooManifestData::load(&dumped_without).unwrap();
     assert_eq!(reloaded_without, data_without);
 }
 
@@ -162,18 +162,18 @@ fn deprecate_in_field() {
 
     // `{"type": "foo_manifest", "author": "alice@pc1"}` in msgpack
     let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331");
-    let loaded_without: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
+    let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data);
 
     // `{"type": "foo_manifest", "author": "alice@pc1", "is_cool_guy": true}` in msgpack
     let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3");
-    let loaded_without: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
+    let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data);
 
     // Check round-trip serialize/deserialize
 
     let dumped = data.dump().unwrap();
-    let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
+    let reloaded: FooManifestData = FooManifestData::load(&dumped).unwrap();
     assert_eq!(reloaded, data);
 }
 
@@ -205,18 +205,18 @@ fn introduce_then_deprecate_in_field() {
 
     // `{"type": "foo_manifest", "author": "alice@pc1"}` in msgpack
     let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331");
-    let loaded_without: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
+    let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data);
 
     // `{"type": "foo_manifest", "author": "alice@pc1", "is_cool_guy": true}` in msgpack
     let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3");
-    let loaded_without: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
+    let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data);
 
     // Check round-trip serialize/deserialize
 
     let dumped = data.dump().unwrap();
-    let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
+    let reloaded: FooManifestData = FooManifestData::load(&dumped).unwrap();
     assert_eq!(reloaded, data);
 }
 
@@ -304,12 +304,12 @@ fn nested_type() {
     let raw = hex!(
         "84a474797065ac666f6f5f6d616e6966657374a165a26531a17582a474797065a27531a1662aa17381a1662a"
     );
-    let loaded: FooManifestData = rmp_serde::from_slice(&raw).unwrap();
+    let loaded: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded, data);
 
     // Check round-trip serialize/deserialize
 
     let dumped = data.dump().unwrap();
-    let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
+    let reloaded: FooManifestData = FooManifestData::load(&dumped).unwrap();
     assert_eq!(reloaded, data);
 }

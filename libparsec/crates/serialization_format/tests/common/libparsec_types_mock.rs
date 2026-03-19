@@ -16,6 +16,7 @@ pub mod rmp_serialize {
     use std::hash::Hash;
 
     pub use rmp::encode; // Re-expose for convenience
+    pub use rmpv::ValueRef;
 
     #[derive(Debug)]
     pub enum SerializeError {
@@ -34,6 +35,46 @@ pub mod rmp_serialize {
 
     pub trait Serialize {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError>;
+    }
+
+    #[derive(Debug)]
+    pub enum DeserializeError {
+        Decode(rmpv::decode::Error),
+        InvalidType {
+            expected: &'static str,
+            got: &'static str,
+        },
+        InvalidValue(String),
+        MissingField(&'static str),
+    }
+
+    pub trait Deserialize: Sized {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError>;
+    }
+
+    pub fn value_kind(value: &ValueRef<'_>) -> &'static str {
+        match value {
+            ValueRef::Nil => "nil",
+            ValueRef::Boolean(_) => "boolean",
+            ValueRef::Integer(_) => "integer",
+            ValueRef::F32(_) => "f32",
+            ValueRef::F64(_) => "f64",
+            ValueRef::String(_) => "string",
+            ValueRef::Binary(_) => "binary",
+            ValueRef::Array(_) => "array",
+            ValueRef::Map(_) => "map",
+            ValueRef::Ext(_, _) => "ext",
+        }
+    }
+
+    pub fn from_slice<T>(buf: &[u8]) -> Result<T, DeserializeError>
+    where
+        T: Deserialize,
+    {
+        let mut rd = buf;
+        let value =
+            rmpv::decode::value_ref::read_value_ref(&mut rd).map_err(DeserializeError::Decode)?;
+        T::deserialize(value)
     }
 
     impl From<rmp::encode::ValueWriteError<std::io::Error>> for SerializeError {
@@ -58,10 +99,31 @@ pub mod rmp_serialize {
         }
     }
 
+    impl<T: Deserialize> Deserialize for &T {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            let _ = value;
+            Err(DeserializeError::InvalidValue(
+                "cannot deserialize a borrowed reference".to_owned(),
+            ))
+        }
+    }
+
     impl Serialize for bool {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
             rmp::encode::write_bool(writer, *self)?;
             Ok(())
+        }
+    }
+
+    impl Deserialize for bool {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::Boolean(v) => Ok(v),
+                other => Err(DeserializeError::InvalidType {
+                    expected: "boolean",
+                    got: value_kind(&other),
+                }),
+            }
         }
     }
 
@@ -72,6 +134,35 @@ pub mod rmp_serialize {
                     fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
                         rmp::encode::write_sint(writer, (*self).into())?;
                         Ok(())
+                    }
+                }
+            )+
+        };
+    }
+
+    macro_rules! impl_signed_deserialize {
+        ($($ty:ty),+ $(,)?) => {
+            $(
+                impl Deserialize for $ty {
+                    fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+                        match value {
+                            ValueRef::Integer(n) => n
+                                .as_i64()
+                                .ok_or_else(|| DeserializeError::InvalidValue(
+                                    "integer out of range for signed type".to_owned(),
+                                ))
+                                .and_then(|v| {
+                                    <$ty>::try_from(v).map_err(|_| {
+                                        DeserializeError::InvalidValue(
+                                            "integer out of range for signed type".to_owned(),
+                                        )
+                                    })
+                                }),
+                            other => Err(DeserializeError::InvalidType {
+                                expected: "integer",
+                                got: value_kind(&other),
+                            }),
+                        }
                     }
                 }
             )+
@@ -91,8 +182,39 @@ pub mod rmp_serialize {
         };
     }
 
+    macro_rules! impl_unsigned_deserialize {
+        ($($ty:ty),+ $(,)?) => {
+            $(
+                impl Deserialize for $ty {
+                    fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+                        match value {
+                            ValueRef::Integer(n) => n
+                                .as_u64()
+                                .ok_or_else(|| DeserializeError::InvalidValue(
+                                    "integer out of range for unsigned type".to_owned(),
+                                ))
+                                .and_then(|v| {
+                                    <$ty>::try_from(v).map_err(|_| {
+                                        DeserializeError::InvalidValue(
+                                            "integer out of range for unsigned type".to_owned(),
+                                        )
+                                    })
+                                }),
+                            other => Err(DeserializeError::InvalidType {
+                                expected: "integer",
+                                got: value_kind(&other),
+                            }),
+                        }
+                    }
+                }
+            )+
+        };
+    }
+
     impl_signed_serialize!(i8, i16, i32, i64);
+    impl_signed_deserialize!(i8, i16, i32, i64);
     impl_unsigned_serialize!(u8, u16, u32, u64);
+    impl_unsigned_deserialize!(u8, u16, u32, u64);
 
     impl Serialize for f32 {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
@@ -101,10 +223,46 @@ pub mod rmp_serialize {
         }
     }
 
+    impl Deserialize for f32 {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::F32(v) => Ok(v),
+                ValueRef::F64(v) => Ok(v as f32),
+                ValueRef::Integer(n) => n.as_f64().map(|v| v as f32).ok_or_else(|| {
+                    DeserializeError::InvalidValue(
+                        "integer cannot be represented as f32".to_owned(),
+                    )
+                }),
+                other => Err(DeserializeError::InvalidType {
+                    expected: "number",
+                    got: value_kind(&other),
+                }),
+            }
+        }
+    }
+
     impl Serialize for f64 {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
             rmp::encode::write_f64(writer, *self)?;
             Ok(())
+        }
+    }
+
+    impl Deserialize for f64 {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::F32(v) => Ok(v.into()),
+                ValueRef::F64(v) => Ok(v),
+                ValueRef::Integer(n) => n.as_f64().ok_or_else(|| {
+                    DeserializeError::InvalidValue(
+                        "integer cannot be represented as f64".to_owned(),
+                    )
+                }),
+                other => Err(DeserializeError::InvalidType {
+                    expected: "number",
+                    got: value_kind(&other),
+                }),
+            }
         }
     }
 
@@ -122,10 +280,36 @@ pub mod rmp_serialize {
         }
     }
 
+    impl Deserialize for String {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::String(s) => s.as_str().map(ToOwned::to_owned).ok_or_else(|| {
+                    DeserializeError::InvalidValue("invalid UTF-8 string".to_owned())
+                }),
+                other => Err(DeserializeError::InvalidType {
+                    expected: "string",
+                    got: value_kind(&other),
+                }),
+            }
+        }
+    }
+
     impl Serialize for bytes::Bytes {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
             rmp::encode::write_bin(writer, self.as_ref())?;
             Ok(())
+        }
+    }
+
+    impl Deserialize for bytes::Bytes {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::Binary(data) => Ok(bytes::Bytes::copy_from_slice(data)),
+                other => Err(DeserializeError::InvalidType {
+                    expected: "binary",
+                    got: value_kind(&other),
+                }),
+            }
         }
     }
 
@@ -140,6 +324,18 @@ pub mod rmp_serialize {
                     rmp::encode::write_nil(writer)?;
                     Ok(())
                 }
+            }
+        }
+    }
+
+    impl<T> Deserialize for Option<T>
+    where
+        T: Deserialize,
+    {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::Nil => Ok(None),
+                other => Ok(Some(T::deserialize(other)?)),
             }
         }
     }
@@ -162,6 +358,21 @@ pub mod rmp_serialize {
         }
     }
 
+    impl<T> Deserialize for Vec<T>
+    where
+        T: Deserialize,
+    {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::Array(values) => values.into_iter().map(T::deserialize).collect(),
+                other => Err(DeserializeError::InvalidType {
+                    expected: "array",
+                    got: value_kind(&other),
+                }),
+            }
+        }
+    }
+
     impl<T> Serialize for HashSet<T>
     where
         T: Serialize + Eq + Hash,
@@ -173,6 +384,21 @@ pub mod rmp_serialize {
                 item.serialize(writer)?;
             }
             Ok(())
+        }
+    }
+
+    impl<T> Deserialize for HashSet<T>
+    where
+        T: Deserialize + Eq + Hash,
+    {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::Array(values) => values.into_iter().map(T::deserialize).collect(),
+                other => Err(DeserializeError::InvalidType {
+                    expected: "array",
+                    got: value_kind(&other),
+                }),
+            }
         }
     }
 
@@ -191,6 +417,29 @@ pub mod rmp_serialize {
         }
     }
 
+    impl<T> Deserialize for HashMap<String, T>
+    where
+        T: Deserialize,
+    {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::Map(entries) => {
+                    let mut out = HashMap::with_capacity(entries.len());
+                    for (raw_key, raw_value) in entries {
+                        let key = String::deserialize(raw_key)?;
+                        let value = T::deserialize(raw_value)?;
+                        out.insert(key, value);
+                    }
+                    Ok(out)
+                }
+                other => Err(DeserializeError::InvalidType {
+                    expected: "map",
+                    got: value_kind(&other),
+                }),
+            }
+        }
+    }
+
     impl<T> Serialize for super::Maybe<T>
     where
         T: Serialize,
@@ -202,11 +451,28 @@ pub mod rmp_serialize {
             }
         }
     }
+
+    impl<T> Deserialize for super::Maybe<T>
+    where
+        T: Deserialize,
+    {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            Ok(super::Maybe::Present(T::deserialize(value)?))
+        }
+    }
 }
 
 impl rmp_serialize::Serialize for DeviceID {
     fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), rmp_serialize::SerializeError> {
         rmp_serialize::Serialize::serialize(self.0.as_str(), writer)
+    }
+}
+
+impl rmp_serialize::Deserialize for DeviceID {
+    fn deserialize(
+        value: rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, rmp_serialize::DeserializeError> {
+        Ok(Self(rmp_serialize::Deserialize::deserialize(value)?))
     }
 }
 

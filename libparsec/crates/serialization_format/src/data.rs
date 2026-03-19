@@ -240,6 +240,13 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             }
         };
 
+        let data_deserialize_impl = match serialization_impl {
+            SerializationImpl::Serde => quote! {},
+            SerializationImpl::DynamicRmp => {
+                quote_dynamic_struct_deserialize_impl(&name, &data.fields, true, true)
+            }
+        };
+
         let data_type_serialize_impl = match serialization_impl {
             SerializationImpl::Serde => {
                 quote! {
@@ -267,6 +274,28 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             }
         };
 
+        let data_type_deserialize_impl = match serialization_impl {
+            SerializationImpl::Serde => quote! {},
+            SerializationImpl::DynamicRmp => {
+                quote! {
+                    impl libparsec_types::rmp_serialize::Deserialize for #name_type {
+                        fn deserialize(
+                            value: libparsec_types::rmp_serialize::ValueRef<'_>,
+                        ) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
+                            let s = String::deserialize(value)?;
+                            if s == #ty {
+                                Ok(#name_type)
+                            } else {
+                                Err(libparsec_types::rmp_serialize::DeserializeError::InvalidValue(
+                                    format!("invalid type value `{s}`, expected `{}`", #ty),
+                                ))
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
         quote! {
             #(#nested_types)*
 
@@ -282,8 +311,10 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             pub struct #name_type;
 
             #data_type_serialize_impl
+            #data_type_deserialize_impl
 
             #data_serialize_impl
+            #data_deserialize_impl
 
             impl<'de> ::serde::Deserialize<'de> for #name_type {
                 fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -326,6 +357,13 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             }
         };
 
+        let data_deserialize_impl = match serialization_impl {
+            SerializationImpl::Serde => quote! {},
+            SerializationImpl::DynamicRmp => {
+                quote_dynamic_struct_deserialize_impl(&name, &data.fields, false, true)
+            }
+        };
+
         quote! {
             #(#nested_types)*
 
@@ -336,6 +374,7 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             }
 
             #data_serialize_impl
+            #data_deserialize_impl
         }
     }
 }
@@ -347,6 +386,15 @@ fn quote_custom_struct_union(
     serialization_impl: SerializationImpl,
 ) -> TokenStream {
     let name = format_ident!("{}", name);
+    let variant_field_names = variants
+        .iter()
+        .map(|variant| {
+            serializable_fields(&variant.fields)
+                .iter()
+                .map(|field| field.name.as_str())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
     let variants_def = variants.iter().map(|variant| {
         let variant_name = format_ident!("{}", variant.name);
         let value_literal = &variant.discriminant_value;
@@ -432,6 +480,82 @@ fn quote_custom_struct_union(
         }
     };
 
+    let deserialize_impl = match serialization_impl {
+        SerializationImpl::Serde => quote! {},
+        SerializationImpl::DynamicRmp => {
+            let variants_deserialize =
+                variants
+                    .iter()
+                    .zip(variant_field_names.iter())
+                    .map(|(variant, field_names)| {
+                        let variant_name = format_ident!("{}", variant.name);
+                        let value_literal = &variant.discriminant_value;
+                        let field_count = field_names.len();
+
+                        if field_count == 0 {
+                            quote! {
+                                #value_literal => {
+                                    Ok(Self::#variant_name)
+                                }
+                            }
+                        } else {
+                            let field_idents = field_names
+                                .iter()
+                                .map(|field_name| field_name_to_ident(field_name))
+                                .collect::<Vec<_>>();
+                            let field_extractors = serializable_fields(&variant.fields)
+                                .into_iter()
+                                .map(quote_dynamic_named_field_extract)
+                                .collect::<Vec<_>>();
+                            quote! {
+                                #value_literal => {
+                                    #(#field_extractors)*
+                                    Ok(Self::#variant_name {
+                                        #(#field_idents),*
+                                    })
+                                }
+                            }
+                        }
+                    });
+
+            quote! {
+                impl libparsec_types::rmp_serialize::Deserialize for #name {
+                    fn deserialize(
+                        value: libparsec_types::rmp_serialize::ValueRef<'_>,
+                    ) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
+                        let entries = match value {
+                            rmpv::ValueRef::Map(entries) => entries,
+                            other => {
+                                return Err(libparsec_types::rmp_serialize::DeserializeError::InvalidType {
+                                    expected: "map",
+                                    got: libparsec_types::rmp_serialize::value_kind(&other),
+                                })
+                            }
+                        };
+
+                        let mut obj = std::collections::HashMap::with_capacity(entries.len());
+                        for (raw_key, raw_value) in entries {
+                            let key = String::deserialize(raw_key)?;
+                            obj.insert(key, raw_value);
+                        }
+
+                        let discriminant = obj
+                            .remove(#discriminant_field)
+                            .ok_or(libparsec_types::rmp_serialize::DeserializeError::MissingField(#discriminant_field))?;
+                        let discriminant = String::deserialize(discriminant)?;
+
+                        match discriminant.as_str() {
+                            #(#variants_deserialize),*,
+                            _ => Err(libparsec_types::rmp_serialize::DeserializeError::InvalidValue(
+                                format!("unknown discriminant `{}`", discriminant),
+                            )),
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     quote! {
         #[::serde_with::serde_as]
         #derive
@@ -441,6 +565,7 @@ fn quote_custom_struct_union(
         }
 
         #serialize_impl
+        #deserialize_impl
     }
 }
 
@@ -493,6 +618,32 @@ fn quote_custom_literal_union(
         }
     };
 
+    let deserialize_impl = match serialization_impl {
+        SerializationImpl::Serde => quote! {},
+        SerializationImpl::DynamicRmp => {
+            let variants_deserialize = variants.iter().map(|(name, value)| {
+                let variant_name = format_ident!("{}", name);
+                quote! { #value => Ok(Self::#variant_name) }
+            });
+
+            quote! {
+                impl libparsec_types::rmp_serialize::Deserialize for #name {
+                    fn deserialize(
+                        value: libparsec_types::rmp_serialize::ValueRef<'_>,
+                    ) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
+                        let discriminant = String::deserialize(value)?;
+                        match discriminant.as_str() {
+                            #(#variants_deserialize),*,
+                            _ => Err(libparsec_types::rmp_serialize::DeserializeError::InvalidValue(
+                                format!("unknown literal discriminant `{}`", discriminant),
+                            )),
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     quote! {
         #[::serde_with::serde_as]
         #derive
@@ -501,6 +652,7 @@ fn quote_custom_literal_union(
         }
 
         #serialize_impl
+        #deserialize_impl
     }
 }
 
@@ -527,6 +679,13 @@ fn quote_custom_struct(
         }
     };
 
+    let deserialize_impl = match serialization_impl {
+        SerializationImpl::Serde => quote! {},
+        SerializationImpl::DynamicRmp => {
+            quote_dynamic_struct_deserialize_impl(&name, fields, false, false)
+        }
+    };
+
     quote! {
         #[::serde_with::serde_as]
         #derive
@@ -535,6 +694,7 @@ fn quote_custom_struct(
         }
 
         #serialize_impl
+        #deserialize_impl
     }
 }
 
@@ -578,6 +738,42 @@ fn field_name_to_ident(name: &str) -> proc_macro2::Ident {
     match name {
         "type" => format_ident!("ty"),
         _ => format_ident!("{}", name),
+    }
+}
+
+fn quote_dynamic_named_field_extract(field: &GenDataField) -> TokenStream {
+    let field_name = field.name.as_str();
+    let field_ident = field_name_to_ident(field_name);
+    let field_type = field.ty.to_rust_type();
+
+    if field.introduced_in_revision.is_some() {
+        quote! {
+            let #field_ident: libparsec_types::Maybe<#field_type> = match obj.remove(#field_name) {
+                Some(value) => {
+                    libparsec_types::Maybe::Present(
+                        <#field_type as libparsec_types::rmp_serialize::Deserialize>::deserialize(value)?,
+                    )
+                }
+                None => libparsec_types::Maybe::Absent,
+            };
+        }
+    } else if let Some(default_fn_name) = &field.default {
+        let default_ident = format_ident!("{}", default_fn_name);
+        quote! {
+            let #field_ident: #field_type = match obj.remove(#field_name) {
+                Some(value) => <#field_type as libparsec_types::rmp_serialize::Deserialize>::deserialize(value)?,
+                None => #default_ident(),
+            };
+        }
+    } else {
+        quote! {
+            let #field_ident: #field_type = {
+                let value = obj
+                    .remove(#field_name)
+                    .ok_or(libparsec_types::rmp_serialize::DeserializeError::MissingField(#field_name))?;
+                <#field_type as libparsec_types::rmp_serialize::Deserialize>::deserialize(value)?
+            };
+        }
     }
 }
 
@@ -715,6 +911,93 @@ fn quote_dynamic_struct_serialize_impl(
         }
 
         #dump_method
+    }
+}
+
+fn quote_dynamic_struct_deserialize_impl(
+    name: &proc_macro2::Ident,
+    fields: &[GenDataField],
+    has_data_type_field: bool,
+    add_load_method: bool,
+) -> TokenStream {
+    let extractors = serializable_fields(fields)
+        .into_iter()
+        .map(quote_dynamic_named_field_extract)
+        .collect::<Vec<_>>();
+    let field_idents = serializable_fields(fields)
+        .iter()
+        .map(|field| field_name_to_ident(field.name.as_str()))
+        .collect::<Vec<_>>();
+
+    let type_field_extractor = if has_data_type_field {
+        quote! {
+            let ty = {
+                let value = obj
+                    .remove("type")
+                    .ok_or(libparsec_types::rmp_serialize::DeserializeError::MissingField("type"))?;
+                <_ as libparsec_types::rmp_serialize::Deserialize>::deserialize(value)?
+            };
+        }
+    } else {
+        quote! {}
+    };
+
+    let struct_init = if has_data_type_field {
+        quote! {
+            Ok(Self {
+                ty,
+                #(#field_idents),*
+            })
+        }
+    } else {
+        quote! {
+            Ok(Self {
+                #(#field_idents),*
+            })
+        }
+    };
+
+    let load_method = if add_load_method {
+        quote! {
+            impl #name {
+                pub fn load(raw: &[u8]) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
+                    libparsec_types::rmp_serialize::from_slice(raw)
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
+    quote! {
+        impl libparsec_types::rmp_serialize::Deserialize for #name {
+            fn deserialize(
+                value: libparsec_types::rmp_serialize::ValueRef<'_>,
+            ) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
+                let entries = match value {
+                    rmpv::ValueRef::Map(entries) => entries,
+                    other => {
+                        return Err(libparsec_types::rmp_serialize::DeserializeError::InvalidType {
+                            expected: "map",
+                            got: libparsec_types::rmp_serialize::value_kind(&other),
+                        })
+                    }
+                };
+
+                let mut obj = std::collections::HashMap::with_capacity(entries.len());
+                for (raw_key, raw_value) in entries {
+                    let key = String::deserialize(raw_key)?;
+                    obj.insert(key, raw_value);
+                }
+
+                #type_field_extractor
+                #(#extractors)*
+
+                #struct_init
+            }
+        }
+
+        #load_method
     }
 }
 
