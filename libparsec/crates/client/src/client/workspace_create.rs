@@ -32,6 +32,8 @@ pub(super) async fn create_workspace(
             name_origin: CertificateBasedInfoOrigin::Placeholder,
             role: RealmRole::Owner,
             role_origin: CertificateBasedInfoOrigin::Placeholder,
+            archiving_configuration: LocalUserManifestWorkspaceArchivingConfiguration::Available
+                .into(),
         });
         local_workspaces.sort_unstable_by(|a, b| a.name.cmp(&b.name));
         local_workspaces

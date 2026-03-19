@@ -328,6 +328,7 @@ impl CrcHash for LocalUserManifestWorkspaceEntry {
             name_origin,
             role,
             role_origin,
+            archiving_configuration,
         } = self;
 
         id.crc_hash(hasher);
@@ -335,6 +336,26 @@ impl CrcHash for LocalUserManifestWorkspaceEntry {
         name_origin.crc_hash(hasher);
         role.crc_hash(hasher);
         role_origin.crc_hash(hasher);
+        archiving_configuration.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for LocalUserManifestWorkspaceArchivingConfiguration {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"LocalUserManifestWorkspaceEntry");
+
+        match self {
+            LocalUserManifestWorkspaceArchivingConfiguration::Available => {
+                hasher.update(b"Available")
+            }
+            LocalUserManifestWorkspaceArchivingConfiguration::Archived => {
+                hasher.update(b"Archived")
+            }
+            LocalUserManifestWorkspaceArchivingConfiguration::DeletionPlanned { deletion_date } => {
+                hasher.update(b"DeletionPlanned");
+                deletion_date.crc_hash(hasher);
+            }
+        }
     }
 }
 

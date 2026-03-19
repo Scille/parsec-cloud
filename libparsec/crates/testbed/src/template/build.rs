@@ -1012,6 +1012,8 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                             name_origin: CertificateBasedInfoOrigin::Placeholder,
                             role: RealmRole::Owner,
                             role_origin: CertificateBasedInfoOrigin::Placeholder,
+                            archiving_configuration:
+                                LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
                         });
                 }
             }
@@ -1083,20 +1085,23 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                         role_origin: CertificateBasedInfoOrigin::Certificate {
                             timestamp: event.timestamp,
                         },
+                        archiving_configuration:
+                            LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
                     });
                 }
-                TestbedEvent::ShareRealm(event) if event.user == user_id => match event.role {
-                    None => {
-                        let found = local_workspaces
-                            .iter()
-                            .position(|entry| entry.id == event.realm);
-                        found.map(|index| local_workspaces.swap_remove(index));
-                    }
-                    Some(role) => {
-                        let found = local_workspaces.iter_mut().find(|w| w.id == event.realm);
-                        match found {
-                            None => {
-                                local_workspaces.push(LocalUserManifestWorkspaceEntry {
+                TestbedEvent::ShareRealm(event) if event.user == user_id => {
+                    match event.role {
+                        None => {
+                            let found = local_workspaces
+                                .iter()
+                                .position(|entry| entry.id == event.realm);
+                            found.map(|index| local_workspaces.swap_remove(index));
+                        }
+                        Some(role) => {
+                            let found = local_workspaces.iter_mut().find(|w| w.id == event.realm);
+                            match found {
+                                None => {
+                                    local_workspaces.push(LocalUserManifestWorkspaceEntry {
                                     id: event.realm,
                                     name: placeholder_name.clone(),
                                     name_origin: CertificateBasedInfoOrigin::Placeholder,
@@ -1104,17 +1109,19 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                                     role_origin: CertificateBasedInfoOrigin::Certificate {
                                         timestamp: event.timestamp,
                                     },
+                                    archiving_configuration: LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
                                 });
-                            }
-                            Some(entry) => {
-                                entry.role = role;
-                                entry.role_origin = CertificateBasedInfoOrigin::Certificate {
-                                    timestamp: event.timestamp,
-                                };
+                                }
+                                Some(entry) => {
+                                    entry.role = role;
+                                    entry.role_origin = CertificateBasedInfoOrigin::Certificate {
+                                        timestamp: event.timestamp,
+                                    };
+                                }
                             }
                         }
                     }
-                },
+                }
                 TestbedEvent::RenameRealm(event) => {
                     rename_events.push(event);
                 }
