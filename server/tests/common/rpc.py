@@ -430,6 +430,15 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.realm_unshare.Rep.load(raw_rep)
 
+    async def realm_update_archiving(
+        self, archiving_certificate: bytes
+    ) -> authenticated_cmds.latest.realm_update_archiving.Rep:
+        req = authenticated_cmds.latest.realm_update_archiving.Req(
+            archiving_certificate=archiving_certificate
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.realm_update_archiving.Rep.load(raw_rep)
+
     async def shamir_recovery_delete(
         self, shamir_recovery_deletion_certificate: bytes
     ) -> authenticated_cmds.latest.shamir_recovery_delete.Rep:
