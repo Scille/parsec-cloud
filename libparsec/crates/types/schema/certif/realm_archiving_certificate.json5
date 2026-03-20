@@ -17,42 +17,5 @@
             "name": "configuration",
             "type": "RealmArchivingConfiguration"
         }
-    ],
-    "nested_types": [
-        {
-            "name": "RealmArchivingConfiguration",
-            "discriminant_field": "type",
-            "variants": [
-                {
-                    // The realm can be read/written, this is the default
-                    // status if no realm archiving certificate has been
-                    // issued.
-                    "name": "Available",
-                    "discriminant_value": "AVAILABLE"
-                },
-                {
-                    // The realm is now in read-only.
-                    // This has precedence over workspace roles, so users
-                    // with write-access (e.g. CONTRIBUTOR) would not be
-                    // able to make changes on an archived realm.
-                    "name": "Archived",
-                    "discriminant_value": "ARCHIVED"
-                },
-                {
-                    // The realm is now in read-only, on top of that the
-                    // server is expected to delete the workspace data
-                    // (i.e. vlob and blocks) once the deletion date has
-                    // been reached.
-                    "name": "DeletionPlanned",
-                    "discriminant_value": "DELETION_PLANNED",
-                    "fields": [
-                        {
-                            "name": "deletion_date",
-                            "type": "DateTime"
-                        }
-                    ]
-                }
-            ]
-        }
     ]
 }

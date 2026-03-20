@@ -15,6 +15,27 @@ use crate::{
 };
 
 /*
+ * RealmArchivingConfiguration
+ */
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(tag = "type")]
+pub enum RealmArchivingConfiguration {
+    /// The realm can be read/written, this is the default status if no
+    /// realm archiving certificate has been issued.
+    Available,
+    /// The realm is now in read-only.
+    /// This has precedence over workspace roles, so users with write-access
+    /// (e.g. CONTRIBUTOR) would not be able to make changes on an archived realm.
+    Archived,
+    /// The realm is now in read-only, on top of that the server is expected
+    /// to delete the workspace data (i.e. vlob and blocks) once the deletion
+    /// date has been reached.
+    DeletionPlanned { deletion_date: DateTime },
+}
+
+/*
  * RealmKeysBundle
  */
 

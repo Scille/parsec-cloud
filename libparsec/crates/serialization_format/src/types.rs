@@ -269,4 +269,5 @@ generate_field_type_enum!(
     // Used only in shamir
     ShamirRecoveryShareData => libparsec_types::ShamirRecoveryShareData,
     ShamirShare =>  libparsec_types::ShamirShare,
+    RealmArchivingConfiguration => libparsec_types::RealmArchivingConfiguration,
 );

@@ -129,8 +129,7 @@ pub async fn refresh_workspaces_list(
             role_origin: CertificateBasedInfoOrigin::Certificate {
                 timestamp: *role_certificate_timestamp,
             },
-            archiving_configuration: LocalUserManifestWorkspaceArchivingConfiguration::Available
-                .into(), // TODO: handle archiving configuration update
+            archiving_configuration: RealmArchivingConfiguration::Available.into(), // TODO: handle archiving configuration update
         });
     }
 
@@ -185,8 +184,7 @@ pub async fn refresh_workspaces_list(
                     name_origin: CertificateBasedInfoOrigin::Placeholder,
                     role: old_entry.role,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
-                    archiving_configuration:
-                        LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                    archiving_configuration: RealmArchivingConfiguration::Available.into(),
                 });
             }
         }
