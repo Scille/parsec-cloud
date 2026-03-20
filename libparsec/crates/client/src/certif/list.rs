@@ -10,6 +10,7 @@ use super::{
 pub type CertifGetCurrentSelfProfileError = super::store::CertifStoreError;
 pub type CertifGetCurrentSelfRealmsRoleError = super::store::CertifStoreError;
 pub type CertifGetCurrentSelfRealmRoleError = super::store::CertifStoreError;
+pub type CertifGetRealmArchivingConfigurationError = super::store::CertifStoreError;
 pub type CertifListUsersError = super::store::CertifStoreError;
 pub type CertifListUserDevicesError = super::store::CertifStoreError;
 pub type CertifListWorkspaceUsersError = super::store::CertifStoreError;
@@ -436,4 +437,21 @@ pub(super) async fn list_workspace_users(
         })
         .await?
         .map_err(|err| err.into())
+}
+
+pub(super) async fn get_realm_archiving_configuration(
+    ops: &CertificateOps,
+    realm_id: VlobID,
+) -> Result<RealmArchivingConfiguration, CertifGetRealmArchivingConfigurationError> {
+    ops.store
+        .for_read(async |store| {
+            let certif = store
+                .get_realm_last_archiving_certificate(UpTo::Current, realm_id)
+                .await?;
+            Ok(match certif {
+                Some(certif) => certif.configuration.clone(),
+                None => RealmArchivingConfiguration::Available,
+            })
+        })
+        .await?
 }

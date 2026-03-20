@@ -24,6 +24,7 @@ mod forget_all_certificates;
 mod get_current_self_profile;
 mod get_current_self_realm_role;
 mod get_current_self_realms_role;
+mod get_realm_archiving_config;
 mod get_realm_needs;
 mod get_user_device;
 mod get_user_info;

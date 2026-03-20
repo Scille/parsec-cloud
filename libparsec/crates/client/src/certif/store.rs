@@ -1052,6 +1052,31 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        pub async fn get_realm_last_archiving_certificate(
+            &mut self,
+            up_to: UpTo,
+            realm_id: VlobID,
+        ) -> anyhow::Result<Option<Arc<RealmArchivingCertificate>>> {
+            let query = GetCertificateQuery::realm_archiving_certificates(&realm_id);
+            let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
+            let encrypted = match outcome {
+                Ok((_, encrypted)) => encrypted,
+                Err(GetCertificateError::NonExisting)
+                | Err(GetCertificateError::ExistButTooRecent { .. }) => return Ok(None),
+                Err(GetCertificateError::Internal(err)) => return Err(err),
+            };
+
+            let certif = get_certificate_from_encrypted(
+                self.store,
+                &encrypted,
+                RealmArchivingCertificate::unsecure_load,
+                UnsecureRealmArchivingCertificate::skip_validation,
+            )?;
+
+            Ok(Some(certif))
+        }
+
+        #[allow(unused)]
         /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_realm_key_rotation_certificate(
             &mut self,
