@@ -84,12 +84,17 @@ async fn ok(env: &TestbedEnv) {
             current_self_role,
             is_started,
             is_bootstrapped,
+            archiving_configuration,
         } = wksp1_info;
         p_assert_eq!(id, wksp1_id);
         p_assert_eq!(current_name, "wksp1'".parse().unwrap());
         p_assert_eq!(current_self_role, RealmRole::Owner);
         p_assert_eq!(is_bootstrapped, true);
         p_assert_eq!(is_started, false);
+        p_assert_eq!(
+            archiving_configuration,
+            RealmArchivingConfiguration::Available
+        );
     }
 }
 
@@ -171,12 +176,17 @@ async fn realm_not_bootstrapped_missing_initial_rename(env: &TestbedEnv) {
             current_self_role,
             is_started,
             is_bootstrapped,
+            archiving_configuration,
         } = wksp1_info;
         p_assert_eq!(id, wksp1_id);
         p_assert_eq!(current_name, "wksp1'".parse().unwrap());
         p_assert_eq!(current_self_role, RealmRole::Owner);
         p_assert_eq!(is_bootstrapped, true);
         p_assert_eq!(is_started, false);
+        p_assert_eq!(
+            archiving_configuration,
+            RealmArchivingConfiguration::Available
+        );
     }
 }
 
@@ -319,12 +329,17 @@ async fn realm_not_bootstrapped_missing_initial_key_rotation(env: &TestbedEnv) {
             current_self_role,
             is_started,
             is_bootstrapped,
+            archiving_configuration,
         } = wksp1_info;
         p_assert_eq!(id, wksp1_id);
         p_assert_eq!(current_name, "wksp1'".parse().unwrap());
         p_assert_eq!(current_self_role, RealmRole::Owner);
         p_assert_eq!(is_bootstrapped, true);
         p_assert_eq!(is_started, false);
+        p_assert_eq!(
+            archiving_configuration,
+            RealmArchivingConfiguration::Available
+        );
     }
 }
 
