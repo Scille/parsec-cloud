@@ -1074,7 +1074,7 @@ fn quote_cmd(
                             };
 
                             match status.as_str() {
-                                #(#dynamic_rep_deserialize_cases)*
+                                #(#dynamic_rep_deserialize_cases,)*
                                 _ => {
                                     let reason: Option<String> = match obj.remove("reason") {
                                         Some(value) => Option::<String>::deserialize(value)?,
@@ -1221,7 +1221,7 @@ fn quote_custom_struct_union(
             quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
         }
         SerializationImpl::DynamicRmp => {
-            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
         }
     };
 
@@ -1393,7 +1393,7 @@ fn quote_custom_literal_union(
             quote! { #[derive(Debug, Clone, Copy, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq, Hash)] }
         }
         SerializationImpl::DynamicRmp => {
-            quote! { #[derive(Debug, Clone, Copy, ::serde::Deserialize, PartialEq, Eq, Hash)] }
+            quote! { #[derive(Debug, Clone, Copy, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq, Hash)] }
         }
     };
 
@@ -1473,7 +1473,7 @@ fn quote_custom_struct(
             quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
         }
         SerializationImpl::DynamicRmp => {
-            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
         }
     };
 

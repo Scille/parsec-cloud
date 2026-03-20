@@ -373,6 +373,45 @@ pub mod rmp_serialize {
         }
     }
 
+    impl<A, B> Serialize for (A, B)
+    where
+        A: Serialize,
+        B: Serialize,
+    {
+        fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
+            rmp::encode::write_array_len(writer, 2)?;
+            self.0.serialize(writer)?;
+            self.1.serialize(writer)?;
+            Ok(())
+        }
+    }
+
+    impl<A, B> Deserialize for (A, B)
+    where
+        A: Deserialize,
+        B: Deserialize,
+    {
+        fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
+            match value {
+                ValueRef::Array(values) => {
+                    if values.len() != 2 {
+                        return Err(DeserializeError::InvalidValue(
+                            "expected tuple of size 2".to_owned(),
+                        ));
+                    }
+                    Ok((
+                        A::deserialize(values[0].clone())?,
+                        B::deserialize(values[1].clone())?,
+                    ))
+                }
+                other => Err(DeserializeError::InvalidType {
+                    expected: "array",
+                    got: value_kind(&other),
+                }),
+            }
+        }
+    }
+
     impl<T> Serialize for HashSet<T>
     where
         T: Serialize + Eq + Hash,
@@ -402,23 +441,25 @@ pub mod rmp_serialize {
         }
     }
 
-    impl<T> Serialize for HashMap<String, T>
+    impl<K, T> Serialize for HashMap<K, T>
     where
+        K: Serialize + Eq + Hash,
         T: Serialize,
     {
         fn serialize(&self, writer: &mut Vec<u8>) -> Result<(), SerializeError> {
             let len = usize_to_u32("map", self.len())?;
             rmp::encode::write_map_len(writer, len)?;
             for (key, value) in self {
-                rmp::encode::write_str(writer, key)?;
+                key.serialize(writer)?;
                 value.serialize(writer)?;
             }
             Ok(())
         }
     }
 
-    impl<T> Deserialize for HashMap<String, T>
+    impl<K, T> Deserialize for HashMap<K, T>
     where
+        K: Deserialize + Eq + Hash,
         T: Deserialize,
     {
         fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
@@ -426,7 +467,7 @@ pub mod rmp_serialize {
                 ValueRef::Map(entries) => {
                     let mut out = HashMap::with_capacity(entries.len());
                     for (raw_key, raw_value) in entries {
-                        let key = String::deserialize(raw_key)?;
+                        let key = K::deserialize(raw_key)?;
                         let value = T::deserialize(raw_value)?;
                         out.insert(key, value);
                     }
