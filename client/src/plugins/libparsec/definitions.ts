@@ -399,6 +399,7 @@ export interface ServerConfig {
 export interface ServerOrganizationConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
+    minimumArchivingPeriod: U64
 }
 
 export interface ShamirRecoveryClaimInProgress1Info {
@@ -553,6 +554,7 @@ export interface WorkspaceInfo {
     currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
+    archivingConfiguration: RealmArchivingConfiguration
 }
 
 export interface WorkspaceUserAccessInfo {
@@ -1740,6 +1742,82 @@ export type ClientAcceptTosError =
   | ClientAcceptTosErrorNoTos
   | ClientAcceptTosErrorOffline
   | ClientAcceptTosErrorTosMismatch
+
+// ClientArchiveWorkspaceError
+export enum ClientArchiveWorkspaceErrorTag {
+    ArchivingPeriodTooShort = 'ClientArchiveWorkspaceErrorArchivingPeriodTooShort',
+    AuthorNotAllowed = 'ClientArchiveWorkspaceErrorAuthorNotAllowed',
+    Internal = 'ClientArchiveWorkspaceErrorInternal',
+    InvalidCertificate = 'ClientArchiveWorkspaceErrorInvalidCertificate',
+    InvalidEncryptedRealmName = 'ClientArchiveWorkspaceErrorInvalidEncryptedRealmName',
+    InvalidKeysBundle = 'ClientArchiveWorkspaceErrorInvalidKeysBundle',
+    Offline = 'ClientArchiveWorkspaceErrorOffline',
+    Stopped = 'ClientArchiveWorkspaceErrorStopped',
+    TimestampOutOfBallpark = 'ClientArchiveWorkspaceErrorTimestampOutOfBallpark',
+    WorkspaceDeleted = 'ClientArchiveWorkspaceErrorWorkspaceDeleted',
+    WorkspaceNotFound = 'ClientArchiveWorkspaceErrorWorkspaceNotFound',
+}
+
+export interface ClientArchiveWorkspaceErrorArchivingPeriodTooShort {
+    tag: ClientArchiveWorkspaceErrorTag.ArchivingPeriodTooShort
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorAuthorNotAllowed {
+    tag: ClientArchiveWorkspaceErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInternal {
+    tag: ClientArchiveWorkspaceErrorTag.Internal
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInvalidCertificate {
+    tag: ClientArchiveWorkspaceErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInvalidEncryptedRealmName {
+    tag: ClientArchiveWorkspaceErrorTag.InvalidEncryptedRealmName
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInvalidKeysBundle {
+    tag: ClientArchiveWorkspaceErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorOffline {
+    tag: ClientArchiveWorkspaceErrorTag.Offline
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorStopped {
+    tag: ClientArchiveWorkspaceErrorTag.Stopped
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorTimestampOutOfBallpark {
+    tag: ClientArchiveWorkspaceErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface ClientArchiveWorkspaceErrorWorkspaceDeleted {
+    tag: ClientArchiveWorkspaceErrorTag.WorkspaceDeleted
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorWorkspaceNotFound {
+    tag: ClientArchiveWorkspaceErrorTag.WorkspaceNotFound
+    error: string
+}
+export type ClientArchiveWorkspaceError =
+  | ClientArchiveWorkspaceErrorArchivingPeriodTooShort
+  | ClientArchiveWorkspaceErrorAuthorNotAllowed
+  | ClientArchiveWorkspaceErrorInternal
+  | ClientArchiveWorkspaceErrorInvalidCertificate
+  | ClientArchiveWorkspaceErrorInvalidEncryptedRealmName
+  | ClientArchiveWorkspaceErrorInvalidKeysBundle
+  | ClientArchiveWorkspaceErrorOffline
+  | ClientArchiveWorkspaceErrorStopped
+  | ClientArchiveWorkspaceErrorTimestampOutOfBallpark
+  | ClientArchiveWorkspaceErrorWorkspaceDeleted
+  | ClientArchiveWorkspaceErrorWorkspaceNotFound
 
 // ClientCancelInvitationError
 export enum ClientCancelInvitationErrorTag {
@@ -3907,6 +3985,28 @@ export type PendingAsyncEnrollmentInfo =
   | PendingAsyncEnrollmentInfoCancelled
   | PendingAsyncEnrollmentInfoRejected
   | PendingAsyncEnrollmentInfoSubmitted
+
+// RealmArchivingConfiguration
+export enum RealmArchivingConfigurationTag {
+    Archived = 'RealmArchivingConfigurationArchived',
+    Available = 'RealmArchivingConfigurationAvailable',
+    DeletionPlanned = 'RealmArchivingConfigurationDeletionPlanned',
+}
+
+export interface RealmArchivingConfigurationArchived {
+    tag: RealmArchivingConfigurationTag.Archived
+}
+export interface RealmArchivingConfigurationAvailable {
+    tag: RealmArchivingConfigurationTag.Available
+}
+export interface RealmArchivingConfigurationDeletionPlanned {
+    tag: RealmArchivingConfigurationTag.DeletionPlanned
+    deletionDate: DateTime
+}
+export type RealmArchivingConfiguration =
+  | RealmArchivingConfigurationArchived
+  | RealmArchivingConfigurationAvailable
+  | RealmArchivingConfigurationDeletionPlanned
 
 // RemoveDeviceDataError
 export enum RemoveDeviceDataErrorTag {
@@ -6305,6 +6405,11 @@ export interface LibParsecPlugin {
         client: Handle,
         tos_updated_on: DateTime
     ): Promise<Result<null, ClientAcceptTosError>>
+    clientArchiveWorkspace(
+        client: Handle,
+        realm_id: VlobID,
+        configuration: RealmArchivingConfiguration
+    ): Promise<Result<null, ClientArchiveWorkspaceError>>
     clientCancelInvitation(
         client: Handle,
         token: AccessToken
