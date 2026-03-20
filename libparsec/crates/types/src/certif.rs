@@ -18,8 +18,8 @@ use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{self as libparsec_types, IndexInt};
 use crate::{
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, MaybeRedacted, RealmRole,
-    SequesterServiceID, UserID, UserProfile, VlobID,
+    DataError, DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, MaybeRedacted,
+    RealmArchivingConfiguration, RealmRole, SequesterServiceID, UserID, UserProfile, VlobID,
 };
 
 fn check_author_allow_root(

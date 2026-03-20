@@ -340,25 +340,6 @@ impl CrcHash for LocalUserManifestWorkspaceEntry {
     }
 }
 
-impl CrcHash for LocalUserManifestWorkspaceArchivingConfiguration {
-    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
-        hasher.update(b"LocalUserManifestWorkspaceEntry");
-
-        match self {
-            LocalUserManifestWorkspaceArchivingConfiguration::Available => {
-                hasher.update(b"Available")
-            }
-            LocalUserManifestWorkspaceArchivingConfiguration::Archived => {
-                hasher.update(b"Archived")
-            }
-            LocalUserManifestWorkspaceArchivingConfiguration::DeletionPlanned { deletion_date } => {
-                hasher.update(b"DeletionPlanned");
-                deletion_date.crc_hash(hasher);
-            }
-        }
-    }
-}
-
 impl CrcHash for CertificateBasedInfoOrigin {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"WorkspaceNameOrigin");

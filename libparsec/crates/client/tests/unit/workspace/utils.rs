@@ -68,8 +68,7 @@ pub(crate) async fn workspace_ops_with_prevent_sync_pattern_factory(
                 name_origin: CertificateBasedInfoOrigin::Placeholder,
                 role: RealmRole::Owner,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
-                archiving_configuration:
-                    LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                archiving_configuration: RealmArchivingConfiguration::Available.into(),
             },
             workspace_index: 0,
             total_workspaces: 1,
@@ -103,8 +102,7 @@ pub(crate) async fn restart_workspace_ops(ops: WorkspaceOps) -> WorkspaceOps {
                 name_origin: CertificateBasedInfoOrigin::Placeholder,
                 role: RealmRole::Owner,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
-                archiving_configuration:
-                    LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                archiving_configuration: RealmArchivingConfiguration::Available.into(),
             },
             workspace_index: 0,
             total_workspaces: 1,

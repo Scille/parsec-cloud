@@ -51,8 +51,7 @@ async fn ok_with_changes(
                             name_origin: CertificateBasedInfoOrigin::Placeholder,
                             role: RealmRole::Owner,
                             role_origin: CertificateBasedInfoOrigin::Placeholder,
-                            archiving_configuration:
-                                LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                            archiving_configuration: RealmArchivingConfiguration::Available.into(),
                         });
                 });
 

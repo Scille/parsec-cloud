@@ -103,41 +103,9 @@
                 },
                 {
                     "name": "archiving_configuration",
-                    "type": "LocalUserManifestWorkspaceArchivingConfiguration",
+                    "type": "RealmArchivingConfiguration",
                     // Introduced in Parsec 3.9.0
                     "introduced_in_revision": 390
-                }
-            ]
-        },
-        {
-            "name": "LocalUserManifestWorkspaceArchivingConfiguration",
-            "discriminant_field": "type",
-            "variants": [
-                {
-                    // The realm can be read/written, this is the default
-                    // status if no realm archiving certificate has been
-                    // issued.
-                    "name": "Available",
-                    "discriminant_value": "AVAILABLE"
-                },
-                {
-                    // The realm is now in read-only.
-                    "name": "Archived",
-                    "discriminant_value": "ARCHIVED"
-                },
-                {
-                    // The realm is now in read-only, on top of that the
-                    // server is expected to delete the workspace data
-                    // (i.e. vlob and blocks) once the deletion date has
-                    // been reached.
-                    "name": "DeletionPlanned",
-                    "discriminant_value": "DELETION_PLANNED",
-                    "fields": [
-                        {
-                            "name": "deletion_date",
-                            "type": "DateTime"
-                        }
-                    ]
                 }
             ]
         }

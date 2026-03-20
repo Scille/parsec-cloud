@@ -63,8 +63,7 @@ async fn ok(env: &TestbedEnv) {
                             name_origin: CertificateBasedInfoOrigin::Placeholder,
                             role: RealmRole::Owner,
                             role_origin: CertificateBasedInfoOrigin::Placeholder,
-                            archiving_configuration:
-                                LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                            archiving_configuration: RealmArchivingConfiguration::Available.into(),
                         });
 
                     // Correct placeholder name for wksp5

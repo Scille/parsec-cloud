@@ -120,7 +120,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     name_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
                     role: RealmRole::Contributor,
                     role_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
-                    archiving_configuration: LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                    archiving_configuration: RealmArchivingConfiguration::Available.into(),
                 },
                 LocalUserManifestWorkspaceEntry {
                     name: "wksp2".parse().unwrap(),
@@ -128,7 +128,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     name_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
                     role: RealmRole::Contributor,
                     role_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
-                    archiving_configuration: LocalUserManifestWorkspaceArchivingConfiguration::Archived.into(),
+                    archiving_configuration: RealmArchivingConfiguration::Archived.into(),
                 },
                 LocalUserManifestWorkspaceEntry {
                     name: "wksp3".parse().unwrap(),
@@ -136,7 +136,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     name_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
                     role: RealmRole::Contributor,
                     role_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
-                    archiving_configuration: LocalUserManifestWorkspaceArchivingConfiguration::DeletionPlanned {
+                    archiving_configuration: RealmArchivingConfiguration::DeletionPlanned {
                         deletion_date: "2025-01-01T00:00:00Z".parse().unwrap(),
                     }.into(),
                 },
@@ -146,7 +146,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     name_origin: CertificateBasedInfoOrigin::Placeholder,
                     role: RealmRole::Contributor,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
-                    archiving_configuration: LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                    archiving_configuration: RealmArchivingConfiguration::Available.into(),
                 },
             ],
         }
@@ -217,7 +217,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     name_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
                     role: RealmRole::Contributor,
                     role_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
-                    archiving_configuration: LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                    archiving_configuration: RealmArchivingConfiguration::Available.into(),
                 },
             ],
         }
@@ -592,8 +592,7 @@ fn local_user_manifest_get_local_workspace_entry(timestamp: DateTime) {
                 role_origin: CertificateBasedInfoOrigin::Certificate {
                     timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 },
-                archiving_configuration:
-                    LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                archiving_configuration: RealmArchivingConfiguration::Available.into(),
             },
             LocalUserManifestWorkspaceEntry {
                 name: "wksp2".parse().unwrap(),
@@ -601,8 +600,7 @@ fn local_user_manifest_get_local_workspace_entry(timestamp: DateTime) {
                 name_origin: CertificateBasedInfoOrigin::Placeholder,
                 role: RealmRole::Contributor,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
-                archiving_configuration:
-                    LocalUserManifestWorkspaceArchivingConfiguration::Available.into(),
+                archiving_configuration: RealmArchivingConfiguration::Available.into(),
             },
         ],
         speculative: false,
