@@ -13,7 +13,7 @@ use crate::{ClientRefreshWorkspacesListError, EventWorkspacesSelfListChanged, Wo
 
 #[parsec_test(testbed = "coolorg")]
 async fn ok_with_changes(
-    #[values("new_sharing", "unsharing", "self_role_change", "renamed")] kind: &str,
+    #[values("new_sharing", "unsharing", "self_role_change", "renamed", "archived")] kind: &str,
     env: &TestbedEnv,
 ) {
     use std::{collections::HashMap, sync::Mutex};
@@ -101,6 +101,12 @@ async fn ok_with_changes(
                     builder.rename_realm(wksp1_id, "wksp1-renamed");
 
                     expected_workspaces[0].current_name = "wksp1-renamed".parse().unwrap();
+                }
+                "archived" => {
+                    builder.archive_realm(wksp1_id, RealmArchivingConfiguration::Archived);
+
+                    expected_workspaces[0].archiving_configuration =
+                        RealmArchivingConfiguration::Archived;
                 }
                 unknown => panic!("Unknown kind: {unknown}"),
             }

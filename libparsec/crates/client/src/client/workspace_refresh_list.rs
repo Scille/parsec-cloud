@@ -7,7 +7,8 @@ use super::Client;
 use crate::{
     certif::{
         CertifDecryptCurrentRealmNameError, CertifGetCurrentSelfRealmsRoleError,
-        InvalidEncryptedRealmNameError, InvalidKeysBundleError,
+        CertifGetRealmArchivingConfigurationError, InvalidEncryptedRealmNameError,
+        InvalidKeysBundleError,
     },
     event_bus::EventWorkspacesSelfListChanged,
     user::UserStoreUpdateError,
@@ -121,6 +122,19 @@ pub async fn refresh_workspaces_list(
             },
         }?;
 
+        let archiving_configuration = client
+            .certificates_ops
+            .get_realm_archiving_configuration(*workspace_id)
+            .await
+            .map_err(|e| match e {
+                CertifGetRealmArchivingConfigurationError::Stopped => {
+                    ClientRefreshWorkspacesListError::Stopped
+                }
+                CertifGetRealmArchivingConfigurationError::Internal(err) => err
+                    .context("Cannot retrieve workspace archiving configuration")
+                    .into(),
+            })?;
+
         local_workspaces.push(LocalUserManifestWorkspaceEntry {
             id: *workspace_id,
             name,
@@ -129,7 +143,7 @@ pub async fn refresh_workspaces_list(
             role_origin: CertificateBasedInfoOrigin::Certificate {
                 timestamp: *role_certificate_timestamp,
             },
-            archiving_configuration: RealmArchivingConfiguration::Available.into(), // TODO: handle archiving configuration update
+            archiving_configuration: archiving_configuration.into(),
         });
     }
 
@@ -184,7 +198,7 @@ pub async fn refresh_workspaces_list(
                     name_origin: CertificateBasedInfoOrigin::Placeholder,
                     role: old_entry.role,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
-                    archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                    archiving_configuration: old_entry.archiving_configuration.clone(),
                 });
             }
         }
