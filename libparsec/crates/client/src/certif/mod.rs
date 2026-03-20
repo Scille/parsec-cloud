@@ -37,9 +37,10 @@ pub use forget_all_certificates::CertifForgetAllCertificatesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 pub use list::{
     CertifGetCurrentSelfProfileError, CertifGetCurrentSelfRealmRoleError,
-    CertifGetCurrentSelfRealmsRoleError, CertifGetUserDeviceError, CertifGetUserInfoError,
-    CertifListUserDevicesError, CertifListUsersError, CertifListWorkspaceUsersError, DeviceInfo,
-    UserInfo, WorkspaceUserAccessInfo,
+    CertifGetCurrentSelfRealmsRoleError, CertifGetRealmArchivingConfigurationError,
+    CertifGetUserDeviceError, CertifGetUserInfoError, CertifListUserDevicesError,
+    CertifListUsersError, CertifListWorkspaceUsersError, DeviceInfo, UserInfo,
+    WorkspaceUserAccessInfo,
 };
 pub use manifest_validate::{CertifValidateManifestError, InvalidManifestError};
 pub use poll::CertifPollServerError;
@@ -652,6 +653,16 @@ impl CertificateOps {
         realm_id: VlobID,
     ) -> Result<Vec<WorkspaceUserAccessInfo>, CertifListWorkspaceUsersError> {
         list::list_workspace_users(self, realm_id).await
+    }
+
+    /// Retrieve the current archiving configuration of a realm from the last
+    /// realm archiving certificate. Returns `Available` if no archiving
+    /// certificate exists for the realm.
+    pub async fn get_realm_archiving_configuration(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<RealmArchivingConfiguration, CertifGetRealmArchivingConfigurationError> {
+        list::get_realm_archiving_configuration(self, realm_id).await
     }
 
     /// Retrieve the realm name from the last realm name certificate, if any).
