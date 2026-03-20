@@ -1,5 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec::DateTime;
+use libparsec::RealmArchivingConfiguration;
+
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
@@ -22,11 +25,23 @@ pub async fn list_workspace(_args: Args, client: &StartedClient) -> anyhow::Resu
         let n = workspaces.len();
         println!("Found {GREEN}{n}{RESET} workspace(s)");
 
+        let now = DateTime::now();
         for ws in workspaces {
             let id = ws.id.hex();
             let name = ws.current_name;
             let role = ws.current_self_role;
-            println!("{YELLOW}{id}{RESET} - {name}: {role}");
+            let archiving_status = match &ws.archiving_configuration {
+                RealmArchivingConfiguration::Available => String::new(),
+                RealmArchivingConfiguration::Archived => " [archived]".to_string(),
+                RealmArchivingConfiguration::DeletionPlanned { deletion_date } => {
+                    if *deletion_date <= now {
+                        format!(" [deleted since {deletion_date}]")
+                    } else {
+                        format!(" [deletion planned: {deletion_date}]")
+                    }
+                }
+            };
+            println!("{YELLOW}{id}{RESET} - {name}: {role}{archiving_status}");
         }
     }
 
