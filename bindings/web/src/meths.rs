@@ -3398,9 +3398,18 @@ fn struct_server_organization_config_js_to_rs(
         let js_val = Reflect::get(&obj, &"activeUsersLimit".into())?;
         variant_active_users_limit_js_to_rs(js_val)?
     };
+    let minimum_archiving_period = {
+        let js_val = Reflect::get(&obj, &"minimumArchivingPeriod".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            v
+        }
+    };
     Ok(libparsec::ServerOrganizationConfig {
         user_profile_outsider_allowed,
         active_users_limit,
+        minimum_archiving_period,
     })
 }
 
@@ -3417,6 +3426,12 @@ fn struct_server_organization_config_rs_to_js(
     )?;
     let js_active_users_limit = variant_active_users_limit_rs_to_js(rs_obj.active_users_limit)?;
     Reflect::set(&js_obj, &"activeUsersLimit".into(), &js_active_users_limit)?;
+    let js_minimum_archiving_period = JsValue::from(rs_obj.minimum_archiving_period);
+    Reflect::set(
+        &js_obj,
+        &"minimumArchivingPeriod".into(),
+        &js_minimum_archiving_period,
+    )?;
     Ok(js_obj)
 }
 
@@ -5423,12 +5438,17 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
             .map_err(|_| TypeError::new("Not a boolean"))?
             .value_of()
     };
+    let archiving_configuration = {
+        let js_val = Reflect::get(&obj, &"archivingConfiguration".into())?;
+        variant_realm_archiving_configuration_js_to_rs(js_val)?
+    };
     Ok(libparsec::WorkspaceInfo {
         id,
         current_name,
         current_self_role,
         is_started,
         is_bootstrapped,
+        archiving_configuration,
     })
 }
 
@@ -5454,6 +5474,13 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
     Reflect::set(&js_obj, &"isStarted".into(), &js_is_started)?;
     let js_is_bootstrapped = rs_obj.is_bootstrapped.into();
     Reflect::set(&js_obj, &"isBootstrapped".into(), &js_is_bootstrapped)?;
+    let js_archiving_configuration =
+        variant_realm_archiving_configuration_rs_to_js(rs_obj.archiving_configuration)?;
+    Reflect::set(
+        &js_obj,
+        &"archivingConfiguration".into(),
+        &js_archiving_configuration,
+    )?;
     Ok(js_obj)
 }
 
@@ -8195,6 +8222,137 @@ fn variant_client_accept_tos_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientAcceptTosErrorTosMismatch".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientArchiveWorkspaceError
+
+#[allow(dead_code)]
+fn variant_client_archive_workspace_error_rs_to_js(
+    rs_obj: libparsec::ClientArchiveWorkspaceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientArchiveWorkspaceError::ArchivingPeriodTooShort { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorArchivingPeriodTooShort".into(),
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorAuthorNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::InvalidEncryptedRealmName { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorInvalidEncryptedRealmName".into(),
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorStopped".into(),
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::WorkspaceDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorWorkspaceDeleted".into(),
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::WorkspaceNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientArchiveWorkspaceErrorWorkspaceNotFound".into(),
             )?;
         }
     }
@@ -15780,6 +15938,86 @@ fn variant_pending_async_enrollment_info_rs_to_js(
     Ok(js_obj)
 }
 
+// RealmArchivingConfiguration
+
+#[allow(dead_code)]
+fn variant_realm_archiving_configuration_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::RealmArchivingConfiguration, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "RealmArchivingConfigurationArchived" => {
+            Ok(libparsec::RealmArchivingConfiguration::Archived)
+        }
+        "RealmArchivingConfigurationAvailable" => {
+            Ok(libparsec::RealmArchivingConfiguration::Available)
+        }
+        "RealmArchivingConfigurationDeletionPlanned" => {
+            let deletion_date = {
+                let js_val = Reflect::get(&obj, &"deletionDate".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::RealmArchivingConfiguration::DeletionPlanned { deletion_date })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a RealmArchivingConfiguration",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_realm_archiving_configuration_rs_to_js(
+    rs_obj: libparsec::RealmArchivingConfiguration,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::RealmArchivingConfiguration::Archived => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"RealmArchivingConfigurationArchived".into(),
+            )?;
+        }
+        libparsec::RealmArchivingConfiguration::Available => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"RealmArchivingConfigurationAvailable".into(),
+            )?;
+        }
+        libparsec::RealmArchivingConfiguration::DeletionPlanned { deletion_date, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"RealmArchivingConfigurationDeletionPlanned".into(),
+            )?;
+            let js_deletion_date = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(deletion_date) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"deletionDate".into(), &js_deletion_date)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // RemoveDeviceDataError
 
 #[allow(dead_code)]
@@ -22278,6 +22516,43 @@ pub fn clientAcceptTos(client: u32, tos_updated_on: f64) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_accept_tos_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_archive_workspace
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientArchiveWorkspace(client: u32, realm_id: String, configuration: Object) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let configuration = configuration.into();
+        let configuration = variant_realm_archiving_configuration_js_to_rs(configuration)?;
+
+        let ret = libparsec::client_archive_workspace(client, realm_id, configuration).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_archive_workspace_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

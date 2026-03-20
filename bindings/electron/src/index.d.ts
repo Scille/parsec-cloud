@@ -346,6 +346,7 @@ export interface ServerConfig {
 export interface ServerOrganizationConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
+    minimumArchivingPeriod: number
 }
 
 
@@ -526,6 +527,7 @@ export interface WorkspaceInfo {
     currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
+    archivingConfiguration: RealmArchivingConfiguration
 }
 
 
@@ -1491,6 +1493,69 @@ export type ClientAcceptTosError =
   | ClientAcceptTosErrorNoTos
   | ClientAcceptTosErrorOffline
   | ClientAcceptTosErrorTosMismatch
+
+
+// ClientArchiveWorkspaceError
+export interface ClientArchiveWorkspaceErrorArchivingPeriodTooShort {
+    tag: "ClientArchiveWorkspaceErrorArchivingPeriodTooShort"
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorAuthorNotAllowed {
+    tag: "ClientArchiveWorkspaceErrorAuthorNotAllowed"
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInternal {
+    tag: "ClientArchiveWorkspaceErrorInternal"
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInvalidCertificate {
+    tag: "ClientArchiveWorkspaceErrorInvalidCertificate"
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInvalidEncryptedRealmName {
+    tag: "ClientArchiveWorkspaceErrorInvalidEncryptedRealmName"
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorInvalidKeysBundle {
+    tag: "ClientArchiveWorkspaceErrorInvalidKeysBundle"
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorOffline {
+    tag: "ClientArchiveWorkspaceErrorOffline"
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorStopped {
+    tag: "ClientArchiveWorkspaceErrorStopped"
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorTimestampOutOfBallpark {
+    tag: "ClientArchiveWorkspaceErrorTimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface ClientArchiveWorkspaceErrorWorkspaceDeleted {
+    tag: "ClientArchiveWorkspaceErrorWorkspaceDeleted"
+    error: string
+}
+export interface ClientArchiveWorkspaceErrorWorkspaceNotFound {
+    tag: "ClientArchiveWorkspaceErrorWorkspaceNotFound"
+    error: string
+}
+export type ClientArchiveWorkspaceError =
+  | ClientArchiveWorkspaceErrorArchivingPeriodTooShort
+  | ClientArchiveWorkspaceErrorAuthorNotAllowed
+  | ClientArchiveWorkspaceErrorInternal
+  | ClientArchiveWorkspaceErrorInvalidCertificate
+  | ClientArchiveWorkspaceErrorInvalidEncryptedRealmName
+  | ClientArchiveWorkspaceErrorInvalidKeysBundle
+  | ClientArchiveWorkspaceErrorOffline
+  | ClientArchiveWorkspaceErrorStopped
+  | ClientArchiveWorkspaceErrorTimestampOutOfBallpark
+  | ClientArchiveWorkspaceErrorWorkspaceDeleted
+  | ClientArchiveWorkspaceErrorWorkspaceNotFound
 
 
 // ClientCancelInvitationError
@@ -3256,6 +3321,23 @@ export type PendingAsyncEnrollmentInfo =
   | PendingAsyncEnrollmentInfoCancelled
   | PendingAsyncEnrollmentInfoRejected
   | PendingAsyncEnrollmentInfoSubmitted
+
+
+// RealmArchivingConfiguration
+export interface RealmArchivingConfigurationArchived {
+    tag: "RealmArchivingConfigurationArchived"
+}
+export interface RealmArchivingConfigurationAvailable {
+    tag: "RealmArchivingConfigurationAvailable"
+}
+export interface RealmArchivingConfigurationDeletionPlanned {
+    tag: "RealmArchivingConfigurationDeletionPlanned"
+    deletion_date: number
+}
+export type RealmArchivingConfiguration =
+  | RealmArchivingConfigurationArchived
+  | RealmArchivingConfigurationAvailable
+  | RealmArchivingConfigurationDeletionPlanned
 
 
 // RemoveDeviceDataError
@@ -5242,6 +5324,11 @@ export function clientAcceptTos(
     client: number,
     tos_updated_on: number
 ): Promise<Result<null, ClientAcceptTosError>>
+export function clientArchiveWorkspace(
+    client: number,
+    realm_id: string,
+    configuration: RealmArchivingConfiguration
+): Promise<Result<null, ClientArchiveWorkspaceError>>
 export function clientCancelInvitation(
     client: number,
     token: string

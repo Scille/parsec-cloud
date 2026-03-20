@@ -3262,9 +3262,19 @@ fn struct_server_organization_config_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "activeUsersLimit")?;
         variant_active_users_limit_js_to_rs(cx, js_val)?
     };
+    let minimum_archiving_period = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "minimumArchivingPeriod")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
     Ok(libparsec::ServerOrganizationConfig {
         user_profile_outsider_allowed,
         active_users_limit,
+        minimum_archiving_period,
     })
 }
 
@@ -3282,6 +3292,8 @@ fn struct_server_organization_config_rs_to_js<'a>(
     )?;
     let js_active_users_limit = variant_active_users_limit_rs_to_js(cx, rs_obj.active_users_limit)?;
     js_obj.set(cx, "activeUsersLimit", js_active_users_limit)?;
+    let js_minimum_archiving_period = JsBigInt::from_u64(cx, rs_obj.minimum_archiving_period);
+    js_obj.set(cx, "minimumArchivingPeriod", js_minimum_archiving_period)?;
     Ok(js_obj)
 }
 
@@ -5184,12 +5196,17 @@ fn struct_workspace_info_js_to_rs<'a>(
         let js_val: Handle<JsBoolean> = obj.get(cx, "isBootstrapped")?;
         js_val.value(cx)
     };
+    let archiving_configuration = {
+        let js_val: Handle<JsObject> = obj.get(cx, "archivingConfiguration")?;
+        variant_realm_archiving_configuration_js_to_rs(cx, js_val)?
+    };
     Ok(libparsec::WorkspaceInfo {
         id,
         current_name,
         current_self_role,
         is_started,
         is_bootstrapped,
+        archiving_configuration,
     })
 }
 
@@ -5218,6 +5235,9 @@ fn struct_workspace_info_rs_to_js<'a>(
     js_obj.set(cx, "isStarted", js_is_started)?;
     let js_is_bootstrapped = JsBoolean::new(cx, rs_obj.is_bootstrapped);
     js_obj.set(cx, "isBootstrapped", js_is_bootstrapped)?;
+    let js_archiving_configuration =
+        variant_realm_archiving_configuration_rs_to_js(cx, rs_obj.archiving_configuration)?;
+    js_obj.set(cx, "archivingConfiguration", js_archiving_configuration)?;
     Ok(js_obj)
 }
 
@@ -7682,6 +7702,116 @@ fn variant_client_accept_tos_error_rs_to_js<'a>(
         }
         libparsec::ClientAcceptTosError::TosMismatch { .. } => {
             let js_tag = JsString::try_new(cx, "ClientAcceptTosErrorTosMismatch").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientArchiveWorkspaceError
+
+#[allow(dead_code)]
+fn variant_client_archive_workspace_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientArchiveWorkspaceError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientArchiveWorkspaceError::ArchivingPeriodTooShort { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorArchivingPeriodTooShort")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::AuthorNotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorAuthorNotAllowed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::InvalidEncryptedRealmName { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorInvalidEncryptedRealmName")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorInvalidKeysBundle")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientArchiveWorkspaceErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorTimestampOutOfBallpark")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientArchiveWorkspaceError::WorkspaceDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorWorkspaceDeleted")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientArchiveWorkspaceError::WorkspaceNotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientArchiveWorkspaceErrorWorkspaceNotFound")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -14344,6 +14474,78 @@ fn variant_pending_async_enrollment_info_rs_to_js<'a>(
                 }
             });
             js_obj.set(cx, "submittedOn", js_submitted_on)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// RealmArchivingConfiguration
+
+#[allow(dead_code)]
+fn variant_realm_archiving_configuration_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::RealmArchivingConfiguration> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "RealmArchivingConfigurationArchived" => {
+            Ok(libparsec::RealmArchivingConfiguration::Archived)
+        }
+        "RealmArchivingConfigurationAvailable" => {
+            Ok(libparsec::RealmArchivingConfiguration::Available)
+        }
+        "RealmArchivingConfigurationDeletionPlanned" => {
+            let deletion_date = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "deletionDate")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::RealmArchivingConfiguration::DeletionPlanned { deletion_date })
+        }
+        _ => cx.throw_type_error("Object is not a RealmArchivingConfiguration"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_realm_archiving_configuration_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::RealmArchivingConfiguration,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::RealmArchivingConfiguration::Archived => {
+            let js_tag =
+                JsString::try_new(cx, "RealmArchivingConfigurationArchived").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::RealmArchivingConfiguration::Available => {
+            let js_tag =
+                JsString::try_new(cx, "RealmArchivingConfigurationAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::RealmArchivingConfiguration::DeletionPlanned { deletion_date, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "RealmArchivingConfigurationDeletionPlanned").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_deletion_date = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(deletion_date) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "deletionDate", js_deletion_date)?;
         }
     }
     Ok(js_obj)
@@ -21697,6 +21899,76 @@ fn client_accept_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_accept_tos_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_archive_workspace
+fn client_archive_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let configuration = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        variant_realm_archiving_configuration_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_archive_workspace(client, realm_id, configuration).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_archive_workspace_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -31247,6 +31519,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         client_accept_async_enrollment,
     )?;
     cx.export_function("clientAcceptTos", client_accept_tos)?;
+    cx.export_function("clientArchiveWorkspace", client_archive_workspace)?;
     cx.export_function("clientCancelInvitation", client_cancel_invitation)?;
     cx.export_function("clientCreateWorkspace", client_create_workspace)?;
     cx.export_function("clientDeleteShamirRecovery", client_delete_shamir_recovery)?;
