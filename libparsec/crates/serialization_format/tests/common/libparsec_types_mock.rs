@@ -527,7 +527,7 @@ pub trait ProtocolRequest<const V: u32> {
     const FAMILY: ProtocolFamily;
     type Response: for<'de> Deserialize<'de>;
 
-    fn api_dump(&self) -> Result<Vec<u8>, rmp_serde::encode::Error>;
+    fn api_dump(&self) -> Result<Vec<u8>, rmp_serialize::SerializeError>;
 
     fn api_load_response(buf: &[u8]) -> Result<Self::Response, rmp_serde::decode::Error>;
 }
