@@ -56,12 +56,17 @@ async fn ok(#[values(false, true)] restart_client: bool, env: &TestbedEnv) {
                     current_self_role,
                     is_started,
                     is_bootstrapped,
+                    archiving_configuration,
                 } = workspaces.pop().unwrap();
                 p_assert_eq!(id, wid);
                 p_assert_eq!(current_name, "wksp1".parse().unwrap());
                 p_assert_eq!(current_self_role, RealmRole::Owner);
                 p_assert_eq!(is_started, false);
                 p_assert_eq!(is_bootstrapped, $expected_is_bootstrapped);
+                p_assert_eq!(
+                    archiving_configuration,
+                    RealmArchivingConfiguration::Available
+                );
             }
         };
     }
@@ -130,12 +135,17 @@ async fn duplicated_name_is_allowed(
             current_self_role,
             is_started,
             is_bootstrapped,
+            archiving_configuration,
         } = &workspaces[0];
         p_assert_eq!(*id, wksp1_id);
         p_assert_eq!(current_name, &common_name);
         p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_started, false);
         p_assert_eq!(*is_bootstrapped, previous_is_bootstrapped);
+        p_assert_eq!(
+            *archiving_configuration,
+            RealmArchivingConfiguration::Available
+        );
     }
 
     // wksp1
@@ -146,12 +156,17 @@ async fn duplicated_name_is_allowed(
             current_self_role,
             is_started,
             is_bootstrapped,
+            archiving_configuration,
         } = &workspaces[1];
         p_assert_eq!(*id, wksp2_id);
         p_assert_eq!(current_name, &common_name);
         p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_started, false);
         p_assert_eq!(*is_bootstrapped, false);
+        p_assert_eq!(
+            *archiving_configuration,
+            RealmArchivingConfiguration::Available
+        );
     }
 }
 

@@ -331,12 +331,21 @@ class ClientListWorkspacesError(ErrorVariant):
         pass
 
 
+class RealmArchivingConfiguration(Variant):
+    Available = VariantItemUnit()
+    Archived = VariantItemUnit()
+
+    class DeletionPlanned:
+        deletion_date: DateTime
+
+
 class WorkspaceInfo(Structure):
     id: VlobID
     current_name: EntryName
     current_self_role: RealmRole
     is_started: bool
     is_bootstrapped: bool
+    archiving_configuration: RealmArchivingConfiguration
 
 
 async def client_list_workspaces(

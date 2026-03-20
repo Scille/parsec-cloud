@@ -20,6 +20,7 @@ pub struct WorkspaceInfo {
     ///
     /// Note that this is unrelated with the synchronization of the workspace's data (i.e. vlob/blob).
     pub is_bootstrapped: bool,
+    pub archiving_configuration: RealmArchivingConfiguration,
 }
 
 pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
@@ -45,12 +46,20 @@ pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
             let is_started = started_workspaces
                 .iter()
                 .any(|workspace_ops| workspace_ops.realm_id() == entry.id);
+            // Missing archiving configuration is a corner case (since the user manifest is recomputed
+            // when the client starts), so we just default to the most likely case
+            let archiving_configuration = entry
+                .archiving_configuration
+                .clone()
+                .unwrap_or(RealmArchivingConfiguration::Available);
+
             WorkspaceInfo {
                 id: entry.id,
                 current_name: entry.name.clone(),
                 current_self_role: entry.role,
                 is_started,
                 is_bootstrapped,
+                archiving_configuration,
             }
         })
         .collect();
