@@ -129,10 +129,9 @@ pub fn generate_protocol_cmds_family_from_contents(json_contents: TokenStream) -
             .expect("JSON spec is not valid");
         json_cmds.push(json_cmd);
     }
-    TokenStream::from(protocol::generate_protocol_cmds_family(
-        json_cmds,
-        family_name,
-    ))
+    TokenStream::from(
+        protocol::generate_protocol_cmds_family_with_dynamic_serialization(json_cmds, family_name),
+    )
 }
 
 /// Generates serialization tests layout for protocol commands based on JSON
