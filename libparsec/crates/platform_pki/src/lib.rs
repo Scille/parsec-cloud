@@ -98,7 +98,15 @@ mod platform {
         ) -> Result<CertificateDer<'static>, crate::GetCertificateDerError> {
             unimplemented!("platform not supported")
         }
+
+        pub async fn request_private_key(
+            &self,
+        ) -> Result<PrivateKey, crate::RequestPrivateKeyError> {
+            unimplemented!("platform not supported")
+        }
     }
+
+    pub struct PrivateKey;
 }
 
 // TODO: https://github.com/Scille/parsec-cloud/issues/11215
@@ -157,6 +165,14 @@ pub enum GetCertificateDerError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum FindCertificateError {
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum RequestPrivateKeyError {
+    #[error("private key not found")]
+    NotFound,
     #[error(transparent)]
     Internal(anyhow::Error),
 }
