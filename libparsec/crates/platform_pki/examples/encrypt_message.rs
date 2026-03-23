@@ -27,7 +27,7 @@ async fn main() -> anyhow::Result<()> {
     let data = args.content.into_bytes()?;
 
     let der = get_der_encoded_certificate(&cert_ref).await?;
-    let (algo, ciphered) = encrypt_message(der.as_ref(), &data)
+    let (algo, ciphered) = encrypt_message(der, &data)
         .await
         .context("Failed to encrypt message")?;
 

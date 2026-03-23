@@ -5,12 +5,12 @@
 //       see https://github.com/Scille/parsec-cloud/issues/12054
 
 use bytes::Bytes;
-use rustls_pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer};
+use rustls_pki_types::{pem::PemObject, PrivateKeyDer};
 use std::collections::HashMap;
 
 use libparsec_types::prelude::*;
 
-use crate::x509::X509CertificateInformation;
+use crate::{x509::X509CertificateInformation, X509CertificateDer};
 
 #[derive(Debug, Clone, Default)]
 pub struct TestPKI {
@@ -63,7 +63,7 @@ impl PartialCertificate {
     }
 
     fn with_pem_certificate(&mut self, pem_cert: Vec<u8>) -> &mut Self {
-        let der_cert = CertificateDer::from_pem_slice(&pem_cert).expect("Invalid pem key");
+        let der_cert = X509CertificateDer::from_pem_slice(&pem_cert).expect("Invalid pem key");
         self.der_certificate = Some(Bytes::copy_from_slice(&der_cert));
         self
     }

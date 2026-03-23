@@ -1,8 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::{ValidationPathOwned, X509CertificateHash, X509CertificateReference};
+use crate::{
+    ValidationPathOwned, X509CertificateDer, X509CertificateHash, X509CertificateReference,
+};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
+use rustls_pki_types::pem::PemObject;
 
 // See `libparsec/crates/platform_pki/test-pki/README.md`
 pub(super) const ALICE_SHA256_CERT_HASH: &str =
@@ -25,9 +28,8 @@ const GLADOS_DEV_TEAM_PEM: &[u8] =
 const APERTURE_SCIENCE_PEM: &[u8] = include_bytes!("../../test-pki/Root/aperture_science.crt");
 const BLACK_MESA_PEM: &[u8] = include_bytes!("../../test-pki/Root/black_mesa.crt");
 
-fn load_pem_and_return_der(pem: &[u8]) -> Bytes {
-    crate::DerCertificate::try_from_pem(pem)
-        .map(|cert| Bytes::copy_from_slice(cert.as_ref()))
+fn load_pem_and_return_der(pem: &[u8]) -> X509CertificateDer<'static> {
+    X509CertificateDer::from_pem_slice(pem)
         .unwrap_or_else(|e| panic!("Failed to read PEM certificate: {e}"))
 }
 
@@ -113,36 +115,36 @@ impl InstalledCertificates {
         certificate_reference
     }
 
-    pub fn alice_der_cert(&self) -> Bytes {
+    pub fn alice_der_cert(&self) -> X509CertificateDer<'static> {
         load_pem_and_return_der(ALICE_PEM)
     }
 
-    pub fn bob_der_cert(&self) -> Bytes {
+    pub fn bob_der_cert(&self) -> X509CertificateDer<'static> {
         load_pem_and_return_der(BOB_PEM)
     }
 
     #[expect(dead_code)]
-    pub fn old_boby_der_cert(&self) -> Bytes {
+    pub fn old_boby_der_cert(&self) -> X509CertificateDer<'static> {
         load_pem_and_return_der(OLD_BOBY_PEM)
     }
 
-    pub fn black_mesa_der_cert(&self) -> Bytes {
+    pub fn black_mesa_der_cert(&self) -> X509CertificateDer<'static> {
         load_pem_and_return_der(BLACK_MESA_PEM)
     }
 
-    pub fn mallory_sign_der_cert(&self) -> Bytes {
+    pub fn mallory_sign_der_cert(&self) -> X509CertificateDer<'static> {
         load_pem_and_return_der(MALLORY_SIGN_PEM)
     }
 
-    pub fn mallory_encrypt_der_cert(&self) -> Bytes {
+    pub fn mallory_encrypt_der_cert(&self) -> X509CertificateDer<'static> {
         load_pem_and_return_der(MALLORY_ENCRYPT_PEM)
     }
 
-    pub fn aperture_science_der_cert(&self) -> Bytes {
+    pub fn aperture_science_der_cert(&self) -> X509CertificateDer<'static> {
         load_pem_and_return_der(APERTURE_SCIENCE_PEM)
     }
 
-    pub fn glados_dev_team_der_cert(&self) -> Bytes {
+    pub fn glados_dev_team_der_cert(&self) -> X509CertificateDer<'static> {
         load_pem_and_return_der(GLADOS_DEV_TEAM_PEM)
     }
 
@@ -155,8 +157,7 @@ impl InstalledCertificates {
         let der = crate::get_der_encoded_certificate(&certificate_ref)
             .await
             .unwrap();
-        let (algo, encrypted_message) =
-            crate::encrypt_message(der.as_ref(), payload).await.unwrap();
+        let (algo, encrypted_message) = crate::encrypt_message(der, payload).await.unwrap();
         (algo, encrypted_message, certificate_ref)
     }
 
