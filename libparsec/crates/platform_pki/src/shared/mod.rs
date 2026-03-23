@@ -6,10 +6,11 @@ use crate::{
         ListCertificatesError, VerifyMessageError, VerifySignatureError,
     },
     get_der_encoded_certificate, GetDerEncodedCertificateError, PkiSignatureAlgorithm,
+    X509CertificateDer,
 };
 
 use bytes::Bytes;
-use rustls_pki_types::{pem::PemObject, CertificateDer, TrustAnchor};
+use rustls_pki_types::{pem::PemObject, TrustAnchor};
 pub use webpki::EndEntityCert as X509EndCertificate;
 use webpki::{Error as WebPkiError, KeyUsage};
 
@@ -17,12 +18,12 @@ use libparsec_types::prelude::*;
 
 #[derive(Clone)]
 pub struct DerCertificate<'a> {
-    internal: CertificateDer<'a>,
+    internal: X509CertificateDer<'a>,
 }
 
 impl<'a> DerCertificate<'a> {
     pub fn try_from_pem(raw: &'a [u8]) -> anyhow::Result<Self> {
-        CertificateDer::from_pem_slice(raw)
+        X509CertificateDer::from_pem_slice(raw)
             .map(Self::new)
             .map_err(|err| anyhow::anyhow!("Invalid PEM content: {err}"))
     }
@@ -31,7 +32,7 @@ impl<'a> DerCertificate<'a> {
         Self::new(raw.into())
     }
 
-    pub fn new(cert: CertificateDer<'a>) -> Self {
+    pub fn new(cert: X509CertificateDer<'a>) -> Self {
         Self { internal: cert }
     }
 
@@ -53,6 +54,12 @@ impl DerCertificate<'static> {
 impl AsRef<[u8]> for DerCertificate<'_> {
     fn as_ref(&self) -> &[u8] {
         self.internal.as_ref()
+    }
+}
+
+impl<'a> From<X509CertificateDer<'a>> for DerCertificate<'a> {
+    fn from(value: X509CertificateDer<'a>) -> Self {
+        Self { internal: value }
     }
 }
 
@@ -81,7 +88,7 @@ pub fn verify_message<'message, 'a>(
 pub fn verify_certificate<'der>(
     certificate: &'der X509EndCertificate<'der>,
     trusted_roots: &'der [TrustAnchor<'_>],
-    intermediate_certs: &'der [CertificateDer<'der>],
+    intermediate_certs: &'der [X509CertificateDer<'der>],
     now: DateTime,
 ) -> Result<webpki::VerifiedPath<'der>, webpki::Error> {
     let time = rustls_pki_types::UnixTime::since_unix_epoch(
@@ -119,7 +126,7 @@ pub fn verify_message2<'a>(
 ) -> Result<(), VerifyMessageError> {
     // 1) Verify the certificate trustchain
 
-    let certificate_der = CertificateDer::from(certificate);
+    let certificate_der = X509CertificateDer::from(certificate);
     let certificate = X509EndCertificate::try_from(&certificate_der)
         .map_err(VerifyMessageError::X509CertificateUntrusted)?;
 
@@ -127,7 +134,7 @@ pub fn verify_message2<'a>(
         &certificate,
         trusted_roots,
         &intermediate_certs
-            .map(CertificateDer::from)
+            .map(X509CertificateDer::from)
             .collect::<Vec<_>>(),
         now,
     )
@@ -146,8 +153,8 @@ pub fn verify_message2<'a>(
 }
 
 pub struct ValidationPathOwned {
-    pub leaf: Bytes,
-    pub intermediates: Vec<Bytes>,
+    pub leaf: X509CertificateDer<'static>,
+    pub intermediates: Vec<X509CertificateDer<'static>>,
     pub root: TrustAnchor<'static>,
 }
 
@@ -179,7 +186,7 @@ pub async fn get_validation_path_for_cert(
             GetDerEncodedCertificateError::NotFound => GetValidationPathForCertError::NotFound,
         })?;
 
-    let leaf_cert_der = CertificateDer::from_slice(&leaf);
+    let leaf_cert_der = X509CertificateDer::from_slice(&leaf);
     let leaf_end_cert = X509EndCertificate::try_from(&leaf_cert_der)
         .map_err(GetValidationPathForCertError::InvalidCertificateDer)?;
     let path = verify_certificate(&leaf_end_cert, &all_trusted_roots, &all_intermediates, now)
@@ -211,14 +218,14 @@ pub fn get_root_certificate_info_from_trustchain<'cert>(
     // 1. Walk up the chain until we reach the root
 
     let submitter_der_x509_certificate_der =
-        CertificateDer::from_slice(submitter_der_x509_certificate);
+        X509CertificateDer::from_slice(submitter_der_x509_certificate);
     let submitter_der_x509_certificate_end =
         X509EndCertificate::try_from(&submitter_der_x509_certificate_der).map_err(|err| {
             GetRootCertificateInfoFromTrustchainError::InvalidCertificateDer(err.into())
         })?;
 
     let intermediate_der_x509_certificates_der = intermediate_der_x509_certificates
-        .map(CertificateDer::from_slice)
+        .map(X509CertificateDer::from_slice)
         .collect::<Vec<_>>();
     let mut intermediate_der_x509_certificates_end = intermediate_der_x509_certificates_der
         .iter()
@@ -267,7 +274,7 @@ pub enum EncryptMessageError {
 }
 
 pub async fn encrypt_message(
-    certificate: impl AsRef<[u8]>,
+    certificate: X509CertificateDer<'_>,
     message: &[u8],
 ) -> Result<(PKIEncryptionAlgorithm, Bytes), EncryptMessageError> {
     let pubkey = crate::x509::get_certificate_public_key(certificate.as_ref())?;

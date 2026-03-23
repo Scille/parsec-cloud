@@ -266,8 +266,8 @@ mod strategy {
                 Ok(protocol::anonymous_cmds::latest::async_enrollment_submit::SubmitPayloadSignature::PKI {
                     signature,
                     algorithm,
-                    submitter_der_x509_certificate: validation_path.leaf,
-                    intermediate_der_x509_certificates: validation_path.intermediates,
+                    submitter_der_x509_certificate: validation_path.leaf.to_vec().into(),
+                    intermediate_der_x509_certificates: validation_path.intermediates.into_iter().map(|crt| crt.to_vec().into()).collect(),
                 })
             }))
         }
@@ -303,7 +303,7 @@ mod strategy {
                     })?;
                 // 2. Encrypt it with the PKI certificate's public key
                 let (algorithm, encrypted_key) =
-                    libparsec_platform_pki::encrypt_message(der.as_ref(), key.as_ref())
+                    libparsec_platform_pki::encrypt_message(der, key.as_ref())
                         .await
                         .map_err(|err| {
                             SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
@@ -724,8 +724,8 @@ mod strategy {
                 Ok(protocol::authenticated_cmds::latest::async_enrollment_accept::AcceptPayloadSignature::PKI {
                     signature,
                     algorithm,
-                    accepter_der_x509_certificate: validation_path.leaf,
-                    intermediate_der_x509_certificates: validation_path.intermediates,
+                    accepter_der_x509_certificate: validation_path.leaf.to_vec().into(),
+                    intermediate_der_x509_certificates: validation_path.intermediates.into_iter().map(|crt| crt.to_vec().into()).collect(),
                 })
             }))
         }

@@ -99,7 +99,7 @@ pub(crate) async fn save_device_pki(
     let der = libparsec_platform_pki::get_der_encoded_certificate(certificate_ref)
         .await
         .map_err(|e| SaveDeviceError::Internal(e.into()))?;
-    let (algorithm, encrypted_key) = encrypt_message(der.as_ref(), secret_key.as_ref())
+    let (algorithm, encrypted_key) = encrypt_message(der, secret_key.as_ref())
         .await
         .map_err(|e| SaveDeviceError::Internal(e.into()))?;
 

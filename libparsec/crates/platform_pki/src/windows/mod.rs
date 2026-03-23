@@ -7,6 +7,7 @@ mod schannel_utils;
 use crate::{
     DecryptMessageError, GetDerEncodedCertificateError, ListIntermediateCertificatesError,
     ListTrustedRootCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
+    X509CertificateDer,
 };
 
 use bytes::Bytes;
@@ -119,11 +120,11 @@ fn get_certificate_uri(cert_context: &CertContext) -> X509WindowsCngURI {
 
 pub async fn get_der_encoded_certificate(
     certificate_ref: &X509CertificateReference,
-) -> Result<Bytes, GetDerEncodedCertificateError> {
+) -> Result<X509CertificateDer<'static>, GetDerEncodedCertificateError> {
     let store = open_store().map_err(GetDerEncodedCertificateError::CannotOpenStore)?;
     let cert_context =
         find_certificate(&store, certificate_ref).ok_or(GetDerEncodedCertificateError::NotFound)?;
-    Ok(Bytes::copy_from_slice(cert_context.to_der()))
+    Ok(X509CertificateDer::from_slice(cert_context.to_der()).into_owned())
 }
 
 fn get_id_and_hash_from_cert_context(
@@ -173,13 +174,13 @@ pub async fn list_trusted_root_certificate_anchors(
 }
 
 pub async fn list_intermediate_certificates(
-) -> Result<Vec<rustls_pki_types::CertificateDer<'static>>, ListIntermediateCertificatesError> {
+) -> Result<Vec<X509CertificateDer<'static>>, ListIntermediateCertificatesError> {
     let store = CertStore::open_current_user("CA")
         .map_err(ListIntermediateCertificatesError::CannotOpenStore)?;
 
     Ok(store
         .certs()
-        .map(|ctx| rustls_pki_types::CertificateDer::from(ctx.to_der()).into_owned())
+        .map(|ctx| X509CertificateDer::from(ctx.to_der()).into_owned())
         .collect::<Vec<_>>())
 }
 

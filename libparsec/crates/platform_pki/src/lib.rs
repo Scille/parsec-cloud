@@ -17,20 +17,22 @@ mod test;
 
 use libparsec_types::prelude::*;
 
+pub type X509CertificateDer<'a> = rustls_pki_types::CertificateDer<'a>;
+
 // Mock module for unsupported platform
 #[cfg(not(target_os = "windows"))]
 mod platform {
     use crate::{
         errors::ListTrustedRootCertificatesError, DecryptMessageError,
         GetDerEncodedCertificateError, ListIntermediateCertificatesError,
-        ShowCertificateSelectionDialogError, SignMessageError,
+        ShowCertificateSelectionDialogError, SignMessageError, X509CertificateDer,
     };
     use libparsec_types::prelude::*;
     use rustls_pki_types::CertificateDer;
 
     pub async fn get_der_encoded_certificate(
         certificate_ref: &X509CertificateReference,
-    ) -> Result<Bytes, GetDerEncodedCertificateError> {
+    ) -> Result<X509CertificateDer<'static>, GetDerEncodedCertificateError> {
         let _ = certificate_ref;
         unimplemented!("platform not supported")
     }
@@ -41,8 +43,7 @@ mod platform {
     }
 
     pub async fn list_intermediate_certificates(
-    ) -> Result<Vec<rustls_pki_types::CertificateDer<'static>>, ListIntermediateCertificatesError>
-    {
+    ) -> Result<Vec<X509CertificateDer<'static>>, ListIntermediateCertificatesError> {
         unimplemented!("platform not supported")
     }
 
