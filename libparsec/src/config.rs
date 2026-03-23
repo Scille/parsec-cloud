@@ -129,10 +129,13 @@ pub async fn get_server_config(
         } => Ok(ServerConfig {
             account,
             organization_bootstrap,
+            // This field has been introduced in Parsec 3.9
             cryptpad: match cryptpad {
-                None => None,
-                Some(libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Disabled) => None,
-                Some(libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Enabled { server_url }) => Some(CryptPadConfig{ server_url }),
+                Maybe::Absent => None,
+                Maybe::Present(cryptpad) => match cryptpad {
+                   libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Disabled => None,
+                   libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Enabled { server_url } => Some(CryptPadConfig{ server_url }),
+                }
             },
             openbao: match openbao {
                 libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Disabled => None,
@@ -144,7 +147,10 @@ pub async fn get_server_config(
                         secret,
                         // This field has been introduced in Parsec 3.8, for older server version
                         // we just assume the mount path is `transit`.
-                        transit_mount_path: transit_mount_path.unwrap_or("transit".to_string()),
+                        transit_mount_path: match transit_mount_path {
+                            Maybe::Absent => "transit".to_string(),
+                            Maybe::Present(transit_mount_path) => transit_mount_path
+                        },
                         auths: auths
                             .into_iter()
                             .filter_map(|auth| match OpenBaoAuthType::try_from(auth.id.as_ref()) {

@@ -22,9 +22,9 @@
                         "type": "OpenBaoConfig"
                     },
                     {
+                        "introduced_in": "5.5",
                         "name": "cryptpad",
-                        "type": "NonRequiredOption<CryptPadConfig>",
-                        "introduced_in": "3.9"
+                        "type": "CryptPadConfig"
                     }
                 ]
             }
@@ -125,9 +125,9 @@
                             {
                                 // Transit is used for signing/verification
                                 // see https://openbao.org/api-docs/secret/transit
-                                "introduced_in": "3.8",
+                                "introduced_in": "5.4",
                                 "name": "transit_mount_path",
-                                "type": "NonRequiredOption<String>"
+                                "type": "String"
                             },
                             {
                                 "name": "auths",

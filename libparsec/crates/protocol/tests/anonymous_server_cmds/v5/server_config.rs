@@ -54,9 +54,9 @@ pub fn rep_ok() {
             ).as_ref(),
             anonymous_server_cmds::server_config::Rep::Ok {
                 account: anonymous_server_cmds::server_config::AccountConfig::Disabled,
+                cryptpad: libparsec_types::Maybe::Absent,
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Disabled,
-                cryptpad: None,
             }
         ),
         (
@@ -89,14 +89,14 @@ pub fn rep_ok() {
             ).as_ref(),
             anonymous_server_cmds::server_config::Rep::Ok {
                 account: anonymous_server_cmds::server_config::AccountConfig::EnabledWithVault,
-                cryptpad: None,
+                cryptpad: libparsec_types::Maybe::Absent,
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::Spontaneous,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Enabled {
                     server_url: "https://openbao.parsec.invalid".to_string(),
                     secret: anonymous_server_cmds::server_config::OpenBaoSecretConfig::KV2 {
                         mount_path: "secrets".to_string(),
                     },
-                    transit_mount_path: None,
+                    transit_mount_path: libparsec_types::Maybe::Absent,
                     auths: vec![
                         anonymous_server_cmds::server_config::OpenBaoAuthConfig {
                             id: "HEXAGONE".to_string(),
@@ -141,14 +141,14 @@ pub fn rep_ok() {
             ).as_ref(),
             anonymous_server_cmds::server_config::Rep::Ok {
                 account: anonymous_server_cmds::server_config::AccountConfig::EnabledWithVault,
-                cryptpad: None,
+                cryptpad: libparsec_types::Maybe::Absent,
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::Spontaneous,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Enabled {
                     server_url: "https://openbao.parsec.invalid".to_string(),
                     secret: anonymous_server_cmds::server_config::OpenBaoSecretConfig::KV2 {
                         mount_path: "secrets".to_string(),
                     },
-                    transit_mount_path: Some("transit".to_string()),
+                    transit_mount_path: libparsec_types::Maybe::Present("transit".to_string()),
                     auths: vec![
                         anonymous_server_cmds::server_config::OpenBaoAuthConfig {
                             id: "HEXAGONE".to_string(),
@@ -178,7 +178,7 @@ pub fn rep_ok() {
             ).as_ref(),
             anonymous_server_cmds::server_config::Rep::Ok {
                 account: anonymous_server_cmds::server_config::AccountConfig::Disabled,
-                cryptpad: Some(anonymous_server_cmds::server_config::CryptPadConfig::Disabled),
+                cryptpad: libparsec_types::Maybe::Present(anonymous_server_cmds::server_config::CryptPadConfig::Disabled),
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Disabled,
             }
@@ -200,7 +200,7 @@ pub fn rep_ok() {
             ).as_ref(),
             anonymous_server_cmds::server_config::Rep::Ok {
                 account: anonymous_server_cmds::server_config::AccountConfig::Disabled,
-                cryptpad: Some(anonymous_server_cmds::server_config::CryptPadConfig::Enabled {
+                cryptpad: libparsec_types::Maybe::Present(anonymous_server_cmds::server_config::CryptPadConfig::Enabled {
                     server_url: "https://cryptpad.parsec.invalid".to_string(),
                 }),
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
