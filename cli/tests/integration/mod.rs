@@ -237,17 +237,12 @@ fn spawn_interactive_command(
     command: std::process::Command,
     timeout: Option<u64>,
 ) -> Result<rexpect::session::PtySession, rexpect::error::Error> {
-    rexpect::spawn_with_options(
-        command,
-        rexpect::reader::Options {
-            // On CI we disable the timeout to avoid flakiness,
-            // If a test is too slow, it will be killed by the timeout set on the CI
-            timeout_ms: if std::option_env!("CI") == Some("true") {
-                None
-            } else {
-                timeout
-            },
-            strip_ansi_escape_codes: true,
-        },
-    )
+    let option = rexpect::reader::Options::default()
+        .timeout_ms(if std::option_env!("CI") == Some("true") {
+            None
+        } else {
+            timeout
+        })
+        .strip_ansi_escape_codes(true);
+    rexpect::spawn_with_options(command, option)
 }

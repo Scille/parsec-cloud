@@ -160,7 +160,7 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
         .into_inner()
         .unwrap();
     greeter.exp_eof().unwrap();
-    greeter.process.exit().unwrap();
+    greeter.process_mut().exit().unwrap();
     drop(greeter);
     // device creation
     let mut locked = p_claimer.lock().unwrap();
