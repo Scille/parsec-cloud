@@ -53,6 +53,9 @@ pub(crate) struct JsonCmd {
 #[derive(Deserialize, Clone)]
 struct JsonCmdFlavour {
     major_versions: Vec<u32>,
+    /// The API version in which this command was added.
+    /// Must be in `X.Y` format.
+    /// See libparsec/crates/protocol/src/version.rs
     #[allow(unused)]
     introduced_in: Option<String>,
     cmd: String,
@@ -87,8 +90,9 @@ struct JsonCmdRep {
     status: String,
     fields: Option<Vec<JsonCmdField>>,
     unit: Option<String>,
-    // In which API version the current response type was introduced.
-    // Must be in `X.Y` format
+    /// The API version in which this response status was added.
+    /// Must be in `X.Y` format.
+    /// See libparsec/crates/protocol/src/version.rs
     #[allow(unused)]
     introduced_in: Option<String>,
 }
@@ -98,8 +102,9 @@ struct JsonCmdField {
     name: String,
     #[serde(rename = "type")]
     ty: String,
-    // In which API version the current field was introduced.
-    // Must be in `X.Y` format
+    /// The API version in which this field was added.
+    /// Must be in `X.Y` format.
+    /// See libparsec/crates/protocol/src/version.rs
     introduced_in: Option<String>,
 }
 
