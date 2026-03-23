@@ -50,8 +50,7 @@ zeroize = { workspace = true, features = ["alloc"] }
 libsodium-rs = { workspace = true, optional = true, features = [
     # Features inherited from `libsodium-sys-stable`
     # https://docs.rs/crate/libsodium-sys-stable/1.22.3
-    "optimized", # Build a version optimized for the current platform.
-    "minimal",   # Do not build deprecated APIs
+    "minimal", # Do not build deprecated APIs
 ] }
 # A word about vendoring. In Parsec, OpenSSL is used for two different things:
 # - Provide X509 support when Rust-Crypto is not used (aka "openssl-for-parsec")
