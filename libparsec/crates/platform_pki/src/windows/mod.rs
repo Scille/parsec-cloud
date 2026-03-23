@@ -2,6 +2,7 @@
 
 mod certificate;
 mod find_in_store;
+mod private_key;
 mod schannel_utils;
 
 use crate::{
@@ -24,6 +25,7 @@ use windows_sys::Win32::Security::Cryptography::{
 
 pub use certificate::Certificate;
 use libparsec_types::prelude::*;
+pub use private_key::PrivateKey;
 
 pub struct PkiSystem {
     my_cert_store: CertStore,
