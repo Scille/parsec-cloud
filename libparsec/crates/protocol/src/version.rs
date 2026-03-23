@@ -51,6 +51,8 @@ use libparsec_types::prelude::*;
 //     authenticated commands.
 //   * Add `totp_create_opaque_key/totp_setup_confirm/totp_setup_get_secret` to authenticated
 //     commands.
+// - v5.5 (Parsec 3.9+)
+//   * Add `cryptpad` field to `server_config` request
 
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
@@ -70,7 +72,7 @@ pub const API_V4_VERSION: &ApiVersion = &ApiVersion {
 };
 pub const API_V5_VERSION: &ApiVersion = &ApiVersion {
     version: 5,
-    revision: 4,
+    revision: 5,
 };
 pub const API_LATEST_VERSION: &ApiVersion = API_V5_VERSION;
 
