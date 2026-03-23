@@ -1085,10 +1085,10 @@
                 "images": "Image",
                 "texts": "Text"
             },
-            "placeholder": "Search a file in this workspace",
+            "placeholder": "Search for a file or folder",
             "noResults": {
                 "title": "No results match your search in this workspace",
-                "subtitle": "Check the orthography or try using simpler search terms, then filter the results."
+                "subtitle": "Check the spelling or try using simpler search terms, then filter the results."
             }
         }
     },

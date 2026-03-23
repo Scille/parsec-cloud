@@ -1070,7 +1070,7 @@
         "search": {
             "title": "Résultats de la recherche",
             "resultsCount": "{count} résultat | {count} résultats",
-            "currentWorkspaceOnly": "Résultats uniquement dans l’espace de travail actuel.",
+            "currentWorkspaceOnly": "Résultats uniquement dans l'espace de travail actuel.",
             "onlyMatchTitles": "Correspondance sur le titre uniquement",
             "filterButtonDefault": "Types de documents",
             "applyFilters": "Appliquer",
@@ -1085,10 +1085,10 @@
                 "images": "Image",
                 "texts": "Texte"
             },
-            "placeholder": "Rechercher un fichier dans cet espace",
+            "placeholder": "Rechercher un fichier ou un dossier",
             "noResults": {
                 "title": "Aucun résultat ne correspond à votre recherche dans cet espace",
-                "subtitle": "Vérifier l'orthographe ou essayez d'utiliser des termes de recherche plus simples, puis de filtrer les résultats. Vous ne trouvez toujours pas ce que vous cherchez ?"
+                "subtitle": "Vérifiez l'orthographe ou essayez d'utiliser des termes de recherche plus simples, puis de filtrer les résultats."
             }
         }
     },
