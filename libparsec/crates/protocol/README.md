@@ -18,6 +18,109 @@ The JSON schemas defining the commands can be found in the [`schema`](./schema) 
 The commands implementation and tests are generated with procedural macros from the
 [`libparsec serialization format`](../serialization_format) crate based on these schemas.
 
+## API schema syntax overview
+
+Here is quick overview of what a schema looks like for the "ping" command.
+
+```json5
+[
+    {
+        "major_versions": [                   // Supported major versions.
+            5
+        ],
+        "cmd": "ping",                        // The command name.
+        "req": {                              // The Request structure.
+            "fields": [                       // The Request fields.
+                {
+                    "name": "ping",           // The field name.
+                    "type": "String"          // The field type.
+                }
+            ]
+        },
+        "reps": [                             // The different Response status.
+            {
+                "status": "ok",               // The response status name.
+                "fields": [                   // The response status fields.
+                    {
+                        "name": "pong",
+                        "type": "String"
+                    }
+                ]
+            }
+        ]
+    }
+]
+```
+
+### The json5 format
+
+Schemas are defined in [`.json5` format](https://json5.org/) to allow for inline comments.
+Note however that this is currently the only supported `json5` feature since comments are removed
+by our parser.
+
+### The `introduced_in` field
+
+The `introduced_in` field is supported for commands and fields. It describes the specific
+**API version** in which the command or field was added.
+
+See [`src/version.rs`](src/version.rs).
+
+### The `type` field
+
+The supported types include **scalars**, **containers** and **custom types**. The list of supported types is defined in [`serialization_format/src/types.rs`](../serialization_format/src/types.rs) (see `generate_field_type_enum!` macro).
+
+It worths mentioning the following containers:
+
+- `RequiredOption` => The field must be present but its value can be null.
+- `NonRequiredOption` => the field can be missing or its value to be null.
+
+### The `nested_types` field
+
+A commands may specify a `nested_types` field containing custom type definitions used in the request or the response.
+
+This can be either "plain" types:
+
+```json5
+{
+    "name": "OpenBaoAuthConfig",
+    "fields": [
+        {
+            "name": "id",
+            "type": "String"
+        },
+        {
+            "name": "mount_path",
+            "type": "String"
+        }
+    ]
+},
+```
+
+Or "variant" types:
+
+```json5
+{
+    "name": "CryptPadConfig",
+    "discriminant_field": "type",
+    "variants": [
+        {
+            "name": "Disabled",
+            "discriminant_value": "DISABLED"
+        },
+        {
+            "name": "Enabled",
+            "discriminant_value": "ENABLED",
+            "fields": [
+                {
+                    "name": "server_url",
+                    "type": "String"
+                }
+            ]
+        }
+    ]
+}
+```
+
 ## How to add/update protocol commands?
 
 1. Bump API version in `libparsec/crates/protocol/src/version.rs`.
