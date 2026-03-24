@@ -115,6 +115,14 @@ mod platform {
         ) -> Result<(PkiSignatureAlgorithm, Bytes), crate::SignError> {
             unimplemented!("platform not supported")
         }
+
+        pub async fn decrypt(
+            &self,
+            #[expect(unused_variables)] algorithm: PKIEncryptionAlgorithm,
+            #[expect(unused_variables)] ciphertext: &[u8],
+        ) -> Result<Bytes, crate::DecryptError> {
+            unimplemented!("platform not supported")
+        }
     }
 }
 
@@ -192,6 +200,16 @@ pub enum SignError {
     UnsupportedAlgorithm,
     #[error("error during signature: {0}")]
     Sign(anyhow::Error),
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum DecryptError {
+    #[error("unsupported encryption algorithm")]
+    UnsupportedAlgorithm,
+    #[error("error during decryption: {0}")]
+    Decrypt(anyhow::Error),
     #[error(transparent)]
     Internal(anyhow::Error),
 }
