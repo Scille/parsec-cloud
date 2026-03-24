@@ -55,6 +55,32 @@ pub fn rep_ok() {
             ),
         ),
         (
+            // Generated from Parsec 3.8.1-a.0+dev
+            // Content:
+            //   status: 'ok'
+            //   event: 'ORGANIZATION_CONFIG'
+            //   active_users_limit: 8
+            //   minimum_archiving_period: 2592000
+            //   sse_keepalive_seconds: 30
+            //   user_profile_outsider_allowed: True
+            &hex!(
+                "86a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+                "4947b26163746976655f75736572735f6c696d697408b86d696e696d756d5f61726368"
+                "6976696e675f706572696f64ce00278d00b57373655f6b656570616c6976655f736563"
+                "6f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c6c6f776564"
+                "c3"
+            )[..],
+            authenticated_cmds::events_listen::Rep::Ok(
+                authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
+                    active_users_limit: ActiveUsersLimit::LimitedTo(8),
+                    user_profile_outsider_allowed: true,
+                    sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    minimum_archiving_period: Maybe::Present(2592000),
+                },
+            ),
+        ),
+        (
+            // Legacy 5.3>=API<5.5 format (without `minimum_archiving_period` field)
             // Generated from Parsec 3.2.5-a.0+dev
             // Content:
             //   status: 'ok'
@@ -73,10 +99,12 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    minimum_archiving_period: Maybe::Absent,
                 },
             ),
         ),
         (
+            // Legacy 5.3>=API<5.5 format (without `minimum_archiving_period` field)
             // Generated from Parsec 3.2.5-a.0+dev
             // Content:
             //   status: 'ok'
@@ -95,6 +123,7 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::NoLimit,
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    minimum_archiving_period: Maybe::Absent,
                 },
             ),
         ),
@@ -122,6 +151,7 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    minimum_archiving_period: Maybe::Absent,
                 },
             ),
         ),
@@ -149,6 +179,7 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::NoLimit,
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    minimum_archiving_period: Maybe::Absent,
                 },
             ),
         ),
