@@ -107,6 +107,15 @@ mod platform {
     }
 
     pub struct PrivateKey;
+
+    impl PrivateKey {
+        pub async fn sign(
+            &self,
+            #[expect(unused_variables)] message: &[u8],
+        ) -> Result<(PkiSignatureAlgorithm, Bytes), crate::SignError> {
+            unimplemented!("platform not supported")
+        }
+    }
 }
 
 // TODO: https://github.com/Scille/parsec-cloud/issues/11215
@@ -173,6 +182,16 @@ pub enum FindCertificateError {
 pub enum RequestPrivateKeyError {
     #[error("private key not found")]
     NotFound,
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum SignError {
+    #[error("unsupported signature algorithm")]
+    UnsupportedAlgorithm,
+    #[error("error during signature: {0}")]
+    Sign(anyhow::Error),
     #[error(transparent)]
     Internal(anyhow::Error),
 }
