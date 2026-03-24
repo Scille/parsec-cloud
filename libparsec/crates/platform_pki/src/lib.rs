@@ -81,6 +81,13 @@ mod platform {
         pub async fn init(_config: crate::PkiConfig<'_>) -> anyhow::Result<Self> {
             anyhow::bail!("Platform not supported")
         }
+
+        pub async fn find_certificate(
+            &self,
+            #[expect(unused_variables)] cert_ref: &X509CertificateReference,
+        ) -> Result<Option<Certificate>, crate::FindCertificateError> {
+            unimplemented!("platform not supported")
+        }
     }
 
     pub struct Certificate;
@@ -144,6 +151,12 @@ pub use platform::{Certificate, PkiSystem};
 
 #[derive(Debug, thiserror::Error)]
 pub enum GetCertificateDerError {
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum FindCertificateError {
     #[error(transparent)]
     Internal(anyhow::Error),
 }

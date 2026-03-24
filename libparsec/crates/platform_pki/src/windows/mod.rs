@@ -26,7 +26,6 @@ pub use certificate::Certificate;
 use libparsec_types::prelude::*;
 
 pub struct PkiSystem {
-    #[expect(dead_code)]
     my_cert_store: CertStore,
 }
 
@@ -37,6 +36,37 @@ impl PkiSystem {
                 my_cert_store: store,
             })
             .context("Cannot open windows cert store")
+    }
+
+    pub async fn find_certificate(
+        &self,
+        cert_ref: &X509CertificateReference,
+    ) -> Result<Option<Certificate>, crate::FindCertificateError> {
+        Ok(cert_ref
+            .get_uri::<X509WindowsCngURI>()
+            .and_then(|uri| {
+                log::trace!("Looking for cert with uri: {uri}");
+                let mut uri = uri.clone();
+                find_in_store::find_cert_in_store(
+                    &self.my_cert_store,
+                    find_in_store::CertFilter::cert_id(&mut uri),
+                )
+                .next()
+            })
+            .inspect(|_v| log::trace!("Certificate found using uri"))
+            .or_else(|| {
+                log::trace!("Certificate not found by uri, trying by fingerprint");
+                let hash_algo = get_hash_algo(&cert_ref.hash);
+                self.my_cert_store.certs().find(|candidate: &CertContext| {
+                    let Ok(cert_hash) = candidate.fingerprint(hash_algo) else {
+                        return false;
+                    };
+                    match &cert_ref.hash {
+                        X509CertificateHash::SHA256(data) => data.as_ref() == cert_hash.as_slice(),
+                    }
+                })
+            })
+            .map(Into::into))
     }
 }
 
