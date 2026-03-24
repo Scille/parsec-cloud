@@ -4,7 +4,6 @@ import { Locator, TestInfo } from '@playwright/test';
 import {
   answerQuestion,
   DisplaySize,
-  expandSheetModal,
   expect,
   fillInputModal,
   importDefaultFiles,
@@ -46,7 +45,6 @@ async function openPopover(page: MsPage, index: number): Promise<Locator> {
     await entry.locator('.options-button').click();
   }
   if (smallDisplay) {
-    await expandSheetModal(page, page.locator('.file-context-sheet-modal'));
     return page.locator('.file-context-sheet-modal');
   }
   return page.locator('.file-context-menu');
@@ -649,12 +647,11 @@ msTest.describe(() => {
         await documents.locator('.topbar-right-buttons').locator('.topbar-right-buttons__item').nth(0).click();
         await expect(documents.locator('.file-context-sheet-modal')).toBeVisible();
         const modal = documents.locator('.file-context-sheet-modal');
-        await expandSheetModal(documents, modal);
         await expect(modal.locator('.button-left')).toHaveText('Selection');
         await expect(modal.locator('.button-right')).toHaveText('Share');
         await expect(modal.locator('.list-group-item')).toHaveCount(1);
         await expect(modal.locator('.list-group-item').nth(0)).toHaveText('Select all');
-        await modal.locator('.list-group-item').click();
+        await modal.locator('.list-group-item').nth(0).click();
 
         const headerElements = documents.locator('.small-display-selection-header').locator('ion-text');
         await expect(headerElements).toHaveCount(3);
@@ -685,7 +682,6 @@ msTest.describe(() => {
           entries = documents.locator('.folder-container').locator('.file-card-item');
         }
         await documents.locator('.topbar-right-buttons').locator('.topbar-right-buttons__item').nth(0).click();
-        await expandSheetModal(documents, documents.locator('.file-context-sheet-modal'));
 
         await documents.locator('.file-context-sheet-modal').locator('.list-group-item').nth(0).click();
 
@@ -722,7 +718,6 @@ msTest.describe(() => {
           entries = documents.locator('.folder-container').locator('.file-card-item');
         }
         await documents.locator('.topbar-right-buttons').locator('.topbar-right-buttons__item').nth(0).click();
-        await expandSheetModal(documents, documents.locator('.file-context-sheet-modal'));
         await documents.locator('.file-context-sheet-modal').locator('.list-group-item').nth(0).click();
         await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
         await expect(entries.nth(1).locator('.ms-checkbox')).toBeChecked();

@@ -49,9 +49,9 @@ export async function openGlobalContextMenu(
       component: SmallDisplayCategoryFileContextMenu,
       cssClass: 'file-context-sheet-modal',
       canDismiss: true,
-      breakpoints: [0, 0.25, 1],
-      expandToScroll: false,
-      initialBreakpoint: 0.25,
+      breakpoints: [0, 0.5],
+      expandToScroll: true,
+      initialBreakpoint: 0.5,
       showBackdrop: true,
       componentProps: {
         disableSelect: isFolderEmpty,
