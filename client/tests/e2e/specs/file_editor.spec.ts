@@ -247,6 +247,7 @@ msTest.describe(() => {
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'ready' });
         }, 100);
+        // First one is "ignored"
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
         }, 300);
@@ -255,10 +256,10 @@ msTest.describe(() => {
         }, 450);
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save', documentContent: new Blob([42, 42, 42, 42, 42, 42, 42], { type: 'application/octet-stream' }) });
-        }, 800);
+        }, 1500);
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: true });
-          }, 1200);
+          }, 2000);
       `,
     });
     /* eslint-enable max-len */
