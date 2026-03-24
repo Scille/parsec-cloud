@@ -136,8 +136,14 @@ The validation constraints from RFC 1002 remain unchanged:
 ```
 
 > [!NOTE]
-> This change is not strictly needed: instead the self-promotion need status could be computed
-> from the certificates lazily (i.e. each time `Client::list_workspaces()` is called).
+> `LocalUserManifest` works in a peculiar way: unlike other manifests, it is never uploaded
+> to the server and instead its main job is to work as a cache on the info computed from
+> the certificates.
+>
+> So adding this new `archiving_configuration` field is not strictly needed: instead the
+> self-promotion need that the status could be computed from the certificates lazily
+> (i.e. each time `Client::list_workspaces()` is called).
+>
 > However this would go against `Client::list_workspaces()` design, as it has been designed
 > around the fact it should get its info from the `LocalUserManifest` that is itself
 > pre-computed by a monitor whenever new certificates are fetched.
@@ -271,9 +277,10 @@ a new field so that clients learn the minimum archiving period without an extra 
                         "fields": [
                             // [...existing fields...]
                             {
+                                // In seconds; default 2592000 (30 days)
                                 "name": "minimum_archiving_period",
-                                "type": "Integer", // In seconds; default 2592000 (30 days)
-                                "introduced_in": "390"
+                                "type": "Integer",
+                                "introduced_in": "5.5"
                             }
                         ]
                     }
