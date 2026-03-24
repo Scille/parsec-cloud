@@ -26,7 +26,7 @@ mod platform {
         errors::{ListTrustedRootCertificatesError, ListUserCertificatesError},
         DecryptMessageError, DerCertificate, GetDerEncodedCertificateError,
         ListIntermediateCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
-        X509CertificateDer,
+        ValidationPathOwned, X509CertificateDer,
     };
     use libparsec_types::prelude::*;
     use rustls_pki_types::CertificateDer;
@@ -114,6 +114,12 @@ mod platform {
         pub async fn to_reference(
             &self,
         ) -> Result<X509CertificateReference, crate::GetCertificateReferenceError> {
+            unimplemented!("platform not supported")
+        }
+
+        pub async fn get_validation_path(
+            &self,
+        ) -> Result<ValidationPathOwned, crate::ValidationPathError> {
             unimplemented!("platform not supported")
         }
     }
@@ -229,6 +235,14 @@ pub enum DecryptError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum GetCertificateReferenceError {
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ValidationPathError {
+    #[error("certificate not trusted")]
+    Untrusted,
     #[error(transparent)]
     Internal(anyhow::Error),
 }

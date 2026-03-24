@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_types::{
-    anyhow::Context as _, X509CertificateHash, X509CertificateReference, X509WindowsCngURI,
+    anyhow::Context as _, DateTime, X509CertificateHash, X509CertificateReference,
+    X509WindowsCngURI,
 };
 
 pub struct Certificate(schannel::cert_context::CertContext);
@@ -80,5 +81,43 @@ impl Certificate {
             issuer,
             serial_number,
         }
+    }
+
+    pub async fn get_validation_path(
+        &self,
+    ) -> Result<crate::ValidationPathOwned, crate::ValidationPathError> {
+        let raw_trusted_roots = super::list_trusted_root_certificate_anchors()
+            .await
+            .context("Cannot list trusted roots")
+            .map_err(crate::ValidationPathError::Internal)?;
+        let raw_intermediates = super::list_intermediate_certificates()
+            .await
+            .context("Cannot list intermediates certificates")
+            .map_err(crate::ValidationPathError::Internal)?;
+        let leaf = self
+            .get_der()
+            .await
+            .context("Cannot get certificate content")
+            .map_err(crate::ValidationPathError::Internal)?;
+        let end_cert = webpki::EndEntityCert::try_from(&leaf)
+            .context("Invalid leaf certificate")
+            .map_err(crate::ValidationPathError::Internal)?;
+        let now = DateTime::now();
+        let path =
+            crate::verify_certificate(&end_cert, &raw_trusted_roots, &raw_intermediates, now)
+                .inspect_err(|e| log::warn!("Failed to verify certificate: {e}"))
+                .map_err(|_| crate::ValidationPathError::Untrusted)?;
+
+        let intermediates = path
+            .intermediate_certificates()
+            .map(|cert| cert.der().into_owned())
+            .collect();
+        let root = path.anchor().to_owned();
+
+        Ok(crate::ValidationPathOwned {
+            root,
+            intermediates,
+            leaf,
+        })
     }
 }
