@@ -139,7 +139,7 @@ import { InjectionProvider, InjectionProviderKey } from '@/services/injectionPro
 import { handleParsecLink } from '@/services/linkHandler';
 import { OpenBaoClient } from '@/services/openBao';
 import { ServerType, getServerTypeFromParsedParsecAddr } from '@/services/parsecServers';
-import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
+import { StorageManager, StorageManagerKey, StoredDeviceData, persistStorage } from '@/services/storageManager';
 import AccountSettingsPage from '@/views/account/AccountSettingsPage.vue';
 import { AccountSettingsTabs } from '@/views/account/types';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
@@ -965,6 +965,8 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   loginInProgress.value = true;
   window.electronAPI.log('debug', 'Starting Parsec login');
+
+  await persistStorage();
 
   if (device.totpOpaqueKeyId !== null) {
     const code = await getTextFromUser(
