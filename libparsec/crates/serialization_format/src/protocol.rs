@@ -934,17 +934,14 @@ fn quote_cmd(
                 dynamic_rep_serialize_arms,
                 dynamic_rep_deserialize_cases,
             ) = quote_cmd_rep_variants(reps);
-            let nested_types = quote_cmd_nested_types(nested_types, SerializationImpl::DynamicRmp);
+            let nested_types = quote_cmd_nested_types(nested_types, serialization_impl);
             let known_rep_statuses = reps.iter().map(|rep| rep.status.to_owned());
 
             let req_dump_and_load_response = match serialization_impl {
                 SerializationImpl::Serde => quote! {
                     impl Req {
                         pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
-                            let mut buff = vec![];
-                            libparsec_types::rmp_serialize::Serialize::serialize(self, &mut buff)
-                                .map_err(|err| <::rmp_serde::encode::Error as ::serde::ser::Error>::custom(format!("{err:?}")))?;
-                            Ok(buff)
+                            ::rmp_serde::to_vec_named(self)
                         }
 
                         pub fn load_response(buf: &[u8]) -> Result<Rep, ::rmp_serde::decode::Error> {
@@ -1101,10 +1098,7 @@ fn quote_cmd(
             let rep_dump_method = match serialization_impl {
                 SerializationImpl::Serde => quote! {
                     pub fn dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
-                        let mut buff = vec![];
-                        libparsec_types::rmp_serialize::Serialize::serialize(self, &mut buff)
-                            .map_err(|err| <::rmp_serde::encode::Error as ::serde::ser::Error>::custom(format!("{err:?}")))?;
-                        Ok(buff)
+                        ::rmp_serde::to_vec_named(self)
                     }
                 },
                 SerializationImpl::DynamicRmp => quote! {
