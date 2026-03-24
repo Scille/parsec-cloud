@@ -84,7 +84,6 @@ mod drop_existing_web_indexed_db {
     }
 }
 
-#[allow(unused)]
 pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, device: &LocalDevice) {
     let disabled = std::env::var("TESTBED_DISABLE_POPULATE_CERTIFICATE_STORAGE").is_ok();
     if disabled {
@@ -153,7 +152,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
 
             storage
                 .for_update(async |mut updater| {
-                    for (offset, certif) in certifs.enumerate() {
+                    for certif in certifs {
                         let signed = if need_redacted {
                             &certif.signed_redacted
                         } else {
@@ -219,9 +218,10 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                     Result::<(), anyhow::Error>::Ok(())
                 })
                 .await
+                .unwrap()
                 .unwrap();
 
-            storage.stop().await;
+            storage.stop().await.unwrap();
         }
 
         // Mark as populated
@@ -229,7 +229,6 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
     }
 }
 
-#[allow(unused)]
 pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: &LocalDevice) {
     if let Some(store) = test_get_testbed_component_store::<ComponentStore>(
         data_base_dir,
@@ -298,7 +297,7 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: &L
         }
 
         if let Some(storage) = lazy_storage {
-            storage.stop().await;
+            storage.stop().await.unwrap();
         }
 
         // Mark as populated
@@ -306,7 +305,6 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: &L
     }
 }
 
-#[allow(unused)]
 pub(crate) async fn maybe_populate_workspace_storage(
     data_base_dir: &Path,
     device: &LocalDevice,
@@ -439,7 +437,7 @@ pub(crate) async fn maybe_populate_workspace_storage(
         }
 
         if let Some(storage) = lazy_storage {
-            storage.stop().await;
+            storage.stop().await.unwrap();
         }
 
         // Mark as populated
@@ -447,7 +445,6 @@ pub(crate) async fn maybe_populate_workspace_storage(
     }
 }
 
-#[allow(unused)]
 /// In theory the database gets populated when `UserStorage::start` is first called.
 /// However, in some test we run `user_storage_non_speculative_init` before that.
 /// Hence this method that will prevent `UserStorage::start` from messing with what
@@ -473,7 +470,6 @@ pub(crate) async fn mark_as_populated_user_storage(data_base_dir: &Path, device:
     }
 }
 
-#[allow(unused)]
 /// In theory the database gets populated when `WorkspaceStorage::start` is first called.
 /// However, in some test we run `workspace_storage_non_speculative_init` before that.
 /// Hence this method that will prevent `WorkspaceStorage::start` from messing with what

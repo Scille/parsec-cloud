@@ -563,7 +563,6 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
 
     /// Only used for debugging tests
     #[cfg(any(test, feature = "expose-test-methods"))]
-    #[allow(unused)]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         let rows = sqlx::query(
             "SELECT \
@@ -762,7 +761,6 @@ impl PlatformCertificatesStorage {
 
     /// Only used for debugging tests
     #[cfg(any(test, feature = "expose-test-methods"))]
-    #[allow(unused)]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         self.for_update(async |mut updater| updater.debug_dump().await)
             .await?

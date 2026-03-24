@@ -34,7 +34,6 @@ pub(super) fn get_user_storage_db_relative_path(device: &LocalDevice) -> PathBuf
     ])
 }
 
-#[allow(unused)]
 /// Path relative to config dir
 pub(super) fn get_workspace_storage_db_relative_path(
     device: &LocalDevice,
@@ -49,7 +48,6 @@ pub(super) fn get_workspace_storage_db_relative_path(
 
 // TODO: remove reference to workspace cache database: now cache is stored in the
 //       same database as the data.
-#[allow(unused)]
 /// Path relative to config dir
 pub(super) fn get_workspace_cache_storage_db_relative_path(
     device: &LocalDevice,

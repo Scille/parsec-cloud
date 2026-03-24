@@ -158,7 +158,7 @@ pub(super) trait StorableCertificateTopic {
     ///
     /// See the implementation of this method in the [`impl_storable_certificate_topic!`] macro.
     #[cfg(test)]
-    #[allow(unused)]
+    #[expect(unused)]
     fn topic_certifs_correspondence_canary(certif: Self);
 }
 
