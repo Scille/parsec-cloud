@@ -18,7 +18,7 @@ export class WinRegistry {
         }
         this.regedit = reg.promisified;
       } catch (error: any) {
-        console.error('Failed to init regedit', error);
+        console.info('Failed to init regedit', error);
       }
     }
   }
@@ -32,17 +32,17 @@ export class WinRegistry {
       const values = await this.regedit.list([KEY]);
       const longPathValue = values[KEY].values['LongPathsEnabled'];
       if (!longPathValue) {
-        console.warn('`LongPathsEnabled` was not found in registry.');
+        console.info('`LongPathsEnabled` was not found in registry.');
         return false;
       }
       if (longPathValue.type !== 'REG_DWORD') {
-        console.warn('`LongPathsEnabled`has incorrect type.');
+        console.info('`LongPathsEnabled`has incorrect type.');
         return false;
       }
       console.debug(`'${KEY}\\LongPathsEnabled' has value ${longPathValue.value}`);
       return (longPathValue.value as any as number) === 1;
     } catch (e: any) {
-      console.error(`Error while trying to obtain 'LongPathsEnabled' value: ${e.toString()}`);
+      console.info(`Error while trying to obtain 'LongPathsEnabled' value: ${e.toString()}`);
     }
   }
 
@@ -150,7 +150,7 @@ export class WinRegistry {
         },
       });
     } catch (error: any) {
-      console.error('Failed to add mountpoint link to sidebar', error);
+      console.info('Failed to add mountpoint link to sidebar', error);
     }
   }
 
