@@ -1,12 +1,32 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { isElectron } from '@/parsec';
+import { isElectron, isWeb } from '@/parsec';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
 import { I18n, Locale, Theme } from 'megashark-lib';
 
 export const StorageManagerKey = 'storageManager';
 export const ThemeManagerKey = 'themeManager';
+
+export async function persistStorage(): Promise<void> {
+  async function _persist(): Promise<void> {
+    try {
+      if (isWeb() && navigator.storage && !(await navigator.storage.persisted())) {
+        const result = await navigator.storage.persist();
+        if (!result) {
+          window.electronAPI.log('warn', 'Failed to make the storage persistent.');
+        } else {
+          window.electronAPI.log('info', 'Storage is persistent.');
+        }
+      }
+    } catch (err: any) {
+      window.electronAPI.log('warn', `Error when trying to make the storage persistent: ${err.toString()}`);
+    }
+  }
+  // Wrapping and calling without await so even if `persistStorage` is called with await,
+  // the GUI will not block.
+  _persist();
+}
 
 export interface StoredDeviceData {
   lastLogin?: DateTime;
