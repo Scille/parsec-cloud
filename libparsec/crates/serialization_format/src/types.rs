@@ -207,13 +207,11 @@ macro_rules! generate_field_type_enum {
 }
 
 generate_field_type_enum!(
-    // We don't provide an absolute path for the types (e.g. `::libparsec_types::Integer`)
-    // This is because in our own test we mock `libparsec_types` to not depend on it.
-    Integer => libparsec_types::Integer,
-    Float => libparsec_types::Float,
-    Version => libparsec_types::VersionInt,
-    Size => libparsec_types::SizeInt,
-    Index => libparsec_types::IndexInt,
+    Integer => libparsec_serialization_format_types::Integer,
+    Float => libparsec_serialization_format_types::Float,
+    Version => libparsec_serialization_format_types::VersionInt,
+    Size => libparsec_serialization_format_types::SizeInt,
+    Index => libparsec_serialization_format_types::IndexInt,
     NonZeroInteger => ::std::num::NonZeroU64,
     NonZeroU8 => ::std::num::NonZeroU8,
     PublicKey => libparsec_types::PublicKey,

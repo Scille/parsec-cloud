@@ -1,0 +1,21 @@
+[package]
+name = "libparsec_serialization_format_types"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+bytes = { workspace = true }
+rmp = "0.8"
+rmpv = "1.3"
+serde = { workspace = true, features = ["derive"] }
+serde_with = { workspace = true, features = ["std", "macros"] }
+rmp-serde = { workspace = true }
+libparsec_zstd = { workspace = true }

@@ -5,7 +5,6 @@ use serde_with::{serde_as, DeserializeFromStr, SerializeDisplay};
 use std::{convert::TryFrom, fmt::Display, hash::Hash, ops::Deref, str::FromStr};
 use unicode_normalization::UnicodeNormalization;
 
-use crate::impl_from_maybe;
 
 const HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN: &str = "redacted.invalid";
 
@@ -257,10 +256,6 @@ new_uuid_type!(pub GreetingAttemptID);
 new_uuid_type!(pub AccountAuthMethodID);
 new_uuid_type!(pub AccountVaultItemOpaqueKeyID);
 new_uuid_type!(pub TOTPOpaqueKeyID);
-impl_from_maybe!(Option<TOTPOpaqueKeyID>);
-
-impl_from_maybe!(std::collections::HashSet<VlobID>);
-
 // ChunkID are often created from file BlockID, so conversion is useful
 impl From<BlockID> for ChunkID {
     fn from(value: BlockID) -> Self {
@@ -477,7 +472,6 @@ impl DeviceLabel {
         Self(device_id.hex())
     }
 }
-impl_from_maybe!(Option<DeviceLabel>);
 
 /*
  * MaybeRedacted (used for DeviceLabel & HumanHandle in certificates)
@@ -682,7 +676,6 @@ impl From<HumanHandle> for (String, String) {
     }
 }
 
-impl_from_maybe!(Option<HumanHandle>);
 
 /// An email address, nothing fancy... or is it ?
 /// Email basically exists since the dawn of humanity,

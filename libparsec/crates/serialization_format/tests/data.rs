@@ -106,12 +106,12 @@ fn introduce_in_field() {
     let data_with = FooManifestData {
         ty: FooManifestDataType,
         author: libparsec_types::DeviceID("alice@pc1".to_owned()),
-        is_cool_guy: libparsec_types::Maybe::Present(true),
+        is_cool_guy: libparsec_serialization_format_types::Maybe::Present(true),
     };
     let data_without = FooManifestData {
         ty: FooManifestDataType,
         author: libparsec_types::DeviceID("alice@pc1".to_owned()),
-        is_cool_guy: libparsec_types::Maybe::Absent,
+        is_cool_guy: libparsec_serialization_format_types::Maybe::Absent,
     };
 
     // `{"type": "foo_manifest", "author": "alice@pc1"}` in msgpack

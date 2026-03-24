@@ -113,22 +113,11 @@ pub enum ClientType {
     Anonymous,
 }
 
-// Numeric types aliases for the data in the schemas.
-// We use them instead of standard Rust types for readability and to ease changing
-// their size.
-// Changing the size of those types (i.e. switching from `u32` to `u64`) won't
-// break compatibility (given msgpack try to use as few bytes as possible to
-// encode a value, for instance `1u64` and `1u32` both get encoded as `0x01`),
-// the only risk is to have a type too small for the value to decode (hence the
-// need to change it in the future if we misjudged the needed size...)
-pub type Integer = i64;
-pub type Float = f64;
-pub type VersionInt = u32;
-pub type SizeInt = u64;
-pub type IndexInt = u64;
-// // Index starts at 1, hence offset on index starts at 0
-// pub type IndexInt = std::num::NonZeroU64;
-// pub type IndexOffsetInt = u64;
+// Re-export types from `libparsec_serialization_format_types` so that downstream
+// crates can keep using `libparsec_types::Integer` etc.
+pub use libparsec_serialization_format_types::{
+    rmp_serialize, Float, IndexInt, Integer, Maybe, SizeInt, VersionInt,
+};
 
 pub mod prelude {
     pub use super::*;

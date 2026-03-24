@@ -39,7 +39,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
             use ::pyo3::prelude::*;
             use ::pyo3::types::*;
             use ::pyo3::exceptions::*;
-            use libparsec_types::ProtocolRequest;
+            use libparsec_serialization_format_types::ProtocolRequest;
             use crate::*;
             use super::*;
 
@@ -278,8 +278,8 @@ fn quote_reps(
                         let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &f.ty);
                         quote! {
                             match x {
-                                libparsec_types::Maybe::Present(x) => Ok(#conversion),
-                                libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
+                                libparsec_serialization_format_types::Maybe::Present(x) => Ok(#conversion),
+                                libparsec_serialization_format_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                             }
                         }
                     } else {
@@ -466,8 +466,8 @@ fn quote_req(
                     let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &field.ty);
                     quote! {
                         match &self.0.#field_name {
-                            libparsec_types::Maybe::Present(x) => Ok(#conversion),
-                            libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
+                            libparsec_serialization_format_types::Maybe::Present(x) => Ok(#conversion),
+                            libparsec_serialization_format_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                         }
                     }
                 } else {
@@ -609,8 +609,8 @@ fn quote_nested_type(
                         let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &f.ty);
                         quote! {
                             match x {
-                                libparsec_types::Maybe::Present(x) => Ok(#conversion),
-                                libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
+                                libparsec_serialization_format_types::Maybe::Present(x) => Ok(#conversion),
+                                libparsec_serialization_format_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                             }
                         }
                     } else {
@@ -721,8 +721,8 @@ fn quote_nested_type(
                     let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &field.ty);
                     quote! {
                         match &self.0.#field_name {
-                            libparsec_types::Maybe::Present(x) => Ok(#conversion),
-                            libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
+                            libparsec_serialization_format_types::Maybe::Present(x) => Ok(#conversion),
+                            libparsec_serialization_format_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                         }
                     }
                 } else {
@@ -1077,7 +1077,7 @@ fn quote_field_as_fn_new_conversion(field: &GenCmdField) -> TokenStream {
     let field_name = format_ident!("{}", field.name);
     let conversion = internal_quote_field_as_fn_new_conversion(&field_name, &field.ty);
     if field.added_in_minor_revision {
-        quote! { let #field_name = libparsec_types::Maybe::Present(#conversion); }
+        quote! { let #field_name = libparsec_serialization_format_types::Maybe::Present(#conversion); }
     } else if conversion.to_string() == field.name {
         // No conversion
         quote! {}

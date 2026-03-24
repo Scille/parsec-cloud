@@ -2541,6 +2541,7 @@ dependencies = [
  "futures",
  "hex",
  "libparsec_serialization_format",
+ "libparsec_serialization_format_types",
  "libparsec_tests_fixtures",
  "libparsec_tests_lite",
  "libparsec_types",
@@ -2560,6 +2561,7 @@ dependencies = [
  "bytes",
  "hex-literal",
  "itertools 0.14.0",
+ "libparsec_serialization_format_types",
  "miniserde",
  "pretty_assertions",
  "proc-macro2",
@@ -2571,6 +2573,19 @@ dependencies = [
  "serde",
  "serde_with",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "libparsec_serialization_format_types"
+version = "3.8.1-a.0+dev"
+dependencies = [
+ "bytes",
+ "libparsec_zstd",
+ "rmp",
+ "rmp-serde",
+ "rmpv",
+ "serde",
+ "serde_with",
 ]
 
 [[package]]
@@ -2660,6 +2675,7 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_serialization_format",
+ "libparsec_serialization_format_types",
  "libparsec_tests_lite",
  "libparsec_types",
  "libparsec_zstd",
@@ -3261,6 +3277,7 @@ dependencies = [
  "libparsec_platform_pki",
  "libparsec_protocol",
  "libparsec_serialization_format",
+ "libparsec_serialization_format_types",
  "libparsec_testbed",
  "libparsec_types",
  "paste",

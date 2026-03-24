@@ -34,6 +34,7 @@ parsec_data!("schema/local_device/device_file_keyring.json5");
 impl_transparent_data_format_conversion!(
     DeviceFileKeyring,
     DeviceFileKeyringData,
+    [totp_opaque_key_id],
     created_on,
     protected_on,
     server_url,
@@ -45,7 +46,6 @@ impl_transparent_data_format_conversion!(
     keyring_service,
     keyring_user,
     ciphertext,
-    totp_opaque_key_id,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -69,6 +69,7 @@ parsec_data!("schema/local_device/device_file_password.json5");
 impl_transparent_data_format_conversion!(
     DeviceFilePassword,
     DeviceFilePasswordData,
+    [totp_opaque_key_id],
     created_on,
     protected_on,
     server_url,
@@ -79,7 +80,6 @@ impl_transparent_data_format_conversion!(
     device_label,
     algorithm,
     ciphertext,
-    totp_opaque_key_id,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -174,6 +174,7 @@ parsec_data!("schema/local_device/device_file_account_vault.json5");
 impl_transparent_data_format_conversion!(
     DeviceFileAccountVault,
     DeviceFileAccountVaultData,
+    [totp_opaque_key_id],
     created_on,
     protected_on,
     server_url,
@@ -184,7 +185,6 @@ impl_transparent_data_format_conversion!(
     device_label,
     ciphertext_key_id,
     ciphertext,
-    totp_opaque_key_id,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -210,6 +210,7 @@ parsec_data!("schema/local_device/device_file_openbao.json5");
 impl_transparent_data_format_conversion!(
     DeviceFileOpenBao,
     DeviceFileOpenBaoData,
+    [totp_opaque_key_id],
     created_on,
     protected_on,
     server_url,
@@ -222,7 +223,6 @@ impl_transparent_data_format_conversion!(
     openbao_entity_id,
     openbao_ciphertext_key_path,
     ciphertext,
-    totp_opaque_key_id,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

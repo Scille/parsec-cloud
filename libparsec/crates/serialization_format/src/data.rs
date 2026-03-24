@@ -262,12 +262,12 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             }
             SerializationImpl::DynamicRmp => {
                 quote! {
-                    impl libparsec_types::rmp_serialize::Serialize for #name_type {
+                    impl libparsec_serialization_format_types::rmp_serialize::Serialize for #name_type {
                         fn serialize(
                             &self,
                             writer: &mut ::std::vec::Vec<u8>,
-                        ) -> Result<(), libparsec_types::rmp_serialize::SerializeError> {
-                            libparsec_types::rmp_serialize::encode::write_str(writer, #ty).map_err(libparsec_types::rmp_serialize::SerializeError::from)
+                        ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #ty).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)
                         }
                     }
                 }
@@ -278,15 +278,15 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             SerializationImpl::Serde => quote! {},
             SerializationImpl::DynamicRmp => {
                 quote! {
-                    impl libparsec_types::rmp_serialize::Deserialize for #name_type {
+                    impl libparsec_serialization_format_types::rmp_serialize::Deserialize for #name_type {
                         fn deserialize(
-                            value: libparsec_types::rmp_serialize::ValueRef<'_>,
-                        ) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
+                            value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
+                        ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
                             let s = String::deserialize(value)?;
                             if s == #ty {
                                 Ok(#name_type)
                             } else {
-                                Err(libparsec_types::rmp_serialize::DeserializeError::InvalidValue(
+                                Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidValue(
                                     format!("invalid type value `{s}`, expected `{}`", #ty),
                                 ))
                             }
@@ -436,9 +436,9 @@ fn quote_custom_struct_union(
                 if serializable_fields(&variant.fields).is_empty() {
                     quote! {
                         Self::#variant_name => {
-                            libparsec_types::rmp_serialize::encode::write_map_len(writer, 1).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_types::rmp_serialize::encode::write_str(writer, #discriminant_field).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_types::rmp_serialize::encode::write_str(writer, #value_literal).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
+                            libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, 1).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #discriminant_field).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #value_literal).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
                             Ok(())
                         }
                     }
@@ -451,13 +451,13 @@ fn quote_custom_struct_union(
                         Self::#variant_name { #(#field_names),* } => {
                             let map_len = (1usize + #field_count_expr)
                                 .try_into()
-                                .map_err(|_| libparsec_types::rmp_serialize::SerializeError::LengthOverflow {
+                                .map_err(|_| libparsec_serialization_format_types::rmp_serialize::SerializeError::LengthOverflow {
                                     kind: "map",
                                     len: 1usize + #field_count_expr,
                                 })?;
-                            libparsec_types::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_types::rmp_serialize::encode::write_str(writer, #discriminant_field).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_types::rmp_serialize::encode::write_str(writer, #value_literal).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
+                            libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #discriminant_field).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #value_literal).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
                             #(#field_writes)*
                             Ok(())
                         }
@@ -466,11 +466,11 @@ fn quote_custom_struct_union(
             });
 
             quote! {
-                impl libparsec_types::rmp_serialize::Serialize for #name {
+                impl libparsec_serialization_format_types::rmp_serialize::Serialize for #name {
                     fn serialize(
                         &self,
                         writer: &mut ::std::vec::Vec<u8>,
-                    ) -> Result<(), libparsec_types::rmp_serialize::SerializeError> {
+                    ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
                         match self {
                             #(#variant_serializers),*
                         }
@@ -519,16 +519,16 @@ fn quote_custom_struct_union(
                     });
 
             quote! {
-                impl libparsec_types::rmp_serialize::Deserialize for #name {
+                impl libparsec_serialization_format_types::rmp_serialize::Deserialize for #name {
                     fn deserialize(
-                        value: libparsec_types::rmp_serialize::ValueRef<'_>,
-                    ) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
+                        value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
+                    ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
                         let entries = match value {
                             rmpv::ValueRef::Map(entries) => entries,
                             other => {
-                                return Err(libparsec_types::rmp_serialize::DeserializeError::InvalidType {
+                                return Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
                                     expected: "map",
-                                    got: libparsec_types::rmp_serialize::value_kind(&other),
+                                    got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
                                 })
                             }
                         };
@@ -541,12 +541,12 @@ fn quote_custom_struct_union(
 
                         let discriminant = obj
                             .remove(#discriminant_field)
-                            .ok_or(libparsec_types::rmp_serialize::DeserializeError::MissingField(#discriminant_field))?;
+                            .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField(#discriminant_field))?;
                         let discriminant = String::deserialize(discriminant)?;
 
                         match discriminant.as_str() {
                             #(#variants_deserialize),*,
-                            _ => Err(libparsec_types::rmp_serialize::DeserializeError::InvalidValue(
+                            _ => Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidValue(
                                 format!("unknown discriminant `{}`", discriminant),
                             )),
                         }
@@ -599,16 +599,16 @@ fn quote_custom_literal_union(
             let variants_serialize = variants.iter().map(|(name, value)| {
                 let variant_name = format_ident!("{}", name);
                 quote! {
-                    Self::#variant_name => libparsec_types::rmp_serialize::encode::write_str(writer, #value).map_err(libparsec_types::rmp_serialize::SerializeError::from)
+                    Self::#variant_name => libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #value).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)
                 }
             });
 
             quote! {
-                impl libparsec_types::rmp_serialize::Serialize for #name {
+                impl libparsec_serialization_format_types::rmp_serialize::Serialize for #name {
                     fn serialize(
                         &self,
                         writer: &mut ::std::vec::Vec<u8>,
-                    ) -> Result<(), libparsec_types::rmp_serialize::SerializeError> {
+                    ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
                         match self {
                             #(#variants_serialize),*
                         }
@@ -627,14 +627,14 @@ fn quote_custom_literal_union(
             });
 
             quote! {
-                impl libparsec_types::rmp_serialize::Deserialize for #name {
+                impl libparsec_serialization_format_types::rmp_serialize::Deserialize for #name {
                     fn deserialize(
-                        value: libparsec_types::rmp_serialize::ValueRef<'_>,
-                    ) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
+                        value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
+                    ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
                         let discriminant = String::deserialize(value)?;
                         match discriminant.as_str() {
                             #(#variants_deserialize),*,
-                            _ => Err(libparsec_types::rmp_serialize::DeserializeError::InvalidValue(
+                            _ => Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidValue(
                                 format!("unknown literal discriminant `{}`", discriminant),
                             )),
                         }
@@ -748,20 +748,20 @@ fn quote_dynamic_named_field_extract(field: &GenDataField) -> TokenStream {
 
     if field.introduced_in_revision.is_some() {
         quote! {
-            let #field_ident: libparsec_types::Maybe<#field_type> = match obj.remove(#field_name) {
+            let #field_ident: libparsec_serialization_format_types::Maybe<#field_type> = match obj.remove(#field_name) {
                 Some(value) => {
-                    libparsec_types::Maybe::Present(
-                        <#field_type as libparsec_types::rmp_serialize::Deserialize>::deserialize(value)?,
+                    libparsec_serialization_format_types::Maybe::Present(
+                        <#field_type as libparsec_serialization_format_types::rmp_serialize::Deserialize>::deserialize(value)?,
                     )
                 }
-                None => libparsec_types::Maybe::Absent,
+                None => libparsec_serialization_format_types::Maybe::Absent,
             };
         }
     } else if let Some(default_fn_name) = &field.default {
         let default_ident = format_ident!("{}", default_fn_name);
         quote! {
             let #field_ident: #field_type = match obj.remove(#field_name) {
-                Some(value) => <#field_type as libparsec_types::rmp_serialize::Deserialize>::deserialize(value)?,
+                Some(value) => <#field_type as libparsec_serialization_format_types::rmp_serialize::Deserialize>::deserialize(value)?,
                 None => #default_ident(),
             };
         }
@@ -770,8 +770,8 @@ fn quote_dynamic_named_field_extract(field: &GenDataField) -> TokenStream {
             let #field_ident: #field_type = {
                 let value = obj
                     .remove(#field_name)
-                    .ok_or(libparsec_types::rmp_serialize::DeserializeError::MissingField(#field_name))?;
-                <#field_type as libparsec_types::rmp_serialize::Deserialize>::deserialize(value)?
+                    .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField(#field_name))?;
+                <#field_type as libparsec_serialization_format_types::rmp_serialize::Deserialize>::deserialize(value)?
             };
         }
     }
@@ -785,15 +785,15 @@ fn quote_dynamic_struct_field_writes_from_self(fields: &[GenDataField]) -> Vec<T
             let field_ident = field_name_to_ident(field_name);
             if field.introduced_in_revision.is_some() {
                 quote! {
-                    if let libparsec_types::Maybe::Present(value) = &self.#field_ident {
-                        libparsec_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
-                        libparsec_types::rmp_serialize::Serialize::serialize(value, writer)?;
+                    if let libparsec_serialization_format_types::Maybe::Present(value) = &self.#field_ident {
+                        libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                        libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(value, writer)?;
                     }
                 }
             } else {
                 quote! {
-                    libparsec_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
-                    libparsec_types::rmp_serialize::Serialize::serialize(&self.#field_ident, writer)?;
+                    libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                    libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(&self.#field_ident, writer)?;
                 }
             }
         })
@@ -807,8 +807,8 @@ fn quote_dynamic_struct_field_count_expr_from_bindings(fields: &[GenDataField]) 
         if field.introduced_in_revision.is_some() {
             quote! {
                 match #field_ident {
-                    libparsec_types::Maybe::Present(_) => 1usize,
-                    libparsec_types::Maybe::Absent => 0usize,
+                    libparsec_serialization_format_types::Maybe::Present(_) => 1usize,
+                    libparsec_serialization_format_types::Maybe::Absent => 0usize,
                 }
             }
         } else {
@@ -826,15 +826,15 @@ fn quote_dynamic_struct_field_writes_from_bindings(fields: &[GenDataField]) -> V
             let field_ident = field_name_to_ident(field_name);
             if field.introduced_in_revision.is_some() {
                 quote! {
-                    if let libparsec_types::Maybe::Present(value) = #field_ident {
-                        libparsec_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
-                        libparsec_types::rmp_serialize::Serialize::serialize(value, writer)?;
+                    if let libparsec_serialization_format_types::Maybe::Present(value) = #field_ident {
+                        libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                        libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(value, writer)?;
                     }
                 }
             } else {
                 quote! {
-                    libparsec_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
-                    libparsec_types::rmp_serialize::Serialize::serialize(#field_ident, writer)?;
+                    libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                    libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(#field_ident, writer)?;
                 }
             }
         })
@@ -854,7 +854,7 @@ fn quote_dynamic_struct_serialize_impl(
         .map(|field| {
             let field_ident = field_name_to_ident(field.name.as_str());
             quote! {
-                if matches!(self.#field_ident, libparsec_types::Maybe::Present(_)) {
+                if matches!(self.#field_ident, libparsec_serialization_format_types::Maybe::Present(_)) {
                     map_len += 1;
                 }
             }
@@ -868,8 +868,8 @@ fn quote_dynamic_struct_serialize_impl(
 
     let type_field_write = if has_data_type_field {
         quote! {
-            libparsec_types::rmp_serialize::encode::write_str(writer, "type").map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
-            libparsec_types::rmp_serialize::Serialize::serialize(&self.ty, writer)?;
+            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "type").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+            libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(&self.ty, writer)?;
         }
     } else {
         quote! {}
@@ -878,9 +878,9 @@ fn quote_dynamic_struct_serialize_impl(
     let dump_method = if add_dump_method {
         quote! {
             impl #name {
-                pub fn dump(&self) -> Result<Vec<u8>, libparsec_types::rmp_serialize::SerializeError> {
+                pub fn dump(&self) -> Result<Vec<u8>, libparsec_serialization_format_types::rmp_serialize::SerializeError> {
                     let mut buff = vec![];
-                    libparsec_types::rmp_serialize::Serialize::serialize(self, &mut buff)?;
+                    libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(self, &mut buff)?;
                     Ok(buff)
                 }
             }
@@ -890,20 +890,20 @@ fn quote_dynamic_struct_serialize_impl(
     };
 
     quote! {
-        impl libparsec_types::rmp_serialize::Serialize for #name {
+        impl libparsec_serialization_format_types::rmp_serialize::Serialize for #name {
             fn serialize(
                 &self,
                 writer: &mut ::std::vec::Vec<u8>,
-            ) -> Result<(), libparsec_types::rmp_serialize::SerializeError> {
+            ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
                 let mut map_len = #static_count;
                 #(#dynamic_count_terms)*
                 let map_len: u32 = map_len.try_into().map_err(|_| {
-                    libparsec_types::rmp_serialize::SerializeError::LengthOverflow {
+                    libparsec_serialization_format_types::rmp_serialize::SerializeError::LengthOverflow {
                         kind: "map",
                         len: map_len,
                     }
                 })?;
-                libparsec_types::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_types::rmp_serialize::SerializeError::from)?;
+                libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
                 #type_field_write
                 #(#field_writes)*
                 Ok(())
@@ -934,8 +934,8 @@ fn quote_dynamic_struct_deserialize_impl(
             let ty = {
                 let value = obj
                     .remove("type")
-                    .ok_or(libparsec_types::rmp_serialize::DeserializeError::MissingField("type"))?;
-                <_ as libparsec_types::rmp_serialize::Deserialize>::deserialize(value)?
+                    .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField("type"))?;
+                <_ as libparsec_serialization_format_types::rmp_serialize::Deserialize>::deserialize(value)?
             };
         }
     } else {
@@ -960,8 +960,8 @@ fn quote_dynamic_struct_deserialize_impl(
     let load_method = if add_load_method {
         quote! {
             impl #name {
-                pub fn load(raw: &[u8]) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
-                    libparsec_types::rmp_serialize::from_slice(raw)
+                pub fn load(raw: &[u8]) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                    libparsec_serialization_format_types::rmp_serialize::from_slice(raw)
                 }
             }
         }
@@ -970,16 +970,16 @@ fn quote_dynamic_struct_deserialize_impl(
     };
 
     quote! {
-        impl libparsec_types::rmp_serialize::Deserialize for #name {
+        impl libparsec_serialization_format_types::rmp_serialize::Deserialize for #name {
             fn deserialize(
-                value: libparsec_types::rmp_serialize::ValueRef<'_>,
-            ) -> Result<Self, libparsec_types::rmp_serialize::DeserializeError> {
+                value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
+            ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
                 let entries = match value {
                     rmpv::ValueRef::Map(entries) => entries,
                     other => {
-                        return Err(libparsec_types::rmp_serialize::DeserializeError::InvalidType {
+                        return Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
                             expected: "map",
-                            got: libparsec_types::rmp_serialize::value_kind(&other),
+                            got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
                         })
                     }
                 };
@@ -1029,9 +1029,9 @@ fn quote_field(field: &GenDataField, with_pub: bool) -> Option<TokenStream> {
     let ty = if field.introduced_in_revision.is_some() {
         let rust_type = field.ty.to_rust_type();
         attrs.push(quote! {
-            #[serde(default, skip_serializing_if = "libparsec_types::Maybe::is_absent")]
+            #[serde(default, skip_serializing_if = "libparsec_serialization_format_types::Maybe::is_absent")]
         });
-        quote! {libparsec_types::Maybe<#rust_type>}
+        quote! {libparsec_serialization_format_types::Maybe<#rust_type>}
     } else {
         field.ty.to_rust_type()
     };
@@ -1049,11 +1049,11 @@ fn quote_field(field: &GenDataField, with_pub: bool) -> Option<TokenStream> {
         field.ty.to_serde_as(),
     ) {
         (true, Some(serde_as_type)) => {
-            let serde_as_type = quote! { libparsec_types::Maybe<#serde_as_type> }.to_string();
+            let serde_as_type = quote! { libparsec_serialization_format_types::Maybe<#serde_as_type> }.to_string();
             attrs.push(quote! { #[serde_as(as = #serde_as_type, #serde_as_allow_default)] });
         }
         (true, None) => {
-            let serde_as_type = quote! { libparsec_types::Maybe<_> }.to_string();
+            let serde_as_type = quote! { libparsec_serialization_format_types::Maybe<_> }.to_string();
             attrs.push(quote! { #[serde_as(as = #serde_as_type, #serde_as_allow_default)] });
         }
         (false, Some(serde_as_type)) => {

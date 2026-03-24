@@ -265,10 +265,10 @@ fn introduce_in_field() {
 
     let v1 = family_cmds::v1::ping::Req {};
     let v2_with = family_cmds::v2::ping::Req {
-        ping: libparsec_types::Maybe::Present("foo".to_owned()),
+        ping: libparsec_serialization_format_types::Maybe::Present("foo".to_owned()),
     };
     let v2_without = family_cmds::v2::ping::Req {
-        ping: libparsec_types::Maybe::Absent,
+        ping: libparsec_serialization_format_types::Maybe::Absent,
     };
     let v3 = family_cmds::v3::ping::Req {
         ping: "foo".to_owned(),
@@ -292,10 +292,10 @@ fn introduce_in_field() {
 
     let v1 = family_cmds::v1::ping2::Rep::Ok {};
     let v2_with = family_cmds::v2::ping2::Rep::Ok {
-        pong: libparsec_types::Maybe::Present(true),
+        pong: libparsec_serialization_format_types::Maybe::Present(true),
     };
     let v2_without = family_cmds::v2::ping2::Rep::Ok {
-        pong: libparsec_types::Maybe::Absent,
+        pong: libparsec_serialization_format_types::Maybe::Absent,
     };
     let v3 = family_cmds::v3::ping2::Rep::Ok { pong: true };
 
