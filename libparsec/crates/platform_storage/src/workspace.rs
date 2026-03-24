@@ -300,6 +300,22 @@ pub async fn workspace_storage_non_speculative_init(
     Ok(())
 }
 
+pub async fn workspace_storage_remove_data(
+    data_base_dir: &Path,
+    device: &LocalDevice,
+    realm_id: VlobID,
+) -> anyhow::Result<()> {
+    crate::platform::workspace::workspace_storage_remove_data(data_base_dir, device, realm_id)
+        .await?;
+
+    // Without this, and if the database has never been opened before, `WorkspaceStorage::start`
+    // would re-populate the now-empty database with testbed data :/
+    #[cfg(feature = "test-with-testbed")]
+    crate::testbed::mark_as_populated_workspace_storage(data_base_dir, device, realm_id).await;
+
+    Ok(())
+}
+
 #[cfg(test)]
 #[path = "../tests/unit/workspace.rs"]
 mod test;

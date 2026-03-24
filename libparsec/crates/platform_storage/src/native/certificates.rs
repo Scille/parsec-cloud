@@ -624,7 +624,9 @@ impl PlatformCertificatesStorage {
         };
 
         #[cfg(feature = "test-with-testbed")]
-        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info).await;
+        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info)
+            .await
+            .map(|(conn, _)| conn);
 
         #[cfg(not(feature = "test-with-testbed"))]
         let conn: Option<SqliteConnection> = None;

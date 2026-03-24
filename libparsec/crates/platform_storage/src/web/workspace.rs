@@ -82,6 +82,20 @@ const BLOCKS_OFFLINE_FIELD: &str = "offline";
 const BLOCKS_ACCESSED_ON_FIELD: &str = "accessed_on";
 const BLOCKS_DATA_FIELD: &str = "data";
 
+pub(crate) async fn workspace_storage_remove_data(
+    data_base_dir: &Path,
+    device: &LocalDevice,
+    realm_id: VlobID,
+) -> anyhow::Result<()> {
+    let db_name = &get_workspace_storage_db_name(data_base_dir, device.device_id, realm_id);
+
+    Factory::get()
+        .map_err(anyhow::Error::from)?
+        .delete_database(db_name)
+        .await
+        .map_err(anyhow::Error::from)
+}
+
 async fn initialize_database(
     evt: &indexed_db::VersionChangeEvent<Infallible>,
 ) -> indexed_db::Result<(), Infallible> {

@@ -17,7 +17,9 @@ use crate::{
     PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
 };
 
-use super::{workspace_storage_non_speculative_init, WorkspaceStorage};
+use super::{
+    workspace_storage_non_speculative_init, workspace_storage_remove_data, WorkspaceStorage,
+};
 
 #[cfg(target_arch = "wasm32")]
 libparsec_tests_lite::platform::wasm_bindgen_test_configure!(run_in_browser);
@@ -224,6 +226,69 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
         };
         p_assert_eq!(folder_manifest.need_sync, expected_need_sync);
     }
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn remove_workspace_data_testbed_support(env: &TestbedEnv) {
+    let (realm_id1, realm_id2) = env
+        .customize(|builder| {
+            let realm_id1 = builder.new_realm("alice").map(|e| e.realm_id);
+            let realm_id2 = builder.new_realm("alice").map(|e| e.realm_id);
+            for realm_id in [realm_id1, realm_id2] {
+                builder.rotate_key_realm(realm_id);
+                let block_id = builder
+                    .create_block("alice@dev1", realm_id, b"<block1>".as_ref())
+                    .map(|e| e.block_id);
+                builder.create_or_update_workspace_manifest_vlob("alice@dev1", realm_id);
+                builder
+                    .workspace_data_storage_chunk_create(
+                        "alice@dev1",
+                        realm_id,
+                        b"<chunk1>".as_ref(),
+                    )
+                    .map(|e| e.chunk_id);
+                builder
+                    .workspace_data_storage_local_file_manifest_create_or_update(
+                        "alice@dev1",
+                        realm_id,
+                        None,
+                        Some(realm_id),
+                    )
+                    .map(|e| e.local_manifest.base.id);
+
+                builder.workspace_data_storage_fetch_realm_checkpoint("alice@dev1", realm_id);
+                builder.workspace_data_storage_fetch_workspace_vlob(
+                    "alice@dev1",
+                    realm_id,
+                    libparsec_types::PreventSyncPattern::empty(),
+                );
+                builder.workspace_cache_storage_fetch_block("alice@dev1", realm_id, block_id);
+            }
+            (realm_id1, realm_id2)
+        })
+        .await;
+
+    let alice = env.local_device("alice@dev1");
+
+    workspace_storage_remove_data(&env.discriminant_dir, &alice, realm_id1)
+        .await
+        .unwrap();
+
+    let dump1 = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id1, u64::MAX)
+        .await
+        .unwrap()
+        .debug_dump()
+        .await
+        .unwrap();
+    let dump2 = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id2, u64::MAX)
+        .await
+        .unwrap()
+        .debug_dump()
+        .await
+        .unwrap();
+
+    assert_eq!(dump1, DebugDump::default());
+    assert_ne!(dump2, DebugDump::default());
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -1360,4 +1425,66 @@ async fn get_inbound_outbound_need_sync(env: &TestbedEnv) {
 
     assert_outbound_need_sync!(vec![vlob1_id, vlob2_id]).await;
     assert_inbound_need_sync!(vec![vlob3_id, vlob4_id]).await;
+}
+
+#[parsec_test]
+async fn remove_data(tmp_path: TmpPath, alice: &Device) {
+    let realm_id1 = VlobID::from_hex("aa0000000000000000000000000000f1").unwrap();
+    let realm_id2 = VlobID::from_hex("aa0000000000000000000000000000f2").unwrap();
+    let alice = alice.local_device();
+
+    workspace_storage_non_speculative_init(&tmp_path, &alice, realm_id1)
+        .await
+        .unwrap();
+    workspace_storage_non_speculative_init(&tmp_path, &alice, realm_id2)
+        .await
+        .unwrap();
+
+    let assert_workspace_db_exists = async |realm_id: VlobID, expect_exist: bool| {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let realm_dir = tmp_path.join(alice.device_id.hex()).join(realm_id.hex());
+            let cache_db = realm_dir.join("workspace_cache-v1.sqlite");
+            let data_db = realm_dir.join("workspace_data-v1.sqlite");
+            if expect_exist {
+                assert!(realm_dir.exists());
+                assert!(cache_db.exists());
+                assert!(data_db.exists());
+            } else {
+                assert!(!cache_db.exists());
+                assert!(!data_db.exists());
+                assert!(!realm_dir.exists());
+            }
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let mut workspace_storage =
+                WorkspaceStorage::start(&tmp_path, &alice, realm_id, u64::MAX)
+                    .await
+                    .unwrap();
+            let dump = workspace_storage.debug_dump().await.unwrap();
+            workspace_storage.stop().await.unwrap();
+            if expect_exist {
+                assert_ne!(dump, DebugDump::default());
+            } else {
+                assert_eq!(dump, DebugDump::default());
+            }
+        }
+    };
+
+    // Sanity check to ensure the workspace has some data
+    assert_workspace_db_exists(realm_id1, true).await;
+    assert_workspace_db_exists(realm_id2, true).await;
+
+    // Remove workspace data
+    workspace_storage_remove_data(&tmp_path, &alice, realm_id1)
+        .await
+        .unwrap();
+    assert_workspace_db_exists(realm_id1, false).await;
+    assert_workspace_db_exists(realm_id2, true).await;
+
+    // Removing should be idempotent
+    workspace_storage_remove_data(&tmp_path, &alice, realm_id1)
+        .await
+        .unwrap();
 }
