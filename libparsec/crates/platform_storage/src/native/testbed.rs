@@ -54,7 +54,7 @@ fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
 
 pub(super) async fn maybe_open_sqlite_in_memory(
     path_info: &DBPathInfo,
-) -> Option<SqliteConnection> {
+) -> Option<(SqliteConnection, Option<PathBuf>)> {
     let store = match test_get_testbed_component_store::<ComponentStore>(
         &path_info.data_base_dir,
         STORE_ENTRY_KEY,
@@ -88,7 +88,7 @@ pub(super) async fn maybe_open_sqlite_in_memory(
                     // The database has been closed by the one that created it.
                     // Of course in-memory database lose all data on close so it has
                     // been kept on the side instead, and now is time to re-use it !
-                    return Some(conn);
+                    return Some((conn, None));
                 }
             }
         }
@@ -97,10 +97,11 @@ pub(super) async fn maybe_open_sqlite_in_memory(
     // This database is brand new
     // Now create the database and register its path as opened
     let force_db_on_disk = std::env::var("TESTBED_FORCE_SQLITE_ON_DISK").is_ok();
-    let conn = if !force_db_on_disk {
-        SqliteConnection::connect("sqlite::memory:")
+    let (conn, on_disk_path) = if !force_db_on_disk {
+        let conn = SqliteConnection::connect("sqlite::memory:")
             .await
-            .expect("Cannot create in-memory database")
+            .expect("Cannot create in-memory database");
+        (conn, None)
     } else {
         // Our function is basically called "open db in memory", wtf is this hack ???
         // The idea is to provide an easy way to inspect the content of the sqlite db
@@ -122,19 +123,21 @@ pub(super) async fn maybe_open_sqlite_in_memory(
             .expect("Cannot create on-disk database path");
         _ = std::fs::remove_file(&db_path); // Remove db from a previous run if any
 
-        SqliteConnectOptions::new()
-            .filename(db_path)
+        let conn = SqliteConnectOptions::new()
+            .filename(&db_path)
             .create_if_missing(true)
             .connect()
             .await
-            .expect("Cannot create on-disk database")
+            .expect("Cannot create on-disk database");
+
+        (conn, Some(db_path))
     };
     dbs.push(DBEntry {
         path_info: path_info.clone(),
         state: ClosableInMemoryDB::Opened,
     });
 
-    Some(conn)
+    Some((conn, on_disk_path))
 }
 
 pub(super) async fn maybe_return_sqlite_in_memory_conn(
@@ -169,4 +172,32 @@ pub(super) async fn maybe_return_sqlite_in_memory_conn(
             )
         }
     }
+}
+
+pub(super) async fn maybe_destroy_sqlite_in_memory(path_info: &DBPathInfo) -> Option<()> {
+    // The database is created in-memory lazily according to the template.
+    // So we first force this creation, then replace the populated database with
+    // a new empty one (which will be the one returned whenever `maybe_open_sqlite_in_memory`
+    // is called again for this database).
+    let (conn, maybe_on_disk_path) = maybe_open_sqlite_in_memory(path_info).await?;
+    conn.close().await.expect("Cannot close in-memory database");
+
+    match maybe_on_disk_path {
+        None => {
+            let conn = SqliteConnection::connect("sqlite::memory:")
+                .await
+                .expect("Cannot create in-memory database");
+            maybe_return_sqlite_in_memory_conn(path_info, conn)
+                .await
+                .expect("Cannot return opened in-memory database to testbed");
+        }
+        // Special case: `TESTBED_FORCE_SQLITE_ON_DISK` is set so we actually remove a SQLite DB file on disk
+        Some(db_path) => {
+            tokio::fs::remove_file(db_path)
+                .await
+                .expect("Cannot remove the on-disk database file");
+        }
+    }
+
+    Some(())
 }

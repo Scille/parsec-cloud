@@ -21,8 +21,44 @@ use crate::workspace::{
 };
 
 use super::model::{
-    get_workspace_cache_storage_db_relative_path, get_workspace_storage_db_relative_path,
+    get_workspace_cache_storage_db_relative_path, get_workspace_folder_relative_path,
+    get_workspace_storage_db_relative_path,
 };
+
+pub(crate) async fn workspace_storage_remove_data(
+    data_base_dir: &Path,
+    device: &LocalDevice,
+    realm_id: VlobID,
+) -> anyhow::Result<()> {
+    let path = data_base_dir.join(get_workspace_folder_relative_path(device, realm_id));
+    log::debug!("Removing workspace data at {}", path.display());
+
+    #[cfg(feature = "test-with-testbed")]
+    {
+        let mut path_info = super::testbed::DBPathInfo {
+            data_base_dir: data_base_dir.to_owned(),
+            db_relative_path: get_workspace_storage_db_relative_path(device, realm_id),
+        };
+        if super::testbed::maybe_destroy_sqlite_in_memory(&path_info)
+            .await
+            .is_some()
+        {
+            path_info.db_relative_path =
+                get_workspace_cache_storage_db_relative_path(device, realm_id);
+            assert!(super::testbed::maybe_destroy_sqlite_in_memory(&path_info)
+                .await
+                .is_some());
+
+            return Ok(());
+        }
+    }
+
+    match tokio::fs::remove_dir_all(&path).await {
+        Ok(()) => Ok(()),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(err) => Err(err.into()),
+    }
+}
 
 async fn create_connection(db_path: &Path) -> anyhow::Result<SqliteConnection> {
     // Create parent directories if needed
@@ -85,7 +121,9 @@ impl PlatformWorkspaceStorage {
         };
 
         #[cfg(feature = "test-with-testbed")]
-        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info).await;
+        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info)
+            .await
+            .map(|(conn, _)| conn);
 
         #[cfg(not(feature = "test-with-testbed"))]
         let conn: Option<SqliteConnection> = None;
@@ -109,7 +147,9 @@ impl PlatformWorkspaceStorage {
         };
 
         #[cfg(feature = "test-with-testbed")]
-        let cache_conn = super::testbed::maybe_open_sqlite_in_memory(&cache_path_info).await;
+        let cache_conn = super::testbed::maybe_open_sqlite_in_memory(&cache_path_info)
+            .await
+            .map(|(conn, _)| conn);
 
         #[cfg(not(feature = "test-with-testbed"))]
         let cache_conn: Option<SqliteConnection> = None;
