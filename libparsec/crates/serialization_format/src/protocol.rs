@@ -1538,6 +1538,14 @@ fn quote_cmd_req_struct(
     // The req struct is exposed as `Req`, however we want to have it named
     // `<CmdName>Req` for debug display
     let struct_name = format_ident!("{}Req", pascal_case_cmd_name);
+    let req_derive = match serialization_impl {
+        SerializationImpl::Serde => {
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
+        }
+        SerializationImpl::DynamicRmp => {
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
+        }
+    };
     match &req.kind {
         GenCmdReqKind::Unit { nested_type_name } => {
             let cmd_name_literal = &req.cmd;
@@ -1597,7 +1605,7 @@ fn quote_cmd_req_struct(
 
             quote! {
                 #[::serde_with::serde_as]
-                #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
+                #req_derive
                 #[serde(transparent)]
                 pub struct #struct_name(pub #nested_type_name);
                 pub use #struct_name as Req;
@@ -1646,7 +1654,7 @@ fn quote_cmd_req_struct(
 
                 quote! {
                     #[::serde_with::serde_as]
-                    #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
+                    #req_derive
                     pub struct #struct_name;
                     pub use #struct_name as Req;
 
@@ -1746,7 +1754,7 @@ fn quote_cmd_req_struct(
 
                 quote! {
                     #[::serde_with::serde_as]
-                    #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)]
+                    #req_derive
                     pub struct #struct_name {
                         #(#fields_codes),*
                     }
