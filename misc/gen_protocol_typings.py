@@ -149,20 +149,42 @@ def cook_field_type(
 
 
 def cook_field(
-    field: Field, field_parse_callback: Callable[[str | None, bool | None], str]
-) -> tuple[str, str]:
+    major_version: MajorVersion,
+    field: Field,
+    field_parse_callback: Callable[[str | None, bool | None], str],
+) -> tuple[str, str] | None:
     field_parse_callback(None, "introduced_in" in field)
-    return (field["name"], cook_field_type(field["type"], field_parse_callback))
+    cooked = (field["name"], cook_field_type(field["type"], field_parse_callback))
+
+    if "introduced_in" in field:
+        introduced_in_major_version, _ = map(int, field["introduced_in"].split("."))
+        if introduced_in_major_version > major_version:
+            # Field introduced in a later version, ignore it
+            return None
+        elif introduced_in_major_version == major_version:
+            # Field introduced in the current version, must be optional
+            name, ty = cooked
+            cooked = (name, f"{ty} | None")
+        else:
+            # Field introduced in a previous version, nothing to do
+            pass
+
+    return cooked
 
 
 def gen_req(
+    major_version: MajorVersion,
     req: CmdReq,
     collected_items: list[str],
     field_parse_callback: Callable[[str | None, bool | None], str],
 ) -> str:
     collected_items.append("Req")
 
-    fields = [cook_field(f, field_parse_callback) for f in req.get("fields", ())]
+    fields = [
+        field
+        for f in req.get("fields", ())
+        if (field := cook_field(major_version, f, field_parse_callback)) is not None
+    ]
     unit_type_name = req.get("unit")
     if unit_type_name:
         fields.append(("unit", unit_type_name))
@@ -182,6 +204,7 @@ def gen_req(
 
 
 def gen_reps(
+    major_version: MajorVersion,
     reps: list[CmdRep],
     collected_items: list[str],
     field_parse_callback: Callable[[str | None, bool | None], str],
@@ -209,7 +232,12 @@ class RepUnknownStatus(Rep):
         rep_cls_name = f"Rep{snake_case_to_upper_camel_case(rep['status'])}"
         collected_items.append(rep_cls_name)
 
-        fields = [cook_field(f, field_parse_callback) for f in rep.get("fields", ())]
+        fields = [
+            field
+            for f in rep.get("fields", ())
+            if (field := cook_field(major_version, f, field_parse_callback)) is not None
+        ]
+
         unit_type_name = rep.get("unit")
         if unit_type_name:
             fields.append(("unit", unit_type_name))
@@ -230,17 +258,23 @@ class {rep_cls_name}(Rep):
 
 
 def gen_nested_type(
+    major_version: MajorVersion,
     nested_type: NestedType,
     collected_items: list[str],
     field_parse_callback: Callable[[str | None, bool | None], str],
 ) -> str:
     if "variants" in nested_type:
-        return gen_nested_type_variant(nested_type, collected_items, field_parse_callback)
+        return gen_nested_type_variant(
+            major_version, nested_type, collected_items, field_parse_callback
+        )
     else:
-        return gen_nested_type_struct(nested_type, collected_items, field_parse_callback)
+        return gen_nested_type_struct(
+            major_version, nested_type, collected_items, field_parse_callback
+        )
 
 
 def gen_nested_type_variant(
+    major_version: MajorVersion,
     nested_type: NestedType,
     collected_items: list[str],
     field_parse_callback: Callable[[str | None, bool | None], str],
@@ -271,7 +305,12 @@ def gen_nested_type_variant(
         for variant in nested_type["variants"]:
             subclass_name = f"{class_name}{variant['name']}"
             collected_items.append(subclass_name)
-            fields = [cook_field(f, field_parse_callback) for f in variant.get("fields", ())]
+
+            fields = [
+                field
+                for f in variant.get("fields", ())
+                if (field := cook_field(major_version, f, field_parse_callback)) is not None
+            ]
 
             code += f"""
 class {subclass_name}({class_name}):
@@ -288,6 +327,7 @@ class {subclass_name}({class_name}):
 
 
 def gen_nested_type_struct(
+    major_version: MajorVersion,
     nested_type: NestedType,
     collected_items: list[str],
     field_parse_callback: Callable[[str | None, bool | None], str],
@@ -295,7 +335,11 @@ def gen_nested_type_struct(
     class_name = nested_type["name"]
     collected_items.append(class_name)
 
-    fields = [cook_field(f, field_parse_callback) for f in nested_type.get("fields", ())]
+    fields = [
+        field
+        for f in nested_type.get("fields", ())
+        if (field := cook_field(major_version, f, field_parse_callback)) is not None
+    ]
 
     code = f"""class {class_name}:
     def __init__(self, {",".join(n + ": " + t for n, t in fields)}) -> None: ...
@@ -314,9 +358,11 @@ def gen_single_version_cmd_spec(
     output_dir: Path,
     family_name: str,
     spec: CmdSpec,
-    v_version: str,
-    collected_items: dict[str, dict[str, list[str]]],
+    major_version: MajorVersion,
+    collected_items: dict[MajorVersion, dict[str, list[str]]],
 ) -> bool:
+    v_version = f"v{major_version}"
+
     # Protocol code generator force separation if a field is marked `introduced_in`
     can_be_reused = True
 
@@ -344,12 +390,14 @@ def gen_single_version_cmd_spec(
 
     code = ""
     for nested_type in spec.get("nested_types", ()):
-        code += gen_nested_type(nested_type, cmd_collected_items, _field_parse_callback)
+        code += gen_nested_type(
+            major_version, nested_type, cmd_collected_items, _field_parse_callback
+        )
         code += "\n\n"
-    code += gen_req(spec["req"], cmd_collected_items, _field_parse_callback)
+    code += gen_req(major_version, spec["req"], cmd_collected_items, _field_parse_callback)
     code += "\n\n"
-    code += gen_reps(spec["reps"], cmd_collected_items, _field_parse_callback)
-    collected_items[v_version][cmd_name] = sorted(cmd_collected_items)
+    code += gen_reps(major_version, spec["reps"], cmd_collected_items, _field_parse_callback)
+    collected_items[major_version][cmd_name] = sorted(cmd_collected_items)
 
     code_prefix = f"{AUTOGENERATED_BANNER}\n\nfrom __future__ import annotations\n\n"
     if need_import_types:
@@ -365,17 +413,16 @@ def gen_pyi_file_for_cmd_spec(
     output_dir: Path,
     family_name: str,
     spec: CmdSpec,
-    collected_items: dict[str, dict[str, list[str]]],
+    collected_items: dict[MajorVersion, dict[str, list[str]]],
 ) -> None:
-    first_version = None
-    other_versions: list[str] = []
+    first_version: int | None = None
+    other_versions: list[int] = []
     for version in sorted(spec["major_versions"]):
-        v_version = f"v{version}"
-        collected_items.setdefault(v_version, {})
+        collected_items.setdefault(version, {})
         if first_version:
-            other_versions.append(v_version)
+            other_versions.append(version)
         else:
-            first_version = v_version
+            first_version = version
     assert first_version is not None
 
     can_be_reused = gen_single_version_cmd_spec(
@@ -394,7 +441,7 @@ def gen_pyi_file_for_cmd_spec(
             collected_items[other_version][cmd_name] = reexported_items
             code = (
                 f"""
-from ..{first_version}.{cmd_name} import {", ".join(reexported_items)}
+from ..v{first_version}.{cmd_name} import {", ".join(reexported_items)}
 
 
 __all__ = ["""
@@ -402,7 +449,7 @@ __all__ = ["""
                 + "]\n"
             )
 
-            version_dir = output_dir / family_name / other_version
+            version_dir = output_dir / family_name / f"v{other_version}"
             version_dir.mkdir(exist_ok=True, parents=True)
             typing_file = version_dir / f"{cmd_name}.pyi"
             typing_file.write_text(code, encoding="utf8")
@@ -453,7 +500,7 @@ if __name__ == "__main__":
     print("2/4 Generating .pyi files")
 
     # {<family>: {<version>: {<cmd>: [<collected items>]}}}
-    collected_items: dict[str, dict[str, dict[str, list[str]]]] = {}
+    collected_items: dict[str, dict[MajorVersion, dict[str, list[str]]]] = {}
     for family_path in PROTOCOL_SCHEMA_DIR.iterdir():
         family_name = family_path.name
         collected_items[family_name] = {}
@@ -514,10 +561,10 @@ class ActiveUsersLimit:
         family_code = f"{AUTOGENERATED_BANNER}\n\nfrom __future__ import annotations\n\n"
         version = ""
         for version in ordered_versions:
-            family_code += f"from . import {version}\n"
-        family_code += f"from . import {version} as latest\n"
+            family_code += f"from . import v{version}\n"
+        family_code += f"from . import v{version} as latest\n"
         family_code += (
-            '\n\n__all__ =["latest", ' + ", ".join(f'"{v}"' for v in ordered_versions) + "]\n"
+            '\n\n__all__ =["latest", ' + ", ".join(f'"v{v}"' for v in ordered_versions) + "]\n"
         )
         (OUTPUT_PROTOCOL_TYPING_DIR / family / "__init__.pyi").write_text(
             family_code, encoding="utf8"
@@ -540,7 +587,7 @@ class AnyCmdReq:
             version_code += (
                 '\n\n__all__ =["AnyCmdReq", ' + ", ".join(f'"{c}"' for c in cmds_names) + "]\n"
             )
-            (OUTPUT_PROTOCOL_TYPING_DIR / family / version / "__init__.pyi").write_text(
+            (OUTPUT_PROTOCOL_TYPING_DIR / family / f"v{version}" / "__init__.pyi").write_text(
                 version_code, encoding="utf8"
             )
 
