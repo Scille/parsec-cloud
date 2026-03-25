@@ -2581,11 +2581,16 @@ version = "3.8.1-a.0+dev"
 dependencies = [
  "bytes",
  "libparsec_zstd",
+ "paste",
+ "regex-syntax",
  "rmp",
  "rmp-serde",
  "rmpv",
  "serde",
+ "serde_bytes",
  "serde_with",
+ "unicode-normalization",
+ "uuid",
 ]
 
 [[package]]

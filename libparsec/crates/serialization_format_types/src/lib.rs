@@ -1,13 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+pub mod ext_types;
 pub mod rmp_serialize;
 mod format;
-mod protocol;
+mod id;
 mod maybe;
+mod protocol;
 
+pub use format::*;
+pub use id::*;
 pub use maybe::*;
 pub use protocol::*;
-pub use format::*;
 
 // Numeric types aliases for the data in the schemas.
 // We use them instead of standard Rust types for readability and to ease changing

@@ -5,8 +5,125 @@ use serde_with::{serde_as, DeserializeFromStr, SerializeDisplay};
 use std::{convert::TryFrom, fmt::Display, hash::Hash, ops::Deref, str::FromStr};
 use unicode_normalization::UnicodeNormalization;
 
+// Re-export types that have been moved to `libparsec_serialization_format_types`
+pub use libparsec_serialization_format_types::{
+    AccountAuthMethodID, AccountVaultItemOpaqueKeyID, AsyncEnrollmentID, BlockID, ChunkID,
+    GreetingAttemptID, InvalidAccountAuthMethodID, InvalidAccountVaultItemOpaqueKeyID,
+    InvalidAsyncEnrollmentID, InvalidBlockID, InvalidChunkID, InvalidGreetingAttemptID,
+    InvalidOrganizationID, InvalidPKIEnrollmentID, InvalidSequesterServiceID,
+    InvalidTOTPOpaqueKeyID, InvalidUserProfile, InvalidVlobID, OrganizationID, PKIEnrollmentID,
+    SequesterServiceID, TOTPOpaqueKeyID, UserProfile, VlobID,
+};
 
 const HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN: &str = "redacted.invalid";
+
+/*
+ * String-based ID type macro (kept here for DeviceLabel which stays in this crate)
+ */
+
+macro_rules! new_string_based_id_type {
+    (pub $name:ident, $match_fn:expr) => {
+        #[derive(
+            Clone,
+            serde_with::SerializeDisplay,
+            serde_with::DeserializeFromStr,
+            PartialEq,
+            Eq,
+            Hash,
+            PartialOrd,
+            Ord,
+        )]
+        pub struct $name(String);
+
+        impl Default for $name {
+            fn default() -> Self {
+                Self(uuid::Uuid::new_v4().as_simple().to_string())
+            }
+        }
+
+        impl std::convert::AsRef<str> for $name {
+            #[inline]
+            fn as_ref(&self) -> &str {
+                &self.0
+            }
+        }
+
+        impl_debug_from_display!($name);
+
+        // Note: Display is used for Serialization !
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str(&self.0)
+            }
+        }
+
+        paste::paste! {
+            #[derive(Debug, Clone, Copy)]
+            pub struct [<Invalid $name>];
+
+            impl ::std::error::Error for [<Invalid $name>] {}
+
+            impl ::std::fmt::Display for [<Invalid $name>] {
+                fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                    f.write_str(concat!("Invalid ", stringify!($name)))
+                }
+            }
+
+            impl std::convert::TryFrom<&str> for $name {
+                type Error = [<Invalid $name>];
+
+                fn try_from(s: &str) -> Result<Self, Self::Error> {
+                    use ::unicode_normalization::UnicodeNormalization;
+                    let id: String = s.nfc().collect();
+
+                    if $match_fn(&id) {
+                        Ok(Self(id))
+                    } else {
+                        Err([<Invalid $name>])
+                    }
+                }
+            }
+
+            // Note: FromStr is used for Deserialization !
+            impl FromStr for $name {
+                type Err = [<Invalid $name>];
+
+                #[inline]
+                fn from_str(s: &str) -> Result<Self, Self::Err> {
+                    $name::try_from(s)
+                }
+            }
+        }
+
+        impl From<$name> for String {
+            fn from(item: $name) -> String {
+                item.0
+            }
+        }
+
+        impl ::libparsec_serialization_format_types::rmp_serialize::Serialize for $name {
+            fn serialize(
+                &self,
+                writer: &mut Vec<u8>,
+            ) -> Result<(), ::libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                ::libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(self.0.as_str(), writer)
+            }
+        }
+
+        impl ::libparsec_serialization_format_types::rmp_serialize::Deserialize for $name {
+            fn deserialize(
+                value: ::libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
+            ) -> Result<Self, ::libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                let s: String = ::libparsec_serialization_format_types::rmp_serialize::Deserialize::deserialize(value)?;
+                s.as_str().try_into().map_err(|_| {
+                    ::libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidValue(
+                        concat!("invalid ", stringify!($name)).to_owned(),
+                    )
+                })
+            }
+        }
+    };
+}
 
 macro_rules! impl_debug_from_display {
     ($name:ident) => {
@@ -21,6 +138,10 @@ macro_rules! impl_debug_from_display {
 
 /*
  * UUID
+ *
+ * This macro is kept here for UserID and DeviceID which cannot be moved to
+ * `libparsec_serialization_format_types` due to test-fixture support requiring
+ * inherent impls and foreign trait impls (orphan rules).
  */
 
 macro_rules! new_uuid_type {
@@ -142,12 +263,10 @@ macro_rules! new_uuid_type {
             where
                 S: ::serde::Serializer,
             {
-                // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
-                // rmp_serde this should be treated as an extension type
                 serializer.serialize_newtype_struct(
                     ::rmp_serde::MSGPACK_EXT_STRUCT_NAME,
                     &(
-                        $crate::ext_types::UUID_EXT_ID,
+                        ::libparsec_serialization_format_types::ext_types::UUID_EXT_ID,
                         ::serde_bytes::Bytes::new(self.as_bytes()),
                     ),
                 )
@@ -159,131 +278,16 @@ macro_rules! new_uuid_type {
             where
                 D: ::serde::Deserializer<'de>,
             {
-                // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
-                // rmp_serde this should be treated as an extension type
                 deserializer
                     .deserialize_newtype_struct(
                         ::rmp_serde::MSGPACK_EXT_STRUCT_NAME,
-                        $crate::ext_types::UuidExtVisitor,
+                        ::libparsec_serialization_format_types::ext_types::UuidExtVisitor,
                     )
                     .map($name)
             }
         }
     };
 }
-
-macro_rules! new_string_based_id_type {
-    (pub $name:ident, $match_fn:expr) => {
-        #[derive(
-            Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash, PartialOrd, Ord,
-        )]
-        pub struct $name(String);
-
-        impl Default for $name {
-            fn default() -> Self {
-                Self(uuid::Uuid::new_v4().as_simple().to_string())
-            }
-        }
-
-        impl std::convert::AsRef<str> for $name {
-            #[inline]
-            fn as_ref(&self) -> &str {
-                &self.0
-            }
-        }
-
-        impl_debug_from_display!($name);
-
-        // Note: Display is used for Serialization !
-        impl std::fmt::Display for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                f.write_str(&self.0)
-            }
-        }
-
-        paste::paste! {
-            #[derive(Debug, Clone, Copy)]
-            pub struct [<Invalid $name>];
-
-            impl ::std::error::Error for [<Invalid $name>] {}
-
-            impl ::std::fmt::Display for [<Invalid $name>] {
-                fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                    f.write_str(concat!("Invalid ", stringify!($name)))
-                }
-            }
-
-            impl TryFrom<&str> for $name {
-                type Error = [<Invalid $name>];
-
-                fn try_from(s: &str) -> Result<Self, Self::Error> {
-                    let id: String = s.nfc().collect();
-
-                    if $match_fn(&id) {
-                        Ok(Self(id))
-                    } else {
-                        Err([<Invalid $name>])
-                    }
-                }
-            }
-
-            // Note: FromStr is used for Deserialization !
-            impl FromStr for $name {
-                type Err = [<Invalid $name>];
-
-                #[inline]
-                fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    $name::try_from(s)
-                }
-            }
-        }
-
-        impl From<$name> for String {
-            fn from(item: $name) -> String {
-                item.0
-            }
-        }
-    };
-}
-
-new_uuid_type!(pub VlobID);
-new_uuid_type!(pub BlockID);
-new_uuid_type!(pub ChunkID);
-new_uuid_type!(pub SequesterServiceID);
-new_uuid_type!(pub AsyncEnrollmentID);
-new_uuid_type!(pub PKIEnrollmentID);
-new_uuid_type!(pub GreetingAttemptID);
-new_uuid_type!(pub AccountAuthMethodID);
-new_uuid_type!(pub AccountVaultItemOpaqueKeyID);
-new_uuid_type!(pub TOTPOpaqueKeyID);
-// ChunkID are often created from file BlockID, so conversion is useful
-impl From<BlockID> for ChunkID {
-    fn from(value: BlockID) -> Self {
-        Self(value.0)
-    }
-}
-impl From<ChunkID> for BlockID {
-    fn from(value: ChunkID) -> Self {
-        Self(value.0)
-    }
-}
-
-// Equivalent to pattern "^[\w\-]{1,32}$" on 32 bytes
-#[inline]
-fn match_organization_id(id: &str) -> bool {
-    // `str::len` returns the number of bytes
-    let bytes_size = id.len();
-
-    let is_valid_char = |c: char| c == '-' || regex_syntax::is_word_character(c);
-
-    (1..=32).contains(&bytes_size) && id.chars().all(is_valid_char)
-}
-
-/*
- * OrganizationID
- */
-
-new_string_based_id_type!(pub OrganizationID, match_organization_id);
 
 /*
  * UserID & DeviceID
@@ -782,61 +786,7 @@ impl TryFrom<email_address_parser::EmailAddress> for EmailAddress {
     }
 }
 
-/*
- * UserProfile
- */
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-/// `UserProfile` represents the different profiles a user can have in the organization.
-///
-/// This should not be confused with `RealmRole` (which represents the different roles
-/// a user can have in a realm) !
-pub enum UserProfile {
-    ///`Admin` can invite and revoke users and on top of what standard user can do.
-    Admin,
-    /// `Standard` user can create new realms and invite new devices for himself.
-    Standard,
-    /// `Outsider` is only able to collaborate on existing realm and can only
-    /// access redacted certificates (i.e. the realms created by an outsider
-    /// cannot be shared and the outsider cannot be OWNER/MANAGER
-    /// on a realm shared with him)
-    Outsider,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct InvalidUserProfile;
-
-impl std::error::Error for InvalidUserProfile {}
-
-impl std::fmt::Display for InvalidUserProfile {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.write_str("Invalid UserProfile")
-    }
-}
-
-impl FromStr for UserProfile {
-    type Err = InvalidUserProfile;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_uppercase().as_str() {
-            "ADMIN" => Ok(Self::Admin),
-            "STANDARD" => Ok(Self::Standard),
-            "OUTSIDER" => Ok(Self::Outsider),
-            _ => Err(InvalidUserProfile),
-        }
-    }
-}
-
-impl Display for UserProfile {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Admin => write!(f, "ADMIN"),
-            Self::Standard => write!(f, "STANDARD"),
-            Self::Outsider => write!(f, "OUTSIDER"),
-        }
-    }
-}
+// UserProfile is now defined in and re-exported from `libparsec_serialization_format_types`
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FileDescriptor(pub u32);

@@ -10,9 +10,6 @@ use pretty_assertions::assert_eq;
 
 use libparsec_serialization_format::parsec_data_from_contents;
 
-#[path = "./common/libparsec_types_mock.rs"]
-mod libparsec_types;
-
 #[test]
 fn simple() {
     parsec_data_from_contents!(
@@ -22,7 +19,7 @@ fn simple() {
             "other_fields": [
                 {
                     "name": "author",
-                    "type": "DeviceID"
+                    "type": "OrganizationID"
                 },
                 {
                     "name": "version",
@@ -40,7 +37,9 @@ fn simple() {
 
     let data = FooManifestData {
         ty: FooManifestDataType,
-        author: libparsec_types::DeviceID("alice@pc1".to_owned()),
+        author: "MyOrg"
+            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .unwrap(),
         version: 1,
         certificate: Bytes::from_static(b"whatever"),
     };
@@ -51,8 +50,10 @@ fn simple() {
 
 #[test]
 fn with_default_field() {
-    fn generate_default_device_id() -> libparsec_types::DeviceID {
-        libparsec_types::DeviceID("default".to_owned())
+    fn generate_default_org_id() -> libparsec_serialization_format_types::OrganizationID {
+        "default"
+            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .unwrap()
     }
     parsec_data_from_contents!(
         r#"{
@@ -61,8 +62,8 @@ fn with_default_field() {
             "other_fields": [
                 {
                     "name": "author",
-                    "type": "DeviceID",
-                    "default": "generate_default_device_id"
+                    "type": "OrganizationID",
+                    "default": "generate_default_org_id"
                 },
                 {
                     "name": "version",
@@ -77,7 +78,9 @@ fn with_default_field() {
     let data: FooManifestData = FooManifestData::load(&raw).unwrap();
     let expected = FooManifestData {
         ty: FooManifestDataType,
-        author: libparsec_types::DeviceID("default".to_owned()),
+        author: "default"
+            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .unwrap(),
         version: 42,
     };
     assert_eq!(data, expected)
@@ -92,7 +95,7 @@ fn introduce_in_field() {
             "other_fields": [
                 {
                     "name": "author",
-                    "type": "DeviceID"
+                    "type": "OrganizationID"
                 },
                 {
                     "name": "is_cool_guy",
@@ -105,22 +108,26 @@ fn introduce_in_field() {
 
     let data_with = FooManifestData {
         ty: FooManifestDataType,
-        author: libparsec_types::DeviceID("alice@pc1".to_owned()),
+        author: "MyOrg"
+            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .unwrap(),
         is_cool_guy: libparsec_serialization_format_types::Maybe::Present(true),
     };
     let data_without = FooManifestData {
         ty: FooManifestDataType,
-        author: libparsec_types::DeviceID("alice@pc1".to_owned()),
+        author: "MyOrg"
+            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .unwrap(),
         is_cool_guy: libparsec_serialization_format_types::Maybe::Absent,
     };
 
-    // `{"type": "foo_manifest", "author": "alice@pc1"}` in msgpack
-    let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331");
+    // `{"type": "foo_manifest", "author": "MyOrg"}` in msgpack
+    let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a6617574686f72a54d794f7267");
     let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data_without);
 
-    // `{"type": "foo_manifest", "author": "alice@pc1", "is_cool_guy": true}` in msgpack
-    let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3");
+    // `{"type": "foo_manifest", "author": "MyOrg", "is_cool_guy": true}` in msgpack
+    let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a54d794f7267ab69735f636f6f6c5f677579c3");
     let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data_with);
 
@@ -144,7 +151,7 @@ fn deprecate_in_field() {
             "other_fields": [
                 {
                     "name": "author",
-                    "type": "DeviceID"
+                    "type": "OrganizationID"
                 },
                 {
                     "name": "is_cool_guy",
@@ -157,16 +164,18 @@ fn deprecate_in_field() {
 
     let data = FooManifestData {
         ty: FooManifestDataType,
-        author: libparsec_types::DeviceID("alice@pc1".to_owned()),
+        author: "MyOrg"
+            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .unwrap(),
     };
 
-    // `{"type": "foo_manifest", "author": "alice@pc1"}` in msgpack
-    let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331");
+    // `{"type": "foo_manifest", "author": "MyOrg"}` in msgpack
+    let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a6617574686f72a54d794f7267");
     let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data);
 
-    // `{"type": "foo_manifest", "author": "alice@pc1", "is_cool_guy": true}` in msgpack
-    let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3");
+    // `{"type": "foo_manifest", "author": "MyOrg", "is_cool_guy": true}` in msgpack
+    let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a54d794f7267ab69735f636f6f6c5f677579c3");
     let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data);
 
@@ -186,7 +195,7 @@ fn introduce_then_deprecate_in_field() {
             "other_fields": [
                 {
                     "name": "author",
-                    "type": "DeviceID"
+                    "type": "OrganizationID"
                 },
                 {
                     "name": "is_cool_guy",
@@ -200,16 +209,18 @@ fn introduce_then_deprecate_in_field() {
 
     let data = FooManifestData {
         ty: FooManifestDataType,
-        author: libparsec_types::DeviceID("alice@pc1".to_owned()),
+        author: "MyOrg"
+            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .unwrap(),
     };
 
-    // `{"type": "foo_manifest", "author": "alice@pc1"}` in msgpack
-    let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331");
+    // `{"type": "foo_manifest", "author": "MyOrg"}` in msgpack
+    let raw = hex!("82a474797065ac666f6f5f6d616e6966657374a6617574686f72a54d794f7267");
     let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data);
 
-    // `{"type": "foo_manifest", "author": "alice@pc1", "is_cool_guy": true}` in msgpack
-    let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a9616c69636540706331ab69735f636f6f6c5f677579c3");
+    // `{"type": "foo_manifest", "author": "MyOrg", "is_cool_guy": true}` in msgpack
+    let raw = hex!("83a474797065ac666f6f5f6d616e6966657374a6617574686f72a54d794f7267ab69735f636f6f6c5f677579c3");
     let loaded_without: FooManifestData = FooManifestData::load(&raw).unwrap();
     assert_eq!(loaded_without, data);
 

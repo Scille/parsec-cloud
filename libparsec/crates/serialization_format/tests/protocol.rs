@@ -10,8 +10,10 @@ use pretty_assertions::assert_eq;
 
 use libparsec_serialization_format::generate_protocol_cmds_family_from_contents;
 
-#[path = "./common/libparsec_types_mock.rs"]
-mod libparsec_types;
+// The protocol macros generate `use super::libparsec_types;` to allow mocking types in tests.
+// We provide an empty module here since all types used in these tests come from
+// `libparsec_serialization_format_types` directly.
+mod libparsec_types {}
 
 #[test]
 fn simple() {
@@ -100,7 +102,7 @@ fn complex_type() {
                     "fields": [
                         {
                             "name": "ping",
-                            "type": "Map<Integer, (DeviceID, Boolean)>"
+                            "type": "Map<Integer, (OrganizationID, Boolean)>"
                         }
                     ]
                 },
@@ -122,7 +124,15 @@ fn complex_type() {
     // Check round-trip serialize/deserialize
 
     let req = family_cmds::v1::ping::Req {
-        ping: HashMap::from([(1, (libparsec_types::DeviceID("alice@pc1".to_owned()), true))]),
+        ping: HashMap::from([(
+            1,
+            (
+                "MyOrg"
+                    .parse::<libparsec_serialization_format_types::OrganizationID>()
+                    .unwrap(),
+                true,
+            ),
+        )]),
     };
     let dumped = req.dump().unwrap();
     assert_eq!(

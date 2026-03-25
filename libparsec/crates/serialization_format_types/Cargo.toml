@@ -17,5 +17,10 @@ rmp = "0.8"
 rmpv = "1.3"
 serde = { workspace = true, features = ["derive"] }
 serde_with = { workspace = true, features = ["std", "macros"] }
+serde_bytes = { workspace = true, features = ["std"] }
 rmp-serde = { workspace = true }
 libparsec_zstd = { workspace = true }
+uuid = { workspace = true, features = ["serde", "v4", "fast-rng"] }
+paste = { workspace = true }
+unicode-normalization = { workspace = true, features = ["std"] }
+regex-syntax = { workspace = true, features = ["unicode-perl"] }
