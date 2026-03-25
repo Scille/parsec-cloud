@@ -12,7 +12,7 @@ use libparsec_serialization_format::generate_protocol_cmds_family_from_contents;
 
 // The protocol macros generate `use super::libparsec_types;` to allow mocking types in tests.
 // We provide an empty module here since all types used in these tests come from
-// `libparsec_serialization_format_types` directly.
+// `libparsec_types_lite` directly.
 mod libparsec_types {}
 
 #[test]
@@ -128,7 +128,7 @@ fn complex_type() {
             1,
             (
                 "MyOrg"
-                    .parse::<libparsec_serialization_format_types::OrganizationID>()
+                    .parse::<libparsec_types_lite::OrganizationID>()
                     .unwrap(),
                 true,
             ),
@@ -275,10 +275,10 @@ fn introduce_in_field() {
 
     let v1 = family_cmds::v1::ping::Req {};
     let v2_with = family_cmds::v2::ping::Req {
-        ping: libparsec_serialization_format_types::Maybe::Present("foo".to_owned()),
+        ping: libparsec_types_lite::Maybe::Present("foo".to_owned()),
     };
     let v2_without = family_cmds::v2::ping::Req {
-        ping: libparsec_serialization_format_types::Maybe::Absent,
+        ping: libparsec_types_lite::Maybe::Absent,
     };
     let v3 = family_cmds::v3::ping::Req {
         ping: "foo".to_owned(),
@@ -302,10 +302,10 @@ fn introduce_in_field() {
 
     let v1 = family_cmds::v1::ping2::Rep::Ok {};
     let v2_with = family_cmds::v2::ping2::Rep::Ok {
-        pong: libparsec_serialization_format_types::Maybe::Present(true),
+        pong: libparsec_types_lite::Maybe::Present(true),
     };
     let v2_without = family_cmds::v2::ping2::Rep::Ok {
-        pong: libparsec_serialization_format_types::Maybe::Absent,
+        pong: libparsec_types_lite::Maybe::Absent,
     };
     let v3 = family_cmds::v3::ping2::Rep::Ok { pong: true };
 

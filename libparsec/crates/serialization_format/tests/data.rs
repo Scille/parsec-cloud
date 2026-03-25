@@ -38,7 +38,7 @@ fn simple() {
     let data = FooManifestData {
         ty: FooManifestDataType,
         author: "MyOrg"
-            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .parse::<libparsec_types_lite::OrganizationID>()
             .unwrap(),
         version: 1,
         certificate: Bytes::from_static(b"whatever"),
@@ -50,9 +50,9 @@ fn simple() {
 
 #[test]
 fn with_default_field() {
-    fn generate_default_org_id() -> libparsec_serialization_format_types::OrganizationID {
+    fn generate_default_org_id() -> libparsec_types_lite::OrganizationID {
         "default"
-            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .parse::<libparsec_types_lite::OrganizationID>()
             .unwrap()
     }
     parsec_data_from_contents!(
@@ -79,7 +79,7 @@ fn with_default_field() {
     let expected = FooManifestData {
         ty: FooManifestDataType,
         author: "default"
-            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .parse::<libparsec_types_lite::OrganizationID>()
             .unwrap(),
         version: 42,
     };
@@ -109,16 +109,16 @@ fn introduce_in_field() {
     let data_with = FooManifestData {
         ty: FooManifestDataType,
         author: "MyOrg"
-            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .parse::<libparsec_types_lite::OrganizationID>()
             .unwrap(),
-        is_cool_guy: libparsec_serialization_format_types::Maybe::Present(true),
+        is_cool_guy: libparsec_types_lite::Maybe::Present(true),
     };
     let data_without = FooManifestData {
         ty: FooManifestDataType,
         author: "MyOrg"
-            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .parse::<libparsec_types_lite::OrganizationID>()
             .unwrap(),
-        is_cool_guy: libparsec_serialization_format_types::Maybe::Absent,
+        is_cool_guy: libparsec_types_lite::Maybe::Absent,
     };
 
     // `{"type": "foo_manifest", "author": "MyOrg"}` in msgpack
@@ -165,7 +165,7 @@ fn deprecate_in_field() {
     let data = FooManifestData {
         ty: FooManifestDataType,
         author: "MyOrg"
-            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .parse::<libparsec_types_lite::OrganizationID>()
             .unwrap(),
     };
 
@@ -210,7 +210,7 @@ fn introduce_then_deprecate_in_field() {
     let data = FooManifestData {
         ty: FooManifestDataType,
         author: "MyOrg"
-            .parse::<libparsec_serialization_format_types::OrganizationID>()
+            .parse::<libparsec_types_lite::OrganizationID>()
             .unwrap(),
     };
 

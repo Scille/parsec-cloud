@@ -207,13 +207,13 @@ fn quote_dynamic_cmd_named_field_extract(field: &GenCmdField) -> TokenStream {
 
     if field.added_in_minor_revision {
         quote! {
-            let #field_ident: libparsec_serialization_format_types::Maybe<#field_type> = match obj.remove(#field_name) {
+            let #field_ident: libparsec_types_lite::Maybe<#field_type> = match obj.remove(#field_name) {
                 Some(value) => {
-                    libparsec_serialization_format_types::Maybe::Present(
-                        <#field_type as libparsec_serialization_format_types::rmp_serialize::Deserialize>::deserialize(value)?,
+                    libparsec_types_lite::Maybe::Present(
+                        <#field_type as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(value)?,
                     )
                 }
-                None => libparsec_serialization_format_types::Maybe::Absent,
+                None => libparsec_types_lite::Maybe::Absent,
             };
         }
     } else {
@@ -221,8 +221,8 @@ fn quote_dynamic_cmd_named_field_extract(field: &GenCmdField) -> TokenStream {
             let #field_ident: #field_type = {
                 let value = obj
                     .remove(#field_name)
-                    .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField(#field_name))?;
-                <#field_type as libparsec_serialization_format_types::rmp_serialize::Deserialize>::deserialize(value)?
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField(#field_name))?;
+                <#field_type as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(value)?
             };
         }
     }
@@ -237,15 +237,15 @@ fn quote_dynamic_cmd_field_writes_from_self(fields: &[GenCmdField]) -> Vec<Token
             let field_ident = field_name_to_ident(field_name);
             if field.added_in_minor_revision {
                 quote! {
-                    if let libparsec_serialization_format_types::Maybe::Present(value) = &self.#field_ident {
-                        libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                        libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(value, writer)?;
+                    if let libparsec_types_lite::Maybe::Present(value) = &self.#field_ident {
+                        libparsec_types_lite::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                        libparsec_types_lite::rmp_serialize::Serialize::serialize(value, writer)?;
                     }
                 }
             } else {
                 quote! {
-                    libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                    libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(&self.#field_ident, writer)?;
+                    libparsec_types_lite::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                    libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.#field_ident, writer)?;
                 }
             }
         })
@@ -261,8 +261,8 @@ fn quote_dynamic_cmd_field_count_expr_from_bindings(fields: &[GenCmdField]) -> T
             if field.added_in_minor_revision {
                 quote! {
                     match #field_ident {
-                        libparsec_serialization_format_types::Maybe::Present(_) => 1usize,
-                        libparsec_serialization_format_types::Maybe::Absent => 0usize,
+                        libparsec_types_lite::Maybe::Present(_) => 1usize,
+                        libparsec_types_lite::Maybe::Absent => 0usize,
                     }
                 }
             } else {
@@ -281,15 +281,15 @@ fn quote_dynamic_cmd_field_writes_from_bindings(fields: &[GenCmdField]) -> Vec<T
             let field_ident = field_name_to_ident(field_name);
             if field.added_in_minor_revision {
                 quote! {
-                    if let libparsec_serialization_format_types::Maybe::Present(value) = #field_ident {
-                        libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                        libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(value, writer)?;
+                    if let libparsec_types_lite::Maybe::Present(value) = #field_ident {
+                        libparsec_types_lite::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                        libparsec_types_lite::rmp_serialize::Serialize::serialize(value, writer)?;
                     }
                 }
             } else {
                 quote! {
-                    libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                    libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(#field_ident, writer)?;
+                    libparsec_types_lite::rmp_serialize::encode::write_str(writer, #field_name).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                    libparsec_types_lite::rmp_serialize::Serialize::serialize(#field_ident, writer)?;
                 }
             }
         })
@@ -308,7 +308,7 @@ fn quote_dynamic_cmd_struct_serialize_impl(
         .map(|field| {
             let field_ident = field_name_to_ident(field.name.as_str());
             quote! {
-                if matches!(self.#field_ident, libparsec_serialization_format_types::Maybe::Present(_)) {
+                if matches!(self.#field_ident, libparsec_types_lite::Maybe::Present(_)) {
                     map_len += 1;
                 }
             }
@@ -320,20 +320,20 @@ fn quote_dynamic_cmd_struct_serialize_impl(
         .count();
 
     quote! {
-        impl libparsec_serialization_format_types::rmp_serialize::Serialize for #name {
+        impl libparsec_types_lite::rmp_serialize::Serialize for #name {
             fn serialize(
                 &self,
                 writer: &mut ::std::vec::Vec<u8>,
-            ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+            ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
                 let mut map_len = #static_count;
                 #(#dynamic_count_terms)*
                 let map_len: u32 = map_len.try_into().map_err(|_| {
-                    libparsec_serialization_format_types::rmp_serialize::SerializeError::LengthOverflow {
+                    libparsec_types_lite::rmp_serialize::SerializeError::LengthOverflow {
                         kind: "map",
                         len: map_len,
                     }
                 })?;
-                libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
                 #(#field_writes)*
                 Ok(())
             }
@@ -357,16 +357,16 @@ fn quote_dynamic_cmd_struct_deserialize_impl(
         .collect::<Vec<_>>();
 
     quote! {
-        impl libparsec_serialization_format_types::rmp_serialize::Deserialize for #name {
+        impl libparsec_types_lite::rmp_serialize::Deserialize for #name {
             fn deserialize(
-                value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
-            ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+            ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                 let entries = match value {
                     rmpv::ValueRef::Map(entries) => entries,
                     other => {
-                        return Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
+                        return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                             expected: "map",
-                            got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
+                            got: libparsec_types_lite::rmp_serialize::value_kind(&other),
                         })
                     }
                 };
@@ -392,16 +392,16 @@ fn quote_unknown_status_deserialize_impl(serialization_impl: SerializationImpl) 
         SerializationImpl::Serde => quote! {},
         SerializationImpl::DynamicRmp => {
             quote! {
-                impl libparsec_serialization_format_types::rmp_serialize::Deserialize for UnknownStatus {
+                impl libparsec_types_lite::rmp_serialize::Deserialize for UnknownStatus {
                     fn deserialize(
-                        value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
-                    ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+                    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                         let entries = match value {
                             rmpv::ValueRef::Map(entries) => entries,
                             other => {
-                                return Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
+                                return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                     expected: "map",
-                                    got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
+                                    got: libparsec_types_lite::rmp_serialize::value_kind(&other),
                                 })
                             }
                         };
@@ -415,7 +415,7 @@ fn quote_unknown_status_deserialize_impl(serialization_impl: SerializationImpl) 
                         let status = {
                             let value = obj
                                 .remove("status")
-                                .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField("status"))?;
+                                .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("status"))?;
                             String::deserialize(value)?
                         };
                         let reason: Option<String> = match obj.remove("reason") {
@@ -746,7 +746,7 @@ fn quote_versioned_cmds(
             let cmd_name_literal = cmd.cmd.as_str();
             quote! {
                 #cmd_name_literal => Ok(Self::#variant_name(
-                    <#module_name::Req as libparsec_serialization_format_types::rmp_serialize::Deserialize>::deserialize(
+                    <#module_name::Req as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(
                         rmpv::ValueRef::Map(entries),
                     )?,
                 )),
@@ -776,21 +776,21 @@ fn quote_versioned_cmds(
             impl AnyCmdReq {
                 pub fn load(
                     buf: &[u8],
-                ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
-                    libparsec_serialization_format_types::rmp_serialize::from_slice(buf)
+                ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+                    libparsec_types_lite::rmp_serialize::from_slice(buf)
                 }
             }
 
-            impl libparsec_serialization_format_types::rmp_serialize::Deserialize for AnyCmdReq {
+            impl libparsec_types_lite::rmp_serialize::Deserialize for AnyCmdReq {
                 fn deserialize(
-                    value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
-                ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                    value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+                ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                     let entries = match value {
                         rmpv::ValueRef::Map(entries) => entries,
                         other => {
-                            return Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
+                            return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                 expected: "map",
-                                got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
+                                got: libparsec_types_lite::rmp_serialize::value_kind(&other),
                             })
                         }
                     };
@@ -799,7 +799,7 @@ fn quote_versioned_cmds(
                     for (raw_key, raw_value) in entries.iter() {
                         let key = match raw_key {
                             rmpv::ValueRef::String(s) => s.as_str().ok_or_else(|| {
-                                libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidValue(
+                                libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
                                     "invalid UTF-8 string".to_owned(),
                                 )
                             })?,
@@ -810,15 +810,15 @@ fn quote_versioned_cmds(
                         }
                         let value = match raw_value {
                             rmpv::ValueRef::String(s) => s.as_str().ok_or_else(|| {
-                                libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidValue(
+                                libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
                                     "invalid UTF-8 string".to_owned(),
                                 )
                             })?,
                             other => {
                                 return Err(
-                                    libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
+                                    libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                         expected: "string",
-                                        got: libparsec_serialization_format_types::rmp_serialize::value_kind(other),
+                                        got: libparsec_types_lite::rmp_serialize::value_kind(other),
                                     },
                                 )
                             }
@@ -828,11 +828,11 @@ fn quote_versioned_cmds(
                     }
 
                     let cmd = cmd
-                        .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField("cmd"))?;
+                        .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("cmd"))?;
 
                     match cmd.as_str() {
                         #(#any_cmd_req_dynamic_deserialize_cases)*
-                        _ => Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidValue(
+                        _ => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
                             format!("unknown command `{}`", cmd),
                         )),
                     }
@@ -882,10 +882,10 @@ fn quote_cmd(
             let reused_version_module_name = format_ident!("v{}", version);
             let protocol_request_impl = match serialization_impl {
                 SerializationImpl::Serde => quote! {
-                    impl libparsec_serialization_format_types::ProtocolRequest<#cmd_version> for Req {
+                    impl libparsec_types_lite::ProtocolRequest<#cmd_version> for Req {
                         type Response = Rep;
                         type DumpError = ::rmp_serde::encode::Error;
-                        const FAMILY: libparsec_serialization_format_types::ProtocolFamily = libparsec_serialization_format_types::ProtocolFamily::#family_enum_variant;
+                        const FAMILY: libparsec_types_lite::ProtocolFamily = libparsec_types_lite::ProtocolFamily::#family_enum_variant;
 
                         fn api_dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                             self.dump()
@@ -897,12 +897,12 @@ fn quote_cmd(
                     }
                 },
                 SerializationImpl::DynamicRmp => quote! {
-                    impl libparsec_serialization_format_types::ProtocolRequest<#cmd_version> for Req {
+                    impl libparsec_types_lite::ProtocolRequest<#cmd_version> for Req {
                         type Response = Rep;
-                        type DumpError = libparsec_serialization_format_types::rmp_serialize::SerializeError;
-                        const FAMILY: libparsec_serialization_format_types::ProtocolFamily = libparsec_serialization_format_types::ProtocolFamily::#family_enum_variant;
+                        type DumpError = libparsec_types_lite::rmp_serialize::SerializeError;
+                        const FAMILY: libparsec_types_lite::ProtocolFamily = libparsec_types_lite::ProtocolFamily::#family_enum_variant;
 
-                        fn api_dump(&self) -> Result<Vec<u8>, libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                        fn api_dump(&self) -> Result<Vec<u8>, libparsec_types_lite::rmp_serialize::SerializeError> {
                             self.dump()
                         }
 
@@ -953,15 +953,15 @@ fn quote_cmd(
                 },
                 SerializationImpl::DynamicRmp => quote! {
                     impl Req {
-                        pub fn dump(&self) -> Result<Vec<u8>, libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                        pub fn dump(&self) -> Result<Vec<u8>, libparsec_types_lite::rmp_serialize::SerializeError> {
                             let mut buff = vec![];
-                            libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(self, &mut buff)?;
+                            libparsec_types_lite::rmp_serialize::Serialize::serialize(self, &mut buff)?;
                             Ok(buff)
                         }
 
                         pub fn load_response(
                             buf: &[u8],
-                        ) -> Result<Rep, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                        ) -> Result<Rep, libparsec_types_lite::rmp_serialize::DeserializeError> {
                             Rep::load(buf)
                         }
                     }
@@ -970,10 +970,10 @@ fn quote_cmd(
 
             let protocol_request_impl = match serialization_impl {
                 SerializationImpl::Serde => quote! {
-                    impl libparsec_serialization_format_types::ProtocolRequest<#cmd_version> for Req {
+                    impl libparsec_types_lite::ProtocolRequest<#cmd_version> for Req {
                         type Response = Rep;
                         type DumpError = ::rmp_serde::encode::Error;
-                        const FAMILY: libparsec_serialization_format_types::ProtocolFamily = libparsec_serialization_format_types::ProtocolFamily::#family_enum_variant;
+                        const FAMILY: libparsec_types_lite::ProtocolFamily = libparsec_types_lite::ProtocolFamily::#family_enum_variant;
 
                         fn api_dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                             self.dump()
@@ -985,12 +985,12 @@ fn quote_cmd(
                     }
                 },
                 SerializationImpl::DynamicRmp => quote! {
-                    impl libparsec_serialization_format_types::ProtocolRequest<#cmd_version> for Req {
+                    impl libparsec_types_lite::ProtocolRequest<#cmd_version> for Req {
                         type Response = Rep;
-                        type DumpError = libparsec_serialization_format_types::rmp_serialize::SerializeError;
-                        const FAMILY: libparsec_serialization_format_types::ProtocolFamily = libparsec_serialization_format_types::ProtocolFamily::#family_enum_variant;
+                        type DumpError = libparsec_types_lite::rmp_serialize::SerializeError;
+                        const FAMILY: libparsec_types_lite::ProtocolFamily = libparsec_types_lite::ProtocolFamily::#family_enum_variant;
 
-                        fn api_dump(&self) -> Result<Vec<u8>, libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                        fn api_dump(&self) -> Result<Vec<u8>, libparsec_types_lite::rmp_serialize::SerializeError> {
                             self.dump()
                         }
 
@@ -1015,11 +1015,11 @@ fn quote_cmd(
             let rep_serialize_impl = match serialization_impl {
                 SerializationImpl::Serde => quote! {},
                 SerializationImpl::DynamicRmp => quote! {
-                    impl libparsec_serialization_format_types::rmp_serialize::Serialize for Rep {
+                    impl libparsec_types_lite::rmp_serialize::Serialize for Rep {
                         fn serialize(
                             &self,
                             writer: &mut ::std::vec::Vec<u8>,
-                        ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                        ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
                             match self {
                                 #(#dynamic_rep_serialize_arms),*
                                 Self::UnknownStatus {
@@ -1031,17 +1031,17 @@ fn quote_cmd(
                                         map_len += 1;
                                     }
                                     let map_len: u32 = map_len.try_into().map_err(|_| {
-                                        libparsec_serialization_format_types::rmp_serialize::SerializeError::LengthOverflow {
+                                        libparsec_types_lite::rmp_serialize::SerializeError::LengthOverflow {
                                             kind: "map",
                                             len: map_len,
                                         }
                                     })?;
-                                    libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                                    libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "status").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                                    libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(unknown_status, writer)?;
+                                    libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                                    libparsec_types_lite::rmp_serialize::encode::write_str(writer, "status").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                                    libparsec_types_lite::rmp_serialize::Serialize::serialize(unknown_status, writer)?;
                                     if let Some(reason) = reason {
-                                        libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "reason").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                                        libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(reason, writer)?;
+                                        libparsec_types_lite::rmp_serialize::encode::write_str(writer, "reason").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                                        libparsec_types_lite::rmp_serialize::Serialize::serialize(reason, writer)?;
                                     }
                                     Ok(())
                                 }
@@ -1054,16 +1054,16 @@ fn quote_cmd(
             let rep_deserialize_impl = match serialization_impl {
                 SerializationImpl::Serde => quote! {},
                 SerializationImpl::DynamicRmp => quote! {
-                    impl libparsec_serialization_format_types::rmp_serialize::Deserialize for Rep {
+                    impl libparsec_types_lite::rmp_serialize::Deserialize for Rep {
                         fn deserialize(
-                            value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
-                        ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                            value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+                        ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                             let entries = match value {
                                 rmpv::ValueRef::Map(entries) => entries,
                                 other => {
-                                    return Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
+                                    return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                         expected: "map",
-                                        got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
+                                        got: libparsec_types_lite::rmp_serialize::value_kind(&other),
                                     })
                                 }
                             };
@@ -1077,7 +1077,7 @@ fn quote_cmd(
                             let status = {
                                 let value = obj
                                     .remove("status")
-                                    .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField("status"))?;
+                                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("status"))?;
                                 String::deserialize(value)?
                             };
 
@@ -1106,9 +1106,9 @@ fn quote_cmd(
                     }
                 },
                 SerializationImpl::DynamicRmp => quote! {
-                    pub fn dump(&self) -> Result<Vec<u8>, libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                    pub fn dump(&self) -> Result<Vec<u8>, libparsec_types_lite::rmp_serialize::SerializeError> {
                         let mut buff = vec![];
-                        libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(self, &mut buff)?;
+                        libparsec_types_lite::rmp_serialize::Serialize::serialize(self, &mut buff)?;
                         Ok(buff)
                     }
                 },
@@ -1137,8 +1137,8 @@ fn quote_cmd(
                 SerializationImpl::DynamicRmp => quote! {
                     pub fn load(
                         buf: &[u8],
-                    ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
-                        libparsec_serialization_format_types::rmp_serialize::from_slice(buf)
+                    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+                        libparsec_types_lite::rmp_serialize::from_slice(buf)
                     }
                 },
             };
@@ -1245,9 +1245,9 @@ fn quote_custom_struct_union(
                 if variant.fields.is_empty() {
                     quote! {
                         Self::#variant_name => {
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, 1).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #discriminant_field).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #value_literal).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, 1).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::encode::write_str(writer, #discriminant_field).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::encode::write_str(writer, #value_literal).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
                             Ok(())
                         }
                     }
@@ -1263,13 +1263,13 @@ fn quote_custom_struct_union(
                         Self::#variant_name { #(#field_names),* } => {
                             let map_len = (1usize + #field_count_expr)
                                 .try_into()
-                                .map_err(|_| libparsec_serialization_format_types::rmp_serialize::SerializeError::LengthOverflow {
+                                .map_err(|_| libparsec_types_lite::rmp_serialize::SerializeError::LengthOverflow {
                                     kind: "map",
                                     len: 1usize + #field_count_expr,
                                 })?;
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #discriminant_field).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #value_literal).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::encode::write_str(writer, #discriminant_field).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::encode::write_str(writer, #value_literal).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
                             #(#field_writes)*
                             Ok(())
                         }
@@ -1278,11 +1278,11 @@ fn quote_custom_struct_union(
             });
 
             quote! {
-                impl libparsec_serialization_format_types::rmp_serialize::Serialize for #name {
+                impl libparsec_types_lite::rmp_serialize::Serialize for #name {
                     fn serialize(
                         &self,
                         writer: &mut ::std::vec::Vec<u8>,
-                    ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
                         match self {
                             #(#variant_serializers),*
                         }
@@ -1331,16 +1331,16 @@ fn quote_custom_struct_union(
             });
 
             quote! {
-                impl libparsec_serialization_format_types::rmp_serialize::Deserialize for #name {
+                impl libparsec_types_lite::rmp_serialize::Deserialize for #name {
                     fn deserialize(
-                        value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
-                    ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+                    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                         let entries = match value {
                             rmpv::ValueRef::Map(entries) => entries,
                             other => {
-                                return Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
+                                return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                     expected: "map",
-                                    got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
+                                    got: libparsec_types_lite::rmp_serialize::value_kind(&other),
                                 })
                             }
                         };
@@ -1353,12 +1353,12 @@ fn quote_custom_struct_union(
 
                         let discriminant = obj
                             .remove(#discriminant_field)
-                            .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField(#discriminant_field))?;
+                            .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField(#discriminant_field))?;
                         let discriminant = String::deserialize(discriminant)?;
 
                         match discriminant.as_str() {
                             #(#variants_deserialize),*,
-                            _ => Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidValue(
+                            _ => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
                                 format!("unknown discriminant `{}`", discriminant),
                             )),
                         }
@@ -1411,16 +1411,16 @@ fn quote_custom_literal_union(
             let variants_serialize = variants.iter().map(|(name, value)| {
                 let variant_name = format_ident!("{}", name);
                 quote! {
-                    Self::#variant_name => libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #value).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)
+                    Self::#variant_name => libparsec_types_lite::rmp_serialize::encode::write_str(writer, #value).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)
                 }
             });
 
             quote! {
-                impl libparsec_serialization_format_types::rmp_serialize::Serialize for #name {
+                impl libparsec_types_lite::rmp_serialize::Serialize for #name {
                     fn serialize(
                         &self,
                         writer: &mut ::std::vec::Vec<u8>,
-                    ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
                         match self {
                             #(#variants_serialize),*
                         }
@@ -1439,14 +1439,14 @@ fn quote_custom_literal_union(
             });
 
             quote! {
-                impl libparsec_serialization_format_types::rmp_serialize::Deserialize for #name {
+                impl libparsec_types_lite::rmp_serialize::Deserialize for #name {
                     fn deserialize(
-                        value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
-                    ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+                    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                         let discriminant = String::deserialize(value)?;
                         match discriminant.as_str() {
                             #(#variants_deserialize),*,
-                            _ => Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidValue(
+                            _ => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
                                 format!("unknown literal discriminant `{}`", discriminant),
                             )),
                         }
@@ -1557,16 +1557,16 @@ fn quote_cmd_req_struct(
             let serialize_impl = match serialization_impl {
                 SerializationImpl::Serde => quote! {},
                 SerializationImpl::DynamicRmp => quote! {
-                    impl libparsec_serialization_format_types::rmp_serialize::Serialize for Req {
+                    impl libparsec_types_lite::rmp_serialize::Serialize for Req {
                         fn serialize(
                             &self,
                             writer: &mut ::std::vec::Vec<u8>,
-                        ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, 2).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "cmd").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #cmd_name_literal).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "unit").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                            libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(&self.0, writer)?;
+                        ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+                            libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, 2).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::encode::write_str(writer, "cmd").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::encode::write_str(writer, #cmd_name_literal).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::encode::write_str(writer, "unit").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                            libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.0, writer)?;
                             Ok(())
                         }
                     }
@@ -1575,16 +1575,16 @@ fn quote_cmd_req_struct(
             let deserialize_impl = match serialization_impl {
                 SerializationImpl::Serde => quote! {},
                 SerializationImpl::DynamicRmp => quote! {
-                    impl libparsec_serialization_format_types::rmp_serialize::Deserialize for Req {
+                    impl libparsec_types_lite::rmp_serialize::Deserialize for Req {
                         fn deserialize(
-                            value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
-                        ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                            value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+                        ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                             let entries = match value {
                                 rmpv::ValueRef::Map(entries) => entries,
                                 other => {
-                                    return Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
+                                    return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                         expected: "map",
-                                        got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
+                                        got: libparsec_types_lite::rmp_serialize::value_kind(&other),
                                     })
                                 }
                             };
@@ -1598,8 +1598,8 @@ fn quote_cmd_req_struct(
                             let unit = {
                                 let value = obj
                                     .remove("unit")
-                                    .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField("unit"))?;
-                                <#nested_type_name as libparsec_serialization_format_types::rmp_serialize::Deserialize>::deserialize(value)?
+                                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("unit"))?;
+                                <#nested_type_name as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(value)?
                             };
                             Ok(Self(unit))
                         }
@@ -1624,14 +1624,14 @@ fn quote_cmd_req_struct(
                 let serialize_impl = match serialization_impl {
                     SerializationImpl::Serde => quote! {},
                     SerializationImpl::DynamicRmp => quote! {
-                        impl libparsec_serialization_format_types::rmp_serialize::Serialize for Req {
+                        impl libparsec_types_lite::rmp_serialize::Serialize for Req {
                             fn serialize(
                                 &self,
                                 writer: &mut ::std::vec::Vec<u8>,
-                            ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
-                                libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, 1).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                                libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "cmd").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                                libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #cmd_name_literal).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                            ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+                                libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, 1).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                                libparsec_types_lite::rmp_serialize::encode::write_str(writer, "cmd").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                                libparsec_types_lite::rmp_serialize::encode::write_str(writer, #cmd_name_literal).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
                                 Ok(())
                             }
                         }
@@ -1640,15 +1640,15 @@ fn quote_cmd_req_struct(
                 let deserialize_impl = match serialization_impl {
                     SerializationImpl::Serde => quote! {},
                     SerializationImpl::DynamicRmp => quote! {
-                        impl libparsec_serialization_format_types::rmp_serialize::Deserialize for Req {
+                        impl libparsec_types_lite::rmp_serialize::Deserialize for Req {
                             fn deserialize(
-                                value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
-                            ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                                value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+                            ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                                 match value {
                                     rmpv::ValueRef::Map(_) => Ok(Self),
-                                    other => Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
+                                    other => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                         expected: "map",
-                                        got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
+                                        got: libparsec_types_lite::rmp_serialize::value_kind(&other),
                                     }),
                                 }
                             }
@@ -1676,7 +1676,7 @@ fn quote_cmd_req_struct(
                     .map(|field| {
                         let field_name = field_name_to_ident(field.name.as_str());
                         quote! {
-                            if matches!(self.#field_name, libparsec_serialization_format_types::Maybe::Present(_)) {
+                            if matches!(self.#field_name, libparsec_types_lite::Maybe::Present(_)) {
                                 map_len += 1;
                             }
                         }
@@ -1700,22 +1700,22 @@ fn quote_cmd_req_struct(
                 let serialize_impl = match serialization_impl {
                     SerializationImpl::Serde => quote! {},
                     SerializationImpl::DynamicRmp => quote! {
-                        impl libparsec_serialization_format_types::rmp_serialize::Serialize for Req {
+                        impl libparsec_types_lite::rmp_serialize::Serialize for Req {
                             fn serialize(
                                 &self,
                                 writer: &mut ::std::vec::Vec<u8>,
-                            ) -> Result<(), libparsec_serialization_format_types::rmp_serialize::SerializeError> {
+                            ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
                                 let mut map_len = #dynamic_static_count;
                                 #(#dynamic_count_terms)*
                                 let map_len: u32 = map_len.try_into().map_err(|_| {
-                                    libparsec_serialization_format_types::rmp_serialize::SerializeError::LengthOverflow {
+                                    libparsec_types_lite::rmp_serialize::SerializeError::LengthOverflow {
                                         kind: "map",
                                         len: map_len,
                                     }
                                 })?;
-                                libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                                libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "cmd").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                                libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #cmd_name_literal).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                                libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                                libparsec_types_lite::rmp_serialize::encode::write_str(writer, "cmd").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                                libparsec_types_lite::rmp_serialize::encode::write_str(writer, #cmd_name_literal).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
                                 #(#dynamic_serialize_fields)*
                                 Ok(())
                             }
@@ -1725,16 +1725,16 @@ fn quote_cmd_req_struct(
                 let deserialize_impl = match serialization_impl {
                     SerializationImpl::Serde => quote! {},
                     SerializationImpl::DynamicRmp => quote! {
-                        impl libparsec_serialization_format_types::rmp_serialize::Deserialize for Req {
+                        impl libparsec_types_lite::rmp_serialize::Deserialize for Req {
                             fn deserialize(
-                                value: libparsec_serialization_format_types::rmp_serialize::ValueRef<'_>,
-                            ) -> Result<Self, libparsec_serialization_format_types::rmp_serialize::DeserializeError> {
+                                value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+                            ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                                 let entries = match value {
                                     rmpv::ValueRef::Map(entries) => entries,
                                     other => {
-                                        return Err(libparsec_serialization_format_types::rmp_serialize::DeserializeError::InvalidType {
+                                        return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                             expected: "map",
-                                            got: libparsec_serialization_format_types::rmp_serialize::value_kind(&other),
+                                            got: libparsec_types_lite::rmp_serialize::value_kind(&other),
                                         })
                                     }
                                 };
@@ -1828,11 +1828,11 @@ fn quote_cmd_rep_variant(rep: &GenCmdRep) -> (TokenStream, TokenStream, TokenStr
         GenCmdRepKind::Unit { .. } => {
             quote! {
                 Self::#variant_name(unit) => {
-                    libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, 2).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                    libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "status").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                    libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #status_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                    libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "unit").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                    libparsec_serialization_format_types::rmp_serialize::Serialize::serialize(unit, writer)?;
+                    libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, 2).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                    libparsec_types_lite::rmp_serialize::encode::write_str(writer, "status").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                    libparsec_types_lite::rmp_serialize::encode::write_str(writer, #status_name).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                    libparsec_types_lite::rmp_serialize::encode::write_str(writer, "unit").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                    libparsec_types_lite::rmp_serialize::Serialize::serialize(unit, writer)?;
                     Ok(())
                 }
             }
@@ -1841,9 +1841,9 @@ fn quote_cmd_rep_variant(rep: &GenCmdRep) -> (TokenStream, TokenStream, TokenStr
             if fields.is_empty() {
                 quote! {
                     Self::#variant_name => {
-                        libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, 1).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                        libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "status").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                        libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #status_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                        libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, 1).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                        libparsec_types_lite::rmp_serialize::encode::write_str(writer, "status").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                        libparsec_types_lite::rmp_serialize::encode::write_str(writer, #status_name).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
                         Ok(())
                     }
                 }
@@ -1860,13 +1860,13 @@ fn quote_cmd_rep_variant(rep: &GenCmdRep) -> (TokenStream, TokenStream, TokenStr
                     Self::#variant_name { #(#field_bindings),* } => {
                         let map_len = (1usize + #field_count_expr)
                             .try_into()
-                            .map_err(|_| libparsec_serialization_format_types::rmp_serialize::SerializeError::LengthOverflow {
+                            .map_err(|_| libparsec_types_lite::rmp_serialize::SerializeError::LengthOverflow {
                                 kind: "map",
                                 len: 1usize + #field_count_expr,
                             })?;
-                        libparsec_serialization_format_types::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                        libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, "status").map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
-                        libparsec_serialization_format_types::rmp_serialize::encode::write_str(writer, #status_name).map_err(libparsec_serialization_format_types::rmp_serialize::SerializeError::from)?;
+                        libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                        libparsec_types_lite::rmp_serialize::encode::write_str(writer, "status").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                        libparsec_types_lite::rmp_serialize::encode::write_str(writer, #status_name).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
                         #(#field_writes)*
                         Ok(())
                     }
@@ -1882,9 +1882,9 @@ fn quote_cmd_rep_variant(rep: &GenCmdRep) -> (TokenStream, TokenStream, TokenStr
                 #status_name => {
                     let value = obj
                         .remove("unit")
-                        .ok_or(libparsec_serialization_format_types::rmp_serialize::DeserializeError::MissingField("unit"))?;
+                        .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("unit"))?;
                     Ok(Self::#variant_name(
-                        <#nested_type_name as libparsec_serialization_format_types::rmp_serialize::Deserialize>::deserialize(value)?,
+                        <#nested_type_name as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(value)?,
                     ))
                 }
             }
@@ -1988,11 +1988,11 @@ fn quote_cmd_field(field: &GenCmdField, with_pub: bool) -> TokenStream {
     let ty = {
         if field.added_in_minor_revision {
             attrs.push(quote! {
-                #[serde(default, skip_serializing_if = "libparsec_serialization_format_types::Maybe::is_absent")]
+                #[serde(default, skip_serializing_if = "libparsec_types_lite::Maybe::is_absent")]
             });
             let rust_type = field.ty.to_rust_type();
             quote! {
-                libparsec_serialization_format_types::Maybe<#rust_type>
+                libparsec_types_lite::Maybe<#rust_type>
             }
         } else {
             field.ty.to_rust_type()
@@ -2009,11 +2009,11 @@ fn quote_cmd_field(field: &GenCmdField, with_pub: bool) -> TokenStream {
 
     match (field.added_in_minor_revision, field.ty.to_serde_as()) {
         (true, Some(serde_as_type)) => {
-            let serde_as_type = quote! { libparsec_serialization_format_types::Maybe<#serde_as_type> }.to_string();
+            let serde_as_type = quote! { libparsec_types_lite::Maybe<#serde_as_type> }.to_string();
             attrs.push(quote! { #[serde_as(as = #serde_as_type, #default)] });
         }
         (true, None) => {
-            let serde_as_type = quote! { libparsec_serialization_format_types::Maybe<_> }.to_string();
+            let serde_as_type = quote! { libparsec_types_lite::Maybe<_> }.to_string();
             attrs.push(quote! { #[serde_as(as = #serde_as_type, #default)] });
         }
         (false, Some(serde_as_type)) => {

@@ -14,7 +14,7 @@ workspace = true
 [dependencies]
 libparsec_types = { workspace = true }
 libparsec_serialization_format = { workspace = true }
-libparsec_serialization_format_types = { workspace = true }
+libparsec_types_lite = { workspace = true }
 
 paste = { workspace = true }
 rand = { workspace = true, features = ["std", "std_rng"] }

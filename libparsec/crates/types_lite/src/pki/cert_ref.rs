@@ -4,7 +4,7 @@ use std::{fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
-use crate::DataError;
+use crate::format::FormatError;
 
 #[derive(
     Clone, Eq, PartialEq, serde_with::SerializeDisplay, serde_with::DeserializeFromStr, Debug,
@@ -33,28 +33,28 @@ impl std::fmt::Display for X509CertificateHash {
 }
 
 impl FromStr for X509CertificateHash {
-    type Err = DataError;
+    type Err = FormatError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (hash_ty, b64_hash) = s.split_once('-').ok_or(DataError::BadSerialization {
+        let (hash_ty, b64_hash) = s.split_once('-').ok_or(FormatError::BadSerialization {
             format: None,
             step: "Missing `-` delimiter",
         })?;
         let raw_data = data_encoding::BASE64
             .decode(b64_hash.as_bytes())
-            .map_err(|_| DataError::BadSerialization {
+            .map_err(|_| FormatError::BadSerialization {
                 format: None,
                 step: "error decoding hash",
             })?;
         if hash_ty.eq_ignore_ascii_case("sha256") {
             Ok(X509CertificateHash::SHA256(raw_data.try_into().map_err(
-                |_| DataError::BadSerialization {
+                |_| FormatError::BadSerialization {
                     format: None,
                     step: "Invalid data size",
                 },
             )?))
         } else {
-            Err(DataError::BadSerialization {
+            Err(FormatError::BadSerialization {
                 format: None,
                 step: "Unsupported hash type ",
             })

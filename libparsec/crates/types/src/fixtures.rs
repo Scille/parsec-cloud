@@ -240,7 +240,7 @@ pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTi
         author: CertificateSigner::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
-        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id)),
+        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id.hex())),
         public_key: bob.public_key(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: UserProfile::Standard,
@@ -273,7 +273,7 @@ pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: Date
         purpose: DevicePurpose::Standard,
         user_id: bob.user_id,
         device_id: bob.device_id,
-        device_label: MaybeRedacted::Real(DeviceLabel::new_redacted(bob.device_id)),
+        device_label: MaybeRedacted::Real(DeviceLabel::new_redacted(bob.device_id.hex())),
         verify_key: bob.verify_key(),
         algorithm: SigningKeyAlgorithm::Ed25519,
     }

@@ -633,7 +633,7 @@ impl TestbedEventBootstrapOrganization {
                             timestamp: self.timestamp,
                             user_id: self.first_user_id,
                             human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(
-                                self.first_user_id,
+                                self.first_user_id.hex(),
                             )),
                             public_key: self.first_user_private_key.public_key(),
                             algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -665,7 +665,7 @@ impl TestbedEventBootstrapOrganization {
                             user_id: self.first_user_id,
                             device_id: self.first_user_first_device_id,
                             device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                                self.first_user_first_device_id,
+                                self.first_user_first_device_id.hex(),
                             )),
                             verify_key: self.first_user_first_device_signing_key.verify_key(),
                             algorithm: SigningKeyAlgorithm::Ed25519,
@@ -956,7 +956,7 @@ impl TestbedEventNewUser {
 
         let device_label = match device_id.test_nickname() {
             Some(nickname) => format!("My {nickname} machine").parse().unwrap(),
-            None => DeviceLabel::new_redacted(device_id),
+            None => DeviceLabel::new_redacted(device_id.hex()),
         };
 
         Self {
@@ -994,7 +994,7 @@ impl TestbedEventNewUser {
                             timestamp: self.timestamp,
                             user_id: self.user_id,
                             human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(
-                                self.user_id,
+                                self.user_id.hex(),
                             )),
                             public_key: self.private_key.public_key(),
                             algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -1027,7 +1027,7 @@ impl TestbedEventNewUser {
                             user_id: self.user_id,
                             device_id: self.first_device_id,
                             device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                                self.first_device_id,
+                                self.first_device_id.hex(),
                             )),
                             verify_key: self.first_device_signing_key.verify_key(),
                             algorithm: SigningKeyAlgorithm::Ed25519,
@@ -1077,7 +1077,7 @@ single_certificate_event!(
             purpose: DevicePurpose::Standard,
             user_id: e.user_id,
             device_id: e.device_id,
-            device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(e.device_id)),
+            device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(e.device_id.hex())),
             verify_key: e.signing_key.verify_key(),
             algorithm: SigningKeyAlgorithm::Ed25519,
         };

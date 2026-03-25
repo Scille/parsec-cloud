@@ -39,7 +39,6 @@ impl<T: Default> Maybe<T> {
     }
 }
 
-
 impl<T, U> serde_with::SerializeAs<Maybe<T>> for Maybe<U>
 where
     U: serde_with::SerializeAs<T>,

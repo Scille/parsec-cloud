@@ -12,48 +12,32 @@ repository.workspace = true
 workspace = true
 
 [features]
-test-mock-time = []
+test-mock-time = ["libparsec_types_lite/test-mock-time"]
 test-fixtures = ["dep:hex-literal", "dep:rstest"]
 
 [dependencies]
 libparsec_crypto = { workspace = true }
 libparsec_serialization_format = { workspace = true }
-libparsec_serialization_format_types = { workspace = true }
-libparsec_platform_async = { workspace = true }
+libparsec_types_lite = { workspace = true }
 libparsec_zstd = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
 bytes = { workspace = true, features = ["serde"] }
-lazy_static = { workspace = true }
 serde_with = { workspace = true, features = ["std", "macros"] }
 rmp-serde = { workspace = true }
 serde_bytes = { workspace = true, features = ["std"] }
-chrono = { workspace = true, features = ["clock"] }
-# By default uuid crate uses `getrandom` directly instead of `rand`, however
-# the latter is much faster (see. https://github.com/uuid-rs/uuid/pull/545,
-# tl;dr: `rand` uses `getrandom` as seed then applies a fast chacha algo on it)
-# Hence `fast-rng` feature which enables the use of `rand`.
 uuid = { workspace = true, features = ["serde", "v4", "fast-rng"] }
-data-encoding = { workspace = true, features = ["std"] }
-hex = { workspace = true }
-url = { workspace = true }
-percent-encoding = { workspace = true, features = ["alloc"] }
-regex = { workspace = true, features = ["std", "perf", "unicode"] }
-regex-syntax = { workspace = true, features = ["unicode-perl"] }
-unicode-normalization = { workspace = true, features = ["std"] }
 paste = { workspace = true }
 rand = { workspace = true, features = ["std", "std_rng"] }
 thiserror = { workspace = true, features = ["std"] }
-email-address-parser = { workspace = true }
+data-encoding = { workspace = true, features = ["std"] }
+url = { workspace = true }
+percent-encoding = { workspace = true, features = ["alloc"] }
+chrono = { workspace = true, features = ["clock"] }
 anyhow = { workspace = true, features = ["std", "backtrace"] }
-fnmatch-regex = { workspace = true, features = ["regex"] }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
 blahaj = { workspace = true }
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-chrono = { workspace = true, features = ["wasmbind"] }
-uuid = { workspace = true, features = ["js"] }
 
 [dev-dependencies]
 libparsec_types = { workspace = true, features = ["test-fixtures"] }
@@ -61,3 +45,4 @@ libparsec_tests_lite = { workspace = true }
 
 serde_test = { workspace = true }
 rstest_reuse = { workspace = true }
+hex = { workspace = true }

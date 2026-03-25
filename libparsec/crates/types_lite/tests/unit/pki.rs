@@ -3,7 +3,7 @@
 use libparsec_tests_lite::prelude::*;
 use serde_test::{Configure, Token};
 
-use crate::prelude::*;
+use crate::*;
 
 #[rstest]
 #[case::fake_sha256(

@@ -31,7 +31,7 @@ syn = { workspace = true, features = [
 ] }
 
 [dev-dependencies]
-libparsec_serialization_format_types = { workspace = true }
+libparsec_types_lite = { workspace = true }
 rstest = { workspace = true, features = ["async-timeout"] }
 pretty_assertions = { workspace = true, features = ["std"] }
 serde = { workspace = true, features = ["derive"] }

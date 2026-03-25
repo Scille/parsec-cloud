@@ -5,17 +5,17 @@
 use libparsec_zstd as zstd;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum DataError {
+pub enum FormatError {
     BadSerialization {
         format: Option<u8>,
         step: &'static str,
     },
 }
 
-impl std::fmt::Display for DataError {
+impl std::fmt::Display for FormatError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DataError::BadSerialization { format, step } => {
+            FormatError::BadSerialization { format, step } => {
                 let format_str = match format {
                     Some(format) => format!("{format}"),
                     None => "<unknown>".to_string(),
@@ -30,13 +30,15 @@ impl std::fmt::Display for DataError {
     }
 }
 
-impl std::error::Error for DataError {}
+impl std::error::Error for FormatError {}
 
 /// Format v0: `0x00` + zstd(msgpack(<data>))
+#[allow(dead_code)]
 const FORMAT_V0_VERSION_BYTE: u8 = 0;
 
 /// Format v0: msgpack + zstd
-pub fn format_v0_dump<T>(obj: &T) -> Vec<u8>
+#[allow(dead_code)]
+pub(crate) fn format_v0_dump<T>(obj: &T) -> Vec<u8>
 where
     T: serde::Serialize + ?Sized,
 {
@@ -58,26 +60,27 @@ where
     step2_output
 }
 
-pub fn format_vx_load<T>(raw: &[u8]) -> Result<T, DataError>
+#[allow(dead_code)]
+pub(crate) fn format_vx_load<T>(raw: &[u8]) -> Result<T, FormatError>
 where
     T: for<'a> serde::Deserialize<'a>,
 {
     match raw.first() {
         Some(&FORMAT_V0_VERSION_BYTE) => {
             let step1_input = {
-                zstd::stream::decode_all(&raw[1..]).map_err(|_| DataError::BadSerialization {
+                zstd::stream::decode_all(&raw[1..]).map_err(|_| FormatError::BadSerialization {
                     format: Some(FORMAT_V0_VERSION_BYTE),
                     step: "zstd",
                 })?
             };
 
-            rmp_serde::from_slice(&step1_input).map_err(|_| DataError::BadSerialization {
+            rmp_serde::from_slice(&step1_input).map_err(|_| FormatError::BadSerialization {
                 format: Some(FORMAT_V0_VERSION_BYTE),
                 step: "msgpack+validation",
             })
         }
 
-        Some(_) | None => Err(DataError::BadSerialization {
+        Some(_) | None => Err(FormatError::BadSerialization {
             format: None,
             step: "format detection",
         }),

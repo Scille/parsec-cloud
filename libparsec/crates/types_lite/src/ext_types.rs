@@ -2,6 +2,48 @@
 
 use serde_bytes::ByteBuf;
 
+pub const UUID_EXT_ID: i8 = 2;
+
+pub struct UuidExtVisitor;
+
+impl<'de> serde::de::Visitor<'de> for UuidExtVisitor {
+    type Value = uuid::Uuid;
+
+    fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+        formatter.write_str("an UUID as extension 2 format")
+    }
+
+    fn visit_newtype_struct<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+    where
+        D: serde::de::Deserializer<'de>,
+    {
+        deserializer.deserialize_tuple(2, self)
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::SeqAccess<'de>,
+    {
+        let tag: i8 = seq
+            .next_element()?
+            .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+        let data: ByteBuf = seq
+            .next_element()?
+            .ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+        if tag == UUID_EXT_ID {
+            uuid::Uuid::from_slice(&data)
+                .map_err(|_| serde::de::Error::custom("invalid size of data extension"))
+        } else {
+            let unexpected = serde::de::Unexpected::Signed(tag as i64);
+            Err(serde::de::Error::invalid_value(unexpected, &self))
+        }
+    }
+}
+
+/*
+ * DateTime ext type
+ */
+
 use crate::{DateTime, DatetimeFromTimestampMicrosError};
 
 // Note msgpack already define a extension type for timestamp
@@ -12,11 +54,6 @@ use crate::{DateTime, DatetimeFromTimestampMicrosError};
 //   PostgreSQL's TIMESTAMPZ type has a microsecond precision, and losing precision on
 //   round trip would be very error prone).
 pub(crate) const DATETIME_EXT_ID: i8 = 1;
-// UUID ext type infrastructure is in `libparsec_serialization_format_types::ext_types`
-
-/*
- * DateTime
- */
 
 impl serde::Serialize for DateTime {
     #[inline]
@@ -100,8 +137,6 @@ impl<'de> serde::de::Visitor<'de> for DateTimeExtVisitor {
     }
 }
 
-// UuidExtVisitor has been moved to `libparsec_serialization_format_types::ext_types`
-
 /*
  * Optional field helper (used for backward compatibility)
  */
@@ -120,6 +155,3 @@ pub mod maybe_field {
 
     // serialize is not needed given we never omit fields
 }
-
-// `Maybe` type is now defined in `libparsec_serialization_format_types` and
-// re-exported from `lib.rs`.

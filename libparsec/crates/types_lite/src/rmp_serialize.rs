@@ -208,9 +208,7 @@ impl Deserialize for f32 {
             ValueRef::F32(v) => Ok(v),
             ValueRef::F64(v) => Ok(v as f32),
             ValueRef::Integer(n) => n.as_f64().map(|v| v as f32).ok_or_else(|| {
-                DeserializeError::InvalidValue(
-                    "integer cannot be represented as f32".to_owned(),
-                )
+                DeserializeError::InvalidValue("integer cannot be represented as f32".to_owned())
             }),
             other => Err(DeserializeError::InvalidType {
                 expected: "number",
@@ -233,9 +231,7 @@ impl Deserialize for f64 {
             ValueRef::F32(v) => Ok(v.into()),
             ValueRef::F64(v) => Ok(v),
             ValueRef::Integer(n) => n.as_f64().ok_or_else(|| {
-                DeserializeError::InvalidValue(
-                    "integer cannot be represented as f64".to_owned(),
-                )
+                DeserializeError::InvalidValue("integer cannot be represented as f64".to_owned())
             }),
             other => Err(DeserializeError::InvalidType {
                 expected: "number",
@@ -262,9 +258,10 @@ impl Serialize for String {
 impl Deserialize for String {
     fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
         match value {
-            ValueRef::String(s) => s.as_str().map(ToOwned::to_owned).ok_or_else(|| {
-                DeserializeError::InvalidValue("invalid UTF-8 string".to_owned())
-            }),
+            ValueRef::String(s) => s
+                .as_str()
+                .map(ToOwned::to_owned)
+                .ok_or_else(|| DeserializeError::InvalidValue("invalid UTF-8 string".to_owned())),
             other => Err(DeserializeError::InvalidType {
                 expected: "string",
                 got: value_kind(&other),
