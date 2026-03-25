@@ -104,6 +104,12 @@ mod platform {
         ) -> Result<PrivateKey, crate::RequestPrivateKeyError> {
             unimplemented!("platform not supported")
         }
+
+        pub async fn to_reference(
+            &self,
+        ) -> Result<X509CertificateReference, crate::GetCertificateReferenceError> {
+            unimplemented!("platform not supported")
+        }
     }
 
     pub struct PrivateKey;
@@ -210,6 +216,12 @@ pub enum DecryptError {
     UnsupportedAlgorithm,
     #[error("error during decryption: {0}")]
     Decrypt(anyhow::Error),
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum GetCertificateReferenceError {
     #[error(transparent)]
     Internal(anyhow::Error),
 }
