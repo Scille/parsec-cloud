@@ -1,5 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_types::{
+    anyhow::Context as _, X509CertificateHash, X509CertificateReference, X509WindowsCngURI,
+};
+
 pub struct Certificate(schannel::cert_context::CertContext);
 
 impl From<schannel::cert_context::CertContext> for Certificate {
@@ -27,5 +31,54 @@ impl Certificate {
                 std::io::ErrorKind::NotFound => crate::RequestPrivateKeyError::NotFound,
                 _ => crate::RequestPrivateKeyError::Internal(e.into()),
             })
+    }
+
+    pub async fn to_reference(
+        &self,
+    ) -> Result<X509CertificateReference, crate::GetCertificateReferenceError> {
+        let uri = self.to_uri();
+        let hash = self
+            .sha256_fingerprint()
+            .context("Cannot get cert fingerprint")
+            .map_err(crate::GetCertificateReferenceError::Internal)?;
+
+        Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
+    }
+
+    fn sha256_fingerprint(&self) -> std::io::Result<X509CertificateHash> {
+        self.0
+            .fingerprint(schannel::cert_context::HashAlgorithm::sha256())
+            .and_then(|buf| {
+                buf.try_into().map_err(|_| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Not a sha256 hash")
+                })
+            })
+            .map(X509CertificateHash::SHA256)
+    }
+
+    fn to_uri(&self) -> X509WindowsCngURI {
+        let raw_context = super::schannel_utils::cert_context_to_raw(&self.0);
+        // SAFETY: The raw pointer come from the inner valid pointer of `cert_context`
+        // that is of type `Cryptography::CERT_CONTEXT`
+        let cert_info = unsafe { *(*raw_context).pCertInfo };
+
+        // SAFETY: Issuer is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
+        let issuer = unsafe {
+            std::slice::from_raw_parts(cert_info.Issuer.pbData, cert_info.Issuer.cbData as usize)
+        }
+        .to_vec();
+        // SAFETY: SerialNumber is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
+        let serial_number = unsafe {
+            std::slice::from_raw_parts(
+                cert_info.SerialNumber.pbData,
+                cert_info.SerialNumber.cbData as usize,
+            )
+        }
+        .to_vec();
+
+        X509WindowsCngURI {
+            issuer,
+            serial_number,
+        }
     }
 }
