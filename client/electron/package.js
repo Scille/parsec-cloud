@@ -60,13 +60,14 @@ function getBuildTargets(platform, targets) {
   }
 }
 const OPTS = cli();
-console.warn(OPTS);
+console.warn('OPTS', OPTS);
 
 const BUILD_TARGETS = getBuildTargets(OPTS.platform, OPTS.targets);
 console.warn('BUILD_TARGETS', BUILD_TARGETS);
 
 // The machine arch the electron-builder is running on.
 process.env.BUILD_MACHINE_ARCH = os.machine();
+console.warn('process.env.BUILD_MACHINE_ARCH', process.env.BUILD_MACHINE_ARCH);
 
 /** @type {import('./assets/publishConfig').CustomPublishOptions} */
 const publishConfig = {
@@ -140,7 +141,7 @@ const options = {
     buildResources: 'assets',
   },
 
-  files: ['assets/**/*', '!assets/installer.nsh', 'build/**/*', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*'],
+  files: ['!assets/installer.nsh', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*', 'assets/**/*', 'build/**/*'],
 
   publish: publishConfig,
 
