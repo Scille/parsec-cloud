@@ -76,6 +76,7 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -114,6 +115,7 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -160,6 +162,7 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -219,6 +222,7 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -268,6 +272,7 @@ async def test_close_on_organization_tos_updated(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 

@@ -152,6 +152,7 @@ async def test_authenticated_events_listen_ok(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -178,6 +179,7 @@ async def test_receive_server_config_as_first_event(
         minimalorg.organization_id,
         active_users_limit=ActiveUsersLimit.limited_to(10),
         user_profile_outsider_allowed=False,
+        minimum_archiving_period=666,
     )
 
     # Native client must have `User-Agent` starting with `Parsec-Client/`
@@ -190,6 +192,7 @@ async def test_receive_server_config_as_first_event(
                 active_users_limit=ActiveUsersLimit.limited_to(10),
                 user_profile_outsider_allowed=False,
                 sse_keepalive_seconds=42,
+                minimum_archiving_period=666,
             )
         )
 
@@ -221,6 +224,7 @@ async def test_user_not_receive_event_before_listen(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -260,6 +264,7 @@ async def test_conn_closed_on_bad_outcome(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -304,6 +309,7 @@ async def test_self_vlob_events_skipped(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -352,6 +358,7 @@ async def test_self_certificate_events_provided(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -423,6 +430,7 @@ async def test_receive_event_of_newly_shared_realm(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -567,6 +575,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
@@ -592,6 +601,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                minimum_archiving_period=2592000,
             )
         )
 
