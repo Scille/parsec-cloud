@@ -13,7 +13,7 @@ workspace = true
 
 [features]
 test-mock-time = ["libparsec_types_lite/test-mock-time"]
-test-fixtures = ["dep:hex-literal", "dep:rstest"]
+test-fixtures = ["libparsec_types_lite/test-fixtures", "dep:hex-literal", "dep:rstest"]
 
 [dependencies]
 libparsec_crypto = { workspace = true }
@@ -30,9 +30,6 @@ uuid = { workspace = true, features = ["serde", "v4", "fast-rng"] }
 paste = { workspace = true }
 rand = { workspace = true, features = ["std", "std_rng"] }
 thiserror = { workspace = true, features = ["std"] }
-data-encoding = { workspace = true, features = ["std"] }
-url = { workspace = true }
-percent-encoding = { workspace = true, features = ["alloc"] }
 chrono = { workspace = true, features = ["clock"] }
 anyhow = { workspace = true, features = ["std", "backtrace"] }
 hex-literal = { workspace = true, optional = true }

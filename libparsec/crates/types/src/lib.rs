@@ -2,6 +2,8 @@
 
 // Re-export everything from types_lite
 pub use libparsec_types_lite::*;
+// Explicit re-export for `$crate::error` paths used in macros
+pub use libparsec_types_lite::error;
 
 #[cfg(any(test, feature = "test-fixtures"))]
 /// We define test fixtures here and not in a different crate to prevent cyclic dependencies.
@@ -11,12 +13,9 @@ pub use libparsec_types_lite::*;
 pub mod fixtures;
 
 mod account;
-mod addr;
 mod async_enrollment;
 mod certif;
 pub mod data_macros;
-pub mod error;
-mod id;
 mod invite;
 mod local_device;
 mod local_device_file;
@@ -28,11 +27,8 @@ mod shamir;
 mod utils;
 
 pub use account::*;
-pub use addr::*;
 pub use async_enrollment::*;
 pub use certif::*;
-pub use error::*;
-pub use id::*;
 pub use invite::*;
 pub use local_device::*;
 pub use local_device_file::*;

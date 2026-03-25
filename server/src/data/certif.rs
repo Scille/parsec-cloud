@@ -57,7 +57,7 @@ impl UserCertificate {
         let human_handle = match human_handle {
             Some(human_handle) => libparsec_types::MaybeRedacted::Real(human_handle.0),
             None => libparsec_types::MaybeRedacted::Redacted(
-                libparsec_types::HumanHandle::new_redacted(user_id.0.hex()),
+                libparsec_types::HumanHandle::new_redacted(user_id.0),
             ),
         };
         Ok(Self(Arc::new(libparsec_types::UserCertificate {
@@ -227,7 +227,7 @@ impl DeviceCertificate {
         let device_label = match device_label {
             Some(device_label) => libparsec_types::MaybeRedacted::Real(device_label.0),
             None => libparsec_types::MaybeRedacted::Redacted(
-                libparsec_types::DeviceLabel::new_redacted(device_id.0.hex()),
+                libparsec_types::DeviceLabel::new_redacted(device_id.0),
             ),
         };
         Ok(Self(Arc::new(libparsec_types::DeviceCertificate {

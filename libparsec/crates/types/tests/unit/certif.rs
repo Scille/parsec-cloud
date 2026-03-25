@@ -396,7 +396,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
         author: CertificateSigner::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id,
-        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id.hex())),
+        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id)),
         public_key: bob.public_key(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: bob.profile,
@@ -757,9 +757,7 @@ fn serde_device_certificate_redacted(
                 purpose: DevicePurpose::Standard,
                 user_id: alice.user_id,
                 device_id: bob.device_id.to_owned(),
-                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                    bob.device_id.hex(),
-                )),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
                 verify_key: bob.verify_key(),
                 algorithm: SigningKeyAlgorithm::Ed25519,
             };
@@ -797,9 +795,7 @@ fn serde_device_certificate_redacted(
                 purpose: DevicePurpose::Standard,
                 user_id: alice.user_id,
                 device_id: bob.device_id.to_owned(),
-                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                    bob.device_id.hex(),
-                )),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
                 verify_key: bob.verify_key(),
                 algorithm: SigningKeyAlgorithm::Ed25519,
             };
@@ -837,9 +833,7 @@ fn serde_device_certificate_redacted(
                 purpose: DevicePurpose::ShamirRecovery,
                 user_id: alice.user_id,
                 device_id: bob.device_id.to_owned(),
-                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                    bob.device_id.hex(),
-                )),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
                 verify_key: bob.verify_key(),
                 algorithm: SigningKeyAlgorithm::Ed25519,
             };
@@ -877,9 +871,7 @@ fn serde_device_certificate_redacted(
                 purpose: DevicePurpose::PassphraseRecovery,
                 user_id: alice.user_id,
                 device_id: bob.device_id.to_owned(),
-                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                    bob.device_id.hex(),
-                )),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
                 verify_key: bob.verify_key(),
                 algorithm: SigningKeyAlgorithm::Ed25519,
             };
@@ -917,9 +909,7 @@ fn serde_device_certificate_redacted(
                 purpose: DevicePurpose::Registration,
                 user_id: alice.user_id,
                 device_id: bob.device_id.to_owned(),
-                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                    bob.device_id.hex(),
-                )),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
                 verify_key: bob.verify_key(),
                 algorithm: SigningKeyAlgorithm::Ed25519,
             };

@@ -63,8 +63,11 @@ pub type SizeInt = u64;
 pub type IndexInt = u64;
 
 // Core types
+mod addr;
+pub mod error;
 mod fs_path;
 mod id;
+mod invite;
 mod openbao;
 mod organization;
 mod pki;
@@ -75,8 +78,11 @@ mod sas_code;
 mod time;
 mod token;
 
+pub use addr::*;
+pub use error::*;
 pub use fs_path::*;
 pub use id::*;
+pub use invite::*;
 pub use openbao::*;
 pub use organization::*;
 pub use pki::*;
@@ -86,3 +92,11 @@ pub use round_robin_cache::*;
 pub use sas_code::*;
 pub use time::*;
 pub use token::*;
+
+#[cfg(any(test, feature = "test-fixtures"))]
+pub mod fixtures;
+
+pub mod prelude {
+    pub use super::*;
+    pub use anyhow::Context;
+}

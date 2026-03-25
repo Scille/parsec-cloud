@@ -270,9 +270,7 @@ impl DeviceLabel {
 
     #[staticmethod]
     fn new_redacted(device_id: DeviceID) -> Self {
-        Self(libparsec_types::DeviceLabel::new_redacted(
-            device_id.0.hex(),
-        ))
+        Self(libparsec_types::DeviceLabel::new_redacted(device_id.0))
     }
 
     #[getter]
@@ -332,7 +330,7 @@ impl HumanHandle {
 
     #[staticmethod]
     fn new_redacted(user_id: UserID) -> Self {
-        Self(libparsec_types::HumanHandle::new_redacted(user_id.0.hex()))
+        Self(libparsec_types::HumanHandle::new_redacted(user_id.0))
     }
 
     #[getter]

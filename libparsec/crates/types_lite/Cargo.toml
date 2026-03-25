@@ -13,6 +13,7 @@ workspace = true
 
 [features]
 test-mock-time = []
+test-fixtures = ["dep:hex-literal", "dep:rstest"]
 
 [dependencies]
 bytes = { workspace = true }
@@ -42,6 +43,8 @@ anyhow = { workspace = true, features = ["std", "backtrace"] }
 fnmatch-regex = { workspace = true, features = ["regex"] }
 lazy_static = { workspace = true }
 blahaj = { workspace = true }
+hex-literal = { workspace = true, optional = true }
+rstest = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 chrono = { workspace = true, features = ["wasmbind"] }

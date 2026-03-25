@@ -231,7 +231,7 @@ impl UserCertificate {
     }
 
     pub fn into_redacted(self) -> Self {
-        let human_handle = MaybeRedacted::Redacted(HumanHandle::new_redacted(self.user_id.hex()));
+        let human_handle = MaybeRedacted::Redacted(HumanHandle::new_redacted(self.user_id));
         Self {
             author: self.author,
             timestamp: self.timestamp,
@@ -280,7 +280,7 @@ parsec_data!("schema/certif/user_certificate.json5");
 impl From<UserCertificateData> for UserCertificate {
     fn from(data: UserCertificateData) -> Self {
         let human_handle = match data.human_handle {
-            None => MaybeRedacted::Redacted(HumanHandle::new_redacted(data.user_id.hex())),
+            None => MaybeRedacted::Redacted(HumanHandle::new_redacted(data.user_id)),
             Some(human_handle) => MaybeRedacted::Real(human_handle),
         };
         Self {
@@ -480,7 +480,7 @@ impl DeviceCertificate {
         Ok(())
     }
     pub fn into_redacted(self) -> Self {
-        let device_label = MaybeRedacted::Redacted(DeviceLabel::new_redacted(self.device_id.hex()));
+        let device_label = MaybeRedacted::Redacted(DeviceLabel::new_redacted(self.device_id));
         Self {
             author: self.author,
             timestamp: self.timestamp,
@@ -518,7 +518,7 @@ impl DeviceCertificate {
 impl From<DeviceCertificateData> for DeviceCertificate {
     fn from(data: DeviceCertificateData) -> Self {
         let device_label = match data.device_label {
-            None => MaybeRedacted::Redacted(DeviceLabel::new_redacted(data.device_id.hex())),
+            None => MaybeRedacted::Redacted(DeviceLabel::new_redacted(data.device_id)),
             Some(device_label) => MaybeRedacted::Real(device_label),
         };
         Self {

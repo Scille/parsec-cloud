@@ -16,8 +16,8 @@ async fn should_create_db_file_and_reusable(tmp_path: TmpPath) {
             .parse()
             .unwrap(),
         UserProfile::Admin,
-        HumanHandle::new_redacted(user_id.hex()),
-        DeviceLabel::new_redacted(device_id.hex()),
+        HumanHandle::new_redacted(user_id),
+        DeviceLabel::new_redacted(device_id),
         Some(user_id),
         Some(device_id),
         None,

@@ -85,9 +85,7 @@ async fn loop_require_greater_timestamp(env: &TestbedEnv) {
                     device_id,
                     author: Some(alice.device_id).into(),
                     purpose: DevicePurpose::Standard,
-                    device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                        device_id.hex(),
-                    )),
+                    device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
                     verify_key: alice.verify_key(),
                     algorithm: SigningKeyAlgorithm::Ed25519,
                 };

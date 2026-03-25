@@ -18,28 +18,8 @@ use crate::{
 // Re-expose `DateTime` to simplify use of `timestamp` fixture
 pub use crate::DateTime;
 
-pub const ALICE_USER_ID: UserID = UserID(uuid::uuid!("A11CEC00100000000000000000000000"));
-pub const BOB_USER_ID: UserID = UserID(uuid::uuid!("808C0010000000000000000000000000"));
-pub const CARL_USER_ID: UserID = UserID(uuid::uuid!("CA470010000000000000000000000000"));
-pub const DIANA_USER_ID: UserID = UserID(uuid::uuid!("D1444010000000000000000000000000"));
-pub const MALLORY_USER_ID: UserID = UserID(uuid::uuid!("3A11031C001000000000000000000000"));
-pub const MIKE_USER_ID: UserID = UserID(uuid::uuid!("31CEC001000000000000000000000000"));
-pub const PHILIP_USER_ID: UserID = UserID(uuid::uuid!("91119EC0010000000000000000000000"));
-pub const ALICE_DEV1_DEVICE_ID: DeviceID =
-    DeviceID(uuid::uuid!("DE10A11CEC0010000000000000000000"));
-pub const ALICE_DEV2_DEVICE_ID: DeviceID =
-    DeviceID(uuid::uuid!("DE20A11CEC0010000000000000000000"));
-pub const ALICE_DEV3_DEVICE_ID: DeviceID =
-    DeviceID(uuid::uuid!("DE30A11CEC0010000000000000000000"));
-pub const BOB_DEV1_DEVICE_ID: DeviceID = DeviceID(uuid::uuid!("DE10808C001000000000000000000000"));
-pub const BOB_DEV2_DEVICE_ID: DeviceID = DeviceID(uuid::uuid!("DE20808C001000000000000000000000"));
-pub const MALLORY_DEV1_DEVICE_ID: DeviceID =
-    DeviceID(uuid::uuid!("DE103A11031C00100000000000000000"));
-pub const MALLORY_DEV2_DEVICE_ID: DeviceID =
-    DeviceID(uuid::uuid!("DE203A11031C00100000000000000000"));
-pub const MIKE_DEV1_DEVICE_ID: DeviceID = DeviceID(uuid::uuid!("DE1031CEC00100000000000000000000"));
-pub const PHILIP_DEV1_DEVICE_ID: DeviceID =
-    DeviceID(uuid::uuid!("DE1091119EC001000000000000000000"));
+// Re-export ID constants from types_lite fixtures
+pub use libparsec_types_lite::fixtures::*;
 
 pub struct Device {
     pub organization_addr: ParsecOrganizationAddr,
@@ -240,7 +220,7 @@ pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTi
         author: CertificateSigner::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
-        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id.hex())),
+        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id)),
         public_key: bob.public_key(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: UserProfile::Standard,
@@ -273,7 +253,7 @@ pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: Date
         purpose: DevicePurpose::Standard,
         user_id: bob.user_id,
         device_id: bob.device_id,
-        device_label: MaybeRedacted::Real(DeviceLabel::new_redacted(bob.device_id.hex())),
+        device_label: MaybeRedacted::Real(DeviceLabel::new_redacted(bob.device_id)),
         verify_key: bob.verify_key(),
         algorithm: SigningKeyAlgorithm::Ed25519,
     }

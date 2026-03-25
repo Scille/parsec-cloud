@@ -85,7 +85,7 @@ pub async fn bootstrap_organization(
         let signed = user_certificate.dump_and_sign(&root_signing_key);
 
         user_certificate.human_handle =
-            MaybeRedacted::Redacted(HumanHandle::new_redacted(device.user_id.hex()));
+            MaybeRedacted::Redacted(HumanHandle::new_redacted(device.user_id));
         let redacted_signed = user_certificate.dump_and_sign(&root_signing_key);
 
         (signed.into(), redacted_signed.into())
@@ -105,7 +105,7 @@ pub async fn bootstrap_organization(
         let signed = device_certificate.dump_and_sign(&root_signing_key);
 
         device_certificate.device_label =
-            MaybeRedacted::Redacted(DeviceLabel::new_redacted(device.device_id.hex()));
+            MaybeRedacted::Redacted(DeviceLabel::new_redacted(device.device_id));
         let redacted_signed = device_certificate.dump_and_sign(&root_signing_key);
 
         (signed.into(), redacted_signed.into())

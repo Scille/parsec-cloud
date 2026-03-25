@@ -1302,7 +1302,7 @@ fn create_new_signed_device_certificates(
         purpose: DevicePurpose::Standard,
         user_id: author.user_id,
         device_id,
-        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id.hex())),
+        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
         verify_key,
         algorithm: SigningKeyAlgorithm::Ed25519,
     };
