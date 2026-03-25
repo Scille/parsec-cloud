@@ -1544,7 +1544,7 @@ fn quote_cmd_req_struct(
     let struct_name = format_ident!("{}Req", pascal_case_cmd_name);
     let req_derive = match serialization_impl {
         SerializationImpl::Serde => {
-            quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
+            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
         }
         SerializationImpl::DynamicRmp => {
             quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
@@ -1555,7 +1555,28 @@ fn quote_cmd_req_struct(
             let cmd_name_literal = &req.cmd;
             let nested_type_name = format_ident!("{}", nested_type_name);
             let serialize_impl = match serialization_impl {
-                SerializationImpl::Serde => quote! {},
+                SerializationImpl::Serde => quote! {
+                    impl ::serde::Serialize for Req {
+                        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                        where
+                            S: ::serde::Serializer,
+                        {
+                            #[derive(::serde::Serialize)]
+                            enum CmdEnum {
+                                #[serde(rename = #cmd_name_literal)]
+                                Val,
+                            }
+                            #[derive(::serde::Serialize)]
+                            struct ReqWithCmd<'a> {
+                                cmd: CmdEnum,
+                                #[serde(flatten)]
+                                unit: &'a #nested_type_name,
+                            }
+                            let to_serialize = ReqWithCmd { cmd: CmdEnum::Val, unit: &self.0 };
+                            to_serialize.serialize(serializer)
+                        }
+                    }
+                },
                 SerializationImpl::DynamicRmp => quote! {
                     impl libparsec_types_lite::rmp_serialize::Serialize for Req {
                         fn serialize(
@@ -1622,7 +1643,19 @@ fn quote_cmd_req_struct(
             if fields.is_empty() {
                 let cmd_name_literal = &req.cmd;
                 let serialize_impl = match serialization_impl {
-                    SerializationImpl::Serde => quote! {},
+                    SerializationImpl::Serde => quote! {
+                        impl ::serde::Serialize for Req {
+                            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                            where
+                                S: ::serde::Serializer,
+                            {
+                                use ::serde::ser::SerializeStruct;
+                                let mut state = serializer.serialize_struct("Req", 1)?;
+                                state.serialize_field("cmd", #cmd_name_literal)?;
+                                state.end()
+                            }
+                        }
+                    },
                     SerializationImpl::DynamicRmp => quote! {
                         impl libparsec_types_lite::rmp_serialize::Serialize for Req {
                             fn serialize(
@@ -1697,8 +1730,49 @@ fn quote_cmd_req_struct(
                     .sorted_by(|a, b| a.name.cmp(&b.name))
                     .map(|field| field_name_to_ident(field.name.as_str()))
                     .collect::<Vec<_>>();
+                let number_of_always_present_fields: usize =
+                    fields.iter().filter(|f| !f.added_in_minor_revision).count();
+                let determine_maybe_present_fields_codes = fields.iter().filter_map(|f| {
+                    if !f.added_in_minor_revision {
+                        return None;
+                    }
+                    let field_name = field_name_to_ident(f.name.as_str());
+                    Some(quote! {
+                        if let libparsec_types_lite::Maybe::Present(_) = &self.#field_name {
+                            fields_count += 1;
+                        }
+                    })
+                });
+                let serde_serialize_fields = fields.iter().map(|f| {
+                    let field_name_literal = &f.name;
+                    let field_name = field_name_to_ident(field_name_literal);
+                    if f.added_in_minor_revision {
+                        quote! {
+                            if let libparsec_types_lite::Maybe::Present(field_data) = &self.#field_name {
+                                state.serialize_field(#field_name_literal, field_data)?;
+                            }
+                        }
+                    } else {
+                        quote! { state.serialize_field(#field_name_literal, &self.#field_name)?; }
+                    }
+                });
                 let serialize_impl = match serialization_impl {
-                    SerializationImpl::Serde => quote! {},
+                    SerializationImpl::Serde => quote! {
+                        impl ::serde::Serialize for Req {
+                            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                            where
+                                S: ::serde::Serializer,
+                            {
+                                use ::serde::ser::SerializeStruct;
+                                let mut fields_count = #number_of_always_present_fields + 1;
+                                #(#determine_maybe_present_fields_codes)*
+                                let mut state = serializer.serialize_struct("Req", fields_count)?;
+                                state.serialize_field("cmd", #cmd_name_literal)?;
+                                #(#serde_serialize_fields)*
+                                state.end()
+                            }
+                        }
+                    },
                     SerializationImpl::DynamicRmp => quote! {
                         impl libparsec_types_lite::rmp_serialize::Serialize for Req {
                             fn serialize(
