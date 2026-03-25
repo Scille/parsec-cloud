@@ -89,6 +89,7 @@ class MemoryEventsComponent(BaseEventsComponent):
             organization_id=org.organization_id,
             user_profile_outsider_allowed=org.user_profile_outsider_allowed,
             active_users_limit=org.active_users_limit,
+            minimum_archiving_period=org.minimum_archiving_period,
         )
 
         user_realms = set()
