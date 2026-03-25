@@ -342,6 +342,7 @@ import {
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, create, download, duplicate, eye, folderOpen, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
+import { DateTime } from 'luxon';
 import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const customTabBar = useCustomTabBar();
@@ -512,6 +513,13 @@ const pathOpener = usePathOpener();
 
 let hotkeys: HotkeyGroup | null = null;
 let fileOpCanceller!: FileEventRegistrationCanceller;
+
+interface DeleteBackup {
+  entries: parsec.WorkspaceHistoryEntryStat[];
+  time: DateTime;
+}
+
+let deleteBackup: DeleteBackup | undefined = undefined;
 
 const ownRole = computed(() => {
   return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : parsec.WorkspaceRole.Reader;
@@ -1259,6 +1267,21 @@ function getSelectedEntries(): EntryModel[] {
 }
 
 async function deleteEntries(entries: EntryModel[]): Promise<void> {
+  function workspaceHistoryEntryStatFromEntryStat(entry: parsec.EntryStat): parsec.WorkspaceHistoryEntryStat {
+    return {
+      tag: entry.tag === parsec.EntryStatTag.File ? parsec.WorkspaceHistoryEntryStatTag.File : parsec.WorkspaceHistoryEntryStatTag.Folder,
+      isFile: entry.isFile,
+      path: entry.path,
+      name: entry.name,
+      size: entry.isFile() ? (entry as EntryStatFile).size : (undefined as any),
+      id: entry.id,
+      parent: entry.parent,
+      created: entry.created,
+      updated: entry.updated,
+      version: entry.baseVersion,
+    };
+  }
+
   if (entries.length === 0 || !workspaceInfo.value) {
     return;
   } else if (entries.length === 1) {
@@ -1291,6 +1314,7 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       if (search.value) {
         await startSearch(searchPattern.value);
       }
+      deleteBackup = { entries: [workspaceHistoryEntryStatFromEntryStat(entry)], time: entry.updated };
       await eventDistributor.value.dispatchEvent(Events.EntryDeleted, {
         workspaceHandle: workspaceInfo.value.handle,
         entryId: entry.id,
@@ -1323,6 +1347,15 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       if (!result.ok) {
         errorsEncountered += 1;
       } else {
+        const oldest = entries.reduce((oldest, current): EntryModel => {
+          return current.updated < oldest.updated ? current : oldest;
+        });
+        if (oldest) {
+          deleteBackup = {
+            entries: entries.map((entry) => workspaceHistoryEntryStatFromEntryStat(entry)),
+            time: oldest.updated,
+          };
+        }
         await eventDistributor.value.dispatchEvent(Events.EntryDeleted, {
           workspaceHandle: workspaceInfo.value.handle,
           entryId: entry.id,
@@ -1344,6 +1377,22 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
     }
   }
   await onSelectionCancel();
+  if (deleteBackup) {
+    informationManager.value.present(
+      new Information({
+        message: `${deleteBackup.entries.length} ENTRIES DELETED`,
+        level: InformationLevel.Success,
+        action: {
+          callback: async (): Promise<void> => {
+            console.log('UNDOING');
+            fileOperationManager.value.restore(workspaceInfo.value?.handle, deleteBackup?.entries, deleteBackup?.time.plus({ seconds: 5 }), DuplicatePolicy.Ignore);
+          },
+          title: 'UNDO',
+        },
+      }),
+      PresentationMode.Toast,
+    );
+  }
   await listFolder({ sameFolder: true });
 }
 

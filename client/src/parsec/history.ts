@@ -157,6 +157,10 @@ export class WorkspaceHistory {
       return { ok: false, error: { tag: WorkspaceHistoryStatEntryErrorTag.Internal, error: 'Not started' } };
     }
 
+    console.log('CURRENT TIME', this.currentTime.toSeconds());
+    console.log('LOWER BOUND', this.lowerBound.toSeconds());
+    console.log('UPPER BOUND', this.upperBound.toSeconds());
+
     const fileName = (await Path.filename(path)) || '';
     const result = await libparsec.workspaceHistoryStatEntry(this.handle, path);
     if (result.ok) {

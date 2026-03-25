@@ -439,6 +439,8 @@ export class FileOperationManager {
           throw new FileOperationCancelled();
         }
 
+        console.log('ENTRY UPDATED', entry.updated.toSeconds());
+
         const statResult = await history.entryStat(entry.path);
         if (!statResult.ok) {
           throw new FileOperationException(OperationFailedErrors.LibParsecCallFailed, stringifyError(statResult.error));
