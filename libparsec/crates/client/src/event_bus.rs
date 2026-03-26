@@ -348,6 +348,7 @@ impl_events!(
     ServerConfigNotified {
         active_users_limit: ActiveUsersLimit,
         user_profile_outsider_allowed: bool,
+        minimum_archiving_period: u64,  // In seconds
     },
     /// This event is fired by the server config monitor.
     ///

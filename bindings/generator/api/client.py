@@ -106,6 +106,7 @@ class ActiveUsersLimit(Variant):
 class ServerOrganizationConfig(Structure):
     user_profile_outsider_allowed: bool
     active_users_limit: ActiveUsersLimit
+    minimum_archiving_period: U64
 
 
 class ClientInfo(Structure):

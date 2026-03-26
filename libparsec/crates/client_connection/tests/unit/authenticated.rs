@@ -229,6 +229,7 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                minimum_archiving_period: Maybe::Absent,
             }
         ))
     );
@@ -294,6 +295,7 @@ async fn sse_ok_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                minimum_archiving_period: Maybe::Present(2592000),
             }
         ))
     );
@@ -644,6 +646,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                minimum_archiving_period: Maybe::Present(2592000),
             }
         ))
     );
@@ -698,6 +701,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                minimum_archiving_period: Maybe::Present(2592000),
             }
         ))
     );
@@ -740,6 +744,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                minimum_archiving_period: Maybe::Present(2592000),
             }
         ))
     );
