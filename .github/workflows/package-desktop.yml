@@ -189,7 +189,6 @@ jobs:
             extensions: exe
             os_alias: win
             artifact_tag: windows-exe
-            cspn: false
           - name: 🍎 macOS x86
             platform: macos
             os: macos-15-intel
@@ -218,6 +217,14 @@ jobs:
             extensions: exe
             os_alias: win
             artifact_tag: windows-exe
+            cspn: true
+          - name: 🍎 macOS x86-CSPN
+            platform: macos
+            os: macos-15-intel
+            raw_latest_file: latest-mac.yml
+            extensions: dmg zip
+            os_alias: mac
+            artifact_tag: macos-dmg
             cspn: true
     name: "${{ matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
@@ -378,7 +385,7 @@ jobs:
             ${{ matrix.platform == 'linux-gnu' && 'appimage' || '' }} \
             ${{ inputs.nightly_build && '--nightly' || '' }} \
             ${{ matrix.platform == 'macos' && '--sign' || ''}}
-            ${{ (matrix.platform == 'windows' && matrix.cspn == 'true') && '--cspn' || '' }}
+            ${{ matrix.cspn == 'true' && '--cspn' || '' }}
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron

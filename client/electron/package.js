@@ -106,10 +106,20 @@ const MACOS_SIGN_OPTIONS = {
   },
 };
 
-const UNSIGNED_ARTIFACT_NAME =
-  OPTS.sign || OPTS.platform === 'linux'
-    ? 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.${ext}'
-    : 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.unsigned.${ext}';
+function buildArtifactName() {
+  const buildName = OPTS.cspn
+    ? 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.cspn'
+    : 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}';
+
+  if (OPTS.sign || OPTS.platform === 'linux') {
+    // eslint-disable-next-line prefer-template
+    return buildName + '.${ext}';
+  }
+  // eslint-disable-next-line prefer-template
+  return buildName + '.unsigned.${ext}';
+}
+
+const UNSIGNED_ARTIFACT_NAME = buildArtifactName();
 
 /**
  * @type {import('electron-builder').Configuration}

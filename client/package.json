@@ -29,6 +29,7 @@
         "electron:copy:dev": "npm run native:build -- --mode development && npx cap copy @capacitor-community/electron",
         "electron:open": "npm run electron:copy:dev && npx cap open @capacitor-community/electron",
         "electron:release": "npm run electron:copy && cd electron && npm run electron:release",
+        "electron:cspn": "npm run electron:copy && cd electron && npm run electron:cspn",
         "electron:release:dev": "npm run electron:copy:dev && cd electron && npm run electron:release",
         "electron:debug": "npm run electron:copy && cd electron && npm run electron:start",
         "prettier:check": "prettier . --check",
