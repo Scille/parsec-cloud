@@ -15,6 +15,7 @@ mod add_shamir_recovery_share_certificate;
 mod add_user_certificate;
 mod add_user_revoked_certificate;
 mod add_user_update_certificate;
+mod archive_realm;
 mod bootstrap_workspace;
 mod decrypt_current_realm_name;
 mod encrypt_for_realm;

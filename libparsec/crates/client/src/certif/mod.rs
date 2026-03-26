@@ -15,6 +15,7 @@ mod forget_all_certificates;
 mod list;
 mod manifest_validate;
 mod poll;
+mod realm_archive;
 mod realm_create;
 mod realm_decrypt_name;
 mod realm_key_rotation;
@@ -44,6 +45,7 @@ pub use list::{
 };
 pub use manifest_validate::{CertifValidateManifestError, InvalidManifestError};
 pub use poll::CertifPollServerError;
+pub use realm_archive::CertifArchiveRealmError;
 pub use realm_create::CertifEnsureRealmCreatedError;
 pub use realm_decrypt_name::{CertifDecryptCurrentRealmNameError, InvalidEncryptedRealmNameError};
 pub use realm_key_rotation::CertifRotateRealmKeyError;
@@ -663,6 +665,15 @@ impl CertificateOps {
         realm_id: VlobID,
     ) -> Result<RealmArchivingConfiguration, CertifGetRealmArchivingConfigurationError> {
         list::get_realm_archiving_configuration(self, realm_id).await
+    }
+
+    /// Returns the timestamp of the uploaded certificate
+    pub async fn archive_realm(
+        &self,
+        realm_id: VlobID,
+        configuration: RealmArchivingConfiguration,
+    ) -> Result<CertificateBasedActionOutcome, CertifArchiveRealmError> {
+        realm_archive::archive_realm(self, realm_id, configuration).await
     }
 
     /// Retrieve the realm name from the last realm name certificate, if any).
