@@ -55,7 +55,7 @@ fn serde_block_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds
         "725f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5b4636c61696d65725f68756d61"
         "6e5f68616e646c652a"
     )[..],
-    "invalid type: integer `42`, expected a tuple of size 2",
+    "invalid type: expected array, got integer",
 )]
 fn serde_invalid_type_deserialization(#[case] raw: &[u8], #[case] expected: &str) {
     let err = invited_cmds::invite_info::Rep::load(raw)

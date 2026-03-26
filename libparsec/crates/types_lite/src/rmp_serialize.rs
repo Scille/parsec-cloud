@@ -294,6 +294,9 @@ impl Deserialize for bytes::Bytes {
     fn deserialize(value: ValueRef<'_>) -> Result<Self, DeserializeError> {
         match value {
             ValueRef::Binary(data) => Ok(bytes::Bytes::copy_from_slice(data)),
+            // Also accept msgpack strings since some implementations encode
+            // byte payloads as strings (e.g. Python's msgpack)
+            ValueRef::String(s) => Ok(bytes::Bytes::copy_from_slice(s.as_bytes())),
             other => Err(DeserializeError::InvalidType {
                 expected: "binary",
                 got: value_kind(&other),

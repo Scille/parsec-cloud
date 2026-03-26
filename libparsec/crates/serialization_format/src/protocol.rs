@@ -205,6 +205,9 @@ fn quote_dynamic_cmd_named_field_extract(field: &GenCmdField) -> TokenStream {
     let field_ident = field_name_to_ident(field_name);
     let field_type = field.ty.to_rust_type();
 
+    let can_be_missing = field.added_in_minor_revision
+        || matches!(field.ty, FieldType::NonRequiredOption(_));
+
     if field.added_in_minor_revision {
         quote! {
             let #field_ident: libparsec_types_lite::Maybe<#field_type> = match obj.remove(#field_name) {
@@ -214,6 +217,16 @@ fn quote_dynamic_cmd_named_field_extract(field: &GenCmdField) -> TokenStream {
                     )
                 }
                 None => libparsec_types_lite::Maybe::Absent,
+            };
+        }
+    } else if can_be_missing {
+        // NonRequiredOption fields can be missing from the payload (defaulting to None)
+        quote! {
+            let #field_ident: #field_type = match obj.remove(#field_name) {
+                Some(value) => {
+                    <#field_type as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(value)?
+                }
+                None => None,
             };
         }
     } else {
