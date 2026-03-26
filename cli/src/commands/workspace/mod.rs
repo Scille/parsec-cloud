@@ -1,3 +1,4 @@
+pub mod archive;
 pub mod create;
 pub mod import;
 pub mod list;
@@ -6,6 +7,8 @@ pub mod sync;
 
 #[derive(clap::Subcommand)]
 pub enum Group {
+    /// Archive workspace
+    Archive(archive::Args),
     /// Create new workspace
     Create(create::Args),
     /// List workspaces
@@ -20,6 +23,7 @@ pub enum Group {
 
 pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
     match command {
+        Group::Archive(args) => archive::main(args).await,
         Group::Create(args) => create::main(args).await,
         Group::List(args) => list::main(args).await,
         Group::Import(args) => import::main(args).await,
