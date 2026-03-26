@@ -13,6 +13,7 @@ mod start_invitation_greet;
 mod tos;
 mod user_revoke;
 mod user_update_profile;
+mod workspace_archive;
 mod workspace_bootstrap;
 mod workspace_create;
 mod workspace_list;
@@ -33,6 +34,7 @@ pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
     start_invitation_greet::ClientStartShamirRecoveryInvitationGreetError,
     tos::{ClientAcceptTosError, ClientGetTosError, Tos},
+    workspace_archive::ClientArchiveWorkspaceError,
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
     workspace_create::ClientCreateWorkspaceError,
     workspace_list::WorkspaceInfo,
@@ -439,6 +441,18 @@ impl Client {
         role: Option<RealmRole>,
     ) -> Result<(), ClientShareWorkspaceError> {
         workspace_share::share_workspace(self, realm_id, recipient, role).await
+    }
+
+    /// Archive, unarchive or plan deletion for a workspace, this function requires to be online.
+    ///
+    /// If the workspace is not bootstrapped, this function will try to bootstrap
+    /// it (this may fail if the current user does not have the OWNER role).
+    pub async fn archive_workspace(
+        &self,
+        realm_id: VlobID,
+        configuration: RealmArchivingConfiguration,
+    ) -> Result<(), ClientArchiveWorkspaceError> {
+        workspace_archive::archive_workspace(self, realm_id, configuration).await
     }
 
     /// Ensure all workspaces are bootstrapped.
