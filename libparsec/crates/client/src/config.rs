@@ -60,6 +60,8 @@ pub struct ClientConfig {
 pub struct ServerOrganizationConfig {
     pub user_profile_outsider_allowed: bool,
     pub active_users_limit: ActiveUsersLimit,
+    /// In seconds
+    pub minimum_archiving_period: u64,
 }
 
 // It's easy to provide "good enough" default value so that the config is guaranteed
@@ -71,6 +73,7 @@ impl Default for ServerOrganizationConfig {
         Self {
             user_profile_outsider_allowed: false,
             active_users_limit: ActiveUsersLimit::NoLimit,
+            minimum_archiving_period: 0,
         }
     }
 }
