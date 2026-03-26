@@ -584,6 +584,8 @@ JsValue::from({{ rs_value }})
 {% else -%}
 JsValue::from({{ rs_value }})
 {%- endif -%}
+{%- elif type.kind == "str" -%}
+JsValue::from_str({{ rs_value }}.as_ref())
 {%- elif type.kind == "str_based" -%}
 JsValue::from_str({%- if type.custom_to_rs_string -%}
 {
