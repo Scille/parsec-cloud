@@ -119,7 +119,8 @@ function buildArtifactName() {
   return buildName + '.unsigned.${ext}';
 }
 
-const UNSIGNED_ARTIFACT_NAME = buildArtifactName();
+const ARTIFACT_NAME = buildArtifactName();
+console.log(`Using artifact name: ${ARTIFACT_NAME}`);
 
 /**
  * @type {import('electron-builder').Configuration}
@@ -140,7 +141,7 @@ const options = {
   /* eslint-enable max-len */
   appId: 'ParsecCloud.Parsec.Parsec.3',
   productName: 'Parsec',
-  artifactName: UNSIGNED_ARTIFACT_NAME,
+  artifactName: ARTIFACT_NAME,
   buildVersion: '3.7.2-a.0+dev',
   protocols: {
     name: 'Parsec-v3',

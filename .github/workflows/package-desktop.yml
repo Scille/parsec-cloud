@@ -380,8 +380,7 @@ jobs:
             export APPLE_ID='${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}'
             export APPLE_APP_SPECIFIC_PASSWORD='${{ secrets.MACOS_NOTARIZATION_PASSWD }}'
           fi
-          npm run electron:release \
-            ${{ (matrix.platform == 'linux-gnu' || inputs.nightly_build || matrix.platform == 'macos') && '--' || '' }} \
+          npm run electron:release -- \
             ${{ matrix.platform == 'linux-gnu' && 'appimage' || '' }} \
             ${{ inputs.nightly_build && '--nightly' || '' }} \
             ${{ matrix.platform == 'macos' && '--sign' || ''}} \
