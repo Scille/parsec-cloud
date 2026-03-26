@@ -456,7 +456,7 @@ jobs:
 
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
         with:
-          name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron
+          name: ${{ matrix.artifact_tag }}${{ matrix.cspn && '-cspn' || '' }}-${{ runner.arch }}-electron
           path: |
             ${{ steps.build-info.outputs.files_to_upload }}
             client/electron/dist/Parsec-SBOM-*.spdx.json
@@ -466,7 +466,7 @@ jobs:
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
         if: matrix.platform == 'windows'
         with:
-          name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron-pre-built
+          name: ${{ matrix.artifact_tag }}${{ matrix.cspn && '-cspn' || '' }}-${{ runner.arch }}-electron-pre-built
           path: |
             client/electron/app
             client/electron/build
