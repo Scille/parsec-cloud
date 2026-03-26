@@ -333,7 +333,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Build client for electron
-        run: npm run native:build -- ${{ matrix.platform == 'windows' && '--' || '' }} --mode ${{ steps.version.outputs.type }}{{ matrix.cspn && '.cspn' || '' }}
+        run: npm run native:build -- ${{ matrix.platform == 'windows' && '--' || '' }} --mode ${{ steps.version.outputs.type }}${{ matrix.cspn && '.cspn' || '' }}
         working-directory: client
         timeout-minutes: 5
         env:
