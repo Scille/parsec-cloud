@@ -46,7 +46,7 @@ pub fn req() {
 
     for raw in raws {
         let err = authenticated_cmds::AnyCmdReq::load(raw).unwrap_err();
-        assert!(matches!(err, rmp_serde::decode::Error::Syntax(_)));
+        assert!(matches!(err, libparsec_types::rmp_serialize::DeserializeError::InvalidType { .. }));
     }
 
     // Generated from Python implementation (Parsec v2.6.0+dev)

@@ -362,6 +362,75 @@ impl PartialOrd<u64> for ChunkView {
     }
 }
 
+impl libparsec_types_lite::rmp_serialize::Serialize for ChunkView {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, 6)
+            .map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("access", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.access, writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("id", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.id, writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("raw_offset", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.raw_offset, writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("raw_size", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.raw_size, writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("start", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.start, writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("stop", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.stop, writer)?;
+        Ok(())
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for ChunkView {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        match value {
+            libparsec_types_lite::rmp_serialize::ValueRef::Map(entries) => {
+                let mut obj = std::collections::HashMap::with_capacity(entries.len());
+                for (raw_key, raw_value) in entries {
+                    let key: String =
+                        libparsec_types_lite::rmp_serialize::Deserialize::deserialize(raw_key)?;
+                    obj.insert(key, raw_value);
+                }
+                let id = obj
+                    .remove("id")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("id"))?;
+                let id = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(id)?;
+                let start = obj
+                    .remove("start")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("start"))?;
+                let start = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(start)?;
+                let stop = obj
+                    .remove("stop")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("stop"))?;
+                let stop = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(stop)?;
+                let raw_offset = obj
+                    .remove("raw_offset")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("raw_offset"))?;
+                let raw_offset = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(raw_offset)?;
+                let raw_size = obj
+                    .remove("raw_size")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("raw_size"))?;
+                let raw_size = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(raw_size)?;
+                let access = obj
+                    .remove("access")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("access"))?;
+                let access = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(access)?;
+                Ok(ChunkView { id, start, stop, raw_offset, raw_size, access })
+            }
+            other => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
+                expected: "map",
+                got: libparsec_types_lite::rmp_serialize::value_kind(&other),
+            }),
+        }
+    }
+}
+
 impl ChunkView {
     pub fn new(start: u64, stop: NonZeroU64) -> Self {
         let chunk_view = Self {

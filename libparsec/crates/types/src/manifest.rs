@@ -237,6 +237,95 @@ impl std::fmt::Display for RealmRole {
     }
 }
 
+impl libparsec_types_lite::rmp_serialize::Serialize for RealmRole {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        let s = match self {
+            Self::Owner => "OWNER",
+            Self::Manager => "MANAGER",
+            Self::Contributor => "CONTRIBUTOR",
+            Self::Reader => "READER",
+        };
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(s, writer)
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for RealmRole {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        let s: String = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(value)?;
+        match s.as_str() {
+            "OWNER" => Ok(Self::Owner),
+            "MANAGER" => Ok(Self::Manager),
+            "CONTRIBUTOR" => Ok(Self::Contributor),
+            "READER" => Ok(Self::Reader),
+            _ => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
+                format!("invalid RealmRole: {s}"),
+            )),
+        }
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Serialize for BlockAccess {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, 4)
+            .map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("digest", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.digest, writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("id", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.id, writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("offset", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.offset, writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize("size", writer)?;
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&self.size, writer)?;
+        Ok(())
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for BlockAccess {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        match value {
+            libparsec_types_lite::rmp_serialize::ValueRef::Map(entries) => {
+                let mut obj = std::collections::HashMap::with_capacity(entries.len());
+                for (raw_key, raw_value) in entries {
+                    let key: String =
+                        libparsec_types_lite::rmp_serialize::Deserialize::deserialize(raw_key)?;
+                    obj.insert(key, raw_value);
+                }
+                let id = obj
+                    .remove("id")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("id"))?;
+                let id = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(id)?;
+                let offset = obj
+                    .remove("offset")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("offset"))?;
+                let offset = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(offset)?;
+                let size = obj
+                    .remove("size")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("size"))?;
+                let size = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(size)?;
+                let digest = obj
+                    .remove("digest")
+                    .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("digest"))?;
+                let digest = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(digest)?;
+                Ok(BlockAccess { id, offset, size, digest })
+            }
+            other => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
+                expected: "map",
+                got: libparsec_types_lite::rmp_serialize::value_kind(&other),
+            }),
+        }
+    }
+}
+
 /*
  * Blocksize
  */
@@ -439,6 +528,28 @@ impl TryFrom<FileManifestData> for FileManifest {
     }
 }
 
+impl libparsec_types_lite::rmp_serialize::Serialize for FileManifest {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        let data: FileManifestData = self.clone().into();
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&data, writer)
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for FileManifest {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        let data: FileManifestData =
+            libparsec_types_lite::rmp_serialize::Deserialize::deserialize(value)?;
+        data.try_into().map_err(|e: InvalidBlockSize| {
+            libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(e.to_string())
+        })
+    }
+}
+
 impl From<FileManifest> for FileManifestData {
     fn from(obj: FileManifest) -> Self {
         Self {
@@ -538,6 +649,26 @@ impl_transparent_data_format_conversion!(
     children,
 );
 
+impl libparsec_types_lite::rmp_serialize::Serialize for FolderManifest {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        let data: FolderManifestData = self.clone().into();
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&data, writer)
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for FolderManifest {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        let data: FolderManifestData =
+            libparsec_types_lite::rmp_serialize::Deserialize::deserialize(value)?;
+        Ok(data.into())
+    }
+}
+
 /*
  * UserManifest
  */
@@ -572,6 +703,26 @@ impl_transparent_data_format_conversion!(
     created,
     updated,
 );
+
+impl libparsec_types_lite::rmp_serialize::Serialize for UserManifest {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        let data: UserManifestData = self.clone().into();
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&data, writer)
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for UserManifest {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        let data: UserManifestData =
+            libparsec_types_lite::rmp_serialize::Deserialize::deserialize(value)?;
+        Ok(data.into())
+    }
+}
 
 impl UserManifest {
     /// This structure represents immutable data (as it is created once, signed, and never updated).

@@ -91,7 +91,7 @@ pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
     let path = parse_macro_input!(path as LitStr).value();
     let path = path_from_str(&path);
     let (family_name, json_cmds) = retrieve_protocol_family_json_cmds(&path);
-    TokenStream::from(protocol::generate_protocol_cmds_family(
+    TokenStream::from(protocol::generate_protocol_cmds_family_with_dynamic_serialization(
         json_cmds,
         family_name,
     ))
@@ -184,7 +184,7 @@ pub fn parsec_data(path: TokenStream) -> TokenStream {
     let path = path_from_str(&path);
     let content = content_from_file(&path);
     let data: data::JsonData = miniserde::json::from_str(&content).expect("Data is not valid");
-    TokenStream::from(data::generate_data(data))
+    TokenStream::from(data::generate_data_with_dynamic_serialization(data))
 }
 
 /// Generates serialization code from the JSON contents of a single data type.

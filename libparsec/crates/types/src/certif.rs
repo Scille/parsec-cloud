@@ -200,6 +200,26 @@ impl From<CertificateSigner> for Option<DeviceID> {
     }
 }
 
+impl libparsec_types_lite::rmp_serialize::Serialize for CertificateSigner {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        let as_option: Option<DeviceID> = (*self).into();
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(&as_option, writer)
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for CertificateSigner {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        let opt: Option<DeviceID> =
+            libparsec_types_lite::rmp_serialize::Deserialize::deserialize(value)?;
+        Ok(opt.into())
+    }
+}
+
 /*
  * UserCertificate
  */

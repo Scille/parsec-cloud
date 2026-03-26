@@ -362,7 +362,7 @@ fn quote_dynamic_cmd_struct_deserialize_impl(
                 value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
             ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                 let entries = match value {
-                    rmpv::ValueRef::Map(entries) => entries,
+                    libparsec_types_lite::rmpv::ValueRef::Map(entries) => entries,
                     other => {
                         return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                             expected: "map",
@@ -397,7 +397,7 @@ fn quote_unknown_status_deserialize_impl(serialization_impl: SerializationImpl) 
                         value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                     ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                         let entries = match value {
-                            rmpv::ValueRef::Map(entries) => entries,
+                            libparsec_types_lite::rmpv::ValueRef::Map(entries) => entries,
                             other => {
                                 return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                     expected: "map",
@@ -747,7 +747,7 @@ fn quote_versioned_cmds(
             quote! {
                 #cmd_name_literal => Ok(Self::#variant_name(
                     <#module_name::Req as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(
-                        rmpv::ValueRef::Map(entries),
+                        libparsec_types_lite::rmpv::ValueRef::Map(entries),
                     )?,
                 )),
             }
@@ -786,7 +786,7 @@ fn quote_versioned_cmds(
                     value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                 ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                     let entries = match value {
-                        rmpv::ValueRef::Map(entries) => entries,
+                        libparsec_types_lite::rmpv::ValueRef::Map(entries) => entries,
                         other => {
                             return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                 expected: "map",
@@ -798,7 +798,7 @@ fn quote_versioned_cmds(
                     let mut cmd: Option<String> = None;
                     for (raw_key, raw_value) in entries.iter() {
                         let key = match raw_key {
-                            rmpv::ValueRef::String(s) => s.as_str().ok_or_else(|| {
+                            libparsec_types_lite::rmpv::ValueRef::String(s) => s.as_str().ok_or_else(|| {
                                 libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
                                     "invalid UTF-8 string".to_owned(),
                                 )
@@ -809,7 +809,7 @@ fn quote_versioned_cmds(
                             continue;
                         }
                         let value = match raw_value {
-                            rmpv::ValueRef::String(s) => s.as_str().ok_or_else(|| {
+                            libparsec_types_lite::rmpv::ValueRef::String(s) => s.as_str().ok_or_else(|| {
                                 libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
                                     "invalid UTF-8 string".to_owned(),
                                 )
@@ -1059,7 +1059,7 @@ fn quote_cmd(
                             value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                         ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                             let entries = match value {
-                                rmpv::ValueRef::Map(entries) => entries,
+                                libparsec_types_lite::rmpv::ValueRef::Map(entries) => entries,
                                 other => {
                                     return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                         expected: "map",
@@ -1336,7 +1336,7 @@ fn quote_custom_struct_union(
                         value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                     ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                         let entries = match value {
-                            rmpv::ValueRef::Map(entries) => entries,
+                            libparsec_types_lite::rmpv::ValueRef::Map(entries) => entries,
                             other => {
                                 return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                     expected: "map",
@@ -1601,7 +1601,7 @@ fn quote_cmd_req_struct(
                             value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                         ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                             let entries = match value {
-                                rmpv::ValueRef::Map(entries) => entries,
+                                libparsec_types_lite::rmpv::ValueRef::Map(entries) => entries,
                                 other => {
                                     return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                         expected: "map",
@@ -1678,7 +1678,7 @@ fn quote_cmd_req_struct(
                                 value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                             ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                                 match value {
-                                    rmpv::ValueRef::Map(_) => Ok(Self),
+                                    libparsec_types_lite::rmpv::ValueRef::Map(_) => Ok(Self),
                                     other => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                         expected: "map",
                                         got: libparsec_types_lite::rmp_serialize::value_kind(&other),
@@ -1804,7 +1804,7 @@ fn quote_cmd_req_struct(
                                 value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                             ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                                 let entries = match value {
-                                    rmpv::ValueRef::Map(entries) => entries,
+                                    libparsec_types_lite::rmpv::ValueRef::Map(entries) => entries,
                                     other => {
                                         return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                             expected: "map",

@@ -228,7 +228,7 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             quote! { #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)] }
         }
         SerializationImpl::DynamicRmp => {
-            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
+            quote! { #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)] }
         }
     };
 
@@ -262,6 +262,15 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
             }
             SerializationImpl::DynamicRmp => {
                 quote! {
+                    impl ::serde::Serialize for #name_type {
+                        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+                        where
+                            S: ::serde::ser::Serializer,
+                        {
+                            serializer.serialize_str(#ty)
+                        }
+                    }
+
                     impl libparsec_types_lite::rmp_serialize::Serialize for #name_type {
                         fn serialize(
                             &self,
@@ -282,7 +291,7 @@ fn quote_data(data: GenData, serialization_impl: SerializationImpl) -> TokenStre
                         fn deserialize(
                             value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                         ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
-                            let s = String::deserialize(value)?;
+                            let s = <String as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(value)?;
                             if s == #ty {
                                 Ok(#name_type)
                             } else {
@@ -419,7 +428,7 @@ fn quote_custom_struct_union(
             quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
         }
         SerializationImpl::DynamicRmp => {
-            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
+            quote! { #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)] }
         }
     };
 
@@ -524,7 +533,7 @@ fn quote_custom_struct_union(
                         value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                     ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                         let entries = match value {
-                            rmpv::ValueRef::Map(entries) => entries,
+                            libparsec_types_lite::rmp_serialize::ValueRef::Map(entries) => entries,
                             other => {
                                 return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                                     expected: "map",
@@ -535,14 +544,14 @@ fn quote_custom_struct_union(
 
                         let mut obj = std::collections::HashMap::with_capacity(entries.len());
                         for (raw_key, raw_value) in entries {
-                            let key = String::deserialize(raw_key)?;
+                            let key = <String as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(raw_key)?;
                             obj.insert(key, raw_value);
                         }
 
                         let discriminant = obj
                             .remove(#discriminant_field)
                             .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField(#discriminant_field))?;
-                        let discriminant = String::deserialize(discriminant)?;
+                        let discriminant = <String as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(discriminant)?;
 
                         match discriminant.as_str() {
                             #(#variants_deserialize),*,
@@ -589,7 +598,7 @@ fn quote_custom_literal_union(
             quote! { #[derive(Debug, Clone, Copy, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq, Hash)] }
         }
         SerializationImpl::DynamicRmp => {
-            quote! { #[derive(Debug, Clone, Copy, ::serde::Deserialize, PartialEq, Eq, Hash)] }
+            quote! { #[derive(Debug, Clone, Copy, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq, Hash)] }
         }
     };
 
@@ -631,7 +640,7 @@ fn quote_custom_literal_union(
                     fn deserialize(
                         value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
                     ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
-                        let discriminant = String::deserialize(value)?;
+                        let discriminant = <String as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(value)?;
                         match discriminant.as_str() {
                             #(#variants_deserialize),*,
                             _ => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
@@ -668,7 +677,7 @@ fn quote_custom_struct(
             quote! { #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq)] }
         }
         SerializationImpl::DynamicRmp => {
-            quote! { #[derive(Debug, Clone, ::serde::Deserialize, PartialEq, Eq)] }
+            quote! { #[derive(Debug, Clone, ::serde::Serialize, ::serde::Deserialize, PartialEq, Eq)] }
         }
     };
 
@@ -975,7 +984,7 @@ fn quote_dynamic_struct_deserialize_impl(
                 value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
             ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
                 let entries = match value {
-                    rmpv::ValueRef::Map(entries) => entries,
+                    libparsec_types_lite::rmp_serialize::ValueRef::Map(entries) => entries,
                     other => {
                         return Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
                             expected: "map",
@@ -986,7 +995,7 @@ fn quote_dynamic_struct_deserialize_impl(
 
                 let mut obj = std::collections::HashMap::with_capacity(entries.len());
                 for (raw_key, raw_value) in entries {
-                    let key = String::deserialize(raw_key)?;
+                    let key = <String as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(raw_key)?;
                     obj.insert(key, raw_value);
                 }
 

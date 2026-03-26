@@ -205,6 +205,37 @@ impl Serialize for ShamirShare {
     }
 }
 
+impl libparsec_types_lite::rmp_serialize::Serialize for ShamirShare {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        libparsec_types_lite::rmp_serialize::encode::write_bin(writer, &self.dump())
+            .map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+        Ok(())
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for ShamirShare {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        match value {
+            libparsec_types_lite::rmp_serialize::ValueRef::Binary(data) => {
+                Self::try_from(data).map_err(|_| {
+                    libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
+                        "invalid ShamirShare".to_owned(),
+                    )
+                })
+            }
+            other => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidType {
+                expected: "binary",
+                got: libparsec_types_lite::rmp_serialize::value_kind(&other),
+            }),
+        }
+    }
+}
+
 #[cfg(test)]
 #[path = "../tests/unit/shamir.rs"]
 mod tests;

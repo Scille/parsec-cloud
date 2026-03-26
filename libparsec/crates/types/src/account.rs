@@ -248,6 +248,28 @@ impl_transparent_data_format_conversion!(
 impl_dump_and_encrypt!(AccountVaultItemOpaqueKeyEncryptedData);
 impl_decrypt_and_load!(AccountVaultItemOpaqueKeyEncryptedData);
 
+// rmp_serialize impls
+
+impl libparsec_types_lite::rmp_serialize::Serialize for ValidationCode {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(self.as_ref(), writer)
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for ValidationCode {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        let s: String = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(value)?;
+        s.parse().map_err(|e: ValidationCodeParseError| {
+            libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(e.to_string())
+        })
+    }
+}
+
 #[cfg(test)]
 #[path = "../tests/unit/account.rs"]
 mod tests;

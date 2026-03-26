@@ -331,6 +331,104 @@ impl_transparent_data_format_conversion!(
     weighted_share,
 );
 
+// rmp_serialize impls
+
+impl libparsec_types_lite::rmp_serialize::Serialize for InvitationStatus {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        let s = match self {
+            Self::Pending => "PENDING",
+            Self::Finished => "FINISHED",
+            Self::Cancelled => "CANCELLED",
+        };
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(s, writer)
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for InvitationStatus {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        let s: String = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(value)?;
+        match s.as_str() {
+            "PENDING" => Ok(Self::Pending),
+            "FINISHED" => Ok(Self::Finished),
+            "CANCELLED" => Ok(Self::Cancelled),
+            _ => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
+                format!("unknown InvitationStatus: {s}"),
+            )),
+        }
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Serialize for GreeterOrClaimer {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        let s = match self {
+            Self::Greeter => "GREETER",
+            Self::Claimer => "CLAIMER",
+        };
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(s, writer)
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for GreeterOrClaimer {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        let s: String = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(value)?;
+        match s.as_str() {
+            "GREETER" => Ok(Self::Greeter),
+            "CLAIMER" => Ok(Self::Claimer),
+            _ => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
+                format!("unknown GreeterOrClaimer: {s}"),
+            )),
+        }
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Serialize for CancelledGreetingAttemptReason {
+    fn serialize(
+        &self,
+        writer: &mut Vec<u8>,
+    ) -> Result<(), libparsec_types_lite::rmp_serialize::SerializeError> {
+        let s = match self {
+            Self::ManuallyCancelled => "MANUALLY_CANCELLED",
+            Self::InvalidNonceHash => "INVALID_NONCE_HASH",
+            Self::InvalidSasCode => "INVALID_SAS_CODE",
+            Self::UndecipherablePayload => "UNDECIPHERABLE_PAYLOAD",
+            Self::UndeserializablePayload => "UNDESERIALIZABLE_PAYLOAD",
+            Self::InconsistentPayload => "INCONSISTENT_PAYLOAD",
+            Self::AutomaticallyCancelled => "AUTOMATICALLY_CANCELLED",
+        };
+        libparsec_types_lite::rmp_serialize::Serialize::serialize(s, writer)
+    }
+}
+
+impl libparsec_types_lite::rmp_serialize::Deserialize for CancelledGreetingAttemptReason {
+    fn deserialize(
+        value: libparsec_types_lite::rmp_serialize::ValueRef<'_>,
+    ) -> Result<Self, libparsec_types_lite::rmp_serialize::DeserializeError> {
+        let s: String = libparsec_types_lite::rmp_serialize::Deserialize::deserialize(value)?;
+        match s.as_str() {
+            "MANUALLY_CANCELLED" => Ok(Self::ManuallyCancelled),
+            "INVALID_NONCE_HASH" => Ok(Self::InvalidNonceHash),
+            "INVALID_SAS_CODE" => Ok(Self::InvalidSasCode),
+            "UNDECIPHERABLE_PAYLOAD" => Ok(Self::UndecipherablePayload),
+            "UNDESERIALIZABLE_PAYLOAD" => Ok(Self::UndeserializablePayload),
+            "INCONSISTENT_PAYLOAD" => Ok(Self::InconsistentPayload),
+            "AUTOMATICALLY_CANCELLED" => Ok(Self::AutomaticallyCancelled),
+            _ => Err(libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
+                format!("unknown CancelledGreetingAttemptReason: {s}"),
+            )),
+        }
+    }
+}
+
 #[cfg(test)]
 #[path = "../tests/unit/invite.rs"]
 #[allow(clippy::unwrap_used)]
