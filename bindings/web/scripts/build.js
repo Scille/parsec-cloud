@@ -165,22 +165,31 @@ switch (profile) {
     const ci_dest_dir_name = "debug"
     const ci_dest_dir = path.resolve(ci_target_dir, ci_dest_dir_name);
 
-    let ci_source_dir_resolved = undefined
+    let needsSymlink = false;
     try {
-      ci_source_dir_resolved = fs.realpathSync(ci_source_dir);
-    } catch {
-      // Source doesn't exist yet
+      const stat = fs.lstatSync(ci_source_dir);  // lstat = don't follow symlink
+      if (stat.isSymbolicLink()) {
+        console.log(`${ci_source_dir} is already a symlink`);
+        const actual = fs.readlinkSync(ci_source_dir);
+        console.debug(`Link pointing to ${actual}`);
+        needsSymlink = actual !== ci_dest_dir_name;
+        if (needsSymlink) {
+          console.log(`${ci_source_dir} pointing to the wrong target, cleaning ...`);
+          fs.unlinkSync(ci_source_dir);
+        }
+      }
+    } catch (e) {
+      if (e.code === 'ENOENT') {
+        console.log(`Link ${ci_source_dir} missing, will create it!`);
+        needsSymlink = true;
+      }
+      else throw e;
     }
 
-    if (ci_source_dir_resolved != ci_dest_dir) {
-      if (ci_source_dir_resolved != undefined) {
-        console.log(`Remove invalid entry ${ci_source_dir}`);
-        fs.rmSync(ci_source_dir, { force: true, recursive: true });
-      }
-      console.log(`Create symlink ${ci_source_dir} => ${ci_dest_dir}`);
-      fs.mkdirSync(ci_dest_dir, { recursive: true });
+    if (needsSymlink) {
       fs.symlinkSync(ci_dest_dir_name, ci_source_dir);
     }
+    fs.mkdirSync(ci_dest_dir, { recursive: true });
 
     break;
 }
