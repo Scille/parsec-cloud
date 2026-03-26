@@ -1900,13 +1900,42 @@ fn quote_cmd_rep_variant(rep: &GenCmdRep) -> (TokenStream, TokenStream, TokenStr
 
     let dynamic_serialize_arm = match &rep.kind {
         GenCmdRepKind::Unit { .. } => {
+            // Unit variants flatten the nested type's map fields into the
+            // response map (like serde's #[serde(flatten)]).
             quote! {
                 Self::#variant_name(unit) => {
-                    libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, 2).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                    // First serialize the nested type to a temporary buffer
+                    let mut temp_buf = Vec::new();
+                    libparsec_types_lite::rmp_serialize::Serialize::serialize(unit, &mut temp_buf)?;
+                    // Decode it back to get the map entries
+                    let mut rd = &temp_buf[..];
+                    let nested_value = libparsec_types_lite::rmpv::decode::value_ref::read_value_ref(&mut rd)
+                        .map_err(libparsec_types_lite::rmp_serialize::DeserializeError::Decode)
+                        .map_err(|e| libparsec_types_lite::rmp_serialize::SerializeError::Io(
+                            std::io::Error::new(std::io::ErrorKind::InvalidData, format!("{:?}", e))
+                        ))?;
+                    let entries = match &nested_value {
+                        libparsec_types_lite::rmpv::ValueRef::Map(entries) => entries,
+                        _ => return Err(libparsec_types_lite::rmp_serialize::SerializeError::Io(
+                            std::io::Error::new(std::io::ErrorKind::InvalidData, "unit type must serialize as map")
+                        )),
+                    };
+                    // Write combined map: "status" + all nested entries
+                    let map_len: u32 = (1 + entries.len()).try_into()
+                        .map_err(|_| libparsec_types_lite::rmp_serialize::SerializeError::LengthOverflow {
+                            kind: "map",
+                            len: 1 + entries.len(),
+                        })?;
+                    libparsec_types_lite::rmp_serialize::encode::write_map_len(writer, map_len).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
                     libparsec_types_lite::rmp_serialize::encode::write_str(writer, "status").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
                     libparsec_types_lite::rmp_serialize::encode::write_str(writer, #status_name).map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
-                    libparsec_types_lite::rmp_serialize::encode::write_str(writer, "unit").map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
-                    libparsec_types_lite::rmp_serialize::Serialize::serialize(unit, writer)?;
+                    // Re-serialize each nested entry into the outer map
+                    for (k, v) in entries {
+                        libparsec_types_lite::rmpv::encode::write_value_ref(writer, k)
+                            .map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                        libparsec_types_lite::rmpv::encode::write_value_ref(writer, v)
+                            .map_err(libparsec_types_lite::rmp_serialize::SerializeError::from)?;
+                    }
                     Ok(())
                 }
             }
@@ -1951,14 +1980,37 @@ fn quote_cmd_rep_variant(rep: &GenCmdRep) -> (TokenStream, TokenStream, TokenStr
 
     let dynamic_deserialize_case = match &rep.kind {
         GenCmdRepKind::Unit { nested_type_name } => {
+            // Unit variants have their nested type's fields flattened into
+            // the response map. Re-serialize the remaining fields as a
+            // msgpack map and deserialize into the nested type.
             let nested_type_name = format_ident!("{}", nested_type_name);
             quote! {
                 #status_name => {
-                    let value = obj
-                        .remove("unit")
-                        .ok_or(libparsec_types_lite::rmp_serialize::DeserializeError::MissingField("unit"))?;
+                    let mut temp_buf = Vec::new();
+                    let remaining_len: u32 = obj.len().try_into().map_err(|_| {
+                        libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
+                            "too many fields".to_owned(),
+                        )
+                    })?;
+                    libparsec_types_lite::rmp_serialize::encode::write_map_len(&mut temp_buf, remaining_len)
+                        .map_err(|e| libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
+                            format!("failed to write map len: {:?}", e),
+                        ))?;
+                    for (k, v) in &obj {
+                        libparsec_types_lite::rmp_serialize::encode::write_str(&mut temp_buf, k)
+                            .map_err(|e| libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
+                                format!("failed to write key: {:?}", e),
+                            ))?;
+                        libparsec_types_lite::rmpv::encode::write_value_ref(&mut temp_buf, v)
+                            .map_err(|e| libparsec_types_lite::rmp_serialize::DeserializeError::InvalidValue(
+                                format!("failed to write value: {:?}", e),
+                            ))?;
+                    }
+                    let mut rd = &temp_buf[..];
+                    let nested_value = libparsec_types_lite::rmpv::decode::value_ref::read_value_ref(&mut rd)
+                        .map_err(libparsec_types_lite::rmp_serialize::DeserializeError::Decode)?;
                     Ok(Self::#variant_name(
-                        <#nested_type_name as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(value)?,
+                        <#nested_type_name as libparsec_types_lite::rmp_serialize::Deserialize>::deserialize(nested_value)?,
                     ))
                 }
             }
