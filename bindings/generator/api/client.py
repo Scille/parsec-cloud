@@ -470,6 +470,52 @@ class ClientForgetAllCertificatesError(ErrorVariant):
         pass
 
 
+class ClientArchiveWorkspaceError(ErrorVariant):
+    class WorkspaceNotFound:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+    class WorkspaceDeleted:
+        pass
+
+    class ArchivingPeriodTooShort:
+        pass
+
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidEncryptedRealmName:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_archive_workspace(
+    client: Handle,
+    realm_id: VlobID,
+    configuration: RealmArchivingConfiguration,
+) -> Result[None, ClientArchiveWorkspaceError]:
+    raise NotImplementedError
+
+
 async def client_forget_all_certificates(
     client: Handle,
 ) -> Result[None, ClientForgetAllCertificatesError]:
