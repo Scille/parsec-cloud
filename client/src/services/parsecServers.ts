@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { isWeb } from '@/parsec';
 import { ParsedParsecAddr } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 
@@ -38,4 +39,20 @@ export function getTrialServerAddress(): string {
     return '';
   }
   return `parsec3://${server}`;
+}
+
+export function currentLocationIsTrialServer(): boolean {
+  if (!isWeb()) {
+    return false;
+  }
+  const host = window.location.host.toLocaleLowerCase();
+  return Env.getTrialServers().find((server) => server.toLocaleLowerCase() === host) !== undefined;
+}
+
+export function currentLocationIsSaasServer(): boolean {
+  if (!isWeb()) {
+    return false;
+  }
+  const host = window.location.host.toLocaleLowerCase();
+  return Env.getSaasServers().find((server) => server.toLocaleLowerCase() === host) !== undefined;
 }
