@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+mod archive_workspace;
 mod create_workspace;
 mod ensure_workspaces_bootstrapped;
 mod list_frozen_users;
