@@ -40,12 +40,19 @@ import {
   AvailableDevice,
   constructAccessStrategy,
   DeviceSaveStrategy,
+  isWeb,
   OrganizationID,
   ParsedParsecAddrTag,
   parseParsecAddr,
 } from '@/parsec';
+import { Env } from '@/services/environment';
 import { InformationManager } from '@/services/informationManager';
-import { getServerTypeFromParsedParsecAddr, ServerType } from '@/services/parsecServers';
+import {
+  currentLocationIsSaasServer,
+  currentLocationIsTrialServer,
+  getServerTypeFromParsedParsecAddr,
+  ServerType,
+} from '@/services/parsecServers';
 import CreateOrganizationCustomServer from '@/views/organizations/creation/CreateOrganizationCustomServer.vue';
 import CreateOrganizationSaas from '@/views/organizations/creation/CreateOrganizationSaas.vue';
 import CreateOrganizationTrial from '@/views/organizations/creation/CreateOrganizationTrial.vue';
@@ -68,11 +75,31 @@ onMounted(async () => {
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       serverType.value = getServerTypeFromParsedParsecAddr(result.value);
     }
+  } else if ((window as any).TESTING === true || window.isDev()) {
+    // On Playwright, everything's available
+    serverType.value = undefined;
+  } else if (currentLocationIsSaasServer()) {
+    // We're on the Saas server, letting the user chose
+    serverType.value = undefined;
+  } else if (currentLocationIsTrialServer()) {
+    // We're on the trial server, using trial by default
+    serverType.value = ServerType.Trial;
+  } else if (isWeb()) {
+    // We're on web but not on trial nor saas, use custom by default
+    serverType.value = ServerType.Custom;
+  } else {
+    serverType.value = undefined;
   }
 });
 
 async function onServerChosen(chosenServerType: ServerType): Promise<void> {
-  serverType.value = chosenServerType;
+  if (chosenServerType === ServerType.Trial && isWeb() && !currentLocationIsTrialServer() && !(window as any).TESTING === true) {
+    await Env.Links.openUrl(`https://${Env.getTrialServers()[0]}/client/home?createOrg=trial`);
+  } else if (chosenServerType === ServerType.Saas && isWeb() && !currentLocationIsSaasServer() && !(window as any).TESTING === true) {
+    await Env.Links.openUrl(`https://${Env.getSaasServers()[0]}/client/home?createOrg=saas`);
+  } else {
+    serverType.value = chosenServerType;
+  }
 }
 
 async function onCloseRequested(force = false): Promise<void> {

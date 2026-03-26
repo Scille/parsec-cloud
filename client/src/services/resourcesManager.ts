@@ -116,7 +116,7 @@ class WebResourcesProvider implements IResourcesProvider {
     }
     // Returns index.html if resource does not exist
     // Note content-type header may contain charset (e.g. `text/html; charset=utf-8`)
-    if (resp.headers['content-type'].startsWith('text/html')) {
+    if (resp.headers['content-type'] && resp.headers['content-type'].startsWith('text/html')) {
       throw new Error('Resource not found');
     }
     const convertF = ResourceConverters.get(res);
