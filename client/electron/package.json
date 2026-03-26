@@ -20,6 +20,7 @@
         "electron:start-live": "npm run build && node ./live-runner.js",
         "electron:start": "npm run build && electron --inspect=5858 ./",
         "electron:release": "npm run build && node package.js --mode prod",
+        "electron:cspn": "npm run build && node package.js --mode prod --cspn",
         "electron:sign": "node package.js --mode prod --sign",
         "sentry:sourcemaps": "sentry-cli sourcemaps inject --org scille --project parsec3-frontend ./build && sentry-cli sourcemaps upload --org scille --project parsec3-frontend ./build"
     },

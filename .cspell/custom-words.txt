@@ -4,6 +4,7 @@ ALLSPHINXOPTS
 Bardock
 CAPELECTRON
 CICD
+CSPN
 CYGPATTERN
 Crefreshiconhandler
 Cryptpad
@@ -86,6 +87,7 @@ clusterfuck
 coordinatorlayout
 coprimes
 corofn
+cspn
 dalek
 datagrid
 debouncer

@@ -210,6 +210,22 @@ jobs:
             os_alias: linux
             extensions: AppImage
             artifact_tag: linux-appimage
+          - name: 🏁 Windows-CSPN
+            platform: windows
+            os: windows-2022
+            raw_latest_file: latest.yml
+            extensions: exe
+            os_alias: win
+            artifact_tag: windows-exe
+            cspn: true
+          - name: 🍎 macOS x86-CSPN
+            platform: macos
+            os: macos-15-intel
+            raw_latest_file: latest-mac.yml
+            extensions: dmg zip
+            os_alias: mac
+            artifact_tag: macos-dmg
+            cspn: true
     name: "${{ matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -317,7 +333,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Build client for electron
-        run: npm run native:build -- ${{ matrix.platform == 'windows' && '--' || '' }} --mode ${{ steps.version.outputs.type }}
+        run: npm run native:build -- ${{ matrix.platform == 'windows' && '--' || '' }} --mode ${{ steps.version.outputs.type }}${{ matrix.cspn && '.cspn' || '' }}
         working-directory: client
         timeout-minutes: 5
         env:
@@ -364,11 +380,11 @@ jobs:
             export APPLE_ID='${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}'
             export APPLE_APP_SPECIFIC_PASSWORD='${{ secrets.MACOS_NOTARIZATION_PASSWD }}'
           fi
-          npm run electron:release \
-            ${{ (matrix.platform == 'linux-gnu' || inputs.nightly_build || matrix.platform == 'macos') && '--' || '' }} \
+          npm run electron:release -- \
             ${{ matrix.platform == 'linux-gnu' && 'appimage' || '' }} \
             ${{ inputs.nightly_build && '--nightly' || '' }} \
-            ${{ matrix.platform == 'macos' && '--sign' || ''}}
+            ${{ matrix.platform == 'macos' && '--sign' || ''}} \
+            ${{ matrix.cspn && '--cspn' || '' }}
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
@@ -389,7 +405,7 @@ jobs:
           tool: syft@0.84.0
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}-${{ runner.arch }}.spdx.json .
+        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}${{ matrix.cspn && '-cspn' || '' }}-${{ runner.arch }}.spdx.json .
 
       - name: Debug dist folder
         if: runner.debug || false
@@ -400,7 +416,7 @@ jobs:
         shell: bash -eux -o pipefail {0}
         run: |
           arch=$(uname -m)
-          app_file_no_ext="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ (matrix.platform == 'windows' || matrix.platform == 'linux-gnu') && '.unsigned' || '' }}"
+          app_file_no_ext="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ matrix.cspn && '.cspn' || '' }}${{ (matrix.platform == 'windows' || matrix.platform == 'linux-gnu') && '.unsigned' || '' }}"
           latest_file="latest-${{ matrix.os_alias }}-${arch}.yml"
           artifact_file=artifacts.yml
 
@@ -439,7 +455,7 @@ jobs:
 
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
         with:
-          name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron
+          name: ${{ matrix.artifact_tag }}${{ matrix.cspn && '-cspn' || '' }}-${{ runner.arch }}-electron
           path: |
             ${{ steps.build-info.outputs.files_to_upload }}
             client/electron/dist/Parsec-SBOM-*.spdx.json
@@ -449,7 +465,7 @@ jobs:
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # pin v5.0.0
         if: matrix.platform == 'windows'
         with:
-          name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron-pre-built
+          name: ${{ matrix.artifact_tag }}${{ matrix.cspn && '-cspn' || '' }}-${{ runner.arch }}-electron-pre-built
           path: |
             client/electron/app
             client/electron/build
