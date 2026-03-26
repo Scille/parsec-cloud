@@ -58,7 +58,7 @@
         "fs-extra": "^11.3.3",
         "luxon": "^3.5.0",
         "mark.js": "^8.11.1",
-        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#ab13899b0c0097cfe31c837ffa35c788ab8ce0ea",
+        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#ca4a9220234de66e19462ec2a0bf6c57d0104281",
         "native-file-system-adapter": "^3.0.1",
         "pdfjs-dist": "^5.4.624",
         "qrcode-vue3": "^1.7.1",

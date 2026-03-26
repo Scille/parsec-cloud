@@ -106,6 +106,7 @@ export interface InformationOptions {
   unique?: boolean;
   title?: Translatable;
   action?: { title: Translatable; callback: () => Promise<void> };
+  onTimeout?: () => Promise<void>;
 }
 
 export class Information {
@@ -116,8 +117,9 @@ export class Information {
   data?: InformationData;
   unique?: boolean;
   action?: { title: Translatable; callback: () => Promise<void> };
+  onTimeout?: () => Promise<void>;
 
-  constructor({ message, level, data, unique, title, action }: InformationOptions) {
+  constructor({ message, level, data, unique, title, action, onTimeout }: InformationOptions) {
     this.id = uuid4();
     this.message = message;
     this.level = level;
@@ -125,6 +127,7 @@ export class Information {
     this.unique = unique;
     this.title = title;
     this.action = action;
+    this.onTimeout = onTimeout;
   }
 
   get theme(): MsReportTheme {
@@ -197,12 +200,12 @@ export class InformationManager {
   }
 
   private async showToast(information: Information): Promise<void> {
-    console.log(information.action);
     this.toastManager.createAndPresent({
       theme: information.theme,
       message: information.message,
       confirmButtonLabel: information.action?.title,
       action: information.action?.callback,
+      onTimeout: information.onTimeout,
     });
   }
 

@@ -43,7 +43,7 @@ export interface FileOperationMoveData extends _FileOperationData {
 }
 
 export interface FileOperationRestoreData extends _FileOperationData {
-  entries: Array<WorkspaceHistoryEntryStat | EntryStat>;
+  entries: Array<WorkspaceHistoryEntryStat>;
   dateTime: DateTime;
   dupPolicy: DuplicatePolicy;
 }

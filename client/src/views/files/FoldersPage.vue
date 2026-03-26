@@ -1284,7 +1284,9 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
 
   if (entries.length === 0 || !workspaceInfo.value) {
     return;
-  } else if (entries.length === 1) {
+  }
+  const parentStatResult = await parsec.entryStat(workspaceInfo.value.handle, currentPath.value);
+  if (entries.length === 1) {
     const entry = entries[0];
     const title = entry.isFile() ? 'FoldersPage.deleteOneFileQuestionTitle' : 'FoldersPage.deleteOneFolderQuestionTitle';
     const subtitle = entry.isFile()
@@ -1314,12 +1316,17 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       if (search.value) {
         await startSearch(searchPattern.value);
       }
-      deleteBackup = { entries: [workspaceHistoryEntryStatFromEntryStat(entry)], time: entry.updated };
       await eventDistributor.value.dispatchEvent(Events.EntryDeleted, {
         workspaceHandle: workspaceInfo.value.handle,
         entryId: entry.id,
         path: entry.path,
       });
+      if (parentStatResult.ok) {
+        deleteBackup = {
+          entries: [workspaceHistoryEntryStatFromEntryStat(entry)],
+          time: parentStatResult.value.updated,
+        };
+      }
     }
   } else {
     const answer = await askQuestion(
@@ -1347,15 +1354,6 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       if (!result.ok) {
         errorsEncountered += 1;
       } else {
-        const oldest = entries.reduce((oldest, current): EntryModel => {
-          return current.updated < oldest.updated ? current : oldest;
-        });
-        if (oldest) {
-          deleteBackup = {
-            entries: entries.map((entry) => workspaceHistoryEntryStatFromEntryStat(entry)),
-            time: oldest.updated,
-          };
-        }
         await eventDistributor.value.dispatchEvent(Events.EntryDeleted, {
           workspaceHandle: workspaceInfo.value.handle,
           entryId: entry.id,
@@ -1374,10 +1372,18 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
         }),
         PresentationMode.Toast,
       );
+    } else {
+      if (parentStatResult.ok) {
+        deleteBackup = {
+          entries: entries.map((entry) => workspaceHistoryEntryStatFromEntryStat(entry)),
+          time: parentStatResult.value.updated,
+        };
+      }
     }
   }
   await onSelectionCancel();
   if (deleteBackup) {
+    console.log('TIME RESTORED', deleteBackup.time.toSeconds());
     informationManager.value.present(
       new Information({
         message: `${deleteBackup.entries.length} ENTRIES DELETED`,
@@ -1385,9 +1391,21 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
         action: {
           callback: async (): Promise<void> => {
             console.log('UNDOING');
-            fileOperationManager.value.restore(workspaceInfo.value?.handle, deleteBackup?.entries, deleteBackup?.time.plus({ seconds: 5 }), DuplicatePolicy.Ignore);
+            if (workspaceInfo.value && deleteBackup) {
+              fileOperationManager.value.restore(
+                workspaceInfo.value.handle,
+                deleteBackup?.entries,
+                deleteBackup?.time,
+                DuplicatePolicy.Ignore,
+              );
+            }
+            deleteBackup = undefined;
           },
           title: 'UNDO',
+        },
+        onTimeout: async (): Promise<void> => {
+          console.log('TIMEOUT');
+          deleteBackup = undefined;
         },
       }),
       PresentationMode.Toast,
