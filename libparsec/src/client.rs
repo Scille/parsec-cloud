@@ -3,16 +3,16 @@
 use std::{collections::HashMap, num::NonZeroU8, path::Path, sync::Arc};
 
 pub use libparsec_client::{
-    ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
-    ClientForgetAllCertificatesError, ClientGetCurrentSelfProfileError,
-    ClientGetOrganizationBootstrapDateError, ClientGetSelfShamirRecoveryError, ClientGetTosError,
-    ClientGetUserDeviceError, ClientGetUserInfoError, ClientListFrozenUsersError,
-    ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
-    ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
-    ClientRevokeUserError, ClientSetupShamirRecoveryError, ClientShareWorkspaceError,
-    ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo,
-    SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo,
-    WorkspaceUserAccessInfo,
+    ClientAcceptTosError, ClientArchiveWorkspaceError, ClientCreateWorkspaceError,
+    ClientDeleteShamirRecoveryError, ClientForgetAllCertificatesError,
+    ClientGetCurrentSelfProfileError, ClientGetOrganizationBootstrapDateError,
+    ClientGetSelfShamirRecoveryError, ClientGetTosError, ClientGetUserDeviceError,
+    ClientGetUserInfoError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
+    ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
+    ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
+    ClientSetupShamirRecoveryError, ClientShareWorkspaceError, ClientUserUpdateProfileError,
+    DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
+    ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -624,6 +624,20 @@ pub async fn client_share_workspace(
     let client = borrow_client(client)?;
 
     client.share_workspace(realm_id, recipient, role).await
+}
+
+/*
+ * Client archive workspace
+ */
+
+pub async fn client_archive_workspace(
+    client: Handle,
+    realm_id: VlobID,
+    configuration: RealmArchivingConfiguration,
+) -> Result<(), ClientArchiveWorkspaceError> {
+    let client = borrow_client(client)?;
+
+    client.archive_workspace(realm_id, configuration).await
 }
 
 /*
