@@ -7,7 +7,7 @@ use std::{
 };
 
 use pyo3::{
-    exceptions::{PyAttributeError, PyValueError},
+    exceptions::PyValueError,
     prelude::*,
     types::{PyBytes, PyDict, PySet, PyType},
     Bound, IntoPyObjectExt,
@@ -879,14 +879,12 @@ impl RealmArchivingConfiguration {
     }
 
     #[getter]
-    fn deletion_date(&self) -> PyResult<DateTime> {
+    fn deletion_date(&self) -> Option<DateTime> {
         match self.0 {
             libparsec_types::RealmArchivingConfiguration::DeletionPlanned { deletion_date } => {
-                Ok(deletion_date.into())
+                Some(deletion_date.into())
             }
-            _ => Err(PyAttributeError::new_err(
-                "`deletion_data` only available for DELETION_PLANNED",
-            )),
+            _ => None,
         }
     }
 }
