@@ -819,15 +819,6 @@ class MemoryRealm:
                 return role.cooked.role
         return None
 
-    def is_personal(self) -> bool:
-        """
-        A personal realm is a realm that has never been shared.
-        """
-        # If the realm is not shared, then only a single user is part of it.
-        # And given it is not possible to change his own role, then there must
-        # only be a single certificate !
-        return len(self.roles) == 1
-
 
 @dataclass(slots=True)
 class MemoryRealmVlobUpdate:
