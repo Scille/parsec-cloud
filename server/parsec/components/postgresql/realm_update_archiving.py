@@ -165,14 +165,12 @@ async def realm_update_archiving(
             assert False, row
 
     # Check minimum archiving period for DeletionPlanned configuration
+    min_deletion_date = now.add(seconds=minimum_archiving_period)
     if (
-        certif.configuration != RealmArchivingConfiguration.AVAILABLE
-        and certif.configuration != RealmArchivingConfiguration.ARCHIVED
+        certif.configuration.deletion_date is not None
+        and certif.configuration.deletion_date < min_deletion_date
     ):
-        deletion_date = certif.configuration.deletion_date
-        min_deletion_date = now.add(seconds=minimum_archiving_period)
-        if deletion_date < min_deletion_date:
-            return RealmUpdateArchivingStoreBadOutcome.ARCHIVING_PERIOD_TOO_SHORT
+        return RealmUpdateArchivingStoreBadOutcome.ARCHIVING_PERIOD_TOO_SHORT
 
     # Ensure we are not breaking causality by adding a newer timestamp.
 
@@ -194,6 +192,8 @@ async def realm_update_archiving(
     else:
         configuration_str = "DELETION_PLANNED"
         deletion_date = certif.configuration.deletion_date
+        assert deletion_date is not None
+        is_archived = True
 
     update_realm_topic_ok = await conn.fetchval(
         *_q_insert_realm_archiving(
