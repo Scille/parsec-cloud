@@ -211,6 +211,7 @@
             :pattern="search.pattern"
             :search-results="search.results"
             :active="search.active"
+            :workspace-name="workspaceName"
             @item-click="onSearchResultClick"
             @menu-item-click="onSearchResultContextMenu"
             @update-pattern="search.pattern = $event"
@@ -515,6 +516,10 @@ let fileOpCanceller!: FileEventRegistrationCanceller;
 
 const ownRole = computed(() => {
   return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : parsec.WorkspaceRole.Reader;
+});
+
+const workspaceName = computed(() => {
+  return workspaceInfo.value?.currentName ?? '';
 });
 
 const itemsToShow = computed(() => {
