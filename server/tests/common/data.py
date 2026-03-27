@@ -11,6 +11,8 @@ from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     DevicePurpose,
+    RealmArchivingCertificate,
+    RealmArchivingConfiguration,
     RealmNameCertificate,
     RealmRole,
     RealmRoleCertificate,
@@ -465,6 +467,33 @@ async def wksp1_bob_becomes_owner_and_changes_alice(
         assert isinstance(outcome, RealmRoleCertificate)
 
     return (certif0, raw_certif0), (certif1, raw_certif1)
+
+
+async def wksp1_alice_update_archiving_config(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    configuration: RealmArchivingConfiguration,
+    now: DateTime | None = None,
+) -> tuple[RealmArchivingCertificate, bytes]:
+    now = now or DateTime.now()
+    certif = RealmArchivingCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=now,
+        realm_id=coolorg.wksp1_id,
+        configuration=configuration,
+    )
+    raw_certif = certif.dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.update_archiving(
+        now=now,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        realm_archiving_certificate=raw_certif,
+    )
+    assert isinstance(outcome, RealmArchivingCertificate)
+
+    return (certif, raw_certif)
 
 
 type HttpCommonErrorsTesterDoCallback = Callable[[], Coroutine[None, None, None]]
