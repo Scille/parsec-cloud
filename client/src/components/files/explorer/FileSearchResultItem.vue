@@ -32,12 +32,20 @@
           >
             {{ searchItem.stats.name }}
           </ion-text>
-          <ion-text
-            class="label-path can-highlight body-sm"
-            :title="searchItem.parent"
-          >
-            {{ searchItem.parent }}
-          </ion-text>
+          <div class="path-content">
+            <ion-text
+              class="workspace-path body-sm"
+              :title="workspaceName"
+            >
+              {{ workspaceName }}
+            </ion-text>
+            <ion-text
+              class="label-path can-highlight body-sm"
+              :title="searchItem.parent"
+            >
+              {{ searchItem.parent }}
+            </ion-text>
+          </div>
           <div
             class="file-mobile-text"
             v-if="isSmallDisplay"
@@ -100,7 +108,7 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { EntryStatFile, SearchResult } from '@/parsec';
+import { EntryName, EntryStatFile, SearchResult } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { Folder, formatTimeSince, MsImage, useWindowSize } from 'megashark-lib';
@@ -112,6 +120,7 @@ const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const props = defineProps<{
   searchItem: SearchResult;
+  workspaceName: EntryName;
 }>();
 
 const emits = defineEmits<{
@@ -151,6 +160,25 @@ async function onClick(): Promise<void> {
     flex-direction: column;
     overflow: hidden;
     gap: 0.25rem;
+  }
+
+  .path-content {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    overflow: hidden;
+  }
+
+  .workspace-path {
+    color: var(--parsec-color-light-secondary-hard-grey);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: 1px 0.25rem;
+    border-radius: var(--parsec-radius-4);
+    background: var(--parsec-color-light-secondary-background);
   }
 
   .label-path {
