@@ -528,13 +528,15 @@ new_realms AS (
         organization,
         realm_id,
         key_index,
-        created_on
+        created_on,
+        status
     )
     SELECT
         (SELECT new_organization_ids._id FROM new_organization_ids) AS organization,
         realm_id,
         key_index,
-        created_on
+        created_on,
+        status
     FROM realm
     WHERE organization = {q_organization_internal_id("$source_id")}  -- noqa: LT05,LT14
     ORDER BY _id
