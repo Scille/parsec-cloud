@@ -231,6 +231,18 @@ Authenticated API:
 ]
 ```
 
+> [!NOTE]
+> For convenience, the certificate is accepted even if it doesn't change the
+> realm's current status.
+> This behavior is similar to what is done for the the `RealmNameCertificate`
+> and shouldn't cause any problems because it is always the last certificate
+> that is taken into account.
+> Rejecting a certificate that doesn't actually change the archiving
+> configuration should be feasible, but it would require updating the
+> certificate validation client-side and adding new error status.
+> Since this type of certificate is not expected to be heavily used, we
+> choose to go with the simplicity here.
+
 ### 2.2 - Commands updated with `realm_archived`/`realm_deleted` status
 
 The table below mirrors the one from RFC 1002 but is adapted to the v3 command set.
