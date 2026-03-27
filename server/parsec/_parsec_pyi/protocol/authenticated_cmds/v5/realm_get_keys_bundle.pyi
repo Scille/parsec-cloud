@@ -43,6 +43,11 @@ class RepAuthorNotAllowed(Rep):
         self,
     ) -> None: ...
 
+class RepRealmDeleted(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepBadKeyIndex(Rep):
     def __init__(
         self,
