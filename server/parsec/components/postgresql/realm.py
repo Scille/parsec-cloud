@@ -20,6 +20,12 @@ from parsec._parsec import (
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.realm_create import realm_create
+from parsec.components.postgresql.realm_delete_1_get_blocks_batch import (
+    realm_delete_1_get_blocks_batch,
+)
+from parsec.components.postgresql.realm_delete_2_do_delete_metadata import (
+    realm_delete_2_do_delete_metadata,
+)
 from parsec.components.postgresql.realm_dump_realms_granted_roles import (
     realm_dump_realms_granted_roles,
 )
@@ -39,6 +45,9 @@ from parsec.components.postgresql.realm_get_current_realms_for_user import (
     realm_get_current_realms_for_user,
 )
 from parsec.components.postgresql.realm_get_keys_bundle import realm_get_keys_bundle
+from parsec.components.postgresql.realm_list_deletion_candidates import (
+    realm_list_deletion_candidates,
+)
 from parsec.components.postgresql.realm_rename import realm_rename
 from parsec.components.postgresql.realm_rotate_key import realm_rotate_key
 from parsec.components.postgresql.realm_share import realm_share
@@ -56,6 +65,11 @@ from parsec.components.realm import (
     ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
+    RealmDelete1GetBlocksBatchBadOutcome,
+    RealmDelete2DoDeleteMetadataBadOutcome,
+    RealmDeleteGetBlocksBatch,
+    RealmDeleteGetBlocksBatchOffsetMarker,
+    RealmDeletionCandidate,
     RealmDumpRealmsGrantedRolesBadOutcome,
     RealmExportBatchOffsetMarker,
     RealmExportBlocksMetadataBatch,
@@ -69,6 +83,7 @@ from parsec.components.realm import (
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
     RealmGrantedRole,
+    RealmListDeletionCandidatesBadOutcome,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
     RealmRotateKeyStoreBadOutcome,
@@ -355,3 +370,38 @@ class PGRealmComponent(BaseRealmComponent):
         return await realm_export_do_blocks_metadata_batch(
             conn, organization_id, realm_id, batch_offset_marker, batch_size
         )
+
+    @override
+    @no_transaction
+    async def delete_1_get_blocks_batch(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmDeleteGetBlocksBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmDeleteGetBlocksBatch | RealmDelete1GetBlocksBatchBadOutcome:
+        return await realm_delete_1_get_blocks_batch(
+            conn, organization_id, realm_id, batch_offset_marker, batch_size
+        )
+
+    @override
+    @transaction
+    async def delete_2_do_delete_metadata(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        now: DateTime,
+    ) -> None | RealmDelete2DoDeleteMetadataBadOutcome:
+        return await realm_delete_2_do_delete_metadata(conn, organization_id, realm_id, now)
+
+    @override
+    @no_transaction
+    async def list_deletion_candidates(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        now: DateTime,
+    ) -> list[RealmDeletionCandidate] | RealmListDeletionCandidatesBadOutcome:
+        return await realm_list_deletion_candidates(conn, organization_id, now)

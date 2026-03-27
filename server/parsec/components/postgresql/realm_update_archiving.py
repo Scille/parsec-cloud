@@ -70,6 +70,12 @@ WITH new_archiving AS (
     )
 ),
 
+update_realm AS (
+    UPDATE realm
+    SET status = $status
+    WHERE _id = $realm_internal_id
+),
+
 update_realm_topic AS (
     UPDATE realm_topic
     SET last_timestamp = $certified_on
@@ -186,20 +192,23 @@ async def realm_update_archiving(
     if certif.configuration == RealmArchivingConfiguration.AVAILABLE:
         configuration_str = "AVAILABLE"
         deletion_date = None
+        status = "AVAILABLE"
     elif certif.configuration == RealmArchivingConfiguration.ARCHIVED:
         configuration_str = "ARCHIVED"
         deletion_date = None
+        status = "ARCHIVED_OR_DELETION_PLANNED"
     else:
         configuration_str = "DELETION_PLANNED"
         deletion_date = certif.configuration.deletion_date
         assert deletion_date is not None
-        is_archived = True
+        status = "ARCHIVED_OR_DELETION_PLANNED"
 
     update_realm_topic_ok = await conn.fetchval(
         *_q_insert_realm_archiving(
             realm_internal_id=db_realm.realm_internal_id,
             configuration=configuration_str,
             deletion_date=deletion_date,
+            status=status,
             certificate=realm_archiving_certificate,
             certified_by=db_common.device_internal_id,
             certified_on=certif.timestamp,

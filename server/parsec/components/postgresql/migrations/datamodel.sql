@@ -560,6 +560,7 @@ CREATE TABLE async_enrollment (
 
 CREATE TYPE MAINTENANCE_TYPE AS ENUM ('REENCRYPTION', 'GARBAGE_COLLECTION');
 
+CREATE TYPE REALM_STATUS AS ENUM ('AVAILABLE', 'ARCHIVED_OR_DELETION_PLANNED', 'DELETED');
 
 CREATE TABLE realm (
     _id SERIAL PRIMARY KEY,
@@ -567,6 +568,19 @@ CREATE TABLE realm (
     realm_id UUID NOT NULL,
     key_index INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
+    -- AVAILABLE: the realm is active and usable (default).
+    -- ARCHIVED_OR_DELETION_PLANNED: the latest RealmArchivingCertificate is ARCHIVED or DELETION_PLANNED.
+    -- DELETED: the realm data has been manually deleted by a server admin.
+    --
+    -- Two situations in which realms can be deleted:
+    -- - Realms planned for deletion by their last archiving certificate, and
+    --   whose deletion date has been reached.
+    -- - Orphaned realms, i.e. realms shared with users who have all been revoked.
+    --
+    -- Note realm deletion doesn't impact the realm's certificates (i.e. only
+    -- vlobs and keys bundles are removed from the database), as members of
+    -- the realm need to fetch them to determine if the deletion is legit.
+    status REALM_STATUS NOT NULL DEFAULT 'AVAILABLE',
 
     UNIQUE (organization, realm_id)
 );
