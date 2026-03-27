@@ -27,6 +27,9 @@
                 "status": "realm_not_found"
             },
             {
+                "status": "realm_deleted"
+            },
+            {
                 "status": "recipient_not_found"
             },
             {
