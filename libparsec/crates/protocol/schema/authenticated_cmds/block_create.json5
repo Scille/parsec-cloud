@@ -35,6 +35,12 @@
                 "status": "realm_not_found"
             },
             {
+                "status": "realm_archived"
+            },
+            {
+                "status": "realm_deleted"
+            },
+            {
                 "status": "block_already_exists"
             },
             {

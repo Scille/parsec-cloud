@@ -54,6 +54,9 @@
                 "status": "realm_not_found"
             },
             {
+                "status": "realm_deleted"
+            },
+            {
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.
                 "status": "timestamp_out_of_ballpark",

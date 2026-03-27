@@ -46,6 +46,9 @@
                 "status": "realm_not_found"
             },
             {
+                "status": "realm_deleted"
+            },
+            {
                 // If the `key_index` in the certificate is not currently the realm's last one plus one
                 "status": "bad_key_index",
                 "fields": [

@@ -63,6 +63,12 @@
                 "status": "realm_not_found"
             },
             {
+                "status": "realm_archived"
+            },
+            {
+                "status": "realm_deleted"
+            },
+            {
                 "status": "vlob_not_found"
             },
             {
