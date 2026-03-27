@@ -984,9 +984,9 @@ fn struct_auth_method_info_rs_to_js(rs_obj: libparsec::AuthMethodInfo) -> Result
         JsValue::from(v)
     };
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-    let js_created_by_ip = rs_obj.created_by_ip.into();
+    let js_created_by_ip = JsValue::from_str(rs_obj.created_by_ip.as_ref());
     Reflect::set(&js_obj, &"createdByIp".into(), &js_created_by_ip)?;
-    let js_created_by_user_agent = rs_obj.created_by_user_agent.into();
+    let js_created_by_user_agent = JsValue::from_str(rs_obj.created_by_user_agent.as_ref());
     Reflect::set(
         &js_obj,
         &"createdByUserAgent".into(),
@@ -1541,7 +1541,7 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
     let js_with_monitors = rs_obj.with_monitors.into();
     Reflect::set(&js_obj, &"withMonitors".into(), &js_with_monitors)?;
     let js_prevent_sync_pattern = match rs_obj.prevent_sync_pattern {
-        Some(val) => val.into(),
+        Some(val) => JsValue::from_str(val.as_ref()),
         None => JsValue::NULL,
     };
     Reflect::set(
@@ -1767,7 +1767,7 @@ fn struct_crypt_pad_config_js_to_rs(obj: JsValue) -> Result<libparsec::CryptPadC
 #[allow(dead_code)]
 fn struct_crypt_pad_config_rs_to_js(rs_obj: libparsec::CryptPadConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_server_url = rs_obj.server_url.into();
+    let js_server_url = JsValue::from_str(rs_obj.server_url.as_ref());
     Reflect::set(&js_obj, &"serverUrl".into(), &js_server_url)?;
     Ok(js_obj)
 }
@@ -2803,7 +2803,7 @@ fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValu
             }
             a(obj)
         };
-        custom_getter(&rs_obj).into()
+        JsValue::from_str(custom_getter(&rs_obj).as_ref())
     };
     Reflect::set(&js_obj, &"label".into(), &js_label)?;
     Ok(js_obj)
@@ -2980,11 +2980,11 @@ fn struct_open_bao_config_js_to_rs(obj: JsValue) -> Result<libparsec::OpenBaoCon
 #[allow(dead_code)]
 fn struct_open_bao_config_rs_to_js(rs_obj: libparsec::OpenBaoConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_server_url = rs_obj.server_url.into();
+    let js_server_url = JsValue::from_str(rs_obj.server_url.as_ref());
     Reflect::set(&js_obj, &"serverUrl".into(), &js_server_url)?;
     let js_secret = variant_open_bao_secret_config_rs_to_js(rs_obj.secret)?;
     Reflect::set(&js_obj, &"secret".into(), &js_secret)?;
-    let js_transit_mount_path = rs_obj.transit_mount_path.into();
+    let js_transit_mount_path = JsValue::from_str(rs_obj.transit_mount_path.as_ref());
     Reflect::set(&js_obj, &"transitMountPath".into(), &js_transit_mount_path)?;
     let js_auths = {
         // Array::new_with_length allocates with `undefined` value, that's why we `set` value
@@ -4086,8 +4086,8 @@ fn struct_tos_rs_to_js(rs_obj: libparsec::Tos) -> Result<JsValue, JsValue> {
     let js_per_locale_urls = {
         let js_map = Map::new();
         for (key, value) in rs_obj.per_locale_urls.into_iter() {
-            let js_key = key.into();
-            let js_value = value.into();
+            let js_key = JsValue::from_str(key.as_ref());
+            let js_value = JsValue::from_str(value.as_ref());
             js_map.set(&js_key, &js_value);
         }
         js_map.into()
@@ -5554,23 +5554,25 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao".into(),
             )?;
-            let js_openbao_server_url = openbao_server_url.into();
+            let js_openbao_server_url = JsValue::from_str(openbao_server_url.as_ref());
             Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
-            let js_openbao_transit_mount_path = openbao_transit_mount_path.into();
+            let js_openbao_transit_mount_path =
+                JsValue::from_str(openbao_transit_mount_path.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoTransitMountPath".into(),
                 &js_openbao_transit_mount_path,
             )?;
-            let js_openbao_secret_mount_path = openbao_secret_mount_path.into();
+            let js_openbao_secret_mount_path =
+                JsValue::from_str(openbao_secret_mount_path.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoSecretMountPath".into(),
                 &js_openbao_secret_mount_path,
             )?;
-            let js_openbao_entity_id = openbao_entity_id.into();
+            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
-            let js_openbao_auth_token = openbao_auth_token.into();
+            let js_openbao_auth_token = JsValue::from_str(openbao_auth_token.as_ref());
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
         }
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
@@ -7082,7 +7084,8 @@ fn variant_async_enrollment_identity_system_rs_to_js(
                 &"tag".into(),
                 &"AsyncEnrollmentIdentitySystemPKI".into(),
             )?;
-            let js_x509_root_certificate_common_name = x509_root_certificate_common_name.into();
+            let js_x509_root_certificate_common_name =
+                JsValue::from_str(x509_root_certificate_common_name.as_ref());
             Reflect::set(
                 &js_obj,
                 &"x509RootCertificateCommonName".into(),
@@ -7102,7 +7105,7 @@ fn variant_async_enrollment_identity_system_rs_to_js(
                 &"tag".into(),
                 &"AsyncEnrollmentIdentitySystemPKICorrupted".into(),
             )?;
-            let js_reason = reason.into();
+            let js_reason = JsValue::from_str(reason.as_ref());
             Reflect::set(&js_obj, &"reason".into(), &js_reason)?;
         }
     }
@@ -7181,13 +7184,14 @@ fn variant_available_device_type_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeOpenBao".into())?;
-            let js_openbao_preferred_auth_id = openbao_preferred_auth_id.into();
+            let js_openbao_preferred_auth_id =
+                JsValue::from_str(openbao_preferred_auth_id.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoPreferredAuthId".into(),
                 &js_openbao_preferred_auth_id,
             )?;
-            let js_openbao_entity_id = openbao_entity_id.into();
+            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
         }
         libparsec::AvailableDeviceType::PKI {
@@ -7279,9 +7283,10 @@ fn variant_available_pending_async_enrollment_identity_system_rs_to_js(
                 &"tag".into(),
                 &"AvailablePendingAsyncEnrollmentIdentitySystemOpenBao".into(),
             )?;
-            let js_openbao_entity_id = openbao_entity_id.into();
+            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
-            let js_openbao_preferred_auth_id = openbao_preferred_auth_id.into();
+            let js_openbao_preferred_auth_id =
+                JsValue::from_str(openbao_preferred_auth_id.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoPreferredAuthId".into(),
@@ -8616,7 +8621,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventClientErrorResponse".into(),
             )?;
-            let js_error_type = error_type.into();
+            let js_error_type = JsValue::from_str(error_type.as_ref());
             Reflect::set(&js_obj, &"errorType".into(), &js_error_type)?;
         }
         libparsec::ClientEvent::ClientStarted { device_id, .. } => {
@@ -8807,7 +8812,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventInvalidCertificate".into(),
             )?;
-            let js_detail = detail.into();
+            let js_detail = JsValue::from_str(detail.as_ref());
             Reflect::set(&js_obj, &"detail".into(), &js_detail)?;
         }
         libparsec::ClientEvent::InvitationAlreadyUsedOrDeleted { .. } => {
@@ -8854,7 +8859,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
         }
         libparsec::ClientEvent::Ping { ping, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventPing".into())?;
-            let js_ping = ping.into();
+            let js_ping = JsValue::from_str(ping.as_ref());
             Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
         }
         libparsec::ClientEvent::RevokedSelfUser { .. } => {
@@ -8876,7 +8881,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventServerInvalidResponseContent".into(),
             )?;
-            let js_protocol_decode_error = protocol_decode_error.into();
+            let js_protocol_decode_error = JsValue::from_str(protocol_decode_error.as_ref());
             Reflect::set(
                 &js_obj,
                 &"protocolDecodeError".into(),
@@ -8889,7 +8894,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventServerInvalidResponseStatus".into(),
             )?;
-            let js_status_code = status_code.into();
+            let js_status_code = JsValue::from_str(status_code.as_ref());
             Reflect::set(&js_obj, &"statusCode".into(), &js_status_code)?;
         }
         libparsec::ClientEvent::TooMuchDriftWithServerClock {
@@ -10886,25 +10891,28 @@ fn variant_device_primary_protection_strategy_rs_to_js(
                 &"tag".into(),
                 &"DevicePrimaryProtectionStrategyOpenBao".into(),
             )?;
-            let js_openbao_server_url = openbao_server_url.into();
+            let js_openbao_server_url = JsValue::from_str(openbao_server_url.as_ref());
             Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
-            let js_openbao_secret_mount_path = openbao_secret_mount_path.into();
+            let js_openbao_secret_mount_path =
+                JsValue::from_str(openbao_secret_mount_path.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoSecretMountPath".into(),
                 &js_openbao_secret_mount_path,
             )?;
-            let js_openbao_transit_mount_path = openbao_transit_mount_path.into();
+            let js_openbao_transit_mount_path =
+                JsValue::from_str(openbao_transit_mount_path.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoTransitMountPath".into(),
                 &js_openbao_transit_mount_path,
             )?;
-            let js_openbao_entity_id = openbao_entity_id.into();
+            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
-            let js_openbao_auth_token = openbao_auth_token.into();
+            let js_openbao_auth_token = JsValue::from_str(openbao_auth_token.as_ref());
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
-            let js_openbao_preferred_auth_id = openbao_preferred_auth_id.into();
+            let js_openbao_preferred_auth_id =
+                JsValue::from_str(openbao_preferred_auth_id.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoPreferredAuthId".into(),
@@ -11820,7 +11828,7 @@ fn variant_invite_info_invitation_created_by_rs_to_js(
                 &"tag".into(),
                 &"InviteInfoInvitationCreatedByExternalService".into(),
             )?;
-            let js_service_label = service_label.into();
+            let js_service_label = JsValue::from_str(service_label.as_ref());
             Reflect::set(&js_obj, &"serviceLabel".into(), &js_service_label)?;
         }
         libparsec::InviteInfoInvitationCreatedBy::User {
@@ -11914,7 +11922,7 @@ fn variant_invite_list_invitation_created_by_rs_to_js(
                 &"tag".into(),
                 &"InviteListInvitationCreatedByExternalService".into(),
             )?;
-            let js_service_label = service_label.into();
+            let js_service_label = JsValue::from_str(service_label.as_ref());
             Reflect::set(&js_obj, &"serviceLabel".into(), &js_service_label)?;
         }
         libparsec::InviteListInvitationCreatedBy::User {
@@ -12783,7 +12791,7 @@ fn variant_open_bao_auth_config_rs_to_js(
                 &"tag".into(),
                 &"OpenBaoAuthConfigOIDCHexagone".into(),
             )?;
-            let js_mount_path = mount_path.into();
+            let js_mount_path = JsValue::from_str(mount_path.as_ref());
             Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
         }
         libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path, .. } => {
@@ -12792,7 +12800,7 @@ fn variant_open_bao_auth_config_rs_to_js(
                 &"tag".into(),
                 &"OpenBaoAuthConfigOIDCProConnect".into(),
             )?;
-            let js_mount_path = mount_path.into();
+            let js_mount_path = JsValue::from_str(mount_path.as_ref());
             Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
         }
     }
@@ -12877,7 +12885,7 @@ fn variant_open_bao_secret_config_rs_to_js(
     match rs_obj {
         libparsec::OpenBaoSecretConfig::KV2 { mount_path, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"OpenBaoSecretConfigKV2".into())?;
-            let js_mount_path = mount_path.into();
+            let js_mount_path = JsValue::from_str(mount_path.as_ref());
             Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
         }
     }
@@ -14738,7 +14746,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrAsyncEnrollment".into(),
             )?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -14763,7 +14771,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrInvitationDevice".into(),
             )?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -14798,7 +14806,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrInvitationShamirRecovery".into(),
             )?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -14833,7 +14841,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrInvitationUser".into(),
             )?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -14867,7 +14875,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrOrganization".into(),
             )?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -14892,7 +14900,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrOrganizationBootstrap".into(),
             )?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -14903,7 +14911,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
             let js_token = match token {
-                Some(val) => val.into(),
+                Some(val) => JsValue::from_str(val.as_ref()),
                 None => JsValue::NULL,
             };
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
@@ -14921,7 +14929,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrPkiEnrollment".into(),
             )?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -14940,7 +14948,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"ParsedParsecAddrServer".into())?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -14960,7 +14968,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"ParsedParsecAddrTOTPReset".into())?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15007,7 +15015,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrWorkspacePath".into(),
             )?;
-            let js_hostname = hostname.into();
+            let js_hostname = JsValue::from_str(hostname.as_ref());
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -17063,25 +17071,28 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
                 &"requestedHumanHandle".into(),
                 &js_requested_human_handle,
             )?;
-            let js_openbao_server_url = openbao_server_url.into();
+            let js_openbao_server_url = JsValue::from_str(openbao_server_url.as_ref());
             Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
-            let js_openbao_transit_mount_path = openbao_transit_mount_path.into();
+            let js_openbao_transit_mount_path =
+                JsValue::from_str(openbao_transit_mount_path.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoTransitMountPath".into(),
                 &js_openbao_transit_mount_path,
             )?;
-            let js_openbao_secret_mount_path = openbao_secret_mount_path.into();
+            let js_openbao_secret_mount_path =
+                JsValue::from_str(openbao_secret_mount_path.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoSecretMountPath".into(),
                 &js_openbao_secret_mount_path,
             )?;
-            let js_openbao_entity_id = openbao_entity_id.into();
+            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
-            let js_openbao_auth_token = openbao_auth_token.into();
+            let js_openbao_auth_token = JsValue::from_str(openbao_auth_token.as_ref());
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
-            let js_openbao_preferred_auth_id = openbao_preferred_auth_id.into();
+            let js_openbao_preferred_auth_id =
+                JsValue::from_str(openbao_preferred_auth_id.as_ref());
             Reflect::set(
                 &js_obj,
                 &"openbaoPreferredAuthId".into(),
@@ -17322,7 +17333,7 @@ fn variant_totp_setup_status_rs_to_js(
             base32_totp_secret, ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"TOTPSetupStatusUnconfirmed".into())?;
-            let js_base32_totp_secret = base32_totp_secret.into();
+            let js_base32_totp_secret = JsValue::from_str(base32_totp_secret.as_ref());
             Reflect::set(&js_obj, &"base32TotpSecret".into(), &js_base32_totp_secret)?;
         }
     }
@@ -21908,7 +21919,7 @@ pub fn clientExportRecoveryDevice(client_handle: u32, device_label: String) -> P
                     let (x1, x2) = value;
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
-                    let js_value = x1.into();
+                    let js_value = JsValue::from_str(x1.as_ref());
                     js_array.set(0, js_value);
                     let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
                     js_array.set(1, js_value);
@@ -24139,7 +24150,7 @@ pub fn openbaoListSelfEmails(
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(value.len() as u32);
                     for (i, elem) in value.into_iter().enumerate() {
-                        let js_elem = elem.into();
+                        let js_elem = JsValue::from_str(elem.as_ref());
                         js_array.set(i as u32, js_elem);
                     }
                     js_array.into()
@@ -24673,7 +24684,7 @@ pub fn testCheckMailbox(server_addr: String, email: String) -> Promise {
                                 JsValue::from(v)
                             };
                             js_array.set(1, js_value);
-                            let js_value = x3.into();
+                            let js_value = JsValue::from_str(x3.as_ref());
                             js_array.set(2, js_value);
                             js_array.into()
                         };
