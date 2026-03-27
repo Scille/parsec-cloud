@@ -70,6 +70,12 @@ impl PkiSystem {
             })
             .map(Into::into))
     }
+
+    pub async fn list_user_certificates<'a>(
+        &'a self,
+    ) -> Result<impl Iterator<Item = Certificate> + use<'a>, crate::ListUserCertificateError> {
+        Ok(self.my_cert_store.certs().map(Into::into))
+    }
 }
 
 pub fn is_available() -> bool {
