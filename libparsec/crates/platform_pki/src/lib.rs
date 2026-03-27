@@ -94,6 +94,18 @@ mod platform {
         ) -> Result<Option<Certificate>, crate::FindCertificateError> {
             unimplemented!("platform not supported")
         }
+
+        pub async fn list_user_certificates<'a>(
+            &'a self,
+        ) -> Result<impl Iterator<Item = Certificate> + use<'a>, crate::ListUserCertificateError>
+        {
+            unimplemented!("platform not supported");
+            #[expect(
+                unreachable_code,
+                reason = "This return value is here to satisfy the `impl Iterator...`"
+            )]
+            Ok(Vec::new().into_iter())
+        }
     }
 
     pub struct Certificate;
@@ -201,6 +213,12 @@ pub enum GetCertificateDerError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum FindCertificateError {
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ListUserCertificateError {
     #[error(transparent)]
     Internal(anyhow::Error),
 }
