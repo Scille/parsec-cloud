@@ -53,6 +53,11 @@ class RepRealmNotFound(Rep):
         self,
     ) -> None: ...
 
+class RepRealmDeleted(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepBadKeyIndex(Rep):
     def __init__(self, last_realm_certificate_timestamp: DateTime) -> None: ...
     @property

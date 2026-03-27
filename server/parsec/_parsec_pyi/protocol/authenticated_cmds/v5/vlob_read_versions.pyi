@@ -45,6 +45,11 @@ class RepRealmNotFound(Rep):
         self,
     ) -> None: ...
 
+class RepRealmDeleted(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepAuthorNotAllowed(Rep):
     def __init__(
         self,
