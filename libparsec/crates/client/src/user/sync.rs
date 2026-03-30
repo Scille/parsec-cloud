@@ -139,6 +139,9 @@ async fn upload_manifest(
                     | Rep::RealmNotFound
                     // The user realm is never supposed to do key rotation
                     | Rep::BadKeyIndex { .. }
+                    // A user realm is never archived or deleted
+                    | Rep::RealmArchived
+                    | Rep::RealmDeleted
                     | Rep::UnknownStatus { .. }
                 ) => Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into()),
             }
@@ -194,6 +197,9 @@ async fn upload_manifest(
                     | Rep::VlobNotFound
                     // The user realm is never supposed to do key rotation
                     | Rep::BadKeyIndex { .. }
+                    // A user realm is never archived or deleted
+                    | Rep::RealmArchived
+                    | Rep::RealmDeleted
                     | Rep::UnknownStatus { .. }
                 ) => Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into()),
             }
@@ -457,6 +463,8 @@ async fn fetch_last_remote_user_manifest(
             Rep::AuthorNotAllowed |
             // User manifest's vlob is supposed to exist !
             Rep::RealmNotFound |
+            // A user realm is never deleted
+            Rep::RealmDeleted |
             // Don't know what to do with this status :/
             Rep::UnknownStatus { .. }
         ) => {
@@ -482,6 +490,8 @@ async fn fetch_last_remote_user_manifest(
             CertifValidateManifestError::InvalidKeysBundle(_)
             // User realm is never shared (hence initial owner can never lose it role)
             | CertifValidateManifestError::NotAllowed
+            // User realm is never deleted
+            | CertifValidateManifestError::RealmDeleted
         ) => {
             FetchRemoteUserManifestError::Internal(anyhow::anyhow!("Unexpected error: {:?}", err))
         }
@@ -523,6 +533,8 @@ async fn fetch_old_remote_user_manifest(
             Rep::AuthorNotAllowed |
             // User manifest's vlob is supposed to exist !
             Rep::RealmNotFound |
+            // A user realm is never deleted
+            Rep::RealmDeleted |
             // Don't know what to do with this status :/
             Rep::UnknownStatus { .. }
         ) => {
@@ -548,6 +560,8 @@ async fn fetch_old_remote_user_manifest(
             CertifValidateManifestError::InvalidKeysBundle(_)
             // User realm is never shared (hence initial owner can never lose it role)
             | CertifValidateManifestError::NotAllowed
+            // User realm is never deleted
+            | CertifValidateManifestError::RealmDeleted
         ) => {
             FetchRemoteUserManifestError::Internal(anyhow::anyhow!("Unexpected error: {:?}", err))
         }

@@ -38,6 +38,8 @@ pub enum WorkspaceRemoveEntryError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Path points to a file")]
     EntryIsFile,
     #[error("Path points to a folder")]
@@ -88,6 +90,7 @@ pub(crate) async fn remove_entry(
             ForUpdateFolderError::EntryNotFound => WorkspaceRemoveEntryError::EntryNotFound,
             ForUpdateFolderError::EntryNotAFolder => WorkspaceRemoveEntryError::EntryNotFound,
             ForUpdateFolderError::NoRealmAccess => WorkspaceRemoveEntryError::NoRealmAccess,
+            ForUpdateFolderError::RealmDeleted => WorkspaceRemoveEntryError::RealmDeleted,
             ForUpdateFolderError::InvalidKeysBundle(err) => {
                 WorkspaceRemoveEntryError::InvalidKeysBundle(err)
             }
@@ -117,6 +120,7 @@ pub(crate) async fn remove_entry(
             GetManifestError::Stopped => WorkspaceRemoveEntryError::Stopped,
             GetManifestError::EntryNotFound => WorkspaceRemoveEntryError::EntryNotFound,
             GetManifestError::NoRealmAccess => WorkspaceRemoveEntryError::NoRealmAccess,
+            GetManifestError::RealmDeleted => WorkspaceRemoveEntryError::RealmDeleted,
             GetManifestError::InvalidKeysBundle(err) => {
                 WorkspaceRemoveEntryError::InvalidKeysBundle(err)
             }
@@ -173,6 +177,9 @@ pub(crate) async fn remove_entry(
                         }
                         EnsureManifestExistsWithParentError::NoRealmAccess => {
                             WorkspaceRemoveEntryError::NoRealmAccess
+                        }
+                        EnsureManifestExistsWithParentError::RealmDeleted => {
+                            WorkspaceRemoveEntryError::RealmDeleted
                         }
                         EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                             WorkspaceRemoveEntryError::InvalidKeysBundle(err)

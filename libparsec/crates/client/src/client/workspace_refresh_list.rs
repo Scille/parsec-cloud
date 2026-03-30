@@ -99,6 +99,8 @@ pub async fn refresh_workspaces_list(
                 CertifDecryptCurrentRealmNameError::Offline(e) => Err(ClientRefreshWorkspacesListError::Offline(e)),
                 // We have lost access to the workspace concurrently, ignore it
                 CertifDecryptCurrentRealmNameError::NotAllowed => continue,
+                // The realm has been deleted, ignore it
+                CertifDecryptCurrentRealmNameError::RealmDeleted => continue,
                 // This workspace is not fully bootstrapped yet (this is unlikely, as workspace
                 // is supposed to be bootstrapped before being shared), so we have to use a
                 // placeholder name.

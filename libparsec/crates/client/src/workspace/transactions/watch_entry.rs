@@ -46,6 +46,8 @@ pub enum WorkspaceWatchEntryOneShotError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -72,6 +74,7 @@ pub async fn watch_entry_oneshot(
             ResolvePathError::Stopped => WorkspaceWatchEntryOneShotError::Stopped,
             ResolvePathError::EntryNotFound => WorkspaceWatchEntryOneShotError::EntryNotFound,
             ResolvePathError::NoRealmAccess => WorkspaceWatchEntryOneShotError::NoRealmAccess,
+            ResolvePathError::RealmDeleted => WorkspaceWatchEntryOneShotError::RealmDeleted,
             ResolvePathError::InvalidKeysBundle(err) => {
                 WorkspaceWatchEntryOneShotError::InvalidKeysBundle(err)
             }

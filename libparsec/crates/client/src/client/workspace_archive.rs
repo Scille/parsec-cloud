@@ -92,6 +92,9 @@ pub async fn archive_workspace(
                     ballpark_client_late_offset,
                 })
             }
+            CertifBootstrapWorkspaceError::RealmDeleted => {
+                return Err(ClientArchiveWorkspaceError::WorkspaceDeleted)
+            }
             CertifBootstrapWorkspaceError::InvalidKeysBundle(err) => {
                 return Err(ClientArchiveWorkspaceError::InvalidKeysBundle(err))
             }

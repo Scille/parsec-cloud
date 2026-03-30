@@ -19,6 +19,8 @@ pub enum DataAccessFetchManifestError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -42,6 +44,8 @@ pub enum DataAccessFetchBlockError {
     BlockNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Block access is temporary unavailable on the server")]
     ServerBlockstoreUnavailable,
     #[error(transparent)]

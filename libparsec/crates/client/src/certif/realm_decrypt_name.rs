@@ -50,6 +50,8 @@ pub enum CertifDecryptCurrentRealmNameError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Realm has no name certificate yet")]
     NoNameCertificate,
     #[error(transparent)]
@@ -99,6 +101,9 @@ pub(super) async fn decrypt_current_realm_name(
                 }
                 CertifDecryptForRealmError::NotAllowed => {
                     CertifDecryptCurrentRealmNameError::NotAllowed
+                }
+                CertifDecryptForRealmError::RealmDeleted => {
+                    CertifDecryptCurrentRealmNameError::RealmDeleted
                 }
                 CertifDecryptForRealmError::KeyNotFound => {
                     CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(

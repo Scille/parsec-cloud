@@ -20,6 +20,8 @@ pub enum ClientShareWorkspaceError {
     RecipientNotFound,
     #[error("Workspace realm not found")]
     WorkspaceNotFound,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Cannot share with a revoked user")]
     RecipientRevoked,
     #[error("Author not allowed")]
@@ -71,6 +73,9 @@ pub async fn share_workspace(
             // with us... and hence the bootstrap has been done already !
             CertifBootstrapWorkspaceError::AuthorNotAllowed => {
                 CertificateBasedActionOutcome::LocalIdempotent
+            }
+            CertifBootstrapWorkspaceError::RealmDeleted => {
+                return Err(ClientShareWorkspaceError::RealmDeleted)
             }
             CertifBootstrapWorkspaceError::Offline(e) => {
                 return Err(ClientShareWorkspaceError::Offline(e))
@@ -143,6 +148,7 @@ pub async fn share_workspace(
             CertifShareRealmError::RecipientIsSelf => ClientShareWorkspaceError::RecipientIsSelf,
             CertifShareRealmError::RecipientNotFound => ClientShareWorkspaceError::RecipientNotFound,
             CertifShareRealmError::RealmNotFound => ClientShareWorkspaceError::WorkspaceNotFound,
+            CertifShareRealmError::RealmDeleted => ClientShareWorkspaceError::RealmDeleted,
             CertifShareRealmError::RecipientRevoked => ClientShareWorkspaceError::RecipientRevoked,
             CertifShareRealmError::AuthorNotAllowed => ClientShareWorkspaceError::AuthorNotAllowed,
             CertifShareRealmError::RoleIncompatibleWithOutsider => ClientShareWorkspaceError::RoleIncompatibleWithOutsider,

@@ -92,6 +92,8 @@ pub enum CertifValidateManifestError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
@@ -211,6 +213,9 @@ pub(super) async fn validate_workspace_manifest(
                 CertifDecryptForRealmError::Stopped => CertifValidateManifestError::Stopped,
                 CertifDecryptForRealmError::Offline(e) => CertifValidateManifestError::Offline(e),
                 CertifDecryptForRealmError::NotAllowed => CertifValidateManifestError::NotAllowed,
+                CertifDecryptForRealmError::RealmDeleted => {
+                    CertifValidateManifestError::RealmDeleted
+                }
                 CertifDecryptForRealmError::KeyNotFound => {
                     CertifValidateManifestError::InvalidManifest(Box::new(
                         InvalidManifestError::NonExistentKeyIndex {
@@ -328,6 +333,9 @@ pub(super) async fn validate_child_manifest(
                 CertifDecryptForRealmError::Stopped => CertifValidateManifestError::Stopped,
                 CertifDecryptForRealmError::Offline(e) => CertifValidateManifestError::Offline(e),
                 CertifDecryptForRealmError::NotAllowed => CertifValidateManifestError::NotAllowed,
+                CertifDecryptForRealmError::RealmDeleted => {
+                    CertifValidateManifestError::RealmDeleted
+                }
                 CertifDecryptForRealmError::KeyNotFound => {
                     CertifValidateManifestError::InvalidManifest(Box::new(
                         InvalidManifestError::NonExistentKeyIndex {

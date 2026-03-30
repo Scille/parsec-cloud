@@ -245,7 +245,10 @@ fn task_future_factory(
                             // We have lost read access to the workspace, the certificates
                             // ops should soon be notified and work accordingly (typically
                             // by stopping the workspace and its monitors).
-                            WorkspaceSyncError::NotAllowed => {
+                            WorkspaceSyncError::NotAllowed
+                            // The workspace's realm has been archived or deleted
+                            | WorkspaceSyncError::RealmArchived
+                            | WorkspaceSyncError::RealmDeleted => {
                                 log::info!("Workspace {realm_id}: stopping as we no longer allowed to access this realm");
                                 return
                             },

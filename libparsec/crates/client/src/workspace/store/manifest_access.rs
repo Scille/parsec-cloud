@@ -19,6 +19,8 @@ pub(crate) enum GetManifestError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -47,6 +49,9 @@ pub(super) async fn get_manifest(
         .map_err(|err| match err {
             PopulateCacheFromLocalStorageOrServerError::Offline(e) => GetManifestError::Offline(e),
             PopulateCacheFromLocalStorageOrServerError::Stopped => GetManifestError::Stopped,
+            PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                GetManifestError::RealmDeleted
+            }
             PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
                 GetManifestError::EntryNotFound
             }

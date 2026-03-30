@@ -319,6 +319,9 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 // ops should soon be notified and work accordingly (typically
                                 // by stopping the workspace and its monitors).
                                 WorkspaceSyncError::NotAllowed
+                                // The workspace's realm has been archived or deleted
+                                | WorkspaceSyncError::RealmArchived
+                                | WorkspaceSyncError::RealmDeleted
                                 // Other errors are unexpected ones
                                 | WorkspaceSyncError::NoKey
                                 | WorkspaceSyncError::NoRealm
@@ -422,7 +425,10 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                         // We have lost read access to the workspace, the certificates
                         // ops should soon be notified and work accordingly (typically
                         // by stopping the workspace and its monitors).
-                        WorkspaceSyncError::NotAllowed => {
+                        WorkspaceSyncError::NotAllowed
+                        // The workspace's realm has been archived or deleted
+                        | WorkspaceSyncError::RealmArchived
+                        | WorkspaceSyncError::RealmDeleted => {
                             log::info!("Workspace {realm_id}: stopping as we no longer allowed to access this realm");
                             return;
                         }

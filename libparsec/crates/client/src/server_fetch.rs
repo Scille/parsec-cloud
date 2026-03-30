@@ -21,6 +21,8 @@ pub(crate) enum ServerFetchManifestError {
     Offline(#[from] ConnectionError),
     #[error("The manifest's realm doesn't exist on the server")]
     RealmNotFound,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("This manifest doesn't exist on the server")]
     VlobNotFound,
     #[error("Not allowed to access this realm")]
@@ -61,6 +63,7 @@ pub(crate) async fn server_fetch_child_manifest(
             CertifValidateManifestError::Offline(e) => ServerFetchManifestError::Offline(e),
             CertifValidateManifestError::Stopped => ServerFetchManifestError::Stopped,
             CertifValidateManifestError::NotAllowed => ServerFetchManifestError::NoRealmAccess,
+            CertifValidateManifestError::RealmDeleted => ServerFetchManifestError::RealmDeleted,
             CertifValidateManifestError::InvalidManifest(err) => {
                 ServerFetchManifestError::InvalidManifest(err)
             }
@@ -101,6 +104,7 @@ pub(super) async fn server_fetch_workspace_manifest(
             CertifValidateManifestError::Offline(e) => ServerFetchManifestError::Offline(e),
             CertifValidateManifestError::Stopped => ServerFetchManifestError::Stopped,
             CertifValidateManifestError::NotAllowed => ServerFetchManifestError::NoRealmAccess,
+            CertifValidateManifestError::RealmDeleted => ServerFetchManifestError::RealmDeleted,
             CertifValidateManifestError::InvalidManifest(err) => {
                 ServerFetchManifestError::InvalidManifest(err)
             }
@@ -158,6 +162,7 @@ async fn fetch_vlob(
         // Expected errors
         Rep::AuthorNotAllowed => Err(ServerFetchManifestError::NoRealmAccess),
         Rep::RealmNotFound => Err(ServerFetchManifestError::RealmNotFound),
+        Rep::RealmDeleted => Err(ServerFetchManifestError::RealmDeleted),
         // Unexpected errors :(
         rep @ (
             // One item is too many ???? Really ????
@@ -178,6 +183,8 @@ pub enum ServerFetchBlockError {
     Offline(#[from] ConnectionError),
     #[error("The realm's manifest doesn't exist on the server")]
     RealmNotFound,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("The block doesn't exist on the server")]
     BlockNotFound,
     #[error("Not allowed to access this realm")]
@@ -221,6 +228,7 @@ pub(crate) async fn server_fetch_block(
             Rep::StoreUnavailable => Err(ServerFetchBlockError::ServerBlockstoreUnavailable),
             Rep::AuthorNotAllowed => Err(ServerFetchBlockError::NoRealmAccess),
             Rep::RealmNotFound => Err(ServerFetchBlockError::RealmNotFound),
+            Rep::RealmDeleted => Err(ServerFetchBlockError::RealmDeleted),
             Rep::BlockNotFound => Err(ServerFetchBlockError::BlockNotFound),
             // Unexpected errors :(
             rep @ Rep::UnknownStatus { .. } => {
@@ -243,6 +251,7 @@ pub(crate) async fn server_fetch_block(
             CertifValidateBlockError::Offline(e) => ServerFetchBlockError::Offline(e),
             CertifValidateBlockError::Stopped => ServerFetchBlockError::Stopped,
             CertifValidateBlockError::NotAllowed => ServerFetchBlockError::NoRealmAccess,
+            CertifValidateBlockError::RealmDeleted => ServerFetchBlockError::RealmDeleted,
             CertifValidateBlockError::InvalidBlockAccess(err) => {
                 ServerFetchBlockError::InvalidBlockAccess(err)
             }
@@ -269,6 +278,8 @@ pub enum ServerFetchVersionsManifestError {
     Offline(#[from] ConnectionError),
     #[error("The manifest's realm doesn't exist on the server")]
     RealmNotFound,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
     #[error(transparent)]
@@ -319,6 +330,9 @@ pub(crate) async fn server_fetch_versions_workspace_manifest(
                 CertifValidateManifestError::Stopped => ServerFetchVersionsManifestError::Stopped,
                 CertifValidateManifestError::NotAllowed => {
                     ServerFetchVersionsManifestError::NoRealmAccess
+                }
+                CertifValidateManifestError::RealmDeleted => {
+                    ServerFetchVersionsManifestError::RealmDeleted
                 }
                 CertifValidateManifestError::InvalidManifest(err) => {
                     ServerFetchVersionsManifestError::InvalidManifest(err)
@@ -378,6 +392,7 @@ async fn fetch_versions_vlob(
         // Expected errors
         Rep::AuthorNotAllowed => Err(ServerFetchVersionsManifestError::NoRealmAccess),
         Rep::RealmNotFound => Err(ServerFetchVersionsManifestError::RealmNotFound),
+        Rep::RealmDeleted => Err(ServerFetchVersionsManifestError::RealmDeleted),
         // Unexpected errors :(
         rep @ (
             // One item is too many ???? Really ????

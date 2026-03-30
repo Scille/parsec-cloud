@@ -125,7 +125,7 @@ async fn outbound_sync_child(
                 return Err(WorkspaceSyncError::InvalidManifest(e))
             }
             Err(ForUpdateSyncError::NoRealmAccess) => return Err(WorkspaceSyncError::NotAllowed),
-
+            Err(ForUpdateSyncError::RealmDeleted) => return Err(WorkspaceSyncError::RealmDeleted),
             Err(ForUpdateSyncError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncError::Internal(err)) => {
                 return Err(err.context("cannot access entry in store").into())
@@ -184,6 +184,7 @@ async fn outbound_sync_child(
                 CertifBootstrapWorkspaceError::Offline(e) => WorkspaceSyncError::Offline(e),
                 CertifBootstrapWorkspaceError::Stopped => WorkspaceSyncError::Stopped,
                 CertifBootstrapWorkspaceError::AuthorNotAllowed => WorkspaceSyncError::NotAllowed,
+                CertifBootstrapWorkspaceError::RealmDeleted => WorkspaceSyncError::RealmDeleted,
                 CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,
@@ -467,6 +468,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
                 CertifEncryptForRealmError::Offline(e) => WorkspaceSyncError::Offline(e),
                 CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
+                CertifEncryptForRealmError::RealmDeleted => WorkspaceSyncError::RealmDeleted,
                 CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
                 CertifEncryptForRealmError::InvalidKeysBundle(err) => {
                     WorkspaceSyncError::InvalidKeysBundle(err)
@@ -530,6 +532,9 @@ async fn upload_manifest<M: RemoteManifest>(
                     continue;
                 }
 
+                Rep::RealmArchived => return Err(WorkspaceSyncError::RealmArchived),
+                Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
+
                 // Unexpected errors :(
                 bad_rep @ (
                     // Already checked the realm exists when we called `CertificateOps::encrypt_for_realm`
@@ -591,6 +596,9 @@ async fn upload_manifest<M: RemoteManifest>(
                         })?;
                     continue;
                 }
+
+                Rep::RealmArchived => return Err(WorkspaceSyncError::RealmArchived),
+                Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
 
                 // Unexpected errors :(
                 bad_rep @ (
@@ -704,6 +712,7 @@ async fn do_next_reshape_operation(
                         "manifest seems to contain invalid data (or the server is lying to us)"
                     ),
                     ReadChunkOrBlockError::NoRealmAccess => WorkspaceSyncError::NotAllowed,
+                    ReadChunkOrBlockError::RealmDeleted => WorkspaceSyncError::RealmDeleted,
                     ReadChunkOrBlockError::InvalidBlockAccess(err) => {
                         WorkspaceSyncError::InvalidBlockAccess(err)
                     }
@@ -821,6 +830,7 @@ async fn upload_blocks(
                     CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
                     CertifEncryptForRealmError::Offline(e) => WorkspaceSyncError::Offline(e),
                     CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
+                    CertifEncryptForRealmError::RealmDeleted => WorkspaceSyncError::RealmDeleted,
                     CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
                     CertifEncryptForRealmError::InvalidKeysBundle(err) => {
                         WorkspaceSyncError::InvalidKeysBundle(err)
@@ -860,6 +870,9 @@ async fn upload_blocks(
                             })?;
                         continue;
                     }
+
+                Rep::RealmArchived => return Err(WorkspaceSyncError::RealmArchived),
+                Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
 
                 // Unexpected errors :(
                 bad_rep @ (

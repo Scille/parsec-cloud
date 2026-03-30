@@ -24,6 +24,8 @@ use crate::{
 pub enum CertifRotateRealmKeyError {
     #[error("Unknown realm ID")]
     UnknownRealm,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Not allowed")]
     AuthorNotAllowed,
     #[error("Cannot communicate with the server: {0}")]
@@ -98,6 +100,7 @@ pub(super) async fn rotate_realm_key_idempotent(
                 certificate_timestamp: last_realm_certificate_timestamp,
             }),
             Rep::RealmNotFound => Err(CertifRotateRealmKeyError::UnknownRealm),
+            Rep::RealmDeleted => Err(CertifRotateRealmKeyError::RealmDeleted),
             Rep::AuthorNotAllowed => Err(CertifRotateRealmKeyError::AuthorNotAllowed),
             Rep::ParticipantMismatch { last_realm_certificate_timestamp } => {
                 // List of participants got updated in our back, refresh and retry
@@ -206,6 +209,9 @@ async fn generate_realm_rotate_key_req(
                         }
                         GenerateNextKeyBundleForRealmError::NotAllowed => {
                             CertifRotateRealmKeyError::AuthorNotAllowed
+                        }
+                        GenerateNextKeyBundleForRealmError::RealmDeleted => {
+                            CertifRotateRealmKeyError::RealmDeleted
                         }
                         GenerateNextKeyBundleForRealmError::Internal(err) => {
                             CertifRotateRealmKeyError::Internal(err)

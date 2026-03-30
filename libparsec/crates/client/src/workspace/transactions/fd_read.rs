@@ -22,6 +22,8 @@ pub enum WorkspaceFdReadError {
     NotInReadMode,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
     #[error(transparent)]
@@ -97,6 +99,7 @@ pub async fn fd_read(
                         }
                         ReadChunkOrBlockError::Stopped => WorkspaceFdReadError::Stopped,
                         ReadChunkOrBlockError::NoRealmAccess => WorkspaceFdReadError::NoRealmAccess,
+                        ReadChunkOrBlockError::RealmDeleted => WorkspaceFdReadError::RealmDeleted,
                         ReadChunkOrBlockError::InvalidBlockAccess(err) => {
                             WorkspaceFdReadError::InvalidBlockAccess(err)
                         }

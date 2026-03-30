@@ -80,6 +80,9 @@ class WorkspaceWatchEntryOneShotError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class InvalidKeysBundle:
         pass
 
@@ -144,6 +147,9 @@ class WorkspaceCreateFileError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class ParentNotFound:
         pass
 
@@ -177,6 +183,9 @@ class WorkspaceCreateFolderError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class ParentNotFound:
@@ -220,6 +229,9 @@ class WorkspaceRemoveEntryError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class EntryIsFile:
         pass
 
@@ -261,6 +273,9 @@ class WorkspaceMoveEntryError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class DestinationExists:
         pass
 
@@ -291,6 +306,9 @@ class WorkspaceStatEntryError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class InvalidKeysBundle:
@@ -366,6 +384,9 @@ class WorkspaceStatFolderChildrenError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class InvalidKeysBundle:
@@ -486,6 +507,9 @@ class WorkspaceIsFileContentLocalError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class EntryNotFound:
         pass
 
@@ -522,6 +546,9 @@ class WorkspaceOpenFileError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class EntryNotFound:
@@ -646,6 +673,9 @@ class WorkspaceFdReadError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class InvalidBlockAccess:
         pass
 
@@ -723,6 +753,9 @@ class WorkspaceGeneratePathAddrError(ErrorVariant):
     class NotAllowed:
         pass
 
+    class RealmDeleted:
+        pass
+
     class NoKey:
         pass
 
@@ -748,6 +781,9 @@ class WorkspaceDecryptPathAddrError(ErrorVariant):
         pass
 
     class NotAllowed:
+        pass
+
+    class RealmDeleted:
         pass
 
     class KeyNotFound:

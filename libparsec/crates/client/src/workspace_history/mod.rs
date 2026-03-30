@@ -82,6 +82,8 @@ pub enum WorkspaceHistorySetTimestampOfInterestError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -216,6 +218,9 @@ impl WorkspaceHistoryOps {
                 }
                 WorkspaceHistoryStoreResolvePathError::NoRealmAccess => {
                     WorkspaceHistorySetTimestampOfInterestError::NoRealmAccess
+                }
+                WorkspaceHistoryStoreResolvePathError::RealmDeleted => {
+                    WorkspaceHistorySetTimestampOfInterestError::RealmDeleted
                 }
                 WorkspaceHistoryStoreResolvePathError::InvalidKeysBundle(err) => {
                     WorkspaceHistorySetTimestampOfInterestError::InvalidKeysBundle(err)

@@ -18,6 +18,8 @@ pub enum WorkspaceGeneratePathAddrError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("There is no key available in this realm for encryption")]
     NoKey,
     #[error(transparent)]
@@ -42,6 +44,9 @@ pub async fn generate_path_addr(
             CertifEncryptForRealmError::Stopped => WorkspaceGeneratePathAddrError::Stopped,
             CertifEncryptForRealmError::Offline(e) => WorkspaceGeneratePathAddrError::Offline(e),
             CertifEncryptForRealmError::NotAllowed => WorkspaceGeneratePathAddrError::NotAllowed,
+            CertifEncryptForRealmError::RealmDeleted => {
+                WorkspaceGeneratePathAddrError::RealmDeleted
+            }
             CertifEncryptForRealmError::NoKey => WorkspaceGeneratePathAddrError::NoKey,
             CertifEncryptForRealmError::InvalidKeysBundle(err) => {
                 WorkspaceGeneratePathAddrError::InvalidKeysBundle(err)
@@ -70,6 +75,8 @@ pub enum WorkspaceDecryptPathAddrError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("The referenced key doesn't exist yet in this realm")]
     KeyNotFound,
     #[error("The referenced key appears to be corrupted !")]
@@ -101,6 +108,7 @@ pub async fn decrypt_path_addr(
             CertifDecryptForRealmError::Stopped => WorkspaceDecryptPathAddrError::Stopped,
             CertifDecryptForRealmError::Offline(e) => WorkspaceDecryptPathAddrError::Offline(e),
             CertifDecryptForRealmError::NotAllowed => WorkspaceDecryptPathAddrError::NotAllowed,
+            CertifDecryptForRealmError::RealmDeleted => WorkspaceDecryptPathAddrError::RealmDeleted,
             CertifDecryptForRealmError::KeyNotFound => WorkspaceDecryptPathAddrError::KeyNotFound,
             CertifDecryptForRealmError::CorruptedKey => WorkspaceDecryptPathAddrError::CorruptedKey,
             CertifDecryptForRealmError::CorruptedData => {

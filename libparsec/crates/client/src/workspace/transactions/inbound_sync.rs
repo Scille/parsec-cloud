@@ -112,6 +112,10 @@ pub enum WorkspaceSyncError {
     NoKey,
     #[error("The workspace's realm hasn't been created yet on server")]
     NoRealm,
+    #[error("The workspace's realm has been archived")]
+    RealmArchived,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
@@ -160,6 +164,7 @@ pub async fn refresh_realm_checkpoint(ops: &WorkspaceOps) -> Result<(), Workspac
             // TODO: error handling !
             Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
             Rep::RealmNotFound => return Err(WorkspaceSyncError::NoRealm),
+            Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
             bad_rep @ Rep::UnknownStatus { .. } => {
                 return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
@@ -341,6 +346,7 @@ pub async fn inbound_sync(
                 return Err(WorkspaceSyncError::InvalidManifest(e))
             }
             Err(ForUpdateSyncError::NoRealmAccess) => return Err(WorkspaceSyncError::NotAllowed),
+            Err(ForUpdateSyncError::RealmDeleted) => return Err(WorkspaceSyncError::RealmDeleted),
             Err(ForUpdateSyncError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncError::Internal(err)) => {
                 return Err(err.context("cannot lock entry for update").into())
@@ -623,6 +629,7 @@ async fn handle_conflict_and_update_store(
                 IntoSyncConflictUpdaterError::Offline(e) => Err(WorkspaceSyncError::Offline(e)),
                 IntoSyncConflictUpdaterError::Stopped => Err(WorkspaceSyncError::Stopped),
                 IntoSyncConflictUpdaterError::NoRealmAccess => Err(WorkspaceSyncError::NotAllowed),
+                IntoSyncConflictUpdaterError::RealmDeleted => Err(WorkspaceSyncError::RealmDeleted),
                 IntoSyncConflictUpdaterError::InvalidKeysBundle(err) => {
                     Err(WorkspaceSyncError::InvalidKeysBundle(err))
                 }
@@ -981,6 +988,7 @@ async fn fetch_remote_manifest_last_version<M: RemoteManifest>(
         },
         Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
         Rep::RealmNotFound => return Err(WorkspaceSyncError::NoRealm),
+        Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
         // Unexpected errors :(
         rep @ (
             // We provided only a single item...
@@ -1013,6 +1021,7 @@ async fn fetch_remote_manifest_last_version<M: RemoteManifest>(
             CertifValidateManifestError::Offline(e) => Err(WorkspaceSyncError::Offline(e)),
             CertifValidateManifestError::Stopped => Err(WorkspaceSyncError::Stopped),
             CertifValidateManifestError::NotAllowed => Err(WorkspaceSyncError::NotAllowed),
+            CertifValidateManifestError::RealmDeleted => Err(WorkspaceSyncError::RealmDeleted),
             CertifValidateManifestError::InvalidCertificate(err) => {
                 Err(WorkspaceSyncError::InvalidCertificate(err))
             }
@@ -1059,6 +1068,7 @@ async fn fetch_remote_manifest_version<M: RemoteManifest>(
         },
         Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
         Rep::RealmNotFound => return Err(WorkspaceSyncError::NoRealm),
+        Rep::RealmDeleted => return Err(WorkspaceSyncError::RealmDeleted),
         // Unexpected errors :(
         rep @ (
             // We provided only a single item...
@@ -1091,6 +1101,7 @@ async fn fetch_remote_manifest_version<M: RemoteManifest>(
             CertifValidateManifestError::Offline(e) => Err(WorkspaceSyncError::Offline(e)),
             CertifValidateManifestError::Stopped => Err(WorkspaceSyncError::Stopped),
             CertifValidateManifestError::NotAllowed => Err(WorkspaceSyncError::NotAllowed),
+            CertifValidateManifestError::RealmDeleted => Err(WorkspaceSyncError::RealmDeleted),
             CertifValidateManifestError::InvalidCertificate(err) => {
                 Err(WorkspaceSyncError::InvalidCertificate(err))
             }

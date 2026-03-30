@@ -52,6 +52,8 @@ pub enum WorkspaceHistoryStatEntryError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -83,6 +85,9 @@ pub(crate) async fn stat_entry_by_id(
             }
             WorkspaceHistoryStoreGetEntryError::NoRealmAccess => {
                 WorkspaceHistoryStatEntryError::NoRealmAccess
+            }
+            WorkspaceHistoryStoreGetEntryError::RealmDeleted => {
+                WorkspaceHistoryStatEntryError::RealmDeleted
             }
             WorkspaceHistoryStoreGetEntryError::InvalidKeysBundle(err) => {
                 WorkspaceHistoryStatEntryError::InvalidKeysBundle(err)
@@ -145,6 +150,9 @@ pub(crate) async fn stat_entry(
             }
             WorkspaceHistoryStoreResolvePathError::NoRealmAccess => {
                 WorkspaceHistoryStatEntryError::NoRealmAccess
+            }
+            WorkspaceHistoryStoreResolvePathError::RealmDeleted => {
+                WorkspaceHistoryStatEntryError::RealmDeleted
             }
             WorkspaceHistoryStoreResolvePathError::InvalidKeysBundle(err) => {
                 WorkspaceHistoryStatEntryError::InvalidKeysBundle(err)

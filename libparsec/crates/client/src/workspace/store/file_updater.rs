@@ -31,6 +31,8 @@ pub(crate) enum ForUpdateFileError {
     EntryNotAFile { entry_id: VlobID },
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Entry is already being updated")]
     WouldBlock,
     #[error(transparent)]
@@ -121,6 +123,9 @@ pub(super) async fn for_update_file(
                     ForUpdateFileError::Offline(e)
                 }
                 PopulateCacheFromLocalStorageOrServerError::Stopped => ForUpdateFileError::Stopped,
+                PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                    ForUpdateFileError::RealmDeleted
+                }
                 PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
                     ForUpdateFileError::EntryNotFound
                 }

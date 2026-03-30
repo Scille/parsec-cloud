@@ -26,6 +26,8 @@ pub enum WorkspaceCreateFolderError {
     ReadOnlyRealm,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Path doesn't point to an existing parent")]
     ParentNotFound,
     #[error("Path points to parent that is not a folder")]
@@ -78,6 +80,7 @@ pub(crate) async fn create_folder(
             ForUpdateFolderError::EntryNotFound => WorkspaceCreateFolderError::ParentNotFound,
             ForUpdateFolderError::EntryNotAFolder => WorkspaceCreateFolderError::ParentNotAFolder,
             ForUpdateFolderError::NoRealmAccess => WorkspaceCreateFolderError::NoRealmAccess,
+            ForUpdateFolderError::RealmDeleted => WorkspaceCreateFolderError::RealmDeleted,
             ForUpdateFolderError::InvalidKeysBundle(err) => {
                 WorkspaceCreateFolderError::InvalidKeysBundle(err)
             }
@@ -106,6 +109,9 @@ pub(crate) async fn create_folder(
                 EnsureManifestExistsWithParentError::Stopped => WorkspaceCreateFolderError::Stopped,
                 EnsureManifestExistsWithParentError::NoRealmAccess => {
                     WorkspaceCreateFolderError::NoRealmAccess
+                }
+                EnsureManifestExistsWithParentError::RealmDeleted => {
+                    WorkspaceCreateFolderError::RealmDeleted
                 }
                 EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                     WorkspaceCreateFolderError::InvalidKeysBundle(err)
