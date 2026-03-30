@@ -69,6 +69,12 @@ deleted_realm_user_roles AS (
     RETURNING _id
 ),
 
+deleted_realm_archiving AS (
+    DELETE FROM realm_archiving
+    WHERE realm IN (SELECT * FROM deleted_realms)
+    RETURNING _id
+),
+
 deleted_vlob_atoms AS (
     DELETE FROM vlob_atom
     WHERE realm IN (SELECT * FROM deleted_realms)
@@ -567,6 +573,37 @@ new_realm_user_roles AS (
     INNER JOIN realm ON realm_user_role.realm = realm._id
     WHERE realm.organization = {q_organization_internal_id("$source_id")}  -- noqa: LT05,LT14
     ORDER BY realm_user_role._id
+    RETURNING _id
+),
+
+new_realm_archivings AS (
+    INSERT INTO realm_archiving (
+        realm,
+        configuration,
+        deletion_date,
+        certificate,
+        certified_by,
+        certified_on
+    )
+    SELECT
+        (
+            SELECT new_realms._id
+            FROM new_realms
+            WHERE new_realms.realm_id = {q_realm(_id="realm_archiving.realm", select="realm_id")}  -- noqa: LT05,LT14
+        ) AS realm,
+        realm_archiving.configuration,
+        realm_archiving.deletion_date,
+        realm_archiving.certificate,
+        (
+            SELECT new_devices._id
+            FROM new_devices
+            WHERE new_devices.device_id = {q_device(_id="realm_archiving.certified_by", select="device_id")}  -- noqa: LT05,LT14
+        ) AS certified_by,
+        realm_archiving.certified_on
+    FROM realm_archiving
+    INNER JOIN realm ON realm_archiving.realm = realm._id
+    WHERE realm.organization = {q_organization_internal_id("$source_id")}  -- noqa: LT05,LT14
+    ORDER BY realm_archiving._id
     RETURNING _id
 ),
 
