@@ -21,6 +21,8 @@ pub enum PopulateManifestCacheError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -46,6 +48,7 @@ impl From<DataAccessFetchManifestError> for PopulateManifestCacheError {
             DataAccessFetchManifestError::NoRealmAccess => {
                 PopulateManifestCacheError::NoRealmAccess
             }
+            DataAccessFetchManifestError::RealmDeleted => PopulateManifestCacheError::RealmDeleted,
             DataAccessFetchManifestError::InvalidKeysBundle(err) => {
                 PopulateManifestCacheError::InvalidKeysBundle(err)
             }

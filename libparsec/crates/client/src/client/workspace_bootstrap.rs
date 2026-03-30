@@ -66,6 +66,8 @@ pub(crate) async fn ensure_workspaces_bootstrapped(
                 //
                 // In any case, we can just ignore the error.
                 CertifBootstrapWorkspaceError::AuthorNotAllowed => Ok(()),
+                // The realm has been deleted, nothing to bootstrap
+                CertifBootstrapWorkspaceError::RealmDeleted => Ok(()),
                 // Propagate the other errors
                 CertifBootstrapWorkspaceError::Offline(e) => {
                     Err(ClientEnsureWorkspacesBootstrappedError::Offline(e))

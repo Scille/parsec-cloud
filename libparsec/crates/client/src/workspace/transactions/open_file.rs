@@ -62,6 +62,8 @@ pub enum WorkspaceIsFileContentLocalError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Path doesn't exist")]
     EntryNotFound,
     #[error(transparent)]
@@ -103,6 +105,9 @@ pub async fn is_file_content_local(
                 }
                 ResolvePathError::NoRealmAccess => {
                     Err(WorkspaceIsFileContentLocalError::NoRealmAccess)
+                }
+                ResolvePathError::RealmDeleted => {
+                    Err(WorkspaceIsFileContentLocalError::RealmDeleted)
                 }
                 ResolvePathError::InvalidKeysBundle(err) => {
                     Err(WorkspaceIsFileContentLocalError::InvalidKeysBundle(err))
@@ -146,6 +151,8 @@ pub enum WorkspaceOpenFileError {
     ReadOnlyRealm,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Path doesn't exist")]
     EntryNotFound,
     #[error("Path points to an entry (ID: `{}`) that is not a file", .entry_id)]
@@ -207,6 +214,9 @@ pub async fn open_file(
                     WorkspaceCreateFileError::NoRealmAccess => {
                         Err(WorkspaceOpenFileError::NoRealmAccess)
                     }
+                    WorkspaceCreateFileError::RealmDeleted => {
+                        Err(WorkspaceOpenFileError::RealmDeleted)
+                    }
                     WorkspaceCreateFileError::ParentNotFound => {
                         Err(WorkspaceOpenFileError::EntryNotFound)
                     }
@@ -234,6 +244,7 @@ pub async fn open_file(
                     ResolvePathError::Stopped => Err(WorkspaceOpenFileError::Stopped),
                     ResolvePathError::EntryNotFound => Err(WorkspaceOpenFileError::EntryNotFound),
                     ResolvePathError::NoRealmAccess => Err(WorkspaceOpenFileError::NoRealmAccess),
+                    ResolvePathError::RealmDeleted => Err(WorkspaceOpenFileError::RealmDeleted),
                     ResolvePathError::InvalidKeysBundle(err) => {
                         Err(WorkspaceOpenFileError::InvalidKeysBundle(err))
                     }
@@ -403,6 +414,9 @@ pub async fn open_file_by_id(
                 }
                 ForUpdateFileError::NoRealmAccess => {
                     return Err(WorkspaceOpenFileError::NoRealmAccess)
+                }
+                ForUpdateFileError::RealmDeleted => {
+                    return Err(WorkspaceOpenFileError::RealmDeleted)
                 }
                 ForUpdateFileError::InvalidKeysBundle(err) => {
                     return Err(WorkspaceOpenFileError::InvalidKeysBundle(err))

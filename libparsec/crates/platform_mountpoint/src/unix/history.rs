@@ -260,6 +260,7 @@ impl fuser::Filesystem for Filesystem {
                         reply.manual().error(libc::EPERM)
                     }
                     WorkspaceHistoryStatEntryError::Stopped
+                    | WorkspaceHistoryStatEntryError::RealmDeleted
                     | WorkspaceHistoryStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceHistoryStatEntryError::InvalidCertificate(_)
                     | WorkspaceHistoryStatEntryError::InvalidManifest(_)
@@ -334,6 +335,7 @@ impl fuser::Filesystem for Filesystem {
                         reply.manual().error(libc::EPERM)
                     }
                     WorkspaceHistoryStatEntryError::Stopped
+                    | WorkspaceHistoryStatEntryError::RealmDeleted
                     | WorkspaceHistoryStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceHistoryStatEntryError::InvalidCertificate(_)
                     | WorkspaceHistoryStatEntryError::InvalidManifest(_)
@@ -390,6 +392,7 @@ impl fuser::Filesystem for Filesystem {
                             reply.manual().error(libc::EPERM)
                         }
                         WorkspaceHistoryOpenFileError::Stopped
+                        | WorkspaceHistoryOpenFileError::RealmDeleted
                         | WorkspaceHistoryOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceHistoryOpenFileError::InvalidCertificate(_)
                         | WorkspaceHistoryOpenFileError::InvalidManifest(_)
@@ -437,6 +440,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceHistoryFdReadError::ServerBlockstoreUnavailable => reply.manual().error(libc::EHOSTUNREACH),
                     WorkspaceHistoryFdReadError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceHistoryFdReadError::Stopped
+                    | WorkspaceHistoryFdReadError::RealmDeleted
                     | WorkspaceHistoryFdReadError::InvalidBlockAccess(_)
                     | WorkspaceHistoryFdReadError::InvalidKeysBundle(_)
                     | WorkspaceHistoryFdReadError::InvalidCertificate(_)
@@ -536,6 +540,7 @@ impl fuser::Filesystem for Filesystem {
                             reply.manual().error(libc::EPERM)
                         }
                         WorkspaceHistoryOpenFolderReaderError::Stopped
+                        | WorkspaceHistoryOpenFolderReaderError::RealmDeleted
                         | WorkspaceHistoryOpenFolderReaderError::InvalidKeysBundle(_)
                         | WorkspaceHistoryOpenFolderReaderError::InvalidCertificate(_)
                         | WorkspaceHistoryOpenFolderReaderError::InvalidManifest(_)
@@ -609,6 +614,7 @@ impl fuser::Filesystem for Filesystem {
                                 reply.manual().error(libc::EPERM)
                             }
                             WorkspaceHistoryFolderReaderStatEntryError::Stopped
+                            | WorkspaceHistoryFolderReaderStatEntryError::RealmDeleted
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidKeysBundle(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidCertificate(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)
@@ -706,6 +712,7 @@ impl fuser::Filesystem for Filesystem {
                                 reply.manual().error(libc::EPERM)
                             }
                             WorkspaceHistoryFolderReaderStatEntryError::Stopped
+                            | WorkspaceHistoryFolderReaderStatEntryError::RealmDeleted
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidKeysBundle(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidCertificate(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)

@@ -18,6 +18,8 @@ use crate::{
 pub enum ClientRenameWorkspaceError {
     #[error("Workspace not found")]
     WorkspaceNotFound,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Not allowed")]
     AuthorNotAllowed,
     #[error("Cannot communicate with the server: {0}")]
@@ -74,6 +76,7 @@ pub async fn rename_workspace(
             CertifBootstrapWorkspaceError::AuthorNotAllowed => {
                 ClientRenameWorkspaceError::AuthorNotAllowed
             }
+            CertifBootstrapWorkspaceError::RealmDeleted => ClientRenameWorkspaceError::RealmDeleted,
             CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
@@ -158,6 +161,7 @@ pub async fn rename_workspace(
                 CertifRenameRealmError::UnknownRealm => {
                     ClientRenameWorkspaceError::WorkspaceNotFound
                 }
+                CertifRenameRealmError::RealmDeleted => ClientRenameWorkspaceError::RealmDeleted,
                 CertifRenameRealmError::AuthorNotAllowed => {
                     ClientRenameWorkspaceError::AuthorNotAllowed
                 }

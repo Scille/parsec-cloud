@@ -98,6 +98,8 @@ async fn process_workspace_needs(
                     // A concurrent operation has changed our rights to the workspace,
                     // hence we can no longer process its needs !
                     CertifShareRealmError::AuthorNotAllowed => return Ok(()),
+                    // Workspace has been deleted, nothing to process
+                    CertifShareRealmError::RealmDeleted => return Ok(()),
                     CertifShareRealmError::TimestampOutOfBallpark {
                         server_timestamp,
                         client_timestamp,
@@ -185,6 +187,8 @@ async fn process_workspace_needs(
                 // A concurrent operation has changed our rights to the workspace,
                 // hence we can no longer process its needs !
                 CertifRotateRealmKeyError::AuthorNotAllowed => return Ok(()),
+                // Workspace has been deleted, nothing to process
+                CertifRotateRealmKeyError::RealmDeleted => return Ok(()),
                 CertifRotateRealmKeyError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,

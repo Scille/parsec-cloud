@@ -28,6 +28,8 @@ pub enum WorkspaceOpenFolderReaderError {
     EntryIsFile,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -46,6 +48,8 @@ pub enum FolderReaderStatEntryError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -136,6 +140,9 @@ impl FolderReader {
                     WorkspaceStatEntryError::NoRealmAccess => {
                         FolderReaderStatEntryError::NoRealmAccess
                     }
+                    WorkspaceStatEntryError::RealmDeleted => {
+                        FolderReaderStatEntryError::RealmDeleted
+                    }
                     WorkspaceStatEntryError::InvalidKeysBundle(err) => {
                         FolderReaderStatEntryError::InvalidKeysBundle(err)
                     }
@@ -188,6 +195,9 @@ impl FolderReader {
                         EnsureManifestExistsWithParentError::NoRealmAccess => {
                             FolderReaderStatEntryError::NoRealmAccess
                         }
+                        EnsureManifestExistsWithParentError::RealmDeleted => {
+                            FolderReaderStatEntryError::RealmDeleted
+                        }
                         EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                             FolderReaderStatEntryError::InvalidKeysBundle(err)
                         }
@@ -221,6 +231,7 @@ pub async fn open_folder_reader_by_id(
             RetrievePathFromIDError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
             // RetrievePathFromIDError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
             RetrievePathFromIDError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
+            RetrievePathFromIDError::RealmDeleted => WorkspaceOpenFolderReaderError::RealmDeleted,
             RetrievePathFromIDError::InvalidKeysBundle(err) => {
                 WorkspaceOpenFolderReaderError::InvalidKeysBundle(err)
             }
@@ -268,6 +279,7 @@ pub async fn open_folder_reader(
                 ResolvePathError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
                 ResolvePathError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
                 ResolvePathError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
+                ResolvePathError::RealmDeleted => WorkspaceOpenFolderReaderError::RealmDeleted,
                 ResolvePathError::InvalidKeysBundle(err) => {
                     WorkspaceOpenFolderReaderError::InvalidKeysBundle(err)
                 }
@@ -301,6 +313,8 @@ pub enum WorkspaceStatFolderChildrenError {
     EntryIsFile,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -330,6 +344,9 @@ pub async fn stat_folder_children(
             }
             WorkspaceOpenFolderReaderError::NoRealmAccess => {
                 WorkspaceStatFolderChildrenError::NoRealmAccess
+            }
+            WorkspaceOpenFolderReaderError::RealmDeleted => {
+                WorkspaceStatFolderChildrenError::RealmDeleted
             }
             WorkspaceOpenFolderReaderError::InvalidKeysBundle(err) => {
                 WorkspaceStatFolderChildrenError::InvalidKeysBundle(err)
@@ -368,6 +385,9 @@ pub async fn stat_folder_children_by_id(
             WorkspaceOpenFolderReaderError::NoRealmAccess => {
                 WorkspaceStatFolderChildrenError::NoRealmAccess
             }
+            WorkspaceOpenFolderReaderError::RealmDeleted => {
+                WorkspaceStatFolderChildrenError::RealmDeleted
+            }
             WorkspaceOpenFolderReaderError::InvalidKeysBundle(err) => {
                 WorkspaceStatFolderChildrenError::InvalidKeysBundle(err)
             }
@@ -405,6 +425,9 @@ async fn consume_reader(
                 FolderReaderStatEntryError::Stopped => WorkspaceStatFolderChildrenError::Stopped,
                 FolderReaderStatEntryError::NoRealmAccess => {
                     WorkspaceStatFolderChildrenError::NoRealmAccess
+                }
+                FolderReaderStatEntryError::RealmDeleted => {
+                    WorkspaceStatFolderChildrenError::RealmDeleted
                 }
                 FolderReaderStatEntryError::InvalidKeysBundle(err) => {
                     WorkspaceStatFolderChildrenError::InvalidKeysBundle(err)

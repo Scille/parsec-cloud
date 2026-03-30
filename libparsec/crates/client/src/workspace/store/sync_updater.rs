@@ -42,6 +42,8 @@ pub(crate) enum ForUpdateSyncError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Entry is already being updated")]
     WouldBlock,
     #[error(transparent)]
@@ -68,6 +70,8 @@ pub(crate) enum IntoSyncConflictUpdaterError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -191,6 +195,9 @@ pub(super) async fn for_update_sync(
                 RetrievePathFromIdAndLockForUpdateError::Stopped => ForUpdateSyncError::Stopped,
                 RetrievePathFromIdAndLockForUpdateError::NoRealmAccess => {
                     ForUpdateSyncError::NoRealmAccess
+                }
+                RetrievePathFromIdAndLockForUpdateError::RealmDeleted => {
+                    ForUpdateSyncError::RealmDeleted
                 }
                 RetrievePathFromIdAndLockForUpdateError::WouldBlock => {
                     ForUpdateSyncError::WouldBlock
@@ -458,6 +465,9 @@ impl<'a> SyncUpdater<'a> {
                             }
                             PopulateCacheFromLocalStorageOrServerError::NoRealmAccess => {
                                 IntoSyncConflictUpdaterError::NoRealmAccess
+                            }
+                            PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                                IntoSyncConflictUpdaterError::RealmDeleted
                             }
                             PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err) => {
                                 IntoSyncConflictUpdaterError::InvalidKeysBundle(err)

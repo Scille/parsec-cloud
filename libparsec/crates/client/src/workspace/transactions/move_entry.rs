@@ -48,6 +48,8 @@ pub enum WorkspaceMoveEntryError {
     ReadOnlyRealm,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Destination already exists (ID `{}`)", .entry_id)]
     DestinationExists { entry_id: VlobID },
     #[error("Destination doesn't exist so exchange is not possible")]
@@ -97,6 +99,7 @@ pub(crate) async fn rename_entry_by_id(
             // If the source's parent is not a folder... then the source cannot exist !
             ForUpdateFolderError::EntryNotAFolder => WorkspaceMoveEntryError::SourceNotFound,
             ForUpdateFolderError::NoRealmAccess => WorkspaceMoveEntryError::NoRealmAccess,
+            ForUpdateFolderError::RealmDeleted => WorkspaceMoveEntryError::RealmDeleted,
             ForUpdateFolderError::InvalidKeysBundle(err) => {
                 WorkspaceMoveEntryError::InvalidKeysBundle(err)
             }
@@ -165,6 +168,7 @@ pub(crate) async fn move_entry(
                 // If the source's parent is not a folder... then the source cannot exist !
                 ForUpdateFolderError::EntryNotAFolder => WorkspaceMoveEntryError::SourceNotFound,
                 ForUpdateFolderError::NoRealmAccess => WorkspaceMoveEntryError::NoRealmAccess,
+                ForUpdateFolderError::RealmDeleted => WorkspaceMoveEntryError::RealmDeleted,
                 ForUpdateFolderError::InvalidKeysBundle(err) => {
                     WorkspaceMoveEntryError::InvalidKeysBundle(err)
                 }
@@ -212,6 +216,7 @@ pub(crate) async fn move_entry(
                     WorkspaceMoveEntryError::DestinationNotFound
                 }
                 ForUpdateReparentingError::NoRealmAccess => WorkspaceMoveEntryError::NoRealmAccess,
+                ForUpdateReparentingError::RealmDeleted => WorkspaceMoveEntryError::RealmDeleted,
                 ForUpdateReparentingError::InvalidKeysBundle(err) => {
                     WorkspaceMoveEntryError::InvalidKeysBundle(err)
                 }
@@ -258,6 +263,9 @@ async fn move_entry_same_parent(
             EnsureManifestExistsWithParentError::NoRealmAccess => {
                 WorkspaceMoveEntryError::NoRealmAccess
             }
+            EnsureManifestExistsWithParentError::RealmDeleted => {
+                WorkspaceMoveEntryError::RealmDeleted
+            }
             EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                 WorkspaceMoveEntryError::InvalidKeysBundle(err)
             }
@@ -292,6 +300,9 @@ async fn move_entry_same_parent(
                     }
                     EnsureManifestExistsWithParentError::NoRealmAccess => {
                         WorkspaceMoveEntryError::NoRealmAccess
+                    }
+                    EnsureManifestExistsWithParentError::RealmDeleted => {
+                        WorkspaceMoveEntryError::RealmDeleted
                     }
                     EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                         WorkspaceMoveEntryError::InvalidKeysBundle(err)
@@ -431,6 +442,9 @@ async fn move_entry_different_parents(
                     }
                     EnsureManifestExistsWithParentError::NoRealmAccess => {
                         WorkspaceMoveEntryError::NoRealmAccess
+                    }
+                    EnsureManifestExistsWithParentError::RealmDeleted => {
+                        WorkspaceMoveEntryError::RealmDeleted
                     }
                     EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
                         WorkspaceMoveEntryError::InvalidKeysBundle(err)

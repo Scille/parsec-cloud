@@ -67,6 +67,8 @@ pub enum WorkspaceHistoryStoreStartError {
     NoHistory,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -172,6 +174,9 @@ impl WorkspaceHistoryStore {
                     }
                     DataAccessFetchManifestError::NoRealmAccess => {
                         WorkspaceHistoryStoreStartError::NoRealmAccess
+                    }
+                    DataAccessFetchManifestError::RealmDeleted => {
+                        WorkspaceHistoryStoreStartError::RealmDeleted
                     }
                     DataAccessFetchManifestError::InvalidKeysBundle(err) => {
                         WorkspaceHistoryStoreStartError::InvalidKeysBundle(err)

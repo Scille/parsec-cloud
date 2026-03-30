@@ -153,6 +153,8 @@ enum LoadLastKeysBundleError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("The realm doesn't have any key yet")]
     NoKey,
     #[error(transparent)]
@@ -218,6 +220,7 @@ async fn load_last_realm_keys_bundle(
             } => (keys_bundle, keys_bundle_access),
             Rep::AccessNotAvailableForAuthor
             | Rep::AuthorNotAllowed => return Err(LoadLastKeysBundleError::NotAllowed),
+            Rep::RealmDeleted => return Err(LoadLastKeysBundleError::RealmDeleted),
             // Unexpected errors :(
             bad_rep @ (
                 // We didn't specify a key index
@@ -279,6 +282,8 @@ pub(super) enum AttemptRealmKeysBundleHealingError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     // TODO: finish key bundle healing !
     #[allow(dead_code)]
     #[error("The realm doesn't have any key yet")]
@@ -373,6 +378,7 @@ async fn recover_realm_keys_from_previous_bundles(
                 Rep::AuthorNotAllowed => {
                     return Err(AttemptRealmKeysBundleHealingError::NotAllowed)
                 }
+                Rep::RealmDeleted => return Err(AttemptRealmKeysBundleHealingError::RealmDeleted),
                 // This key rotation has been done while we were not part of the realm,
                 // so we have no choice but to skip it.
                 // Not we still continue to fetch the previous keys bundle, as we might
@@ -488,6 +494,8 @@ pub enum EncryptRealmKeysBundleAccessForUserError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("User not found")]
     UserNotFound,
     #[error("The realm doesn't have any key yet")]
@@ -512,6 +520,9 @@ pub(super) async fn encrypt_realm_keys_bundle_access_for_user(
             }
             LoadLastKeysBundleError::NotAllowed => {
                 EncryptRealmKeysBundleAccessForUserError::NotAllowed
+            }
+            LoadLastKeysBundleError::RealmDeleted => {
+                EncryptRealmKeysBundleAccessForUserError::RealmDeleted
             }
             LoadLastKeysBundleError::NoKey => EncryptRealmKeysBundleAccessForUserError::NoKey,
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
@@ -837,6 +848,8 @@ pub enum CertifEncryptForRealmError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("There is no key available in this realm for encryption")]
     NoKey,
     #[error(transparent)]
@@ -857,6 +870,7 @@ pub(super) async fn encrypt_for_realm(
         .map_err(|e| match e {
             LoadLastKeysBundleError::Offline(e) => CertifEncryptForRealmError::Offline(e),
             LoadLastKeysBundleError::NotAllowed => CertifEncryptForRealmError::NotAllowed,
+            LoadLastKeysBundleError::RealmDeleted => CertifEncryptForRealmError::RealmDeleted,
             LoadLastKeysBundleError::NoKey => CertifEncryptForRealmError::NoKey,
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
                 CertifEncryptForRealmError::InvalidKeysBundle(err)
@@ -887,6 +901,8 @@ pub enum CertifDecryptForRealmError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("The referenced key doesn't exist yet in this realm")]
     KeyNotFound,
     #[error("The referenced key appears to be corrupted !")]
@@ -917,6 +933,7 @@ pub(super) async fn decrypt_for_realm(
         .map_err(|e| match e {
             LoadLastKeysBundleError::Offline(e) => CertifDecryptForRealmError::Offline(e),
             LoadLastKeysBundleError::NotAllowed => CertifDecryptForRealmError::NotAllowed,
+            LoadLastKeysBundleError::RealmDeleted => CertifDecryptForRealmError::RealmDeleted,
             LoadLastKeysBundleError::NoKey => CertifDecryptForRealmError::KeyNotFound,
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
                 CertifDecryptForRealmError::InvalidKeysBundle(err)
@@ -943,6 +960,8 @@ pub enum GenerateNextKeyBundleForRealmError {
     Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -971,6 +990,9 @@ pub(super) async fn generate_next_keys_bundle_for_realm(
             }
             LoadLastKeysBundleError::NotAllowed => {
                 return Err(GenerateNextKeyBundleForRealmError::NotAllowed)
+            }
+            LoadLastKeysBundleError::RealmDeleted => {
+                return Err(GenerateNextKeyBundleForRealmError::RealmDeleted)
             }
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
                 return Err(GenerateNextKeyBundleForRealmError::InvalidKeysBundle(err))

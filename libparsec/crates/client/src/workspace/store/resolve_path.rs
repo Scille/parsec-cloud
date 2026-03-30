@@ -48,6 +48,8 @@ pub(crate) enum ResolvePathError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -151,6 +153,9 @@ async fn resolve_path_maybe_lock_for_update(
                         }
                         PopulateCacheFromLocalStorageOrServerError::Stopped => {
                             ResolvePathError::Stopped
+                        }
+                        PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                            ResolvePathError::RealmDeleted
                         }
                         PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
                             ResolvePathError::EntryNotFound
@@ -343,6 +348,8 @@ pub(crate) enum ResolvePathForReparentingError {
     DestinationNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -644,6 +651,9 @@ pub(crate) async fn resolve_path_for_reparenting(
                         PopulateCacheFromLocalStorageOrServerError::Stopped => {
                             ResolvePathForReparentingError::Stopped
                         }
+                        PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                            ResolvePathForReparentingError::RealmDeleted
+                        }
                         PopulateCacheFromLocalStorageOrServerError::EntryNotFound => match who_need
                         {
                             WhoIsInNeed::DstParent | WhoIsInNeed::DstChild => {
@@ -849,6 +859,8 @@ pub(crate) enum RetrievePathFromIDError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -867,6 +879,8 @@ pub(crate) enum RetrievePathFromIdAndLockForUpdateError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Entry is already being updated")]
     WouldBlock,
     #[error(transparent)]
@@ -982,6 +996,9 @@ pub(crate) async fn retrieve_path_from_id_and_lock_for_update(
                     Err(PopulateCacheFromLocalStorageOrServerError::NoRealmAccess) => {
                         return Err(RetrievePathFromIdAndLockForUpdateError::NoRealmAccess)
                     }
+                    Err(PopulateCacheFromLocalStorageOrServerError::RealmDeleted) => {
+                        return Err(RetrievePathFromIdAndLockForUpdateError::RealmDeleted)
+                    }
                     Err(PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err)) => {
                         return Err(RetrievePathFromIdAndLockForUpdateError::InvalidKeysBundle(
                             err,
@@ -1063,6 +1080,9 @@ pub(crate) async fn retrieve_path_from_id(
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::NoRealmAccess) => {
                         return Err(RetrievePathFromIDError::NoRealmAccess)
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::RealmDeleted) => {
+                        return Err(RetrievePathFromIDError::RealmDeleted)
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err)) => {
                         return Err(RetrievePathFromIDError::InvalidKeysBundle(err))

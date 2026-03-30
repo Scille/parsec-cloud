@@ -194,6 +194,7 @@ async fn reply_with_lookup(
             WorkspaceStatEntryError::Offline(_) => reply.error(libc::EHOSTUNREACH),
             WorkspaceStatEntryError::NoRealmAccess => reply.error(libc::EPERM),
             WorkspaceStatEntryError::Stopped
+            | WorkspaceStatEntryError::RealmDeleted
             | WorkspaceStatEntryError::InvalidKeysBundle(_)
             | WorkspaceStatEntryError::InvalidCertificate(_)
             | WorkspaceStatEntryError::InvalidManifest(_)
@@ -435,6 +436,7 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceStatEntryError::Offline(_) => reply.manual().error(libc::EHOSTUNREACH),
                     WorkspaceStatEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceStatEntryError::Stopped
+                    | WorkspaceStatEntryError::RealmDeleted
                     | WorkspaceStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceStatEntryError::InvalidCertificate(_)
                     | WorkspaceStatEntryError::InvalidManifest(_)
@@ -573,6 +575,7 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceCreateFolderError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceCreateFolderError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceCreateFolderError::Stopped
+                    | WorkspaceCreateFolderError::RealmDeleted
                     | WorkspaceCreateFolderError::InvalidKeysBundle(_)
                     | WorkspaceCreateFolderError::InvalidCertificate(_)
                     | WorkspaceCreateFolderError::InvalidManifest(_)
@@ -634,6 +637,7 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceRemoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceRemoveEntryError::Stopped
+                    | WorkspaceRemoveEntryError::RealmDeleted
                     | WorkspaceRemoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceRemoveEntryError::InvalidCertificate(_)
                     | WorkspaceRemoveEntryError::InvalidManifest(_)
@@ -697,6 +701,7 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceRemoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceRemoveEntryError::Stopped
+                    | WorkspaceRemoveEntryError::RealmDeleted
                     | WorkspaceRemoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceRemoveEntryError::InvalidCertificate(_)
                     | WorkspaceRemoveEntryError::InvalidManifest(_)
@@ -797,6 +802,7 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceMoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceMoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceMoveEntryError::Stopped
+                    | WorkspaceMoveEntryError::RealmDeleted
                     | WorkspaceMoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceMoveEntryError::InvalidCertificate(_)
                     | WorkspaceMoveEntryError::InvalidManifest(_)
@@ -874,6 +880,7 @@ impl fuser::Filesystem for Filesystem {
                         WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(libc::EPERM),
                         WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                         WorkspaceOpenFileError::Stopped
+                        | WorkspaceOpenFileError::RealmDeleted
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceOpenFileError::InvalidCertificate(_)
                         | WorkspaceOpenFileError::InvalidManifest(_)
@@ -987,6 +994,7 @@ impl fuser::Filesystem for Filesystem {
                         WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(libc::EPERM),
                         WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                         WorkspaceOpenFileError::Stopped
+                        | WorkspaceOpenFileError::RealmDeleted
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceOpenFileError::InvalidCertificate(_)
                         | WorkspaceOpenFileError::InvalidManifest(_)
@@ -1140,6 +1148,7 @@ impl fuser::Filesystem for Filesystem {
                                     reply.manual().error(libc::EROFS)
                                 }
                                 WorkspaceOpenFileError::Stopped
+                                | WorkspaceOpenFileError::RealmDeleted
                                 | WorkspaceOpenFileError::InvalidKeysBundle(_)
                                 | WorkspaceOpenFileError::InvalidCertificate(_)
                                 | WorkspaceOpenFileError::InvalidManifest(_)
@@ -1248,6 +1257,7 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceFdReadError::NotInReadMode => reply.manual().error(libc::EBADF),
                     WorkspaceFdReadError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceFdReadError::Stopped
+                    | WorkspaceFdReadError::RealmDeleted
                     | WorkspaceFdReadError::InvalidBlockAccess(_)
                     | WorkspaceFdReadError::InvalidKeysBundle(_)
                     | WorkspaceFdReadError::InvalidCertificate(_)
@@ -1474,6 +1484,7 @@ impl fuser::Filesystem for Filesystem {
                             reply.manual().error(libc::EPERM)
                         }
                         WorkspaceOpenFolderReaderError::Stopped
+                        | WorkspaceOpenFolderReaderError::RealmDeleted
                         | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
                         | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
                         | WorkspaceOpenFolderReaderError::InvalidManifest(_)
@@ -1545,6 +1556,7 @@ impl fuser::Filesystem for Filesystem {
                                 reply.manual().error(libc::EPERM)
                             }
                             FolderReaderStatEntryError::Stopped
+                            | FolderReaderStatEntryError::RealmDeleted
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
                             | FolderReaderStatEntryError::InvalidCertificate(_)
                             | FolderReaderStatEntryError::InvalidManifest(_)
@@ -1639,6 +1651,7 @@ impl fuser::Filesystem for Filesystem {
                                 reply.manual().error(libc::EPERM)
                             }
                             FolderReaderStatEntryError::Stopped
+                            | FolderReaderStatEntryError::RealmDeleted
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
                             | FolderReaderStatEntryError::InvalidCertificate(_)
                             | FolderReaderStatEntryError::InvalidManifest(_)
@@ -1736,6 +1749,7 @@ async fn getattr_from_path(
             WorkspaceStatEntryError::Offline(_) => Err(libc::EHOSTUNREACH),
             WorkspaceStatEntryError::NoRealmAccess => Err(libc::EPERM),
             WorkspaceStatEntryError::Stopped
+            | WorkspaceStatEntryError::RealmDeleted
             | WorkspaceStatEntryError::InvalidKeysBundle(_)
             | WorkspaceStatEntryError::InvalidCertificate(_)
             | WorkspaceStatEntryError::InvalidManifest(_)

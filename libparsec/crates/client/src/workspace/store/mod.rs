@@ -79,6 +79,8 @@ pub(super) enum ReadChunkOrBlockError {
     ChunkNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
     #[error(transparent)]
@@ -97,6 +99,8 @@ pub(super) enum EnsureManifestExistsWithParentError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -454,6 +458,9 @@ impl WorkspaceStore {
                     GetManifestError::NoRealmAccess => {
                         Err(EnsureManifestExistsWithParentError::NoRealmAccess)
                     }
+                    GetManifestError::RealmDeleted => {
+                        Err(EnsureManifestExistsWithParentError::RealmDeleted)
+                    }
                     GetManifestError::InvalidKeysBundle(err) => {
                         Err(EnsureManifestExistsWithParentError::InvalidKeysBundle(err))
                     }
@@ -707,6 +714,7 @@ impl WorkspaceStore {
                 ReadChunkOrBlockError::ChunkNotFound
             }
             ServerFetchBlockError::NoRealmAccess => ReadChunkOrBlockError::NoRealmAccess,
+            ServerFetchBlockError::RealmDeleted => ReadChunkOrBlockError::RealmDeleted,
             ServerFetchBlockError::InvalidBlockAccess(err) => {
                 ReadChunkOrBlockError::InvalidBlockAccess(err)
             }

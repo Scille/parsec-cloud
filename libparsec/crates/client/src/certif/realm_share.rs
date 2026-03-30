@@ -25,6 +25,8 @@ pub enum CertifShareRealmError {
     RecipientNotFound,
     #[error("Workspace realm not found")]
     RealmNotFound,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Cannot share with a revoked user")]
     RecipientRevoked,
     #[error("Author not allowed")]
@@ -212,6 +214,7 @@ async fn unshare_do_server_command(
             })
         }
         Rep::RealmNotFound => Err(CertifShareRealmError::RealmNotFound),
+        Rep::RealmDeleted => Err(CertifShareRealmError::RealmDeleted),
         // Unlike for the sharing, we didn't have retrieved the user on our side,
         // so this error can actually occur (this is only theoretical though, as the
         // user ID is supposed to have been obtained from certificates).
@@ -254,6 +257,9 @@ async fn share_do_server_command(
             }
             EncryptRealmKeysBundleAccessForUserError::NotAllowed => {
                 CertifShareRealmError::AuthorNotAllowed
+            }
+            EncryptRealmKeysBundleAccessForUserError::RealmDeleted => {
+                CertifShareRealmError::RealmDeleted
             }
             EncryptRealmKeysBundleAccessForUserError::UserNotFound => {
                 CertifShareRealmError::RecipientNotFound
@@ -348,6 +354,7 @@ async fn share_do_server_command(
         // Note this error should never occur in practice given we have already
         // made sure the workspace exists in the server.
         Rep::RealmNotFound => Err(CertifShareRealmError::RealmNotFound),
+        Rep::RealmDeleted => Err(CertifShareRealmError::RealmDeleted),
         // Note this error should never occur in practice given we have already
         // retrieve the user on our side.
         Rep::RecipientNotFound => Err(CertifShareRealmError::RecipientNotFound),

@@ -23,6 +23,8 @@ pub enum CertifRenameRealmError {
     Offline(#[from] ConnectionError),
     #[error("Unknown realm ID")]
     UnknownRealm,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error("Not allowed")]
     AuthorNotAllowed,
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -81,6 +83,7 @@ async fn rename_realm_internal(
                 CertifEncryptForRealmError::Stopped => CertifRenameRealmError::Stopped,
                 CertifEncryptForRealmError::Offline(e) => CertifRenameRealmError::Offline(e),
                 CertifEncryptForRealmError::NotAllowed => CertifRenameRealmError::AuthorNotAllowed,
+                CertifEncryptForRealmError::RealmDeleted => CertifRenameRealmError::RealmDeleted,
                 CertifEncryptForRealmError::NoKey => CertifRenameRealmError::NoKey,
                 CertifEncryptForRealmError::InvalidKeysBundle(err) => {
                     CertifRenameRealmError::InvalidKeysBundle(err)
@@ -146,6 +149,7 @@ async fn rename_realm_internal(
                 continue;
             }
             Rep::RealmNotFound => Err(CertifRenameRealmError::UnknownRealm),
+            Rep::RealmDeleted => Err(CertifRenameRealmError::RealmDeleted),
             Rep::AuthorNotAllowed => Err(CertifRenameRealmError::AuthorNotAllowed),
             Rep::RequireGreaterTimestamp {
                 strictly_greater_than,

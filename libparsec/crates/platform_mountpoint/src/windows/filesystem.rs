@@ -251,6 +251,7 @@ impl ParsecFileSystemInterface {
                         WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceStatEntryError::NoRealmAccess
+                        | WorkspaceStatEntryError::RealmDeleted
                         | WorkspaceStatEntryError::InvalidKeysBundle(_)
                         | WorkspaceStatEntryError::InvalidCertificate(_)
                         | WorkspaceStatEntryError::InvalidManifest(_)
@@ -318,6 +319,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceStatEntryError::NoRealmAccess
+                        | WorkspaceStatEntryError::RealmDeleted
                         | WorkspaceStatEntryError::InvalidKeysBundle(_)
                         | WorkspaceStatEntryError::InvalidCertificate(_)
                         | WorkspaceStatEntryError::InvalidManifest(_)
@@ -386,6 +388,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         // in Windows Explorer, which is obviously not the best user experience :/
                         WorkspaceCreateFolderError::ReadOnlyRealm => STATUS_ACCESS_DENIED,
                         WorkspaceCreateFolderError::NoRealmAccess
+                        | WorkspaceCreateFolderError::RealmDeleted
                         | WorkspaceCreateFolderError::InvalidKeysBundle(_)
                         | WorkspaceCreateFolderError::InvalidCertificate(_)
                         | WorkspaceCreateFolderError::InvalidManifest(_)
@@ -435,6 +438,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             STATUS_OBJECT_NAME_COLLISION
                         }
                         WorkspaceOpenFileError::NoRealmAccess
+                        | WorkspaceOpenFileError::RealmDeleted
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceOpenFileError::InvalidCertificate(_)
                         | WorkspaceOpenFileError::InvalidManifest(_)
@@ -534,6 +538,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
                     WorkspaceOpenFileError::ReadOnlyRealm => Err(STATUS_MEDIA_WRITE_PROTECTED),
                     WorkspaceOpenFileError::NoRealmAccess
+                    | WorkspaceOpenFileError::RealmDeleted
                     | WorkspaceOpenFileError::InvalidKeysBundle(_)
                     | WorkspaceOpenFileError::InvalidCertificate(_)
                     | WorkspaceOpenFileError::InvalidManifest(_)
@@ -692,7 +697,8 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         WorkspaceFdReadError::Stopped => STATUS_NO_SUCH_DEVICE,
                         WorkspaceFdReadError::BadFileDescriptor => STATUS_INVALID_HANDLE,
                         WorkspaceFdReadError::NotInReadMode => STATUS_ACCESS_DENIED,
-                        WorkspaceFdReadError::InvalidBlockAccess(_)
+                        WorkspaceFdReadError::RealmDeleted
+                        | WorkspaceFdReadError::InvalidBlockAccess(_)
                         | WorkspaceFdReadError::InvalidKeysBundle(_)
                         | WorkspaceFdReadError::InvalidCertificate(_)
                         | WorkspaceFdReadError::Internal(_) => {
@@ -926,6 +932,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 STATUS_OBJECT_NAME_NOT_FOUND
                             }
                             WorkspaceOpenFolderReaderError::NoRealmAccess
+                            | WorkspaceOpenFolderReaderError::RealmDeleted
                             | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
                             | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
                             | WorkspaceOpenFolderReaderError::InvalidManifest(_)
@@ -948,7 +955,8 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         .await
                         .map_err(|err| match err {
                             FolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
-                            FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                            FolderReaderStatEntryError::Stopped
+                            | FolderReaderStatEntryError::RealmDeleted => STATUS_DEVICE_NOT_READY,
                             FolderReaderStatEntryError::NoRealmAccess
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
                             | FolderReaderStatEntryError::InvalidCertificate(_)
@@ -1019,6 +1027,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
                     WorkspaceMoveEntryError::ReadOnlyRealm => STATUS_MEDIA_WRITE_PROTECTED,
                     WorkspaceMoveEntryError::NoRealmAccess
+                    | WorkspaceMoveEntryError::RealmDeleted
                     | WorkspaceMoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceMoveEntryError::InvalidCertificate(_)
                     | WorkspaceMoveEntryError::InvalidManifest(_)
@@ -1065,6 +1074,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 STATUS_OBJECT_NAME_NOT_FOUND
                             }
                             WorkspaceOpenFolderReaderError::NoRealmAccess
+                            | WorkspaceOpenFolderReaderError::RealmDeleted
                             | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
                             | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
                             | WorkspaceOpenFolderReaderError::InvalidManifest(_)
@@ -1121,6 +1131,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                             WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
                             WorkspaceStatEntryError::NoRealmAccess
+                            | WorkspaceStatEntryError::RealmDeleted
                             | WorkspaceStatEntryError::InvalidKeysBundle(_)
                             | WorkspaceStatEntryError::InvalidCertificate(_)
                             | WorkspaceStatEntryError::InvalidManifest(_)
@@ -1149,6 +1160,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 FolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                                 FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                                 FolderReaderStatEntryError::NoRealmAccess
+                                | FolderReaderStatEntryError::RealmDeleted
                                 | FolderReaderStatEntryError::InvalidKeysBundle(_)
                                 | FolderReaderStatEntryError::InvalidCertificate(_)
                                 | FolderReaderStatEntryError::InvalidManifest(_)
@@ -1176,6 +1188,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             FolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                             FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                             FolderReaderStatEntryError::NoRealmAccess
+                            | FolderReaderStatEntryError::RealmDeleted
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
                             | FolderReaderStatEntryError::InvalidCertificate(_)
                             | FolderReaderStatEntryError::InvalidManifest(_)
@@ -1242,6 +1255,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                     WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                     WorkspaceStatEntryError::NoRealmAccess
+                    | WorkspaceStatEntryError::RealmDeleted
                     | WorkspaceStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceStatEntryError::InvalidCertificate(_)
                     | WorkspaceStatEntryError::InvalidManifest(_)

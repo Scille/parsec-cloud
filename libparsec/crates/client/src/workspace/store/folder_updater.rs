@@ -32,6 +32,8 @@ pub(crate) enum ForUpdateFolderError {
     EntryNotAFolder,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -115,6 +117,9 @@ pub(super) async fn for_update_folder(
                 PopulateCacheFromLocalStorageOrServerError::Stopped => {
                     ForUpdateFolderError::Stopped
                 }
+                PopulateCacheFromLocalStorageOrServerError::RealmDeleted => {
+                    ForUpdateFolderError::RealmDeleted
+                }
                 PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
                     ForUpdateFolderError::EntryNotFound
                 }
@@ -181,6 +186,7 @@ pub async fn resolve_path_for_update_folder<'a>(
                 ResolvePathError::Stopped => ForUpdateFolderError::Stopped,
                 ResolvePathError::EntryNotFound => ForUpdateFolderError::EntryNotFound,
                 ResolvePathError::NoRealmAccess => ForUpdateFolderError::NoRealmAccess,
+                ResolvePathError::RealmDeleted => ForUpdateFolderError::RealmDeleted,
                 ResolvePathError::InvalidKeysBundle(err) => {
                     ForUpdateFolderError::InvalidKeysBundle(err)
                 }

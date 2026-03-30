@@ -217,6 +217,7 @@ impl ParsecFileSystemInterface {
                         WorkspaceHistoryStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceHistoryStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceHistoryStatEntryError::NoRealmAccess
+                        | WorkspaceHistoryStatEntryError::RealmDeleted
                         | WorkspaceHistoryStatEntryError::InvalidKeysBundle(_)
                         | WorkspaceHistoryStatEntryError::InvalidCertificate(_)
                         | WorkspaceHistoryStatEntryError::InvalidManifest(_)
@@ -286,6 +287,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         WorkspaceHistoryStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceHistoryStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceHistoryStatEntryError::NoRealmAccess
+                        | WorkspaceHistoryStatEntryError::RealmDeleted
                         | WorkspaceHistoryStatEntryError::InvalidKeysBundle(_)
                         | WorkspaceHistoryStatEntryError::InvalidCertificate(_)
                         | WorkspaceHistoryStatEntryError::InvalidManifest(_)
@@ -384,6 +386,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         Err(STATUS_OBJECT_NAME_NOT_FOUND)
                     }
                     WorkspaceHistoryOpenFileError::NoRealmAccess
+                    | WorkspaceHistoryOpenFileError::RealmDeleted
                     | WorkspaceHistoryOpenFileError::InvalidKeysBundle(_)
                     | WorkspaceHistoryOpenFileError::InvalidCertificate(_)
                     | WorkspaceHistoryOpenFileError::InvalidManifest(_)
@@ -479,7 +482,8 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         WorkspaceHistoryFdReadError::NoRealmAccess => STATUS_ACCESS_DENIED,
                         WorkspaceHistoryFdReadError::Stopped => STATUS_NO_SUCH_DEVICE,
                         WorkspaceHistoryFdReadError::BadFileDescriptor => STATUS_INVALID_HANDLE,
-                        WorkspaceHistoryFdReadError::InvalidBlockAccess(_)
+                        WorkspaceHistoryFdReadError::RealmDeleted
+                        | WorkspaceHistoryFdReadError::InvalidBlockAccess(_)
                         | WorkspaceHistoryFdReadError::InvalidKeysBundle(_)
                         | WorkspaceHistoryFdReadError::InvalidCertificate(_)
                         | WorkspaceHistoryFdReadError::Internal(_) => {
@@ -650,6 +654,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 STATUS_OBJECT_NAME_NOT_FOUND
                             }
                             WorkspaceHistoryOpenFolderReaderError::NoRealmAccess
+                            | WorkspaceHistoryOpenFolderReaderError::RealmDeleted
                             | WorkspaceHistoryOpenFolderReaderError::InvalidKeysBundle(_)
                             | WorkspaceHistoryOpenFolderReaderError::InvalidCertificate(_)
                             | WorkspaceHistoryOpenFolderReaderError::InvalidManifest(_)
@@ -707,6 +712,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             WorkspaceHistoryStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                             WorkspaceHistoryStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
                             WorkspaceHistoryStatEntryError::NoRealmAccess
+                            | WorkspaceHistoryStatEntryError::RealmDeleted
                             | WorkspaceHistoryStatEntryError::InvalidKeysBundle(_)
                             | WorkspaceHistoryStatEntryError::InvalidCertificate(_)
                             | WorkspaceHistoryStatEntryError::InvalidManifest(_)
@@ -736,6 +742,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 WorkspaceHistoryFolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                                 WorkspaceHistoryFolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                                 WorkspaceHistoryFolderReaderStatEntryError::NoRealmAccess
+                                | WorkspaceHistoryFolderReaderStatEntryError::RealmDeleted
                                 | WorkspaceHistoryFolderReaderStatEntryError::InvalidKeysBundle(_)
                                 | WorkspaceHistoryFolderReaderStatEntryError::InvalidCertificate(_)
                                 | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)
@@ -764,6 +771,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             WorkspaceHistoryFolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                             WorkspaceHistoryFolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                             WorkspaceHistoryFolderReaderStatEntryError::NoRealmAccess
+                            | WorkspaceHistoryFolderReaderStatEntryError::RealmDeleted
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidKeysBundle(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidCertificate(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)
@@ -831,6 +839,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     WorkspaceHistoryStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                     WorkspaceHistoryStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                     WorkspaceHistoryStatEntryError::NoRealmAccess
+                    | WorkspaceHistoryStatEntryError::RealmDeleted
                     | WorkspaceHistoryStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceHistoryStatEntryError::InvalidCertificate(_)
                     | WorkspaceHistoryStatEntryError::InvalidManifest(_)

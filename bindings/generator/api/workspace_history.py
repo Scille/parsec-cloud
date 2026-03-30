@@ -39,6 +39,9 @@ class WorkspaceHistoryStartError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class InvalidKeysBundle:
         pass
 
@@ -146,6 +149,9 @@ class WorkspaceHistorySetTimestampOfInterestError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class InvalidKeysBundle:
         pass
 
@@ -201,6 +207,9 @@ class WorkspaceHistoryStatEntryError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class InvalidKeysBundle:
         pass
 
@@ -247,6 +256,9 @@ class WorkspaceHistoryStatFolderChildrenError(ErrorVariant):
     class NoRealmAccess:
         pass
 
+    class RealmDeleted:
+        pass
+
     class InvalidKeysBundle:
         pass
 
@@ -289,6 +301,9 @@ class WorkspaceHistoryOpenFileError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class EntryNotFound:
@@ -360,6 +375,9 @@ class WorkspaceHistoryFdReadError(ErrorVariant):
         pass
 
     class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
         pass
 
     class ServerBlockstoreUnavailable:

@@ -95,6 +95,8 @@ pub enum CertifValidateBlockError {
     Stopped,
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
     #[error(transparent)]
@@ -133,6 +135,7 @@ pub(super) async fn validate_block(
                 CertifDecryptForRealmError::Stopped => CertifValidateBlockError::Stopped,
                 CertifDecryptForRealmError::Offline(e) => CertifValidateBlockError::Offline(e),
                 CertifDecryptForRealmError::NotAllowed => CertifValidateBlockError::NotAllowed,
+                CertifDecryptForRealmError::RealmDeleted => CertifValidateBlockError::RealmDeleted,
                 CertifDecryptForRealmError::KeyNotFound => {
                     CertifValidateBlockError::InvalidBlockAccess(Box::new(
                         InvalidBlockAccessError::NonExistentKeyIndex {

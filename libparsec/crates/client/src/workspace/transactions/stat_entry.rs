@@ -74,6 +74,8 @@ pub enum WorkspaceStatEntryError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -100,6 +102,7 @@ pub(crate) async fn stat_entry_by_id(
                     GetManifestError::Stopped => WorkspaceStatEntryError::Stopped,
                     GetManifestError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
                     GetManifestError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+                    GetManifestError::RealmDeleted => WorkspaceStatEntryError::RealmDeleted,
                     GetManifestError::InvalidKeysBundle(err) => {
                         WorkspaceStatEntryError::InvalidKeysBundle(err)
                     }
@@ -123,6 +126,9 @@ pub(crate) async fn stat_entry_by_id(
                         RetrievePathFromIDError::Stopped => WorkspaceStatEntryError::Stopped,
                         RetrievePathFromIDError::NoRealmAccess => {
                             WorkspaceStatEntryError::NoRealmAccess
+                        }
+                        RetrievePathFromIDError::RealmDeleted => {
+                            WorkspaceStatEntryError::RealmDeleted
                         }
                         RetrievePathFromIDError::InvalidKeysBundle(err) => {
                             WorkspaceStatEntryError::InvalidKeysBundle(err)
@@ -214,6 +220,7 @@ pub(crate) async fn stat_entry(
                 ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
                 ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
                 ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+                ResolvePathError::RealmDeleted => WorkspaceStatEntryError::RealmDeleted,
                 ResolvePathError::InvalidKeysBundle(err) => {
                     WorkspaceStatEntryError::InvalidKeysBundle(err)
                 }

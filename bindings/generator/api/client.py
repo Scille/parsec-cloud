@@ -373,6 +373,9 @@ class ClientRenameWorkspaceError(ErrorVariant):
     class WorkspaceNotFound:
         pass
 
+    class RealmDeleted:
+        pass
+
     class AuthorNotAllowed:
         pass
 
@@ -423,6 +426,9 @@ class ClientShareWorkspaceError(ErrorVariant):
         pass
 
     class WorkspaceNotFound:
+        pass
+
+    class RealmDeleted:
         pass
 
     class RecipientRevoked:

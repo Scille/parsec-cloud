@@ -226,6 +226,8 @@ pub(super) enum PopulateCacheFromLocalStorageOrServerError {
     EntryNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
+    #[error("The workspace's realm has been deleted on the server")]
+    RealmDeleted,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -314,6 +316,9 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                 }
                 ServerFetchManifestError::NoRealmAccess => {
                     PopulateCacheFromLocalStorageOrServerError::NoRealmAccess
+                }
+                ServerFetchManifestError::RealmDeleted => {
+                    PopulateCacheFromLocalStorageOrServerError::RealmDeleted
                 }
                 ServerFetchManifestError::InvalidKeysBundle(err) => {
                     PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err)
