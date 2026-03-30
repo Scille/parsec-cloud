@@ -220,6 +220,10 @@ class TestbedEventArchiveRealm:
     raw_redacted_certificate: bytes
     raw_certificate: bytes
 
+class TestbedEventDeleteRealm:
+    timestamp: DateTime
+    realm: VlobID
+
 class TestbedEventNewShamirRecovery:
     timestamp: DateTime
     user_id: UserID
@@ -301,6 +305,7 @@ TestbedEvent = (
     | TestbedEventRenameRealm
     | TestbedEventRotateKeyRealm
     | TestbedEventArchiveRealm
+    | TestbedEventDeleteRealm
     | TestbedEventNewShamirRecovery
     | TestbedEventDeleteShamirRecovery
     | TestbedEventCreateOrUpdateOpaqueVlob

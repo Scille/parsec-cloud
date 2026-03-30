@@ -156,6 +156,7 @@ pub enum TestbedEvent {
     RenameRealm(TestbedEventRenameRealm),
     RotateKeyRealm(TestbedEventRotateKeyRealm),
     ArchiveRealm(TestbedEventArchiveRealm),
+    DeleteRealm(TestbedEventDeleteRealm),
     NewShamirRecovery(TestbedEventNewShamirRecovery),
     DeleteShamirRecovery(TestbedEventDeleteShamirRecovery),
 
@@ -208,6 +209,7 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::RenameRealm(x) => x.crc_hash(hasher),
             TestbedEvent::RotateKeyRealm(x) => x.crc_hash(hasher),
             TestbedEvent::ArchiveRealm(x) => x.crc_hash(hasher),
+            TestbedEvent::DeleteRealm(x) => x.crc_hash(hasher),
             TestbedEvent::NewShamirRecovery(x) => x.crc_hash(hasher),
             TestbedEvent::DeleteShamirRecovery(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateUserManifestVlob(x) => x.crc_hash(hasher),
@@ -384,6 +386,7 @@ impl TestbedEvent {
             | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
             | TestbedEvent::CreateBlock(_)
             | TestbedEvent::CreateOpaqueBlock(_)
+            | TestbedEvent::DeleteRealm(_)
             | TestbedEvent::FreezeUser(_)
             | TestbedEvent::UpdateOrganization(_)
             | TestbedEvent::CertificatesStorageFetchCertificates(_)
@@ -427,6 +430,7 @@ impl TestbedEvent {
             | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
             | TestbedEvent::CreateBlock(_)
             | TestbedEvent::CreateOpaqueBlock(_)
+            | TestbedEvent::DeleteRealm(_)
             | TestbedEvent::FreezeUser(_)
             | TestbedEvent::UpdateOrganization(_) => false,
 
@@ -1971,6 +1975,39 @@ impl TestbedEventArchiveRealm {
             let mut guard = self.cache.lock().expect("Mutex is poisoned");
             guard.populated(populate).to_owned()
         })
+    }
+}
+
+/*
+ * TestbedEventDeleteRealm
+ */
+
+no_certificate_event!(
+    TestbedEventDeleteRealm,
+    [
+        timestamp: DateTime,
+        realm: VlobID,
+    ]
+);
+
+impl TestbedEventDeleteRealm {
+    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, realm: VlobID) -> Self {
+        // 1) Consistency checks
+
+        if builder.check_consistency {
+            let already_deleted = builder
+                .events
+                .iter()
+                .any(|e| matches!(e, TestbedEvent::DeleteRealm(x) if x.realm == realm));
+            assert!(!already_deleted, "Realm already deleted");
+        }
+
+        // 2) Actual creation
+
+        Self {
+            timestamp: builder.counters.next_timestamp(),
+            realm,
+        }
     }
 }
 

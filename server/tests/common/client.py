@@ -1066,6 +1066,9 @@ def get_last_realm_certificate_timestamp(
             case tb.TestbedEventArchiveRealm() as event:
                 if event.realm == realm_id:
                     return event.timestamp
+            case tb.TestbedEventDeleteRealm() as event:
+                if event.realm == realm_id:
+                    return event.timestamp
             case (
                 tb.TestbedEventBootstrapOrganization()
                 | tb.TestbedEventNewSequesterService()
