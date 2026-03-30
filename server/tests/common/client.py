@@ -3,7 +3,7 @@
 from base64 import b64decode
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pytest
 from httpx import ASGITransport, AsyncClient, Response
@@ -13,6 +13,7 @@ from parsec._parsec import (
     AccessToken,
     AccountAuthMethodID,
     ApiVersion,
+    BlockID,
     DateTime,
     DeviceID,
     EmailAddress,
@@ -1039,6 +1040,137 @@ async def workspace_history_org(
     async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
         organization_id, _, template_content = await testbed.new_organization("workspace_history")
         yield WorkspaceHistoryOrgRpcClients(
+            raw_client=raw_client,
+            organization_id=organization_id,
+            testbed_template=template_content,
+        )
+
+
+@dataclass(slots=True)
+class WorkspaceArchivedOrgRpcClients:
+    """
+    See `libparsec/crates/testbed/src/templates/workspace_archived.rs` for it actual definition.
+    """
+
+    raw_client: AsyncClient
+    testbed_template: tb.TestbedTemplateContent
+    organization_id: OrganizationID
+    bob_user_id: UserID = field(init=False)
+    bob_device_id: DeviceID = field(init=False)
+    wksp_archived_id: VlobID = field(init=False)
+    wksp_soon_to_delete_id: VlobID = field(init=False)
+    wksp_ready_to_delete_id: VlobID = field(init=False)
+    wksp_deleted_id: VlobID = field(init=False)
+    wksp_not_longer_to_delete_id: VlobID = field(init=False)
+    wksp_orphaned_id: VlobID = field(init=False)
+    wksp_orphaned_and_ready_to_delete_id: VlobID = field(init=False)
+    _anonymous: AnonymousRpcClient | None = None
+    _alice: AuthenticatedRpcClient | None = None
+
+    def __post_init__(self):
+        self.bob_user_id = UserID.test_from_nickname("bob")
+        self.bob_device_id = DeviceID.test_from_nickname("bob@dev1")
+        realms = (
+            event.realm_id
+            for event in self.testbed_template.events
+            if isinstance(event, tb.TestbedEventNewRealm)
+        )
+        self.wksp_archived_id = next(realms)
+        self.wksp_soon_to_delete_id = next(realms)
+        self.wksp_ready_to_delete_id = next(realms)
+        self.wksp_deleted_id = next(realms)
+        self.wksp_not_longer_to_delete_id = next(realms)
+        self.wksp_orphaned_id = next(realms)
+        self.wksp_orphaned_and_ready_to_delete_id = next(realms)
+        assert next(realms, None) is None
+
+    @property
+    def wksp_archived_block_id(self) -> BlockID:
+        for event in self.testbed_template.events:
+            if isinstance(event, (tb.TestbedEventCreateBlock, tb.TestbedEventCreateOpaqueBlock)):
+                # This testbed template has only a single block
+                if event.realm == self.wksp_archived_id:
+                    return event.block_id
+        raise RuntimeError("Block create event not found !")
+
+    @property
+    def wksp_archived_file_id(self) -> VlobID:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventCreateOrUpdateOpaqueVlob):
+                # This testbed template has two vlob: the workspace manifest and the file manifest we want
+                if event.realm == self.wksp_archived_id and event.vlob_id != self.wksp_archived_id:
+                    return event.vlob_id
+        raise RuntimeError("Vlob create event not found !")
+
+    @property
+    def wksp_ready_to_delete_blocks(self) -> set[BlockID]:
+        return {
+            event.block_id
+            for event in self.testbed_template.events
+            if isinstance(event, (tb.TestbedEventCreateBlock, tb.TestbedEventCreateOpaqueBlock))
+            and event.realm == self.wksp_ready_to_delete_id
+        }
+
+    @property
+    def root_signing_key(self) -> SigningKey:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventBootstrapOrganization):
+                return event.root_signing_key
+        raise RuntimeError("Organization bootstrap event not found !")
+
+    @property
+    def root_verify_key(self) -> VerifyKey:
+        return self.root_signing_key.verify_key
+
+    @property
+    def anonymous(self) -> AnonymousRpcClient:
+        self._anonymous = self._anonymous or AnonymousRpcClient(
+            self.raw_client, self.organization_id
+        )
+        return self._anonymous
+
+    @property
+    def alice(self) -> AuthenticatedRpcClient:
+        if self._alice:
+            return self._alice
+        self._alice = self._init_for("alice")
+        return self._alice
+
+    def _init_for(self, user: str) -> AuthenticatedRpcClient:
+        user_id = UserID.test_from_nickname(user)
+        for event in self.testbed_template.events:
+            if (
+                isinstance(event, tb.TestbedEventBootstrapOrganization)
+                and event.first_user_id == user_id
+            ):
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.first_user_id,
+                    device_id=event.first_user_first_device_id,
+                    signing_key=event.first_user_first_device_signing_key,
+                    event=event,
+                )
+            elif isinstance(event, tb.TestbedEventNewUser) and event.user_id == user_id:
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.user_id,
+                    device_id=event.first_device_id,
+                    signing_key=event.first_device_signing_key,
+                    event=event,
+                )
+        else:
+            raise RuntimeError(f"`{user}` user creation event not found !")
+
+
+@pytest.fixture
+async def workspace_archived_org(
+    app: AsgiApp, testbed: TestbedBackend
+) -> AsyncGenerator[WorkspaceArchivedOrgRpcClients, None]:
+    async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
+        organization_id, _, template_content = await testbed.new_organization("workspace_archived")
+        yield WorkspaceArchivedOrgRpcClients(
             raw_client=raw_client,
             organization_id=organization_id,
             testbed_template=template_content,
