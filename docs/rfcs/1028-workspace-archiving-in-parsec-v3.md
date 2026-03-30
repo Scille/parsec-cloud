@@ -356,6 +356,18 @@ The following rules apply during this window:
 > reached, this create a typical pattern where only then the users realized the deletion was a mistake.
 > Hence the need for a convenient way to undo the deletion using the CLI.
 
+### 4.3 - What is deleted
+
+Deleting a workspace means removing the following data:
+
+- Blocks
+- Vlobs
+- Keys bundles
+
+Certificates are not deleted because Parsec clients need to fetch them in order to determine
+whether a realm, to which the user has access, is no longer accessible for a legitimate
+reason (i.e. it has a `RealmArchivingCertificate` with a deletion date in the past).
+
 ## 5 - CLI commands
 
 ### 5.1 - Parsec CLI `workspace archive` command
