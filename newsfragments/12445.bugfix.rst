@@ -1,1 +1,0 @@
-Fix Linux snap crash during login on a CPU not supporting AVX-512 instructions

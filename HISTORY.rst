@@ -4,6 +4,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.8.2-rc.0 (2026-03-30)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix Linux snap crash during login on a CPU not supporting AVX-512 instructions
+  (`#12445 <https://github.com/Scille/parsec-cloud/issues/12445>`__)
+
+
+
 Parsec v3.8.1 (2026-03-17)
 --------------------------
 
