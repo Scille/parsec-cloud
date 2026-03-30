@@ -26,11 +26,18 @@
         />
         <div class="file-name-content">
           <ion-text
-            class="label-name can-highlight button-medium"
+            class="label-name button-medium"
             :title="searchItem.stats.name"
             @click="onClick"
           >
-            {{ searchItem.stats.name }}
+            <!-- Those strings have been escaped by the search function -->
+            <!-- eslint-disable vue/no-v-html -->
+            <span
+              v-if="searchItem.highlightedName"
+              v-html="searchItem.highlightedName"
+            />
+            <!-- eslint-enable vue/no-v-html -->
+            <span v-else>{{ searchItem.stats.name }}</span>
           </ion-text>
           <div class="path-content">
             <ion-text
@@ -43,7 +50,14 @@
               class="label-path can-highlight body-sm"
               :title="searchItem.parent"
             >
-              {{ searchItem.parent }}
+              <!-- Those strings have been escaped by the search function -->
+              <!-- eslint-disable vue/no-v-html -->
+              <span
+                v-if="searchItem.highlightedPath"
+                v-html="searchItem.highlightedPath"
+              />
+              <!-- eslint-enable vue/no-v-html -->
+              <span v-else>{{ searchItem.parent }}</span>
             </ion-text>
           </div>
           <div
@@ -152,6 +166,11 @@ async function onClick(): Promise<void> {
 <style lang="scss" scoped>
 .result-list-item {
   padding: 0.25rem 0;
+}
+
+:deep(.highlight) {
+  color: var(--parsec-color-light-primary-500);
+  font-weight: bold;
 }
 
 .file-name {
