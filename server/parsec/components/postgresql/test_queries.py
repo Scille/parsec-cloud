@@ -731,7 +731,12 @@ new_realm_keys_bundle_access AS (
             SELECT new_realm_keys_bundle._id
             FROM new_realm_keys_bundle
             WHERE
-                new_realm_keys_bundle.key_index = (
+                new_realm_keys_bundle.realm = (
+                    SELECT new_realms._id
+                    FROM new_realms
+                    WHERE new_realms.realm_id = realm.realm_id
+                )
+                AND new_realm_keys_bundle.key_index = (
                     SELECT realm_keys_bundle.key_index
                     FROM realm_keys_bundle
                     WHERE realm_keys_bundle._id = realm_keys_bundle_access.realm_keys_bundle
