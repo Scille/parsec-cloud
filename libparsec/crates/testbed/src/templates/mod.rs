@@ -6,4 +6,5 @@ pub(crate) mod minimal;
 pub(crate) mod minimal_client_ready;
 pub(crate) mod sequestered;
 pub(crate) mod shamir;
+pub(crate) mod workspace_archived;
 pub(crate) mod workspace_history;
