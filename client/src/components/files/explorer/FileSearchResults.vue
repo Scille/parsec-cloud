@@ -50,7 +50,6 @@
     <div
       class="results-list"
       v-show="hasResults"
-      ref="results"
     >
       <ion-list-header
         class="folder-list-header"
@@ -104,9 +103,8 @@ import { DocumentFilters, DocumentFiltersIncludeAll, DocumentFiltersIncludeNone 
 import { EntryName, SearchResult } from '@/parsec';
 import { IonButton, IonIcon, IonListHeader, IonText } from '@ionic/vue';
 import { checkmark, text } from 'ionicons/icons';
-import Mark from 'mark.js';
 import { MsImage, MsReportText, MsReportTheme, MsSpinner, useWindowSize } from 'megashark-lib';
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
   pattern: string;
@@ -121,7 +119,6 @@ defineEmits<{
 }>();
 
 const { isLargeDisplay } = useWindowSize();
-const resultsRef = useTemplateRef<HTMLDivElement>('results');
 
 const filteredResults = computed(() => {
   const activeFilters = Object.values(documentFilters.value).some((selected) => selected)
@@ -167,41 +164,9 @@ const hasResults = computed(() => {
 const titlesOnly = ref(false);
 
 const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
-
-const marker = ref<Mark | undefined>(undefined);
-
-async function mark(): Promise<void> {
-  await nextTick();
-  if (!resultsRef.value) {
-    return;
-  }
-  marker.value = new Mark(resultsRef.value.querySelectorAll('.can-highlight'));
-  marker.value.unmark({
-    done: () => {
-      marker.value?.mark(props.pattern, { element: 'span', className: 'search-highlight' });
-    },
-  });
-}
-
-watch(
-  () => [filteredResults, props.pattern],
-  () => {
-    mark();
-  },
-  { deep: true },
-);
-
-onMounted(async () => {
-  mark();
-});
 </script>
 
 <style scoped lang="scss">
-:deep(.search-highlight) {
-  color: var(--parsec-color-light-primary-500);
-  font-weight: bold;
-}
-
 .file-search-results {
   padding: 1rem 1rem 0 1rem;
   border-radius: var(--parsec-radius-12);
