@@ -8,7 +8,6 @@ from parsec._parsec import (
     DeviceID,
     OrganizationID,
     RealmArchivingCertificate,
-    RealmArchivingConfiguration,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRoleCertificate,
@@ -582,24 +581,16 @@ class MemoryRealmComponent(BaseRealmComponent):
                 if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
                     return RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
-                # Check if realm is already deleted (DeletionPlanned with past deletion date)
+                # Check if realm is already deleted
                 if realm.archivings:
-                    current_config = realm.archivings[-1].cooked.configuration
-                    if (
-                        current_config != RealmArchivingConfiguration.AVAILABLE
-                        and current_config != RealmArchivingConfiguration.ARCHIVED
-                        and current_config.deletion_date <= now
-                    ):
+                    maybe_deletion_date = realm.archivings[-1].cooked.configuration.deletion_date
+                    if maybe_deletion_date is not None and maybe_deletion_date <= now:
                         return RealmUpdateArchivingStoreBadOutcome.REALM_DELETED
 
                 # Check minimum archiving period for DeletionPlanned configuration
-                if (
-                    certif.configuration != RealmArchivingConfiguration.AVAILABLE
-                    and certif.configuration != RealmArchivingConfiguration.ARCHIVED
-                ):
-                    deletion_date = certif.configuration.deletion_date
+                if certif.configuration.deletion_date is not None:
                     min_deletion_date = now.add(seconds=org.minimum_archiving_period)
-                    if deletion_date < min_deletion_date:
+                    if certif.configuration.deletion_date < min_deletion_date:
                         return RealmUpdateArchivingStoreBadOutcome.ARCHIVING_PERIOD_TOO_SHORT
 
                 # Ensure we are not breaking causality by adding a newer timestamp.
