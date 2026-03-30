@@ -470,6 +470,63 @@ class RealmExportDoBlocksBatchMetadataBadOutcome(BadOutcomeEnum):
     REALM_NOT_FOUND = auto()
 
 
+class RealmDelete1GetBlocksBatchBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+    # No error if the realm is already deleted or not in a deletable
+    # state, this is because this check is going to be done anyway
+    # in `delete_2_do_delete_metadata` (and in practice we should
+    # start by calling `list_deletion_candidates` to know which
+    # realm should be deleted).
+
+
+type RealmDeleteGetBlocksBatchOffsetMarker = int
+
+
+@dataclass(slots=True)
+class RealmDeleteGetBlocksBatch:
+    blocks: list[BlockID]
+    batch_offset_marker: RealmDeleteGetBlocksBatchOffsetMarker
+
+
+class RealmDelete2DoDeleteMetadataBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+    REALM_ALREADY_DELETED = auto()
+    REALM_NOT_ORPHANED_NOR_DELETION_PLANNED = auto()
+    REALM_DELETION_DATE_NOT_REACHED = auto()
+
+
+class RealmListDeletionCandidatesBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmDeletionCandidate:
+    realm_id: VlobID
+
+
+@dataclass(slots=True)
+class RealmDeletionCandidateOrphaned(RealmDeletionCandidate):
+    """
+    Realm that can be deleted since all its members have been revoked.
+
+    Note, even without user having access to it, the realm's data can still
+    be accessed in case of a sequestered organization.
+    """
+
+    orphaned_since: DateTime
+
+
+@dataclass(slots=True)
+class RealmDeletionCandidatePlanned(RealmDeletionCandidate):
+    """
+    Realm planned for deletion according to its last realm archiving certificate.
+    """
+
+    deletion_date: DateTime
+
+
 class BaseRealmComponent:
     def __init__(self, webhooks: WebhooksComponent):
         self.webhooks = webhooks
@@ -645,6 +702,63 @@ class BaseRealmComponent:
         batch_offset_marker: RealmExportBatchOffsetMarker,
         batch_size: int,
     ) -> RealmExportBlocksMetadataBatch | RealmExportDoBlocksBatchMetadataBadOutcome:
+        raise NotImplementedError
+
+    async def delete_1_get_blocks_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmDeleteGetBlocksBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmDeleteGetBlocksBatch | RealmDelete1GetBlocksBatchBadOutcome:
+        """
+        Return the IDs of all the blocks related to the realm.
+
+        These IDs are expected to then be turned into slugs (i.e. path in the object storage)
+        according to the object storage configuration.
+
+        Those slugs MUST BE exported before going on with the actual deletion, this is because
+        1) this list won't be available once the deletion done; and 2) the blocks must be
+        manually removed from the object storage by the server admin (given object storage has
+        its own backup logic Parsec doesn't know about).
+
+        Note there is no risk for the list of blocks to change between this call and the actual
+        deletion since the realm is either not accessible by any user (i.e. orphaned realm) or
+        is in read-only (i.e. archived realm planned for deletion).
+        """
+        raise NotImplementedError
+
+    async def delete_2_do_delete_metadata(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        now: DateTime,
+    ) -> None | RealmDelete2DoDeleteMetadataBadOutcome:
+        """
+        Mark the realm as deleted, and delete its vlobs, keys bundles and blocks metadata.
+
+        Certificates are not deleted because Parsec clients need to fetch them in
+        order to determine whether a realm, to which the user has access, is no longer
+        accessible for a legitimate reason (i.e. it has a `RealmArchivingCertificate`
+        with a deletion date in the past).
+
+        Two situations in which realms can be deleted:
+        - Realms planned for deletion by their last archiving certificate, and
+          whose deletion date has been reached.
+        - Orphaned realms, i.e. realms shared with users who have all been revoked.
+        """
+        raise NotImplementedError
+
+    async def list_deletion_candidates(
+        self,
+        organization_id: OrganizationID,
+        now: DateTime,
+    ) -> list[RealmDeletionCandidate] | RealmListDeletionCandidatesBadOutcome:
+        """
+        List the realm that are ready for deletion (deletion planned or orphaned).
+        Note a given realm can be both planned for deletion AND orphaned, in this case
+        it will be listed twice.
+        """
         raise NotImplementedError
 
     #

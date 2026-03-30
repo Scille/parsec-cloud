@@ -34,6 +34,7 @@ from parsec._parsec import (
     PKIEnrollmentID,
     PkiSignatureAlgorithm,
     RealmArchivingCertificate,
+    RealmArchivingConfiguration,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRole,
@@ -812,12 +813,22 @@ class MemoryRealm:
     archivings: list[MemoryRealmArchiving] = field(default_factory=list)
     last_vlob_timestamp: DateTime | None = None
     vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
+    is_deleted: bool = False
 
     def get_current_role_for(self, user_id: UserID) -> RealmRole | None:
         for role in reversed(self.roles):
             if role.cooked.user_id == user_id:
                 return role.cooked.role
         return None
+
+    @property
+    def is_archived_or_deletion_planned(self) -> bool:
+        if not self.archivings:
+            return False
+        if self.archivings[-1].cooked.configuration == RealmArchivingConfiguration.AVAILABLE:
+            return False
+        else:
+            return True
 
 
 @dataclass(slots=True)
