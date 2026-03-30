@@ -13,6 +13,7 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     OrganizationID,
+    RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRoleCertificate,
@@ -344,8 +345,14 @@ class Backend:
                 )
                 assert isinstance(outcome, RealmKeyRotationCertificate)
             elif isinstance(event, testbed.TestbedEventArchiveRealm):
-                # TODO #6092: support archiving here !
-                raise NotImplementedError
+                outcome = await self.realm.update_archiving(
+                    now=event.timestamp,
+                    organization_id=org_id,
+                    author=event.author,
+                    author_verify_key=_get_device_verify_key(event.author),
+                    realm_archiving_certificate=event.raw_certificate,
+                )
+                assert isinstance(outcome, RealmArchivingCertificate)
             elif isinstance(event, testbed.TestbedEventNewShamirRecovery):
                 outcome = await self.shamir.setup(
                     now=event.timestamp,
