@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import override
 
 from parsec._parsec import (
+    BlockID,
     DateTime,
     DeviceID,
     OrganizationID,
@@ -21,6 +22,7 @@ from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
     MemoryDatamodel,
+    MemoryOrganization,
     MemoryRealm,
     MemoryRealmArchiving,
     MemoryRealmKeyRotation,
@@ -35,6 +37,13 @@ from parsec.components.realm import (
     ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
+    RealmDelete1GetBlocksBatchBadOutcome,
+    RealmDelete2DoDeleteMetadataBadOutcome,
+    RealmDeleteGetBlocksBatch,
+    RealmDeleteGetBlocksBatchOffsetMarker,
+    RealmDeletionCandidate,
+    RealmDeletionCandidateOrphaned,
+    RealmDeletionCandidatePlanned,
     RealmDumpRealmsGrantedRolesBadOutcome,
     RealmExportBatchOffsetMarker,
     RealmExportBlocksMetadataBatch,
@@ -50,6 +59,7 @@ from parsec.components.realm import (
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
     RealmGrantedRole,
+    RealmListDeletionCandidatesBadOutcome,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
     RealmRole,
@@ -1129,3 +1139,130 @@ class MemoryRealmComponent(BaseRealmComponent):
         return RealmExportBlocksMetadataBatch(
             items=items,
         )
+
+    def _is_realm_orphaned(self, org: MemoryOrganization, realm: MemoryRealm) -> DateTime | None:
+        current_roles = {role.cooked.user_id: role.cooked.role for role in realm.roles}
+        orphaned_since = None
+        for user_id, role in current_roles.items():
+            if role is None:
+                continue
+            maybe_revoked_on = org.users[user_id].revoked_on
+            if maybe_revoked_on is not None:
+                orphaned_since = (
+                    max(orphaned_since, maybe_revoked_on) if orphaned_since else maybe_revoked_on
+                )
+        return orphaned_since
+
+    @override
+    async def delete_1_get_blocks_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmDeleteGetBlocksBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmDeleteGetBlocksBatch | RealmDelete1GetBlocksBatchBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmDelete1GetBlocksBatchBadOutcome.ORGANIZATION_NOT_FOUND
+
+        try:
+            org.realms[realm_id]
+        except KeyError:
+            return RealmDelete1GetBlocksBatchBadOutcome.REALM_NOT_FOUND
+
+        block_ids: list[BlockID] = []
+        sequential_row_id = 0
+        for sequential_row_id, row in org.simulate_postgresql_block_table():
+            if sequential_row_id <= batch_offset_marker:
+                continue
+            if row.realm_id != realm_id:
+                continue
+            block_ids.append(row.block_id)
+            if len(block_ids) >= batch_size:
+                break
+
+        return RealmDeleteGetBlocksBatch(
+            blocks=block_ids,
+            batch_offset_marker=sequential_row_id,
+        )
+
+    @override
+    async def delete_2_do_delete_metadata(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        now: DateTime,
+    ) -> None | RealmDelete2DoDeleteMetadataBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmDelete2DoDeleteMetadataBadOutcome.ORGANIZATION_NOT_FOUND
+
+        try:
+            realm = org.realms[realm_id]
+        except KeyError:
+            return RealmDelete2DoDeleteMetadataBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return RealmDelete2DoDeleteMetadataBadOutcome.REALM_ALREADY_DELETED
+
+        if not self._is_realm_orphaned(org, realm):
+            if not realm.archivings:
+                return (
+                    RealmDelete2DoDeleteMetadataBadOutcome.REALM_NOT_ORPHANED_NOR_DELETION_PLANNED
+                )
+            match realm.archivings[-1].cooked.configuration.deletion_date:
+                case None:
+                    return RealmDelete2DoDeleteMetadataBadOutcome.REALM_NOT_ORPHANED_NOR_DELETION_PLANNED
+                case deletion_date if deletion_date > now:
+                    return RealmDelete2DoDeleteMetadataBadOutcome.REALM_DELETION_DATE_NOT_REACHED
+                case _:
+                    pass
+
+        # All checks are good, now we do the actual deletion
+
+        realm.is_deleted = True
+        # For simplicity, we don't actually remove vlobs/blocks/keys bundle, as
+        # the `is_deleted` flag should be enough to simulate this behavior from
+        # the client point of view.
+
+    @override
+    async def list_deletion_candidates(
+        self,
+        organization_id: OrganizationID,
+        now: DateTime,
+    ) -> list[RealmDeletionCandidate] | RealmListDeletionCandidatesBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmListDeletionCandidatesBadOutcome.ORGANIZATION_NOT_FOUND
+
+        candidates: list[RealmDeletionCandidate] = []
+
+        for realm in org.realms.values():
+            if realm.is_deleted:
+                continue
+
+            if realm.archivings:
+                match realm.archivings[-1].cooked.configuration.deletion_date:
+                    case DateTime() as deletion_date if deletion_date <= now:
+                        candidates.append(
+                            RealmDeletionCandidatePlanned(
+                                realm_id=realm.realm_id,
+                                deletion_date=deletion_date,
+                            )
+                        )
+                    case _:
+                        pass
+
+            orphaned_since = self._is_realm_orphaned(org, realm)
+            if orphaned_since is not None:
+                candidates.append(
+                    RealmDeletionCandidateOrphaned(
+                        realm_id=realm.realm_id,
+                        orphaned_since=orphaned_since,
+                    )
+                )
+
+        return candidates
