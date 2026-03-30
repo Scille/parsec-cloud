@@ -60,13 +60,14 @@ function getBuildTargets(platform, targets) {
   }
 }
 const OPTS = cli();
-console.warn(OPTS);
+console.warn('OPTS', OPTS);
 
 const BUILD_TARGETS = getBuildTargets(OPTS.platform, OPTS.targets);
 console.warn('BUILD_TARGETS', BUILD_TARGETS);
 
 // The machine arch the electron-builder is running on.
 process.env.BUILD_MACHINE_ARCH = os.machine();
+console.warn('process.env.BUILD_MACHINE_ARCH', process.env.BUILD_MACHINE_ARCH);
 
 /** @type {import('./assets/publishConfig').CustomPublishOptions} */
 const publishConfig = {
@@ -99,9 +100,8 @@ const WIN_SIGN_OPTIONS = {
  * @type {Partial<import('app-builder-lib').MacConfiguration>}
  */
 const MACOS_SIGN_OPTIONS = {
-  notarize: {
-    teamId: process.env.APPLE_TEAM_ID,
-  },
+  // See https://www.electron.build/mac#notarize
+  notarize: true,
 };
 
 const UNSIGNED_ARTIFACT_NAME =
@@ -141,7 +141,7 @@ const options = {
     buildResources: 'assets',
   },
 
-  files: ['assets/**/*', '!assets/installer.nsh', 'build/**/*', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*'],
+  files: ['!assets/installer.nsh', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*', 'assets/**/*', 'build/**/*'],
 
   publish: publishConfig,
 
@@ -187,12 +187,10 @@ const options = {
   },
 
   linux: {
-    synopsis: 'Secure cloud framework',
-    description: 'Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file hosting.',
+    synopsis: 'Secure file sharing in the cloud',
+    description: 'Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file sharing.',
     category: 'Office Network FileTransfer FileSystem Security',
-    desktop: {
-      MimeType: `x-scheme-handler/${PARSEC_SCHEME}`,
-    },
+    mimeTypes: [`x-scheme-handler/${PARSEC_SCHEME}`],
     target: 'snap',
   },
 

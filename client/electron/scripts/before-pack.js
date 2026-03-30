@@ -51,6 +51,7 @@ async function downloadFile(url, sha256sum, dest) {
  * @param {import('app-builder-lib/out/configuration').BeforePackContext} context
  */
 exports.default = async function beforePack(context) {
+  console.group('Checking for hooks to run before pack');
   switch (context.electronPlatformName) {
     case builder.Platform.WINDOWS.nodeName:
       console.log('Downloading WinFSP');
@@ -59,7 +60,8 @@ exports.default = async function beforePack(context) {
       );
       break;
     default:
-      console.log(`No hook for platform ${context.electronPlatformName}`);
+      console.log(`No hook for platform '${context.electronPlatformName}'`);
       break;
   }
+  console.groupEnd();
 };

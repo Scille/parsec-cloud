@@ -167,7 +167,9 @@ parts:
       fi
 
       # Package
-      node package.js --mode prod --platform linux dir
+      # TODO: Remove debugs
+      (cd /root/parts/parsec/build/electron; npm list)
+      DEBUG='electron-*' node package.js --mode prod --platform linux dir
 
       cp -vr dist/linux-unpacked "$CRAFT_PART_INSTALL"/app
 
