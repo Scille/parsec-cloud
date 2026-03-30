@@ -353,6 +353,13 @@ class Backend:
                     realm_archiving_certificate=event.raw_certificate,
                 )
                 assert isinstance(outcome, RealmArchivingCertificate)
+            elif isinstance(event, testbed.TestbedEventDeleteRealm):
+                outcome = await self.realm.delete_2_do_delete_metadata(
+                    now=event.timestamp,
+                    organization_id=org_id,
+                    realm_id=event.realm,
+                )
+                assert outcome is None
             elif isinstance(event, testbed.TestbedEventNewShamirRecovery):
                 outcome = await self.shamir.setup(
                     now=event.timestamp,

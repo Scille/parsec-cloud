@@ -396,6 +396,21 @@ event_wrapper!(
 );
 
 event_wrapper!(
+    TestbedEventDeleteRealm,
+    [
+        timestamp: DateTime,
+        realm: VlobID,
+    ],
+    |_py, x: &TestbedEventDeleteRealm| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, realm={:?}",
+            x.timestamp.0,
+            x.realm.0,
+        ))
+    }
+);
+
+event_wrapper!(
     TestbedEventNewShamirRecovery,
     [
         timestamp: DateTime,
@@ -948,6 +963,14 @@ fn event_to_pyobject(
             obj.into_py_any(py).map(Some)
         }
 
+        libparsec_testbed::TestbedEvent::DeleteRealm(x) => {
+            let obj = TestbedEventDeleteRealm {
+                timestamp: x.timestamp.into(),
+                realm: x.realm.into(),
+            };
+            obj.into_py_any(py).map(Some)
+        }
+
         libparsec_testbed::TestbedEvent::NewShamirRecovery(x) => {
             let mut certifs = x.certificates(template);
 
@@ -1142,6 +1165,21 @@ fn event_to_pyobject(
         }
 
         // Ignore non-server events
-        _ => Ok(None),
+        // Be explict so to make sure this code is updated whenever a new event type is added
+        libparsec_testbed::TestbedEvent::CertificatesStorageFetchCertificates(_)
+        | libparsec_testbed::TestbedEvent::UserStorageFetchUserVlob(_)
+        | libparsec_testbed::TestbedEvent::UserStorageFetchRealmCheckpoint(_)
+        | libparsec_testbed::TestbedEvent::UserStorageLocalUpdate(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageChunkCreate(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(
+            _,
+        )
+        | libparsec_testbed::TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_) => {
+            Ok(None)
+        }
     }
 }

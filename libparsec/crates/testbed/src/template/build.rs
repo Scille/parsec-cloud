@@ -806,6 +806,17 @@ impl TestbedEventArchiveRealmBuilder<'_> {
 }
 
 /*
+ * TestbedEventDeleteRealmBuilder
+ */
+
+impl_event_builder!(
+    DeleteRealm,
+    [
+        realm: VlobID,
+    ]
+);
+
+/*
  * TestbedEventNewShamirRecoveryBuilder
  */
 

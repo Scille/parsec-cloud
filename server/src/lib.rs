@@ -115,6 +115,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
         tm.add_class::<TestbedEventRenameRealm>()?;
         tm.add_class::<TestbedEventRotateKeyRealm>()?;
         tm.add_class::<TestbedEventArchiveRealm>()?;
+        tm.add_class::<TestbedEventDeleteRealm>()?;
         tm.add_class::<TestbedEventNewShamirRecovery>()?;
         tm.add_class::<TestbedEventDeleteShamirRecovery>()?;
         tm.add_class::<TestbedEventCreateOrUpdateOpaqueVlob>()?;
