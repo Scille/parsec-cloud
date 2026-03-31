@@ -66,6 +66,7 @@ class VlobReadAsUserBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
 
 
 class VlobPollChangesAsUserBadOutcome(BadOutcomeEnum):
@@ -75,6 +76,7 @@ class VlobPollChangesAsUserBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
 
 
 class VlobListVersionsBadOutcome(BadOutcomeEnum):
@@ -335,6 +337,8 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_read_batch.RepAuthorNotAllowed()
             case VlobReadAsUserBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_read_batch.RepRealmNotFound()
+            case VlobReadAsUserBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_read_batch.RepRealmDeleted()
             case VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED:
@@ -370,6 +374,8 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_read_versions.RepAuthorNotAllowed()
             case VlobReadAsUserBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_read_versions.RepRealmNotFound()
+            case VlobReadAsUserBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_read_versions.RepRealmDeleted()
             case VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED:
@@ -400,6 +406,8 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_poll_changes.RepAuthorNotAllowed()
             case VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_poll_changes.RepRealmNotFound()
+            case VlobPollChangesAsUserBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_poll_changes.RepRealmDeleted()
             case VlobPollChangesAsUserBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED:
