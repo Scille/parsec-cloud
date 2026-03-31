@@ -99,6 +99,12 @@ class MemoryVlobComponent(BaseVlobComponent):
             except KeyError:
                 return VlobCreateBadOutcome.REALM_NOT_FOUND
 
+            if realm.is_deleted:
+                return VlobCreateBadOutcome.REALM_DELETED
+
+            if realm.is_archived_or_deletion_planned:
+                return VlobCreateBadOutcome.REALM_ARCHIVED
+
             match realm.get_current_role_for(author_user_id):
                 case RealmRole.READER | None:
                     return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
