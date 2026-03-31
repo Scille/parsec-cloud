@@ -2214,6 +2214,10 @@ export interface ClientRenameWorkspaceErrorOffline {
     tag: "ClientRenameWorkspaceErrorOffline"
     error: string
 }
+export interface ClientRenameWorkspaceErrorRealmDeleted {
+    tag: "ClientRenameWorkspaceErrorRealmDeleted"
+    error: string
+}
 export interface ClientRenameWorkspaceErrorStopped {
     tag: "ClientRenameWorkspaceErrorStopped"
     error: string
@@ -2238,6 +2242,7 @@ export type ClientRenameWorkspaceError =
   | ClientRenameWorkspaceErrorInvalidKeysBundle
   | ClientRenameWorkspaceErrorNoKey
   | ClientRenameWorkspaceErrorOffline
+  | ClientRenameWorkspaceErrorRealmDeleted
   | ClientRenameWorkspaceErrorStopped
   | ClientRenameWorkspaceErrorTimestampOutOfBallpark
   | ClientRenameWorkspaceErrorWorkspaceNotFound
@@ -2381,6 +2386,10 @@ export interface ClientShareWorkspaceErrorOffline {
     tag: "ClientShareWorkspaceErrorOffline"
     error: string
 }
+export interface ClientShareWorkspaceErrorRealmDeleted {
+    tag: "ClientShareWorkspaceErrorRealmDeleted"
+    error: string
+}
 export interface ClientShareWorkspaceErrorRecipientIsSelf {
     tag: "ClientShareWorkspaceErrorRecipientIsSelf"
     error: string
@@ -2419,6 +2428,7 @@ export type ClientShareWorkspaceError =
   | ClientShareWorkspaceErrorInvalidCertificate
   | ClientShareWorkspaceErrorInvalidKeysBundle
   | ClientShareWorkspaceErrorOffline
+  | ClientShareWorkspaceErrorRealmDeleted
   | ClientShareWorkspaceErrorRecipientIsSelf
   | ClientShareWorkspaceErrorRecipientNotFound
   | ClientShareWorkspaceErrorRecipientRevoked
@@ -3958,6 +3968,10 @@ export interface WorkspaceCreateFileErrorReadOnlyRealm {
     tag: "WorkspaceCreateFileErrorReadOnlyRealm"
     error: string
 }
+export interface WorkspaceCreateFileErrorRealmDeleted {
+    tag: "WorkspaceCreateFileErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceCreateFileErrorStopped {
     tag: "WorkspaceCreateFileErrorStopped"
     error: string
@@ -3973,6 +3987,7 @@ export type WorkspaceCreateFileError =
   | WorkspaceCreateFileErrorParentNotAFolder
   | WorkspaceCreateFileErrorParentNotFound
   | WorkspaceCreateFileErrorReadOnlyRealm
+  | WorkspaceCreateFileErrorRealmDeleted
   | WorkspaceCreateFileErrorStopped
 
 
@@ -4017,6 +4032,10 @@ export interface WorkspaceCreateFolderErrorReadOnlyRealm {
     tag: "WorkspaceCreateFolderErrorReadOnlyRealm"
     error: string
 }
+export interface WorkspaceCreateFolderErrorRealmDeleted {
+    tag: "WorkspaceCreateFolderErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceCreateFolderErrorStopped {
     tag: "WorkspaceCreateFolderErrorStopped"
     error: string
@@ -4032,6 +4051,7 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorParentNotAFolder
   | WorkspaceCreateFolderErrorParentNotFound
   | WorkspaceCreateFolderErrorReadOnlyRealm
+  | WorkspaceCreateFolderErrorRealmDeleted
   | WorkspaceCreateFolderErrorStopped
 
 
@@ -4068,6 +4088,10 @@ export interface WorkspaceDecryptPathAddrErrorOffline {
     tag: "WorkspaceDecryptPathAddrErrorOffline"
     error: string
 }
+export interface WorkspaceDecryptPathAddrErrorRealmDeleted {
+    tag: "WorkspaceDecryptPathAddrErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceDecryptPathAddrErrorStopped {
     tag: "WorkspaceDecryptPathAddrErrorStopped"
     error: string
@@ -4081,6 +4105,7 @@ export type WorkspaceDecryptPathAddrError =
   | WorkspaceDecryptPathAddrErrorKeyNotFound
   | WorkspaceDecryptPathAddrErrorNotAllowed
   | WorkspaceDecryptPathAddrErrorOffline
+  | WorkspaceDecryptPathAddrErrorRealmDeleted
   | WorkspaceDecryptPathAddrErrorStopped
 
 
@@ -4160,6 +4185,10 @@ export interface WorkspaceFdReadErrorOffline {
     tag: "WorkspaceFdReadErrorOffline"
     error: string
 }
+export interface WorkspaceFdReadErrorRealmDeleted {
+    tag: "WorkspaceFdReadErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceFdReadErrorServerBlockstoreUnavailable {
     tag: "WorkspaceFdReadErrorServerBlockstoreUnavailable"
     error: string
@@ -4177,6 +4206,7 @@ export type WorkspaceFdReadError =
   | WorkspaceFdReadErrorNoRealmAccess
   | WorkspaceFdReadErrorNotInReadMode
   | WorkspaceFdReadErrorOffline
+  | WorkspaceFdReadErrorRealmDeleted
   | WorkspaceFdReadErrorServerBlockstoreUnavailable
   | WorkspaceFdReadErrorStopped
 
@@ -4254,6 +4284,10 @@ export interface WorkspaceGeneratePathAddrErrorOffline {
     tag: "WorkspaceGeneratePathAddrErrorOffline"
     error: string
 }
+export interface WorkspaceGeneratePathAddrErrorRealmDeleted {
+    tag: "WorkspaceGeneratePathAddrErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceGeneratePathAddrErrorStopped {
     tag: "WorkspaceGeneratePathAddrErrorStopped"
     error: string
@@ -4264,6 +4298,7 @@ export type WorkspaceGeneratePathAddrError =
   | WorkspaceGeneratePathAddrErrorNoKey
   | WorkspaceGeneratePathAddrErrorNotAllowed
   | WorkspaceGeneratePathAddrErrorOffline
+  | WorkspaceGeneratePathAddrErrorRealmDeleted
   | WorkspaceGeneratePathAddrErrorStopped
 
 
@@ -4335,6 +4370,10 @@ export interface WorkspaceHistoryFdReadErrorOffline {
     tag: "WorkspaceHistoryFdReadErrorOffline"
     error: string
 }
+export interface WorkspaceHistoryFdReadErrorRealmDeleted {
+    tag: "WorkspaceHistoryFdReadErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable {
     tag: "WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable"
     error: string
@@ -4351,6 +4390,7 @@ export type WorkspaceHistoryFdReadError =
   | WorkspaceHistoryFdReadErrorInvalidKeysBundle
   | WorkspaceHistoryFdReadErrorNoRealmAccess
   | WorkspaceHistoryFdReadErrorOffline
+  | WorkspaceHistoryFdReadErrorRealmDeleted
   | WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable
   | WorkspaceHistoryFdReadErrorStopped
 
@@ -4415,6 +4455,10 @@ export interface WorkspaceHistoryOpenFileErrorOffline {
     tag: "WorkspaceHistoryOpenFileErrorOffline"
     error: string
 }
+export interface WorkspaceHistoryOpenFileErrorRealmDeleted {
+    tag: "WorkspaceHistoryOpenFileErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceHistoryOpenFileErrorStopped {
     tag: "WorkspaceHistoryOpenFileErrorStopped"
     error: string
@@ -4429,6 +4473,7 @@ export type WorkspaceHistoryOpenFileError =
   | WorkspaceHistoryOpenFileErrorInvalidManifest
   | WorkspaceHistoryOpenFileErrorNoRealmAccess
   | WorkspaceHistoryOpenFileErrorOffline
+  | WorkspaceHistoryOpenFileErrorRealmDeleted
   | WorkspaceHistoryOpenFileErrorStopped
 
 
@@ -4488,6 +4533,10 @@ export interface WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound 
     tag: "WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound"
     error: string
 }
+export interface WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted {
+    tag: "WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceHistorySetTimestampOfInterestErrorStopped {
     tag: "WorkspaceHistorySetTimestampOfInterestErrorStopped"
     error: string
@@ -4503,6 +4552,7 @@ export type WorkspaceHistorySetTimestampOfInterestError =
   | WorkspaceHistorySetTimestampOfInterestErrorNoRealmAccess
   | WorkspaceHistorySetTimestampOfInterestErrorOffline
   | WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound
+  | WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted
   | WorkspaceHistorySetTimestampOfInterestErrorStopped
 
 
@@ -4547,6 +4597,10 @@ export interface WorkspaceHistoryStartErrorOffline {
     tag: "WorkspaceHistoryStartErrorOffline"
     error: string
 }
+export interface WorkspaceHistoryStartErrorRealmDeleted {
+    tag: "WorkspaceHistoryStartErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceHistoryStartErrorStopped {
     tag: "WorkspaceHistoryStartErrorStopped"
     error: string
@@ -4566,6 +4620,7 @@ export type WorkspaceHistoryStartError =
   | WorkspaceHistoryStartErrorNoHistory
   | WorkspaceHistoryStartErrorNoRealmAccess
   | WorkspaceHistoryStartErrorOffline
+  | WorkspaceHistoryStartErrorRealmDeleted
   | WorkspaceHistoryStartErrorStopped
   | WorkspaceHistoryStartErrorUnsupportedRealmExportDatabaseVersion
 
@@ -4603,6 +4658,10 @@ export interface WorkspaceHistoryStatEntryErrorOffline {
     tag: "WorkspaceHistoryStatEntryErrorOffline"
     error: string
 }
+export interface WorkspaceHistoryStatEntryErrorRealmDeleted {
+    tag: "WorkspaceHistoryStatEntryErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceHistoryStatEntryErrorStopped {
     tag: "WorkspaceHistoryStatEntryErrorStopped"
     error: string
@@ -4616,6 +4675,7 @@ export type WorkspaceHistoryStatEntryError =
   | WorkspaceHistoryStatEntryErrorInvalidManifest
   | WorkspaceHistoryStatEntryErrorNoRealmAccess
   | WorkspaceHistoryStatEntryErrorOffline
+  | WorkspaceHistoryStatEntryErrorRealmDeleted
   | WorkspaceHistoryStatEntryErrorStopped
 
 
@@ -4656,6 +4716,10 @@ export interface WorkspaceHistoryStatFolderChildrenErrorOffline {
     tag: "WorkspaceHistoryStatFolderChildrenErrorOffline"
     error: string
 }
+export interface WorkspaceHistoryStatFolderChildrenErrorRealmDeleted {
+    tag: "WorkspaceHistoryStatFolderChildrenErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceHistoryStatFolderChildrenErrorStopped {
     tag: "WorkspaceHistoryStatFolderChildrenErrorStopped"
     error: string
@@ -4670,6 +4734,7 @@ export type WorkspaceHistoryStatFolderChildrenError =
   | WorkspaceHistoryStatFolderChildrenErrorInvalidManifest
   | WorkspaceHistoryStatFolderChildrenErrorNoRealmAccess
   | WorkspaceHistoryStatFolderChildrenErrorOffline
+  | WorkspaceHistoryStatFolderChildrenErrorRealmDeleted
   | WorkspaceHistoryStatFolderChildrenErrorStopped
 
 
@@ -4715,6 +4780,10 @@ export interface WorkspaceIsFileContentLocalErrorOffline {
     tag: "WorkspaceIsFileContentLocalErrorOffline"
     error: string
 }
+export interface WorkspaceIsFileContentLocalErrorRealmDeleted {
+    tag: "WorkspaceIsFileContentLocalErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceIsFileContentLocalErrorStopped {
     tag: "WorkspaceIsFileContentLocalErrorStopped"
     error: string
@@ -4728,6 +4797,7 @@ export type WorkspaceIsFileContentLocalError =
   | WorkspaceIsFileContentLocalErrorNoRealmAccess
   | WorkspaceIsFileContentLocalErrorNotAFile
   | WorkspaceIsFileContentLocalErrorOffline
+  | WorkspaceIsFileContentLocalErrorRealmDeleted
   | WorkspaceIsFileContentLocalErrorStopped
 
 
@@ -4786,6 +4856,10 @@ export interface WorkspaceMoveEntryErrorReadOnlyRealm {
     tag: "WorkspaceMoveEntryErrorReadOnlyRealm"
     error: string
 }
+export interface WorkspaceMoveEntryErrorRealmDeleted {
+    tag: "WorkspaceMoveEntryErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceMoveEntryErrorSourceNotFound {
     tag: "WorkspaceMoveEntryErrorSourceNotFound"
     error: string
@@ -4805,6 +4879,7 @@ export type WorkspaceMoveEntryError =
   | WorkspaceMoveEntryErrorNoRealmAccess
   | WorkspaceMoveEntryErrorOffline
   | WorkspaceMoveEntryErrorReadOnlyRealm
+  | WorkspaceMoveEntryErrorRealmDeleted
   | WorkspaceMoveEntryErrorSourceNotFound
   | WorkspaceMoveEntryErrorStopped
 
@@ -4850,6 +4925,10 @@ export interface WorkspaceOpenFileErrorReadOnlyRealm {
     tag: "WorkspaceOpenFileErrorReadOnlyRealm"
     error: string
 }
+export interface WorkspaceOpenFileErrorRealmDeleted {
+    tag: "WorkspaceOpenFileErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceOpenFileErrorStopped {
     tag: "WorkspaceOpenFileErrorStopped"
     error: string
@@ -4865,6 +4944,7 @@ export type WorkspaceOpenFileError =
   | WorkspaceOpenFileErrorNoRealmAccess
   | WorkspaceOpenFileErrorOffline
   | WorkspaceOpenFileErrorReadOnlyRealm
+  | WorkspaceOpenFileErrorRealmDeleted
   | WorkspaceOpenFileErrorStopped
 
 
@@ -4917,6 +4997,10 @@ export interface WorkspaceRemoveEntryErrorReadOnlyRealm {
     tag: "WorkspaceRemoveEntryErrorReadOnlyRealm"
     error: string
 }
+export interface WorkspaceRemoveEntryErrorRealmDeleted {
+    tag: "WorkspaceRemoveEntryErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceRemoveEntryErrorStopped {
     tag: "WorkspaceRemoveEntryErrorStopped"
     error: string
@@ -4934,6 +5018,7 @@ export type WorkspaceRemoveEntryError =
   | WorkspaceRemoveEntryErrorNoRealmAccess
   | WorkspaceRemoveEntryErrorOffline
   | WorkspaceRemoveEntryErrorReadOnlyRealm
+  | WorkspaceRemoveEntryErrorRealmDeleted
   | WorkspaceRemoveEntryErrorStopped
 
 
@@ -4966,6 +5051,10 @@ export interface WorkspaceStatEntryErrorOffline {
     tag: "WorkspaceStatEntryErrorOffline"
     error: string
 }
+export interface WorkspaceStatEntryErrorRealmDeleted {
+    tag: "WorkspaceStatEntryErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceStatEntryErrorStopped {
     tag: "WorkspaceStatEntryErrorStopped"
     error: string
@@ -4978,6 +5067,7 @@ export type WorkspaceStatEntryError =
   | WorkspaceStatEntryErrorInvalidManifest
   | WorkspaceStatEntryErrorNoRealmAccess
   | WorkspaceStatEntryErrorOffline
+  | WorkspaceStatEntryErrorRealmDeleted
   | WorkspaceStatEntryErrorStopped
 
 
@@ -5014,6 +5104,10 @@ export interface WorkspaceStatFolderChildrenErrorOffline {
     tag: "WorkspaceStatFolderChildrenErrorOffline"
     error: string
 }
+export interface WorkspaceStatFolderChildrenErrorRealmDeleted {
+    tag: "WorkspaceStatFolderChildrenErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceStatFolderChildrenErrorStopped {
     tag: "WorkspaceStatFolderChildrenErrorStopped"
     error: string
@@ -5027,6 +5121,7 @@ export type WorkspaceStatFolderChildrenError =
   | WorkspaceStatFolderChildrenErrorInvalidManifest
   | WorkspaceStatFolderChildrenErrorNoRealmAccess
   | WorkspaceStatFolderChildrenErrorOffline
+  | WorkspaceStatFolderChildrenErrorRealmDeleted
   | WorkspaceStatFolderChildrenErrorStopped
 
 
@@ -5081,6 +5176,10 @@ export interface WorkspaceWatchEntryOneShotErrorOffline {
     tag: "WorkspaceWatchEntryOneShotErrorOffline"
     error: string
 }
+export interface WorkspaceWatchEntryOneShotErrorRealmDeleted {
+    tag: "WorkspaceWatchEntryOneShotErrorRealmDeleted"
+    error: string
+}
 export interface WorkspaceWatchEntryOneShotErrorStopped {
     tag: "WorkspaceWatchEntryOneShotErrorStopped"
     error: string
@@ -5093,6 +5192,7 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorInvalidManifest
   | WorkspaceWatchEntryOneShotErrorNoRealmAccess
   | WorkspaceWatchEntryOneShotErrorOffline
+  | WorkspaceWatchEntryOneShotErrorRealmDeleted
   | WorkspaceWatchEntryOneShotErrorStopped
 
 

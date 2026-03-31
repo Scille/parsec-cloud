@@ -10433,6 +10433,13 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorOffline".into(),
             )?;
         }
+        libparsec::ClientRenameWorkspaceError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorRealmDeleted".into(),
+            )?;
+        }
         libparsec::ClientRenameWorkspaceError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10752,6 +10759,13 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientShareWorkspaceErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientShareWorkspaceError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorRealmDeleted".into(),
             )?;
         }
         libparsec::ClientShareWorkspaceError::RecipientIsSelf { .. } => {
@@ -18390,6 +18404,13 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorReadOnlyRealm".into(),
             )?;
         }
+        libparsec::WorkspaceCreateFileError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceCreateFileErrorRealmDeleted".into(),
+            )?;
+        }
         libparsec::WorkspaceCreateFileError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18481,6 +18502,13 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorReadOnlyRealm".into(),
             )?;
         }
+        libparsec::WorkspaceCreateFolderError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceCreateFolderErrorRealmDeleted".into(),
+            )?;
+        }
         libparsec::WorkspaceCreateFolderError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18556,6 +18584,13 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceDecryptPathAddrErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceDecryptPathAddrError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptPathAddrErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceDecryptPathAddrError::Stopped { .. } => {
@@ -18710,6 +18745,13 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceFdReadErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceFdReadError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFdReadErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceFdReadError::ServerBlockstoreUnavailable { .. } => {
@@ -18871,6 +18913,13 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceGeneratePathAddrErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceGeneratePathAddrError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceGeneratePathAddrErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceGeneratePathAddrError::Stopped { .. } => {
@@ -19328,6 +19377,13 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorOffline".into(),
             )?;
         }
+        libparsec::WorkspaceHistoryFdReadError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistoryFdReadErrorRealmDeleted".into(),
+            )?;
+        }
         libparsec::WorkspaceHistoryFdReadError::ServerBlockstoreUnavailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19466,6 +19522,13 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceHistoryOpenFileErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistoryOpenFileError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistoryOpenFileErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceHistoryOpenFileError::Stopped { .. } => {
@@ -19684,6 +19747,13 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound".into(),
             )?;
         }
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted".into(),
+            )?;
+        }
         libparsec::WorkspaceHistorySetTimestampOfInterestError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19775,6 +19845,13 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorOffline".into(),
             )?;
         }
+        libparsec::WorkspaceHistoryStartError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistoryStartErrorRealmDeleted".into(),
+            )?;
+        }
         libparsec::WorkspaceHistoryStartError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19859,6 +19936,13 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorOffline".into(),
             )?;
         }
+        libparsec::WorkspaceHistoryStatEntryError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistoryStatEntryErrorRealmDeleted".into(),
+            )?;
+        }
         libparsec::WorkspaceHistoryStatEntryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19941,6 +20025,13 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceHistoryStatFolderChildrenErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistoryStatFolderChildrenError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistoryStatFolderChildrenErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceHistoryStatFolderChildrenError::Stopped { .. } => {
@@ -20035,6 +20126,13 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceIsFileContentLocalErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceIsFileContentLocalErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceIsFileContentLocalError::Stopped { .. } => {
@@ -20156,6 +20254,13 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorReadOnlyRealm".into(),
             )?;
         }
+        libparsec::WorkspaceMoveEntryError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceMoveEntryErrorRealmDeleted".into(),
+            )?;
+        }
         libparsec::WorkspaceMoveEntryError::SourceNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20252,6 +20357,13 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceOpenFileErrorReadOnlyRealm".into(),
+            )?;
+        }
+        libparsec::WorkspaceOpenFileError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceOpenFileErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceOpenFileError::Stopped { .. } => {
@@ -20359,6 +20471,13 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorReadOnlyRealm".into(),
             )?;
         }
+        libparsec::WorkspaceRemoveEntryError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorRealmDeleted".into(),
+            )?;
+        }
         libparsec::WorkspaceRemoveEntryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20427,6 +20546,13 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceStatEntryErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatEntryError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatEntryErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceStatEntryError::Stopped { .. } => {
@@ -20504,6 +20630,13 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceStatFolderChildrenErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceStatFolderChildrenError::Stopped { .. } => {
@@ -20652,6 +20785,13 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceWatchEntryOneShotErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceWatchEntryOneShotError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceWatchEntryOneShotErrorRealmDeleted".into(),
             )?;
         }
         libparsec::WorkspaceWatchEntryOneShotError::Stopped { .. } => {
