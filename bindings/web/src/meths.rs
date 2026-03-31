@@ -4145,6 +4145,10 @@ fn struct_started_workspace_info_js_to_rs(
             enum_realm_role_js_to_rs(raw_string.as_str())
         }?
     };
+    let archiving_configuration = {
+        let js_val = Reflect::get(&obj, &"archivingConfiguration".into())?;
+        variant_realm_archiving_configuration_js_to_rs(js_val)?
+    };
     let mountpoints = {
         let js_val = Reflect::get(&obj, &"mountpoints".into())?;
         {
@@ -4193,6 +4197,7 @@ fn struct_started_workspace_info_js_to_rs(
         id,
         current_name,
         current_self_role,
+        archiving_configuration,
         mountpoints,
     })
 }
@@ -4219,6 +4224,13 @@ fn struct_started_workspace_info_rs_to_js(
     let js_current_self_role =
         JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.current_self_role));
     Reflect::set(&js_obj, &"currentSelfRole".into(), &js_current_self_role)?;
+    let js_archiving_configuration =
+        variant_realm_archiving_configuration_rs_to_js(rs_obj.archiving_configuration)?;
+    Reflect::set(
+        &js_obj,
+        &"archivingConfiguration".into(),
+        &js_archiving_configuration,
+    )?;
     let js_mountpoints = {
         // Array::new_with_length allocates with `undefined` value, that's why we `set` value
         let js_array = Array::new_with_length(rs_obj.mountpoints.len() as u32);

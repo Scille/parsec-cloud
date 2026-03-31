@@ -419,6 +419,7 @@ export interface StartedWorkspaceInfo {
     id: string
     currentName: string
     currentSelfRole: RealmRole
+    archivingConfiguration: RealmArchivingConfiguration
     mountpoints: Array<[number, string]>
 }
 

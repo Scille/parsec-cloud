@@ -461,6 +461,7 @@ export interface StartedWorkspaceInfo {
     id: VlobID
     currentName: EntryName
     currentSelfRole: RealmRole
+    archivingConfiguration: RealmArchivingConfiguration
     mountpoints: Array<[Handle, Path]>
 }
 
