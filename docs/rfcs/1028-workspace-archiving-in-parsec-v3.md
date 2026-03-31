@@ -392,42 +392,128 @@ its name and role. Possible displayed statuses:
 - `[deletion planned: <date>]`
 - `[deleted]`
 
-### 5.3 - Server CLI `cleanup_realms` command
+### 5.3 - Server CLI realm deletion commands
 
-This command is not available in the Parsec CLI since deleting data from the PostgreSQL
+These commands are not available in the Parsec CLI since deleting data from the PostgreSQL
 database is considered too sensitive to be available from the administration API exposed by the Parsec server.
 
-Instead it is part of the server CLI that directly access the PostgreSQL database.
+Instead they are part of the server CLI that directly accesses the PostgreSQL database.
 
 > [!NOTE]
-> An important point here is that this command only modify the PostgreSQL database, it is still
+> An important point here is that these commands only modify the PostgreSQL database, it is still
 > up to the server administrator to manually remove the data from the blockstore (e.g. S3).
-> The rational being that the blockstore is expected to have its own backup system configured
+> The rationale being that the blockstore is expected to have its own backup system configured
 > in a way Parsec cannot bypass (otherwise an attacker getting access to a Parsec server could
 > erase all the data and their backup from the blockstore...).
 > So instead the server administrator is expected to manually remove the deleted workspaces'
 > data from the blockstore.
 
-This command aims at removing two kinds of workspaces:
+Realm deletion is a three-step process:
 
-- Orphan workspace, i.e. Workspaces that are only shared with revoked users.
-- Workspaces that have been marked for deletion.
+1. Find the realms that are ready for deletion (command `list_deletable_realms`).
+2. PostgreSQL cleanup, i.e. actual realm deletion (command `delete_realm`).
+3. Manual blockstore cleanup, i.e. removing the realm's blocks (no command, see note above).
+
+#### Step 1 — List deletion candidates (`list_deletable_realms`)
+
+List the realms that are ready for deletion. Two kinds of realms can be candidates:
+
+- **Planned for deletion**: realms whose last `RealmArchivingCertificate` has a
+  `DeletionPlanned` configuration with a `deletion_date` that has been reached.
+- **Orphaned**: realms that are only shared among revoked users. For these, the date of
+  revocation of the last member is considered equivalent to an implicit deletion date.
+
+A given realm can be both planned for deletion AND orphaned, in which case it appears
+twice in the list (once as each kind).
 
 > [!NOTE]
-> It could be tempting to always delete orphan workspace right away since in theory
+> It could be tempting to always delete orphan workspaces right away since in theory
 > nobody can access them anymore. However this is not the case for a sequestered
 > organization (where the workspace's decryption keys are accessible for a sequester
 > service).
-> For this reason we consider the date of revocation of the last member of the
-> workspace to be equivalent to an implicit workspace deletion date, and
-> `--if-deadline-overdue-by-x-days` option (see below) can be used to ensure
-> the actual deletion only occurs after a certain time.
 
 ```bash
-# Pretend to delete all workspaces that have reached the deletion deadline
-parsec cleanup_realms --dry-run
-# Delete all workspaces whose deletion deadline is older than 15 days
-parsec cleanup_realms --dry-run --if-deadline-overdue-by-x-days 15
-# Only delete a specify workspace (or return an error if the deletion conditions are not met)
-parsec cleanup_realms --realm-id 42ed56d053764eb899e3ba7f6e6ea4e3
+# List all realms eligible for deletion
+parsec list_deletable_realms --organization $ORG_ID
+```
+
+The output lists each candidate with its realm ID, its kind (`orphaned` or
+`deletion_planned`), and the associated date (`orphaned_since` or `deletion_date`).
+
+#### Step 2 — Actual realm deletion (`delete_realm`)
+
+This command internally does two things:
+
+1. Export the IDs of all the realm's blocks
+2. Proceed to delete the realm's metadata from the PostgreSQL database
+
+Before deleting a realm's metadata, the IDs of all blocks belonging to the realm **must**
+be exported. This is necessary because:
+
+- The list of block IDs will no longer be available once the metadata is deleted.
+- The blocks must be manually removed from the object storage by the server administrator
+  (since the object storage has its own backup logic that Parsec cannot bypass).
+
+> [!NOTE]
+> There is no risk for the list of blocks to change between this step and the actual
+> deletion since the realm is either not accessible by any user (i.e. orphaned realm) or
+> is in read-only (i.e. archived realm planned for deletion).
+
+The block IDs are then turned into slugs (i.e. paths in the object storage) according to
+the object storage configuration.
+
+```bash
+# Export block slugs for a realm into a file
+parsec delete_realm \
+    --organization $ORG_ID \
+    --realm 42ed56d053764eb899e3ba7f6e6ea4e3 \
+    --dump-realm-blocks blocks-to-remove.txt
+```
+
+Options:
+
+- `--dump-realm-blocks OUTPUT_FILE` write in `OUTPUT_FILE` the list of all the
+  realm's blocks (in their slug format, i.e. the path there are referenced in
+  the object storage). This list can then be used to clear the object storage
+  from all those now useless objects.
+  This option is required in order to ensure the user is aware that deleting the
+  realm requires one more step.
+- `--dry-run` Pretend to do the deletion.
+
+#### Step 3 — Manual blockstore cleanup
+
+As stated before, this step must be handled by the server administrator according
+to his object store and backup policy.
+
+For instance for a AWS S3 compatible storage.
+
+```python
+import boto3
+
+BUCKET = "your-bucket-name"
+FILE = "paths_to_delete.txt"
+
+s3 = boto3.client("s3")
+
+with open(FILE) as f:
+    slugs = [line.strip() for line in f if line.strip()]
+
+# Batch in chunks of 1000 (S3 API limit)
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+deleted, errors = 0, 0
+for batch in chunks(slugs, 1000):
+    objects = [{"Key": k} for k in batch]
+    response = s3.delete_objects(
+        Bucket=BUCKET,
+        Delete={"Objects": objects, "Quiet": False}
+    )
+    deleted += len(response.get("Deleted", []))
+    errors  += len(response.get("Errors", []))
+    for err in response.get("Errors", []):
+        print(f"  ERROR: {err['Key']} — {err['Message']}")
+
+print(f"\nDone: {deleted} deleted, {errors} errors")
 ```
