@@ -379,6 +379,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
 
+        if realm.is_deleted:
+            return VlobReadAsUserBadOutcome.REALM_DELETED
+
         match realm.get_current_role_for(author_user_id):
             case None:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
@@ -456,6 +459,9 @@ class MemoryVlobComponent(BaseVlobComponent):
             realm = org.realms[realm_id]
         except KeyError:
             return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return VlobReadAsUserBadOutcome.REALM_DELETED
 
         match realm.get_current_role_for(author_user_id):
             case None:
@@ -535,6 +541,9 @@ class MemoryVlobComponent(BaseVlobComponent):
             realm = org.realms[realm_id]
         except KeyError:
             return VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return VlobPollChangesAsUserBadOutcome.REALM_DELETED
 
         match realm.get_current_role_for(author_user_id):
             case None:

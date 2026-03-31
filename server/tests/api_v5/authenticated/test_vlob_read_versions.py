@@ -16,6 +16,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
@@ -218,6 +219,16 @@ async def test_authenticated_vlob_read_versions_too_many_elements(
         items=too_many_items,
     )
     assert rep == authenticated_cmds.latest.vlob_read_versions.RepTooManyElements()
+
+
+async def test_authenticated_vlob_read_versions_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    rep = await workspace_archived_org.alice.vlob_read_versions(
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        items=[(VlobID.new(), 1)],
+    )
+    assert rep == authenticated_cmds.latest.vlob_read_versions.RepRealmDeleted()
 
 
 async def test_authenticated_vlob_read_versions_http_common_errors(
