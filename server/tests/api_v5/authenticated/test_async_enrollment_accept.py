@@ -37,7 +37,7 @@ from tests.common import (
     DeviceCertificates,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
-    TestPki,
+    PkiCollection,
     UserCertificates,
     generate_new_device_certificates,
     generate_new_user_certificates,
@@ -146,7 +146,7 @@ async def submit_for_mike(
 async def test_authenticated_async_enrollment_accept_ok(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
     kind: str,
 ) -> None:
     match kind:
@@ -481,7 +481,7 @@ async def test_authenticated_async_enrollment_accept_invalid_accept_payload_sign
 async def test_authenticated_async_enrollment_accept_invalid_der_x509_certificate(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
     kind: str,
 ) -> None:
     match kind:
@@ -529,7 +529,7 @@ async def test_authenticated_async_enrollment_accept_invalid_x509_trustchain(
     monkeypatch: pytest.MonkeyPatch,
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
     kind: str,
 ) -> None:
     match kind:

@@ -18,7 +18,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
-    TestPki,
+    PkiCollection,
     generate_new_device_certificates,
     generate_new_user_certificates,
 )
@@ -32,7 +32,7 @@ from .test_async_enrollment_submit import submit_for_mike
 async def test_anonymous_async_enrollment_info_ok(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
     kind: str,
 ):
     if kind.endswith("_pki"):

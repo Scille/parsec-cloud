@@ -23,7 +23,7 @@ from tests.common.postgresql import clear_postgresql_pki_certificate_data
 
 
 @dataclass
-class TestPki:
+class PkiCollection:
     root: dict[str, PkiCertificate]
     intermediate: dict[str, PkiCertificate]
     cert: dict[str, PkiCertificate]
@@ -118,7 +118,7 @@ def test_pki_dir() -> Path:
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
-async def test_pki() -> TestPki:
+async def test_pki() -> PkiCollection:
     dir = test_pki_dir()
 
     cert_dir = dir / "Cert"
@@ -129,7 +129,7 @@ async def test_pki() -> TestPki:
         list_files(cert_dir), list_files(intermediate_dir), list_files(root_dir)
     )
 
-    return TestPki(root=root, intermediate=intermediate, cert=cert)
+    return PkiCollection(root=root, intermediate=intermediate, cert=cert)
 
 
 async def list_files(dir: Path) -> dict[str, PkiCertificate]:
