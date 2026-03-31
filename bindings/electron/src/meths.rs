@@ -9643,6 +9643,11 @@ fn variant_client_rename_workspace_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ClientRenameWorkspaceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClientRenameWorkspaceError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientRenameWorkspaceErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientRenameWorkspaceError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "ClientRenameWorkspaceErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -9906,6 +9911,11 @@ fn variant_client_share_workspace_error_rs_to_js<'a>(
         }
         libparsec::ClientShareWorkspaceError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "ClientShareWorkspaceErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientShareWorkspaceError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientShareWorkspaceErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientShareWorkspaceError::RecipientIsSelf { .. } => {
@@ -16720,6 +16730,11 @@ fn variant_workspace_create_file_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceCreateFileErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceCreateFileError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceCreateFileErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceCreateFileError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceCreateFileErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16788,6 +16803,11 @@ fn variant_workspace_create_folder_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceCreateFolderErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceCreateFolderError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceCreateFolderErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceCreateFolderError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceCreateFolderErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -16845,6 +16865,11 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js<'a>(
         libparsec::WorkspaceDecryptPathAddrError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptPathAddrError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceDecryptPathAddrError::Stopped { .. } => {
@@ -16962,6 +16987,10 @@ fn variant_workspace_fd_read_error_rs_to_js<'a>(
         }
         libparsec::WorkspaceFdReadError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdReadError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceFdReadError::ServerBlockstoreUnavailable { .. } => {
@@ -17093,6 +17122,11 @@ fn variant_workspace_generate_path_addr_error_rs_to_js<'a>(
         libparsec::WorkspaceGeneratePathAddrError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceGeneratePathAddrError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceGeneratePathAddrError::Stopped { .. } => {
@@ -17510,6 +17544,11 @@ fn variant_workspace_history_fd_read_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceHistoryFdReadErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceHistoryFdReadError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryFdReadErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceHistoryFdReadError::ServerBlockstoreUnavailable { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable")
@@ -17624,6 +17663,11 @@ fn variant_workspace_history_open_file_error_rs_to_js<'a>(
         libparsec::WorkspaceHistoryOpenFileError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistoryOpenFileErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistoryOpenFileError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryOpenFileErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceHistoryOpenFileError::Stopped { .. } => {
@@ -17828,6 +17872,14 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js<'a>(
             .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceHistorySetTimestampOfInterestError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceHistorySetTimestampOfInterestError::Stopped { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistorySetTimestampOfInterestErrorStopped")
@@ -17905,6 +17957,11 @@ fn variant_workspace_history_start_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "WorkspaceHistoryStartErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceHistoryStartError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryStartErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceHistoryStartError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceHistoryStartErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -17970,6 +18027,11 @@ fn variant_workspace_history_stat_entry_error_rs_to_js<'a>(
         libparsec::WorkspaceHistoryStatEntryError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistoryStatEntryErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistoryStatEntryError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryStatEntryErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceHistoryStatEntryError::Stopped { .. } => {
@@ -18046,6 +18108,12 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js<'a>(
         libparsec::WorkspaceHistoryStatFolderChildrenError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceHistoryStatFolderChildrenErrorOffline")
                 .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistoryStatFolderChildrenError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistoryStatFolderChildrenErrorRealmDeleted")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceHistoryStatFolderChildrenError::Stopped { .. } => {
@@ -18126,6 +18194,11 @@ fn variant_workspace_is_file_content_local_error_rs_to_js<'a>(
         libparsec::WorkspaceIsFileContentLocalError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceIsFileContentLocalError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceIsFileContentLocalErrorRealmDeleted")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceIsFileContentLocalError::Stopped { .. } => {
@@ -18219,6 +18292,11 @@ fn variant_workspace_move_entry_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceMoveEntryErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceMoveEntryError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceMoveEntryErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceMoveEntryError::SourceNotFound { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceMoveEntryErrorSourceNotFound").or_throw(cx)?;
@@ -18289,6 +18367,11 @@ fn variant_workspace_open_file_error_rs_to_js<'a>(
         libparsec::WorkspaceOpenFileError::ReadOnlyRealm { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceOpenFileErrorReadOnlyRealm").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceOpenFileErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceOpenFileError::Stopped { .. } => {
@@ -18368,6 +18451,11 @@ fn variant_workspace_remove_entry_error_rs_to_js<'a>(
                 JsString::try_new(cx, "WorkspaceRemoveEntryErrorReadOnlyRealm").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceRemoveEntryError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceRemoveEntryErrorRealmDeleted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceRemoveEntryError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceRemoveEntryErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -18418,6 +18506,11 @@ fn variant_workspace_stat_entry_error_rs_to_js<'a>(
         }
         libparsec::WorkspaceStatEntryError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceStatEntryErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceStatEntryError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceStatEntryErrorRealmDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceStatEntryError::Stopped { .. } => {
@@ -18478,6 +18571,11 @@ fn variant_workspace_stat_folder_children_error_rs_to_js<'a>(
         libparsec::WorkspaceStatFolderChildrenError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceStatFolderChildrenErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceStatFolderChildrenErrorRealmDeleted")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceStatFolderChildrenError::Stopped { .. } => {
@@ -18601,6 +18699,11 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js<'a>(
         libparsec::WorkspaceWatchEntryOneShotError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchEntryOneShotError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorRealmDeleted")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceWatchEntryOneShotError::Stopped { .. } => {
