@@ -21,6 +21,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     get_last_realm_certificate_timestamp,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
@@ -423,6 +424,23 @@ async def test_authenticated_realm_rename_timestamp_out_of_ballpark(
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark
+
+
+async def test_authenticated_realm_rename_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    certif = RealmNameCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        key_index=1,
+        encrypted_name=b"<dummy>",
+    )
+    rep = await workspace_archived_org.alice.realm_rename(
+        realm_name_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+        initial_name_or_fail=False,
+    )
+    assert rep == authenticated_cmds.latest.realm_rename.RepRealmDeleted()
 
 
 async def test_authenticated_realm_rename_http_common_errors(

@@ -19,6 +19,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     alice_gives_profile,
     generate_realm_role_certificate,
     wksp1_alice_gives_role,
@@ -448,6 +449,22 @@ async def test_authenticated_realm_unshare_require_greater_timestamp(
     assert rep == authenticated_cmds.latest.realm_unshare.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
+
+
+async def test_authenticated_realm_unshare_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    certif = RealmRoleCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        user_id=workspace_archived_org.bob_user_id,
+        role=None,
+    )
+    rep = await workspace_archived_org.alice.realm_unshare(
+        realm_role_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+    )
+    assert rep == authenticated_cmds.latest.realm_unshare.RepRealmDeleted()
 
 
 async def test_authenticated_realm_unshare_http_common_errors(

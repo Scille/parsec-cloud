@@ -156,6 +156,8 @@ async def realm_unshare(
             pass
         case LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND:
             return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
+        case LockRealmWriteRealmBadOutcome.REALM_DELETED:
+            return RealmUnshareStoreBadOutcome.REALM_DELETED
         case LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM:
             return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 

@@ -126,6 +126,8 @@ async def realm_rename(
                 return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
         case LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND:
             return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
+        case LockRealmWriteRealmBadOutcome.REALM_DELETED:
+            return RealmRenameStoreBadOutcome.REALM_DELETED
         case LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM:
             return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
 

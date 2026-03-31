@@ -231,6 +231,8 @@ async def realm_rotate_key(
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
         case LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND:
             return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
+        case LockRealmWriteRealmBadOutcome.REALM_DELETED:
+            return RealmRotateKeyStoreBadOutcome.REALM_DELETED
         case LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM:
             return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
 

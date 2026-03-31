@@ -259,6 +259,7 @@ class RealmShareStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
@@ -271,6 +272,7 @@ class RealmUnshareStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
@@ -281,6 +283,7 @@ class RealmRenameStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
@@ -290,6 +293,7 @@ class RealmRotateKeyStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
@@ -340,6 +344,7 @@ class RealmGetKeysBundleBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
@@ -850,6 +855,8 @@ class BaseRealmComponent:
                 )
             case RealmShareStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_share.RepRealmNotFound()
+            case RealmShareStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_share.RepRealmDeleted()
             case RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_share.RepAuthorNotAllowed()
             case RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND:
@@ -902,6 +909,8 @@ class BaseRealmComponent:
                 )
             case RealmUnshareStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_unshare.RepRealmNotFound()
+            case RealmUnshareStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_unshare.RepRealmDeleted()
             case RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_unshare.RepAuthorNotAllowed()
             case RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND:
@@ -955,6 +964,8 @@ class BaseRealmComponent:
                 )
             case RealmRenameStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rename.RepRealmNotFound()
+            case RealmRenameStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_rename.RepRealmDeleted()
             case RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_rename.RepAuthorNotAllowed()
             case RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND:
@@ -1020,6 +1031,8 @@ class BaseRealmComponent:
                 )
             case RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rotate_key.RepRealmNotFound()
+            case RealmRotateKeyStoreBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_rotate_key.RepRealmDeleted()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_rotate_key.RepAuthorNotAllowed()
             case RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_SEQUESTERED:
@@ -1102,6 +1115,8 @@ class BaseRealmComponent:
                 | RealmGetKeysBundleBadOutcome.REALM_NOT_FOUND
             ):
                 return authenticated_cmds.latest.realm_get_keys_bundle.RepAuthorNotAllowed()
+            case RealmGetKeysBundleBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.realm_get_keys_bundle.RepRealmDeleted()
             case RealmGetKeysBundleBadOutcome.ACCESS_NOT_AVAILABLE_FOR_AUTHOR:
                 return (
                     authenticated_cmds.latest.realm_get_keys_bundle.RepAccessNotAvailableForAuthor()
