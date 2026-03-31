@@ -5,6 +5,7 @@ from .addr import (
     ParsecWorkspacePathAddr,
     ParsecWorkspacePathAddrAndRedirectionURL,
 )
+from .client import RealmArchivingConfiguration
 from .common import (
     U64,
     DateTime,
@@ -55,6 +56,7 @@ class StartedWorkspaceInfo(Structure):
     id: VlobID
     current_name: EntryName
     current_self_role: RealmRole
+    archiving_configuration: RealmArchivingConfiguration
     mountpoints: list[tuple[Handle, Path]]
 
 
