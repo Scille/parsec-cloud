@@ -81,10 +81,6 @@ impl PkiSystem {
     }
 }
 
-pub fn is_available() -> bool {
-    open_store().is_ok()
-}
-
 fn open_store() -> std::io::Result<CertStore> {
     CertStore::open_current_user("My")
 }
