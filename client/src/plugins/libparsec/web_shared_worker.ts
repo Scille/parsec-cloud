@@ -40,12 +40,18 @@ self.onconnect = async (msg: MessageEvent): Promise<void> => {
       return;
     }
 
-    // Since libparsec bindings never raise exceptions under normal conditions,
-    // we don't need to catch them: any exception here is a bug and we should
-    // just let it bubble up so that Sentry takes care of it.
-    const result = await promise;
-
-    port.postMessage({ id, result, isException: false });
+    try {
+      const result = await promise;
+      port.postMessage({ id, result, isException: false });
+    } catch (err) {
+      // Forward exceptions to the GUI where they are treated as generic errors,
+      // otherwise it may block for all eternity because it doesn't get a return value.
+      // It's also helpful to have the error directly in the console instead of having to inspect
+      // the worker.
+      port.postMessage({ id, result: err, isException: true });
+      // re-throw for Sentry
+      throw err;
+    }
   };
 
   // Notify the client that the worker is ready to process messages.
