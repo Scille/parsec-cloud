@@ -36,6 +36,16 @@ async def test_authenticated_realm_get_keys_bundle_ok(coolorg: CoolorgRpcClients
     )
 
 
+async def test_authenticated_realm_get_keys_bundle_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    rep = await workspace_archived_org.alice.realm_get_keys_bundle(
+        realm_id=workspace_archived_org.wksp_archived_id,
+        key_index=1,
+    )
+    assert isinstance(rep, authenticated_cmds.latest.realm_get_keys_bundle.RepOk)
+
+
 async def test_authenticated_realm_get_keys_bundle_access_not_available_for_author(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:

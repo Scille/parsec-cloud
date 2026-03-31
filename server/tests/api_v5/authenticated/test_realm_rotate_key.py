@@ -177,6 +177,31 @@ async def test_authenticated_realm_rotate_key_ok_sequestered(
     # TODO: Check the database correctly contains the sequester service's keys bundle access
 
 
+async def test_authenticated_realm_rotate_key_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    certif = RealmKeyRotationCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_archived_id,
+        key_index=2,
+        encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
+        hash_algorithm=HashAlgorithm.SHA256,
+        key_canary=SecretKey.generate().encrypt(b""),
+    )
+    rep = await workspace_archived_org.alice.realm_rotate_key(
+        realm_key_rotation_certificate=certif.dump_and_sign(
+            workspace_archived_org.alice.signing_key
+        ),
+        per_participant_keys_bundle_access={
+            workspace_archived_org.alice.user_id: b"<alice keys bundle access>",
+        },
+        keys_bundle=b"<keys bundle>",
+        per_sequester_service_keys_bundle_access=None,
+    )
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepOk()
+
+
 @pytest.mark.parametrize(
     "kind",
     (

@@ -179,6 +179,16 @@ async def test_authenticated_vlob_read_versions_ok(
     )
 
 
+async def test_authenticated_vlob_read_versions_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    rep = await workspace_archived_org.alice.vlob_read_versions(
+        realm_id=workspace_archived_org.wksp_archived_id,
+        items=[(workspace_archived_org.wksp_archived_file_id, 1)],
+    )
+    assert isinstance(rep, authenticated_cmds.latest.vlob_read_versions.RepOk)
+
+
 async def test_authenticated_vlob_read_versions_realm_not_found(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:

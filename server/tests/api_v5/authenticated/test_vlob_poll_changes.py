@@ -146,6 +146,16 @@ async def test_authenticated_vlob_poll_changes_ok(
     )
 
 
+async def test_authenticated_vlob_poll_changes_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    rep = await workspace_archived_org.alice.vlob_poll_changes(
+        realm_id=workspace_archived_org.wksp_archived_id,
+        last_checkpoint=0,
+    )
+    assert isinstance(rep, authenticated_cmds.latest.vlob_poll_changes.RepOk)
+
+
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_vlob_poll_changes_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
