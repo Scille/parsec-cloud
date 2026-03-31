@@ -240,6 +240,12 @@ class MemoryVlobComponent(BaseVlobComponent):
             except KeyError:
                 return VlobUpdateBadOutcome.REALM_NOT_FOUND
 
+            if realm.is_deleted:
+                return VlobUpdateBadOutcome.REALM_DELETED
+
+            if realm.is_archived_or_deletion_planned:
+                return VlobUpdateBadOutcome.REALM_ARCHIVED
+
             try:
                 vlobs = realm.vlobs[vlob_id]
             except KeyError:

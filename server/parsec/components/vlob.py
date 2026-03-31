@@ -53,6 +53,8 @@ class VlobUpdateBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_ARCHIVED = auto()
+    REALM_DELETED = auto()
     VLOB_NOT_FOUND = auto()
     BAD_VLOB_VERSION = auto()
 
@@ -271,6 +273,10 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_update.RepBadVlobVersion()
             case VlobUpdateBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_update.RepRealmNotFound()
+            case VlobUpdateBadOutcome.REALM_ARCHIVED:
+                return authenticated_cmds.latest.vlob_update.RepRealmArchived()
+            case VlobUpdateBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_update.RepRealmDeleted()
             case VlobUpdateBadOutcome.VLOB_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_update.RepVlobNotFound()
             case TimestampOutOfBallpark() as error:

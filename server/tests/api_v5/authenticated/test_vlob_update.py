@@ -28,6 +28,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
     SequesteredOrgRpcClients,
+    WorkspaceArchivedOrgRpcClients,
     get_last_realm_certificate_timestamp,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
@@ -687,6 +688,38 @@ async def test_authenticated_vlob_update_max_blob_size(
             ],
         },
     }
+
+
+async def test_authenticated_vlob_update_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    for wksp_id in (
+        workspace_archived_org.wksp_archived_id,
+        workspace_archived_org.wksp_soon_to_delete_id,
+    ):
+        rep = await workspace_archived_org.alice.vlob_update(
+            realm_id=wksp_id,
+            vlob_id=VlobID.new(),
+            key_index=1,
+            version=2,
+            timestamp=DateTime.now(),
+            blob=b"<dummy>",
+        )
+        assert rep == authenticated_cmds.latest.vlob_update.RepRealmArchived()
+
+
+async def test_authenticated_vlob_update_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    rep = await workspace_archived_org.alice.vlob_update(
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        vlob_id=VlobID.new(),
+        key_index=1,
+        version=2,
+        timestamp=DateTime.now(),
+        blob=b"<dummy>",
+    )
+    assert rep == authenticated_cmds.latest.vlob_update.RepRealmDeleted()
 
 
 async def test_authenticated_vlob_update_http_common_errors(
