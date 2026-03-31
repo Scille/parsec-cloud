@@ -104,6 +104,12 @@ class MemoryBlockComponent(BaseBlockComponent):
             except KeyError:
                 return BlockCreateBadOutcome.REALM_NOT_FOUND
 
+            if realm.is_deleted:
+                return BlockCreateBadOutcome.REALM_DELETED
+
+            if realm.is_archived_or_deletion_planned:
+                return BlockCreateBadOutcome.REALM_ARCHIVED
+
             match realm.get_current_role_for(author_user_id):
                 case RealmRole.OWNER | RealmRole.MANAGER | RealmRole.CONTRIBUTOR:
                     pass
