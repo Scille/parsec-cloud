@@ -67,10 +67,6 @@ mod platform {
         unimplemented!("platform not supported")
     }
 
-    pub fn is_available() -> bool {
-        false
-    }
-
     pub async fn list_user_certificates_der(
     ) -> Result<Vec<DerCertificate<'static>>, ListUserCertificatesError> {
         unimplemented!("platform not supported")
@@ -186,8 +182,6 @@ pub use shared::{encrypt_message, EncryptMessageError};
 pub use errors::DecryptMessageError;
 pub use platform::decrypt_message;
 
-pub use platform::is_available;
-
 pub use shared::verify_certificate;
 pub use webpki::KeyUsage;
 
@@ -214,6 +208,13 @@ pub struct PkiConfig<'a> {
 }
 
 pub use platform::{PkiSystem, X509Certificate};
+
+impl PkiConfig<'_> {
+    pub fn new(_lifetime_placehoder: &u8) -> PkiConfig<'_> {
+        todo!()
+    }
+}
+
 
 #[derive(Debug, thiserror::Error)]
 pub enum X509CertificateGetDerError {
