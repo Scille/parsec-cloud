@@ -41,6 +41,8 @@ class VlobCreateBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_ARCHIVED = auto()
+    REALM_DELETED = auto()
     VLOB_ALREADY_EXISTS = auto()
 
 
@@ -198,6 +200,10 @@ class BaseVlobComponent:
                 )
             case VlobCreateBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_create.RepRealmNotFound()
+            case VlobCreateBadOutcome.REALM_ARCHIVED:
+                return authenticated_cmds.latest.vlob_create.RepRealmArchived()
+            case VlobCreateBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.vlob_create.RepRealmDeleted()
             case VlobCreateBadOutcome.VLOB_ALREADY_EXISTS:
                 return authenticated_cmds.latest.vlob_create.RepVlobAlreadyExists()
             case TimestampOutOfBallpark() as error:
