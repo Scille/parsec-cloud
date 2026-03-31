@@ -86,6 +86,16 @@ async def test_authenticated_block_read_ok(
     )
 
 
+async def test_authenticated_block_read_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    rep = await workspace_archived_org.alice.block_read(
+        realm_id=workspace_archived_org.wksp_archived_id,
+        block_id=workspace_archived_org.wksp_archived_block_id,
+    )
+    assert isinstance(rep, authenticated_cmds.latest.block_read.RepOk)
+
+
 async def test_authenticated_block_read_realm_not_found(
     coolorg: CoolorgRpcClients,
 ):

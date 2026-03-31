@@ -180,6 +180,17 @@ async def test_authenticated_vlob_read_batch_ok(
         )
 
 
+async def test_authenticated_vlob_read_batch_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    rep = await workspace_archived_org.alice.vlob_read_batch(
+        realm_id=workspace_archived_org.wksp_archived_id,
+        vlobs=[workspace_archived_org.wksp_archived_file_id],
+        at=None,
+    )
+    assert isinstance(rep, authenticated_cmds.latest.vlob_read_batch.RepOk)
+
+
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_vlob_read_batch_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str

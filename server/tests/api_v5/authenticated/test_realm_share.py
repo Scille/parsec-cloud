@@ -165,6 +165,27 @@ async def test_authenticated_realm_share_ok(
     assert topics == expected_topics
 
 
+async def test_authenticated_realm_share_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    # Bob is the only other user in this org, but he is revoked.
+    # The important thing is that the archived status does not prevent the
+    # operation: we should get `RecipientRevoked` (not a realm-level error).
+    certif = RealmRoleCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_archived_id,
+        user_id=workspace_archived_org.bob_user_id,
+        role=RealmRole.READER,
+    )
+    rep = await workspace_archived_org.alice.realm_share(
+        realm_role_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+        recipient_keys_bundle_access=b"<dummy>",
+        key_index=1,
+    )
+    assert rep == authenticated_cmds.latest.realm_share.RepRecipientRevoked()
+
+
 async def test_authenticated_realm_share_role_already_granted(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:

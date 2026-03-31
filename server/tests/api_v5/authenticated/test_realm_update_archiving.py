@@ -83,6 +83,21 @@ async def test_authenticated_realm_update_archiving_ok(
         assert topics == expected_topics
 
 
+async def test_authenticated_realm_update_archiving_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    certif = RealmArchivingCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_archived_id,
+        configuration=RealmArchivingConfiguration.AVAILABLE,
+    )
+    rep = await workspace_archived_org.alice.realm_update_archiving(
+        archiving_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+    )
+    assert rep == authenticated_cmds.latest.realm_update_archiving.RepOk()
+
+
 @pytest.mark.parametrize(
     "kind",
     (

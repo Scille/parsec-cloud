@@ -168,6 +168,23 @@ async def test_authenticated_realm_rename_ok_initial_rename(
     assert topics == expected_topics
 
 
+async def test_authenticated_realm_rename_ok_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    certif = RealmNameCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_archived_id,
+        key_index=1,
+        encrypted_name=b"<dummy>",
+    )
+    rep = await workspace_archived_org.alice.realm_rename(
+        realm_name_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+        initial_name_or_fail=False,
+    )
+    assert rep == authenticated_cmds.latest.realm_rename.RepOk()
+
+
 async def test_authenticated_realm_rename_initial_name_already_exists(
     coolorg: CoolorgRpcClients,
 ) -> None:
