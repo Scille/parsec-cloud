@@ -3950,6 +3950,10 @@ fn struct_started_workspace_info_js_to_rs<'a>(
             enum_realm_role_js_to_rs(cx, js_string.as_str())?
         }
     };
+    let archiving_configuration = {
+        let js_val: Handle<JsObject> = obj.get(cx, "archivingConfiguration")?;
+        variant_realm_archiving_configuration_js_to_rs(cx, js_val)?
+    };
     let mountpoints = {
         let js_val: Handle<JsArray> = obj.get(cx, "mountpoints")?;
         {
@@ -3991,6 +3995,7 @@ fn struct_started_workspace_info_js_to_rs<'a>(
         id,
         current_name,
         current_self_role,
+        archiving_configuration,
         mountpoints,
     })
 }
@@ -4018,6 +4023,9 @@ fn struct_started_workspace_info_rs_to_js<'a>(
     let js_current_self_role =
         JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.current_self_role)).or_throw(cx)?;
     js_obj.set(cx, "currentSelfRole", js_current_self_role)?;
+    let js_archiving_configuration =
+        variant_realm_archiving_configuration_rs_to_js(cx, rs_obj.archiving_configuration)?;
+    js_obj.set(cx, "archivingConfiguration", js_archiving_configuration)?;
     let js_mountpoints = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
         let js_array = JsArray::new(cx, rs_obj.mountpoints.len());
