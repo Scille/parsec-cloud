@@ -1,15 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
+  entryStat,
+  FsPath,
   isValidDeviceName,
   isValidEmail,
   isValidEntryName,
   isValidOrganizationName,
   isValidUserName,
   isValidWorkspaceName,
+  ParsedParsecAddrTag,
   parseParsecAddr,
+  Path,
+  WorkspaceHandle,
 } from '@/parsec';
-import { ParsedParsecAddrTag } from '@/plugins/libparsec';
 import { IValidator, Validity } from 'megashark-lib';
 
 const ENTRY_NAME_LIMIT = 128;
@@ -49,7 +53,10 @@ export const workspaceNameValidator: IValidator = async function (value: string)
   return (await isValidWorkspaceName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
 };
 
-export const entryNameValidator = (isFile: boolean): IValidator =>
+export const entryNameValidator = (
+  isFile: boolean,
+  options?: { workspaceHandle: WorkspaceHandle; path: FsPath; extension?: string },
+): IValidator =>
   async function (value: string) {
     value = value.trim();
     if (value.length === 0) {
@@ -62,6 +69,19 @@ export const entryNameValidator = (isFile: boolean): IValidator =>
           data: { limit: ENTRY_NAME_LIMIT },
         },
       };
+    }
+    if (options) {
+      const fullPath = await Path.join(options.path, `${value}${options.extension ?? ''}`);
+      const statsResult = await entryStat(options.workspaceHandle, fullPath);
+
+      if (statsResult.ok) {
+        return {
+          validity: Validity.Invalid,
+          reason: {
+            key: statsResult.value.isFile() ? 'validators.fileName.fileAlreadyExists' : 'validators.fileName.folderAlreadyExists',
+          },
+        };
+      }
     }
     return (await isValidEntryName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   };

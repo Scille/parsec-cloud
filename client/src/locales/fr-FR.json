@@ -913,7 +913,8 @@
             "copyFailedSourceDoesNotExist": "L'élément {source} n'existe pas.",
             "seeInExplorerFailed": "Impossible d'ouvrir le chemin sélectionné dans l'explorateur de fichiers.",
             "failedToListContent": "Impossible de lister le contenu de ce dossier.",
-            "createFileFailed": "Failed to create the file."
+            "createFileFailed": "Failed to create the file.",
+            "createFileFailedAlreadyExists": "Impossible de créer le nouveau fichier car un fichier du même nom existe déjà."
         },
         "CreateFolderModal": {
             "title": "Créer un nouveau dossier",
@@ -2090,7 +2091,9 @@
         },
         "fileName": {
             "fileTooLong": "Le nom du fichier est trop long, la limite est de {limit} caractères.",
-            "folderTooLong": "Le nom du dossier est trop long, la limite est de {limit} caractères."
+            "folderTooLong": "Le nom du dossier est trop long, la limite est de {limit} caractères.",
+            "fileAlreadyExists": "Un fichier du même nom existe déjà.",
+            "folderAlreadyExists": "Un dossier du même nom existe déjà."
         },
         "claimLink": {
             "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
