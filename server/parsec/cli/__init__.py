@@ -13,6 +13,7 @@ from parsec.cli.export_email import export_email
 from parsec.cli.inspect import human_accesses
 from parsec.cli.migration import migrate
 from parsec.cli.options import version_option
+from parsec.cli.realm_delete import delete_realm, list_deletable_realms
 from parsec.cli.run import run_cmd
 from parsec.cli.sequester_create import create_service, generate_service_certificate
 from parsec.cli.sequester_list import list_services
@@ -49,6 +50,8 @@ cli.add_command(run_cmd, "run")
 cli.add_command(migrate, "migrate")
 cli.add_command(export_realm, "export_realm")
 cli.add_command(human_accesses, "human_accesses")
+cli.add_command(list_deletable_realms, "list_deletable_realms")
+cli.add_command(delete_realm, "delete_realm")
 cli.add_command(server_sequester_cmd, "sequester")
 if TESTBED_AVAILABLE:
     cli.add_command(testbed_cmd, "testbed")
