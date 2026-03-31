@@ -107,6 +107,16 @@ pub struct WorkspaceExternalInfo {
     pub workspace_index: usize,
 }
 
+impl WorkspaceExternalInfo {
+    pub fn is_read_only(&self) -> bool {
+        !self.entry.role.can_write()
+            && matches!(
+                self.entry.archiving_configuration,
+                Maybe::Absent | Maybe::Present(RealmArchivingConfiguration::Available)
+            )
+    }
+}
+
 pub struct WorkspaceOps {
     #[allow(unused)]
     config: Arc<ClientConfig>,
@@ -304,13 +314,20 @@ impl WorkspaceOps {
         self.realm_id
     }
 
-    pub fn get_current_name_and_self_role(&self) -> (EntryName, RealmRole) {
+    /// TL;DR: Use this function to access current workspace name, and our role.
+    /// External info are things related to the workspace that can change at any time
+    /// (typically because they are updated by certificates).
+    /// So whenever those info changes, `update_workspace_external_info` is expected
+    /// to be called.
+    pub fn get_workspace_external_info<T>(
+        &self,
+        cb: impl FnOnce(&WorkspaceExternalInfo) -> T,
+    ) -> T {
         let guard = self
             .workspace_external_info
             .lock()
             .expect("Mutex is poisoned");
-
-        (guard.entry.name.clone(), guard.entry.role)
+        cb(&guard)
     }
 
     /// Only needed for WinFSP
