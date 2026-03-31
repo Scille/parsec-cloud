@@ -226,6 +226,7 @@ pub struct StartedWorkspaceInfo {
     pub id: VlobID,
     pub current_name: EntryName,
     pub current_self_role: RealmRole,
+    pub archiving_configuration: RealmArchivingConfiguration,
     pub mountpoints: Vec<(Handle, std::path::PathBuf)>,
 }
 
@@ -240,8 +241,17 @@ pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, W
         _ => None,
     })?;
 
-    let (current_name, current_self_role) =
-        workspace.get_workspace_external_info(|info| (info.entry.name.clone(), info.entry.role));
+    let (current_name, current_self_role, archiving_configuration) = workspace
+        .get_workspace_external_info(|info| {
+            (
+                info.entry.name.clone(),
+                info.entry.role,
+                info.entry
+                    .archiving_configuration
+                    .clone()
+                    .unwrap_or(RealmArchivingConfiguration::Available),
+            )
+        });
 
     #[cfg(target_arch = "wasm32")]
     let mountpoints = vec![];
@@ -266,6 +276,7 @@ pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, W
         id: workspace.realm_id(),
         current_name,
         current_self_role,
+        archiving_configuration,
         mountpoints,
     })
 }
