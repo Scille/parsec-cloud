@@ -1074,7 +1074,10 @@ async function createNewFile(name: EntryName, fileParams: CreateTemplateFilePara
       if (!fdResult.ok) {
         informationManager.value.present(
           new Information({
-            message: 'FoldersPage.errors.createFileFailed',
+            message:
+              fdResult.error.tag === parsec.WorkspaceOpenFileErrorTag.EntryExistsInCreateNewMode
+                ? 'FoldersPage.errors.createFileFailedAlreadyExists'
+                : 'FoldersPage.errors.createFileFailed',
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
@@ -1136,7 +1139,7 @@ async function createFolder(): Promise<void> {
     {
       title: 'FoldersPage.CreateFolderModal.title',
       trim: true,
-      validator: entryNameValidator(false),
+      validator: entryNameValidator(false, { workspaceHandle: workspaceInfo.value.handle, path: currentPath.value }),
       inputLabel: 'FoldersPage.CreateFolderModal.label',
       placeholder: 'FoldersPage.CreateFolderModal.placeholder',
       okButtonText: 'FoldersPage.CreateFolderModal.create',
@@ -1192,20 +1195,29 @@ async function onImportClicked(event: Event): Promise<void> {
 }
 
 async function getNewFileName(fileType: FileContentType): Promise<string | null> {
+  if (!workspaceInfo.value) {
+    return null;
+  }
+
   let defaultNewName = '';
+  let ext = '';
 
   switch (fileType) {
     case FileContentType.Document:
       defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.document');
+      ext = '.docx';
       break;
     case FileContentType.Spreadsheet:
       defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.spreadsheet');
+      ext = '.xlsx';
       break;
     case FileContentType.Presentation:
       defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.presentation');
+      ext = '.pptx';
       break;
     case FileContentType.Text:
       defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.text');
+      ext = '.txt';
       break;
     default:
       break;
@@ -1219,7 +1231,7 @@ async function getNewFileName(fileType: FileContentType): Promise<string | null>
     {
       title: 'FoldersPage.createFile.fileName',
       trim: true,
-      validator: entryNameValidator(true),
+      validator: entryNameValidator(true, { workspaceHandle: workspaceInfo.value.handle, path: currentPath.value, extension: ext }),
       inputLabel: 'FoldersPage.createFile.label',
       placeholder: 'FoldersPage.createFile.placeholder',
       okButtonText: 'FoldersPage.createFile.create',
@@ -1362,7 +1374,11 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
     {
       title: entry.isFile() ? 'FoldersPage.RenameModal.fileTitle' : 'FoldersPage.RenameModal.folderTitle',
       trim: true,
-      validator: entryNameValidator(entry.isFile()),
+      validator: entryNameValidator(entry.isFile(), {
+        workspaceHandle: workspaceInfo.value.handle,
+        path: currentPath.value,
+        extension: '',
+      }),
       inputLabel: entry.isFile() ? 'FoldersPage.RenameModal.fileLabel' : 'FoldersPage.RenameModal.folderLabel',
       placeholder: entry.isFile() ? 'FoldersPage.RenameModal.filePlaceholder' : 'FoldersPage.RenameModal.folderPlaceholder',
       okButtonText: 'FoldersPage.RenameModal.rename',

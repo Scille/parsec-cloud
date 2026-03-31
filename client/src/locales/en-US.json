@@ -914,7 +914,8 @@
             "copyFailedSourceDoesNotExist": "Entry {source} does not exist.",
             "seeInExplorerFailed": "Failed to open the selected entry in file explorer.",
             "failedToListContent": "Failed to list the content of this folder.",
-            "createFileFailed": "Failed to create the file."
+            "createFileFailed": "Failed to create the file.",
+            "createFileFailedAlreadyExists": "Failed to create the new file because a file with the same name already exists."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",
@@ -2091,7 +2092,9 @@
         },
         "fileName": {
             "fileTooLong": "File name is too long, limit is {limit} characters.",
-            "folderTooLong": "Folder name is too long, limit is {limit} characters."
+            "folderTooLong": "Folder name is too long, limit is {limit} characters.",
+            "fileAlreadyExists": "A file with this name already exists.",
+            "folderAlreadyExists": "A folder with this name already exists."
         },
         "claimLink": {
             "invalidProtocol": "Link should start with 'parsec3://'.",
