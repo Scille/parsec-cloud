@@ -17,6 +17,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     get_last_realm_certificate_timestamp,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
@@ -236,6 +237,34 @@ async def test_authenticated_block_create_store_unavailable(
 
     dump = await backend.block.test_dump_blocks(coolorg.organization_id)
     assert not dump  # No changes!
+
+
+async def test_authenticated_block_create_realm_archived(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    for wksp_id in (
+        workspace_archived_org.wksp_archived_id,
+        workspace_archived_org.wksp_soon_to_delete_id,
+    ):
+        rep = await workspace_archived_org.alice.block_create(
+            realm_id=wksp_id,
+            block_id=BlockID.new(),
+            key_index=1,
+            block=b"<dummy>",
+        )
+        assert rep == authenticated_cmds.latest.block_create.RepRealmArchived()
+
+
+async def test_authenticated_block_create_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    rep = await workspace_archived_org.alice.block_create(
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        block_id=BlockID.new(),
+        key_index=1,
+        block=b"<dummy>",
+    )
+    assert rep == authenticated_cmds.latest.block_create.RepRealmDeleted()
 
 
 async def test_authenticated_block_create_http_common_errors(
