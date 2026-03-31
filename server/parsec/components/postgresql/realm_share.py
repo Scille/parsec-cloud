@@ -194,6 +194,8 @@ async def realm_share(
             pass
         case LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND:
             return RealmShareStoreBadOutcome.REALM_NOT_FOUND
+        case LockRealmWriteRealmBadOutcome.REALM_DELETED:
+            return RealmShareStoreBadOutcome.REALM_DELETED
         case LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM:
             return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 

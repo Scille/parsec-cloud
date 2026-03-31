@@ -138,6 +138,8 @@ async def realm_update_archiving(
                 return RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_ALLOWED
         case LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND:
             return RealmUpdateArchivingStoreBadOutcome.REALM_NOT_FOUND
+        case LockRealmWriteRealmBadOutcome.REALM_DELETED:
+            return RealmUpdateArchivingStoreBadOutcome.REALM_DELETED
         case LockRealmWriteRealmBadOutcome.USER_NOT_IN_REALM:
             return RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_ALLOWED
 

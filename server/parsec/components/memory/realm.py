@@ -235,17 +235,20 @@ class MemoryRealmComponent(BaseRealmComponent):
                     return error
 
             try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmShareStoreBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return RealmShareStoreBadOutcome.REALM_DELETED
+
+            try:
                 user = org.users[certif.user_id]
             except KeyError:
                 return RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND
 
             if user.is_revoked:
                 return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
-
-            try:
-                realm = org.realms[certif.realm_id]
-            except KeyError:
-                return RealmShareStoreBadOutcome.REALM_NOT_FOUND
 
             realm_topic = ("realm", certif.realm_id)
 
@@ -370,16 +373,19 @@ class MemoryRealmComponent(BaseRealmComponent):
                 case error:
                     return error
 
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return RealmUnshareStoreBadOutcome.REALM_DELETED
+
             # Note we don't check if the recipient is revoked here: it is indeed allowed
             # to unshare with a revoked user. This allows for client to only check for
             # unshare event to detect when key rotation is needed.
             if certif.user_id not in org.users:
                 return RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND
-
-            try:
-                realm = org.realms[certif.realm_id]
-            except KeyError:
-                return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
 
             realm_topic = ("realm", certif.realm_id)
 
@@ -491,6 +497,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             except KeyError:
                 return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
 
+            if realm.is_deleted:
+                return RealmRenameStoreBadOutcome.REALM_DELETED
+
             realm_topic = ("realm", certif.realm_id)
 
             async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
@@ -584,6 +593,9 @@ class MemoryRealmComponent(BaseRealmComponent):
                 realm = org.realms[certif.realm_id]
             except KeyError:
                 return RealmUpdateArchivingStoreBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return RealmUpdateArchivingStoreBadOutcome.REALM_DELETED
 
             realm_topic = ("realm", certif.realm_id)
 
@@ -690,6 +702,9 @@ class MemoryRealmComponent(BaseRealmComponent):
                 realm = org.realms[certif.realm_id]
             except KeyError:
                 return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
+
+            if realm.is_deleted:
+                return RealmRotateKeyStoreBadOutcome.REALM_DELETED
 
             realm_topic = ("realm", certif.realm_id)
 
@@ -828,6 +843,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             realm = org.realms[realm_id]
         except KeyError:
             return RealmGetKeysBundleBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return RealmGetKeysBundleBadOutcome.REALM_DELETED
 
         if realm.get_current_role_for(author_user_id) is None:
             return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_ALLOWED

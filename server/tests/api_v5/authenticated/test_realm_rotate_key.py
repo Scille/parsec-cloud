@@ -29,6 +29,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    WorkspaceArchivedOrgRpcClients,
     get_last_realm_certificate_timestamp,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
@@ -471,6 +472,29 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
     assert rep == authenticated_cmds.latest.realm_rotate_key.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
     )
+
+
+async def test_authenticated_realm_rotate_key_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+) -> None:
+    certif = RealmKeyRotationCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_deleted_id,
+        key_index=2,
+        encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
+        hash_algorithm=HashAlgorithm.SHA256,
+        key_canary=SecretKey.generate().encrypt(b""),
+    )
+    rep = await workspace_archived_org.alice.realm_rotate_key(
+        realm_key_rotation_certificate=certif.dump_and_sign(
+            workspace_archived_org.alice.signing_key
+        ),
+        per_participant_keys_bundle_access={},
+        keys_bundle=b"<dummy>",
+        per_sequester_service_keys_bundle_access=None,
+    )
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepRealmDeleted()
 
 
 async def test_authenticated_realm_rotate_key_http_common_errors(

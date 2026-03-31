@@ -18,6 +18,7 @@ from parsec.types import BadOutcomeEnum
 
 class LockRealmWriteRealmBadOutcome(BadOutcomeEnum):
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     USER_NOT_IN_REALM = auto()
 
 
@@ -73,6 +74,7 @@ WITH my_realm_user_role AS (
 SELECT
     realm_topic.last_timestamp AS last_realm_certificate_timestamp,
     realm.key_index AS realm_key_index,
+    realm.status AS realm_status,
     (SELECT my_realm_user_role.role FROM my_realm_user_role) AS realm_user_current_role
 FROM realm
 INNER JOIN realm_topic ON realm._id = realm_topic.realm
@@ -147,6 +149,14 @@ async def _do_lock_realm(
     match row["realm_key_index"]:
         case int() as realm_key_index:
             pass
+        case _:
+            assert False, row
+
+    match row["realm_status"]:
+        case "AVAILABLE" | "ARCHIVED_OR_DELETION_PLANNED":
+            pass
+        case "DELETED":
+            return LockRealmWriteRealmBadOutcome.REALM_DELETED
         case _:
             assert False, row
 
