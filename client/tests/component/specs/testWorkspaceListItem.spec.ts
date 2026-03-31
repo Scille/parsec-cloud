@@ -2,6 +2,7 @@
 
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import { UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
+import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import { IonAvatar } from '@ionic/vue';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
@@ -62,6 +63,7 @@ describe('Workspace List Item', () => {
     lastUpdated: DateTime.fromISO('2023-05-08T12:00:00'),
     isStarted: false,
     isBootstrapped: true,
+    archivingConfiguration: { tag: RealmArchivingConfigurationTag.Available },
     mountpoints: [[42, '/']],
     handle: 1,
   };
