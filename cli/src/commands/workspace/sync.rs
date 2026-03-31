@@ -17,7 +17,8 @@ pub async fn workspace_sync(args: Args, client: &StartedClient) -> anyhow::Resul
 
     let workspace = client.start_workspace(wid).await?;
 
-    let (name, role) = workspace.get_current_name_and_self_role();
+    let (name, is_read_only) = workspace
+        .get_workspace_external_info(|info| (info.entry.name.clone(), info.is_read_only()));
     let mut handle = start_spinner(format!("Syncing workspace {name}"));
 
     log::debug!("Refreshing realm checkpoint");
@@ -36,7 +37,7 @@ pub async fn workspace_sync(args: Args, client: &StartedClient) -> anyhow::Resul
             workspace.inbound_sync(entry).await?;
         }
     }
-    if role.can_write() {
+    if !is_read_only {
         loop {
             let entries_to_sync = workspace
                 .get_need_outbound_sync(OUTBOUND_SYNC_BATCH_SIZE)

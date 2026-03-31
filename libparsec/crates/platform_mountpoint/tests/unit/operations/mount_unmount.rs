@@ -250,10 +250,8 @@ async fn weird_workspace_name(
     let client =
         start_client_with_mountpoint_base_dir(env, mountpoint_base_dir.clone(), "alice@dev1").await;
     let wksp1_ops = client.start_workspace(wksp1_id).await.unwrap();
-    p_assert_eq!(
-        wksp1_ops.get_current_name_and_self_role().0.as_ref(),
-        workspace_name
-    ); // Sanity check
+    wksp1_ops
+        .get_workspace_external_info(|info| p_assert_eq!(info.entry.name.as_ref(), workspace_name)); // Sanity check
 
     let mountpoint = Mountpoint::mount(wksp1_ops).await.unwrap();
 

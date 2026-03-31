@@ -240,7 +240,8 @@ pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, W
         _ => None,
     })?;
 
-    let (current_name, current_self_role) = workspace.get_current_name_and_self_role();
+    let (current_name, current_self_role) =
+        workspace.get_workspace_external_info(|info| (info.entry.name.clone(), info.entry.role));
 
     #[cfg(target_arch = "wasm32")]
     let mountpoints = vec![];

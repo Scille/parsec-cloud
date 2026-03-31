@@ -43,12 +43,18 @@ impl Mountpoint {
     }
 
     pub async fn mount(ops: Arc<WorkspaceOps>) -> anyhow::Result<Self> {
-        let (workspace_name, self_role) = ops.get_current_name_and_self_role();
-        log::debug!("Preparing mounting of workspace {workspace_name} for role {self_role}");
-        let is_read_only = !self_role.can_write();
+        let (workspace_name, is_read_only, workspace_index, total_workspaces) = ops
+            .get_workspace_external_info(|info| {
+                (
+                    info.entry.name.clone(),
+                    info.is_read_only(),
+                    info.workspace_index,
+                    info.total_workspaces,
+                )
+            });
         let volume_label = generate_volume_label(&workspace_name);
         log::debug!(
-            "Volume label for workspace {workspace_name} is {}",
+            "Mount workspace {workspace_name} (read only={is_read_only}, label={})",
             volume_label.display()
         );
 
@@ -61,12 +67,10 @@ impl Mountpoint {
 
         let mountpoint_path = match &ops.config().mountpoint_mount_strategy {
             MountpointMountStrategy::Directory { base_dir } => {
-                let (workspace_name, _) = ops.get_current_name_and_self_role();
                 find_suitable_mountpoint_dir(base_dir, &workspace_name)?
             }
             MountpointMountStrategy::DriveLetter => {
-                let (index, total) = ops.get_workspace_index_and_total_workspaces();
-                let maybe_drive = find_suitable_drive_letter(index, total);
+                let maybe_drive = find_suitable_drive_letter(workspace_index, total_workspaces);
                 match maybe_drive {
                     None => return Err(anyhow::anyhow!("No more available drive letter")),
                     Some(drive) => drive,
