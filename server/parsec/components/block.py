@@ -33,6 +33,7 @@ class BlockReadBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     BLOCK_NOT_FOUND = auto()
     STORE_UNAVAILABLE = auto()
 
@@ -100,6 +101,8 @@ class BaseBlockComponent:
                 )
             case BlockReadBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.block_read.RepRealmNotFound()
+            case BlockReadBadOutcome.REALM_DELETED:
+                return authenticated_cmds.latest.block_read.RepRealmDeleted()
             case BlockReadBadOutcome.BLOCK_NOT_FOUND:
                 return authenticated_cmds.latest.block_read.RepBlockNotFound()
             case BlockReadBadOutcome.AUTHOR_NOT_ALLOWED:
