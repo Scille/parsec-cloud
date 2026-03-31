@@ -64,7 +64,9 @@ my_user AS (
 ),
 
 my_realm AS (
-    SELECT _id
+    SELECT
+        _id,
+        status
     FROM realm
     WHERE
         organization = (SELECT my_organization._id FROM my_organization)
@@ -97,6 +99,7 @@ SELECT
             AND realm = (SELECT my_realm._id FROM my_realm)
         LIMIT 1
     ) AS last_realm_certificate_timestamp,
+    (SELECT status FROM my_realm) AS realm_status,
     COALESCE(
         (
             SELECT role IS NOT NULL
@@ -181,6 +184,14 @@ async def block_read(
             pass
         case None:
             return BlockReadBadOutcome.REALM_NOT_FOUND
+        case _:
+            assert False, row
+
+    match row["realm_status"]:
+        case "AVAILABLE" | "ARCHIVED_OR_DELETION_PLANNED":
+            pass
+        case "DELETED":
+            return BlockReadBadOutcome.REALM_DELETED
         case _:
             assert False, row
 

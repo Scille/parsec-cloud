@@ -45,6 +45,9 @@ class MemoryBlockComponent(BaseBlockComponent):
         except KeyError:
             return BlockReadBadOutcome.REALM_NOT_FOUND
 
+        if realm.is_deleted:
+            return BlockReadBadOutcome.REALM_DELETED
+
         try:
             block_info = org.blocks[block_id]
         except KeyError:
