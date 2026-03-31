@@ -76,6 +76,7 @@ export async function listWorkspaces(
           currentSelfRole: wkInfo.currentSelfRole,
           isStarted: true,
           isBootstrapped: wkInfo.isBootstrapped,
+          archivingConfiguration: wkInfo.archivingConfiguration,
           sharing: [],
           size: 0,
           lastUpdated: DateTime.now(),
