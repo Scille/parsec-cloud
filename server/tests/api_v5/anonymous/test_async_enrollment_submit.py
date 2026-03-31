@@ -26,7 +26,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
-    TestPki,
+    PkiCollection,
 )
 
 
@@ -66,7 +66,7 @@ async def submit_for_mike(
 async def test_anonymous_async_enrollment_submit_ok(
     backend: Backend,
     minimalorg: MinimalorgRpcClients,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
     kind: str,
 ) -> None:
     match kind:
@@ -262,7 +262,7 @@ async def test_anonymous_async_enrollment_submit_invalid_submit_payload_signatur
 @pytest.mark.parametrize("kind", ("bad_leaf", "bad_intermediate"))
 async def test_anonymous_async_enrollment_submit_invalid_der_x509_certificate(
     minimalorg: MinimalorgRpcClients,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
     kind: str,
 ) -> None:
     match kind:
@@ -302,7 +302,7 @@ async def test_anonymous_async_enrollment_submit_invalid_der_x509_certificate(
 async def test_anonymous_async_enrollment_submit_invalid_x509_trustchain(
     monkeypatch: pytest.MonkeyPatch,
     minimalorg: MinimalorgRpcClients,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
     kind: str,
 ) -> None:
     match kind:

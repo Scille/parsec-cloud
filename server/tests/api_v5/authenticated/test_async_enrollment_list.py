@@ -25,7 +25,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
-    TestPki,
+    PkiCollection,
     generate_new_device_certificates,
     generate_new_user_certificates,
 )
@@ -68,7 +68,7 @@ async def submit_for(
 async def test_authenticated_async_enrollment_list_ok(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
-    test_pki: TestPki,
+    test_pki: PkiCollection,
 ) -> None:
     # Rejected enrollment, should be ignored
 
