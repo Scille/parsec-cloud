@@ -1173,7 +1173,8 @@
             "macos": "MacOS",
             "linux": "Linux",
             "android": "Android",
-            "unknown": "Inconnu"
+            "unknown": "Inconnu ({label})",
+            "mobileWeb": "Mobile Web"
         },
         "sortBy": "Trier par :",
         "technicalId": "ID interne :"

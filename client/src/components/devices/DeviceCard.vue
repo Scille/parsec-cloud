@@ -8,12 +8,12 @@
     <div class="card-content">
       <ion-icon
         class="icon-device"
-        :icon="desktopOutline"
+        :icon="deviceInfo.icon"
       />
       <div class="card-text">
         <div class="card-text-info">
           <ion-text class="device-name subtitles-sm">
-            {{ device.deviceLabel }}
+            {{ $msTranslate(deviceInfo.label) }}
           </ion-text>
           <ion-text class="join-date body-sm">
             {{ $msTranslate('DevicesPage.joinedOn') }}
@@ -39,17 +39,37 @@
 </template>
 
 <script setup lang="ts">
+import { DeviceLabel } from '@/common/device';
 import { TechnicalId } from '@/components/misc';
 import { DeviceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
 import { desktopOutline } from 'ionicons/icons';
-import { formatTimeSince } from 'megashark-lib';
+import { formatTimeSince, Translatable } from 'megashark-lib';
+import { computed } from 'vue';
 
-defineProps<{
+const props = defineProps<{
   device: DeviceInfo;
   isCurrent?: boolean;
   showId?: boolean;
 }>();
+
+const DEVICE_PLATFORMS: Map<DeviceLabel, { label: Translatable; icon: string }> = new Map([
+  [DeviceLabel.Android, { label: 'common.deviceTypes.android', icon: desktopOutline }],
+  [DeviceLabel.Linux, { label: 'common.deviceTypes.linux', icon: desktopOutline }],
+  [DeviceLabel.Windows, { label: 'common.deviceTypes.windows', icon: desktopOutline }],
+  [DeviceLabel.MacOS, { label: 'common.deviceTypes.macos', icon: desktopOutline }],
+  [DeviceLabel.MobileWeb, { label: 'common.deviceTypes.mobileWeb', icon: desktopOutline }],
+  [DeviceLabel.Web, { label: 'common.deviceTypes.web', icon: desktopOutline }],
+]);
+
+const deviceInfo = computed(() => {
+  return (
+    DEVICE_PLATFORMS.get(props.device.deviceLabel as DeviceLabel) ?? {
+      label: { key: 'common.deviceTypes.unknown', data: { label: props.device.deviceLabel } },
+      icon: desktopOutline,
+    }
+  );
+});
 </script>
 
 <style scoped lang="scss">
