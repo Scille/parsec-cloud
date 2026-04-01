@@ -37,6 +37,7 @@ concurrency:
 
 env:
   CARGO_CI_FLAGS: --locked --profile=ci-rust
+  # Use Nextest `ci` profile and Cargo `ci-rust` profile
   CARGO_NEXTEST_CI_FLAGS: --profile=ci --locked --cargo-profile=ci-rust
   WINFSP_VERSION: 2.1.25156
   WINFSP_TEST_EXE: C:/Program Files (x86)/WinFsp/bin/winfsp-tests-x64.exe
@@ -68,7 +69,8 @@ jobs:
         ports:
           - 6777:6777
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
       - name: Retrieve runner specs
@@ -76,11 +78,26 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # pin v2.0.0
+      # SQL lint is fast and doesn't use cache, so run it as early as possible for early exist
+      - name: SQL lint
+        # Cannot use `./misc/lint_sql.py` here since it would require us to install the
+        # whole Python server project.
+        shell: bash -eux {0}
+        run: |
+          pipx install sqlfluff
+          sqlfluff lint --disable-progress-bar --config libparsec/crates/platform_storage/src/native/sql/.sqlfluff  libparsec/crates/platform_storage/src/native/sql/
+
+      - name: Setup rust
+        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # pin v2.0.0
         with:
           # We setup the cache by hand, see below
           cache: false
         timeout-minutes: 10
+
+      # Rust fmt is fast and doesn't use cache, so run it as early as possible for early exist
+      - name: Check rust code format
+        run: cargo fmt --check --all
+        timeout-minutes: 2
 
       - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # pin v2.9.3
@@ -91,15 +108,7 @@ jobs:
           # most likely to be reused.
           save-if: ${{ github.ref == 'refs/heads/master' }}
           key: ${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}
-        timeout-minutes: 5
-
-      # Install fuse
-      - name: Install build dependencies
-        shell: bash
-        run: |
-          until sudo apt-get -y install fuse3 libfuse3-dev libdbus-1-dev; do
-            echo "Fail to install APT package retrying ...";
-          done
+          cache-workspace-crates: false # Storing workspace crates are not helpful since we often had to switch features causing mass rebuild
         timeout-minutes: 5
 
       # Install cargo nextest command
@@ -112,6 +121,15 @@ jobs:
       - name: Patch missing `ld.mold`
         run: ln -sv mold ~/.install-action/bin/ld.mold
 
+      # Install fuse
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          until sudo apt-get -y install fuse3 libfuse3-dev libdbus-1-dev; do
+            echo "Fail to install APT package retrying ...";
+          done
+        timeout-minutes: 5
+
       - name: Categorize workspace crates
         id: crates
         shell: bash
@@ -123,25 +141,17 @@ jobs:
           ) | tee -a $GITHUB_OUTPUT
         timeout-minutes: 2
 
-      - name: Test agnostic rust codebase
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }}
-        env:
-          RUST_LOG: ${{ env.TEST_RUST_LOG }}
-        timeout-minutes: 10
+      - name: 📎 Retrieve clippy args
+        id: clippy-args
+        shell: bash
+        run: yq -r '"args=" + (.repos | map(.hooks) | flatten | map(select(.id == "clippy"))[0] | .args | join(" "))' .pre-commit-config.yaml | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1
 
-      # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
-      # implementation and it compatibility with the rest of the project
-      - name: Test sodiumoxide rust crypto
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-libsodium
-        env:
-          RUST_LOG: debug
+      # Clippy basically compile the project, hence it's faster to run it in
+      # the job where compilation cache is reused !
+      - name: 📎 Check cargo-clippy
+        run: cargo clippy ${{ env.CARGO_CI_FLAGS }} ${{ steps.clippy-args.outputs.args }}
         timeout-minutes: 10
-
-      - name: Check agnostic & platform crates using sodium crypto features
-        run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }} ${{ steps.crates.outputs.platform }} --features use-libsodium
-        timeout-minutes: 10
-        env:
-          RUST_LOG: ${{ env.TEST_RUST_LOG }}
 
       - name: unlock keyring
         uses: t1m0thyj/unlock-keyring@cbcf205c879ebd86add70bab3a6abfcce59a5cae # pin v1.2.0
@@ -151,31 +161,59 @@ jobs:
         run: echo 'mount_max = 8192' | sudo tee /etc/fuse.conf
         continue-on-error: true
 
+      - name: 🧪 Test agnostic rust codebase
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }}
+        env:
+          RUST_LOG: ${{ env.TEST_RUST_LOG }}
+        timeout-minutes: 10
+
+      - name: 👨‍💻 Build CLI binary
+        run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec-cli
+        timeout-minutes: 5
+
+      - name: 👨‍💻 Test CLI
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec-cli
+        timeout-minutes: 10
+
+      # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
+      # implementation and it compatibility with the rest of the project
+      - name: 🧪 Test sodiumoxide rust crypto
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-libsodium
+        env:
+          RUST_LOG: ${{ env.TEST_RUST_LOG }}
+        timeout-minutes: 10
+
+      - name: 🔬 Check agnostic & platform crates using sodium crypto features
+        run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }} ${{ steps.crates.outputs.platform }} --features use-libsodium
+        timeout-minutes: 10
+        env:
+          RUST_LOG: ${{ env.TEST_RUST_LOG }}
+
       # Use sodiumoxide here given 1) it is composed of C code, so not totally
       # platform independent and 2) it is what is going to be used in release
-      - name: Test platform crates using sodium crypto features (🐧 Linux specific)
+      - name: 🧪 Test platform crates using sodium crypto features (🐧 Linux specific)
         shell: bash
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.platform }} --features libparsec_crypto/use-libsodium
         timeout-minutes: 30
         env:
           RUST_LOG: ${{ env.TEST_RUST_LOG }}
 
-      - name: Clippy on wasm
+      - name: 📎 Clippy on wasm
         if: inputs.run-wasm-tests
         run: cargo clippy --target wasm32-unknown-unknown -p libparsec_bindings_web ${{ steps.crates.outputs.platform }}
         timeout-minutes: 10
 
-      - name: Test platform-async on wasm
+      - name: 🧪 Test platform-async on wasm
         if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_async
         timeout-minutes: 10
 
-      - name: Test platform-storage on wasm
+      - name: 🧪 Test platform-storage on wasm
         if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_storage
         timeout-minutes: 10
 
-      - name: Test platform-device-loader on wasm
+      - name: 🧪 Test platform-device-loader on wasm
         if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_device_loader
         env:
@@ -184,44 +222,12 @@ jobs:
           WASM_BINDGEN_TEST_TIMEOUT: 40
         timeout-minutes: 10
 
-      - name: Test platform-async on wasm
+      - name: 🧪 Test platform-filesystem on wasm
         if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_filesystem
         timeout-minutes: 10
 
-      - name: Build CLI binary
-        run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec-cli
-        timeout-minutes: 5
-
-      - name: Test CLI
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec-cli
-        timeout-minutes: 10
-
-      - name: Retrieve clippy args
-        id: clippy-args
-        shell: bash
-        run: yq -r '"args=" + (.repos | map(.hooks) | flatten | map(select(.id == "clippy"))[0] | .args | join(" "))' .pre-commit-config.yaml | tee -a $GITHUB_OUTPUT
-        timeout-minutes: 1
-
-      - name: Check rust code format
-        run: cargo fmt --check
-        timeout-minutes: 2
-
-      - name: SQL lint
-        # Cannot use `./misc/lint_sql.py` here since it would require us to install the
-        # whole Python server project.
-        shell: bash -eux {0}
-        run: |
-          pipx install sqlfluff
-          sqlfluff lint --disable-progress-bar --config libparsec/crates/platform_storage/src/native/sql/.sqlfluff  libparsec/crates/platform_storage/src/native/sql/
-
-      # Clippy basically compile the project, hence it's faster to run it in
-      # the job where compilation cache is reused !
-      - name: Check cargo-clippy
-        run: cargo clippy ${{ env.CARGO_CI_FLAGS }} --verbose ${{ steps.clippy-args.outputs.args }}
-        timeout-minutes: 10
-
-      - name: Check restricted usage with cargo-deny
+      - name: 🛑 Check restricted usage with cargo-deny
         if: inputs.check-cargo-deny
         run: |
           echo "::add-matcher::.github/custom-problem-matchers/cargo-deny.json"
@@ -231,7 +237,7 @@ jobs:
           echo "::remove-matcher owner=cargo-deny::"
         timeout-minutes: 2
 
-      - name: Check for unused dependencies
+      - name: 🫗 Check for unused dependencies
         # We reused `check-cargo-deny` since it's only trigger in `Cargo.toml` changes
         if: inputs.check-cargo-deny
         run: cargo +nightly udeps --workspace
