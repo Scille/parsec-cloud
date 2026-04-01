@@ -160,7 +160,10 @@ for (const identitySystem of ['pki', 'openbao']) {
     await selectProfileModal.locator('#next-button').click();
     await expect(page).toShowToast('This request has been accepted', 'Success');
 
-    await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeHidden();
+    // Pki is mocked, it doesn't have the event to refresh the notification
+    if (identitySystem === 'openbao') {
+      await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeHidden();
+    }
 
     await logout(page);
 
