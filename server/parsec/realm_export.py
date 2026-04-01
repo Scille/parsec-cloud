@@ -548,6 +548,8 @@ async def export_realm(
             raise RealmExporterInputError(
                 f"Realm `{realm_id.hex}` doesn't exist in organization `{organization_id.str}`"
             )
+        case RealmExportDoBaseInfoBadOutcome.REALM_DELETED:
+            raise RealmExporterInputError(f"Realm `{realm_id.hex}` has been deleted")
         case RealmExportDoBaseInfoBadOutcome.REALM_DIDNT_EXIST_AT_SNAPSHOT_TIMESTAMP:
             raise RealmExporterInputError(
                 f"Requested snapshot timestamp `{snapshot_timestamp}` is older than realm creation"
