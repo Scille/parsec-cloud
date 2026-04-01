@@ -51,6 +51,7 @@ You can also use the search function in the top left corner.
     hosting/maintenance/index
     hosting/administration/index
     hosting/sequester/index
+    hosting/openbao/index
     hosting/custom_branding
 
 .. only:: html
