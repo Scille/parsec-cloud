@@ -260,6 +260,23 @@
                 {{ $msTranslate('SideMenu.hidden') }}
               </span>
             </ion-text>
+
+            <!-- Archived -->
+            <ion-text
+              @click="navigateTo(Routes.Archived)"
+              :class="{ active: currentRouteIs(Routes.Archived) }"
+              class="sidebar-content-organization-button button-medium"
+              id="sidebar-archived-workspaces"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="archive"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.archived') }}
+              </span>
+            </ion-text>
           </div>
         </sidebar-menu-list>
 
@@ -333,7 +350,7 @@
       v-if="isSmallDisplay && !customTabBar.isVisible.value && !currentRouteIs(Routes.History) && !currentRouteIs(Routes.FileHandler)"
       :user-info="userInfo"
       @action-clicked="onActionClicked"
-      :actions="actions"
+      :actions="setActions()"
     />
     <ion-router-outlet id="main" />
   </ion-split-pane>
@@ -347,6 +364,7 @@ import RecommendationChecklistPopoverModal from '@/components/misc/Recommendatio
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { SidebarMenuList, SidebarRecentFileItem, SidebarWorkspaceItem } from '@/components/sidebar';
 import { openWorkspaceContextMenu } from '@/components/workspaces';
+import { openArchivedWorkspaceContextMenu } from '@/components/workspaces/utils';
 import {
   ClientInfo,
   getAsyncEnrollmentAddr,
@@ -364,9 +382,9 @@ import {
 } from '@/parsec';
 import {
   currentRouteIs,
-  currentRouteIsWorkspaceRoute,
   getConnectionHandle,
   getCurrentRouteQuery,
+  getWorkspaceHandle,
   navigateTo,
   navigateToWorkspace,
   ProfilePages,
@@ -419,6 +437,7 @@ import {
 } from '@ionic/vue';
 import {
   addCircle,
+  archive,
   chevronForward,
   cloudUpload,
   document as documentIcon,
@@ -437,7 +456,7 @@ import {
   warning,
 } from 'ionicons/icons';
 import { Duration } from 'luxon';
-import { ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
+import { asyncComputed, ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
 import { computed, inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -482,7 +501,12 @@ const securityWarningsCount = computed(() => {
 });
 
 const { isSmallDisplay, windowWidth } = useWindowSize();
-const actions = ref<Array<Array<MenuAction>>>([]);
+const isReadOnly = computed(() => {
+  if (currentWorkspace.value) {
+    return currentWorkspace.value.currentSelfRole === WorkspaceRole.Reader || currentWorkspace.value.isArchived;
+  }
+  return false;
+});
 
 const MIN_WIDTH = 150;
 const MAX_WIDTH = 370;
@@ -497,10 +521,12 @@ const watchSidebarWidthCancel = watch(sidebarWidth, async (value: number) => {
   emits('sidebarWidthChanged', value);
 });
 
-const currentWorkspace = computed(() => {
-  for (const wk of recentDocumentManager.getWorkspaces()) {
-    if (currentRouteIsWorkspaceRoute(wk.handle)) {
-      return wk;
+const currentWorkspace = asyncComputed(async () => {
+  const handle = getWorkspaceHandle();
+  if (handle) {
+    const wInfo = await getWorkspaceInfo(handle);
+    if (wInfo.ok) {
+      return wInfo.value;
     }
   }
   return undefined;
@@ -577,40 +603,46 @@ async function updateDividerPosition(value?: number): Promise<void> {
   }
 }
 
-function setActions(): void {
-  if (currentRouteIs(Routes.Documents) && currentWorkspace.value && currentWorkspace.value.currentSelfRole !== WorkspaceRole.Reader) {
-    actions.value = [
-      [{ action: FolderGlobalAction.CreateFolder, label: 'FoldersPage.createFolder', icon: folderOpen }],
-      [
-        { action: FolderGlobalAction.ImportFolder, label: 'FoldersPage.ImportFile.importFolderAction', icon: cloudUpload },
-        { action: FolderGlobalAction.ImportFiles, label: 'FoldersPage.ImportFile.importFilesAction', icon: cloudUpload },
-      ],
-    ];
+function setActions(): Array<Array<MenuAction>> {
+  const actions = [];
+  if (currentRouteIs(Routes.Documents)) {
+    if (!isReadOnly.value) {
+      actions.push(
+        [{ action: FolderGlobalAction.CreateFolder, label: 'FoldersPage.createFolder', icon: folderOpen }],
+        [
+          { action: FolderGlobalAction.ImportFolder, label: 'FoldersPage.ImportFile.importFolderAction', icon: cloudUpload },
+          { action: FolderGlobalAction.ImportFiles, label: 'FoldersPage.ImportFile.importFilesAction', icon: cloudUpload },
+        ],
+      );
+    }
     if (props.userInfo.currentProfile === UserProfile.Admin) {
-      actions.value.push([{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]);
+      actions.push([
+        { action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd },
+        { action: UserAction.CopyAsyncEnrollmentLink, label: 'InvitationsPage.asyncEnrollmentRequest.copyLink', icon: link },
+      ]);
     }
   } else if (currentRouteIs(Routes.Workspaces) && props.userInfo.currentProfile !== UserProfile.Outsider) {
-    actions.value = [[{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }]];
+    actions.push([{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }]);
     if (props.userInfo.currentProfile === UserProfile.Admin) {
-      actions.value.push([{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]);
+      actions.push([
+        { action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd },
+        { action: UserAction.CopyAsyncEnrollmentLink, label: 'InvitationsPage.asyncEnrollmentRequest.copyLink', icon: link },
+      ]);
     }
   } else if (
     (currentRouteIs(Routes.Users) ||
       currentRouteIs(Routes.MyProfile) ||
       currentRouteIs(Routes.Organization) ||
-      currentRouteIs(Routes.Invitations)) &&
+      currentRouteIs(Routes.Invitations) ||
+      currentRouteIs(Routes.Archived)) &&
     props.userInfo.currentProfile === UserProfile.Admin
   ) {
-    actions.value = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
-    if (false) {
-      // TODO enable with PKI support
-      actions.value.push([
-        { action: UserAction.CopyAsyncEnrollmentLink, label: 'InvitationsPage.asyncEnrollmentRequest.copyLink', icon: link },
-      ]);
-    }
-  } else {
-    actions.value = [];
+    actions.push([
+      { action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd },
+      { action: UserAction.CopyAsyncEnrollmentLink, label: 'InvitationsPage.asyncEnrollmentRequest.copyLink', icon: link },
+    ]);
   }
+  return actions;
 }
 
 const watchWindowWidthCancel = watch(windowWidth, async () => {
@@ -619,7 +651,6 @@ const watchWindowWidthCancel = watch(windowWidth, async () => {
 });
 
 const watchRouteCancel = watchRoute(async (newRoute) => {
-  setActions();
   if (newRoute.query.workspaceMenu && Object.values(WorkspaceMenu).includes(newRoute.query.workspaceMenu as WorkspaceMenu)) {
     workspaceMenuState.value = newRoute.query.workspaceMenu as WorkspaceMenu;
   }
@@ -637,6 +668,7 @@ onMounted(async () => {
       Events.WorkspaceMountpointsSync,
       Events.InvitationUpdated,
       Events.AsyncEnrollmentUpdated,
+      Events.WorkspaceArchiveSync,
     ],
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
@@ -694,15 +726,13 @@ onMounted(async () => {
         if (updateData.newRole === null || updateData.newRole === WorkspaceRole.Owner) {
           securityWarnings.value = await getSecurityWarnings();
         }
-      } else if (event === Events.Online) {
+      } else if (event === Events.Online || event === Events.WorkspaceArchiveSync) {
         securityWarnings.value = await getSecurityWarnings();
       } else if (event === Events.InvitationUpdated || event === Events.AsyncEnrollmentUpdated) {
         await refreshPendingJoinRequests();
       }
     },
   );
-
-  setActions();
 
   sidebarWidthProperty.value = `${sidebarWidth.value}px`;
   emits('sidebarWidthChanged', sidebarWidth.value);
@@ -839,15 +869,19 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event): Promise<void> {
-  await openWorkspaceContextMenu(
-    event,
-    workspace,
-    workspaceAttributes,
-    eventDistributor.value,
-    informationManager.value,
-    storageManager,
-    true,
-  );
+  if (workspace.isArchived) {
+    await openArchivedWorkspaceContextMenu(event, workspace, eventDistributor.value, informationManager.value, true);
+  } else {
+    await openWorkspaceContextMenu(
+      event,
+      workspace,
+      workspaceAttributes,
+      eventDistributor.value,
+      informationManager.value,
+      storageManager,
+      true,
+    );
+  }
 }
 
 async function onOrganizationMenuVisibilityChanged(visible: boolean): Promise<void> {

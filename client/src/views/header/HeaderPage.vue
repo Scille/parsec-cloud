@@ -6,6 +6,16 @@
       v-if="showHeader"
       id="connected-header"
     >
+      <ion-text
+        v-if="isSmallDisplay && isArchived"
+        class="header-archived button-large"
+      >
+        <ion-icon
+          :icon="archive"
+          class="header-archived__icon"
+        />
+        {{ $msTranslate('WorkspacesPage.archiveWorkspace.isArchived') }}
+      </ion-text>
       <ion-toolbar
         class="topbar"
         :class="currentRouteIs(Routes.History) ? 'topbar-history' : ''"
@@ -26,7 +36,7 @@
           <div
             class="topbar-left-content"
             ref="backBlock"
-            v-if="hasHistory() && !currentRouteIs(Routes.Workspaces)"
+            v-if="hasHistory() && !currentRouteIs(Routes.Workspaces) && !currentRouteIs(Routes.Archived)"
           >
             <header-back-button
               :short="currentRouteIsFileRoute()"
@@ -35,7 +45,7 @@
           </div>
 
           <div
-            v-if="!currentRouteIsFileRoute()"
+            v-if="!currentRouteIsFileRoute() && !(currentRouteIs(Routes.Archived) && isSmallDisplay)"
             class="topbar-left-text"
           >
             <ion-label
@@ -54,7 +64,7 @@
 
           <div
             class="topbar-left__breadcrumb"
-            v-if="(currentRouteIsFileRoute() && isLargeDisplay) || (!currentRouteIs(Routes.Workspaces) && isSmallDisplay)"
+            v-if="currentRouteIs(Routes.Documents) || (currentRouteIs(Routes.Workspaces) && isLargeDisplay)"
           >
             <header-breadcrumbs
               :workspace-name="workspaceName"
@@ -66,11 +76,22 @@
           </div>
 
           <div
-            v-if="currentRouteIs(Routes.Workspaces) && isSmallDisplay && userInfo"
+            v-if="(currentRouteIs(Routes.Workspaces) || currentRouteIs(Routes.Archived)) && isSmallDisplay && userInfo"
             class="topbar-left-workspaces-mobile"
           >
             <ion-text class="topbar-left-workspaces-mobile__orga body">{{ userInfo.organizationId }}</ion-text>
-            <ion-text class="topbar-left-workspaces-mobile__title title-h2">{{ $msTranslate('HeaderPage.titles.workspaces') }}</ion-text>
+            <div
+              class="topbar-left-workspaces-mobile-dropdown"
+              @click="openWorkspacesSwitchModal"
+            >
+              <ion-text class="topbar-left-workspaces-mobile-dropdown__title title-h2">
+                {{ $msTranslate(currentRouteIs(Routes.Archived) ? 'HeaderPage.titles.archived' : 'HeaderPage.titles.workspaces') }}
+              </ion-text>
+              <ion-icon
+                :icon="chevronDown"
+                class="topbar-left-workspaces-mobile-dropdown__icon"
+              />
+            </div>
           </div>
         </div>
 
@@ -83,9 +104,13 @@
             class="topbar-right-buttons"
             v-if="!currentRouteIs(Routes.History) && !currentRouteIs(Routes.MyProfile) && !currentRouteIs(Routes.Invitations)"
           >
+            <!-- eslint-disable vue/html-indent -->
             <invitations-button
               v-if="
-                (!currentRouteIs(Routes.Invitations) && isLargeDisplay) || currentRouteIs(Routes.Workspaces) || currentRouteIs(Routes.Users)
+                (!currentRouteIs(Routes.Invitations) && isLargeDisplay) ||
+                currentRouteIs(Routes.Workspaces) ||
+                currentRouteIs(Routes.Archived) ||
+                currentRouteIs(Routes.Users)
               "
             />
             <ion-button
@@ -94,7 +119,7 @@
               id="trigger-contextual-menu-button"
               @click="openContextualMenu($event)"
               ref="contextualMenuButton"
-              v-if="!currentRouteIs(Routes.Workspaces) && isSmallDisplay"
+              v-if="!currentRouteIs(Routes.Workspaces) && !currentRouteIs(Routes.Archived) && isSmallDisplay"
             >
               <ion-icon :icon="ellipsisHorizontal" />
             </ion-button>
@@ -136,8 +161,9 @@
           />
         </ion-buttons>
       </ion-toolbar>
+
       <div
-        v-if="!currentRouteIs(Routes.Invitations) && !currentRouteIs(Routes.History) && showSecurityChecklistSmallDisplay"
+        v-if="showSecurityChecklistSmallDisplay"
         id="trigger-checklist-button"
         class="checklist-security-container"
         @click="openSecurityWarningsModal()"
@@ -161,7 +187,12 @@
             :icon="checkmarkCircle"
           />
           <ion-icon
-            v-if="userInfo && userInfo.currentProfile !== UserProfile.Outsider && securityWarnings.soloOwnerWorkspaces.length === 0"
+            v-if="
+              userInfo &&
+              userInfo.currentProfile !== UserProfile.Outsider &&
+              securityWarnings.soloOwnerWorkspaces.length === 0 &&
+              securityWarnings.needsSecondOwner
+            "
             class="checklist-security__icon"
             :icon="checkmarkCircle"
           />
@@ -188,7 +219,7 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile } from '@/parsec';
+import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceInfo, getWorkspaceName, isMobile } from '@/parsec';
 import {
   ProfilePages,
   Routes,
@@ -220,6 +251,7 @@ import useSidebarMenu from '@/services/sidebarMenu';
 import NotificationCenterModal from '@/views/header/NotificationCenterModal.vue';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
+import WorkspaceSwitchModal from '@/views/header/WorkspaceSwitchModal.vue';
 import { openSettingsModal } from '@/views/settings';
 import {
   IonButton,
@@ -235,8 +267,8 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-import { checkmarkCircle, ellipseOutline, ellipsisHorizontal, home, notifications, search } from 'ionicons/icons';
-import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
+import { archive, checkmarkCircle, chevronDown, ellipseOutline, ellipsisHorizontal, home, notifications, search } from 'ionicons/icons';
+import { MsImage, MsModalResult, SidebarToggle, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -279,7 +311,26 @@ const breadcrumbsWidth = ref(0);
 const backBlockRef = useTemplateRef('backBlock');
 const topbarLeftRef = useTemplateRef('topbarLeft');
 const showSecurityChecklistSmallDisplay = computed(() => {
-  return isSmallDisplay.value && securityWarningsCount.value > 0 && securityWarnings.value;
+  return (
+    !currentRouteIs(Routes.Invitations) &&
+    !currentRouteIs(Routes.History) &&
+    !currentRouteIs(Routes.Archived) &&
+    isSmallDisplay.value &&
+    securityWarningsCount.value > 0 &&
+    securityWarnings.value &&
+    !isArchived.value
+  );
+});
+
+const isArchived = asyncComputed(async (): Promise<boolean> => {
+  const workspaceHandle = getWorkspaceHandle();
+  if (workspaceHandle) {
+    const wInfo = await getWorkspaceInfo(workspaceHandle);
+    if (wInfo.ok && wInfo.value.isArchived) {
+      return true;
+    }
+  }
+  return false;
 });
 
 const routeTitle = computed((): Translatable => {
@@ -298,6 +349,8 @@ const routeTitle = computed((): Translatable => {
       return 'HeaderPage.titles.myProfile';
     case Routes.History:
       return 'HeaderPage.titles.history';
+    case Routes.Archived:
+      return 'HeaderPage.titles.archived';
     case null:
       return '';
   }
@@ -352,8 +405,9 @@ async function updateRoute(): Promise<void> {
     const finalPath: RouterPathNode[] = [];
     finalPath.push({
       id: 0,
-      icon: home,
-      route: Routes.Workspaces,
+      icon: isArchived.value ? archive : home,
+      title: isArchived.value ? 'HeaderPage.titles.archived' : '',
+      route: isArchived.value ? Routes.Archived : Routes.Workspaces,
       params: {},
     });
 
@@ -364,7 +418,7 @@ async function updateRoute(): Promise<void> {
       display: workspaceName.value,
       route: Routes.Documents,
       popoverIcon: home,
-      query: { documentPath: '/' },
+      query: { documentPath: '/', workspaceHandle: workspaceHandle },
       params: getCurrentRouteParams(),
     });
     for (let i = 0; i < workspacePath.length; i++) {
@@ -373,7 +427,7 @@ async function updateRoute(): Promise<void> {
         id: i + 2,
         display: workspacePath[i],
         route: Routes.Documents,
-        query: { documentPath: `/${rebuildPath.join('/')}` },
+        query: { documentPath: `/${rebuildPath.join('/')}`, workspaceHandle: workspaceHandle },
         params: getCurrentRouteParams(),
       });
     }
@@ -407,7 +461,14 @@ onMounted(async () => {
   await updateRoute();
 
   eventDistributorCbId = await eventDistributor.value.registerCallback(
-    [Events.WorkspaceCreated, Events.MenuAction, Events.WorkspaceRoleUpdate, Events.DeviceCreated, Events.WorkspaceUpdated],
+    [
+      Events.WorkspaceCreated,
+      Events.MenuAction,
+      Events.WorkspaceRoleUpdate,
+      Events.DeviceCreated,
+      Events.WorkspaceUpdated,
+      Events.WorkspaceArchiveSync,
+    ],
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
         securityWarnings.value = await getSecurityWarnings();
@@ -421,7 +482,7 @@ onMounted(async () => {
         if (updateData.newRole === null || updateData.newRole === WorkspaceRole.Owner) {
           securityWarnings.value = await getSecurityWarnings();
         }
-      } else if (event === Events.Online) {
+      } else if (event === Events.Online || event === Events.WorkspaceArchiveSync) {
         securityWarnings.value = await getSecurityWarnings();
       } else if (event === Events.WorkspaceUpdated) {
         await updateRoute();
@@ -523,6 +584,32 @@ async function openSecurityWarningsModal(): Promise<void> {
     }
   }
 }
+
+async function openWorkspacesSwitchModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: WorkspaceSwitchModal,
+    canDismiss: true,
+    backdropDismiss: true,
+    cssClass: 'workspace-switch-modal',
+    showBackdrop: true,
+    breakpoints: [1],
+    expandToScroll: false,
+    initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+    componentProps: {
+      currentRoute: currentRouteIs(Routes.Workspaces) ? Routes.Workspaces : Routes.Archived,
+    },
+  });
+
+  await modal.present();
+  const { data, role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role !== MsModalResult.Confirm || currentRouteIs(data)) {
+    return;
+  }
+
+  await navigateTo(data);
+}
 </script>
 
 <style scoped lang="scss">
@@ -530,6 +617,21 @@ async function openSecurityWarningsModal(): Promise<void> {
 #connected-header {
   ion-toolbar:last-of-type {
     --border-width: 0;
+  }
+}
+
+.header-archived {
+  background: var(--parsec-color-light-secondary-text);
+  color: var(--parsec-color-light-secondary-premiere);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+
+  &__icon {
+    color: var(--parsec-color-light-secondary-premiere);
+    width: 1rem;
   }
 }
 
@@ -572,6 +674,7 @@ async function openSecurityWarningsModal(): Promise<void> {
   display: flex;
   align-items: center;
   margin-right: 0.5rem;
+  overflow: hidden;
 
   @include ms.responsive-breakpoint('sm') {
     margin-right: 0 !important;
@@ -582,13 +685,29 @@ async function openSecurityWarningsModal(): Promise<void> {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    width: 100%;
+    overflow: hidden;
 
     &__orga {
       color: var(--parsec-color-light-secondary-grey);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     &__title {
       color: var(--parsec-color-light-primary-800);
+    }
+
+    &-dropdown {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      cursor: pointer;
+
+      &__icon {
+        color: var(--parsec-color-light-secondary-grey);
+      }
     }
   }
 
@@ -710,60 +829,6 @@ async function openSecurityWarningsModal(): Promise<void> {
         }
       }
     }
-  }
-}
-
-.topbar-left {
-  display: flex;
-  align-items: center;
-  margin-right: 0.5rem;
-  overflow: hidden;
-
-  @include ms.responsive-breakpoint('sm') {
-    gap: 0.5rem;
-  }
-
-  &-workspaces-mobile {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    width: 100%;
-    overflow: hidden;
-
-    &__orga {
-      color: var(--parsec-color-light-secondary-grey);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    &__title {
-      color: var(--parsec-color-light-primary-800);
-    }
-  }
-
-  &-text {
-    width: 100%;
-    color: var(--parsec-color-light-primary-800);
-    text-align: center;
-
-    .align-left {
-      display: flex;
-      justify-content: start;
-      align-items: center;
-      margin-inline: 1.5rem;
-    }
-
-    .align-center {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-    }
-  }
-
-  &__breadcrumb {
-    display: flex;
   }
 }
 

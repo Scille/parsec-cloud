@@ -12,6 +12,8 @@ enum WorkspaceAction {
   Mount = 'workspace-mount',
   UnMount = 'workspace-unmount',
   Favorite = 'workspace-favorite',
+  Archive = 'workspace-archive',
+  Restore = 'workspace-restore',
 }
 
 enum WorkspaceMenu {

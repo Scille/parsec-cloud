@@ -311,10 +311,11 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await expect(popover).toBeVisible();
       await expect(popover.getByRole('group')).toHaveCount(3);
       await expect(popover.getByRole('listitem')).toHaveText([
-        'Manage workspace',
+        'Workspace management',
         'Rename',
         'History',
         'Hide this workspace',
+        'Archive this workspace',
         'Collaboration',
         'Copy link',
         'Sharing and roles',
@@ -329,6 +330,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Rename',
         'History',
         'Hide this workspace',
+        'Archive this workspace',
         'Copy link',
         'Sharing and roles',
         'Add as starred',
@@ -366,10 +368,11 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await expect(popover).toBeVisible();
       await expect(popover.getByRole('group')).toHaveCount(3);
       await expect(popover.getByRole('listitem')).toHaveText([
-        'Manage workspace',
+        'Workspace management',
         'Rename',
         'History',
         'Show this workspace',
+        'Archive this workspace',
         'Collaboration',
         'Copy link',
         'Sharing and roles',
@@ -384,6 +387,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Rename',
         'History',
         'Show this workspace',
+        'Archive this workspace',
         'Copy link',
         'Sharing and roles',
         'Add as starred',

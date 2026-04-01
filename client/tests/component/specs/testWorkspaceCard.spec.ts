@@ -64,6 +64,7 @@ describe('Workspace Card', () => {
     isStarted: false,
     isBootstrapped: true,
     archivingConfiguration: { tag: RealmArchivingConfigurationTag.Available },
+    isArchived: false,
     mountpoints: [[42, '/']],
     handle: 1,
   };

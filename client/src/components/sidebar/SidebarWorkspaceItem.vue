@@ -11,8 +11,13 @@
   >
     <div class="sidebar-item-workspace">
       <ion-icon
-        v-if="isHidden"
+        v-if="isHidden && !workspace.isArchived"
         :icon="eyeOff"
+        class="sidebar-item-workspace__hide"
+      />
+      <ion-icon
+        v-if="workspace.isArchived"
+        :icon="archive"
         class="sidebar-item-workspace__hide"
       />
       <ion-text
@@ -35,7 +40,7 @@
 import { WorkspaceInfo } from '@/parsec';
 import { currentRouteIsWorkspaceRoute } from '@/router';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
-import { ellipsisHorizontal, eyeOff } from 'ionicons/icons';
+import { archive, ellipsisHorizontal, eyeOff } from 'ionicons/icons';
 
 defineProps<{
   workspace: WorkspaceInfo;
