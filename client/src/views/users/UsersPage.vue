@@ -39,12 +39,11 @@
           />
           <ms-sorter
             :key="`${currentSortProperty}-${currentSortOrder}`"
-            :label="'UsersPage.sort.byName'"
             :options="msSorterOptions"
             :default-option="currentSortProperty"
             :sorter-labels="msSorterLabels"
             :sort-by-asc="currentSortOrder"
-            @change="onSortChange"
+            @change="onSortChange($event.option.key, $event.sortByAsc)"
           />
           <ms-grid-list-toggle
             v-model="displayView"
@@ -88,12 +87,11 @@
               />
               <ms-sorter
                 :key="`${currentSortProperty}-${currentSortOrder}`"
-                :label="'UsersPage.sort.byName'"
                 :options="msSorterOptions"
                 :default-option="currentSortProperty"
                 :sorter-labels="msSorterLabels"
                 :sort-by-asc="currentSortOrder"
-                @change="onSortChange"
+                @change="onSortChange($event.option.key, $event.sortByAsc)"
                 class="mobile-filterss-buttons__sorter"
               />
             </div>
@@ -106,21 +104,22 @@
             />
           </div>
           <div v-if="displayView === DisplayState.List">
-            <!-- prettier-ignore -->
             <user-list-display
-              :users="(users as UserCollection)"
+              :users="users"
               @menu-click="openUserContextMenu"
               @checkbox-click="selectionEnabled = users.hasSelected()"
               :selection-enabled="selectionEnabled"
+              :sort-by="currentSortProperty"
+              :sort-ascending="currentSortOrder"
+              @sort-update="onSortChange"
             />
           </div>
           <div
             v-else
             class="users-container-grid"
           >
-            <!-- prettier-ignore -->
             <user-grid-display
-              :users="(users as UserCollection)"
+              :users="users"
               @menu-click="openUserContextMenu"
               @checkbox-click="selectionEnabled = users.hasSelected()"
               :selection-enabled="selectionEnabled"
@@ -180,7 +179,6 @@ import {
   MsOptions,
   MsSearchInput,
   MsSorter,
-  MsSorterChangeEvent,
   NoActiveUser,
   askQuestion,
   useWindowSize,
@@ -282,6 +280,7 @@ const ALL_SORT_OPTIONS = [
   { label: 'UsersPage.sort.byJoined', key: SortProperty.JoinedDate },
   { label: 'UsersPage.sort.byProfile', key: SortProperty.Profile },
   { label: 'UsersPage.sort.byStatus', key: SortProperty.Status },
+  { label: 'UsersPage.sort.byEmail', key: SortProperty.Email },
 ];
 
 const msSorterOptions = ref<MsOptions>(new MsOptions(ALL_SORT_OPTIONS));
@@ -291,9 +290,9 @@ const msSorterLabels = {
   desc: 'UsersPage.sort.desc',
 };
 
-async function onSortChange(event: MsSorterChangeEvent): Promise<void> {
-  currentSortProperty.value = event.option.key;
-  currentSortOrder.value = event.sortByAsc;
+async function onSortChange(property: SortProperty, ascending: boolean): Promise<void> {
+  currentSortProperty.value = property;
+  currentSortOrder.value = ascending;
   users.value.sort(currentSortProperty.value, currentSortOrder.value);
   await storeComponentData();
 }

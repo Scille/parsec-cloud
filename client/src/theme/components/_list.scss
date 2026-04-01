@@ -85,6 +85,14 @@
       color: var(--parsec-color-light-secondary-text);
     }
   }
+
+  &-sorted {
+    color: var(--parsec-color-light-secondary-soft-text);
+
+    ion-icon {
+      display: block;
+    }
+  }
 }
 
 .workspace-list-item-content > [class^='workspace-'],
@@ -100,6 +108,56 @@
 }
 
 // ------- File & User -------
+.files-container-list,
+.users-container-list {
+  .header-label-selected,
+  .header-label-name,
+  .header-label-updated-by,
+  .header-label-last-update,
+  .header-label-creation-date,
+  .header-label-join-date,
+  .header-label-profile,
+  .header-label-email,
+  .header-label-size {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--parsec-color-light-secondary-soft-text);
+
+      ion-icon {
+        display: block;
+      }
+    }
+
+    &__text {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    &__sort-icon {
+      display: none;
+      flex-shrink: 0;
+      font-size: 0.875rem;
+    }
+
+    &-sorted {
+      color: var(--parsec-color-light-secondary-soft-text);
+
+      ion-icon {
+        display: block;
+      }
+    }
+  }
+}
+
 .file-options,
 .user-options {
   display: flex;
@@ -167,54 +225,6 @@
     display: flex;
     width: 100%;
     padding: 0;
-  }
-
-  .header-label-selected,
-  .header-label-name,
-  .header-label-updated-by,
-  .header-label-last-update,
-  .header-label-creation-date,
-  .header-label-size {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    padding: 0.5rem 1rem;
-
-    // "Updated by" column is not sortable
-    &:not(.header-label-updated-by) {
-      cursor: pointer;
-
-      &:hover {
-        color: var(--parsec-color-light-secondary-soft-text);
-
-        ion-icon {
-          display: block;
-        }
-      }
-    }
-
-    &__text {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    &__sort-icon {
-      display: none;
-      flex-shrink: 0;
-      font-size: 0.875rem;
-    }
-
-    &-sorted {
-      color: var(--parsec-color-light-secondary-soft-text);
-
-      ion-icon {
-        display: block;
-      }
-    }
   }
 
   .label-name,
@@ -348,7 +358,7 @@
   }
 
   // Set special drop zone style when dragging elements on folder
-  .files-container-list .drop-zone-active .drop-zone-dashed {
+  .files-list-container .drop-zone-active .drop-zone-dashed {
     left: 0.5rem !important;
     top: 0.25rem !important;
     right: 0.5rem !important;
@@ -484,7 +494,7 @@
     align-items: center;
   }
 
-  .label-selected,
+  .header-label-selected,
   .user-selected {
     min-width: 4rem;
     flex-grow: 0;
@@ -499,7 +509,7 @@
     }
   }
 
-  .label-name,
+  .header-label-name,
   .user-name {
     width: 100%;
     min-width: 11.25rem;
@@ -513,7 +523,7 @@
     }
   }
 
-  .label-profile:not(.user-mobile-text__profile),
+  .header-label-profile:not(.user-mobile-text__profile),
   .user-profile {
     max-width: 9.5rem;
     width: 9.5rem;
@@ -524,7 +534,7 @@
     }
   }
 
-  .label-email,
+  .header-label-email,
   .user-email {
     min-width: 12rem;
     width: 16rem;
@@ -542,7 +552,7 @@
     }
   }
 
-  .label-joined-on,
+  .header-label-join-date,
   .user-join {
     min-width: 11.25rem;
     flex-grow: 0;
@@ -552,7 +562,7 @@
     }
   }
 
-  .label-status:not(.user-mobile-text__status),
+  .header-label-status:not(.user-mobile-text__status),
   .user-status {
     flex: 0 0 8rem;
 
@@ -561,7 +571,7 @@
     }
   }
 
-  .label-space,
+  .header-label-space,
   .user-options {
     min-width: 4rem;
     flex: 1 0 4rem;

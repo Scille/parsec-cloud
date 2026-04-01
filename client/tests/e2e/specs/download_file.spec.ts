@@ -197,13 +197,13 @@ msTest.describe(() => {
     await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
     await expect(documents.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     // cspell:disable-next-line
-    await renameDocument(documents, entries.nth(0), '文件名.png');
+    await renameDocument(documents, entries.nth(1), '文件名.png');
     // cspell:disable-next-line
-    await renameDocument(documents, entries.nth(1), 'Имя файла.png');
+    await renameDocument(documents, entries.nth(0), 'Имя файла.png');
     // cspell:disable-next-line
-    await expect(entries.nth(0).locator('.file-name').locator('.label-name')).toHaveText('文件名.png');
+    await expect(entries.nth(1).locator('.file-name').locator('.label-name')).toHaveText('文件名.png');
     // cspell:disable-next-line
-    await expect(entries.nth(1).locator('.file-name').locator('.label-name')).toHaveText('Имя файла.png');
+    await expect(entries.nth(0).locator('.file-name').locator('.label-name')).toHaveText('Имя файла.png');
 
     await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1).click();
     await expect(documents).toHaveHeader(['wksp1'], true, true);

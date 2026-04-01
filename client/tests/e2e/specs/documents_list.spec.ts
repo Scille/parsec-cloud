@@ -131,21 +131,18 @@ msTest.describe(() => {
     const sorterPopoverButton = actionBar.locator('#select-popover-button');
     await expect(entries).toHaveCount(4);
 
-    let sortOrder = false;
-
     const headerNameLabel = documents.locator('.folder-list-header__label').nth(1);
     await expect(headerNameLabel).toBeVisible();
     await expect(headerNameLabel).toHaveText('Name');
     await expect(sorterPopoverButton).toHaveText('Name');
-    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', ['false', 'true'][Number(sortOrder)]);
+    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', 'true');
 
     // Folder should stay at the top
     await expect(entries.locator('.label-name')).toHaveText(['Dir_Folder', 'audio.mp3', 'image.png', 'pdfDocument.pdf']);
 
     // Revert the order
     await headerNameLabel.click();
-    sortOrder = !sortOrder;
-    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', ['false', 'true'][Number(sortOrder)]);
+    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', 'false');
     // Folder should stay at the top
     await expect(entries.locator('.label-name')).toHaveText(['Dir_Folder', 'pdfDocument.pdf', 'image.png', 'audio.mp3']);
     await expect(entries.locator('.file-size')).toHaveText(['', '76.9 KB', '6.18 KB', '40.9 KB']);
@@ -155,18 +152,17 @@ msTest.describe(() => {
     await expect(headerSizeLabel).toHaveText('Size');
     await headerSizeLabel.click();
     await expect(sorterPopoverButton).toHaveText('Size');
-    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', ['false', 'true'][Number(sortOrder)]);
+    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', 'false');
 
-    await expect(entries.locator('.label-name')).toHaveText(['Dir_Folder', 'image.png', 'audio.mp3', 'pdfDocument.pdf']);
-    await expect(entries.locator('.file-size')).toHaveText(['', '6.18 KB', '40.9 KB', '76.9 KB']);
+    await expect(entries.locator('.label-name')).toHaveText(['Dir_Folder', 'pdfDocument.pdf', 'audio.mp3', 'image.png']);
+    await expect(entries.locator('.file-size')).toHaveText(['', '76.9 KB', '40.9 KB', '6.18 KB']);
 
     // Revert the order
     await headerSizeLabel.click();
-    sortOrder = !sortOrder;
-    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', ['false', 'true'][Number(sortOrder)]);
+    await expect(sorterPopoverButton).toHaveAttribute('sort-ascending', 'true');
     // Folder should stay at the top
-    await expect(entries.locator('.label-name')).toHaveText(['Dir_Folder', 'pdfDocument.pdf', 'audio.mp3', 'image.png']);
-    await expect(entries.locator('.file-size')).toHaveText(['', '76.9 KB', '40.9 KB', '6.18 KB']);
+    await expect(entries.locator('.label-name')).toHaveText(['Dir_Folder', 'image.png', 'audio.mp3', 'pdfDocument.pdf']);
+    await expect(entries.locator('.file-size')).toHaveText(['', '6.18 KB', '40.9 KB', '76.9 KB']);
   });
 
   msTest.skip('Select all documents', async ({ documents }, testInfo: TestInfo) => {
