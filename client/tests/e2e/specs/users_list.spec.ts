@@ -406,8 +406,8 @@ msTest('User sort popover default state', async ({ usersPage }) => {
   await expect(usersPage.locator('.sorter-popover')).toBeVisible();
   const popover = usersPage.locator('.sorter-popover');
   const items = popover.locator('.sorter-container').getByRole('listitem');
-  await expect(items).toHaveCount(4);
-  await expect(items).toHaveText(['Ascending', 'Name', 'Joining date', 'Profile']);
+  await expect(items).toHaveCount(5);
+  await expect(items).toHaveText(['Ascending', 'Name', 'Joining date', 'Profile', 'Email']);
   for (const [index, item] of (await items.all()).entries()) {
     if (index === 3) {
       await expect(item).toHaveTheClass('selected');
@@ -417,12 +417,14 @@ msTest('User sort popover default state', async ({ usersPage }) => {
   }
 });
 
-msTest('Sort users list', async ({ usersPage }) => {
+msTest('Sort users list with popover', async ({ usersPage }) => {
   const usersList = usersPage.locator('#users-page-user-list');
   const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
+  const headers = usersPage.locator('.user-list-header').locator('.user-list-header__label');
 
   await sortBy(sortButton, 'Name');
   await expect(sortButton).toHaveText('Name');
+  await expect(headers.nth(1).locator('ion-icon')).toBeVisible();
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
     USERS.sort((u1, u2) => {
       if (u1.currentUser) {
@@ -430,7 +432,7 @@ msTest('Sort users list', async ({ usersPage }) => {
       } else if (u2.currentUser) {
         return 1;
       } else {
-        return u1.name.localeCompare(u2.name);
+        return u2.name.localeCompare(u1.name);
       }
     }).map((u) => u.name),
   );
@@ -443,7 +445,43 @@ msTest('Sort users list', async ({ usersPage }) => {
       } else if (u2.currentUser) {
         return 1;
       } else {
+        return u1.name.localeCompare(u2.name);
+      }
+    }).map((u) => u.name),
+  );
+});
+
+msTest('Sort users list with header', async ({ usersPage }) => {
+  const usersList = usersPage.locator('#users-page-user-list');
+  const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
+  const headers = usersPage.locator('.user-list-header').locator('.user-list-header__label');
+
+  await expect(headers).toHaveText(['', 'Name ', 'Profile ', 'Email ', 'Joined On ', 'Status', '']);
+
+  await headers.nth(1).click();
+  await expect(headers.nth(1).locator('ion-icon')).toBeVisible();
+  await expect(sortButton).toHaveText('Name');
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.sort((u1, u2) => {
+      if (u1.currentUser) {
+        return -1;
+      } else if (u2.currentUser) {
+        return 1;
+      } else {
         return u2.name.localeCompare(u1.name);
+      }
+    }).map((u) => u.name),
+  );
+
+  await headers.nth(1).click();
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.sort((u1, u2) => {
+      if (u1.currentUser) {
+        return -1;
+      } else if (u2.currentUser) {
+        return 1;
+      } else {
+        return u1.name.localeCompare(u2.name);
       }
     }).map((u) => u.name),
   );
