@@ -14,10 +14,13 @@ import {
   getWorkspaceInfo,
   isDesktop,
   mountWorkspace,
+  archiveWorkspace as parsecArchiveWorkspace,
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
+  restoreWorkspace as parsecRestoreWorkspace,
   unmountWorkspace,
 } from '@/parsec';
+import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -147,6 +150,7 @@ export async function openWorkspaceContextMenu(
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
         isHidden: workspaceAttributes.isHidden(workspace.id),
+        isArchived: workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived,
       },
     });
 
@@ -166,6 +170,7 @@ export async function openWorkspaceContextMenu(
         clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
         isHidden: workspaceAttributes.isHidden(workspace.id),
+        isArchived: workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived,
       },
     });
 
@@ -213,9 +218,59 @@ export async function openWorkspaceContextMenu(
           await hideWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
         }
         break;
+      case WorkspaceAction.Archive:
+        await archiveWorkspace(workspace, informationManager);
+        break;
+      case WorkspaceAction.Restore:
+        await restoreWorkspace(workspace, informationManager);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
+  }
+}
+
+async function archiveWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
+  const answer = await askQuestion(
+    'WorkspacesPage.archiveWorkspace.title',
+    { key: 'WorkspacesPage.archiveWorkspace.subtitle', data: { workspace: workspace.currentName } },
+    { yesText: 'WorkspacesPage.archiveWorkspace.yes', noText: 'WorkspacesPage.archiveWorkspace.no' },
+  );
+  if (answer === Answer.No) {
+    return;
+  }
+
+  const result = await parsecArchiveWorkspace(workspace);
+  informationManager.present(
+    new Information({
+      message: {
+        key: result.ok ? 'WorkspacesPage.archiveWorkspace.archive.success' : 'WorkspacesPage.archiveWorkspace.archive.fail',
+        data: { workspace: workspace.currentName },
+      },
+      level: result.ok ? InformationLevel.Success : InformationLevel.Error,
+    }),
+    PresentationMode.Toast,
+  );
+  if (!result.ok) {
+    window.electronAPI.log('error', `Error while archiving workspace: ${result.error}`);
+  }
+}
+
+async function restoreWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
+  const result = await parsecRestoreWorkspace(workspace);
+
+  informationManager.present(
+    new Information({
+      message: {
+        key: result.ok ? 'WorkspacesPage.archiveWorkspace.restore.success' : 'WorkspacesPage.archiveWorkspace.restore.fail',
+        data: { workspace: workspace.currentName },
+      },
+      level: result.ok ? InformationLevel.Success : InformationLevel.Error,
+    }),
+    PresentationMode.Toast,
+  );
+  if (!result.ok) {
+    window.electronAPI.log('error', `Error while restoring workspace: ${result.error}`);
   }
 }
 

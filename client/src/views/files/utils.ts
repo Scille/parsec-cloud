@@ -69,7 +69,7 @@ export async function openEntryContextMenu(
   event: Event,
   entry: EntryModel,
   selectedEntries: EntryModel[],
-  ownRole: WorkspaceRole,
+  readOnly: boolean,
   isLargeDisplay: boolean,
   navigateFromAnywhere?: boolean,
 ): Promise<{ action: FileAction } | undefined> {
@@ -86,7 +86,7 @@ export async function openEntryContextMenu(
       dismissOnSelect: true,
       alignment: 'start',
       componentProps: {
-        role: ownRole,
+        readOnly: readOnly,
         multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
         isFile: entry.isFile(),
         isEditable: isFileEditable(entry.name),
@@ -106,7 +106,7 @@ export async function openEntryContextMenu(
       expandToScroll: false,
       showBackdrop: true,
       componentProps: {
-        role: ownRole,
+        readOnly: readOnly,
         multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
         isFile: entry.isFile(),
         isEditable: isFileEditable(entry.name),

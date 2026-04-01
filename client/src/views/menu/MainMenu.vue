@@ -260,6 +260,23 @@
                 {{ $msTranslate('SideMenu.hidden') }}
               </span>
             </ion-text>
+
+            <!-- Archived -->
+            <ion-text
+              @click="navigateTo(Routes.Archived)"
+              :class="{ active: currentRouteIs(Routes.Archived) }"
+              class="sidebar-content-organization-button button-medium"
+              id="sidebar-archived-workspaces"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="archive"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.archived') }}
+              </span>
+            </ion-text>
           </div>
         </sidebar-menu-list>
 
@@ -362,6 +379,7 @@ import {
   WorkspaceInfo,
   WorkspaceRole,
 } from '@/parsec';
+import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import {
   currentRouteIs,
   currentRouteIsWorkspaceRoute,
@@ -419,6 +437,7 @@ import {
 } from '@ionic/vue';
 import {
   addCircle,
+  archive,
   chevronForward,
   cloudUpload,
   document as documentIcon,
@@ -481,6 +500,15 @@ const securityWarningsCount = computed(() => {
 });
 
 const { isSmallDisplay, windowWidth } = useWindowSize();
+const isReadOnly = computed(() => {
+  if (currentWorkspace.value) {
+    return (
+      currentWorkspace.value.currentSelfRole === WorkspaceRole.Reader ||
+      currentWorkspace.value.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived
+    );
+  }
+  return false;
+});
 const actions = ref<Array<Array<MenuAction>>>([]);
 
 const MIN_WIDTH = 150;
@@ -577,7 +605,7 @@ async function updateDividerPosition(value?: number): Promise<void> {
 }
 
 function setActions(): void {
-  if (currentRouteIs(Routes.Documents) && currentWorkspace.value && currentWorkspace.value.currentSelfRole !== WorkspaceRole.Reader) {
+  if (currentRouteIs(Routes.Documents) && !isReadOnly.value) {
     actions.value = [
       [{ action: FolderGlobalAction.CreateFolder, label: 'FoldersPage.createFolder', icon: folderOpen }],
       [

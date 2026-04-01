@@ -188,7 +188,8 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile } from '@/parsec';
+import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile, listWorkspaces } from '@/parsec';
+import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import {
   ProfilePages,
   Routes,
@@ -236,7 +237,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { checkmarkCircle, ellipseOutline, ellipsisHorizontal, home, notifications, search } from 'ionicons/icons';
-import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
+import { MsImage, MsModalResult, SidebarToggle, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -282,6 +283,18 @@ const showSecurityChecklistSmallDisplay = computed(() => {
   return isSmallDisplay.value && securityWarningsCount.value > 0 && securityWarnings.value;
 });
 
+const isArchived = asyncComputed(async (): Promise<boolean> => {
+  const workspaceHandle = getWorkspaceHandle();
+  const workspacesResult = await listWorkspaces();
+  if (workspacesResult.ok && workspaceHandle) {
+    const wInfo = workspacesResult.value.find((wi) => wi.handle === workspaceHandle);
+    if (wInfo) {
+      return wInfo.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived;
+    }
+  }
+  return false;
+});
+
 const routeTitle = computed((): Translatable => {
   switch (getCurrentRouteName()) {
     case Routes.Users:
@@ -298,6 +311,8 @@ const routeTitle = computed((): Translatable => {
       return 'HeaderPage.titles.myProfile';
     case Routes.History:
       return 'HeaderPage.titles.history';
+    case Routes.Archived:
+      return 'HeaderPage.titles.archived';
     case null:
       return '';
   }
@@ -350,12 +365,14 @@ async function updateRoute(): Promise<void> {
     }
 
     const finalPath: RouterPathNode[] = [];
-    finalPath.push({
-      id: 0,
-      icon: home,
-      route: Routes.Workspaces,
-      params: {},
-    });
+    if (!isArchived.value) {
+      finalPath.push({
+        id: 0,
+        icon: home,
+        route: Routes.Workspaces,
+        params: {},
+      });
+    }
 
     const rebuildPath: string[] = [];
     const workspacePath = await Path.parse(getDocumentPath());

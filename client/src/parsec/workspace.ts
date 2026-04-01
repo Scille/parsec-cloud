@@ -32,7 +32,14 @@ import {
   WorkspaceRole,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { MountpointUnmountError, ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceStopError, libparsec } from '@/plugins/libparsec';
+import {
+  ClientArchiveWorkspaceError,
+  MountpointUnmountError,
+  ParsecWorkspacePathAddrAndRedirectionURL,
+  RealmArchivingConfigurationTag,
+  WorkspaceStopError,
+  libparsec,
+} from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
@@ -264,6 +271,29 @@ export async function unmountWorkspace(workspace: WorkspaceInfo | StartedWorkspa
   }
 
   return { ok: true, value: null };
+}
+
+export async function archiveWorkspace(workspace: WorkspaceInfo): Promise<Result<null, ClientArchiveWorkspaceError>> {
+  console.log(`Archive ${workspace.currentName}`);
+  const handle = getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientArchiveWorkspaceError>();
+  }
+  // const clientResult = await getClientInfo();
+  // if (clientResult.ok) {
+  //   const deletionDate = DateTime.now().plus({ milliseconds: clientResult.value.serverOrganizationConfig.minimumArchivingPeriod as unknown as number });
+  //   return await libparsec.clientArchiveWorkspace(handle, workspace.id, { tag: RealmArchivingConfigurationTag.DeletionPlanned, deletionDate: deletionDate });
+  // }
+  return await libparsec.clientArchiveWorkspace(handle, workspace.id, { tag: RealmArchivingConfigurationTag.Archived });
+}
+
+export async function restoreWorkspace(workspace: WorkspaceInfo): Promise<Result<null, ClientArchiveWorkspaceError>> {
+  console.log(`Restore ${workspace.currentName}`);
+  const handle = getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientArchiveWorkspaceError>();
+  }
+  return await libparsec.clientArchiveWorkspace(handle, workspace.id, { tag: RealmArchivingConfigurationTag.Available });
 }
 
 export async function getPathLink(

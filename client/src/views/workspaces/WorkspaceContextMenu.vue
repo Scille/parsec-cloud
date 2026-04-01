@@ -37,7 +37,10 @@
         </ion-item>
       </ion-item-group>
 
-      <ion-item-group class="list-group">
+      <ion-item-group
+        v-if="!isArchived"
+        class="list-group"
+      >
         <ion-item class="list-group-title button-small">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleManage') }}
@@ -46,7 +49,7 @@
 
         <ion-item
           button
-          v-show="clientRole === WorkspaceRole.Owner"
+          v-show="clientRole === WorkspaceRole.Owner && !isArchived"
           @click="onClick(WorkspaceAction.Rename)"
           class="ion-no-padding list-group-item"
         >
@@ -132,8 +135,24 @@
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionShow') }}
           </ion-text>
         </ion-item>
+        <ion-item
+          button
+          @click="onClick(WorkspaceAction.Archive)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="archive"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionArchive') }}
+          </ion-text>
+        </ion-item>
       </ion-item-group>
-      <ion-item-group class="list-group">
+      <ion-item-group
+        v-if="!isArchived"
+        class="list-group"
+      >
         <ion-item class="list-group-title button-small">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleCollaboration') }}
@@ -168,7 +187,10 @@
           </ion-text>
         </ion-item>
       </ion-item-group>
-      <ion-item-group class="list-group">
+      <ion-item-group
+        v-if="!isArchived"
+        class="list-group"
+      >
         <ion-item class="list-group-title button-small">
           <ion-text class="list-group-title__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleMisc') }}
@@ -194,6 +216,37 @@
           </ion-text>
         </ion-item>
       </ion-item-group>
+      <ion-item-group
+        v-if="isArchived"
+        class="list-group"
+      >
+        <ion-item
+          button
+          @click="onClick(WorkspaceAction.Restore)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="reload"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionRestore') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          @click="onClick(WorkspaceAction.Restore)"
+          class="ion-no-padding list-group-item item-danger"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="trash"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDelete') }}
+          </ion-text>
+        </ion-item>
+      </ion-item-group>
     </ion-list>
   </ion-content>
 </template>
@@ -202,7 +255,7 @@
 import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
-import { cloudy, eye, eyeOff, informationCircle, link, open, shareSocial, star, time } from 'ionicons/icons';
+import { archive, cloudy, eye, eyeOff, informationCircle, link, open, reload, shareSocial, star, time, trash } from 'ionicons/icons';
 import { MsImage, RenameIcon } from 'megashark-lib';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
@@ -215,6 +268,7 @@ defineProps<{
   clientRole: WorkspaceRole;
   isFavorite: boolean;
   isHidden: boolean;
+  isArchived: boolean;
 }>();
 </script>
 

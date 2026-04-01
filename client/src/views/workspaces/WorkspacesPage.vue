@@ -186,6 +186,7 @@
               :client-profile="clientProfile"
               :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
               :is-hidden="workspaceAttributes.isHidden(workspace.id)"
+              :is-archived="workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived"
               @click="onWorkspaceClick"
               @favorite-click="onWorkspaceFavoriteClick"
               @menu-click="onOpenWorkspaceContextMenu"
@@ -204,6 +205,7 @@
             :client-profile="clientProfile"
             :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
             :is-hidden="workspaceAttributes.isHidden(workspace.id)"
+            :is-archived="workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived"
             @click="onWorkspaceClick"
             @favorite-click="onWorkspaceFavoriteClick"
             @menu-click="onOpenWorkspaceContextMenu"
@@ -252,6 +254,7 @@ import {
   listWorkspaces as parsecListWorkspaces,
   mountWorkspace as parsecMountWorkspace,
 } from '@/parsec';
+import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -546,7 +549,11 @@ const filteredWorkspaces = computed(() => {
   const filter = searchFilterContent.value.toLocaleLowerCase();
   return Array.from(workspaceList.value)
     .filter((workspace) => {
-      if (!workspace.currentName.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.currentSelfRole)) {
+      if (
+        !workspace.currentName.toLocaleLowerCase().includes(filter) ||
+        isWorkspaceFiltered(workspace.currentSelfRole) ||
+        workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived
+      ) {
         return false;
       }
 

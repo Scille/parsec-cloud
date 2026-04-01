@@ -15,6 +15,7 @@ export enum Routes {
   Account = 'account',
   CreateAccount = 'createAccount',
   Workspaces = 'workspaces',
+  Archived = 'archived',
   Documents = 'documents',
   Users = 'users',
   Storage = 'storage',
@@ -140,6 +141,11 @@ const routes: Array<RouteRecordRaw> = [
                         path: `/:handle(\\d+)/${Routes.Workspaces}`,
                         name: Routes.Workspaces,
                         component: () => import('@/views/workspaces/WorkspacesPage.vue'),
+                      },
+                      {
+                        path: `/:handle(\\d+)/${Routes.Archived}`,
+                        name: Routes.Archived,
+                        component: () => import('@/views/workspaces/WorkspaceArchivePage.vue'),
                       },
                       {
                         path: `/:handle(\\d+)/${Routes.Documents}`,
