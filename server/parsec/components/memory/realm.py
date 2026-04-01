@@ -942,8 +942,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         root_verify_key = org.root_verify_key
         assert root_verify_key is not None
 
-        if realm_id not in org.realms:
+        try:
+            realm = org.realms[realm_id]
+        except KeyError:
             return RealmExportDoBaseInfoBadOutcome.REALM_NOT_FOUND
+
+        if realm.is_deleted:
+            return RealmExportDoBaseInfoBadOutcome.REALM_DELETED
 
         vlob_offset_marker_upper_bound = 0
         vlobs_total_bytes = 0

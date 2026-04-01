@@ -402,6 +402,7 @@ class RealmExportDoBaseInfo:
 class RealmExportDoBaseInfoBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     REALM_NOT_FOUND = auto()
+    REALM_DELETED = auto()
     REALM_DIDNT_EXIST_AT_SNAPSHOT_TIMESTAMP = auto()
 
 
