@@ -1242,7 +1242,8 @@
             "macos": "MacOS",
             "linux": "Linux",
             "android": "Android",
-            "unknown": "Unknown"
+            "unknown": "Unknown ({label})",
+            "mobileWeb": "Mobile Web"
         },
         "sortBy": "Sort by:",
         "technicalId": "Internal ID:"
