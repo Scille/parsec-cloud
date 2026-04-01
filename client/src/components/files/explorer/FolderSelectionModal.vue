@@ -208,8 +208,8 @@ import {
   EntryStat,
   FsPath,
   Path,
-  StartedWorkspaceInfo,
   WorkspaceCreateFolderErrorTag,
+  WorkspaceInfo,
   createFolder,
   getWorkspaceInfo,
   statFolderChildren,
@@ -228,7 +228,7 @@ const pathLength = ref(0);
 const isCreatingFolder = ref(false);
 const newFolderName = ref('');
 const currentEntries: Ref<[EntryStat, boolean][]> = ref([]);
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 const breadcrumbsWidth = ref(0);

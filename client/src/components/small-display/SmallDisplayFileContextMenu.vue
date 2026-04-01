@@ -21,7 +21,7 @@
           </ion-item>
           <ion-item
             button
-            v-if="!multipleFiles && role !== WorkspaceRole.Reader && isEditable && isFile"
+            v-if="!multipleFiles && !isReadOnly && isEditable && isFile"
             @click="onClick(FileAction.Edit)"
             class="ion-no-padding list-group-item"
           >
@@ -35,7 +35,7 @@
           </ion-item>
           <ion-item
             button
-            v-if="!multipleFiles && role !== WorkspaceRole.Reader"
+            v-if="!multipleFiles && !isReadOnly"
             @click="onClick(FileAction.Rename)"
             class="ion-no-padding list-group-item"
           >
@@ -49,7 +49,7 @@
           </ion-item>
           <ion-item
             button
-            v-if="role !== WorkspaceRole.Reader"
+            v-if="!isReadOnly"
             @click="onClick(FileAction.MoveTo)"
             class="ion-no-padding list-group-item"
           >
@@ -64,7 +64,7 @@
 
           <ion-item
             button
-            v-if="role !== WorkspaceRole.Reader"
+            v-if="!isReadOnly"
             @click="onClick(FileAction.MakeACopy)"
             class="ion-no-padding list-group-item"
           >
@@ -126,7 +126,7 @@
             button
             @click="onClick(FileAction.ShowHistory)"
             class="ion-no-padding list-group-item"
-            v-show="!multipleFiles && role !== WorkspaceRole.Reader"
+            v-show="!multipleFiles && !isReadOnly"
           >
             <ion-icon
               class="list-group-item__icon"
@@ -184,7 +184,7 @@
         </ion-item-group>
         <ion-item-group
           class="list-group"
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
         >
           <ion-item
             button
@@ -207,14 +207,14 @@
 
 <script setup lang="ts">
 import FolderParentIcon from '@/assets/images/folder-parent.svg?raw';
-import { isDesktop, WorkspaceRole } from '@/parsec';
+import { isDesktop } from '@/parsec';
 import { FileAction } from '@/views/files/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonPage, IonText, modalController } from '@ionic/vue';
 import { arrowRedo, copy, create, download, eye, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
 import { EyeOpenIcon, MsImage, RenameIcon } from 'megashark-lib';
 
 defineProps<{
-  role: WorkspaceRole;
+  isReadOnly: boolean;
   multipleFiles?: boolean;
   isFile: boolean;
   isEditable?: boolean;

@@ -255,3 +255,38 @@ svg {
     gap: 1rem;
   }
 }
+
+// manage FoldersPage for archived workspace
+.folder-content.archived {
+  &::part(scroll) {
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+    box-shadow: var(--parsec-shadow-light);
+    margin: 1.5rem 1.5rem 0 !important;
+
+    @include ms.responsive-breakpoint('sm') {
+      margin: 0 !important;
+      border: 0;
+    }
+  }
+
+  &::part(background) {
+    --background: var(--parsec-color-light-secondary-background);
+  }
+
+  .toolbar {
+    margin: 0;
+    background-color: var(--parsec-color-light-secondary-white);
+    border-radius: 0;
+    padding: 0.25rem 0.75rem 0.5rem 1rem;
+  }
+
+  .scroll {
+    padding: 0;
+    background: var(--parsec-color-light-secondary-white);
+  }
+
+  .folders-container-grid {
+    padding: 1.5rem;
+  }
+}

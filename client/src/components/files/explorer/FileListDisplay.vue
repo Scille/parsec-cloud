@@ -5,7 +5,7 @@
     ref="fileDropZone"
     @files-added="$emit('filesAdded', $event)"
     :show-drop-message="true"
-    :is-reader="ownRole === WorkspaceRole.Reader"
+    :is-reader="isReader"
     @drop-as-reader="$emit('dropAsReader')"
     class="file-drop-zone"
   >
@@ -91,7 +91,7 @@
             :entry="folder"
             :own-profile="ownProfile"
             :show-checkbox="someSelected || selectionEnabled === true"
-            :is-workspace-reader="ownRole === WorkspaceRole.Reader"
+            :is-workspace-reader="isReader"
             @open-item.stop="$emit('openItem', folder, $event)"
             @menu-click="onMenuClick"
             @files-added="onFilesAdded"
@@ -128,7 +128,7 @@ import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import FileListItem from '@/components/files/explorer/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/explorer/FileListItemProcessing.vue';
 import { EntryCollection, EntryModel, FileModel, FileOperationCurrentFolder, FolderModel } from '@/components/files/types';
-import { EntryName, UserProfile, WorkspaceRole } from '@/parsec';
+import { EntryName, UserProfile } from '@/parsec';
 import { IonIcon, IonLabel, IonList, IonListHeader, IonText } from '@ionic/vue';
 import { arrowDown, arrowUp } from 'ionicons/icons';
 import { MsCheckbox, MsSorterChangeEvent, useWindowSize } from 'megashark-lib';
@@ -139,7 +139,7 @@ const props = defineProps<{
   ownProfile: UserProfile;
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;
-  ownRole: WorkspaceRole;
+  isReader: boolean;
   fileOperations: Array<FileOperationCurrentFolder>;
   selectionEnabled?: boolean;
   currentSortProperty: SortProperty;

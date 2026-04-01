@@ -215,6 +215,13 @@ async function openPopover(event: Event): Promise<void> {
       max-width: calc(v-bind(breadcrumbWidthProperty));
     }
 
+    &:nth-child(1) {
+      &::part(native) {
+        display: flex;
+        gap: 0.5rem;
+      }
+    }
+
     &::part(separator) {
       margin-inline: 0;
       color: var(--parsec-color-light-secondary-grey);
@@ -230,6 +237,10 @@ async function openPopover(event: Event): Promise<void> {
     &:hover:not(.breadcrumb-collapsed) {
       color: var(--parsec-color-light-secondary-text);
       position: relative;
+
+      .main-icon {
+        color: var(--parsec-color-light-secondary-text);
+      }
 
       &::after {
         content: '';
@@ -263,7 +274,6 @@ async function openPopover(event: Event): Promise<void> {
 
     .main-icon {
       color: var(--parsec-color-light-primary-700);
-      margin-right: 0.5rem;
     }
   }
 

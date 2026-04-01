@@ -6,6 +6,7 @@
     :class="{
       'workspace-hovered': isHovered || menuOpened,
       'workspace-card-item--hidden': isHidden,
+      'workspace-card-item--archived': workspace.isArchived,
     }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
@@ -14,6 +15,7 @@
   >
     <div class="workspace-card-content">
       <div
+        v-show="!workspace.isArchived"
         class="workspace-favorite-icon"
         :class="{
           'workspace-favorite-icon__on': isFavorite,
@@ -35,6 +37,7 @@
         <ion-text class="workspace-card-content__update subtitles-sm">
           <span v-if="false">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
           <ion-icon
+            v-if="!workspace.isArchived"
             class="cloud-overlay"
             :class="workspace.availableOffline ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
             :icon="workspace.availableOffline ? cloudDone : cloudOffline"
@@ -49,7 +52,7 @@
 
         <div
           class="workspace-hidden subtitles-sm"
-          v-if="isHidden"
+          v-if="isHidden && !workspace.isArchived"
         >
           <ion-icon
             class="cloud-overlay"
@@ -57,16 +60,28 @@
           />
           <ion-text>{{ $msTranslate('WorkspacesPage.Workspace.hidden') }}</ion-text>
         </div>
+        <ion-icon
+          v-if="workspace.isArchived"
+          class="archived-icon"
+          :icon="archive"
+        />
       </div>
     </div>
     <div class="workspace-card-bottom">
       <workspace-role-tag
+        v-if="!workspace.isArchived"
         class="workspace-card-bottom__role"
         :role="workspace.currentSelfRole"
       />
+      <ion-text
+        v-else
+        class="button-small archived-label"
+      >
+        {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
+      </ion-text>
       <div class="workspace-card-bottom__icons">
         <div
-          v-show="clientProfile !== UserProfile.Outsider"
+          v-show="clientProfile !== UserProfile.Outsider && !workspace.isArchived"
           class="icon-share-container"
           @click.stop="$emit('shareClick', workspace, $event)"
         >
@@ -94,7 +109,7 @@ import { formatFileSize } from '@/common/file';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
+import { archive, cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
 import { formatTimeSince } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -136,6 +151,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   overflow: hidden;
   padding: 0.25rem;
   transition: all 0.15s ease-in-out;
+  min-width: 14rem;
 
   @include ms.responsive-breakpoint('sm') {
     max-width: 100%;
@@ -238,21 +254,6 @@ async function onOptionsClick(event: Event): Promise<void> {
     }
   }
 
-  .workspace-hidden {
-    background: var(--parsec-color-light-secondary-white);
-    color: var(--parsec-color-light-secondary-contrast);
-    text-align: left;
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 3px 0.5rem;
-    border-radius: var(--parsec-radius-8);
-
-    ion-icon {
-      font-size: 0.875rem;
-    }
-  }
-
   &-info {
     display: flex;
     align-items: center;
@@ -320,6 +321,56 @@ async function onOptionsClick(event: Event): Promise<void> {
     &:hover {
       background: var(--parsec-color-light-secondary-premiere) !important;
     }
+  }
+
+  .workspace-hidden {
+    background: var(--parsec-color-light-secondary-white);
+    color: var(--parsec-color-light-secondary-contrast);
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 3px 0.5rem;
+    border-radius: var(--parsec-radius-8);
+
+    ion-icon {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.workspace-card-item--archived {
+  position: relative;
+
+  .archived-label {
+    color: var(--parsec-color-light-secondary-text);
+    display: flex;
+    align-items: center;
+    background-color: none;
+    padding: 0.1875rem 0.375rem;
+    color: var(--parsec-color-light-primary-600);
+  }
+
+  .archived-icon {
+    color: var(--parsec-color-light-secondary-grey);
+    opacity: 0.2;
+    position: absolute;
+    top: 0.25rem;
+    right: -1rem;
+    margin: 0 0 auto auto;
+    font-size: 4.5rem;
+  }
+
+  .workspace-card-bottom__icons {
+    padding: 0rem;
+  }
+
+  .workspace-card-content {
+    background: linear-gradient(
+      133deg,
+      var(--parsec-color-light-secondary-premiere) 2.5%,
+      var(--parsec-color-light-secondary-disabled) 96.4%
+    );
   }
 }
 </style>

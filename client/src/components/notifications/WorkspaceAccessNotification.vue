@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { getWorkspaceInfo, StartedWorkspaceInfo } from '@/parsec';
+import { getWorkspaceInfo, WorkspaceInfo } from '@/parsec';
 import { currentRouteIsWorkspaceRoute, navigateToWorkspace } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
 import { NewWorkspaceAccessData } from '@/services/informationManager';
@@ -48,7 +48,7 @@ import { arrowForward, business } from 'ionicons/icons';
 import { formatTimeSince } from 'megashark-lib';
 import { onMounted, ref, Ref } from 'vue';
 
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 
 const props = defineProps<{
   notification: Notification;

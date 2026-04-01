@@ -49,6 +49,7 @@ enum Events {
   EntryDeleted = 'entry-deleted',
   EntrySyncProgress = 'entry-sync-progress',
   WorkspaceMountpointsSync = 'workspace-mountpoints-sync',
+  WorkspaceArchiveSync = 'workspace-archive-sync',
   OpenContextMenu = 'open-context-menu',
   AsyncEnrollmentUpdated = 'async-enrollment-updated',
 }
@@ -136,6 +137,11 @@ interface OpenContextualMenuData {
   event: Event;
 }
 
+interface WorkspaceArchiveData {
+  workspaceId: WorkspaceID;
+  isArchived: boolean;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -152,7 +158,8 @@ type EventData =
   | EntryRenamedData
   | EntryDeletedData
   | WorkspaceMountpointInfo
-  | OpenContextualMenuData;
+  | OpenContextualMenuData
+  | WorkspaceArchiveData;
 
 interface Callback {
   id: string;
@@ -244,6 +251,7 @@ export {
   MenuActionData,
   OpenContextualMenuData,
   UpdateAvailabilityData,
+  WorkspaceArchiveData,
   WorkspaceCreatedData,
   WorkspaceMountpointInfo,
   WorkspaceRoleUpdateData,

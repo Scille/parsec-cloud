@@ -566,12 +566,18 @@
             "recoveryExport": "Fichier de récupération",
             "history": "Historique",
             "viewer": "Aperçu du fichier",
-            "editor": "Édition du fichier"
+            "editor": "Édition du fichier",
+            "archived": "Espaces archivés"
         },
         "previous": "Précédent",
         "invitations": {
             "title": "Aucune invitation | Une invitation | {count} invitations",
             "smallDisplayTitle": "invitation en cours | invitations en cours"
+        },
+        "workspaceSwitchModal": {
+            "actions": {
+                "confirm": "Confirmer"
+            }
         },
         "modalHeader": {
             "step": "Étape {current} sur {total}"
@@ -702,6 +708,9 @@
             "actionCopyLink": "Copier le lien",
             "actionHide": "Masquer cet espace",
             "actionShow": "Afficher cet espace",
+            "actionArchive": "Archiver cet espace",
+            "actionRestore": "Restaurer cet espace",
+            "actionDelete": "Mettre à la corbeille",
             "actionAddFavorite": "Ajouter aux favoris",
             "actionRemoveFavorite": "Supprimer des favoris"
         },
@@ -762,6 +771,7 @@
             "noRecentWorkspaces": "Vous n'avez encore consulté aucun espace de travail. Les espaces consultés récemment apparaîtront ici.",
             "noFavoriteWorkspaces": "Vous n'avez encore aucun espace de travail favori. Les espaces favoris apparaîtront ici.",
             "noHiddenWorkspaces": "Vous n'avez encore aucun espace de travail masqué. Les espaces masqués apparaîtront ici.",
+            "noArchivedWorkspaces": "Vos espaces de travail archivés seront consultables en lecture seule uniquement. Le partage ne sera plus actif tant qu'ils seront archivés. Les propriétaires d'un espace de travail archivé ont la possibilité de le restaurer.",
             "showHiddenWorkspaces": "Afficher les espaces masqués"
         },
         "showHideWorkspace": {
@@ -806,6 +816,28 @@
             "description": "Vous devez rendre cet espace de travail visible afin de pouvoir ouvrir votre fichier avec votre application par défaut.",
             "actionConfirm": "Rendre cet espace de travail visible",
             "actionCancel": "Annuler"
+        },
+        "archiveWorkspace": {
+            "title": "Archiver cet espace de travail",
+            "info": "Vos espaces de travail archivés reste consultables lecture seul pour tous les utilisateurs.",
+            "subtitle": "Vous êtes sur le point d'archiver l'espace de travail {workspace}. Il sera toujours accessible en lecture seule pour tous les utilisateurs y ayant accès. Êtes-vous sûr de vouloir continuer ?",
+            "yes": "Archiver",
+            "no": "Cancel",
+            "loading": "Chargement de vos espaces de travail archivés...",
+            "backToWorkspace": "Retour à mes espaces de travail",
+            "archive": {
+                "success": "L'espace {workspace} a bien été archivé.",
+                "fail": "Impossible d'archiver l'espace {workspace}."
+            },
+            "restore": {
+                "success": "L'espace {workspace} a bien été restauré.",
+                "fail": "Impossible de restaurer l'espace {workspace}."
+            },
+            "success": "L'espace {workspace} a bien été archivé.",
+            "restoreSuccess": "L'espace {workspace} a bien été restauré.",
+            "readOnly": "Lecture seule",
+            "count": "1 espace de travail | {count} espaces de travail",
+            "isArchived": "Espace de travail archivé (lecture seule)"
         }
     },
     "FoldersPage": {
@@ -1184,6 +1216,7 @@
         "recent": "Récents",
         "favorites": "Favoris",
         "hidden": "Masqués",
+        "archived": "Archivés",
         "noWorkspace": "Aucun espace de travail",
         "users": "Utilisateurs",
         "invitationsRequests": "Invitations & Demandes",

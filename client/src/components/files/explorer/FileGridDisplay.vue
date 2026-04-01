@@ -5,7 +5,7 @@
     ref="fileDropZone"
     :show-drop-message="true"
     @files-added="$emit('filesAdded', $event)"
-    :is-reader="ownRole === WorkspaceRole.Reader"
+    :is-reader="isReader"
     @drop-as-reader="$emit('dropAsReader')"
   >
     <div
@@ -24,7 +24,7 @@
           @open-item.stop="$emit('openItem', folder, $event)"
           @menu-click="onMenuClick"
           @files-added="onFilesAdded"
-          :is-workspace-reader="ownRole === WorkspaceRole.Reader"
+          :is-workspace-reader="isReader"
           @drop-as-reader="$emit('dropAsReader')"
         />
         <file-card
@@ -55,13 +55,13 @@ import FileCard from '@/components/files/explorer/FileCard.vue';
 import FileCardProcessing from '@/components/files/explorer/FileCardProcessing.vue';
 import FileDropZone from '@/components/files/explorer/FileDropZone.vue';
 import { EntryCollection, EntryModel, FileModel, FileOperationCurrentFolder, FolderModel } from '@/components/files/types';
-import { EntryName, WorkspaceRole } from '@/parsec';
+import { EntryName } from '@/parsec';
 import { useTemplateRef } from 'vue';
 
 const props = defineProps<{
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;
-  ownRole: WorkspaceRole;
+  isReader: boolean;
   selectionEnabled?: boolean;
   fileOperations: Array<FileOperationCurrentFolder>;
 }>();

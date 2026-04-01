@@ -53,8 +53,23 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
 
 const MENU = [
   {
-    title: 'Manage workspace',
-    actions: ['Rename', 'History'],
+    title: 'Workspace management',
+    actions: ['Rename', 'History', 'Hide this workspace', 'Archive this workspace'],
+  },
+  {
+    title: 'Collaboration',
+    actions: ['Copy link', 'Sharing and roles'],
+  },
+  {
+    title: 'Miscellaneous',
+    actions: ['Add as starred'],
+  },
+];
+
+const READER_MENU = [
+  {
+    title: 'Workspace management',
+    actions: ['Hide this workspace'],
   },
   {
     title: 'Collaboration',
@@ -74,6 +89,26 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(contextMenu).toBeVisible();
     await expect(contextMenu.getByRole('group')).toHaveCount(MENU.length);
     for (const [index, group] of MENU.entries()) {
+      await expect(contextMenu.getByRole('group').nth(index).getByRole('listitem').nth(0)).toHaveText(group.title);
+      for (const [actionIndex, action] of group.actions.entries()) {
+        await expect(
+          contextMenu
+            .getByRole('group')
+            .nth(index)
+            .getByRole('listitem')
+            .nth(actionIndex + 1),
+        ).toHaveText(action);
+      }
+    }
+  });
+
+  msTest(`Checks read-only workspace context menu ${mode}`, async ({ workspacesStandard }) => {
+    await expect(workspacesStandard.locator('.workspace-context-menu')).toBeHidden();
+    await openContextMenu(workspacesStandard, mode as Mode, OpenMenuMethod.Button);
+    const contextMenu = workspacesStandard.locator('.workspace-context-menu');
+    await expect(contextMenu).toBeVisible();
+    await expect(contextMenu.getByRole('group')).toHaveCount(MENU.length);
+    for (const [index, group] of READER_MENU.entries()) {
       await expect(contextMenu.getByRole('group').nth(index).getByRole('listitem').nth(0)).toHaveText(group.title);
       for (const [actionIndex, action] of group.actions.entries()) {
         await expect(
@@ -159,7 +194,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(favorites).toBeVisible();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(8).click();
+    await popover.getByRole('listitem').nth(9).click();
     await expect(popover).toBeHidden();
     if (mode === 'sidebar') {
       await workspaces.locator('.sidebar').locator('#sidebar-all-workspaces').click();
@@ -182,7 +217,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeHidden();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(6).click();
+    await popover.getByRole('listitem').nth(7).click();
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeVisible();
     await expect(workspaces.locator('.ms-modal-header__title')).toHaveText('Share the workspace');
     await expect(workspaces.locator('.sharing-modal__title')).toHaveText('wksp1');

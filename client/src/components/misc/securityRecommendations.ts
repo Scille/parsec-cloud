@@ -3,9 +3,9 @@
 import {
   getClientInfo,
   getWorkspaceSharing,
+  listAvailableWorkspaces,
   listOwnDevices,
   listUsers,
-  listWorkspaces,
   UserProfile,
   WorkspaceInfo,
   WorkspaceRole,
@@ -48,7 +48,7 @@ export async function getSecurityWarnings(): Promise<SecurityWarnings> {
       return warnings;
     }
   }
-  const workspacesResult = await listWorkspaces();
+  const workspacesResult = await listAvailableWorkspaces();
   for (const workspace of workspacesResult.ok ? workspacesResult.value : []) {
     if (workspace.currentSelfRole === WorkspaceRole.Owner) {
       warnings.needsSecondOwner = true;

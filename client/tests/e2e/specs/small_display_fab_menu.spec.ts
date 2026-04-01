@@ -14,8 +14,8 @@ msTest('Fab button and menu as administrator and read/write', async ({ workspace
   await expect(fabModal).toBeHidden();
   await fabButton.click();
   await expect(fabModal).toBeVisible();
-  await expect(fabModalOptions).toHaveCount(2);
-  await expect(fabModalOptions).toHaveText(['New workspace', 'Invite a user']);
+  await expect(fabModalOptions).toHaveCount(3);
+  await expect(fabModalOptions).toHaveText(['New workspace', 'Invite a user', 'Copy join request link (PKI/SSO)']);
   await fabButton.click();
   await expect(fabModal).toBeHidden();
 
@@ -24,8 +24,14 @@ msTest('Fab button and menu as administrator and read/write', async ({ workspace
   await expect(fabButton).toBeVisible();
   await fabButton.click();
   await expect(fabModal).toBeVisible();
-  await expect(fabModalOptions).toHaveCount(4);
-  await expect(fabModalOptions).toHaveText(['New folder', 'Import a folder', 'Import files', 'Invite a user']);
+  await expect(fabModalOptions).toHaveCount(5);
+  await expect(fabModalOptions).toHaveText([
+    'New folder',
+    'Import a folder',
+    'Import files',
+    'Invite a user',
+    'Copy join request link (PKI/SSO)',
+  ]);
   await fabButton.click();
   await expect(fabModal).toBeHidden();
 
@@ -34,8 +40,8 @@ msTest('Fab button and menu as administrator and read/write', async ({ workspace
   await expect(workspaces).toBeOrganizationPage();
   await fabButton.click();
   await expect(fabModal).toBeVisible();
-  await expect(fabModalOptions).toHaveCount(1);
-  await expect(fabModalOptions).toHaveText(['Invite a user']);
+  await expect(fabModalOptions).toHaveCount(2);
+  await expect(fabModalOptions).toHaveText(['Invite a user', 'Copy join request link (PKI/SSO)']);
   await fabButton.click();
   await expect(fabModal).toBeHidden();
 
@@ -44,8 +50,8 @@ msTest('Fab button and menu as administrator and read/write', async ({ workspace
   await expect(workspaces).toBeMyProfilePage();
   await fabButton.click();
   await expect(fabModal).toBeVisible();
-  await expect(fabModalOptions).toHaveCount(1);
-  await expect(fabModalOptions).toHaveText(['Invite a user']);
+  await expect(fabModalOptions).toHaveCount(2);
+  await expect(fabModalOptions).toHaveText(['Invite a user', 'Copy join request link (PKI/SSO)']);
   await fabButton.click();
   await expect(fabModal).toBeHidden();
 });
