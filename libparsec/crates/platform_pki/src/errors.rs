@@ -29,13 +29,13 @@ pub type ListIntermediateCertificatesError = ListCertificatesError;
 #[derive(Debug, thiserror::Error)]
 pub enum SignMessageError {
     #[error("Cannot open certificate store: {0}")]
-    CannotOpenStore(std::io::Error),
+    CannotOpenStore(anyhow::Error),
     #[error("Cannot find certificate")]
     NotFound,
     #[error("Cannot acquire keypair related to certificate: {0}")]
-    CannotAcquireKeypair(std::io::Error),
+    CannotAcquireKeypair(anyhow::Error),
     #[error("Cannot sign message: {0}")]
-    CannotSign(std::io::Error),
+    CannotSign(anyhow::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
