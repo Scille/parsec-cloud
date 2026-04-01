@@ -7,6 +7,7 @@ export enum SortProperty {
   JoinedDate = 'sort-joined-data',
   Status = 'sort-status',
   Profile = 'sort-profile',
+  Email = 'sort-email',
 }
 
 export enum InvitationAction {
@@ -112,7 +113,7 @@ export class UserCollection {
     return this.getUsers().length;
   }
 
-  private userIsVisible(user: UserModel): boolean {
+  userIsVisible(user: UserModel): boolean {
     if (
       (!this.filters.profileAdmin && user.currentProfile === UserProfile.Admin) ||
       (!this.filters.profileStandard && user.currentProfile === UserProfile.Standard) ||
@@ -152,7 +153,7 @@ export class UserCollection {
     return this.getSelectedUsers().length;
   }
 
-  private statusDiff(user1: UserModel, user2: UserModel): number {
+  statusDiff(user1: UserModel, user2: UserModel): number {
     return (
       Number(user2.isActive()) * 4 +
       Number(user2.isRevoked()) * 2 +
@@ -170,11 +171,6 @@ export class UserCollection {
         return 42;
       }
 
-      let diff = 0;
-      const profile1 = ascending ? user1.currentProfile : user2.currentProfile;
-      const profile2 = ascending ? user2.currentProfile : user1.currentProfile;
-      diff = compareUserProfiles(profile1, profile2);
-
       switch (property) {
         case SortProperty.Name:
           return ascending
@@ -182,15 +178,24 @@ export class UserCollection {
             : user2.humanHandle.label.localeCompare(user1.humanHandle.label);
         case SortProperty.JoinedDate:
           if (ascending) {
-            return user2.createdOn < user1.createdOn ? -1 : 0;
-          } else {
             return user1.createdOn < user2.createdOn ? -1 : 0;
+          } else {
+            return user2.createdOn < user1.createdOn ? -1 : 0;
           }
-        case SortProperty.Profile:
+        case SortProperty.Profile: {
+          const profile1 = ascending ? user1.currentProfile : user2.currentProfile;
+          const profile2 = ascending ? user2.currentProfile : user1.currentProfile;
+          const diff = compareUserProfiles(profile1, profile2);
+
           if (profile1 === profile2) {
             return this.statusDiff(user1, user2);
           }
           return diff;
+        }
+        case SortProperty.Email:
+          return ascending
+            ? user1.humanHandle.email.localeCompare(user2.humanHandle.email)
+            : user2.humanHandle.email.localeCompare(user1.humanHandle.email);
         case SortProperty.Status:
           return ascending ? this.statusDiff(user1, user2) : this.statusDiff(user2, user1);
         default:

@@ -1790,6 +1790,7 @@
             "byJoined": "Joining date",
             "byProfile": "Profile",
             "byStatus": "Status",
+            "byEmail": "Email",
             "asc": "Ascending",
             "desc": "Descending"
         },

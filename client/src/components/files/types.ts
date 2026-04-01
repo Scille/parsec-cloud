@@ -139,11 +139,11 @@ export class EntryCollection<Model extends EntryModel> {
       }
 
       if (property === SortProperty.Name) {
-        return ascending ? item2.name.localeCompare(item1.name) : item1.name.localeCompare(item2.name);
+        return ascending ? item1.name.localeCompare(item2.name) : item2.name.localeCompare(item1.name);
       } else if (property === SortProperty.LastUpdate) {
-        return ascending ? item1.updated.diff(item2.updated).toMillis() : item2.updated.diff(item1.updated).toMillis();
+        return ascending ? item2.updated.diff(item1.updated).toMillis() : item1.updated.diff(item2.updated).toMillis();
       } else if (property === SortProperty.CreationDate) {
-        return ascending ? item1.updated.diff(item2.updated).toMillis() : item2.updated.diff(item1.updated).toMillis();
+        return ascending ? item2.updated.diff(item1.updated).toMillis() : item1.updated.diff(item2.updated).toMillis();
       } else if (property === SortProperty.Size) {
         const size1 = item1.isFile() ? (item1 as FileModel).size : 0;
         const size2 = item1.isFile() ? (item2 as FileModel).size : 0;
