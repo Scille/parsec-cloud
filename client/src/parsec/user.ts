@@ -2,6 +2,7 @@
 
 import { libparsec, UserInfo as ParsecUserInfo } from '@/plugins/libparsec';
 
+import { DataCache } from '@/common/cache';
 import {
   ClientGetUserDeviceError,
   ClientGetUserInfoError,
@@ -67,13 +68,24 @@ export async function revokeUser(userId: UserID): Promise<Result<null, ClientRev
   return generateNoHandleError<ClientRevokeUserError>();
 }
 
+const UserCache = new DataCache<UserID, UserInfo>();
+
 export async function getUserInfo(userId: UserID): Promise<Result<UserInfo, ClientGetUserInfoError>> {
   const handle = getConnectionHandle();
 
-  if (handle !== null) {
-    await libparsec.clientGetUserInfo(handle, userId);
+  if (handle === null) {
+    return generateNoHandleError<ClientGetUserInfoError>();
   }
-  return generateNoHandleError<ClientGetUserInfoError>();
+  const info = UserCache.get(userId);
+  if (info) {
+    return { ok: true, value: info };
+  }
+  const result = await libparsec.clientGetUserInfo(handle, userId);
+  if (result.ok) {
+    result.value = patchUserInfo(result.value);
+    UserCache.set(userId, result.value as UserInfo);
+  }
+  return result as Result<UserInfo, ClientGetUserInfoError>;
 }
 
 export async function updateProfile(userId: UserID, profile: UserProfile): Promise<Result<null, ClientUserUpdateProfileError>> {
@@ -85,23 +97,24 @@ export async function updateProfile(userId: UserID, profile: UserProfile): Promi
   return generateNoHandleError<ClientUserUpdateProfileError>();
 }
 
-const DeviceUserMapping = new Map<DeviceID, UserInfo>();
+const DeviceCache = new DataCache<DeviceID, UserInfo>();
 
 export async function getUserInfoFromDeviceID(deviceId: DeviceID): Promise<Result<UserInfo, ClientGetUserDeviceError>> {
   const handle = getConnectionHandle();
-  if (handle !== null) {
-    let userInfo: UserInfo | undefined = DeviceUserMapping.get(deviceId);
+  if (handle === null) {
+    return generateNoHandleError<ClientGetUserDeviceError>();
+  }
+  const userInfo = DeviceCache.get(deviceId);
 
-    if (!userInfo) {
-      const result = await libparsec.clientGetUserDevice(handle, deviceId);
-
-      if (!result.ok) {
-        return result;
-      }
-      userInfo = patchUserInfo(result.value[0]);
-      DeviceUserMapping.set(deviceId, userInfo);
-    }
+  if (userInfo) {
     return { ok: true, value: userInfo };
   }
-  return generateNoHandleError<ClientGetUserDeviceError>();
+  const result = await libparsec.clientGetUserDevice(handle, deviceId);
+
+  if (result.ok) {
+    result.value[0] = patchUserInfo(result.value[0]);
+    DeviceCache.set(deviceId, result.value[0] as UserInfo);
+    return { ok: true, value: result.value[0] as UserInfo };
+  }
+  return result;
 }

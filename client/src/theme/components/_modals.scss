@@ -1381,3 +1381,27 @@ ion-modal {
     width: 100%;
   }
 }
+
+.shamir-recovery-modal {
+  .ms-modal-content {
+    @include ms.responsive-breakpoint('sm') {
+      padding-bottom: 1.5rem !important;
+    }
+  }
+  &:has(.shamir-information) {
+    &::part(content) {
+      max-width: var(--parsec-modal-width-sm);
+    }
+  }
+
+  &:has(#shamir-initial-step),
+  &:has(.shamir-done) {
+    .ms-modal-header {
+      display: none;
+    }
+
+    .ms-modal-content {
+      padding-top: 1.5rem !important;
+    }
+  }
+}

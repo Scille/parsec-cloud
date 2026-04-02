@@ -431,7 +431,9 @@ onUnmounted(async () => {
   z-index: 1;
 
   @include ms.responsive-breakpoint('sm') {
-    background: transparent;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   .header-selected-item {
@@ -474,11 +476,10 @@ onUnmounted(async () => {
   z-index: 10;
 
   @include ms.responsive-breakpoint('sm') {
-    position: sticky;
     background: var(--parsec-color-light-secondary-white);
-    box-shadow: var(--parsec-shadow-strong);
     border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
     height: stretch;
+    z-index: 1;
   }
 
   .profile-menu {
@@ -524,6 +525,7 @@ onUnmounted(async () => {
 
     @include ms.responsive-breakpoint('sm') {
       padding: 0;
+      overflow: visible;
     }
 
     &-item {
