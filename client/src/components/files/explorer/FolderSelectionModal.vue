@@ -211,7 +211,7 @@ import {
   StartedWorkspaceInfo,
   WorkspaceCreateFolderErrorTag,
   createFolder,
-  getWorkspaceInfo,
+  getStartedWorkspaceInfo,
   statFolderChildren,
 } from '@/parsec';
 import { Routes } from '@/router';
@@ -304,7 +304,7 @@ async function cancelNewFolder(): Promise<void> {
 }
 
 onMounted(async () => {
-  const result = await getWorkspaceInfo(props.workspaceHandle);
+  const result = await getStartedWorkspaceInfo(props.workspaceHandle);
   if (result.ok) {
     workspaceInfo.value = result.value;
   }

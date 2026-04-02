@@ -188,8 +188,7 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile, listWorkspaces } from '@/parsec';
-import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
+import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile, listArchivedWorkspaces } from '@/parsec';
 import {
   ProfilePages,
   Routes,
@@ -285,11 +284,11 @@ const showSecurityChecklistSmallDisplay = computed(() => {
 
 const isArchived = asyncComputed(async (): Promise<boolean> => {
   const workspaceHandle = getWorkspaceHandle();
-  const workspacesResult = await listWorkspaces();
+  const workspacesResult = await listArchivedWorkspaces();
   if (workspacesResult.ok && workspaceHandle) {
     const wInfo = workspacesResult.value.find((wi) => wi.handle === workspaceHandle);
     if (wInfo) {
-      return wInfo.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived;
+      return true;
     }
   }
   return false;
@@ -365,14 +364,12 @@ async function updateRoute(): Promise<void> {
     }
 
     const finalPath: RouterPathNode[] = [];
-    if (!isArchived.value) {
-      finalPath.push({
-        id: 0,
-        icon: home,
-        route: Routes.Workspaces,
-        params: {},
-      });
-    }
+    finalPath.push({
+      id: 0,
+      icon: home,
+      route: isArchived.value ? Routes.Archived : Routes.Workspaces,
+      params: {},
+    });
 
     const rebuildPath: string[] = [];
     const workspacePath = await Path.parse(getDocumentPath());

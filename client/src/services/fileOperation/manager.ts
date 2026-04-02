@@ -8,7 +8,7 @@ import {
   EntryStatFolder,
   EntryTree,
   FsPath,
-  getWorkspaceInfo,
+  getStartedWorkspaceInfo,
   HistoryEntryTree,
   listTree,
   listTreeAt,
@@ -77,7 +77,7 @@ export class FileOperationManager {
   }
 
   async import(workspaceHandle: WorkspaceHandle, files: Array<File>, destination: FsPath, dupPolicy: DuplicatePolicy): Promise<boolean> {
-    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    const workspaceResult = await getStartedWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
       return false;
     }
@@ -106,7 +106,7 @@ export class FileOperationManager {
     destination: FsPath,
     dupPolicy: DuplicatePolicy,
   ): Promise<boolean> {
-    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    const workspaceResult = await getStartedWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
       return false;
     }
@@ -135,7 +135,7 @@ export class FileOperationManager {
     destination: FsPath,
     dupPolicy: DuplicatePolicy,
   ): Promise<boolean> {
-    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    const workspaceResult = await getStartedWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
       return false;
     }
@@ -164,7 +164,7 @@ export class FileOperationManager {
     dateTime: DateTime,
     dupPolicy: DuplicatePolicy,
   ): Promise<boolean> {
-    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    const workspaceResult = await getStartedWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
       return false;
     }
@@ -193,7 +193,7 @@ export class FileOperationManager {
     saveHandle: FileSystemFileHandle,
     dateTime?: DateTime,
   ): Promise<boolean> {
-    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    const workspaceResult = await getStartedWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
       return false;
     }
@@ -222,7 +222,7 @@ export class FileOperationManager {
     saveHandle: FileSystemFileHandle,
     root: FsPath,
   ): Promise<boolean> {
-    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    const workspaceResult = await getStartedWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
       return false;
     }

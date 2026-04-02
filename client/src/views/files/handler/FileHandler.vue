@@ -225,8 +225,8 @@ import {
   EntryStatFile,
   FsPath,
   getClientInfo,
+  getStartedWorkspaceInfo,
   getSystemPath,
-  getWorkspaceInfo,
   isDesktop,
   isMobile,
   isWeb,
@@ -374,7 +374,7 @@ async function _getFileInfoAt(
   fileInfo: DetectedFileType,
   fileName: EntryName,
 ): Promise<FileContentInfo | undefined> {
-  const infoResult = await getWorkspaceInfo(workspaceHandle);
+  const infoResult = await getStartedWorkspaceInfo(workspaceHandle);
   if (!infoResult.ok) {
     return;
   }
@@ -597,7 +597,7 @@ onMounted(async () => {
 
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
-    const infoResult = await getWorkspaceInfo(workspaceHandle);
+    const infoResult = await getStartedWorkspaceInfo(workspaceHandle);
     if (infoResult.ok) {
       isReader.value = infoResult.value.currentSelfRole === WorkspaceRole.Reader;
     }
@@ -759,7 +759,7 @@ async function downloadFile(): Promise<void> {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
     return;
   }
-  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
+  const workspaceInfoResult = await getStartedWorkspaceInfo(workspaceHandle);
   if (!workspaceInfoResult.ok) {
     window.electronAPI.log(
       'error',

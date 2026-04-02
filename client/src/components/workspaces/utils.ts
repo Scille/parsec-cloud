@@ -10,8 +10,8 @@ import {
   WorkspaceName,
   WorkspaceRole,
   getClientProfile,
+  getStartedWorkspaceInfo,
   getSystemPath,
-  getWorkspaceInfo,
   isDesktop,
   mountWorkspace,
   archiveWorkspace as parsecArchiveWorkspace,
@@ -20,7 +20,6 @@ import {
   restoreWorkspace as parsecRestoreWorkspace,
   unmountWorkspace,
 } from '@/parsec';
-import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -145,12 +144,10 @@ export async function openWorkspaceContextMenu(
       showBackdrop: false,
       dismissOnSelect: true,
       componentProps: {
-        workspaceName: workspace.currentName,
+        workspace: workspace,
         clientProfile: clientProfile,
-        clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
         isHidden: workspaceAttributes.isHidden(workspace.id),
-        isArchived: workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived,
       },
     });
 
@@ -165,12 +162,10 @@ export async function openWorkspaceContextMenu(
       expandToScroll: false,
       initialBreakpoint: 0.5,
       componentProps: {
-        workspaceName: workspace.currentName,
+        workspace: workspace,
         clientProfile: clientProfile,
-        clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
         isHidden: workspaceAttributes.isHidden(workspace.id),
-        isArchived: workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived,
       },
     });
 
@@ -204,7 +199,7 @@ export async function openWorkspaceContextMenu(
         break;
       case WorkspaceAction.UnMount:
         if (isDesktop()) {
-          const refreshWorkspaces = await getWorkspaceInfo(workspace.handle);
+          const refreshWorkspaces = await getStartedWorkspaceInfo(workspace.handle);
           if (refreshWorkspaces.ok) {
             await unmountWorkspaceConfirmation(
               workspaceAttributes,
@@ -219,10 +214,10 @@ export async function openWorkspaceContextMenu(
         }
         break;
       case WorkspaceAction.Archive:
-        await archiveWorkspace(workspace, informationManager);
+        await archiveWorkspace(workspace, informationManager, eventDistributor);
         break;
       case WorkspaceAction.Restore:
-        await restoreWorkspace(workspace, informationManager);
+        await restoreWorkspace(workspace, informationManager, eventDistributor);
         break;
       default:
         console.warn('No WorkspaceAction match found');
@@ -230,7 +225,11 @@ export async function openWorkspaceContextMenu(
   }
 }
 
-async function archiveWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
+async function archiveWorkspace(
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+  eventDistributor: EventDistributor,
+): Promise<void> {
   const answer = await askQuestion(
     'WorkspacesPage.archiveWorkspace.title',
     { key: 'WorkspacesPage.archiveWorkspace.subtitle', data: { workspace: workspace.currentName } },
@@ -240,7 +239,7 @@ async function archiveWorkspace(workspace: WorkspaceInfo, informationManager: In
     return;
   }
 
-  const result = await parsecArchiveWorkspace(workspace);
+  const result = await parsecArchiveWorkspace(workspace.id);
   informationManager.present(
     new Information({
       message: {
@@ -251,13 +250,17 @@ async function archiveWorkspace(workspace: WorkspaceInfo, informationManager: In
     }),
     PresentationMode.Toast,
   );
-  if (!result.ok) {
-    window.electronAPI.log('error', `Error while archiving workspace: ${result.error}`);
+  if (result.ok) {
+    await eventDistributor.dispatchEvent(Events.WorkspaceArchiveSync, { workspaceId: workspace.id, isArchived: true });
   }
 }
 
-async function restoreWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
-  const result = await parsecRestoreWorkspace(workspace);
+async function restoreWorkspace(
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+  eventDistributor: EventDistributor,
+): Promise<void> {
+  const result = await parsecRestoreWorkspace(workspace.id);
 
   informationManager.present(
     new Information({
@@ -269,8 +272,8 @@ async function restoreWorkspace(workspace: WorkspaceInfo, informationManager: In
     }),
     PresentationMode.Toast,
   );
-  if (!result.ok) {
-    window.electronAPI.log('error', `Error while restoring workspace: ${result.error}`);
+  if (result.ok) {
+    await eventDistributor.dispatchEvent(Events.WorkspaceArchiveSync, { workspaceId: workspace.id, isArchived: false });
   }
 }
 
@@ -294,7 +297,6 @@ export async function showWorkspace(
         }),
         PresentationMode.Toast,
       );
-      window.electronAPI.log('error', `Error while unmounting workspace: ${result.error}`);
       return false;
     } else {
       workspaceAttributes.removeHidden(workspace.id);
@@ -344,7 +346,6 @@ export async function hideWorkspace(
         }),
         PresentationMode.Toast,
       );
-      window.electronAPI.log('error', `Error while unmounting workspace: ${result.error}`);
       return;
     } else {
       workspaceAttributes.addHidden(workspace.id);

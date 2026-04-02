@@ -69,6 +69,7 @@ export {
   ParseParsecAddrErrorTag,
   PendingAsyncEnrollmentInfoTag,
   Platform,
+  RealmArchivingConfigurationTag,
   ShowCertificateSelectionDialogErrorTag,
   SubmitAsyncEnrollmentErrorTag,
   SubmitAsyncEnrollmentIdentityStrategyTag,
@@ -145,6 +146,7 @@ export type {
   ClaimInProgressError,
   ClientAcceptAsyncEnrollmentError,
   ClientAcceptTosError,
+  ClientArchiveWorkspaceError,
   ClientCancelInvitationError,
   ClientConfig,
   ClientCreateWorkspaceError,
@@ -213,6 +215,7 @@ export type {
   ListAvailableDeviceError,
   ListInvitationsError,
   MountpointToOsPathError,
+  MountpointUnmountError,
   NewInvitationInfo,
   OpenBaoAuthConfig,
   OpenBaoListSelfEmailsError,
@@ -221,6 +224,7 @@ export type {
   EntryStat as ParsecEntryStat,
   ParsecTOTPResetAddr,
   ParsecWorkspacePathAddr,
+  ParsecWorkspacePathAddrAndRedirectionURL,
   ParsedParsecAddr,
   ParsedParsecAddrAsyncEnrollment,
   ParsedParsecAddrInvitationDevice,
@@ -415,6 +419,7 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   availableOffline: boolean;
   handle: WorkspaceHandle;
   mountpoints: [MountpointHandle, SystemPath][];
+  isArchived?: boolean;
 }
 
 interface StartedWorkspaceInfo extends ParsecStartedWorkspaceInfo {

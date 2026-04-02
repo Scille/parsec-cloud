@@ -7,7 +7,7 @@
     :detail="false"
     :class="{
       'workspace-hovered': isHovered || menuOpened,
-      'workspace-list-item--hidden': isHidden || isArchived,
+      'workspace-list-item--hidden': isHidden || workspace.isArchived,
     }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
@@ -16,7 +16,7 @@
   >
     <div class="workspace-list-item-content">
       <div
-        v-show="!isArchived"
+        v-show="!workspace.isArchived"
         class="workspace-favorite-icon"
         :class="{
           'workspace-favorite-icon__on': isFavorite,
@@ -27,7 +27,7 @@
         <ion-icon :icon="star" />
       </div>
       <ion-icon
-        v-if="!isArchived"
+        v-if="!workspace.isArchived"
         class="cloud-overlay"
         :class="workspace.availableOffline ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
         :icon="workspace.availableOffline ? cloudDone : cloudOffline"
@@ -42,13 +42,13 @@
         </ion-text>
       </div>
       <ion-icon
-        v-if="isArchived"
+        v-if="workspace.isArchived"
         class="workspace-archive"
         :icon="archive"
       />
       <div
         class="workspace-hidden"
-        v-if="isHidden && !isArchived"
+        v-if="isHidden && !workspace.isArchived"
       >
         <ion-icon
           class="workspace-hidden__icon"
@@ -60,7 +60,7 @@
       <!-- role user -->
       <div class="workspace-role">
         <workspace-role-tag
-          v-if="!isArchived"
+          v-if="!workspace.isArchived"
           :role="workspace.currentSelfRole"
           class="workspace-role-tag"
         />
@@ -78,7 +78,7 @@
       <div
         class="workspace-users"
         v-show="clientProfile !== UserProfile.Outsider"
-        v-if="isLargeDisplay && windowWidth >= WindowSizeBreakpoints.MD && !isArchived"
+        v-if="isLargeDisplay && windowWidth >= WindowSizeBreakpoints.MD && !workspace.isArchived"
       >
         <avatar-group
           v-show="workspace.sharing.length > 0"
@@ -99,7 +99,7 @@
       <!-- last update -->
       <div
         class="workspace-last-update"
-        v-show="isArchived"
+        v-show="workspace.isArchived"
       >
         <ion-label class="label-last-update cell">
           {{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}
@@ -165,7 +165,6 @@ const props = defineProps<{
   clientProfile: UserProfile;
   isFavorite: boolean;
   isHidden: boolean;
-  isArchived: boolean;
 }>();
 
 const emits = defineEmits<{

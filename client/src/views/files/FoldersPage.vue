@@ -297,7 +297,6 @@ import {
   isWeb,
   listWorkspaces,
 } from '@/parsec';
-import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { isFileEditable } from '@/services/cryptpad';
 import {
@@ -308,6 +307,7 @@ import {
   Events,
   MenuActionData,
   OpenContextualMenuData,
+  WorkspaceArchiveData,
 } from '@/services/eventDistributor';
 import {
   DuplicatePolicy,
@@ -423,7 +423,7 @@ const displayView = ref(DisplayState.List);
 const search = ref<Search | undefined>(undefined);
 const searchPattern = ref('');
 const searchInputValue = ref('');
-const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<parsec.WorkspaceInfo | null> = ref(null);
 // Init at true to avoid blinking while we're mounting the component
 // but we're not loading the files yet.
 const querying = ref(true);
@@ -453,15 +453,8 @@ const workspaceName = computed(() => {
 });
 
 const isReadOnly = asyncComputed(async (): Promise<boolean> => {
-  if (ownRole.value === parsec.WorkspaceRole.Reader) {
+  if (ownRole.value === parsec.WorkspaceRole.Reader || (workspaceInfo.value && workspaceInfo.value.isArchived === true)) {
     return true;
-  }
-  const workspacesResult = await listWorkspaces();
-  if (workspaceInfo.value && workspacesResult.ok) {
-    const wInfo = workspacesResult.value.find((wi) => wi.id === workspaceInfo.value!.id);
-    if (wInfo) {
-      return wInfo.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived;
-    }
   }
   return false;
 });
@@ -709,6 +702,11 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
     }
   } else if (event === Events.OpenContextMenu) {
     await openGlobalContextMenu((data as OpenContextualMenuData).event);
+  } else if (event === Events.WorkspaceArchiveSync) {
+    const archiveData = data as WorkspaceArchiveData;
+    if (archiveData.workspaceId && workspaceInfo.value && archiveData.workspaceId === workspaceInfo.value.id) {
+      await navigateTo(archiveData.isArchived ? Routes.Archived : Routes.Workspaces);
+    }
   }
 }
 
@@ -744,6 +742,7 @@ onMounted(async () => {
       Events.MenuAction,
       Events.EntrySyncProgress,
       Events.OpenContextMenu,
+      Events.WorkspaceArchiveSync,
     ],
     handleEvents,
   );
@@ -1716,13 +1715,9 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
 }
 
 async function openGlobalContextMenu(event: Event): Promise<void> {
-  if (isReadOnly.value) {
-    // All current options in the global context menu are write-only operations.
-    return;
-  }
   const data = await _openGlobalContextMenu(
     event,
-    ownRole.value,
+    isReadOnly.value,
     isLargeDisplay.value,
     folders.value.entriesCount() + files.value.entriesCount() === 0,
   );

@@ -26,7 +26,7 @@
         </ion-item>
         <ion-item
           button
-          v-if="!multipleFiles && isFile && !readOnly && isEditable"
+          v-if="!multipleFiles && isFile && !isReadOnly && isEditable"
           @click="onClick(FileAction.Edit)"
           class="ion-no-padding list-group-item"
         >
@@ -40,7 +40,7 @@
         </ion-item>
         <ion-item
           button
-          v-if="!multipleFiles && !readOnly"
+          v-if="!multipleFiles && !isReadOnly"
           @click="onClick(FileAction.Rename)"
           class="ion-no-padding list-group-item"
         >
@@ -54,7 +54,7 @@
         </ion-item>
         <ion-item
           button
-          v-if="!readOnly"
+          v-if="!isReadOnly"
           @click="onClick(FileAction.MoveTo)"
           class="ion-no-padding list-group-item"
         >
@@ -69,7 +69,7 @@
 
         <ion-item
           button
-          v-if="!readOnly"
+          v-if="!isReadOnly"
           @click="onClick(FileAction.MakeACopy)"
           class="ion-no-padding list-group-item"
         >
@@ -131,7 +131,7 @@
           button
           @click="onClick(FileAction.ShowHistory)"
           class="ion-no-padding list-group-item"
-          v-show="!multipleFiles && !readOnly"
+          v-show="!multipleFiles && !isReadOnly"
         >
           <ion-icon
             class="list-group-item__icon"
@@ -174,7 +174,7 @@
 
         <ion-item
           button
-          v-if="!readOnly"
+          v-if="!isReadOnly"
           @click="onClick(FileAction.Delete)"
           class="ion-no-padding list-group-item"
         >
@@ -224,7 +224,7 @@ import { arrowRedo, create, download, duplicate, eye, informationCircle, link, o
 import { EyeOpenIcon, MsImage, RenameIcon } from 'megashark-lib';
 
 defineProps<{
-  readOnly: boolean;
+  isReadOnly: boolean;
   multipleFiles?: boolean;
   isFile: boolean;
   isEditable?: boolean;

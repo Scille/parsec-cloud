@@ -29,7 +29,7 @@
         >
           <ion-item
             button
-            v-show="clientRole === WorkspaceRole.Owner"
+            v-show="workspace.currentSelfRole === WorkspaceRole.Owner"
             @click="onClick(WorkspaceAction.Rename)"
             class="ion-no-padding list-group-item"
           >
@@ -61,7 +61,7 @@
             button
             @click="onClick(WorkspaceAction.ShowHistory)"
             class="ion-no-padding list-group-item"
-            v-show="clientRole === WorkspaceRole.Manager || clientRole === WorkspaceRole.Owner"
+            v-show="workspace.currentSelfRole === WorkspaceRole.Manager || workspace.currentSelfRole === WorkspaceRole.Owner"
           >
             <ion-icon
               class="list-group-item__icon"
@@ -224,24 +224,27 @@
 </template>
 
 <script setup lang="ts">
-import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
+import { RealmArchivingConfigurationTag, UserProfile, WorkspaceInfo, WorkspaceRole, isDesktop } from '@/parsec';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonPage, IonText, modalController } from '@ionic/vue';
 import { archive, cloudy, eye, eyeOff, informationCircle, link, open, reload, shareSocial, star, time, trash } from 'ionicons/icons';
 import { MsImage, RenameIcon } from 'megashark-lib';
+import { computed } from 'vue';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
   return modalController.dismiss({ action: action });
 }
 
-defineProps<{
-  workspaceName: WorkspaceName;
+const props = defineProps<{
+  workspace: WorkspaceInfo;
   clientProfile: UserProfile;
-  clientRole: WorkspaceRole;
   isFavorite: boolean;
   isHidden: boolean;
-  isArchived: boolean;
 }>();
+
+const isArchived = computed(() => {
+  return props.workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived;
+});
 </script>
 
 <style lang="scss" scoped></style>

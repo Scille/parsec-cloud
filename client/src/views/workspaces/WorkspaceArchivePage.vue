@@ -40,10 +40,9 @@
             v-for="workspace in filteredWorkspaces"
             :key="workspace.id"
             :workspace="workspace"
-            :client-profile="clientProfile"
+            :client-profile="UserProfile.Outsider"
             :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
             :is-hidden="workspaceAttributes.isHidden(workspace.id)"
-            :is-archived="workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived"
             @click="onWorkspaceClick"
             @menu-click="onOpenWorkspaceContextMenu"
           />
@@ -57,8 +56,7 @@
 import NoHiddenWorkspaces from '@/assets/images/no-hidden-workspaces.svg?raw';
 import { openWorkspaceContextMenu } from '@/components/workspaces';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
-import { listWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
-import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
+import { listArchivedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
 import { currentRouteIs, navigateToWorkspace, Routes } from '@/router';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -76,16 +74,8 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 
-// clientProfile is required as a WorkspaceCard prop but only to show or hide
-// the share button, we can leave it as Outsider
-const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
-
 const filteredWorkspaces = computed(() => {
-  return Array.from(workspaceList.value)
-    .filter((workspace) => {
-      return workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived;
-    })
-    .sort((a: WorkspaceInfo, b: WorkspaceInfo) => a.currentName.localeCompare(b.currentName));
+  return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => a.currentName.localeCompare(b.currentName));
 });
 
 onMounted(async (): Promise<void> => {
@@ -99,7 +89,7 @@ async function refreshArchivedWorkspacesList(): Promise<void> {
   }
   querying.value = true;
   window.electronAPI.log('debug', 'Starting Parsec list workspaces');
-  const result = await listWorkspaces();
+  const result = await listArchivedWorkspaces();
   if (result.ok) {
     workspaceList.value = result.value;
   } else {

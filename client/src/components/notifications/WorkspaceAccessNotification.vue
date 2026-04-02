@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { getWorkspaceInfo, StartedWorkspaceInfo } from '@/parsec';
+import { getStartedWorkspaceInfo, StartedWorkspaceInfo } from '@/parsec';
 import { currentRouteIsWorkspaceRoute, navigateToWorkspace } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
 import { NewWorkspaceAccessData } from '@/services/informationManager';
@@ -56,7 +56,7 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
-  const result = await getWorkspaceInfo(notificationData.workspaceHandle);
+  const result = await getStartedWorkspaceInfo(notificationData.workspaceHandle);
   if (result.ok) {
     workspaceInfo.value = result.value;
   }

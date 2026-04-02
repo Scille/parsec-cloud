@@ -371,15 +371,15 @@ import {
   getCurrentAvailableDevice,
   getLoggedInDevices,
   getOrganizationCreationDate,
-  getWorkspaceInfo,
+  getStartedWorkspaceInfo,
   listAsyncEnrollments,
   listWorkspaces,
   LoggedInDeviceInfo,
+  RealmArchivingConfigurationTag,
   UserProfile,
   WorkspaceInfo,
   WorkspaceRole,
 } from '@/parsec';
-import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import {
   currentRouteIs,
   currentRouteIsWorkspaceRoute,
@@ -456,7 +456,7 @@ import {
   warning,
 } from 'ionicons/icons';
 import { Duration } from 'luxon';
-import { ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
+import { asyncComputed, ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
 import { computed, inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -524,10 +524,12 @@ const watchSidebarWidthCancel = watch(sidebarWidth, async (value: number) => {
   emits('sidebarWidthChanged', value);
 });
 
-const currentWorkspace = computed(() => {
-  for (const wk of recentDocumentManager.getWorkspaces()) {
-    if (currentRouteIsWorkspaceRoute(wk.handle)) {
-      return wk;
+const currentWorkspace = asyncComputed(async () => {
+  const workspacesResult = await listWorkspaces();
+  if (workspacesResult.ok) {
+    const wInfo = workspacesResult.value.find((wi) => currentRouteIsWorkspaceRoute(wi.handle));
+    if (wInfo) {
+      return wInfo;
     }
   }
   return undefined;
@@ -680,7 +682,7 @@ onMounted(async () => {
           if (!isMounted) {
             workspace.mountpoints = [];
           } else {
-            const result = await getWorkspaceInfo(workspace.handle);
+            const result = await getStartedWorkspaceInfo(workspace.handle);
             if (result.ok) {
               workspace.mountpoints = result.value.mountpoints;
             }

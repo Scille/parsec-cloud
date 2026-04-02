@@ -183,7 +183,7 @@ import { pxToRem } from '@/common/utils';
 import { HistoryFileListItem, WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel } from '@/components/files';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { SortProperty } from '@/components/users';
-import { EntryName, FsPath, getWorkspaceInfo, Path, StartedWorkspaceInfo, WorkspaceHistory } from '@/parsec';
+import { EntryName, FsPath, getStartedWorkspaceInfo, Path, StartedWorkspaceInfo, WorkspaceHistory } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
 import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
@@ -248,7 +248,7 @@ const cancelRouteWatch = watchRoute(async () => {
 async function loadHistory(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
-    const infoResult = await getWorkspaceInfo(workspaceHandle);
+    const infoResult = await getStartedWorkspaceInfo(workspaceHandle);
     if (infoResult.ok) {
       workspaceInfo.value = infoResult.value;
     } else {

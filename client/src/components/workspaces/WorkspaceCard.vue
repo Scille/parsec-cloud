@@ -5,7 +5,7 @@
     class="workspace-card-item ion-no-padding"
     :class="{
       'workspace-hovered': isHovered || menuOpened,
-      'workspace-card-item--hidden': isHidden || isArchived,
+      'workspace-card-item--hidden': isHidden || workspace.isArchived,
     }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
@@ -14,7 +14,7 @@
   >
     <div class="workspace-card-content">
       <div
-        v-show="!isArchived"
+        v-show="!workspace.isArchived"
         class="workspace-favorite-icon"
         :class="{
           'workspace-favorite-icon__on': isFavorite,
@@ -34,7 +34,7 @@
 
       <div class="workspace-card-content-info">
         <ion-text class="workspace-card-content__update subtitles-sm">
-          <span v-if="isArchived">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
+          <span v-if="workspace.isArchived">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
           <ion-icon
             v-else
             class="cloud-overlay"
@@ -51,7 +51,7 @@
 
         <div
           class="workspace-hidden subtitles-sm"
-          v-if="isHidden && !isArchived"
+          v-if="isHidden && !workspace.isArchived"
         >
           <ion-icon
             class="cloud-overlay"
@@ -60,7 +60,7 @@
           <ion-text>{{ $msTranslate('WorkspacesPage.Workspace.hidden') }}</ion-text>
         </div>
         <ion-icon
-          v-if="isArchived"
+          v-if="workspace.isArchived"
           class="workspace-archive"
           :icon="archive"
         />
@@ -68,7 +68,7 @@
     </div>
     <div class="workspace-card-bottom">
       <workspace-role-tag
-        v-if="!isArchived"
+        v-if="!workspace.isArchived"
         class="workspace-card-bottom__role"
         :role="workspace.currentSelfRole"
       />
@@ -82,7 +82,7 @@
       </ion-label>
       <div class="workspace-card-bottom__icons">
         <div
-          v-show="clientProfile !== UserProfile.Outsider && !isArchived"
+          v-show="clientProfile !== UserProfile.Outsider && !workspace.isArchived"
           class="icon-share-container"
           @click.stop="$emit('shareClick', workspace, $event)"
         >
@@ -122,7 +122,6 @@ const props = defineProps<{
   clientProfile: UserProfile;
   isFavorite: boolean;
   isHidden: boolean;
-  isArchived: boolean;
 }>();
 
 const emits = defineEmits<{

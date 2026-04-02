@@ -6,8 +6,8 @@ import {
   EntryStat,
   FsPath,
   getClientInfo,
+  getStartedWorkspaceInfo,
   getSystemPath,
-  getWorkspaceInfo,
   isDesktop,
   isFileContentAvailable,
   isWeb,
@@ -93,7 +93,7 @@ async function _getEntryStat(
   let statsResult;
 
   if (options.atTime) {
-    const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
+    const workspaceInfoResult = await getStartedWorkspaceInfo(workspaceHandle);
     if (!workspaceInfoResult.ok) {
       return;
     }
