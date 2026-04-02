@@ -308,6 +308,7 @@ export enum ProfilePages {
   Authentication = 'authentication',
   Settings = 'settings',
   About = 'about',
+  ShamirRecovery = 'shamirRecovery',
 }
 
 export interface Query {

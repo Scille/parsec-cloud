@@ -111,6 +111,23 @@
                   />
                 </div>
               </ion-radio>
+              <!-- Shamir -->
+              <ion-radio
+                slot="start"
+                :value="ProfilePages.ShamirRecovery"
+                class="menu-list__item"
+              >
+                <div class="item-container">
+                  <ion-icon :icon="idCard" />
+                  <ion-text class="item-container__text body">
+                    {{ $msTranslate('MyProfilePage.tabs.account.shamirRecovery') }}
+                  </ion-text>
+                  <ion-icon
+                    v-if="isSmallDisplay"
+                    :icon="chevronForward"
+                  />
+                </div>
+              </ion-radio>
             </div>
           </div>
 
@@ -242,6 +259,16 @@
             </div>
             <organization-recovery-page />
           </div>
+          <!-- shamir tab -->
+          <div
+            v-if="myProfileTab === ProfilePages.ShamirRecovery"
+            class="profile-content-item recovery"
+          >
+            <div class="item-header">
+              <ion-text class="item-header__title title-h3">{{ $msTranslate('ShamirRecovery.title') }}</ion-text>
+            </div>
+            <shamir-recovery-page />
+          </div>
           <!-- About tab -->
           <div
             v-if="myProfileTab === ProfilePages.About"
@@ -271,6 +298,7 @@ import AboutView from '@/views/about/AboutView.vue';
 import DevicesPage from '@/views/devices/DevicesPage.vue';
 import AuthenticationPage from '@/views/profile/AuthenticationPage.vue';
 import OrganizationRecoveryPage from '@/views/profile/OrganizationRecoveryPage.vue';
+import ShamirRecoveryPage from '@/views/profile/ShamirRecoveryPage.vue';
 import { IonContent, IonHeader, IonIcon, IonPage, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import {
   chatbubbles,
