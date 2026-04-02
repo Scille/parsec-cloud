@@ -35,9 +35,11 @@ export {
   ClientEventTag,
   ClientExportRecoveryDeviceErrorTag,
   ClientGetOrganizationBootstrapDateErrorTag,
+  ClientGetSelfShamirRecoveryErrorTag,
   ClientGetUserDeviceErrorTag,
   ClientGetUserInfoErrorTag,
   ClientInfoErrorTag,
+  ClientListShamirRecoveriesForOthersErrorTag,
   ClientListUserDevicesErrorTag,
   ClientListUsersErrorTag,
   ClientListWorkspacesErrorTag,
@@ -75,6 +77,7 @@ export {
   Platform,
   RealmArchivingConfigurationTag,
   RequestedRealmArchivingConfigurationTag,
+  SelfShamirRecoveryInfoTag,
   ShowCertificateSelectionDialogErrorTag,
   SubmitAsyncEnrollmentErrorTag,
   SubmitAsyncEnrollmentIdentityStrategyTag,
@@ -158,6 +161,7 @@ export type {
   ClientCancelInvitationError,
   ClientConfig,
   ClientCreateWorkspaceError,
+  ClientDeleteShamirRecoveryError,
   ClientEvent,
   ClientEventGreetingAttemptCancelled,
   ClientEventGreetingAttemptJoined,
@@ -167,12 +171,14 @@ export type {
   ClientExportRecoveryDeviceError,
   ClientGetAsyncEnrollmentAddrError,
   ClientGetOrganizationBootstrapDateError,
+  ClientGetSelfShamirRecoveryError,
   ClientGetTosError,
   ClientGetUserDeviceError,
   ClientGetUserInfoError,
   ClientInfo,
   ClientInfoError,
   ClientListAsyncEnrollmentsError,
+  ClientListShamirRecoveriesForOthersError,
   ClientListUserDevicesError,
   ClientListUsersError,
   ClientListWorkspacesError,
@@ -182,6 +188,7 @@ export type {
   ClientRejectAsyncEnrollmentError,
   ClientRenameWorkspaceError,
   ClientRevokeUserError,
+  ClientSetupShamirRecoveryError,
   ClientShareWorkspaceError,
   ClientStartError,
   ClientStartInvitationGreetError,
@@ -323,6 +330,15 @@ import type {
   EntryStatFolder as ParsecEntryStatFolder,
   ParsecInvitationAddrAndRedirectionURL,
   ParsecOrganizationAddr,
+  OtherShamirRecoveryInfoDeleted as ParsecOtherShamirRecoveryInfoDeleted,
+  OtherShamirRecoveryInfoSetupAllValid as ParsecOtherShamirRecoveryInfoSetupAllValid,
+  OtherShamirRecoveryInfoSetupButUnusable as ParsecOtherShamirRecoveryInfoSetupButUnusable,
+  OtherShamirRecoveryInfoSetupWithRevokedRecipients as ParsecOtherShamirRecoveryInfoSetupWithRevokedRecipients,
+  SelfShamirRecoveryInfoDeleted as ParsecSelfShamirRecoveryInfoDeleted,
+  SelfShamirRecoveryInfoNeverSetup as ParsecSelfShamirRecoveryInfoNeverSetup,
+  SelfShamirRecoveryInfoSetupAllValid as ParsecSelfShamirRecoveryInfoSetupAllValid,
+  SelfShamirRecoveryInfoSetupButUnusable as ParsecSelfShamirRecoveryInfoSetupButUnusable,
+  SelfShamirRecoveryInfoSetupWithRevokedRecipients as ParsecSelfShamirRecoveryInfoSetupWithRevokedRecipients,
   ServerConfig as ParsecServerConfig,
   UserInfo as ParsecUserInfo,
   WorkspaceHistoryEntryStatFile as ParsecWorkspaceHistoryEntryStatFile,
@@ -513,6 +529,57 @@ interface ServerConfig extends ParsecServerConfig {
   doesAuthMethodRequireTotp: (strategy: DevicePrimaryProtectionStrategyTag) => boolean;
 }
 
+interface SelfShamirRecoveryInfoSetupAllValid extends ParsecSelfShamirRecoveryInfoSetupAllValid {
+  isUsable: () => boolean;
+  recipients: Array<UserInfo>;
+}
+
+interface SelfShamirRecoveryInfoSetupWithRevokedRecipients extends ParsecSelfShamirRecoveryInfoSetupWithRevokedRecipients {
+  isUsable: () => boolean;
+  recipients: Array<UserInfo>;
+}
+
+interface SelfShamirRecoveryInfoSetupButUnusable extends ParsecSelfShamirRecoveryInfoSetupButUnusable {
+  isUsable: () => boolean;
+}
+
+interface SelfShamirRecoveryInfoNeverSetup extends ParsecSelfShamirRecoveryInfoNeverSetup {
+  isUsable: () => boolean;
+}
+
+interface SelfShamirRecoveryInfoDeleted extends ParsecSelfShamirRecoveryInfoDeleted {
+  isUsable: () => boolean;
+}
+
+type SelfShamirRecoveryInfo =
+  | SelfShamirRecoveryInfoSetupAllValid
+  | SelfShamirRecoveryInfoSetupWithRevokedRecipients
+  | SelfShamirRecoveryInfoSetupButUnusable
+  | SelfShamirRecoveryInfoNeverSetup
+  | SelfShamirRecoveryInfoDeleted;
+
+interface OtherShamirRecoveryInfoDeleted extends ParsecOtherShamirRecoveryInfoDeleted {
+  owner: UserInfo;
+}
+
+interface OtherShamirRecoveryInfoSetupAllValid extends ParsecOtherShamirRecoveryInfoSetupAllValid {
+  owner: UserInfo;
+}
+
+interface OtherShamirRecoveryInfoSetupButUnusable extends ParsecOtherShamirRecoveryInfoSetupButUnusable {
+  owner: UserInfo;
+}
+
+interface OtherShamirRecoveryInfoSetupWithRevokedRecipients extends ParsecOtherShamirRecoveryInfoSetupWithRevokedRecipients {
+  owner: UserInfo;
+}
+
+type OtherShamirRecoveryInfo =
+  | OtherShamirRecoveryInfoDeleted
+  | OtherShamirRecoveryInfoSetupAllValid
+  | OtherShamirRecoveryInfoSetupButUnusable
+  | OtherShamirRecoveryInfoSetupWithRevokedRecipients;
+
 export {
   AccessToken,
   AccountHandle,
@@ -541,10 +608,18 @@ export {
   OrganizationInfo,
   OrganizationInfoError,
   OrganizationInfoErrorTag,
+  OtherShamirRecoveryInfo,
+  OtherShamirRecoveryInfoDeleted,
+  OtherShamirRecoveryInfoSetupAllValid,
+  OtherShamirRecoveryInfoSetupButUnusable,
+  OtherShamirRecoveryInfoSetupWithRevokedRecipients,
   OwnDeviceInfo,
   ParsecOrganizationAddr,
   PkiHandle,
   RegistrationDevice,
+  SelfShamirRecoveryInfo,
+  SelfShamirRecoveryInfoSetupAllValid,
+  SelfShamirRecoveryInfoSetupWithRevokedRecipients,
   ServerConfig,
   SystemPath,
   UserID,

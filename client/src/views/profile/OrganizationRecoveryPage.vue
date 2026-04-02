@@ -126,16 +126,12 @@
       </div>
     </section>
 
-    <section
-      class="recovery-section recovery-section--trust"
-      v-if="false"
-    >
+    <section class="recovery-section recovery-section--trust">
       <div class="recovery-method">
         <ms-image
           :image="RecoveryTrustIcon"
           class="recovery-method-image"
         />
-
         <div class="recovery-method-content">
           <div class="recovery-method-content-text">
             <ion-text class="recovery-method-content-text__title title-h4">
@@ -149,6 +145,7 @@
             <ion-button
               class="button-normal button-default action-button"
               fill="clear"
+              @click="openShamirRecoveryModal"
             >
               {{ $msTranslate('OrganizationRecovery.trustedUser.action') }}
             </ion-button>
@@ -161,10 +158,16 @@
           </div>
         </div>
         <div class="recovery-method-state">
-          <ion-text class="badge-active button-medium">
+          <ion-text
+            class="badge-active button-medium"
+            v-if="shamirInfo?.isUsable()"
+          >
             {{ $msTranslate('OrganizationRecovery.state.active') }}
           </ion-text>
-          <ion-text class="badge-inactive button-medium">
+          <ion-text
+            v-if="shamirInfo && !shamirInfo.isUsable()"
+            class="badge-inactive button-medium"
+          >
             {{ $msTranslate('OrganizationRecovery.state.inactive') }}
           </ion-text>
         </div>
@@ -177,12 +180,13 @@
 import RecoveryDeviceIcon from '@/assets/images/recovery-device-icon.svg?raw';
 import RecoveryFileIcon from '@/assets/images/recovery-file-icon.svg?raw';
 import RecoveryTrustIcon from '@/assets/images/recovery-trusted-user-icon.svg?raw';
-import { getClientInfo, listOwnDevices, OwnDeviceInfo } from '@/parsec';
+import { getClientInfo, getSelfShamirRecovery, listOwnDevices, OwnDeviceInfo, SelfShamirRecoveryInfo } from '@/parsec';
 import { navigateTo, ProfilePages, Routes } from '@/router';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { openDeviceGreetModal } from '@/views/devices/utils';
 import ExportRecoveryDevice from '@/views/profile/ExportRecoveryDeviceModal.vue';
+import ShamirRecoveryModal from '@/views/profile/ShamirRecoveryModal.vue';
 import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Answer, askQuestion, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
@@ -195,16 +199,25 @@ const hasRecoveryDevice = ref(false);
 const queryingDevices = ref(true);
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
 const hasSecondaryDevice = computed(() => devices.value.length > 1);
+const shamirInfo = ref<SelfShamirRecoveryInfo | undefined>(undefined);
+const error = ref('');
 
 onMounted(async (): Promise<void> => {
-  const result = await getClientInfo();
-  if (!result.ok) {
-    return;
+  const [clientInfoResult] = await Promise.all([getClientInfo(), refreshDevicesList(), refreshShamirStatus()]);
+  if (clientInfoResult.ok) {
+    orgId.value = clientInfoResult.value.organizationId;
   }
-  orgId.value = result.value.organizationId;
-
-  await refreshDevicesList();
 });
+
+async function refreshShamirStatus(): Promise<void> {
+  const result = await getSelfShamirRecovery();
+
+  if (!result.ok) {
+    error.value = 'ERROR';
+  } else {
+    shamirInfo.value = result.value;
+  }
+}
 
 async function refreshDevicesList(): Promise<void> {
   const result = await listOwnDevices();
@@ -274,6 +287,23 @@ async function exportRecoveryDevice(): Promise<void> {
     }
     hasRecoveryDevice.value = true;
   }
+}
+
+async function openShamirRecoveryModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: ShamirRecoveryModal,
+    cssClass: 'shamir-recovery-modal',
+    componentProps: {
+      informationManager: informationManager,
+    },
+    canDismiss: true,
+    backdropDismiss: true,
+    showBackdrop: true,
+  });
+  await modal.present();
+  await modal.onDidDismiss();
+  await modal.dismiss();
+  await refreshShamirStatus();
 }
 
 async function onAddDeviceClick(): Promise<void> {
