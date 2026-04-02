@@ -56,6 +56,7 @@ export interface SetupOptions {
   mockPki?: boolean;
   allowedProtectionMethods?: Array<ProtectionMethod>;
   additionalUsers?: Array<AdditionalUserData>;
+  enableShamir?: boolean;
 }
 
 export interface MsPage extends Page {

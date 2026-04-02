@@ -68,6 +68,9 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.enableUpdateEvent) {
         (window as any).TESTING_ENABLE_UPDATE_EVENT = options.enableUpdateEvent;
       }
+      if (options.enableShamir) {
+        (window as any).TESTING_ENABLE_SHAMIR = true;
+      }
       if (options.mockPki) {
         // When the testbed is used, `pkiInitForScws()` relies on a mock and never
         // actually tries to access the SCWS middleware.

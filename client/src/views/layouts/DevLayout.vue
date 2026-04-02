@@ -198,7 +198,6 @@ async function addUser(
 ): Promise<void> {
   const invResult = await parsec.inviteUser(email);
   if (!invResult.ok) {
-    console.log(invResult.error);
     return;
   }
 

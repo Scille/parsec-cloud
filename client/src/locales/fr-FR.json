@@ -1793,6 +1793,7 @@
         "inviteUser": "Inviter un utilisateur",
         "currentUser": "(Vous)",
         "itemCount": "Aucun utilisateur | Un utilisateur | {count} utilisateurs",
+        "anonymous": "Anonyme",
         "profile": {
             "admin": {
                 "label": "Administrateur",
@@ -2274,11 +2275,77 @@
             "otherActiveDevices": "{count} autres appareils/navigateurs actifs",
             "action": "Ajouter un appareil"
         },
-        "trustedUser": {
+        "shamir": {
             "title": "Personnes de confiance",
-            "description": "Désignez des personnes de confiance qui pourront vous aider à récupérer votre compte en cas de perte d'accès (minimum {minUsers} personnes).",
-            "action": "Gérer mes personnes de confiance",
-            "actionSecondary": "Aider à récupérer un accès"
+            "description": "Désignez au moins {count} personnes de confiance. En cas de perte d'accès, elles pourront ensemble rétablir l'accès à votre compte.",
+            "action": "Définir mes personnes de confiance",
+            "actionSecondary": "Aider à récupérer un accès",
+            "modalSelf": {
+                "title": "Mon cercle de confiance",
+                "subtitle": "Gérez votre cercle de confiance pour la récupération d'accès",
+                "setupInfo": {
+                    "title": "Désignez des personnes de confiance",
+                    "subtitle": "Si vous perdez votre mot de passe ou votre appareil, {threshold} de ces personnes pourront ensemble vous redonner accès à votre compte.",
+                    "info1Title": "Choisissez au moins {threshold} collègues",
+                    "info1Subtitle": "Parmi les membres de votre organisation - des personnes que vous pouvez contacter facilement",
+                    "info2Title": "Ils sont notifiés et informés de leur rôle",
+                    "info2Subtitle": "Ils sauront qu'ils peuvent vous aider à récupérer votre accès si besoin",
+                    "startSetup": "Choisir mes personnes de confiance"
+                },
+                "threshold": {
+                    "title": "Personnes de confiance",
+                    "minUsers": "{count} / {threshold} minimum",
+                    "selected": "{count} sélectionnées",
+                    "subtitle": "Ces personnes pourront participer à la récupération de votre accès."
+                },
+                "trustedPeople": {
+                    "input": "Rechercher par nom ou email",
+                    "noPeopleAddedTitle": "Recherchez des personnes en qui vous avez confiance pour créer votre cercle.",
+                    "noPeopleAddedSubtitle": "Vous pouvez ajouter des personnes en recherchant leur nom ou leur email.",
+                    "checkbox": "Je confirme mon choix de personnes de confiance en cas de récupération d'accès",
+                    "confirmSetup": "Créer mon cercle de confiance"
+                },
+                "deleteModal": {
+                    "title": "Supprimer mon cercle de confiance",
+                    "message": "Votre cercle actuel sera supprimé. Vous pourrez ensuite en créer un nouveau avec d'autres personnes.",
+                    "yes": "Supprimer mon cercle",
+                    "no": "Conserver"
+                },
+                "setupDone": "Votre cercle de confiance est configuré",
+                "revoked": "Révoqué",
+                "warningRevokedRecipients": "Attention : certaines de vos personnes de confiance sont révoquées.",
+                "errorRecipientsAllRevoked": "Le cercle de confiance contient uniquement des personnes révoquées. Veuillez le supprimer et en créer un nouveau.",
+                "numberPeople": "{count} personnes de confiance",
+                "necessaryPeople": "{threshold} personnes sont nécessaires pour récupérer votre accès.",
+                "close": "Fermer",
+                "delete": "Supprimer mon cercle de confiance",
+                "toasts": {
+                    "setupSuccess": "Votre cercle de confiance a été créé.",
+                    "setupFailed": "Impossible de configurer votre cercle de confiance. Veuillez réessayer."
+                },
+                "errors": {
+                    "setupFailed": "Impossible de configurer votre cercle de confiance. Veuillez réessayer."
+                }
+            },
+            "modalOthers": {
+                "title": "Aider à récupérer un accès",
+                "subtitle": "Aidez quelqu'un à récupérer son accès en faisant partie de son cercle de confiance.",
+                "info": "Si l'un d'eux vous contacte, copiez son lien et envoyez-le lui - il pourra ensuite déclencher l'échange de code.",
+                "noPeopleTitle": "Vous n'appartenez à aucun cercle de confiance",
+                "noPeopleSubtitle": "Les personnes qui vous ajoutent à leur cercle de confiance apparaîtront ici. Vous pourrez alors les aider à récupérer leur accès s'ils le perdent.",
+                "copyLink": "Copier le lien",
+                "startRecovery": "Commencer la récupération",
+                "toasts": {
+                    "linkCopied": "Lien de récupération copié dans le presse-papiers.",
+                    "linkNotCopied": "Impossible de copier le lien de récupération dans le presse-papiers."
+                }
+            },
+            "errors": {
+                "generic": "Une erreur est survenue. Veuillez réessayer plus tard.",
+                "failedToGetLink": "Impossible d'obtenir le lien de récupération.",
+                "notEnoughPeople": "Votre organisation ne contient pas assez d'utilisateurs. La mise en place du cercle de confiance requiert au moins {needed} personnes avec un profil différent d'Externe.",
+                "notEnoughAdmins": "Votre organisation ne contient pas assez d'administrateurs. La mise en place du cercle de confiance requiert au moins {needed} administrateurs."
+            }
         },
         "state": {
             "active": "Actif",
