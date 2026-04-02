@@ -30,6 +30,7 @@ describe('User List Item', () => {
       isRevoked: () => false,
       isFrozen: () => false,
       isActive: () => true,
+      isAnonymous: () => false,
       isSelected: false,
       isCurrent: false,
     };

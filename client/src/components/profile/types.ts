@@ -10,3 +10,8 @@ export enum AuthenticationCardState {
   Unavailable = 'unavailable',
   Forbidden = 'forbidden',
 }
+
+export enum ShamirTab {
+  Self = 'shamir-tab-self',
+  Others = 'shamir-tab-others',
+}

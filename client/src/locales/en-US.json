@@ -1791,6 +1791,7 @@
         "currentUser": "(You)",
         "inviteUser": "Invite a user",
         "itemCount": "No user | One user | {count} users",
+        "anonymous": "Anonymous",
         "profile": {
             "admin": {
                 "label": "Administrator",
@@ -2273,11 +2274,77 @@
             "otherActiveDevices": "{count} other active devices/browsers",
             "action": "Add a device"
         },
-        "trustedUser": {
+        "shamir": {
             "title": "People of trust",
-            "description": "Designate trusted people who can help you recover your account in case of lost access (minimum {minUsers} people).",
+            "description": "Designate at least {count} trusted people. In case of lost access, they can help you regain access to your account.",
             "action": "Manage my people of trust",
-            "actionSecondary": "Help recover a person"
+            "actionSecondary": "Help recover an access",
+            "modalSelf": {
+                "title": "My circle of trust",
+                "subtitle": "Manage your circle of trust for access recovery",
+                "setupInfo": {
+                    "title": "Designate trusted people",
+                    "subtitle": "If you lose your password or device, {threshold} of these people can help you restore your access to your account.",
+                    "info1Title": "Choose at least {threshold} colleagues",
+                    "info1Subtitle": "From among the organization's users — people you can easily contact",
+                    "info2Title": "They are notified and informed of their role",
+                    "info2Subtitle": "They will know they can help you recover your access if needed",
+                    "startSetup": "Choose my trusted people"
+                },
+                "threshold": {
+                    "title": "Trusted people",
+                    "minUsers": "{count} / {threshold} minimum",
+                    "selected": "{count} selected",
+                    "subtitle": "These people will be able to help you recover your access."
+                },
+                "trustedPeople": {
+                    "input": "Search by name or email",
+                    "noPeopleAddedTitle": "Search people you trust to start your circle.",
+                    "noPeopleAddedSubtitle": "You can add people by searching their name or email.",
+                    "checkbox": "I confirm my choice of trusted people for access recovery",
+                    "confirmSetup": "Create my circle of trust"
+                },
+                "deleteModal": {
+                    "title": "Delete my circle of trust",
+                    "message": "Your current circle will be deleted. You can then create a new one with other people.",
+                    "yes": "Delete my circle",
+                    "no": "Keep"
+                },
+                "setupDone": "Your circle of trust is configured",
+                "revoked": "Revoked",
+                "warningRevokedRecipients": "Warning: some of your people of trust are revoked.",
+                "errorRecipientsAllRevoked": "The circle of trust contains only revoked people. Please delete it and create a new one.",
+                "numberPeople": "{count} trusted people",
+                "necessaryPeople": "{threshold} people of trust are necessary to recover your access.",
+                "close": "Close",
+                "delete": "Delete my circle of trust",
+                "toasts": {
+                    "setupSuccess": "Your circle of trust has been created.",
+                    "setupFailed": "Cannot set up the circle of trust. Please try again."
+                },
+                "errors": {
+                    "setupFailed": "Cannot set up the circle of trust. Please try again."
+                }
+            },
+            "modalOthers": {
+                "title": "Help recover access",
+                "subtitle": "Help someone recover their access by being part of their circle of trust.",
+                "info": "If one of them contacts you, copy their link and send it to them — they can then initiate the code exchange.",
+                "noPeopleTitle": "You are not part of any circle of trust",
+                "noPeopleSubtitle": "People who have added you to their circle of trust will appear here. You can then help them recover their access in case of loss.",
+                "copyLink": "Copy link",
+                "startRecovery": "Start recovery",
+                "toasts": {
+                    "linkCopied": "Recovery link copied to clipboard.",
+                    "linkNotCopied": "Failed to copy recovery link to clipboard."
+                }
+            },
+            "errors": {
+                "generic": "An error occurred. Please try again later.",
+                "failedToGetLink": "Failed to get the recovery link.",
+                "notEnoughPeople": "Not enough people in your organization. At least {needed} people with a profile different than External are required.",
+                "notEnoughAdmins": "Not enough administrators in your organization. At least {needed} administrators are required."
+            }
         },
         "state": {
             "active": "Active",
