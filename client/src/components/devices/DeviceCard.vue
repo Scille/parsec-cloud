@@ -43,7 +43,7 @@ import { DeviceLabel } from '@/common/device';
 import { TechnicalId } from '@/components/misc';
 import { DeviceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
-import { desktopOutline } from 'ionicons/icons';
+import { desktopOutline, logoAndroid, logoApple, logoTux, logoWindows, phoneLandscape } from 'ionicons/icons';
 import { formatTimeSince, Translatable } from 'megashark-lib';
 import { computed } from 'vue';
 
@@ -54,11 +54,11 @@ const props = defineProps<{
 }>();
 
 const DEVICE_PLATFORMS: Map<DeviceLabel, { label: Translatable; icon: string }> = new Map([
-  [DeviceLabel.Android, { label: 'common.deviceTypes.android', icon: desktopOutline }],
-  [DeviceLabel.Linux, { label: 'common.deviceTypes.linux', icon: desktopOutline }],
-  [DeviceLabel.Windows, { label: 'common.deviceTypes.windows', icon: desktopOutline }],
-  [DeviceLabel.MacOS, { label: 'common.deviceTypes.macos', icon: desktopOutline }],
-  [DeviceLabel.MobileWeb, { label: 'common.deviceTypes.mobileWeb', icon: desktopOutline }],
+  [DeviceLabel.Android, { label: 'common.deviceTypes.android', icon: logoAndroid }],
+  [DeviceLabel.Linux, { label: 'common.deviceTypes.linux', icon: logoTux }],
+  [DeviceLabel.Windows, { label: 'common.deviceTypes.windows', icon: logoWindows }],
+  [DeviceLabel.MacOS, { label: 'common.deviceTypes.macos', icon: logoApple }],
+  [DeviceLabel.MobileWeb, { label: 'common.deviceTypes.mobileWeb', icon: phoneLandscape }],
   [DeviceLabel.Web, { label: 'common.deviceTypes.web', icon: desktopOutline }],
 ]);
 
