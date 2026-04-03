@@ -3,60 +3,12 @@
 use crate::X509CertificateDer;
 
 use bytes::Bytes;
-use rustls_pki_types::pem::PemObject;
 pub use webpki::EndEntityCert as X509EndCertificate;
 
 use crate::X509TrustAnchor;
-use webpki::{Error as WebPkiError, KeyUsage};
+use webpki::KeyUsage;
 
 use libparsec_types::prelude::*;
-
-#[derive(Clone)]
-pub struct DerCertificate<'a> {
-    internal: X509CertificateDer<'a>,
-}
-
-impl<'a> DerCertificate<'a> {
-    pub fn try_from_pem(raw: &'a [u8]) -> anyhow::Result<Self> {
-        X509CertificateDer::from_pem_slice(raw)
-            .map(Self::new)
-            .map_err(|err| anyhow::anyhow!("Invalid PEM content: {err}"))
-    }
-
-    pub fn from_der(raw: &'a [u8]) -> Self {
-        Self::new(raw.into())
-    }
-
-    pub fn new(cert: X509CertificateDer<'a>) -> Self {
-        Self { internal: cert }
-    }
-
-    pub fn into_owned(&self) -> DerCertificate<'static> {
-        DerCertificate::new(self.internal.clone().into_owned())
-    }
-
-    pub fn to_end_certificate(&self) -> Result<X509EndCertificate<'_>, WebPkiError> {
-        X509EndCertificate::try_from(&self.internal)
-    }
-}
-
-impl DerCertificate<'static> {
-    pub fn from_der_owned(raw: Vec<u8>) -> Self {
-        Self::new(raw.into())
-    }
-}
-
-impl AsRef<[u8]> for DerCertificate<'_> {
-    fn as_ref(&self) -> &[u8] {
-        self.internal.as_ref()
-    }
-}
-
-impl<'a> From<X509CertificateDer<'a>> for DerCertificate<'a> {
-    fn from(value: X509CertificateDer<'a>) -> Self {
-        Self { internal: value }
-    }
-}
 
 pub(crate) fn verify_certificate<'der>(
     certificate: &'der X509EndCertificate<'der>,

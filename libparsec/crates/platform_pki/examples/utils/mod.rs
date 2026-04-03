@@ -8,9 +8,7 @@ use clap::{
     builder::{NonEmptyStringValueParser, TypedValueParser},
     error::{Error, ErrorKind},
 };
-use libparsec_platform_pki::{x509::DistinguishedNameValue, DerCertificate, PkiSystem};
 use libparsec_types::X509CertificateHash;
-use x509_cert::der::{DecodeValue, Header, SliceReader, Tag};
 
 // Not all examples uses `Base64Parser` so it is not always used.
 #[allow(dead_code)]
@@ -109,58 +107,5 @@ impl ContentOpts {
                 .map(Into::into),
             (Some(_), Some(_)) | (None, None) => unreachable!("Handled by clap"),
         }
-    }
-}
-
-#[derive(Debug, Clone, clap::Args)]
-#[group(required = true, multiple = false)]
-pub struct CertificateOrRef {
-    /// Hash of the certificate from the store to use to verify the signature.
-    #[arg(long, value_parser = CertificateSRIHashParser)]
-    certificate_hash: Option<X509CertificateHash>,
-    /// Path to a file containing the certificate in DER format.
-    #[arg(long)]
-    der_file: Option<PathBuf>,
-    /// Path to a file containing the certificate in PEM format.
-    #[arg(long)]
-    pem_file: Option<PathBuf>,
-    /// Certificate in PEM format but without headers.
-    #[arg(long)]
-    pem: Option<String>,
-}
-
-impl CertificateOrRef {
-    // Not all examples uses `CertificateOrRef` so `get_certificate` is not always used.
-    #[allow(dead_code)]
-    pub async fn get_certificate(&self) -> anyhow::Result<DerCertificate<'static>> {
-        let cert = if let Some(hash) = self.certificate_hash.clone() {
-            let cert_ref: libparsec_types::X509CertificateReference = hash.into();
-            // Config dir is only used for testbed, we can safely provide an empty path here
-            let pki = PkiSystem::init(std::path::Path::new(""), None)
-                .await
-                .context("Failed to initialize PKI system")?;
-            let certificate = pki
-                .find_certificate(&cert_ref)
-                .await
-                .context("Failed to find certificate")?
-                .context("Certificate not found")?;
-            let der = certificate.get_der().await.context("Failed to get DER")?;
-            DerCertificate::from(der)
-        } else if let Some(der_file) = &self.der_file {
-            let raw = std::fs::read(der_file).context("Failed to read file")?;
-            DerCertificate::from_der_owned(raw)
-        } else if let Some(pem_file) = &self.pem_file {
-            let raw = std::fs::read(pem_file).context("Failed to read file")?;
-            DerCertificate::try_from_pem(&r#raw)?.into_owned()
-        } else if let Some(pem) = self.pem.as_deref() {
-            let raw = data_encoding::BASE64
-                .decode(pem.as_bytes())
-                .context("Invalid pem base64")?;
-            DerCertificate::from_der_owned(raw)
-        } else {
-            unreachable!("Should be handle by clap")
-        };
-
-        Ok(cert)
     }
 }
