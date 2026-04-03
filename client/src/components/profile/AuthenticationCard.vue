@@ -11,11 +11,18 @@
         class="authentication-card__image"
       />
     </div>
+
     <div class="authentication-card-text">
-      <ion-text class="authentication-card-text__title body-lg">{{ $msTranslate(config.methodName) }}</ion-text>
+      <ion-text
+        class="authentication-card-text__header subtitles-sm"
+        v-if="state === AuthenticationCardState.Update"
+      >
+        {{ $msTranslate('Authentication.methodChosen') }}
+      </ion-text>
+      <ion-text class="authentication-card-text__title title-h4">{{ $msTranslate(config.methodName) }}</ion-text>
       <ion-text
         class="authentication-card-text__description body"
-        v-if="config.description && showDescription"
+        v-if="config.description && showDescription && state !== AuthenticationCardState.Update"
       >
         {{ $msTranslate(config.description) }}
       </ion-text>
@@ -40,7 +47,6 @@
     <ion-button
       class="authentication-card__update-button"
       v-if="state === AuthenticationCardState.Update"
-      fill="clear"
       :disabled="disabled"
       @click="$emit('update-clicked')"
     >
@@ -141,21 +147,20 @@ function keyringUnavailableMessage(): Translatable {
 .authentication-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
   padding-right: 1rem;
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-12);
-  box-shadow: var(--parsec-shadow-1);
-  overflow: hidden;
+  border-radius: var(--parsec-radius-18);
+  --overflow: visible;
   width: 100%;
   position: relative;
   z-index: 3;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.1s ease-in;
 
   .image-container {
-    background: var(--parsec-color-light-secondary-background);
-    padding: 1.25rem 1rem;
+    background: var(--parsec-color-light-secondary-premiere);
+    margin: 1rem;
+    padding: 0.5rem;
     align-self: stretch;
+    border-radius: var(--parsec-radius-12);
     display: flex;
     align-items: center;
   }
@@ -170,9 +175,15 @@ function keyringUnavailableMessage(): Translatable {
     flex-direction: column;
     width: 100%;
     padding: 0.25rem 0;
+    gap: 0.25rem;
+
+    &__header {
+      color: var(--parsec-color-light-secondary-grey);
+    }
 
     &__title {
       color: var(--parsec-color-light-primary-700);
+      font-weight: 500;
     }
 
     &__description {
@@ -195,8 +206,17 @@ function keyringUnavailableMessage(): Translatable {
 
   // Manage different states
   &--default {
+    box-shadow:
+      0 1px 1px 0 rgba(0, 0, 0, 0.05),
+      0 1px 4px 0 rgba(0, 0, 0, 0.03),
+      0 0 1px 0 rgba(0, 0, 0, 0.2);
+
     &:hover {
-      border-color: var(--parsec-color-light-secondary-light);
+      background: var(--parsec-color-light-primary-30);
+
+      .image-container {
+        background-color: var(--parsec-color-light-primary-100);
+      }
     }
   }
 
@@ -209,6 +229,10 @@ function keyringUnavailableMessage(): Translatable {
 
   &--active {
     background: var(--parsec-color-light-secondary-premiere);
+    box-shadow:
+      0 1px 1px 0 rgba(0, 0, 0, 0.05),
+      0 1px 4px 0 rgba(0, 0, 0, 0.03),
+      0 0 1px 0 rgba(0, 0, 0, 0.2);
 
     .authentication-card__icon {
       color: var(--parsec-color-light-primary-400);
@@ -217,16 +241,29 @@ function keyringUnavailableMessage(): Translatable {
   }
 
   &--selected {
+    box-shadow:
+      0 1px 1px 0 rgba(0, 0, 0, 0.05),
+      0 1px 4px 0 rgba(0, 0, 0, 0.03),
+      0 0 1px 0 rgba(0, 0, 0, 0.2);
     border-color: var(--parsec-color-light-primary-400);
   }
 
   &--update {
+    box-shadow:
+      0 1px 1px 0 rgba(0, 0, 0, 0.05),
+      0 1px 4px 0 rgba(0, 0, 0, 0.03),
+      0 0 1px 0 rgba(0, 0, 0, 0.2);
     border-color: var(--parsec-color-light-secondary-medium);
 
     .authentication-card__update-button {
       margin-left: auto;
-      color: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-premiere);
+      color: var(--parsec-color-light-secondary-white);
+      --background: var(--parsec-color-light-secondary-text);
+      --background-hover: var(--parsec-color-light-secondary-contrast);
+
+      &::part(native) {
+        padding: 0.75rem 1.125rem;
+      }
     }
   }
 
@@ -239,6 +276,7 @@ function keyringUnavailableMessage(): Translatable {
 
     .authentication-card-text__title {
       color: var(--parsec-color-light-secondary-text);
+      opacity: 0.7;
     }
   }
 
