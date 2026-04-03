@@ -109,25 +109,25 @@ mod platform {
     impl X509Certificate {
         pub async fn get_der(
             &self,
-        ) -> Result<CertificateDer<'static>, crate::GetCertificateDerError> {
+        ) -> Result<CertificateDer<'static>, crate::X509CertificateGetDerError> {
             unimplemented!("platform not supported")
         }
 
         pub async fn request_private_key(
             &self,
-        ) -> Result<X509PrivateKey, crate::RequestPrivateKeyError> {
+        ) -> Result<X509PrivateKey, crate::X509CertificateRequestPrivateKeyError> {
             unimplemented!("platform not supported")
         }
 
         pub async fn to_reference(
             &self,
-        ) -> Result<X509CertificateReference, crate::GetCertificateReferenceError> {
+        ) -> Result<X509CertificateReference, crate::X509CertificateToReferenceError> {
             unimplemented!("platform not supported")
         }
 
         pub async fn get_validation_path(
             &self,
-        ) -> Result<X509ValidationPathOwned, crate::ValidationPathError> {
+        ) -> Result<X509ValidationPathOwned, crate::X509CertificateGetValidationPathError> {
             unimplemented!("platform not supported")
         }
     }
@@ -208,7 +208,7 @@ pub struct PkiConfig<'a> {
 pub use platform::{PkiSystem, X509Certificate};
 
 #[derive(Debug, thiserror::Error)]
-pub enum GetCertificateDerError {
+pub enum X509CertificateGetDerError {
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -226,7 +226,7 @@ pub enum ListUserCertificateError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum RequestPrivateKeyError {
+pub enum X509CertificateRequestPrivateKeyError {
     #[error("private key not found")]
     NotFound,
     #[error(transparent)]
@@ -254,13 +254,13 @@ pub enum X509PrivateKeyDecryptError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum GetCertificateReferenceError {
+pub enum X509CertificateToReferenceError {
     #[error(transparent)]
     Internal(anyhow::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ValidationPathError {
+pub enum X509CertificateGetValidationPathError {
     #[error("certificate not trusted")]
     Untrusted,
     #[error(transparent)]
