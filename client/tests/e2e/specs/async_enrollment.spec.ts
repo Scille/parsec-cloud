@@ -53,10 +53,10 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
   await expect(requestModal.locator('.modal-info')).toBeVisible();
 
   if (identitySystem === 'pki') {
-    await expect(requestModal.locator('.async-authentication-modal-header__title')).toHaveText('Certificate Authentication (PKI)');
-    await requestModal.locator('.choose-certificate-button').click();
+    await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Certificate Authentication (PKI)');
+    await requestModal.locator('.certificate-card').nth(0).click();
   } else {
-    await expect(requestModal.locator('.async-authentication-modal-header__title')).toHaveText(
+    await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText(
       'Log in with SSO to access the organization.',
     );
     await requestModal.locator('.proconnect-button').click();
@@ -120,16 +120,15 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(acceptModal).toBeVisible();
 
     if (identitySystem === 'pki') {
-      await expect(acceptModal.locator('.async-authentication-modal-header__title')).toHaveText(
-        'A certificate is required to accept the request',
+      await expect(acceptModal.locator('.async-authentication-modal-header-text__title')).toHaveText(
+        'A certificate is required to accept the PKI request',
       );
       await expect(acceptModal.locator('.async-authentication-modal-text')).toHaveText(
-        'A certificate is required to validate requests received by PKI. ' +
-          'For security reasons, it must be provided each time the organization is reopened.',
+        'For security reasons, it must be provided each time the organization is reopened.',
       );
-      await acceptModal.locator('.choose-certificate-button').click();
+      await acceptModal.locator('.certificate-card').nth(1).click();
     } else {
-      await expect(acceptModal.locator('.async-authentication-modal-header__title')).toHaveText(
+      await expect(acceptModal.locator('.async-authentication-modal-header-text__title')).toHaveText(
         'You must be logged in to accept the request',
       );
       await expect(acceptModal.locator('.async-authentication-modal-text')).toHaveText(
@@ -175,7 +174,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     if (identitySystem !== 'pki') {
       const finalizeModal = page.locator('.async-enrollment-openbao-modal');
       await expect(finalizeModal).toBeVisible();
-      await expect(finalizeModal.locator('.async-authentication-modal-header__title')).toHaveText('Log in to join the organization');
+      await expect(finalizeModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Log in to join the organization');
       await expect(finalizeModal.locator('.async-authentication-modal-text')).toHaveText(
         'To join the organization, you must log in using your Single Sign-On authentication.',
       );

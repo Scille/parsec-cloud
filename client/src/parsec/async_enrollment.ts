@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { getDefaultDeviceName } from '@/common/device';
+import { toHex } from '@/common/utils';
 import { getClientConfig } from '@/parsec/internals';
 import { parseParsecAddr } from '@/parsec/organization';
 import {
@@ -16,12 +17,18 @@ import {
   AvailableDeviceTypeTag,
   AvailablePendingAsyncEnrollmentIdentitySystem,
   AvailablePendingAsyncEnrollmentIdentitySystemTag,
+  CertificatePurpose,
+  CertificateWithDetails,
+  CertificateWithDetailsTag,
+  CertificateWithDetailsValid,
   ClientAcceptAsyncEnrollmentError,
   ClientGetAsyncEnrollmentAddrError,
   ClientListAsyncEnrollmentsError,
   ClientRejectAsyncEnrollmentError,
   DeviceSaveStrategy,
   HumanHandle,
+  InvalidCertificateReasonTag,
+  ListUserCertificatesError,
   OpenBaoListSelfEmailsError,
   ParsecAsyncEnrollmentAddr,
   ParsedParsecAddrTag,
@@ -175,6 +182,38 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
 
   async isSmartcardAvailable(): Promise<boolean> {
     return await libparsec.isPkiAvailable();
+  },
+
+  async listCertificates(purpose: CertificatePurpose): Promise<Result<Array<CertificateWithDetailsValid>, ListUserCertificatesError>> {
+    const result = await libparsec.listUserCertificatesWithDetails();
+
+    if (result.ok) {
+      const filtered: Array<CertificateWithDetailsValid> = result.value.filter((cert) => {
+        if (cert.tag !== CertificateWithDetailsTag.Valid) {
+          window.electronAPI.log('warn', `Invalid certificate '${cert.friendlyName}': ${cert.invalidReason.tag}`);
+          return false;
+        }
+        switch (purpose) {
+          case CertificatePurpose.Both:
+            return cert.details.canEncrypt && cert.details.canSign;
+          case CertificatePurpose.Encrypt:
+            return cert.details.canEncrypt;
+          case CertificatePurpose.Sign:
+            return cert.details.canSign;
+        }
+      }) as Array<CertificateWithDetailsValid>;
+
+      result.value = filtered.map((cert) => {
+        cert.details.notAfter = DateTime.fromSeconds(cert.details.notAfter as any as number);
+        cert.details.notBefore = DateTime.fromSeconds(cert.details.notBefore as any as number);
+        (cert as CertificateWithDetailsValid).isExpired = () => cert.details.notAfter < DateTime.utc();
+        (cert as CertificateWithDetailsValid).getName = () => cert.friendlyName ?? cert.details.name ?? '';
+        (cert as CertificateWithDetailsValid).getSerial = () => toHex(cert.details.serial);
+        return cert;
+      });
+      return result as { ok: true; value: Array<CertificateWithDetailsValid> };
+    }
+    return result;
   },
 };
 
@@ -378,6 +417,217 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
   async isSmartcardAvailable(): Promise<boolean> {
     return true;
   },
+
+  async listCertificates(purpose: CertificatePurpose): Promise<Result<Array<CertificateWithDetailsValid>, ListUserCertificatesError>> {
+    const CERTIF_REF = {
+      uris: [
+        {
+          tag: X509URIFlavorValueTag.WindowsCNG,
+          x1: {
+            issuer: new Uint8Array(),
+            serialNumber: new Uint8Array(),
+          },
+        },
+      ],
+      hash: 'abcd',
+    };
+
+    const certs: Array<CertificateWithDetails> = [
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        friendlyName: 'Gordon Freeman',
+        details: {
+          name: 'Gordon Freeman',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2056-12-31T10:30:00'),
+          serial: new Uint8Array([45, 23, 42, 12, 34, 23, 42, 5, 97, 98]),
+          emails: ['gordon.freeman@blackmesa.nm', 'gordon.freeman@wanadoo.fr'],
+          canSign: true,
+          canEncrypt: true,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        friendlyName: 'Eli Vance',
+        details: {
+          name: 'Eli Vance',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2007-10-10T10:30:00'),
+          serial: new Uint8Array([86, 45, 42, 7, 65, 64, 23, 23, 5, 97, 98]),
+          emails: ['eli.vance@blackmesa.nm'],
+          canSign: true,
+          canEncrypt: true,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        friendlyName: 'Eli Vance',
+        details: {
+          name: 'Eli Vance',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2007-10-10T10:30:00'),
+          serial: new Uint8Array([86, 45, 42, 78, 65, 64, 23, 23, 5, 97, 98]),
+          emails: ['eli.vance@blackmesa.nm'],
+          canSign: true,
+          canEncrypt: true,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        friendlyName: 'Eli Vance',
+        details: {
+          name: 'Eli Vance',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2027-10-10T10:30:00'),
+          serial: new Uint8Array([86, 45, 78, 7, 65, 64, 23, 23, 5, 97, 98]),
+          emails: ['eli.vance@blackmesa.nm'],
+          canSign: true,
+          canEncrypt: true,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        friendlyName: 'Eli Vance',
+        details: {
+          name: 'Eli Vance',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2027-10-10T10:30:00'),
+          serial: new Uint8Array([86, 23, 42, 7, 65, 64, 23, 23, 5, 97, 98]),
+          emails: ['eli.vance@blackmesa.nm'],
+          canSign: true,
+          canEncrypt: true,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        friendlyName: 'Eli Vance',
+        details: {
+          name: 'Eli Vance',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2007-10-10T10:30:00'),
+          serial: new Uint8Array([86, 45, 42, 7, 65, 64, 23, 23, 57, 97, 98]),
+          emails: ['eli.vance@blackmesa.nm'],
+          canSign: true,
+          canEncrypt: true,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        friendlyName: 'Eli Vance',
+        details: {
+          name: 'Eli Vance',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2027-10-10T10:30:00'),
+          serial: new Uint8Array([86, 45, 42, 7, 65, 64, 23, 23, 5, 73, 98]),
+          emails: ['eli.vance@blackmesa.nm'],
+          canSign: true,
+          canEncrypt: true,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        friendlyName: 'Eli Vance',
+        details: {
+          name: 'Eli Vance',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2007-10-10T10:30:00'),
+          serial: new Uint8Array([86, 45, 42, 7, 65, 64, 79, 23, 5, 97, 98]),
+          emails: ['eli.vance@blackmesa.nm'],
+          canSign: true,
+          canEncrypt: true,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        friendlyName: 'Eli Vance',
+        details: {
+          name: 'Eli Vance',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2027-10-10T10:30:00'),
+          serial: new Uint8Array([86, 45, 42, 21, 65, 64, 23, 23, 5, 97, 98]),
+          emails: ['eli.vance@blackmesa.nm'],
+          canSign: true,
+          canEncrypt: true,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Valid,
+        handle: CERTIF_REF,
+        // cspell:disable-next-line
+        friendlyName: 'Isaac Kleiner',
+        details: {
+          // cspell:disable-next-line
+          name: 'Isaac Kleiner',
+          subject: [],
+          issuer: [],
+          notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
+          notAfter: DateTime.fromISO('2032-08-08T11:45:00'),
+          serial: new Uint8Array([76, 34, 21, 4, 65, 23, 68, 8, 34, 98]),
+          // cspell:disable-next-line
+          emails: ['isaac.kleiner@blackmesa.nm'],
+          canSign: true,
+          canEncrypt: false,
+        },
+      },
+      {
+        tag: CertificateWithDetailsTag.Invalid,
+        handle: CERTIF_REF,
+        friendlyName: 'Wallace Breen',
+        invalidReason: { tag: InvalidCertificateReasonTag.InvalidEmail },
+      },
+    ];
+
+    const filtered: Array<CertificateWithDetailsValid> = certs.filter((cert) => {
+      if (cert.tag !== CertificateWithDetailsTag.Valid) {
+        return false;
+      }
+      switch (purpose) {
+        case CertificatePurpose.Both:
+          return cert.details.canEncrypt && cert.details.canSign;
+        case CertificatePurpose.Encrypt:
+          return cert.details.canEncrypt;
+        case CertificatePurpose.Sign:
+          return cert.details.canSign;
+      }
+    }) as Array<CertificateWithDetailsValid>;
+
+    return {
+      ok: true,
+      value: filtered.map((cert) => {
+        (cert as CertificateWithDetailsValid).isExpired = () => cert.details.notAfter < DateTime.utc();
+        (cert as CertificateWithDetailsValid).getName = () => cert.friendlyName ?? cert.details.name ?? '';
+        (cert as CertificateWithDetailsValid).getSerial = () => toHex(cert.details.serial);
+        return cert;
+      }),
+    };
+  },
 };
 
 async function getAsyncEnrollmentAddr(): Promise<Result<ParsecAsyncEnrollmentAddrAndRedirectionURL, ClientGetAsyncEnrollmentAddrError>> {
@@ -475,6 +725,7 @@ const acceptAsyncEnrollment = bind('acceptAsyncEnrollment');
 const rejectAsyncEnrollment = bind('rejectAsyncEnrollment');
 const selectCertificate = bind('selectCertificate');
 const isSmartcardAvailable = bind('isSmartcardAvailable');
+const listCertificates = bind('listCertificates');
 
 export {
   acceptAsyncEnrollment,
@@ -484,6 +735,7 @@ export {
   getOpenBaoEmails,
   isSmartcardAvailable,
   listAsyncEnrollments,
+  listCertificates,
   listJoinRequests,
   makeAcceptOpenBaoIdentityStrategy,
   makeAcceptPkiIdentityStrategy,

@@ -63,18 +63,23 @@
               alt="Certificate Icon"
               class="async-authentication-modal-header__icon"
             />
-            <ion-text class="async-authentication-modal-header__title subtitles-lg">
-              {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.title') }}
-            </ion-text>
+            <div class="async-authentication-modal-header-text">
+              <ion-text class="async-authentication-modal-header-text__title title-h4">
+                {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.title') }}
+              </ion-text>
+              <ion-text class="async-authentication-modal-header-text__description body">
+                {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.description') }}
+              </ion-text>
+            </div>
           </div>
-          <ion-text class="async-authentication-modal-text body-lg">
-            {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.pki.description') }}
-          </ion-text>
-          <choose-certificate @certificate-selected="certificate = $event" />
+          <certificate-selection
+            :purpose="CertificatePurpose.Both"
+            @certificate-selected="certificate = $event.handle"
+          />
         </div>
         <div v-if="state === JoinRequestState.MethodSSO && serverConfig?.openbao">
           <div
-            class="modal-info"
+            class="modal-info modal-info-sso"
             v-if="!openBaoClient"
           >
             <div class="async-authentication-modal-header">
@@ -83,9 +88,11 @@
                 alt="Certificate Icon"
                 class="async-authentication-modal-header__icon"
               />
-              <ion-text class="async-authentication-modal-header__title subtitles-lg">
-                {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.description') }}
-              </ion-text>
+              <div class="async-authentication-modal-header-text">
+                <ion-text class="async-authentication-modal-header-text__title title-h4">
+                  {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.sso.title') }}
+                </ion-text>
+              </div>
             </div>
             <connect-sso
               class="async-authentication-modal-sso"
@@ -146,9 +153,10 @@
 <script setup lang="ts">
 import CertificateIcon from '@/assets/images/certificate-icon.svg?raw';
 import { userNameValidator } from '@/common/validators';
-import { ChooseCertificate } from '@/components/devices';
 import ConnectSso from '@/components/devices/ConnectSso.vue';
+import CertificateSelection from '@/components/misc/CertificateSelection.vue';
 import {
+  CertificatePurpose,
   getOpenBaoEmails,
   makeRequestOpenBaoIdentityStrategy,
   makeRequestPkiIdentityStrategy,
@@ -403,13 +411,14 @@ async function onPreviousClicked(): Promise<boolean> {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: var(--parsec-color-light-secondary-premiere);
-  box-shadow: var(--parsec-shadow-input);
-  border-radius: var(--parsec-radius-12);
-  padding: 1rem;
+  overflow: hidden;
+  gap: 1rem;
 
-  .async-authentication-modal-text {
-    padding: 0 0.75rem;
+  &-sso {
+    .async-authentication-modal-header {
+      align-items: center;
+      margin-bottom: 1rem;
+    }
   }
 }
 
