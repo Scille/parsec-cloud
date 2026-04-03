@@ -248,7 +248,7 @@ mod strategy {
                         })?;
 
                 // 2. Get leaf & intermediate certificates
-                let validation_path: libparsec_platform_pki::ValidationPathOwned =
+                let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
                     .await
                         .map_err(|err| match err {
@@ -606,7 +606,7 @@ mod strategy {
                 // 1. Retrieve the root certificate used by our own X059 certificate,
                 // as the submitter X509 certificate must also depend on it.
 
-                let validation_path: libparsec_platform_pki::ValidationPathOwned =
+                let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
                         .await
                         .map_err(|err| match err {
@@ -705,7 +705,7 @@ mod strategy {
                         })?;
 
                 // 2. Get leaf & intermediate certificates
-                let validation_path: libparsec_platform_pki::ValidationPathOwned =
+                let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
                         .await
                         .map_err(|err| match err {
@@ -759,7 +759,7 @@ mod strategy {
                 // 1. Retrieve the root certificate used by our own X059 certificate,
                 // as the accepter X509 certificate must also depend on it.
 
-                let validation_path: libparsec_platform_pki::ValidationPathOwned =
+                let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
                     libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
                         .await
                         .map_err(|err| match err {

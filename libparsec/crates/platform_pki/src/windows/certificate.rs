@@ -85,7 +85,7 @@ impl X509Certificate {
 
     pub async fn get_validation_path(
         &self,
-    ) -> Result<crate::ValidationPathOwned, crate::ValidationPathError> {
+    ) -> Result<crate::X509ValidationPathOwned, crate::ValidationPathError> {
         let raw_trusted_roots = super::list_trusted_root_certificate_anchors()
             .await
             .context("Cannot list trusted roots")
@@ -114,7 +114,7 @@ impl X509Certificate {
             .collect();
         let root = path.anchor().to_owned();
 
-        Ok(crate::ValidationPathOwned {
+        Ok(crate::X509ValidationPathOwned {
             root,
             intermediates,
             leaf,

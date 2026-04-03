@@ -22,7 +22,7 @@ mod platform {
         errors::{ListTrustedRootCertificatesError, ListUserCertificatesError},
         DecryptMessageError, DerCertificate, GetDerEncodedCertificateError,
         ListIntermediateCertificatesError, ShowCertificateSelectionDialogError, SignMessageError,
-        ValidationPathOwned, X509CertificateDer,
+        X509CertificateDer, X509ValidationPathOwned,
     };
     use libparsec_types::prelude::*;
     use rustls_pki_types::CertificateDer;
@@ -127,7 +127,7 @@ mod platform {
 
         pub async fn get_validation_path(
             &self,
-        ) -> Result<ValidationPathOwned, crate::ValidationPathError> {
+        ) -> Result<X509ValidationPathOwned, crate::ValidationPathError> {
             unimplemented!("platform not supported")
         }
     }
@@ -187,7 +187,7 @@ pub use errors::VerifyMessageError;
 pub use shared::verify_message2;
 
 pub use errors::GetValidationPathForCertError;
-pub use shared::{get_validation_path_for_cert, ValidationPathOwned};
+pub use shared::{get_validation_path_for_cert, X509ValidationPathOwned};
 
 pub use shared::get_root_certificate_info_from_trustchain;
 
