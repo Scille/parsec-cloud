@@ -85,6 +85,20 @@
           <ion-button
             fill="clear"
             size="default"
+            v-if="backButtonIsVisible"
+            @click="goBack"
+          >
+            {{ $msTranslate('HeaderPage.previous') }}
+            <ion-icon
+              slot="start"
+              :icon="chevronBack"
+              size="small"
+            />
+          </ion-button>
+          <ion-button
+            v-if="!backButtonIsVisible"
+            fill="clear"
+            size="default"
             @click="cancel"
           >
             {{ $msTranslate('MyProfilePage.cancelButton') }}
@@ -122,7 +136,7 @@ import { DevicePrimaryProtectionStrategyTag, SecretKey, TotpFetchOpaqueKeyErrorT
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import PromptCurrentAuthentication from '@/views/users/PromptCurrentAuthentication.vue';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-import { close } from 'ionicons/icons';
+import { chevronBack, close } from 'ionicons/icons';
 import { MsInput, MsModalResult, MsReportText, MsReportTheme, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
 import { Ref, computed, ref, toRaw, useTemplateRef } from 'vue';
 
@@ -231,6 +245,16 @@ const canGoForward = asyncComputed(async () => {
   }
   return false;
 });
+
+const backButtonIsVisible = computed(() => {
+  return pageStep.value === ChangeAuthenticationStep.ChooseNewAuthMethod && chooseAuthRef.value?.authentication !== undefined;
+});
+
+function goBack(): void {
+  if (pageStep.value === ChangeAuthenticationStep.ChooseNewAuthMethod) {
+    chooseAuthRef.value?.changeAuthenticationMethod();
+  }
+}
 
 async function onCurrentAuthenticationSelected(protection?: DevicePrimaryProtectionStrategy): Promise<void> {
   currentAuth.value = protection;

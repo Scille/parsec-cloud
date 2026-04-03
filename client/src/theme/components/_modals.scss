@@ -90,7 +90,7 @@
 
       &:first-child:not([hidden]),
       ion-button:not([style='display: none']) {
-        margin-top: 2.5rem;
+        margin-top: 2rem;
 
         @include ms.responsive-breakpoint('sm') {
           margin-top: 0;
@@ -110,19 +110,28 @@
           gap: 0.5rem;
           width: 100%;
         }
+
+        ion-icon {
+          width: 1rem;
+          height: 1rem;
+
+          &[slot='start'] {
+            margin-right: 0.375rem;
+          }
+        }
       }
     }
   }
 
   .label-waiting {
-    color: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-hard-grey);
     font-style: italic;
     padding-left: 2em;
     padding-right: 2em;
   }
 
   .spinner-container {
-    padding-top: 2.9rem;
+    padding-top: 1rem;
     display: flex;
     justify-content: center;
     align-items: center;

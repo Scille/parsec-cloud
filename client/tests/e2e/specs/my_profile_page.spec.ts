@@ -101,8 +101,9 @@ msTest('Change password', async ({ myProfilePage }) => {
   await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
   await authRadio.nth(0).click();
 
-  await expect(changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button')).toHaveText('Update');
-  await changePasswordModal.locator('.method-chosen').locator('.authentication-card__update-button').click();
+  await expect(changePasswordModal.locator('#previous-button')).toBeVisible();
+  await expect(changePasswordModal.locator('#previous-button')).toHaveText('Go back');
+  await changePasswordModal.locator('#previous-button').click();
   await expect(changePasswordModal.locator('.method-chosen')).toBeHidden();
   await changePasswordModal.locator('.authentication-card').nth(0).click();
   const passwordInputs = changePasswordModal.locator('.input-container').locator('ion-input');

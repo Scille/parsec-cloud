@@ -152,6 +152,7 @@
             @on-enter-keyup="nextStep()"
           />
         </div>
+
         <!-- part 5 (get auth)-->
         <div
           v-show="pageStep === UserJoinOrganizationStep.Authentication"
@@ -163,6 +164,7 @@
             :server-config="serverConfig"
           />
         </div>
+
         <!-- part 6 (finish the process)-->
         <div
           v-show="pageStep === UserJoinOrganizationStep.Finish"
@@ -180,6 +182,20 @@
       <ion-footer class="modal-footer">
         <div class="modal-footer-buttons">
           <ion-button
+            fill="clear"
+            size="default"
+            id="previous-button"
+            v-show="previousButtonIsVisible"
+            @click="previousStep()"
+          >
+            {{ $msTranslate('HeaderPage.previous') }}
+            <ion-icon
+              slot="start"
+              :icon="chevronBack"
+              size="small"
+            />
+          </ion-button>
+          <ion-button
             fill="solid"
             size="default"
             id="next-button"
@@ -195,7 +211,10 @@
             v-show="waitingForHost || querying"
             class="spinner-container"
           >
-            <ms-spinner :title="getSpinnerTitle()" />
+            <ms-spinner
+              :title="getSpinnerTitle()"
+              :size="20"
+            />
           </div>
         </div>
       </ion-footer>
@@ -228,7 +247,7 @@ import {
 import { ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-import { close, personAdd } from 'ionicons/icons';
+import { chevronBack, close, personAdd } from 'ionicons/icons';
 import {
   Answer,
   MsInformativeText,
@@ -375,6 +394,10 @@ const nextButtonIsVisible = computed(() => {
   );
 });
 
+const previousButtonIsVisible = computed(() => {
+  return pageStep.value === UserJoinOrganizationStep.Authentication && authChoiceRef.value?.authentication !== undefined;
+});
+
 const canGoForward = asyncComputed(async () => {
   if (fieldsUpdated.value) {
     fieldsUpdated.value = false;
@@ -494,6 +517,12 @@ async function nextStep(): Promise<void> {
   }
 }
 
+function previousStep(): void {
+  if (pageStep.value === UserJoinOrganizationStep.Authentication) {
+    authChoiceRef.value?.changeAuthenticationMethod();
+  }
+}
+
 async function startProcess(): Promise<void> {
   pageStep.value = UserJoinOrganizationStep.WaitForHost;
   waitingForHost.value = true;
@@ -607,6 +636,14 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+  }
+}
+
+.modal-footer-buttons {
+  padding-top: 2rem;
+
+  ion-button {
+    margin-top: 0 !important;
   }
 }
 
