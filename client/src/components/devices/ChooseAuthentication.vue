@@ -205,6 +205,7 @@ const props = defineProps<{
 defineExpose({
   areFieldsCorrect,
   authentication,
+  changeAuthenticationMethod,
   getSaveStrategy,
 });
 

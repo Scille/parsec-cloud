@@ -173,7 +173,6 @@ for (const error of ['timeout', '400', 'popup']) {
 
     if (error === 'timeout') {
       await expect(authContainer.locator('.authentication-card')).toHaveTheClass('authentication-card--disabled');
-      await expect(authContainer.locator('.authentication-card').locator('.authentication-card__update-button')).toBeTrulyDisabled();
     }
 
     await expect(authNext).toBeTrulyDisabled();

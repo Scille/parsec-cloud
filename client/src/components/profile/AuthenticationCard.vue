@@ -37,15 +37,6 @@
     >
       {{ $msTranslate('Authentication.active') }}
     </ion-text>
-    <ion-button
-      class="authentication-card__update-button"
-      v-if="state === AuthenticationCardState.Update"
-      fill="clear"
-      :disabled="disabled"
-      @click="$emit('update-clicked')"
-    >
-      {{ $msTranslate('Authentication.update') }}
-    </ion-button>
   </div>
 </template>
 
@@ -56,7 +47,7 @@ import KeypadGradient from '@/assets/images/keypad-gradient.svg';
 import personCircleGradient from '@/assets/images/person-circle-gradient.svg';
 import { AuthenticationCardState } from '@/components/profile/types';
 import { DevicePrimaryProtectionStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
-import { IonButton, IonIcon, IonText } from '@ionic/vue';
+import { IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
 import { computed, onMounted, ref } from 'vue';
@@ -218,16 +209,6 @@ function keyringUnavailableMessage(): Translatable {
 
   &--selected {
     border-color: var(--parsec-color-light-primary-400);
-  }
-
-  &--update {
-    border-color: var(--parsec-color-light-secondary-medium);
-
-    .authentication-card__update-button {
-      margin-left: auto;
-      color: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-premiere);
-    }
   }
 
   &--disabled {
