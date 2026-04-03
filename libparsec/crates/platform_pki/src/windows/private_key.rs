@@ -8,15 +8,15 @@ use windows_sys::Win32::Security::Cryptography::{
     NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
 };
 
-pub struct PrivateKey(SchannelPKey);
+pub struct X509PrivateKey(SchannelPKey);
 
-impl From<SchannelPKey> for PrivateKey {
+impl From<SchannelPKey> for X509PrivateKey {
     fn from(value: SchannelPKey) -> Self {
         Self(value)
     }
 }
 
-impl PrivateKey {
+impl X509PrivateKey {
     pub async fn sign(
         &self,
         message: &[u8],
