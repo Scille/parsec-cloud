@@ -22,7 +22,7 @@ impl Certificate {
 
     pub async fn request_private_key(
         &self,
-    ) -> Result<super::PrivateKey, crate::RequestPrivateKeyError> {
+    ) -> Result<super::X509PrivateKey, crate::RequestPrivateKeyError> {
         self.0
             .private_key()
             .compare_key(true)

@@ -25,7 +25,7 @@ use windows_sys::Win32::Security::Cryptography::{
 
 pub use certificate::Certificate;
 use libparsec_types::prelude::*;
-pub use private_key::PrivateKey;
+pub use private_key::X509PrivateKey;
 
 pub struct PkiSystem {
     my_cert_store: CertStore,

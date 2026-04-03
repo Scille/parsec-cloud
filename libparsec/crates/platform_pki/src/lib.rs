@@ -115,7 +115,7 @@ mod platform {
 
         pub async fn request_private_key(
             &self,
-        ) -> Result<PrivateKey, crate::RequestPrivateKeyError> {
+        ) -> Result<X509PrivateKey, crate::RequestPrivateKeyError> {
             unimplemented!("platform not supported")
         }
 
@@ -132,9 +132,9 @@ mod platform {
         }
     }
 
-    pub struct PrivateKey;
+    pub struct X509PrivateKey;
 
-    impl PrivateKey {
+    impl X509PrivateKey {
         pub async fn sign(
             &self,
             #[expect(unused_variables)] message: &[u8],
