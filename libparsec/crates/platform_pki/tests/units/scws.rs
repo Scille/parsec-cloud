@@ -15,7 +15,9 @@ fn make_config() -> crate::PkiConfig<'static> {
     crate::PkiConfig {
         config_dir: std::path::Path::new("/tmp"),
         addr: Box::leak(Box::new(
-            "parsec3://localhost".parse::<libparsec_types::ParsecAddr>().unwrap(),
+            "parsec3://localhost"
+                .parse::<libparsec_types::ParsecAddr>()
+                .unwrap(),
         )),
         proxy: Box::leak(Box::new(
             libparsec_platform_http_proxy::ProxyConfig::default(),
@@ -78,7 +80,10 @@ async fn find_certificate_not_found() {
     let pki = init_or_skip().await;
     let dummy_ref: X509CertificateReference = X509CertificateHash::fake_sha256().into();
     let found = pki.find_certificate(&dummy_ref).await.unwrap();
-    assert!(found.is_none(), "Should not find a certificate with a fake hash");
+    assert!(
+        found.is_none(),
+        "Should not find a certificate with a fake hash"
+    );
 }
 
 #[parsec_test]

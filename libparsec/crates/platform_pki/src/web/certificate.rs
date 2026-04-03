@@ -38,9 +38,7 @@ impl Certificate {
             .await
     }
 
-    pub async fn get_der(
-        &self,
-    ) -> Result<CertificateDer<'static>, crate::GetCertificateDerError> {
+    pub async fn get_der(&self) -> Result<CertificateDer<'static>, crate::GetCertificateDerError> {
         let der_bytes = self
             .get_der_bytes()
             .await
@@ -48,9 +46,7 @@ impl Certificate {
         Ok(CertificateDer::from(der_bytes.clone()).into_owned())
     }
 
-    pub async fn request_private_key(
-        &self,
-    ) -> Result<PrivateKey, crate::RequestPrivateKeyError> {
+    pub async fn request_private_key(&self) -> Result<PrivateKey, crate::RequestPrivateKeyError> {
         let ck_id = self
             .object
             .ck_id

@@ -172,9 +172,10 @@ impl PkiSystem {
     pub async fn list_user_certificates<'a>(
         &'a self,
     ) -> Result<impl Iterator<Item = Certificate> + use<'a>, crate::ListUserCertificateError> {
-        Ok(self.session.certificate_objects().map(|obj| {
-            Certificate::new(Arc::clone(&self.session), obj.clone())
-        }))
+        Ok(self
+            .session
+            .certificate_objects()
+            .map(|obj| Certificate::new(Arc::clone(&self.session), obj.clone())))
     }
 }
 
@@ -208,9 +209,7 @@ async fn get_or_init_global_session() -> Result<&'static Arc<ScwsSession>, anyho
         .get_or_try_init(|| async {
             let base_url =
                 std::env::var("SCWS_URL").unwrap_or_else(|_| DEFAULT_SCWS_URL.to_string());
-            ScwsSession::init(&base_url)
-                .await
-                .map(Arc::new)
+            ScwsSession::init(&base_url).await.map(Arc::new)
         })
         .await
 }
@@ -307,11 +306,9 @@ pub async fn list_trusted_root_certificate_anchors(
 
 pub async fn list_intermediate_certificates(
 ) -> Result<Vec<X509CertificateDer<'static>>, ListIntermediateCertificatesError> {
-    let session = get_or_init_global_session()
-        .await
-        .map_err(|e| {
-            ListIntermediateCertificatesError::CannotOpenStore(std::io::Error::other(e))
-        })?;
+    let session = get_or_init_global_session().await.map_err(|e| {
+        ListIntermediateCertificatesError::CannotOpenStore(std::io::Error::other(e))
+    })?;
 
     let mut intermediates = Vec::new();
     for obj in session.certificate_objects() {
@@ -352,13 +349,9 @@ pub async fn sign_message(
         .map_err(|e| SignMessageError::CannotOpenStore(std::io::Error::other(e)))?
         .ok_or(SignMessageError::NotFound)?;
 
-    let ck_id = obj
-        .ck_id
-        .as_deref()
-        .ok_or(SignMessageError::NotFound)?;
+    let ck_id = obj.ck_id.as_deref().ok_or(SignMessageError::NotFound)?;
 
-    let key_handle =
-        find_private_key_handle(session, ck_id).ok_or(SignMessageError::NotFound)?;
+    let key_handle = find_private_key_handle(session, ck_id).ok_or(SignMessageError::NotFound)?;
 
     let hash = sha2::Sha256::digest(message);
     let hash_hex = scws_client::hex_encode(&hash);
@@ -393,13 +386,10 @@ pub async fn decrypt_message(
         .map_err(|e| DecryptMessageError::CannotOpenStore(std::io::Error::other(e)))?
         .ok_or(DecryptMessageError::NotFound)?;
 
-    let ck_id = obj
-        .ck_id
-        .as_deref()
-        .ok_or(DecryptMessageError::NotFound)?;
+    let ck_id = obj.ck_id.as_deref().ok_or(DecryptMessageError::NotFound)?;
 
-    let key_handle = find_private_key_handle(session, ck_id)
-        .ok_or(DecryptMessageError::NotFound)?;
+    let key_handle =
+        find_private_key_handle(session, ck_id).ok_or(DecryptMessageError::NotFound)?;
 
     let ciphertext_hex = scws_client::hex_encode(encrypted_message);
 

@@ -54,11 +54,7 @@ impl PrivateKey {
         let plaintext = self
             .session
             .client
-            .decrypt(
-                &self.session.env_id,
-                &self.key_handle,
-                &ciphertext_hex,
-            )
+            .decrypt(&self.session.env_id, &self.key_handle, &ciphertext_hex)
             .await
             .map_err(|e| crate::DecryptError::Decrypt(e.into()))?;
 

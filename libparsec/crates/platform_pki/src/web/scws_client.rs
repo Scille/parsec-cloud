@@ -54,10 +54,7 @@ impl ScwsClient {
         }
     }
 
-    pub async fn get_challenge(
-        &self,
-        token: &str,
-    ) -> Result<ChallengeResponse, ScwsClientError> {
+    pub async fn get_challenge(&self, token: &str) -> Result<ChallengeResponse, ScwsClientError> {
         let resp = self
             .client
             .get(self.url("get_challenge"))
@@ -83,10 +80,7 @@ impl ScwsClient {
         resp.json().await.map_err(Into::into)
     }
 
-    pub async fn get_readers(
-        &self,
-        env: &str,
-    ) -> Result<Vec<ReaderInfo>, ScwsClientError> {
+    pub async fn get_readers(&self, env: &str) -> Result<Vec<ReaderInfo>, ScwsClientError> {
         let resp = self
             .client
             .get(self.url("get_readers"))
@@ -264,10 +258,7 @@ impl ScwsClient {
         resp.json().await.map_err(Into::into)
     }
 
-    pub async fn get_event(
-        &self,
-        env: &str,
-    ) -> Result<Option<serde_json::Value>, ScwsClientError> {
+    pub async fn get_event(&self, env: &str) -> Result<Option<serde_json::Value>, ScwsClientError> {
         let resp = self
             .client
             .get(self.url("get_event"))

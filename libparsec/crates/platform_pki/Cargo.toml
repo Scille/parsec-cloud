@@ -13,6 +13,8 @@ workspace = true
 
 [features]
 test-fixture = ["libparsec_tests_lite"]
+# Dummy feature used to gate native-only examples (prevents wasm-pack from building them)
+__native_examples = []
 
 [dependencies]
 bytes = { workspace = true }
@@ -62,3 +64,41 @@ rmp-serde = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 tokio = { workspace = true, features = ["macros"] }
+
+# Examples are native-only (they use #[tokio::main] which is unavailable on wasm32).
+# Using `required-features` prevents wasm-pack from trying to build them.
+[[example]]
+name = "decode_cert_subject"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "decrypt_message"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "encrypt_message"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "get_certificate_der"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "list_certificate"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "list_trusted_roots"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "sign_message"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "verify_certificate"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "verify_message"
+required-features = ["__native_examples"]
