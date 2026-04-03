@@ -111,6 +111,41 @@ pub enum OpenBaoOperationsUploadOpaqueKeyError {
 }
 
 /*
+ * PKI operations
+ */
+
+pub trait PkiDeviceOperations: std::fmt::Debug + Send + Sync {
+    fn certificate_ref(&self) -> &X509CertificateReference;
+    fn encrypt_opaque_key(
+        &self,
+        opaque_key: &[u8],
+    ) -> PinBoxFutureResult<(PKIEncryptionAlgorithm, Bytes), PkiOperationsEncryptOpaqueKeyError>;
+    fn decrypt_opaque_key(
+        &self,
+        algorithm: PKIEncryptionAlgorithm,
+        encrypted_opaque_key: &[u8],
+    ) -> PinBoxFutureResult<SecretKey, PkiOperationsDecryptOpaqueKeyError>;
+}
+
+// TODO: determine the errors needed
+#[derive(Debug, thiserror::Error)]
+pub enum PkiOperationsEncryptOpaqueKeyError {
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+// TODO: determine the errors needed
+#[derive(Debug, thiserror::Error)]
+pub enum PkiOperationsDecryptOpaqueKeyError {
+    #[error("Unsupported algorithm")]
+    UnsupportedAlgorithm,
+    #[error("Decryption failed: {0}")]
+    DecryptionFailed(anyhow::Error),
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+/*
  * DeviceSaveStrategy
  */
 
@@ -121,7 +156,7 @@ pub enum DevicePrimaryProtectionStrategy {
         password: Password,
     },
     PKI {
-        certificate_ref: X509CertificateReference,
+        operations: Arc<dyn PkiDeviceOperations>,
     },
     AccountVault {
         operations: Arc<dyn AccountVaultOperations>,
@@ -136,10 +171,8 @@ impl DevicePrimaryProtectionStrategy {
         match self {
             Self::Keyring => AvailableDeviceType::Keyring,
             Self::Password { .. } => AvailableDeviceType::Password,
-            Self::PKI {
-                certificate_ref, ..
-            } => AvailableDeviceType::PKI {
-                certificate_ref: certificate_ref.to_owned(),
+            Self::PKI { operations, .. } => AvailableDeviceType::PKI {
+                certificate_ref: operations.certificate_ref().to_owned(),
             },
             Self::AccountVault { .. } => AvailableDeviceType::AccountVault,
             Self::OpenBao { operations, .. } => AvailableDeviceType::OpenBao {
