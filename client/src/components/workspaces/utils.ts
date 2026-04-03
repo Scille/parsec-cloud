@@ -3,7 +3,6 @@
 import { workspaceNameValidator } from '@/common/validators';
 import {
   ClientRenameWorkspaceErrorTag,
-  StartedWorkspaceInfo,
   UserProfile,
   WorkspaceID,
   WorkspaceInfo,
@@ -14,8 +13,10 @@ import {
   getWorkspaceInfo,
   isDesktop,
   mountWorkspace,
+  archiveWorkspace as parsecArchiveWorkspace,
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
+  restoreWorkspace as parsecRestoreWorkspace,
   unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
@@ -142,9 +143,8 @@ export async function openWorkspaceContextMenu(
       showBackdrop: false,
       dismissOnSelect: true,
       componentProps: {
-        workspaceName: workspace.currentName,
+        workspace: workspace,
         clientProfile: clientProfile,
-        clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
         isHidden: workspaceAttributes.isHidden(workspace.id),
       },
@@ -161,9 +161,8 @@ export async function openWorkspaceContextMenu(
       expandToScroll: false,
       initialBreakpoint: 0.5,
       componentProps: {
-        workspaceName: workspace.currentName,
+        workspace: workspace,
         clientProfile: clientProfile,
-        clientRole: workspace.currentSelfRole,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
         isHidden: workspaceAttributes.isHidden(workspace.id),
       },
@@ -213,14 +212,72 @@ export async function openWorkspaceContextMenu(
           await hideWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
         }
         break;
+      case WorkspaceAction.Archive:
+        await archiveWorkspace(workspace, informationManager, eventDistributor);
+        break;
+      case WorkspaceAction.Restore:
+        await restoreWorkspace(workspace, informationManager, eventDistributor);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
   }
 }
 
+async function archiveWorkspace(
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+  eventDistributor: EventDistributor,
+): Promise<void> {
+  const answer = await askQuestion(
+    'WorkspacesPage.archiveWorkspace.title',
+    { key: 'WorkspacesPage.archiveWorkspace.subtitle', data: { workspace: workspace.currentName } },
+    { yesText: 'WorkspacesPage.archiveWorkspace.yes', noText: 'WorkspacesPage.archiveWorkspace.no' },
+  );
+  if (answer === Answer.No) {
+    return;
+  }
+
+  const result = await parsecArchiveWorkspace(workspace.id);
+  informationManager.present(
+    new Information({
+      message: {
+        key: result.ok ? 'WorkspacesPage.archiveWorkspace.archive.success' : 'WorkspacesPage.archiveWorkspace.archive.fail',
+        data: { workspace: workspace.currentName },
+      },
+      level: result.ok ? InformationLevel.Success : InformationLevel.Error,
+    }),
+    PresentationMode.Toast,
+  );
+  if (result.ok) {
+    await eventDistributor.dispatchEvent(Events.WorkspaceArchiveSync, { workspaceId: workspace.id, isArchived: true });
+  }
+}
+
+async function restoreWorkspace(
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+  eventDistributor: EventDistributor,
+): Promise<void> {
+  const result = await parsecRestoreWorkspace(workspace.id);
+
+  informationManager.present(
+    new Information({
+      message: {
+        key: result.ok ? 'WorkspacesPage.archiveWorkspace.restore.success' : 'WorkspacesPage.archiveWorkspace.restore.fail',
+        data: { workspace: workspace.currentName },
+      },
+      level: result.ok ? InformationLevel.Success : InformationLevel.Error,
+    }),
+    PresentationMode.Toast,
+  );
+  if (result.ok) {
+    await eventDistributor.dispatchEvent(Events.WorkspaceArchiveSync, { workspaceId: workspace.id, isArchived: false });
+  }
+}
+
 export async function showWorkspace(
-  workspace: WorkspaceInfo | StartedWorkspaceInfo,
+  workspace: WorkspaceInfo,
   workspaceAttributes: WorkspaceAttributes,
   informationManager: InformationManager,
   eventDistributor: EventDistributor,
@@ -239,7 +296,6 @@ export async function showWorkspace(
         }),
         PresentationMode.Toast,
       );
-      window.electronAPI.log('error', `Error while unmounting workspace: ${result.error}`);
       return false;
     } else {
       workspaceAttributes.removeHidden(workspace.id);
@@ -270,7 +326,7 @@ export async function showWorkspace(
 }
 
 export async function hideWorkspace(
-  workspace: WorkspaceInfo | StartedWorkspaceInfo,
+  workspace: WorkspaceInfo,
   workspaceAttributes: WorkspaceAttributes,
   informationManager: InformationManager,
   eventDistributor: EventDistributor,
@@ -289,7 +345,6 @@ export async function hideWorkspace(
         }),
         PresentationMode.Toast,
       );
-      window.electronAPI.log('error', `Error while unmounting workspace: ${result.error}`);
       return;
     } else {
       workspaceAttributes.addHidden(workspace.id);
@@ -393,7 +448,7 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
 
 async function unmountWorkspaceConfirmation(
   workspaceAttributes: WorkspaceAttributes,
-  workspace: WorkspaceInfo | StartedWorkspaceInfo,
+  workspace: WorkspaceInfo,
   informationManager: InformationManager,
   eventDistributor: EventDistributor,
   storageManager: StorageManager,

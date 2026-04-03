@@ -183,7 +183,7 @@ import { pxToRem } from '@/common/utils';
 import { HistoryFileListItem, WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel } from '@/components/files';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { SortProperty } from '@/components/users';
-import { EntryName, FsPath, getWorkspaceInfo, Path, StartedWorkspaceInfo, WorkspaceHistory } from '@/parsec';
+import { EntryName, FsPath, getWorkspaceInfo, Path, WorkspaceHistory, WorkspaceInfo } from '@/parsec';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
 import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
@@ -197,7 +197,7 @@ import { computed, inject, onBeforeUnmount, onMounted, onUnmounted, ref, Ref, us
 
 const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 const selectedDateTime = ref(DateTime.now().toJSDate());
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];

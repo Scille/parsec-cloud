@@ -5,7 +5,7 @@
     class="workspace-card-item ion-no-padding"
     :class="{
       'workspace-hovered': isHovered || menuOpened,
-      'workspace-card-item--hidden': isHidden,
+      'workspace-card-item--hidden': isHidden || workspace.isArchived,
     }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
@@ -14,6 +14,7 @@
   >
     <div class="workspace-card-content">
       <div
+        v-show="!workspace.isArchived"
         class="workspace-favorite-icon"
         :class="{
           'workspace-favorite-icon__on': isFavorite,
@@ -33,8 +34,9 @@
 
       <div class="workspace-card-content-info">
         <ion-text class="workspace-card-content__update subtitles-sm">
-          <span v-if="false">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
+          <span v-if="workspace.isArchived">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
           <ion-icon
+            v-else
             class="cloud-overlay"
             :class="workspace.availableOffline ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
             :icon="workspace.availableOffline ? cloudDone : cloudOffline"
@@ -49,7 +51,7 @@
 
         <div
           class="workspace-hidden subtitles-sm"
-          v-if="isHidden"
+          v-if="isHidden && !workspace.isArchived"
         >
           <ion-icon
             class="cloud-overlay"
@@ -57,16 +59,30 @@
           />
           <ion-text>{{ $msTranslate('WorkspacesPage.Workspace.hidden') }}</ion-text>
         </div>
+        <ion-icon
+          v-if="workspace.isArchived"
+          class="workspace-archive"
+          :icon="archive"
+        />
       </div>
     </div>
     <div class="workspace-card-bottom">
       <workspace-role-tag
+        v-if="!workspace.isArchived"
         class="workspace-card-bottom__role"
         :role="workspace.currentSelfRole"
       />
+      <ion-label
+        v-else
+        class="archived-label"
+      >
+        <ion-text class="button-small archived-label-text">
+          {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
+        </ion-text>
+      </ion-label>
       <div class="workspace-card-bottom__icons">
         <div
-          v-show="clientProfile !== UserProfile.Outsider"
+          v-show="clientProfile !== UserProfile.Outsider && !workspace.isArchived"
           class="icon-share-container"
           @click.stop="$emit('shareClick', workspace, $event)"
         >
@@ -93,8 +109,8 @@
 import { formatFileSize } from '@/common/file';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
-import { IonIcon, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
+import { IonIcon, IonLabel, IonText } from '@ionic/vue';
+import { archive, cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
 import { formatTimeSince } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -253,6 +269,15 @@ async function onOptionsClick(event: Event): Promise<void> {
     }
   }
 
+  .workspace-archive {
+    position: absolute;
+    top: 0;
+    right: -1rem;
+    margin: 0 0 auto auto;
+    font-size: 4.5rem;
+    color: var(--parsec-color-light-secondary-disabled);
+  }
+
   &-info {
     display: flex;
     align-items: center;
@@ -308,6 +333,18 @@ async function onOptionsClick(event: Event): Promise<void> {
 
     @include ms.responsive-breakpoint('sm') {
       padding: 0 0.25rem;
+    }
+  }
+
+  .archived-label {
+    color: var(--parsec-color-light-secondary-text);
+    display: flex;
+    align-items: center;
+
+    &-text {
+      background-color: none;
+      padding: 0.2rem 0.5rem;
+      color: var(--parsec-color-light-primary-500);
     }
   }
 }

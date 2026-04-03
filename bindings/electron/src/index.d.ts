@@ -414,16 +414,6 @@ export interface ShamirRecoveryRecipient {
 }
 
 
-export interface StartedWorkspaceInfo {
-    client: number
-    id: string
-    currentName: string
-    currentSelfRole: RealmRole
-    archivingConfiguration: RealmArchivingConfiguration
-    mountpoints: Array<[number, string]>
-}
-
-
 export interface Tos {
     perLocaleUrls: Map<string, string>
     updatedOn: number
@@ -523,12 +513,14 @@ export interface WorkspaceHistoryFileStat {
 
 
 export interface WorkspaceInfo {
+    client: number
     id: string
     currentName: string
     currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
     archivingConfiguration: RealmArchivingConfiguration
+    mountpoints: Array<[number, string]>
 }
 
 
@@ -5956,7 +5948,7 @@ export function workspaceHistoryStop(
 ): Promise<Result<null, WorkspaceHistoryInternalOnlyError>>
 export function workspaceInfo(
     workspace: number
-): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>
+): Promise<Result<WorkspaceInfo, WorkspaceInfoError>>
 export function workspaceIsFileContentLocal(
     workspace: number,
     path: string

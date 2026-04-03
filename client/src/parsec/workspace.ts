@@ -3,9 +3,10 @@
 import { DataCache } from '@/common/cache';
 import { getClientInfo } from '@/parsec/login';
 import {
+  ClientArchiveWorkspaceError,
   ClientCreateWorkspaceError,
-  ClientListWorkspaceUsersError,
   ClientListWorkspacesError,
+  ClientListWorkspaceUsersError,
   ClientRenameWorkspaceError,
   ClientShareWorkspaceError,
   ClientStartWorkspaceError,
@@ -14,9 +15,11 @@ import {
   MountpointHandle,
   MountpointToOsPathError,
   MountpointToOsPathErrorTag,
+  MountpointUnmountError,
   ParsecWorkspacePathAddr,
+  ParsecWorkspacePathAddrAndRedirectionURL,
+  RealmArchivingConfigurationTag,
   Result,
-  StartedWorkspaceInfo,
   SystemPath,
   UserID,
   UserTuple,
@@ -30,16 +33,17 @@ import {
   WorkspaceMountErrorTag,
   WorkspaceName,
   WorkspaceRole,
+  WorkspaceStopError,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { MountpointUnmountError, ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceStopError, libparsec } from '@/plugins/libparsec';
+import { ClientListWorkspacesErrorInternal, libparsec, WorkspaceInfoErrorTag } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
 export async function initializeWorkspace(
   workspaceId: WorkspaceID,
   connectionHandle: ConnectionHandle | null = null,
-): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError | ClientStartWorkspaceError>> {
+): Promise<Result<WorkspaceInfo, WorkspaceInfoError | ClientStartWorkspaceError | ClientListWorkspacesErrorInternal>> {
   const startResult = await startWorkspace(workspaceId, connectionHandle);
   if (!startResult.ok) {
     return startResult;
@@ -69,8 +73,13 @@ export async function listWorkspaces(
         if (!startResult.ok) {
           continue;
         }
-
+        let mountpoints: Array<[MountpointHandle, SystemPath]> = [];
+        const getInfo = await libparsec.workspaceInfo(startResult.value);
+        if (getInfo.ok) {
+          mountpoints = getInfo.value.mountpoints;
+        }
         const info: WorkspaceInfo = {
+          client: handle,
           id: wkInfo.id,
           currentName: wkInfo.currentName,
           currentSelfRole: wkInfo.currentSelfRole,
@@ -81,8 +90,9 @@ export async function listWorkspaces(
           size: 0,
           lastUpdated: DateTime.now(),
           availableOffline: true,
-          mountpoints: [],
+          mountpoints: mountpoints,
           handle: startResult.value,
+          isArchived: wkInfo.archivingConfiguration.tag !== RealmArchivingConfigurationTag.Available,
         };
         returnValue.push(info);
       }
@@ -94,12 +104,38 @@ export async function listWorkspaces(
   return generateNoHandleError<ClientListWorkspacesError>();
 }
 
-export async function getWorkspaceInfo(workspaceHandle: WorkspaceHandle): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>> {
-  const result = await libparsec.workspaceInfo(workspaceHandle);
+export async function listAvailableWorkspaces(
+  handle: ConnectionHandle | null = null,
+): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
+  const result = await listWorkspaces(handle);
   if (result.ok) {
-    (result.value as StartedWorkspaceInfo).handle = workspaceHandle;
+    result.value = result.value.filter((workspace) => !workspace.isArchived);
   }
-  return result as Result<StartedWorkspaceInfo, WorkspaceInfoError>;
+  return result;
+}
+
+export async function listArchivedWorkspaces(
+  handle: ConnectionHandle | null = null,
+): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
+  const result = await listWorkspaces(handle);
+  if (result.ok) {
+    result.value = result.value.filter((workspace) => workspace.isArchived);
+  }
+  return result;
+}
+
+export async function getWorkspaceInfo(
+  workspaceHandle: WorkspaceHandle,
+): Promise<Result<WorkspaceInfo, WorkspaceInfoError | ClientListWorkspacesError>> {
+  const result = await listWorkspaces();
+  if (result.ok) {
+    const workspace = result.value.find((wk) => wk.handle === workspaceHandle);
+    if (workspace) {
+      return { ok: true, value: workspace };
+    }
+    return { ok: false, error: { tag: WorkspaceInfoErrorTag.Internal, error: 'not-found' } };
+  }
+  return result;
 }
 
 const WORKSPACE_NAMES_CACHE = new DataCache<WorkspaceHandle, string>();
@@ -246,7 +282,7 @@ export async function mountWorkspace(
   return await libparsec.workspaceMount(workspaceHandle);
 }
 
-export async function unmountWorkspace(workspace: WorkspaceInfo | StartedWorkspaceInfo): Promise<Result<null, MountpointUnmountError>> {
+export async function unmountWorkspace(workspace: WorkspaceInfo): Promise<Result<null, MountpointUnmountError>> {
   let error: MountpointUnmountError | null = null;
 
   for (let i = workspace.mountpoints.length - 1; i >= 0; i--) {
@@ -264,6 +300,22 @@ export async function unmountWorkspace(workspace: WorkspaceInfo | StartedWorkspa
   }
 
   return { ok: true, value: null };
+}
+
+export async function archiveWorkspace(workspace: WorkspaceID): Promise<Result<null, ClientArchiveWorkspaceError>> {
+  const handle = getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientArchiveWorkspaceError>();
+  }
+  return await libparsec.clientArchiveWorkspace(handle, workspace, { tag: RealmArchivingConfigurationTag.Archived });
+}
+
+export async function restoreWorkspace(workspace: WorkspaceID): Promise<Result<null, ClientArchiveWorkspaceError>> {
+  const handle = getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientArchiveWorkspaceError>();
+  }
+  return await libparsec.clientArchiveWorkspace(handle, workspace, { tag: RealmArchivingConfigurationTag.Available });
 }
 
 export async function getPathLink(

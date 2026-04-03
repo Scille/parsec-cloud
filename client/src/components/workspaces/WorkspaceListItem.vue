@@ -7,7 +7,7 @@
     :detail="false"
     :class="{
       'workspace-hovered': isHovered || menuOpened,
-      'workspace-list-item--hidden': isHidden,
+      'workspace-list-item--hidden': isHidden || workspace.isArchived,
     }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
@@ -16,6 +16,7 @@
   >
     <div class="workspace-list-item-content">
       <div
+        v-show="!workspace.isArchived"
         class="workspace-favorite-icon"
         :class="{
           'workspace-favorite-icon__on': isFavorite,
@@ -26,6 +27,7 @@
         <ion-icon :icon="star" />
       </div>
       <ion-icon
+        v-if="!workspace.isArchived"
         class="cloud-overlay"
         :class="workspace.availableOffline ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
         :icon="workspace.availableOffline ? cloudDone : cloudOffline"
@@ -39,9 +41,14 @@
           {{ workspace.currentName }}
         </ion-text>
       </div>
+      <ion-icon
+        v-if="workspace.isArchived"
+        class="workspace-archive"
+        :icon="archive"
+      />
       <div
         class="workspace-hidden"
-        v-if="isHidden"
+        v-if="isHidden && !workspace.isArchived"
       >
         <ion-icon
           class="workspace-hidden__icon"
@@ -53,16 +60,25 @@
       <!-- role user -->
       <div class="workspace-role">
         <workspace-role-tag
+          v-if="!workspace.isArchived"
           :role="workspace.currentSelfRole"
           class="workspace-role-tag"
         />
+        <ion-label
+          v-else
+          class="archived-label"
+        >
+          <ion-text class="button-small archived-label-text">
+            {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
+          </ion-text>
+        </ion-label>
       </div>
 
       <!-- user avatars -->
       <div
         class="workspace-users"
         v-show="clientProfile !== UserProfile.Outsider"
-        v-if="isLargeDisplay && windowWidth >= WindowSizeBreakpoints.MD"
+        v-if="isLargeDisplay && windowWidth >= WindowSizeBreakpoints.MD && !workspace.isArchived"
       >
         <avatar-group
           v-show="workspace.sharing.length > 0"
@@ -83,7 +99,7 @@
       <!-- last update -->
       <div
         class="workspace-last-update"
-        v-show="false"
+        v-show="workspace.isArchived"
       >
         <ion-label class="label-last-update cell">
           {{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}
@@ -136,7 +152,7 @@ import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
+import { archive, cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
 import { formatTimeSince, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -258,6 +274,12 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
+.workspace-archive {
+  font-size: 7rem;
+  color: var(--parsec-color-light-secondary-disabled);
+  z-index: 0;
+}
+
 .workspace-name {
   padding-inline: 0.5rem 1rem;
   width: 100%;
@@ -284,6 +306,7 @@ async function onOptionsClick(event: Event): Promise<void> {
     color: var(--parsec-color-light-secondary-text);
     min-width: 0;
   }
+  z-index: 1;
 }
 
 .workspace-hidden {
@@ -330,6 +353,21 @@ async function onOptionsClick(event: Event): Promise<void> {
 
   @include ms.responsive-breakpoint('sm') {
     padding-inline: 0.125rem;
+  }
+
+  .archived-label {
+    color: var(--parsec-color-light-secondary-text);
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-18);
+    background: var(--parsec-color-light-secondary-white);
+
+    &-text {
+      background-color: none;
+      padding: 0.2rem 0.5rem;
+      color: var(--parsec-color-light-primary-500);
+    }
   }
 }
 

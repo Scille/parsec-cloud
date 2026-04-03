@@ -6,7 +6,7 @@
       <ion-item-group class="list-group">
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FolderGlobalAction.CreateFolder)"
           class="ion-no-padding list-group-item"
         >
@@ -20,7 +20,7 @@
         </ion-item>
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FolderGlobalAction.ImportFiles)"
           class="ion-no-padding list-group-item"
         >
@@ -35,7 +35,7 @@
 
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FolderGlobalAction.ImportFolder)"
           class="ion-no-padding list-group-item"
         >
@@ -50,7 +50,7 @@
 
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FolderGlobalAction.CreateFileDocument)"
           class="ion-no-padding list-group-item"
         >
@@ -64,7 +64,7 @@
         </ion-item>
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FolderGlobalAction.CreateFileSpreadsheet)"
           class="ion-no-padding list-group-item"
         >
@@ -78,7 +78,7 @@
         </ion-item>
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FolderGlobalAction.CreateFilePresentation)"
           class="ion-no-padding list-group-item"
         >
@@ -92,7 +92,7 @@
         </ion-item>
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!isReadOnly"
           @click="onClick(FolderGlobalAction.CreateFileText)"
           class="ion-no-padding list-group-item"
         >
@@ -125,14 +125,14 @@
 </template>
 
 <script setup lang="ts">
-import { WorkspaceRole, isDesktop } from '@/parsec';
+import { isDesktop } from '@/parsec';
 import { FolderGlobalAction } from '@/views/files/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
 import { cloudUpload, folderOpen, open } from 'ionicons/icons';
 import { File, MsImage } from 'megashark-lib';
 
 defineProps<{
-  role: WorkspaceRole;
+  isReadOnly: boolean;
 }>();
 
 async function onClick(action: FolderGlobalAction): Promise<boolean> {

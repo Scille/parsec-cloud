@@ -260,6 +260,23 @@
                 {{ $msTranslate('SideMenu.hidden') }}
               </span>
             </ion-text>
+
+            <!-- Archived -->
+            <ion-text
+              @click="navigateTo(Routes.Archived)"
+              :class="{ active: currentRouteIs(Routes.Archived) }"
+              class="sidebar-content-organization-button button-medium"
+              id="sidebar-archived-workspaces"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="archive"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.archived') }}
+              </span>
+            </ion-text>
           </div>
         </sidebar-menu-list>
 
@@ -419,6 +436,7 @@ import {
 } from '@ionic/vue';
 import {
   addCircle,
+  archive,
   chevronForward,
   cloudUpload,
   document as documentIcon,
@@ -437,7 +455,7 @@ import {
   warning,
 } from 'ionicons/icons';
 import { Duration } from 'luxon';
-import { ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
+import { asyncComputed, ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
 import { computed, inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -481,6 +499,15 @@ const securityWarningsCount = computed(() => {
 });
 
 const { isSmallDisplay, windowWidth } = useWindowSize();
+const isReadOnly = computed(() => {
+  if (currentWorkspace.value) {
+    return (
+      currentWorkspace.value.currentSelfRole === WorkspaceRole.Reader ||
+      currentWorkspace.value.isArchived
+    );
+  }
+  return false;
+});
 const actions = ref<Array<Array<MenuAction>>>([]);
 
 const MIN_WIDTH = 150;
@@ -496,10 +523,12 @@ const watchSidebarWidthCancel = watch(sidebarWidth, async (value: number) => {
   emits('sidebarWidthChanged', value);
 });
 
-const currentWorkspace = computed(() => {
-  for (const wk of recentDocumentManager.getWorkspaces()) {
-    if (currentRouteIsWorkspaceRoute(wk.handle)) {
-      return wk;
+const currentWorkspace = asyncComputed(async () => {
+  const workspacesResult = await listWorkspaces();
+  if (workspacesResult.ok) {
+    const wInfo = workspacesResult.value.find((wi) => currentRouteIsWorkspaceRoute(wi.handle));
+    if (wInfo) {
+      return wInfo;
     }
   }
   return undefined;
@@ -577,7 +606,7 @@ async function updateDividerPosition(value?: number): Promise<void> {
 }
 
 function setActions(): void {
-  if (currentRouteIs(Routes.Documents) && currentWorkspace.value && currentWorkspace.value.currentSelfRole !== WorkspaceRole.Reader) {
+  if (currentRouteIs(Routes.Documents) && !isReadOnly.value) {
     actions.value = [
       [{ action: FolderGlobalAction.CreateFolder, label: 'FoldersPage.createFolder', icon: folderOpen }],
       [

@@ -139,7 +139,7 @@
             :show-drop-message="true"
             @files-added="startImportFiles"
             @global-menu-click="openGlobalContextMenu"
-            :is-reader="ownRole === parsec.WorkspaceRole.Reader"
+            :is-reader="isReadOnly"
           >
             <div
               class="error-list-folder"
@@ -177,7 +177,7 @@
               :files="files"
               :folders="folders"
               :own-profile="userInfo.currentProfile"
-              :own-role="ownRole"
+              :is-reader="isReadOnly"
               :selection-enabled="selectionEnabled && isSmallDisplay"
               :current-sort-order="currentSortOrder"
               :current-sort-property="currentSortProperty"
@@ -195,7 +195,7 @@
               ref="fileGridDisplay"
               :files="files"
               :folders="folders"
-              :own-role="ownRole"
+              :is-reader="isReadOnly"
               :selection-enabled="selectionEnabled && isSmallDisplay"
               :file-operations="fileOperationsCurrentDir"
               @open-item="onEntryClick"
@@ -307,6 +307,7 @@ import {
   Events,
   MenuActionData,
   OpenContextualMenuData,
+  WorkspaceArchiveData,
 } from '@/services/eventDistributor';
 import {
   DuplicatePolicy,
@@ -370,77 +371,6 @@ interface Search {
   active: boolean;
 }
 
-const tabBarActions = computed(() => {
-  const selectedEntries = getSelectedEntries();
-  const isReadOnly: boolean = workspaceInfo.value ? workspaceInfo.value.currentSelfRole === WorkspaceRole.Reader : true;
-  const actions: MenuAction[] = [];
-  if (!isReadOnly) {
-    if (selectedEntries.length === 1) {
-      actions.push({
-        label: 'FoldersPage.tabbar.rename',
-        action: async () => await renameEntries(getSelectedEntries()),
-        image: RenameIcon,
-      });
-    } else {
-      actions.push({ label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate });
-    }
-    actions.push({ label: 'FoldersPage.tabbar.move', action: async () => await moveEntriesTo(getSelectedEntries()), icon: arrowRedo });
-    actions.push({
-      label: 'FoldersPage.tabbar.delete',
-      action: async () => await deleteEntries(getSelectedEntries()),
-      icon: trashBin,
-      danger: true,
-    });
-  }
-  if (selectedEntries.length === 1 && selectedEntries[0].isFile()) {
-    actions.push({
-      label: 'FoldersPage.tabbar.preview',
-      action: async () => await openEntry(getSelectedEntries()[0], {}),
-      icon: eye,
-    });
-    if (isFileEditable(selectedEntries[0].name) && !isReadOnly) {
-      actions.push({
-        label: 'FoldersPage.tabbar.edit',
-        action: async () => await openEntry(getSelectedEntries()[0], {}),
-        icon: create,
-      });
-    }
-  }
-  if (selectedEntries.length > folders.value.getSelectedEntries().length && isWeb()) {
-    actions.push({ label: 'FoldersPage.tabbar.download', action: async () => await downloadEntries(getSelectedEntries()), icon: download });
-  }
-  if (selectedEntries.length === 1) {
-    if (isDesktop()) {
-      if (selectedEntries[0].isFile()) {
-        actions.push({
-          label: 'FoldersPage.tabbar.seeInExplorer',
-          action: async () => await seeInExplorer(getSelectedEntries()),
-          image: EyeOpenIcon,
-        });
-      }
-      actions.push({
-        label: 'FoldersPage.tabbar.openWithDefault',
-        action: async () => await openEntry(getSelectedEntries()[0], { skipViewers: true }),
-        icon: open,
-      });
-    }
-    if (isReadOnly) {
-      actions.push(
-        { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
-        { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
-      );
-    } else {
-      actions.push(
-        { label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate },
-        { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
-        { label: 'FoldersPage.tabbar.history', action: async () => await showHistory(getSelectedEntries()), icon: time },
-        { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
-      );
-    }
-  }
-  return actions;
-});
-
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Documents)) {
     return;
@@ -493,7 +423,7 @@ const displayView = ref(DisplayState.List);
 const search = ref<Search | undefined>(undefined);
 const searchPattern = ref('');
 const searchInputValue = ref('');
-const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<parsec.WorkspaceInfo | null> = ref(null);
 // Init at true to avoid blinking while we're mounting the component
 // but we're not loading the files yet.
 const querying = ref(true);
@@ -522,8 +452,85 @@ const workspaceName = computed(() => {
   return workspaceInfo.value?.currentName ?? '';
 });
 
+const isReadOnly = asyncComputed(async (): Promise<boolean> => {
+  if (ownRole.value === parsec.WorkspaceRole.Reader || (workspaceInfo.value && workspaceInfo.value.isArchived === true)) {
+    return true;
+  }
+  return false;
+});
+
 const itemsToShow = computed(() => {
   return folders.value.entriesCount() + files.value.entriesCount() + fileOperationsCurrentDir.value.length;
+});
+
+const tabBarActions = computed(() => {
+  const selectedEntries = getSelectedEntries();
+  const actions: MenuAction[] = [];
+  if (!isReadOnly.value) {
+    if (selectedEntries.length === 1) {
+      actions.push({
+        label: 'FoldersPage.tabbar.rename',
+        action: async () => await renameEntries(getSelectedEntries()),
+        image: RenameIcon,
+      });
+    } else {
+      actions.push({ label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate });
+    }
+    actions.push({ label: 'FoldersPage.tabbar.move', action: async () => await moveEntriesTo(getSelectedEntries()), icon: arrowRedo });
+    actions.push({
+      label: 'FoldersPage.tabbar.delete',
+      action: async () => await deleteEntries(getSelectedEntries()),
+      icon: trashBin,
+      danger: true,
+    });
+  }
+  if (selectedEntries.length === 1 && selectedEntries[0].isFile()) {
+    actions.push({
+      label: 'FoldersPage.tabbar.preview',
+      action: async () => await openEntry(getSelectedEntries()[0], {}),
+      icon: eye,
+    });
+    if (isFileEditable(selectedEntries[0].name) && !isReadOnly.value) {
+      actions.push({
+        label: 'FoldersPage.tabbar.edit',
+        action: async () => await openEntry(getSelectedEntries()[0], {}),
+        icon: create,
+      });
+    }
+  }
+  if (selectedEntries.length > folders.value.getSelectedEntries().length && isWeb()) {
+    actions.push({ label: 'FoldersPage.tabbar.download', action: async () => await downloadEntries(getSelectedEntries()), icon: download });
+  }
+  if (selectedEntries.length === 1) {
+    if (isDesktop()) {
+      if (selectedEntries[0].isFile()) {
+        actions.push({
+          label: 'FoldersPage.tabbar.seeInExplorer',
+          action: async () => await seeInExplorer(getSelectedEntries()),
+          image: EyeOpenIcon,
+        });
+      }
+      actions.push({
+        label: 'FoldersPage.tabbar.openWithDefault',
+        action: async () => await openEntry(getSelectedEntries()[0], { skipViewers: true }),
+        icon: open,
+      });
+    }
+    if (isReadOnly.value) {
+      actions.push(
+        { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
+        { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
+      );
+    } else {
+      actions.push(
+        { label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate },
+        { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
+        { label: 'FoldersPage.tabbar.history', action: async () => await showHistory(getSelectedEntries()), icon: time },
+        { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
+      );
+    }
+  }
+  return actions;
 });
 
 const fileOperationsCurrentDir = asyncComputed(async () => {
@@ -695,6 +702,11 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
     }
   } else if (event === Events.OpenContextMenu) {
     await openGlobalContextMenu((data as OpenContextualMenuData).event);
+  } else if (event === Events.WorkspaceArchiveSync) {
+    const archiveData = data as WorkspaceArchiveData;
+    if (archiveData.workspaceId && workspaceInfo.value && archiveData.workspaceId === workspaceInfo.value.id) {
+      await navigateTo(archiveData.isArchived ? Routes.Archived : Routes.Workspaces);
+    }
   }
 }
 
@@ -730,6 +742,7 @@ onMounted(async () => {
       Events.MenuAction,
       Events.EntrySyncProgress,
       Events.OpenContextMenu,
+      Events.WorkspaceArchiveSync,
     ],
     handleEvents,
   );
@@ -1127,7 +1140,7 @@ async function onEntryClick(entry: EntryModel): Promise<void> {
     });
   } else {
     const config = await storageManager.retrieveConfig();
-    await openEntry(entry, { skipViewers: config.skipViewers });
+    await openEntry(entry, { skipViewers: config.skipViewers, readOnly: isReadOnly.value });
   }
 }
 
@@ -1704,7 +1717,7 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
 async function openGlobalContextMenu(event: Event): Promise<void> {
   const data = await _openGlobalContextMenu(
     event,
-    ownRole.value,
+    isReadOnly.value,
     isLargeDisplay.value,
     folders.value.entriesCount() + files.value.entriesCount() === 0,
   );
@@ -1723,11 +1736,7 @@ async function dispatchContextMenuAction(action: FileAction, entry: EntryModel, 
         await openEntry(entries[0], { disallowSystem: true, skipViewers: false, readOnly: true }),
     ],
     [FileAction.Rename, renameEntries],
-    [
-      FileAction.Edit,
-      async (entries: EntryModel[]): Promise<void> =>
-        await openEntry(entries[0], { readOnly: ownRole.value === parsec.WorkspaceRole.Reader }),
-    ],
+    [FileAction.Edit, async (entries: EntryModel[]): Promise<void> => await openEntry(entries[0], { readOnly: isReadOnly.value })],
     [FileAction.MoveTo, moveEntriesTo],
     [FileAction.MakeACopy, copyEntries],
     [FileAction.Open, async (entries: EntryModel[]): Promise<void> => await openEntry(entries[0], { skipViewers: true })],
@@ -1752,7 +1761,7 @@ async function dispatchContextMenuAction(action: FileAction, entry: EntryModel, 
 
 async function onSearchResultContextMenu(event: Event, entry: parsec.SearchResult, onFinished?: () => void): Promise<void> {
   await onSelectionCancel();
-  const data = await _openEntryContextMenu(event, { ...entry.stats, isSelected: false }, [], ownRole.value, isLargeDisplay.value, true);
+  const data = await _openEntryContextMenu(event, { ...entry.stats, isSelected: false }, [], isReadOnly.value, isLargeDisplay.value, true);
 
   if (!data) {
     if (onFinished) {
@@ -1768,7 +1777,7 @@ async function onSearchResultContextMenu(event: Event, entry: parsec.SearchResul
 
 async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
   const selectedEntries = getSelectedEntries();
-  const data = await _openEntryContextMenu(event, entry, selectedEntries, ownRole.value, isLargeDisplay.value);
+  const data = await _openEntryContextMenu(event, entry, selectedEntries, isReadOnly.value, isLargeDisplay.value);
 
   if (!data) {
     if (onFinished) {
@@ -1871,7 +1880,7 @@ const actionBarOptionsFoldersPage = computed(() => {
     return actionArray;
   }
 
-  if (selectedFilesCount.value === 0 && ownRole.value !== parsec.WorkspaceRole.Reader) {
+  if (selectedFilesCount.value === 0 && !isReadOnly.value) {
     actionArray.push(
       {
         label: 'FoldersPage.createFolder',
@@ -1906,7 +1915,7 @@ const actionBarOptionsFoldersPage = computed(() => {
         },
       });
     }
-    if (selectedEntries[0].isFile() && ownRole.value !== parsec.WorkspaceRole.Reader && isFileEditable(selectedEntries[0].name)) {
+    if (selectedEntries[0].isFile() && !isReadOnly.value && isFileEditable(selectedEntries[0].name)) {
       actionArray.push({
         label: 'FoldersPage.fileContextMenu.actionEdit',
         icon: create,
@@ -1915,7 +1924,7 @@ const actionBarOptionsFoldersPage = computed(() => {
         },
       });
     }
-    if (ownRole.value !== parsec.WorkspaceRole.Reader) {
+    if (!isReadOnly.value) {
       actionArray.push(
         {
           label: 'FoldersPage.fileContextMenu.actionRename',
@@ -1974,7 +1983,7 @@ const actionBarOptionsFoldersPage = computed(() => {
     );
   }
   if (selectedFilesCount.value > 1) {
-    if (ownRole.value !== parsec.WorkspaceRole.Reader) {
+    if (!isReadOnly.value) {
       actionArray.push(
         {
           label: 'FoldersPage.fileContextMenu.actionMoveTo',

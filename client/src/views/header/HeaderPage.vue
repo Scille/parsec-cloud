@@ -188,7 +188,7 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile } from '@/parsec';
+import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceName, isMobile, listArchivedWorkspaces } from '@/parsec';
 import {
   ProfilePages,
   Routes,
@@ -236,7 +236,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { checkmarkCircle, ellipseOutline, ellipsisHorizontal, home, notifications, search } from 'ionicons/icons';
-import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
+import { MsImage, MsModalResult, SidebarToggle, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -282,6 +282,18 @@ const showSecurityChecklistSmallDisplay = computed(() => {
   return isSmallDisplay.value && securityWarningsCount.value > 0 && securityWarnings.value;
 });
 
+const isArchived = asyncComputed(async (): Promise<boolean> => {
+  const workspaceHandle = getWorkspaceHandle();
+  const workspacesResult = await listArchivedWorkspaces();
+  if (workspacesResult.ok && workspaceHandle) {
+    const wInfo = workspacesResult.value.find((wi) => wi.handle === workspaceHandle);
+    if (wInfo) {
+      return true;
+    }
+  }
+  return false;
+});
+
 const routeTitle = computed((): Translatable => {
   switch (getCurrentRouteName()) {
     case Routes.Users:
@@ -298,6 +310,8 @@ const routeTitle = computed((): Translatable => {
       return 'HeaderPage.titles.myProfile';
     case Routes.History:
       return 'HeaderPage.titles.history';
+    case Routes.Archived:
+      return 'HeaderPage.titles.archived';
     case null:
       return '';
   }
@@ -353,7 +367,7 @@ async function updateRoute(): Promise<void> {
     finalPath.push({
       id: 0,
       icon: home,
-      route: Routes.Workspaces,
+      route: isArchived.value ? Routes.Archived : Routes.Workspaces,
       params: {},
     });
 

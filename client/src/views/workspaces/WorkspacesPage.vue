@@ -249,7 +249,7 @@ import {
   createWorkspace as parsecCreateWorkspace,
   getClientInfo as parsecGetClientInfo,
   getWorkspaceSharing as parsecGetWorkspaceSharing,
-  listWorkspaces as parsecListWorkspaces,
+  listAvailableWorkspaces as parsecListWorkspaces,
   mountWorkspace as parsecMountWorkspace,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
@@ -362,6 +362,7 @@ onMounted(async (): Promise<void> => {
         case Events.WorkspaceUpdated:
         case Events.WorkspaceCreated:
         case Events.WorkspaceMountpointsSync:
+        case Events.WorkspaceArchiveSync:
           await refreshWorkspacesList();
           break;
         case Events.MenuAction:

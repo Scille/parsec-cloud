@@ -3,7 +3,7 @@
 import { formatFileSize } from '@/common/file';
 import { EntryModel } from '@/components/files';
 import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
-import { EntryName, EntryStat, EntryStatFile, EntryTree, listTree, WorkspaceHandle, WorkspaceID, WorkspaceRole } from '@/parsec';
+import { EntryName, EntryStat, EntryStatFile, EntryTree, listTree, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { isFileEditable } from '@/services/cryptpad';
 import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager } from '@/services/fileOperation/manager';
@@ -17,14 +17,14 @@ import { showSaveFilePicker } from 'native-file-system-adapter';
 
 export async function openGlobalContextMenu(
   event: Event,
-  ownRole: WorkspaceRole,
+  isReadOnly: boolean,
   isLargeDisplay: boolean,
   isFolderEmpty: boolean,
 ): Promise<{ action: FolderGlobalAction } | undefined> {
   let data: { action: FolderGlobalAction } | undefined;
 
   if (isLargeDisplay) {
-    if (ownRole === WorkspaceRole.Reader) {
+    if (isReadOnly) {
       return;
     }
 
@@ -38,7 +38,7 @@ export async function openGlobalContextMenu(
       dismissOnSelect: true,
       alignment: 'start',
       componentProps: {
-        role: ownRole,
+        isReadOnly: isReadOnly,
       },
     });
     await popover.present();
@@ -69,7 +69,7 @@ export async function openEntryContextMenu(
   event: Event,
   entry: EntryModel,
   selectedEntries: EntryModel[],
-  ownRole: WorkspaceRole,
+  isReadOnly: boolean,
   isLargeDisplay: boolean,
   navigateFromAnywhere?: boolean,
 ): Promise<{ action: FileAction } | undefined> {
@@ -86,7 +86,7 @@ export async function openEntryContextMenu(
       dismissOnSelect: true,
       alignment: 'start',
       componentProps: {
-        role: ownRole,
+        isReadOnly: isReadOnly,
         multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
         isFile: entry.isFile(),
         isEditable: isFileEditable(entry.name),
@@ -106,7 +106,7 @@ export async function openEntryContextMenu(
       expandToScroll: false,
       showBackdrop: true,
       componentProps: {
-        role: ownRole,
+        isReadOnly: isReadOnly,
         multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
         isFile: entry.isFile(),
         isEditable: isFileEditable(entry.name),

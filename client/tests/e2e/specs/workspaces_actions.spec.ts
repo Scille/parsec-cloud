@@ -53,8 +53,8 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
 
 const MENU = [
   {
-    title: 'Manage workspace',
-    actions: ['Rename', 'History'],
+    title: 'Workspace management',
+    actions: ['Rename', 'History', 'Hide this workspace', 'Archive this workspace'],
   },
   {
     title: 'Collaboration',

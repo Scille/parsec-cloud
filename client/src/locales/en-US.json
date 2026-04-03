@@ -567,7 +567,8 @@
             "recoveryExport": "Recovery file",
             "history": "History",
             "viewer": "File viewer",
-            "editor": "File editor"
+            "editor": "File editor",
+            "archived": "Archived workspaces"
         },
         "previous": "Go back",
         "invitations": {
@@ -691,7 +692,7 @@
         "filterPlaceholder": "Workspace name",
         "workspaceContextMenu": {
             "titleOffline": "Offline",
-            "titleManage": "Manage workspace",
+            "titleManage": "Workspace management",
             "titleCollaboration": "Collaboration",
             "titleMisc": "Miscellaneous",
             "actionOffline": "Enable offline availability",
@@ -702,6 +703,9 @@
             "actionDetails": "Details",
             "actionHide": "Hide this workspace",
             "actionShow": "Show this workspace",
+            "actionArchive": "Archive this workspace",
+            "actionRestore": "Restore this workspace",
+            "actionDelete": "Move to bin",
             "actionCopyLink": "Copy link",
             "actionAddFavorite": "Add as starred",
             "actionRemoveFavorite": "Remove as starred"
@@ -763,6 +767,7 @@
             "noRecentWorkspaces": "You have not consulted any workspaces yet. Recently consulted workspaces will be listed here.",
             "noFavoriteWorkspaces": "You have not set starred any workspaces yet. Starred workspaces will be listed here.",
             "noHiddenWorkspaces": "You have not hidden any workspaces yet. Hidden workspaces will be listed here.",
+            "noArchivedWorkspaces": "Your archived workspaces can be consulted here in read-only. Sharing is disabled unless the workspace is restored. Archived workspace owners can restore them.",
             "showHiddenWorkspaces": "Show hidden workspaces"
         },
         "showHideWorkspace": {
@@ -807,6 +812,21 @@
             "description": "You must make this workspace visible in order to open your file with your default application.",
             "actionConfirm": "Make this workspace visible",
             "actionCancel": "Cancel"
+        },
+        "archiveWorkspace": {
+            "title": "Archive this workspace",
+            "subtitle": "You are about to archive the workspace {workspace}. It will remain accessible in read-only for all users who have access to it. Are you sure you want to proceed?",
+            "yes": "Archive",
+            "no": "Cancel",
+            "archive": {
+                "success": "The workspace {workspace} has successfully been archived.",
+                "fail": "Failed to archive the workspace {workspace}."
+            },
+            "restore": {
+                "success": "The workspace {workspace} has successfully been restored.",
+                "fail": "Failed to restore the workspace {workspace}."
+            },
+            "readOnly": "Read only"
         }
     },
     "FoldersPage": {
@@ -1184,6 +1204,7 @@
         "recent": "Recent",
         "favorites": "Starred",
         "hidden": "Hidden",
+        "archived": "Archived",
         "noWorkspace": "No workspaces",
         "users": "Users",
         "invitationsRequests": "Invitations & Join Requests",
