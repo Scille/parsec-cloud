@@ -20,9 +20,11 @@ impl X509PrivateKey {
     pub async fn sign(
         &self,
         message: &[u8],
-    ) -> Result<(PkiSignatureAlgorithm, Bytes), crate::SignError> {
+    ) -> Result<(PkiSignatureAlgorithm, Bytes), crate::X509PrivateKeySignError> {
         match &self.0 {
-            SchannelPKey::CryptProv(_crypt) => Err(crate::SignError::UnsupportedAlgorithm),
+            SchannelPKey::CryptProv(_crypt) => {
+                Err(crate::X509PrivateKeySignError::UnsupportedAlgorithm)
+            }
             SchannelPKey::NcryptKey(ncrypt) => sign_with_ncrypt(ncrypt, message),
         }
     }
@@ -31,14 +33,14 @@ impl X509PrivateKey {
         &self,
         algorithm: PKIEncryptionAlgorithm,
         ciphertext: &[u8],
-    ) -> Result<Bytes, crate::DecryptError> {
+    ) -> Result<Bytes, crate::X509PrivateKeyDecryptError> {
         if algorithm != PKIEncryptionAlgorithm::RsaesOaepSha256 {
-            return Err(crate::DecryptError::UnsupportedAlgorithm);
+            return Err(crate::X509PrivateKeyDecryptError::UnsupportedAlgorithm);
         }
         match &self.0 {
-            SchannelPKey::CryptProv(_crypt) => Err(crate::DecryptError::Internal(anyhow::anyhow!(
-                "Unsupported private key handle type"
-            ))),
+            SchannelPKey::CryptProv(_crypt) => Err(crate::X509PrivateKeyDecryptError::Internal(
+                anyhow::anyhow!("Unsupported private key handle type"),
+            )),
             SchannelPKey::NcryptKey(ncrypt) => decrypt_with_ncrypt(ncrypt, ciphertext),
         }
     }
@@ -47,7 +49,7 @@ impl X509PrivateKey {
 fn sign_with_ncrypt(
     pkey: &schannel::ncrypt_key::NcryptKey,
     message: &[u8],
-) -> Result<(PkiSignatureAlgorithm, Bytes), crate::SignError> {
+) -> Result<(PkiSignatureAlgorithm, Bytes), crate::X509PrivateKeySignError> {
     const ALGO: PkiSignatureAlgorithm = PkiSignatureAlgorithm::RsassaPssSha256;
     let hash = sha2::Sha256::digest(message);
     // SAFETY: We retrieve the inner NCRYPT_KEY_HANDLE wrapped by NcryptKey.
@@ -88,7 +90,7 @@ fn sign_with_ncrypt(
         );
 
         if res != 0 {
-            return Err(crate::SignError::Sign(
+            return Err(crate::X509PrivateKeySignError::Sign(
                 std::io::Error::from_raw_os_error(res).into(),
             ));
         }
@@ -107,7 +109,7 @@ fn sign_with_ncrypt(
         );
 
         if res != 0 {
-            return Err(crate::SignError::Sign(
+            return Err(crate::X509PrivateKeySignError::Sign(
                 std::io::Error::from_raw_os_error(res).into(),
             ));
         }
@@ -118,7 +120,7 @@ fn sign_with_ncrypt(
 fn decrypt_with_ncrypt(
     pkey: &schannel::ncrypt_key::NcryptKey,
     ciphertext: &[u8],
-) -> Result<Bytes, crate::DecryptError> {
+) -> Result<Bytes, crate::X509PrivateKeyDecryptError> {
     // SAFETY: We retrieve the inner NCRYPT_KEY_HANDLE wrapped by NcryptKey.
     let raw_handle =
         unsafe { schannel::RawPointer::as_ptr(pkey) as Cryptography::NCRYPT_KEY_HANDLE };
@@ -155,7 +157,7 @@ fn decrypt_with_ncrypt(
             flags,
         );
         if res != 0 {
-            return Err(crate::DecryptError::Decrypt(
+            return Err(crate::X509PrivateKeyDecryptError::Decrypt(
                 std::io::Error::from_raw_os_error(res).into(),
             ));
         }
@@ -173,7 +175,7 @@ fn decrypt_with_ncrypt(
             flags,
         );
         if res != 0 {
-            return Err(crate::DecryptError::Decrypt(
+            return Err(crate::X509PrivateKeyDecryptError::Decrypt(
                 std::io::Error::from_raw_os_error(res).into(),
             ));
         }
