@@ -1790,6 +1790,7 @@
             "byJoined": "Date d'inscription",
             "byProfile": "Profil",
             "byStatus": "Statut",
+            "byEmail": "Email",
             "asc": "Croissant",
             "desc": "Décroissant"
         },

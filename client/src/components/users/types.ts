@@ -7,6 +7,7 @@ export enum SortProperty {
   JoinedDate = 'sort-joined-data',
   Status = 'sort-status',
   Profile = 'sort-profile',
+  Email = 'sort-email',
 }
 
 export enum InvitationAction {
@@ -112,7 +113,7 @@ export class UserCollection {
     return this.getUsers().length;
   }
 
-  private userIsVisible(user: UserModel): boolean {
+  userIsVisible(user: UserModel): boolean {
     if (
       (!this.filters.profileAdmin && user.currentProfile === UserProfile.Admin) ||
       (!this.filters.profileStandard && user.currentProfile === UserProfile.Standard) ||
@@ -152,7 +153,7 @@ export class UserCollection {
     return this.getSelectedUsers().length;
   }
 
-  private statusDiff(user1: UserModel, user2: UserModel): number {
+  statusDiff(user1: UserModel, user2: UserModel): number {
     return (
       Number(user2.isActive()) * 4 +
       Number(user2.isRevoked()) * 2 +
@@ -178,8 +179,8 @@ export class UserCollection {
       switch (property) {
         case SortProperty.Name:
           return ascending
-            ? user1.humanHandle.label.localeCompare(user2.humanHandle.label)
-            : user2.humanHandle.label.localeCompare(user1.humanHandle.label);
+            ? user2.humanHandle.label.localeCompare(user1.humanHandle.label)
+            : user1.humanHandle.label.localeCompare(user2.humanHandle.label);
         case SortProperty.JoinedDate:
           if (ascending) {
             return user2.createdOn < user1.createdOn ? -1 : 0;
@@ -191,6 +192,10 @@ export class UserCollection {
             return this.statusDiff(user1, user2);
           }
           return diff;
+        case SortProperty.Email:
+          return ascending
+            ? user2.humanHandle.email.localeCompare(user1.humanHandle.email)
+            : user1.humanHandle.email.localeCompare(user2.humanHandle.email);
         case SortProperty.Status:
           return ascending ? this.statusDiff(user1, user2) : this.statusDiff(user2, user1);
         default:

@@ -11,7 +11,7 @@ export const ThemeManagerKey = 'themeManager';
 export async function persistStorage(): Promise<void> {
   async function _persist(): Promise<void> {
     try {
-      if (isWeb() && navigator.storage && !(await navigator.storage.persisted())) {
+      if ((window as any).TESTING !== true && isWeb() && navigator.storage && !(await navigator.storage.persisted())) {
         const result = await navigator.storage.persist();
         if (!result) {
           window.electronAPI.log('warn', 'Failed to make the storage persistent.');
