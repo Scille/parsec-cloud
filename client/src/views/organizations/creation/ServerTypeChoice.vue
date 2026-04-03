@@ -291,11 +291,11 @@ function getImagePath(): string {
 
     &:hover {
       @include ms.responsive-breakpoint('sm') {
-        outline: 2px solid var(--parsec-color-light-primary-300);
+        border: 1px solid var(--parsec-color-light-primary-200);
       }
 
       .server-choice-item__image {
-        outline: 2px solid var(--parsec-color-light-primary-300);
+        border: 1px solid var(--parsec-color-light-primary-200);
         background-color: var(--parsec-color-light-primary-30);
 
         @include ms.responsive-breakpoint('sm') {

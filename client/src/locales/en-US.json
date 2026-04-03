@@ -1400,7 +1400,7 @@
         },
         "methodChosen": "Method chosen:",
         "active": "Active method",
-        "update": "Update",
+        "update": "Change method",
         "changeAuthenticationButton": "Change method",
         "changePasswordButton": "Change password",
         "useKeyring": "System Authentication",
@@ -1566,7 +1566,7 @@
         "validateUserInfo": "Validate my information",
         "continueWith": "Continue with {greeter}",
         "waitingForAnyHost": "(Waiting for an administrator)",
-        "waitingForHost": "(Waiting for the administrator)",
+        "waitingForHost": "Waiting for the administrator",
         "linkFormLabel": "Invitation link",
         "linkFormPlaceholder": "parsec3://example.com/Org?...",
         "successMessage": "You successfully joined the organization.",
@@ -1750,7 +1750,7 @@
             "cancelYes": "Cancel process",
             "cancelNo": "Resume",
             "cancelled": "The process has been cancelled.",
-            "waiting": "Waiting for the guest..."
+            "waiting": "Waiting for the guest"
         },
         "invitation": {
             "greetUser": "Greet",

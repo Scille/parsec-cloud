@@ -1350,7 +1350,7 @@
             "emailSent": "L'email a été envoyé !",
             "emailSentToast": "L'email a été envoyé à votre adresse email.",
             "cancelled": "Le processus a été annulé.",
-            "waiting": "En attente de l'invité..."
+            "waiting": "En attente de l'invité"
         }
     },
     "Password": {
@@ -1402,7 +1402,7 @@
         },
         "methodChosen": "Méthode choisie :",
         "active": "Méthode active",
-        "update": "Modifier",
+        "update": "Change de méthode",
         "changeAuthenticationButton": "Changer de méthode",
         "changePasswordButton": "Modifier le mot de passe",
         "useKeyring": "Authentification du système",
@@ -1567,8 +1567,8 @@
         "createDevice": "Rejoindre l'organisation",
         "validateUserInfo": "Valider mes informations",
         "continueWith": "Continuer avec {greeter}",
-        "waitingForAnyHost": "(En attente d'un administrateur)",
-        "waitingForHost": "(En attente de l'administrateur)",
+        "waitingForAnyHost": "En attente d'un administrateur",
+        "waitingForHost": "En attente de l'administrateur",
         "linkFormLabel": "Lien d'invitation",
         "linkFormPlaceholder": "parsec3://exemple.com/Org?...",
         "successMessage": "Vous avez rejoint l'organisation avec succès.",
@@ -1752,7 +1752,7 @@
             "cancelYes": "Annuler le processus",
             "cancelNo": "Reprendre",
             "cancelled": "Le processus a été annulé.",
-            "waiting": "En attente de l'invité..."
+            "waiting": "En attente de l'invité"
         },
         "invitation": {
             "greetUser": "Accueillir",
