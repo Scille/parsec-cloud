@@ -30,6 +30,12 @@ thiserror = { workspace = true }
 
 libparsec_tests_lite = { workspace = true, optional = true }
 libparsec_platform_http_proxy = { workspace = true }
+libparsec_platform_async = { workspace = true }
+reqwest = { workspace = true, features = ["json", "query"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+data-encoding = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }
@@ -48,6 +54,9 @@ anyhow = { workspace = true }
 env_logger = { workspace = true }
 hex-literal = { workspace = true }
 libparsec_tests_lite = { workspace = true, features = ["parsec_test_macro"] }
+# rstest is needed directly because `libparsec_tests_lite::rstest::fixture` proc macro
+# generates code that references the `rstest` crate by name.
+rstest = { workspace = true }
 serde = { workspace = true }
 rmp-serde = { workspace = true }
 

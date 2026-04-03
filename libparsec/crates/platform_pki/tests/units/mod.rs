@@ -3,6 +3,8 @@
 mod encrypt;
 #[cfg(target_os = "windows")] // TODO: libparsec_platform_pki only supports Windows so far
 mod list;
+#[cfg(not(target_os = "windows"))]
+mod scws;
 mod shared;
 #[cfg(target_os = "windows")] // TODO: libparsec_platform_pki only supports Windows so far
 mod sign;

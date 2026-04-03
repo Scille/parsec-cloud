@@ -4,6 +4,10 @@ pub mod errors;
 #[cfg(target_os = "windows")]
 #[path = "windows/mod.rs"]
 mod platform;
+// Web backend via SCWS — used for wasm32 builds and for tests on non-Windows
+#[cfg(all(not(target_os = "windows"), any(target_arch = "wasm32", test)))]
+#[path = "web/mod.rs"]
+mod platform;
 mod shared;
 #[cfg(any(test, feature = "test-fixture"))]
 pub mod test_fixture;
@@ -19,8 +23,8 @@ use libparsec_types::prelude::*;
 
 pub type X509CertificateDer<'a> = rustls_pki_types::CertificateDer<'a>;
 
-// Mock module for unsupported platform
-#[cfg(not(target_os = "windows"))]
+// Stub module for unsupported platforms (non-Windows, non-wasm32, non-test)
+#[cfg(all(not(target_os = "windows"), not(target_arch = "wasm32"), not(test)))]
 mod platform {
     use crate::{
         errors::{ListTrustedRootCertificatesError, ListUserCertificatesError},
