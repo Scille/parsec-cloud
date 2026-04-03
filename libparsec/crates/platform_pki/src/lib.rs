@@ -138,7 +138,7 @@ mod platform {
         pub async fn sign(
             &self,
             #[expect(unused_variables)] message: &[u8],
-        ) -> Result<(PkiSignatureAlgorithm, Bytes), crate::SignError> {
+        ) -> Result<(PkiSignatureAlgorithm, Bytes), crate::X509PrivateKeySignError> {
             unimplemented!("platform not supported")
         }
 
@@ -146,7 +146,7 @@ mod platform {
             &self,
             #[expect(unused_variables)] algorithm: PKIEncryptionAlgorithm,
             #[expect(unused_variables)] ciphertext: &[u8],
-        ) -> Result<Bytes, crate::DecryptError> {
+        ) -> Result<Bytes, crate::X509PrivateKeyDecryptError> {
             unimplemented!("platform not supported")
         }
     }
@@ -234,7 +234,7 @@ pub enum RequestPrivateKeyError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum SignError {
+pub enum X509PrivateKeySignError {
     #[error("unsupported signature algorithm")]
     UnsupportedAlgorithm,
     #[error("error during signature: {0}")]
@@ -244,7 +244,7 @@ pub enum SignError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum DecryptError {
+pub enum X509PrivateKeyDecryptError {
     #[error("unsupported encryption algorithm")]
     UnsupportedAlgorithm,
     #[error("error during decryption: {0}")]
