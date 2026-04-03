@@ -1,0 +1,10 @@
+[project]
+name = "mock-scws"
+version = "0.1.0"
+description = "Mock SCWS (SmartCard Web Service) for development and testing"
+requires-python = ">=3.10"
+dependencies = ["flask>=3.0", "cryptography>=43.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
