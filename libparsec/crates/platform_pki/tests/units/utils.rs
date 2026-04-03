@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::{
-    ValidationPathOwned, X509CertificateDer, X509CertificateHash, X509CertificateReference,
+    X509CertificateDer, X509CertificateHash, X509CertificateReference, X509ValidationPathOwned,
 };
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
@@ -165,7 +165,7 @@ impl InstalledCertificates {
     pub async fn alice_sign_message(
         &self,
         payload: &[u8],
-    ) -> (PkiSignatureAlgorithm, Bytes, ValidationPathOwned) {
+    ) -> (PkiSignatureAlgorithm, Bytes, X509ValidationPathOwned) {
         let certificate_ref = self.alice_cert_ref().await;
         let (algo, signature) = crate::sign_message(payload, &certificate_ref)
             .await

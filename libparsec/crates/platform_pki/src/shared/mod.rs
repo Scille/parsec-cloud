@@ -141,7 +141,7 @@ pub fn verify_message<'a>(
     Ok(())
 }
 
-pub struct ValidationPathOwned {
+pub struct X509ValidationPathOwned {
     pub leaf: X509CertificateDer<'static>,
     pub intermediates: Vec<X509CertificateDer<'static>>,
     pub root: TrustAnchor<'static>,
@@ -150,7 +150,7 @@ pub struct ValidationPathOwned {
 pub async fn get_validation_path_for_cert(
     cert_ref: &X509CertificateReference,
     now: DateTime,
-) -> Result<ValidationPathOwned, GetValidationPathForCertError> {
+) -> Result<X509ValidationPathOwned, GetValidationPathForCertError> {
     let all_trusted_roots = crate::list_trusted_root_certificate_anchors()
         .await
         .map_err(|err| match err {
@@ -187,7 +187,7 @@ pub async fn get_validation_path_for_cert(
         .collect();
     let root = path.anchor().to_owned();
 
-    Ok(ValidationPathOwned {
+    Ok(X509ValidationPathOwned {
         root,
         intermediates,
         leaf,
