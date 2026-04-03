@@ -91,6 +91,8 @@ When MFA is enabled on a device:
 4. Parsec then asks you to enter your usual credential (eg. password).
 5. You are now logged-in.
 
+.. _doc_userguide_mfa_reset:
+
 Recovering access when the authenticator app is lost
 -----------------------------------------------------
 

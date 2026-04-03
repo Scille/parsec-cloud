@@ -123,6 +123,8 @@ You'll be able to download both the Recovery File and the Secret Key. Make sure 
     :alt: Download the recovery file and passphrase
 
 
+.. _doc_userguide_recovery_files_recover:
+
 Use a recovery file to get back access
 --------------------------------------
 

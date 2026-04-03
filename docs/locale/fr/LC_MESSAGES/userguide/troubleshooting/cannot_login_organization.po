@@ -1,0 +1,239 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-01 18:52+0200\n"
+"PO-Revision-Date: 2026-04-01 19:08+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.9\n"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:6
+msgid "Cannot login to my Organization"
+msgstr "Je n'arrive pas à me connecter à mon Organisation"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:8
+msgid ""
+"If you cannot login to your organization in Parsec, here is a list of things "
+"you can try to recover access."
+msgstr ""
+"Si vous ne parvenez pas à vous connecter à votre organisation dans Parsec, "
+"voici une liste de solutions que vous pouvez essayer pour récupérer votre "
+"accès."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:11
+msgid "Check your login method"
+msgstr "Vérifiez votre méthode de connexion"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:13
+msgid ""
+"Depending on the method you use to login, there may be some preliminary "
+"checks to perform."
+msgstr ""
+"Selon la méthode que vous utilisez pour vous connecter, il se peut que vous "
+"deviez effectuer quelques vérifications préalables."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:16
+msgid "Login with password"
+msgstr "Se connecter avec un mot de passe"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:18
+msgid ""
+"If you login with **password**, double-check it to make sure you are using "
+"the right one:"
+msgstr ""
+"Si vous vous connectez avec **mot de passe**, vérifiez bien que vous "
+"utilisez le bon :"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:20
+msgid ""
+"If you are a SaaS customer, the password to login to your organization is "
+"not the same as the one used for your *Customer Area*."
+msgstr ""
+"Si vous êtes client SaaS, le mot de passe permettant de vous connecter à "
+"votre organisation n'est pas le même que celui utilisé pour votre *Espace "
+"client*."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:21
+msgid ""
+"If you have set up multiple devices, each device may have a different "
+"password to login to the same organization (this also holds you are using "
+"both Parsec web and desktop application)"
+msgstr ""
+"Si vous avez configuré plusieurs appareils, chacun d'entre eux peut disposer "
+"d'un mot de passe différent pour se connecter à la même organisation (cela "
+"vaut également si vous utilisez à la fois l'application web et l'application "
+"de bureau Parsec)"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:25
+msgid "Login with system authentication"
+msgstr "Se connecter via l'authentification système"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:27
+msgid ""
+"If you login with **system authentication**, checks will depend on your "
+"specific operating system and/or desktop manager. In any case, check that "
+"the system keyring exists and that is unlocked. Depending on your system, a "
+"dialog may appear asking you to unlock the keyring in order to allow Parsec "
+"application to access it."
+msgstr ""
+"Si vous vous connectez via l'**authentification système**, les vérifications "
+"dépendront de votre système d'exploitation et/ou de votre gestionnaire de "
+"bureau. Dans tous les cas, vérifiez que le trousseau système existe et qu'il "
+"est déverrouillé. Selon votre système, une boîte de dialogue peut s'afficher "
+"pour vous demander de déverrouiller le trousseau afin de permettre à "
+"l'application Parsec d'y accéder."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:32
+msgid "Login with Single Sign-On (SSO)"
+msgstr "Se connecter via l'authentification unique (SSO)"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:34
+msgid ""
+"If you login with **SSO** (such as ProConnect), the service may be "
+"temporarily unavailable or there may be network issues to reach the server. "
+"Check your Internet connection and try again later."
+msgstr ""
+"Si vous vous connectez via **SSO** (par exemple ProConnect), il se peut que "
+"le service soit temporairement indisponible ou que des problèmes de réseau "
+"empêchent l'accès au serveur. Vérifiez votre connexion Internet et réessayez "
+"plus tard."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:38
+msgid "Login with SmartCard (PKI)"
+msgstr "Connexion avec une carte à puce (PKI)"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:40
+msgid ""
+"If you login with **SmartCard**, double-check that you are choosing the "
+"right certificate and that it has not expired."
+msgstr ""
+"Si vous vous connectez avec une **SmartCard**, vérifiez bien que vous "
+"sélectionnez le bon certificat et qu'il n'est pas périmé."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:44
+msgid "Check your MFA setup"
+msgstr "Vérifiez votre configuration MFA"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:46
+msgid ""
+"If you have enabled MFA, Parsec will require the **6-digit** code shown in "
+"your authenticator app to login."
+msgstr ""
+"Si vous avez activé l'authentification multifacteur (MFA), Parsec vous "
+"demandera le code **à 6 chiffres** affiché dans votre application "
+"d'authentification pour vous connecter."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:48
+msgid ""
+"Parsec application needs to reach the Parsec server in order to login with "
+"MFA. Check your Internet connection and make sure you are online."
+msgstr ""
+"L'application Parsec doit pouvoir se connecter au serveur Parsec pour que "
+"vous puissiez vous connecter via l'authentification multifacteur (MFA). "
+"Vérifiez votre connexion Internet et assurez-vous d'être en ligne."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:50
+msgid ""
+"Refer to the :ref:`MFA <doc_userguide_mfa_reset>` section to reset your MFA "
+"setup."
+msgstr ""
+"Consultez la section :ref:`MFA <doc_userguide_mfa_reset>` pour réinitialiser "
+"votre configuration MFA."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:54
+msgid "Recover your session using a Recovery file"
+msgstr "Récupérez votre session à l'aide d'un fichier de récupération"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:56
+msgid ""
+"If you've created a Recovery file, it should allow you to recover access to "
+"your organization."
+msgstr ""
+"Si vous avez créé un fichier de récupération, cela devrait vous permettre de "
+"récupérer l'accès à votre organisation."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:58
+msgid ""
+"Refer to the :ref:`Recovery files<doc_userguide_recovery_files>` section for "
+"more detail."
+msgstr ""
+"Pour plus d'informations, consultez la section :ref:`Fichiers de "
+"récupération<doc_userguide_recovery_files>`."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:62
+msgid "Contact an administrator"
+msgstr "Contactez un administrateur"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:64
+msgid ""
+"If none of the above worked, you should contact an administrator for help."
+msgstr ""
+"Si aucune des solutions ci-dessus n'a fonctionné, veuillez contacter un "
+"administrateur pour obtenir de l'aide."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:66
+msgid ""
+"To address the issue as efficiently as possible, please include the "
+"following information:"
+msgstr ""
+"Afin de traiter votre demande dans les meilleurs délais, veuillez fournir "
+"les informations suivantes :"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:68
+msgid "The Parsec version you are using (displayed in the About dialog)"
+msgstr ""
+"La version de Parsec que vous utilisez (affichée dans la boîte de dialogue « "
+"À propos »)"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:69
+msgid ""
+"The method you use to login (password, ...) and if you have enabled MFA or "
+"not"
+msgstr ""
+"La méthode que vous utilisez pour vous connecter (mot de passe, etc.) et si "
+"vous avez activé l'authentification à deux facteurs (MFA) ou non"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:70
+msgid ""
+"Any error message displayed or unexpected behaviour observed (include "
+"screenshots if you can)"
+msgstr ""
+"Tout message d'erreur affiché ou comportement inattendu constaté (joignez "
+"des captures d'écran si possible)"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:71
+msgid "A brief description of steps you follow to login"
+msgstr "Une brève description des étapes que vous suivez pour vous connecter"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:75
+msgid "Consider revocation and re-joining the organization"
+msgstr "Envisagez la révocation afin de rejoindre l'organisation à nouveau"
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:77
+msgid ""
+"For security reasons, the keys needed to authenticate you with Parsec never "
+"leave your device. This means that it is not possible to recover a forgotten "
+"password."
+msgstr ""
+"Pour des raisons de sécurité, les clés nécessaires à votre authentification "
+"sur Parsec ne quittent jamais votre appareil. Cela signifie qu'il n'est pas "
+"possible de récupérer un mot de passe oublié."
+
+#: ../../userguide/troubleshooting/cannot_login_organization.rst:80
+msgid ""
+"As a last resort, the administrator may need to revoked your access and re-"
+"invite you to join the organization."
+msgstr ""
+"En dernier recours, l'administrateur pourrait être amené à révoquer votre "
+"accès et à vous inviter à nouveau à rejoindre l'organisation."

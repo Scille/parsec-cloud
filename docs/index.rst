@@ -38,7 +38,7 @@ You can also use the search function in the top left corner.
     userguide/manage_devices
     userguide/mfa
     userguide/security
-    userguide/troubleshooting
+    userguide/troubleshooting/index
 
 .. toctree::
     :maxdepth: 1

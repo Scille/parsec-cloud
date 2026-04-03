@@ -1,9 +1,6 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-.. _doc_userguide_troubleshooting:
-
-Troubleshooting
-===============
+.. _doc_userguide_troubleshooting_macos_finder_errors:
 
 MacOS Finder errors
 -------------------
@@ -28,20 +25,3 @@ The Parsec interface (GUI) allows you to:
 
   * by drag & drop from the Finder into a directory in Parsec
   * by using the ``Import`` button
-
-
-Microsoft Excel/Word or similar software says the file name is too long
------------------------------------------------------------------------
-
-This error is due to Microsoft's `Maximum File Path Limitation <https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation>`_.
-
-When you save or open a file, its path (including the file name) cannot exceeds
-260 characters. This limitation includes 3 characters for the drive (i.e. `D:`),
-the characters in folder names, the backslash character between folders, and
-the characters in the file name.
-
-So the only solution is to rename the file or the folders containing it in
-order to have shorter path.
-
-Microsoft's article also mentions a more cumbersome approach by modifying a
-registry entry. This might work, but it has not been tested in Parsec.
