@@ -23,7 +23,7 @@ use windows_sys::Win32::Security::Cryptography::{
     UI::CryptUIDlgSelectCertificateFromStore,
 };
 
-pub use certificate::Certificate;
+pub use certificate::X509Certificate;
 use libparsec_types::prelude::*;
 pub use private_key::X509PrivateKey;
 
@@ -43,7 +43,7 @@ impl PkiSystem {
     pub async fn find_certificate(
         &self,
         cert_ref: &X509CertificateReference,
-    ) -> Result<Option<Certificate>, crate::FindCertificateError> {
+    ) -> Result<Option<X509Certificate>, crate::FindCertificateError> {
         Ok(cert_ref
             .get_uri::<X509WindowsCngURI>()
             .and_then(|uri| {
@@ -73,7 +73,8 @@ impl PkiSystem {
 
     pub async fn list_user_certificates<'a>(
         &'a self,
-    ) -> Result<impl Iterator<Item = Certificate> + use<'a>, crate::ListUserCertificateError> {
+    ) -> Result<impl Iterator<Item = X509Certificate> + use<'a>, crate::ListUserCertificateError>
+    {
         Ok(self.my_cert_store.certs().map(Into::into))
     }
 }

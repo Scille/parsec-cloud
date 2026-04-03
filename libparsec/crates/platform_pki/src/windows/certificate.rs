@@ -5,15 +5,15 @@ use libparsec_types::{
     X509WindowsCngURI,
 };
 
-pub struct Certificate(schannel::cert_context::CertContext);
+pub struct X509Certificate(schannel::cert_context::CertContext);
 
-impl From<schannel::cert_context::CertContext> for Certificate {
+impl From<schannel::cert_context::CertContext> for X509Certificate {
     fn from(value: schannel::cert_context::CertContext) -> Self {
         Self(value)
     }
 }
 
-impl Certificate {
+impl X509Certificate {
     pub async fn get_der(
         &self,
     ) -> Result<crate::X509CertificateDer<'static>, crate::GetCertificateDerError> {
