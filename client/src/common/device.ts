@@ -1,22 +1,37 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { AvailableDevice, OrganizationID, ParsedParsecAddrTag, parseParsecAddr, Platform } from '@/parsec';
-import { I18n } from 'megashark-lib';
+import { getPlatforms } from '@ionic/vue';
 
-export function getDefaultDeviceName(): string {
+export enum DeviceLabel {
+  MobileWeb = 'MobileWeb',
+  Web = 'Web',
+  Windows = 'Windows',
+  MacOS = 'MacOS',
+  Linux = 'Linux',
+  Android = 'Android',
+  Unknown = 'Unknown',
+}
+
+export function getDefaultDeviceName(): DeviceLabel {
   switch (window.getPlatform()) {
     case Platform.Web:
-      return I18n.translate('common.deviceTypes.web');
+      const platforms = getPlatforms();
+      // cspell:disable-next-line
+      if (platforms.includes('mobileweb')) {
+        return DeviceLabel.MobileWeb;
+      }
+      return DeviceLabel.Web;
     case Platform.Android:
-      return I18n.translate('common.deviceTypes.android');
+      return DeviceLabel.Android;
     case Platform.Windows:
-      return I18n.translate('common.deviceTypes.windows');
+      return DeviceLabel.Windows;
     case Platform.MacOS:
-      return I18n.translate('common.deviceTypes.macos');
+      return DeviceLabel.MacOS;
     case Platform.Linux:
-      return I18n.translate('common.deviceTypes.linux');
+      return DeviceLabel.Linux;
     default:
-      return I18n.translate('common.deviceTypes.unknown');
+      return DeviceLabel.Unknown;
   }
 }
 
