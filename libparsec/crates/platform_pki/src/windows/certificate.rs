@@ -16,32 +16,34 @@ impl From<schannel::cert_context::CertContext> for X509Certificate {
 impl X509Certificate {
     pub async fn get_der(
         &self,
-    ) -> Result<crate::X509CertificateDer<'static>, crate::GetCertificateDerError> {
+    ) -> Result<crate::X509CertificateDer<'static>, crate::X509CertificateGetDerError> {
         Ok(crate::X509CertificateDer::from_slice(self.0.to_der()).into_owned())
     }
 
     pub async fn request_private_key(
         &self,
-    ) -> Result<super::X509PrivateKey, crate::RequestPrivateKeyError> {
+    ) -> Result<super::X509PrivateKey, crate::X509CertificateRequestPrivateKeyError> {
         self.0
             .private_key()
             .compare_key(true)
             .acquire()
             .map(Into::into)
             .map_err(|e| match e.kind() {
-                std::io::ErrorKind::NotFound => crate::RequestPrivateKeyError::NotFound,
-                _ => crate::RequestPrivateKeyError::Internal(e.into()),
+                std::io::ErrorKind::NotFound => {
+                    crate::X509CertificateRequestPrivateKeyError::NotFound
+                }
+                _ => crate::X509CertificateRequestPrivateKeyError::Internal(e.into()),
             })
     }
 
     pub async fn to_reference(
         &self,
-    ) -> Result<X509CertificateReference, crate::GetCertificateReferenceError> {
+    ) -> Result<X509CertificateReference, crate::X509CertificateToReferenceError> {
         let uri = self.to_uri();
         let hash = self
             .sha256_fingerprint()
             .context("Cannot get cert fingerprint")
-            .map_err(crate::GetCertificateReferenceError::Internal)?;
+            .map_err(crate::X509CertificateToReferenceError::Internal)?;
 
         Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
     }
@@ -85,28 +87,28 @@ impl X509Certificate {
 
     pub async fn get_validation_path(
         &self,
-    ) -> Result<crate::X509ValidationPathOwned, crate::ValidationPathError> {
+    ) -> Result<crate::X509ValidationPathOwned, crate::X509CertificateGetValidationPathError> {
         let raw_trusted_roots = super::list_trusted_root_certificate_anchors()
             .await
             .context("Cannot list trusted roots")
-            .map_err(crate::ValidationPathError::Internal)?;
+            .map_err(crate::X509CertificateGetValidationPathError::Internal)?;
         let raw_intermediates = super::list_intermediate_certificates()
             .await
             .context("Cannot list intermediates certificates")
-            .map_err(crate::ValidationPathError::Internal)?;
+            .map_err(crate::X509CertificateGetValidationPathError::Internal)?;
         let leaf = self
             .get_der()
             .await
             .context("Cannot get certificate content")
-            .map_err(crate::ValidationPathError::Internal)?;
+            .map_err(crate::X509CertificateGetValidationPathError::Internal)?;
         let end_cert = webpki::EndEntityCert::try_from(&leaf)
             .context("Invalid leaf certificate")
-            .map_err(crate::ValidationPathError::Internal)?;
+            .map_err(crate::X509CertificateGetValidationPathError::Internal)?;
         let now = DateTime::now();
         let path =
             crate::verify_certificate(&end_cert, &raw_trusted_roots, &raw_intermediates, now)
                 .inspect_err(|e| log::warn!("Failed to verify certificate: {e}"))
-                .map_err(|_| crate::ValidationPathError::Untrusted)?;
+                .map_err(|_| crate::X509CertificateGetValidationPathError::Untrusted)?;
 
         let intermediates = path
             .intermediate_certificates()
