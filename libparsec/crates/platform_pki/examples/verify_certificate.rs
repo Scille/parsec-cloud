@@ -5,7 +5,7 @@ mod utils;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::PkiSystem;
+use libparsec_platform_pki::{PkiSystem, X509CertificateDer};
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -31,24 +31,50 @@ pub async fn main() -> anyhow::Result<()> {
         .await
         .context("Failed to find certificate")?
         .context("Certificate not found")?;
-
-    let path = cert
+    let validation_path = cert
         .get_validation_path()
         .await
-        .context("Cannot trust certificate")?;
+        .context("Failed to get validation path")?;
 
-    println!("Certificate is trusted!");
+    println!("trusted path:");
     println!(
         "  root: subject={}",
-        utils::display_x509_raw_name(&path.root.subject)
+        display_x509_raw_name(&validation_path.root.subject)
     );
-    if !path.intermediates.is_empty() {
+    if !validation_path.intermediates.is_empty() {
         println!("  intermediate certificates:");
-        for (i, cert_der) in path.intermediates.iter().enumerate() {
-            println!("  {:02}. (DER {} bytes)", i + 1, cert_der.as_ref().len());
+        for (i, cert) in validation_path.intermediates.iter().enumerate() {
+            println!("    {:02}. {}", i + 1, display_x509_certificate_der(cert)?);
         }
     }
-    println!("  leaf: (DER {} bytes)", path.leaf.as_ref().len());
+    println!(
+        "  leaf: {}",
+        display_x509_certificate_der(&validation_path.leaf)?
+    );
 
     Ok(())
+}
+
+fn display_x509_raw_name(raw_name: &[u8]) -> String {
+    use x509_cert::der::{DecodeValue, Header, SliceReader, Tag};
+
+    let components = x509_cert::name::Name::decode_value(
+        &mut SliceReader::new(raw_name).unwrap(),
+        Header::new(Tag::Sequence, raw_name.len()).unwrap(),
+    )
+    .map(libparsec_platform_pki::x509::extract_dn_list_from_rnd_seq)
+    .unwrap_or_default();
+
+    format!("{:?}", components)
+}
+
+fn display_x509_certificate_der(cert: &X509CertificateDer<'_>) -> anyhow::Result<String> {
+    let cert = libparsec_platform_pki::x509::X509CertificateInformation::load_der(cert.as_ref())
+        .context("Invalid certificate DER")?;
+
+    Ok(format!(
+        "subject={subject:?}, issuer={issuer:?}",
+        subject = cert.subject,
+        issuer = cert.issuer
+    ))
 }

@@ -58,15 +58,7 @@ impl<'a> From<X509CertificateDer<'a>> for DerCertificate<'a> {
     }
 }
 
-#[derive(Clone)]
-pub struct SignedMessage {
-    pub algo: PkiSignatureAlgorithm,
-    pub signature: Bytes,
-    pub message: Bytes,
-}
-
-// Internal API, but `pub` is needed by `examples/verify_certificate.rs`
-pub fn verify_certificate<'der>(
+pub(crate) fn verify_certificate<'der>(
     certificate: &'der X509EndCertificate<'der>,
     intermediate_certs: &'der [X509CertificateDer<'der>],
     trusted_roots: &'der [X509TrustAnchor<'_>],

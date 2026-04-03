@@ -25,7 +25,7 @@ pub use pki_system::*;
 
 pub use shared::*;
 
-pub(crate) type X509CertificateDer<'a> = rustls_pki_types::CertificateDer<'a>;
+pub type X509CertificateDer<'a> = rustls_pki_types::CertificateDer<'a>;
 pub type X509TrustAnchor<'a> = rustls_pki_types::TrustAnchor<'a>;
 pub use libparsec_types::{
     PKIEncryptionAlgorithm, PkiSignatureAlgorithm, X509CertificateHash, X509CertificateReference,
