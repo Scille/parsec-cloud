@@ -87,14 +87,16 @@ mod platform {
         pub async fn find_certificate(
             &self,
             #[expect(unused_variables)] cert_ref: &X509CertificateReference,
-        ) -> Result<Option<X509Certificate>, crate::FindCertificateError> {
+        ) -> Result<Option<X509Certificate>, crate::PkiSystemFindCertificateError> {
             unimplemented!("platform not supported")
         }
 
         pub async fn list_user_certificates<'a>(
             &'a self,
-        ) -> Result<impl Iterator<Item = X509Certificate> + use<'a>, crate::ListUserCertificateError>
-        {
+        ) -> Result<
+            impl Iterator<Item = X509Certificate> + use<'a>,
+            crate::PkiSystemListUserCertificateError,
+        > {
             unimplemented!("platform not supported");
             #[expect(
                 unreachable_code,
@@ -214,13 +216,13 @@ pub enum X509CertificateGetDerError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum FindCertificateError {
+pub enum PkiSystemFindCertificateError {
     #[error(transparent)]
     Internal(anyhow::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ListUserCertificateError {
+pub enum PkiSystemListUserCertificateError {
     #[error(transparent)]
     Internal(anyhow::Error),
 }
