@@ -3,15 +3,14 @@
 import { workspaceNameValidator } from '@/common/validators';
 import {
   ClientRenameWorkspaceErrorTag,
-  StartedWorkspaceInfo,
   UserProfile,
   WorkspaceID,
   WorkspaceInfo,
   WorkspaceName,
   WorkspaceRole,
   getClientProfile,
-  getStartedWorkspaceInfo,
   getSystemPath,
+  getWorkspaceInfo,
   isDesktop,
   mountWorkspace,
   archiveWorkspace as parsecArchiveWorkspace,
@@ -199,7 +198,7 @@ export async function openWorkspaceContextMenu(
         break;
       case WorkspaceAction.UnMount:
         if (isDesktop()) {
-          const refreshWorkspaces = await getStartedWorkspaceInfo(workspace.handle);
+          const refreshWorkspaces = await getWorkspaceInfo(workspace.handle);
           if (refreshWorkspaces.ok) {
             await unmountWorkspaceConfirmation(
               workspaceAttributes,
@@ -278,7 +277,7 @@ async function restoreWorkspace(
 }
 
 export async function showWorkspace(
-  workspace: WorkspaceInfo | StartedWorkspaceInfo,
+  workspace: WorkspaceInfo,
   workspaceAttributes: WorkspaceAttributes,
   informationManager: InformationManager,
   eventDistributor: EventDistributor,
@@ -327,7 +326,7 @@ export async function showWorkspace(
 }
 
 export async function hideWorkspace(
-  workspace: WorkspaceInfo | StartedWorkspaceInfo,
+  workspace: WorkspaceInfo,
   workspaceAttributes: WorkspaceAttributes,
   informationManager: InformationManager,
   eventDistributor: EventDistributor,
@@ -449,7 +448,7 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
 
 async function unmountWorkspaceConfirmation(
   workspaceAttributes: WorkspaceAttributes,
-  workspace: WorkspaceInfo | StartedWorkspaceInfo,
+  workspace: WorkspaceInfo,
   informationManager: InformationManager,
   eventDistributor: EventDistributor,
   storageManager: StorageManager,

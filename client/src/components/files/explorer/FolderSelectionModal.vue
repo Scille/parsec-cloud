@@ -208,10 +208,10 @@ import {
   EntryStat,
   FsPath,
   Path,
-  StartedWorkspaceInfo,
   WorkspaceCreateFolderErrorTag,
+  WorkspaceInfo,
   createFolder,
-  getStartedWorkspaceInfo,
+  getWorkspaceInfo,
   statFolderChildren,
 } from '@/parsec';
 import { Routes } from '@/router';
@@ -228,7 +228,7 @@ const pathLength = ref(0);
 const isCreatingFolder = ref(false);
 const newFolderName = ref('');
 const currentEntries: Ref<[EntryStat, boolean][]> = ref([]);
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 const breadcrumbsWidth = ref(0);
@@ -304,7 +304,7 @@ async function cancelNewFolder(): Promise<void> {
 }
 
 onMounted(async () => {
-  const result = await getStartedWorkspaceInfo(props.workspaceHandle);
+  const result = await getWorkspaceInfo(props.workspaceHandle);
   if (result.ok) {
     workspaceInfo.value = result.value;
   }

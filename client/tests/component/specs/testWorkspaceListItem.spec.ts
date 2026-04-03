@@ -13,6 +13,7 @@ describe('Workspace List Item', () => {
   let wrapper: VueWrapper;
 
   const WORKSPACE: WorkspaceInfo = {
+    client: 1,
     id: 'id1',
     currentName: 'My Workspace',
     sharing: [

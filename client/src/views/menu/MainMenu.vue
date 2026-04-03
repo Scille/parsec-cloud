@@ -371,11 +371,10 @@ import {
   getCurrentAvailableDevice,
   getLoggedInDevices,
   getOrganizationCreationDate,
-  getStartedWorkspaceInfo,
+  getWorkspaceInfo,
   listAsyncEnrollments,
   listWorkspaces,
   LoggedInDeviceInfo,
-  RealmArchivingConfigurationTag,
   UserProfile,
   WorkspaceInfo,
   WorkspaceRole,
@@ -504,7 +503,7 @@ const isReadOnly = computed(() => {
   if (currentWorkspace.value) {
     return (
       currentWorkspace.value.currentSelfRole === WorkspaceRole.Reader ||
-      currentWorkspace.value.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived
+      currentWorkspace.value.isArchived
     );
   }
   return false;
@@ -682,7 +681,7 @@ onMounted(async () => {
           if (!isMounted) {
             workspace.mountpoints = [];
           } else {
-            const result = await getStartedWorkspaceInfo(workspace.handle);
+            const result = await getWorkspaceInfo(workspace.handle);
             if (result.ok) {
               workspace.mountpoints = result.value.mountpoints;
             }

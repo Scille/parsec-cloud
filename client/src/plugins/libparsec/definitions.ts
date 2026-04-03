@@ -456,15 +456,6 @@ export interface ShamirRecoveryRecipient {
     onlineStatus: UserOnlineStatus
 }
 
-export interface StartedWorkspaceInfo {
-    client: Handle
-    id: VlobID
-    currentName: EntryName
-    currentSelfRole: RealmRole
-    archivingConfiguration: RealmArchivingConfiguration
-    mountpoints: Array<[Handle, Path]>
-}
-
 export interface Tos {
     perLocaleUrls: Map<string, string>
     updatedOn: DateTime
@@ -550,12 +541,14 @@ export interface WorkspaceHistoryFileStat {
 }
 
 export interface WorkspaceInfo {
+    client: Handle
     id: VlobID
     currentName: EntryName
     currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
     archivingConfiguration: RealmArchivingConfiguration
+    mountpoints: Array<[Handle, Path]>
 }
 
 export interface WorkspaceUserAccessInfo {
@@ -7057,7 +7050,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, WorkspaceHistoryInternalOnlyError>>
     workspaceInfo(
         workspace: Handle
-    ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>
+    ): Promise<Result<WorkspaceInfo, WorkspaceInfoError>>
     workspaceIsFileContentLocal(
         workspace: Handle,
         path: FsPath

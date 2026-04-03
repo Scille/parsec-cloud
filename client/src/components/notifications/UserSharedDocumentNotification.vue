@@ -53,7 +53,7 @@
 import { formatFileSize, getFileIcon } from '@/common/file';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { StartedWorkspaceInfo, UserInfo, getStartedWorkspaceInfo, getUserInfo } from '@/parsec';
+import { UserInfo, WorkspaceInfo, getUserInfo, getWorkspaceInfo } from '@/parsec';
 import { navigateToWorkspace } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
 import { UserSharedDocumentData } from '@/services/informationManager';
@@ -63,7 +63,7 @@ import { Folder, MsImage, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
 const userInfo: Ref<UserInfo | null> = ref(null);
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 
 const props = defineProps<{
   notification: Notification;
@@ -71,7 +71,7 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
-  const resultWorkspace = await getStartedWorkspaceInfo(notificationData.workspaceHandle);
+  const resultWorkspace = await getWorkspaceInfo(notificationData.workspaceHandle);
   const resultUser = await getUserInfo(notificationData.userId);
 
   if (resultWorkspace.ok) {

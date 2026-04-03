@@ -38,7 +38,7 @@
       </ion-item-group>
 
       <ion-item-group
-        v-if="workspace.archivingConfiguration.tag !== RealmArchivingConfigurationTag.Archived"
+        v-if="!workspace.isArchived"
         class="list-group"
       >
         <ion-item class="list-group-title button-small">
@@ -49,7 +49,7 @@
 
         <ion-item
           button
-          v-show="workspace.currentSelfRole === WorkspaceRole.Owner && !isArchived"
+          v-show="workspace.currentSelfRole === WorkspaceRole.Owner && !workspace.isArchived"
           @click="onClick(WorkspaceAction.Rename)"
           class="ion-no-padding list-group-item"
         >
@@ -150,7 +150,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group
-        v-if="!isArchived"
+        v-if="!workspace.isArchived"
         class="list-group"
       >
         <ion-item class="list-group-title button-small">
@@ -188,7 +188,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group
-        v-if="!isArchived"
+        v-if="!workspace.isArchived"
         class="list-group"
       >
         <ion-item class="list-group-title button-small">
@@ -217,7 +217,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group
-        v-if="isArchived"
+        v-if="workspace.isArchived"
         class="list-group"
       >
         <ion-item
@@ -252,27 +252,22 @@
 </template>
 
 <script setup lang="ts">
-import { RealmArchivingConfigurationTag, UserProfile, WorkspaceInfo, WorkspaceRole, isDesktop } from '@/parsec';
+import { UserProfile, WorkspaceInfo, WorkspaceRole, isDesktop } from '@/parsec';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
 import { archive, cloudy, eye, eyeOff, informationCircle, link, open, reload, shareSocial, star, time, trash } from 'ionicons/icons';
 import { MsImage, RenameIcon } from 'megashark-lib';
-import { computed } from 'vue';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
   return popoverController.dismiss({ action: action });
 }
 
-const props = defineProps<{
+defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
   isFavorite: boolean;
   isHidden: boolean;
 }>();
-
-const isArchived = computed(() => {
-  return props.workspace.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived;
-});
 </script>
 
 <style lang="scss" scoped>

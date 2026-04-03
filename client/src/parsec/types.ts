@@ -308,7 +308,6 @@ import type {
   EntryStatFolder as ParsecEntryStatFolder,
   ParsecInvitationAddrAndRedirectionURL,
   ParsecOrganizationAddr,
-  StartedWorkspaceInfo as ParsecStartedWorkspaceInfo,
   UserInfo as ParsecUserInfo,
   WorkspaceHistoryEntryStatFile as ParsecWorkspaceHistoryEntryStatFile,
   WorkspaceHistoryEntryStatFolder as ParsecWorkspaceHistoryEntryStatFolder,
@@ -418,12 +417,7 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   created?: DateTime;
   availableOffline: boolean;
   handle: WorkspaceHandle;
-  mountpoints: [MountpointHandle, SystemPath][];
   isArchived?: boolean;
-}
-
-interface StartedWorkspaceInfo extends ParsecStartedWorkspaceInfo {
-  handle: WorkspaceHandle;
 }
 
 enum OrganizationInfoErrorTag {
@@ -508,7 +502,6 @@ export {
   OwnDeviceInfo,
   ParsecOrganizationAddr,
   RegistrationDevice,
-  StartedWorkspaceInfo,
   SystemPath,
   UserID,
   UserInfo,

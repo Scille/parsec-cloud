@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { StartedWorkspaceInfo, getStartedWorkspaceInfo } from '@/parsec';
+import { WorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import { EventDistributor } from '@/services/eventDistributor';
 import { WorkspaceRoleChangedData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
@@ -43,7 +43,7 @@ import { IonText } from '@ionic/vue';
 import { LogoIconGradient, MsImage, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 
 const props = defineProps<{
   notification: Notification;
@@ -51,7 +51,7 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
-  const result = await getStartedWorkspaceInfo(notificationData.workspaceHandle);
+  const result = await getWorkspaceInfo(notificationData.workspaceHandle);
   if (result.ok) {
     workspaceInfo.value = result.value;
   }
