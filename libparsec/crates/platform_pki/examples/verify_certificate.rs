@@ -5,12 +5,13 @@ mod utils;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_types::DateTime;
+use libparsec_platform_pki::PkiSystem;
 
 #[derive(Debug, Parser)]
 struct Args {
-    #[command(flatten)]
-    cert: utils::CertificateOrRef,
+    /// Hash of the certificate to verify.
+    #[arg(value_parser = utils::CertificateSRIHashParser)]
+    certificate_hash: libparsec_types::X509CertificateHash,
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -19,52 +20,35 @@ pub async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     log::debug!("args={args:?}");
 
-    let trusted_roots = libparsec_platform_pki::list_trusted_root_certificate_anchors()
+    // Config dir is only used for testbed, we can safely provide an empty path here
+    let pki = PkiSystem::init(std::path::Path::new(""), None)
         .await
-        .context("Cannot list trusted root certificates")?;
-    println!("Found {} trusted roots", trusted_roots.len());
+        .context("Failed to initialize PKI system")?;
 
-    let intermediate_certificates = libparsec_platform_pki::list_intermediate_certificates()
+    let cert_ref: libparsec_types::X509CertificateReference = args.certificate_hash.into();
+    let cert = pki
+        .find_certificate(&cert_ref)
         .await
-        .context("Cannot list intermediate certificates")?;
-    println!(
-        "Found {} intermediate certificates",
-        intermediate_certificates.len()
-    );
+        .context("Failed to find certificate")?
+        .context("Certificate not found")?;
 
-    let untrusted_certificate = args
-        .cert
-        .get_certificate()
+    let path = cert
+        .get_validation_path()
         .await
-        .context("Cannot get certificate")?;
+        .context("Cannot trust certificate")?;
 
-    let end_cert = untrusted_certificate
-        .to_end_certificate()
-        .context("Invalid certificate")?;
-    println!("Untrusted certificate: {}", utils::display_cert(&end_cert));
-
-    let path = libparsec_platform_pki::verify_certificate(
-        &end_cert,
-        &trusted_roots,
-        &intermediate_certificates,
-        DateTime::now(),
-    )
-    .context("Cannot trust certificate")?;
-
-    println!("trusted path:");
+    println!("Certificate is trusted!");
     println!(
         "  root: subject={}",
-        utils::display_x509_raw_name(&path.anchor().subject)
+        utils::display_x509_raw_name(&path.root.subject)
     );
-    let mut intermediate = path.intermediate_certificates().enumerate().peekable();
-    if intermediate.peek().is_some() {
+    if !path.intermediates.is_empty() {
         println!("  intermediate certificates:");
-        for (i, cert) in intermediate {
-            println!("  {:02}. {}", i + 1, utils::display_cert(cert));
+        for (i, cert_der) in path.intermediates.iter().enumerate() {
+            println!("  {:02}. (DER {} bytes)", i + 1, cert_der.as_ref().len());
         }
     }
-    let trusted_cert = path.end_entity();
-    println!("  leaf: {}", utils::display_cert(trusted_cert));
+    println!("  leaf: (DER {} bytes)", path.leaf.as_ref().len());
 
     Ok(())
 }

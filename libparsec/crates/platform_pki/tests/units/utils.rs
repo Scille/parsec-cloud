@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::{
-    X509CertificateDer, X509CertificateHash, X509CertificateReference, X509ValidationPathOwned,
-};
+use crate::{PkiSystem, X509CertificateDer, X509CertificateHash, X509CertificateReference};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 use rustls_pki_types::pem::PemObject;
@@ -10,7 +8,9 @@ use rustls_pki_types::pem::PemObject;
 // See `libparsec/crates/platform_pki/test-pki/README.md`
 pub(super) const ALICE_SHA256_CERT_HASH: &str =
     "sha256-FH45Rn8sFI5XTBxE1inkRUxeVmBA9jtsdSkY+6w3+gQ=";
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 pub(super) const BOB_SHA256_CERT_HASH: &str = "sha256-639SRoRFC0jog3h76fY63ccZmlSORK2mR+IcBf2apqg=";
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 pub(super) const BLACK_MESA_SHA256_CERT_HASH: &str =
     "sha256-DrumDH+peXOqrXywKiTQTwfBE6gBiq4jawDfJlBlVRg=";
 pub(super) const MALLORY_SIGN_SHA256_CERT_HASH: &str =
@@ -36,38 +36,32 @@ fn load_pem_and_return_der(pem: &[u8]) -> X509CertificateDer<'static> {
 pub(super) struct InstalledCertificates {}
 
 impl InstalledCertificates {
-    pub async fn alice_cert_ref(&self) -> X509CertificateReference {
-        self.cert_ref(ALICE_SHA256_CERT_HASH).await
+    pub fn alice_cert_ref(&self) -> X509CertificateReference {
+        Self::make_cert_ref(ALICE_SHA256_CERT_HASH)
     }
 
-    #[cfg_attr(not(windows), expect(dead_code))]
-    pub async fn bob_cert_ref(&self) -> X509CertificateReference {
-        self.cert_ref(BOB_SHA256_CERT_HASH).await
+    #[expect(dead_code)]
+    pub fn bob_cert_ref(&self) -> X509CertificateReference {
+        Self::make_cert_ref(BOB_SHA256_CERT_HASH)
     }
 
-    #[cfg_attr(not(windows), expect(dead_code))]
+    #[expect(dead_code)]
     pub fn black_mesa_cert_ref(&self) -> X509CertificateReference {
-        // Black Mesa cert is a root certificate, so the sanity check in `cert_ref` will fail
-        X509CertificateReference::from(
-            BLACK_MESA_SHA256_CERT_HASH
-                .parse::<X509CertificateHash>()
-                .unwrap(),
-        )
+        Self::make_cert_ref(BLACK_MESA_SHA256_CERT_HASH)
     }
 
     #[expect(dead_code)]
-    pub async fn mallory_sign_cert_ref(&self) -> X509CertificateReference {
-        self.cert_ref(MALLORY_SIGN_SHA256_CERT_HASH).await
+    pub fn mallory_sign_cert_ref(&self) -> X509CertificateReference {
+        Self::make_cert_ref(MALLORY_SIGN_SHA256_CERT_HASH)
     }
 
     #[expect(dead_code)]
-    pub async fn mallory_encrypt_cert_ref(&self) -> X509CertificateReference {
-        self.cert_ref(MALLORY_ENCRYPT_SHA256_CERT_HASH).await
+    pub fn mallory_encrypt_cert_ref(&self) -> X509CertificateReference {
+        Self::make_cert_ref(MALLORY_ENCRYPT_SHA256_CERT_HASH)
     }
 
     #[expect(dead_code)]
     pub fn glados_dev_team_cert_ref(&self) -> X509CertificateReference {
-        // GLaDOS Dev Team cert is an intermediate certificate, so the sanity check in `cert_ref` will fail
         X509CertificateReference::from(
             "sha256-4kC1hYV+2l6l5c6qtfLAqJNBPB8ETqAGKriNrAN8mUGVU="
                 .parse::<X509CertificateHash>()
@@ -77,7 +71,6 @@ impl InstalledCertificates {
 
     #[expect(dead_code)]
     pub fn aperture_science_cert_ref(&self) -> X509CertificateReference {
-        // Aperture Science cert is a root certificate, so the sanity check in `cert_ref` will fail
         X509CertificateReference::from(
             "sha256-+rumDH+peXOqrXywKiTQTwfBE6gBiq4jawDfJlBlVRg="
                 .parse::<X509CertificateHash>()
@@ -85,34 +78,8 @@ impl InstalledCertificates {
         )
     }
 
-    async fn cert_ref(&self, sha256_hash: &str) -> X509CertificateReference {
-        let certificate_reference =
-            X509CertificateReference::from(sha256_hash.parse::<X509CertificateHash>().unwrap());
-        // Sanity check to ensure the certificate is installed
-        if crate::get_der_encoded_certificate(&certificate_reference)
-            .await
-            .is_err()
-        {
-            #[cfg(windows)]
-            panic!(
-                "Certificate not found: \x1b[1;31m{}\x1b[0m\n\
-                This probably means the test PKI certificates are not installed correctly\n\
-                tl;dr: run in a PowerShell:\n\
-                \t\x1b[1;35m& libparsec\\crates\\platform_pki\\examples\\import_testpki_windows.ps1\x1b[0m\n\
-                ",
-                sha256_hash
-            );
-            // TODO: Explain how to install the test PKI certificates once Linux support is available
-            //       see https://github.com/Scille/parsec-cloud/issues/11848
-            #[cfg(not(windows))]
-            panic!(
-                "Certificate not found: \x1b[1;31m{}\x1b[0m\n\
-                This probably means the test PKI certificates are not installed correctly\n\
-                ",
-                sha256_hash
-            );
-        }
-        certificate_reference
+    fn make_cert_ref(sha256_hash: &str) -> X509CertificateReference {
+        X509CertificateReference::from(sha256_hash.parse::<X509CertificateHash>().unwrap())
     }
 
     pub fn alice_der_cert(&self) -> X509CertificateDer<'static> {
@@ -148,33 +115,27 @@ impl InstalledCertificates {
         load_pem_and_return_der(GLADOS_DEV_TEAM_PEM)
     }
 
-    #[cfg_attr(not(windows), expect(dead_code))]
+    pub fn black_mesa_trust_anchor(&self) -> crate::X509TrustAnchor<'static> {
+        webpki::anchor_from_trusted_cert(&self.black_mesa_der_cert())
+            .unwrap()
+            .to_owned()
+    }
+
+    pub fn aperture_science_trust_anchor(&self) -> crate::X509TrustAnchor<'static> {
+        webpki::anchor_from_trusted_cert(&self.aperture_science_der_cert())
+            .unwrap()
+            .to_owned()
+    }
+
+    #[cfg_attr(not(target_os = "windows"), expect(dead_code))]
     pub async fn alice_encrypt_message(
         &self,
         payload: &[u8],
     ) -> (PKIEncryptionAlgorithm, Bytes, X509CertificateReference) {
-        let certificate_ref = self.alice_cert_ref().await;
-        let der = crate::get_der_encoded_certificate(&certificate_ref)
+        let (algo, encrypted_message) = crate::encrypt_message(self.alice_der_cert(), payload)
             .await
             .unwrap();
-        let (algo, encrypted_message) = crate::encrypt_message(der, payload).await.unwrap();
-        (algo, encrypted_message, certificate_ref)
-    }
-
-    #[cfg_attr(not(windows), expect(dead_code))]
-    pub async fn alice_sign_message(
-        &self,
-        payload: &[u8],
-    ) -> (PkiSignatureAlgorithm, Bytes, X509ValidationPathOwned) {
-        let certificate_ref = self.alice_cert_ref().await;
-        let (algo, signature) = crate::sign_message(payload, &certificate_ref)
-            .await
-            .unwrap();
-        let now = DateTime::now();
-        let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now)
-            .await
-            .unwrap();
-        (algo, signature, validation_path)
+        (algo, encrypted_message, self.alice_cert_ref())
     }
 }
 
@@ -182,4 +143,57 @@ impl InstalledCertificates {
 #[once]
 pub(super) fn certificates() -> InstalledCertificates {
     InstalledCertificates {}
+}
+
+/// Initialize the *real* PKI system (not the testbed)
+/// This requirest to have the test certificates properly installed in the system
+/// (tl;dr: run in a PowerShell: `& libparsec\crates\platform_pki\examples\import_testpki_windows.ps1`).
+pub(super) async fn initialize_pki_system() -> PkiSystem {
+    #[cfg(all(not(target_arch = "wasm32"), not(feature = "force-scws-on-native")))]
+    {
+        let pki = PkiSystem::init(std::path::Path::new(""), None)
+            .await
+            .unwrap();
+
+        //_Sanity check to ensure the test certificates has been properly configured in the system
+        let alice_ref = X509CertificateReference::from(
+            ALICE_SHA256_CERT_HASH
+                .parse::<X509CertificateHash>()
+                .unwrap(),
+        );
+        match pki.find_certificate(&alice_ref).await {
+            Ok(Some(_)) => {} // Found Alice's certificate, good!
+            unexpected => {
+                #[cfg(windows)]
+                panic!(
+                    "Certificate \x1b[1;31m{}\x1b[0m not found (error: {:?})\n\
+                    This probably means the test PKI certificates are not installed correctly\n\
+                    tl;dr: run in a PowerShell:\n\
+                    \t\x1b[1;35m& libparsec\\crates\\platform_pki\\examples\\import_testpki_windows.ps1\x1b[0m\n\
+                    ",
+                    ALICE_SHA256_CERT_HASH, unexpected
+                );
+                // TODO: Explain how to install the test PKI certificates once Linux support is available
+                //       see https://github.com/Scille/parsec-cloud/issues/11848
+                #[cfg(not(windows))]
+                panic!(
+                    "Certificate \x1b[1;31m{}\x1b[0m not found (error: {:?})\n\
+                    This probably means the test PKI certificates are not installed correctly\n\
+                    ",
+                    ALICE_SHA256_CERT_HASH, unexpected
+                );
+            }
+        }
+
+        pki
+    }
+    #[cfg(any(target_arch = "wasm32", feature = "force-scws-on-native"))]
+    {
+        // TODO:
+        // - Get the Parsec server URL from an environment variable
+        // - Do a sanity check to ensure the test certificates are properly configured
+        //   (or consider having a dedicated test for this if it's too slow to do it for
+        //   every test)
+        todo!()
+    }
 }

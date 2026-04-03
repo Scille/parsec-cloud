@@ -5,72 +5,51 @@ use libparsec_types::prelude::*;
 
 use super::utils::{certificates, InstalledCertificates};
 use crate::{
-    errors::GetRootCertificateInfoFromTrustchainError, shared::RootCertificateInfo,
-    verify_certificate, X509CertificateDer,
+    get_root_certificate_info_from_trustchain, verify_certificate,
+    GetRootCertificateInfoFromTrustchainError, RootCertificateInfo,
 };
 
 #[rstest]
 fn test_verify_cert_ok(certificates: &InstalledCertificates) {
-    let der_certificate = certificates.bob_der_cert();
-    let trusted_roots = [
-        webpki::anchor_from_trusted_cert(&X509CertificateDer::from_slice(
-            &certificates.black_mesa_der_cert(),
-        ))
-        .unwrap()
-        .to_owned(),
-    ];
-    let binding = crate::shared::DerCertificate::from(der_certificate);
+    let bob_der = certificates.bob_der_cert();
+    let bob_end_entity_cert = webpki::EndEntityCert::try_from(&bob_der).unwrap();
 
-    let untrusted_cert = binding
-        .to_end_certificate()
-        .expect("Should be a valid certificate data");
-
-    verify_certificate(&untrusted_cert, &trusted_roots, &[], DateTime::now()).unwrap();
+    verify_certificate(
+        &bob_end_entity_cert,
+        &[],
+        &[certificates.black_mesa_trust_anchor()],
+        DateTime::now(),
+    )
+    .unwrap();
 }
 
 #[rstest]
 fn test_verify_unknown_issuer(certificates: &InstalledCertificates) {
-    let der_certificate = certificates.bob_der_cert();
-    let binding = crate::shared::DerCertificate::from_der(&der_certificate);
-
-    let untrusted_cert = binding
-        .to_end_certificate()
-        .expect("Should be a valid certificate data");
+    let bob_der = certificates.bob_der_cert();
+    let bob_end_entity_cert = webpki::EndEntityCert::try_from(&bob_der).unwrap();
 
     let err = verify_certificate(
-        &untrusted_cert,
-        &[], // No trusted root, so always invalid
+        &bob_end_entity_cert,
         &[],
+        &[], // No trusted root, so always invalid
         DateTime::now(),
     )
     .map(|_| ())
     .expect_err("Should not be trusted");
 
-    assert!(matches!(err, webpki::Error::UnknownIssuer));
+    p_assert_matches!(err, webpki::Error::UnknownIssuer);
 }
 
 #[rstest]
 fn test_verify_with_intermediate(certificates: &InstalledCertificates) {
-    let der_certificate = certificates.mallory_sign_der_cert();
-    let trusted_roots = [
-        webpki::anchor_from_trusted_cert(&X509CertificateDer::from_slice(
-            &certificates.aperture_science_der_cert(),
-        ))
-        .unwrap()
-        .to_owned(),
-    ];
-    let glados_dev_team_der_cert = certificates.glados_dev_team_der_cert();
-    let intermediate_certs = [X509CertificateDer::from_slice(&glados_dev_team_der_cert)];
-    let binding = crate::shared::DerCertificate::from(der_certificate);
-
-    let untrusted_cert = binding
-        .to_end_certificate()
-        .expect("Should be a valid certificate data");
+    let glados_dev_team_der = certificates.glados_dev_team_der_cert();
+    let mallory_sign_der = certificates.mallory_sign_der_cert();
+    let mallory_sign_end_entity_cert = webpki::EndEntityCert::try_from(&mallory_sign_der).unwrap();
 
     verify_certificate(
-        &untrusted_cert,
-        &trusted_roots,
-        intermediate_certs.as_ref(),
+        &mallory_sign_end_entity_cert,
+        &[glados_dev_team_der],
+        &[certificates.aperture_science_trust_anchor()],
         DateTime::now(),
     )
     .unwrap();
@@ -127,7 +106,7 @@ fn test_get_root_certificate_info_from_trustchain_ok(
     };
 
     p_assert_matches!(
-        crate::get_root_certificate_info_from_trustchain(
+        get_root_certificate_info_from_trustchain(
             &leaf,
             intermediates.iter().map(|cert| cert.as_ref()),
         ),
@@ -144,18 +123,18 @@ fn test_get_root_certificate_info_from_trustchain_ko_invalid_der(
     #[values("invalid_der_leaf", "invalid_der_intermediate")] kind: &str,
     certificates: &InstalledCertificates,
 ) {
-    let (leaf, intermediates) = match kind {
-        "invalid_der_leaf" => (X509CertificateDer::from_slice(b"<invalid der>"), vec![]),
+    let (leaf, intermediates): (Bytes, Vec<Bytes>) = match kind {
+        "invalid_der_leaf" => (Bytes::from_static(b"<invalid der>"), vec![]),
 
         "invalid_der_intermediate" => (
-            certificates.mallory_encrypt_der_cert(),
+            Bytes::copy_from_slice(&certificates.mallory_encrypt_der_cert()),
             vec![Bytes::from_static(b"<invalid der>")],
         ),
 
         unknown => panic!("Unknown kind: {unknown}"),
     };
 
-    let outcome = crate::get_root_certificate_info_from_trustchain(
+    let outcome = get_root_certificate_info_from_trustchain(
         &leaf,
         intermediates.iter().map(|cert| cert.as_ref()),
     );
@@ -199,7 +178,7 @@ fn test_get_root_certificate_info_from_trustchain_ko_missing_root_common_name() 
     "
     );
     p_assert_matches!(
-        crate::get_root_certificate_info_from_trustchain(
+        get_root_certificate_info_from_trustchain(
             ALICE_ISSUER_WITHOUT_COMMON_NAME_DER,
             [].into_iter(),
         ),

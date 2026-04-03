@@ -7,17 +7,16 @@ use std::fmt::Debug;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::get_der_encoded_certificate;
-use libparsec_types::{X509CertificateHash, X509CertificateReference, X509URIFlavorValue};
+use libparsec_platform_pki::PkiSystem;
+use libparsec_types::X509CertificateHash;
 use sha2::Digest;
 
 #[derive(Debug, Parser)]
 struct Args {
     /// Hash of the certificate to get content of.
+    /// If not provided, lists all user certificates and shows the first one.
     #[arg(value_parser = utils::CertificateSRIHashParser)]
     certificate_hash: Option<X509CertificateHash>,
-    #[arg(value_parser = utils::Base64SerdeParser::<X509URIFlavorValue>::default())]
-    certificate_uri: Option<X509URIFlavorValue>,
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -26,54 +25,50 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     log::debug!("args={args:x?}");
 
-    let cert_ref: X509CertificateReference = match args.certificate_hash {
+    // Config dir is only used for testbed, we can safely provide an empty path here
+    let pki = PkiSystem::init(std::path::Path::new(""), None)
+        .await
+        .context("Failed to initialize PKI system")?;
+
+    let cert = match args.certificate_hash {
         Some(hash) => {
-            let h: X509CertificateReference = hash.into();
-            if let Some(uri) = args.certificate_uri {
-                h.add_or_replace_uri_wrapped(uri)
-            } else {
-                h
-            }
+            let cert_ref = hash.into();
+            pki.find_certificate(&cert_ref)
+                .await
+                .context("Failed to find certificate")?
+                .context("Certificate not found")?
         }
-        #[cfg(target_os = "windows")]
-        None => libparsec_platform_pki::show_certificate_selection_dialog_windows_only()
-            .map_err(anyhow::Error::from)
-            .and_then(|res| res.ok_or_else(|| anyhow::anyhow!("User did not select a certificate")))
-            .context("Failed to get certificate from user")?,
-        #[cfg(not(target_os = "windows"))]
         None => {
-            return Err(anyhow::anyhow!(
-                "certificate hash is required on non-Windows OS"
-            ));
+            let certs = pki
+                .list_user_certificates()
+                .await
+                .context("Failed to list user certificates")?;
+            if certs.is_empty() {
+                return Err(anyhow::anyhow!("No user certificates found"));
+            }
+            println!("Found {} user certificate(s)", certs.len());
+            certs.into_iter().next().unwrap()
         }
     };
 
-    if let Some(uri) = cert_ref.uris().next() {
-        println!("original uri: {uri}");
-    }
-    println!("original fingerprint: {}", cert_ref.hash);
-    let certificate = get_der_encoded_certificate(&cert_ref)
+    let cert_ref = cert
+        .to_reference()
         .await
-        .context("Get certificate")?;
-
-    let uri = cert_ref.uris().next().unwrap();
-    println!("uri: {uri}");
-    println!("serialized uri: {}", display_serialized_uri(uri));
+        .context("Failed to get certificate reference")?;
     println!("fingerprint: {}", cert_ref.hash);
+
+    let certificate = cert.get_der().await.context("Get certificate")?;
+    let der_bytes = certificate.as_ref();
+
     {
-        let digest = sha2::Sha256::digest(&certificate);
+        let digest = sha2::Sha256::digest(der_bytes);
         let hash = X509CertificateHash::SHA256(Box::new(digest.into()));
         println!("Manually calculated fingerprint: {hash}");
     }
     println!(
         "content: {}",
-        data_encoding::BASE64.encode_display(&certificate)
+        data_encoding::BASE64.encode_display(der_bytes)
     );
 
     Ok(())
-}
-
-fn display_serialized_uri(uri: &X509URIFlavorValue) -> impl std::fmt::Display {
-    let encoded = rmp_serde::encode::to_vec(uri).unwrap();
-    data_encoding::BASE64.encode(&encoded)
 }

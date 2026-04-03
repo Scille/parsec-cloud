@@ -1,23 +1,24 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #![allow(clippy::unwrap_used)]
 
+mod utils;
+
 use anyhow::Context;
 use bytes::Bytes;
 use clap::Parser;
-use libparsec_platform_pki::X509EndCertificate;
-use libparsec_platform_pki::{errors::VerifySignatureError, SignedMessage};
-use libparsec_types::{PkiSignatureAlgorithm, X509CertificateHash};
-use sha2::Digest;
-
-mod utils;
+use libparsec_platform_pki::{verify_message, PkiSystem};
+use libparsec_types::{DateTime, PkiSignatureAlgorithm, X509CertificateHash};
 
 #[derive(Debug, Parser)]
 struct Args {
-    #[command(flatten)]
-    cert: utils::CertificateOrRef,
+    /// Hash of the certificate that signed the message.
+    #[arg(value_parser = utils::CertificateSRIHashParser)]
+    certificate_hash: X509CertificateHash,
     #[command(flatten)]
     content: utils::ContentOpts,
+    /// The signature algorithm used.
     signature_header: PkiSignatureAlgorithm,
+    /// The signature in base64 format.
     #[arg(value_parser = utils::Base64Parser)]
     signature: Bytes,
 }
@@ -30,42 +31,35 @@ async fn main() -> anyhow::Result<()> {
 
     let data = args.content.into_bytes()?;
 
-    let cert = args.cert.get_certificate().await?;
+    // Config dir is only used for testbed, we can safely provide an empty path here
+    let pki = PkiSystem::init(std::path::Path::new(""), None)
+        .await
+        .context("Failed to initialize PKI system")?;
 
-    {
-        let fingerprint =
-            X509CertificateHash::SHA256(Box::new(sha2::Sha256::digest(cert.as_ref()).into()));
-        println!("Certificate fingerprint: {fingerprint}");
-    }
+    let cert_ref = args.certificate_hash.into();
+    let cert = pki
+        .find_certificate(&cert_ref)
+        .await
+        .context("Failed to find certificate")?
+        .context("Certificate not found")?;
 
-    let signed_message = SignedMessage {
-        algo: args.signature_header,
-        signature: args.signature,
-        message: data,
-    };
+    let path = cert
+        .get_validation_path()
+        .await
+        .context("Failed to get validation path")?;
 
     match verify_message(
-        &signed_message,
-        &cert.to_end_certificate().context("Invalid certificate")?,
+        &data,
+        &args.signature,
+        args.signature_header,
+        path.leaf.as_ref(),
+        path.intermediates.iter().map(|c| c.as_ref()),
+        &[path.root],
+        DateTime::now(),
     ) {
-        Ok(_) => {
-            println!("The message as a correct signature")
-        }
-        Err(e) => println!("The message as an incorrect signature: {e}"),
+        Ok(_) => println!("The message has a correct signature"),
+        Err(e) => println!("The message has an incorrect signature: {e}"),
     }
 
     Ok(())
-}
-
-fn verify_message<'message, 'a>(
-    signed_message: &'message SignedMessage,
-    certificate: &'a X509EndCertificate<'a>,
-) -> Result<&'message [u8], VerifySignatureError> {
-    let verifier = match signed_message.algo {
-        PkiSignatureAlgorithm::RsassaPssSha256 => webpki::ring::RSA_PSS_2048_8192_SHA256_LEGACY_KEY,
-    };
-    certificate
-        .verify_signature(verifier, &signed_message.message, &signed_message.signature)
-        .map(|_| signed_message.message.as_ref())
-        .map_err(VerifySignatureError::InvalidSignature)
 }

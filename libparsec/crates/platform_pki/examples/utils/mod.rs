@@ -8,7 +8,7 @@ use clap::{
     builder::{NonEmptyStringValueParser, TypedValueParser},
     error::{Error, ErrorKind},
 };
-use libparsec_platform_pki::{x509::DistinguishedNameValue, DerCertificate};
+use libparsec_platform_pki::{x509::DistinguishedNameValue, DerCertificate, PkiSystem};
 use libparsec_types::X509CertificateHash;
 use x509_cert::der::{DecodeValue, Header, SliceReader, Tag};
 
@@ -89,7 +89,7 @@ impl TypedValueParser for CertificateSRIHashParser {
 pub struct ContentOpts {
     /// The content to use.
     #[arg(long)]
-    pub content: Option<String>,
+    pub content_b64: Option<String>,
     /// Read content from a file
     #[arg(long)]
     pub content_file: Option<PathBuf>,
@@ -99,8 +99,11 @@ impl ContentOpts {
     // Not all examples uses `ContentOpts` so `into_bytes` is not always used.
     #[allow(dead_code)]
     pub fn into_bytes(self) -> anyhow::Result<Bytes> {
-        match (self.content, self.content_file) {
-            (Some(content), None) => Ok(content.into()),
+        match (self.content_b64, self.content_file) {
+            (Some(content), None) => Ok(data_encoding::BASE64
+                .decode(content.as_ref())
+                .context("Invalid base64 content")?
+                .into()),
             (None, Some(filepath)) => std::fs::read(filepath)
                 .context("Failed to read file")
                 .map(Into::into),
@@ -132,9 +135,17 @@ impl CertificateOrRef {
     pub async fn get_certificate(&self) -> anyhow::Result<DerCertificate<'static>> {
         let cert = if let Some(hash) = self.certificate_hash.clone() {
             let cert_ref: libparsec_types::X509CertificateReference = hash.into();
-            let certificate =
-                libparsec_platform_pki::get_der_encoded_certificate(&cert_ref).await?;
-            DerCertificate::from(certificate)
+            // Config dir is only used for testbed, we can safely provide an empty path here
+            let pki = PkiSystem::init(std::path::Path::new(""), None)
+                .await
+                .context("Failed to initialize PKI system")?;
+            let certificate = pki
+                .find_certificate(&cert_ref)
+                .await
+                .context("Failed to find certificate")?
+                .context("Certificate not found")?;
+            let der = certificate.get_der().await.context("Failed to get DER")?;
+            DerCertificate::from(der)
         } else if let Some(der_file) = &self.der_file {
             let raw = std::fs::read(der_file).context("Failed to read file")?;
             DerCertificate::from_der_owned(raw)
