@@ -200,7 +200,7 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 3);
   await expect(joinData.nextButton).toHaveText('Join the organization');
   await expect(joinData.nextButton).toHaveDisabledAttribute();
-  await expect((secondTab).locator('#previous-button')).toBeHidden();
+  await expect(secondTab.locator('#previous-button')).toBeHidden();
 
   // host is done
   await expect(greetData.title).toHaveText('User has been added successfully!');
@@ -224,9 +224,9 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   // Joiner sets password
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item:visible');
   await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
-  await expect((secondTab).locator('#previous-button')).toBeHidden();
+  await expect(secondTab.locator('#previous-button')).toBeHidden();
   await authRadio.nth(0).click();
-  await expect((secondTab).locator('#previous-button')).toBeVisible();
+  await expect(secondTab.locator('#previous-button')).toBeVisible();
   const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
   await passwordChoice.scrollIntoViewIfNeeded();
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
