@@ -736,7 +736,6 @@ async def test_re_export_is_noop(
     backend: Backend,
     sequestered_export_db_path: Path,
 ):
-    # ruff: noqa: ASYNC240
     # Since this is test-related code it should not matter that we use blocking
     # calls to pathlib.Path instead of async equivalents like anyio.Path.
     output_db_stat = sequestered_export_db_path.stat()

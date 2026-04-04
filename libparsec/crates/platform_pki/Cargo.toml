@@ -13,6 +13,8 @@ workspace = true
 
 [features]
 test-fixture = ["libparsec_tests_lite"]
+test-with-testbed = ["libparsec_testbed"]
+force-scws-on-native = []  # Only used to test SCWS
 
 [dependencies]
 bytes = { workspace = true }
@@ -29,6 +31,7 @@ chrono = { workspace = true }
 thiserror = { workspace = true }
 
 libparsec_tests_lite = { workspace = true, optional = true }
+libparsec_testbed = { workspace = true, optional = true }
 libparsec_platform_http_proxy = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -48,6 +51,10 @@ anyhow = { workspace = true }
 env_logger = { workspace = true }
 hex-literal = { workspace = true }
 libparsec_tests_lite = { workspace = true, features = ["parsec_test_macro"] }
+# Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
+libparsec_tests_fixtures = { workspace = true, default-features = false, features = [
+    "test-with-platform-pki-testbed",
+] }
 serde = { workspace = true }
 rmp-serde = { workspace = true }
 

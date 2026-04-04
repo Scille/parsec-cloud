@@ -14,6 +14,7 @@ normal = [
     "libparsec_client_connection",
     "libparsec_platform_device_loader",
     "libparsec_platform_ipc",
+    "libparsec_platform_pki",
     "libparsec_platform_storage",
 ]
 
@@ -25,6 +26,7 @@ default = [
     "test-with-client-connection-testbed",
     "test-with-platform-device-loader-testbed",
     "test-with-platform-ipc-testbed",
+    "test-with-platform-pki-testbed",
     "test-with-platform-storage-testbed",
 ]
 test-with-client-connection-testbed = [
@@ -38,6 +40,10 @@ test-with-platform-device-loader-testbed = [
 test-with-platform-ipc-testbed = [
     "dep:libparsec_platform_ipc",
     "libparsec_platform_ipc/test-with-testbed",
+]
+test-with-platform-pki-testbed = [
+    "dep:libparsec_platform_pki",
+    "libparsec_platform_pki/test-with-testbed",
 ]
 test-with-platform-storage-testbed = [
     "dep:libparsec_platform_storage",
@@ -55,6 +61,7 @@ uuid = { workspace = true, features = ["v4", "fast-rng"] }
 
 libparsec_client_connection = { workspace = true, optional = true }
 libparsec_platform_device_loader = { workspace = true, optional = true }
+libparsec_platform_pki = { workspace = true, optional = true }
 libparsec_platform_storage = { workspace = true, optional = true }
 
 # `libparsec_platform_ipc` is not implemented on web, so there is no

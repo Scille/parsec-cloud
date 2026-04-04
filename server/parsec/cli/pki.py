@@ -17,7 +17,7 @@ logger = get_logger()
 def _load_x509_trust_anchor(file: Path) -> TrustAnchor:
     logger.debug(f"Loading trust anchor from {file}")
     raw_cert = file.read_bytes()
-    return TrustAnchor.try_from_pem(raw_cert)
+    return TrustAnchor.from_pem(raw_cert)
 
 
 def _load_x509_trust_anchor_from_dirs(_ctx, _param, raw_dirs: tuple[Path, ...]) -> list[Any]:

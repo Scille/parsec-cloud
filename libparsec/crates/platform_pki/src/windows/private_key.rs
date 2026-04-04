@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_types::{anyhow, Bytes, PKIEncryptionAlgorithm, PkiSignatureAlgorithm};
 use schannel::cert_context::PrivateKey as SchannelPKey;
 use sha2::Digest as _;
 use windows_sys::Win32::Security::Cryptography::{
@@ -8,21 +7,32 @@ use windows_sys::Win32::Security::Cryptography::{
     NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
 };
 
-pub struct PrivateKey(SchannelPKey);
+use libparsec_types::prelude::*;
 
-impl From<SchannelPKey> for PrivateKey {
+pub struct PlatformPkiPrivateKey(SchannelPKey);
+
+impl std::fmt::Debug for PlatformPkiPrivateKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PlatformPkiPrivateKey")
+            .finish_non_exhaustive()
+    }
+}
+
+impl From<SchannelPKey> for PlatformPkiPrivateKey {
     fn from(value: SchannelPKey) -> Self {
         Self(value)
     }
 }
 
-impl PrivateKey {
+impl PlatformPkiPrivateKey {
     pub async fn sign(
         &self,
         message: &[u8],
-    ) -> Result<(PkiSignatureAlgorithm, Bytes), crate::SignError> {
+    ) -> Result<(PkiSignatureAlgorithm, Bytes), crate::PkiPrivateKeySignError> {
         match &self.0 {
-            SchannelPKey::CryptProv(_crypt) => Err(crate::SignError::UnsupportedAlgorithm),
+            SchannelPKey::CryptProv(_crypt) => {
+                Err(crate::PkiPrivateKeySignError::UnsupportedAlgorithm)
+            }
             SchannelPKey::NcryptKey(ncrypt) => sign_with_ncrypt(ncrypt, message),
         }
     }
@@ -31,14 +41,14 @@ impl PrivateKey {
         &self,
         algorithm: PKIEncryptionAlgorithm,
         ciphertext: &[u8],
-    ) -> Result<Bytes, crate::DecryptError> {
+    ) -> Result<Bytes, crate::PkiPrivateKeyDecryptError> {
         if algorithm != PKIEncryptionAlgorithm::RsaesOaepSha256 {
-            return Err(crate::DecryptError::UnsupportedAlgorithm);
+            return Err(crate::PkiPrivateKeyDecryptError::UnsupportedAlgorithm);
         }
         match &self.0 {
-            SchannelPKey::CryptProv(_crypt) => Err(crate::DecryptError::Internal(anyhow::anyhow!(
-                "Unsupported private key handle type"
-            ))),
+            SchannelPKey::CryptProv(_crypt) => Err(crate::PkiPrivateKeyDecryptError::Internal(
+                anyhow::anyhow!("Unsupported private key handle type"),
+            )),
             SchannelPKey::NcryptKey(ncrypt) => decrypt_with_ncrypt(ncrypt, ciphertext),
         }
     }
@@ -47,7 +57,7 @@ impl PrivateKey {
 fn sign_with_ncrypt(
     pkey: &schannel::ncrypt_key::NcryptKey,
     message: &[u8],
-) -> Result<(PkiSignatureAlgorithm, Bytes), crate::SignError> {
+) -> Result<(PkiSignatureAlgorithm, Bytes), crate::PkiPrivateKeySignError> {
     const ALGO: PkiSignatureAlgorithm = PkiSignatureAlgorithm::RsassaPssSha256;
     let hash = sha2::Sha256::digest(message);
     // SAFETY: We retrieve the inner NCRYPT_KEY_HANDLE wrapped by NcryptKey.
@@ -88,7 +98,7 @@ fn sign_with_ncrypt(
         );
 
         if res != 0 {
-            return Err(crate::SignError::Sign(
+            return Err(crate::PkiPrivateKeySignError::Sign(
                 std::io::Error::from_raw_os_error(res).into(),
             ));
         }
@@ -107,7 +117,7 @@ fn sign_with_ncrypt(
         );
 
         if res != 0 {
-            return Err(crate::SignError::Sign(
+            return Err(crate::PkiPrivateKeySignError::Sign(
                 std::io::Error::from_raw_os_error(res).into(),
             ));
         }
@@ -118,7 +128,7 @@ fn sign_with_ncrypt(
 fn decrypt_with_ncrypt(
     pkey: &schannel::ncrypt_key::NcryptKey,
     ciphertext: &[u8],
-) -> Result<Bytes, crate::DecryptError> {
+) -> Result<Bytes, crate::PkiPrivateKeyDecryptError> {
     // SAFETY: We retrieve the inner NCRYPT_KEY_HANDLE wrapped by NcryptKey.
     let raw_handle =
         unsafe { schannel::RawPointer::as_ptr(pkey) as Cryptography::NCRYPT_KEY_HANDLE };
@@ -155,7 +165,7 @@ fn decrypt_with_ncrypt(
             flags,
         );
         if res != 0 {
-            return Err(crate::DecryptError::Decrypt(
+            return Err(crate::PkiPrivateKeyDecryptError::Decrypt(
                 std::io::Error::from_raw_os_error(res).into(),
             ));
         }
@@ -173,7 +183,7 @@ fn decrypt_with_ncrypt(
             flags,
         );
         if res != 0 {
-            return Err(crate::DecryptError::Decrypt(
+            return Err(crate::PkiPrivateKeyDecryptError::Decrypt(
                 std::io::Error::from_raw_os_error(res).into(),
             ));
         }

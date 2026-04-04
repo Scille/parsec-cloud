@@ -5302,13 +5302,32 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs<'a>(
             )
         }
         "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
-            let certificate_reference = {
-                let js_val: Handle<JsObject> = obj.get(cx, "certificateReference")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            let pki_certificate_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiCertificateHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let pki_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
             Ok(
                 libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-                    certificate_reference,
+                    pki_certificate_handle,
+                    pki_private_key_handle,
                 },
             )
         }
@@ -5349,15 +5368,17 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
         }
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-            certificate_reference,
+            pki_certificate_handle,
+            pki_private_key_handle,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(cx, certificate_reference)?;
-            js_obj.set(cx, "certificateReference", js_certificate_reference)?;
+            let js_pki_certificate_handle = JsNumber::new(cx, pki_certificate_handle as f64);
+            js_obj.set(cx, "pkiCertificateHandle", js_pki_certificate_handle)?;
+            let js_pki_private_key_handle = JsNumber::new(cx, pki_private_key_handle as f64);
+            js_obj.set(cx, "pkiPrivateKeyHandle", js_pki_private_key_handle)?;
         }
     }
     Ok(js_obj)
@@ -10094,11 +10115,32 @@ fn variant_device_primary_protection_strategy_js_to_rs<'a>(
             })
         }
         "DevicePrimaryProtectionStrategyPKI" => {
-            let certificate_ref = {
-                let js_val: Handle<JsObject> = obj.get(cx, "certificateRef")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            let pki_certificate_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiCertificateHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
-            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI { certificate_ref })
+            let pki_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI {
+                pki_certificate_handle,
+                pki_private_key_handle,
+            })
         }
         "DevicePrimaryProtectionStrategyPassword" => {
             let password = {
@@ -10165,14 +10207,17 @@ fn variant_device_primary_protection_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
         libparsec::DevicePrimaryProtectionStrategy::PKI {
-            certificate_ref, ..
+            pki_certificate_handle,
+            pki_private_key_handle,
+            ..
         } => {
             let js_tag =
                 JsString::try_new(cx, "DevicePrimaryProtectionStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_certificate_ref =
-                struct_x509_certificate_reference_rs_to_js(cx, certificate_ref)?;
-            js_obj.set(cx, "certificateRef", js_certificate_ref)?;
+            let js_pki_certificate_handle = JsNumber::new(cx, pki_certificate_handle as f64);
+            js_obj.set(cx, "pkiCertificateHandle", js_pki_certificate_handle)?;
+            let js_pki_private_key_handle = JsNumber::new(cx, pki_private_key_handle as f64);
+            js_obj.set(cx, "pkiPrivateKeyHandle", js_pki_private_key_handle)?;
         }
         libparsec::DevicePrimaryProtectionStrategy::Password { password, .. } => {
             let js_tag =
@@ -14057,6 +14102,112 @@ fn variant_pending_async_enrollment_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// PkiCertificateCloseError
+
+#[allow(dead_code)]
+fn variant_pki_certificate_close_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiCertificateCloseError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiCertificateCloseError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiCertificateCloseErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiCertificateRequestPrivateKeyError
+
+#[allow(dead_code)]
+fn variant_pki_certificate_request_private_key_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiCertificateRequestPrivateKeyError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiCertificateRequestPrivateKeyError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiCertificateRequestPrivateKeyErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiCertificateRequestPrivateKeyError::NotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiCertificateRequestPrivateKeyErrorNotFound")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiPrivateKeyCloseError
+
+#[allow(dead_code)]
+fn variant_pki_private_key_close_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiPrivateKeyCloseError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiPrivateKeyCloseError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiPrivateKeyCloseErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiSystemFindCertificateError
+
+#[allow(dead_code)]
+fn variant_pki_system_find_certificate_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiSystemFindCertificateError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiSystemFindCertificateError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiSystemFindCertificateErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiSystemInitError
+
+#[allow(dead_code)]
+fn variant_pki_system_init_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiSystemInitError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiSystemInitError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiSystemInitErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiSystemInitError::NotAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiSystemInitErrorNotAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // RealmArchivingConfiguration
 
 #[allow(dead_code)]
@@ -15736,12 +15887,31 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs<'a>(
             })
         }
         "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
-            let certificate_reference = {
-                let js_val: Handle<JsObject> = obj.get(cx, "certificateReference")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            let pki_certificate_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiCertificateHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let pki_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
             Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-                certificate_reference,
+                pki_certificate_handle,
+                pki_private_key_handle,
             })
         }
         _ => cx.throw_type_error("Object is not a SubmitAsyncEnrollmentIdentityStrategy"),
@@ -15788,15 +15958,17 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-            certificate_reference,
+            pki_certificate_handle,
+            pki_private_key_handle,
             ..
         } => {
             let js_tag =
                 JsString::try_new(cx, "SubmitAsyncEnrollmentIdentityStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(cx, certificate_reference)?;
-            js_obj.set(cx, "certificateReference", js_certificate_reference)?;
+            let js_pki_certificate_handle = JsNumber::new(cx, pki_certificate_handle as f64);
+            js_obj.set(cx, "pkiCertificateHandle", js_pki_certificate_handle)?;
+            let js_pki_private_key_handle = JsNumber::new(cx, pki_private_key_handle as f64);
+            js_obj.set(cx, "pkiPrivateKeyHandle", js_pki_private_key_handle)?;
         }
     }
     Ok(js_obj)
@@ -25604,28 +25776,6 @@ fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// is_pki_available
-fn is_pki_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::is_pki_available().await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = JsBoolean::new(&mut cx, ret);
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
 // libparsec_init_native_only_init
 fn libparsec_init_native_only_init(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -26220,6 +26370,321 @@ fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// pki_certificate_close
+fn pki_certificate_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let ret = libparsec::pki_certificate_close(handle);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = {
+                #[allow(clippy::let_unit_value)]
+                let _ = ok;
+                JsNull::new(&mut cx)
+            };
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_pki_certificate_close_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// pki_certificate_open_private_key
+fn pki_certificate_open_private_key(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_certificate_open_private_key(handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_certificate_request_private_key_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_init
+fn pki_init(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_init(&config_dir).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_system_init_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_init_for_scws
+fn pki_init_for_scws(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let parsec_addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_init_for_scws(&config_dir, &parsec_addr).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_system_init_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_open_certificate
+fn pki_open_certificate(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let cert_ref = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_open_certificate(&cert_ref).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = match ok {
+                            Some(elem) => JsNumber::new(&mut cx, elem as f64).as_value(&mut cx),
+                            None => JsNull::new(&mut cx).as_value(&mut cx),
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_pki_system_find_certificate_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_private_key_close
+fn pki_private_key_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_private_key_close(handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_private_key_close_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
     Ok(promise)
 }
 
@@ -31294,7 +31759,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("importRecoveryDevice", import_recovery_device)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
-    cx.export_function("isPkiAvailable", is_pki_available)?;
     cx.export_function(
         "libparsecInitNativeOnlyInit",
         libparsec_init_native_only_init,
@@ -31316,6 +31780,15 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("pathNormalize", path_normalize)?;
     cx.export_function("pathParent", path_parent)?;
     cx.export_function("pathSplit", path_split)?;
+    cx.export_function("pkiCertificateClose", pki_certificate_close)?;
+    cx.export_function(
+        "pkiCertificateOpenPrivateKey",
+        pki_certificate_open_private_key,
+    )?;
+    cx.export_function("pkiInit", pki_init)?;
+    cx.export_function("pkiInitForScws", pki_init_for_scws)?;
+    cx.export_function("pkiOpenCertificate", pki_open_certificate)?;
+    cx.export_function("pkiPrivateKeyClose", pki_private_key_close)?;
     cx.export_function("removeDeviceData", remove_device_data)?;
     cx.export_function(
         "showCertificateSelectionDialogWindowsOnly",

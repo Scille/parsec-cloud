@@ -16,29 +16,10 @@ pub(crate) async fn save_device_keyring(
     panic!("Keyring not supported on Web")
 }
 
-pub(crate) async fn save_device_pki(
-    _: &LocalDevice,
-    _: &DateTime,
-    _: &Path,
-    _: &ParsecAddr,
-    _: &DateTime,
-    _: &X509CertificateReference,
-    _: Option<TOTPOpaqueKeyID>,
-    _: Option<&SecretKey>,
-) -> Result<(), SaveDeviceError> {
-    panic!("PKI not supported on Web")
-}
-
 pub(super) async fn load_ciphertext_key_keyring(
     _: &DeviceFile,
 ) -> Result<SecretKey, LoadCiphertextKeyError> {
     panic!("Keyring not supported on Web")
-}
-
-pub(super) async fn load_ciphertext_key_pki(
-    _: &DeviceFile,
-) -> Result<SecretKey, LoadCiphertextKeyError> {
-    panic!("PKI not supported on Web")
 }
 
 pub(super) fn is_keyring_available() -> bool {

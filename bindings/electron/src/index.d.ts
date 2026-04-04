@@ -554,7 +554,8 @@ export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
     tag: "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI"
-    certificate_reference: X509CertificateReference
+    pki_certificate_handle: number
+    pki_private_key_handle: number
 }
 export type AcceptFinalizeAsyncEnrollmentIdentityStrategy =
   | AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao
@@ -2653,7 +2654,8 @@ export interface DevicePrimaryProtectionStrategyOpenBao {
 }
 export interface DevicePrimaryProtectionStrategyPKI {
     tag: "DevicePrimaryProtectionStrategyPKI"
-    certificate_ref: X509CertificateReference
+    pki_certificate_handle: number
+    pki_private_key_handle: number
 }
 export interface DevicePrimaryProtectionStrategyPassword {
     tag: "DevicePrimaryProtectionStrategyPassword"
@@ -3264,6 +3266,61 @@ export type PendingAsyncEnrollmentInfo =
   | PendingAsyncEnrollmentInfoSubmitted
 
 
+// PkiCertificateCloseError
+export interface PkiCertificateCloseErrorInternal {
+    tag: "PkiCertificateCloseErrorInternal"
+    error: string
+}
+export type PkiCertificateCloseError =
+  | PkiCertificateCloseErrorInternal
+
+
+// PkiCertificateRequestPrivateKeyError
+export interface PkiCertificateRequestPrivateKeyErrorInternal {
+    tag: "PkiCertificateRequestPrivateKeyErrorInternal"
+    error: string
+}
+export interface PkiCertificateRequestPrivateKeyErrorNotFound {
+    tag: "PkiCertificateRequestPrivateKeyErrorNotFound"
+    error: string
+}
+export type PkiCertificateRequestPrivateKeyError =
+  | PkiCertificateRequestPrivateKeyErrorInternal
+  | PkiCertificateRequestPrivateKeyErrorNotFound
+
+
+// PkiPrivateKeyCloseError
+export interface PkiPrivateKeyCloseErrorInternal {
+    tag: "PkiPrivateKeyCloseErrorInternal"
+    error: string
+}
+export type PkiPrivateKeyCloseError =
+  | PkiPrivateKeyCloseErrorInternal
+
+
+// PkiSystemFindCertificateError
+export interface PkiSystemFindCertificateErrorInternal {
+    tag: "PkiSystemFindCertificateErrorInternal"
+    error: string
+}
+export type PkiSystemFindCertificateError =
+  | PkiSystemFindCertificateErrorInternal
+
+
+// PkiSystemInitError
+export interface PkiSystemInitErrorInternal {
+    tag: "PkiSystemInitErrorInternal"
+    error: string
+}
+export interface PkiSystemInitErrorNotAvailable {
+    tag: "PkiSystemInitErrorNotAvailable"
+    error: string
+}
+export type PkiSystemInitError =
+  | PkiSystemInitErrorInternal
+  | PkiSystemInitErrorNotAvailable
+
+
 // RealmArchivingConfiguration
 export interface RealmArchivingConfigurationArchived {
     tag: "RealmArchivingConfigurationArchived"
@@ -3544,7 +3601,8 @@ export interface SubmitAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface SubmitAsyncEnrollmentIdentityStrategyPKI {
     tag: "SubmitAsyncEnrollmentIdentityStrategyPKI"
-    certificate_reference: X509CertificateReference
+    pki_certificate_handle: number
+    pki_private_key_handle: number
 }
 export type SubmitAsyncEnrollmentIdentityStrategy =
   | SubmitAsyncEnrollmentIdentityStrategyOpenBao
@@ -5604,8 +5662,6 @@ export function importRecoveryDevice(
 ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
 export function isKeyringAvailable(
 ): Promise<boolean>
-export function isPkiAvailable(
-): Promise<boolean>
 export function libparsecInitNativeOnlyInit(
     config: ClientConfig
 ): Promise<null>
@@ -5654,6 +5710,25 @@ export function pathParent(
 export function pathSplit(
     path: string
 ): Promise<Array<string>>
+export function pkiCertificateClose(
+    handle: number
+): Promise<Result<null, PkiCertificateCloseError>>
+export function pkiCertificateOpenPrivateKey(
+    handle: number
+): Promise<Result<number, PkiCertificateRequestPrivateKeyError>>
+export function pkiInit(
+    config_dir: string
+): Promise<Result<null, PkiSystemInitError>>
+export function pkiInitForScws(
+    config_dir: string,
+    parsec_addr: string
+): Promise<Result<null, PkiSystemInitError>>
+export function pkiOpenCertificate(
+    cert_ref: X509CertificateReference
+): Promise<Result<number | null, PkiSystemFindCertificateError>>
+export function pkiPrivateKeyClose(
+    handle: number
+): Promise<Result<null, PkiPrivateKeyCloseError>>
 export function removeDeviceData(
     config: ClientConfig,
     device_id: string

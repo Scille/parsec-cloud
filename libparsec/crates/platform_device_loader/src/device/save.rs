@@ -1,14 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::{encrypt_device, platform, DevicePrimaryProtectionStrategy};
-use libparsec_platform_filesystem::{save_content, SaveContentError};
 use std::path::PathBuf;
 
-use crate::{
-    AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice, DeviceSaveStrategy,
-    OpenBaoOperationsUploadOpaqueKeyError, RemoteOperationServer,
-};
+use libparsec_platform_filesystem::{save_content, SaveContentError};
 use libparsec_types::prelude::*;
+
+use crate::{
+    encrypt_device, platform, AccountVaultOperationsUploadOpaqueKeyError, AvailableDevice,
+    DevicePrimaryProtectionStrategy, DeviceSaveStrategy, OpenBaoOperationsUploadOpaqueKeyError,
+    PkiOperationsEncryptOpaqueKeyError, RemoteOperationServer,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum SaveDeviceError {
@@ -114,18 +115,51 @@ pub(crate) async fn save_device(
             save_content(&key_file, &file_content).await?;
         }
 
-        DevicePrimaryProtectionStrategy::PKI { certificate_ref } => {
-            platform::save_device_pki(
-                device,
-                &created_on,
-                &key_file,
-                &server_addr,
-                &protected_on,
-                certificate_ref,
+        DevicePrimaryProtectionStrategy::PKI { operations } => {
+            // Generate a random key
+            let key = SecretKey::generate();
+
+            // Encrypt the key using the public key related to a certificate from the store
+            let (algorithm, encrypted_key) = operations
+                .encrypt_opaque_key(key.as_ref())
+                .await
+                .map_err(|err| match err {
+                    PkiOperationsEncryptOpaqueKeyError::Internal(e) => SaveDeviceError::Internal(e),
+                })?;
+
+            // May check if we are able to decrypt the encrypted key from the previous step
+            assert_eq!(
+                operations
+                    .decrypt_opaque_key(algorithm, encrypted_key.as_ref())
+                    .await
+                    .map_err(|e| SaveDeviceError::Internal(e.into()))?
+                    .as_ref(),
+                key.as_ref()
+            );
+
+            // Use the generated key to encrypt the device content
+            let ciphertext = encrypt_device(device, &key, totp_opaque_key);
+
+            // Save
+            let file_content = DeviceFile::PKI(DeviceFilePKI {
+                created_on,
+                protected_on,
+                server_url: server_addr.clone(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.to_owned(),
+                device_label: device.device_label.to_owned(),
+                certificate_ref: operations.certificate_ref().to_owned(),
+                encrypted_key,
+                ciphertext,
+                algorithm,
                 totp_opaque_key_id,
-                totp_opaque_key,
-            )
-            .await?;
+            });
+
+            let file_content = file_content.dump();
+
+            save_content(&key_file, &file_content).await?;
         }
 
         DevicePrimaryProtectionStrategy::AccountVault { operations } => {

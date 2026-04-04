@@ -1,53 +1,52 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_types::{
-    anyhow::Context as _, DateTime, X509CertificateHash, X509CertificateReference,
-    X509WindowsCngURI,
-};
+use libparsec_types::prelude::*;
 
-pub struct Certificate(schannel::cert_context::CertContext);
+pub struct PlatformPkiCertificate(schannel::cert_context::CertContext);
 
-impl From<schannel::cert_context::CertContext> for Certificate {
+impl std::fmt::Debug for PlatformPkiCertificate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PlatformPkiCertificate")
+            .finish_non_exhaustive()
+    }
+}
+
+impl From<schannel::cert_context::CertContext> for PlatformPkiCertificate {
     fn from(value: schannel::cert_context::CertContext) -> Self {
         Self(value)
     }
 }
 
-impl Certificate {
+impl PlatformPkiCertificate {
     pub async fn get_der(
         &self,
-    ) -> Result<crate::X509CertificateDer<'static>, crate::GetCertificateDerError> {
+    ) -> Result<crate::X509CertificateDer<'static>, crate::PkiCertificateGetDerError> {
         Ok(crate::X509CertificateDer::from_slice(self.0.to_der()).into_owned())
     }
 
     pub async fn request_private_key(
         &self,
-    ) -> Result<super::PrivateKey, crate::RequestPrivateKeyError> {
+    ) -> Result<crate::PkiPrivateKey, crate::PkiCertificateRequestPrivateKeyError> {
         self.0
             .private_key()
             .compare_key(true)
             .acquire()
             .map(Into::into)
+            .map(super::wrap_platform_private_key)
             .map_err(|e| match e.kind() {
-                std::io::ErrorKind::NotFound => crate::RequestPrivateKeyError::NotFound,
-                _ => crate::RequestPrivateKeyError::Internal(e.into()),
+                std::io::ErrorKind::NotFound => {
+                    crate::PkiCertificateRequestPrivateKeyError::NotFound
+                }
+                _ => crate::PkiCertificateRequestPrivateKeyError::Internal(e.into()),
             })
     }
 
     pub async fn to_reference(
         &self,
-    ) -> Result<X509CertificateReference, crate::GetCertificateReferenceError> {
-        let uri = self.to_uri();
+    ) -> Result<X509CertificateReference, crate::PkiCertificateToReferenceError> {
+        let uri = super::get_certificate_uri(&self.0);
         let hash = self
-            .sha256_fingerprint()
-            .context("Cannot get cert fingerprint")
-            .map_err(crate::GetCertificateReferenceError::Internal)?;
-
-        Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
-    }
-
-    fn sha256_fingerprint(&self) -> std::io::Result<X509CertificateHash> {
-        self.0
+            .0
             .fingerprint(schannel::cert_context::HashAlgorithm::sha256())
             .and_then(|buf| {
                 buf.try_into().map_err(|_| {
@@ -55,58 +54,36 @@ impl Certificate {
                 })
             })
             .map(X509CertificateHash::SHA256)
-    }
+            .context("Cannot get cert fingerprint")
+            .map_err(crate::PkiCertificateToReferenceError::Internal)?;
 
-    fn to_uri(&self) -> X509WindowsCngURI {
-        let raw_context = super::schannel_utils::cert_context_to_raw(&self.0);
-        // SAFETY: The raw pointer come from the inner valid pointer of `cert_context`
-        // that is of type `Cryptography::CERT_CONTEXT`
-        let cert_info = unsafe { *(*raw_context).pCertInfo };
-
-        // SAFETY: Issuer is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
-        let issuer = unsafe {
-            std::slice::from_raw_parts(cert_info.Issuer.pbData, cert_info.Issuer.cbData as usize)
-        }
-        .to_vec();
-        // SAFETY: SerialNumber is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
-        let serial_number = unsafe {
-            std::slice::from_raw_parts(
-                cert_info.SerialNumber.pbData,
-                cert_info.SerialNumber.cbData as usize,
-            )
-        }
-        .to_vec();
-
-        X509WindowsCngURI {
-            issuer,
-            serial_number,
-        }
+        Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
     }
 
     pub async fn get_validation_path(
         &self,
-    ) -> Result<crate::ValidationPathOwned, crate::ValidationPathError> {
+    ) -> Result<crate::X509ValidationPathOwned, crate::PkiCertificateGetValidationPathError> {
         let raw_trusted_roots = super::list_trusted_root_certificate_anchors()
             .await
             .context("Cannot list trusted roots")
-            .map_err(crate::ValidationPathError::Internal)?;
+            .map_err(crate::PkiCertificateGetValidationPathError::Internal)?;
         let raw_intermediates = super::list_intermediate_certificates()
             .await
             .context("Cannot list intermediates certificates")
-            .map_err(crate::ValidationPathError::Internal)?;
+            .map_err(crate::PkiCertificateGetValidationPathError::Internal)?;
         let leaf = self
             .get_der()
             .await
             .context("Cannot get certificate content")
-            .map_err(crate::ValidationPathError::Internal)?;
+            .map_err(crate::PkiCertificateGetValidationPathError::Internal)?;
         let end_cert = webpki::EndEntityCert::try_from(&leaf)
             .context("Invalid leaf certificate")
-            .map_err(crate::ValidationPathError::Internal)?;
+            .map_err(crate::PkiCertificateGetValidationPathError::Internal)?;
         let now = DateTime::now();
         let path =
-            crate::verify_certificate(&end_cert, &raw_trusted_roots, &raw_intermediates, now)
+            crate::verify_certificate(&end_cert, &raw_intermediates, &raw_trusted_roots, now)
                 .inspect_err(|e| log::warn!("Failed to verify certificate: {e}"))
-                .map_err(|_| crate::ValidationPathError::Untrusted)?;
+                .map_err(|_| crate::PkiCertificateGetValidationPathError::Untrusted)?;
 
         let intermediates = path
             .intermediate_certificates()
@@ -114,7 +91,7 @@ impl Certificate {
             .collect();
         let root = path.anchor().to_owned();
 
-        Ok(crate::ValidationPathOwned {
+        Ok(crate::X509ValidationPathOwned {
             root,
             intermediates,
             leaf,

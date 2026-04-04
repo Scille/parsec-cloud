@@ -4,82 +4,81 @@ mod certificate;
 mod find_in_store;
 mod private_key;
 mod schannel_utils;
-
-use crate::errors::ListUserCertificatesError;
-use crate::{
-    DecryptMessageError, DerCertificate, GetDerEncodedCertificateError,
-    ListIntermediateCertificatesError, ListTrustedRootCertificatesError,
-    ShowCertificateSelectionDialogError, SignMessageError, X509CertificateDer,
-};
-use bytes::Bytes;
 use schannel::{
     cert_context::{CertContext, HashAlgorithm},
     cert_store::CertStore,
 };
-use sha2::Digest as _;
-use windows_sys::Win32::Security::Cryptography::{
-    NCryptDecrypt, NCryptSignHash, BCRYPT_OAEP_PADDING_INFO, BCRYPT_PSS_PADDING_INFO,
-    NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
-    UI::CryptUIDlgSelectCertificateFromStore,
+use windows_sys::Win32::Security::Cryptography::UI::CryptUIDlgSelectCertificateFromStore;
+
+use libparsec_types::prelude::*;
+
+use crate::{
+    PkiCertificate, PkiPrivateKey, PkiScwsConfig, PkiSystemFindCertificateError,
+    PkiSystemInitError, PkiSystemListUserCertificateError, ShowCertificateSelectionDialogError,
+    X509CertificateDer, X509TrustAnchor,
 };
 
-pub use certificate::Certificate;
-use libparsec_types::prelude::*;
-pub use private_key::PrivateKey;
+pub(crate) use certificate::PlatformPkiCertificate;
+pub(crate) use private_key::PlatformPkiPrivateKey;
 
-pub struct PkiSystem {
+#[derive(Debug)]
+pub struct PlatformPkiSystem {
     my_cert_store: CertStore,
 }
 
-impl PkiSystem {
-    pub async fn init(_config: crate::PkiConfig<'_>) -> anyhow::Result<Self> {
+impl PlatformPkiSystem {
+    pub async fn init(_scws_config: Option<PkiScwsConfig<'_>>) -> Result<Self, PkiSystemInitError> {
         CertStore::open_current_user("My")
             .map(|store| Self {
                 my_cert_store: store,
             })
             .context("Cannot open windows cert store")
+            .map_err(PkiSystemInitError::Internal)
     }
 
     pub async fn find_certificate(
         &self,
         cert_ref: &X509CertificateReference,
-    ) -> Result<Option<Certificate>, crate::FindCertificateError> {
-        Ok(cert_ref
-            .get_uri::<X509WindowsCngURI>()
-            .and_then(|uri| {
-                log::trace!("Looking for cert with uri: {uri}");
-                let mut uri = uri.clone();
-                find_in_store::find_cert_in_store(
-                    &self.my_cert_store,
-                    find_in_store::CertFilter::cert_id(&mut uri),
-                )
-                .next()
-            })
-            .inspect(|_v| log::trace!("Certificate found using uri"))
-            .or_else(|| {
-                log::trace!("Certificate not found by uri, trying by fingerprint");
-                let hash_algo = get_hash_algo(&cert_ref.hash);
-                self.my_cert_store.certs().find(|candidate: &CertContext| {
-                    let Ok(cert_hash) = candidate.fingerprint(hash_algo) else {
-                        return false;
-                    };
-                    match &cert_ref.hash {
-                        X509CertificateHash::SHA256(data) => data.as_ref() == cert_hash.as_slice(),
-                    }
-                })
-            })
-            .map(Into::into))
+    ) -> Result<Option<PkiCertificate>, PkiSystemFindCertificateError> {
+        Ok(find_certificate(&self.my_cert_store, cert_ref)
+            .map(PlatformPkiCertificate::from)
+            .map(wrap_platform_certificate))
     }
 
-    pub async fn list_user_certificates<'a>(
-        &'a self,
-    ) -> Result<impl Iterator<Item = Certificate> + use<'a>, crate::ListUserCertificateError> {
-        Ok(self.my_cert_store.certs().map(Into::into))
+    pub async fn list_user_certificates(
+        &self,
+    ) -> Result<Vec<PkiCertificate>, PkiSystemListUserCertificateError> {
+        Ok(self
+            .my_cert_store
+            .certs()
+            .map(PlatformPkiCertificate::from)
+            .map(wrap_platform_certificate)
+            .collect())
     }
 }
 
-pub fn is_available() -> bool {
-    open_store().is_ok()
+#[cfg(not(feature = "test-with-testbed"))]
+pub(super) fn wrap_platform_certificate(platform: PlatformPkiCertificate) -> PkiCertificate {
+    PkiCertificate { platform }
+}
+
+#[cfg(feature = "test-with-testbed")]
+pub(super) fn wrap_platform_certificate(platform: PlatformPkiCertificate) -> PkiCertificate {
+    PkiCertificate {
+        platform: crate::testbed::MaybeWithTestbed::WithPlatform(platform),
+    }
+}
+
+#[cfg(not(feature = "test-with-testbed"))]
+pub(super) fn wrap_platform_private_key(platform: PlatformPkiPrivateKey) -> PkiPrivateKey {
+    PkiPrivateKey { platform }
+}
+
+#[cfg(feature = "test-with-testbed")]
+pub(super) fn wrap_platform_private_key(platform: PlatformPkiPrivateKey) -> PkiPrivateKey {
+    PkiPrivateKey {
+        platform: crate::testbed::MaybeWithTestbed::WithPlatform(platform),
+    }
 }
 
 fn open_store() -> std::io::Result<CertStore> {
@@ -156,15 +155,6 @@ fn get_certificate_uri(cert_context: &CertContext) -> X509WindowsCngURI {
     }
 }
 
-pub async fn get_der_encoded_certificate(
-    certificate_ref: &X509CertificateReference,
-) -> Result<X509CertificateDer<'static>, GetDerEncodedCertificateError> {
-    let store = open_store().map_err(GetDerEncodedCertificateError::CannotOpenStore)?;
-    let cert_context =
-        find_certificate(&store, certificate_ref).ok_or(GetDerEncodedCertificateError::NotFound)?;
-    Ok(X509CertificateDer::from_slice(cert_context.to_der()).into_owned())
-}
-
 fn get_id_and_hash_from_cert_context(
     context: &CertContext,
 ) -> std::io::Result<X509CertificateReference> {
@@ -174,8 +164,16 @@ fn get_id_and_hash_from_cert_context(
     Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
 }
 
-pub async fn list_trusted_root_certificate_anchors(
-) -> Result<Vec<rustls_pki_types::TrustAnchor<'static>>, ListTrustedRootCertificatesError> {
+#[derive(Debug, thiserror::Error)]
+enum ListCertificatesError {
+    #[error("Cannot open certificate store: {0}")]
+    CannotOpenStore(std::io::Error),
+}
+
+type ListTrustedRootCertificatesError = ListCertificatesError;
+
+async fn list_trusted_root_certificate_anchors(
+) -> Result<Vec<X509TrustAnchor<'static>>, ListTrustedRootCertificatesError> {
     let store = CertStore::open_current_user("Root")
         .map_err(ListTrustedRootCertificatesError::CannotOpenStore)?;
 
@@ -211,7 +209,9 @@ pub async fn list_trusted_root_certificate_anchors(
     Ok(res)
 }
 
-pub async fn list_intermediate_certificates(
+type ListIntermediateCertificatesError = ListCertificatesError;
+
+async fn list_intermediate_certificates(
 ) -> Result<Vec<X509CertificateDer<'static>>, ListIntermediateCertificatesError> {
     let store = CertStore::open_current_user("CA")
         .map_err(ListIntermediateCertificatesError::CannotOpenStore)?;
@@ -258,175 +258,4 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
             Some(schannel_utils::cert_context_from_raw(raw_cert_context))
         }
     }
-}
-
-pub async fn sign_message(
-    message: &[u8],
-    certificate_ref: &X509CertificateReference,
-) -> Result<(PkiSignatureAlgorithm, Bytes), SignMessageError> {
-    let store = open_store().map_err(SignMessageError::CannotOpenStore)?;
-    let cert_context =
-        find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
-    let pkey = schannel_utils::acquire_private_key(&cert_context)
-        .map_err(SignMessageError::CannotAcquireKeypair)?;
-    let (algo, signature) =
-        ncrypt_sign_message_with_rsa(message, pkey).map_err(SignMessageError::CannotSign)?;
-
-    Ok((algo, signature.into()))
-}
-
-fn ncrypt_sign_message_with_rsa(
-    message: &[u8],
-    pkey: schannel_utils::PrivateKey,
-) -> std::io::Result<(PkiSignatureAlgorithm, Vec<u8>)> {
-    const ALGO: PkiSignatureAlgorithm = PkiSignatureAlgorithm::RsassaPssSha256;
-    let hash = sha2::Sha256::digest(message);
-    let raw_handle = pkey.handle();
-
-    // SAFETY: We follow the windows documentation by correctly passing the correct flags according
-    // to padding_info type, and the other pointer are either coming from allocated buffer or null
-    // pointer with their correct associated sizes.
-    //
-    // Documentation of the below function:
-    // https://learn.microsoft.com/en-us/windows/win32/api/ncrypt/nf-ncrypt-ncryptsignhash
-    // Rust doc:
-    // https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/Cryptography/fn.NCryptSignHash.html
-    unsafe {
-        // We sign the hash using RSA_PSS_SHA256 algo.
-        let flags = NCRYPT_PAD_PSS_FLAG;
-        // https://learn.microsoft.com/en-us/windows/win32/api/bcrypt/ns-bcrypt-bcrypt_pss_padding_info
-        let padding_info = BCRYPT_PSS_PADDING_INFO {
-            pszAlgId: NCRYPT_SHA256_ALGORITHM,
-            // This determine the size of the random salt, from WolfSSL it's the convention to use
-            // a salt of the same size of the hash.
-            cbSalt: hash.len() as u32,
-        };
-        let padding_info_ptr = (&raw const padding_info) as *const std::os::raw::c_void;
-        let mut len = 0_u32;
-
-        // 1. Get the size of the resulting signature
-        let res = NCryptSignHash(
-            raw_handle,
-            padding_info_ptr,
-            hash.as_ptr(),
-            hash.len() as u32,
-            std::ptr::null_mut(),
-            0,
-            &mut len,
-            flags,
-        );
-
-        if res != 0 {
-            return Err(std::io::Error::from_raw_os_error(res));
-        }
-
-        // 2. Fill the actual signature in a buffer
-        let mut buff = vec![0_u8; len as usize];
-        let res = NCryptSignHash(
-            raw_handle,
-            padding_info_ptr,
-            hash.as_ptr(),
-            hash.len() as u32,
-            buff.as_mut_ptr(),
-            buff.len() as u32,
-            &mut len,
-            flags,
-        );
-
-        if res != 0 {
-            return Err(std::io::Error::from_raw_os_error(res));
-        }
-        Ok((ALGO, buff))
-    }
-}
-
-pub async fn decrypt_message(
-    algo: PKIEncryptionAlgorithm,
-    encrypted_message: &[u8],
-    certificate_ref: &X509CertificateReference,
-) -> Result<Bytes, DecryptMessageError> {
-    let store = open_store().map_err(DecryptMessageError::CannotOpenStore)?;
-    let cert_context =
-        find_certificate(&store, certificate_ref).ok_or(DecryptMessageError::NotFound)?;
-    let pkey = schannel_utils::acquire_private_key(&cert_context)
-        .map_err(DecryptMessageError::CannotAcquireKeypair)?;
-    if algo != PKIEncryptionAlgorithm::RsaesOaepSha256 {
-        todo!("Unsupported encryption algo '{algo}'");
-    }
-    let data = ncrypt_decrypt_message_with_rsa(encrypted_message, pkey)
-        .map(Into::into)
-        .map_err(DecryptMessageError::CannotDecrypt)?;
-
-    Ok(data)
-}
-
-fn ncrypt_decrypt_message_with_rsa(
-    encrypted_message: &[u8],
-    pkey: schannel_utils::PrivateKey,
-) -> std::io::Result<Vec<u8>> {
-    let raw_handle = pkey.handle();
-
-    // SAFETY: We follow the windows documentation by correctly passing the correct flags according
-    // to padding_info type, and the other pointer are either coming from allocated buffer or null
-    // pointer with their correct associated sizes.
-    //
-    // Documentation of the below function:
-    // https://learn.microsoft.com/en-us/windows/win32/api/ncrypt/nf-ncrypt-ncryptdecrypt
-    // Rust doc:
-    // https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/Cryptography/fn.NCryptDecrypt.html
-    unsafe {
-        // We have padded the ciphered data using OAEP.
-        let flags = NCRYPT_PAD_OAEP_FLAG;
-        // https://learn.microsoft.com/en-us/windows/win32/api/bcrypt/ns-bcrypt-bcrypt_oaep_padding_info
-        let padding_info = BCRYPT_OAEP_PADDING_INFO {
-            pszAlgId: NCRYPT_SHA256_ALGORITHM,
-            pbLabel: std::ptr::null_mut(),
-            cbLabel: 0,
-        };
-        let padding_info_ptr = (&raw const padding_info) as *const std::os::raw::c_void;
-        let mut len = 0_u32;
-
-        // 1. Get size of the resulting ciphered data.
-        let res = NCryptDecrypt(
-            raw_handle,
-            encrypted_message.as_ptr(),
-            encrypted_message.len() as u32,
-            padding_info_ptr,
-            std::ptr::null_mut(),
-            0,
-            &mut len,
-            flags,
-        );
-        if res != 0 {
-            return Err(std::io::Error::from_raw_os_error(res));
-        }
-
-        // 2. Actually perform the decryption.
-        let mut buff = vec![0_u8; len as usize];
-        let res = NCryptDecrypt(
-            raw_handle,
-            encrypted_message.as_ptr(),
-            encrypted_message.len() as u32,
-            padding_info_ptr,
-            buff.as_mut_ptr(),
-            buff.len() as u32,
-            &mut len,
-            flags,
-        );
-        if res != 0 {
-            return Err(std::io::Error::from_raw_os_error(res));
-        }
-        Ok(buff)
-    }
-}
-
-pub async fn list_user_certificates_der(
-) -> Result<Vec<DerCertificate<'static>>, ListUserCertificatesError> {
-    let store = CertStore::open_current_user("MY")
-        .map_err(|_| ListUserCertificatesError::CannotOpenStore)?;
-
-    Ok(store
-        .certs()
-        .map(|ctx| DerCertificate::from_der_owned(ctx.to_der().to_owned()))
-        .collect())
 }
