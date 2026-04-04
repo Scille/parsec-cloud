@@ -73,6 +73,9 @@ pub(crate) enum HandleItem {
 
     Account(Arc<libparsec_account::Account>),
 
+    PkiCertificate(Arc<libparsec_platform_pki::PkiCertificate>),
+    PkiPrivateKey(Arc<libparsec_platform_pki::PkiPrivateKey>),
+
     UserGreetInitial(libparsec_client::UserGreetInitialCtx),
     DeviceGreetInitial(libparsec_client::DeviceGreetInitialCtx),
     ShamirRecoveryGreetInitial(libparsec_client::ShamirRecoveryGreetInitialCtx),

@@ -44,7 +44,8 @@ class SubmitAsyncEnrollmentIdentityStrategy(Variant):
         openbao_preferred_auth_id: str
 
     class PKI:
-        certificate_reference: X509CertificateReference
+        pki_certificate_handle: Handle
+        pki_private_key_handle: Handle
 
 
 class AcceptFinalizeAsyncEnrollmentIdentityStrategy(Variant):
@@ -56,7 +57,8 @@ class AcceptFinalizeAsyncEnrollmentIdentityStrategy(Variant):
         openbao_auth_token: str
 
     class PKI:
-        certificate_reference: X509CertificateReference
+        pki_certificate_handle: Handle
+        pki_private_key_handle: Handle
 
 
 class ClientListAsyncEnrollmentsError(ErrorVariant):

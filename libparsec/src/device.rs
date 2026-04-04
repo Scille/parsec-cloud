@@ -28,6 +28,73 @@ mod strategy {
     use crate::handle::{borrow_from_handle, Handle, HandleItem};
 
     /*
+     * PKI operations
+     */
+
+    #[derive(Debug)]
+    struct PkiOperations {
+        pki_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
+        pki_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
+        certificate_ref: X509CertificateReference,
+    }
+
+    impl libparsec_platform_device_loader::PkiDeviceOperations for PkiOperations {
+        fn certificate_ref(&self) -> &X509CertificateReference {
+            &self.certificate_ref
+        }
+
+        fn encrypt_opaque_key(
+            &self,
+            opaque_key: &[u8],
+        ) -> PinBoxFutureResult<
+            (PKIEncryptionAlgorithm, Bytes),
+            libparsec_platform_device_loader::PkiOperationsEncryptOpaqueKeyError,
+        > {
+            let pki_certificate = self.pki_certificate.clone();
+            let opaque_key = opaque_key.to_vec();
+            Box::pin(pretend_future_is_send_on_web(async move {
+                let der = pki_certificate.get_der().await.map_err(|err| {
+                    libparsec_platform_device_loader::PkiOperationsEncryptOpaqueKeyError::Internal(
+                        err.into(),
+                    )
+                })?;
+                libparsec_platform_pki::encrypt_message(der, &opaque_key).await
+                    .map_err(|err| libparsec_platform_device_loader::PkiOperationsEncryptOpaqueKeyError::Internal(err.into()))
+            }))
+        }
+
+        fn decrypt_opaque_key(
+            &self,
+            algorithm: PKIEncryptionAlgorithm,
+            encrypted_opaque_key: &[u8],
+        ) -> PinBoxFutureResult<
+            SecretKey,
+            libparsec_platform_device_loader::PkiOperationsDecryptOpaqueKeyError,
+        > {
+            let pki_private_key = self.pki_private_key.clone();
+            let encrypted_opaque_key = encrypted_opaque_key.to_vec();
+            Box::pin(pretend_future_is_send_on_web(async move {
+                let decrypted = pki_private_key.decrypt(algorithm, &encrypted_opaque_key).await
+                    .map_err(|err| match err {
+                        libparsec_platform_pki::PkiPrivateKeyDecryptError::UnsupportedAlgorithm => {
+                            libparsec_platform_device_loader::PkiOperationsDecryptOpaqueKeyError::UnsupportedAlgorithm
+                        }
+                        libparsec_platform_pki::PkiPrivateKeyDecryptError::Decrypt(err) => {
+                            libparsec_platform_device_loader::PkiOperationsDecryptOpaqueKeyError::DecryptionFailed(err)
+                        }
+                        libparsec_platform_pki::PkiPrivateKeyDecryptError::Internal(err) => {
+                            libparsec_platform_device_loader::PkiOperationsDecryptOpaqueKeyError::Internal(err)
+                        }
+                    })?;
+                SecretKey::try_from(decrypted.as_ref())
+                    .map_err(|_| libparsec_platform_device_loader::PkiOperationsDecryptOpaqueKeyError::DecryptionFailed(
+                        anyhow::anyhow!("Decrypted data is not a valid SecretKey")
+                    ))
+            }))
+        }
+    }
+
+    /*
      * Account vault operations
      */
 
@@ -173,7 +240,8 @@ mod strategy {
             password: Password,
         },
         PKI {
-            certificate_ref: X509CertificateReference,
+            pki_certificate_handle: Handle,
+            pki_private_key_handle: Handle,
         },
         AccountVault {
             account_handle: Handle,
@@ -202,7 +270,7 @@ mod strategy {
         /// This method may need to do side-effects (typically to obtain the `Account`
         /// object from its handle).
         /// Hence its funny name, and why we don't just replace it by a `impl From<...> for ...`
-        pub fn convert_with_side_effects(
+        pub async fn convert_with_side_effects(
             self,
         ) -> anyhow::Result<libparsec_platform_device_loader::DeviceSaveStrategy> {
             let primary_protection = match self.primary_protection {
@@ -214,9 +282,35 @@ mod strategy {
                         password,
                     }
                 }
-                DevicePrimaryProtectionStrategy::PKI { certificate_ref } => {
+                DevicePrimaryProtectionStrategy::PKI {
+                    pki_certificate_handle,
+                    pki_private_key_handle,
+                } => {
+                    // Note `borrow_from_handle` does a side-effect here !
+                    let pki_certificate =
+                        borrow_from_handle(pki_certificate_handle, |x| match x {
+                            HandleItem::PkiCertificate(pki_certificate) => {
+                                Some(pki_certificate.clone())
+                            }
+                            _ => None,
+                        })?;
+                    let pki_private_key =
+                        borrow_from_handle(pki_private_key_handle, |x| match x {
+                            HandleItem::PkiPrivateKey(pki_private_key) => {
+                                Some(pki_private_key.clone())
+                            }
+                            _ => None,
+                        })?;
+                    let certificate_ref = pki_certificate.to_reference().await.map_err(|err| {
+                        anyhow::anyhow!("Cannot get certificate reference: {}", err)
+                    })?;
+
                     libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::PKI {
-                        certificate_ref,
+                        operations: Arc::new(PkiOperations {
+                            pki_certificate,
+                            pki_private_key,
+                            certificate_ref,
+                        }),
                     }
                 }
                 DevicePrimaryProtectionStrategy::AccountVault { account_handle } => {
@@ -283,7 +377,7 @@ mod strategy {
         /// This method may need to do side-effects (typically to obtain the `Account`
         /// object from its handle).
         /// Hence its funny name, and why we don't just replace it by a `impl From<...> for ...`
-        pub fn convert_with_side_effects(
+        pub async fn convert_with_side_effects(
             self,
         ) -> anyhow::Result<libparsec_platform_device_loader::DeviceAccessStrategy> {
             let primary_protection = match self.primary_protection {
@@ -295,9 +389,34 @@ mod strategy {
                         password,
                     }
                 }
-                DevicePrimaryProtectionStrategy::PKI { certificate_ref } => {
+                DevicePrimaryProtectionStrategy::PKI {
+                    pki_certificate_handle,
+                    pki_private_key_handle,
+                } => {
+                    let pki_certificate =
+                        borrow_from_handle(pki_certificate_handle, |x| match x {
+                            HandleItem::PkiCertificate(pki_certificate) => {
+                                Some(pki_certificate.clone())
+                            }
+                            _ => None,
+                        })?;
+                    let pki_private_key =
+                        borrow_from_handle(pki_private_key_handle, |x| match x {
+                            HandleItem::PkiPrivateKey(pki_private_key) => {
+                                Some(pki_private_key.clone())
+                            }
+                            _ => None,
+                        })?;
+                    let certificate_ref = pki_certificate.to_reference().await.map_err(|err| {
+                        anyhow::anyhow!("Cannot get certificate reference: {}", err)
+                    })?;
+
                     libparsec_platform_device_loader::DevicePrimaryProtectionStrategy::PKI {
-                        certificate_ref,
+                        operations: Arc::new(PkiOperations {
+                            pki_certificate,
+                            pki_private_key,
+                            certificate_ref,
+                        }),
                     }
                 }
                 DevicePrimaryProtectionStrategy::AccountVault { account_handle } => {
@@ -377,9 +496,11 @@ pub async fn update_device_change_authentication(
 ) -> Result<AvailableDevice, UpdateDeviceError> {
     let current_auth = current_auth
         .convert_with_side_effects()
+        .await
         .map_err(UpdateDeviceError::Internal)?;
     let new_auth = new_auth
         .convert_with_side_effects()
+        .await
         .map_err(UpdateDeviceError::Internal)?;
 
     let key_file = &current_auth.key_file;
@@ -400,6 +521,7 @@ pub async fn update_device_overwrite_server_addr(
 ) -> Result<ParsecAddr, UpdateDeviceError> {
     let auth = auth
         .convert_with_side_effects()
+        .await
         .map_err(UpdateDeviceError::Internal)?;
 
     libparsec_platform_device_loader::update_device_overwrite_server_addr(
