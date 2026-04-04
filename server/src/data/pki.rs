@@ -8,6 +8,7 @@ use pyo3::{
     Bound, PyResult, Python,
 };
 use rustls_pki_types::CertificateDer;
+use sha2::{Digest, Sha256};
 
 use crate::ids::HumanHandle;
 
@@ -27,44 +28,64 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct X509Certificate(pub libparsec_platform_pki::DerCertificate<'static>);
+pub(crate) struct X509Certificate {
+    der: Vec<u8>,
+    issuer: Vec<u8>,
+    subject: Vec<u8>,
+    sha256_fingerprint: Vec<u8>,
+}
 
 impl X509Certificate {
-    fn to_end_certificate(&self) -> PyResult<libparsec_platform_pki::X509EndCertificate<'_>> {
-        self.0
-            .to_end_certificate()
-            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))
+    fn try_new(der: Vec<u8>) -> PyResult<Self> {
+        let cert_der = CertificateDer::from_slice(&der);
+        let end = webpki::EndEntityCert::try_from(&cert_der)
+            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))?;
+        let issuer = end.issuer().to_vec();
+        let subject = end.subject().to_vec();
+        let sha256_fingerprint = Sha256::digest(&der).to_vec();
+        Ok(Self {
+            der,
+            issuer,
+            subject,
+            sha256_fingerprint,
+        })
     }
 }
 
 #[pymethods]
 impl X509Certificate {
     #[classmethod]
-    fn try_from_pem(_cls: Bound<'_, PyType>, raw_pem: &[u8]) -> PyResult<Self> {
-        libparsec_platform_pki::DerCertificate::try_from_pem(raw_pem)
-            .map(|v| v.into_owned())
-            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))
-            .map(Self)
+    fn load_pem(_cls: Bound<'_, PyType>, raw_pem: &[u8]) -> PyResult<Self> {
+        use rustls_pki_types::pem::PemObject;
+
+        let cert_der = CertificateDer::from_pem_slice(raw_pem)
+            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))?;
+        Self::try_new(cert_der.to_vec())
     }
 
     #[classmethod]
-    fn from_der(_cls: Bound<'_, PyType>, raw_der: &[u8]) -> Self {
-        Self(libparsec_platform_pki::DerCertificate::from_der(raw_der).into_owned())
+    fn load_der(_cls: Bound<'_, PyType>, raw_der: &[u8]) -> PyResult<Self> {
+        Self::try_new(raw_der.to_vec())
     }
 
-    fn issuer<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-        self.to_end_certificate()
-            .map(|v| PyBytes::new(py, v.issuer()))
+    #[getter]
+    fn issuer<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new(py, &self.issuer)
     }
 
-    fn subject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-        self.to_end_certificate()
-            .map(|v| PyBytes::new(py, v.subject()))
+    #[getter]
+    fn subject<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new(py, &self.subject)
+    }
+
+    #[getter]
+    fn sha256_fingerprint<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new(py, &self.sha256_fingerprint)
     }
 
     #[getter]
     fn der<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, self.0.as_ref())
+        PyBytes::new(py, &self.der)
     }
 }
 
