@@ -5558,13 +5558,38 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(
             )
         }
         "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
-            let certificate_reference = {
-                let js_val = Reflect::get(&obj, &"certificateReference".into())?;
-                struct_x509_certificate_reference_js_to_rs(js_val)?
+            let pki_certificate_handle = {
+                let js_val = Reflect::get(&obj, &"pkiCertificateHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let pki_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiPrivateKeyHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
             Ok(
                 libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-                    certificate_reference,
+                    pki_certificate_handle,
+                    pki_private_key_handle,
                 },
             )
         }
@@ -5615,7 +5640,8 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
         }
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-            certificate_reference,
+            pki_certificate_handle,
+            pki_private_key_handle,
             ..
         } => {
             Reflect::set(
@@ -5623,12 +5649,17 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI".into(),
             )?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
+            let js_pki_certificate_handle = JsValue::from(pki_certificate_handle);
             Reflect::set(
                 &js_obj,
-                &"certificateReference".into(),
-                &js_certificate_reference,
+                &"pkiCertificateHandle".into(),
+                &js_pki_certificate_handle,
+            )?;
+            let js_pki_private_key_handle = JsValue::from(pki_private_key_handle);
+            Reflect::set(
+                &js_obj,
+                &"pkiPrivateKeyHandle".into(),
+                &js_pki_private_key_handle,
             )?;
         }
     }
@@ -11011,11 +11042,38 @@ fn variant_device_primary_protection_strategy_js_to_rs(
             })
         }
         "DevicePrimaryProtectionStrategyPKI" => {
-            let certificate_ref = {
-                let js_val = Reflect::get(&obj, &"certificateRef".into())?;
-                struct_x509_certificate_reference_js_to_rs(js_val)?
+            let pki_certificate_handle = {
+                let js_val = Reflect::get(&obj, &"pkiCertificateHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
-            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI { certificate_ref })
+            let pki_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiPrivateKeyHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI {
+                pki_certificate_handle,
+                pki_private_key_handle,
+            })
         }
         "DevicePrimaryProtectionStrategyPassword" => {
             let password = {
@@ -11104,15 +11162,27 @@ fn variant_device_primary_protection_strategy_rs_to_js(
             )?;
         }
         libparsec::DevicePrimaryProtectionStrategy::PKI {
-            certificate_ref, ..
+            pki_certificate_handle,
+            pki_private_key_handle,
+            ..
         } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"DevicePrimaryProtectionStrategyPKI".into(),
             )?;
-            let js_certificate_ref = struct_x509_certificate_reference_rs_to_js(certificate_ref)?;
-            Reflect::set(&js_obj, &"certificateRef".into(), &js_certificate_ref)?;
+            let js_pki_certificate_handle = JsValue::from(pki_certificate_handle);
+            Reflect::set(
+                &js_obj,
+                &"pkiCertificateHandle".into(),
+                &js_pki_certificate_handle,
+            )?;
+            let js_pki_private_key_handle = JsValue::from(pki_private_key_handle);
+            Reflect::set(
+                &js_obj,
+                &"pkiPrivateKeyHandle".into(),
+                &js_pki_private_key_handle,
+            )?;
         }
         libparsec::DevicePrimaryProtectionStrategy::Password { password, .. } => {
             Reflect::set(
@@ -15477,6 +15547,121 @@ fn variant_pending_async_enrollment_info_rs_to_js(
     Ok(js_obj)
 }
 
+// PkiCertificateCloseError
+
+#[allow(dead_code)]
+fn variant_pki_certificate_close_error_rs_to_js(
+    rs_obj: libparsec::PkiCertificateCloseError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiCertificateCloseError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiCertificateCloseErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiCertificateRequestPrivateKeyError
+
+#[allow(dead_code)]
+fn variant_pki_certificate_request_private_key_error_rs_to_js(
+    rs_obj: libparsec::PkiCertificateRequestPrivateKeyError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiCertificateRequestPrivateKeyError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiCertificateRequestPrivateKeyErrorInternal".into(),
+            )?;
+        }
+        libparsec::PkiCertificateRequestPrivateKeyError::NotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiCertificateRequestPrivateKeyErrorNotFound".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiPrivateKeyCloseError
+
+#[allow(dead_code)]
+fn variant_pki_private_key_close_error_rs_to_js(
+    rs_obj: libparsec::PkiPrivateKeyCloseError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiPrivateKeyCloseError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiPrivateKeyCloseErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiSystemFindCertificateError
+
+#[allow(dead_code)]
+fn variant_pki_system_find_certificate_error_rs_to_js(
+    rs_obj: libparsec::PkiSystemFindCertificateError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiSystemFindCertificateError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiSystemFindCertificateErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiSystemInitError
+
+#[allow(dead_code)]
+fn variant_pki_system_init_error_rs_to_js(
+    rs_obj: libparsec::PkiSystemInitError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiSystemInitError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PkiSystemInitErrorInternal".into())?;
+        }
+        libparsec::PkiSystemInitError::NotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiSystemInitErrorNotAvailable".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // RealmArchivingConfiguration
 
 #[allow(dead_code)]
@@ -17294,12 +17479,37 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs(
             })
         }
         "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
-            let certificate_reference = {
-                let js_val = Reflect::get(&obj, &"certificateReference".into())?;
-                struct_x509_certificate_reference_js_to_rs(js_val)?
+            let pki_certificate_handle = {
+                let js_val = Reflect::get(&obj, &"pkiCertificateHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let pki_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiPrivateKeyHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
             Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-                certificate_reference,
+                pki_certificate_handle,
+                pki_private_key_handle,
             })
         }
         _ => Err(JsValue::from(TypeError::new(
@@ -17364,7 +17574,8 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
             )?;
         }
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-            certificate_reference,
+            pki_certificate_handle,
+            pki_private_key_handle,
             ..
         } => {
             Reflect::set(
@@ -17372,12 +17583,17 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"SubmitAsyncEnrollmentIdentityStrategyPKI".into(),
             )?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
+            let js_pki_certificate_handle = JsValue::from(pki_certificate_handle);
             Reflect::set(
                 &js_obj,
-                &"certificateReference".into(),
-                &js_certificate_reference,
+                &"pkiCertificateHandle".into(),
+                &js_pki_certificate_handle,
+            )?;
+            let js_pki_private_key_handle = JsValue::from(pki_private_key_handle);
+            Reflect::set(
+                &js_obj,
+                &"pkiPrivateKeyHandle".into(),
+                &js_pki_private_key_handle,
             )?;
         }
     }
@@ -24304,16 +24520,6 @@ pub fn isKeyringAvailable() -> Promise {
     }))
 }
 
-// is_pki_available
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn isPkiAvailable() -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::is_pki_available().await;
-        Ok(ret.into())
-    }))
-}
-
 // libparsec_init_native_only_init
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -24715,6 +24921,193 @@ pub fn pathSplit(path: String) -> Promise {
                 js_array.set(i as u32, js_elem);
             }
             js_array.into()
+        })
+    }))
+}
+
+// pki_certificate_close
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiCertificateClose(handle: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::pki_certificate_close(handle);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_certificate_close_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_certificate_open_private_key
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiCertificateOpenPrivateKey(handle: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::pki_certificate_open_private_key(handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_certificate_request_private_key_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_init
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiInit(config_dir: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::pki_init(&config_dir).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_system_init_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_init_for_scws
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiInitForScws(config_dir: String, parsec_addr: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let parsec_addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(parsec_addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::pki_init_for_scws(&config_dir, &parsec_addr).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_system_init_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_open_certificate
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiOpenCertificate(cert_ref: Object) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let cert_ref = cert_ref.into();
+        let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
+
+        let ret = libparsec::pki_open_certificate(&cert_ref).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = match value {
+                    Some(val) => JsValue::from(val),
+                    None => JsValue::NULL,
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_system_find_certificate_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_private_key_close
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiPrivateKeyClose(handle: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::pki_private_key_close(handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_private_key_close_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     }))
 }
