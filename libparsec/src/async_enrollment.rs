@@ -243,7 +243,7 @@ mod strategy {
                                 )
                             }
                             PKISignMessageError::CannotOpenStore(e) => {
-                                SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                                SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e)
                             }
                         })?;
 
@@ -700,7 +700,7 @@ mod strategy {
                                 )
                             }
                             PKISignMessageError::CannotOpenStore(e) => {
-                                AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                                AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e)
                             }
                         })?;
 

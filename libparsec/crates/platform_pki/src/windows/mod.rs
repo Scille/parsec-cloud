@@ -8,18 +8,17 @@ mod schannel_utils;
 use crate::errors::ListUserCertificatesError;
 use crate::{
     DecryptMessageError, DerCertificate, GetDerEncodedCertificateError,
-    ListIntermediateCertificatesError, ListTrustedRootCertificatesError,
-    ShowCertificateSelectionDialogError, SignMessageError, X509CertificateDer,
+    ListIntermediateCertificatesError, ListTrustedRootCertificatesError, PkiConfig,
+    RequestPrivateKeyError, ShowCertificateSelectionDialogError, SignMessageError,
+    X509CertificateDer,
 };
 use bytes::Bytes;
 use schannel::{
     cert_context::{CertContext, HashAlgorithm},
     cert_store::CertStore,
 };
-use sha2::Digest as _;
 use windows_sys::Win32::Security::Cryptography::{
-    NCryptDecrypt, NCryptSignHash, BCRYPT_OAEP_PADDING_INFO, BCRYPT_PSS_PADDING_INFO,
-    NCRYPT_PAD_OAEP_FLAG, NCRYPT_PAD_PSS_FLAG, NCRYPT_SHA256_ALGORITHM,
+    NCryptDecrypt, BCRYPT_OAEP_PADDING_INFO, NCRYPT_PAD_OAEP_FLAG, NCRYPT_SHA256_ALGORITHM,
     UI::CryptUIDlgSelectCertificateFromStore,
 };
 
@@ -76,10 +75,6 @@ impl PkiSystem {
     ) -> Result<impl Iterator<Item = Certificate> + use<'a>, crate::ListUserCertificateError> {
         Ok(self.my_cert_store.certs().map(Into::into))
     }
-}
-
-pub fn is_available() -> bool {
-    open_store().is_ok()
 }
 
 fn open_store() -> std::io::Result<CertStore> {
@@ -264,80 +259,26 @@ pub async fn sign_message(
     message: &[u8],
     certificate_ref: &X509CertificateReference,
 ) -> Result<(PkiSignatureAlgorithm, Bytes), SignMessageError> {
-    let store = open_store().map_err(SignMessageError::CannotOpenStore)?;
-    let cert_context =
-        find_certificate(&store, certificate_ref).ok_or(SignMessageError::NotFound)?;
-    let pkey = schannel_utils::acquire_private_key(&cert_context)
-        .map_err(SignMessageError::CannotAcquireKeypair)?;
-    let (algo, signature) =
-        ncrypt_sign_message_with_rsa(message, pkey).map_err(SignMessageError::CannotSign)?;
+    let pki_config = PkiConfig::new(&0);
+    let pki_system = PkiSystem::init(pki_config)
+        .await
+        .map_err(|e| SignMessageError::CannotOpenStore(e.into()))?;
+    let cert = pki_system
+        .find_certificate(&certificate_ref)
+        .await
+        .map_err(|_| SignMessageError::NotFound)?
+        .ok_or(SignMessageError::NotFound)?;
+    let pkey = cert.request_private_key().await.map_err(|e| match e {
+        RequestPrivateKeyError::Internal(e) => SignMessageError::CannotAcquireKeypair(e.into()),
+        RequestPrivateKeyError::NotFound => SignMessageError::NotFound,
+    })?;
+
+    let (algo, signature) = pkey
+        .sign(message)
+        .await
+        .map_err(|e| SignMessageError::CannotSign(e.into()))?;
 
     Ok((algo, signature.into()))
-}
-
-fn ncrypt_sign_message_with_rsa(
-    message: &[u8],
-    pkey: schannel_utils::PrivateKey,
-) -> std::io::Result<(PkiSignatureAlgorithm, Vec<u8>)> {
-    const ALGO: PkiSignatureAlgorithm = PkiSignatureAlgorithm::RsassaPssSha256;
-    let hash = sha2::Sha256::digest(message);
-    let raw_handle = pkey.handle();
-
-    // SAFETY: We follow the windows documentation by correctly passing the correct flags according
-    // to padding_info type, and the other pointer are either coming from allocated buffer or null
-    // pointer with their correct associated sizes.
-    //
-    // Documentation of the below function:
-    // https://learn.microsoft.com/en-us/windows/win32/api/ncrypt/nf-ncrypt-ncryptsignhash
-    // Rust doc:
-    // https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/Cryptography/fn.NCryptSignHash.html
-    unsafe {
-        // We sign the hash using RSA_PSS_SHA256 algo.
-        let flags = NCRYPT_PAD_PSS_FLAG;
-        // https://learn.microsoft.com/en-us/windows/win32/api/bcrypt/ns-bcrypt-bcrypt_pss_padding_info
-        let padding_info = BCRYPT_PSS_PADDING_INFO {
-            pszAlgId: NCRYPT_SHA256_ALGORITHM,
-            // This determine the size of the random salt, from WolfSSL it's the convention to use
-            // a salt of the same size of the hash.
-            cbSalt: hash.len() as u32,
-        };
-        let padding_info_ptr = (&raw const padding_info) as *const std::os::raw::c_void;
-        let mut len = 0_u32;
-
-        // 1. Get the size of the resulting signature
-        let res = NCryptSignHash(
-            raw_handle,
-            padding_info_ptr,
-            hash.as_ptr(),
-            hash.len() as u32,
-            std::ptr::null_mut(),
-            0,
-            &mut len,
-            flags,
-        );
-
-        if res != 0 {
-            return Err(std::io::Error::from_raw_os_error(res));
-        }
-
-        // 2. Fill the actual signature in a buffer
-        let mut buff = vec![0_u8; len as usize];
-        let res = NCryptSignHash(
-            raw_handle,
-            padding_info_ptr,
-            hash.as_ptr(),
-            hash.len() as u32,
-            buff.as_mut_ptr(),
-            buff.len() as u32,
-            &mut len,
-            flags,
-        );
-
-        if res != 0 {
-            return Err(std::io::Error::from_raw_os_error(res));
-        }
-        Ok((ALGO, buff))
-    }
 }
 
 pub async fn decrypt_message(
