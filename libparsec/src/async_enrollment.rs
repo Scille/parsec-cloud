@@ -354,6 +354,8 @@ mod strategy {
             openbao_auth_token: String,
         },
         PKI {
+            config_dir: PathBuf,
+            parsec_server_url: String,
             certificate_reference: X509CertificateReference,
         },
     }
@@ -365,7 +367,7 @@ mod strategy {
     }
 
     impl AcceptFinalizeAsyncEnrollmentIdentityStrategy {
-        pub(super) fn convert(
+        pub(super) async fn convert(
             self,
         ) -> anyhow::Result<Box<dyn AcceptFinalizeAsyncEnrollmentIdentityStrategyTrait>> {
             match self {
@@ -396,9 +398,24 @@ mod strategy {
 
                 Self::PKI {
                     certificate_reference,
-                } => Ok(Box::new(AcceptFinalizeAsyncEnrollmentPKIIdentityStrategy {
-                    certificate_reference,
-                })),
+                    config_dir,
+                    parsec_server_url,
+                } => {
+                    let pki_config = libparsec_platform_pki::PkiConfig {
+                        config_dir: &config_dir,
+                        addr: &libparsec_types::ParsecAddr::from_str(&parsec_server_url)
+                            .context("Failed to parse server URL")?,
+                        proxy: &libparsec_client_connection::ProxyConfig::new_from_env()
+                            .context("Failed to create proxy config")?,
+                    };
+                    let system = libparsec_platform_pki::PkiSystem::init(pki_config)
+                        .await
+                        .context("Failed to initialize PKI system")?;
+                    Ok(Box::new(AcceptFinalizeAsyncEnrollmentPKIIdentityStrategy {
+                        system,
+                        certificate_reference,
+                    }))
+                }
             }
         }
 
@@ -586,6 +603,8 @@ mod strategy {
 
     #[derive(Debug)]
     struct AcceptFinalizeAsyncEnrollmentPKIIdentityStrategy {
+        #[expect(dead_code, reason = "Will be used by either #12550 or #12551")]
+        system: libparsec_platform_pki::PkiSystem,
         certificate_reference: X509CertificateReference,
     }
 
@@ -921,6 +940,7 @@ pub async fn client_accept_async_enrollment(
 
     let identity_strategy = identity_strategy
         .convert()
+        .await
         .map_err(ClientAcceptAsyncEnrollmentError::Internal)?;
 
     client
@@ -971,7 +991,7 @@ pub async fn submitter_finalize_async_enrollment(
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
 ) -> Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
-    let identity_strategy = identity_strategy.convert()?;
+    let identity_strategy = identity_strategy.convert().await?;
     let new_device_save_strategy = new_device_save_strategy.convert_with_side_effects()?;
 
     libparsec_client::submitter_finalize_async_enrollment(
