@@ -624,7 +624,7 @@ mod strategy {
 
                 // 2. Validate certificate trustchain and payload signature
 
-                libparsec_platform_pki::verify_message(
+                libparsec_platform_pki::verify_message2(
                     &payload,
                     &signature,
                     algorithm,
@@ -777,7 +777,7 @@ mod strategy {
 
                 // 2. Validate certificate trustchain and payload signature
 
-                libparsec_platform_pki::verify_message(
+                libparsec_platform_pki::verify_message2(
                     &payload,
                     &signature,
                     algorithm,
