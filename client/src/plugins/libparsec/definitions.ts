@@ -3596,6 +3596,18 @@ export type InviteListItem =
   | InviteListItemShamirRecovery
   | InviteListItemUser
 
+// IsPkiAvailableError
+export enum IsPkiAvailableErrorTag {
+    Internal = 'IsPkiAvailableErrorInternal',
+}
+
+export interface IsPkiAvailableErrorInternal {
+    tag: IsPkiAvailableErrorTag.Internal
+    error: string
+}
+export type IsPkiAvailableError =
+  | IsPkiAvailableErrorInternal
+
 // ListAvailableDeviceError
 export enum ListAvailableDeviceErrorTag {
     Internal = 'ListAvailableDeviceErrorInternal',
@@ -6780,7 +6792,9 @@ export interface LibParsecPlugin {
     isKeyringAvailable(
     ): Promise<boolean>
     isPkiAvailable(
-    ): Promise<boolean>
+        addr: ParsecAddr,
+        config_dir: Path
+    ): Promise<Result<boolean, IsPkiAvailableError>>
     libparsecInitNativeOnlyInit(
         config: ClientConfig
     ): Promise<null>

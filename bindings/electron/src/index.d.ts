@@ -3003,6 +3003,15 @@ export type InviteListItem =
   | InviteListItemUser
 
 
+// IsPkiAvailableError
+export interface IsPkiAvailableErrorInternal {
+    tag: "IsPkiAvailableErrorInternal"
+    error: string
+}
+export type IsPkiAvailableError =
+  | IsPkiAvailableErrorInternal
+
+
 // ListAvailableDeviceError
 export interface ListAvailableDeviceErrorInternal {
     tag: "ListAvailableDeviceErrorInternal"
@@ -5679,7 +5688,9 @@ export function importRecoveryDevice(
 export function isKeyringAvailable(
 ): Promise<boolean>
 export function isPkiAvailable(
-): Promise<boolean>
+    addr: string,
+    config_dir: string
+): Promise<Result<boolean, IsPkiAvailableError>>
 export function libparsecInitNativeOnlyInit(
     config: ClientConfig
 ): Promise<null>
