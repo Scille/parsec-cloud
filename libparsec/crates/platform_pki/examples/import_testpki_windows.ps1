@@ -29,8 +29,8 @@ function Cleanup-Test-PKI {
 
     $thumbprints = Get-Content -Path $register_file
 
+    # Need to filter out store containers (which lack a Thumbprint property) to only keep actual certificates
     Get-ChildItem -Recurse Cert:\CurrentUser `
-        #  Filter out store containers (which lack a Thumbprint property) to only keep actual certificates
         | Where-Object { $_ -is [System.Security.Cryptography.X509Certificates.X509Certificate2] } `
         | Where-Object { $thumbprints -contains $_.Thumbprint } `
         | Remove-Item -Verbose
