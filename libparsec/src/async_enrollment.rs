@@ -773,6 +773,7 @@ mod strategy {
             payload: Bytes,
             payload_signature: protocol::anonymous_cmds::latest::async_enrollment_info::AcceptPayloadSignature,
         ) -> PinBoxFutureResult<(), SubmitterFinalizeAsyncEnrollmentError> {
+            let system = self.system.clone();
             let cert_ref = self.certificate_reference.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 let (signature, algorithm, accepter_cert, intermediate_certs) = match payload_signature {
@@ -793,21 +794,23 @@ mod strategy {
                 // 1. Retrieve the root certificate used by our own X059 certificate,
                 // as the accepter X509 certificate must also depend on it.
 
-                let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
-                    libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
-                        .await
-                        .map_err(|err| match err {
-                            err @ (
-                                PKIGetValidationPathForCertError::NotFound
-                                | PKIGetValidationPathForCertError::InvalidCertificateDer(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateUntrusted(_)
-                            ) => SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into()),
-                            PKIGetValidationPathForCertError::CannotOpenStore(e) => {
-                                SubmitterFinalizeAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                            }
-
-                        })?;
+                let Some(cert) = system.find_certificate(&cert_ref).await.map_err(|e| {
+                    SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                        e.into(),
+                    )
+                })?
+                else {
+                    return Err(
+                        SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                            anyhow::anyhow!("Certificate not found"),
+                        ),
+                    );
+                };
+                let validation_path = cert.get_validation_path().await.map_err(|e| {
+                    SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                        e.into(),
+                    )
+                })?;
 
                 // 2. Validate certificate trustchain and payload signature
 
