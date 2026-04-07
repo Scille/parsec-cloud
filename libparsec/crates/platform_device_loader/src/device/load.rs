@@ -17,6 +17,9 @@ use crate::{
     RemoteOperationServer,
 };
 
+const PARSEC_SAAS_SERVER_HOSTNAME_LEGACY: &str = "saas-v3.parsec.cloud";
+const PARSEC_SAAS_SERVER_HOSTNAME_CURRENT: &str = "app.parsec.cloud";
+
 #[derive(Debug, thiserror::Error)]
 pub enum LoadAvailableDeviceError {
     #[error("Device storage is not available")]
@@ -257,7 +260,22 @@ fn load_available_device_from_blob(
         key_file_path: path,
         created_on,
         protected_on,
-        server_addr,
+        // This patch is required following an issue encountered when web support was added:
+        // The domain "app.parsec.cloud" is used for the general web app while "saas-v3.parsec.cloud"
+        // is the name of a specific server. Except that that “saas-v3.parsec.cloud” is a terrible
+        // name for the end user (the web app did not exist when it was chosen).
+        // Since this domain was largely hidden from the end-user, we decided, for security reasons,
+        // that each server had to host its own web frontend.
+        // See: https://github.com/Scille/parsec-cloud/issues/12377
+        server_addr: if server_addr.hostname() == PARSEC_SAAS_SERVER_HOSTNAME_LEGACY {
+            ParsecAddr::new(
+                PARSEC_SAAS_SERVER_HOSTNAME_CURRENT.to_owned(),
+                Some(server_addr.port()),
+                server_addr.use_ssl(),
+            )
+        } else {
+            server_addr
+        },
         organization_id,
         user_id,
         device_id,

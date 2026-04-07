@@ -40,6 +40,8 @@ use crate::prelude::*;
         "122e23a1cee9a87ebf268c6360068db44398e2aaf26382606bb7e1bee4321a91"
     ),
     UserProfile::Admin,
+    // cspell:disable-next-line
+    "parsec3://alice_dev1.example.com:9999/CoolOrg?no_ssl=true&p=xCC-KXZzLOyMqU7tzwqv1BPNFZNj4PrcnmhXLHeh4X2bvQ".parse().unwrap()
 )]
 #[case::standard(
     // Generated from Parsec v3.0.0-b.11+dev
@@ -76,6 +78,8 @@ use crate::prelude::*;
         "bb4509bc79de71abae79cfa37139de4c393b41674c2729ec169d0092b8d590fd336dbb"
     ),
     UserProfile::Standard,
+    // cspell:disable-next-line
+    "parsec3://alice_dev1.example.com:9999/CoolOrg?no_ssl=true&p=xCC-KXZzLOyMqU7tzwqv1BPNFZNj4PrcnmhXLHeh4X2bvQ".parse().unwrap()
 )]
 #[case::outsider(
     // Generated from Parsec v3.0.0-b.11+dev
@@ -112,16 +116,58 @@ use crate::prelude::*;
         "82fcb754a9268ca37e6719040a3a655bbd899651123118f8568ed00ef1a196f74048aa"
     ),
     UserProfile::Outsider,
+    // cspell:disable-next-line
+    "parsec3://alice_dev1.example.com:9999/CoolOrg?no_ssl=true&p=xCC-KXZzLOyMqU7tzwqv1BPNFZNj4PrcnmhXLHeh4X2bvQ".parse().unwrap()
 )]
-fn serde_local_device_data_x(#[case] data: &[u8], #[case] initial_profile: UserProfile) {
+#[case::admin_with_legacy_saas_server_url(
+    // Generated from Parsec v3.0.0-b.11+dev
+    // Content:
+    //   server_url: http://saas-v3.parsec.cloud
+    //   organization_id: "CoolOrg"
+    //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
+    //   user_id: ext(2, a11cec00100000000000000000000000)
+    //   device_id: ext(2, de10a11cec0010000000000000000000)
+    //   device_label: "My dev1 machine"
+    //   human_handle: ("alice@example.com", "Alicey McAliceFace")
+    //   signing_key: <alice.signing_key as bytes>
+    //   private_key: <alice.private_key as bytes>
+    //   initial_profile: "ADMIN"
+    //   user_realm_id: ext(2, hex!("a4031e8bcdd84df8ae12bd3d05e6e20f"))
+    //   user_realm_key: hex!("26bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b990426b0b30b0f9a")
+    //   local_symkey: hex!("125a78618995e2e0f9a19bc8617083c809c03deb5457d5b82df5bcaec9966cd4")
+    &hex!(
+        "8ea474797065ac6c6f63616c5f646576696365aa7365727665725f75726cbc68747470"
+        "3a2f2f736161732d76332e7061727365632e636c6f75642faf6f7267616e697a617469"
+        "6f6e5f6964a7436f6f6c4f7267af726f6f745f7665726966795f6b6579c420be297673"
+        "2cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbda7757365725f69"
+        "64d802a11cec00100000000000000000000000a96465766963655f6964d802de10a11c"
+        "ec0010000000000000000000ac6465766963655f6c6162656caf4d792064657631206d"
+        "616368696e65ac68756d616e5f68616e646c6592b1616c696365406578616d706c652e"
+        "636f6db2416c69636579204d63416c69636546616365ab7369676e696e675f6b6579c4"
+        "20d544f66ece9c85d5b80275db9124b5f04bb038081622bed139c1e789c5217400ab70"
+        "7269766174655f6b6579c42074e860967fd90d063ebd64fb1ba6824c4c010099dd3750"
+        "8b7f2875a5db2ef8c9af696e697469616c5f70726f66696c65a541444d494ead757365"
+        "725f7265616c6d5f6964d802a4031e8bcdd84df8ae12bd3d05e6e20fae757365725f72"
+        "65616c6d5f6b6579c42026bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b99"
+        "0426b0b30b0f9aac6c6f63616c5f73796d6b6579c420125a78618995e2e0f9a19bc861"
+        "7083c809c03deb5457d5b82df5bcaec9966cd4"
+    ),
+    UserProfile::Admin,
+    // cspell:disable-next-line
+    "parsec3://app.parsec.cloud/CoolOrg?no_ssl=true&p=xCC-KXZzLOyMqU7tzwqv1BPNFZNj4PrcnmhXLHeh4X2bvQ".parse().unwrap()
+)]
+fn serde_local_device_data_x(
+    #[case] data: &[u8],
+    #[case] initial_profile: UserProfile,
+    #[case] organization_addr: ParsecOrganizationAddr,
+) {
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
     let expected = LocalDevice {
         initial_profile,
-        // cspell:disable-next-line
-        organization_addr: "parsec3://alice_dev1.example.com:9999/CoolOrg?no_ssl=true&p=xCC-KXZzLOyMqU7tzwqv1BPNFZNj4PrcnmhXLHeh4X2bvQ".parse().unwrap(),
+        organization_addr,
         user_id: "alice".parse().unwrap(),
         device_id: "alice@dev1".parse().unwrap(),
         device_label: "My dev1 machine".parse().unwrap(),

@@ -7,8 +7,11 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, DateTime, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
-    ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
+    ParsecAddr, ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
 };
+
+const PARSEC_SAAS_SERVER_HOSTNAME_LEGACY: &str = "saas-v3.parsec.cloud";
+const PARSEC_SAAS_SERVER_HOSTNAME_CURRENT: &str = "app.parsec.cloud";
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
@@ -161,7 +164,22 @@ parsec_data!("schema/local_device/local_device.json5");
 impl From<LocalDeviceData> for LocalDevice {
     fn from(data: LocalDeviceData) -> Self {
         let organization_addr = ParsecOrganizationAddr::new(
-            data.server_url,
+            // This patch is required following an issue encountered when web support was added:
+            // The domain "app.parsec.cloud" is used for the general web app while "saas-v3.parsec.cloud"
+            // is the name of a specific server. Except that that “saas-v3.parsec.cloud” is a terrible
+            // name for the end user (the web app did not exist when it was chosen).
+            // Since this domain was largely hidden from the end-user, we decided, for security reasons,
+            // that each server had to host its own web frontend.
+            // See: https://github.com/Scille/parsec-cloud/issues/12377
+            if data.server_url.hostname() == PARSEC_SAAS_SERVER_HOSTNAME_LEGACY {
+                ParsecAddr::new(
+                    PARSEC_SAAS_SERVER_HOSTNAME_CURRENT.to_owned(),
+                    Some(data.server_url.port()),
+                    data.server_url.use_ssl(),
+                )
+            } else {
+                data.server_url
+            },
             data.organization_id,
             data.root_verify_key,
         );
