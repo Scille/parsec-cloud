@@ -259,7 +259,6 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
-import { workspaceMenuState } from '@/services/workspaceMenuState';
 import { WorkspaceAction, WorkspaceMenu, isWorkspaceAction } from '@/views/workspaces/types';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
@@ -307,6 +306,8 @@ const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 
 let eventCbId: string | null = null;
 
+const workspaceMenuState = ref<WorkspaceMenu>(WorkspaceMenu.All);
+
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Workspaces)) {
     return;
@@ -321,6 +322,9 @@ const routeWatchCancel = watchRoute(async () => {
     if (!success) {
       await navigateTo(Routes.Workspaces, { query: {} });
     }
+  }
+  if (query.workspaceMenu && Object.values(WorkspaceMenu).includes(query.workspaceMenu)) {
+    workspaceMenuState.value = query.workspaceMenu as WorkspaceMenu;
   }
   await refreshWorkspacesList();
 });
@@ -399,6 +403,9 @@ onMounted(async (): Promise<void> => {
       window.electronAPI.log('warn', 'Could not handle file link, going back to workspaces');
       await navigateTo(Routes.Workspaces, { query: {} });
     }
+  }
+  if (query.workspaceMenu && Object.values(WorkspaceMenu).includes(query.workspaceMenu)) {
+    workspaceMenuState.value = query.workspaceMenu as WorkspaceMenu;
   }
 });
 
@@ -617,7 +624,7 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
       PresentationMode.Toast,
     );
 
-    workspaceMenuState.value = WorkspaceMenu.All;
+    await navigateTo(Routes.Workspaces, { query: { workspaceMenu: WorkspaceMenu.All } });
   } else {
     informationManager.value.present(
       new Information({
@@ -755,16 +762,11 @@ async function onFilterUpdate(): Promise<void> {
   await refreshWorkspacesList();
 }
 
-function onMenuUpdate(menu: WorkspaceMenu): void {
-  if (isSmallDisplay.value) {
-    if (workspaceMenuState.value === menu) {
-      workspaceMenuState.value = WorkspaceMenu.All;
-    } else {
-      workspaceMenuState.value = menu;
-    }
-  } else {
-    workspaceMenuState.value = menu;
+async function onMenuUpdate(menu: WorkspaceMenu): Promise<void> {
+  if (isSmallDisplay.value && workspaceMenuState.value === menu) {
+    menu = WorkspaceMenu.All;
   }
+  await navigateTo(Routes.Workspaces, { query: { workspaceMenu: menu } });
 }
 </script>
 

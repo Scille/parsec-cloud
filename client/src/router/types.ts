@@ -6,6 +6,7 @@ import { Env } from '@/services/environment';
 import { ServerType } from '@/services/parsecServers';
 import { FileHandlerMode } from '@/views/files/handler';
 import { InvitationView } from '@/views/invitations/types';
+import { WorkspaceMenu } from '@/views/workspaces/types';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
@@ -332,6 +333,7 @@ export interface Query {
   bmsLogin?: true;
   readOnly?: boolean;
   webRedirectUrl?: string;
+  workspaceMenu?: WorkspaceMenu;
 }
 
 export interface ClientAreaQuery {
