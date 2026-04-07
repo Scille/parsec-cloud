@@ -39,7 +39,6 @@ mod strategy {
     };
     use libparsec_platform_async::{pretend_future_is_send_on_web, PinBoxFutureResult};
     use libparsec_platform_pki::{
-        DecryptMessageError as PKIDecryptMessageError,
         GetValidationPathForCertError as PKIGetValidationPathForCertError,
         SignMessageError as PKISignMessageError,
     };
@@ -412,7 +411,7 @@ mod strategy {
                         .await
                         .context("Failed to initialize PKI system")?;
                     Ok(Box::new(AcceptFinalizeAsyncEnrollmentPKIIdentityStrategy {
-                        system,
+                        system: Arc::new(system),
                         certificate_reference,
                     }))
                 }
@@ -603,8 +602,7 @@ mod strategy {
 
     #[derive(Debug)]
     struct AcceptFinalizeAsyncEnrollmentPKIIdentityStrategy {
-        #[expect(dead_code, reason = "Will be used by either #12550 or #12551")]
-        system: libparsec_platform_pki::PkiSystem,
+        system: Arc<libparsec_platform_pki::PkiSystem>,
         certificate_reference: X509CertificateReference,
     }
 
@@ -839,6 +837,7 @@ mod strategy {
             &self,
             identity_system: AsyncEnrollmentLocalPendingIdentitySystem,
         ) -> PinBoxFutureResult<SecretKey, SubmitterFinalizeAsyncEnrollmentError> {
+            let system = self.system.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 let (encrypted_key, certificate_ref, algorithm) = match identity_system {
                     AsyncEnrollmentLocalPendingIdentitySystem::PKI {
@@ -853,25 +852,30 @@ mod strategy {
                     }
                 };
 
-                let decrypted = libparsec_platform_pki::decrypt_message(
-                    algorithm,
-                    &encrypted_key,
-                    &certificate_ref,
-                )
-                .await
-                .map_err(|err| match err {
-                    err @ (PKIDecryptMessageError::NotFound
-                    | PKIDecryptMessageError::CannotAcquireKeypair(_)
-                    | PKIDecryptMessageError::CannotDecrypt(_)) => {
+                let Some(cert) = system
+                    .find_certificate(&certificate_ref)
+                    .await
+                    .map_err(|e| {
                         SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                            err.into(),
-                        )
-                    }
-                    PKIDecryptMessageError::CannotOpenStore(e) => {
-                        SubmitterFinalizeAsyncEnrollmentError::PKICannotOpenCertificateStore(
                             e.into(),
                         )
-                    }
+                    })?
+                else {
+                    return Err(
+                        SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                            anyhow::anyhow!("Certificate not found"),
+                        ),
+                    );
+                };
+                let pkey = cert.request_private_key().await.map_err(|e| {
+                    SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                        e.into(),
+                    )
+                })?;
+                let decrypted = pkey.decrypt(algorithm, &encrypted_key).await.map_err(|e| {
+                    SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                        e.into(),
+                    )
                 })?;
 
                 SecretKey::try_from(decrypted.as_ref())
