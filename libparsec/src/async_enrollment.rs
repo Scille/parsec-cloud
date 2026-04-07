@@ -25,7 +25,7 @@ use crate::{
 };
 
 mod strategy {
-    use std::sync::Arc;
+    use std::{path::PathBuf, str::FromStr, sync::Arc};
 
     use libparsec_client::{
         AcceptAsyncEnrollmentError, SubmitAsyncEnrollmentError,
@@ -66,6 +66,8 @@ mod strategy {
             openbao_preferred_auth_id: String,
         },
         PKI {
+            config_dir: PathBuf,
+            parsec_server_url: String,
             certificate_reference: X509CertificateReference,
         },
     }
@@ -105,8 +107,20 @@ mod strategy {
                     }))
                 }
                 SubmitAsyncEnrollmentIdentityStrategy::PKI {
+                    config_dir,
+                    parsec_server_url,
                     certificate_reference,
                 } => {
+                    let pki_config = libparsec_platform_pki::PkiConfig {
+                        config_dir: &config_dir,
+                        addr: &libparsec_types::ParsecAddr::from_str(&parsec_server_url)
+                            .context("Failed to parse parsec server URL")?,
+                        proxy: &libparsec_client_connection::ProxyConfig::new_from_env()
+                            .context("Failed to create proxy config")?,
+                    };
+                    let system = libparsec_platform_pki::PkiSystem::init(pki_config)
+                        .await
+                        .context("Failed to initialize PKI System")?;
                     // Get certificate DER
                     let cert_der =
                         libparsec_platform_pki::get_der_encoded_certificate(&certificate_reference)
@@ -125,6 +139,7 @@ mod strategy {
                     })?;
 
                     Ok(Box::new(SubmitAsyncEnrollmentPKIIdentityStrategy {
+                        system,
                         certificate_reference,
                         human_handle,
                     }))
@@ -214,6 +229,8 @@ mod strategy {
 
     #[derive(Debug)]
     struct SubmitAsyncEnrollmentPKIIdentityStrategy {
+        #[expect(dead_code, reason = "Will be used once #12548 or #12549 are impl")]
+        system: libparsec_platform_pki::PkiSystem,
         certificate_reference: X509CertificateReference,
         human_handle: HumanHandle,
     }
