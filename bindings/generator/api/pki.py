@@ -1,10 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from .addr import ParsecAddr
 from .common import (
     Bytes,
     DateTime,
     EmailAddress,
     ErrorVariant,
+    Path,
+    Ref,
     Result,
     Structure,
     Variant,
@@ -25,7 +28,14 @@ async def show_certificate_selection_dialog_windows_only() -> Result[
     raise NotImplementedError
 
 
-async def is_pki_available() -> bool:
+class IsPkiAvailableError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def is_pki_available(
+    addr: Ref[ParsecAddr], config_dir: Ref[Path]
+) -> Result[bool, IsPkiAvailableError]:
     raise NotImplementedError
 
 

@@ -12072,6 +12072,25 @@ fn variant_invite_list_item_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// IsPkiAvailableError
+
+#[allow(dead_code)]
+fn variant_is_pki_available_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::IsPkiAvailableError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::IsPkiAvailableError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "IsPkiAvailableErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ListAvailableDeviceError
 
 #[allow(dead_code)]
@@ -26151,6 +26170,29 @@ fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
 // is_pki_available
 fn is_pki_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
+    let addr = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -26159,10 +26201,27 @@ fn is_pki_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::is_pki_available().await;
+            let ret = libparsec::is_pki_available(&addr, &config_dir).await;
 
             deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = JsBoolean::new(&mut cx, ret);
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsBoolean::new(&mut cx, ok);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_is_pki_available_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
                 Ok(js_ret)
             });
         });

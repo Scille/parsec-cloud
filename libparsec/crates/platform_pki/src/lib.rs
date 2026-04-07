@@ -209,13 +209,6 @@ pub struct PkiConfig<'a> {
 
 pub use platform::{PkiSystem, X509Certificate};
 
-impl PkiConfig<'_> {
-    pub fn new(_lifetime_placehoder: &u8) -> PkiConfig<'_> {
-        todo!()
-    }
-}
-
-
 #[derive(Debug, thiserror::Error)]
 pub enum X509CertificateGetDerError {
     #[error(transparent)]
