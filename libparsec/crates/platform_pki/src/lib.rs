@@ -154,6 +154,12 @@ mod platform {
     }
 }
 
+impl std::fmt::Debug for platform::PkiSystem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PkiSystem").finish_non_exhaustive()
+    }
+}
+
 // TODO: https://github.com/Scille/parsec-cloud/issues/11215
 // This is specific to windows, it cannot be replicated on other platform.
 // Instead, we likely need to go the manual way and show a custom dialog on the client side with a
