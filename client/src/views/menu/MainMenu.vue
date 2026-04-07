@@ -366,6 +366,7 @@ import {
   currentRouteIs,
   currentRouteIsWorkspaceRoute,
   getConnectionHandle,
+  getCurrentRouteQuery,
   navigateTo,
   navigateToWorkspace,
   ProfilePages,
@@ -390,7 +391,6 @@ import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
-import { workspaceMenuState } from '@/services/workspaceMenuState';
 import { FolderGlobalAction } from '@/views/files';
 import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
 import TabBarMenu from '@/views/menu/TabBarMenu.vue';
@@ -467,6 +467,7 @@ const expirationDuration = ref<Duration | undefined>(undefined);
 const isTrialOrg = ref(false);
 const pathOpener = usePathOpener();
 const pendingRequestsCount = ref(0);
+const workspaceMenuState = ref<WorkspaceMenu>(WorkspaceMenu.All);
 
 const securityWarnings = ref<SecurityWarnings | undefined>();
 const securityWarningsCount = computed(() => {
@@ -617,8 +618,11 @@ const watchWindowWidthCancel = watch(windowWidth, async () => {
   emits('windowWidthChanged');
 });
 
-const watchRouteCancel = watchRoute(async () => {
+const watchRouteCancel = watchRoute(async (newRoute) => {
   setActions();
+  if (newRoute.query.workspaceMenu && Object.values(WorkspaceMenu).includes(newRoute.query.workspaceMenu as WorkspaceMenu)) {
+    workspaceMenuState.value = newRoute.query.workspaceMenu as WorkspaceMenu;
+  }
 });
 
 onMounted(async () => {
@@ -729,6 +733,11 @@ onMounted(async () => {
 
   securityWarnings.value = await getSecurityWarnings();
 
+  const query = getCurrentRouteQuery();
+  if (query.workspaceMenu && Object.values(WorkspaceMenu).includes(query.workspaceMenu as WorkspaceMenu)) {
+    workspaceMenuState.value = query.workspaceMenu as WorkspaceMenu;
+  }
+
   updateDividerPosition();
 });
 
@@ -749,10 +758,7 @@ onUnmounted(async () => {
 });
 
 async function onCategoryMenuChange(menu: WorkspaceMenu): Promise<void> {
-  if (!currentRouteIs(Routes.Workspaces)) {
-    await navigateTo(Routes.Workspaces);
-  }
-  workspaceMenuState.value = menu;
+  await navigateTo(Routes.Workspaces, { query: { workspaceMenu: menu } });
 }
 
 async function onActionClicked(action: MenuAction): Promise<void> {

@@ -250,7 +250,7 @@ export const expect = baseExpect.extend({
 
   async toBeWorkspacePage(page: Page): Promise<AssertReturnType> {
     try {
-      await expect(page).toHaveURL(/\/\d+\/workspaces$/);
+      await expect(page).toHaveURL(/\/\d+\/workspaces\??.*$/);
     } catch (error: any) {
       console.log(error);
       return {
