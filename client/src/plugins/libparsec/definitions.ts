@@ -244,6 +244,18 @@ export interface AvailablePendingAsyncEnrollment {
     identitySystem: AvailablePendingAsyncEnrollmentIdentitySystem
 }
 
+export interface CertificateDetails {
+    name: string | null
+    subject: Array<DistinguishedNameValue>
+    issuer: Array<DistinguishedNameValue>
+    notBefore: DateTime
+    notAfter: DateTime
+    serial: Bytes
+    emails: Array<EmailAddress>
+    canSign: boolean
+    canEncrypt: boolean
+}
+
 export interface ClientConfig {
     configDir: Path
     dataBaseDir: Path
@@ -1412,6 +1424,28 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
+
+// CertificateWithDetails
+export enum CertificateWithDetailsTag {
+    Invalid = 'CertificateWithDetailsInvalid',
+    Valid = 'CertificateWithDetailsValid',
+}
+
+export interface CertificateWithDetailsInvalid {
+    tag: CertificateWithDetailsTag.Invalid
+    handle: X509CertificateReference
+    friendlyName: string | null
+    invalidReason: InvalidCertificateReason
+}
+export interface CertificateWithDetailsValid {
+    tag: CertificateWithDetailsTag.Valid
+    handle: X509CertificateReference
+    friendlyName: string | null
+    details: CertificateDetails
+}
+export type CertificateWithDetails =
+  | CertificateWithDetailsInvalid
+  | CertificateWithDetailsValid
 
 // ClaimFinalizeError
 export enum ClaimFinalizeErrorTag {
@@ -3194,6 +3228,24 @@ export type DevicePrimaryProtectionStrategy =
   | DevicePrimaryProtectionStrategyPKI
   | DevicePrimaryProtectionStrategyPassword
 
+// DistinguishedNameValue
+export enum DistinguishedNameValueTag {
+    CommonName = 'DistinguishedNameValueCommonName',
+    EmailAddress = 'DistinguishedNameValueEmailAddress',
+}
+
+export interface DistinguishedNameValueCommonName {
+    tag: DistinguishedNameValueTag.CommonName
+    x1: string
+}
+export interface DistinguishedNameValueEmailAddress {
+    tag: DistinguishedNameValueTag.EmailAddress
+    x1: string
+}
+export type DistinguishedNameValue =
+  | DistinguishedNameValueCommonName
+  | DistinguishedNameValueEmailAddress
+
 // EntryStat
 export enum EntryStatTag {
     File = 'EntryStatFile',
@@ -3444,6 +3496,27 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorStopped
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
+// InvalidCertificateReason
+export enum InvalidCertificateReasonTag {
+    InvalidEmail = 'InvalidCertificateReasonInvalidEmail',
+    UnableToParseCert = 'InvalidCertificateReasonUnableToParseCert',
+    UnableToParseTime = 'InvalidCertificateReasonUnableToParseTime',
+}
+
+export interface InvalidCertificateReasonInvalidEmail {
+    tag: InvalidCertificateReasonTag.InvalidEmail
+}
+export interface InvalidCertificateReasonUnableToParseCert {
+    tag: InvalidCertificateReasonTag.UnableToParseCert
+}
+export interface InvalidCertificateReasonUnableToParseTime {
+    tag: InvalidCertificateReasonTag.UnableToParseTime
+}
+export type InvalidCertificateReason =
+  | InvalidCertificateReasonInvalidEmail
+  | InvalidCertificateReasonUnableToParseCert
+  | InvalidCertificateReasonUnableToParseTime
+
 // InviteInfoInvitationCreatedBy
 export enum InviteInfoInvitationCreatedByTag {
     ExternalService = 'InviteInfoInvitationCreatedByExternalService',
@@ -3556,6 +3629,18 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
+
+// ListUserCertificatesError
+export enum ListUserCertificatesErrorTag {
+    CannotOpenStore = 'ListUserCertificatesErrorCannotOpenStore',
+}
+
+export interface ListUserCertificatesErrorCannotOpenStore {
+    tag: ListUserCertificatesErrorTag.CannotOpenStore
+    error: string
+}
+export type ListUserCertificatesError =
+  | ListUserCertificatesErrorCannotOpenStore
 
 // MountpointMountStrategy
 export enum MountpointMountStrategyTag {
@@ -6705,6 +6790,8 @@ export interface LibParsecPlugin {
     ): Promise<Array<Handle>>
     listStartedClients(
     ): Promise<Array<[Handle, DeviceID]>>
+    listUserCertificatesWithDetails(
+    ): Promise<Result<Array<CertificateWithDetails>, ListUserCertificatesError>>
     mountpointToOsPath(
         mountpoint: Handle,
         parsec_path: FsPath
