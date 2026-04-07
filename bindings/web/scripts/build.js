@@ -156,7 +156,7 @@ switch (profile) {
 
     // Sanity check on the expected name of the profile
     if (cargo_flags.find((e) => e == `--profile=${ci_profile}`) == undefined) {
-      console.log(`Expected to find argument \`--profile=${ci_profile}\` in the cargo flags (i.e. \`${cargo_flags.join(" ")}\`)`)
+      console.error(`Expected to find argument \`--profile=${ci_profile}\` in the cargo flags (i.e. \`${cargo_flags.join(" ")}\`)`)
       exit(1);
     }
 
@@ -165,6 +165,22 @@ switch (profile) {
     const ci_dest_dir_name = "debug"
     const ci_dest_dir = path.resolve(ci_target_dir, ci_dest_dir_name);
 
+    // Ensure the destination folder exist
+    try {
+      const stat = fs.statSync(ci_dest_dir)
+      if (!stat.isDirectory()) {
+        console.error(`${ci_dest_dir} is not a directory`);
+        exit(1);
+      }
+    } catch (e) {
+      if (e.code === 'ENOENT') {
+        console.log(`${ci_dest_dir} missing, creating ...`);
+        fs.mkdirSync(ci_dest_dir, { recursive: true });
+      }
+      else throw e;
+    }
+
+    // Create the required symlink for `wasm-pack`
     let needsSymlink = false;
     try {
       const stat = fs.lstatSync(ci_source_dir);  // lstat = don't follow symlink
@@ -189,7 +205,6 @@ switch (profile) {
     if (needsSymlink) {
       fs.symlinkSync(ci_dest_dir_name, ci_source_dir);
     }
-    fs.mkdirSync(ci_dest_dir, { recursive: true });
 
     break;
 }
