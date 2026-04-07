@@ -4,8 +4,7 @@
 use anyhow::Context;
 use bytes::Bytes;
 use clap::Parser;
-use libparsec_platform_pki::X509EndCertificate;
-use libparsec_platform_pki::{errors::VerifySignatureError, SignedMessage};
+use libparsec_platform_pki::{verify_message, SignedMessage};
 use libparsec_types::{PkiSignatureAlgorithm, X509CertificateHash};
 use sha2::Digest;
 
@@ -55,17 +54,4 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
-}
-
-fn verify_message<'message, 'a>(
-    signed_message: &'message SignedMessage,
-    certificate: &'a X509EndCertificate<'a>,
-) -> Result<&'message [u8], VerifySignatureError> {
-    let verifier = match signed_message.algo {
-        PkiSignatureAlgorithm::RsassaPssSha256 => webpki::ring::RSA_PSS_2048_8192_SHA256_LEGACY_KEY,
-    };
-    certificate
-        .verify_signature(verifier, &signed_message.message, &signed_message.signature)
-        .map(|_| signed_message.message.as_ref())
-        .map_err(VerifySignatureError::InvalidSignature)
 }
