@@ -104,7 +104,7 @@ class CustomGithubProvider extends GitHubProvider {
       case 'win32':
         platform = 'win';
     }
-    const base = (process.env.PARSEC_APP_IS_CSPN === 'true') ? '-cspn' : '';
+    const base = process.env.PARSEC_APP_IS_CSPN === 'true' ? '-cspn' : '';
     return `${base}-${platform}-${arch}`;
   }
 
