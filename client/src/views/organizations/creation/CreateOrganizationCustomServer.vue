@@ -26,6 +26,7 @@
       v-show="step === Steps.Authentication"
       :class="step === Steps.Authentication ? 'active' : ''"
       :server-config="serverConfig"
+      :server-addr="serverAddr"
       @authentication-chosen="onAuthenticationChosen"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
@@ -80,14 +81,15 @@ import {
   AvailableDevice,
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
+  buildParsecAddr,
   constructSaveStrategy,
   DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
-  forgeServerAddr,
   getServerConfig,
   isWeb,
   OrganizationID,
   ParsecAccount,
+  ParsecAddr,
   bootstrapOrganization as parsecBootstrapOrganization,
   createOrganization as parsecCreateOrganization,
   ParsedParsecAddrTag,
@@ -130,7 +132,7 @@ const emits = defineEmits<{
 const bootstrapLink = ref<string | undefined>(props.bootstrapLink);
 const step = ref<Steps>(Steps.OrganizationNameAndServer);
 const organizationName = ref<OrganizationID | undefined>(undefined);
-const serverAddr = ref<string | undefined>(undefined);
+const serverAddr = ref<ParsecAddr>('');
 const email = ref<string | undefined>(undefined);
 const name = ref<string | undefined>(undefined);
 const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
@@ -145,7 +147,7 @@ onMounted(async () => {
     const result = await parseParsecAddr(bootstrapLink.value);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
-      serverAddr.value = await forgeServerAddr(result.value);
+      serverAddr.value = await buildParsecAddr(result.value);
     }
   }
   initialized.value = true;

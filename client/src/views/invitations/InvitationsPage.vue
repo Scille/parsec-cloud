@@ -193,7 +193,7 @@ import {
   ClientNewUserInvitationError,
   ClientNewUserInvitationErrorTag,
   getAsyncEnrollmentAddr,
-  getCurrentServerAddr,
+  getCurrentAvailableDevice,
   getServerConfig,
   InvitationEmailSentStatus,
   isSmartcardAvailable,
@@ -283,15 +283,14 @@ onMounted(async (): Promise<void> => {
       }
     },
   );
-  pkiAvailable.value = await isSmartcardAvailable();
-  const addrResult = await getCurrentServerAddr();
-  if (addrResult.ok) {
-    serverAddr.value = addrResult.value;
-
+  const deviceResult = await getCurrentAvailableDevice();
+  if (deviceResult.ok) {
+    serverAddr.value = deviceResult.value.serverAddr;
     const configResult = await getServerConfig(serverAddr.value);
     if (configResult.ok) {
       serverConfig.value = configResult.value;
     }
+    pkiAvailable.value = await isSmartcardAvailable(serverAddr.value);
   }
 
   await refreshAll();

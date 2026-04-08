@@ -161,6 +161,7 @@
           <choose-authentication
             ref="authChoice"
             :server-config="serverConfig"
+            :server-addr="serverAddr"
           />
         </div>
         <!-- part 6 (finish the process)-->
@@ -217,15 +218,17 @@ import {
   ClaimerRetrieveInfoErrorTag,
   DeviceSaveStrategy,
   OrganizationID,
+  ParsecAddr,
+  ParsecInvitationAddr,
+  ParsecInvitationRedirectionURL,
   ParsedParsecAddrTag,
   ServerConfig,
   UserClaim,
+  buildParsecAddr,
   constructAccessStrategy,
-  forgeServerAddr,
   getServerConfig,
   parseParsecAddr,
 } from '@/parsec';
-import { ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { close, personAdd } from 'ionicons/icons';
@@ -263,6 +266,7 @@ const organizationName: Ref<OrganizationID> = ref('');
 const querying = ref(false);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
 const claimer = ref(new UserClaim());
+const serverAddr = ref<ParsecAddr>('');
 
 const props = defineProps<{
   invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
@@ -582,7 +586,8 @@ onMounted(async () => {
       return;
     }
     organizationName.value = result.value.organizationId;
-    const configResult = await getServerConfig(await forgeServerAddr(result.value));
+    serverAddr.value = await buildParsecAddr(result.value);
+    const configResult = await getServerConfig(serverAddr.value);
     if (configResult.ok) {
       serverConfig.value = configResult.value;
     }

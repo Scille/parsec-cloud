@@ -69,7 +69,8 @@ defineExpose({
 });
 
 onMounted(async () => {
-  smartcardAvailable.value = await isSmartcardAvailable();
+  // Will be deleted very soon anyway
+  smartcardAvailable.value = await isSmartcardAvailable('');
 });
 
 function getCertificate(): X509CertificateReference | undefined {

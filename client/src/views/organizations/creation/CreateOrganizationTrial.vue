@@ -16,6 +16,7 @@
       :class="step === Steps.Authentication ? 'active' : ''"
       :is-last-step="true"
       :server-config="serverConfig"
+      :server-addr="serverAddr"
       @authentication-chosen="onAuthenticationChosen"
       @go-back-requested="onGoBackRequested"
       @close-requested="$emit('closeRequested')"
@@ -42,10 +43,11 @@ import {
   AvailableDevice,
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
+  buildParsecAddr,
   DeviceSaveStrategy,
-  forgeServerAddr,
   getServerConfig,
   OrganizationID,
+  ParsecAddr,
   bootstrapOrganization as parsecBootstrapOrganization,
   createOrganization as parsecCreateOrganization,
   ParsedParsecAddrTag,
@@ -90,17 +92,18 @@ const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const currentError = ref<Translatable | undefined>(undefined);
 const organizationName = ref<OrganizationID | undefined>(undefined);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
+const serverAddr = ref<ParsecAddr>('');
 
 onMounted(async () => {
-  let server = getTrialServerAddress();
+  serverAddr.value = getTrialServerAddress();
   if (props.bootstrapLink) {
     const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
-      server = await forgeServerAddr(result.value);
+      serverAddr.value = await buildParsecAddr(result.value);
     }
   }
-  const configResult = await getServerConfig(server);
+  const configResult = await getServerConfig(serverAddr.value);
   if (configResult.ok) {
     serverConfig.value = configResult.value;
   }
