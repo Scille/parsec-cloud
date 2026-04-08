@@ -529,6 +529,18 @@ export interface UserInfo {
     revokedBy: DeviceID | null
 }
 
+export interface UserX509CertificateDetails {
+    commonName: string
+    subject: Array<DistinguishedNameValue>
+    issuer: Array<DistinguishedNameValue>
+    notBefore: DateTime
+    notAfter: DateTime
+    serial: Uint8Array
+    emails: Array<EmailAddress>
+    canSign: boolean
+    canEncrypt: boolean
+}
+
 export interface WorkspaceHistoryFileStat {
     id: VlobID
     created: DateTime
@@ -1319,6 +1331,27 @@ export interface AvailablePendingAsyncEnrollmentIdentitySystemPKI {
 export type AvailablePendingAsyncEnrollmentIdentitySystem =
   | AvailablePendingAsyncEnrollmentIdentitySystemOpenBao
   | AvailablePendingAsyncEnrollmentIdentitySystemPKI
+
+// AvailablePkiCertificate
+export enum AvailablePkiCertificateTag {
+    Invalid = 'AvailablePkiCertificateInvalid',
+    Valid = 'AvailablePkiCertificateValid',
+}
+
+export interface AvailablePkiCertificateInvalid {
+    tag: AvailablePkiCertificateTag.Invalid
+    reference: X509CertificateReference
+    invalidReason: UserX509CertificateLoadError
+}
+export interface AvailablePkiCertificateValid {
+    tag: AvailablePkiCertificateTag.Valid
+    reference: X509CertificateReference
+    friendlyName: string
+    details: UserX509CertificateDetails
+}
+export type AvailablePkiCertificate =
+  | AvailablePkiCertificateInvalid
+  | AvailablePkiCertificateValid
 
 // BootstrapOrganizationError
 export enum BootstrapOrganizationErrorTag {
@@ -3196,6 +3229,24 @@ export type DevicePrimaryProtectionStrategy =
   | DevicePrimaryProtectionStrategyPKI
   | DevicePrimaryProtectionStrategyPassword
 
+// DistinguishedNameValue
+export enum DistinguishedNameValueTag {
+    CommonName = 'DistinguishedNameValueCommonName',
+    EmailAddress = 'DistinguishedNameValueEmailAddress',
+}
+
+export interface DistinguishedNameValueCommonName {
+    tag: DistinguishedNameValueTag.CommonName
+    x1: string
+}
+export interface DistinguishedNameValueEmailAddress {
+    tag: DistinguishedNameValueTag.EmailAddress
+    x1: string
+}
+export type DistinguishedNameValue =
+  | DistinguishedNameValueCommonName
+  | DistinguishedNameValueEmailAddress
+
 // EntryStat
 export enum EntryStatTag {
     File = 'EntryStatFile',
@@ -3958,18 +4009,6 @@ export interface PkiPrivateKeyCloseErrorInternal {
 export type PkiPrivateKeyCloseError =
   | PkiPrivateKeyCloseErrorInternal
 
-// PkiSystemFindCertificateError
-export enum PkiSystemFindCertificateErrorTag {
-    Internal = 'PkiSystemFindCertificateErrorInternal',
-}
-
-export interface PkiSystemFindCertificateErrorInternal {
-    tag: PkiSystemFindCertificateErrorTag.Internal
-    error: string
-}
-export type PkiSystemFindCertificateError =
-  | PkiSystemFindCertificateErrorInternal
-
 // PkiSystemInitError
 export enum PkiSystemInitErrorTag {
     Internal = 'PkiSystemInitErrorInternal',
@@ -3987,6 +4026,30 @@ export interface PkiSystemInitErrorNotAvailable {
 export type PkiSystemInitError =
   | PkiSystemInitErrorInternal
   | PkiSystemInitErrorNotAvailable
+
+// PkiSystemListUserCertificateError
+export enum PkiSystemListUserCertificateErrorTag {
+    Internal = 'PkiSystemListUserCertificateErrorInternal',
+}
+
+export interface PkiSystemListUserCertificateErrorInternal {
+    tag: PkiSystemListUserCertificateErrorTag.Internal
+    error: string
+}
+export type PkiSystemListUserCertificateError =
+  | PkiSystemListUserCertificateErrorInternal
+
+// PkiSystemOpenCertificateError
+export enum PkiSystemOpenCertificateErrorTag {
+    Internal = 'PkiSystemOpenCertificateErrorInternal',
+}
+
+export interface PkiSystemOpenCertificateErrorInternal {
+    tag: PkiSystemOpenCertificateErrorTag.Internal
+    error: string
+}
+export type PkiSystemOpenCertificateError =
+  | PkiSystemOpenCertificateErrorInternal
 
 // RealmArchivingConfiguration
 export enum RealmArchivingConfigurationTag {
@@ -4711,6 +4774,32 @@ export interface UserClaimListInitialInfosErrorInternal {
 }
 export type UserClaimListInitialInfosError =
   | UserClaimListInitialInfosErrorInternal
+
+// UserX509CertificateLoadError
+export enum UserX509CertificateLoadErrorTag {
+    InvalidCertificateDer = 'UserX509CertificateLoadErrorInvalidCertificateDer',
+    InvalidEmail = 'UserX509CertificateLoadErrorInvalidEmail',
+    InvalidTime = 'UserX509CertificateLoadErrorInvalidTime',
+    NoCommonName = 'UserX509CertificateLoadErrorNoCommonName',
+}
+
+export interface UserX509CertificateLoadErrorInvalidCertificateDer {
+    tag: UserX509CertificateLoadErrorTag.InvalidCertificateDer
+}
+export interface UserX509CertificateLoadErrorInvalidEmail {
+    tag: UserX509CertificateLoadErrorTag.InvalidEmail
+}
+export interface UserX509CertificateLoadErrorInvalidTime {
+    tag: UserX509CertificateLoadErrorTag.InvalidTime
+}
+export interface UserX509CertificateLoadErrorNoCommonName {
+    tag: UserX509CertificateLoadErrorTag.NoCommonName
+}
+export type UserX509CertificateLoadError =
+  | UserX509CertificateLoadErrorInvalidCertificateDer
+  | UserX509CertificateLoadErrorInvalidEmail
+  | UserX509CertificateLoadErrorInvalidTime
+  | UserX509CertificateLoadErrorNoCommonName
 
 // WaitForDeviceAvailableError
 export enum WaitForDeviceAvailableErrorTag {
@@ -6826,9 +6915,11 @@ export interface LibParsecPlugin {
         config_dir: Path,
         parsec_addr: ParsecAddr
     ): Promise<Result<null, PkiSystemInitError>>
+    pkiListUserCertificates(
+    ): Promise<Result<Array<AvailablePkiCertificate>, PkiSystemListUserCertificateError>>
     pkiOpenCertificate(
         cert_ref: X509CertificateReference
-    ): Promise<Result<Handle | null, PkiSystemFindCertificateError>>
+    ): Promise<Result<Handle | null, PkiSystemOpenCertificateError>>
     pkiPrivateKeyClose(
         handle: Handle
     ): Promise<Result<null, PkiPrivateKeyCloseError>>

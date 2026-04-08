@@ -500,6 +500,19 @@ export interface UserInfo {
 }
 
 
+export interface UserX509CertificateDetails {
+    commonName: string
+    subject: Array<DistinguishedNameValue>
+    issuer: Array<DistinguishedNameValue>
+    notBefore: number
+    notAfter: number
+    serial: Uint8Array
+    emails: Array<string>
+    canSign: boolean
+    canEncrypt: boolean
+}
+
+
 export interface WorkspaceHistoryFileStat {
     id: string
     created: number
@@ -1145,6 +1158,23 @@ export interface AvailablePendingAsyncEnrollmentIdentitySystemPKI {
 export type AvailablePendingAsyncEnrollmentIdentitySystem =
   | AvailablePendingAsyncEnrollmentIdentitySystemOpenBao
   | AvailablePendingAsyncEnrollmentIdentitySystemPKI
+
+
+// AvailablePkiCertificate
+export interface AvailablePkiCertificateInvalid {
+    tag: "AvailablePkiCertificateInvalid"
+    reference: X509CertificateReference
+    invalid_reason: UserX509CertificateLoadError
+}
+export interface AvailablePkiCertificateValid {
+    tag: "AvailablePkiCertificateValid"
+    reference: X509CertificateReference
+    friendly_name: string
+    details: UserX509CertificateDetails
+}
+export type AvailablePkiCertificate =
+  | AvailablePkiCertificateInvalid
+  | AvailablePkiCertificateValid
 
 
 // BootstrapOrganizationError
@@ -2669,6 +2699,20 @@ export type DevicePrimaryProtectionStrategy =
   | DevicePrimaryProtectionStrategyPassword
 
 
+// DistinguishedNameValue
+export interface DistinguishedNameValueCommonName {
+    tag: "DistinguishedNameValueCommonName"
+    x1: string
+}
+export interface DistinguishedNameValueEmailAddress {
+    tag: "DistinguishedNameValueEmailAddress"
+    x1: string
+}
+export type DistinguishedNameValue =
+  | DistinguishedNameValueCommonName
+  | DistinguishedNameValueEmailAddress
+
+
 // EntryStat
 export interface EntryStatFile {
     tag: "EntryStatFile"
@@ -3298,15 +3342,6 @@ export type PkiPrivateKeyCloseError =
   | PkiPrivateKeyCloseErrorInternal
 
 
-// PkiSystemFindCertificateError
-export interface PkiSystemFindCertificateErrorInternal {
-    tag: "PkiSystemFindCertificateErrorInternal"
-    error: string
-}
-export type PkiSystemFindCertificateError =
-  | PkiSystemFindCertificateErrorInternal
-
-
 // PkiSystemInitError
 export interface PkiSystemInitErrorInternal {
     tag: "PkiSystemInitErrorInternal"
@@ -3319,6 +3354,24 @@ export interface PkiSystemInitErrorNotAvailable {
 export type PkiSystemInitError =
   | PkiSystemInitErrorInternal
   | PkiSystemInitErrorNotAvailable
+
+
+// PkiSystemListUserCertificateError
+export interface PkiSystemListUserCertificateErrorInternal {
+    tag: "PkiSystemListUserCertificateErrorInternal"
+    error: string
+}
+export type PkiSystemListUserCertificateError =
+  | PkiSystemListUserCertificateErrorInternal
+
+
+// PkiSystemOpenCertificateError
+export interface PkiSystemOpenCertificateErrorInternal {
+    tag: "PkiSystemOpenCertificateErrorInternal"
+    error: string
+}
+export type PkiSystemOpenCertificateError =
+  | PkiSystemOpenCertificateErrorInternal
 
 
 // RealmArchivingConfiguration
@@ -3905,6 +3958,26 @@ export interface UserClaimListInitialInfosErrorInternal {
 }
 export type UserClaimListInitialInfosError =
   | UserClaimListInitialInfosErrorInternal
+
+
+// UserX509CertificateLoadError
+export interface UserX509CertificateLoadErrorInvalidCertificateDer {
+    tag: "UserX509CertificateLoadErrorInvalidCertificateDer"
+}
+export interface UserX509CertificateLoadErrorInvalidEmail {
+    tag: "UserX509CertificateLoadErrorInvalidEmail"
+}
+export interface UserX509CertificateLoadErrorInvalidTime {
+    tag: "UserX509CertificateLoadErrorInvalidTime"
+}
+export interface UserX509CertificateLoadErrorNoCommonName {
+    tag: "UserX509CertificateLoadErrorNoCommonName"
+}
+export type UserX509CertificateLoadError =
+  | UserX509CertificateLoadErrorInvalidCertificateDer
+  | UserX509CertificateLoadErrorInvalidEmail
+  | UserX509CertificateLoadErrorInvalidTime
+  | UserX509CertificateLoadErrorNoCommonName
 
 
 // WaitForDeviceAvailableError
@@ -5723,9 +5796,11 @@ export function pkiInitForScws(
     config_dir: string,
     parsec_addr: string
 ): Promise<Result<null, PkiSystemInitError>>
+export function pkiListUserCertificates(
+): Promise<Result<Array<AvailablePkiCertificate>, PkiSystemListUserCertificateError>>
 export function pkiOpenCertificate(
     cert_ref: X509CertificateReference
-): Promise<Result<number | null, PkiSystemFindCertificateError>>
+): Promise<Result<number | null, PkiSystemOpenCertificateError>>
 export function pkiPrivateKeyClose(
     handle: number
 ): Promise<Result<null, PkiPrivateKeyCloseError>>
