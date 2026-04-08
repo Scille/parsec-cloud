@@ -14,7 +14,7 @@ use libparsec_types::prelude::*;
 
 pub(crate) use distinguished_name::extract_common_name_from_subject;
 pub use distinguished_name::{extract_dn_list_from_rnd_seq, DistinguishedNameValue};
-pub use extensions::{Extensions, SubjectAltName};
+pub(crate) use extensions::{Extensions, SubjectAltName};
 
 error_set::error_set! {
     X509LoadError := {
@@ -24,7 +24,7 @@ error_set::error_set! {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum HandleFromCertInfoError {
+pub enum X509CertificateInformationHumanHandleError {
     #[error("missing name")]
     MissingName,
     #[error("missing email")]
@@ -33,14 +33,12 @@ pub enum HandleFromCertInfoError {
     InvalidHumanHandle(#[from] libparsec_types::HumanHandleParseError),
 }
 
-// TODO: Remove `pub` qualifier once pki_enrollment is removed.
-//       see https://github.com/Scille/parsec-cloud/issues/12054
 #[derive(Debug, Clone)]
 pub struct X509CertificateInformation {
     pub subject: Vec<DistinguishedNameValue>,
     pub issuer: Vec<DistinguishedNameValue>,
     pub validity: Validity,
-    pub serial: Bytes,
+    pub serial: Vec<u8>,
     pub extensions: Extensions,
 }
 
@@ -88,11 +86,13 @@ impl X509CertificateInformation {
         self.emails().next()
     }
 
-    pub fn human_handle(&self) -> Result<HumanHandle, HandleFromCertInfoError> {
+    pub fn human_handle(&self) -> Result<HumanHandle, X509CertificateInformationHumanHandleError> {
         let name = self
             .common_name()
-            .ok_or(HandleFromCertInfoError::MissingName)?;
-        let email = self.email().ok_or(HandleFromCertInfoError::MissingEmail)?;
+            .ok_or(X509CertificateInformationHumanHandleError::MissingName)?;
+        let email = self
+            .email()
+            .ok_or(X509CertificateInformationHumanHandleError::MissingEmail)?;
         HumanHandle::from_raw(email, name).map_err(Into::into)
     }
 }
@@ -129,7 +129,7 @@ impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
             issuer,
             extensions,
             validity,
-            serial: Bytes::copy_from_slice(serial.as_bytes()),
+            serial: serial.as_bytes().into(),
         })
     }
 }
@@ -166,6 +166,6 @@ pub(crate) fn get_certificate_public_key(
     }
 }
 
-pub enum PublicKey {
+pub(crate) enum PublicKey {
     Rsa(rsa::RsaPublicKey),
 }
