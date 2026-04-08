@@ -2,14 +2,15 @@
 
 use libparsec_tests_lite::parsec_test;
 
-use super::utils::initialize_pki_system;
+use super::utils::{certificates, initialize_pki_system, InstalledCertificates};
+use crate::AvailablePkiCertificate;
 
 // Root certificates subject fields
 const BLACK_MESA_CA_SUBJECT: &[u8] =
     b"1\x160\x14\x06\x03U\x04\x03\x0c\rBlack Mesa CA1\x130\x11\x06\x03U\x04\n\x0c\nBlack Mesa";
 
 #[parsec_test]
-async fn list_user_certificates() {
+async fn list_user_certificates(certificates: &InstalledCertificates) {
     let pki = initialize_pki_system().await;
 
     let certs = pki.list_user_certificates().await.unwrap();
@@ -19,15 +20,13 @@ async fn list_user_certificates() {
         "Expected at least one user certificate in the store"
     );
 
-    // Verify we can get DER and reference for each certificate
-    for cert in &certs {
-        let _der = cert.get_der().await.unwrap();
-        let _cert_ref = cert.to_reference().await.unwrap();
-    }
+    // Should at least found Alice's certificate
+    let alice_reference = certificates.alice_cert_ref();
+    assert!(certs.iter().find(|c| matches!(c, AvailablePkiCertificate::Valid{ reference, .. } if *reference == alice_reference)).is_some());
 }
 
 #[parsec_test]
-async fn find_certificate_and_get_validation_path() {
+async fn open_certificate_and_get_validation_path() {
     let pki = initialize_pki_system().await;
 
     // Use Alice's known cert hash to find her certificate
@@ -37,7 +36,7 @@ async fn find_certificate_and_get_validation_path() {
             .unwrap(),
     );
     let cert = pki
-        .find_certificate(&alice_ref)
+        .open_certificate(&alice_ref)
         .await
         .unwrap()
         .expect("Alice's certificate should be installed");

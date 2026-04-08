@@ -13,7 +13,7 @@ async fn init_pki(env: &TestbedEnv) -> PkiSystem {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn testbed_find_certificate(env: &TestbedEnv) {
+async fn testbed_open_certificate(env: &TestbedEnv) {
     let pki = init_pki(env).await;
 
     let alice_ref = certificates().alice_cert_ref();

@@ -8,9 +8,7 @@ use rustls_pki_types::pem::PemObject;
 // See `libparsec/crates/platform_pki/test-pki/README.md`
 pub(super) const ALICE_SHA256_CERT_HASH: &str =
     "sha256-FH45Rn8sFI5XTBxE1inkRUxeVmBA9jtsdSkY+6w3+gQ=";
-#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 pub(super) const BOB_SHA256_CERT_HASH: &str = "sha256-639SRoRFC0jog3h76fY63ccZmlSORK2mR+IcBf2apqg=";
-#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 pub(super) const BLACK_MESA_SHA256_CERT_HASH: &str =
     "sha256-DrumDH+peXOqrXywKiTQTwfBE6gBiq4jawDfJlBlVRg=";
 pub(super) const MALLORY_SIGN_SHA256_CERT_HASH: &str =

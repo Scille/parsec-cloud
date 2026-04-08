@@ -21,7 +21,7 @@ async fn encrypt_decrypt(certificates: &InstalledCertificates) {
     {
         let pki = super::utils::initialize_pki_system().await;
         let cert_ref = certificates.alice_cert_ref();
-        let store_cert = pki.find_certificate(&cert_ref).await.unwrap().unwrap();
+        let store_cert = pki.open_certificate(&cert_ref).await.unwrap().unwrap();
         let key = store_cert.request_private_key().await.unwrap();
         let decrypted_message = key.decrypt(algo, &encrypted_message).await.unwrap();
         assert_eq!(*decrypted_message, payload);
@@ -46,7 +46,7 @@ async fn decrypt(certificates: &InstalledCertificates) {
     );
     let pki = super::utils::initialize_pki_system().await;
     let cert_ref = certificates.alice_cert_ref();
-    let cert = pki.find_certificate(&cert_ref).await.unwrap().unwrap();
+    let cert = pki.open_certificate(&cert_ref).await.unwrap().unwrap();
     let key = cert.request_private_key().await.unwrap();
     let decrypted_message = key.decrypt(algo, &encrypted_message).await.unwrap();
     assert_eq!(*decrypted_message, *payload);
@@ -93,7 +93,7 @@ async fn decrypt_ko_cannot_decrypt(certificates: &InstalledCertificates) {
 
     let pki = super::utils::initialize_pki_system().await;
     let cert = pki
-        .find_certificate(&certificate_ref)
+        .open_certificate(&certificate_ref)
         .await
         .unwrap()
         .unwrap();

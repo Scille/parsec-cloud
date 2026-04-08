@@ -13,7 +13,7 @@ async fn sign_and_verify(certificates: &InstalledCertificates) {
 
     let pki = super::utils::initialize_pki_system().await;
     let cert_ref = certificates.alice_cert_ref();
-    let cert = pki.find_certificate(&cert_ref).await.unwrap().unwrap();
+    let cert = pki.open_certificate(&cert_ref).await.unwrap().unwrap();
     let key = cert.request_private_key().await.unwrap();
     let (algo, signature) = key.sign(payload.as_ref()).await.unwrap();
 
@@ -80,7 +80,7 @@ async fn verify_message_ko_outdated_certificate(certificates: &InstalledCertific
     let pki = super::utils::initialize_pki_system().await;
 
     let cert = pki
-        .find_certificate(&certificates.alice_cert_ref())
+        .open_certificate(&certificates.alice_cert_ref())
         .await
         .unwrap()
         .unwrap();
@@ -118,7 +118,7 @@ async fn verify_message_ko_different_certificate(certificates: &InstalledCertifi
     let pki = super::utils::initialize_pki_system().await;
 
     let cert = pki
-        .find_certificate(&certificates.alice_cert_ref())
+        .open_certificate(&certificates.alice_cert_ref())
         .await
         .unwrap()
         .unwrap();
@@ -156,7 +156,7 @@ async fn verify_message_ko_different_payload(certificates: &InstalledCertificate
     let pki = super::utils::initialize_pki_system().await;
 
     let cert = pki
-        .find_certificate(&certificates.alice_cert_ref())
+        .open_certificate(&certificates.alice_cert_ref())
         .await
         .unwrap()
         .unwrap();
