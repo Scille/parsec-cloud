@@ -34,3 +34,54 @@ We provide some example to test the PKI support:
 - `examples/verify_message.rs`: Verify a message signature using the public key of a reference certificate
 - `examples/list_trusted_roots.rs`: List trusted root found on system.
 - `examples/verify_certificate.rs`: Check for a certificate trust
+
+## Compile for web on a Windows/MacOS host
+
+This crate depends on `ring`, however compiling this dependency for WASM can be cumbersome
+on a Windows/MacOS host, as it requires to install a specific version of llvm with WebAssembly
+support (see https://github.com/briansmith/ring/issues/1824).
+
+To solve this issue this crate can be compiled in two ways:
+
+- The standard one that include `ring`
+- A mocked one that disables `ring` (hence making it trivial to compile). It can be enabled by
+  setting the `libparsec_platform_pki_disable_ring_dep_and_stub_apis` cfg option.
+
+Note using `libparsec_platform_pki_disable_ring_dep_and_stub_apis` means `libparsec_platform_pki` should only be used
+with the testbed (which itself does it own mock of the functions exposed by `libparsec_platform_pki`)
+as obviously all  function exposed by `libparsec_platform_pki` are`libparsec_platform_pki` are
+stubbed and hence will panic at runtime when called.
+
+### Example
+
+Compiling with ring support:
+
+```shell
+cargo build -p libparsec_platform_pki
+```
+
+Compiling on MacOs/Windows to generate the web bindings.
+
+```shell
+RUSTFLAGS='--cfg libparsec_platform_pki_disable_ring_dep_and_stub_apis' cargo build -p libparsec_platform_pki
+```
+
+Notes:
+
+- There is nothing to do to have the correct implementation that release should use ;-)
+- You should never need to use this `libparsec_platform_pki_disable_ring_dep_and_stub_apis` by hand:
+  instead it is used by the `make.py` script which is already responsible to
+  do libparsec compilation with the correct flags.
+
+### Why not using features instead of cfg ?
+
+Features are supposed to be additive, while we want to switch between two
+implementations.
+
+Features must be explicitly enabled, however here we have one case that should
+be used for the vast majority of the cases and a weird corner case that should
+under no circumstances end up being used in production !
+
+So using a feature would require more configuration in multiple places, and may
+lead to the wrong implementation being used by mistake while being hard to
+detect (this has already happened when generating test data !).
