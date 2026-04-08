@@ -1,5 +1,5 @@
 [package]
-name = "libparsec_platform_pki"
+name = "libparsec_platform_pki_2_electric_boogaloo"
 publish.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -13,6 +13,12 @@ workspace = true
 
 [features]
 test-fixture = ["libparsec_tests_lite"]
+test-with-testbed = ["libparsec_testbed"]
+# On web, OS certificates store is accessed using SCWS (a native client running
+# on the machine and exposing an HTTP API on localhost).
+# This feature can be use for development needs to force the use of SCWS on
+# native platform (typically allowing to debug SCWS with the PKI examples).
+force-scws-on-native = []
 
 [dependencies]
 bytes = { workspace = true }
@@ -29,6 +35,7 @@ chrono = { workspace = true }
 thiserror = { workspace = true }
 
 libparsec_tests_lite = { workspace = true, optional = true }
+libparsec_testbed = { workspace = true, optional = true }
 libparsec_platform_http_proxy = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -48,6 +55,10 @@ anyhow = { workspace = true }
 env_logger = { workspace = true }
 hex-literal = { workspace = true }
 libparsec_tests_lite = { workspace = true, features = ["parsec_test_macro"] }
+# Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
+libparsec_tests_fixtures = { workspace = true, default-features = false, features = [
+    "test-with-platform-pki-testbed",
+] }
 serde = { workspace = true }
 rmp-serde = { workspace = true }
 
