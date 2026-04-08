@@ -52,7 +52,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             block = MemoryBlockComponent(data, blockstore)
             events = MemoryEventsComponent(data, config, event_bus)
             account = MemoryAccountComponent(data, config, event_bus)
-            async_enrollment = MemoryAsyncEnrollmentComponent(data, event_bus)
+            async_enrollment = MemoryAsyncEnrollmentComponent(data, event_bus, config)
             totp = MemoryTOTPComponent(data, config)
 
             components = {

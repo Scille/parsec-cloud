@@ -61,7 +61,7 @@ async def components_factory(
                 shamir = PGShamirComponent(pool=pool)
                 sequester = PGSequesterComponent(pool=pool)
                 account = PGAccountComponent(pool=pool, config=config)
-                async_enrollment = PGAsyncEnrollmentComponent(pool=pool)
+                async_enrollment = PGAsyncEnrollmentComponent(pool=pool, config=config)
                 totp = PGTOTPComponent(pool=pool, config=config)
 
                 components = {
