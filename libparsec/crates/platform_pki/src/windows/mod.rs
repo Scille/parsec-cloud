@@ -13,7 +13,7 @@ use windows_sys::Win32::Security::Cryptography::UI::CryptUIDlgSelectCertificateF
 use libparsec_types::prelude::*;
 
 use crate::{
-    PkiCertificate, PkiPrivateKey, PkiScwsConfig, PkiSystemInitError,
+    AvailablePkiCertificate, PkiCertificate, PkiPrivateKey, PkiScwsConfig, PkiSystemInitError,
     PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
     ShowCertificateSelectionDialogError, X509CertificateDer, X509TrustAnchor,
 };
@@ -47,12 +47,11 @@ impl PlatformPkiSystem {
 
     pub async fn list_user_certificates(
         &self,
-    ) -> Result<Vec<PkiCertificate>, PkiSystemListUserCertificateError> {
+    ) -> Result<Vec<AvailablePkiCertificate>, PkiSystemListUserCertificateError> {
         Ok(self
             .my_cert_store
             .certs()
-            .map(PlatformPkiCertificate::from)
-            .map(wrap_platform_certificate)
+            .map(|cert| AvailablePkiCertificate::load_der(&cert.to_der()))
             .collect())
     }
 }
