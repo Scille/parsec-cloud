@@ -27,7 +27,7 @@ pub struct PlatformPkiSystem {
 }
 
 impl PlatformPkiSystem {
-    pub async fn init(_scws_config: Option<PkiScwsConfig<'_>>) -> Result<Self, PkiSystemInitError> {
+    pub async fn init(_scws_config: Option<PkiScwsConfig>) -> Result<Self, PkiSystemInitError> {
         CertStore::open_current_user("My")
             .map(|store| Self {
                 my_cert_store: store,

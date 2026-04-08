@@ -29,9 +29,9 @@ pub enum PkiSystemListUserCertificateError {
 /// SCWS requires mutual authentication using which requires communicating with
 /// the Parsec server (so that the private key authenticating our application cannot
 /// be ripped from the web page code).
-pub struct PkiScwsConfig<'a> {
-    pub parsec_addr: &'a libparsec_types::ParsecAddr,
-    pub proxy: &'a libparsec_platform_http_proxy::ProxyConfig,
+pub struct PkiScwsConfig {
+    pub parsec_addr: libparsec_types::ParsecAddr,
+    pub proxy: libparsec_platform_http_proxy::ProxyConfig,
 }
 
 pub enum AvailablePkiCertificate {
@@ -83,7 +83,7 @@ impl PkiSystem {
     pub async fn init(
         #[cfg_attr(not(feature = "test-with-testbed"), expect(unused))]
         config_dir: &std::path::Path,
-        scws_config: Option<PkiScwsConfig<'_>>,
+        scws_config: Option<PkiScwsConfig>,
     ) -> Result<Self, PkiSystemInitError> {
         #[cfg(feature = "test-with-testbed")]
         let platform = {

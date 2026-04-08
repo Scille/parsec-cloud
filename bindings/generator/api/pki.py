@@ -42,7 +42,7 @@ async def pki_init(
 
 async def pki_init_for_scws(
     config_dir: Ref[Path],
-    parsec_addr: Ref[ParsecAddr],
+    parsec_addr: ParsecAddr,
 ) -> Result[None, PkiSystemInitError]:
     raise NotImplementedError
 

@@ -41,7 +41,7 @@ pub async fn pki_init(config_dir: &std::path::Path) -> Result<(), PkiSystemInitE
 
 pub async fn pki_init_for_scws(
     config_dir: &std::path::Path,
-    parsec_addr: &libparsec_types::ParsecAddr,
+    parsec_addr: libparsec_types::ParsecAddr,
 ) -> Result<(), PkiSystemInitError> {
     {
         let guard = PKI_SYSTEM.lock().expect("Mutex is poisoned");
@@ -52,7 +52,7 @@ pub async fn pki_init_for_scws(
 
     let scws_config = PkiScwsConfig {
         parsec_addr,
-        proxy: &libparsec_client_connection::ProxyConfig::default(),
+        proxy: libparsec_client_connection::ProxyConfig::default(),
     };
     let pki_system = libparsec_platform_pki::PkiSystem::init(config_dir, Some(scws_config)).await?;
 
