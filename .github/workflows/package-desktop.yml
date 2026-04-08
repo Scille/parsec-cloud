@@ -417,7 +417,7 @@ jobs:
         run: |
           arch=$(uname -m)
           app_file_no_ext="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ matrix.cspn && '.cspn' || '' }}${{ (matrix.platform == 'windows' || matrix.platform == 'linux-gnu') && '.unsigned' || '' }}"
-          latest_file="latest-${{ matrix.os_alias }}-${arch}.yml"
+          latest_file="latest-${{ matrix.cspn && 'cspn-' || '' }}${{ matrix.os_alias }}-${arch}.yml"
           artifact_file=artifacts.yml
 
           EOF="EOF-$(dd if=/dev/urandom bs=15 count=1 status=none | base64)"

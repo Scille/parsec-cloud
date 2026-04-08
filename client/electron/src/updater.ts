@@ -95,16 +95,17 @@ class CustomGithubProvider extends GitHubProvider {
     const { machine } = require('node:os');
     const arch = process.env['TEST_UPDATER_ARCH'] || this.options.buildMachineArch || machine();
 
+    let platform: string = this.runtimeOptions.platform;
     switch (this.runtimeOptions.platform) {
       case 'linux':
-        return `-linux-${arch}`;
+        platform = 'linux';
       case 'darwin':
-        return `-mac-${arch}`;
+        platform = 'mac';
       case 'win32':
-        return `-win-${arch}`;
-      default:
-        return `-${this.runtimeOptions.platform}-${arch}`;
+        platform = 'win';
     }
+    const base = (process.env.PARSEC_APP_IS_CSPN === 'true') ? '-cspn' : '';
+    return `${base}-${platform}-${arch}`;
   }
 
   async getLatestVersion(): Promise<GithubUpdateInfo> {
