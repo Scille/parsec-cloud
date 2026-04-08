@@ -39,7 +39,14 @@ pub struct PkiScwsConfig {
 pub enum AvailablePkiCertificate {
     Valid {
         reference: X509CertificateReference,
-        friendly_name: String, // May be different that `X509CertificateDetails.name` TODO: give an example
+        /// The most human-readable name for the certificate.
+        ///
+        /// Typically defaults to `X509CertificateDetails.common_name`, but
+        /// some OS store certificate allow to give a custom name (since
+        /// COMMON_NAME is often not that friendly...).
+        ///
+        /// See: https://learn.microsoft.com/en-us/uwp/api/windows.security.cryptography.certificates.certificate.friendlyname
+        friendly_name: String, // May be different that `X509CertificateDetails.common_name` TODO: give an example
         details: UserX509CertificateDetails,
     },
     Invalid {

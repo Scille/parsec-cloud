@@ -1,5 +1,5 @@
 [package]
-name = "libparsec_platform_pki_2_electric_boogaloo"
+name = "libparsec_platform_pki"
 publish.workspace = true
 authors.workspace = true
 edition.workspace = true

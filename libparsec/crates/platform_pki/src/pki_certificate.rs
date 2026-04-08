@@ -39,20 +39,6 @@ pub struct X509ValidationPathOwned {
     pub root: X509TrustAnchor<'static>,
 }
 
-// #[derive(Debug, thiserror::Error)]
-// pub enum PkiCertificateEncryptError {
-//     #[error("Cannot acquire public key: {0}")]
-//     CannotAcquirePubkey(#[from] crate::x509::GetCertificatePublicKeyError),
-//     #[error("Cannot encrypt message: {0}")]
-//     CannotEncrypt(#[from] rsa::errors::Error),
-// }
-
-// #[derive(Debug, thiserror::Error)]
-// pub enum PkiCertificateVerifyError {
-//     #[error("Invalid signature: {0}")]
-//     InvalidSignature(webpki::Error),
-// }
-
 /// Represents a validated X509 end-entity certificate (i.e. not a CA/intermediate/root)
 /// present on the certificate store.
 ///
