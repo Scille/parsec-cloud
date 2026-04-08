@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-#[cfg_attr(not(target_os = "windows"), expect(unused))]
 use crate::EncryptMessageError;
 use libparsec_tests_lite::prelude::*;
 #[cfg_attr(not(target_os = "windows"), expect(unused))]
 use libparsec_types::prelude::*;
 
-use super::utils::{certificates, initialize_pki_system, InstalledCertificates};
+use super::utils::{certificates, InstalledCertificates};
 
 #[parsec_test]
 async fn encrypt_decrypt(certificates: &InstalledCertificates) {
@@ -20,7 +19,7 @@ async fn encrypt_decrypt(certificates: &InstalledCertificates) {
 
     #[cfg(target_os = "windows")] // TODO: decrypt only supported by Windows so far
     {
-        let pki = initialize_pki_system().await;
+        let pki = super::utils::initialize_pki_system().await;
         let cert_ref = certificates.alice_cert_ref();
         let store_cert = pki.find_certificate(&cert_ref).await.unwrap().unwrap();
         let key = store_cert.request_private_key().await.unwrap();
@@ -45,7 +44,7 @@ async fn decrypt(certificates: &InstalledCertificates) {
         "063df66b4e70db2f2a0d4ba4c4109f131676cf11da7925a50db9d77745e5a4f22e9e5b"
         "6e0254fcb7c210e0a8fb32"
     );
-    let pki = initialize_pki_system().await;
+    let pki = super::utils::initialize_pki_system().await;
     let cert_ref = certificates.alice_cert_ref();
     let cert = pki.find_certificate(&cert_ref).await.unwrap().unwrap();
     let key = cert.request_private_key().await.unwrap();
@@ -92,7 +91,7 @@ async fn decrypt_ko_cannot_decrypt(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
     let (algo, _, certificate_ref) = certificates.alice_encrypt_message(payload).await;
 
-    let pki = initialize_pki_system().await;
+    let pki = super::utils::initialize_pki_system().await;
     let cert = pki
         .find_certificate(&certificate_ref)
         .await

@@ -11,6 +11,8 @@ use libparsec_platform_pki::PkiSystem;
 use libparsec_types::X509CertificateHash;
 use sha2::Digest;
 
+use libparsec_platform_pki::AvailablePkiCertificate;
+
 #[derive(Debug, Parser)]
 struct Args {
     /// Hash of the certificate to get content of.
@@ -30,26 +32,33 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("Failed to initialize PKI system")?;
 
-    let cert = match args.certificate_hash {
-        Some(hash) => {
-            let cert_ref = hash.into();
-            pki.find_certificate(&cert_ref)
-                .await
-                .context("Failed to find certificate")?
-                .context("Certificate not found")?
-        }
+    let cert_ref = match args.certificate_hash {
+        Some(hash) => hash.into(),
         None => {
-            let certs = pki
+            let available_certificates = pki
                 .list_user_certificates()
                 .await
                 .context("Failed to list user certificates")?;
-            if certs.is_empty() {
+            if available_certificates.is_empty() {
                 return Err(anyhow::anyhow!("No user certificates found"));
             }
-            println!("Found {} user certificate(s)", certs.len());
-            certs.into_iter().next().unwrap()
+            println!("Found {} user certificate(s)", available_certificates.len());
+            available_certificates
+                .into_iter()
+                .filter_map(|c| match c {
+                    AvailablePkiCertificate::Valid { reference, .. } => Some(reference),
+                    AvailablePkiCertificate::Invalid { .. } => None,
+                })
+                .next()
+                .unwrap()
         }
     };
+
+    let cert = pki
+        .open_certificate(&cert_ref)
+        .await
+        .context("Failed to find certificate")?
+        .context("Certificate not found")?;
 
     let cert_ref = cert
         .to_reference()

@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
 
     let cert_ref = args.certificate_hash.into();
     let cert = pki
-        .find_certificate(&cert_ref)
+        .open_certificate(&cert_ref)
         .await
         .context("Failed to find certificate")?
         .context("Certificate not found")?;

@@ -148,6 +148,7 @@ pub(super) fn certificates() -> InstalledCertificates {
 /// Initialize the *real* PKI system (not the testbed)
 /// This requirest to have the test certificates properly installed in the system
 /// (tl;dr: run in a PowerShell: `& libparsec\crates\platform_pki\examples\import_testpki_windows.ps1`).
+#[cfg_attr(not(target_os = "windows"), expect(unused))]
 pub(super) async fn initialize_pki_system() -> PkiSystem {
     #[cfg(all(not(target_arch = "wasm32"), not(feature = "force-scws-on-native")))]
     {
@@ -161,7 +162,7 @@ pub(super) async fn initialize_pki_system() -> PkiSystem {
                 .parse::<X509CertificateHash>()
                 .unwrap(),
         );
-        match pki.find_certificate(&alice_ref).await {
+        match pki.open_certificate(&alice_ref).await {
             Ok(Some(_)) => {} // Found Alice's certificate, good!
             unexpected => {
                 #[cfg(windows)]

@@ -2,11 +2,16 @@
 
 from .addr import ParsecAddr
 from .common import (
+    DateTime,
+    EmailAddress,
     ErrorVariant,
     Handle,
     Path,
     Ref,
     Result,
+    Structure,
+    Variant,
+    VariantItemTuple,
     X509CertificateReference,
 )
 
@@ -42,13 +47,61 @@ async def pki_init_for_scws(
     raise NotImplementedError
 
 
-class PkiSystemFindCertificateError(ErrorVariant):
+class DistinguishedNameValue(Variant):
+    CommonName = VariantItemTuple(str)
+    EmailAddress = VariantItemTuple(str)
+
+
+class UserX509CertificateDetails(Structure):
+    common_name: str
+    subject: list[DistinguishedNameValue]
+    issuer: list[DistinguishedNameValue]
+    not_before: DateTime
+    not_after: DateTime
+    serial: bytes
+    emails: list[EmailAddress]
+    can_sign: bool
+    can_encrypt: bool
+
+
+class UserX509CertificateLoadError(Variant):
+    class InvalidCertificateDer: ...
+
+    class NoCommonName: ...
+
+    class InvalidTime: ...
+
+    class InvalidEmail: ...
+
+
+class AvailablePkiCertificate(Variant):
+    class Valid:
+        reference: X509CertificateReference
+        friendly_name: str
+        details: UserX509CertificateDetails
+
+    class Invalid:
+        reference: X509CertificateReference
+        invalid_reason: UserX509CertificateLoadError
+
+
+class PkiSystemListUserCertificateError(ErrorVariant):
+    class Internal: ...
+
+
+async def pki_list_user_certificates() -> Result[
+    list[AvailablePkiCertificate], PkiSystemListUserCertificateError
+]:
+    raise NotImplementedError
+
+
+class PkiSystemOpenCertificateError(ErrorVariant):
     class Internal: ...
 
 
 async def pki_open_certificate(
     cert_ref: Ref[X509CertificateReference],
-) -> Result[Handle | None, PkiSystemFindCertificateError]:
+) -> Result[Handle | None, PkiSystemOpenCertificateError]:
     raise NotImplementedError
 
 

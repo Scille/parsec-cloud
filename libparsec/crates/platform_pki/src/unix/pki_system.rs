@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use crate::{
-    PkiCertificate, PkiConfig, PkiScwsConfig, PkiSystemFindCertificateError, PkiSystemInitError,
-    PkiSystemListUserCertificateError,
+    AvailablePkiCertificate, PkiCertificate, PkiScwsConfig, PkiSystemInitError,
+    PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
 };
 use libparsec_types::prelude::*;
 
@@ -14,16 +14,16 @@ impl PlatformPkiSystem {
         Err(PkiSystemInitError::NotAvailable)
     }
 
-    pub async fn find_certificate(
+    pub async fn open_certificate(
         &self,
         _cert_ref: &X509CertificateReference,
-    ) -> Result<Option<PkiCertificate>, PkiSystemFindCertificateError> {
+    ) -> Result<Option<PkiCertificate>, PkiSystemOpenCertificateError> {
         unimplemented!("platform not supported")
     }
 
     pub async fn list_user_certificates(
         &self,
-    ) -> Result<Vec<PkiCertificate>, PkiSystemListUserCertificateError> {
+    ) -> Result<Vec<AvailablePkiCertificate>, PkiSystemListUserCertificateError> {
         unimplemented!("platform not supported");
     }
 }

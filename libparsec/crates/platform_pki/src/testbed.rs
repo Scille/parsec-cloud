@@ -18,11 +18,11 @@ use rustls_pki_types::CertificateDer;
 use sha2::Digest;
 
 use crate::{
-    PkiCertificate, PkiCertificateGetDerError, PkiCertificateGetValidationPathError,
-    PkiCertificateRequestPrivateKeyError, PkiCertificateToReferenceError, PkiPrivateKey,
-    PkiPrivateKeyDecryptError, PkiPrivateKeySignError, PkiSystemFindCertificateError,
-    PkiSystemListUserCertificateError, X509CertificateDer, X509TrustAnchor,
-    X509ValidationPathOwned,
+    AvailablePkiCertificate, PkiCertificate, PkiCertificateGetDerError,
+    PkiCertificateGetValidationPathError, PkiCertificateRequestPrivateKeyError,
+    PkiCertificateToReferenceError, PkiPrivateKey, PkiPrivateKeyDecryptError,
+    PkiPrivateKeySignError, PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
+    X509CertificateDer, X509TrustAnchor, X509ValidationPathOwned,
 };
 
 // Embedded test certificates (PEM format, converted to DER at init time)
@@ -140,10 +140,10 @@ impl TestbedPkiSystem {
         }
     }
 
-    pub async fn find_certificate(
+    pub async fn open_certificate(
         &self,
         cert_ref: &X509CertificateReference,
-    ) -> Result<Option<PkiCertificate>, PkiSystemFindCertificateError> {
+    ) -> Result<Option<PkiCertificate>, PkiSystemOpenCertificateError> {
         Ok(self
             .certificates
             .user_certs
@@ -159,17 +159,12 @@ impl TestbedPkiSystem {
 
     pub async fn list_user_certificates(
         &self,
-    ) -> Result<Vec<PkiCertificate>, PkiSystemListUserCertificateError> {
+    ) -> Result<Vec<AvailablePkiCertificate>, PkiSystemListUserCertificateError> {
         let certs = self
             .certificates
             .user_certs
             .iter()
-            .map(|entry| PkiCertificate {
-                platform: MaybeWithTestbed::WithTestbed(TestbedPkiCertificate {
-                    entry: entry.clone(),
-                    certificates: self.certificates.clone(),
-                }),
-            })
+            .map(|entry| AvailablePkiCertificate::load(&entry.cert_der))
             .collect();
         Ok(certs)
     }

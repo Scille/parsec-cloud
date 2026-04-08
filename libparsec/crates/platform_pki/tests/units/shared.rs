@@ -5,8 +5,8 @@ use libparsec_types::prelude::*;
 
 use super::utils::{certificates, InstalledCertificates};
 use crate::{
-    get_root_certificate_info_from_trustchain, verify_certificate,
-    GetRootCertificateInfoFromTrustchainError, RootCertificateInfo,
+    get_root_x509_certificate_info_from_trustchain, verify_certificate,
+    GetRootCertificateInfoFromTrustchainError, RootX509CertificateInfo,
 };
 
 #[rstest]
@@ -106,11 +106,11 @@ fn test_get_root_certificate_info_from_trustchain_ok(
     };
 
     p_assert_matches!(
-        get_root_certificate_info_from_trustchain(
+        get_root_x509_certificate_info_from_trustchain(
             &leaf,
             intermediates.iter().map(|cert| cert.as_ref()),
         ),
-        Ok(RootCertificateInfo {
+        Ok(RootX509CertificateInfo {
             common_name,
             subject,
         })
@@ -134,7 +134,7 @@ fn test_get_root_certificate_info_from_trustchain_ko_invalid_der(
         unknown => panic!("Unknown kind: {unknown}"),
     };
 
-    let outcome = get_root_certificate_info_from_trustchain(
+    let outcome = get_root_x509_certificate_info_from_trustchain(
         &leaf,
         intermediates.iter().map(|cert| cert.as_ref()),
     );
@@ -178,7 +178,7 @@ fn test_get_root_certificate_info_from_trustchain_ko_missing_root_common_name() 
     "
     );
     p_assert_matches!(
-        get_root_certificate_info_from_trustchain(
+        get_root_x509_certificate_info_from_trustchain(
             ALICE_ISSUER_WITHOUT_COMMON_NAME_DER,
             [].into_iter(),
         ),

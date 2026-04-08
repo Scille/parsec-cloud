@@ -58,6 +58,3 @@ pub fn show_certificate_selection_dialog_windows_only(
         unimplemented!("platform not supported")
     }
 }
-
-pub use webpki::KeyUsage;
-pub use x509::DistinguishedNameValue;

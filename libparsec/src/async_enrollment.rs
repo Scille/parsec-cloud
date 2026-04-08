@@ -99,7 +99,10 @@ mod strategy {
                         cmds,
                         requested_human_handle,
                         openbao_preferred_auth_id,
-                    }))
+                    })
+                        as Box<
+                            dyn libparsec_client::SubmitAsyncEnrollmentIdentityStrategy,
+                        >)
                 }
                 SubmitAsyncEnrollmentIdentityStrategy::PKI {
                     pki_certificate_handle,
@@ -149,7 +152,10 @@ mod strategy {
                         pki_private_key,
                         certificate_reference,
                         human_handle,
-                    }))
+                    })
+                        as Box<
+                            dyn libparsec_client::SubmitAsyncEnrollmentIdentityStrategy,
+                        >)
                 }
             }
         }

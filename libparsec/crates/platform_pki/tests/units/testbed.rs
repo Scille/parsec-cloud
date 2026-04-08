@@ -17,7 +17,7 @@ async fn testbed_find_certificate(env: &TestbedEnv) {
     let pki = init_pki(env).await;
 
     let alice_ref = certificates().alice_cert_ref();
-    let cert = pki.find_certificate(&alice_ref).await.unwrap();
+    let cert = pki.open_certificate(&alice_ref).await.unwrap();
     p_assert_matches!(cert, Some(_));
 
     // Non-existent certificate
@@ -26,7 +26,7 @@ async fn testbed_find_certificate(env: &TestbedEnv) {
             .parse::<crate::X509CertificateHash>()
             .unwrap(),
     );
-    let cert = pki.find_certificate(&dummy_ref).await.unwrap();
+    let cert = pki.open_certificate(&dummy_ref).await.unwrap();
     p_assert_matches!(cert, None);
 }
 
@@ -43,7 +43,7 @@ async fn testbed_encrypt_decrypt(env: &TestbedEnv) {
     let pki = init_pki(env).await;
 
     let alice_ref = certificates().alice_cert_ref();
-    let cert = pki.find_certificate(&alice_ref).await.unwrap().unwrap();
+    let cert = pki.open_certificate(&alice_ref).await.unwrap().unwrap();
 
     let payload = b"The cake is a lie!";
     let (algo, encrypted) = encrypt_message(cert.get_der().await.unwrap(), payload.as_ref())
@@ -61,7 +61,7 @@ async fn testbed_sign_verify(env: &TestbedEnv) {
     let pki = init_pki(env).await;
 
     let alice_ref = certificates().alice_cert_ref();
-    let cert = pki.find_certificate(&alice_ref).await.unwrap().unwrap();
+    let cert = pki.open_certificate(&alice_ref).await.unwrap().unwrap();
 
     // Alice key is 2048 bits, check payload can be larger than the key
     let payload = [b'x'; 257];
@@ -90,7 +90,7 @@ async fn testbed_get_validation_path(env: &TestbedEnv) {
     let pki = init_pki(env).await;
 
     let alice_ref = certificates().alice_cert_ref();
-    let cert = pki.find_certificate(&alice_ref).await.unwrap().unwrap();
+    let cert = pki.open_certificate(&alice_ref).await.unwrap().unwrap();
 
     let path = cert.get_validation_path().await.unwrap();
     // Alice's cert is directly signed by black_mesa root, so no intermediates
@@ -103,7 +103,7 @@ async fn testbed_to_reference(env: &TestbedEnv) {
     let pki = init_pki(env).await;
 
     let alice_ref = certificates().alice_cert_ref();
-    let cert = pki.find_certificate(&alice_ref).await.unwrap().unwrap();
+    let cert = pki.open_certificate(&alice_ref).await.unwrap().unwrap();
     let computed_ref = cert.to_reference().await.unwrap();
     assert_eq!(computed_ref.hash, alice_ref.hash);
 }

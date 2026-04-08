@@ -34,7 +34,7 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("Failed to initialize PKI system")?;
     let cert = pki
-        .find_certificate(&cert_ref)
+        .open_certificate(&cert_ref)
         .await
         .context("Failed to find certificate")?
         .context("Certificate not found")?;

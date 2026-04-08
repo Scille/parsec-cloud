@@ -27,7 +27,7 @@ pub async fn main() -> anyhow::Result<()> {
 
     let cert_ref: libparsec_types::X509CertificateReference = args.certificate_hash.into();
     let cert = pki
-        .find_certificate(&cert_ref)
+        .open_certificate(&cert_ref)
         .await
         .context("Failed to find certificate")?
         .context("Certificate not found")?;
@@ -69,12 +69,12 @@ fn display_x509_raw_name(raw_name: &[u8]) -> String {
 }
 
 fn display_x509_certificate_der(cert: &X509CertificateDer<'_>) -> anyhow::Result<String> {
-    let cert = libparsec_platform_pki::x509::X509CertificateInformation::load_der(cert.as_ref())
+    let details = libparsec_platform_pki::UserX509CertificateDetails::load(cert.as_ref())
         .context("Invalid certificate DER")?;
 
     Ok(format!(
         "subject={subject:?}, issuer={issuer:?}",
-        subject = cert.subject,
-        issuer = cert.issuer
+        subject = details.subject,
+        issuer = details.issuer
     ))
 }

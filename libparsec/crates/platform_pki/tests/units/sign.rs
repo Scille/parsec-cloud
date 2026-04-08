@@ -3,8 +3,7 @@
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{certificates, initialize_pki_system, InstalledCertificates};
-use crate::VerifyMessageError;
+use super::utils::{certificates, InstalledCertificates};
 
 #[cfg(target_os = "windows")]
 #[parsec_test]
@@ -12,7 +11,7 @@ async fn sign_and_verify(certificates: &InstalledCertificates) {
     // Alice key is 2048 bits (i.e. 256 bytes), so we check that the payload can be larger than the key.
     let payload = [b'x'; 257];
 
-    let pki = initialize_pki_system().await;
+    let pki = super::utils::initialize_pki_system().await;
     let cert_ref = certificates.alice_cert_ref();
     let cert = pki.find_certificate(&cert_ref).await.unwrap().unwrap();
     let key = cert.request_private_key().await.unwrap();
@@ -78,7 +77,7 @@ async fn verify(certificates: &InstalledCertificates) {
 async fn verify_message_ko_outdated_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
 
-    let pki = initialize_pki_system().await;
+    let pki = super::utils::initialize_pki_system().await;
 
     let cert = pki
         .find_certificate(&certificates.alice_cert_ref())
@@ -105,7 +104,7 @@ async fn verify_message_ko_outdated_certificate(certificates: &InstalledCertific
             &[validation_path.root],
             "9999-01-01T00:00:00Z".parse().unwrap(),
         ),
-        Err(VerifyMessageError::X509CertificateUntrusted(
+        Err(crate::VerifyMessageError::X509CertificateUntrusted(
             webpki::Error::CertExpired { .. }
         ))
     );
@@ -116,7 +115,7 @@ async fn verify_message_ko_outdated_certificate(certificates: &InstalledCertific
 async fn verify_message_ko_different_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
 
-    let pki = initialize_pki_system().await;
+    let pki = super::utils::initialize_pki_system().await;
 
     let cert = pki
         .find_certificate(&certificates.alice_cert_ref())
@@ -143,7 +142,7 @@ async fn verify_message_ko_different_certificate(certificates: &InstalledCertifi
             &[validation_path.root],
             DateTime::now(),
         ),
-        Err(VerifyMessageError::InvalidSignature(
+        Err(crate::VerifyMessageError::InvalidSignature(
             webpki::Error::InvalidSignatureForPublicKey
         ))
     );
@@ -154,7 +153,7 @@ async fn verify_message_ko_different_certificate(certificates: &InstalledCertifi
 async fn verify_message_ko_different_payload(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
 
-    let pki = initialize_pki_system().await;
+    let pki = super::utils::initialize_pki_system().await;
 
     let cert = pki
         .find_certificate(&certificates.alice_cert_ref())
@@ -180,7 +179,7 @@ async fn verify_message_ko_different_payload(certificates: &InstalledCertificate
             &[validation_path.root],
             DateTime::now(),
         ),
-        Err(VerifyMessageError::InvalidSignature(
+        Err(crate::VerifyMessageError::InvalidSignature(
             webpki::Error::InvalidSignatureForPublicKey
         ))
     );

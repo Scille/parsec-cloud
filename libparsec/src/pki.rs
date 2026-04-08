@@ -3,8 +3,10 @@
 use std::sync::Arc;
 
 pub use libparsec_platform_pki::{
-    PkiCertificateRequestPrivateKeyError, PkiScwsConfig, PkiSystemFindCertificateError,
-    PkiSystemInitError, PkiSystemListUserCertificateError, ShowCertificateSelectionDialogError,
+    x509::DistinguishedNameValue, AvailablePkiCertificate, PkiCertificateRequestPrivateKeyError,
+    PkiScwsConfig, PkiSystemInitError, PkiSystemListUserCertificateError,
+    PkiSystemOpenCertificateError, ShowCertificateSelectionDialogError, UserX509CertificateDetails,
+    UserX509CertificateLoadError,
 };
 use libparsec_types::prelude::*;
 
@@ -69,19 +71,20 @@ fn get_pki_system() -> anyhow::Result<std::sync::Arc<libparsec_platform_pki::Pki
         .cloned()
 }
 
-// TODO
-// pub async fn pki_list_user_certificates() -> Result<Vec<X509CertificateReference>, PkiSystemListUserCertificateError> {
-//     let pki_system = get_pki_system().map_err(libparsec_platform_pki::PkiSystemListUserCertificateError::Internal)?;
-//     pki_system.list_user_certificates().await.map
-// }
+pub async fn pki_list_user_certificates(
+) -> Result<Vec<AvailablePkiCertificate>, PkiSystemListUserCertificateError> {
+    let pki_system = get_pki_system()
+        .map_err(libparsec_platform_pki::PkiSystemListUserCertificateError::Internal)?;
+    pki_system.list_user_certificates().await
+}
 
 pub async fn pki_open_certificate(
     cert_ref: &X509CertificateReference,
-) -> Result<Option<Handle>, PkiSystemFindCertificateError> {
+) -> Result<Option<Handle>, PkiSystemOpenCertificateError> {
     let pki_system = get_pki_system()
-        .map_err(libparsec_platform_pki::PkiSystemFindCertificateError::Internal)?;
+        .map_err(libparsec_platform_pki::PkiSystemOpenCertificateError::Internal)?;
     pki_system
-        .find_certificate(cert_ref)
+        .open_certificate(cert_ref)
         .await?
         .map(|cert| {
             let handle = register_handle(HandleItem::PkiCertificate(Arc::new(cert)));
