@@ -150,6 +150,7 @@ async def test_anonymous_async_enrollment_info_ok(
                 submitter_redacted_user_certificate=mike_user_certificates.signed_redacted_certificate,
                 submitter_device_certificate=mike_device_certificates.signed_certificate,
                 submitter_redacted_device_certificate=mike_device_certificates.signed_redacted_certificate,
+                send_mail=True,
             )
             assert isinstance(outcome, tuple)
 
@@ -213,6 +214,7 @@ async def test_anonymous_async_enrollment_info_ok(
                 submitter_redacted_user_certificate=mike_user_certificates.signed_redacted_certificate,
                 submitter_device_certificate=mike_device_certificates.signed_certificate,
                 submitter_redacted_device_certificate=mike_device_certificates.signed_redacted_certificate,
+                send_mail=True,
             )
             assert isinstance(outcome, tuple)
 

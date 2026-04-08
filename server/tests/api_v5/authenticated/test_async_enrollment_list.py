@@ -146,6 +146,7 @@ async def test_authenticated_async_enrollment_list_ok(
         submitter_redacted_user_certificate=blacky_user_certificates.signed_redacted_certificate,
         submitter_device_certificate=blacky_device_certificates.signed_certificate,
         submitter_redacted_device_certificate=blacky_device_certificates.signed_redacted_certificate,
+        send_mail=True,
     )
     assert isinstance(outcome, tuple)
 

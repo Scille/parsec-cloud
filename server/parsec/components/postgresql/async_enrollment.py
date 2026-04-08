@@ -27,7 +27,9 @@ from parsec.components.async_enrollment import (
     AsyncEnrollmentSubmitBadOutcome,
     AsyncEnrollmentSubmitValidateBadOutcome,
     BaseAsyncEnrollmentComponent,
+    send_accepted_enrollment_email,
 )
+from parsec.components.email import SendEmailBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.async_enrollment_accept import async_enrollment_accept
 from parsec.components.postgresql.async_enrollment_cancel import async_enrollment_cancel
@@ -36,11 +38,13 @@ from parsec.components.postgresql.async_enrollment_list import async_enrollment_
 from parsec.components.postgresql.async_enrollment_reject import async_enrollment_reject
 from parsec.components.postgresql.async_enrollment_submit import async_enrollment_submit
 from parsec.components.postgresql.utils import no_transaction, transaction
+from parsec.config import BackendConfig
 
 
 class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
-    def __init__(self, pool: AsyncpgPool) -> None:
+    def __init__(self, pool: AsyncpgPool, config: BackendConfig) -> None:
         self.pool = pool
+        self._config = config
 
     @override
     @transaction
@@ -133,7 +137,7 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
 
     @override
     @transaction
-    async def accept(
+    async def _accept(
         self,
         conn: AsyncpgConnection,
         now: DateTime,
@@ -155,6 +159,7 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         | TimestampOutOfBallpark
     ):
         return await async_enrollment_accept(
+            self._config,
             conn,
             now,
             organization_id,
@@ -168,3 +173,63 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             submitter_device_certificate,
             submitter_redacted_device_certificate,
         )
+
+    @override
+    async def accept(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        enrollment_id: AsyncEnrollmentID,
+        accept_payload: bytes,
+        accept_payload_signature: AsyncEnrollmentPayloadSignature,
+        submitter_user_certificate: bytes,
+        submitter_redacted_user_certificate: bytes,
+        submitter_device_certificate: bytes,
+        submitter_redacted_device_certificate: bytes,
+        send_mail: bool,
+    ) -> (
+        tuple[UserCertificate, DeviceCertificate]
+        | AsyncEnrollmentAcceptValidateBadOutcome
+        | AsyncEnrollmentAcceptBadOutcome
+        | RequireGreaterTimestamp
+        | TimestampOutOfBallpark
+        | SendEmailBadOutcome
+    ):
+
+        outcome = await self._accept(
+            now,
+            organization_id,
+            author,
+            author_verify_key,
+            enrollment_id,
+            accept_payload,
+            accept_payload_signature,
+            submitter_user_certificate,
+            submitter_redacted_user_certificate,
+            submitter_device_certificate,
+            submitter_redacted_device_certificate,
+        )
+
+        match outcome:
+            case (UserCertificate() as user_cert, DeviceCertificate()):
+                pass
+            case err:
+                return err
+
+        # Note we send the email once the PostgreSQL transaction is done, since this
+        # operation can be long.
+        if send_mail:
+            mail_outcome = await send_accepted_enrollment_email(
+                self._config,
+                organization_id=organization_id,
+                claimer_email=user_cert.human_handle.email,
+            )
+            match mail_outcome:
+                case None:
+                    pass
+                case error:
+                    return error
+
+        return outcome
