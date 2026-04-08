@@ -6,13 +6,13 @@ use libparsec_types::prelude::*;
 use super::utils::{certificates, InstalledCertificates};
 use crate::{
     get_root_x509_certificate_info_from_trustchain, verify_certificate,
-    GetRootX509CertificateInfoFromTrustchainError, RootX509CertificateInfo,
+    GetRootX509CertificateInfoFromTrustchainError, RootX509CertificateInfo, X509EndCertificate,
 };
 
 #[rstest]
 fn test_verify_cert_ok(certificates: &InstalledCertificates) {
     let bob_der = certificates.bob_der_cert();
-    let bob_end_entity_cert = webpki::EndEntityCert::try_from(&bob_der).unwrap();
+    let bob_end_entity_cert = X509EndCertificate::try_from(&bob_der).unwrap();
 
     verify_certificate(
         &bob_end_entity_cert,
@@ -26,7 +26,7 @@ fn test_verify_cert_ok(certificates: &InstalledCertificates) {
 #[rstest]
 fn test_verify_unknown_issuer(certificates: &InstalledCertificates) {
     let bob_der = certificates.bob_der_cert();
-    let bob_end_entity_cert = webpki::EndEntityCert::try_from(&bob_der).unwrap();
+    let bob_end_entity_cert = X509EndCertificate::try_from(&bob_der).unwrap();
 
     let err = verify_certificate(
         &bob_end_entity_cert,
@@ -44,7 +44,7 @@ fn test_verify_unknown_issuer(certificates: &InstalledCertificates) {
 fn test_verify_with_intermediate(certificates: &InstalledCertificates) {
     let glados_dev_team_der = certificates.glados_dev_team_der_cert();
     let mallory_sign_der = certificates.mallory_sign_der_cert();
-    let mallory_sign_end_entity_cert = webpki::EndEntityCert::try_from(&mallory_sign_der).unwrap();
+    let mallory_sign_end_entity_cert = X509EndCertificate::try_from(&mallory_sign_der).unwrap();
 
     verify_certificate(
         &mallory_sign_end_entity_cert,

@@ -76,7 +76,7 @@ impl PlatformPkiCertificate {
             .await
             .context("Cannot get certificate content")
             .map_err(crate::PkiCertificateGetValidationPathError::Internal)?;
-        let end_cert = webpki::EndEntityCert::try_from(&leaf)
+        let end_cert = crate::X509EndCertificate::try_from(&leaf)
             .context("Invalid leaf certificate")
             .map_err(crate::PkiCertificateGetValidationPathError::Internal)?;
         let now = DateTime::now();

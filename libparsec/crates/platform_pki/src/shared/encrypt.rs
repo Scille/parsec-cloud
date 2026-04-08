@@ -1,11 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::X509CertificateDer;
-
-use bytes::Bytes;
 pub use webpki::EndEntityCert as X509EndCertificate;
 
 use libparsec_types::prelude::*;
+
+use crate::X509CertificateDer;
 
 #[derive(Debug, thiserror::Error)]
 pub enum EncryptMessageError {

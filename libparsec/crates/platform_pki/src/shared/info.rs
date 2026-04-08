@@ -1,12 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use std::str::FromStr;
-
-use crate::X509CertificateDer;
-
 pub use webpki::EndEntityCert as X509EndCertificate;
 
 use libparsec_types::prelude::*;
+
+use crate::X509CertificateDer;
 
 #[derive(Debug)]
 pub struct RootX509CertificateInfo {

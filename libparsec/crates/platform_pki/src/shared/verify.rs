@@ -1,13 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::X509CertificateDer;
-
-pub use webpki::EndEntityCert as X509EndCertificate;
-
-use crate::X509TrustAnchor;
+pub(crate) use webpki::EndEntityCert as X509EndCertificate;
 use webpki::KeyUsage;
 
 use libparsec_types::prelude::*;
+
+use crate::{X509CertificateDer, X509TrustAnchor};
 
 pub(crate) fn verify_certificate<'der>(
     certificate: &'der X509EndCertificate<'der>,

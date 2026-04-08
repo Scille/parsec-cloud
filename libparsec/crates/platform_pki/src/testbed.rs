@@ -22,7 +22,7 @@ use crate::{
     PkiCertificateGetValidationPathError, PkiCertificateRequestPrivateKeyError,
     PkiCertificateToReferenceError, PkiPrivateKey, PkiPrivateKeyDecryptError,
     PkiPrivateKeySignError, PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
-    X509CertificateDer, X509TrustAnchor, X509ValidationPathOwned,
+    X509CertificateDer, X509EndCertificate, X509TrustAnchor, X509ValidationPathOwned,
 };
 
 // Embedded test certificates (PEM format, converted to DER at init time)
@@ -204,7 +204,7 @@ impl TestbedPkiCertificate {
     pub async fn get_validation_path(
         &self,
     ) -> Result<X509ValidationPathOwned, PkiCertificateGetValidationPathError> {
-        let cert = webpki::EndEntityCert::try_from(&self.entry.cert_der).unwrap();
+        let cert = X509EndCertificate::try_from(&self.entry.cert_der).unwrap();
 
         let intermediate_refs: Vec<X509CertificateDer<'_>> = self
             .certificates
