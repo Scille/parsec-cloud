@@ -34,6 +34,7 @@
       @close-requested="$emit('closeRequested', false)"
       @go-back-requested="onGoBackRequested"
       :server-config="serverConfig"
+      :server-addr="serverAddr"
       :hide-back-button="bootstrapLink !== undefined"
     />
     <organization-summary-page
@@ -80,14 +81,15 @@ import {
   AvailableDevice,
   bootstrapOrganization,
   BootstrapOrganizationErrorTag,
+  buildParsecAddr,
   constructSaveStrategy,
   DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
-  forgeServerAddr,
   getServerConfig,
   isWeb,
   OrganizationID,
   ParsecAccount,
+  ParsecAddr,
   ParsedParsecAddrTag,
   parseParsecAddr,
   PrimaryProtectionStrategy,
@@ -145,18 +147,19 @@ const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const sequesterKey = ref<string | undefined>(undefined);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
+const serverAddr = ref<ParsecAddr>('');
 
 onMounted(async () => {
-  let server = Env.getSaasServers()[0] ?? '';
+  serverAddr.value = Env.getSaasServers()[0] ?? '';
   if (props.bootstrapLink) {
     const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
-      server = await forgeServerAddr(result.value);
+      serverAddr.value = await buildParsecAddr(result.value);
     }
   }
-  if (server) {
-    const configResult = await getServerConfig(server);
+  if (serverAddr.value) {
+    const configResult = await getServerConfig(serverAddr.value);
     if (configResult.ok) {
       serverConfig.value = configResult.value;
     }

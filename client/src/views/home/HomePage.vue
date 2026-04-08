@@ -529,8 +529,8 @@ async function handleAsyncEnrollment(link: string): Promise<void> {
     return;
   }
 
-  const pkiAvailable = await isSmartcardAvailable();
   const addr = await buildParsecAddr(addrResult.value);
+  const pkiAvailable = await isSmartcardAvailable(addr);
   const serverConfigResult = await getServerConfig(addr);
 
   // We don't have PKI and openbao is not configured on the server, can't do anything
@@ -638,7 +638,15 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
   const serverAddr = await buildParsecAddr(parsedAddrResult.value);
 
   if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI) {
-    if (!(await isSmartcardAvailable())) {
+    const addrResult = await parseParsecAddr(request.enrollment.addr);
+
+    if (!addrResult.ok) {
+      return;
+    }
+
+    const addr = await buildParsecAddr(addrResult.value);
+
+    if (!(await isSmartcardAvailable(addr))) {
       // Should never happen.
       informationManager.present(
         new Information({

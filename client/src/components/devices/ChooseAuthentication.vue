@@ -169,6 +169,7 @@ import {
   DevicePrimaryProtectionStrategyTag,
   DeviceSaveStrategy,
   OpenBaoAuthConfigTag,
+  ParsecAddr,
   PrimaryProtectionStrategy,
   ServerConfig,
   X509CertificateReference,
@@ -200,6 +201,7 @@ const props = defineProps<{
   showTitle?: boolean;
   activeAuth?: AvailableDeviceTypeTag;
   serverConfig?: ServerConfig;
+  serverAddr: ParsecAddr;
 }>();
 
 defineExpose({
@@ -214,7 +216,7 @@ defineEmits<{
 
 onMounted(async () => {
   keyringAvailable.value = props.activeAuth === AvailableDeviceTypeTag.Keyring ? true : await isKeyringAvailable();
-  smartcardAvailable.value = await isSmartcardAvailable();
+  smartcardAvailable.value = await isSmartcardAvailable(props.serverAddr);
 });
 
 async function onChange(_value: any): Promise<void> {

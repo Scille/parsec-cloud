@@ -13,6 +13,7 @@
       ref="chooseAuthentication"
       class="authentication-content"
       :server-config="serverConfig"
+      :server-addr="serverAddr"
       @field-update="onFieldUpdated"
     />
 
@@ -56,7 +57,7 @@
 <script setup lang="ts">
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
-import { DeviceSaveStrategy, ServerConfig } from '@/parsec';
+import { DeviceSaveStrategy, ParsecAddr, ServerConfig } from '@/parsec';
 import { IonButton, IonFooter, IonIcon, IonPage } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
 import { asyncComputed } from 'megashark-lib';
@@ -66,6 +67,7 @@ defineProps<{
   hideBackButton?: boolean;
   isLastStep?: boolean;
   serverConfig?: ServerConfig;
+  serverAddr: ParsecAddr;
 }>();
 
 const emits = defineEmits<{

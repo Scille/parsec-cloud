@@ -219,6 +219,8 @@ export type {
   ParsecAddr,
   ParsecAsyncEnrollmentAddr,
   EntryStat as ParsecEntryStat,
+  ParsecInvitationAddr,
+  ParsecInvitationRedirectionURL,
   ParsecTOTPResetAddr,
   ParsecWorkspacePathAddr,
   ParsedParsecAddr,

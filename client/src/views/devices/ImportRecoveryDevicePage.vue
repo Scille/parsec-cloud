@@ -105,7 +105,7 @@
   </div>
   <!-- step 2: new authentication -->
   <div
-    v-else-if="state === ImportDevicePageState.Authentication"
+    v-else-if="state === ImportDevicePageState.Authentication && newDevice"
     class="recovery-content password-input"
     id="recovery-auth-step"
   >
@@ -119,6 +119,7 @@
       <choose-authentication
         ref="chooseAuth"
         :server-config="serverConfig"
+        :server-addr="newDevice.serverAddr"
       />
       <ion-button
         id="validate-password-btn"
@@ -196,7 +197,7 @@ const informationManager: InformationManager = injectionProvider.getDefault().in
 const serverConfig = ref<ServerConfig | undefined>(undefined);
 let tmpDeviceProtection: DevicePrimaryProtectionStrategy | undefined;
 let accessStrategy: DeviceAccessStrategy | undefined;
-let newDevice: AvailableDevice | undefined;
+const newDevice = ref<AvailableDevice | undefined>(undefined);
 
 const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
   if (!chooseAuthRef.value) {
@@ -256,8 +257,8 @@ async function goToPasswordChange(): Promise<void> {
     constructSaveStrategy(tmpDeviceProtection),
   );
   if (result.ok) {
-    newDevice = result.value;
-    const serverConfigResult = await getServerConfig(newDevice.serverAddr);
+    newDevice.value = result.value;
+    const serverConfigResult = await getServerConfig(newDevice.value.serverAddr);
     if (serverConfigResult.ok) {
       serverConfig.value = serverConfigResult.value;
     }
@@ -284,7 +285,7 @@ async function finishRecovery(): Promise<void> {
   if (!(await chooseAuthRef.value!.areFieldsCorrect())) {
     return;
   }
-  if (!newDevice || !tmpDeviceProtection) {
+  if (!newDevice.value || !tmpDeviceProtection) {
     window.electronAPI.log('warn', 'Should have a device and a tmp primary protection at this stage');
     return;
   }
@@ -304,11 +305,11 @@ async function finishRecovery(): Promise<void> {
   if (!saveStrategy) {
     return;
   }
-  const access = constructAccessStrategy(newDevice, tmpDeviceProtection);
+  const access = constructAccessStrategy(newDevice.value, tmpDeviceProtection);
   const result = await updateDeviceChangeAuthentication(access, saveStrategy);
   if (result.ok) {
-    newDevice = result.value;
-    accessStrategy = constructAccessStrategy(newDevice, saveStrategy.primaryProtection, saveStrategy.totpProtection);
+    newDevice.value = result.value;
+    accessStrategy = constructAccessStrategy(newDevice.value, saveStrategy.primaryProtection, saveStrategy.totpProtection);
     state.value = ImportDevicePageState.Done;
   } else {
     const notificationInfo = { message: 'ImportRecoveryDevicePage.errors.internalErrorMessage', level: InformationLevel.Error };
@@ -318,10 +319,10 @@ async function finishRecovery(): Promise<void> {
 }
 
 async function onLoginClick(): Promise<void> {
-  if (!newDevice || !accessStrategy) {
+  if (!newDevice.value || !accessStrategy) {
     return;
   }
-  emits('organizationSelected', newDevice, accessStrategy);
+  emits('organizationSelected', newDevice.value, accessStrategy);
 }
 </script>
 

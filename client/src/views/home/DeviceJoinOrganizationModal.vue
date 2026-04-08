@@ -106,6 +106,7 @@
           <choose-authentication
             ref="authChoice"
             :server-config="serverConfig"
+            :server-addr="serverAddr"
           />
         </div>
         <!-- part 5 (finish the process)-->
@@ -153,20 +154,20 @@ import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepMod
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import {
+  buildParsecAddr,
   CancelledGreetingAttemptReason,
   ClaimerRetrieveInfoErrorTag,
   ClaimInProgressErrorTag,
   constructAccessStrategy,
   DeviceClaim,
   DeviceSaveStrategy,
-  forgeServerAddr,
   getServerConfig,
   OrganizationID,
   ParsedParsecAddrTag,
   parseParsecAddr,
   ServerConfig,
 } from '@/parsec';
-import { ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
+import { ParsecAddr, ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
@@ -201,6 +202,7 @@ const claimer = ref(new DeviceClaim());
 const authChoiceRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>('authChoice');
 const cancelled = ref(false);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
+const serverAddr = ref<ParsecAddr>('');
 
 const props = defineProps<{
   invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
@@ -476,7 +478,8 @@ onMounted(async () => {
       return;
     }
     organizationName.value = addrResult.value.organizationId;
-    const configResult = await getServerConfig(await forgeServerAddr(addrResult.value));
+    serverAddr.value = await buildParsecAddr(addrResult.value);
+    const configResult = await getServerConfig(serverAddr.value);
     if (configResult.ok) {
       serverConfig.value = configResult.value;
     }

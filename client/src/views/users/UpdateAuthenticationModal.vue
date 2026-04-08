@@ -68,6 +68,7 @@
             ref="chooseAuth"
             :active-auth="currentDevice.ty.tag"
             :server-config="serverConfig"
+            :server-addr="currentDevice.serverAddr"
           />
         </div>
       </div>

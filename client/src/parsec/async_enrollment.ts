@@ -28,7 +28,6 @@ import {
   PendingAsyncEnrollmentInfoTag,
   Result,
   ShowCertificateSelectionDialogError,
-  ShowCertificateSelectionDialogErrorTag,
   SubmitAsyncEnrollmentError,
   SubmitAsyncEnrollmentIdentityStrategy,
   SubmitAsyncEnrollmentIdentityStrategyOpenBao,
@@ -164,9 +163,6 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
   },
 
   async selectCertificate(): Promise<Result<X509CertificateReference | undefined, ShowCertificateSelectionDialogError>> {
-    if (!(await isSmartcardAvailable())) {
-      return { ok: false, error: { tag: ShowCertificateSelectionDialogErrorTag.CannotOpenStore, error: 'smartcard not available' } };
-    }
     const result = await libparsec.showCertificateSelectionDialogWindowsOnly();
     if (result.ok && result.value === null) {
       return { ok: true, value: undefined };
@@ -174,8 +170,12 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
     return result as Result<X509CertificateReference | undefined, ShowCertificateSelectionDialogError>;
   },
 
-  async isSmartcardAvailable(): Promise<boolean> {
-    return await libparsec.isPkiAvailable();
+  async isSmartcardAvailable(addr: ParsecAddr): Promise<boolean> {
+    const result = await libparsec.isPkiAvailable(addr, window.getConfigDir());
+    if (result.ok) {
+      return result.value;
+    }
+    return false;
   },
 };
 
@@ -376,7 +376,7 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
     };
   },
 
-  async isSmartcardAvailable(): Promise<boolean> {
+  async isSmartcardAvailable(_addr: ParsecAddr): Promise<boolean> {
     return true;
   },
 };
