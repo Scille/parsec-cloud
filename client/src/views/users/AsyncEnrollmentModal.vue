@@ -149,6 +149,7 @@ import { userNameValidator } from '@/common/validators';
 import { ChooseCertificate } from '@/components/devices';
 import ConnectSso from '@/components/devices/ConnectSso.vue';
 import {
+  buildParsecAddr,
   getOpenBaoEmails,
   makeRequestOpenBaoIdentityStrategy,
   makeRequestPkiIdentityStrategy,
@@ -269,7 +270,8 @@ async function onNextButtonClicked(): Promise<boolean> {
       window.electronAPI.log('error', 'Invalid state for async enrollment with PKI');
       return false;
     }
-    const result = await requestJoinOrganization(props.link, makeRequestPkiIdentityStrategy(toRaw(certificate.value)));
+    const serverAddr = await buildParsecAddr(props.addr);
+    const result = await requestJoinOrganization(props.link, makeRequestPkiIdentityStrategy(serverAddr, toRaw(certificate.value)));
     if (!result.ok) {
       switch (result.error.tag) {
         case SubmitAsyncEnrollmentErrorTag.EmailAlreadyEnrolled: {

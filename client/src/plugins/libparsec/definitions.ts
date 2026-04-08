@@ -594,6 +594,8 @@ export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
     tag: AcceptFinalizeAsyncEnrollmentIdentityStrategyTag.PKI
+    configDir: Path
+    serverAddr: ParsecAddr
     certificateReference: X509CertificateReference
 }
 export type AcceptFinalizeAsyncEnrollmentIdentityStrategy =
@@ -4345,6 +4347,8 @@ export interface SubmitAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface SubmitAsyncEnrollmentIdentityStrategyPKI {
     tag: SubmitAsyncEnrollmentIdentityStrategyTag.PKI
+    configDir: Path
+    serverAddr: ParsecAddr
     certificateReference: X509CertificateReference
 }
 export type SubmitAsyncEnrollmentIdentityStrategy =

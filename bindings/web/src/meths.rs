@@ -5773,12 +5773,42 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(
             )
         }
         "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
+            let config_dir = {
+                let js_val = Reflect::get(&obj, &"configDir".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let server_addr = {
+                let js_val = Reflect::get(&obj, &"serverAddr".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
             let certificate_reference = {
                 let js_val = Reflect::get(&obj, &"certificateReference".into())?;
                 struct_x509_certificate_reference_js_to_rs(js_val)?
             };
             Ok(
                 libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
+                    config_dir,
+                    server_addr,
                     certificate_reference,
                 },
             )
@@ -5830,6 +5860,8 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
         }
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
+            config_dir,
+            server_addr,
             certificate_reference,
             ..
         } => {
@@ -5838,6 +5870,31 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI".into(),
             )?;
+            let js_config_dir = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(config_dir) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
+            let js_server_addr = JsValue::from_str({
+                let custom_to_rs_string =
+                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(server_addr) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
             let js_certificate_reference =
                 struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
             Reflect::set(
@@ -17781,11 +17838,41 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs(
             })
         }
         "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
+            let config_dir = {
+                let js_val = Reflect::get(&obj, &"configDir".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
+            let server_addr = {
+                let js_val = Reflect::get(&obj, &"serverAddr".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?
+            };
             let certificate_reference = {
                 let js_val = Reflect::get(&obj, &"certificateReference".into())?;
                 struct_x509_certificate_reference_js_to_rs(js_val)?
             };
             Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
+                config_dir,
+                server_addr,
                 certificate_reference,
             })
         }
@@ -17851,6 +17938,8 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
             )?;
         }
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
+            config_dir,
+            server_addr,
             certificate_reference,
             ..
         } => {
@@ -17859,6 +17948,31 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"SubmitAsyncEnrollmentIdentityStrategyPKI".into(),
             )?;
+            let js_config_dir = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(config_dir) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
+            let js_server_addr = JsValue::from_str({
+                let custom_to_rs_string =
+                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(server_addr) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
             let js_certificate_reference =
                 struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
             Reflect::set(
