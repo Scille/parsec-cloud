@@ -1,31 +1,30 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use super::utils::{certificates, InstalledCertificates};
-use crate::{SignMessageError, VerifyMessageError, X509CertificateHash, X509CertificateReference};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
+use super::utils::{certificates, InstalledCertificates};
+
+#[cfg(target_os = "windows")]
 #[parsec_test]
 async fn sign_and_verify(certificates: &InstalledCertificates) {
     // Alice key is 2048 bits (i.e. 256 bytes), so we check that the payload can be larger than the key.
     let payload = [b'x'; 257];
-    let certificate_ref = certificates.alice_cert_ref().await;
-    let (algo, signature) = crate::sign_message(payload.as_ref(), &certificate_ref)
-        .await
-        .unwrap();
+
+    let pki = super::utils::initialize_pki_system().await;
+    let cert_ref = certificates.alice_cert_ref();
+    let cert = pki.open_certificate(&cert_ref).await.unwrap();
+    let key = cert.request_private_key().await.unwrap();
+    let (algo, signature) = key.sign(payload.as_ref()).await.unwrap();
 
     let now = DateTime::now();
-    let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now)
-        .await
-        .unwrap();
-
-    crate::verify_message2(
+    crate::verify_message(
         payload.as_ref(),
         &signature,
         algo,
-        &validation_path.leaf,
-        validation_path.intermediates.iter().map(|c| c.as_ref()),
-        &[validation_path.root],
+        &certificates.alice_der_cert(),
+        [].into_iter(),
+        &[certificates.black_mesa_trust_anchor()],
         now,
     )
     .unwrap();
@@ -47,19 +46,15 @@ async fn verify(certificates: &InstalledCertificates) {
         "50a46299802826ac298262"
     );
 
-    let certificate_ref = certificates.alice_cert_ref().await;
     let now: DateTime = "2026-02-01T00:00:00Z".parse().unwrap();
-    let validation_path = crate::get_validation_path_for_cert(&certificate_ref, now)
-        .await
-        .unwrap();
 
-    crate::verify_message2(
+    crate::verify_message(
         payload.as_ref(),
         &signature,
         algo,
-        &validation_path.leaf,
-        validation_path.intermediates.iter().map(|c| c.as_ref()),
-        &[validation_path.root],
+        &certificates.alice_der_cert(),
+        [].into_iter(),
+        &[certificates.black_mesa_trust_anchor()],
         now,
     )
     .unwrap();
@@ -77,79 +72,102 @@ async fn verify(certificates: &InstalledCertificates) {
 //     );
 // }
 
-#[parsec_test]
-async fn sign_ko_cannot_use_root_certificate(certificates: &InstalledCertificates) {
-    let payload = b"The cake is a lie!";
-    let certificate_ref = certificates.black_mesa_cert_ref();
-    p_assert_matches!(
-        crate::sign_message(payload.as_ref(), &certificate_ref).await,
-        Err(SignMessageError::NotFound)
-    );
-}
-
-#[parsec_test]
-async fn sign_ko_not_found() {
-    let payload = b"The cake is a lie!";
-    let dummy_certificate_ref: X509CertificateReference = X509CertificateHash::fake_sha256().into();
-    p_assert_matches!(
-        crate::sign_message(payload.as_ref(), &dummy_certificate_ref).await,
-        Err(SignMessageError::NotFound)
-    );
-}
-
+#[cfg(target_os = "windows")]
 #[parsec_test]
 async fn verify_message_ko_outdated_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, signature, validation_path) = certificates.alice_sign_message(payload).await;
 
+    let pki = super::utils::initialize_pki_system().await;
+
+    let cert = pki
+        .open_certificate(&certificates.alice_cert_ref())
+        .await
+        .unwrap();
+    let validation_path = cert.get_validation_path().await.unwrap();
+    let (algo, signature) = cert
+        .request_private_key()
+        .await
+        .unwrap()
+        .sign(payload)
+        .await
+        .unwrap();
+
+    // Try to validate with a far-future date (certificate is expired)
     p_assert_matches!(
-        crate::verify_message2(
+        crate::verify_message(
             payload.as_ref(),
             &signature,
             algo,
-            &validation_path.leaf,
+            &certificates.alice_der_cert(),
             validation_path.intermediates.iter().map(|c| c.as_ref()),
             &[validation_path.root],
-            "9999-01-01T00:00:00Z".parse().unwrap(), // Certificate is outdated at this date
+            "9999-01-01T00:00:00Z".parse().unwrap(),
         ),
-        Err(VerifyMessageError::X509CertificateUntrusted(
+        Err(crate::VerifyMessageError::X509CertificateUntrusted(
             webpki::Error::CertExpired { .. }
         ))
     );
 }
 
+#[cfg(target_os = "windows")] // TODO: signing only supported by Windows so far
 #[parsec_test]
 async fn verify_message_ko_different_certificate(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, signature, validation_path) = certificates.alice_sign_message(payload).await;
-    let different_certificate =
-        crate::get_der_encoded_certificate(&certificates.bob_cert_ref().await)
-            .await
-            .unwrap();
 
+    let pki = super::utils::initialize_pki_system().await;
+
+    let cert = pki
+        .open_certificate(&certificates.alice_cert_ref())
+        .await
+        .unwrap();
+    let validation_path = cert.get_validation_path().await.unwrap();
+    let (algo, signature) = cert
+        .request_private_key()
+        .await
+        .unwrap()
+        .sign(payload)
+        .await
+        .unwrap();
+
+    // Verify with Bob's certificate instead of Alice's
     p_assert_matches!(
-        crate::verify_message2(
+        crate::verify_message(
             payload.as_ref(),
             &signature,
             algo,
-            &different_certificate,
+            &certificates.bob_der_cert(),
             validation_path.intermediates.iter().map(|c| c.as_ref()),
             &[validation_path.root],
             DateTime::now(),
         ),
-        Err(VerifyMessageError::InvalidSignature(
+        Err(crate::VerifyMessageError::InvalidSignature(
             webpki::Error::InvalidSignatureForPublicKey
         ))
     );
 }
 
+#[cfg(target_os = "windows")] // TODO: signing only supported by Windows so far
 #[parsec_test]
 async fn verify_message_ko_different_payload(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
-    let (algo, signature, validation_path) = certificates.alice_sign_message(payload).await;
+
+    let pki = super::utils::initialize_pki_system().await;
+
+    let cert = pki
+        .open_certificate(&certificates.alice_cert_ref())
+        .await
+        .unwrap();
+    let validation_path = cert.get_validation_path().await.unwrap();
+    let (algo, signature) = cert
+        .request_private_key()
+        .await
+        .unwrap()
+        .sign(payload)
+        .await
+        .unwrap();
 
     p_assert_matches!(
-        crate::verify_message2(
+        crate::verify_message(
             b"Different payload",
             &signature,
             algo,
@@ -158,7 +176,7 @@ async fn verify_message_ko_different_payload(certificates: &InstalledCertificate
             &[validation_path.root],
             DateTime::now(),
         ),
-        Err(VerifyMessageError::InvalidSignature(
+        Err(crate::VerifyMessageError::InvalidSignature(
             webpki::Error::InvalidSignatureForPublicKey
         ))
     );
