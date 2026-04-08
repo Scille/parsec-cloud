@@ -20,8 +20,13 @@ pub(crate) fn verify_certificate<'der>(
         now.duration_since_unix_epoch()
             .expect("current time always > EPOCH"),
     );
+    static SUPPORTED_ALGS: &[&dyn rustls_pki_types::SignatureVerificationAlgorithm] = &[
+        &RsaPssSha256WebpkiAlgorithmSupport,
+        &RsaPkcs1Sha256WebpkiAlgorithmSupport,
+    ];
+
     certificate.verify_for_usage(
-        webpki::ALL_VERIFICATION_ALGS,
+        SUPPORTED_ALGS,
         trusted_roots,
         intermediate_certs,
         time,
@@ -71,11 +76,77 @@ pub fn verify_message<'a>(
     // 2) Verify the message signature
 
     let verifier = match algorithm {
-        PkiSignatureAlgorithm::RsassaPssSha256 => webpki::ring::RSA_PSS_2048_8192_SHA256_LEGACY_KEY,
+        PkiSignatureAlgorithm::RsassaPssSha256 => RsaPssSha256WebpkiAlgorithmSupport,
     };
     certificate
-        .verify_signature(verifier, message, signature)
+        .verify_signature(&verifier, message, signature)
         .map_err(VerifyMessageError::InvalidSignature)?;
 
     Ok(())
+}
+
+#[derive(Debug)]
+struct RsaPssSha256WebpkiAlgorithmSupport;
+
+impl rustls_pki_types::SignatureVerificationAlgorithm for RsaPssSha256WebpkiAlgorithmSupport {
+    fn verify_signature(
+        &self,
+        public_key: &[u8],
+        message: &[u8],
+        signature: &[u8],
+    ) -> Result<(), rustls_pki_types::InvalidSignature> {
+        use rsa::{pkcs1::DecodeRsaPublicKey, signature::Verifier};
+
+        let public_key = rsa::RsaPublicKey::from_pkcs1_der(public_key)
+            .map(rsa::pss::VerifyingKey::<rsa::sha2::Sha256>::from)
+            .map_err(|_| rustls_pki_types::InvalidSignature)?;
+
+        let signature = rsa::pss::Signature::try_from(signature)
+            .map_err(|_| rustls_pki_types::InvalidSignature)?;
+
+        public_key
+            .verify(message, &signature)
+            .map_err(|_| rustls_pki_types::InvalidSignature)
+    }
+
+    fn public_key_alg_id(&self) -> rustls_pki_types::AlgorithmIdentifier {
+        rustls_pki_types::alg_id::RSA_ENCRYPTION
+    }
+
+    fn signature_alg_id(&self) -> rustls_pki_types::AlgorithmIdentifier {
+        rustls_pki_types::alg_id::RSA_PSS_SHA256
+    }
+}
+
+#[derive(Debug)]
+struct RsaPkcs1Sha256WebpkiAlgorithmSupport;
+
+impl rustls_pki_types::SignatureVerificationAlgorithm for RsaPkcs1Sha256WebpkiAlgorithmSupport {
+    fn verify_signature(
+        &self,
+        public_key: &[u8],
+        message: &[u8],
+        signature: &[u8],
+    ) -> Result<(), rustls_pki_types::InvalidSignature> {
+        use rsa::{pkcs1::DecodeRsaPublicKey, pkcs1v15, signature::Verifier};
+
+        let public_key = rsa::RsaPublicKey::from_pkcs1_der(public_key)
+            .map(pkcs1v15::VerifyingKey::<rsa::sha2::Sha256>::new_with_prefix)
+            .map_err(|_| rustls_pki_types::InvalidSignature)?;
+
+        let signature = pkcs1v15::Signature::try_from(signature)
+            .map_err(|_| rustls_pki_types::InvalidSignature)?;
+
+        public_key
+            .verify(message, &signature)
+            .map_err(|_| rustls_pki_types::InvalidSignature)
+    }
+
+    fn public_key_alg_id(&self) -> rustls_pki_types::AlgorithmIdentifier {
+        rustls_pki_types::alg_id::RSA_ENCRYPTION
+    }
+
+    fn signature_alg_id(&self) -> rustls_pki_types::AlgorithmIdentifier {
+        rustls_pki_types::alg_id::RSA_PKCS1_SHA256
+    }
 }

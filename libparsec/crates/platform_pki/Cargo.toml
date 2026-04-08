@@ -19,7 +19,7 @@ force-scws-on-native = []  # Only used to test SCWS
 [dependencies]
 bytes = { workspace = true }
 error_set = { workspace = true }
-rustls-webpki = { workspace = true, features = ["std", "ring"] }
+rustls-webpki = { workspace = true, features = ["std"] }
 rustls-pki-types = { workspace = true }
 rsa = { workspace = true, features = ["sha2"] }
 sha2 = { workspace = true }
