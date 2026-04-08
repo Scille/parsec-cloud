@@ -3,7 +3,8 @@
 use std::time::Duration;
 
 use crate::x509::{
-    DistinguishedNameValue, HandleFromCertInfoError, SubjectAltName, X509CertificateInformation,
+    DistinguishedNameValue, SubjectAltName, X509CertificateInformation,
+    X509CertificateInformationHumanHandleError,
 };
 use hex_literal::hex;
 
@@ -73,12 +74,12 @@ fn missing_name_for_human_handle() {
         issuer: Default::default(),
         extensions: Default::default(),
         validity: Validity::from_now(Duration::new(3600, 0)).unwrap(),
-        serial: Bytes::copy_from_slice(b"1234"),
+        serial: b"1234".to_vec(),
     };
 
     assert!(matches!(
         info.human_handle().unwrap_err(),
-        HandleFromCertInfoError::MissingName
+        X509CertificateInformationHumanHandleError::MissingName
     ));
 }
 
@@ -89,11 +90,11 @@ fn missing_email_for_human_handle() {
         issuer: Default::default(),
         extensions: Default::default(),
         validity: Validity::from_now(Duration::new(3600, 0)).unwrap(),
-        serial: Bytes::copy_from_slice(b"1234"),
+        serial: b"1234".to_vec(),
     };
     assert!(matches!(
         info.human_handle().unwrap_err(),
-        HandleFromCertInfoError::MissingEmail
+        X509CertificateInformationHumanHandleError::MissingEmail
     ));
 }
 
@@ -107,11 +108,13 @@ fn invalid_name_for_human_handle() {
         issuer: Default::default(),
         extensions: Default::default(),
         validity: Validity::from_now(Duration::new(3600, 0)).unwrap(),
-        serial: Bytes::copy_from_slice(b"1234"),
+        serial: b"1234".to_vec(),
     };
     assert!(matches!(
         info.human_handle().unwrap_err(),
-        HandleFromCertInfoError::InvalidHumanHandle(HumanHandleParseError::InvalidLabel)
+        X509CertificateInformationHumanHandleError::InvalidHumanHandle(
+            HumanHandleParseError::InvalidLabel
+        )
     ));
 }
 
@@ -125,10 +128,12 @@ fn invalid_email_for_human_handle() {
         issuer: Default::default(),
         extensions: Default::default(),
         validity: Validity::from_now(Duration::new(3600, 0)).unwrap(),
-        serial: Bytes::copy_from_slice(b"1234"),
+        serial: b"1234".to_vec(),
     };
     assert!(matches!(
         info.human_handle().unwrap_err(),
-        HandleFromCertInfoError::InvalidHumanHandle(HumanHandleParseError::InvalidEmail)
+        X509CertificateInformationHumanHandleError::InvalidHumanHandle(
+            HumanHandleParseError::InvalidEmail
+        )
     ));
 }
