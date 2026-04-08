@@ -164,7 +164,7 @@ impl TestbedPkiSystem {
             .certificates
             .user_certs
             .iter()
-            .map(|entry| AvailablePkiCertificate::load(&entry.cert_der))
+            .map(|entry| AvailablePkiCertificate::load_der(&entry.cert_der))
             .collect();
         Ok(certs)
     }

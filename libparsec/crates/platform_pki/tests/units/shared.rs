@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use super::utils::{certificates, InstalledCertificates};
 use crate::{
     get_root_x509_certificate_info_from_trustchain, verify_certificate,
-    GetRootCertificateInfoFromTrustchainError, RootX509CertificateInfo,
+    GetRootX509CertificateInfoFromTrustchainError, RootX509CertificateInfo,
 };
 
 #[rstest]
@@ -140,7 +140,7 @@ fn test_get_root_certificate_info_from_trustchain_ko_invalid_der(
     );
     p_assert_matches!(
         outcome,
-        Err(GetRootCertificateInfoFromTrustchainError::InvalidCertificateDer(err))
+        Err(GetRootX509CertificateInfoFromTrustchainError::InvalidCertificateDer(err))
         if format!("{}", err) == "TrailingData(SignedData)"
     );
 }
@@ -182,6 +182,6 @@ fn test_get_root_certificate_info_from_trustchain_ko_missing_root_common_name() 
             ALICE_ISSUER_WITHOUT_COMMON_NAME_DER,
             [].into_iter(),
         ),
-        Err(GetRootCertificateInfoFromTrustchainError::InvalidCertificateNoCommonName)
+        Err(GetRootX509CertificateInfoFromTrustchainError::InvalidCertificateNoCommonName)
     );
 }

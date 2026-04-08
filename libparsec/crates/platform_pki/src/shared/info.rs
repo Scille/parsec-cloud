@@ -15,7 +15,7 @@ pub struct RootX509CertificateInfo {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum GetRootCertificateInfoFromTrustchainError {
+pub enum GetRootX509CertificateInfoFromTrustchainError {
     #[error("Invalid certificate: invalid DER format: {0}")]
     InvalidCertificateDer(anyhow::Error),
     #[error("Invalid certificate: missing common name")]
@@ -25,14 +25,14 @@ pub enum GetRootCertificateInfoFromTrustchainError {
 pub fn get_root_x509_certificate_info_from_trustchain<'cert>(
     submitter_der_x509_certificate: &[u8],
     intermediate_der_x509_certificates: impl Iterator<Item = &'cert [u8]>,
-) -> Result<RootX509CertificateInfo, GetRootCertificateInfoFromTrustchainError> {
+) -> Result<RootX509CertificateInfo, GetRootX509CertificateInfoFromTrustchainError> {
     // 1. Walk up the chain until we reach the root
 
     let submitter_der_x509_certificate_der =
         X509CertificateDer::from_slice(submitter_der_x509_certificate);
     let submitter_der_x509_certificate_end =
         X509EndCertificate::try_from(&submitter_der_x509_certificate_der).map_err(|err| {
-            GetRootCertificateInfoFromTrustchainError::InvalidCertificateDer(err.into())
+            GetRootX509CertificateInfoFromTrustchainError::InvalidCertificateDer(err.into())
         })?;
 
     let intermediate_der_x509_certificates_der = intermediate_der_x509_certificates
@@ -43,7 +43,7 @@ pub fn get_root_x509_certificate_info_from_trustchain<'cert>(
         .map(X509EndCertificate::try_from)
         .collect::<Result<Vec<_>, _>>()
         .map_err(|err| {
-            GetRootCertificateInfoFromTrustchainError::InvalidCertificateDer(err.into())
+            GetRootX509CertificateInfoFromTrustchainError::InvalidCertificateDer(err.into())
         })?;
 
     let mut current = submitter_der_x509_certificate_end;
@@ -61,11 +61,13 @@ pub fn get_root_x509_certificate_info_from_trustchain<'cert>(
     let common_name = match crate::x509::extract_common_name_from_subject(&subject) {
         Ok(Some(common_name)) => common_name,
         Ok(None) => {
-            return Err(GetRootCertificateInfoFromTrustchainError::InvalidCertificateNoCommonName)
+            return Err(
+                GetRootX509CertificateInfoFromTrustchainError::InvalidCertificateNoCommonName,
+            )
         }
         Err(err) => {
             return Err(
-                GetRootCertificateInfoFromTrustchainError::InvalidCertificateDer(err.into()),
+                GetRootX509CertificateInfoFromTrustchainError::InvalidCertificateDer(err.into()),
             )
         }
     };
@@ -101,7 +103,7 @@ pub struct UserX509CertificateDetails {
 }
 
 impl UserX509CertificateDetails {
-    pub fn load(der: &[u8]) -> Result<Self, UserX509CertificateLoadError> {
+    pub fn load_der(der: &[u8]) -> Result<Self, UserX509CertificateLoadError> {
         let info = crate::x509::X509CertificateInformation::load_der(der)
             .map_err(|_| UserX509CertificateLoadError::InvalidCertificateDer)?;
         let emails = info

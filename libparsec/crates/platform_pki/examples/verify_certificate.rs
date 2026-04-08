@@ -69,7 +69,7 @@ fn display_x509_raw_name(raw_name: &[u8]) -> String {
 }
 
 fn display_x509_certificate_der(cert: &X509CertificateDer<'_>) -> anyhow::Result<String> {
-    let details = libparsec_platform_pki::UserX509CertificateDetails::load(cert.as_ref())
+    let details = libparsec_platform_pki::UserX509CertificateDetails::load_der(cert.as_ref())
         .context("Invalid certificate DER")?;
 
     Ok(format!(

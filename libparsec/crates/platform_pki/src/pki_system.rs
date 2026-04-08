@@ -47,14 +47,14 @@ pub enum AvailablePkiCertificate {
 }
 
 impl AvailablePkiCertificate {
-    pub fn load(der: &[u8]) -> Self {
+    pub fn load_der(der: &[u8]) -> Self {
         use sha2::Digest as _;
 
         let digest = sha2::Sha256::digest(der);
         let hash = X509CertificateHash::SHA256(Box::new(digest.into()));
 
         let reference: X509CertificateReference = hash.into();
-        match UserX509CertificateDetails::load(der) {
+        match UserX509CertificateDetails::load_der(der) {
             Ok(details) => Self::Valid {
                 reference,
                 friendly_name: details.common_name.clone(),
