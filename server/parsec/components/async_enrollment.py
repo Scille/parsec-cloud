@@ -2,9 +2,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from email.message import Message
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from enum import auto
 from hashlib import sha256
 from typing import Literal
+
+from jinja2 import Environment
 
 from parsec._parsec import (
     AsyncEnrollmentAcceptPayload,
@@ -13,6 +18,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    EmailAddress,
     OrganizationID,
     PkiSignatureAlgorithm,
     UserCertificate,
@@ -31,6 +37,8 @@ from parsec.client_context import (
     AnonymousClientContext,
     AuthenticatedClientContext,
 )
+from parsec.components.email import SendEmailBadOutcome, send_email
+from parsec.config import BackendConfig
 from parsec.logging import get_logger
 from parsec.types import BadOutcome, BadOutcomeEnum
 
@@ -377,6 +385,9 @@ def async_enrollment_accept_validate(
 
 
 class BaseAsyncEnrollmentComponent:
+    def __init__(self, config: BackendConfig):
+        self._config = config
+
     async def submit(
         self,
         now: DateTime,
@@ -768,3 +779,62 @@ class BaseAsyncEnrollmentComponent:
                 client_ctx.author_not_found_abort()
             case AsyncEnrollmentAcceptBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
+
+
+async def send_accepted_enrollment_email(
+    config: BackendConfig,
+    organization_id: OrganizationID,
+    claimer_email: EmailAddress,
+) -> None | SendEmailBadOutcome:
+    if not config.server_addr:
+        return SendEmailBadOutcome.BAD_SMTP_CONFIG
+    message = generate_accepted_enrollment_email(
+        jinja_env=config.jinja_env,
+        from_addr=config.email_config.sender,
+        to_addr=claimer_email,
+        organization_id=organization_id,
+        server_url=config.server_addr.to_http_url(),
+    )
+    return await send_email(
+        email_config=config.email_config,
+        to_addr=claimer_email,
+        message=message,
+    )
+
+
+def generate_accepted_enrollment_email(
+    jinja_env: Environment,
+    from_addr: EmailAddress,
+    to_addr: EmailAddress,
+    organization_id: OrganizationID,
+    server_url: str,
+) -> Message:
+    # Quick fix to have a similar behavior between Rust and Python
+    server_url = server_url.removesuffix("/")
+
+    html = jinja_env.get_template("email/async_enrollment_accepted.html.j2").render(
+        organization_id=organization_id.str,
+        server_url=server_url,
+    )
+    text = jinja_env.get_template("email/async_enrollment_accepted.txt.j2").render(
+        organization_id=organization_id.str,
+        server_url=server_url,
+    )
+
+    # mail settings
+    message = MIMEMultipart("alternative")
+
+    message["Subject"] = f"[Parsec] Request accepted to join {organization_id.str}"
+    message["From"] = str(from_addr)
+    message["To"] = str(to_addr)
+
+    # Turn parts into MIMEText objects
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    # The email client will try to render the last part first
+    message.attach(part1)
+    message.attach(part2)
+
+    return message

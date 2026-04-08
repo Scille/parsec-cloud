@@ -36,11 +36,13 @@ from parsec.components.postgresql.async_enrollment_list import async_enrollment_
 from parsec.components.postgresql.async_enrollment_reject import async_enrollment_reject
 from parsec.components.postgresql.async_enrollment_submit import async_enrollment_submit
 from parsec.components.postgresql.utils import no_transaction, transaction
+from parsec.config import BackendConfig
 
 
 class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
-    def __init__(self, pool: AsyncpgPool) -> None:
+    def __init__(self, pool: AsyncpgPool, config: BackendConfig) -> None:
         self.pool = pool
+        self._config = config
 
     @override
     @transaction
@@ -155,6 +157,7 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         | TimestampOutOfBallpark
     ):
         return await async_enrollment_accept(
+            self._config,
             conn,
             now,
             organization_id,

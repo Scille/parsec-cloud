@@ -39,6 +39,7 @@ from parsec.components.async_enrollment import (
     BaseAsyncEnrollmentComponent,
     async_enrollment_accept_validate,
     async_enrollment_submit_validate,
+    send_accepted_enrollment_email,
 )
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
@@ -48,6 +49,7 @@ from parsec.components.memory.datamodel import (
     MemoryDevice,
     MemoryUser,
 )
+from parsec.config import BackendConfig
 from parsec.events import EventAsyncEnrollment, EventCommonCertificate
 from parsec.locks import AdvisoryLock
 
@@ -57,9 +59,11 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         self,
         data: MemoryDatamodel,
         event_bus: EventBus,
+        config: BackendConfig,
     ) -> None:
         self._data = data
         self._event_bus = event_bus
+        self._config = config
 
     @override
     async def submit(
@@ -410,5 +414,10 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             )
 
             await self._event_bus.send(EventAsyncEnrollment(organization_id=organization_id))
+
+            # Send mail
+            await send_accepted_enrollment_email(
+                self._config, organization_id, u_certif.human_handle.email
+            )
 
             return u_certif, d_certif

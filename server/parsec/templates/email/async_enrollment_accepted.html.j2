@@ -1,0 +1,20 @@
+{% extends "email/base.html.j2" %}
+{% block document_title %}Parsec: Join an organization{% endblock %}
+
+{% block preheader %}Your demand to join {{organization_id}} has been accepted.{% endblock %}
+
+{% block title %}You are now part of {{organization_id}}{% endblock %}
+
+{% block main_content %}
+You can now log into {{organization_id}} and start sharing documents.
+{% from "email/macros.html.j2" import render_note %}
+
+{% call render_note() %}
+<p style="font-size: 14px; color: #51517B; padding-bottom: 8px;">
+  <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+  origin page using window.opener unless link type noopener or noreferrer is specified. -->
+  For more information please refer to the User Guide:
+  <a style="color: #0058CC;" href="https://docs.parsec.cloud/en/stable/userguide/join_organization.html" rel="noopener noreferrer" target="_blank">Join an organization</a>.
+</p>
+{% endcall %}
+{% endblock %}
