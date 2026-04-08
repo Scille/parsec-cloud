@@ -145,17 +145,17 @@ pub(super) fn get_id_and_hash_from_cert_context(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub(super) enum ListCertificatesError {
+pub(super) enum ListX509CertificatesError {
     #[error("Cannot open certificate store: {0}")]
     CannotOpenStore(std::io::Error),
 }
 
-pub(super) type ListTrustedRootCertificatesError = ListCertificatesError;
+pub(super) type ListX509TrustAnchors = ListX509CertificatesError;
 
-pub(super) async fn list_trusted_root_certificate_anchors(
-) -> Result<Vec<X509TrustAnchor<'static>>, ListTrustedRootCertificatesError> {
-    let store = CertStore::open_current_user("Root")
-        .map_err(ListTrustedRootCertificatesError::CannotOpenStore)?;
+pub(super) async fn list_x509_trust_anchors(
+) -> Result<Vec<X509TrustAnchor<'static>>, ListX509TrustAnchors> {
+    let store =
+        CertStore::open_current_user("Root").map_err(ListX509TrustAnchors::CannotOpenStore)?;
 
     let res = store
         .certs()
@@ -189,12 +189,12 @@ pub(super) async fn list_trusted_root_certificate_anchors(
     Ok(res)
 }
 
-pub(super) type ListIntermediateCertificatesError = ListCertificatesError;
+pub(super) type ListIntermediateX509CertificatesError = ListX509CertificatesError;
 
-pub(super) async fn list_intermediate_certificates(
-) -> Result<Vec<X509CertificateDer<'static>>, ListIntermediateCertificatesError> {
+pub(super) async fn list_intermediate_x509_certificates(
+) -> Result<Vec<X509CertificateDer<'static>>, ListIntermediateX509CertificatesError> {
     let store = CertStore::open_current_user("CA")
-        .map_err(ListIntermediateCertificatesError::CannotOpenStore)?;
+        .map_err(ListIntermediateX509CertificatesError::CannotOpenStore)?;
 
     Ok(store
         .certs()

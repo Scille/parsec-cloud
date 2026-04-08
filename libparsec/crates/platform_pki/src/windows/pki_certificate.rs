@@ -66,11 +66,11 @@ impl PlatformPkiCertificate {
     pub async fn get_validation_path(
         &self,
     ) -> Result<X509ValidationPathOwned, PkiCertificateGetValidationPathError> {
-        let raw_trusted_roots = super::list_trusted_root_certificate_anchors()
+        let raw_trusted_roots = super::list_x509_trust_anchors()
             .await
             .context("Cannot list trusted roots")
             .map_err(PkiCertificateGetValidationPathError::Internal)?;
-        let raw_intermediates = super::list_intermediate_certificates()
+        let raw_intermediates = super::list_intermediate_x509_certificates()
             .await
             .context("Cannot list intermediates certificates")
             .map_err(PkiCertificateGetValidationPathError::Internal)?;
