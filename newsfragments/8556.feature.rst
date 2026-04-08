@@ -1,0 +1,1 @@
+CLI: Convert some options as argument in CLI commands: ``device`` in command ``device remove``, ``input`` in command ``device import-recovery-device``, ``organization-id`` in command ``organization stats``, ``organization-id`` in command ``organization status``.

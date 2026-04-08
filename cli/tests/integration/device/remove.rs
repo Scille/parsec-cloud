@@ -9,7 +9,7 @@ use crate::{bootstrap_cli_test, testenv_utils::TestOrganization, wait_for};
 async fn remove_device(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    let mut process = crate::std_cmd!("device", "remove", "--device", &alice.device_id.hex())
+    let mut process = crate::std_cmd!("device", "remove", &alice.device_id.hex())
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
         .stdout(std::process::Stdio::piped())
