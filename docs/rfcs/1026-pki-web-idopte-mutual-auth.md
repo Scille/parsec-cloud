@@ -103,7 +103,8 @@ The client would then retrieve the certificate using the following anonymous com
       "fields": [
         {
           "name": "certificate",
-          "type": "Bytes"
+          // Not a true certificate, it's provided as a base64 string and should be send as is.
+          "type": "String"
         }
       ]
     },

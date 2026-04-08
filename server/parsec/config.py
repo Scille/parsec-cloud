@@ -320,6 +320,8 @@ class BackendConfig:
     sse_events_cache_size: int = 1024
     backend_mocked_data: dict[OrganizationID, MemoryOrganization] | None = None
 
+    scws_service_certificate: str | None = None
+
     def logging_kwargs(self) -> dict[str, str]:
         """
         Provide a safe dictionary for logging the backend configuration.
