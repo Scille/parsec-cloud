@@ -48,6 +48,7 @@ import {
   ClientAcceptAsyncEnrollmentErrorTag,
   ClientRejectAsyncEnrollmentErrorTag,
   libparsec,
+  ParsecAddr,
   ParsecAsyncEnrollmentAddrAndRedirectionURL,
   SubmitAsyncEnrollmentErrorTag,
 } from '@/plugins/libparsec';
@@ -406,17 +407,29 @@ async function getOpenBaoEmails(client: OpenBaoClient): Promise<Result<Array<str
   return result;
 }
 
-function makeRequestPkiIdentityStrategy(certificate: X509CertificateReference): SubmitAsyncEnrollmentIdentityStrategyPKI {
+function makeRequestPkiIdentityStrategy(
+  serverAddr: ParsecAddr,
+  certificate: X509CertificateReference,
+): SubmitAsyncEnrollmentIdentityStrategyPKI {
+  const config = getClientConfig();
   return {
     tag: SubmitAsyncEnrollmentIdentityStrategyTag.PKI,
     certificateReference: certificate,
+    configDir: config.configDir,
+    serverAddr,
   };
 }
 
-function makeAcceptPkiIdentityStrategy(certificate: X509CertificateReference): AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
+function makeAcceptPkiIdentityStrategy(
+  serverAddr: ParsecAddr,
+  certificate: X509CertificateReference,
+): AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
+  const config = getClientConfig();
   return {
     tag: AcceptFinalizeAsyncEnrollmentIdentityStrategyTag.PKI,
     certificateReference: certificate,
+    configDir: config.configDir,
+    serverAddr,
   };
 }
 

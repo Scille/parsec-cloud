@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
-from .addr import ParsecAsyncEnrollmentAddr, ParsecAsyncEnrollmentAddrAndRedirectionURL
+from .addr import ParsecAddr, ParsecAsyncEnrollmentAddr, ParsecAsyncEnrollmentAddrAndRedirectionURL
 from .common import (
     AsyncEnrollmentID,
     DateTime,
@@ -44,6 +44,8 @@ class SubmitAsyncEnrollmentIdentityStrategy(Variant):
         openbao_preferred_auth_id: str
 
     class PKI:
+        config_dir: Path
+        server_addr: ParsecAddr
         certificate_reference: X509CertificateReference
 
 
@@ -56,6 +58,8 @@ class AcceptFinalizeAsyncEnrollmentIdentityStrategy(Variant):
         openbao_auth_token: str
 
     class PKI:
+        config_dir: Path
+        server_addr: ParsecAddr
         certificate_reference: X509CertificateReference
 
 

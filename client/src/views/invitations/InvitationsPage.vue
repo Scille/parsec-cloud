@@ -193,13 +193,15 @@ import {
   ClientNewUserInvitationError,
   ClientNewUserInvitationErrorTag,
   getAsyncEnrollmentAddr,
-  getCurrentServerConfig,
+  getCurrentServerAddr,
+  getServerConfig,
   InvitationEmailSentStatus,
   isSmartcardAvailable,
   listAsyncEnrollments,
   listUserInvitations,
   makeAcceptOpenBaoIdentityStrategy,
   makeAcceptPkiIdentityStrategy,
+  ParsecAddr,
   inviteUser as parsecInviteUser,
   rejectAsyncEnrollment,
   ServerConfig,
@@ -241,6 +243,7 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const invitations = ref<Array<UserInvitation>>([]);
 const asyncEnrollmentRequests = ref<Array<AsyncEnrollmentUntrusted>>([]);
+const serverAddr = ref<ParsecAddr | undefined>(undefined);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
 const pkiAvailable = ref(false);
 const openBaoClient = ref<OpenBaoClient | undefined>(undefined);
@@ -281,9 +284,14 @@ onMounted(async (): Promise<void> => {
     },
   );
   pkiAvailable.value = await isSmartcardAvailable();
-  const configResult = await getCurrentServerConfig();
-  if (configResult.ok) {
-    serverConfig.value = configResult.value;
+  const addrResult = await getCurrentServerAddr();
+  if (addrResult.ok) {
+    serverAddr.value = addrResult.value;
+
+    const configResult = await getServerConfig(serverAddr.value);
+    if (configResult.ok) {
+      serverConfig.value = configResult.value;
+    }
   }
 
   await refreshAll();
@@ -607,10 +615,10 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
     await pkiModal.present();
     const { role, data } = await pkiModal.onWillDismiss();
     await pkiModal.dismiss();
-    if (role !== MsModalResult.Confirm || !data.certificate) {
+    if (role !== MsModalResult.Confirm || !data.certificate || !serverAddr.value) {
       return;
     }
-    strategy = makeAcceptPkiIdentityStrategy(toRaw(data.certificate) as X509CertificateReference);
+    strategy = makeAcceptPkiIdentityStrategy(serverAddr.value, toRaw(data.certificate) as X509CertificateReference);
   } else if (request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao && !openBaoClient.value) {
     if (!serverConfig.value?.openbao || serverConfig.value.openbao.auths.length === 0) {
       return;

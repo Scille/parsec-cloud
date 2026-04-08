@@ -630,6 +630,12 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
 
   let identityStrategy!: AcceptFinalizeAsyncEnrollmentIdentityStrategy;
   let primaryProtection!: DevicePrimaryProtectionStrategy;
+  const parsedAddrResult = await parseParsecAddr(request.enrollment.addr);
+  if (!parsedAddrResult.ok) {
+    window.electronAPI.log('error', 'Failed to parse request enrollment address');
+    return;
+  }
+  const serverAddr = await buildParsecAddr(parsedAddrResult.value);
 
   if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI) {
     if (!(await isSmartcardAvailable())) {
@@ -645,15 +651,9 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
       return;
     }
     const identitySystem = request.enrollment.identitySystem as AvailablePendingAsyncEnrollmentIdentitySystemPKI;
-    identityStrategy = makeAcceptPkiIdentityStrategy(toRaw(identitySystem.certificateRef));
+    identityStrategy = makeAcceptPkiIdentityStrategy(serverAddr, toRaw(identitySystem.certificateRef));
     primaryProtection = PrimaryProtectionStrategy.useSmartcard(toRaw(identitySystem.certificateRef));
   } else if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.OpenBao) {
-    const parsedAddrResult = await parseParsecAddr(request.enrollment.addr);
-    if (!parsedAddrResult.ok) {
-      window.electronAPI.log('error', 'Failed to parse request enrollment address');
-      return;
-    }
-    const serverAddr = await buildParsecAddr(parsedAddrResult.value);
     const serverConfigResult = await getServerConfig(serverAddr);
 
     if (!serverConfigResult.ok) {

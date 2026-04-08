@@ -25,7 +25,7 @@ use crate::{
 };
 
 mod strategy {
-    use std::{path::PathBuf, str::FromStr, sync::Arc};
+    use std::{path::PathBuf, sync::Arc};
 
     use libparsec_client::{
         AcceptAsyncEnrollmentError, SubmitAsyncEnrollmentError,
@@ -66,7 +66,7 @@ mod strategy {
         },
         PKI {
             config_dir: PathBuf,
-            parsec_server_url: String,
+            server_addr: ParsecAddr,
             certificate_reference: X509CertificateReference,
         },
     }
@@ -107,13 +107,12 @@ mod strategy {
                 }
                 SubmitAsyncEnrollmentIdentityStrategy::PKI {
                     config_dir,
-                    parsec_server_url,
+                    server_addr,
                     certificate_reference,
                 } => {
                     let pki_config = libparsec_platform_pki::PkiConfig {
                         config_dir: &config_dir,
-                        addr: &libparsec_types::ParsecAddr::from_str(&parsec_server_url)
-                            .context("Failed to parse parsec server URL")?,
+                        addr: &server_addr,
                         proxy: &libparsec_client_connection::ProxyConfig::new_from_env()
                             .context("Failed to create proxy config")?,
                     };
@@ -354,7 +353,7 @@ mod strategy {
         },
         PKI {
             config_dir: PathBuf,
-            parsec_server_url: String,
+            server_addr: ParsecAddr,
             certificate_reference: X509CertificateReference,
         },
     }
@@ -398,12 +397,11 @@ mod strategy {
                 Self::PKI {
                     certificate_reference,
                     config_dir,
-                    parsec_server_url,
+                    server_addr,
                 } => {
                     let pki_config = libparsec_platform_pki::PkiConfig {
                         config_dir: &config_dir,
-                        addr: &libparsec_types::ParsecAddr::from_str(&parsec_server_url)
-                            .context("Failed to parse server URL")?,
+                        addr: &server_addr,
                         proxy: &libparsec_client_connection::ProxyConfig::new_from_env()
                             .context("Failed to create proxy config")?,
                     };

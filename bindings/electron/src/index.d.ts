@@ -567,6 +567,8 @@ export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
     tag: "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI"
+    config_dir: string
+    server_addr: string
     certificate_reference: X509CertificateReference
 }
 export type AcceptFinalizeAsyncEnrollmentIdentityStrategy =
@@ -3614,6 +3616,8 @@ export interface SubmitAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface SubmitAsyncEnrollmentIdentityStrategyPKI {
     tag: "SubmitAsyncEnrollmentIdentityStrategyPKI"
+    config_dir: string
+    server_addr: string
     certificate_reference: X509CertificateReference
 }
 export type SubmitAsyncEnrollmentIdentityStrategy =
