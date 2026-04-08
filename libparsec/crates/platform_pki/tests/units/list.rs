@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_tests_lite::parsec_test;
+use libparsec_tests_lite::prelude::*;
 
 use super::utils::{certificates, initialize_pki_system, InstalledCertificates};
 use crate::AvailablePkiCertificate;
@@ -53,4 +53,13 @@ async fn open_certificate_and_get_validation_path() {
         "Missing expected root certificate with subject: {:?}",
         String::from_utf8_lossy(BLACK_MESA_CA_SUBJECT),
     );
+}
+
+#[parsec_test]
+async fn open_certificate_ko_not_found() {
+    let pki = initialize_pki_system().await;
+
+    let dummy_ref =
+        crate::X509CertificateReference::from(crate::X509CertificateHash::fake_sha256());
+    p_assert_matches!(pki.open_certificate(&dummy_ref).await, Ok(None));
 }

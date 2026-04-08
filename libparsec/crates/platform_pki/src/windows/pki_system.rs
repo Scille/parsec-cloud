@@ -33,7 +33,7 @@ impl PlatformPkiSystem {
         &self,
         cert_ref: &X509CertificateReference,
     ) -> Result<Option<PkiCertificate>, PkiSystemOpenCertificateError> {
-        Ok(find_certificate(&self.my_cert_store, cert_ref)
+        Ok(open_certificate(&self.my_cert_store, cert_ref)
             .map(PlatformPkiCertificate::from)
             .map(wrap_platform_certificate))
     }
@@ -82,7 +82,7 @@ fn hash_from_certificate_context(context: &CertContext) -> std::io::Result<X509C
         .map(X509CertificateHash::SHA256)
 }
 
-fn find_certificate(
+fn open_certificate(
     store: &CertStore,
     certificate_ref: &X509CertificateReference,
 ) -> Option<CertContext> {
