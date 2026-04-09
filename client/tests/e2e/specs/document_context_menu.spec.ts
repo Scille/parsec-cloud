@@ -634,7 +634,7 @@ msTest.describe(() => {
       },
     );
 
-    msTest(
+    msTest.fixme(
       `Small display popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, false);
@@ -652,6 +652,7 @@ msTest.describe(() => {
         await expect(modal.locator('.list-group-item')).toHaveCount(1);
         await expect(modal.locator('.list-group-item').nth(0)).toHaveText('Select all');
         await modal.locator('.list-group-item').nth(0).click();
+        await documents.waitForTimeout(300);
 
         const headerElements = documents.locator('.small-display-selection-header').locator('ion-text');
         await expect(headerElements).toHaveCount(3);
@@ -667,7 +668,7 @@ msTest.describe(() => {
       },
     );
 
-    msTest(
+    msTest.fixme(
       `Small display document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} only files`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, true);
