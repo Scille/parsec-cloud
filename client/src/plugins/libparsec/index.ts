@@ -46,6 +46,18 @@ const FUNCTIONS_TO_SKIP: Array<SkipData> = [
   },
 ];
 
+const FUNCTIONS_TO_SLOW_DOWN: Array<string> = [
+  'workspaceStatEntry',
+  'clientListWorkspaces',
+  'workspaceInfo',
+  'clientListUsers',
+  'workspaceStatFolderChildrenById',
+  'clientOrganizationInfo',
+  'bootstrapOrganization',
+  'clientInfo',
+  'clientListInvitations',
+];
+
 const MOCKS: Array<{ name: string; funct: (..._args: Array<any>) => Promise<any> }> = [];
 
 class ParsecProxy {
@@ -58,6 +70,14 @@ class ParsecProxy {
             console.log(`Using mocked '${name}'`);
             return await mock.funct(...args);
           }
+        }
+        if ((window as any).TESTING_ENABLE_SNAIL_MODE === true && FUNCTIONS_TO_SLOW_DOWN.includes(name)) {
+          console.log(`Slowing down '${name}'`);
+          await new Promise<void>((resolve) => {
+            setTimeout(() => {
+              resolve();
+            }, Math.random() * 1500);
+          });
         }
         // @ts-expect-error Dont know how to fix the `...arg` properly so that the linter doesn't complain
         const result = await target[name as keyof LibParsecPlugin](...args);
