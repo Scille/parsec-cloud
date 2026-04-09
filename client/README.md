@@ -142,6 +142,7 @@ ionic cap add ios
 | `PARSEC_APP_ENABLE_CUSTOM_BRANDING`     | `boolean`                                        | Enable the custom branding (not needed on web, see `custom-branding` meta attribute in `client/index.html`)                                              |                                                                                                                         |
 | `PARSEC_APP_ENABLE_EDITICS`             | `boolean`                                        | Enable Parsec Editics poc                                                                                                                                |                                                                                                                         |
 | `PARSEC_APP_FORCE_CRYPTPAD_SERVER`      | `url`                                            | Cryptpad server to use (overwrites server config)                                                                                                        |                                                                                                                         |
+| `PARSEC_APP_ENABLE_SHAMIR`              | `boolean`                                        | Enable Shamir                                                                                                                                            |                                                                                                                         |
 
 ### Testing variables
 
@@ -152,14 +153,14 @@ Those variables are used when testing the app in Playwright. They will mostly be
 | `TESTING`                        | `boolean`                                         | Place the app in testing mode (reduce the logs, disable Sentry, does not setup the testbed automatically, ...) |
 | `TESTING_PKI`                    | `boolean`                                         | Use mocks for PKI                                                                                              |
 | `TESTING_DISABLE_STRIPE`         | `boolean`                                         | Disable Stripe                                                                                                 |
-| `TESTING_OPEN_BAO_SERVER`        | `url`                                             | Sets the OpenBao server to use                                                                                 |
 | `TESTING_ACCOUNT_AUTO_LOGIN`     | `boolean`                                         | Automatically logs into Parsec Account                                                                         |
 | `TESTING_ENABLE_ACCOUNT`         | `boolean`                                         | Enables Parsec Account                                                                                         |
 | `TESTING_ACCOUNT_SERVER`         | `url`                                             | Sets the Parsec Account server                                                                                 |
 | `TESTING_ENABLE_EDITICS`         | `boolean`                                         | Enables Cryptpad integration                                                                                   |
 | `TESTING_CRYPTPAD_SERVER`        | `url`                                             | Cryptpad server                                                                                                |
 | `TESTING_EDITICS_SAVE_TIMEOUT`   | `number`                                          | Timeout before Cryptpad auto-save                                                                              |
-| `TESTING_ENABLE_CUSTOM_BRANDING` | `boolean`                                         | Enabled custom branding                                                                                        |
+| `TESTING_ENABLE_CUSTOM_BRANDING` | `boolean`                                         | Enables custom branding                                                                                        |
 | `TESTING_MOCK_BROWSER`           | `Chrome\|Firefox\|Safari\|Edge\|\Brave\|Chromium` | Simulates navigating with a specific browser                                                                   |
 | `TESTING_SAAS_SERVERS`           | `server1;server2;server3;...`                     | Servers recognized as Saas                                                                                     |
 | `TESTING_TRIAL_SERVERS`          | `server1;server2;server3;...`                     | Servers recognized as trial                                                                                    |
+| `TESTING_ENABLE_SHAMIR`          | `boolean`                                         | Enables Shamir                                                                                                 |

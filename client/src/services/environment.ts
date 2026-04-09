@@ -180,13 +180,13 @@ function isCustomBrandingEnabled(): [boolean, string] {
   return [true, suffix];
 }
 
-const OPEN_BAO_SERVER_ENV_VARIABLE = 'PARSEC_APP_OPEN_BAO_SERVER';
+/*
+* Shamir
+*/
+const SHAMIR_ENV_VARIABLE = 'PARSEC_APP_ENABLE_SHAMIR';
 
-function getOpenBaoServer(): string | undefined {
-  if ((window as any).TESTING_OPEN_BAO_SERVER) {
-    return (window as any).TESTING_OPEN_BAO_SERVER;
-  }
-  return import.meta.env[OPEN_BAO_SERVER_ENV_VARIABLE];
+function isShamirEnabled(): boolean {
+  return import.meta.env[SHAMIR_ENV_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_SHAMIR === true;
 }
 
 /*
@@ -320,12 +320,12 @@ export const Env = {
   isStripeDisabled,
   isSentryDisabled,
   getAccountServer,
-  getOpenBaoServer,
   isAccountEnabled,
   isEditicsEnabled,
   getCryptpadServer,
   isAccountAutoLoginEnabled,
   isCustomBrandingEnabled,
+  isShamirEnabled,
   Links: {
     openDocumentationLink,
     openDocumentationUserGuideLink,
