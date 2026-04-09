@@ -29,6 +29,7 @@ export interface SetupOptions {
   enableStripe?: boolean;
   enableUpdateEvent?: boolean;
   mockPki?: boolean;
+  enableShamir?: boolean;
 }
 
 export interface MsPage extends Page {
