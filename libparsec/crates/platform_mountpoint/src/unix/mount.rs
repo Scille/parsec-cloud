@@ -32,8 +32,9 @@ impl Mountpoint {
     pub async fn mount(
         ops: Arc<libparsec_client::workspace::WorkspaceOps>,
     ) -> anyhow::Result<Self> {
-        let (workspace_name, is_read_only) =
-            ops.get_workspace_external_info(|info| (info.entry.name.clone(), info.is_read_only()));
+        let (workspace_name, is_read_only) = ops.get_workspace_external_info(|info| {
+            (info.entry.name.clone(), info.entry.is_read_only())
+        });
         log::debug!("Mount workspace {workspace_name} (read only={is_read_only})");
         let filesystem = super::filesystem::Filesystem::new(
             ops.clone(),

@@ -18,7 +18,7 @@ pub async fn workspace_sync(args: Args, client: &StartedClient) -> anyhow::Resul
     let workspace = client.start_workspace(wid).await?;
 
     let (name, is_read_only) = workspace
-        .get_workspace_external_info(|info| (info.entry.name.clone(), info.is_read_only()));
+        .get_workspace_external_info(|info| (info.entry.name.clone(), info.entry.is_read_only()));
     let mut handle = start_spinner(format!("Syncing workspace {name}"));
 
     log::debug!("Refreshing realm checkpoint");
