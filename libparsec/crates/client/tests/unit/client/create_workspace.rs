@@ -52,20 +52,29 @@ async fn ok(#[values(false, true)] restart_client: bool, env: &TestbedEnv) {
                 p_assert_eq!(workspaces.len(), 1);
                 let WorkspaceInfo {
                     id,
-                    current_name,
-                    current_self_role,
                     is_started,
                     is_bootstrapped,
+                    name,
+                    name_origin,
+                    self_role,
+                    self_role_origin,
                     archiving_configuration,
+                    archiving_configuration_origin,
                 } = workspaces.pop().unwrap();
                 p_assert_eq!(id, wid);
-                p_assert_eq!(current_name, "wksp1".parse().unwrap());
-                p_assert_eq!(current_self_role, RealmRole::Owner);
                 p_assert_eq!(is_started, false);
                 p_assert_eq!(is_bootstrapped, $expected_is_bootstrapped);
+                p_assert_eq!(name, "wksp1".parse().unwrap());
+                p_assert_eq!(name_origin, CertificateBasedInfoOrigin::Placeholder);
+                p_assert_eq!(self_role, RealmRole::Owner);
+                p_assert_eq!(self_role_origin, CertificateBasedInfoOrigin::Placeholder);
                 p_assert_eq!(
                     archiving_configuration,
                     RealmArchivingConfiguration::Available
+                );
+                p_assert_eq!(
+                    archiving_configuration_origin,
+                    CertificateBasedInfoOrigin::Placeholder
                 );
             }
         };
@@ -131,20 +140,47 @@ async fn duplicated_name_is_allowed(
     {
         let WorkspaceInfo {
             id,
-            current_name,
-            current_self_role,
             is_started,
             is_bootstrapped,
+            name,
+            name_origin,
+            self_role,
+            self_role_origin,
             archiving_configuration,
+            archiving_configuration_origin,
         } = &workspaces[0];
         p_assert_eq!(*id, wksp1_id);
-        p_assert_eq!(current_name, &common_name);
-        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_started, false);
         p_assert_eq!(*is_bootstrapped, previous_is_bootstrapped);
+        p_assert_eq!(*name, common_name);
+        if previous_is_bootstrapped {
+            p_assert_eq!(
+                *name_origin,
+                CertificateBasedInfoOrigin::Certificate {
+                    timestamp: "2000-01-05T00:00:00Z".parse().unwrap()
+                }
+            );
+        } else {
+            p_assert_eq!(*name_origin, CertificateBasedInfoOrigin::Placeholder);
+        }
+        p_assert_eq!(*self_role, RealmRole::Owner);
+        if previous_is_bootstrapped {
+            p_assert_eq!(
+                *self_role_origin,
+                CertificateBasedInfoOrigin::Certificate {
+                    timestamp: "2000-01-03T00:00:00Z".parse().unwrap()
+                }
+            );
+        } else {
+            p_assert_eq!(*self_role_origin, CertificateBasedInfoOrigin::Placeholder);
+        }
         p_assert_eq!(
             *archiving_configuration,
             RealmArchivingConfiguration::Available
+        );
+        p_assert_eq!(
+            *archiving_configuration_origin,
+            CertificateBasedInfoOrigin::Placeholder
         );
     }
 
@@ -152,20 +188,29 @@ async fn duplicated_name_is_allowed(
     {
         let WorkspaceInfo {
             id,
-            current_name,
-            current_self_role,
             is_started,
             is_bootstrapped,
+            name,
+            name_origin,
+            self_role,
+            self_role_origin,
             archiving_configuration,
+            archiving_configuration_origin,
         } = &workspaces[1];
         p_assert_eq!(*id, wksp2_id);
-        p_assert_eq!(current_name, &common_name);
-        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_started, false);
         p_assert_eq!(*is_bootstrapped, false);
+        p_assert_eq!(*name, common_name);
+        p_assert_eq!(*name_origin, CertificateBasedInfoOrigin::Placeholder);
+        p_assert_eq!(*self_role, RealmRole::Owner);
+        p_assert_eq!(*self_role_origin, CertificateBasedInfoOrigin::Placeholder);
         p_assert_eq!(
             *archiving_configuration,
             RealmArchivingConfiguration::Available
+        );
+        p_assert_eq!(
+            *archiving_configuration_origin,
+            CertificateBasedInfoOrigin::Placeholder
         );
     }
 }

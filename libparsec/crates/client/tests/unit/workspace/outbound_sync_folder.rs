@@ -287,14 +287,14 @@ async fn entry_is_busy(#[values(false, true)] concurrent_write: bool, env: &Test
         },
     );
 
-    let egg_txt_current_name = if concurrent_write {
+    let egg_txt_name = if concurrent_write {
         "egg_renamed.txt"
     } else {
         "egg.txt"
     };
     let expected_children = HashMap::from_iter([
         ("spam_renamed".parse().unwrap(), wksp1_foo_spam_id),
-        (egg_txt_current_name.parse().unwrap(), wksp1_foo_egg_txt_id),
+        (egg_txt_name.parse().unwrap(), wksp1_foo_egg_txt_id),
     ]);
 
     // 2) The synchronization couldn't successfully finish
