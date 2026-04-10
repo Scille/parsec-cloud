@@ -73,7 +73,6 @@ pub(crate) enum HandleItem {
 
     Account(Arc<libparsec_account::Account>),
 
-    PkiCertificate(Arc<libparsec_platform_pki::PkiCertificate>),
     PkiPrivateKey {
         certificate: Arc<libparsec_platform_pki::PkiCertificate>,
         private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
