@@ -16,30 +16,30 @@ const WINFSP_DEST_FILE = `build/winfsp-${WINFSP_VERSION}.msi`;
  * @param {path} dest
  */
 async function downloadFile(url, sha256sum, dest) {
-  const axios = require('axios');
   const { createHash } = require('node:crypto');
   const fs = require('node:fs');
-  const stream = require('node:stream/promises');
+  const { pipeline } = require('node:stream/promises');
+  const { Readable, Transform } = require('node:stream');
 
   const hash = createHash('sha256');
   const destStream = fs.createWriteStream(dest, {
     encoding: 'binary',
   });
 
-  /**
-   * @type {import('axios').AxiosResponse<import('node:stream').Readable>}
-   */
-  const response = await axios({
-    method: 'get',
-    url,
-    responseType: 'stream',
-  });
+  const response = await fetch(url);
 
-  if (response.status !== 200) {
+  if (!response.ok || response.status !== 200) {
     throw new Error(`Failed to download ${url}: invalid response: ${response.status}`);
   }
 
-  await Promise.all([stream.pipeline(response.data, hash), stream.pipeline(response.data, destStream)]);
+  const httpStream = Readable.fromWeb(response.body);
+  const hashStream = new Transform({
+    transform(chunk, _enc, cb) {
+      hash.update(chunk);
+      cb(null, chunk);
+    },
+  });
+  await pipeline(httpStream, hashStream, destStream);
 
   const fileDigest = hash.digest('base64');
   if (fileDigest !== sha256sum) {
