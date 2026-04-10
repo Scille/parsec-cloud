@@ -168,19 +168,6 @@ export interface AvailablePendingAsyncEnrollment {
 }
 
 
-export interface CertificateDetails {
-    name: string | null
-    subject: Array<DistinguishedNameValue>
-    issuer: Array<DistinguishedNameValue>
-    notBefore: number
-    notAfter: number
-    serial: Uint8Array
-    emails: Array<string>
-    canSign: boolean
-    canEncrypt: boolean
-}
-
-
 export interface ClientConfig {
     configDir: string
     dataBaseDir: string
@@ -513,6 +500,19 @@ export interface UserInfo {
 }
 
 
+export interface UserX509CertificateDetails {
+    commonName: string
+    subject: Array<DistinguishedNameValue>
+    issuer: Array<DistinguishedNameValue>
+    notBefore: number
+    notAfter: number
+    serial: Uint8Array
+    emails: Array<string>
+    canSign: boolean
+    canEncrypt: boolean
+}
+
+
 export interface WorkspaceHistoryFileStat {
     id: string
     created: number
@@ -567,9 +567,7 @@ export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
     tag: "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI"
-    config_dir: string
-    server_addr: string
-    certificate_reference: X509CertificateReference
+    pki_private_key_handle: number
 }
 export type AcceptFinalizeAsyncEnrollmentIdentityStrategy =
   | AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao
@@ -1161,6 +1159,23 @@ export type AvailablePendingAsyncEnrollmentIdentitySystem =
   | AvailablePendingAsyncEnrollmentIdentitySystemPKI
 
 
+// AvailablePkiCertificate
+export interface AvailablePkiCertificateInvalid {
+    tag: "AvailablePkiCertificateInvalid"
+    reference: X509CertificateReference
+    invalid_reason: UserX509CertificateLoadError
+}
+export interface AvailablePkiCertificateValid {
+    tag: "AvailablePkiCertificateValid"
+    reference: X509CertificateReference
+    friendly_name: string
+    details: UserX509CertificateDetails
+}
+export type AvailablePkiCertificate =
+  | AvailablePkiCertificateInvalid
+  | AvailablePkiCertificateValid
+
+
 // BootstrapOrganizationError
 export interface BootstrapOrganizationErrorAlreadyUsedToken {
     tag: "BootstrapOrganizationErrorAlreadyUsedToken"
@@ -1236,24 +1251,6 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
-
-
-// CertificateWithDetails
-export interface CertificateWithDetailsInvalid {
-    tag: "CertificateWithDetailsInvalid"
-    handle: X509CertificateReference
-    friendly_name: string | null
-    invalid_reason: InvalidCertificateReason
-}
-export interface CertificateWithDetailsValid {
-    tag: "CertificateWithDetailsValid"
-    handle: X509CertificateReference
-    friendly_name: string | null
-    details: CertificateDetails
-}
-export type CertificateWithDetails =
-  | CertificateWithDetailsInvalid
-  | CertificateWithDetailsValid
 
 
 // ClaimFinalizeError
@@ -2686,7 +2683,7 @@ export interface DevicePrimaryProtectionStrategyOpenBao {
 }
 export interface DevicePrimaryProtectionStrategyPKI {
     tag: "DevicePrimaryProtectionStrategyPKI"
-    certificate_ref: X509CertificateReference
+    pki_private_key_handle: number
 }
 export interface DevicePrimaryProtectionStrategyPassword {
     tag: "DevicePrimaryProtectionStrategyPassword"
@@ -2923,22 +2920,6 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 
-// InvalidCertificateReason
-export interface InvalidCertificateReasonInvalidEmail {
-    tag: "InvalidCertificateReasonInvalidEmail"
-}
-export interface InvalidCertificateReasonUnableToParseCert {
-    tag: "InvalidCertificateReasonUnableToParseCert"
-}
-export interface InvalidCertificateReasonUnableToParseTime {
-    tag: "InvalidCertificateReasonUnableToParseTime"
-}
-export type InvalidCertificateReason =
-  | InvalidCertificateReasonInvalidEmail
-  | InvalidCertificateReasonUnableToParseCert
-  | InvalidCertificateReasonUnableToParseTime
-
-
 // InviteInfoInvitationCreatedBy
 export interface InviteInfoInvitationCreatedByExternalService {
     tag: "InviteInfoInvitationCreatedByExternalService"
@@ -3029,15 +3010,6 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
-
-
-// ListUserCertificatesError
-export interface ListUserCertificatesErrorCannotOpenStore {
-    tag: "ListUserCertificatesErrorCannotOpenStore"
-    error: string
-}
-export type ListUserCertificatesError =
-  | ListUserCertificatesErrorCannotOpenStore
 
 
 // MountpointMountStrategy
@@ -3336,6 +3308,57 @@ export type PendingAsyncEnrollmentInfo =
   | PendingAsyncEnrollmentInfoSubmitted
 
 
+// PkiOpenUserCertificatePrivateKeyError
+export interface PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound {
+    tag: "PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound"
+    error: string
+}
+export interface PkiOpenUserCertificatePrivateKeyErrorInternal {
+    tag: "PkiOpenUserCertificatePrivateKeyErrorInternal"
+    error: string
+}
+export interface PkiOpenUserCertificatePrivateKeyErrorPrivateKeyNotFound {
+    tag: "PkiOpenUserCertificatePrivateKeyErrorPrivateKeyNotFound"
+    error: string
+}
+export type PkiOpenUserCertificatePrivateKeyError =
+  | PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound
+  | PkiOpenUserCertificatePrivateKeyErrorInternal
+  | PkiOpenUserCertificatePrivateKeyErrorPrivateKeyNotFound
+
+
+// PkiPrivateKeyCloseError
+export interface PkiPrivateKeyCloseErrorInternal {
+    tag: "PkiPrivateKeyCloseErrorInternal"
+    error: string
+}
+export type PkiPrivateKeyCloseError =
+  | PkiPrivateKeyCloseErrorInternal
+
+
+// PkiSystemInitError
+export interface PkiSystemInitErrorInternal {
+    tag: "PkiSystemInitErrorInternal"
+    error: string
+}
+export interface PkiSystemInitErrorNotAvailable {
+    tag: "PkiSystemInitErrorNotAvailable"
+    error: string
+}
+export type PkiSystemInitError =
+  | PkiSystemInitErrorInternal
+  | PkiSystemInitErrorNotAvailable
+
+
+// PkiSystemListUserCertificateError
+export interface PkiSystemListUserCertificateErrorInternal {
+    tag: "PkiSystemListUserCertificateErrorInternal"
+    error: string
+}
+export type PkiSystemListUserCertificateError =
+  | PkiSystemListUserCertificateErrorInternal
+
+
 // RealmArchivingConfiguration
 export interface RealmArchivingConfigurationArchived {
     tag: "RealmArchivingConfigurationArchived"
@@ -3616,9 +3639,7 @@ export interface SubmitAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface SubmitAsyncEnrollmentIdentityStrategyPKI {
     tag: "SubmitAsyncEnrollmentIdentityStrategyPKI"
-    config_dir: string
-    server_addr: string
-    certificate_reference: X509CertificateReference
+    pki_private_key_handle: number
 }
 export type SubmitAsyncEnrollmentIdentityStrategy =
   | SubmitAsyncEnrollmentIdentityStrategyOpenBao
@@ -3921,6 +3942,26 @@ export interface UserClaimListInitialInfosErrorInternal {
 }
 export type UserClaimListInitialInfosError =
   | UserClaimListInitialInfosErrorInternal
+
+
+// UserX509CertificateLoadError
+export interface UserX509CertificateLoadErrorInvalidCertificateDer {
+    tag: "UserX509CertificateLoadErrorInvalidCertificateDer"
+}
+export interface UserX509CertificateLoadErrorInvalidEmail {
+    tag: "UserX509CertificateLoadErrorInvalidEmail"
+}
+export interface UserX509CertificateLoadErrorInvalidTime {
+    tag: "UserX509CertificateLoadErrorInvalidTime"
+}
+export interface UserX509CertificateLoadErrorNoCommonName {
+    tag: "UserX509CertificateLoadErrorNoCommonName"
+}
+export type UserX509CertificateLoadError =
+  | UserX509CertificateLoadErrorInvalidCertificateDer
+  | UserX509CertificateLoadErrorInvalidEmail
+  | UserX509CertificateLoadErrorInvalidTime
+  | UserX509CertificateLoadErrorNoCommonName
 
 
 // WaitForDeviceAvailableError
@@ -5678,8 +5719,6 @@ export function importRecoveryDevice(
 ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
 export function isKeyringAvailable(
 ): Promise<boolean>
-export function isPkiAvailable(
-): Promise<boolean>
 export function libparsecInitNativeOnlyInit(
     config: ClientConfig
 ): Promise<null>
@@ -5693,8 +5732,6 @@ export function listStartedAccounts(
 ): Promise<Array<number>>
 export function listStartedClients(
 ): Promise<Array<[number, string]>>
-export function listUserCertificatesWithDetails(
-): Promise<Result<Array<CertificateWithDetails>, ListUserCertificatesError>>
 export function mountpointToOsPath(
     mountpoint: number,
     parsec_path: string
@@ -5730,6 +5767,21 @@ export function pathParent(
 export function pathSplit(
     path: string
 ): Promise<Array<string>>
+export function pkiInitForNative(
+    config_dir: string
+): Promise<Result<null, PkiSystemInitError>>
+export function pkiInitForScws(
+    config_dir: string,
+    parsec_addr: string
+): Promise<Result<null, PkiSystemInitError>>
+export function pkiListUserCertificates(
+): Promise<Result<Array<AvailablePkiCertificate>, PkiSystemListUserCertificateError>>
+export function pkiOpenUserCertificatePrivateKey(
+    cert_ref: X509CertificateReference
+): Promise<Result<number, PkiOpenUserCertificatePrivateKeyError>>
+export function pkiPrivateKeyClose(
+    handle: number
+): Promise<Result<null, PkiPrivateKeyCloseError>>
 export function removeDeviceData(
     config: ClientConfig,
     device_id: string

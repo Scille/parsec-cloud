@@ -1410,221 +1410,6 @@ fn struct_available_pending_async_enrollment_rs_to_js(
     Ok(js_obj)
 }
 
-// CertificateDetails
-
-#[allow(dead_code)]
-fn struct_certificate_details_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::CertificateDetails, JsValue> {
-    let name = {
-        let js_val = Reflect::get(&obj, &"name".into())?;
-        if js_val.is_null() {
-            None
-        } else {
-            Some(
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?,
-            )
-        }
-    };
-    let subject = {
-        let js_val = Reflect::get(&obj, &"subject".into())?;
-        {
-            let js_val = js_val
-                .dyn_into::<Array>()
-                .map_err(|_| TypeError::new("Not an array"))?;
-            let mut converted = Vec::with_capacity(js_val.length() as usize);
-            for x in js_val.iter() {
-                let x_converted = variant_distinguished_name_value_js_to_rs(x)?;
-                converted.push(x_converted);
-            }
-            converted
-        }
-    };
-    let issuer = {
-        let js_val = Reflect::get(&obj, &"issuer".into())?;
-        {
-            let js_val = js_val
-                .dyn_into::<Array>()
-                .map_err(|_| TypeError::new("Not an array"))?;
-            let mut converted = Vec::with_capacity(js_val.length() as usize);
-            for x in js_val.iter() {
-                let x_converted = variant_distinguished_name_value_js_to_rs(x)?;
-                converted.push(x_converted);
-            }
-            converted
-        }
-    };
-    let not_before = {
-        let js_val = Reflect::get(&obj, &"notBefore".into())?;
-        {
-            let v = js_val.dyn_into::<Number>()?.value_of();
-            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                    .map_err(|_| "Out-of-bound datetime")
-            };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
-            v
-        }
-    };
-    let not_after = {
-        let js_val = Reflect::get(&obj, &"notAfter".into())?;
-        {
-            let v = js_val.dyn_into::<Number>()?.value_of();
-            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                    .map_err(|_| "Out-of-bound datetime")
-            };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
-            v
-        }
-    };
-    let serial = {
-        let js_val = Reflect::get(&obj, &"serial".into())?;
-        js_val
-            .dyn_into::<Uint8Array>()
-            .map(|x| x.to_vec())
-            .map_err(|_| TypeError::new("Not a Uint8Array"))
-            .and_then(|x| {
-                let custom_from_rs_bytes =
-                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
-    };
-    let emails = {
-        let js_val = Reflect::get(&obj, &"emails".into())?;
-        {
-            let js_val = js_val
-                .dyn_into::<Array>()
-                .map_err(|_| TypeError::new("Not an array"))?;
-            let mut converted = Vec::with_capacity(js_val.length() as usize);
-            for x in js_val.iter() {
-                let x_converted = x
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?;
-                converted.push(x_converted);
-            }
-            converted
-        }
-    };
-    let can_sign = {
-        let js_val = Reflect::get(&obj, &"canSign".into())?;
-        js_val
-            .dyn_into::<Boolean>()
-            .map_err(|_| TypeError::new("Not a boolean"))?
-            .value_of()
-    };
-    let can_encrypt = {
-        let js_val = Reflect::get(&obj, &"canEncrypt".into())?;
-        js_val
-            .dyn_into::<Boolean>()
-            .map_err(|_| TypeError::new("Not a boolean"))?
-            .value_of()
-    };
-    Ok(libparsec::CertificateDetails {
-        name,
-        subject,
-        issuer,
-        not_before,
-        not_after,
-        serial,
-        emails,
-        can_sign,
-        can_encrypt,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_certificate_details_rs_to_js(
-    rs_obj: libparsec::CertificateDetails,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_name = match rs_obj.name {
-        Some(val) => JsValue::from_str(val.as_ref()),
-        None => JsValue::NULL,
-    };
-    Reflect::set(&js_obj, &"name".into(), &js_name)?;
-    let js_subject = {
-        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-        let js_array = Array::new_with_length(rs_obj.subject.len() as u32);
-        for (i, elem) in rs_obj.subject.into_iter().enumerate() {
-            let js_elem = variant_distinguished_name_value_rs_to_js(elem)?;
-            js_array.set(i as u32, js_elem);
-        }
-        js_array.into()
-    };
-    Reflect::set(&js_obj, &"subject".into(), &js_subject)?;
-    let js_issuer = {
-        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-        let js_array = Array::new_with_length(rs_obj.issuer.len() as u32);
-        for (i, elem) in rs_obj.issuer.into_iter().enumerate() {
-            let js_elem = variant_distinguished_name_value_rs_to_js(elem)?;
-            js_array.set(i as u32, js_elem);
-        }
-        js_array.into()
-    };
-    Reflect::set(&js_obj, &"issuer".into(), &js_issuer)?;
-    let js_not_before = {
-        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-        };
-        let v = match custom_to_rs_f64(rs_obj.not_before) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        };
-        JsValue::from(v)
-    };
-    Reflect::set(&js_obj, &"notBefore".into(), &js_not_before)?;
-    let js_not_after = {
-        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-        };
-        let v = match custom_to_rs_f64(rs_obj.not_after) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        };
-        JsValue::from(v)
-    };
-    Reflect::set(&js_obj, &"notAfter".into(), &js_not_after)?;
-    let js_serial = JsValue::from(Uint8Array::from(rs_obj.serial.as_ref()));
-    Reflect::set(&js_obj, &"serial".into(), &js_serial)?;
-    let js_emails = {
-        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-        let js_array = Array::new_with_length(rs_obj.emails.len() as u32);
-        for (i, elem) in rs_obj.emails.into_iter().enumerate() {
-            let js_elem = JsValue::from_str({
-                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                    Ok(std::string::ToString::to_string(&v))
-                };
-                match custom_to_rs_string(elem) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                }
-                .as_ref()
-            });
-            js_array.set(i as u32, js_elem);
-        }
-        js_array.into()
-    };
-    Reflect::set(&js_obj, &"emails".into(), &js_emails)?;
-    let js_can_sign = rs_obj.can_sign.into();
-    Reflect::set(&js_obj, &"canSign".into(), &js_can_sign)?;
-    let js_can_encrypt = rs_obj.can_encrypt.into();
-    Reflect::set(&js_obj, &"canEncrypt".into(), &js_can_encrypt)?;
-    Ok(js_obj)
-}
-
 // ClientConfig
 
 #[allow(dead_code)]
@@ -5274,6 +5059,207 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     Ok(js_obj)
 }
 
+// UserX509CertificateDetails
+
+#[allow(dead_code)]
+fn struct_user_x509_certificate_details_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::UserX509CertificateDetails, JsValue> {
+    let common_name = {
+        let js_val = Reflect::get(&obj, &"commonName".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let subject = {
+        let js_val = Reflect::get(&obj, &"subject".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = variant_distinguished_name_value_js_to_rs(x)?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    let issuer = {
+        let js_val = Reflect::get(&obj, &"issuer".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = variant_distinguished_name_value_js_to_rs(x)?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    let not_before = {
+        let js_val = Reflect::get(&obj, &"notBefore".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let not_after = {
+        let js_val = Reflect::get(&obj, &"notAfter".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let serial = {
+        let js_val = Reflect::get(&obj, &"serial".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map_err(|_| TypeError::new("Not a Uint8Array"))?
+            .to_vec()
+    };
+    let emails = {
+        let js_val = Reflect::get(&obj, &"emails".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = x
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    let can_sign = {
+        let js_val = Reflect::get(&obj, &"canSign".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    let can_encrypt = {
+        let js_val = Reflect::get(&obj, &"canEncrypt".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    Ok(libparsec::UserX509CertificateDetails {
+        common_name,
+        subject,
+        issuer,
+        not_before,
+        not_after,
+        serial,
+        emails,
+        can_sign,
+        can_encrypt,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_user_x509_certificate_details_rs_to_js(
+    rs_obj: libparsec::UserX509CertificateDetails,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_common_name = JsValue::from_str(rs_obj.common_name.as_ref());
+    Reflect::set(&js_obj, &"commonName".into(), &js_common_name)?;
+    let js_subject = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.subject.len() as u32);
+        for (i, elem) in rs_obj.subject.into_iter().enumerate() {
+            let js_elem = variant_distinguished_name_value_rs_to_js(elem)?;
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"subject".into(), &js_subject)?;
+    let js_issuer = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.issuer.len() as u32);
+        for (i, elem) in rs_obj.issuer.into_iter().enumerate() {
+            let js_elem = variant_distinguished_name_value_rs_to_js(elem)?;
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"issuer".into(), &js_issuer)?;
+    let js_not_before = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.not_before) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"notBefore".into(), &js_not_before)?;
+    let js_not_after = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.not_after) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"notAfter".into(), &js_not_after)?;
+    let js_serial = JsValue::from(Uint8Array::from(rs_obj.serial.as_ref()));
+    Reflect::set(&js_obj, &"serial".into(), &js_serial)?;
+    let js_emails = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.emails.len() as u32);
+        for (i, elem) in rs_obj.emails.into_iter().enumerate() {
+            let js_elem = JsValue::from_str({
+                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                    Ok(std::string::ToString::to_string(&v))
+                };
+                match custom_to_rs_string(elem) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                }
+                .as_ref()
+            });
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"emails".into(), &js_emails)?;
+    let js_can_sign = rs_obj.can_sign.into();
+    Reflect::set(&js_obj, &"canSign".into(), &js_can_sign)?;
+    let js_can_encrypt = rs_obj.can_encrypt.into();
+    Reflect::set(&js_obj, &"canEncrypt".into(), &js_can_encrypt)?;
+    Ok(js_obj)
+}
+
 // WorkspaceHistoryFileStat
 
 #[allow(dead_code)]
@@ -5773,43 +5759,23 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(
             )
         }
         "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
-            let config_dir = {
-                let js_val = Reflect::get(&obj, &"configDir".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
-            let server_addr = {
-                let js_val = Reflect::get(&obj, &"serverAddr".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
-            let certificate_reference = {
-                let js_val = Reflect::get(&obj, &"certificateReference".into())?;
-                struct_x509_certificate_reference_js_to_rs(js_val)?
+            let pki_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiPrivateKeyHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
             Ok(
                 libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-                    config_dir,
-                    server_addr,
-                    certificate_reference,
+                    pki_private_key_handle,
                 },
             )
         }
@@ -5860,9 +5826,7 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
         }
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-            config_dir,
-            server_addr,
-            certificate_reference,
+            pki_private_key_handle,
             ..
         } => {
             Reflect::set(
@@ -5870,37 +5834,11 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI".into(),
             )?;
-            let js_config_dir = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(config_dir) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
-            let js_server_addr = JsValue::from_str({
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(server_addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
+            let js_pki_private_key_handle = JsValue::from(pki_private_key_handle);
             Reflect::set(
                 &js_obj,
-                &"certificateReference".into(),
-                &js_certificate_reference,
+                &"pkiPrivateKeyHandle".into(),
+                &js_pki_private_key_handle,
             )?;
         }
     }
@@ -7619,6 +7557,104 @@ fn variant_available_pending_async_enrollment_identity_system_rs_to_js(
     Ok(js_obj)
 }
 
+// AvailablePkiCertificate
+
+#[allow(dead_code)]
+fn variant_available_pki_certificate_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AvailablePkiCertificate, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "AvailablePkiCertificateInvalid" => {
+            let reference = {
+                let js_val = Reflect::get(&obj, &"reference".into())?;
+                struct_x509_certificate_reference_js_to_rs(js_val)?
+            };
+            let invalid_reason = {
+                let js_val = Reflect::get(&obj, &"invalidReason".into())?;
+                variant_user_x509_certificate_load_error_js_to_rs(js_val)?
+            };
+            Ok(libparsec::AvailablePkiCertificate::Invalid {
+                reference,
+                invalid_reason,
+            })
+        }
+        "AvailablePkiCertificateValid" => {
+            let reference = {
+                let js_val = Reflect::get(&obj, &"reference".into())?;
+                struct_x509_certificate_reference_js_to_rs(js_val)?
+            };
+            let friendly_name = {
+                let js_val = Reflect::get(&obj, &"friendlyName".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let details = {
+                let js_val = Reflect::get(&obj, &"details".into())?;
+                struct_user_x509_certificate_details_js_to_rs(js_val)?
+            };
+            Ok(libparsec::AvailablePkiCertificate::Valid {
+                reference,
+                friendly_name,
+                details,
+            })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a AvailablePkiCertificate",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_available_pki_certificate_rs_to_js(
+    rs_obj: libparsec::AvailablePkiCertificate,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::AvailablePkiCertificate::Invalid {
+            reference,
+            invalid_reason,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AvailablePkiCertificateInvalid".into(),
+            )?;
+            let js_reference = struct_x509_certificate_reference_rs_to_js(reference)?;
+            Reflect::set(&js_obj, &"reference".into(), &js_reference)?;
+            let js_invalid_reason =
+                variant_user_x509_certificate_load_error_rs_to_js(invalid_reason)?;
+            Reflect::set(&js_obj, &"invalidReason".into(), &js_invalid_reason)?;
+        }
+        libparsec::AvailablePkiCertificate::Valid {
+            reference,
+            friendly_name,
+            details,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AvailablePkiCertificateValid".into(),
+            )?;
+            let js_reference = struct_x509_certificate_reference_rs_to_js(reference)?;
+            Reflect::set(&js_obj, &"reference".into(), &js_reference)?;
+            let js_friendly_name = JsValue::from_str(friendly_name.as_ref());
+            Reflect::set(&js_obj, &"friendlyName".into(), &js_friendly_name)?;
+            let js_details = struct_user_x509_certificate_details_rs_to_js(details)?;
+            Reflect::set(&js_obj, &"details".into(), &js_details)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
@@ -7765,133 +7801,6 @@ fn variant_cancel_error_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsVal
         }
         libparsec::CancelError::NotBound { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"CancelErrorNotBound".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// CertificateWithDetails
-
-#[allow(dead_code)]
-fn variant_certificate_with_details_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::CertificateWithDetails, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    let tag = tag
-        .as_string()
-        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
-    match tag.as_str() {
-        "CertificateWithDetailsInvalid" => {
-            let handle = {
-                let js_val = Reflect::get(&obj, &"handle".into())?;
-                struct_x509_certificate_reference_js_to_rs(js_val)?
-            };
-            let friendly_name = {
-                let js_val = Reflect::get(&obj, &"friendlyName".into())?;
-                if js_val.is_null() {
-                    None
-                } else {
-                    Some(
-                        js_val
-                            .dyn_into::<JsString>()
-                            .ok()
-                            .and_then(|s| s.as_string())
-                            .ok_or_else(|| TypeError::new("Not a string"))?,
-                    )
-                }
-            };
-            let invalid_reason = {
-                let js_val = Reflect::get(&obj, &"invalidReason".into())?;
-                variant_invalid_certificate_reason_js_to_rs(js_val)?
-            };
-            Ok(libparsec::CertificateWithDetails::Invalid {
-                handle,
-                friendly_name,
-                invalid_reason,
-            })
-        }
-        "CertificateWithDetailsValid" => {
-            let handle = {
-                let js_val = Reflect::get(&obj, &"handle".into())?;
-                struct_x509_certificate_reference_js_to_rs(js_val)?
-            };
-            let friendly_name = {
-                let js_val = Reflect::get(&obj, &"friendlyName".into())?;
-                if js_val.is_null() {
-                    None
-                } else {
-                    Some(
-                        js_val
-                            .dyn_into::<JsString>()
-                            .ok()
-                            .and_then(|s| s.as_string())
-                            .ok_or_else(|| TypeError::new("Not a string"))?,
-                    )
-                }
-            };
-            let details = {
-                let js_val = Reflect::get(&obj, &"details".into())?;
-                struct_certificate_details_js_to_rs(js_val)?
-            };
-            Ok(libparsec::CertificateWithDetails::Valid {
-                handle,
-                friendly_name,
-                details,
-            })
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a CertificateWithDetails",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_certificate_with_details_rs_to_js(
-    rs_obj: libparsec::CertificateWithDetails,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::CertificateWithDetails::Invalid {
-            handle,
-            friendly_name,
-            invalid_reason,
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"CertificateWithDetailsInvalid".into(),
-            )?;
-            let js_handle = struct_x509_certificate_reference_rs_to_js(handle)?;
-            Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-            let js_friendly_name = match friendly_name {
-                Some(val) => JsValue::from_str(val.as_ref()),
-                None => JsValue::NULL,
-            };
-            Reflect::set(&js_obj, &"friendlyName".into(), &js_friendly_name)?;
-            let js_invalid_reason = variant_invalid_certificate_reason_rs_to_js(invalid_reason)?;
-            Reflect::set(&js_obj, &"invalidReason".into(), &js_invalid_reason)?;
-        }
-        libparsec::CertificateWithDetails::Valid {
-            handle,
-            friendly_name,
-            details,
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"CertificateWithDetailsValid".into(),
-            )?;
-            let js_handle = struct_x509_certificate_reference_rs_to_js(handle)?;
-            Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-            let js_friendly_name = match friendly_name {
-                Some(val) => JsValue::from_str(val.as_ref()),
-                None => JsValue::NULL,
-            };
-            Reflect::set(&js_obj, &"friendlyName".into(), &js_friendly_name)?;
-            let js_details = struct_certificate_details_rs_to_js(details)?;
-            Reflect::set(&js_obj, &"details".into(), &js_details)?;
         }
     }
     Ok(js_obj)
@@ -11410,11 +11319,23 @@ fn variant_device_primary_protection_strategy_js_to_rs(
             })
         }
         "DevicePrimaryProtectionStrategyPKI" => {
-            let certificate_ref = {
-                let js_val = Reflect::get(&obj, &"certificateRef".into())?;
-                struct_x509_certificate_reference_js_to_rs(js_val)?
+            let pki_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiPrivateKeyHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
-            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI { certificate_ref })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI {
+                pki_private_key_handle,
+            })
         }
         "DevicePrimaryProtectionStrategyPassword" => {
             let password = {
@@ -11503,15 +11424,20 @@ fn variant_device_primary_protection_strategy_rs_to_js(
             )?;
         }
         libparsec::DevicePrimaryProtectionStrategy::PKI {
-            certificate_ref, ..
+            pki_private_key_handle,
+            ..
         } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"DevicePrimaryProtectionStrategyPKI".into(),
             )?;
-            let js_certificate_ref = struct_x509_certificate_reference_rs_to_js(certificate_ref)?;
-            Reflect::set(&js_obj, &"certificateRef".into(), &js_certificate_ref)?;
+            let js_pki_private_key_handle = JsValue::from(pki_private_key_handle);
+            Reflect::set(
+                &js_obj,
+                &"pkiPrivateKeyHandle".into(),
+                &js_pki_private_key_handle,
+            )?;
         }
         libparsec::DevicePrimaryProtectionStrategy::Password { password, .. } => {
             Reflect::set(
@@ -12414,63 +12340,6 @@ fn variant_import_recovery_device_error_rs_to_js(
     Ok(js_obj)
 }
 
-// InvalidCertificateReason
-
-#[allow(dead_code)]
-fn variant_invalid_certificate_reason_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::InvalidCertificateReason, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    let tag = tag
-        .as_string()
-        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
-    match tag.as_str() {
-        "InvalidCertificateReasonInvalidEmail" => {
-            Ok(libparsec::InvalidCertificateReason::InvalidEmail {})
-        }
-        "InvalidCertificateReasonUnableToParseCert" => {
-            Ok(libparsec::InvalidCertificateReason::UnableToParseCert {})
-        }
-        "InvalidCertificateReasonUnableToParseTime" => {
-            Ok(libparsec::InvalidCertificateReason::UnableToParseTime {})
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a InvalidCertificateReason",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_invalid_certificate_reason_rs_to_js(
-    rs_obj: libparsec::InvalidCertificateReason,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::InvalidCertificateReason::InvalidEmail { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"InvalidCertificateReasonInvalidEmail".into(),
-            )?;
-        }
-        libparsec::InvalidCertificateReason::UnableToParseCert { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"InvalidCertificateReasonUnableToParseCert".into(),
-            )?;
-        }
-        libparsec::InvalidCertificateReason::UnableToParseTime { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"InvalidCertificateReasonUnableToParseTime".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // InviteInfoInvitationCreatedBy
 
 #[allow(dead_code)]
@@ -13276,27 +13145,6 @@ fn variant_list_invitations_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ListInvitationsErrorOffline".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ListUserCertificatesError
-
-#[allow(dead_code)]
-fn variant_list_user_certificates_error_rs_to_js(
-    rs_obj: libparsec::ListUserCertificatesError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ListUserCertificatesError::CannotOpenStore { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ListUserCertificatesErrorCannotOpenStore".into(),
             )?;
         }
     }
@@ -16021,6 +15869,107 @@ fn variant_pending_async_enrollment_info_rs_to_js(
     Ok(js_obj)
 }
 
+// PkiOpenUserCertificatePrivateKeyError
+
+#[allow(dead_code)]
+fn variant_pki_open_user_certificate_private_key_error_rs_to_js(
+    rs_obj: libparsec::PkiOpenUserCertificatePrivateKeyError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiOpenUserCertificatePrivateKeyError::CertificateNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound".into(),
+            )?;
+        }
+        libparsec::PkiOpenUserCertificatePrivateKeyError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiOpenUserCertificatePrivateKeyErrorInternal".into(),
+            )?;
+        }
+        libparsec::PkiOpenUserCertificatePrivateKeyError::PrivateKeyNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiOpenUserCertificatePrivateKeyErrorPrivateKeyNotFound".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiPrivateKeyCloseError
+
+#[allow(dead_code)]
+fn variant_pki_private_key_close_error_rs_to_js(
+    rs_obj: libparsec::PkiPrivateKeyCloseError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiPrivateKeyCloseError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiPrivateKeyCloseErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiSystemInitError
+
+#[allow(dead_code)]
+fn variant_pki_system_init_error_rs_to_js(
+    rs_obj: libparsec::PkiSystemInitError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiSystemInitError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PkiSystemInitErrorInternal".into())?;
+        }
+        libparsec::PkiSystemInitError::NotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiSystemInitErrorNotAvailable".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiSystemListUserCertificateError
+
+#[allow(dead_code)]
+fn variant_pki_system_list_user_certificate_error_rs_to_js(
+    rs_obj: libparsec::PkiSystemListUserCertificateError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::PkiSystemListUserCertificateError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiSystemListUserCertificateErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // RealmArchivingConfiguration
 
 #[allow(dead_code)]
@@ -17838,42 +17787,22 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs(
             })
         }
         "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
-            let config_dir = {
-                let js_val = Reflect::get(&obj, &"configDir".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
-            let server_addr = {
-                let js_val = Reflect::get(&obj, &"serverAddr".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })?
-            };
-            let certificate_reference = {
-                let js_val = Reflect::get(&obj, &"certificateReference".into())?;
-                struct_x509_certificate_reference_js_to_rs(js_val)?
+            let pki_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiPrivateKeyHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
             Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-                config_dir,
-                server_addr,
-                certificate_reference,
+                pki_private_key_handle,
             })
         }
         _ => Err(JsValue::from(TypeError::new(
@@ -17938,9 +17867,7 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
             )?;
         }
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-            config_dir,
-            server_addr,
-            certificate_reference,
+            pki_private_key_handle,
             ..
         } => {
             Reflect::set(
@@ -17948,37 +17875,11 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"SubmitAsyncEnrollmentIdentityStrategyPKI".into(),
             )?;
-            let js_config_dir = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(config_dir) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
-            let js_server_addr = JsValue::from_str({
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(server_addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"serverAddr".into(), &js_server_addr)?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(certificate_reference)?;
+            let js_pki_private_key_handle = JsValue::from(pki_private_key_handle);
             Reflect::set(
                 &js_obj,
-                &"certificateReference".into(),
-                &js_certificate_reference,
+                &"pkiPrivateKeyHandle".into(),
+                &js_pki_private_key_handle,
             )?;
         }
     }
@@ -18423,6 +18324,73 @@ fn variant_user_claim_list_initial_infos_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"UserClaimListInitialInfosErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// UserX509CertificateLoadError
+
+#[allow(dead_code)]
+fn variant_user_x509_certificate_load_error_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::UserX509CertificateLoadError, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "UserX509CertificateLoadErrorInvalidCertificateDer" => {
+            Ok(libparsec::UserX509CertificateLoadError::InvalidCertificateDer {})
+        }
+        "UserX509CertificateLoadErrorInvalidEmail" => {
+            Ok(libparsec::UserX509CertificateLoadError::InvalidEmail {})
+        }
+        "UserX509CertificateLoadErrorInvalidTime" => {
+            Ok(libparsec::UserX509CertificateLoadError::InvalidTime {})
+        }
+        "UserX509CertificateLoadErrorNoCommonName" => {
+            Ok(libparsec::UserX509CertificateLoadError::NoCommonName {})
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a UserX509CertificateLoadError",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_user_x509_certificate_load_error_rs_to_js(
+    rs_obj: libparsec::UserX509CertificateLoadError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::UserX509CertificateLoadError::InvalidCertificateDer { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UserX509CertificateLoadErrorInvalidCertificateDer".into(),
+            )?;
+        }
+        libparsec::UserX509CertificateLoadError::InvalidEmail { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UserX509CertificateLoadErrorInvalidEmail".into(),
+            )?;
+        }
+        libparsec::UserX509CertificateLoadError::InvalidTime { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UserX509CertificateLoadErrorInvalidTime".into(),
+            )?;
+        }
+        libparsec::UserX509CertificateLoadError::NoCommonName { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UserX509CertificateLoadErrorNoCommonName".into(),
             )?;
         }
     }
@@ -24905,16 +24873,6 @@ pub fn isKeyringAvailable() -> Promise {
     }))
 }
 
-// is_pki_available
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn isPkiAvailable() -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::is_pki_available().await;
-        Ok(ret.into())
-    }))
-}
-
 // libparsec_init_native_only_init
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -25041,39 +24999,6 @@ pub fn listStartedClients() -> Promise {
                 js_array.set(i as u32, js_elem);
             }
             js_array.into()
-        })
-    }))
-}
-
-// list_user_certificates_with_details
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn listUserCertificatesWithDetails() -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::list_user_certificates_with_details().await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-                    let js_array = Array::new_with_length(value.len() as u32);
-                    for (i, elem) in value.into_iter().enumerate() {
-                        let js_elem = variant_certificate_with_details_rs_to_js(elem)?;
-                        js_array.set(i as u32, js_elem);
-                    }
-                    js_array.into()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_list_user_certificates_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
         })
     }))
 }
@@ -25349,6 +25274,169 @@ pub fn pathSplit(path: String) -> Promise {
                 js_array.set(i as u32, js_elem);
             }
             js_array.into()
+        })
+    }))
+}
+
+// pki_init_for_native
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiInitForNative(config_dir: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::pki_init_for_native(&config_dir).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_system_init_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_init_for_scws
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiInitForScws(config_dir: String, parsec_addr: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let parsec_addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(parsec_addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::pki_init_for_scws(&config_dir, parsec_addr).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_system_init_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_list_user_certificates
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiListUserCertificates() -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::pki_list_user_certificates().await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = variant_available_pki_certificate_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_system_list_user_certificate_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_open_user_certificate_private_key
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiOpenUserCertificatePrivateKey(cert_ref: Object) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let cert_ref = cert_ref.into();
+        let cert_ref = struct_x509_certificate_reference_js_to_rs(cert_ref)?;
+
+        let ret = libparsec::pki_open_user_certificate_private_key(&cert_ref).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_open_user_certificate_private_key_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// pki_private_key_close
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pkiPrivateKeyClose(handle: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::pki_private_key_close(handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_pki_private_key_close_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     }))
 }
