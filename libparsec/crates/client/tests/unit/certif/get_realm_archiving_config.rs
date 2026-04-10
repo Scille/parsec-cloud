@@ -24,12 +24,13 @@ async fn no_archiving_certificate(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let res = ops
+    let (config, timestamp) = ops
         .get_realm_archiving_configuration(realm_id)
         .await
         .unwrap();
 
-    p_assert_eq!(res, RealmArchivingConfiguration::Available);
+    p_assert_eq!(config, RealmArchivingConfiguration::Available);
+    p_assert_eq!(timestamp, None);
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -50,12 +51,13 @@ async fn archived(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let res = ops
+    let (config, timestamp) = ops
         .get_realm_archiving_configuration(realm_id)
         .await
         .unwrap();
 
-    p_assert_eq!(res, RealmArchivingConfiguration::Archived);
+    p_assert_eq!(config, RealmArchivingConfiguration::Archived);
+    assert!(timestamp.is_some());
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -80,15 +82,16 @@ async fn deletion_planned(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let res = ops
+    let (config, timestamp) = ops
         .get_realm_archiving_configuration(realm_id)
         .await
         .unwrap();
 
     p_assert_eq!(
-        res,
+        config,
         RealmArchivingConfiguration::DeletionPlanned { deletion_date }
     );
+    assert!(timestamp.is_some());
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -115,13 +118,14 @@ async fn multiple_archiving_certificates(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let res = ops
+    let (config, timestamp) = ops
         .get_realm_archiving_configuration(realm_id)
         .await
         .unwrap();
 
     // The last certificate should win
-    p_assert_eq!(res, RealmArchivingConfiguration::Available);
+    p_assert_eq!(config, RealmArchivingConfiguration::Available);
+    assert!(timestamp.is_some());
 }
 
 #[parsec_test(testbed = "minimal")]
