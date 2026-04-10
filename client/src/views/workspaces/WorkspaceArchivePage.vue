@@ -33,7 +33,7 @@
           v-if="!querying && filteredWorkspaces.length === 0"
         >
           <ms-image
-            :image="NoHiddenWorkspaces"
+            :image="NoArchivedWorkspaces"
             class="no-archived-workspaces__image"
           />
           <ion-text class="body-lg">
@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import NoHiddenWorkspaces from '@/assets/images/no-hidden-workspaces.svg?raw';
+import NoArchivedWorkspaces from '@/assets/images/no-archived-workspaces.svg?raw';
 import { openArchivedWorkspaceContextMenu } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { listArchivedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';

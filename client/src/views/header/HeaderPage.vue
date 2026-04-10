@@ -406,7 +406,7 @@ async function updateRoute(): Promise<void> {
     finalPath.push({
       id: 0,
       icon: isArchived.value ? archive : home,
-      title: isArchived.value ? 'HeaderPage.titles.archived' : '',
+      title: isArchived.value ? 'HeaderPage.breadcrumbs.archived' : '',
       route: isArchived.value ? Routes.Archived : Routes.Workspaces,
       params: {},
     });
