@@ -28,5 +28,5 @@ async fn create_workspace(tmp_path: TmpPath) {
     let workspace_name = "new-workspace".parse().unwrap();
     assert!(workspaces
         .iter()
-        .any(|w| w.current_name == workspace_name && w.current_self_role == RealmRole::Owner));
+        .any(|w| w.name == workspace_name && w.self_role == RealmRole::Owner));
 }

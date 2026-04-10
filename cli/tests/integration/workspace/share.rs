@@ -60,8 +60,7 @@ async fn share_workspace(tmp_path: TmpPath) {
     assert!(
         workspaces
             .iter()
-            .any(|w| w.current_name == workspace_name
-                && w.current_self_role == RealmRole::Contributor),
+            .any(|w| w.name == workspace_name && w.self_role == RealmRole::Contributor),
         "Missing shared workspace for bob, {workspaces:?}"
     );
 }
