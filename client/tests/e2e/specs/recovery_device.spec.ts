@@ -4,25 +4,25 @@ import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, msTest } from '
 
 for (const authMode of ['password', 'sso']) {
   msTest(`Export and use recovery files with ${authMode}`, async ({ myProfilePage }) => {
-    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
-    const recovery = myProfilePage.locator('.recovery');
-    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
-    await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
-    await expect(recovery.locator('.restore-password-button')).toHaveText('Create recovery files');
-    const recoveryFiles = recovery.locator('.recovery-list');
-    await expect(recoveryFiles).toBeHidden();
-    await recovery.locator('.restore-password-button').click();
-    await expect(recoveryFiles).toBeVisible();
-    const recoveryItems = recoveryFiles.locator('.recovery-item');
-    await expect(recoveryItems).toHaveCount(2);
-    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Recovery File', 'Secret Key']);
-    await expect(recoveryItems.locator('.recovery-item-download ion-button')).toHaveText(['Download', 'Download']);
-    await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
-    await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
+    const recoveryPage = myProfilePage.locator('.recovery');
+    const recoveryFileSection = recoveryPage.locator('.recovery-section--file');
+    const exportRecoveryModal = myProfilePage.locator('.export-recovery-device-modal');
+    await expect(recoveryPage.locator('.item-header__title')).toHaveText('Access recovery');
+    await expect(exportRecoveryModal).toBeHidden();
+    await expect(recoveryFileSection.locator('.action-button')).toHaveText('Create recovery files');
+    await recoveryFileSection.locator('.action-button').click();
+    await expect(exportRecoveryModal).toBeVisible();
+    const recoverySteps = exportRecoveryModal.locator('.step-item');
+    await expect(recoverySteps).toHaveCount(2);
+    await expect(recoverySteps.locator('.step-item__title')).toContainText(['Secret Key', 'Recovery File']);
+    await expect(exportRecoveryModal.locator('.confirmation-checkbox')).not.toBeChecked();
+    const passphraseContent = ((await exportRecoveryModal.locator('.recovery-key .input-action-text').textContent()) ?? '').trim();
+    expect(passphraseContent).toMatch(/^[A-Z0-9-]+$/);
 
     const fileDownloadPromise = myProfilePage.waitForEvent('download');
-    await recoveryItems.nth(0).locator('.recovery-item-download').locator('ion-button').click();
+    await exportRecoveryModal.locator('.recovery-file .input-action-button').click();
     const fileDownload = await fileDownloadPromise;
     expect(fileDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_TestbedOrg\d+\.psrk$/);
     const fileStream = await fileDownload.createReadStream();
@@ -32,24 +32,12 @@ for (const authMode of ['password', 'sso']) {
     }
     const fileContent = Buffer.concat(chunks);
     expect(fileContent.byteLength).toBeGreaterThan(0);
-    await expect(myProfilePage).toShowToast('The recovery file was successfully downloaded', 'Success');
-    await expect(recoveryItems.nth(0).locator('.checked')).toBeVisible();
 
-    const passphraseDownloadPromise = myProfilePage.waitForEvent('download');
-    await recoveryItems.nth(1).locator('.recovery-item-download').locator('ion-button').click();
-    const passphraseDownload = await passphraseDownloadPromise;
-    expect(passphraseDownload.suggestedFilename()).toMatch(/Parsec_Recovery_Code_TestbedOrg\d+\.txt/);
-    const passphraseStream = await passphraseDownload.createReadStream();
-    passphraseStream.setEncoding('utf8');
+    await exportRecoveryModal.locator('.confirmation-checkbox').click();
+    await expect(exportRecoveryModal.locator('.confirmation-checkbox')).toBeChecked();
+    await exportRecoveryModal.locator('#next-button').click();
 
-    const codes: Array<string> = [];
-    for await (const chunk of passphraseStream) {
-      codes.push(chunk);
-    }
-    const passphraseContent = codes.join();
-    expect(passphraseContent).toMatch(/^([A-Z0-9]{4}-?){13}$/);
-    await expect(myProfilePage).toShowToast('The secret key was successfully downloaded', 'Success');
-    await expect(recoveryItems.nth(1).locator('.checked')).toBeVisible();
+    await expect(myProfilePage).toShowToast('Files downloaded', 'Success');
 
     await logout(myProfilePage);
     await expect(myProfilePage.locator('.recovery-devices').locator('ion-button')).toHaveText('Recover my session');
@@ -146,24 +134,35 @@ for (const authMode of ['password', 'sso']) {
 
 for (const error of ['invalid-passphrase', 'invalid-file']) {
   msTest(`Export and use recovery files with errors (${error})`, async ({ myProfilePage }) => {
-    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
     const recovery = myProfilePage.locator('.recovery');
-    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
-    await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
-    await expect(recovery.locator('.restore-password-button')).toHaveText('Create recovery files');
-    const recoveryFiles = recovery.locator('.recovery-list');
-    await expect(recoveryFiles).toBeHidden();
-    await recovery.locator('.restore-password-button').click();
-    await expect(recoveryFiles).toBeVisible();
-    const recoveryItems = recoveryFiles.locator('.recovery-item');
-    await expect(recoveryItems).toHaveCount(2);
-    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Recovery File', 'Secret Key']);
-    await expect(recoveryItems.locator('.recovery-item-download ion-button')).toHaveText(['Download', 'Download']);
-    await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
+    await expect(recovery.locator('.item-header__title')).toHaveText('Access recovery');
+    const recoveryFileSection = recovery.locator('.recovery-section--file');
+    await expect(recoveryFileSection).toBeVisible();
+    await expect(recoveryFileSection.locator('.recovery-method-content-text__title')).toHaveText('Recovery files');
+    await expect(recoveryFileSection.locator('.recovery-method-content-text__description')).toHaveText(
+      'A recovery file combined with a secret key allow you to restore access to your data once assembled.',
+    );
+    await expect(recoveryFileSection.locator('.action-button')).toHaveText('Create recovery files');
+    await expect(recoveryFileSection.locator('.badge-inactive')).toHaveText('Inactive');
+
+    await recoveryFileSection.locator('.action-button').click();
+    const exportRecoveryModal = myProfilePage.locator('.export-recovery-device-modal');
+    await expect(exportRecoveryModal).toBeVisible();
+    await expect(exportRecoveryModal.locator('.ms-modal-header__title')).toHaveText('Recovery files');
+    await expect(exportRecoveryModal.locator('.step-item').nth(0).locator('.step-item__title')).toContainText('Secret Key');
+    await expect(exportRecoveryModal.locator('.step-item').nth(1).locator('.step-item__title')).toContainText('Recovery File');
+
+    const recoverySteps = exportRecoveryModal.locator('.step-item');
+    await expect(recoverySteps).toHaveCount(2);
+    await expect(recoverySteps.locator('.step-item__title')).toContainText(['Secret Key', 'Recovery File']);
+
+    const passphraseContent = ((await exportRecoveryModal.locator('.recovery-key .input-action-text').textContent()) ?? '').trim();
+    expect(passphraseContent).toMatch(/^[A-Z0-9-]+$/);
 
     const fileDownloadPromise = myProfilePage.waitForEvent('download');
-    await recoveryItems.nth(0).locator('.recovery-item-download ion-button').click();
+    await exportRecoveryModal.locator('.recovery-file .input-action-button').click();
     const fileDownload = await fileDownloadPromise;
     expect(fileDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_TestbedOrg\d+\.psrk$/);
     const fileStream = await fileDownload.createReadStream();
@@ -173,24 +172,12 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     }
     const fileContent = Buffer.concat(chunks);
     expect(fileContent.byteLength).toBeGreaterThan(0);
-    await expect(myProfilePage).toShowToast('The recovery file was successfully downloaded', 'Success');
-    await expect(recoveryItems.nth(0).locator('.checked')).toBeVisible();
 
-    const passphraseDownloadPromise = myProfilePage.waitForEvent('download');
-    await recoveryItems.nth(1).locator('.recovery-item-download').locator('ion-button').click();
-    const passphraseDownload = await passphraseDownloadPromise;
-    expect(passphraseDownload.suggestedFilename()).toMatch(/Parsec_Recovery_Code_TestbedOrg\d+\.txt/);
-    const passphraseStream = await passphraseDownload.createReadStream();
-    passphraseStream.setEncoding('utf8');
+    await exportRecoveryModal.locator('.confirmation-checkbox').click();
+    await expect(exportRecoveryModal.locator('.confirmation-checkbox')).toBeChecked();
+    await exportRecoveryModal.locator('#next-button').click();
 
-    const codes: Array<string> = [];
-    for await (const chunk of passphraseStream) {
-      codes.push(chunk);
-    }
-    const passphraseContent = codes.join();
-    expect(passphraseContent).toMatch(/^([A-Z0-9]{4}-?){13}$/);
-    await expect(myProfilePage).toShowToast('The secret key was successfully downloaded', 'Success');
-    await expect(recoveryItems.nth(1).locator('.checked')).toBeVisible();
+    await expect(myProfilePage).toShowToast('Files downloaded', 'Success');
 
     await logout(myProfilePage);
     await expect(myProfilePage.locator('.recovery-devices').locator('ion-button')).toHaveText('Recover my session');

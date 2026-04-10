@@ -93,14 +93,14 @@
                 </ion-text>
               </div>
               <!-- right element: invite link, copy button, email button -->
-              <div class="step-link-copy">
-                <ion-text class="step-link-copy-text form-input">{{ greeter.invitationLink }}</ion-text>
-                <div class="step-link-copy-buttons">
+              <div class="input-action">
+                <ion-text class="input-action-text form-input">{{ greeter.invitationLink }}</ion-text>
+                <div class="input-action-buttons">
                   <ion-button
                     id="copy-link-btn"
                     @click="copyLink"
                     :disabled="linkCopiedToClipboard !== undefined"
-                    class="button-item"
+                    class="input-action-button"
                   >
                     <ion-icon
                       class="button-icon"
@@ -114,7 +114,7 @@
                     </span>
                   </ion-button>
                   <ion-button
-                    class="button-item"
+                    class="input-action-button"
                     :class="isEmailSent && elapsedCount === 0 ? 'button-clicked' : ''"
                     @click="sendEmail"
                     :disabled="isEmailSent && elapsedCount > 0"
@@ -216,8 +216,9 @@
             class="spinner-container"
           >
             <ms-spinner
+              class="spinner"
               title="DevicesPage.greet.waiting"
-              :size="20"
+              :size="14"
             />
           </div>
         </div>

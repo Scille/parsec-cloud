@@ -188,7 +188,7 @@
             "devices": "My devices",
             "authentication": "Authentication",
             "account": "Account",
-            "recovery": "Recovery file",
+            "recovery": "Access recovery",
             "contactUs": "Contact us",
             "documentation": "Documentation",
             "logout": "Log out",
@@ -2097,6 +2097,10 @@
         "title": "Changes"
     },
     "MyProfilePage": {
+        "settings": {
+            "title": "Settings",
+            "description": "Access language, theme and privacy settings for the application."
+        },
         "titleCurrentPassword": "Enter your current password",
         "titleCurrentOpenBao": "Connect to your SSO provider",
         "titleNewAuthentication": "Change authentication method",
@@ -2114,7 +2118,7 @@
                 "settings": "Settings",
                 "devices": "My devices",
                 "authentication": "Authentication",
-                "recovery": "Recovery files"
+                "recovery": "Access recovery"
             },
             "support": {
                 "title": "Support",
@@ -2133,16 +2137,37 @@
         }
     },
     "OrganizationRecovery": {
-        "title": "Organization recovery files",
-        "recoveryFile": "Recovery Files",
-        "recoveryKey": "Secret Key",
+        "title": "Access recovery",
+        "description": "Set up recovery options in case you lose your access (forgotten password, lost login details, etc.) from a device or browser.",
         "advice": "We strongly recommend creating recovery files for each organization.",
-        "adviceDone": "You have already created recovery files.",
+        "file": {
+            "title": "Recovery files",
+            "description": "A recovery file combined with a secret key allow you to restore access to your data once assembled.",
+            "info": "You need to save this recovery file and this secret key in a secure place, if possible in separate places, as both are needed to recover a device's access to an organization.",
+            "downloaded": "Files downloaded",
+            "action": "Create recovery files"
+        },
+        "device": {
+            "title": "Trusted devices or browsers",
+            "description": "Add secondary devices or browsers (Chrome or Firefox) as backup accesses to this organization.",
+            "activeDevices": "1 other active device/browser | {count} other active devices/browsers",
+            "action": "Add a device"
+        },
+        "trustedUser": {
+            "title": "People of trust",
+            "description": "Designate trusted people who can help you recover your account in case of lost access (minimum {minUsers} people).",
+            "action": "Manage my people of trust",
+            "actionSecondary": "Help recover a person"
+        },
+        "state": {
+            "active": "Active",
+            "inactive": "Inactive"
+        },
+        "modal": {
+            "title": "Recovery files",
+            "confirmation": "I confirm that I have copied my secret key and downloaded my recovery file."
+        },
         "done": {
-            "subtitle": "Recovery files allow you to regain access to this organization if you forgot your password or lose your devices.",
-            "subtitle2": "Without recovery files, you will not be able to recover your account in such a case, and you will need to be re-invited to the organization.",
-            "subtitle3": "They consist of a recovery file and a recovery key. You need to save both in a secure place, if possible in separate places, as both are needed to recover a device's access to an organization.",
-            "button": "Download file",
             "recreateQuestionTitle": "Create new recovery files?",
             "recreateQuestionMessage": "You have already created recovery files in the past. Do you want to create new ones?",
             "recreateYes": "Create new recovery files",

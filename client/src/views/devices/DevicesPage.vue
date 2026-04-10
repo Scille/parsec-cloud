@@ -42,17 +42,15 @@
 
 <script setup lang="ts">
 import DeviceCard from '@/components/devices/DeviceCard.vue';
-import { OwnDeviceInfo, createDeviceInvitation, listOwnDevices } from '@/parsec';
+import { OwnDeviceInfo, listOwnDevices } from '@/parsec';
 import { Routes, getCurrentRouteName, watchRoute } from '@/router';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
-import { IonButton, IonItem, IonList, IonText, modalController } from '@ionic/vue';
+import { openDeviceGreetModal } from '@/views/devices/utils';
+import { IonButton, IonItem, IonList, IonText } from '@ionic/vue';
 import { MsModalResult } from 'megashark-lib';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
-const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
 
 const routeWatchCancel = watchRoute(async () => {
@@ -87,39 +85,9 @@ async function refreshDevicesList(): Promise<void> {
 }
 
 async function onAddDeviceClick(): Promise<void> {
-  const result = await createDeviceInvitation(false);
-  if (!result.ok) {
-    informationManager.value.present(
-      new Information({
-        message: 'DevicesPage.greet.errors.startFailed',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
-
-  const [_, invitationAddr] = result.value.addr;
-  const modal = await modalController.create({
-    component: GreetDeviceModal,
-    canDismiss: true,
-    backdropDismiss: false,
-    cssClass: 'greet-organization-modal',
-    componentProps: {
-      informationManager: informationManager.value,
-      invitationLink: invitationAddr,
-      token: result.value.token,
-    },
-  });
-  await modal.present();
-  const modalResult = await modal.onWillDismiss();
-  await modal.dismiss();
-  if (modalResult.role === MsModalResult.Confirm) {
+  const modalResult = await openDeviceGreetModal(informationManager.value);
+  if (modalResult === MsModalResult.Confirm) {
     await refreshDevicesList();
-    const lastDevice = devices.value.toSorted((d1, d2) => (d1.createdOn > d2.createdOn ? -1 : 1))[0];
-    if (lastDevice) {
-      eventDistributor.value.dispatchEvent(Events.DeviceCreated, { info: lastDevice });
-    }
   }
 }
 </script>
@@ -130,6 +98,13 @@ async function onAddDeviceClick(): Promise<void> {
   flex-direction: column;
   justify-content: end;
   position: relative;
+  border-radius: var(--parsec-radius-12);
+  background: var(--parsec-color-light-secondary-white);
+  padding: 1.5rem;
+  box-shadow:
+    0 1px 1px 0 rgba(0, 0, 0, 0.05),
+    0 1px 4px 0 rgba(0, 0, 0, 0.03),
+    0 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
 #add-device-button {

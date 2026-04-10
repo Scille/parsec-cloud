@@ -23,7 +23,7 @@
       </div>
 
       <ion-text
-        class="badge button-medium"
+        class="badge-active button-medium"
         v-show="isCurrent"
         :outline="true"
       >
@@ -129,12 +129,15 @@ defineProps<{
   }
 }
 
-.badge {
-  font-size: 0.8125rem;
-  margin: auto 0 auto auto;
-  border-radius: var(--parsec-radius-32);
-  padding: 0.25em 0.5em;
-  color: var(--parsec-color-light-primary-600);
-  background: var(--parsec-color-light-primary-100);
+.badge-active {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: var(--parsec-color-light-primary-50);
+  color: var(--parsec-color-light-primary-500);
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--parsec-radius-12);
+  white-space: nowrap;
 }
 </style>

@@ -187,7 +187,7 @@
             "devices": "Mes appareils",
             "authentication": "Authentification",
             "account": "Compte",
-            "recovery": "Fichier de récupération",
+            "recovery": "Récupération d'accès",
             "contactUs": "Nous contacter",
             "documentation": "Documentation",
             "logout": "Déconnexion",
@@ -2098,6 +2098,10 @@
         "title": "Journal des modifications"
     },
     "MyProfilePage": {
+        "settings": {
+            "title": "Paramètres",
+            "description": "Accédez à l'ensemble des paramètres de langue, de thème et de confidentialité de l'application."
+        },
         "titleCurrentPassword": "Saisissez votre mot de passe",
         "titleCurrentOpenBao": "Connectez-vous à votre fournisseur de SSO",
         "titleNewAuthentication": "Changer de méthode d'authentification",
@@ -2115,7 +2119,7 @@
                 "settings": "Paramètres",
                 "devices": "Mes appareils",
                 "authentication": "Authentification",
-                "recovery": "Fichiers de récupération"
+                "recovery": "Récupération d'accès"
             },
             "support": {
                 "title": "Support",
@@ -2134,16 +2138,37 @@
         }
     },
     "OrganizationRecovery": {
-        "title": "Fichiers de récupération d'organisation",
-        "recoveryFile": "Fichiers de récupération",
-        "recoveryKey": "Clé secrète",
+        "title": "Récupération d'accès",
+        "description": "Activez des moyens de récupération en cas de perte de votre accès (mot de passe oublié, authentification perdue, etc.) depuis un appareil ou un navigateur.",
         "advice": "Nous vous conseillons de créer des fichiers de récupération pour chaque organisation.",
-        "adviceDone": "Vous avez déjà créé des fichiers de récupération.",
+        "file": {
+            "title": "Fichiers de récupération",
+            "description": "Un fichier de récupération et une clé secrète vous permettent, une fois assemblés, de retrouver l'accès à vos données.",
+            "info": "Il est nécessaire de sauvegarder ce fichier de récupération et cette clé secrète dans des emplacements sûrs, de préférence dans deux emplacements séparés, sachant que les deux sont nécessaires pour restaurer un accès perdu d'un appareil à une organisation.",
+            "downloaded": "Fichiers téléchargés",
+            "action": "Créer des fichiers de récupération"
+        },
+        "device": {
+            "title": "Appareils ou navigateurs de récupération",
+            "description": "Ajoutez des appareils ou des navigateurs (Chrome ou Firefox) secondaires comme accès alternatifs à cette organisation.",
+            "activeDevices": "1 autre appareil/navigateur actif | {count} autres appareils/navigateurs actifs",
+            "action": "Ajouter un appareil"
+        },
+        "trustedUser": {
+            "title": "Personnes de confiance",
+            "description": "Désignez des personnes de confiance qui pourront vous aider à récupérer votre compte en cas de perte d'accès (minimum {minUsers} personnes).",
+            "action": "Gérer mes personnes de confiance",
+            "actionSecondary": "Aider à récupérer un accès"
+        },
+        "state": {
+            "active": "Actif",
+            "inactive": "Inactif"
+        },
+        "modal": {
+            "title": "Fichiers de récupération",
+            "confirmation": "Je confirme avoir copié ma clé secrète et téléchargé mon fichier de récupération."
+        },
         "done": {
-            "subtitle": "Les fichiers de récupération vous permettent de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-            "subtitle2": "Sans fichiers de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
-            "subtitle3": "Ils comportent un fichier de récupération et une clé de récupération. Il est nécessaire de les sauvegarder dans des emplacements sûrs, de préférence dans deux emplacements séparés, sachant que les deux sont nécessaires pour restaurer un accès perdu d'un appareil à une organisation.",
-            "button": "Créer un fichier de récupération",
             "recreateQuestionTitle": "Nouveaux fichiers de récupération",
             "recreateQuestionMessage": "Vous avez déjà créé des fichiers de récupération dans le passé. Souhaitez-vous en créer de nouveaux ?",
             "recreateYes": "Créer de nouveaux fichiers",

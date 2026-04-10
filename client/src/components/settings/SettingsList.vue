@@ -245,6 +245,7 @@ onUnmounted(async (): Promise<void> => {
   padding-top: 0px;
   padding-bottom: 0px;
   gap: 2rem;
+  contain: initial;
 
   &-container {
     display: flex;
@@ -256,7 +257,10 @@ onUnmounted(async (): Promise<void> => {
     background: var(--parsec-color-light-secondary-white);
     border-radius: var(--parsec-radius-12);
     padding: 1.5rem 0 0;
-    box-shadow: var(--parsec-shadow-input);
+    box-shadow:
+      0 1px 1px 0 rgba(0, 0, 0, 0.05),
+      0 1px 4px 0 rgba(0, 0, 0, 0.03),
+      0 0 1px 0 rgba(0, 0, 0, 0.2);
 
     &__title {
       color: var(--parsec-color-light-primary-700);
