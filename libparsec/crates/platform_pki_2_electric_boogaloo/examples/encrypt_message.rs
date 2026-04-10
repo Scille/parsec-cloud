@@ -5,7 +5,7 @@ mod utils;
 
 use anyhow::Context;
 use clap::Parser;
-use libparsec_platform_pki::{encrypt_message, get_der_encoded_certificate};
+use libparsec_platform_pki::{encrypt_message, PkiSystem};
 use libparsec_types::X509CertificateHash;
 
 #[derive(Debug, Parser)]
@@ -26,7 +26,16 @@ async fn main() -> anyhow::Result<()> {
     let cert_ref = args.certificate_hash.into();
     let data = args.content.into_bytes()?;
 
-    let der = get_der_encoded_certificate(&cert_ref).await?;
+    // Config dir is only used for testbed, we can safely provide an empty path here
+    let pki = PkiSystem::init(std::path::Path::new(""), None)
+        .await
+        .context("Failed to initialize PKI system")?;
+    let cert = pki
+        .open_certificate(&cert_ref)
+        .await
+        .context("Failed to find certificate")?;
+
+    let der = cert.get_der().await.context("Failed to get DER")?;
     let (algo, ciphered) = encrypt_message(der, &data)
         .await
         .context("Failed to encrypt message")?;
@@ -34,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
     println!("Encrypted using the algorithm {}", algo);
     println!("Encrypted by cert with fingerprint: {}", cert_ref.hash);
     println!(
-        "Encrypted data: {}",
+        "Encrypted data (in base64): {}",
         data_encoding::BASE64.encode_display(&ciphered)
     );
 
