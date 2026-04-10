@@ -84,7 +84,7 @@ pub(crate) async fn list_async_enrollments(
                         intermediate_der_x509_certificates,
                         ..
                     } => {
-                        match libparsec_platform_pki::get_root_certificate_info_from_trustchain(
+                        match libparsec_platform_pki::get_root_x509_certificate_info_from_trustchain(
                             &submitter_der_x509_certificate,
                             intermediate_der_x509_certificates
                                 .iter()
