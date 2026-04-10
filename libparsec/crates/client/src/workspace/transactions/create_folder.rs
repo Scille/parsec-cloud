@@ -48,13 +48,12 @@ pub(crate) async fn create_folder(
     ops: &WorkspaceOps,
     path: FsPath,
 ) -> Result<VlobID, WorkspaceCreateFolderError> {
-    if !ops
+    if ops
         .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
         .entry
-        .role
-        .can_write()
+        .is_read_only()
     {
         return Err(WorkspaceCreateFolderError::ReadOnlyRealm);
     }
