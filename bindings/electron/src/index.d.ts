@@ -417,9 +417,12 @@ export interface ShamirRecoveryRecipient {
 export interface StartedWorkspaceInfo {
     client: number
     id: string
-    currentName: string
-    currentSelfRole: RealmRole
+    name: string
+    nameOrigin: CertificateBasedInfoOrigin
+    selfRole: RealmRole
+    selfRoleOrigin: CertificateBasedInfoOrigin
     archivingConfiguration: RealmArchivingConfiguration
+    archivingConfigurationOrigin: CertificateBasedInfoOrigin
     mountpoints: Array<[number, string]>
 }
 
@@ -524,11 +527,14 @@ export interface WorkspaceHistoryFileStat {
 
 export interface WorkspaceInfo {
     id: string
-    currentName: string
-    currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
+    name: string
+    nameOrigin: CertificateBasedInfoOrigin
+    selfRole: RealmRole
+    selfRoleOrigin: CertificateBasedInfoOrigin
     archivingConfiguration: RealmArchivingConfiguration
+    archivingConfigurationOrigin: CertificateBasedInfoOrigin
 }
 
 
@@ -1236,6 +1242,19 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
+
+
+// CertificateBasedInfoOrigin
+export interface CertificateBasedInfoOriginCertificate {
+    tag: "CertificateBasedInfoOriginCertificate"
+    timestamp: number
+}
+export interface CertificateBasedInfoOriginPlaceholder {
+    tag: "CertificateBasedInfoOriginPlaceholder"
+}
+export type CertificateBasedInfoOrigin =
+  | CertificateBasedInfoOriginCertificate
+  | CertificateBasedInfoOriginPlaceholder
 
 
 // CertificateWithDetails
