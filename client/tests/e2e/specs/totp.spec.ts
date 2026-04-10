@@ -32,7 +32,7 @@ async function setupTotp(page: MsPage): Promise<string> {
   await nextButton.click();
 
   await setWriteClipboardPermission(page.context(), true);
-  await secondPage.locator('.step-code-copy-button').click();
+  await secondPage.locator('.input-action-button').click();
   const totpSecret = await getClipboardText(page);
 
   await nextButton.click();
@@ -91,11 +91,11 @@ msTest('Setup totp modal', async ({ myProfilePage }) => {
   await expect(fourthPage).toBeHidden();
   await expect(modal.locator('.ms-modal-header')).toHaveText('Multi-Factor Authentication (MFA)');
   await expect(secondPage.locator('.step-code-qrcode')).toBeVisible();
-  await expect(secondPage.locator('.step-code-copy-text')).toHaveText(/^[A-Z0-9]{32}$/);
-  await expect(secondPage.locator('.step-code-copy-button')).toHaveText('Copy key', { useInnerText: true });
+  await expect(secondPage.locator('.input-action-text')).toHaveText(/^[A-Z0-9]{32}$/);
+  await expect(secondPage.locator('.input-action-button')).toHaveText('Copy key', { useInnerText: true });
 
   await setWriteClipboardPermission(myProfilePage.context(), true);
-  await secondPage.locator('.step-code-copy-button').click();
+  await secondPage.locator('.input-action-button').click();
   const totpSecret = await getClipboardText(myProfilePage);
 
   await nextButton.click();
@@ -159,6 +159,9 @@ msTest('Setup totp modal', async ({ myProfilePage }) => {
 });
 
 msTest('Reset totp', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.menu-list__item').nth(0)).toHaveText('Settings');
+  await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Settings');
+  const email = (await myProfilePage.locator('.profile-info-card').locator('.item-text').nth(1).textContent()) || '';
   await expect(myProfilePage.locator('.menu-list__item').nth(2)).toHaveText('Authentication');
   await myProfilePage.locator('.menu-list__item').nth(2).click();
   await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
@@ -166,7 +169,6 @@ msTest('Reset totp', async ({ myProfilePage }) => {
   await setupTotp(myProfilePage);
   const orgName = (await myProfilePage.locator('.large-display-menu-container').locator('.organization-text').textContent()) || '';
   expect(orgName).toBeTruthy();
-  const email = (await myProfilePage.locator('.profile-info-card__email').textContent()) || '';
   expect(email).toBeTruthy();
 
   await logout(myProfilePage);
@@ -191,11 +193,11 @@ msTest('Reset totp', async ({ myProfilePage }) => {
 
   await expect(resetModal.locator('.ms-modal-header')).toHaveText('Multi-Factor Authentication (MFA)');
   await expect(firstPage.locator('.step-code-qrcode')).toBeVisible();
-  await expect(firstPage.locator('.step-code-copy-text')).toHaveText(/^[A-Z0-9]{32}$/);
-  await expect(firstPage.locator('.step-code-copy-button')).toHaveText('Copy key', { useInnerText: true });
+  await expect(firstPage.locator('.input-action-text')).toHaveText(/^[A-Z0-9]{32}$/);
+  await expect(firstPage.locator('.input-action-button')).toHaveText('Copy key', { useInnerText: true });
 
   await setWriteClipboardPermission(page.context(), true);
-  await firstPage.locator('.step-code-copy-button').click();
+  await firstPage.locator('.input-action-button').click();
   const totpSecret = await getClipboardText(page);
 
   await nextButton.click();

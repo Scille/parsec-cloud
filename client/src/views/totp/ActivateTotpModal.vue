@@ -35,7 +35,11 @@
             v-if="url"
             class="step-container"
           >
-            <ms-report-text :theme="MsReportTheme.Info">
+            <!-- Should be added when organization requires mfa -->
+            <ms-report-text
+              :theme="MsReportTheme.Info"
+              v-show="false"
+            >
               {{ $msTranslate('Authentication.mfa.info') }}
             </ms-report-text>
 
@@ -70,15 +74,15 @@
                   {{ $msTranslate('Authentication.mfa.or') }}
                 </ion-text>
               </div>
-              <div class="step-code-copy">
-                <ion-text class="step-code-copy-text form-input">{{ code }}</ion-text>
+              <div class="input-action">
+                <ion-text class="input-action-text form-input">{{ code }}</ion-text>
                 <ion-button
                   @click="copyCode"
                   :disabled="codeCopied !== undefined"
-                  class="step-code-copy-button"
+                  class="input-action-button"
                 >
                   <ion-icon
-                    class="copy-icon"
+                    class="button-icon"
                     :icon="codeCopied ? checkmarkCircle : copy"
                   />
                   <span
@@ -96,7 +100,7 @@
                 </ion-button>
                 <ion-text
                   v-if="codeCopied === false"
-                  class="step-code-copy-error body-sm"
+                  class="input-action-error body-sm"
                 >
                   {{ $msTranslate('Authentication.mfa.step2.copyError') }}
                 </ion-text>
@@ -480,59 +484,6 @@ async function onPreviousClicked(): Promise<boolean> {
         &::after {
           height: 1px;
           width: 3rem;
-        }
-      }
-    }
-
-    &-copy {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.5rem;
-      width: 100%;
-      color: var(--parsec-color-light-secondary-text);
-      background-color: var(--parsec-color-light-secondary-white);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-12);
-      padding: 0.5rem 0.5rem 0.5rem 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      overflow: hidden;
-      width: 100%;
-      min-height: 2.5rem;
-
-      &-text {
-        flex-grow: 1;
-      }
-
-      &-button {
-        border-radius: var(--parsec-radius-8);
-        background: var(--parsec-color-light-primary-30);
-        color: var(--parsec-color-light-primary-600);
-        transition: all 0.2s;
-        padding: 0.5rem 0.625rem;
-        cursor: pointer;
-
-        &::part(native) {
-          padding: 0;
-          --background: none;
-          --background-hover: none;
-          --border-radius: none;
-        }
-
-        &:hover {
-          background: var(--parsec-color-light-primary-50);
-        }
-
-        .copy-icon {
-          color: var(--parsec-color-light-primary-600);
-          font-size: 1rem;
-          margin-right: 0.5rem;
-
-          @include ms.responsive-breakpoint('sm') {
-            margin-right: 0;
-          }
         }
       }
     }

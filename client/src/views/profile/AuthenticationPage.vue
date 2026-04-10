@@ -332,6 +332,13 @@ async function deleteTotp(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  border-radius: var(--parsec-radius-12);
+  background: var(--parsec-color-light-secondary-white);
+  padding: 1.5rem;
+  box-shadow:
+    0 1px 1px 0 rgba(0, 0, 0, 0.05),
+    0 1px 4px 0 rgba(0, 0, 0, 0.03),
+    0 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .authentication-content {
@@ -343,8 +350,12 @@ async function deleteTotp(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 1.5rem 0;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
+
+  &:not(:last-child) {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    margin-bottom: 1.5rem;
+  }
 
   @include ms.responsive-breakpoint('lg') {
     flex-direction: column;
@@ -392,7 +403,7 @@ async function deleteTotp(): Promise<void> {
     }
 
     &__description {
-      color: var(--parsec-color-light-secondary-text);
+      color: var(--parsec-color-light-secondary-hard-grey);
 
       &.method {
         font-style: italic;

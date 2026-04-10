@@ -3,7 +3,7 @@
 <template>
   <div class="settings-option">
     <div class="settings-option__content">
-      <ion-text class="button-medium title">
+      <ion-text class="button-large title">
         {{ $msTranslate(title) }}
       </ion-text>
       <ion-text class="body-sm description">
@@ -43,7 +43,7 @@ defineProps<{
     }
 
     .description {
-      color: var(--parsec-color-light-secondary-grey);
+      color: var(--parsec-color-light-secondary-hard-grey);
     }
   }
 }

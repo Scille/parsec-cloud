@@ -1236,3 +1236,9 @@
     max-width: var(--parsec-modal-width-sm);
   }
 }
+
+.export-recovery-modal {
+  #next-button {
+    width: 100%;
+  }
+}

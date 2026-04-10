@@ -106,3 +106,89 @@
     height: 2.25rem !important;
   }
 }
+
+.export-recovery-modal-content,
+.activate-totp-modal,
+.greet-organization-modal {
+  .input-action {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    color: var(--parsec-color-light-secondary-text);
+    background-color: var(--parsec-color-light-secondary-white);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-12);
+    padding: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    overflow: hidden;
+    width: 100%;
+    min-height: 2.5rem;
+
+    &:has(.input-action-buttons) {
+      gap: 0.75rem;
+      flex-direction: column;
+    }
+
+    &-text {
+      flex-grow: 1;
+    }
+
+    // single button
+    &-button {
+      border-radius: var(--parsec-radius-8);
+      background: var(--parsec-color-light-primary-50);
+      color: var(--parsec-color-light-primary-600);
+      box-shadow: var(--parsec-shadow-input);
+      transition: all 0.2s;
+      padding: 0.5rem 0.625rem;
+      cursor: pointer;
+
+      &::part(native) {
+        padding: 0;
+        --background: none;
+        --background-hover: none;
+        --border-radius: none;
+      }
+
+      &:hover {
+        background: var(--parsec-color-light-primary-100);
+      }
+
+      .button-icon {
+        color: var(--parsec-color-light-primary-600);
+        --fill-color: var(--parsec-color-light-primary-600);
+        font-size: 1rem;
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+
+        @include ms.responsive-breakpoint('sm') {
+          margin-right: 0;
+        }
+      }
+    }
+
+    // multiple buttons
+    &-buttons {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+
+      .input-action-button {
+        flex: 1;
+        display: flex;
+        padding: 0.75rem 0.625rem;
+        justify-content: center;
+      }
+    }
+
+    &-error {
+      color: var(--parsec-color-light-danger-500);
+    }
+  }
+}

@@ -134,17 +134,23 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
   await workspaces.locator('.topbar').locator('.profile-header').click();
   workspaces.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0).click();
   const profilePage = workspaces;
-  await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+  await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
   await profilePage.locator('.menu-list__item').nth(3).click();
-  const recovery = profilePage.locator('.recovery');
-  const recoveryFiles = recovery.locator('.recovery-list');
-  await recovery.locator('.restore-password-button').click();
-  await expect(recoveryFiles).toBeVisible();
-  const recoveryItems = recoveryFiles.locator('.recovery-item');
-  await expect(recoveryItems).toHaveCount(2);
+  const recoveryFileSection = profilePage.locator('.recovery-section--file');
+  await expect(recoveryFileSection).toBeVisible();
+  await recoveryFileSection.locator('.action-button').click();
 
-  await recoveryItems.nth(0).locator('.recovery-item-download').locator('ion-button').click();
-  await recoveryItems.nth(1).locator('.recovery-item-download').locator('ion-button').click();
+  const exportRecoveryModal = profilePage.locator('.export-recovery-device-modal');
+  await expect(exportRecoveryModal).toBeVisible();
+
+  const recoveryDownloadPromise = profilePage.waitForEvent('download');
+  await exportRecoveryModal.locator('.recovery-file .input-action-button').click();
+  await recoveryDownloadPromise;
+
+  const confirmationCheckbox = exportRecoveryModal.locator('.confirmation-checkbox');
+  await confirmationCheckbox.click();
+  await exportRecoveryModal.locator('#next-button').click();
+  await expect(exportRecoveryModal).toBeHidden();
   await expect(checklist).toBeHidden();
 });
 
@@ -214,11 +220,24 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   await workspaces.locator('#tab-bar').locator('.tab-bar-menu-button').nth(3).click();
   workspaces.locator('.menu-list__item').nth(3).click();
   const profilePage = workspaces;
-  await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
-  await profilePage.locator('.restore-password-button').click();
+  await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
 
-  await workspaces.locator('.recovery-item-download').locator('ion-button').nth(0).click();
-  await workspaces.locator('.recovery-item-download').locator('ion-button').nth(1).click();
+  const recoveryFileSection = profilePage.locator('.recovery-section--file');
+  await expect(recoveryFileSection).toBeVisible();
+  await recoveryFileSection.locator('.action-button').click();
+
+  const exportRecoveryModal = profilePage.locator('.export-recovery-device-modal');
+  await expect(exportRecoveryModal).toBeVisible();
+
+  const recoveryDownloadPromise = profilePage.waitForEvent('download');
+  await exportRecoveryModal.locator('.recovery-file .input-action-button').click();
+  await recoveryDownloadPromise;
+
+  const confirmationCheckbox = exportRecoveryModal.locator('.confirmation-checkbox');
+  await confirmationCheckbox.click();
+  await exportRecoveryModal.locator('#next-button').click();
+  await expect(exportRecoveryModal).toBeHidden();
+
   await workspaces.locator('#tab-bar').locator('.tab-bar-menu-button').nth(1).click();
   await expect(checklistModal).toBeHidden();
 });

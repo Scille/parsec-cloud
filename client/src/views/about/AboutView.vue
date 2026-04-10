@@ -142,6 +142,13 @@ async function update(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 1.5em;
+  border-radius: var(--parsec-radius-12);
+  background: var(--parsec-color-light-secondary-white);
+  padding: 1.5rem;
+  box-shadow:
+    0 1px 1px 0 rgba(0, 0, 0, 0.05),
+    0 1px 4px 0 rgba(0, 0, 0, 0.03),
+    0 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .update-container {
@@ -181,7 +188,6 @@ async function update(): Promise<void> {
   flex-direction: column;
   gap: 1em;
   padding: 0;
-  padding-bottom: 2rem;
 
   &__item {
     --padding-start: 0;
