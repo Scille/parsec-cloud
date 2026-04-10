@@ -1,13 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use super::utils::{certificates, InstalledCertificates};
-#[cfg_attr(not(target_os = "windows"), expect(unused))]
-use crate::{
-    DecryptMessageError, EncryptMessageError, X509CertificateHash, X509CertificateReference,
-};
+use crate::EncryptMessageError;
 use libparsec_tests_lite::prelude::*;
 #[cfg_attr(not(target_os = "windows"), expect(unused))]
 use libparsec_types::prelude::*;
+
+use super::utils::{certificates, InstalledCertificates};
 
 #[parsec_test]
 async fn encrypt_decrypt(certificates: &InstalledCertificates) {
@@ -21,10 +19,11 @@ async fn encrypt_decrypt(certificates: &InstalledCertificates) {
 
     #[cfg(target_os = "windows")] // TODO: decrypt only supported by Windows so far
     {
-        let cert_ref = certificates.alice_cert_ref().await;
-        let decrypted_message = crate::decrypt_message(algo, &encrypted_message, &cert_ref)
-            .await
-            .unwrap();
+        let pki = super::utils::initialize_pki_system().await;
+        let cert_ref = certificates.alice_cert_ref();
+        let store_cert = pki.open_certificate(&cert_ref).await.unwrap();
+        let key = store_cert.request_private_key().await.unwrap();
+        let decrypted_message = key.decrypt(algo, &encrypted_message).await.unwrap();
         assert_eq!(*decrypted_message, payload);
     }
 }
@@ -45,10 +44,11 @@ async fn decrypt(certificates: &InstalledCertificates) {
         "063df66b4e70db2f2a0d4ba4c4109f131676cf11da7925a50db9d77745e5a4f22e9e5b"
         "6e0254fcb7c210e0a8fb32"
     );
-    let certificate_ref = certificates.alice_cert_ref().await;
-    let decrypted_message = crate::decrypt_message(algo, &encrypted_message, &certificate_ref)
-        .await
-        .unwrap();
+    let pki = super::utils::initialize_pki_system().await;
+    let cert_ref = certificates.alice_cert_ref();
+    let cert = pki.open_certificate(&cert_ref).await.unwrap();
+    let key = cert.request_private_key().await.unwrap();
+    let decrypted_message = key.decrypt(algo, &encrypted_message).await.unwrap();
     assert_eq!(*decrypted_message, *payload);
 }
 
@@ -87,29 +87,15 @@ async fn encrypt_payload_too_big(certificates: &InstalledCertificates) {
 
 #[cfg(target_os = "windows")] // TODO: decrypt only supported by Windows so far
 #[parsec_test]
-async fn decrypt_ko_not_found(certificates: &InstalledCertificates) {
-    let payload = b"The cake is a lie!";
-    let (algo, encrypted_message, _) = certificates.alice_encrypt_message(payload).await;
-
-    let dummy_certificate_ref = X509CertificateReference::from(
-        "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-            .parse::<X509CertificateHash>()
-            .unwrap(),
-    );
-    p_assert_matches!(
-        crate::decrypt_message(algo, &encrypted_message, &dummy_certificate_ref).await,
-        Err(DecryptMessageError::NotFound)
-    );
-}
-
-#[cfg(target_os = "windows")] // TODO: decrypt only supported by Windows so far
-#[parsec_test]
 async fn decrypt_ko_cannot_decrypt(certificates: &InstalledCertificates) {
     let payload = b"The cake is a lie!";
     let (algo, _, certificate_ref) = certificates.alice_encrypt_message(payload).await;
 
+    let pki = super::utils::initialize_pki_system().await;
+    let cert = pki.open_certificate(&certificate_ref).await.unwrap();
+    let key = cert.request_private_key().await.unwrap();
     p_assert_matches!(
-        crate::decrypt_message(algo, b"<dummy_message>", &certificate_ref).await,
-        Err(DecryptMessageError::CannotDecrypt(_))
+        key.decrypt(algo, b"<dummy_message>").await,
+        Err(crate::PkiPrivateKeyDecryptError::Decrypt(_))
     );
 }
