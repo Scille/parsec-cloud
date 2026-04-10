@@ -4120,8 +4120,8 @@ fn struct_started_workspace_info_js_to_rs(
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
-    let current_name = {
-        let js_val = Reflect::get(&obj, &"currentName".into())?;
+    let name = {
+        let js_val = Reflect::get(&obj, &"name".into())?;
         js_val
             .dyn_into::<JsString>()
             .ok()
@@ -4134,8 +4134,12 @@ fn struct_started_workspace_info_js_to_rs(
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
-    let current_self_role = {
-        let js_val = Reflect::get(&obj, &"currentSelfRole".into())?;
+    let name_origin = {
+        let js_val = Reflect::get(&obj, &"nameOrigin".into())?;
+        variant_certificate_based_info_origin_js_to_rs(js_val)?
+    };
+    let self_role = {
+        let js_val = Reflect::get(&obj, &"selfRole".into())?;
         {
             let raw_string = js_val.as_string().ok_or_else(|| {
                 let type_error = TypeError::new("value is not a string");
@@ -4145,9 +4149,17 @@ fn struct_started_workspace_info_js_to_rs(
             enum_realm_role_js_to_rs(raw_string.as_str())
         }?
     };
+    let self_role_origin = {
+        let js_val = Reflect::get(&obj, &"selfRoleOrigin".into())?;
+        variant_certificate_based_info_origin_js_to_rs(js_val)?
+    };
     let archiving_configuration = {
         let js_val = Reflect::get(&obj, &"archivingConfiguration".into())?;
         variant_realm_archiving_configuration_js_to_rs(js_val)?
+    };
+    let archiving_configuration_origin = {
+        let js_val = Reflect::get(&obj, &"archivingConfigurationOrigin".into())?;
+        variant_certificate_based_info_origin_js_to_rs(js_val)?
     };
     let mountpoints = {
         let js_val = Reflect::get(&obj, &"mountpoints".into())?;
@@ -4195,9 +4207,12 @@ fn struct_started_workspace_info_js_to_rs(
     Ok(libparsec::StartedWorkspaceInfo {
         client,
         id,
-        current_name,
-        current_self_role,
+        name,
+        name_origin,
+        self_role,
+        self_role_origin,
         archiving_configuration,
+        archiving_configuration_origin,
         mountpoints,
     })
 }
@@ -4219,17 +4234,28 @@ fn struct_started_workspace_info_rs_to_js(
         .as_ref()
     });
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
-    let js_current_name = JsValue::from_str(rs_obj.current_name.as_ref());
-    Reflect::set(&js_obj, &"currentName".into(), &js_current_name)?;
-    let js_current_self_role =
-        JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.current_self_role));
-    Reflect::set(&js_obj, &"currentSelfRole".into(), &js_current_self_role)?;
+    let js_name = JsValue::from_str(rs_obj.name.as_ref());
+    Reflect::set(&js_obj, &"name".into(), &js_name)?;
+    let js_name_origin = variant_certificate_based_info_origin_rs_to_js(rs_obj.name_origin)?;
+    Reflect::set(&js_obj, &"nameOrigin".into(), &js_name_origin)?;
+    let js_self_role = JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.self_role));
+    Reflect::set(&js_obj, &"selfRole".into(), &js_self_role)?;
+    let js_self_role_origin =
+        variant_certificate_based_info_origin_rs_to_js(rs_obj.self_role_origin)?;
+    Reflect::set(&js_obj, &"selfRoleOrigin".into(), &js_self_role_origin)?;
     let js_archiving_configuration =
         variant_realm_archiving_configuration_rs_to_js(rs_obj.archiving_configuration)?;
     Reflect::set(
         &js_obj,
         &"archivingConfiguration".into(),
         &js_archiving_configuration,
+    )?;
+    let js_archiving_configuration_origin =
+        variant_certificate_based_info_origin_rs_to_js(rs_obj.archiving_configuration_origin)?;
+    Reflect::set(
+        &js_obj,
+        &"archivingConfigurationOrigin".into(),
+        &js_archiving_configuration_origin,
     )?;
     let js_mountpoints = {
         // Array::new_with_length allocates with `undefined` value, that's why we `set` value
@@ -5411,31 +5437,6 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
-    let current_name = {
-        let js_val = Reflect::get(&obj, &"currentName".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<_, _> {
-                    s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
-                };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
-    };
-    let current_self_role = {
-        let js_val = Reflect::get(&obj, &"currentSelfRole".into())?;
-        {
-            let raw_string = js_val.as_string().ok_or_else(|| {
-                let type_error = TypeError::new("value is not a string");
-                type_error.set_cause(&js_val);
-                JsValue::from(type_error)
-            })?;
-            enum_realm_role_js_to_rs(raw_string.as_str())
-        }?
-    };
     let is_started = {
         let js_val = Reflect::get(&obj, &"isStarted".into())?;
         js_val
@@ -5450,17 +5451,57 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
             .map_err(|_| TypeError::new("Not a boolean"))?
             .value_of()
     };
+    let name = {
+        let js_val = Reflect::get(&obj, &"name".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, _> {
+                    s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let name_origin = {
+        let js_val = Reflect::get(&obj, &"nameOrigin".into())?;
+        variant_certificate_based_info_origin_js_to_rs(js_val)?
+    };
+    let self_role = {
+        let js_val = Reflect::get(&obj, &"selfRole".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_realm_role_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let self_role_origin = {
+        let js_val = Reflect::get(&obj, &"selfRoleOrigin".into())?;
+        variant_certificate_based_info_origin_js_to_rs(js_val)?
+    };
     let archiving_configuration = {
         let js_val = Reflect::get(&obj, &"archivingConfiguration".into())?;
         variant_realm_archiving_configuration_js_to_rs(js_val)?
     };
+    let archiving_configuration_origin = {
+        let js_val = Reflect::get(&obj, &"archivingConfigurationOrigin".into())?;
+        variant_certificate_based_info_origin_js_to_rs(js_val)?
+    };
     Ok(libparsec::WorkspaceInfo {
         id,
-        current_name,
-        current_self_role,
         is_started,
         is_bootstrapped,
+        name,
+        name_origin,
+        self_role,
+        self_role_origin,
         archiving_configuration,
+        archiving_configuration_origin,
     })
 }
 
@@ -5477,21 +5518,32 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
         .as_ref()
     });
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
-    let js_current_name = JsValue::from_str(rs_obj.current_name.as_ref());
-    Reflect::set(&js_obj, &"currentName".into(), &js_current_name)?;
-    let js_current_self_role =
-        JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.current_self_role));
-    Reflect::set(&js_obj, &"currentSelfRole".into(), &js_current_self_role)?;
     let js_is_started = rs_obj.is_started.into();
     Reflect::set(&js_obj, &"isStarted".into(), &js_is_started)?;
     let js_is_bootstrapped = rs_obj.is_bootstrapped.into();
     Reflect::set(&js_obj, &"isBootstrapped".into(), &js_is_bootstrapped)?;
+    let js_name = JsValue::from_str(rs_obj.name.as_ref());
+    Reflect::set(&js_obj, &"name".into(), &js_name)?;
+    let js_name_origin = variant_certificate_based_info_origin_rs_to_js(rs_obj.name_origin)?;
+    Reflect::set(&js_obj, &"nameOrigin".into(), &js_name_origin)?;
+    let js_self_role = JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.self_role));
+    Reflect::set(&js_obj, &"selfRole".into(), &js_self_role)?;
+    let js_self_role_origin =
+        variant_certificate_based_info_origin_rs_to_js(rs_obj.self_role_origin)?;
+    Reflect::set(&js_obj, &"selfRoleOrigin".into(), &js_self_role_origin)?;
     let js_archiving_configuration =
         variant_realm_archiving_configuration_rs_to_js(rs_obj.archiving_configuration)?;
     Reflect::set(
         &js_obj,
         &"archivingConfiguration".into(),
         &js_archiving_configuration,
+    )?;
+    let js_archiving_configuration_origin =
+        variant_certificate_based_info_origin_rs_to_js(rs_obj.archiving_configuration_origin)?;
+    Reflect::set(
+        &js_obj,
+        &"archivingConfigurationOrigin".into(),
+        &js_archiving_configuration_origin,
     )?;
     Ok(js_obj)
 }
@@ -7765,6 +7817,76 @@ fn variant_cancel_error_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsVal
         }
         libparsec::CancelError::NotBound { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"CancelErrorNotBound".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// CertificateBasedInfoOrigin
+
+#[allow(dead_code)]
+fn variant_certificate_based_info_origin_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::CertificateBasedInfoOrigin, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "CertificateBasedInfoOriginCertificate" => {
+            let timestamp = {
+                let js_val = Reflect::get(&obj, &"timestamp".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            Ok(libparsec::CertificateBasedInfoOrigin::Certificate { timestamp })
+        }
+        "CertificateBasedInfoOriginPlaceholder" => {
+            Ok(libparsec::CertificateBasedInfoOrigin::Placeholder)
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a CertificateBasedInfoOrigin",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_certificate_based_info_origin_rs_to_js(
+    rs_obj: libparsec::CertificateBasedInfoOrigin,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::CertificateBasedInfoOrigin::Certificate { timestamp, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"CertificateBasedInfoOriginCertificate".into(),
+            )?;
+            let js_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
+        }
+        libparsec::CertificateBasedInfoOrigin::Placeholder => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"CertificateBasedInfoOriginPlaceholder".into(),
+            )?;
         }
     }
     Ok(js_obj)
