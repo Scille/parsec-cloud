@@ -503,7 +503,7 @@ const securityWarningsCount = computed(() => {
 const { isSmallDisplay, windowWidth } = useWindowSize();
 const isReadOnly = computed(() => {
   if (currentWorkspace.value) {
-    return currentWorkspace.value.currentSelfRole === WorkspaceRole.Reader || currentWorkspace.value.isArchived;
+    return currentWorkspace.value.selfRole === WorkspaceRole.Reader || currentWorkspace.value.isArchived;
   }
   return false;
 });
@@ -561,7 +561,7 @@ async function loadAll(): Promise<void> {
 
   const result = await listWorkspaces();
   if (result.ok) {
-    workspaces.value = result.value.sort((w1, w2) => w1.currentName.toLocaleLowerCase().localeCompare(w2.currentName.toLocaleLowerCase()));
+    workspaces.value = result.value.sort((w1, w2) => w1.name.toLocaleLowerCase().localeCompare(w2.name.toLocaleLowerCase()));
   } else {
     window.electronAPI.log('error', `Failed to list workspaces ${JSON.stringify(result.error)}`);
   }

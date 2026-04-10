@@ -22,9 +22,9 @@
       />
       <ion-text
         class="sidebar-item-workspace__label"
-        :title="workspace.currentName"
+        :title="workspace.name"
       >
-        {{ workspace.currentName }}
+        {{ workspace.name }}
       </ion-text>
       <div
         class="sidebar-item-workspace__option"

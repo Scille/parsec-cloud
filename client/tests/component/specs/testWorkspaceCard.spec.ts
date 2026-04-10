@@ -2,7 +2,7 @@
 
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
-import { RealmArchivingConfigurationTag } from '@/plugins/libparsec';
+import { CertificateBasedInfoOriginTag, RealmArchivingConfigurationTag } from '@/plugins/libparsec';
 import { IonAvatar } from '@ionic/vue';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
@@ -14,7 +14,8 @@ describe('Workspace Card', () => {
 
   const WORKSPACE: WorkspaceInfo = {
     id: 'id1',
-    currentName: 'My Workspace',
+    name: 'My Workspace',
+    nameOrigin: { tag: CertificateBasedInfoOriginTag.Placeholder },
     sharing: [
       [
         {
@@ -58,12 +59,14 @@ describe('Workspace Card', () => {
       ],
     ],
     size: 60_817_408,
-    currentSelfRole: WorkspaceRole.Reader,
+    selfRole: WorkspaceRole.Reader,
+    selfRoleOrigin: { tag: CertificateBasedInfoOriginTag.Placeholder },
     availableOffline: true,
     lastUpdated: DateTime.fromISO('2023-05-08T12:00:00'),
     isStarted: false,
     isBootstrapped: true,
     archivingConfiguration: { tag: RealmArchivingConfigurationTag.Available },
+    archivingConfigurationOrigin: { tag: CertificateBasedInfoOriginTag.Placeholder },
     isArchived: false,
     mountpoints: [[42, '/']],
     handle: 1,

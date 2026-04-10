@@ -13,7 +13,7 @@
             class="title-h3 head-content__title"
           >
             <span class="body-lg">{{ $msTranslate('workspaceHistory.workspace') }}</span>
-            {{ workspaceInfo.currentName }}
+            {{ workspaceInfo.name }}
             <div v-show="querying">
               <ms-spinner />
             </div>
@@ -72,7 +72,7 @@
               </div>
               <header-breadcrumbs
                 v-if="workspaceInfo && isLargeDisplay"
-                :workspace-name="workspaceInfo.currentName"
+                :workspace-name="workspaceInfo.name"
                 :path-nodes="headerPath"
                 @change="onPathChange"
                 class="navigation-breadcrumb"
@@ -121,7 +121,7 @@
             />
             <header-breadcrumbs
               v-if="workspaceInfo"
-              :workspace-name="workspaceInfo.currentName"
+              :workspace-name="workspaceInfo.name"
               :path-nodes="headerPath"
               @change="onPathChange"
               class="navigation-breadcrumb"
@@ -338,7 +338,7 @@ async function listCurrentPath(): Promise<void> {
     headerPath.value = [];
     headerPath.value.push({
       id: 0,
-      display: workspaceInfo.value.currentName,
+      display: workspaceInfo.value.name,
       route: Routes.History,
       popoverIcon: home,
       query: { documentPath: path },

@@ -80,11 +80,14 @@ export async function listWorkspaces(
         }
         const info: WorkspaceInfo = {
           id: wkInfo.id,
-          currentName: wkInfo.currentName,
-          currentSelfRole: wkInfo.currentSelfRole,
           isStarted: true,
           isBootstrapped: wkInfo.isBootstrapped,
+          name: wkInfo.name,
+          nameOrigin: wkInfo.nameOrigin,
+          selfRole: wkInfo.selfRole,
+          selfRoleOrigin: wkInfo.selfRoleOrigin,
           archivingConfiguration: wkInfo.archivingConfiguration,
+          archivingConfigurationOrigin: wkInfo.archivingConfigurationOrigin,
           sharing: [],
           size: 0,
           lastUpdated: DateTime.now(),
@@ -150,8 +153,8 @@ export async function getWorkspaceName(workspaceHandle: WorkspaceHandle, ignoreC
   if (!result.ok) {
     return '';
   }
-  WORKSPACE_NAMES_CACHE.set(workspaceHandle, result.value.currentName);
-  return result.value.currentName;
+  WORKSPACE_NAMES_CACHE.set(workspaceHandle, result.value.name);
+  return result.value.name;
 }
 
 export async function createWorkspace(name: WorkspaceName): Promise<Result<WorkspaceID, ClientCreateWorkspaceError>> {
