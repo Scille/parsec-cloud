@@ -9,6 +9,7 @@ pub use crate::{
     AccountVaultOperations, AccountVaultOperationsFetchOpaqueKeyError,
     AccountVaultOperationsUploadOpaqueKeyError, OpenBaoDeviceOperations,
     OpenBaoOperationsFetchOpaqueKeyError, OpenBaoOperationsUploadOpaqueKeyError,
+    PkiDeviceOperations, PkiOperationsDecryptOpaqueKeyError, PkiOperationsEncryptOpaqueKeyError,
 };
 
 use libparsec_platform_filesystem::{load_file, save_content, LoadFileError};
@@ -32,6 +33,66 @@ pub async fn key_is_archived(path: &Path) -> bool {
     let archived_path = get_device_archive_path(path);
 
     !key_present_in_system(path).await && key_present_in_system(&archived_path).await
+}
+
+/*
+ * MockedPkiOperations
+ */
+
+#[derive(Debug)]
+pub(super) struct MockedPkiOperations {
+    certificate: X509CertificateReference,
+    fake_pki_key: SecretKey,
+}
+
+impl MockedPkiOperations {
+    pub fn new(certificate: X509CertificateReference) -> Self {
+        Self {
+            certificate,
+            fake_pki_key: SecretKey::generate(),
+        }
+    }
+}
+
+impl PkiDeviceOperations for MockedPkiOperations {
+    fn certificate_ref(&self) -> &X509CertificateReference {
+        &self.certificate
+    }
+
+    fn encrypt_opaque_key(
+        &self,
+        opaque_key: &[u8],
+    ) -> PinBoxFutureResult<(PKIEncryptionAlgorithm, Bytes), PkiOperationsEncryptOpaqueKeyError>
+    {
+        let encrypted = self.fake_pki_key.encrypt(opaque_key).into();
+        Box::pin(async move { Ok((PKIEncryptionAlgorithm::RsaesOaepSha256, encrypted)) })
+    }
+
+    fn decrypt_opaque_key(
+        &self,
+        algorithm: PKIEncryptionAlgorithm,
+        encrypted_opaque_key: &[u8],
+    ) -> PinBoxFutureResult<SecretKey, PkiOperationsDecryptOpaqueKeyError> {
+        let outcome = {
+            if algorithm != PKIEncryptionAlgorithm::RsaesOaepSha256 {
+                Err(PkiOperationsDecryptOpaqueKeyError::UnsupportedAlgorithm)
+            } else {
+                self.fake_pki_key
+                    .decrypt(encrypted_opaque_key)
+                    .map_err(|e| PkiOperationsDecryptOpaqueKeyError::DecryptionFailed(e.into()))
+                    .and_then(|raw| {
+                        let raw_array: &[u8] = &raw;
+                        SecretKey::try_from(raw_array).map_err(|e| {
+                            PkiOperationsDecryptOpaqueKeyError::Internal(anyhow::anyhow!(
+                                "Decrypted opaque key is invalid: {:?}",
+                                e
+                            ))
+                        })
+                    })
+            }
+        };
+        Box::pin(async move { outcome })
+    }
 }
 
 /*
