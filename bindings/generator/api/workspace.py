@@ -5,7 +5,7 @@ from .addr import (
     ParsecWorkspacePathAddr,
     ParsecWorkspacePathAddrAndRedirectionURL,
 )
-from .client import RealmArchivingConfiguration
+from .client import CertificateBasedInfoOrigin, RealmArchivingConfiguration
 from .common import (
     U64,
     DateTime,
@@ -54,9 +54,12 @@ async def workspace_stop(workspace: Handle) -> Result[None, WorkspaceStopError]:
 class StartedWorkspaceInfo(Structure):
     client: Handle
     id: VlobID
-    current_name: EntryName
-    current_self_role: RealmRole
+    name: EntryName
+    name_origin: CertificateBasedInfoOrigin
+    self_role: RealmRole
+    self_role_origin: CertificateBasedInfoOrigin
     archiving_configuration: RealmArchivingConfiguration
+    archiving_configuration_origin: CertificateBasedInfoOrigin
     mountpoints: list[tuple[Handle, Path]]
 
 
