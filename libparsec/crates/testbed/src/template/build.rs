@@ -1071,7 +1071,7 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
 
         let mut local_workspaces: Vec<LocalUserManifestWorkspaceEntry> = vec![];
         let placeholder_name: EntryName = "<placeholder>".parse().unwrap();
-        let mut rename_events = vec![];
+        let mut rename_and_archive_events = vec![];
         for event in fetched_certifs {
             match event {
                 TestbedEvent::NewRealm(event) => {
@@ -1136,22 +1136,39 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                         }
                     }
                 },
-                TestbedEvent::RenameRealm(event) => {
-                    rename_events.push(event);
+                event @ (TestbedEvent::RenameRealm(_) | TestbedEvent::ArchiveRealm(_)) => {
+                    rename_and_archive_events.push(event);
                 }
                 _ => (),
             }
         }
         // Cannot set the workspace name in the previous loop as this would hide
         // the rename events that occurred before the workspace was shared with us!
-        for event in rename_events {
-            let found: Option<&mut LocalUserManifestWorkspaceEntry> =
-                local_workspaces.iter_mut().find(|w| w.id == event.realm);
-            if let Some(entry) = found {
-                entry.name = event.name.clone();
-                entry.name_origin = CertificateBasedInfoOrigin::Certificate {
-                    timestamp: event.timestamp,
-                };
+        for event in rename_and_archive_events {
+            match event {
+                TestbedEvent::RenameRealm(event) => {
+                    let found: Option<&mut LocalUserManifestWorkspaceEntry> =
+                        local_workspaces.iter_mut().find(|w| w.id == event.realm);
+                    if let Some(entry) = found {
+                        entry.name = event.name.clone();
+                        entry.name_origin = CertificateBasedInfoOrigin::Certificate {
+                            timestamp: event.timestamp,
+                        };
+                    }
+                }
+                TestbedEvent::ArchiveRealm(event) => {
+                    let found: Option<&mut LocalUserManifestWorkspaceEntry> =
+                        local_workspaces.iter_mut().find(|w| w.id == event.realm);
+                    if let Some(entry) = found {
+                        entry.archiving_configuration = event.configuration.clone().into();
+                        entry.archiving_configuration_origin =
+                            CertificateBasedInfoOrigin::Certificate {
+                                timestamp: event.timestamp,
+                            }
+                            .into();
+                    }
+                }
+                _ => unreachable!(),
             }
         }
 
