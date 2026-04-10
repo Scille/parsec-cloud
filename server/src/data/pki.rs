@@ -1,19 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
-    create_exception,
-    exceptions::{PyException, PyValueError},
+    exceptions::PyValueError,
+    prelude::*,
     pyclass, pymethods,
     types::{PyBytes, PyString, PyType},
     Bound, PyResult, Python,
 };
-use rustls_pki_types::CertificateDer;
 
 use crate::ids::HumanHandle;
-
-create_exception!(_parsec, PkiInvalidSignature, PyException);
-create_exception!(_parsec, PkiUntrusted, PyException);
-create_exception!(_parsec, PkiInvalidCertificateDER, PyValueError);
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     PkiSignatureAlgorithm,
@@ -27,44 +22,56 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct X509Certificate(pub libparsec_platform_pki::DerCertificate<'static>);
+pub(crate) struct X509Certificate {
+    #[pyo3(get)]
+    der: Py<PyBytes>,
+    #[pyo3(get)]
+    issuer: Py<PyBytes>,
+    #[pyo3(get)]
+    subject: Py<PyBytes>,
+    #[pyo3(get)]
+    sha256_fingerprint: Py<PyBytes>,
+}
 
 impl X509Certificate {
-    fn to_end_certificate(&self) -> PyResult<libparsec_platform_pki::X509EndCertificate<'_>> {
-        self.0
-            .to_end_certificate()
-            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))
+    fn new<'py>(py: Python<'py>, der: Bound<'py, PyBytes>) -> PyResult<Self> {
+        let cert_der = rustls_pki_types::CertificateDer::from_slice(der.as_bytes());
+        let end = webpki::EndEntityCert::try_from(&cert_der)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        let issuer = PyBytes::new(py, end.issuer());
+        let subject = PyBytes::new(py, end.subject());
+        let sha256_fingerprint = {
+            use sha2::Digest;
+            PyBytes::new(py, sha2::Sha256::digest(der.as_bytes()).as_ref())
+        };
+        Ok(Self {
+            der: der.unbind(),
+            issuer: issuer.unbind(),
+            subject: subject.unbind(),
+            sha256_fingerprint: sha256_fingerprint.unbind(),
+        })
     }
 }
 
 #[pymethods]
 impl X509Certificate {
     #[classmethod]
-    fn try_from_pem(_cls: Bound<'_, PyType>, raw_pem: &[u8]) -> PyResult<Self> {
-        libparsec_platform_pki::DerCertificate::try_from_pem(raw_pem)
-            .map(|v| v.into_owned())
-            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))
-            .map(Self)
+    fn load_pem<'py>(_cls: Bound<'py, PyType>, py: Python<'py>, raw_pem: &[u8]) -> PyResult<Self> {
+        use rustls_pki_types::pem::PemObject;
+
+        let raw_der = rustls_pki_types::CertificateDer::from_pem_slice(raw_pem)
+            .map(|cert_der| PyBytes::new(py, cert_der.as_ref()))
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Self::new(py, raw_der)
     }
 
     #[classmethod]
-    fn from_der(_cls: Bound<'_, PyType>, raw_der: &[u8]) -> Self {
-        Self(libparsec_platform_pki::DerCertificate::from_der(raw_der).into_owned())
-    }
-
-    fn issuer<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-        self.to_end_certificate()
-            .map(|v| PyBytes::new(py, v.issuer()))
-    }
-
-    fn subject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-        self.to_end_certificate()
-            .map(|v| PyBytes::new(py, v.subject()))
-    }
-
-    #[getter]
-    fn der<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new(py, self.0.as_ref())
+    fn load_der<'py>(
+        _cls: Bound<'py, PyType>,
+        py: Python<'py>,
+        raw_der: Bound<'py, PyBytes>,
+    ) -> PyResult<Self> {
+        Self::new(py, raw_der)
     }
 }
 
@@ -80,7 +87,7 @@ impl X509CertificateInformation {
     fn load_der(_cls: Bound<'_, PyType>, raw_der: &[u8]) -> PyResult<Self> {
         libparsec_platform_pki::x509::X509CertificateInformation::load_der(raw_der)
             .map(Self)
-            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 
     fn common_name<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyString>> {
@@ -105,9 +112,9 @@ impl X509CertificateInformation {
 
 #[pyclass]
 #[derive(Clone)]
-pub(crate) struct TrustAnchor(pub rustls_pki_types::TrustAnchor<'static>);
+pub(crate) struct X509TrustAnchor(pub rustls_pki_types::TrustAnchor<'static>);
 
-impl TryFrom<&'_ rustls_pki_types::CertificateDer<'_>> for TrustAnchor {
+impl TryFrom<&'_ rustls_pki_types::CertificateDer<'_>> for X509TrustAnchor {
     type Error = pyo3::PyErr;
 
     fn try_from(value: &'_ rustls_pki_types::CertificateDer<'_>) -> Result<Self, Self::Error> {
@@ -121,20 +128,20 @@ impl TryFrom<&'_ rustls_pki_types::CertificateDer<'_>> for TrustAnchor {
 }
 
 #[pymethods]
-impl TrustAnchor {
+impl X509TrustAnchor {
     #[classmethod]
-    fn try_from_pem(_cls: Bound<'_, PyType>, pem_data: &[u8]) -> PyResult<Self> {
-        use rustls_pki_types::{pem::PemObject, CertificateDer};
+    fn load_pem(_cls: Bound<'_, PyType>, pem_data: &[u8]) -> PyResult<Self> {
+        use rustls_pki_types::pem::PemObject;
 
-        let cert_der = CertificateDer::from_pem_slice(pem_data)
-            .map_err(|e| PkiInvalidCertificateDER::new_err(e.to_string()))?;
+        let cert_der = rustls_pki_types::CertificateDer::from_pem_slice(pem_data)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
 
         Self::try_from(&cert_der)
     }
 
     #[classmethod]
-    fn from_der(_cls: Bound<'_, PyType>, der_data: &[u8]) -> PyResult<Self> {
-        let cert_der = CertificateDer::from_slice(der_data);
+    fn load_der(_cls: Bound<'_, PyType>, der_data: &[u8]) -> PyResult<Self> {
+        let cert_der = rustls_pki_types::CertificateDer::from_slice(der_data);
         Self::try_from(&cert_der)
     }
 
