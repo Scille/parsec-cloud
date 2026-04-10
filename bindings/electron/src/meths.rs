@@ -1446,214 +1446,6 @@ fn struct_available_pending_async_enrollment_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// CertificateDetails
-
-#[allow(dead_code)]
-fn struct_certificate_details_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::CertificateDetails> {
-    let name = {
-        let js_val: Handle<JsValue> = obj.get(cx, "name")?;
-        {
-            if js_val.is_a::<JsNull, _>(cx) {
-                None
-            } else {
-                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                Some(js_val.value(cx))
-            }
-        }
-    };
-    let subject = {
-        let js_val: Handle<JsArray> = obj.get(cx, "subject")?;
-        {
-            let size = js_val.len(cx);
-            let mut v = Vec::with_capacity(size as usize);
-            for i in 0..size {
-                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
-                v.push(variant_distinguished_name_value_js_to_rs(cx, js_item)?);
-            }
-            v
-        }
-    };
-    let issuer = {
-        let js_val: Handle<JsArray> = obj.get(cx, "issuer")?;
-        {
-            let size = js_val.len(cx);
-            let mut v = Vec::with_capacity(size as usize);
-            for i in 0..size {
-                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
-                v.push(variant_distinguished_name_value_js_to_rs(cx, js_item)?);
-            }
-            v
-        }
-    };
-    let not_before = {
-        let js_val: Handle<JsNumber> = obj.get(cx, "notBefore")?;
-        {
-            let v = js_val.value(cx);
-            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                    .map_err(|_| "Out-of-bound datetime")
-            };
-            match custom_from_rs_f64(v) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let not_after = {
-        let js_val: Handle<JsNumber> = obj.get(cx, "notAfter")?;
-        {
-            let v = js_val.value(cx);
-            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                    .map_err(|_| "Out-of-bound datetime")
-            };
-            match custom_from_rs_f64(v) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let serial = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serial")?;
-        {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let emails = {
-        let js_val: Handle<JsArray> = obj.get(cx, "emails")?;
-        {
-            let size = js_val.len(cx);
-            let mut v = Vec::with_capacity(size as usize);
-            for i in 0..size {
-                let js_item: Handle<JsString> = js_val.get(cx, i)?;
-                v.push({
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_item.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                });
-            }
-            v
-        }
-    };
-    let can_sign = {
-        let js_val: Handle<JsBoolean> = obj.get(cx, "canSign")?;
-        js_val.value(cx)
-    };
-    let can_encrypt = {
-        let js_val: Handle<JsBoolean> = obj.get(cx, "canEncrypt")?;
-        js_val.value(cx)
-    };
-    Ok(libparsec::CertificateDetails {
-        name,
-        subject,
-        issuer,
-        not_before,
-        not_after,
-        serial,
-        emails,
-        can_sign,
-        can_encrypt,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_certificate_details_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::CertificateDetails,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_name = match rs_obj.name {
-        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
-        None => JsNull::new(cx).as_value(cx),
-    };
-    js_obj.set(cx, "name", js_name)?;
-    let js_subject = {
-        // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.subject.len());
-        for (i, elem) in rs_obj.subject.into_iter().enumerate() {
-            let js_elem = variant_distinguished_name_value_rs_to_js(cx, elem)?;
-            js_array.set(cx, i as u32, js_elem)?;
-        }
-        js_array
-    };
-    js_obj.set(cx, "subject", js_subject)?;
-    let js_issuer = {
-        // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.issuer.len());
-        for (i, elem) in rs_obj.issuer.into_iter().enumerate() {
-            let js_elem = variant_distinguished_name_value_rs_to_js(cx, elem)?;
-            js_array.set(cx, i as u32, js_elem)?;
-        }
-        js_array
-    };
-    js_obj.set(cx, "issuer", js_issuer)?;
-    let js_not_before = JsNumber::new(cx, {
-        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-        };
-        match custom_to_rs_f64(rs_obj.not_before) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
-        }
-    });
-    js_obj.set(cx, "notBefore", js_not_before)?;
-    let js_not_after = JsNumber::new(cx, {
-        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-        };
-        match custom_to_rs_f64(rs_obj.not_after) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
-        }
-    });
-    js_obj.set(cx, "notAfter", js_not_after)?;
-    let js_serial = {
-        let rs_buff = { rs_obj.serial };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "serial", js_serial)?;
-    let js_emails = {
-        // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.emails.len());
-        for (i, elem) in rs_obj.emails.into_iter().enumerate() {
-            let js_elem = JsString::try_new(cx, {
-                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
-                    Ok(std::string::ToString::to_string(&v))
-                };
-                match custom_to_rs_string(elem) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_array.set(cx, i as u32, js_elem)?;
-        }
-        js_array
-    };
-    js_obj.set(cx, "emails", js_emails)?;
-    let js_can_sign = JsBoolean::new(cx, rs_obj.can_sign);
-    js_obj.set(cx, "canSign", js_can_sign)?;
-    let js_can_encrypt = JsBoolean::new(cx, rs_obj.can_encrypt);
-    js_obj.set(cx, "canEncrypt", js_can_encrypt)?;
-    Ok(js_obj)
-}
-
 // ClientConfig
 
 #[allow(dead_code)]
@@ -5189,6 +4981,193 @@ fn struct_user_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// UserX509CertificateDetails
+
+#[allow(dead_code)]
+fn struct_user_x509_certificate_details_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserX509CertificateDetails> {
+    let common_name = {
+        let js_val: Handle<JsString> = obj.get(cx, "commonName")?;
+        js_val.value(cx)
+    };
+    let subject = {
+        let js_val: Handle<JsArray> = obj.get(cx, "subject")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                v.push(variant_distinguished_name_value_js_to_rs(cx, js_item)?);
+            }
+            v
+        }
+    };
+    let issuer = {
+        let js_val: Handle<JsArray> = obj.get(cx, "issuer")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                v.push(variant_distinguished_name_value_js_to_rs(cx, js_item)?);
+            }
+            v
+        }
+    };
+    let not_before = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "notBefore")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let not_after = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "notAfter")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let serial = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serial")?;
+        js_val.as_slice(cx).to_vec()
+    };
+    let emails = {
+        let js_val: Handle<JsArray> = obj.get(cx, "emails")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsString> = js_val.get(cx, i)?;
+                v.push({
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                });
+            }
+            v
+        }
+    };
+    let can_sign = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "canSign")?;
+        js_val.value(cx)
+    };
+    let can_encrypt = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "canEncrypt")?;
+        js_val.value(cx)
+    };
+    Ok(libparsec::UserX509CertificateDetails {
+        common_name,
+        subject,
+        issuer,
+        not_before,
+        not_after,
+        serial,
+        emails,
+        can_sign,
+        can_encrypt,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_user_x509_certificate_details_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserX509CertificateDetails,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_common_name = JsString::try_new(cx, rs_obj.common_name).or_throw(cx)?;
+    js_obj.set(cx, "commonName", js_common_name)?;
+    let js_subject = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.subject.len());
+        for (i, elem) in rs_obj.subject.into_iter().enumerate() {
+            let js_elem = variant_distinguished_name_value_rs_to_js(cx, elem)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "subject", js_subject)?;
+    let js_issuer = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.issuer.len());
+        for (i, elem) in rs_obj.issuer.into_iter().enumerate() {
+            let js_elem = variant_distinguished_name_value_rs_to_js(cx, elem)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "issuer", js_issuer)?;
+    let js_not_before = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.not_before) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "notBefore", js_not_before)?;
+    let js_not_after = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.not_after) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "notAfter", js_not_after)?;
+    let js_serial = {
+        let js_buff = JsTypedArray::from_slice(cx, rs_obj.serial.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "serial", js_serial)?;
+    let js_emails = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.emails.len());
+        for (i, elem) in rs_obj.emails.into_iter().enumerate() {
+            let js_elem = JsString::try_new(cx, {
+                let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
+                    Ok(std::string::ToString::to_string(&v))
+                };
+                match custom_to_rs_string(elem) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(cx)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "emails", js_emails)?;
+    let js_can_sign = JsBoolean::new(cx, rs_obj.can_sign);
+    js_obj.set(cx, "canSign", js_can_sign)?;
+    let js_can_encrypt = JsBoolean::new(cx, rs_obj.can_encrypt);
+    js_obj.set(cx, "canEncrypt", js_can_encrypt)?;
+    Ok(js_obj)
+}
+
 // WorkspaceHistoryFileStat
 
 #[allow(dead_code)]
@@ -5687,38 +5666,20 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs<'a>(
             )
         }
         "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
-            let config_dir = {
-                let js_val: Handle<JsString> = obj.get(cx, "configDir")?;
+            let pki_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiPrivateKeyHandle")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
                     }
+                    let v = v as u32;
+                    v
                 }
-            };
-            let server_addr = {
-                let js_val: Handle<JsString> = obj.get(cx, "serverAddr")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let certificate_reference = {
-                let js_val: Handle<JsObject> = obj.get(cx, "certificateReference")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
             };
             Ok(
                 libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-                    config_dir,
-                    server_addr,
-                    certificate_reference,
+                    pki_private_key_handle,
                 },
             )
         }
@@ -5759,42 +5720,14 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
         }
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-            config_dir,
-            server_addr,
-            certificate_reference,
+            pki_private_key_handle,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_config_dir = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(config_dir) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "configDir", js_config_dir)?;
-            let js_server_addr = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(server_addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "serverAddr", js_server_addr)?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(cx, certificate_reference)?;
-            js_obj.set(cx, "certificateReference", js_certificate_reference)?;
+            let js_pki_private_key_handle = JsNumber::new(cx, pki_private_key_handle as f64);
+            js_obj.set(cx, "pkiPrivateKeyHandle", js_pki_private_key_handle)?;
         }
     }
     Ok(js_obj)
@@ -7346,6 +7279,91 @@ fn variant_available_pending_async_enrollment_identity_system_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AvailablePkiCertificate
+
+#[allow(dead_code)]
+fn variant_available_pki_certificate_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AvailablePkiCertificate> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "AvailablePkiCertificateInvalid" => {
+            let reference = {
+                let js_val: Handle<JsObject> = obj.get(cx, "reference")?;
+                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            let invalid_reason = {
+                let js_val: Handle<JsObject> = obj.get(cx, "invalidReason")?;
+                variant_user_x509_certificate_load_error_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::AvailablePkiCertificate::Invalid {
+                reference,
+                invalid_reason,
+            })
+        }
+        "AvailablePkiCertificateValid" => {
+            let reference = {
+                let js_val: Handle<JsObject> = obj.get(cx, "reference")?;
+                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            };
+            let friendly_name = {
+                let js_val: Handle<JsString> = obj.get(cx, "friendlyName")?;
+                js_val.value(cx)
+            };
+            let details = {
+                let js_val: Handle<JsObject> = obj.get(cx, "details")?;
+                struct_user_x509_certificate_details_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::AvailablePkiCertificate::Valid {
+                reference,
+                friendly_name,
+                details,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a AvailablePkiCertificate"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_available_pki_certificate_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AvailablePkiCertificate,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::AvailablePkiCertificate::Invalid {
+            reference,
+            invalid_reason,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AvailablePkiCertificateInvalid").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_reference = struct_x509_certificate_reference_rs_to_js(cx, reference)?;
+            js_obj.set(cx, "reference", js_reference)?;
+            let js_invalid_reason =
+                variant_user_x509_certificate_load_error_rs_to_js(cx, invalid_reason)?;
+            js_obj.set(cx, "invalidReason", js_invalid_reason)?;
+        }
+        libparsec::AvailablePkiCertificate::Valid {
+            reference,
+            friendly_name,
+            details,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AvailablePkiCertificateValid").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_reference = struct_x509_certificate_reference_rs_to_js(cx, reference)?;
+            js_obj.set(cx, "reference", js_reference)?;
+            let js_friendly_name = JsString::try_new(cx, friendly_name).or_throw(cx)?;
+            js_obj.set(cx, "friendlyName", js_friendly_name)?;
+            let js_details = struct_user_x509_certificate_details_rs_to_js(cx, details)?;
+            js_obj.set(cx, "details", js_details)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
@@ -7547,119 +7565,6 @@ fn variant_certificate_based_info_origin_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "CertificateBasedInfoOriginPlaceholder").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// CertificateWithDetails
-
-#[allow(dead_code)]
-fn variant_certificate_with_details_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::CertificateWithDetails> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "CertificateWithDetailsInvalid" => {
-            let handle = {
-                let js_val: Handle<JsObject> = obj.get(cx, "handle")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
-            };
-            let friendly_name = {
-                let js_val: Handle<JsValue> = obj.get(cx, "friendlyName")?;
-                {
-                    if js_val.is_a::<JsNull, _>(cx) {
-                        None
-                    } else {
-                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                        Some(js_val.value(cx))
-                    }
-                }
-            };
-            let invalid_reason = {
-                let js_val: Handle<JsObject> = obj.get(cx, "invalidReason")?;
-                variant_invalid_certificate_reason_js_to_rs(cx, js_val)?
-            };
-            Ok(libparsec::CertificateWithDetails::Invalid {
-                handle,
-                friendly_name,
-                invalid_reason,
-            })
-        }
-        "CertificateWithDetailsValid" => {
-            let handle = {
-                let js_val: Handle<JsObject> = obj.get(cx, "handle")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
-            };
-            let friendly_name = {
-                let js_val: Handle<JsValue> = obj.get(cx, "friendlyName")?;
-                {
-                    if js_val.is_a::<JsNull, _>(cx) {
-                        None
-                    } else {
-                        let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
-                        Some(js_val.value(cx))
-                    }
-                }
-            };
-            let details = {
-                let js_val: Handle<JsObject> = obj.get(cx, "details")?;
-                struct_certificate_details_js_to_rs(cx, js_val)?
-            };
-            Ok(libparsec::CertificateWithDetails::Valid {
-                handle,
-                friendly_name,
-                details,
-            })
-        }
-        _ => cx.throw_type_error("Object is not a CertificateWithDetails"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_certificate_with_details_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::CertificateWithDetails,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::CertificateWithDetails::Invalid {
-            handle,
-            friendly_name,
-            invalid_reason,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "CertificateWithDetailsInvalid").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_handle = struct_x509_certificate_reference_rs_to_js(cx, handle)?;
-            js_obj.set(cx, "handle", js_handle)?;
-            let js_friendly_name = match friendly_name {
-                Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
-                None => JsNull::new(cx).as_value(cx),
-            };
-            js_obj.set(cx, "friendlyName", js_friendly_name)?;
-            let js_invalid_reason =
-                variant_invalid_certificate_reason_rs_to_js(cx, invalid_reason)?;
-            js_obj.set(cx, "invalidReason", js_invalid_reason)?;
-        }
-        libparsec::CertificateWithDetails::Valid {
-            handle,
-            friendly_name,
-            details,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "CertificateWithDetailsValid").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_handle = struct_x509_certificate_reference_rs_to_js(cx, handle)?;
-            js_obj.set(cx, "handle", js_handle)?;
-            let js_friendly_name = match friendly_name {
-                Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
-                None => JsNull::new(cx).as_value(cx),
-            };
-            js_obj.set(cx, "friendlyName", js_friendly_name)?;
-            let js_details = struct_certificate_details_rs_to_js(cx, details)?;
-            js_obj.set(cx, "details", js_details)?;
         }
     }
     Ok(js_obj)
@@ -10708,11 +10613,20 @@ fn variant_device_primary_protection_strategy_js_to_rs<'a>(
             })
         }
         "DevicePrimaryProtectionStrategyPKI" => {
-            let certificate_ref = {
-                let js_val: Handle<JsObject> = obj.get(cx, "certificateRef")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
+            let pki_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
             };
-            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI { certificate_ref })
+            Ok(libparsec::DevicePrimaryProtectionStrategy::PKI {
+                pki_private_key_handle,
+            })
         }
         "DevicePrimaryProtectionStrategyPassword" => {
             let password = {
@@ -10779,14 +10693,14 @@ fn variant_device_primary_protection_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
         libparsec::DevicePrimaryProtectionStrategy::PKI {
-            certificate_ref, ..
+            pki_private_key_handle,
+            ..
         } => {
             let js_tag =
                 JsString::try_new(cx, "DevicePrimaryProtectionStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_certificate_ref =
-                struct_x509_certificate_reference_rs_to_js(cx, certificate_ref)?;
-            js_obj.set(cx, "certificateRef", js_certificate_ref)?;
+            let js_pki_private_key_handle = JsNumber::new(cx, pki_private_key_handle as f64);
+            js_obj.set(cx, "pkiPrivateKeyHandle", js_pki_private_key_handle)?;
         }
         libparsec::DevicePrimaryProtectionStrategy::Password { password, .. } => {
             let js_tag =
@@ -11619,54 +11533,6 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// InvalidCertificateReason
-
-#[allow(dead_code)]
-fn variant_invalid_certificate_reason_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::InvalidCertificateReason> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "InvalidCertificateReasonInvalidEmail" => {
-            Ok(libparsec::InvalidCertificateReason::InvalidEmail {})
-        }
-        "InvalidCertificateReasonUnableToParseCert" => {
-            Ok(libparsec::InvalidCertificateReason::UnableToParseCert {})
-        }
-        "InvalidCertificateReasonUnableToParseTime" => {
-            Ok(libparsec::InvalidCertificateReason::UnableToParseTime {})
-        }
-        _ => cx.throw_type_error("Object is not a InvalidCertificateReason"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_invalid_certificate_reason_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::InvalidCertificateReason,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::InvalidCertificateReason::InvalidEmail { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "InvalidCertificateReasonInvalidEmail").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidCertificateReason::UnableToParseCert { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "InvalidCertificateReasonUnableToParseCert").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::InvalidCertificateReason::UnableToParseTime { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "InvalidCertificateReasonUnableToParseTime").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // InviteInfoInvitationCreatedBy
 
 #[allow(dead_code)]
@@ -12352,25 +12218,6 @@ fn variant_invite_list_item_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// IsPkiAvailableError
-
-#[allow(dead_code)]
-fn variant_is_pki_available_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::IsPkiAvailableError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::IsPkiAvailableError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "IsPkiAvailableErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // ListAvailableDeviceError
 
 #[allow(dead_code)]
@@ -12412,26 +12259,6 @@ fn variant_list_invitations_error_rs_to_js<'a>(
         }
         libparsec::ListInvitationsError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "ListInvitationsErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// ListUserCertificatesError
-
-#[allow(dead_code)]
-fn variant_list_user_certificates_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ListUserCertificatesError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::ListUserCertificatesError::CannotOpenStore { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ListUserCertificatesErrorCannotOpenStore").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -14848,6 +14675,104 @@ fn variant_pending_async_enrollment_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// PkiOpenUserCertificatePrivateKeyError
+
+#[allow(dead_code)]
+fn variant_pki_open_user_certificate_private_key_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiOpenUserCertificatePrivateKeyError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiOpenUserCertificatePrivateKeyError::CertificateNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiOpenUserCertificatePrivateKeyError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiOpenUserCertificatePrivateKeyErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiOpenUserCertificatePrivateKeyError::PrivateKeyNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "PkiOpenUserCertificatePrivateKeyErrorPrivateKeyNotFound",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiPrivateKeyCloseError
+
+#[allow(dead_code)]
+fn variant_pki_private_key_close_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiPrivateKeyCloseError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiPrivateKeyCloseError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiPrivateKeyCloseErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiSystemInitError
+
+#[allow(dead_code)]
+fn variant_pki_system_init_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiSystemInitError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiSystemInitError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiSystemInitErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::PkiSystemInitError::NotAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "PkiSystemInitErrorNotAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// PkiSystemListUserCertificateError
+
+#[allow(dead_code)]
+fn variant_pki_system_list_user_certificate_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::PkiSystemListUserCertificateError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::PkiSystemListUserCertificateError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "PkiSystemListUserCertificateErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // RealmArchivingConfiguration
 
 #[allow(dead_code)]
@@ -16527,37 +16452,19 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs<'a>(
             })
         }
         "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
-            let config_dir = {
-                let js_val: Handle<JsString> = obj.get(cx, "configDir")?;
+            let pki_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiPrivateKeyHandle")?;
                 {
-                    let custom_from_rs_string =
-                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
                     }
+                    let v = v as u32;
+                    v
                 }
-            };
-            let server_addr = {
-                let js_val: Handle<JsString> = obj.get(cx, "serverAddr")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let certificate_reference = {
-                let js_val: Handle<JsObject> = obj.get(cx, "certificateReference")?;
-                struct_x509_certificate_reference_js_to_rs(cx, js_val)?
             };
             Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-                config_dir,
-                server_addr,
-                certificate_reference,
+                pki_private_key_handle,
             })
         }
         _ => cx.throw_type_error("Object is not a SubmitAsyncEnrollmentIdentityStrategy"),
@@ -16604,42 +16511,14 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-            config_dir,
-            server_addr,
-            certificate_reference,
+            pki_private_key_handle,
             ..
         } => {
             let js_tag =
                 JsString::try_new(cx, "SubmitAsyncEnrollmentIdentityStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_config_dir = JsString::try_new(cx, {
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(config_dir) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "configDir", js_config_dir)?;
-            let js_server_addr = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(server_addr) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "serverAddr", js_server_addr)?;
-            let js_certificate_reference =
-                struct_x509_certificate_reference_rs_to_js(cx, certificate_reference)?;
-            js_obj.set(cx, "certificateReference", js_certificate_reference)?;
+            let js_pki_private_key_handle = JsNumber::new(cx, pki_private_key_handle as f64);
+            js_obj.set(cx, "pkiPrivateKeyHandle", js_pki_private_key_handle)?;
         }
     }
     Ok(js_obj)
@@ -17056,6 +16935,62 @@ fn variant_user_claim_list_initial_infos_error_rs_to_js<'a>(
         libparsec::UserClaimListInitialInfosError::Internal { .. } => {
             let js_tag =
                 JsString::try_new(cx, "UserClaimListInitialInfosErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// UserX509CertificateLoadError
+
+#[allow(dead_code)]
+fn variant_user_x509_certificate_load_error_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserX509CertificateLoadError> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "UserX509CertificateLoadErrorInvalidCertificateDer" => {
+            Ok(libparsec::UserX509CertificateLoadError::InvalidCertificateDer {})
+        }
+        "UserX509CertificateLoadErrorInvalidEmail" => {
+            Ok(libparsec::UserX509CertificateLoadError::InvalidEmail {})
+        }
+        "UserX509CertificateLoadErrorInvalidTime" => {
+            Ok(libparsec::UserX509CertificateLoadError::InvalidTime {})
+        }
+        "UserX509CertificateLoadErrorNoCommonName" => {
+            Ok(libparsec::UserX509CertificateLoadError::NoCommonName {})
+        }
+        _ => cx.throw_type_error("Object is not a UserX509CertificateLoadError"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_user_x509_certificate_load_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserX509CertificateLoadError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::UserX509CertificateLoadError::InvalidCertificateDer { .. } => {
+            let js_tag = JsString::try_new(cx, "UserX509CertificateLoadErrorInvalidCertificateDer")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserX509CertificateLoadError::InvalidEmail { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UserX509CertificateLoadErrorInvalidEmail").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserX509CertificateLoadError::InvalidTime { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UserX509CertificateLoadErrorInvalidTime").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UserX509CertificateLoadError::NoCommonName { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UserX509CertificateLoadErrorNoCommonName").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -26448,68 +26383,6 @@ fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// is_pki_available
-fn is_pki_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let addr = {
-        let js_val = cx.argument::<JsString>(0)?;
-        {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
-            };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let config_dir = {
-        let js_val = cx.argument::<JsString>(1)?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(&mut cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
-    };
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::is_pki_available(&addr, &config_dir).await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsBoolean::new(&mut cx, ok);
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_is_pki_available_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
-    Ok(promise)
-}
-
 // libparsec_init_native_only_init
 fn libparsec_init_native_only_init(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -26702,54 +26575,6 @@ fn list_started_clients(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
-    Ok(promise)
-}
-
-// list_user_certificates_with_details
-fn list_user_certificates_with_details(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let channel = cx.channel();
-    let (deferred, promise) = cx.promise();
-
-    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
-    let _handle = crate::TOKIO_RUNTIME
-        .lock()
-        .expect("Mutex is poisoned")
-        .spawn(async move {
-            let ret = libparsec::list_user_certificates_with_details().await;
-
-            deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = match ret {
-                    Ok(ok) => {
-                        let js_obj = JsObject::new(&mut cx);
-                        let js_tag = JsBoolean::new(&mut cx, true);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len());
-                            for (i, elem) in ok.into_iter().enumerate() {
-                                let js_elem =
-                                    variant_certificate_with_details_rs_to_js(&mut cx, elem)?;
-                                js_array.set(&mut cx, i as u32, js_elem)?;
-                            }
-                            js_array
-                        };
-                        js_obj.set(&mut cx, "value", js_value)?;
-                        js_obj
-                    }
-                    Err(err) => {
-                        let js_obj = cx.empty_object();
-                        let js_tag = JsBoolean::new(&mut cx, false);
-                        js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_list_user_certificates_error_rs_to_js(&mut cx, err)?;
-                        js_obj.set(&mut cx, "error", js_err)?;
-                        js_obj
-                    }
-                };
-                Ok(js_ret)
-            });
-        });
-
     Ok(promise)
 }
 
@@ -27152,6 +26977,274 @@ fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// pki_init_for_native
+fn pki_init_for_native(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_init_for_native(&config_dir).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_system_init_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_init_for_scws
+fn pki_init_for_scws(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let parsec_addr = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_init_for_scws(&config_dir, parsec_addr).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_system_init_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_list_user_certificates
+fn pki_list_user_certificates(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_list_user_certificates().await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem =
+                                    variant_available_pki_certificate_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_pki_system_list_user_certificate_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_open_user_certificate_private_key
+fn pki_open_user_certificate_private_key(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let cert_ref = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_x509_certificate_reference_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_open_user_certificate_private_key(&cert_ref).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_open_user_certificate_private_key_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// pki_private_key_close
+fn pki_private_key_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::pki_private_key_close(handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_pki_private_key_close_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
     Ok(promise)
 }
 
@@ -32226,7 +32319,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("importRecoveryDevice", import_recovery_device)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
-    cx.export_function("isPkiAvailable", is_pki_available)?;
     cx.export_function(
         "libparsecInitNativeOnlyInit",
         libparsec_init_native_only_init,
@@ -32238,10 +32330,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("listAvailableDevices", list_available_devices)?;
     cx.export_function("listStartedAccounts", list_started_accounts)?;
     cx.export_function("listStartedClients", list_started_clients)?;
-    cx.export_function(
-        "listUserCertificatesWithDetails",
-        list_user_certificates_with_details,
-    )?;
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;
     cx.export_function("mountpointUnmount", mountpoint_unmount)?;
     cx.export_function("newCanceller", new_canceller)?;
@@ -32252,6 +32340,14 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("pathNormalize", path_normalize)?;
     cx.export_function("pathParent", path_parent)?;
     cx.export_function("pathSplit", path_split)?;
+    cx.export_function("pkiInitForNative", pki_init_for_native)?;
+    cx.export_function("pkiInitForScws", pki_init_for_scws)?;
+    cx.export_function("pkiListUserCertificates", pki_list_user_certificates)?;
+    cx.export_function(
+        "pkiOpenUserCertificatePrivateKey",
+        pki_open_user_certificate_private_key,
+    )?;
+    cx.export_function("pkiPrivateKeyClose", pki_private_key_close)?;
     cx.export_function("removeDeviceData", remove_device_data)?;
     cx.export_function(
         "showCertificateSelectionDialogWindowsOnly",
