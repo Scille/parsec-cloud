@@ -2385,7 +2385,6 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_platform_filesystem",
- "libparsec_platform_pki",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
  "libparsec_tests_lite",

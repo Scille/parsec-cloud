@@ -2,7 +2,8 @@
 
 use crate::{
     platform, AccountVaultOperationsFetchOpaqueKeyError, DeviceAccessStrategy,
-    DevicePrimaryProtectionStrategy, OpenBaoOperationsFetchOpaqueKeyError, RemoteOperationServer,
+    DevicePrimaryProtectionStrategy, OpenBaoOperationsFetchOpaqueKeyError,
+    PkiOperationsDecryptOpaqueKeyError, RemoteOperationServer,
 };
 use libparsec_types::prelude::*;
 
@@ -12,7 +13,6 @@ pub(crate) enum LoadCiphertextKeyError {
     #[error("Invalid data")]
     InvalidData,
     #[error("Decryption failed")]
-    #[cfg_attr(target_arch = "wasm32", expect(dead_code))]
     DecryptionFailed,
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
@@ -64,9 +64,31 @@ pub(super) async fn load_ciphertext_key(
             }
         }
 
-        DevicePrimaryProtectionStrategy::PKI { .. } => {
-            let ciphertext_key = platform::load_ciphertext_key_pki(device_file).await?;
-            Ok(ciphertext_key)
+        DevicePrimaryProtectionStrategy::PKI { operations, .. } => {
+            if let DeviceFile::PKI(device) = device_file {
+                if device.certificate_ref != *operations.certificate_ref() {
+                    return Err(LoadCiphertextKeyError::InvalidData);
+                }
+
+                let raw = operations
+                    .decrypt_opaque_key(device.algorithm, device.encrypted_key.as_ref())
+                    .await
+                    .map_err(|err| match err {
+                        PkiOperationsDecryptOpaqueKeyError::UnsupportedAlgorithm => {
+                            LoadCiphertextKeyError::InvalidData
+                        }
+                        PkiOperationsDecryptOpaqueKeyError::DecryptionFailed(_) => {
+                            LoadCiphertextKeyError::DecryptionFailed
+                        }
+                        PkiOperationsDecryptOpaqueKeyError::Internal(e) => {
+                            LoadCiphertextKeyError::Internal(e)
+                        }
+                    })?;
+
+                Ok(raw)
+            } else {
+                Err(LoadCiphertextKeyError::InvalidData)
+            }
         }
 
         DevicePrimaryProtectionStrategy::AccountVault { operations, .. } => {
