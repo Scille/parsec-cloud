@@ -612,3 +612,92 @@ fn local_user_manifest_get_local_workspace_entry(timestamp: DateTime) {
         Some(&lum.local_workspaces[1])
     );
 }
+
+#[rstest]
+fn local_user_manifest_workspace_entry_is_read_only() {
+    let mut entry = LocalUserManifestWorkspaceEntry {
+        id: VlobID::default(),
+        archiving_configuration: RealmArchivingConfiguration::Available.into(),
+        name: "wksp".parse().unwrap(),
+        name_origin: CertificateBasedInfoOrigin::Placeholder,
+        role: RealmRole::Owner,
+        role_origin: CertificateBasedInfoOrigin::Placeholder,
+    };
+
+    let far_in_the_future = "2999-01-01T00:00:00Z".parse().unwrap();
+
+    for (is_read_only, role, archiving_configuration) in [
+        (
+            false,
+            RealmRole::Owner,
+            RealmArchivingConfiguration::Available,
+        ),
+        (
+            false,
+            RealmRole::Contributor,
+            RealmArchivingConfiguration::Available,
+        ),
+        (
+            false,
+            RealmRole::Manager,
+            RealmArchivingConfiguration::Available,
+        ),
+        (
+            true,
+            RealmRole::Reader,
+            RealmArchivingConfiguration::Available,
+        ),
+        (
+            true,
+            RealmRole::Owner,
+            RealmArchivingConfiguration::Archived,
+        ),
+        (
+            true,
+            RealmRole::Contributor,
+            RealmArchivingConfiguration::Archived,
+        ),
+        (
+            true,
+            RealmRole::Manager,
+            RealmArchivingConfiguration::Archived,
+        ),
+        (
+            true,
+            RealmRole::Reader,
+            RealmArchivingConfiguration::Archived,
+        ),
+        (
+            true,
+            RealmRole::Owner,
+            RealmArchivingConfiguration::DeletionPlanned {
+                deletion_date: far_in_the_future,
+            },
+        ),
+        (
+            true,
+            RealmRole::Contributor,
+            RealmArchivingConfiguration::DeletionPlanned {
+                deletion_date: far_in_the_future,
+            },
+        ),
+        (
+            true,
+            RealmRole::Manager,
+            RealmArchivingConfiguration::DeletionPlanned {
+                deletion_date: far_in_the_future,
+            },
+        ),
+        (
+            true,
+            RealmRole::Reader,
+            RealmArchivingConfiguration::DeletionPlanned {
+                deletion_date: far_in_the_future,
+            },
+        ),
+    ] {
+        entry.role = role;
+        entry.archiving_configuration = archiving_configuration.into();
+        p_assert_eq!(entry.is_read_only(), is_read_only);
+    }
+}
