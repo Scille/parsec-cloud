@@ -47,7 +47,7 @@ impl Mountpoint {
             .get_workspace_external_info(|info| {
                 (
                     info.entry.name.clone(),
-                    info.is_read_only(),
+                    info.entry.is_read_only(),
                     info.workspace_index,
                     info.total_workspaces,
                 )
