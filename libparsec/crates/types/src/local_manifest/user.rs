@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, DataResult, DateTime,
-    DeviceID, UserManifest, VlobID,
+    DeviceID, Maybe, RealmArchivingConfiguration, UserManifest, VlobID,
 };
 
 use super::{impl_local_manifest_dump, impl_local_manifest_load};
@@ -42,6 +42,19 @@ impl_local_manifest_dump!(LocalUserManifest);
 impl_local_manifest_load!(LocalUserManifest);
 
 parsec_data!("schema/local_manifest/local_user_manifest.json5");
+
+impl LocalUserManifestWorkspaceEntry {
+    pub fn is_read_only(&self) -> bool {
+        !self.role.can_write()
+            || matches!(
+                self.archiving_configuration,
+                Maybe::Present(
+                    RealmArchivingConfiguration::Archived
+                        | RealmArchivingConfiguration::DeletionPlanned { .. }
+                )
+            )
+    }
+}
 
 impl_transparent_data_format_conversion!(
     LocalUserManifest,
