@@ -40,8 +40,8 @@ describe('Device Card', () => {
 
     expect(wrapper.get('.device-name').text()).to.equal('My Device');
     expect(wrapper.get('.join-date').text()).to.equal('Joined: Today');
-    expect(wrapper.get('.badge').isVisible()).to.be.true;
-    expect(wrapper.get('.badge').text()).to.equal('Current');
+    expect(wrapper.get('.badge-active').isVisible()).to.be.true;
+    expect(wrapper.get('.badge-active').text()).to.equal('Current');
   });
 
   it('Display not current device', () => {
@@ -68,6 +68,6 @@ describe('Device Card', () => {
     expect(wrapper.get('.device-name').text()).to.equal('My Other Device');
     expect(wrapper.get('.join-date').text()).to.equal('Joined: Today');
     expect((wrapper.vm as any).isCurrent).to.be.false;
-    expect(wrapper.get('.badge').isVisible()).to.be.false;
+    expect(wrapper.get('.badge-active').isVisible()).to.be.false;
   });
 });

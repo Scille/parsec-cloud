@@ -188,7 +188,7 @@
             "devices": "My devices",
             "authentication": "Authentication",
             "account": "Account",
-            "recovery": "Recovery file",
+            "recovery": "Organization recovery",
             "contactUs": "Contact us",
             "documentation": "Documentation",
             "logout": "Log out",
@@ -2083,7 +2083,7 @@
                 "settings": "Settings",
                 "devices": "My devices",
                 "authentication": "Authentication",
-                "recovery": "Recovery files"
+                "recovery": "Organization recovery"
             },
             "support": {
                 "title": "Support",
@@ -2102,16 +2102,37 @@
         }
     },
     "OrganizationRecovery": {
-        "title": "Organization recovery files",
-        "recoveryFile": "Recovery Files",
-        "recoveryKey": "Secret Key",
+        "title": "Organization recovery",
+        "description": "If you lose access to your account, you can set up recovery options for your account with this organization.",
         "advice": "We strongly recommend creating recovery files for each organization.",
-        "adviceDone": "You have already created recovery files.",
+        "file": {
+            "title": "Recovery files",
+            "description": "A recovery file and a secret key allow you to regain access to your data once assembled.",
+            "info": "You need to save recovery file and recovery key in a secure place, if possible in separate places, as both are needed to recover a device's access to an organization.",
+            "downloaded": "Files downloaded",
+            "action": "Create recovery files"
+        },
+        "device": {
+            "title": "Trusted devices or browsers",
+            "description": "Simply add secondary devices or browsers (Chrome or Firefox) to recover your account.",
+            "activeDevices": "1 other active device/browser | {count} other active devices/browsers",
+            "action": "Add a device"
+        },
+        "trustedUser": {
+            "title": "Circle of trust",
+            "description": "Designate trusted people who can help you recover your account in case of lost access (minimum {minUsers} people).",
+            "action": "Manage my circle of trust",
+            "actionSecondary": "Circles I belong to"
+        },
+        "state": {
+            "active": "Active",
+            "inactive": "Inactive"
+        },
+        "modal": {
+            "title": "Recovery files",
+            "confirmation": "I confirm that I have copied my secret key and downloaded my recovery file."
+        },
         "done": {
-            "subtitle": "Recovery files allow you to regain access to this organization if you forgot your password or lose your devices.",
-            "subtitle2": "Without recovery files, you will not be able to recover your account in such a case, and you will need to be re-invited to the organization.",
-            "subtitle3": "They consist of a recovery file and a recovery key. You need to save both in a secure place, if possible in separate places, as both are needed to recover a device's access to an organization.",
-            "button": "Download file",
             "recreateQuestionTitle": "Create new recovery files?",
             "recreateQuestionMessage": "You have already created recovery files in the past. Do you want to create new ones?",
             "recreateYes": "Create new recovery files",

@@ -7,7 +7,7 @@ for (const authMode of ['password', 'sso']) {
     await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
     const recovery = myProfilePage.locator('.recovery');
-    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
+    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery');
     await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
     await expect(recovery.locator('.restore-password-button')).toHaveText('Create recovery files');
     const recoveryFiles = recovery.locator('.recovery-list');
@@ -149,7 +149,7 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
     const recovery = myProfilePage.locator('.recovery');
-    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
+    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery');
     await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
     await expect(recovery.locator('.restore-password-button')).toHaveText('Create recovery files');
     const recoveryFiles = recovery.locator('.recovery-list');

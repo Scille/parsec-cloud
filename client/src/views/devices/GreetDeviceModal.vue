@@ -215,10 +215,11 @@
             v-show="waitingForGuest"
             class="spinner-container"
           >
-            <ion-text class="subtitles-normal">
-              {{ $msTranslate('DevicesPage.greet.waiting') }}
-            </ion-text>
-            <ms-spinner class="spinner" />
+            <ms-spinner
+              class="spinner"
+              title="DevicesPage.greet.waiting"
+              :size="14"
+            />
           </div>
         </div>
       </ion-footer>

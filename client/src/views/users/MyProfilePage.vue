@@ -194,7 +194,7 @@
           <!-- profile info -->
           <div
             class="profile-content-infos"
-            v-if="clientInfo && isLargeDisplay"
+            v-if="clientInfo && isLargeDisplay && myProfileTab !== ProfilePages.Recovery"
           >
             <profile-info-card
               :label="clientInfo.humanHandle.label"
@@ -216,8 +216,8 @@
             class="profile-content-item"
           >
             <div class="item-header">
-              <ion-text class="item-header__title title-h3">{{ $msTranslate('DevicesPage.title') }}</ion-text>
-              <ion-text class="item-header__description body">{{ $msTranslate('DevicesPage.description') }}</ion-text>
+              <ion-text class="item-header__title title-h2">{{ $msTranslate('DevicesPage.title') }}</ion-text>
+              <ion-text class="item-header__description body-lg">{{ $msTranslate('DevicesPage.description') }}</ion-text>
             </div>
             <devices-page class="devices" />
           </div>
@@ -227,8 +227,8 @@
             class="profile-content-item"
           >
             <div class="item-header">
-              <ion-text class="item-header__title title-h3">{{ $msTranslate('Authentication.title') }}</ion-text>
-              <ion-text class="item-header__description body">{{ $msTranslate('Authentication.description') }}</ion-text>
+              <ion-text class="item-header__title title-h2">{{ $msTranslate('Authentication.title') }}</ion-text>
+              <ion-text class="item-header__description body-lg">{{ $msTranslate('Authentication.description') }}</ion-text>
             </div>
             <authentication-page />
           </div>
@@ -236,9 +236,11 @@
           <div
             v-if="myProfileTab === ProfilePages.Recovery"
             class="profile-content-item recovery"
+            id="recovery-profile-content"
           >
             <div class="item-header">
-              <ion-text class="item-header__title title-h3">{{ $msTranslate('OrganizationRecovery.title') }}</ion-text>
+              <ion-text class="item-header__title title-h2">{{ $msTranslate('OrganizationRecovery.title') }}</ion-text>
+              <ion-text class="item-header__description body-lg">{{ $msTranslate('OrganizationRecovery.description') }}</ion-text>
             </div>
             <organization-recovery-page />
           </div>
@@ -249,7 +251,7 @@
           >
             <div class="item-header">
               <ion-text class="item-header__title title-h3">{{ $msTranslate('AboutPage.title') }}</ion-text>
-              <ion-text class="item-header__description body">{{ $msTranslate('AboutPage.description') }}</ion-text>
+              <ion-text class="item-header__description body-lg">{{ $msTranslate('AboutPage.description') }}</ion-text>
             </div>
             <about-view />
           </div>
@@ -524,10 +526,14 @@ onUnmounted(async () => {
       max-width: 37.5rem;
       height: fit-content;
       gap: 1.5rem;
-      border-radius: var(--parsec-radius-8);
+      border-radius: var(--parsec-radius-12);
       position: relative;
 
-      &:not(#settings-profile-content) {
+      &:not(#settings-profile-content):not(#recovery-profile-content) {
+        box-shadow:
+          0 1px 1px 0 rgba(0, 0, 0, 0.05),
+          0 1px 4px 0 rgba(0, 0, 0, 0.03),
+          0 0 1px 0 rgba(0, 0, 0, 0.2);
         padding: 2rem;
         background: var(--parsec-color-light-secondary-white);
       }

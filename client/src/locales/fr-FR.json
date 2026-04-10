@@ -187,7 +187,7 @@
             "devices": "Mes appareils",
             "authentication": "Authentification",
             "account": "Compte",
-            "recovery": "Fichier de récupération",
+            "recovery": "Récupération d'organisation",
             "contactUs": "Nous contacter",
             "documentation": "Documentation",
             "logout": "Déconnexion",
@@ -2084,7 +2084,7 @@
                 "settings": "Paramètres",
                 "devices": "Mes appareils",
                 "authentication": "Authentification",
-                "recovery": "Fichiers de récupération"
+                "recovery": "Récupération d'organisation"
             },
             "support": {
                 "title": "Support",
@@ -2103,16 +2103,37 @@
         }
     },
     "OrganizationRecovery": {
-        "title": "Fichiers de récupération d'organisation",
-        "recoveryFile": "Fichiers de récupération",
-        "recoveryKey": "Clé secrète",
+        "title": "Récupération d'organisation",
+        "description": "En cas de perte de votre accès, vous avez la possibilité d'ajouter des systèmes pour récupérer votre compte à cette organisation.",
         "advice": "Nous vous conseillons de créer des fichiers de récupération pour chaque organisation.",
-        "adviceDone": "Vous avez déjà créé des fichiers de récupération.",
+        "file": {
+            "title": "Fichiers de récupération",
+            "description": "Un fichier de restauration et une clé secrète vous permettent, une fois assemblés, de retrouver l'accès à vos données.",
+            "info": "Ils comportent un fichier de récupération et une clé de récupération. Il est nécessaire de les sauvegarder dans des emplacements sûrs, de préférence dans deux emplacements séparés, sachant que les deux sont nécessaires pour restaurer un accès perdu d'un appareil à une organisation.",
+            "downloaded": "Fichiers téléchargés",
+            "action": "Créer des fichiers de récupération"
+        },
+        "device": {
+            "title": "Appareils ou navigateurs de récupération",
+            "description": "Il vous suffit d'ajouter des appareils secondaires ou des navigateurs (Chrome ou Firefox) pour récupérer votre compte.",
+            "activeDevices": "1 autre appareil/navigateur actif | {count} autres appareils/navigateurs actifs",
+            "action": "Ajouter un appareil"
+        },
+        "trustedUser": {
+            "title": "Cercle de confiance",
+            "description": "Désignez des personnes de confiance qui pourront vous aider à récupérer votre compte en cas de perte d'accès (minimum {minUsers} personnes).",
+            "action": "Gérer mon cercle de confiance",
+            "actionSecondary": "Cercles dont je fais partie"
+        },
+        "state": {
+            "active": "Actif",
+            "inactive": "Inactif"
+        },
+        "modal": {
+            "title": "Fichiers de récupération",
+            "confirmation": "Je confirme avoir copié ma clé secrète et téléchargé mon fichier de récupération."
+        },
         "done": {
-            "subtitle": "Les fichiers de récupération vous permettent de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-            "subtitle2": "Sans fichiers de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
-            "subtitle3": "Ils comportent un fichier de récupération et une clé de récupération. Il est nécessaire de les sauvegarder dans des emplacements sûrs, de préférence dans deux emplacements séparés, sachant que les deux sont nécessaires pour restaurer un accès perdu d'un appareil à une organisation.",
-            "button": "Créer un fichier de récupération",
             "recreateQuestionTitle": "Nouveaux fichiers de récupération",
             "recreateQuestionMessage": "Vous avez déjà créé des fichiers de récupération dans le passé. Souhaitez-vous en créer de nouveaux ?",
             "recreateYes": "Créer de nouveaux fichiers",
