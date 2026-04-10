@@ -590,6 +590,9 @@
         },
         "modalHeader": {
             "step": "Step {current} of {total}"
+        },
+        "breadcrumbs": {
+            "archived": "Archived"
         }
     },
     "WorkspaceSharing": {
@@ -828,10 +831,10 @@
         },
         "archiveWorkspace": {
             "title": "Archive this workspace",
-            "info": "Your archived workspaces will remain accessible in read-only for all users who have access to them.",
             "subtitle": "You are about to archive the workspace {workspace}. It will remain accessible in read-only for all users who have access to it. Are you sure you want to proceed?",
             "yes": "Archive",
             "no": "Cancel",
+            "info": "Your archived workspaces will remain accessible in read-only for all users who have access to them.",
             "loading": "Loading your archived workspaces...",
             "backToWorkspace": "Back to my workspaces",
             "archive": {
@@ -845,6 +848,12 @@
             "readOnly": "Read only",
             "count": "1 workspace | {count} workspaces",
             "isArchived": "Archived workspace (read-only)"
+        },
+        "restoreWorkspace": {
+            "title": "Restore this workspace",
+            "subtitle": "You are about to restore the workspace {workspace}. Previous read and write accesses will be restored. Are you sure you want to proceed?",
+            "yes": "Restore",
+            "no": "Cancel"
         }
     },
     "FoldersPage": {

@@ -589,6 +589,9 @@
         },
         "modalHeader": {
             "step": "Étape {current} sur {total}"
+        },
+        "breadcrumbs": {
+            "archived": "Archivés"
         }
     },
     "WorkspaceSharing": {
@@ -827,10 +830,10 @@
         },
         "archiveWorkspace": {
             "title": "Archiver cet espace de travail",
-            "info": "Vos espaces de travail archivés reste consultables lecture seul pour tous les utilisateurs.",
             "subtitle": "Vous êtes sur le point d'archiver l'espace de travail {workspace}. Il sera toujours accessible en lecture seule pour tous les utilisateurs y ayant accès. Êtes-vous sûr de vouloir continuer ?",
             "yes": "Archiver",
             "no": "Cancel",
+            "info": "Vos espaces de travail archivés reste consultables lecture seul pour tous les utilisateurs.",
             "loading": "Chargement de vos espaces de travail archivés...",
             "backToWorkspace": "Retour à mes espaces de travail",
             "archive": {
@@ -846,6 +849,12 @@
             "readOnly": "Lecture seule",
             "count": "1 espace de travail | {count} espaces de travail",
             "isArchived": "Espace de travail archivé (lecture seule)"
+        },
+        "restoreWorkspace": {
+            "title": "Restaurer cet espace de travail",
+            "subtitle": "Vous êtes sur le point de restaurer l'espace de travail {workspace}. Les précédents accès en lecture et écriture seront restaurés. Êtes-vous sûr de vouloir continuer ?",
+            "yes": "Restaurer",
+            "no": "Annuler"
         }
     },
     "FoldersPage": {

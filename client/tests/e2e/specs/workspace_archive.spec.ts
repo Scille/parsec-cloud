@@ -53,8 +53,14 @@ msTest('Restore archived workspace', async ({ workspaces }) => {
   await sidebarArchiveButton.click();
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  await expect(contextMenu.getByRole('group').getByRole('listitem')).toHaveText(['Restore this workspace']);
-  await contextMenu.getByRole('group').getByRole('listitem').nth(0).click();
+  const restoreButton = contextMenu.getByRole('listitem').nth(0);
+  await expect(restoreButton).toHaveText('Restore this workspace');
+  await restoreButton.click();
+  await answerQuestion(workspaces, false);
+  await expect(wk).toBeVisible();
+  await wk.click({ button: 'right' });
+  await restoreButton.click();
+  await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been restored.', 'Success');
 
   await expect(wk).not.toBeVisible();

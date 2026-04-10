@@ -317,6 +317,15 @@ async function restoreWorkspace(
   informationManager: InformationManager,
   eventDistributor: EventDistributor,
 ): Promise<void> {
+  const answer = await askQuestion(
+    'WorkspacesPage.restoreWorkspace.title',
+    { key: 'WorkspacesPage.restoreWorkspace.subtitle', data: { workspace: workspace.currentName } },
+    { yesText: 'WorkspacesPage.restoreWorkspace.yes', noText: 'WorkspacesPage.restoreWorkspace.no' },
+  );
+  if (answer === Answer.No) {
+    return;
+  }
+
   const result = await parsecRestoreWorkspace(workspace.id);
 
   informationManager.present(
