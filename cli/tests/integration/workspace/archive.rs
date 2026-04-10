@@ -57,7 +57,7 @@ async fn archive_workspace(tmp_path: TmpPath) {
         .iter()
         .find(|w| w.id == wid)
         .expect("workspace should exist");
-    assert_eq!(workspace.current_name, workspace_name);
+    assert_eq!(workspace.name, workspace_name);
     assert_eq!(
         workspace.archiving_configuration,
         RealmArchivingConfiguration::Archived
