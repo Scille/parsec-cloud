@@ -6,7 +6,6 @@ from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import auto
-from hashlib import sha256
 from typing import Literal
 
 from jinja2 import Environment
@@ -189,42 +188,18 @@ class AsyncEnrollmentListItem:
     submit_payload_signature: AsyncEnrollmentPayloadSignature
 
 
-# TODO: `X509Certificate` is error prone since it's validation is currently lazy
-# (see https://github.com/Scille/parsec-cloud/issues/12012).
-@dataclass(slots=True, frozen=True)
-class X509Certificate2:
-    der: bytes
-    issuer: bytes
-    subject: bytes
-    sha256_fingerprint: bytes
-
-    @classmethod
-    def from_der(cls, der: bytes) -> X509Certificate2:
-        certificate = X509Certificate.from_der(der)
-        return X509Certificate2(
-            der=der,
-            # Raises `PkiInvalidCertificateDER` which is a subclass of `ValueError`
-            issuer=certificate.issuer(),
-            subject=certificate.subject(),
-            sha256_fingerprint=sha256(der).digest(),
-        )
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__qualname__}(subject={self.subject}, issuer={self.issuer})"
-
-
 def _validate_x509_trustchain(
     leaf: bytes, intermediates: list[bytes]
 ) -> (
-    list[X509Certificate2]
+    list[X509Certificate]
     | Literal["INVALID_DER_X509_CERTIFICATE"]
     | Literal["INVALID_X509_TRUSTCHAIN"]
 ):
     # Validate format for each x509 certificate
     try:
-        author_der_x509_certificate = X509Certificate2.from_der(leaf)
+        author_der_x509_certificate = X509Certificate.load_der(leaf)
         intermediate_der_x509_certificates = [
-            X509Certificate2.from_der(certif) for certif in intermediates
+            X509Certificate.load_der(certif) for certif in intermediates
         ]
     except ValueError:
         return "INVALID_DER_X509_CERTIFICATE"
@@ -260,7 +235,7 @@ def async_enrollment_submit_validate(
     submit_payload: bytes,
     submit_payload_signature: AsyncEnrollmentPayloadSignature,
 ) -> (
-    tuple[AsyncEnrollmentSubmitPayload, list[X509Certificate2] | None]
+    tuple[AsyncEnrollmentSubmitPayload, list[X509Certificate] | None]
     | AsyncEnrollmentSubmitValidateBadOutcome
 ):
     try:
@@ -304,7 +279,7 @@ def async_enrollment_accept_validate(
         AsyncEnrollmentAcceptPayload,
         UserCertificate,
         DeviceCertificate,
-        list[X509Certificate2] | None,
+        list[X509Certificate] | None,
     ]
     | TimestampOutOfBallpark
     | AsyncEnrollmentAcceptValidateBadOutcome

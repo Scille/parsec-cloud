@@ -16,7 +16,7 @@ use pyo3::{
     wrap_pyfunction, Bound, PyResult,
 };
 
-pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub(crate) fn add_mod(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Certif
     m.add_class::<PrivateKeyAlgorithm>()?;
     m.add_class::<UserCertificate>()?;
@@ -51,10 +51,7 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PkiSignatureAlgorithm>()?;
     m.add_class::<X509Certificate>()?;
     m.add_class::<X509CertificateInformation>()?;
-    m.add_class::<TrustAnchor>()?;
-    crate::binding_utils::export_exception!(m, py, PkiInvalidSignature);
-    crate::binding_utils::export_exception!(m, py, PkiInvalidCertificateDER);
-    crate::binding_utils::export_exception!(m, py, PkiUntrusted);
+    m.add_class::<X509TrustAnchor>()?;
 
     // Async enrollment
     m.add_class::<AsyncEnrollmentSubmitPayload>()?;
