@@ -143,6 +143,7 @@ export type {
   AvailablePendingAsyncEnrollmentIdentitySystem,
   AvailablePendingAsyncEnrollmentIdentitySystemPKI,
   BootstrapOrganizationError,
+  CertificateBasedInfoOrigin,
   CertificateWithDetails,
   ClaimerRetrieveInfoError,
   ClaimFinalizeError,

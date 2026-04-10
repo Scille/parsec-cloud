@@ -111,7 +111,7 @@ async function populate(handle: parsec.ConnectionHandle): Promise<void> {
   }
 
   for (const workspace of workspaces.value) {
-    if (workspace.currentName === 'wksp1') {
+    if (workspace.name === 'wksp1') {
       if (import.meta.env.PARSEC_APP_DEV_POPULATE_REAL_FILES === 'true') {
         await populateRealFiles(workspace);
       }

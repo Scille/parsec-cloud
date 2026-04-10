@@ -459,11 +459,11 @@ let hotkeys: HotkeyGroup | null = null;
 let fileOpCanceller!: FileEventRegistrationCanceller;
 
 const ownRole = computed(() => {
-  return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : parsec.WorkspaceRole.Reader;
+  return workspaceInfo.value ? workspaceInfo.value.selfRole : parsec.WorkspaceRole.Reader;
 });
 
 const workspaceName = computed(() => {
-  return workspaceInfo.value?.currentName ?? '';
+  return workspaceInfo.value?.name ?? '';
 });
 
 const isReadOnly = asyncComputed(async (): Promise<boolean> => {
@@ -734,7 +734,7 @@ function getDisplayText(): Translatable {
   } else {
     return currentFolder.value !== '/'
       ? I18n.valueAsTranslatable(currentFolder.value)
-      : I18n.valueAsTranslatable(workspaceInfo.value?.currentName);
+      : I18n.valueAsTranslatable(workspaceInfo.value?.name);
   }
 }
 
@@ -810,7 +810,7 @@ async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
           message: {
             key: 'FoldersPage.events.workspaceUnshared',
             data: {
-              name: workspaceInfo.value?.currentName,
+              name: workspaceInfo.value?.name,
             },
           },
           level: InformationLevel.Error,
@@ -820,7 +820,7 @@ async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
       await navigateTo(Routes.Workspaces);
     } else {
       // display a toast if the role has been changed in a significant manner: Reader to something else, or something else to Reader
-      if (workspaceInfo.value?.currentSelfRole === WorkspaceRole.Reader && wInfo.currentSelfRole !== WorkspaceRole.Reader) {
+      if (workspaceInfo.value?.selfRole === WorkspaceRole.Reader && wInfo.selfRole !== WorkspaceRole.Reader) {
         await informationManager.value.present(
           new Information({
             message: {
@@ -830,7 +830,7 @@ async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
           }),
           PresentationMode.Toast,
         );
-      } else if (workspaceInfo.value?.currentSelfRole !== WorkspaceRole.Reader && wInfo.currentSelfRole === WorkspaceRole.Reader) {
+      } else if (workspaceInfo.value?.selfRole !== WorkspaceRole.Reader && wInfo.selfRole === WorkspaceRole.Reader) {
         await informationManager.value.present(
           new Information({
             message: {
@@ -845,8 +845,8 @@ async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
       if (!workspaceInfo.value) {
         return;
       }
-      workspaceInfo.value.currentName = wInfo.currentName;
-      workspaceInfo.value.currentSelfRole = wInfo.currentSelfRole;
+      workspaceInfo.value.name = wInfo.name;
+      workspaceInfo.value.selfRole = wInfo.selfRole;
     }
   } else {
     // Don't really know what to do in this case, just move the user back to workspaces list
@@ -1614,7 +1614,7 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
   } else {
     await downloadArchive({
       entries: entries,
-      archiveName: `${workspaceInfo.value.currentName}_${currentFolder.value === '/' ? 'ROOT' : currentFolder.value}.zip`,
+      archiveName: `${workspaceInfo.value.name}_${currentFolder.value === '/' ? 'ROOT' : currentFolder.value}.zip`,
       workspaceHandle: workspaceInfo.value.handle,
       workspaceId: workspaceInfo.value.id,
       informationManager: informationManager.value,

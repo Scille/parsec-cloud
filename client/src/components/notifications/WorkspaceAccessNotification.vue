@@ -15,7 +15,7 @@
           scope="global"
         >
           <template #workspace>
-            <strong>{{ workspaceInfo ? workspaceInfo.currentName : '' }}</strong>
+            <strong>{{ workspaceInfo ? workspaceInfo.name : '' }}</strong>
           </template>
         </i18n-t>
       </ion-text>

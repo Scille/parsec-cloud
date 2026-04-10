@@ -109,8 +109,8 @@ export async function workspaceShareClick(
     initialBreakpoint: isLargeDisplay ? undefined : 1,
     componentProps: {
       workspaceId: workspace.id,
-      workspaceName: workspace.currentName,
-      ownRole: workspace.currentSelfRole,
+      workspaceName: workspace.name,
+      ownRole: workspace.selfRole,
       informationManager: informationManager,
       eventDistributor: eventDistributor,
     },
@@ -289,7 +289,7 @@ async function archiveWorkspace(
 ): Promise<void> {
   const answer = await askQuestion(
     'WorkspacesPage.archiveWorkspace.title',
-    { key: 'WorkspacesPage.archiveWorkspace.subtitle', data: { workspace: workspace.currentName } },
+    { key: 'WorkspacesPage.archiveWorkspace.subtitle', data: { workspace: workspace.name } },
     { yesText: 'WorkspacesPage.archiveWorkspace.yes', noText: 'WorkspacesPage.archiveWorkspace.no' },
   );
   if (answer === Answer.No) {
@@ -301,7 +301,7 @@ async function archiveWorkspace(
     new Information({
       message: {
         key: result.ok ? 'WorkspacesPage.archiveWorkspace.archive.success' : 'WorkspacesPage.archiveWorkspace.archive.fail',
-        data: { workspace: workspace.currentName },
+        data: { workspace: workspace.name },
       },
       level: result.ok ? InformationLevel.Success : InformationLevel.Error,
     }),
@@ -332,7 +332,7 @@ async function restoreWorkspace(
     new Information({
       message: {
         key: result.ok ? 'WorkspacesPage.archiveWorkspace.restore.success' : 'WorkspacesPage.archiveWorkspace.restore.fail',
-        data: { workspace: workspace.currentName },
+        data: { workspace: workspace.name },
       },
       level: result.ok ? InformationLevel.Success : InformationLevel.Error,
     }),
@@ -357,7 +357,7 @@ export async function showWorkspace(
         new Information({
           message: {
             key: 'WorkspacesPage.showHideWorkspace.failedShown',
-            data: { workspace: workspace.currentName },
+            data: { workspace: workspace.name },
           },
           level: InformationLevel.Error,
         }),
@@ -382,7 +382,7 @@ export async function showWorkspace(
     new Information({
       message: {
         key: isDesktop() ? 'WorkspacesPage.showHideWorkspace.successDesktopShown' : 'WorkspacesPage.showHideWorkspace.successWebShown',
-        data: { workspace: workspace.currentName },
+        data: { workspace: workspace.name },
       },
       level: InformationLevel.Success,
     }),
@@ -406,7 +406,7 @@ export async function hideWorkspace(
         new Information({
           message: {
             key: 'WorkspacesPage.showHideWorkspace.failedHidden',
-            data: { workspace: workspace.currentName },
+            data: { workspace: workspace.name },
           },
           level: InformationLevel.Error,
         }),
@@ -431,7 +431,7 @@ export async function hideWorkspace(
     new Information({
       message: {
         key: isDesktop() ? 'WorkspacesPage.showHideWorkspace.successDesktopHidden' : 'WorkspacesPage.showHideWorkspace.successWebHidden',
-        data: { workspace: workspace.currentName },
+        data: { workspace: workspace.name },
       },
       level: InformationLevel.Success,
     }),
@@ -465,7 +465,7 @@ async function seeInExplorer(
   if (!result.ok) {
     await informationManager.present(
       new Information({
-        message: { key: 'FoldersPage.open.folderFailed', data: { name: workspace.currentName } },
+        message: { key: 'FoldersPage.open.folderFailed', data: { name: workspace.name } },
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -485,7 +485,7 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
       }),
       PresentationMode.Toast,
     );
-    recentDocumentManager.updateWorkspace(workspace.id, { currentName: newName });
+    recentDocumentManager.updateWorkspace(workspace.id, { name: newName });
   } else {
     let message: Translatable = '';
     switch (result.error.tag) {
@@ -531,7 +531,7 @@ async function unmountWorkspaceConfirmation(
     component: WorkspaceHiddenModal,
     cssClass: 'workspace-hidden-modal',
     componentProps: {
-      workspaceName: workspace.currentName,
+      workspaceName: workspace.name,
     },
   });
 
@@ -562,8 +562,8 @@ async function openRenameWorkspaceModal(
       inputLabel: 'WorkspacesPage.RenameWorkspaceModal.label',
       placeholder: 'WorkspacesPage.RenameWorkspaceModal.placeholder',
       okButtonText: 'WorkspacesPage.RenameWorkspaceModal.rename',
-      defaultValue: workspace.currentName,
-      selectionRange: [0, workspace.currentName.length],
+      defaultValue: workspace.name,
+      selectionRange: [0, workspace.name.length],
     },
     isLargeDisplay,
   );
