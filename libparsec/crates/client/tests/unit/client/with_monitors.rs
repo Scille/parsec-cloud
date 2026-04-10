@@ -53,26 +53,38 @@ async fn multi_devices(env: &TestbedEnv) {
     // TODO: use event instead of this ugly polling loop !
     loop {
         let workspaces = alice2_client.list_workspaces().await;
-        let found = workspaces.into_iter().find(|entry| {
-            entry.id == wid && entry.current_name == "new workspace".parse().unwrap()
-        });
+        let found = workspaces
+            .into_iter()
+            .find(|entry| entry.id == wid && entry.name == "new workspace".parse().unwrap());
         if let Some(entry) = found {
             let WorkspaceInfo {
                 id,
-                current_name,
-                current_self_role,
                 is_started,
                 is_bootstrapped,
+                name,
+                name_origin,
+                self_role,
+                self_role_origin,
                 archiving_configuration,
+                archiving_configuration_origin,
             } = entry;
             p_assert_eq!(id, wid);
-            p_assert_eq!(current_name, "new workspace".parse().unwrap());
-            p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
+            p_assert_eq!(name, "new workspace".parse().unwrap());
+            p_assert_matches!(name_origin, CertificateBasedInfoOrigin::Certificate { .. });
+            p_assert_eq!(self_role, RealmRole::Owner);
+            p_assert_matches!(
+                self_role_origin,
+                CertificateBasedInfoOrigin::Certificate { .. }
+            );
             p_assert_eq!(
                 archiving_configuration,
                 RealmArchivingConfiguration::Available
+            );
+            p_assert_eq!(
+                archiving_configuration_origin,
+                CertificateBasedInfoOrigin::Placeholder
             );
             break;
         }
@@ -186,20 +198,32 @@ async fn sharing(env: &TestbedEnv) {
         if let Some(entry) = found {
             let WorkspaceInfo {
                 id,
-                current_name,
-                current_self_role,
                 is_started,
                 is_bootstrapped,
+                name,
+                name_origin,
+                self_role,
+                self_role_origin,
                 archiving_configuration,
+                archiving_configuration_origin,
             } = entry;
             p_assert_eq!(id, wid);
-            p_assert_eq!(current_name, "new workspace".parse().unwrap());
-            p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
+            p_assert_eq!(name, "new workspace".parse().unwrap());
+            p_assert_matches!(name_origin, CertificateBasedInfoOrigin::Certificate { .. });
+            p_assert_eq!(self_role, RealmRole::Owner);
+            p_assert_matches!(
+                self_role_origin,
+                CertificateBasedInfoOrigin::Certificate { .. }
+            );
             p_assert_eq!(
                 archiving_configuration,
                 RealmArchivingConfiguration::Available
+            );
+            p_assert_eq!(
+                archiving_configuration_origin,
+                CertificateBasedInfoOrigin::Placeholder
             );
             break;
         }
@@ -323,26 +347,38 @@ async fn multi_devices_with_confinement(env: &TestbedEnv) {
     // TODO: use event instead of this ugly polling loop !
     loop {
         let workspaces = alice2_client.list_workspaces().await;
-        let found = workspaces.into_iter().find(|entry| {
-            entry.id == wid && entry.current_name == "new workspace".parse().unwrap()
-        });
+        let found = workspaces
+            .into_iter()
+            .find(|entry| entry.id == wid && entry.name == "new workspace".parse().unwrap());
         if let Some(entry) = found {
             let WorkspaceInfo {
                 id,
-                current_name,
-                current_self_role,
                 is_started,
                 is_bootstrapped,
+                name,
+                name_origin,
+                self_role,
+                self_role_origin,
                 archiving_configuration,
+                archiving_configuration_origin,
             } = entry;
             p_assert_eq!(id, wid);
-            p_assert_eq!(current_name, "new workspace".parse().unwrap());
-            p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
+            p_assert_eq!(name, "new workspace".parse().unwrap());
+            p_assert_matches!(name_origin, CertificateBasedInfoOrigin::Certificate { .. });
+            p_assert_eq!(self_role, RealmRole::Owner);
+            p_assert_matches!(
+                self_role_origin,
+                CertificateBasedInfoOrigin::Certificate { .. }
+            );
             p_assert_eq!(
                 archiving_configuration,
                 RealmArchivingConfiguration::Available
+            );
+            p_assert_eq!(
+                archiving_configuration_origin,
+                CertificateBasedInfoOrigin::Placeholder
             );
             break;
         }
@@ -520,26 +556,38 @@ async fn multi_devices_with_move_out_of_confinement(env: &TestbedEnv) {
     // TODO: use event instead of this ugly polling loop !
     loop {
         let workspaces = alice2_client.list_workspaces().await;
-        let found = workspaces.into_iter().find(|entry| {
-            entry.id == wid && entry.current_name == "new workspace".parse().unwrap()
-        });
+        let found = workspaces
+            .into_iter()
+            .find(|entry| entry.id == wid && entry.name == "new workspace".parse().unwrap());
         if let Some(entry) = found {
             let WorkspaceInfo {
                 id,
-                current_name,
-                current_self_role,
                 is_started,
                 is_bootstrapped,
+                name,
+                name_origin,
+                self_role,
+                self_role_origin,
                 archiving_configuration,
+                archiving_configuration_origin,
             } = entry;
             p_assert_eq!(id, wid);
-            p_assert_eq!(current_name, "new workspace".parse().unwrap());
-            p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
+            p_assert_eq!(name, "new workspace".parse().unwrap());
+            p_assert_matches!(name_origin, CertificateBasedInfoOrigin::Certificate { .. });
+            p_assert_eq!(self_role, RealmRole::Owner);
+            p_assert_matches!(
+                self_role_origin,
+                CertificateBasedInfoOrigin::Certificate { .. }
+            );
             p_assert_eq!(
                 archiving_configuration,
                 RealmArchivingConfiguration::Available
+            );
+            p_assert_eq!(
+                archiving_configuration_origin,
+                CertificateBasedInfoOrigin::Placeholder
             );
             break;
         }

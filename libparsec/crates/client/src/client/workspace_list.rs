@@ -7,8 +7,6 @@ use super::Client;
 #[derive(Debug, PartialEq, Eq)]
 pub struct WorkspaceInfo {
     pub id: VlobID,
-    pub current_name: EntryName,
-    pub current_self_role: RealmRole,
     pub is_started: bool,
     /// `true` once the bootstrap has been done (i.e. initial user realm role certificate,
     /// key rotation & realm name certificate uploaded on server-side).
@@ -20,7 +18,12 @@ pub struct WorkspaceInfo {
     ///
     /// Note that this is unrelated with the synchronization of the workspace's data (i.e. vlob/blob).
     pub is_bootstrapped: bool,
+    pub name: EntryName,
+    pub name_origin: CertificateBasedInfoOrigin,
+    pub self_role: RealmRole,
+    pub self_role_origin: CertificateBasedInfoOrigin,
     pub archiving_configuration: RealmArchivingConfiguration,
+    pub archiving_configuration_origin: CertificateBasedInfoOrigin,
 }
 
 pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
@@ -52,21 +55,28 @@ pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
                 .archiving_configuration
                 .clone()
                 .unwrap_or(RealmArchivingConfiguration::Available);
+            let archiving_configuration_origin = entry
+                .archiving_configuration_origin
+                .clone()
+                .unwrap_or(CertificateBasedInfoOrigin::Placeholder);
 
             WorkspaceInfo {
                 id: entry.id,
-                current_name: entry.name.clone(),
-                current_self_role: entry.role,
                 is_started,
                 is_bootstrapped,
+                name: entry.name.clone(),
+                name_origin: entry.name_origin.clone(),
+                self_role: entry.role,
+                self_role_origin: entry.role_origin.clone(),
                 archiving_configuration,
+                archiving_configuration_origin,
             }
         })
         .collect();
 
     // Workspace list is sorted during it refresh, but there is no strong guarantee
     // that's the case if the data comes from a serialized local user manifest.
-    infos.sort_unstable_by(|a, b| a.current_name.cmp(&b.current_name));
+    infos.sort_unstable_by(|a, b| a.name.cmp(&b.name));
 
     infos
 }

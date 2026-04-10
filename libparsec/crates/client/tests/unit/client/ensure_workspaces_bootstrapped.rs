@@ -158,20 +158,29 @@ async fn ok(env: &TestbedEnv) {
     {
         let WorkspaceInfo {
             id,
-            current_name,
-            current_self_role,
             is_started,
             is_bootstrapped,
+            name,
+            name_origin,
+            self_role,
+            self_role_origin,
             archiving_configuration,
+            archiving_configuration_origin,
         } = wksp1_info;
         p_assert_eq!(*id, wksp1_id);
-        p_assert_eq!(*current_name, "wksp1".parse().unwrap());
-        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_bootstrapped, false); // Weird but expected !
         p_assert_eq!(*is_started, false);
+        p_assert_eq!(*name, "wksp1".parse().unwrap());
+        p_assert_eq!(*name_origin, CertificateBasedInfoOrigin::Placeholder);
+        p_assert_eq!(*self_role, RealmRole::Owner);
+        p_assert_eq!(*self_role_origin, CertificateBasedInfoOrigin::Placeholder);
         p_assert_eq!(
             *archiving_configuration,
             RealmArchivingConfiguration::Available
+        );
+        p_assert_eq!(
+            *archiving_configuration_origin,
+            CertificateBasedInfoOrigin::Placeholder
         );
     }
 }
