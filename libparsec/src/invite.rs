@@ -119,7 +119,7 @@ pub async fn bootstrap_organization(
     //   obtained from libparsec).
     sequester_authority_verify_key_pem: Option<&str>,
 ) -> Result<AvailableDevice, BootstrapOrganizationError> {
-    let save_strategy = save_strategy.convert_with_side_effects()?;
+    let save_strategy = save_strategy.convert_with_side_effects().await?;
 
     let sequester_authority_verify_key = match sequester_authority_verify_key_pem {
         None => None,
@@ -1047,6 +1047,7 @@ pub async fn claimer_user_finalize_save_local_device(
 ) -> Result<AvailableDevice, ClaimFinalizeError> {
     let save_strategy = save_strategy
         .convert_with_side_effects()
+        .await
         .map_err(ClaimFinalizeError::Internal)?;
 
     let ctx = take_and_close_handle(handle, |x| match *x {
@@ -1068,6 +1069,7 @@ pub async fn claimer_device_finalize_save_local_device(
 ) -> Result<AvailableDevice, ClaimFinalizeError> {
     let save_strategy = save_strategy
         .convert_with_side_effects()
+        .await
         .map_err(ClaimFinalizeError::Internal)?;
 
     let ctx = take_and_close_handle(handle, |x| match *x {
@@ -1089,6 +1091,7 @@ pub async fn claimer_shamir_recovery_finalize_save_local_device(
 ) -> Result<AvailableDevice, ClaimFinalizeError> {
     let save_strategy = save_strategy
         .convert_with_side_effects()
+        .await
         .map_err(ClaimFinalizeError::Internal)?;
 
     let ctx = take_and_close_handle(handle, |x| match *x {

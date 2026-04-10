@@ -1,10 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from .addr import ParsecAddr
 from .common import (
-    Bytes,
     DateTime,
     EmailAddress,
     ErrorVariant,
+    Handle,
+    Path,
+    Ref,
     Result,
     Structure,
     Variant,
@@ -25,7 +28,22 @@ async def show_certificate_selection_dialog_windows_only() -> Result[
     raise NotImplementedError
 
 
-async def is_pki_available() -> bool:
+class PkiSystemInitError(ErrorVariant):
+    class NotAvailable: ...
+
+    class Internal: ...
+
+
+async def pki_init_for_native(
+    config_dir: Ref[Path],
+) -> Result[None, PkiSystemInitError]:
+    raise NotImplementedError
+
+
+async def pki_init_for_scws(
+    config_dir: Ref[Path],
+    parsec_addr: ParsecAddr,
+) -> Result[None, PkiSystemInitError]:
     raise NotImplementedError
 
 
@@ -34,47 +52,88 @@ class DistinguishedNameValue(Variant):
     EmailAddress = VariantItemTuple(str)
 
 
-class CertificateDetails(Structure):
-    name: str | None
+class UserX509CertificateDetails(Structure):
+    common_name: str
     subject: list[DistinguishedNameValue]
     issuer: list[DistinguishedNameValue]
     not_before: DateTime
     not_after: DateTime
-    serial: Bytes
+    serial: bytes
     emails: list[EmailAddress]
     can_sign: bool
     can_encrypt: bool
 
 
-class InvalidCertificateReason(Variant):
-    class UnableToParseTime:
-        pass
+class UserX509CertificateLoadError(Variant):
+    class InvalidCertificateDer: ...
 
-    class UnableToParseCert:
-        pass
+    class NoCommonName: ...
 
-    class InvalidEmail:
-        pass
+    class InvalidTime: ...
+
+    class InvalidEmail: ...
 
 
-class CertificateWithDetails(Variant):
+class AvailablePkiCertificate(Variant):
     class Valid:
-        handle: X509CertificateReference
-        friendly_name: str | None
-        details: CertificateDetails
+        reference: X509CertificateReference
+        friendly_name: str
+        details: UserX509CertificateDetails
 
     class Invalid:
-        handle: X509CertificateReference
-        friendly_name: str | None
-        invalid_reason: InvalidCertificateReason
+        reference: X509CertificateReference
+        invalid_reason: UserX509CertificateLoadError
 
 
-class ListUserCertificatesError(ErrorVariant):
-    class CannotOpenStore:
-        pass
+class PkiSystemListUserCertificateError(ErrorVariant):
+    class Internal: ...
 
 
-async def list_user_certificates_with_details() -> Result[
-    list[CertificateWithDetails], ListUserCertificatesError
+async def pki_list_user_certificates() -> Result[
+    list[AvailablePkiCertificate], PkiSystemListUserCertificateError
 ]:
+    raise NotImplementedError
+
+
+class PkiSystemOpenCertificateError(ErrorVariant):
+    class NotFound: ...
+
+    class Internal: ...
+
+
+async def pki_open_certificate(
+    cert_ref: Ref[X509CertificateReference],
+) -> Result[Handle, PkiSystemOpenCertificateError]:
+    raise NotImplementedError
+
+
+class PkiCertificateCloseError(ErrorVariant):
+    class Internal: ...
+
+
+def pki_certificate_close(
+    handle: Handle,
+) -> Result[None, PkiCertificateCloseError]:
+    raise NotImplementedError
+
+
+class PkiCertificateRequestPrivateKeyError(ErrorVariant):
+    class NotFound: ...
+
+    class Internal: ...
+
+
+async def pki_certificate_open_private_key(
+    handle: Handle,
+) -> Result[Handle, PkiCertificateRequestPrivateKeyError]:
+    raise NotImplementedError
+
+
+class PkiPrivateKeyCloseError(ErrorVariant):
+    class Internal: ...
+
+
+async def pki_private_key_close(
+    handle: Handle,
+) -> Result[None, PkiPrivateKeyCloseError]:
     raise NotImplementedError

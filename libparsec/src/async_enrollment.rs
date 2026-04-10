@@ -25,7 +25,7 @@ use crate::{
 };
 
 mod strategy {
-    use std::{path::PathBuf, sync::Arc};
+    use std::sync::Arc;
 
     use libparsec_client::{
         AcceptAsyncEnrollmentError, SubmitAsyncEnrollmentError,
@@ -38,10 +38,7 @@ mod strategy {
         OpenBaoVerifyError,
     };
     use libparsec_platform_async::{pretend_future_is_send_on_web, PinBoxFutureResult};
-    use libparsec_platform_pki::{
-        GetValidationPathForCertError as PKIGetValidationPathForCertError,
-        SignMessageError as PKISignMessageError,
-    };
+    use libparsec_platform_pki::PkiCertificateGetValidationPathError as PKIGetValidationPathError;
     use libparsec_types::prelude::*;
 
     /*
@@ -65,9 +62,7 @@ mod strategy {
             openbao_preferred_auth_id: String,
         },
         PKI {
-            config_dir: PathBuf,
-            server_addr: ParsecAddr,
-            certificate_reference: X509CertificateReference,
+            pki_private_key_handle: crate::handle::Handle,
         },
     }
 
@@ -103,27 +98,30 @@ mod strategy {
                         cmds,
                         requested_human_handle,
                         openbao_preferred_auth_id,
-                    }))
+                    })
+                        as Box<
+                            dyn libparsec_client::SubmitAsyncEnrollmentIdentityStrategy,
+                        >)
                 }
                 SubmitAsyncEnrollmentIdentityStrategy::PKI {
-                    config_dir,
-                    server_addr,
-                    certificate_reference,
+                    pki_private_key_handle,
                 } => {
-                    let pki_config = libparsec_platform_pki::PkiConfig {
-                        config_dir: &config_dir,
-                        addr: &server_addr,
-                        proxy: &libparsec_client_connection::ProxyConfig::new_from_env()
-                            .context("Failed to create proxy config")?,
-                    };
-                    let system = libparsec_platform_pki::PkiSystem::init(pki_config)
-                        .await
-                        .context("Failed to initialize PKI System")?;
+                    use crate::handle::{borrow_from_handle, HandleItem};
+
+                    let (pki_certificate, pki_private_key) =
+                        borrow_from_handle(pki_private_key_handle, |x| match x {
+                            HandleItem::PkiPrivateKey {
+                                certificate,
+                                private_key,
+                            } => Some((certificate.clone(), private_key.clone())),
+                            _ => None,
+                        })?;
+
                     // Get certificate DER
-                    let cert_der =
-                        libparsec_platform_pki::get_der_encoded_certificate(&certificate_reference)
-                            .await
-                            .map_err(|e| anyhow::anyhow!("Cannot get certificate: {}", e))?;
+                    let cert_der = pki_certificate
+                        .get_der()
+                        .await
+                        .map_err(|e| anyhow::anyhow!("Cannot get certificate: {}", e))?;
 
                     // Parse certificate and extract human handle
                     let cert_info =
@@ -136,11 +134,20 @@ mod strategy {
                         anyhow::anyhow!("Cannot extract human handle from certificate: {}", e)
                     })?;
 
+                    let certificate_reference = pki_certificate
+                        .to_reference()
+                        .await
+                        .map_err(|e| anyhow::anyhow!("Cannot get certificate reference: {}", e))?;
+
                     Ok(Box::new(SubmitAsyncEnrollmentPKIIdentityStrategy {
-                        system,
+                        pki_certificate,
+                        pki_private_key,
                         certificate_reference,
                         human_handle,
-                    }))
+                    })
+                        as Box<
+                            dyn libparsec_client::SubmitAsyncEnrollmentIdentityStrategy,
+                        >)
                 }
             }
         }
@@ -227,8 +234,8 @@ mod strategy {
 
     #[derive(Debug)]
     struct SubmitAsyncEnrollmentPKIIdentityStrategy {
-        #[expect(dead_code, reason = "Will be used once #12548 or #12549 are impl")]
-        system: libparsec_platform_pki::PkiSystem,
+        pki_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
+        pki_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
         certificate_reference: X509CertificateReference,
         human_handle: HumanHandle,
     }
@@ -243,38 +250,30 @@ mod strategy {
             protocol::anonymous_cmds::latest::async_enrollment_submit::SubmitPayloadSignature,
             SubmitAsyncEnrollmentError,
         > {
-            let cert_ref = self.certificate_reference.clone();
+            let pki_private_key = self.pki_private_key.clone();
+            let pki_certificate = self.pki_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 // 1. Sign the payload
                 let (algorithm, signature) =
-                    libparsec_platform_pki::sign_message(&payload, &cert_ref)
+                    pki_private_key.sign(&payload).await.map_err(|err| {
+                        SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
+                    })?;
+
+                // 2. Get leaf & intermediate certificates
+                let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
+                    pki_certificate
+                        .get_validation_path()
                         .await
                         .map_err(|err| match err {
-                            err @ (PKISignMessageError::NotFound
-                            | PKISignMessageError::CannotAcquireKeypair(_)
-                            | PKISignMessageError::CannotSign(_)) => {
+                            PKIGetValidationPathError::Untrusted => {
                                 SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
                                     err.into(),
                                 )
                             }
-                            PKISignMessageError::CannotOpenStore(e) => {
-                                SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                            }
-                        })?;
-
-                // 2. Get leaf & intermediate certificates
-                let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
-                    libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
-                    .await
-                        .map_err(|err| match err {
-                            err @ (
-                                PKIGetValidationPathForCertError::NotFound
-                                | PKIGetValidationPathForCertError::InvalidCertificateDer(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateUntrusted(_)
-                            ) => SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into()),
-                            PKIGetValidationPathForCertError::CannotOpenStore(e) => {
-                                SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
+                            PKIGetValidationPathError::Internal(ref _e) => {
+                                SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                    err.into(),
+                                )
                             }
                         })?;
 
@@ -298,24 +297,14 @@ mod strategy {
             SubmitAsyncEnrollmentError,
         > {
             let cert_ref = self.certificate_reference.clone();
+            let pki_certificate = self.pki_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 // 1. Generate a random secret key
                 let key = SecretKey::generate();
 
-                let der = libparsec_platform_pki::get_der_encoded_certificate(&cert_ref)
-                    .await
-                    .map_err(|e| match e {
-                        libparsec_platform_pki::GetDerEncodedCertificateError::CannotOpenStore(
-                            error,
-                        ) => {
-                            SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore(error.into())
-                        }
-                        libparsec_platform_pki::GetDerEncodedCertificateError::NotFound => {
-                            SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                e.into(),
-                            )
-                        }
-                    })?;
+                let der = pki_certificate.get_der().await.map_err(|e| {
+                    SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(e.into())
+                })?;
                 // 2. Encrypt it with the PKI certificate's public key
                 let (algorithm, encrypted_key) =
                     libparsec_platform_pki::encrypt_message(der, key.as_ref())
@@ -352,9 +341,7 @@ mod strategy {
             openbao_auth_token: String,
         },
         PKI {
-            config_dir: PathBuf,
-            server_addr: ParsecAddr,
-            certificate_reference: X509CertificateReference,
+            pki_private_key_handle: crate::handle::Handle,
         },
     }
 
@@ -365,7 +352,7 @@ mod strategy {
     }
 
     impl AcceptFinalizeAsyncEnrollmentIdentityStrategy {
-        pub(super) async fn convert(
+        pub(super) fn convert(
             self,
         ) -> anyhow::Result<Box<dyn AcceptFinalizeAsyncEnrollmentIdentityStrategyTrait>> {
             match self {
@@ -395,22 +382,22 @@ mod strategy {
                 }
 
                 Self::PKI {
-                    certificate_reference,
-                    config_dir,
-                    server_addr,
+                    pki_private_key_handle,
                 } => {
-                    let pki_config = libparsec_platform_pki::PkiConfig {
-                        config_dir: &config_dir,
-                        addr: &server_addr,
-                        proxy: &libparsec_client_connection::ProxyConfig::new_from_env()
-                            .context("Failed to create proxy config")?,
-                    };
-                    let system = libparsec_platform_pki::PkiSystem::init(pki_config)
-                        .await
-                        .context("Failed to initialize PKI system")?;
+                    use crate::handle::{borrow_from_handle, HandleItem};
+
+                    let (pki_certificate, pki_private_key) =
+                        borrow_from_handle(pki_private_key_handle, |x| match x {
+                            HandleItem::PkiPrivateKey {
+                                certificate,
+                                private_key,
+                            } => Some((certificate.clone(), private_key.clone())),
+                            _ => None,
+                        })?;
+
                     Ok(Box::new(AcceptFinalizeAsyncEnrollmentPKIIdentityStrategy {
-                        system: Arc::new(system),
-                        certificate_reference,
+                        pki_certificate,
+                        pki_private_key,
                     }))
                 }
             }
@@ -600,8 +587,8 @@ mod strategy {
 
     #[derive(Debug)]
     struct AcceptFinalizeAsyncEnrollmentPKIIdentityStrategy {
-        system: Arc<libparsec_platform_pki::PkiSystem>,
-        certificate_reference: X509CertificateReference,
+        pki_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
+        pki_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
     }
 
     impl AcceptFinalizeAsyncEnrollmentIdentityStrategyTrait
@@ -618,7 +605,7 @@ mod strategy {
             payload_signature: protocol::authenticated_cmds::latest::async_enrollment_list::SubmitPayloadSignature,
             expected_author: EmailAddress,
         ) -> PinBoxFutureResult<(), AcceptAsyncEnrollmentError> {
-            let cert_ref = self.certificate_reference.clone();
+            let pki_certificate = self.pki_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 let (signature, algorithm, submitter_cert, intermediate_certs) = match payload_signature {
                     protocol::authenticated_cmds::v5::async_enrollment_list::SubmitPayloadSignature::PKI {
@@ -639,24 +626,13 @@ mod strategy {
                 // as the submitter X509 certificate must also depend on it.
 
                 let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
-                    libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
-                        .await
-                        .map_err(|err| match err {
-                            err @ (
-                                PKIGetValidationPathForCertError::NotFound
-                                | PKIGetValidationPathForCertError::InvalidCertificateDer(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateUntrusted(_)
-                            ) => AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into()),
-                            PKIGetValidationPathForCertError::CannotOpenStore(e) => {
-                                AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                            }
-
-                        })?;
+                    pki_certificate.get_validation_path().await.map_err(|err| {
+                        AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
+                    })?;
 
                 // 2. Validate certificate trustchain and payload signature
 
-                libparsec_platform_pki::verify_message2(
+                libparsec_platform_pki::verify_message(
                     &payload,
                     &signature,
                     algorithm,
@@ -717,41 +693,20 @@ mod strategy {
             protocol::authenticated_cmds::latest::async_enrollment_accept::AcceptPayloadSignature,
             AcceptAsyncEnrollmentError,
         > {
-            let cert_ref = self.certificate_reference.clone();
+            let pki_private_key = self.pki_private_key.clone();
+            let pki_certificate = self.pki_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 // 1. Sign the payload
                 let (algorithm, signature) =
-                    libparsec_platform_pki::sign_message(&payload, &cert_ref)
-                        .await
-                        .map_err(|err| match err {
-                            err @ (PKISignMessageError::NotFound
-                            | PKISignMessageError::CannotAcquireKeypair(_)
-                            | PKISignMessageError::CannotSign(_)) => {
-                                AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                                    err.into(),
-                                )
-                            }
-                            PKISignMessageError::CannotOpenStore(e) => {
-                                AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                            }
-                        })?;
+                    pki_private_key.sign(&payload).await.map_err(|err| {
+                        AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
+                    })?;
 
                 // 2. Get leaf & intermediate certificates
                 let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
-                    libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
-                        .await
-                        .map_err(|err| match err {
-                            err @ (
-                                PKIGetValidationPathForCertError::NotFound
-                                | PKIGetValidationPathForCertError::InvalidCertificateDer(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateUntrusted(_)
-                            ) => AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into()),
-                            PKIGetValidationPathForCertError::CannotOpenStore(e) => {
-                                AcceptAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                            }
-
-                        })?;
+                    pki_certificate.get_validation_path().await.map_err(|err| {
+                        AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
+                    })?;
 
                 Ok(protocol::authenticated_cmds::latest::async_enrollment_accept::AcceptPayloadSignature::PKI {
                     signature,
@@ -771,7 +726,7 @@ mod strategy {
             payload: Bytes,
             payload_signature: protocol::anonymous_cmds::latest::async_enrollment_info::AcceptPayloadSignature,
         ) -> PinBoxFutureResult<(), SubmitterFinalizeAsyncEnrollmentError> {
-            let cert_ref = self.certificate_reference.clone();
+            let pki_certificate = self.pki_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 let (signature, algorithm, accepter_cert, intermediate_certs) = match payload_signature {
                     protocol::anonymous_cmds::latest::async_enrollment_info::AcceptPayloadSignature::PKI {
@@ -792,24 +747,15 @@ mod strategy {
                 // as the accepter X509 certificate must also depend on it.
 
                 let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
-                    libparsec_platform_pki::get_validation_path_for_cert(&cert_ref, DateTime::now())
-                        .await
-                        .map_err(|err| match err {
-                            err @ (
-                                PKIGetValidationPathForCertError::NotFound
-                                | PKIGetValidationPathForCertError::InvalidCertificateDer(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateDateTimeOutOfRange(_)
-                                | PKIGetValidationPathForCertError::InvalidCertificateUntrusted(_)
-                            ) => SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into()),
-                            PKIGetValidationPathForCertError::CannotOpenStore(e) => {
-                                SubmitterFinalizeAsyncEnrollmentError::PKICannotOpenCertificateStore(e.into())
-                            }
-
-                        })?;
+                    pki_certificate.get_validation_path().await.map_err(|err| {
+                        SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                            err.into(),
+                        )
+                    })?;
 
                 // 2. Validate certificate trustchain and payload signature
 
-                libparsec_platform_pki::verify_message2(
+                libparsec_platform_pki::verify_message(
                     &payload,
                     &signature,
                     algorithm,
@@ -835,9 +781,9 @@ mod strategy {
             &self,
             identity_system: AsyncEnrollmentLocalPendingIdentitySystem,
         ) -> PinBoxFutureResult<SecretKey, SubmitterFinalizeAsyncEnrollmentError> {
-            let system = self.system.clone();
+            let pki_private_key = self.pki_private_key.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
-                let (encrypted_key, certificate_ref, algorithm) = match identity_system {
+                let (encrypted_key, _certificate_ref, algorithm) = match identity_system {
                     AsyncEnrollmentLocalPendingIdentitySystem::PKI {
                         encrypted_key,
                         certificate_ref,
@@ -850,31 +796,14 @@ mod strategy {
                     }
                 };
 
-                let Some(cert) = system
-                    .find_certificate(&certificate_ref)
+                let decrypted = pki_private_key
+                    .decrypt(algorithm, &encrypted_key)
                     .await
-                    .map_err(|e| {
+                    .map_err(|err| {
                         SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                            e.into(),
+                            err.into(),
                         )
-                    })?
-                else {
-                    return Err(
-                        SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                            anyhow::anyhow!("Certificate not found"),
-                        ),
-                    );
-                };
-                let pkey = cert.request_private_key().await.map_err(|e| {
-                    SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                        e.into(),
-                    )
-                })?;
-                let decrypted = pkey.decrypt(algorithm, &encrypted_key).await.map_err(|e| {
-                    SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                        e.into(),
-                    )
-                })?;
+                    })?;
 
                 SecretKey::try_from(decrypted.as_ref())
                     .map_err(|_| SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidData)
@@ -942,7 +871,6 @@ pub async fn client_accept_async_enrollment(
 
     let identity_strategy = identity_strategy
         .convert()
-        .await
         .map_err(ClientAcceptAsyncEnrollmentError::Internal)?;
 
     client
@@ -993,8 +921,8 @@ pub async fn submitter_finalize_async_enrollment(
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
 ) -> Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
-    let identity_strategy = identity_strategy.convert().await?;
-    let new_device_save_strategy = new_device_save_strategy.convert_with_side_effects()?;
+    let identity_strategy = identity_strategy.convert()?;
+    let new_device_save_strategy = new_device_save_strategy.convert_with_side_effects().await?;
 
     libparsec_client::submitter_finalize_async_enrollment(
         config,

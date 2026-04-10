@@ -46,7 +46,7 @@ class DevicePrimaryProtectionStrategy(Variant):
         password: Password
 
     class PKI:
-        certificate_ref: X509CertificateReference
+        pki_private_key_handle: Handle
 
     class AccountVault:
         account_handle: Handle

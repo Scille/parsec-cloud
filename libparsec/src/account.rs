@@ -297,7 +297,9 @@ pub async fn account_create_registration_device(
 ) -> Result<(), AccountCreateRegistrationDeviceError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
-    let existing_local_device_access = existing_local_device_access.convert_with_side_effects()?;
+    let existing_local_device_access = existing_local_device_access
+        .convert_with_side_effects()
+        .await?;
 
     let existing_local_device = libparsec_platform_device_loader::load_device(
         account.config_dir(),
@@ -321,7 +323,7 @@ pub async fn account_register_new_device(
 ) -> Result<AvailableDevice, AccountRegisterNewDeviceError> {
     let account_handle = account;
     let account = borrow_account(account_handle)?;
-    let save_strategy = save_strategy.convert_with_side_effects()?;
+    let save_strategy = save_strategy.convert_with_side_effects().await?;
 
     account
         .register_new_device(organization_id, user_id, new_device_label, save_strategy)
