@@ -123,7 +123,7 @@ ion-button {
     }
 
     &::part(native) {
-      border: 2px solid var(--parsec-color-light-primary-300);
+      border: 1px solid var(--parsec-color-light-primary-200);
     }
 
     &:hover {

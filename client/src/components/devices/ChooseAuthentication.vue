@@ -85,7 +85,6 @@
     >
       <div v-if="authentication === DevicePrimaryProtectionStrategyTag.Keyring">
         <div class="method-chosen">
-          <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
             :auth-method="DevicePrimaryProtectionStrategyTag.Keyring"
             :state="AuthenticationCardState.Update"
@@ -97,7 +96,6 @@
 
       <div v-if="authentication === DevicePrimaryProtectionStrategyTag.Password">
         <div class="method-chosen">
-          <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
             :auth-method="DevicePrimaryProtectionStrategyTag.Password"
             :state="AuthenticationCardState.Update"
@@ -113,7 +111,6 @@
 
       <div v-if="authentication === DevicePrimaryProtectionStrategyTag.PKI">
         <div class="method-chosen">
-          <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
             :auth-method="DevicePrimaryProtectionStrategyTag.PKI"
             :state="AuthenticationCardState.Update"
@@ -128,7 +125,6 @@
 
       <div v-if="authentication === DevicePrimaryProtectionStrategyTag.OpenBao && serverConfig?.openbao && openBaoAuthAvailable">
         <div class="method-chosen">
-          <ion-text class="method-chosen__title subtitles-sm">{{ $msTranslate('Authentication.methodChosen') }}</ion-text>
           <authentication-card
             :auth-method="DevicePrimaryProtectionStrategyTag.OpenBao"
             :state="AuthenticationCardState.Update"
@@ -381,6 +377,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
       flex-direction: column;
       align-items: flex-start;
       margin: 0;
+      overflow: visible;
       width: 100%;
     }
 

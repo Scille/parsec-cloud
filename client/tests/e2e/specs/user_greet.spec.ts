@@ -52,7 +52,7 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
   await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the administrator)');
+  await expect(joinData.modal.locator('.spinner-container')).toHaveText('Waiting for the administrator');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');
@@ -171,7 +171,7 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
   await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the administrator)');
+  await expect(joinData.modal.locator('.spinner-container')).toHaveText('Waiting for the administrator');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');
@@ -594,7 +594,7 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
   await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the administrator)');
+  await expect(joinData.modal.locator('.spinner-container')).toHaveText('Waiting for the administrator');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');

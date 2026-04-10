@@ -152,6 +152,7 @@
             @on-enter-keyup="nextStep()"
           />
         </div>
+
         <!-- part 5 (get auth)-->
         <div
           v-show="pageStep === UserJoinOrganizationStep.Authentication"
@@ -164,6 +165,7 @@
             :server-addr="serverAddr"
           />
         </div>
+
         <!-- part 6 (finish the process)-->
         <div
           v-show="pageStep === UserJoinOrganizationStep.Finish"
@@ -196,7 +198,10 @@
             v-show="waitingForHost || querying"
             class="spinner-container"
           >
-            <ms-spinner :title="getSpinnerTitle()" />
+            <ms-spinner
+              :title="getSpinnerTitle()"
+              :size="20"
+            />
           </div>
         </div>
       </ion-footer>
@@ -612,6 +617,14 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+  }
+}
+
+.modal-footer-buttons {
+  padding-top: 2rem;
+
+  ion-button {
+    margin-top: 0 !important;
   }
 }
 
