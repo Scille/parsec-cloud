@@ -152,6 +152,7 @@ pub async fn client_start(
     log::trace!("Starting client_start");
     let access = access
         .convert_with_side_effects()
+        .await
         .map_err(ClientStartError::Internal)?;
 
     let config: Arc<libparsec_client::ClientConfig> = config.into();

@@ -132,7 +132,7 @@ pub async fn workspace_history_start_with_realm_export(
         for raw_decryptor in decryptors {
             let cooked_decryptor = match raw_decryptor {
                 WorkspaceHistoryRealmExportDecryptor::User { access } => {
-                    let access = access.convert_with_side_effects()?;
+                    let access = access.convert_with_side_effects().await?;
 
                     let device =
                         libparsec_platform_device_loader::load_device(&config.config_dir, &access)
