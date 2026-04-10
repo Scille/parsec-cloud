@@ -504,19 +504,19 @@ async function refreshWorkspacesList(): Promise<void> {
   const result = await parsecListWorkspaces();
   if (result.ok) {
     for (const wk of result.value) {
-      window.electronAPI.log('debug', `Processing workspace: ${wk.currentName}`);
+      window.electronAPI.log('debug', `Processing workspace: ${wk.name}`);
       const sharingResult = await parsecGetWorkspaceSharing(wk.id, false);
       if (sharingResult.ok) {
         wk.sharing = sharingResult.value;
       } else {
-        window.electronAPI.log('warn', `Failed to get sharing for ${wk.currentName}`);
+        window.electronAPI.log('warn', `Failed to get sharing for ${wk.name}`);
       }
       if (isDesktop() && wk.mountpoints.length === 0 && !workspaceAttributes.isHidden(wk.id)) {
         const mountResult = await parsecMountWorkspace(wk.handle);
         if (mountResult.ok) {
           wk.mountpoints.push(mountResult.value);
         } else {
-          window.electronAPI.log('warn', `Failed to mount ${wk.currentName}: ${mountResult.error.error}`);
+          window.electronAPI.log('warn', `Failed to mount ${wk.name}: ${mountResult.error.error}`);
         }
       }
     }
@@ -554,7 +554,7 @@ const filteredWorkspaces = computed(() => {
   const filter = searchFilterContent.value.toLocaleLowerCase();
   return Array.from(workspaceList.value)
     .filter((workspace) => {
-      if (!workspace.currentName.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.currentSelfRole)) {
+      if (!workspace.name.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.selfRole)) {
         return false;
       }
 
@@ -580,9 +580,9 @@ const filteredWorkspaces = computed(() => {
         return workspaceAttributes.isFavorite(b.id) ? 1 : -1;
       }
       if (sortBy.value === SortWorkspaceBy.Name) {
-        return sortByAsc.value ? a.currentName.localeCompare(b.currentName) : b.currentName.localeCompare(a.currentName);
+        return sortByAsc.value ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
       } else if (sortBy.value === SortWorkspaceBy.Role) {
-        return compareWorkspaceRoles(b.currentSelfRole, a.currentSelfRole) * (sortByAsc.value ? 1 : -1);
+        return compareWorkspaceRoles(b.selfRole, a.selfRole) * (sortByAsc.value ? 1 : -1);
       } else if (sortBy.value === SortWorkspaceBy.Size) {
         return sortByAsc.value ? a.size - b.size : b.size - a.size;
       } else if (sortBy.value === SortWorkspaceBy.LastUpdate) {
@@ -659,7 +659,7 @@ async function openCreateWorkspaceModal(): Promise<void> {
     const found = workspaceList.value.find((wi) => {
       // eslint thinks workspaceName can be null here, no idea why
       const newName = workspaceName!.toLocaleLowerCase();
-      const current = wi.currentName.toLocaleLowerCase();
+      const current = wi.name.toLocaleLowerCase();
 
       // If we find a case-insensitive match or one name contains the other and the name is a bit longer that a few letters,
       // both names are not too far off each other in length (3 characters difference at most)

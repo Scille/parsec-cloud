@@ -23,7 +23,7 @@
               key: 'SideMenu.checklist.items.ownerRequired',
               count: securityWarnings.soloOwnerWorkspaces.length,
               data: {
-                workspace: securityWarnings.soloOwnerWorkspaces.length === 1 ? securityWarnings.soloOwnerWorkspaces[0].currentName : '',
+                workspace: securityWarnings.soloOwnerWorkspaces.length === 1 ? securityWarnings.soloOwnerWorkspaces[0].name : '',
                 workspacesCount: securityWarnings.soloOwnerWorkspaces.length,
               },
             })

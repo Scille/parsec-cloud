@@ -127,7 +127,7 @@
             >
               <div class="workspace-item">
                 <div class="workspace-item__name">
-                  <ion-text class="title-h5">{{ roleUpdate.workspace.currentName }}</ion-text>
+                  <ion-text class="title-h5">{{ roleUpdate.workspace.name }}</ion-text>
                 </div>
                 <div class="workspace-item__role">
                   <ion-text class="body workspace-item__role-old">
@@ -257,7 +257,7 @@ async function findWorkspaces(): Promise<void> {
 
   for (const wsInfo of sourceWorkspaces) {
     // Not Manager or Owner, cannot assign roles anyway
-    if (wsInfo.workspace.currentSelfRole !== WorkspaceRole.Owner && wsInfo.workspace.currentSelfRole !== WorkspaceRole.Manager) {
+    if (wsInfo.workspace.selfRole !== WorkspaceRole.Owner && wsInfo.workspace.selfRole !== WorkspaceRole.Manager) {
       continue;
     }
     const commonWs = targetWorkspaces.find((wi) => wi.workspace.id === wsInfo.workspace.id);
@@ -277,7 +277,7 @@ async function findWorkspaces(): Promise<void> {
     }
     // Manager can't promote, we downgrade
     if (
-      wsInfo.workspace.currentSelfRole === WorkspaceRole.Manager &&
+      wsInfo.workspace.selfRole === WorkspaceRole.Manager &&
       (update.newRole === WorkspaceRole.Manager || update.newRole === WorkspaceRole.Owner)
     ) {
       update.newRole = WorkspaceRole.Contributor;
