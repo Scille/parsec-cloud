@@ -15,7 +15,7 @@ pub async fn import_recovery_device(
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-    let save_strategy = save_strategy.convert_with_side_effects()?;
+    let save_strategy = save_strategy.convert_with_side_effects().await?;
 
     libparsec_client::import_recovery_device(
         &config.config_dir,
