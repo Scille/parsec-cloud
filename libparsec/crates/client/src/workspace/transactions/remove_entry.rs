@@ -61,13 +61,12 @@ pub(crate) async fn remove_entry(
     path: FsPath,
     expect: RemoveEntryExpect,
 ) -> Result<(), WorkspaceRemoveEntryError> {
-    if !ops
+    if ops
         .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
         .entry
-        .role
-        .can_write()
+        .is_read_only()
     {
         return Err(WorkspaceRemoveEntryError::ReadOnlyRealm);
     }
