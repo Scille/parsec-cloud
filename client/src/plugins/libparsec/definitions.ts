@@ -459,9 +459,12 @@ export interface ShamirRecoveryRecipient {
 export interface StartedWorkspaceInfo {
     client: Handle
     id: VlobID
-    currentName: EntryName
-    currentSelfRole: RealmRole
+    name: EntryName
+    nameOrigin: CertificateBasedInfoOrigin
+    selfRole: RealmRole
+    selfRoleOrigin: CertificateBasedInfoOrigin
     archivingConfiguration: RealmArchivingConfiguration
+    archivingConfigurationOrigin: CertificateBasedInfoOrigin
     mountpoints: Array<[Handle, Path]>
 }
 
@@ -551,11 +554,14 @@ export interface WorkspaceHistoryFileStat {
 
 export interface WorkspaceInfo {
     id: VlobID
-    currentName: EntryName
-    currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
+    name: EntryName
+    nameOrigin: CertificateBasedInfoOrigin
+    selfRole: RealmRole
+    selfRoleOrigin: CertificateBasedInfoOrigin
     archivingConfiguration: RealmArchivingConfiguration
+    archivingConfigurationOrigin: CertificateBasedInfoOrigin
 }
 
 export interface WorkspaceUserAccessInfo {
@@ -1426,6 +1432,23 @@ export interface CancelErrorNotBound {
 export type CancelError =
   | CancelErrorInternal
   | CancelErrorNotBound
+
+// CertificateBasedInfoOrigin
+export enum CertificateBasedInfoOriginTag {
+    Certificate = 'CertificateBasedInfoOriginCertificate',
+    Placeholder = 'CertificateBasedInfoOriginPlaceholder',
+}
+
+export interface CertificateBasedInfoOriginCertificate {
+    tag: CertificateBasedInfoOriginTag.Certificate
+    timestamp: DateTime
+}
+export interface CertificateBasedInfoOriginPlaceholder {
+    tag: CertificateBasedInfoOriginTag.Placeholder
+}
+export type CertificateBasedInfoOrigin =
+  | CertificateBasedInfoOriginCertificate
+  | CertificateBasedInfoOriginPlaceholder
 
 // CertificateWithDetails
 export enum CertificateWithDetailsTag {
