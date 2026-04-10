@@ -339,13 +339,23 @@ class RealmArchivingConfiguration(Variant):
         deletion_date: DateTime
 
 
+class CertificateBasedInfoOrigin(Variant):
+    Placeholder = VariantItemUnit()
+
+    class Certificate:
+        timestamp: DateTime
+
+
 class WorkspaceInfo(Structure):
     id: VlobID
-    current_name: EntryName
-    current_self_role: RealmRole
     is_started: bool
     is_bootstrapped: bool
+    name: EntryName
+    name_origin: CertificateBasedInfoOrigin
+    self_role: RealmRole
+    self_role_origin: CertificateBasedInfoOrigin
     archiving_configuration: RealmArchivingConfiguration
+    archiving_configuration_origin: CertificateBasedInfoOrigin
 
 
 async def client_list_workspaces(
