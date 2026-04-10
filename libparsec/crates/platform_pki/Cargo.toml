@@ -13,6 +13,8 @@ workspace = true
 
 [features]
 test-fixture = ["libparsec_tests_lite"]
+# Dummy feature used to gate native-only examples (prevents wasm-pack from building them)
+__native_examples = []
 
 [dependencies]
 bytes = { workspace = true }
@@ -30,6 +32,12 @@ thiserror = { workspace = true }
 
 libparsec_tests_lite = { workspace = true, optional = true }
 libparsec_platform_http_proxy = { workspace = true }
+libparsec_platform_async = { workspace = true }
+reqwest = { workspace = true, features = ["json", "query"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+data-encoding = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }
@@ -48,8 +56,49 @@ anyhow = { workspace = true }
 env_logger = { workspace = true }
 hex-literal = { workspace = true }
 libparsec_tests_lite = { workspace = true, features = ["parsec_test_macro"] }
+# rstest is needed directly because `libparsec_tests_lite::rstest::fixture` proc macro
+# generates code that references the `rstest` crate by name.
+rstest = { workspace = true }
 serde = { workspace = true }
 rmp-serde = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 tokio = { workspace = true, features = ["macros"] }
+
+# Examples are native-only (they use #[tokio::main] which is unavailable on wasm32).
+# Using `required-features` prevents wasm-pack from trying to build them.
+[[example]]
+name = "decode_cert_subject"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "decrypt_message"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "encrypt_message"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "get_certificate_der"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "list_certificate"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "list_trusted_roots"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "sign_message"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "verify_certificate"
+required-features = ["__native_examples"]
+
+[[example]]
+name = "verify_message"
+required-features = ["__native_examples"]
