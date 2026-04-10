@@ -2,7 +2,7 @@
 
 use std::{path::Path, sync::Arc};
 
-use super::utils::{MockedAccountVaultOperations, MockedOpenBaoOperations};
+use super::utils::{MockedAccountVaultOperations, MockedOpenBaoOperations, MockedPkiOperations};
 use crate::{
     load_available_device, load_device, save_device, AvailableDevice, AvailableDeviceType,
     DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
@@ -12,12 +12,11 @@ use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
 #[parsec_test]
-#[case("password")]
 #[cfg_attr(not(target_arch = "wasm32"), case("keyring"))]
+#[case("password")]
+#[case("pki")]
 #[case("account_vault")]
 #[case("openbao")]
-// TODO #11269
-// #[cfg_attr(target_os = "windows", case("pki"))]
 async fn save_load(#[case] kind: &str, #[values(false, true)] with_totp: bool, tmp_path: TmpPath) {
     use crate::tests::utils::key_present_in_system;
 
@@ -88,6 +87,32 @@ async fn save_load(#[case] kind: &str, #[values(false, true)] with_totp: bool, t
             (access_strategy, expected_available_device)
         }
 
+        "pki" => {
+            let access_strategy = DeviceAccessStrategy {
+                key_file: key_file.clone(),
+                totp_protection: None,
+                primary_protection: DevicePrimaryProtectionStrategy::PKI {
+                    operations: Arc::new(MockedPkiOperations::new(
+                        X509CertificateHash::fake_sha256().into(),
+                    )),
+                },
+            };
+            let expected_available_device = AvailableDevice {
+                key_file_path: key_file.clone(),
+                created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                server_addr: "parsec3://test.invalid".parse().unwrap(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.clone(),
+                device_label: device.device_label.clone(),
+                totp_opaque_key_id: None,
+                ty: access_strategy.primary_protection.ty(),
+            };
+            (access_strategy, expected_available_device)
+        }
+
         "account_vault" => {
             let access_strategy = DeviceAccessStrategy {
                 key_file: key_file.clone(),
@@ -139,8 +164,6 @@ async fn save_load(#[case] kind: &str, #[values(false, true)] with_totp: bool, t
             };
             (access_strategy, expected_available_device)
         }
-
-        "pki" => todo!(),
 
         unknown => panic!("Unknown kind: {unknown:?}"),
     };
