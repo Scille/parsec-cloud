@@ -319,7 +319,7 @@ async function restoreWorkspace(
 ): Promise<void> {
   const answer = await askQuestion(
     'WorkspacesPage.restoreWorkspace.title',
-    { key: 'WorkspacesPage.restoreWorkspace.subtitle', data: { workspace: workspace.currentName } },
+    { key: 'WorkspacesPage.restoreWorkspace.subtitle', data: { workspace: workspace.name } },
     { yesText: 'WorkspacesPage.restoreWorkspace.yes', noText: 'WorkspacesPage.restoreWorkspace.no' },
   );
   if (answer === Answer.No) {
