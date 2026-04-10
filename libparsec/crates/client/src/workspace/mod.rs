@@ -107,16 +107,6 @@ pub struct WorkspaceExternalInfo {
     pub workspace_index: usize,
 }
 
-impl WorkspaceExternalInfo {
-    pub fn is_read_only(&self) -> bool {
-        !self.entry.role.can_write()
-            && matches!(
-                self.entry.archiving_configuration,
-                Maybe::Absent | Maybe::Present(RealmArchivingConfiguration::Available)
-            )
-    }
-}
-
 pub struct WorkspaceOps {
     #[allow(unused)]
     config: Arc<ClientConfig>,
