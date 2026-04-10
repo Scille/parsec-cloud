@@ -11,9 +11,7 @@ pub use libparsec_platform_pki::{
 };
 use libparsec_types::prelude::*;
 
-use crate::handle::{
-    borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem,
-};
+use crate::handle::{register_handle, take_and_close_handle, Handle, HandleItem};
 
 pub async fn show_certificate_selection_dialog_windows_only(
 ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
@@ -73,46 +71,52 @@ pub async fn pki_list_user_certificates(
     pki_system.list_user_certificates().await
 }
 
-pub async fn pki_open_certificate(
+#[derive(Debug, thiserror::Error)]
+pub enum PkiOpenUserCertificatePrivateKeyError {
+    #[error("Certificate not found")]
+    CertificateNotFound,
+    #[error("Private key not found")]
+    PrivateKeyNotFound,
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+pub async fn pki_open_user_certificate_private_key(
     cert_ref: &X509CertificateReference,
-) -> Result<Handle, PkiSystemOpenCertificateError> {
+) -> Result<Handle, PkiOpenUserCertificatePrivateKeyError> {
     let pki_system = get_pki_system()
         .await
-        .map_err(libparsec_platform_pki::PkiSystemOpenCertificateError::Internal)?;
-    let cert = pki_system.open_certificate(cert_ref).await?;
-    let handle = register_handle(HandleItem::PkiCertificate(Arc::new(cert)));
-    Ok(handle)
-}
+        .map_err(PkiOpenUserCertificatePrivateKeyError::Internal)?;
 
-#[derive(Debug, thiserror::Error)]
-pub enum PkiCertificateCloseError {
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
+    let pki_certificate = pki_system
+        .open_certificate(cert_ref)
+        .await
+        .map(Arc::new)
+        .map_err(|err| match err {
+            PkiSystemOpenCertificateError::NotFound => {
+                PkiOpenUserCertificatePrivateKeyError::CertificateNotFound
+            }
+            e @ PkiSystemOpenCertificateError::Internal(_) => {
+                PkiOpenUserCertificatePrivateKeyError::Internal(e.into())
+            }
+        })?;
 
-pub fn pki_certificate_close(handle: Handle) -> Result<(), PkiCertificateCloseError> {
-    let pki_certificate = take_and_close_handle(handle, |x| match *x {
-        HandleItem::PkiCertificate(pki_certificate) => Ok(pki_certificate),
-        _ => Err(x),
-    })?;
+    let pki_private_key = pki_certificate
+        .request_private_key()
+        .await
+        .map(Arc::new)
+        .map_err(|err| match err {
+            PkiCertificateRequestPrivateKeyError::NotFound => {
+                PkiOpenUserCertificatePrivateKeyError::PrivateKeyNotFound
+            }
+            e @ PkiCertificateRequestPrivateKeyError::Internal(_) => {
+                PkiOpenUserCertificatePrivateKeyError::Internal(e.into())
+            }
+        })?;
 
-    drop(pki_certificate);
-    Ok(())
-}
-
-pub async fn pki_certificate_open_private_key(
-    handle: Handle,
-) -> Result<Handle, PkiCertificateRequestPrivateKeyError> {
-    let pki_certificate = borrow_from_handle(handle, |x| match x {
-        HandleItem::PkiCertificate(pki_certificate) => Some(pki_certificate.clone()),
-        _ => None,
-    })
-    .map_err(PkiCertificateRequestPrivateKeyError::Internal)?;
-
-    let pki_private_key = pki_certificate.request_private_key().await?;
     let handle = register_handle(HandleItem::PkiPrivateKey {
-        certificate: pki_certificate.clone(),
-        private_key: Arc::new(pki_private_key),
+        certificate: pki_certificate,
+        private_key: pki_private_key,
     });
     Ok(handle)
 }

@@ -95,37 +95,17 @@ async def pki_list_user_certificates() -> Result[
     raise NotImplementedError
 
 
-class PkiSystemOpenCertificateError(ErrorVariant):
-    class NotFound: ...
+class PkiOpenUserCertificatePrivateKeyError(ErrorVariant):
+    class CertificateNotFound: ...
+
+    class PrivateKeyNotFound: ...
 
     class Internal: ...
 
 
-async def pki_open_certificate(
+async def pki_open_user_certificate_private_key(
     cert_ref: Ref[X509CertificateReference],
-) -> Result[Handle, PkiSystemOpenCertificateError]:
-    raise NotImplementedError
-
-
-class PkiCertificateCloseError(ErrorVariant):
-    class Internal: ...
-
-
-def pki_certificate_close(
-    handle: Handle,
-) -> Result[None, PkiCertificateCloseError]:
-    raise NotImplementedError
-
-
-class PkiCertificateRequestPrivateKeyError(ErrorVariant):
-    class NotFound: ...
-
-    class Internal: ...
-
-
-async def pki_certificate_open_private_key(
-    handle: Handle,
-) -> Result[Handle, PkiCertificateRequestPrivateKeyError]:
+) -> Result[Handle, PkiOpenUserCertificatePrivateKeyError]:
     raise NotImplementedError
 
 
