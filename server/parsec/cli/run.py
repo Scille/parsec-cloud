@@ -9,7 +9,7 @@ from typing import Any
 
 import click
 
-from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey, TrustAnchor
+from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey, X509TrustAnchor
 from parsec._version import __version__ as server_version
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
@@ -566,7 +566,7 @@ async def run_cmd(
     organization_initial_user_profile_outsider_allowed: bool,
     organization_initial_minimum_archiving_period: int,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
-    trusted_x509_root_dir: list[TrustAnchor],
+    trusted_x509_root_dir: list[X509TrustAnchor],
     # (cooldown in seconds, max number of email per hour)
     validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
