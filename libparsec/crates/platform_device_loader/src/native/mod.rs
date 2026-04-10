@@ -10,7 +10,6 @@ use crate::{
     encrypt_device, LoadCiphertextKeyError, LoadDeviceError, SaveDeviceError,
     PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
 };
-use libparsec_platform_pki::{decrypt_message, encrypt_message};
 use libparsec_types::prelude::*;
 
 const KEYRING_SERVICE: &str = "parsec";
@@ -72,63 +71,6 @@ pub(crate) async fn save_device_keyring(
         keyring_service: KEYRING_SERVICE.into(),
         keyring_user,
         ciphertext,
-        totp_opaque_key_id,
-    });
-
-    let file_content = file_content.dump();
-
-    save_content(key_file, &file_content).await?;
-    Ok(())
-}
-
-#[expect(clippy::too_many_arguments)]
-pub(crate) async fn save_device_pki(
-    device: &LocalDevice,
-    created_on: &DateTime,
-    key_file: &Path,
-    server_addr: &ParsecAddr,
-    protected_on: &DateTime,
-    certificate_ref: &X509CertificateReference,
-    totp_opaque_key_id: Option<TOTPOpaqueKeyID>,
-    totp_opaque_key: Option<&SecretKey>,
-) -> Result<(), SaveDeviceError> {
-    // Generate a random key
-    let secret_key = SecretKey::generate();
-
-    // Encrypt the key using the public key related to a certificate from the store
-    let der = libparsec_platform_pki::get_der_encoded_certificate(certificate_ref)
-        .await
-        .map_err(|e| SaveDeviceError::Internal(e.into()))?;
-    let (algorithm, encrypted_key) = encrypt_message(der, secret_key.as_ref())
-        .await
-        .map_err(|e| SaveDeviceError::Internal(e.into()))?;
-
-    // May check if we are able to decrypt the encrypted key from the previous step
-    assert_eq!(
-        decrypt_message(algorithm, &encrypted_key, certificate_ref)
-            .await
-            .map_err(|e| SaveDeviceError::Internal(e.into()))?
-            .as_ref(),
-        secret_key.as_ref()
-    );
-
-    // Use the generated key to encrypt the device content
-    let ciphertext = encrypt_device(device, &secret_key, totp_opaque_key);
-
-    // Save
-    let file_content = DeviceFile::PKI(DeviceFilePKI {
-        created_on: *created_on,
-        protected_on: *protected_on,
-        server_url: server_addr.clone(),
-        organization_id: device.organization_id().to_owned(),
-        user_id: device.user_id,
-        device_id: device.device_id,
-        human_handle: device.human_handle.to_owned(),
-        device_label: device.device_label.to_owned(),
-        certificate_ref: certificate_ref.to_owned(),
-        encrypted_key,
-        ciphertext,
-        algorithm,
         totp_opaque_key_id,
     });
 
@@ -211,25 +153,6 @@ pub(super) async fn load_ciphertext_key_keyring(
             .map_err(|_| LoadCiphertextKeyError::DecryptionFailed)?;
 
         Ok(key)
-    } else {
-        Err(LoadCiphertextKeyError::InvalidData)
-    }
-}
-
-pub(super) async fn load_ciphertext_key_pki(
-    device_file: &DeviceFile,
-) -> Result<SecretKey, LoadCiphertextKeyError> {
-    if let DeviceFile::PKI(device) = device_file {
-        decrypt_message(
-            device.algorithm,
-            device.encrypted_key.as_ref(),
-            &device.certificate_ref,
-        )
-        .await
-        .map_err(|_| LoadCiphertextKeyError::InvalidData)?
-        .as_ref()
-        .try_into()
-        .map_err(|_| LoadCiphertextKeyError::InvalidData)
     } else {
         Err(LoadCiphertextKeyError::InvalidData)
     }
