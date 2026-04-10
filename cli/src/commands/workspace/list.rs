@@ -28,8 +28,8 @@ pub async fn list_workspace(_args: Args, client: &StartedClient) -> anyhow::Resu
         let now = DateTime::now();
         for ws in workspaces {
             let id = ws.id.hex();
-            let name = ws.current_name;
-            let role = ws.current_self_role;
+            let name = ws.name;
+            let role = ws.self_role;
             let archiving_status = match &ws.archiving_configuration {
                 RealmArchivingConfiguration::Available => String::new(),
                 RealmArchivingConfiguration::Archived => " [archived]".to_string(),
