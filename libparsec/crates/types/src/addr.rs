@@ -41,6 +41,15 @@ const PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY: &str = "claim_shamir_recovery";
 const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
 const PARSEC_ACTION_ASYNC_ENROLLMENT: &str = "async_enrollment";
 const PARSEC_ACTION_TOTP_RESET: &str = "totp_reset";
+// The domain "saas-v3.parsec.cloud" is the name of a specific server. It was chosen
+// before the web app was released but there are still some devices created with it.
+// Since this domain was largely hidden from the end-user, we decided, for security reasons,
+// that each server had to host its own web frontend.
+// The domain "app.parsec.cloud", which is much more user friendly, was chosen for the Parsec
+// SaaS web app.
+// See: https://github.com/Scille/parsec-cloud/issues/12377
+const PARSEC_SAAS_SERVER_HOSTNAME_CURRENT: &str = "app.parsec.cloud";
+const PARSEC_SAAS_SERVER_HOSTNAME_LEGACY: &str = "saas-v3.parsec.cloud";
 
 /// Url has a special way to parse http/https schemes. This is because those kind
 /// of url have special needs (for instance host cannot be empty).
@@ -297,7 +306,14 @@ mod base {
             let port = port.and_then(|p| if p == default_port { None } else { Some(p) });
 
             Self {
-                hostname,
+                // This patch is required because there are still some devices created with the legacy domain
+                // which causes issues on web. See: https://github.com/Scille/parsec-cloud/issues/12377
+                // Also, see comment above (on the lines declaring the LEGACY and CURRENT constants).
+                hostname: if hostname == PARSEC_SAAS_SERVER_HOSTNAME_LEGACY {
+                    PARSEC_SAAS_SERVER_HOSTNAME_CURRENT.to_owned()
+                } else {
+                    hostname
+                },
                 port,
                 use_ssl,
             }
