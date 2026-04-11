@@ -6,7 +6,10 @@ use std::str::FromStr;
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::prelude::*;
+use crate::{
+    addr::{PARSEC_SAAS_SERVER_HOSTNAME_CURRENT, PARSEC_SAAS_SERVER_HOSTNAME_LEGACY},
+    prelude::*,
+};
 
 const ORG: &str = "MyOrg";
 const TOKEN: &str = "a0000000000000000000000000000001";
@@ -239,6 +242,22 @@ fn action_addr(testbed: &dyn TestbedActionAddr) {}
 #[rstest_reuse::apply(all_addr)]
 fn good_addr_base(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&testbed.url());
+}
+
+// See: https://github.com/Scille/parsec-cloud/issues/12377
+#[rstest_reuse::apply(all_addr)]
+fn patch_addr_saas_legacy(testbed: &dyn Testbed) {
+    let url = testbed
+        .url()
+        .replace(DOMAIN, PARSEC_SAAS_SERVER_HOSTNAME_LEGACY);
+
+    testbed.assert_addr_ok_with_expected(
+        url.as_str(),
+        testbed
+            .url()
+            .replace(DOMAIN, PARSEC_SAAS_SERVER_HOSTNAME_CURRENT)
+            .as_str(),
+    );
 }
 
 #[rstest(value, assert_outcome)]
