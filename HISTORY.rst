@@ -4,6 +4,28 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.8.2-a.0.dev.20555+35ac0de (2026-04-12)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Add a file search feature to look for files inside a workspace
+  (`#12403 <https://github.com/Scille/parsec-cloud/issues/12403>`__)
+
+* Added workspace archiving
+  (`#12355 <https://github.com/Scille/parsec-cloud/issues/12355>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fix Linux Snap version crashing during login with CPU not supporting AVX-512
+  instructions
+  (`#12445 <https://github.com/Scille/parsec-cloud/issues/12445>`__)
+
+
+
 Parsec v3.8.1 (2026-03-17)
 --------------------------
 
