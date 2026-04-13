@@ -258,6 +258,11 @@ fn good_addr_base(testbed: &dyn Testbed) {
     "https://example.com?foo=bar",
     |outcome| { p_assert_eq!(outcome, Ok("parsec3://example.com".parse().unwrap())); },
 )]
+// See: https://github.com/Scille/parsec-cloud/issues/12377
+#[case::ok_saas_legacy(
+    "https://saas-v3.parsec.cloud",
+    |outcome| { p_assert_eq!(outcome, Ok("parsec3://app.parsec.cloud".parse().unwrap())); },
+)]
 #[case::invalid_url(
     "<dummy>",
     |outcome| { p_assert_matches!(outcome, Err(AddrError::InvalidUrl(_))); },
