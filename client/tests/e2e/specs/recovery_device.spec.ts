@@ -4,25 +4,30 @@ import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, msTest } from '
 
 for (const authMode of ['password', 'sso']) {
   msTest(`Export and use recovery files with ${authMode}`, async ({ myProfilePage }) => {
-    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
-    const recovery = myProfilePage.locator('.recovery');
-    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
-    await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
-    await expect(recovery.locator('.restore-password-button')).toHaveText('Create recovery files');
-    const recoveryFiles = recovery.locator('.recovery-list');
-    await expect(recoveryFiles).toBeHidden();
-    await recovery.locator('.restore-password-button').click();
-    await expect(recoveryFiles).toBeVisible();
-    const recoveryItems = recoveryFiles.locator('.recovery-item');
+    const recoveryPage = myProfilePage.locator('.recovery');
+    const recoveryFileSection = recoveryPage.locator('.recovery-section--file');
+    const exportRecoveryModal = myProfilePage.locator('.export-recovery-modal');
+    await expect(recoveryPage.locator('.item-header__title')).toHaveText('Organization recovery');
+    await expect(exportRecoveryModal).toBeHidden();
+    await expect(recoveryFileSection.locator('.action-button')).toHaveText('Create recovery files');
+    await recoveryFileSection.locator('.action-button').click();
+    await expect(exportRecoveryModal).toBeVisible();
+    const recoveryItems = exportRecoveryModal.locator('.step-item');
     await expect(recoveryItems).toHaveCount(2);
-    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Recovery File', 'Secret Key']);
-    await expect(recoveryItems.locator('.recovery-item-download ion-button')).toHaveText(['Download', 'Download']);
-    await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
-    await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
+    await expect(recoveryItems.locator('.step-item__title')).toContainText(['Secret Key', 'Recovery File']);
+    await expect(recoveryItems.locator('.button-solid')).toContainText(['Copy key', 'Download']);
+    await expect(exportRecoveryModal.locator('.checkbox-container').locator('.ms-checkbox')).not.toBeChecked();
+
+    await recoveryItems.nth(0).locator('.button-solid').click();
+    await recoveryItems.nth(1).locator('.button-solid').click();
+
+    await exportRecoveryModal.locator('.checkbox-container').locator('.ms-checkbox').click();
+    await expect(exportRecoveryModal.locator('.checkbox-container').locator('.ms-checkbox')).toBeChecked();
+    await exportRecoveryModal.locator('#next-button').click();
 
     const fileDownloadPromise = myProfilePage.waitForEvent('download');
-    await recoveryItems.nth(0).locator('.recovery-item-download').locator('ion-button').click();
     const fileDownload = await fileDownloadPromise;
     expect(fileDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_TestbedOrg\d+\.psrk$/);
     const fileStream = await fileDownload.createReadStream();
@@ -146,10 +151,10 @@ for (const authMode of ['password', 'sso']) {
 
 for (const error of ['invalid-passphrase', 'invalid-file']) {
   msTest(`Export and use recovery files with errors (${error})`, async ({ myProfilePage }) => {
-    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
     const recovery = myProfilePage.locator('.recovery');
-    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
+    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery');
     await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
     await expect(recovery.locator('.restore-password-button')).toHaveText('Create recovery files');
     const recoveryFiles = recovery.locator('.recovery-list');
@@ -158,7 +163,7 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     await expect(recoveryFiles).toBeVisible();
     const recoveryItems = recoveryFiles.locator('.recovery-item');
     await expect(recoveryItems).toHaveCount(2);
-    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Recovery File', 'Secret Key']);
+    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Organization recovery', 'Secret Key']);
     await expect(recoveryItems.locator('.recovery-item-download ion-button')).toHaveText(['Download', 'Download']);
     await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
 

@@ -106,3 +106,62 @@
     height: 2.25rem !important;
   }
 }
+
+.export-recovery-modal {
+  .input-copy {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    color: var(--parsec-color-light-secondary-text);
+    background-color: var(--parsec-color-light-secondary-white);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-12);
+    padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    overflow: hidden;
+    width: 100%;
+    min-height: 2.5rem;
+
+    &-text {
+      flex-grow: 1;
+    }
+
+    &-button {
+      border-radius: var(--parsec-radius-8);
+      background: var(--parsec-color-light-primary-30);
+      color: var(--parsec-color-light-primary-600);
+      transition: all 0.2s;
+      padding: 0.5rem 0.625rem;
+      cursor: pointer;
+
+      &::part(native) {
+        padding: 0;
+        --background: none;
+        --background-hover: none;
+        --border-radius: none;
+      }
+
+      &:hover {
+        background: var(--parsec-color-light-primary-50);
+      }
+
+      .copy-icon {
+        color: var(--parsec-color-light-primary-600);
+        font-size: 1rem;
+        margin-right: 0.5rem;
+
+        @include ms.responsive-breakpoint('sm') {
+          margin-right: 0;
+        }
+      }
+    }
+
+    &-error {
+      color: var(--parsec-color-light-danger-500);
+    }
+  }
+}

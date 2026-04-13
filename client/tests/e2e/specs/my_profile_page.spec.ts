@@ -1,7 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { DisplaySize, expect, fillIonInput, logout, msTest, openExternalLink, selectDropdown } from '@tests/e2e/helpers';
+import {
+  DisplaySize,
+  expect,
+  fillIonInput,
+  logout,
+  msTest,
+  openExternalLink,
+  selectDropdown,
+  setWriteClipboardPermission,
+} from '@tests/e2e/helpers';
 
 msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
@@ -11,9 +20,9 @@ msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(devices.locator('.device-name')).toHaveText(['My alice@dev2 machine', 'My alice@dev1 machine']);
   await expect(devices.locator('.join-date')).toHaveText(['Joined: Jan 4, 2000', 'Joined: Jan 2, 2000']);
   await expect(devices.locator('.label-id')).toHaveText([/^Internal ID: [a-f0-9]+$/, /^Internal ID: [a-f0-9]+$/]);
-  await expect(devices.nth(1).locator('.badge')).toBeHidden();
-  await expect(devices.nth(0).locator('.badge')).toBeVisible();
-  await expect(devices.nth(0).locator('.badge')).toHaveText('Current');
+  await expect(devices.nth(1).locator('.badge-active')).toBeHidden();
+  await expect(devices.nth(0).locator('.badge-active')).toBeVisible();
+  await expect(devices.nth(0).locator('.badge-active')).toHaveText('Current');
 });
 
 async function checkMenuItem(
@@ -41,7 +50,7 @@ msTest('Check if each tab is displayed', async ({ myProfilePage }) => {
   await checkMenuItem(myProfilePage, 0, 'Settings');
   await checkMenuItem(myProfilePage, 1, 'My devices', 'My devices', 'devices');
   await checkMenuItem(myProfilePage, 2, 'Authentication', 'Authentication', 'authentication');
-  await checkMenuItem(myProfilePage, 3, 'Recovery files', 'Organization recovery files', 'recovery');
+  await checkMenuItem(myProfilePage, 3, 'Organization recovery', 'Organization recovery', 'recovery');
   await expect(myProfilePage.locator('.item-container__text').nth(5)).toHaveText('Feedback');
   await expect(myProfilePage.locator('.item-container__text').nth(6)).toHaveText('About');
   await checkMenuItem(myProfilePage, 6, 'About', 'About', 'about');
@@ -55,23 +64,15 @@ msTest('Open authentication section', async ({ myProfilePage }) => {
 });
 
 msTest('Check if restore-password section is displayed', async ({ myProfilePage }) => {
-  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
   await myProfilePage.locator('.menu-list__item').nth(3).click();
-  const restorePassword = myProfilePage.locator('.recovery');
+  const restorePassword = myProfilePage.locator('.recovery-section--file');
   await expect(restorePassword).toBeVisible();
-  await expect(restorePassword.locator('.item-header__title')).toHaveText('Organization recovery files');
-  await expect(restorePassword.locator('.restore-password__description span').nth(0)).toHaveText(
-    'Recovery files allow you to regain access to this organization if you forgot your password or lose your devices.',
+  await expect(restorePassword.locator('.recovery-method-content-text__title')).toHaveText('Recovery files');
+  await expect(restorePassword.locator('.recovery-method-content-text__description')).toHaveText(
+    'A recovery file and a secret key allow you to regain access to your data once assembled.',
   );
-  await expect(restorePassword.locator('.restore-password__description span').nth(1)).toHaveText(
-    `Without recovery files, you will not be able to recover your account in such a case,
-  and you will need to be re-invited to the organization.`,
-  );
-  await expect(restorePassword.locator('.restore-password__description span').nth(2)).toHaveText(
-    `They consist of a recovery file and a recovery key. You need to save both in a secure place,
-    if possible in separate places, as both are needed to recover a device's access to an organization.`,
-  );
-  await expect(restorePassword.locator('.restore-password-button')).toHaveText('Create recovery files');
+  await expect(restorePassword.locator('.action-button')).toHaveText('Create recovery files');
 });
 
 msTest('Change password', async ({ myProfilePage }) => {
@@ -286,6 +287,70 @@ msTest('Profile page back button', async ({ workspaces }) => {
   await backButton.click();
   await expect(workspaces.locator('#connected-header')).toContainText('My workspaces');
   await expect(workspaces).toBeWorkspacePage();
+});
+
+msTest('Recovery page file flow', async ({ myProfilePage }) => {
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  const recoveryFileSection = myProfilePage.locator('.recovery-section--file');
+
+  await expect(recoveryFileSection).toBeVisible();
+  await expect(recoveryFileSection.locator('.recovery-method-content-text__title')).toHaveText('Recovery files');
+  await expect(recoveryFileSection.locator('.recovery-method-content-text__description')).toHaveText(
+    'A recovery file and a secret key allow you to regain access to your data once assembled.',
+  );
+  await expect(recoveryFileSection.locator('.action-button')).toHaveText('Create recovery files');
+  await expect(recoveryFileSection.locator('.badge-inactive')).toHaveText('Inactive');
+
+  await recoveryFileSection.locator('.action-button').click();
+  const exportRecoveryModal = myProfilePage.locator('.export-recovery-modal');
+  await expect(exportRecoveryModal).toBeVisible();
+  await expect(exportRecoveryModal.locator('.ms-modal-header__title')).toHaveText('Recovery files');
+  await expect(exportRecoveryModal.locator('.step-item').nth(0).locator('.step-item__title')).toContainText('Secret Key');
+  await expect(exportRecoveryModal.locator('.step-item').nth(1).locator('.step-item__title')).toContainText('Recovery File');
+
+  await exportRecoveryModal.locator('.input-copy-button').click();
+
+  const recoveryDownloadPromise = myProfilePage.waitForEvent('download');
+  await exportRecoveryModal.locator('.file-download__button').click();
+  const recoveryDownload = await recoveryDownloadPromise;
+  expect(recoveryDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_TestbedOrg\d+\.psrk$/);
+
+  const confirmationCheckbox = exportRecoveryModal.locator('.confirmation-checkbox');
+  await confirmationCheckbox.click();
+  await expect(exportRecoveryModal.locator('#next-button')).toBeEnabled();
+  await exportRecoveryModal.locator('#next-button').click();
+  await expect(exportRecoveryModal).toBeHidden();
+
+  await expect(myProfilePage).toShowToast('Files downloaded', 'Success');
+  await expect(recoveryFileSection.locator('.badge-active')).toHaveText('Active');
+  await expect(recoveryFileSection.locator('.action-validation')).toContainText('Files downloaded');
+});
+
+msTest('Recovery page device flow', async ({ myProfilePage }) => {
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  const backupDeviceSection = myProfilePage.locator('.recovery-section--device');
+
+  await expect(backupDeviceSection).toBeVisible();
+  await expect(backupDeviceSection.locator('.recovery-method-content-text__title')).toHaveText('Trusted devices or browsers');
+  await expect(backupDeviceSection.locator('.recovery-method-content-text__description')).toHaveText(
+    'Simply add secondary devices or browsers (Chrome or Firefox) to recover your account.',
+  );
+  await expect(backupDeviceSection.locator('.action-button')).toHaveText('Add a device');
+  await expect(backupDeviceSection.locator('.badge-active')).toHaveText('Active');
+
+  const activeDevicesText = backupDeviceSection.locator('.action-validation .has-devices');
+  const initialCountMatch = (await activeDevicesText.textContent())?.match(/^(\d+)/);
+  expect(initialCountMatch).toBeTruthy();
+
+  await setWriteClipboardPermission(myProfilePage.context(), true);
+
+  await backupDeviceSection.locator('.action-button').click();
+  const greetModal = myProfilePage.locator('.greet-organization-modal');
+  await expect(greetModal).toBeVisible();
+  await expect(greetModal.locator('.modal-header__title')).toHaveText('Create a new device');
+
+  await greetModal.locator('#copy-link-btn').click();
+  await expect(myProfilePage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
 });
 
 msTest('Open modal to greet user from ProfilePage in small display', async ({ usersPage }) => {
