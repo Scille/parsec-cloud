@@ -4,7 +4,7 @@ import { createApp } from 'vue';
 
 import App from '@/App.vue';
 import { getConnectionHandle, getRouter } from '@/router';
-import { Config, StorageManagerKey, ThemeManagerKey, storageManagerInstance } from '@/services/storageManager';
+import { Config, StorageManagerKey, ThemeManagerKey, persistStorage, storageManagerInstance } from '@/services/storageManager';
 import { IonicVue, isPlatform, modalController, popoverController } from '@ionic/vue';
 
 /* Theme variables */
@@ -435,6 +435,7 @@ async function setupApp(): Promise<void> {
         }
       });
     }
+    await persistStorage();
     window.electronAPI.pageIsInitialized();
     preventRightClick();
   };
