@@ -4,7 +4,7 @@ import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, msTest } from '
 
 for (const authMode of ['password', 'sso']) {
   msTest(`Export and use recovery files with ${authMode}`, async ({ myProfilePage }) => {
-    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
     const recovery = myProfilePage.locator('.recovery');
     await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery');
@@ -146,7 +146,7 @@ for (const authMode of ['password', 'sso']) {
 
 for (const error of ['invalid-passphrase', 'invalid-file']) {
   msTest(`Export and use recovery files with errors (${error})`, async ({ myProfilePage }) => {
-    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
+    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
     const recovery = myProfilePage.locator('.recovery');
     await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery');
