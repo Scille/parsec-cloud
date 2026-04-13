@@ -272,7 +272,7 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import AboutView from '@/views/about/AboutView.vue';
 import DevicesPage from '@/views/devices/DevicesPage.vue';
 import AuthenticationPage from '@/views/profile/AuthenticationPage.vue';
-import OrganizationRecoveryPage from '@/views/profile/OrganizationRecoveryPage.vue';
+import DeviceRecoveryPage from '@/views/profile/DeviceRecoveryPage.vue';
 import { IonContent, IonHeader, IonIcon, IonPage, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import {
   chatbubbles,

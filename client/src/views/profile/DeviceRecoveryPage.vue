@@ -181,7 +181,7 @@ import { navigateTo, ProfilePages, Routes } from '@/router';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { addDeviceWithGreetModal, refreshOwnDevicesList } from '@/views/devices/utils';
-import ExportRecoveryDeviceModal from '@/views/profile/ExportRecoveryDeviceModal.vue';
+import DeviceRecoveryModal from '@/views/profile/DeviceRecoveryModal.vue';
 import { IonButton, IonIcon, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Answer, askQuestion, MsImage, MsModalResult } from 'megashark-lib';
@@ -221,7 +221,7 @@ async function goToExportRecoveryDevice(): Promise<void> {
   }
 
   const modal = await modalController.create({
-    component: ExportRecoveryDeviceModal,
+    component: DeviceRecoveryModal,
     cssClass: 'export-recovery-modal',
     componentProps: {
       organizationId: orgId.value,
