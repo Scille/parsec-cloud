@@ -19,6 +19,7 @@ from parsec.components.async_enrollment import (
     AsyncEnrollmentPayloadSignatureOpenBao,
     AsyncEnrollmentPayloadSignaturePKI,
     async_enrollment_accept_validate,
+    send_accepted_enrollment_email,
 )
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.async_enrollment_submit import (
@@ -33,6 +34,7 @@ from parsec.components.postgresql.queries import (
 )
 from parsec.components.postgresql.user_create_user import _q_insert_user_and_device
 from parsec.components.postgresql.utils import Q
+from parsec.config import BackendConfig
 from parsec.events import EventAsyncEnrollment, EventCommonCertificate
 
 _q_get_enrollment = Q("""
@@ -66,6 +68,7 @@ WHERE
 
 
 async def async_enrollment_accept(
+    config: BackendConfig,
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,
@@ -311,5 +314,8 @@ async def async_enrollment_accept(
             organization_id=organization_id,
         ),
     )
+
+    # Send mail
+    await send_accepted_enrollment_email(config, organization_id, u_certif.human_handle.email)
 
     return u_certif, d_certif
