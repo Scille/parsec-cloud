@@ -17,6 +17,7 @@ import {
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
   restoreWorkspace as parsecRestoreWorkspace,
+  trashWorkspace as parsecTrashWorkspace,
   unmountWorkspace,
 } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
@@ -276,6 +277,9 @@ export async function openArchivedWorkspaceContextMenu(
       case WorkspaceAction.Restore:
         await restoreWorkspace(workspace, informationManager, eventDistributor);
         break;
+      case WorkspaceAction.Trash:
+        await trashWorkspace(workspace, informationManager, eventDistributor);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
@@ -319,7 +323,7 @@ async function restoreWorkspace(
 ): Promise<void> {
   const answer = await askQuestion(
     'WorkspacesPage.restoreWorkspace.title',
-    { key: 'WorkspacesPage.restoreWorkspace.subtitle', data: { workspace: workspace.name } },
+    { key: `WorkspacesPage.restoreWorkspace.subtitle${workspace.isTrashed ? 'Trashed' : 'Archived'}`, data: { workspace: workspace.name } },
     { yesText: 'WorkspacesPage.restoreWorkspace.yes', noText: 'WorkspacesPage.restoreWorkspace.no' },
   );
   if (answer === Answer.No) {
@@ -331,7 +335,7 @@ async function restoreWorkspace(
   informationManager.present(
     new Information({
       message: {
-        key: result.ok ? 'WorkspacesPage.archiveWorkspace.restore.success' : 'WorkspacesPage.archiveWorkspace.restore.fail',
+        key: result.ok ? 'WorkspacesPage.restoreWorkspace.restore.success' : 'WorkspacesPage.restoreWorkspace.restore.fail',
         data: { workspace: workspace.name },
       },
       level: result.ok ? InformationLevel.Success : InformationLevel.Error,
@@ -340,6 +344,33 @@ async function restoreWorkspace(
   );
   if (result.ok) {
     await eventDistributor.dispatchEvent(Events.WorkspaceArchiveSync, { workspaceId: workspace.id, isArchived: false });
+  }
+}
+
+async function trashWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager, eventDistributor: EventDistributor) {
+  const answer = await askQuestion(
+    'WorkspacesPage.trashWorkspace.title',
+    { key: 'WorkspacesPage.trashWorkspace.subtitle', data: { workspace: workspace.name } },
+    { yesText: 'WorkspacesPage.trashWorkspace.yes', noText: 'WorkspacesPage.trashWorkspace.no', yesIsDangerous: true },
+  );
+  if (answer === Answer.No) {
+    return;
+  }
+
+  const result = await parsecTrashWorkspace(workspace.id);
+
+  informationManager.present(
+    new Information({
+      message: {
+        key: result.ok ? 'WorkspacesPage.trashWorkspace.trash.success' : 'WorkspacesPage.trashWorkspace.trash.fail',
+        data: { workspace: workspace.name },
+      },
+      level: result.ok ? InformationLevel.Success : InformationLevel.Error,
+    }),
+    PresentationMode.Toast,
+  );
+  if (result.ok) {
+    await eventDistributor.dispatchEvent(Events.WorkspaceTrashSync, { workspaceId: workspace.id });
   }
 }
 

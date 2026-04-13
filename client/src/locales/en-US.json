@@ -576,7 +576,8 @@
             "history": "History",
             "viewer": "File viewer",
             "editor": "File editor",
-            "archived": "Archived workspaces"
+            "archived": "Archived workspaces",
+            "trashed": "Workspaces bin"
         },
         "previous": "Go back",
         "invitations": {
@@ -592,7 +593,8 @@
             "step": "Step {current} of {total}"
         },
         "breadcrumbs": {
-            "archived": "Archived"
+            "archived": "Archived",
+            "trashed": "Bin"
         }
     },
     "WorkspaceSharing": {
@@ -721,7 +723,7 @@
             "actionShow": "Show this workspace",
             "actionArchive": "Archive this workspace",
             "actionRestore": "Restore this workspace",
-            "actionDelete": "Move to bin",
+            "actionDelete": "Delete this workspace",
             "actionCopyLink": "Copy link",
             "actionAddFavorite": "Add as starred",
             "actionRemoveFavorite": "Remove as starred"
@@ -784,6 +786,7 @@
             "noFavoriteWorkspaces": "You have not set starred any workspaces yet. Starred workspaces will be listed here.",
             "noHiddenWorkspaces": "You have not hidden any workspaces yet. Hidden workspaces will be listed here.",
             "noArchivedWorkspaces": "Your archived workspaces can be consulted here in read-only. Sharing is disabled unless the workspace is restored. Archived workspace owners can restore them.",
+            "noTrashedWorkspaces": "Your deleted workspaces can be consulted here in read-only. They will be permanently deleted after a set period. Deleted workspace owners can restore them before this date.",
             "showHiddenWorkspaces": "Show hidden workspaces"
         },
         "showHideWorkspace": {
@@ -841,20 +844,37 @@
                 "success": "The workspace {workspace} has successfully been archived.",
                 "fail": "Failed to archive the workspace {workspace}."
             },
-            "restore": {
-                "success": "The workspace {workspace} has successfully been restored.",
-                "fail": "Failed to restore the workspace {workspace}."
-            },
             "readOnly": "Read only",
             "timestamp": "Archived on: {timestamp}",
             "count": "1 workspace | {count} workspaces",
-            "isArchived": "Archived workspace (read-only)"
+            "isArchived": "Archived workspace (read-only)",
+            "isTrashed": "Deleted workspace (read-only)"
         },
         "restoreWorkspace": {
             "title": "Restore this workspace",
-            "subtitle": "You are about to restore the workspace {workspace}. Previous read and write accesses will be restored. Are you sure you want to proceed?",
+            "subtitleArchived": "You are about to restore the workspace {workspace}. Previous read and write accesses will be restored. Are you sure you want to proceed?",
+            "subtitleTrashed": "You are about to restore the workspace {workspace}. Its planned deletion will be cancelled. Are you sure you want to proceed?",
             "yes": "Restore",
-            "no": "Cancel"
+            "no": "Cancel",
+            "restore": {
+                "success": "The workspace {workspace} has successfully been restored.",
+                "fail": "Failed to restore the workspace {workspace}."
+            }
+        },
+        "trashWorkspace": {
+            "title": "Delete this workspace",
+            "subtitle": "You are about to delete the workspace {workspace}. It will remain accessible in read-only for all users who have access to it for 30 days. Are you sure you want to proceed?",
+            "yes": "Delete",
+            "no": "Cancel",
+            "info": "Your deleted workspaces will remain accessible in read-only for all users who have access to them, until their permanent deletion. Deleted workspace owners can restore them before this date.",
+            "loading": "Loading your deleted workspaces...",
+            "backToWorkspace": "Back to my workspaces",
+            "count": "1 workspace | {count} workspaces",
+            "trash": {
+                "success": "The workspace {workspace} has successfully been moved to the bin.",
+                "fail": "Failed to move the workspace {workspace} to the bin."
+            },
+            "timestamp": "Planned deletion date:"
         }
     },
     "FoldersPage": {
@@ -1233,6 +1253,7 @@
         "favorites": "Starred",
         "hidden": "Hidden",
         "archived": "Archived",
+        "trashed": "Bin",
         "noWorkspace": "No workspaces",
         "users": "Users",
         "invitationsRequests": "Invitations & Join Requests",

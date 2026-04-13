@@ -42,6 +42,25 @@
           class="switch-item__check-icon"
         />
       </ion-radio>
+
+      <ion-radio
+        class="switch-item"
+        :value="Routes.Trash"
+        @click.prevent
+        :class="{ 'radio-checked': selectedRoute === Routes.Trash }"
+      >
+        <ion-icon
+          :icon="trash"
+          class="switch-item__icon"
+        />
+        <ion-text class="subtitles-normal">{{ $msTranslate('HeaderPage.titles.trashed') }}</ion-text>
+
+        <ion-icon
+          v-if="selectedRoute === Routes.Trash"
+          :icon="checkmarkCircle"
+          class="switch-item__check-icon"
+        />
+      </ion-radio>
     </ion-radio-group>
 
     <ion-button
@@ -58,15 +77,15 @@
 <script setup lang="ts">
 import { Routes } from '@/router';
 import { IonButton, IonIcon, IonRadio, IonRadioGroup, IonText, modalController } from '@ionic/vue';
-import { archive, business, checkmarkCircle } from 'ionicons/icons';
+import { archive, business, checkmarkCircle, trash } from 'ionicons/icons';
 import { MsModalResult } from 'megashark-lib';
 import { ref } from 'vue';
 
 const props = defineProps<{
-  currentRoute: Routes.Workspaces | Routes.Archived;
+  currentRoute: Routes.Workspaces | Routes.Archived | Routes.Trash | undefined;
 }>();
 
-const selectedRoute = ref<Routes.Workspaces | Routes.Archived>(props.currentRoute);
+const selectedRoute = ref<Routes.Workspaces | Routes.Archived | Routes.Trash | undefined>(props.currentRoute);
 
 async function validate(): Promise<void> {
   await modalController.dismiss(selectedRoute.value, MsModalResult.Confirm);

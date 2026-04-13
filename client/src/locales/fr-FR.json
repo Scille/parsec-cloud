@@ -575,7 +575,8 @@
             "history": "Historique",
             "viewer": "Aperçu du fichier",
             "editor": "Édition du fichier",
-            "archived": "Espaces archivés"
+            "archived": "Espaces archivés",
+            "trashed": "Espaces à la corbeille"
         },
         "previous": "Précédent",
         "invitations": {
@@ -591,7 +592,8 @@
             "step": "Étape {current} sur {total}"
         },
         "breadcrumbs": {
-            "archived": "Archivés"
+            "archived": "Archivés",
+            "trashed": "Corbeille"
         }
     },
     "WorkspaceSharing": {
@@ -721,7 +723,7 @@
             "actionShow": "Afficher cet espace",
             "actionArchive": "Archiver cet espace",
             "actionRestore": "Restaurer cet espace",
-            "actionDelete": "Mettre à la corbeille",
+            "actionDelete": "Supprimer cet espace",
             "actionAddFavorite": "Ajouter aux favoris",
             "actionRemoveFavorite": "Supprimer des favoris"
         },
@@ -782,7 +784,8 @@
             "noRecentWorkspaces": "Vous n'avez encore consulté aucun espace de travail. Les espaces consultés récemment apparaîtront ici.",
             "noFavoriteWorkspaces": "Vous n'avez encore aucun espace de travail favori. Les espaces favoris apparaîtront ici.",
             "noHiddenWorkspaces": "Vous n'avez encore aucun espace de travail masqué. Les espaces masqués apparaîtront ici.",
-            "noArchivedWorkspaces": "Vos espaces de travail archivés seront consultables en lecture seule uniquement. Le partage ne sera plus actif tant qu'ils seront archivés. Les propriétaires d'un espace de travail archivé ont la possibilité de le restaurer.",
+            "noArchivedWorkspaces": "Vos espaces de travail archivés seront consultables en lecture seule uniquement. Le partage ne sera plus actif tant qu'ils seront archivés. Les propriétaires d'espaces de travail archivés peuvent les restaurer.",
+            "noTrashedWorkspaces": "Vos espaces de travail supprimés seront consultables en lecture seule uniquement. Ils seront définitivement supprimés après une période déterminée. Les propriétaires d'espaces de travail supprimés peuvent les restaurer avant cette échéance.",
             "showHiddenWorkspaces": "Afficher les espaces masqués"
         },
         "showHideWorkspace": {
@@ -833,29 +836,46 @@
             "subtitle": "Vous êtes sur le point d'archiver l'espace de travail {workspace}. Il sera toujours accessible en lecture seule pour tous les utilisateurs y ayant accès. Êtes-vous sûr de vouloir continuer ?",
             "yes": "Archiver",
             "no": "Cancel",
-            "info": "Vos espaces de travail archivés reste consultables lecture seul pour tous les utilisateurs.",
+            "info": "Vos espaces de travail archivés restent consultables en lecture seule pour tous les utilisateurs.",
             "loading": "Chargement de vos espaces de travail archivés...",
             "backToWorkspace": "Retour à mes espaces de travail",
             "archive": {
                 "success": "L'espace {workspace} a bien été archivé.",
                 "fail": "Impossible d'archiver l'espace {workspace}."
             },
-            "restore": {
-                "success": "L'espace {workspace} a bien été restauré.",
-                "fail": "Impossible de restaurer l'espace {workspace}."
-            },
             "success": "L'espace {workspace} a bien été archivé.",
             "restoreSuccess": "L'espace {workspace} a bien été restauré.",
             "readOnly": "Lecture seule",
             "timestamp": "Archivé le : {timestamp}",
             "count": "1 espace de travail | {count} espaces de travail",
-            "isArchived": "Espace de travail archivé (lecture seule)"
+            "isArchived": "Espace de travail archivé (lecture seule)",
+            "isTrashed": "Espace de travail supprimé (lecture seule)"
         },
         "restoreWorkspace": {
             "title": "Restaurer cet espace de travail",
-            "subtitle": "Vous êtes sur le point de restaurer l'espace de travail {workspace}. Les précédents accès en lecture et écriture seront restaurés. Êtes-vous sûr de vouloir continuer ?",
+            "subtitleArchived": "Vous êtes sur le point de restaurer l'espace de travail {workspace}. Les précédents accès en lecture et écriture seront restaurés. Êtes-vous sûr de vouloir continuer ?",
+            "subtitleTrashed": "Vous êtes sur le point de restaurer l'espace de travail {workspace}. Sa suppression programmée sera annulée. Êtes-vous sûr de vouloir continuer ?",
             "yes": "Restaurer",
-            "no": "Annuler"
+            "no": "Annuler",
+            "restore": {
+                "success": "L'espace {workspace} a bien été restauré.",
+                "fail": "Impossible de restaurer l'espace {workspace}."
+            }
+        },
+        "trashWorkspace": {
+            "title": "Supprimer cet espace de travail",
+            "subtitle": "Vous êtes sur le point de supprimer l'espace de travail {workspace}. Il sera toujours accessible en lecture seule pour tous les utilisateurs y ayant accès pendant 30 jours. Êtes-vous sûr de vouloir continuer ?",
+            "yes": "Supprimer",
+            "no": "Cancel",
+            "info": "Vos espaces de travail supprimés restent consultables en lecture seule pour tous les utilisateurs y ayant accès jusqu'à leur suppression définitive. Les propriétaires d'espaces supprimés peuvent les restaurer avant cette échéance.",
+            "loading": "Chargement de la corbeille...",
+            "backToWorkspace": "Retour à mes espaces de travail",
+            "count": "1 espace de travail | {count} espaces de travail",
+            "trash": {
+                "success": "L'espace {workspace} a bien été mis à la corbeille.",
+                "fail": "Impossible de mettre l'espace {workspace} à la corbeille."
+            },
+            "timestamp": "Suppression prévue le :"
         }
     },
     "FoldersPage": {
@@ -1235,6 +1255,7 @@
         "favorites": "Favoris",
         "hidden": "Masqués",
         "archived": "Archivés",
+        "trashed": "Corbeille",
         "noWorkspace": "Aucun espace de travail",
         "users": "Utilisateurs",
         "invitationsRequests": "Invitations & Demandes",

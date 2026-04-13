@@ -180,7 +180,7 @@
         >
           <ion-icon
             class="list-group-item__icon"
-            :icon="trashBin"
+            :icon="trash"
           />
           <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionDelete') }}
@@ -220,7 +220,7 @@ import FolderParentIcon from '@/assets/images/folder-parent.svg?raw';
 import { isDesktop } from '@/parsec';
 import { FileAction } from '@/views/files/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
-import { arrowRedo, create, download, duplicate, eye, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
+import { arrowRedo, create, download, duplicate, eye, informationCircle, link, open, time, trash } from 'ionicons/icons';
 import { EyeOpenIcon, MsImage, RenameIcon } from 'megashark-lib';
 
 defineProps<{
