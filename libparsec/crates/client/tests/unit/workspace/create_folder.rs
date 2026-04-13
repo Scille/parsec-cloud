@@ -265,6 +265,40 @@ async fn invalid_path(
     assert_ls!(ops, "/foo", ["egg.txt", "spam"]).await;
 }
 
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn read_only_workspace(
+    #[values("reader_role", "archived_workspace")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    match kind {
+        "reader_role" => {
+            ops.update_workspace_external_info(|info| {
+                info.entry.role = RealmRole::Reader;
+            });
+        }
+        "archived_workspace" => {
+            ops.update_workspace_external_info(|info| {
+                info.entry.archiving_configuration = RealmArchivingConfiguration::Archived.into();
+            });
+        }
+        unknown => panic!("Unknown kind: {unknown}"),
+    }
+
+    let spy = ops.event_bus.spy.start_expecting();
+
+    let err = ops
+        .create_folder("/new_folder".parse().unwrap())
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, WorkspaceCreateFolderError::ReadOnlyRealm);
+    spy.assert_no_events();
+}
+
 // TODO: test parent manifest not present in local (with and without server available)
 // TODO: test entry already exists but not present in local
 // TODO: test entry already exists but is a file

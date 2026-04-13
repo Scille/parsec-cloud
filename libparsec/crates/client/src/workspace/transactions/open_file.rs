@@ -181,7 +181,7 @@ pub async fn open_file(
             .workspace_external_info
             .lock()
             .expect("mutex is poisoned");
-        if !guard.entry.role.can_write() {
+        if guard.entry.is_read_only() {
             return Err(WorkspaceOpenFileError::ReadOnlyRealm);
         }
     }

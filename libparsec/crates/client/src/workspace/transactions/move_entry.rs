@@ -77,13 +77,12 @@ pub(crate) async fn rename_entry_by_id(
     //       This is because rename is often used as a way to update an entry
     //       in an atomic way.
 
-    if !ops
+    if ops
         .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
         .entry
-        .role
-        .can_write()
+        .is_read_only()
     {
         return Err(WorkspaceMoveEntryError::ReadOnlyRealm);
     }
@@ -137,13 +136,12 @@ pub(crate) async fn move_entry(
     //       This is because rename is often used as a way to update an entry
     //       in an atomic way.
 
-    if !ops
+    if ops
         .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
         .entry
-        .role
-        .can_write()
+        .is_read_only()
     {
         return Err(WorkspaceMoveEntryError::ReadOnlyRealm);
     }
