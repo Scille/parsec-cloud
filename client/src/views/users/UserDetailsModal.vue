@@ -82,7 +82,7 @@
                 :icon="business"
               />
               <ion-text class="item-container__name cell">
-                {{ sharedWorkspace.workspace.currentName }}
+                {{ sharedWorkspace.workspace.name }}
               </ion-text>
               <workspace-role-tag
                 class="item-container__tag"

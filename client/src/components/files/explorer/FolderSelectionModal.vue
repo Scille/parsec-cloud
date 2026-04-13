@@ -53,7 +53,7 @@
         :items-before-collapse="1"
         :items-after-collapse="2"
         :available-width="breadcrumbsWidth"
-        :workspace-name="workspaceInfo.currentName"
+        :workspace-name="workspaceInfo.name"
       />
       <div
         v-if="isSmallDisplay"
@@ -342,7 +342,7 @@ async function update(): Promise<void> {
   headerPath.value = [];
   headerPath.value.push({
     id: 0,
-    display: workspaceInfo.value ? workspaceInfo.value.currentName : '',
+    display: workspaceInfo.value ? workspaceInfo.value.name : '',
     route: Routes.Documents,
     popoverIcon: home,
     query: { documentPath: path },

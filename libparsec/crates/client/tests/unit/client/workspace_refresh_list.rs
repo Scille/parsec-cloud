@@ -30,11 +30,18 @@ async fn ok_with_changes(
 
             expected_workspaces.push(WorkspaceInfo {
                 id: wksp1_id,
-                current_name: "wksp1".parse().unwrap(),
-                current_self_role: RealmRole::Owner,
                 is_started: false,
                 is_bootstrapped: true,
+                name: "wksp1".parse().unwrap(),
+                name_origin: CertificateBasedInfoOrigin::Certificate {
+                    timestamp: "2000-01-11T00:00:00Z".parse().unwrap(),
+                },
+                self_role: RealmRole::Owner,
+                self_role_origin: CertificateBasedInfoOrigin::Certificate {
+                    timestamp: "2000-01-09T00:00:00Z".parse().unwrap(),
+                },
                 archiving_configuration: RealmArchivingConfiguration::Available,
+                archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder,
             });
 
             // ...provide Alice's client with an additional local-only workspace.
@@ -53,16 +60,21 @@ async fn ok_with_changes(
                             role: RealmRole::Owner,
                             role_origin: CertificateBasedInfoOrigin::Placeholder,
                             archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                            archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder
+                                .into(),
                         });
                 });
 
             expected_workspaces.push(WorkspaceInfo {
                 id: wksp2_id,
-                current_name: "wksp2".parse().unwrap(),
-                current_self_role: RealmRole::Owner,
                 is_started: false,
                 is_bootstrapped: false,
+                name: "wksp2".parse().unwrap(),
+                name_origin: CertificateBasedInfoOrigin::Placeholder,
+                self_role: RealmRole::Owner,
+                self_role_origin: CertificateBasedInfoOrigin::Placeholder,
                 archiving_configuration: RealmArchivingConfiguration::Available,
+                archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder,
             });
 
             builder.certificates_storage_fetch_certificates("alice@dev1");
@@ -76,11 +88,18 @@ async fn ok_with_changes(
 
                     expected_workspaces.push(WorkspaceInfo {
                         id: wksp3_id,
-                        current_name: "wksp3".parse().unwrap(),
-                        current_self_role: RealmRole::Manager,
                         is_started: false,
                         is_bootstrapped: true,
+                        name: "wksp3".parse().unwrap(),
+                        name_origin: CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-23T00:00:00Z".parse().unwrap(),
+                        },
+                        self_role: RealmRole::Manager,
+                        self_role_origin: CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-24T00:00:00Z".parse().unwrap(),
+                        },
                         archiving_configuration: RealmArchivingConfiguration::Available,
+                        archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder,
                     });
                 }
                 "unsharing" => {
@@ -95,18 +114,29 @@ async fn ok_with_changes(
                     builder.share_realm(wksp1_id, "bob", RealmRole::Owner);
                     builder.share_realm(wksp1_id, "alice", RealmRole::Reader);
 
-                    expected_workspaces[0].current_self_role = RealmRole::Reader;
+                    expected_workspaces[0].self_role = RealmRole::Reader;
+                    expected_workspaces[0].self_role_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-22T00:00:00Z".parse().unwrap(),
+                        };
                 }
                 "renamed" => {
                     builder.rename_realm(wksp1_id, "wksp1-renamed");
 
-                    expected_workspaces[0].current_name = "wksp1-renamed".parse().unwrap();
+                    expected_workspaces[0].name = "wksp1-renamed".parse().unwrap();
+                    expected_workspaces[0].name_origin = CertificateBasedInfoOrigin::Certificate {
+                        timestamp: "2000-01-21T00:00:00Z".parse().unwrap(),
+                    };
                 }
                 "archived" => {
                     builder.archive_realm(wksp1_id, RealmArchivingConfiguration::Archived);
 
                     expected_workspaces[0].archiving_configuration =
                         RealmArchivingConfiguration::Archived;
+                    expected_workspaces[0].archiving_configuration_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-21T00:00:00Z".parse().unwrap(),
+                        };
                 }
                 unknown => panic!("Unknown kind: {unknown}"),
             }

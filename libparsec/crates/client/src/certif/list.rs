@@ -442,15 +442,18 @@ pub(super) async fn list_workspace_users(
 pub(super) async fn get_realm_archiving_configuration(
     ops: &CertificateOps,
     realm_id: VlobID,
-) -> Result<RealmArchivingConfiguration, CertifGetRealmArchivingConfigurationError> {
+) -> Result<
+    (RealmArchivingConfiguration, Option<DateTime>),
+    CertifGetRealmArchivingConfigurationError,
+> {
     ops.store
         .for_read(async |store| {
             let certif = store
                 .get_realm_last_archiving_certificate(UpTo::Current, realm_id)
                 .await?;
             Ok(match certif {
-                Some(certif) => certif.configuration.clone(),
-                None => RealmArchivingConfiguration::Available,
+                Some(certif) => (certif.configuration.clone(), Some(certif.timestamp)),
+                None => (RealmArchivingConfiguration::Available, None),
             })
         })
         .await?

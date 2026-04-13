@@ -3931,8 +3931,8 @@ fn struct_started_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let current_name = {
-        let js_val: Handle<JsString> = obj.get(cx, "currentName")?;
+    let name = {
+        let js_val: Handle<JsString> = obj.get(cx, "name")?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
@@ -3943,16 +3943,28 @@ fn struct_started_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let current_self_role = {
-        let js_val: Handle<JsString> = obj.get(cx, "currentSelfRole")?;
+    let name_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "nameOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
+    };
+    let self_role = {
+        let js_val: Handle<JsString> = obj.get(cx, "selfRole")?;
         {
             let js_string = js_val.value(cx);
             enum_realm_role_js_to_rs(cx, js_string.as_str())?
         }
     };
+    let self_role_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "selfRoleOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
+    };
     let archiving_configuration = {
         let js_val: Handle<JsObject> = obj.get(cx, "archivingConfiguration")?;
         variant_realm_archiving_configuration_js_to_rs(cx, js_val)?
+    };
+    let archiving_configuration_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "archivingConfigurationOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
     };
     let mountpoints = {
         let js_val: Handle<JsArray> = obj.get(cx, "mountpoints")?;
@@ -3993,9 +4005,12 @@ fn struct_started_workspace_info_js_to_rs<'a>(
     Ok(libparsec::StartedWorkspaceInfo {
         client,
         id,
-        current_name,
-        current_self_role,
+        name,
+        name_origin,
+        self_role,
+        self_role_origin,
         archiving_configuration,
+        archiving_configuration_origin,
         mountpoints,
     })
 }
@@ -4018,14 +4033,26 @@ fn struct_started_workspace_info_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
-    let js_current_name = JsString::try_new(cx, rs_obj.current_name).or_throw(cx)?;
-    js_obj.set(cx, "currentName", js_current_name)?;
-    let js_current_self_role =
-        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.current_self_role)).or_throw(cx)?;
-    js_obj.set(cx, "currentSelfRole", js_current_self_role)?;
+    let js_name = JsString::try_new(cx, rs_obj.name).or_throw(cx)?;
+    js_obj.set(cx, "name", js_name)?;
+    let js_name_origin = variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.name_origin)?;
+    js_obj.set(cx, "nameOrigin", js_name_origin)?;
+    let js_self_role =
+        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.self_role)).or_throw(cx)?;
+    js_obj.set(cx, "selfRole", js_self_role)?;
+    let js_self_role_origin =
+        variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.self_role_origin)?;
+    js_obj.set(cx, "selfRoleOrigin", js_self_role_origin)?;
     let js_archiving_configuration =
         variant_realm_archiving_configuration_rs_to_js(cx, rs_obj.archiving_configuration)?;
     js_obj.set(cx, "archivingConfiguration", js_archiving_configuration)?;
+    let js_archiving_configuration_origin =
+        variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.archiving_configuration_origin)?;
+    js_obj.set(
+        cx,
+        "archivingConfigurationOrigin",
+        js_archiving_configuration_origin,
+    )?;
     let js_mountpoints = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
         let js_array = JsArray::new(cx, rs_obj.mountpoints.len());
@@ -5177,8 +5204,16 @@ fn struct_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let current_name = {
-        let js_val: Handle<JsString> = obj.get(cx, "currentName")?;
+    let is_started = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "isStarted")?;
+        js_val.value(cx)
+    };
+    let is_bootstrapped = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "isBootstrapped")?;
+        js_val.value(cx)
+    };
+    let name = {
+        let js_val: Handle<JsString> = obj.get(cx, "name")?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
@@ -5189,32 +5224,39 @@ fn struct_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let current_self_role = {
-        let js_val: Handle<JsString> = obj.get(cx, "currentSelfRole")?;
+    let name_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "nameOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
+    };
+    let self_role = {
+        let js_val: Handle<JsString> = obj.get(cx, "selfRole")?;
         {
             let js_string = js_val.value(cx);
             enum_realm_role_js_to_rs(cx, js_string.as_str())?
         }
     };
-    let is_started = {
-        let js_val: Handle<JsBoolean> = obj.get(cx, "isStarted")?;
-        js_val.value(cx)
-    };
-    let is_bootstrapped = {
-        let js_val: Handle<JsBoolean> = obj.get(cx, "isBootstrapped")?;
-        js_val.value(cx)
+    let self_role_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "selfRoleOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
     };
     let archiving_configuration = {
         let js_val: Handle<JsObject> = obj.get(cx, "archivingConfiguration")?;
         variant_realm_archiving_configuration_js_to_rs(cx, js_val)?
     };
+    let archiving_configuration_origin = {
+        let js_val: Handle<JsObject> = obj.get(cx, "archivingConfigurationOrigin")?;
+        variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
+    };
     Ok(libparsec::WorkspaceInfo {
         id,
-        current_name,
-        current_self_role,
         is_started,
         is_bootstrapped,
+        name,
+        name_origin,
+        self_role,
+        self_role_origin,
         archiving_configuration,
+        archiving_configuration_origin,
     })
 }
 
@@ -5234,18 +5276,30 @@ fn struct_workspace_info_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
-    let js_current_name = JsString::try_new(cx, rs_obj.current_name).or_throw(cx)?;
-    js_obj.set(cx, "currentName", js_current_name)?;
-    let js_current_self_role =
-        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.current_self_role)).or_throw(cx)?;
-    js_obj.set(cx, "currentSelfRole", js_current_self_role)?;
     let js_is_started = JsBoolean::new(cx, rs_obj.is_started);
     js_obj.set(cx, "isStarted", js_is_started)?;
     let js_is_bootstrapped = JsBoolean::new(cx, rs_obj.is_bootstrapped);
     js_obj.set(cx, "isBootstrapped", js_is_bootstrapped)?;
+    let js_name = JsString::try_new(cx, rs_obj.name).or_throw(cx)?;
+    js_obj.set(cx, "name", js_name)?;
+    let js_name_origin = variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.name_origin)?;
+    js_obj.set(cx, "nameOrigin", js_name_origin)?;
+    let js_self_role =
+        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.self_role)).or_throw(cx)?;
+    js_obj.set(cx, "selfRole", js_self_role)?;
+    let js_self_role_origin =
+        variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.self_role_origin)?;
+    js_obj.set(cx, "selfRoleOrigin", js_self_role_origin)?;
     let js_archiving_configuration =
         variant_realm_archiving_configuration_rs_to_js(cx, rs_obj.archiving_configuration)?;
     js_obj.set(cx, "archivingConfiguration", js_archiving_configuration)?;
+    let js_archiving_configuration_origin =
+        variant_certificate_based_info_origin_rs_to_js(cx, rs_obj.archiving_configuration_origin)?;
+    js_obj.set(
+        cx,
+        "archivingConfigurationOrigin",
+        js_archiving_configuration_origin,
+    )?;
     Ok(js_obj)
 }
 
@@ -7305,6 +7359,70 @@ fn variant_cancel_error_rs_to_js<'a>(
         }
         libparsec::CancelError::NotBound { .. } => {
             let js_tag = JsString::try_new(cx, "CancelErrorNotBound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// CertificateBasedInfoOrigin
+
+#[allow(dead_code)]
+fn variant_certificate_based_info_origin_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::CertificateBasedInfoOrigin> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "CertificateBasedInfoOriginCertificate" => {
+            let timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "timestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::CertificateBasedInfoOrigin::Certificate { timestamp })
+        }
+        "CertificateBasedInfoOriginPlaceholder" => {
+            Ok(libparsec::CertificateBasedInfoOrigin::Placeholder)
+        }
+        _ => cx.throw_type_error("Object is not a CertificateBasedInfoOrigin"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_certificate_based_info_origin_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CertificateBasedInfoOrigin,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::CertificateBasedInfoOrigin::Certificate { timestamp, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "CertificateBasedInfoOriginCertificate").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+        }
+        libparsec::CertificateBasedInfoOrigin::Placeholder => {
+            let js_tag =
+                JsString::try_new(cx, "CertificateBasedInfoOriginPlaceholder").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }

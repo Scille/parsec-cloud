@@ -34,6 +34,7 @@ async fn sync_non_placeholder(
                 role: RealmRole::Owner,
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
                 archiving_configuration: RealmArchivingConfiguration::Available.into(),
+                archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
             }];
         } else {
             user_manifest_mut.local_workspaces.clear();

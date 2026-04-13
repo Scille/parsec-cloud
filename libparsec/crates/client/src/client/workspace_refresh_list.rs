@@ -124,10 +124,17 @@ pub async fn refresh_workspaces_list(
             },
         }?;
 
-        let archiving_configuration = client
+        let (archiving_configuration, archiving_configuration_origin) = client
             .certificates_ops
             .get_realm_archiving_configuration(*workspace_id)
             .await
+            .map(|(config, maybe_timestamp)| match maybe_timestamp {
+                Some(timestamp) => (
+                    config,
+                    CertificateBasedInfoOrigin::Certificate { timestamp },
+                ),
+                None => (config, CertificateBasedInfoOrigin::Placeholder),
+            })
             .map_err(|e| match e {
                 CertifGetRealmArchivingConfigurationError::Stopped => {
                     ClientRefreshWorkspacesListError::Stopped
@@ -146,6 +153,7 @@ pub async fn refresh_workspaces_list(
                 timestamp: *role_certificate_timestamp,
             },
             archiving_configuration: archiving_configuration.into(),
+            archiving_configuration_origin: archiving_configuration_origin.into(),
         });
     }
 
@@ -201,6 +209,7 @@ pub async fn refresh_workspaces_list(
                     role: old_entry.role,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
                     archiving_configuration: old_entry.archiving_configuration.clone(),
+                    archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
                 });
             }
         }

@@ -663,7 +663,10 @@ impl CertificateOps {
     pub async fn get_realm_archiving_configuration(
         &self,
         realm_id: VlobID,
-    ) -> Result<RealmArchivingConfiguration, CertifGetRealmArchivingConfigurationError> {
+    ) -> Result<
+        (RealmArchivingConfiguration, Option<DateTime>),
+        CertifGetRealmArchivingConfigurationError,
+    > {
         list::get_realm_archiving_configuration(self, realm_id).await
     }
 

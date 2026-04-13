@@ -50,7 +50,7 @@ export async function getSecurityWarnings(): Promise<SecurityWarnings> {
   }
   const workspacesResult = await listAvailableWorkspaces();
   for (const workspace of workspacesResult.ok ? workspacesResult.value : []) {
-    if (workspace.currentSelfRole === WorkspaceRole.Owner) {
+    if (workspace.selfRole === WorkspaceRole.Owner) {
       warnings.needsSecondOwner = true;
       const sharingResult = await getWorkspaceSharing(workspace.id, false, false);
       if (sharingResult.ok && !sharingResult.value.some(([_user, role]) => role === WorkspaceRole.Owner)) {

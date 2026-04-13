@@ -28,9 +28,9 @@
 
       <ion-text
         class="workspace-card-content__title subtitles-sm"
-        :title="workspace.currentName"
+        :title="workspace.name"
       >
-        {{ workspace.currentName }}
+        {{ workspace.name }}
       </ion-text>
 
       <div class="workspace-card-content-info">
@@ -71,7 +71,7 @@
       <workspace-role-tag
         v-if="!workspace.isArchived"
         class="workspace-card-bottom__role"
-        :role="workspace.currentSelfRole"
+        :role="workspace.selfRole"
       />
       <ion-text
         v-else

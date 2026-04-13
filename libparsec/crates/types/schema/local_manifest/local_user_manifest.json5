@@ -106,6 +106,16 @@
                     "type": "RealmArchivingConfiguration",
                     // Introduced in Parsec 3.9.0
                     "introduced_in_revision": 390
+                },
+                // The way `CertificateBasedInfoOrigin` should be interpreted is a bit peculiar here:
+                // `CertificateBasedInfoOrigin::Placeholder` means that no `RealmArchivingCertificate`
+                // exists yet (hence in this case the configuration should in theory always be
+                // `RealmArchivingConfiguration::Available` since this is the default value).
+                {
+                    "name": "archiving_configuration_origin",
+                    "type": "CertificateBasedInfoOrigin",
+                    // Introduced in Parsec 3.9.0
+                    "introduced_in_revision": 390
                 }
             ]
         }

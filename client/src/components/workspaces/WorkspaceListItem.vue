@@ -35,10 +35,10 @@
       <!-- workspace name -->
       <div
         class="workspace-name"
-        :title="workspace.currentName"
+        :title="workspace.name"
       >
         <ion-text class="workspace-name__label title-h4">
-          {{ workspace.currentName }}
+          {{ workspace.name }}
         </ion-text>
       </div>
       <ion-icon
@@ -61,7 +61,7 @@
       <div class="workspace-role">
         <workspace-role-tag
           v-if="!workspace.isArchived"
-          :role="workspace.currentSelfRole"
+          :role="workspace.selfRole"
           class="workspace-role-tag"
         />
         <ion-label

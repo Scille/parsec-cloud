@@ -74,11 +74,7 @@ async fn ok(#[case] configuration: RealmArchivingConfiguration, env: &TestbedEnv
         .unwrap();
 
     spy.assert_next(|_event: &EventNewCertificates| {});
-    if matches!(configuration, RealmArchivingConfiguration::Available) {
-        spy.assert_no_events();
-    } else {
-        spy.assert_next(|_event: &EventWorkspacesSelfListChanged| {});
-    }
+    spy.assert_next(|_event: &EventWorkspacesSelfListChanged| {});
 
     let mut workspaces = client.list_workspaces().await;
     p_assert_eq!(workspaces.len(), 1, "{:?}", workspaces);
@@ -87,18 +83,37 @@ async fn ok(#[case] configuration: RealmArchivingConfiguration, env: &TestbedEnv
 
     let WorkspaceInfo {
         id,
-        current_name,
-        current_self_role,
         is_started,
         is_bootstrapped,
+        name,
+        name_origin,
+        self_role,
+        self_role_origin,
         archiving_configuration,
+        archiving_configuration_origin,
     } = wksp1_info;
     p_assert_eq!(id, wksp1_id);
-    p_assert_eq!(current_name, "wksp1".parse().unwrap());
-    p_assert_eq!(current_self_role, RealmRole::Owner);
     p_assert_eq!(is_bootstrapped, true);
     p_assert_eq!(is_started, false);
+    p_assert_eq!(name, "wksp1".parse().unwrap());
+    p_assert_eq!(
+        name_origin,
+        CertificateBasedInfoOrigin::Certificate {
+            timestamp: "2000-01-11T00:00:00Z".parse().unwrap()
+        }
+    );
+    p_assert_eq!(self_role, RealmRole::Owner);
+    p_assert_eq!(
+        self_role_origin,
+        CertificateBasedInfoOrigin::Certificate {
+            timestamp: "2000-01-09T00:00:00Z".parse().unwrap()
+        }
+    );
     p_assert_eq!(archiving_configuration, configuration);
+    p_assert_matches!(
+        archiving_configuration_origin,
+        CertificateBasedInfoOrigin::Certificate { .. }
+    );
 }
 
 #[parsec_test(testbed = "coolorg", with_server)]

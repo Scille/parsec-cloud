@@ -93,7 +93,7 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 
 const filteredWorkspaces = computed(() => {
-  return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => a.currentName.localeCompare(b.currentName));
+  return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => a.name.localeCompare(b.name));
 });
 
 onMounted(async (): Promise<void> => {

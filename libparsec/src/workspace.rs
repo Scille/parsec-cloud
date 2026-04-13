@@ -224,9 +224,12 @@ pub enum WorkspaceInfoError {
 pub struct StartedWorkspaceInfo {
     pub client: Handle,
     pub id: VlobID,
-    pub current_name: EntryName,
-    pub current_self_role: RealmRole,
+    pub name: EntryName,
+    pub name_origin: CertificateBasedInfoOrigin,
+    pub self_role: RealmRole,
+    pub self_role_origin: CertificateBasedInfoOrigin,
     pub archiving_configuration: RealmArchivingConfiguration,
+    pub archiving_configuration_origin: CertificateBasedInfoOrigin,
     pub mountpoints: Vec<(Handle, std::path::PathBuf)>,
 }
 
@@ -241,17 +244,7 @@ pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, W
         _ => None,
     })?;
 
-    let (current_name, current_self_role, archiving_configuration) = workspace
-        .get_workspace_external_info(|info| {
-            (
-                info.entry.name.clone(),
-                info.entry.role,
-                info.entry
-                    .archiving_configuration
-                    .clone()
-                    .unwrap_or(RealmArchivingConfiguration::Available),
-            )
-        });
+    let entry = workspace.get_workspace_external_info(|info| info.entry.clone());
 
     #[cfg(target_arch = "wasm32")]
     let mountpoints = vec![];
@@ -274,9 +267,16 @@ pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, W
     Ok(StartedWorkspaceInfo {
         client: client_handle,
         id: workspace.realm_id(),
-        current_name,
-        current_self_role,
-        archiving_configuration,
+        name: entry.name,
+        name_origin: entry.name_origin,
+        self_role: entry.role,
+        self_role_origin: entry.role_origin,
+        archiving_configuration: entry
+            .archiving_configuration
+            .unwrap_or(RealmArchivingConfiguration::Available),
+        archiving_configuration_origin: entry
+            .archiving_configuration_origin
+            .unwrap_or(CertificateBasedInfoOrigin::Placeholder),
         mountpoints,
     })
 }

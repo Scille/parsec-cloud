@@ -599,7 +599,7 @@ onMounted(async () => {
   if (workspaceHandle) {
     const infoResult = await getWorkspaceInfo(workspaceHandle);
     if (infoResult.ok) {
-      isReader.value = infoResult.value.currentSelfRole === WorkspaceRole.Reader;
+      isReader.value = infoResult.value.selfRole === WorkspaceRole.Reader;
     }
   }
 

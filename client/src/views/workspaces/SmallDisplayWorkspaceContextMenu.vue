@@ -29,7 +29,7 @@
         >
           <ion-item
             button
-            v-show="workspace.currentSelfRole === WorkspaceRole.Owner"
+            v-show="workspace.selfRole === WorkspaceRole.Owner"
             @click="onClick(WorkspaceAction.Rename)"
             class="ion-no-padding list-group-item"
           >
@@ -61,7 +61,7 @@
             button
             @click="onClick(WorkspaceAction.ShowHistory)"
             class="ion-no-padding list-group-item"
-            v-show="workspace.currentSelfRole === WorkspaceRole.Manager || workspace.currentSelfRole === WorkspaceRole.Owner"
+            v-show="workspace.selfRole === WorkspaceRole.Manager || workspace.selfRole === WorkspaceRole.Owner"
           >
             <ion-icon
               class="list-group-item__icon"
@@ -118,7 +118,7 @@
           </ion-item>
           <ion-item
             button
-            v-show="workspace.currentSelfRole === WorkspaceRole.Owner"
+            v-show="workspace.selfRole === WorkspaceRole.Owner"
             @click="onClick(WorkspaceAction.Archive)"
             class="ion-no-padding list-group-item"
           >
@@ -189,7 +189,7 @@
           </ion-item>
         </ion-item-group>
         <ion-item-group
-          v-if="workspace.isArchived && workspace.currentSelfRole === WorkspaceRole.Owner"
+          v-if="workspace.isArchived && workspace.selfRole === WorkspaceRole.Owner"
           class="list-group"
         >
           <ion-item
