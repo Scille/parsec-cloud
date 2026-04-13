@@ -16,7 +16,7 @@ for (const authMode of ['password', 'sso']) {
     await expect(recoveryFiles).toBeVisible();
     const recoveryItems = recoveryFiles.locator('.recovery-item');
     await expect(recoveryItems).toHaveCount(2);
-    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Recovery File', 'Secret Key']);
+    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Organization recovery', 'Secret Key']);
     await expect(recoveryItems.locator('.recovery-item-download ion-button')).toHaveText(['Download', 'Download']);
     await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
     await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
@@ -158,7 +158,7 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     await expect(recoveryFiles).toBeVisible();
     const recoveryItems = recoveryFiles.locator('.recovery-item');
     await expect(recoveryItems).toHaveCount(2);
-    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Recovery File', 'Secret Key']);
+    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Organization recovery', 'Secret Key']);
     await expect(recoveryItems.locator('.recovery-item-download ion-button')).toHaveText(['Download', 'Download']);
     await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
 
