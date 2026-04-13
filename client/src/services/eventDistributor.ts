@@ -50,6 +50,7 @@ enum Events {
   EntrySyncProgress = 'entry-sync-progress',
   WorkspaceMountpointsSync = 'workspace-mountpoints-sync',
   WorkspaceArchiveSync = 'workspace-archive-sync',
+  WorkspaceTrashSync = 'workspace-trash-sync',
   OpenContextMenu = 'open-context-menu',
   AsyncEnrollmentUpdated = 'async-enrollment-updated',
 }

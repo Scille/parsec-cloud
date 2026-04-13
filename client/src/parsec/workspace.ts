@@ -38,7 +38,7 @@ import {
   WorkspaceStopError,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { CertificateBasedInfoOriginTag, libparsec } from '@/plugins/libparsec';
+import { CertificateBasedInfoOriginTag, libparsec, RealmArchivingConfiguration } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
@@ -61,6 +61,13 @@ export async function initializeWorkspace(
 function getArchivedTimestamp(configTag: RealmArchivingConfigurationTag, originInfo: CertificateBasedInfoOrigin): DateTime | undefined {
   if (configTag === RealmArchivingConfigurationTag.Archived && originInfo.tag === CertificateBasedInfoOriginTag.Certificate) {
     return DateTime.fromSeconds(originInfo.timestamp as any as number);
+  }
+  return undefined;
+}
+
+function getDeletionDate(config: RealmArchivingConfiguration): DateTime | undefined {
+  if (config.tag === RealmArchivingConfigurationTag.DeletionPlanned) {
+    return DateTime.fromMillis(config.deletionDate as any as number);
   }
   return undefined;
 }
@@ -103,8 +110,10 @@ export async function listWorkspaces(
           availableOffline: true,
           mountpoints: mountpoints,
           handle: startResult.value,
-          isArchived: wkInfo.archivingConfiguration.tag !== RealmArchivingConfigurationTag.Available,
+          isArchived: wkInfo.archivingConfiguration.tag === RealmArchivingConfigurationTag.Archived,
           archivedOn: getArchivedTimestamp(wkInfo.archivingConfiguration.tag, wkInfo.archivingConfigurationOrigin),
+          isTrashed: wkInfo.archivingConfiguration.tag === RealmArchivingConfigurationTag.DeletionPlanned,
+          deletionDate: getDeletionDate(wkInfo.archivingConfiguration),
         };
         returnValue.push(info);
       }
@@ -121,7 +130,7 @@ export async function listAvailableWorkspaces(
 ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
   const result = await listWorkspaces(handle);
   if (result.ok) {
-    result.value = result.value.filter((workspace) => !workspace.isArchived);
+    result.value = result.value.filter((workspace) => !workspace.isArchived && !workspace.isTrashed);
   }
   return result;
 }
@@ -132,6 +141,16 @@ export async function listArchivedWorkspaces(
   const result = await listWorkspaces(handle);
   if (result.ok) {
     result.value = result.value.filter((workspace) => workspace.isArchived);
+  }
+  return result;
+}
+
+export async function listTrashedWorkspaces(
+  handle: ConnectionHandle | null = null,
+): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
+  const result = await listWorkspaces(handle);
+  if (result.ok) {
+    result.value = result.value.filter((workspace) => workspace.isTrashed);
   }
   return result;
 }
@@ -326,6 +345,17 @@ export async function restoreWorkspace(workspace: WorkspaceID): Promise<Result<n
     return generateNoHandleError<ClientArchiveWorkspaceError>();
   }
   return await libparsec.clientArchiveWorkspace(handle, workspace, { tag: RealmArchivingConfigurationTag.Available });
+}
+
+export async function trashWorkspace(workspace: WorkspaceID): Promise<Result<null, ClientArchiveWorkspaceError>> {
+  const handle = getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientArchiveWorkspaceError>();
+  }
+  return await libparsec.clientArchiveWorkspace(handle, workspace, {
+    tag: RealmArchivingConfigurationTag.DeletionPlanned,
+    deletionDate: DateTime.now().plus({ days: 30 }).toMillis() as any as DateTime,
+  });
 }
 
 export async function getPathLink(

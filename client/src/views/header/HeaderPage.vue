@@ -7,7 +7,7 @@
       id="connected-header"
     >
       <ion-text
-        v-if="isSmallDisplay && isArchived"
+        v-if="isSmallDisplay && workspaceArchiveState && workspaceArchiveState.isArchived"
         class="header-archived button-large"
       >
         <ion-icon
@@ -15,6 +15,16 @@
           class="header-archived__icon"
         />
         {{ $msTranslate('WorkspacesPage.archiveWorkspace.isArchived') }}
+      </ion-text>
+      <ion-text
+        v-if="isSmallDisplay && workspaceArchiveState && workspaceArchiveState.isTrashed"
+        class="header-archived button-large"
+      >
+        <ion-icon
+          :icon="trash"
+          class="header-archived__icon"
+        />
+        {{ $msTranslate('WorkspacesPage.archiveWorkspace.isTrashed') }}
       </ion-text>
       <ion-toolbar
         class="topbar"
@@ -36,7 +46,7 @@
           <div
             class="topbar-left-content"
             ref="backBlock"
-            v-if="hasHistory() && !currentRouteIs(Routes.Workspaces) && !currentRouteIs(Routes.Archived)"
+            v-if="hasHistory() && !currentRouteIsOneOf([Routes.Workspaces, Routes.Archived, Routes.Trash])"
           >
             <header-back-button
               :short="currentRouteIsFileRoute()"
@@ -45,7 +55,7 @@
           </div>
 
           <div
-            v-if="!currentRouteIsFileRoute() && !(currentRouteIs(Routes.Archived) && isSmallDisplay)"
+            v-if="!currentRouteIsFileRoute() && !(currentRouteIsOneOf([Routes.Archived, Routes.Trash]) && isSmallDisplay)"
             class="topbar-left-text"
           >
             <ion-label
@@ -76,7 +86,7 @@
           </div>
 
           <div
-            v-if="(currentRouteIs(Routes.Workspaces) || currentRouteIs(Routes.Archived)) && isSmallDisplay && userInfo"
+            v-if="currentRouteIsOneOf([Routes.Workspaces, Routes.Archived, Routes.Trash]) && isSmallDisplay && userInfo"
             class="topbar-left-workspaces-mobile"
           >
             <ion-text class="topbar-left-workspaces-mobile__orga body">{{ userInfo.organizationId }}</ion-text>
@@ -84,8 +94,13 @@
               class="topbar-left-workspaces-mobile-dropdown"
               @click="openWorkspacesSwitchModal"
             >
+              <ion-icon
+                v-if="currentRouteIsOneOf([Routes.Archived, Routes.Trash])"
+                :icon="currentRouteIs(Routes.Archived) ? archive : trash"
+                class="contextual-icon"
+              />
               <ion-text class="topbar-left-workspaces-mobile-dropdown__title title-h2">
-                {{ $msTranslate(currentRouteIs(Routes.Archived) ? 'HeaderPage.titles.archived' : 'HeaderPage.titles.workspaces') }}
+                {{ $msTranslate(workspaceSwitchModalTitle) }}
               </ion-text>
               <ion-icon
                 :icon="chevronDown"
@@ -226,6 +241,7 @@ import {
   currentRouteIs,
   currentRouteIsFileRoute,
   currentRouteIsLoggedRoute,
+  currentRouteIsOneOf,
   currentRouteIsUserRoute,
   getCurrentRouteName,
   getCurrentRouteParams,
@@ -267,7 +283,17 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-import { archive, checkmarkCircle, chevronDown, ellipseOutline, ellipsisHorizontal, home, notifications, search } from 'ionicons/icons';
+import {
+  archive,
+  checkmarkCircle,
+  chevronDown,
+  ellipseOutline,
+  ellipsisHorizontal,
+  home,
+  notifications,
+  search,
+  trash,
+} from 'ionicons/icons';
 import { MsImage, MsModalResult, SidebarToggle, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
@@ -312,25 +338,37 @@ const backBlockRef = useTemplateRef('backBlock');
 const topbarLeftRef = useTemplateRef('topbarLeft');
 const showSecurityChecklistSmallDisplay = computed(() => {
   return (
-    !currentRouteIs(Routes.Invitations) &&
-    !currentRouteIs(Routes.History) &&
-    !currentRouteIs(Routes.Archived) &&
+    !currentRouteIsOneOf([Routes.Invitations, Routes.History, Routes.Archived, Routes.Trash]) &&
     isSmallDisplay.value &&
     securityWarningsCount.value > 0 &&
     securityWarnings.value &&
-    !isArchived.value
+    !workspaceArchiveState.value.isArchived &&
+    !workspaceArchiveState.value.isTrashed
   );
 });
+const workspaceSwitchModalTitle = computed(() => {
+  if (currentRouteIs(Routes.Archived)) {
+    return 'HeaderPage.titles.archived';
+  } else if (currentRouteIs(Routes.Trash)) {
+    return 'HeaderPage.titles.trashed';
+  }
+  return 'HeaderPage.titles.workspaces';
+});
 
-const isArchived = asyncComputed(async (): Promise<boolean> => {
+interface WorkspaceArchiveState {
+  isArchived: boolean;
+  isTrashed: boolean;
+}
+
+const workspaceArchiveState = asyncComputed(async (): Promise<WorkspaceArchiveState> => {
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
     const wInfo = await getWorkspaceInfo(workspaceHandle);
-    if (wInfo.ok && wInfo.value.isArchived) {
-      return true;
+    if (wInfo.ok) {
+      return { isArchived: wInfo.value.isArchived, isTrashed: wInfo.value.isTrashed };
     }
   }
-  return false;
+  return { isArchived: false, isTrashed: false };
 });
 
 const routeTitle = computed((): Translatable => {
@@ -351,6 +389,8 @@ const routeTitle = computed((): Translatable => {
       return 'HeaderPage.titles.history';
     case Routes.Archived:
       return 'HeaderPage.titles.archived';
+    case Routes.Trash:
+      return 'HeaderPage.titles.trashed';
     case null:
       return '';
   }
@@ -403,11 +443,17 @@ async function updateRoute(): Promise<void> {
     }
 
     const finalPath: RouterPathNode[] = [];
+
+    let firstItem = { icon: home, title: '', route: Routes.Workspaces };
+    if (workspaceArchiveState.value.isArchived) {
+      firstItem = { icon: archive, title: 'HeaderPage.breadcrumbs.archived', route: Routes.Archived };
+    } else if (workspaceArchiveState.value.isTrashed) {
+      firstItem = { icon: trash, title: 'HeaderPage.breadcrumbs.trashed', route: Routes.Trash };
+    }
+
     finalPath.push({
       id: 0,
-      icon: isArchived.value ? archive : home,
-      title: isArchived.value ? 'HeaderPage.breadcrumbs.archived' : '',
-      route: isArchived.value ? Routes.Archived : Routes.Workspaces,
+      ...firstItem,
       params: {},
     });
 
@@ -586,6 +632,7 @@ async function openSecurityWarningsModal(): Promise<void> {
 }
 
 async function openWorkspacesSwitchModal(): Promise<void> {
+  const currentRoute = getCurrentRouteName();
   const modal = await modalController.create({
     component: WorkspaceSwitchModal,
     canDismiss: true,
@@ -596,7 +643,7 @@ async function openWorkspacesSwitchModal(): Promise<void> {
     expandToScroll: false,
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
-      currentRoute: currentRouteIs(Routes.Workspaces) ? Routes.Workspaces : Routes.Archived,
+      currentRoute: currentRoute && [Routes.Workspaces, Routes.Archived, Routes.Trash].includes(currentRoute) ? currentRoute : undefined,
     },
   });
 
@@ -704,6 +751,11 @@ async function openWorkspacesSwitchModal(): Promise<void> {
       align-items: center;
       gap: 0.25rem;
       cursor: pointer;
+
+      .contextual-icon {
+        font-size: 1.25rem;
+        margin-right: 0.125rem;
+      }
 
       &__icon {
         color: var(--parsec-color-light-secondary-grey);

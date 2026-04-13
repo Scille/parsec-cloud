@@ -277,6 +277,23 @@
                 {{ $msTranslate('SideMenu.archived') }}
               </span>
             </ion-text>
+
+            <!-- Trashed -->
+            <ion-text
+              @click="navigateTo(Routes.Trash)"
+              :class="{ active: currentRouteIs(Routes.Trash) }"
+              class="sidebar-content-organization-button button-medium"
+              id="sidebar-trashed-workspaces"
+              button
+            >
+              <ion-icon
+                class="sidebar-content-organization-button__icon"
+                :icon="trash"
+              />
+              <span class="sidebar-content-organization-button__text">
+                {{ $msTranslate('SideMenu.trashed') }}
+              </span>
+            </ion-text>
           </div>
         </sidebar-menu-list>
 
@@ -453,6 +470,7 @@ import {
   snow,
   star,
   time,
+  trash,
   warning,
 } from 'ionicons/icons';
 import { Duration } from 'luxon';
@@ -869,7 +887,7 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event): Promise<void> {
-  if (workspace.isArchived) {
+  if (workspace.isArchived || workspace.isTrashed) {
     await openArchivedWorkspaceContextMenu(event, workspace, eventDistributor.value, informationManager.value, true);
   } else {
     await openWorkspaceContextMenu(

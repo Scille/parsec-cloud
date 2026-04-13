@@ -14,6 +14,7 @@ enum WorkspaceAction {
   Favorite = 'workspace-favorite',
   Archive = 'workspace-archive',
   Restore = 'workspace-restore',
+  Trash = 'workspace-trash',
 }
 
 enum WorkspaceMenu {

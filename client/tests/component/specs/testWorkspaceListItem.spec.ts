@@ -68,6 +68,7 @@ describe('Workspace List Item', () => {
     archivingConfiguration: { tag: RealmArchivingConfigurationTag.Available },
     archivingConfigurationOrigin: { tag: CertificateBasedInfoOriginTag.Placeholder },
     isArchived: false,
+    isTrashed: false,
     mountpoints: [[42, '/']],
     handle: 1,
   };

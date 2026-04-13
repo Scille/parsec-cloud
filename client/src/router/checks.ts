@@ -78,6 +78,8 @@ export function currentRouteIsLoggedRoute(): boolean {
     Routes.MyProfile,
     Routes.History,
     Routes.FileHandler,
+    Routes.Archived,
+    Routes.Trash,
   ]);
 }
 

@@ -179,6 +179,22 @@
           --fill-color: var(--parsec-color-light-primary-600);
         }
       }
+
+      &.item-danger {
+        .list-group-item__label,
+        .list-group-item__icon {
+          color: var(--parsec-color-light-danger-500);
+        }
+
+        &:hover {
+          background: var(--parsec-color-light-danger-50);
+
+          .list-group-item__label,
+          .list-group-item__icon {
+            color: var(--parsec-color-light-danger-700);
+          }
+        }
+      }
     }
   }
 

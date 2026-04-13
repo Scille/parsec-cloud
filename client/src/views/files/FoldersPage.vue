@@ -18,7 +18,7 @@
         <div class="right-side">
           <ion-text
             class="button-medium read-only-info"
-            v-if="workspaceInfo?.isArchived"
+            v-if="workspaceInfo?.isArchived || workspaceInfo?.isTrashed"
           >
             <ion-icon
               :icon="eye"
@@ -467,7 +467,11 @@ const workspaceName = computed(() => {
 });
 
 const isReadOnly = asyncComputed(async (): Promise<boolean> => {
-  if (ownRole.value === parsec.WorkspaceRole.Reader || workspaceInfo.value?.isArchived === true) {
+  if (
+    ownRole.value === parsec.WorkspaceRole.Reader ||
+    workspaceInfo.value?.isArchived === true ||
+    workspaceInfo.value?.isTrashed === true
+  ) {
     return true;
   }
   return false;

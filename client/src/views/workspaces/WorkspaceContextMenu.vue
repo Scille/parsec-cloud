@@ -38,7 +38,7 @@
       </ion-item-group>
 
       <ion-item-group
-        v-if="!workspace.isArchived"
+        v-if="!(workspace.isArchived || workspace.isTrashed)"
         class="list-group"
       >
         <ion-item class="list-group-title button-small">
@@ -151,7 +151,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group
-        v-if="!workspace.isArchived"
+        v-if="!(workspace.isArchived || workspace.isTrashed)"
         class="list-group"
       >
         <ion-item class="list-group-title button-small">
@@ -189,7 +189,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group
-        v-if="!workspace.isArchived"
+        v-if="!(workspace.isArchived || workspace.isTrashed)"
         class="list-group"
       >
         <ion-item class="list-group-title button-small">
@@ -218,7 +218,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group
-        v-if="workspace.isArchived && workspace.selfRole === WorkspaceRole.Owner"
+        v-if="(workspace.isArchived || workspace.isTrashed) && workspace.selfRole === WorkspaceRole.Owner"
         class="list-group"
       >
         <ion-item
@@ -235,9 +235,9 @@
           </ion-text>
         </ion-item>
         <ion-item
-          v-if="false"
+          v-show="!workspace.isTrashed"
           button
-          @click="onClick(WorkspaceAction.Restore)"
+          @click="onClick(WorkspaceAction.Trash)"
           class="ion-no-padding list-group-item item-danger"
         >
           <ion-icon

@@ -7,6 +7,7 @@
       'workspace-hovered': isHovered || menuOpened,
       'workspace-card-item--hidden': isHidden,
       'workspace-card-item--archived': workspace.isArchived,
+      'workspace-card-item--trashed': workspace.isTrashed,
     }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
@@ -15,7 +16,7 @@
   >
     <div class="workspace-card-content">
       <div
-        v-show="!workspace.isArchived"
+        v-show="!workspace.isArchived && !workspace.isTrashed"
         class="workspace-favorite-icon"
         :class="{
           'workspace-favorite-icon__on': isFavorite,
@@ -34,20 +35,34 @@
       </ion-text>
 
       <div class="workspace-card-content-info">
-        <ion-text class="workspace-card-content__update subtitles-sm">
+        <ion-text
+          class="workspace-card-content__update subtitles-sm"
+          v-if="!workspace.isArchived && !workspace.isTrashed"
+        >
           <span v-if="false">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
+          <ion-icon
+            class="cloud-overlay"
+            :class="workspace.availableOffline ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
+            :icon="workspace.availableOffline ? cloudDone : cloudOffline"
+          />
+        </ion-text>
+        <ion-text
+          class="workspace-card-content__update subtitles-sm"
+          v-else
+        >
           <span v-if="workspace.isArchived && workspace.archivedOn">{{
             $msTranslate({
               key: 'WorkspacesPage.archiveWorkspace.timestamp',
               data: { timestamp: $msTranslate(I18n.formatDate(workspace.archivedOn, 'short')) },
             })
           }}</span>
-          <ion-icon
-            v-if="!workspace.isArchived"
-            class="cloud-overlay"
-            :class="workspace.availableOffline ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-            :icon="workspace.availableOffline ? cloudDone : cloudOffline"
-          />
+          <span v-if="workspace.isTrashed && workspace.deletionDate">{{ $msTranslate('WorkspacesPage.trashWorkspace.timestamp') }}</span>
+          <span
+            v-if="workspace.isTrashed && workspace.deletionDate"
+            class="deletion-date"
+          >
+            {{ $msTranslate(I18n.formatDate(workspace.deletionDate, 'short')) }}
+          </span>
         </ion-text>
         <ion-text
           class="workspace-card-content__size body-sm"
@@ -58,7 +73,7 @@
 
         <div
           class="workspace-hidden subtitles-sm"
-          v-if="isHidden && !workspace.isArchived"
+          v-if="isHidden && !workspace.isArchived && !workspace.isTrashed"
         >
           <ion-icon
             class="cloud-overlay"
@@ -68,8 +83,13 @@
         </div>
         <ion-icon
           v-if="workspace.isArchived"
-          class="archived-icon"
+          class="custom-icon"
           :icon="archive"
+        />
+        <ion-icon
+          v-if="workspace.isTrashed"
+          class="custom-icon"
+          :icon="trash"
         />
       </div>
     </div>
@@ -115,7 +135,7 @@ import { formatFileSize } from '@/common/file';
 import { WorkspaceRoleTag } from '@/components/workspaces';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
-import { archive, cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
+import { archive, cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star, trash } from 'ionicons/icons';
 import { formatTimeSince, I18n } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -239,9 +259,8 @@ async function onOptionsClick(event: Event): Promise<void> {
 
   &__update {
     display: flex;
-    align-items: center;
     justify-content: flex-start;
-    color: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-hard-grey);
     gap: 0.25rem;
 
     .cloud-overlay {
@@ -345,19 +364,11 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
-.workspace-card-item--archived {
+.workspace-card-item--archived,
+.workspace-card-item--trashed {
   position: relative;
 
-  .archived-label {
-    color: var(--parsec-color-light-secondary-text);
-    display: flex;
-    align-items: center;
-    background-color: none;
-    padding: 0.1875rem 0.375rem;
-    color: var(--parsec-color-light-primary-600);
-  }
-
-  .archived-icon {
+  .custom-icon {
     color: var(--parsec-color-light-secondary-grey);
     opacity: 0.2;
     position: absolute;
@@ -377,6 +388,39 @@ async function onOptionsClick(event: Event): Promise<void> {
       var(--parsec-color-light-secondary-premiere) 2.5%,
       var(--parsec-color-light-secondary-disabled) 96.4%
     );
+  }
+}
+
+.workspace-card-item--archived {
+  .archived-label {
+    color: var(--parsec-color-light-secondary-text);
+    display: flex;
+    align-items: center;
+    background-color: none;
+    padding: 0.1875rem 0.375rem;
+    color: var(--parsec-color-light-primary-600);
+  }
+}
+
+.workspace-card-item--trashed {
+  .workspace-card-content__update {
+    position: relative;
+    text-align: start;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .deletion-date {
+      width: fit-content;
+      background: var(--parsec-color-light-secondary-white);
+      color: var(--parsec-color-light-danger-500);
+      border-radius: var(--parsec-radius-6);
+      padding: 0.1875rem 0.375rem;
+      box-shadow:
+        0 3px 5px 0 rgba(0, 0, 0, 0.02),
+        0 1px 1px 0 rgba(0, 0, 0, 0.03);
+    }
   }
 }
 </style>
