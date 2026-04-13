@@ -452,7 +452,7 @@ pub(super) async fn get_realm_archiving_configuration(
                 .get_realm_last_archiving_certificate(UpTo::Current, realm_id)
                 .await?;
             Ok(match certif {
-                Some(certif) => (certif.configuration.clone(), Some(certif.timestamp)),
+                Some(certif) => (certif.configuration, Some(certif.timestamp)),
                 None => (RealmArchivingConfiguration::Available, None),
             })
         })

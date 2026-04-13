@@ -208,7 +208,7 @@ pub async fn refresh_workspaces_list(
                     name_origin: CertificateBasedInfoOrigin::Placeholder,
                     role: old_entry.role,
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
-                    archiving_configuration: old_entry.archiving_configuration.clone(),
+                    archiving_configuration: old_entry.archiving_configuration,
                     archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
                 });
             }

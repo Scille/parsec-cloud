@@ -69,7 +69,7 @@ async fn ok(#[case] configuration: RealmArchivingConfiguration, env: &TestbedEnv
     let mut spy = client.event_bus.spy.start_expecting();
 
     client
-        .archive_workspace(wksp1_id, configuration.clone())
+        .archive_workspace(wksp1_id, configuration)
         .await
         .unwrap();
 

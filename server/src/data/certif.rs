@@ -968,7 +968,7 @@ impl RealmArchivingCertificate {
 
     #[getter]
     fn configuration(&self) -> RealmArchivingConfiguration {
-        self.0.configuration.clone().into()
+        self.0.configuration.into()
     }
 }
 

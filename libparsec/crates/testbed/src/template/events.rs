@@ -1961,7 +1961,7 @@ impl TestbedEventArchiveRealm {
                 author: self.author,
                 timestamp: self.timestamp,
                 realm_id: self.realm,
-                configuration: self.configuration.clone(),
+                configuration: self.configuration,
             };
             let signed: Bytes = certif.dump_and_sign(author_signkey).into();
             TestbedTemplateEventCertificate {

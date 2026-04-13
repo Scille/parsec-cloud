@@ -53,7 +53,6 @@ pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
             // when the client starts), so we just default to the most likely case
             let archiving_configuration = entry
                 .archiving_configuration
-                .clone()
                 .unwrap_or(RealmArchivingConfiguration::Available);
             let archiving_configuration_origin = entry
                 .archiving_configuration_origin
