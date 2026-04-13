@@ -1160,7 +1160,7 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
                     let found: Option<&mut LocalUserManifestWorkspaceEntry> =
                         local_workspaces.iter_mut().find(|w| w.id == event.realm);
                     if let Some(entry) = found {
-                        entry.archiving_configuration = event.configuration.clone().into();
+                        entry.archiving_configuration = event.configuration.into();
                         entry.archiving_configuration_origin =
                             CertificateBasedInfoOrigin::Certificate {
                                 timestamp: event.timestamp,

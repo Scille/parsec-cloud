@@ -58,7 +58,7 @@ pub(super) async fn archive_realm(
             author: ops.device.device_id,
             timestamp,
             realm_id,
-            configuration: configuration.clone(),
+            configuration,
         }
         .dump_and_sign(&ops.device.signing_key)
         .into();
