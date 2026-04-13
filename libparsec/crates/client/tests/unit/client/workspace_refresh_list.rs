@@ -9,28 +9,41 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::client_factory;
-use crate::{ClientRefreshWorkspacesListError, EventWorkspacesSelfListChanged, WorkspaceInfo};
+use crate::{
+    workspace::{EntryStat, WorkspaceStatEntryError},
+    ClientRefreshWorkspacesListError, EventWorkspacesSelfListChanged, WorkspaceInfo,
+};
 
 #[parsec_test(testbed = "coolorg")]
 async fn ok_with_changes(
-    #[values("new_sharing", "unsharing", "self_role_change", "renamed", "archived")] kind: &str,
+    #[values(
+        "new_sharing",
+        "unsharing",
+        "self_role_change",
+        "renamed",
+        "archived",
+        "deletion_planned",
+        "deletion_date_reached"
+    )]
+    kind: &str,
     env: &TestbedEnv,
 ) {
     use std::{collections::HashMap, sync::Mutex};
 
     use libparsec_protocol::authenticated_cmds;
 
-    let expected_workspaces = env
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let (expected_workspaces, expected_wksp1_local_storage_removed) = env
         .customize(|builder| {
             let mut expected_workspaces = vec![];
+            let mut expected_wksp1_local_storage_removed = false;
 
             // The testbed env is coolorg, hence Alice already has access to workspace wksp1...
 
-            let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
-
             expected_workspaces.push(WorkspaceInfo {
                 id: wksp1_id,
-                is_started: false,
+                is_started: true,
                 is_bootstrapped: true,
                 name: "wksp1".parse().unwrap(),
                 name_origin: CertificateBasedInfoOrigin::Certificate {
@@ -108,6 +121,7 @@ async fn ok_with_changes(
                     builder.share_realm(wksp1_id, "alice", None);
 
                     expected_workspaces.remove(0);
+                    expected_wksp1_local_storage_removed = true;
                 }
                 "self_role_change" => {
                     // Must promote Bob first so that he can change Alice's role
@@ -138,11 +152,34 @@ async fn ok_with_changes(
                             timestamp: "2000-01-21T00:00:00Z".parse().unwrap(),
                         };
                 }
+                "deletion_planned" => {
+                    let archiving_configuration = RealmArchivingConfiguration::DeletionPlanned {
+                        deletion_date: "2999-01-01T00:00:00Z".parse().unwrap(),
+                    };
+                    builder.archive_realm(wksp1_id, archiving_configuration);
+
+                    expected_workspaces[0].archiving_configuration = archiving_configuration;
+                    expected_workspaces[0].archiving_configuration_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-21T00:00:00Z".parse().unwrap(),
+                        };
+                }
+                "deletion_date_reached" => {
+                    builder.archive_realm(
+                        wksp1_id,
+                        RealmArchivingConfiguration::DeletionPlanned {
+                            deletion_date: "2025-01-01T00:00:00Z".parse().unwrap(),
+                        },
+                    );
+
+                    expected_workspaces.remove(0);
+                    expected_wksp1_local_storage_removed = true;
+                }
                 unknown => panic!("Unknown kind: {unknown}"),
             }
             builder.certificates_storage_fetch_certificates("alice@dev1");
 
-            expected_workspaces
+            (expected_workspaces, expected_wksp1_local_storage_removed)
         })
         .await;
 
@@ -237,9 +274,11 @@ async fn ok_with_changes(
     }
 
     let alice = env.local_device("alice@dev1");
-    let client = client_factory(&env.discriminant_dir, alice).await;
+    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
 
     let mut spy = client.event_bus.spy.start_expecting();
+
+    let wksp1 = client.start_workspace(wksp1_id).await.unwrap();
 
     client.refresh_workspaces_list().await.unwrap();
 
@@ -247,6 +286,35 @@ async fn ok_with_changes(
 
     let workspaces = client.list_workspaces().await;
     p_assert_eq!(workspaces, expected_workspaces);
+
+    if expected_wksp1_local_storage_removed {
+        // Workspace has bee stopped and its local storage removed
+        p_assert_matches!(
+            // A dummy ID ensures we will bypass the cache (that still works for
+            // the workspace manifest even when the workspace is stopped) and
+            // attempt to use the local storage (hence hitting the `Stopped` error).
+            wksp1.stat_entry_by_id(VlobID::default()).await,
+            Err(WorkspaceStatEntryError::Stopped)
+        );
+        // Re-opening it show show an empty local storage
+        let mut storage = libparsec_platform_storage::workspace::WorkspaceStorage::start(
+            &env.discriminant_dir,
+            &alice,
+            wksp1_id,
+            0,
+        )
+        .await
+        .unwrap();
+        let realm_checkpoint = storage.get_realm_checkpoint().await.unwrap();
+        p_assert_eq!(realm_checkpoint, 0);
+    } else {
+        // Workspace still started, database not removed so root is not placeholder
+        p_assert_matches!(
+            wksp1.stat_entry(&"/".parse().unwrap()).await,
+            Ok(EntryStat::Folder{ is_placeholder, .. })
+            if !is_placeholder
+        );
+    }
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

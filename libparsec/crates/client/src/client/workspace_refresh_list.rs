@@ -54,6 +54,9 @@ pub async fn refresh_workspaces_list(
     let old_local_workspaces = updater.workspaces();
 
     let mut local_workspaces = Vec::with_capacity(old_local_workspaces.len());
+    // Workspaces not longer shared with us or that have been deleted, in either case
+    // we can no longer use them and hence we should cleanup their local database.
+    let mut to_cleanup_workspaces = vec![];
 
     // 2) Retrieve the list of workspaces according to the certificates locally stored
 
@@ -83,6 +86,41 @@ pub async fn refresh_workspaces_list(
             None => continue,
             Some(role) => role,
         };
+
+        // Ignore the workspace that we consider deleted (see comment below)
+        let (archiving_configuration, archiving_configuration_origin) = client
+            .certificates_ops
+            .get_realm_archiving_configuration(*workspace_id)
+            .await
+            .map(|(config, maybe_timestamp)| match maybe_timestamp {
+                Some(timestamp) => (
+                    config,
+                    CertificateBasedInfoOrigin::Certificate { timestamp },
+                ),
+                None => (config, CertificateBasedInfoOrigin::Placeholder),
+            })
+            .map_err(|e| match e {
+                CertifGetRealmArchivingConfigurationError::Stopped => {
+                    ClientRefreshWorkspacesListError::Stopped
+                }
+                CertifGetRealmArchivingConfigurationError::Internal(err) => err
+                    .context("Cannot retrieve workspace archiving configuration")
+                    .into(),
+            })?;
+
+        // We consider as deleted any workspace whose deletion date has been reached.
+        // This is not strictly true as the actual deletion is not effective until a job
+        // is run server-side, however we have no way of knowing when this is done so
+        // it's just simpler to assume this occurs as soon as possible.
+        // Also note that if the deletion is eventually cancelled (i.e. a new archiving
+        // certificate is uploaded), then the poll certificate -> add certificates -> refresh workspace list
+        // pipeline will kick in and the workspace will be added to the list of active
+        // workspaces normally.
+        if matches!(archiving_configuration, RealmArchivingConfiguration::DeletionPlanned { deletion_date } if deletion_date <= client.device.now())
+        {
+            to_cleanup_workspaces.push(*workspace_id);
+            continue;
+        }
 
         // Retrieve the name of the workspace
         let outcome = client
@@ -124,26 +162,6 @@ pub async fn refresh_workspaces_list(
             },
         }?;
 
-        let (archiving_configuration, archiving_configuration_origin) = client
-            .certificates_ops
-            .get_realm_archiving_configuration(*workspace_id)
-            .await
-            .map(|(config, maybe_timestamp)| match maybe_timestamp {
-                Some(timestamp) => (
-                    config,
-                    CertificateBasedInfoOrigin::Certificate { timestamp },
-                ),
-                None => (config, CertificateBasedInfoOrigin::Placeholder),
-            })
-            .map_err(|e| match e {
-                CertifGetRealmArchivingConfigurationError::Stopped => {
-                    ClientRefreshWorkspacesListError::Stopped
-                }
-                CertifGetRealmArchivingConfigurationError::Internal(err) => err
-                    .context("Cannot retrieve workspace archiving configuration")
-                    .into(),
-            })?;
-
         local_workspaces.push(LocalUserManifestWorkspaceEntry {
             id: *workspace_id,
             name,
@@ -181,14 +199,24 @@ pub async fn refresh_workspaces_list(
                 }
             }
             // Workspace is not in the new list, so it is either:
-            // - A workspace we've lost access to.
-            // - A workspace we've just created (hence currently local-only).
-            // - The certificates database is lagging behind (e.g. it has been cleared
+            // A) A workspace whose deletion date has been reached.
+            // B) A workspace we've lost access to.
+            // C) A workspace we've just created (hence currently local-only).
+            // D) The certificates database is lagging behind (e.g. it has been cleared
             //   because we switch from/to OUTSIDER role).
             //   In this case we can also pretend we have just created the workspace
             //   thank to the workspace bootstrap being idempotent (and we will
             //   eventually receive the certificates and hence correct the entry).
+            //
+            // Here we only want to keep case C & D (i.e. workspace that are still useful).
             None => {
+                // `to_cleanup_workspaces` is already populated with workspaces in
+                // case A (this has been done during the previous step)
+                if to_cleanup_workspaces.contains(&old_entry.id) {
+                    continue;
+                }
+
+                // Detect case B
                 let no_longer_access = self_realms_role
                     .iter()
                     .find_map(|(wid, role, _)| {
@@ -200,8 +228,11 @@ pub async fn refresh_workspaces_list(
                     })
                     .unwrap_or(false);
                 if no_longer_access {
+                    to_cleanup_workspaces.push(old_entry.id);
                     continue;
                 }
+
+                // Now we only have workspaces in case C & D
                 local_workspaces.push(LocalUserManifestWorkspaceEntry {
                     id: old_entry.id,
                     name: old_entry.name.clone(),
@@ -253,7 +284,7 @@ pub async fn refresh_workspaces_list(
             .enumerate()
             .find(|(_, e)| e.id == workspace_ops.realm_id());
         match found {
-            // Workspace not longer shared with us
+            // Workspace not longer accessible (unshared or workspace deleted)
             None => {
                 super::workspace_start::stop_workspace_internal(
                     client,
@@ -262,7 +293,7 @@ pub async fn refresh_workspaces_list(
                 )
                 .await
             }
-            // Workspace still shared with us, but it might have changed nevertheless
+            // Workspace still accessible, but it might have changed nevertheless
             Some((workspace_index, workspace_entry)) => workspace_ops
                 .update_workspace_external_info(|info| {
                     workspace_entry.clone_into(&mut info.entry);
@@ -273,7 +304,20 @@ pub async fn refresh_workspaces_list(
         }
     }
 
-    // 8) Finally trigger an event about the refresh
+    // 8) Remove the database for the workspaces we no longer have access to
+    for workspace_id in to_cleanup_workspaces {
+        if let Err(err) = libparsec_platform_storage::workspace::workspace_storage_remove_data(
+            &client.config.data_base_dir,
+            &client.device,
+            workspace_id,
+        )
+        .await
+        {
+            log::warn!("Cannot remove local database for (no longer needed) workspace {workspace_id}: {err}")
+        }
+    }
+
+    // 9) Finally trigger an event about the refresh
     client.event_bus.send(&EventWorkspacesSelfListChanged);
 
     Ok(())
