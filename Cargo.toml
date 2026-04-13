@@ -163,13 +163,13 @@ js-sys = { version = "0.3.78", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.180", default-features = false }
-libsodium-rs = { version = "0.2.2", default-features = false }
+libsodium-rs = { version = "0.2.4", default-features = false }
 libsqlite3-sys = { version = "0.30.1", default-features = false }
 log = { version = "0.4.29", default-features = false }
 miniserde = { version = "0.1.45", default-features = false }
 neon = { version = "1.1.1", default-features = false }
 once_cell = { version = "1.21.4", default-features = false }
-openssl = { version = "0.10.76", default-features = false }
+openssl = { version = "0.10.77", default-features = false }
 paste = { version = "1.0.15", default-features = false }
 percent-encoding = { version = "2.3.2", default-features = false }
 pin-project = { version = "1.1.11", default-features = false }
@@ -192,7 +192,7 @@ rsa = { version = "0.8.2", default-features = false }
 rstest = { version = "0.26.1", default-features = false }
 rstest_reuse = { version = "0.7.0", default-features = false }
 rustls-pki-types = { version = "1.14.0", default-features = false }
-rustls-webpki = { version = "0.103.10", default-features = false }
+rustls-webpki = { version = "0.103.11", default-features = false }
 ruzstd = { version = "0.8.2", default-features = true }
 schannel = { version = "0.1.29", default-features = false }                              # Crate to interact with windows credential store, it's used notably in `native-tls` crate.
 sentry = { version = "0.47.0", default-features = false }
