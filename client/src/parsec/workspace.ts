@@ -3,6 +3,7 @@
 import { DataCache } from '@/common/cache';
 import { getClientInfo } from '@/parsec/login';
 import {
+  CertificateBasedInfoOrigin,
   ClientArchiveWorkspaceError,
   ClientCreateWorkspaceError,
   ClientListWorkspacesError,
@@ -29,6 +30,7 @@ import {
   WorkspaceID,
   WorkspaceInfo,
   WorkspaceInfoError,
+  WorkspaceInfoErrorTag,
   WorkspaceMountError,
   WorkspaceMountErrorTag,
   WorkspaceName,
@@ -36,7 +38,7 @@ import {
   WorkspaceStopError,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
-import { libparsec, WorkspaceInfoErrorTag } from '@/plugins/libparsec';
+import { CertificateBasedInfoOriginTag, libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
@@ -54,6 +56,13 @@ export async function initializeWorkspace(
     return startedWorkspaceResult;
   }
   return startedWorkspaceResult;
+}
+
+function getArchivedTimestamp(configTag: RealmArchivingConfigurationTag, originInfo: CertificateBasedInfoOrigin): DateTime | undefined {
+  if (configTag === RealmArchivingConfigurationTag.Archived && originInfo.tag === CertificateBasedInfoOriginTag.Certificate) {
+    return DateTime.fromSeconds(originInfo.timestamp as any as number);
+  }
+  return undefined;
 }
 
 export async function listWorkspaces(
@@ -95,6 +104,7 @@ export async function listWorkspaces(
           mountpoints: mountpoints,
           handle: startResult.value,
           isArchived: wkInfo.archivingConfiguration.tag !== RealmArchivingConfigurationTag.Available,
+          archivedOn: getArchivedTimestamp(wkInfo.archivingConfiguration.tag, wkInfo.archivingConfigurationOrigin),
         };
         returnValue.push(info);
       }

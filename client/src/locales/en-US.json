@@ -846,6 +846,7 @@
                 "fail": "Failed to restore the workspace {workspace}."
             },
             "readOnly": "Read only",
+            "timestamp": "Archived on: {timestamp}",
             "count": "1 workspace | {count} workspaces",
             "isArchived": "Archived workspace (read-only)"
         },

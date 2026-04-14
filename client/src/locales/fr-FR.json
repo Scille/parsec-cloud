@@ -847,6 +847,7 @@
             "success": "L'espace {workspace} a bien été archivé.",
             "restoreSuccess": "L'espace {workspace} a bien été restauré.",
             "readOnly": "Lecture seule",
+            "timestamp": "Archivé le : {timestamp}",
             "count": "1 espace de travail | {count} espaces de travail",
             "isArchived": "Espace de travail archivé (lecture seule)"
         },
