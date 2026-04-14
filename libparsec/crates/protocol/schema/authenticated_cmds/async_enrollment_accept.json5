@@ -40,12 +40,23 @@
                 {
                     "name": "accept_payload_signature",
                     "type": "AcceptPayloadSignature"
+                },
+                {
+                    "name": "send_email",
+                    "type": "Boolean"
                 }
             ]
         },
         "reps": [
             {
-                "status": "ok"
+                "status": "ok",
+                "fields": [
+                    // Field used when the invitation is correctly created but the invitation email cannot be sent
+                    {
+                        "name": "email_sent",
+                        "type": "EmailSentStatus"
+                    }
+                ]
             },
             {
                 // The user does not have the permission required to perform this action
@@ -200,6 +211,24 @@
                                 "type": "String"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "name": "EmailSentStatus",
+                "variants": [
+                    {
+                        // Also returned when `send_email=false`
+                        "name": "Success",
+                        "discriminant_value": "SUCCESS"
+                    },
+                    {
+                        "name": "ServerUnavailable",
+                        "discriminant_value": "SERVER_UNAVAILABLE"
+                    },
+                    {
+                        "name": "RecipientRefused",
+                        "discriminant_value": "RECIPIENT_REFUSED"
                     }
                 ]
             }

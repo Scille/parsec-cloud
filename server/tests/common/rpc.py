@@ -215,6 +215,7 @@ class BaseAuthenticatedRpcClient:
         submitter_redacted_device_certificate: bytes,
         accept_payload: bytes,
         accept_payload_signature: authenticated_cmds.latest.async_enrollment_accept.AcceptPayloadSignature,
+        send_email: bool,
     ) -> authenticated_cmds.latest.async_enrollment_accept.Rep:
         req = authenticated_cmds.latest.async_enrollment_accept.Req(
             enrollment_id=enrollment_id,
@@ -224,6 +225,7 @@ class BaseAuthenticatedRpcClient:
             submitter_redacted_device_certificate=submitter_redacted_device_certificate,
             accept_payload=accept_payload,
             accept_payload_signature=accept_payload_signature,
+            send_email=send_email,
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.async_enrollment_accept.Rep.load(raw_rep)

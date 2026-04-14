@@ -2733,6 +2733,22 @@ export type DistinguishedNameValue =
   | DistinguishedNameValueEmailAddress
 
 
+// EmailSentStatus
+export interface EmailSentStatusRecipientRefused {
+    tag: "EmailSentStatusRecipientRefused"
+}
+export interface EmailSentStatusServerUnavailable {
+    tag: "EmailSentStatusServerUnavailable"
+}
+export interface EmailSentStatusSuccess {
+    tag: "EmailSentStatusSuccess"
+}
+export type EmailSentStatus =
+  | EmailSentStatusRecipientRefused
+  | EmailSentStatusServerUnavailable
+  | EmailSentStatusSuccess
+
+
 // EntryStat
 export interface EntryStatFile {
     tag: "EntryStatFile"
@@ -5451,8 +5467,9 @@ export function clientAcceptAsyncEnrollment(
     client: number,
     profile: UserProfile,
     enrollment_id: string,
-    identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy
-): Promise<Result<null, ClientAcceptAsyncEnrollmentError>>
+    identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
+    send_email: boolean
+): Promise<Result<EmailSentStatus, ClientAcceptAsyncEnrollmentError>>
 export function clientAcceptTos(
     client: number,
     tos_updated_on: number

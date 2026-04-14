@@ -78,6 +78,7 @@ async fn with_server(env: &TestbedEnv) {
             UserProfile::Outsider,
             enrollment_id,
             &mock_identity_strategy,
+            false,
         )
         .await
         .unwrap();

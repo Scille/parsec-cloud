@@ -173,12 +173,24 @@ class ClientAcceptAsyncEnrollmentError(ErrorVariant):
         pass
 
 
+class EmailSentStatus(Variant):
+    class Success:
+        pass
+
+    class ServerUnavailable:
+        pass
+
+    class RecipientRefused:
+        pass
+
+
 async def client_accept_async_enrollment(
     client: Handle,
     profile: UserProfile,
     enrollment_id: AsyncEnrollmentID,
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
-) -> Result[None, ClientAcceptAsyncEnrollmentError]:
+    send_email: bool,
+) -> Result[EmailSentStatus, ClientAcceptAsyncEnrollmentError]:
     raise NotImplementedError
 
 

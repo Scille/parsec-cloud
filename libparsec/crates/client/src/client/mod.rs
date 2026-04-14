@@ -85,7 +85,7 @@ pub use crate::certif::{
 pub use crate::invite::{
     AcceptAsyncEnrollmentError as ClientAcceptAsyncEnrollmentError,
     AcceptAsyncEnrollmentIdentityStrategy, AsyncEnrollmentUntrusted,
-    CancelInvitationError as ClientCancelInvitationError, DeviceGreetInitialCtx,
+    CancelInvitationError as ClientCancelInvitationError, DeviceGreetInitialCtx, EmailSentStatus,
     InvitationEmailSentStatus, InviteListItem,
     ListAsyncEnrollmentsError as ClientListAsyncEnrollmentsError,
     ListInvitationsError as ClientListInvitationsError,
@@ -734,7 +734,8 @@ impl Client {
         profile: UserProfile,
         enrollment_id: AsyncEnrollmentID,
         identity_strategy: &dyn AcceptAsyncEnrollmentIdentityStrategy,
-    ) -> Result<(), ClientAcceptAsyncEnrollmentError> {
+        send_email: bool,
+    ) -> Result<EmailSentStatus, ClientAcceptAsyncEnrollmentError> {
         crate::invite::accept_async_enrollment(
             &self.cmds,
             &self.event_bus,
@@ -742,6 +743,7 @@ impl Client {
             enrollment_id,
             profile,
             identity_strategy,
+            send_email,
         )
         .await
     }
