@@ -36,6 +36,12 @@
       <div class="workspace-card-content-info">
         <ion-text class="workspace-card-content__update subtitles-sm">
           <span v-if="false">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
+          <span v-if="workspace.isArchived && workspace.archivedOn">{{
+            $msTranslate({
+              key: 'WorkspacesPage.archiveWorkspace.timestamp',
+              data: { timestamp: $msTranslate(I18n.formatDate(workspace.archivedOn, 'short')) },
+            })
+          }}</span>
           <ion-icon
             v-if="!workspace.isArchived"
             class="cloud-overlay"
@@ -110,7 +116,7 @@ import { WorkspaceRoleTag } from '@/components/workspaces';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
 import { archive, cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star } from 'ionicons/icons';
-import { formatTimeSince } from 'megashark-lib';
+import { formatTimeSince, I18n } from 'megashark-lib';
 import { ref } from 'vue';
 
 const isHovered = ref(false);

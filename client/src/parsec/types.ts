@@ -427,6 +427,7 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   handle: WorkspaceHandle;
   mountpoints: [MountpointHandle, SystemPath][];
   isArchived: boolean;
+  archivedOn?: DateTime;
 }
 
 enum OrganizationInfoErrorTag {
