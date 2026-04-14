@@ -16,7 +16,7 @@ use libparsec_types::prelude::*;
 pub fn req() {
     for (raw, req) in [
         (
-            // Generated from Parsec 3.7.1-a.0+dev
+            // Generated from Parsec 3.8.2-a.0+dev
             // Content:
             //   cmd: 'async_enrollment_accept'
             //   enrollment_id: ext(2, 0x1d3353157d7d4e95ad2fdea7b3bd19c5)
@@ -41,8 +41,9 @@ pub fn req() {
             //     ],
             //     signature: 0x3c7369676e61747572653e,
             //   }
+            //   send_email: True
             hex!(
-                "88a3636d64b76173796e635f656e726f6c6c6d656e745f616363657074ad656e726f6c"
+                "89a3636d64b76173796e635f656e726f6c6c6d656e745f616363657074ad656e726f6c"
                 "6c6d656e745f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5ba7375626d69747465"
                 "725f757365725f6365727469666963617465c41c3c7375626d69747465725f75736572"
                 "5f63657274696669636174653ebc7375626d69747465725f6465766963655f63657274"
@@ -65,9 +66,8 @@ pub fn req() {
                 "7465726d6564696174655f6465725f783530395f63657274696669636174657392c421"
                 "3c696e7465726d656469617465203120783530392063657274696669636174653ec421"
                 "3c696e7465726d656469617465203220783530392063657274696669636174653ea973"
-                "69676e6174757265c40b3c7369676e61747572653e"
+                "69676e6174757265c40b3c7369676e61747572653eaa73656e645f656d61696cc3"
             ).as_ref(),
-
             authenticated_cmds::async_enrollment_accept::Req {
                 enrollment_id: AsyncEnrollmentID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
                 submitter_user_certificate: b"<submitter_user_certificate>".as_ref().into(),
@@ -92,10 +92,11 @@ pub fn req() {
                         b"<intermediate 2 x509 certificate>".as_ref().into()
                     ].to_vec(),
                 },
+                send_email: true
             }
         ),
         (
-            // Generated from Parsec 3.7.1-a.0+dev
+            // Generated from Parsec 3.8.2-a.0+dev
             // Content:
             //   cmd: 'async_enrollment_accept'
             //   enrollment_id: ext(2, 0x1d3353157d7d4e95ad2fdea7b3bd19c5)
@@ -115,8 +116,9 @@ pub fn req() {
             //     accepter_openbao_entity_id: 'e7d07e2a-b05d-ec59-dcf2-4403efdbf1b7',
             //     signature: 'vault:v1:C4jRZx+ymLou26tN8Q2KDy46dA47W7x/MH6nuEZVqdz+H0RvoaFbQUAHceBKhB+Qow2qXAXiRFAFWKGPZU93CQ==',
             //   }
+            //   send_email: True
             hex!(
-                "88a3636d64b76173796e635f656e726f6c6c6d656e745f616363657074ad656e726f6c"
+                "89a3636d64b76173796e635f656e726f6c6c6d656e745f616363657074ad656e726f6c"
                 "6c6d656e745f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5ba7375626d69747465"
                 "725f757365725f6365727469666963617465c41c3c7375626d69747465725f75736572"
                 "5f63657274696669636174653ebc7375626d69747465725f6465766963655f63657274"
@@ -138,9 +140,8 @@ pub fn req() {
                 "322d343430336566646266316237a97369676e6174757265d9617661756c743a76313a"
                 "43346a525a782b796d4c6f753236744e3851324b44793436644134375737782f4d4836"
                 "6e75455a5671647a2b483052766f614662515541486365424b68422b516f7732715841"
-                "586952464146574b47505a55393343513d3d"
+                "586952464146574b47505a55393343513d3daa73656e645f656d61696cc3"
             ).as_ref(),
-
             authenticated_cmds::async_enrollment_accept::Req {
                 enrollment_id: AsyncEnrollmentID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
                 submitter_user_certificate: b"<submitter_user_certificate>".as_ref().into(),
@@ -160,6 +161,7 @@ pub fn req() {
                     signature: "vault:v1:C4jRZx+ymLou26tN8Q2KDy46dA47W7x/MH6nuEZVqdz+H0RvoaFbQUAHceBKhB+Qow2qXAXiRFAFWKGPZU93CQ==".to_owned(),
                     accepter_openbao_entity_id: "e7d07e2a-b05d-ec59-dcf2-4403efdbf1b7".to_owned(),
                 },
+                send_email: true
             }
         ),
     ] {
@@ -183,11 +185,15 @@ pub fn req() {
 // Responses
 
 pub fn rep_ok() {
-    // Generated from Parsec 3.7.1-a.0+dev
+    // Generated from Parsec 3.8.2-a.0+dev
     // Content:
     //   status: 'ok'
-    let raw: &[u8] = hex!("81a6737461747573a26f6b").as_ref();
-    let expected = authenticated_cmds::async_enrollment_accept::Rep::Ok;
+    //   email_sent: 'SUCCESS'
+    let raw: &[u8] = hex!("82a6737461747573a26f6baa656d61696c5f73656e74a753554343455353").as_ref();
+    use libparsec_protocol::authenticated_cmds::latest::async_enrollment_accept::EmailSentStatus;
+    let expected = authenticated_cmds::async_enrollment_accept::Rep::Ok {
+        email_sent: EmailSentStatus::Success,
+    };
     println!("***expected: {:?}", expected.dump().unwrap());
 
     rep_helper(raw, expected);
@@ -219,9 +225,8 @@ pub fn rep_invalid_accept_payload() {
     // Generated from Parsec 3.7.1-a.0+dev
     // Content:
     //   status: 'invalid_accept_payload'
-    let raw: &[u8] = hex!(
-        "81a6737461747573b6696e76616c69645f6163636570745f7061796c6f6164"
-    ).as_ref();
+    let raw: &[u8] =
+        hex!("81a6737461747573b6696e76616c69645f6163636570745f7061796c6f6164").as_ref();
     let expected = authenticated_cmds::async_enrollment_accept::Rep::InvalidAcceptPayload;
     println!("***expected: {:?}", expected.dump().unwrap());
 
@@ -235,8 +240,10 @@ pub fn rep_submit_and_accept_identity_systems_mismatch() {
     let raw: &[u8] = hex!(
         "81a6737461747573d92b7375626d69745f616e645f6163636570745f6964656e746974"
         "795f73797374656d735f6d69736d61746368"
-    ).as_ref();
-    let expected = authenticated_cmds::async_enrollment_accept::Rep::SubmitAndAcceptIdentitySystemsMismatch;
+    )
+    .as_ref();
+    let expected =
+        authenticated_cmds::async_enrollment_accept::Rep::SubmitAndAcceptIdentitySystemsMismatch;
     println!("***expected: {:?}", expected.dump().unwrap());
 
     rep_helper(raw, expected);
@@ -249,7 +256,8 @@ pub fn rep_invalid_accept_payload_signature() {
     let raw: &[u8] = hex!(
         "81a6737461747573d920696e76616c69645f6163636570745f7061796c6f61645f7369"
         "676e6174757265"
-    ).as_ref();
+    )
+    .as_ref();
     let expected = authenticated_cmds::async_enrollment_accept::Rep::InvalidAcceptPayloadSignature;
     println!("***expected: {:?}", expected.dump().unwrap());
 
@@ -263,7 +271,8 @@ pub fn rep_invalid_der_x509_certificate() {
     let raw: &[u8] = hex!(
         "81a6737461747573bc696e76616c69645f6465725f783530395f636572746966696361"
         "7465"
-    ).as_ref();
+    )
+    .as_ref();
     let expected = authenticated_cmds::async_enrollment_accept::Rep::InvalidDerX509Certificate;
     println!("***expected: {:?}", expected.dump().unwrap());
 
@@ -274,9 +283,8 @@ pub fn rep_invalid_x509_trustchain() {
     // Generated from Parsec 3.7.1-a.0+dev
     // Content:
     //   status: 'invalid_x509_trustchain'
-    let raw: &[u8] = hex!(
-        "81a6737461747573b7696e76616c69645f783530395f7472757374636861696e"
-    ).as_ref();
+    let raw: &[u8] =
+        hex!("81a6737461747573b7696e76616c69645f783530395f7472757374636861696e").as_ref();
     let expected = authenticated_cmds::async_enrollment_accept::Rep::InvalidX509Trustchain;
     println!("***expected: {:?}", expected.dump().unwrap());
 

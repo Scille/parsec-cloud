@@ -3,6 +3,7 @@
 use std::path::Path;
 use std::sync::Arc;
 
+pub use libparsec_client::EmailSentStatus;
 pub use libparsec_client::{
     AsyncEnrollmentIdentitySystem, AsyncEnrollmentUntrusted, AvailableDevice,
     AvailablePendingAsyncEnrollment, AvailablePendingAsyncEnrollmentIdentitySystem,
@@ -933,7 +934,8 @@ pub async fn client_accept_async_enrollment(
     profile: UserProfile,
     enrollment_id: AsyncEnrollmentID,
     identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
-) -> Result<(), ClientAcceptAsyncEnrollmentError> {
+    send_email: bool,
+) -> Result<EmailSentStatus, ClientAcceptAsyncEnrollmentError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
@@ -946,7 +948,12 @@ pub async fn client_accept_async_enrollment(
         .map_err(ClientAcceptAsyncEnrollmentError::Internal)?;
 
     client
-        .accept_async_enrollment(profile, enrollment_id, identity_strategy.as_ref())
+        .accept_async_enrollment(
+            profile,
+            enrollment_id,
+            identity_strategy.as_ref(),
+            send_email,
+        )
         .await
 }
 

@@ -722,11 +722,18 @@ class BaseAsyncEnrollmentComponent:
             submitter_redacted_user_certificate=req.submitter_redacted_user_certificate,
             submitter_device_certificate=req.submitter_device_certificate,
             submitter_redacted_device_certificate=req.submitter_redacted_device_certificate,
-            send_mail=True,  # TODO update api
+            send_mail=req.send_email,
         )
         match outcome:
             case (_, _):
-                return authenticated_cmds.latest.async_enrollment_accept.RepOk()
+                email_sent = (
+                    authenticated_cmds.latest.async_enrollment_accept.EmailSentStatus.SUCCESS
+                )
+            case SendEmailBadOutcome.SERVER_UNAVAILABLE | SendEmailBadOutcome.BAD_SMTP_CONFIG:
+                email_sent = authenticated_cmds.latest.async_enrollment_accept.EmailSentStatus.SERVER_UNAVAILABLE
+            case SendEmailBadOutcome.RECIPIENT_REFUSED:
+                email_sent = authenticated_cmds.latest.async_enrollment_accept.EmailSentStatus.RECIPIENT_REFUSED
+
             case AsyncEnrollmentAcceptBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.async_enrollment_accept.RepAuthorNotAllowed()
             case AsyncEnrollmentAcceptBadOutcome.ENROLLMENT_NOT_FOUND:
@@ -774,10 +781,7 @@ class BaseAsyncEnrollmentComponent:
                 return authenticated_cmds.latest.async_enrollment_accept.RepRequireGreaterTimestamp(
                     strictly_greater_than=error.strictly_greater_than
                 )
-            case SendEmailBadOutcome() as error:
-                return authenticated_cmds.latest.async_enrollment_accept.RepUnknownStatus(
-                    "unable to send mail", None
-                )  # TODO update api
+
             case AsyncEnrollmentAcceptBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case AsyncEnrollmentAcceptBadOutcome.ORGANIZATION_EXPIRED:
@@ -786,6 +790,7 @@ class BaseAsyncEnrollmentComponent:
                 client_ctx.author_not_found_abort()
             case AsyncEnrollmentAcceptBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
+        return authenticated_cmds.latest.async_enrollment_accept.RepOk(email_sent=email_sent)
 
 
 async def send_accepted_enrollment_email(

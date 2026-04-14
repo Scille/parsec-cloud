@@ -11715,6 +11715,51 @@ fn variant_distinguished_name_value_rs_to_js(
     Ok(js_obj)
 }
 
+// EmailSentStatus
+
+#[allow(dead_code)]
+fn variant_email_sent_status_js_to_rs(obj: JsValue) -> Result<libparsec::EmailSentStatus, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "EmailSentStatusRecipientRefused" => Ok(libparsec::EmailSentStatus::RecipientRefused {}),
+        "EmailSentStatusServerUnavailable" => Ok(libparsec::EmailSentStatus::ServerUnavailable {}),
+        "EmailSentStatusSuccess" => Ok(libparsec::EmailSentStatus::Success {}),
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a EmailSentStatus",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_email_sent_status_rs_to_js(
+    rs_obj: libparsec::EmailSentStatus,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::EmailSentStatus::RecipientRefused { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"EmailSentStatusRecipientRefused".into(),
+            )?;
+        }
+        libparsec::EmailSentStatus::ServerUnavailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"EmailSentStatusServerUnavailable".into(),
+            )?;
+        }
+        libparsec::EmailSentStatus::Success { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"EmailSentStatusSuccess".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // EntryStat
 
 #[allow(dead_code)]
@@ -22853,6 +22898,7 @@ pub fn clientAcceptAsyncEnrollment(
     profile: String,
     enrollment_id: String,
     identity_strategy: Object,
+    send_email: bool,
 ) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let profile = enum_user_profile_js_to_rs(&profile)?;
@@ -22872,16 +22918,14 @@ pub fn clientAcceptAsyncEnrollment(
             profile,
             enrollment_id,
             identity_strategy,
+            send_email,
         )
         .await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
+                let js_value = variant_email_sent_status_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }

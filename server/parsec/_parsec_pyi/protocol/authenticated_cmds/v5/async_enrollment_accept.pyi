@@ -33,6 +33,17 @@ class AcceptPayloadSignatureOpenBao(AcceptPayloadSignature):
     @property
     def signature(self) -> str: ...
 
+class EmailSentStatus:
+    VALUES: tuple[EmailSentStatus]
+    SUCCESS: EmailSentStatus
+    SERVER_UNAVAILABLE: EmailSentStatus
+    RECIPIENT_REFUSED: EmailSentStatus
+
+    @classmethod
+    def from_str(cls, value: str) -> EmailSentStatus: ...
+    @property
+    def str(self) -> str: ...
+
 class Req:
     def __init__(
         self,
@@ -43,6 +54,7 @@ class Req:
         submitter_redacted_device_certificate: bytes,
         accept_payload: bytes,
         accept_payload_signature: AcceptPayloadSignature,
+        send_email: bool,
     ) -> None: ...
     def dump(self) -> bytes: ...
     @property
@@ -51,6 +63,8 @@ class Req:
     def accept_payload_signature(self) -> AcceptPayloadSignature: ...
     @property
     def enrollment_id(self) -> AsyncEnrollmentID: ...
+    @property
+    def send_email(self) -> bool: ...
     @property
     def submitter_device_certificate(self) -> bytes: ...
     @property
@@ -73,9 +87,9 @@ class RepUnknownStatus(Rep):
     def reason(self) -> str | None: ...
 
 class RepOk(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self, email_sent: EmailSentStatus) -> None: ...
+    @property
+    def email_sent(self) -> EmailSentStatus: ...
 
 class RepAuthorNotAllowed(Rep):
     def __init__(

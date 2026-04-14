@@ -10727,6 +10727,45 @@ fn variant_distinguished_name_value_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// EmailSentStatus
+
+#[allow(dead_code)]
+fn variant_email_sent_status_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::EmailSentStatus> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "EmailSentStatusRecipientRefused" => Ok(libparsec::EmailSentStatus::RecipientRefused {}),
+        "EmailSentStatusServerUnavailable" => Ok(libparsec::EmailSentStatus::ServerUnavailable {}),
+        "EmailSentStatusSuccess" => Ok(libparsec::EmailSentStatus::Success {}),
+        _ => cx.throw_type_error("Object is not a EmailSentStatus"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_email_sent_status_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::EmailSentStatus,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::EmailSentStatus::RecipientRefused { .. } => {
+            let js_tag = JsString::try_new(cx, "EmailSentStatusRecipientRefused").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::EmailSentStatus::ServerUnavailable { .. } => {
+            let js_tag = JsString::try_new(cx, "EmailSentStatusServerUnavailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::EmailSentStatus::Success { .. } => {
+            let js_tag = JsString::try_new(cx, "EmailSentStatusSuccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // EntryStat
 
 #[allow(dead_code)]
@@ -22147,6 +22186,10 @@ fn client_accept_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise
         let js_val = cx.argument::<JsObject>(3)?;
         variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(&mut cx, js_val)?
     };
+    let send_email = {
+        let js_val = cx.argument::<JsBoolean>(4)?;
+        js_val.value(&mut cx)
+    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -22160,6 +22203,7 @@ fn client_accept_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise
                 profile,
                 enrollment_id,
                 identity_strategy,
+                send_email,
             )
             .await;
 
@@ -22169,11 +22213,7 @@ fn client_accept_async_enrollment(mut cx: FunctionContext) -> JsResult<JsPromise
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = {
-                            #[allow(clippy::let_unit_value)]
-                            let _ = ok;
-                            JsNull::new(&mut cx)
-                        };
+                        let js_value = variant_email_sent_status_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }

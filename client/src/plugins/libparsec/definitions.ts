@@ -3271,6 +3271,27 @@ export type DistinguishedNameValue =
   | DistinguishedNameValueCommonName
   | DistinguishedNameValueEmailAddress
 
+// EmailSentStatus
+export enum EmailSentStatusTag {
+    RecipientRefused = 'EmailSentStatusRecipientRefused',
+    ServerUnavailable = 'EmailSentStatusServerUnavailable',
+    Success = 'EmailSentStatusSuccess',
+}
+
+export interface EmailSentStatusRecipientRefused {
+    tag: EmailSentStatusTag.RecipientRefused
+}
+export interface EmailSentStatusServerUnavailable {
+    tag: EmailSentStatusTag.ServerUnavailable
+}
+export interface EmailSentStatusSuccess {
+    tag: EmailSentStatusTag.Success
+}
+export type EmailSentStatus =
+  | EmailSentStatusRecipientRefused
+  | EmailSentStatusServerUnavailable
+  | EmailSentStatusSuccess
+
 // EntryStat
 export enum EntryStatTag {
     File = 'EntryStatFile',
@@ -6559,8 +6580,9 @@ export interface LibParsecPlugin {
         client: Handle,
         profile: UserProfile,
         enrollment_id: AsyncEnrollmentID,
-        identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy
-    ): Promise<Result<null, ClientAcceptAsyncEnrollmentError>>
+        identity_strategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
+        send_email: boolean
+    ): Promise<Result<EmailSentStatus, ClientAcceptAsyncEnrollmentError>>
     clientAcceptTos(
         client: Handle,
         tos_updated_on: DateTime

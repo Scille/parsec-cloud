@@ -196,8 +196,11 @@ async def test_authenticated_async_enrollment_accept_ok(
             submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
             accept_payload=enrollment.accept_payload.dump(),
             accept_payload_signature=accept_payload_signature,
+            send_email=False,
         )
-        assert rep == authenticated_cmds.latest.async_enrollment_accept.RepOk()
+        assert rep == authenticated_cmds.latest.async_enrollment_accept.RepOk(
+            email_sent=authenticated_cmds.latest.async_enrollment_accept.EmailSentStatus.SUCCESS
+        )
 
         await spy.wait_event_occurred(
             EventCommonCertificate(
@@ -239,6 +242,7 @@ async def test_authenticated_async_enrollment_accept_active_users_limit_reached(
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=enrollment.accept_payload_signature,
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepActiveUsersLimitReached()
 
@@ -261,6 +265,7 @@ async def test_authenticated_async_enrollment_accept_author_not_allowed(
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=enrollment.accept_payload_signature,
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepAuthorNotAllowed()
 
@@ -282,6 +287,7 @@ async def test_authenticated_async_enrollment_accept_enrollment_not_found(
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=enrollment.accept_payload_signature,
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepEnrollmentNotFound()
 
@@ -311,6 +317,7 @@ async def test_authenticated_async_enrollment_accept_enrollment_no_longer_availa
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=enrollment.accept_payload_signature,
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepEnrollmentNoLongerAvailable()
 
@@ -352,6 +359,7 @@ async def test_authenticated_async_enrollment_accept_user_already_exists(
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=enrollment.accept_payload_signature,
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepUserAlreadyExists()
 
@@ -374,6 +382,7 @@ async def test_authenticated_async_enrollment_accept_human_handle_already_taken(
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=enrollment.accept_payload_signature,
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepHumanHandleAlreadyTaken()
 
@@ -395,6 +404,7 @@ async def test_authenticated_async_enrollment_accept_invalid_accept_payload(
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=b"<dummy>",
         accept_payload_signature=enrollment.accept_payload_signature,
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepInvalidAcceptPayload()
 
@@ -431,6 +441,7 @@ async def test_authenticated_async_enrollment_accept_submit_and_accept_identity_
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=accept_payload_signature,
+        send_email=False,
     )
     assert (
         rep
@@ -471,6 +482,7 @@ async def test_authenticated_async_enrollment_accept_invalid_accept_payload_sign
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=accept_payload_signature,
+        send_email=False,
     )
     assert (
         rep == authenticated_cmds.latest.async_enrollment_accept.RepInvalidAcceptPayloadSignature()
@@ -520,6 +532,7 @@ async def test_authenticated_async_enrollment_accept_invalid_der_x509_certificat
             accepter_der_x509_certificate=accepter_der_x509_certificate,
             intermediate_der_x509_certificates=intermediate_der_x509_certificates,
         ),
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepInvalidDerX509Certificate()
 
@@ -578,6 +591,7 @@ async def test_authenticated_async_enrollment_accept_invalid_x509_trustchain(
             accepter_der_x509_certificate=accepter_der_x509_certificate,
             intermediate_der_x509_certificates=intermediate_der_x509_certificates,
         ),
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepInvalidX509Trustchain()
 
@@ -624,6 +638,7 @@ async def test_authenticated_async_enrollment_accept_invalid_certificate(
         "submitter_redacted_device_certificate": enrollment.device_certificates.signed_redacted_certificate,
         "accept_payload": enrollment.accept_payload.dump(),
         "accept_payload_signature": enrollment.accept_payload_signature,
+        "send_email": False,
     }
 
     match kind:
@@ -925,6 +940,7 @@ async def test_authenticated_async_enrollment_accept_require_greater_timestamp(
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=enrollment.accept_payload_signature,
+        send_email=False,
     )
     assert rep == authenticated_cmds.latest.async_enrollment_accept.RepRequireGreaterTimestamp(
         strictly_greater_than=t1,
@@ -952,6 +968,7 @@ async def test_authenticated_async_enrollment_accept_timestamp_out_of_ballpark(
         submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
         accept_payload=enrollment.accept_payload.dump(),
         accept_payload_signature=enrollment.accept_payload_signature,
+        send_email=False,
     )
     assert isinstance(
         rep, authenticated_cmds.latest.async_enrollment_accept.RepTimestampOutOfBallpark
@@ -980,6 +997,7 @@ async def test_authenticated_async_enrollment_accept_http_common_errors(
             submitter_redacted_device_certificate=enrollment.device_certificates.signed_redacted_certificate,
             accept_payload=enrollment.accept_payload.dump(),
             accept_payload_signature=enrollment.accept_payload_signature,
+            send_email=False,
         )
 
     await anonymous_http_common_errors_tester(do)

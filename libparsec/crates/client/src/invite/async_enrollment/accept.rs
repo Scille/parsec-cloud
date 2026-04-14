@@ -9,6 +9,13 @@ use crate::{
     EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
 };
 
+#[derive(Debug)]
+pub enum EmailSentStatus {
+    Success,
+    ServerUnavailable,
+    RecipientRefused,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum AcceptAsyncEnrollmentError {
     #[error("Cannot communicate with the server: {0}")]
@@ -98,7 +105,8 @@ pub(crate) async fn accept_async_enrollment(
     enrollment_id: AsyncEnrollmentID,
     profile: UserProfile,
     identity_strategy: &dyn AcceptAsyncEnrollmentIdentityStrategy,
-) -> Result<(), AcceptAsyncEnrollmentError> {
+    send_email: bool,
+) -> Result<EmailSentStatus, AcceptAsyncEnrollmentError> {
     // 1) Get back the enrollment submit payload from the server
 
     let enrollment = {
@@ -156,7 +164,7 @@ pub(crate) async fn accept_async_enrollment(
             .await?;
 
         {
-            use libparsec_client_connection::protocol::authenticated_cmds::latest::async_enrollment_accept::{Req, Rep};
+            use libparsec_client_connection::protocol::authenticated_cmds::latest::async_enrollment_accept::{Req, Rep, EmailSentStatus as ApiEmailSentStatus};
 
             let rep = cmds
                 .send(Req {
@@ -167,10 +175,18 @@ pub(crate) async fn accept_async_enrollment(
                     submitter_redacted_device_certificate,
                     accept_payload,
                     accept_payload_signature,
+                    send_email,
                 })
                 .await?;
             return match rep {
-                Rep::Ok => Ok(()),
+                Rep::Ok {email_sent} => {
+                    let status = match email_sent {
+                        ApiEmailSentStatus::Success => EmailSentStatus::Success,
+                        ApiEmailSentStatus::ServerUnavailable => EmailSentStatus::ServerUnavailable,
+                        ApiEmailSentStatus::RecipientRefused => EmailSentStatus::RecipientRefused,
+                    };
+                     Ok(status)
+                },
                 Rep::RequireGreaterTimestamp {
                     strictly_greater_than,
                 } => {
