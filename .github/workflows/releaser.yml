@@ -130,27 +130,15 @@ jobs:
         run: |
           set -ex
           # Python Files
-          cp ${CP_ARGS} artifacts/Linux-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+          cp ${CP_ARGS} artifacts/*-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+
           cp ${CP_ARGS} artifacts/Linux-X64-wheel/requirements.txt release-files/python-linux-requirements.txt
-          cp ${CP_ARGS} artifacts/macOS-ARM64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp ${CP_ARGS} artifacts/macOS-ARM64-wheel/requirements.txt release-files/python-macos-requirements.txt
-          cp ${CP_ARGS} artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp ${CP_ARGS} artifacts/Windows-X64-wheel/requirements.txt release-files/python-win-requirements.txt
 
-          # Snapcraft
-          cp ${CP_ARGS} artifacts/linux-snap-X64-electron/Parsec_${{ needs.version.outputs.full }}_linux_*.snap release-files
-
-          # AppImage
-          cp ${CP_ARGS} artifacts/linux-appimage-X64-electron/Parsec_${{ needs.version.outputs.full }}_linux_*.AppImage release-files
-          cp ${CP_ARGS} artifacts/linux-appimage-X64-electron/latest-linux-*.yml release-files
-
-          # macos DMG & ZIP for x86 architecture
-          cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.{dmg,zip}{,.blockmap} release-files
-          cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/latest-mac-*.yml release-files
-
-          # macos DMG & ZIP for arm architecture
-          cp ${CP_ARGS} artifacts/macos-dmg-ARM64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.{dmg,zip}{,.blockmap} release-files
-          cp ${CP_ARGS} artifacts/macos-dmg-ARM64-electron/latest-mac-*.yml release-files
+          # Copy electron apps & latest files
+          cp ${CP_ARGS} artifacts/*-electron/Parsec_${{ needs.version.outputs.full }}_* release-files
+          cp ${CP_ARGS} artifacts/*-electron/latest-*.yml release-files
 
           # TODO: Currently, Windows electron client is not signed by the CI, thus
           # it should not be uploaded when creating the draft release.
@@ -159,9 +147,8 @@ jobs:
           # cp ${CP_ARGS} artifacts/windows-exe-X64-electron/Parsec_${{ needs.version.outputs.full }}_win_*.unsigned.exe{,.blockmap} release-files
           # cp ${CP_ARGS} artifacts/windows-exe-X64-electron/latest-win-*.yml release-files
 
-          # CLI
-          cp ${CP_ARGS} artifacts/cli-x86_64-unknown-linux-gnu/parsec-cli-${{ needs.version.outputs.full }}-x86_64-unknown-linux-gnu release-files
-          cp ${CP_ARGS} artifacts/cli-x86_64-unknown-linux-musl/parsec-cli-${{ needs.version.outputs.full }}-x86_64-unknown-linux-musl release-files
+          # Copy client CLI
+          cp ${CP_ARGS} artifacts/cli-*/parsec-cli-${{ needs.version.outputs.full }}-* release-files
 
           # Webapp
           cp ${CP_ARGS} artifacts/webapp/parsec-web-${{ needs.version.outputs.full }}.zip release-files
