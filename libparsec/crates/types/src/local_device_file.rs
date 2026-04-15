@@ -2,6 +2,7 @@
 
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 use libparsec_serialization_format::parsec_data;
 
@@ -11,6 +12,78 @@ use crate::{
     DeviceLabel, HumanHandle, OrganizationID, ParsecAddr, PasswordAlgorithm, TOTPOpaqueKeyID,
     UserID,
 };
+
+/*
+ * AdvisoryDeviceFileProtection
+ */
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum AdvisoryDeviceFilePrimaryProtection {
+    Password,
+    Keyring,
+    PKI,
+    OpenBao,
+    AccountVault,
+}
+
+/// Advisory device protection configuration combining a primary strategy with an
+/// optional TOTP second factor.
+/// This gets serialized as a string (e.g. `"PASSWORD+TOTP"`, `"PKI"`).
+///
+/// Note this type doesn't implement serde (de)serialization but instead relies
+/// on manual conversion from/to string. This is because this deserialization
+/// is expected to be run manually *after* the object containing it (i.e. server
+/// response to a `server_config` command) is deserialized, hence allowing to
+/// ignore unknown strings to stays forward-compatible.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AdvisoryDeviceFileProtection {
+    pub primary: AdvisoryDeviceFilePrimaryProtection,
+    pub with_totp: bool,
+}
+
+impl FromStr for AdvisoryDeviceFileProtection {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (primary_str, with_totp) = if let Some(base) = s.strip_suffix("+TOTP") {
+            (base, true)
+        } else {
+            (s, false)
+        };
+
+        let primary = match primary_str {
+            "PASSWORD" => AdvisoryDeviceFilePrimaryProtection::Password,
+            "KEYRING" => AdvisoryDeviceFilePrimaryProtection::Keyring,
+            "PKI" => AdvisoryDeviceFilePrimaryProtection::PKI,
+            "OPENBAO" => AdvisoryDeviceFilePrimaryProtection::OpenBao,
+            "ACCOUNT_VAULT" => AdvisoryDeviceFilePrimaryProtection::AccountVault,
+            _ => return Err(()),
+        };
+
+        Ok(AdvisoryDeviceFileProtection { primary, with_totp })
+    }
+}
+
+impl AdvisoryDeviceFileProtection {
+    pub fn as_str(&self) -> &'static str {
+        match (&self.primary, self.with_totp) {
+            (AdvisoryDeviceFilePrimaryProtection::Password, false) => "PASSWORD",
+            (AdvisoryDeviceFilePrimaryProtection::Password, true) => "PASSWORD+TOTP",
+            (AdvisoryDeviceFilePrimaryProtection::Keyring, false) => "KEYRING",
+            (AdvisoryDeviceFilePrimaryProtection::Keyring, true) => "KEYRING+TOTP",
+            (AdvisoryDeviceFilePrimaryProtection::PKI, false) => "PKI",
+            (AdvisoryDeviceFilePrimaryProtection::PKI, true) => "PKI+TOTP",
+            (AdvisoryDeviceFilePrimaryProtection::OpenBao, false) => "OPENBAO",
+            (AdvisoryDeviceFilePrimaryProtection::OpenBao, true) => "OPENBAO+TOTP",
+            (AdvisoryDeviceFilePrimaryProtection::AccountVault, false) => "ACCOUNT_VAULT",
+            (AdvisoryDeviceFilePrimaryProtection::AccountVault, true) => "ACCOUNT_VAULT+TOTP",
+        }
+    }
+}
+
+/*
+ * DeviceFileKeyring
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileKeyringData", try_from = "DeviceFileKeyringData")]
@@ -48,6 +121,10 @@ impl_transparent_data_format_conversion!(
     totp_opaque_key_id,
 );
 
+/*
+ * DeviceFilePassword
+ */
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFilePasswordData", try_from = "DeviceFilePasswordData")]
 pub struct DeviceFilePassword {
@@ -82,6 +159,10 @@ impl_transparent_data_format_conversion!(
     totp_opaque_key_id,
 );
 
+/*
+ * DeviceFileRecovery
+ */
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileRecoveryData", try_from = "DeviceFileRecoveryData")]
 pub struct DeviceFileRecovery {
@@ -111,6 +192,10 @@ impl_transparent_data_format_conversion!(
     device_label,
     ciphertext,
 );
+
+/*
+ * DeviceFilePKI
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFilePKIData", try_from = "DeviceFilePKIData")]
@@ -150,6 +235,10 @@ impl_transparent_data_format_conversion!(
     totp_opaque_key_id,
 );
 
+/*
+ * DeviceFileAccountVault
+ */
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
     into = "DeviceFileAccountVaultData",
@@ -186,6 +275,10 @@ impl_transparent_data_format_conversion!(
     ciphertext,
     totp_opaque_key_id,
 );
+
+/*
+ * DeviceFileOpenBao
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileOpenBaoData", try_from = "DeviceFileOpenBaoData")]
@@ -224,6 +317,10 @@ impl_transparent_data_format_conversion!(
     ciphertext,
     totp_opaque_key_id,
 );
+
+/*
+ * DeviceFile
+ */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
