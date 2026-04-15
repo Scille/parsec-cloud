@@ -10,7 +10,7 @@ import { parseUpdateInfo, type ProviderRuntimeOptions } from 'electron-updater/o
 import { getChannelFilename, newUrlFromBase } from 'electron-updater/out/util';
 import * as semver from 'semver';
 import type { CustomPublishOptions as CustomGitHubOptions } from '../assets/publishConfig';
-import { Env } from './envVariables';
+import { FEATURE_FLAGS } from './features';
 
 // Greatly inspired by (it isn't exported by `electron-updater`)
 // https://github.com/electron-userland/electron-builder/blob/77f977435c99247d5db395895618b150f5006e8f/packages/electron-updater/src/providers/GitHubProvider.ts#L11-L13
@@ -104,7 +104,7 @@ class CustomGithubProvider extends GitHubProvider {
       case 'win32':
         platform = 'win';
     }
-    const base = Env.HARDENED ? '-hardened' : '';
+    const base = FEATURE_FLAGS.hardened() ? '-hardened' : '';
     return `${base}-${platform}-${arch}`;
   }
 

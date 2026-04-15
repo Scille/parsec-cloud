@@ -77,6 +77,9 @@ const publishConfig = {
   repo: 'parsec-cloud',
   buildMachineArch: process.env.BUILD_MACHINE_ARCH,
   nightlyBuild: OPTS.nightly,
+  features: {
+    hardened: OPTS.hardened,
+  },
 };
 
 const fs = require('node:fs');
