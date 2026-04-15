@@ -25,6 +25,19 @@
                         "introduced_in": "5.5",
                         "name": "cryptpad",
                         "type": "CryptPadConfig"
+                    },
+                    {
+                        // Advisory configuration for local device protection (e.g.
+                        // `["PASSWORD+TOTP", "PKI"]`).
+                        //
+                        // Each entry is a serialized `AdvisoryDeviceFileProtection`
+                        // (this way forward-compatibility is achieved by having the
+                        // client simply ignoring unknown values).
+                        //
+                        // Missing field or empty list means no recommendation.
+                        "introduced_in": "5.5",
+                        "name": "advisory_device_file_protection",
+                        "type": "List<String>"
                     }
                 ]
             }
