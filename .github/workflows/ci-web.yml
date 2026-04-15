@@ -153,6 +153,11 @@ jobs:
             bindings/web/pkg/
         timeout-minutes: 2
 
+      - name: Check knip
+        run: npm run knip
+        working-directory: client
+        timeout-minutes: 2
+
       - name: Unit tests
         run: npm run test:unit
         working-directory: client
