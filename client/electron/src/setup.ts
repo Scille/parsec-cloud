@@ -12,6 +12,7 @@ import fs from 'fs';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
 import { Env } from './envVariables';
+import { FEATURE_FLAGS } from './features';
 import { SplashScreen } from './splashscreen';
 import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
 import { electronIsDev } from './utils';
@@ -122,11 +123,11 @@ export class ElectronCapacitorApp {
       scheme: this.customScheme,
     });
 
-    if (Env.DISABLE_UPDATES) {
-      this.log('info', 'Disabled application updates');
-    } else {
+    if (FEATURE_FLAGS.updatesEnabled()) {
       this.log('info', 'Setting up application updates');
       this.updater = createAppUpdater();
+    } else {
+      this.log('info', 'Disabled application updates');
     }
 
     if (this.updater) {

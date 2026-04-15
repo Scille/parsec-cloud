@@ -5,6 +5,7 @@ export interface CustomPublishOptions {
   /** The machine arch the electron-builder is running on */
   readonly buildMachineArch: string;
   nightlyBuild: boolean;
+  features: ParsecFeatures;
   /**
    * The repository name.
    */
@@ -31,4 +32,9 @@ export interface CustomPublishOptions {
    * @default draft
    */
   releaseType?: 'draft' | 'prerelease' | 'release' | null;
+}
+
+export interface ParsecFeatures {
+  hardened: boolean;
+  [k: string]: any;
 }
