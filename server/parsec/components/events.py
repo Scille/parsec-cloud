@@ -547,4 +547,7 @@ class BaseEventsComponent:
             organization_bootstrap=organization_bootstrap,
             cryptpad=cryptpad,
             openbao=openbao,
+            advisory_device_file_protection=[
+                p.str for p in self._config.advisory_device_file_protection
+            ],
         )

@@ -13,6 +13,7 @@ from jinja2.environment import Environment
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    AdvisoryDeviceFileProtection,
     DateTime,
     EmailAddress,
     OpenBaoAuthType,
@@ -341,6 +342,8 @@ class BackendConfig:
     cryptpad_config: CryptPadConfig | None = None
 
     openbao_config: OpenBaoConfig | None = None
+
+    advisory_device_file_protection: tuple[AdvisoryDeviceFileProtection, ...] = ()
 
     organization_bootstrap_webhook_url: str | None = None
     organization_spontaneous_bootstrap: bool = False
