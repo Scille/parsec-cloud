@@ -95,7 +95,12 @@ from parsec._parsec_pyi.manifest import (
     child_manifest_decrypt_verify_and_load,
     child_manifest_verify_and_load,
 )
-from parsec._parsec_pyi.misc import ApiVersion, ValidationCode
+from parsec._parsec_pyi.misc import (
+    AdvisoryDeviceFilePrimaryProtection,
+    AdvisoryDeviceFileProtection,
+    ApiVersion,
+    ValidationCode,
+)
 from parsec._parsec_pyi.pki import (
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
@@ -127,6 +132,8 @@ from parsec._parsec_pyi.time import DateTime
 # See: https://docs.astral.sh/ruff/rules/unsorted-dunder-all/
 
 __all__ = [
+    "AdvisoryDeviceFilePrimaryProtection",
+    "AdvisoryDeviceFileProtection",
     "ApiVersion",
     "ValidationCode",
     # Data Error
