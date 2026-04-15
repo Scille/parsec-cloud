@@ -247,10 +247,8 @@ updates:
         dependency-type: development
         patterns:
           - eslint*
-          - "@intlify/eslint*"
           - prettier*
           - "@typescript-eslint*"
-          - "@vue/eslint*"
       client-dev-vite:
         dependency-type: development
         patterns:

@@ -189,6 +189,7 @@ librsvg
 libsodium
 linenodiv
 linkcheck
+lintignore
 literalinclude
 liveplay
 Ljava

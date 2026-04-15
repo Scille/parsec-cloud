@@ -2,9 +2,11 @@
 
 import type { ClientEvent, LibParsecPlugin } from '@/plugins/libparsec/definitions';
 
+/** @lintignore */ // exclude from knip report
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 // eslint-disable-next-line camelcase
 import init_module from 'libparsec_bindings_web';
+/** @lintignore */ // exclude from knip report
 // @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 import * as module from 'libparsec_bindings_web';
 
