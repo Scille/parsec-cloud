@@ -39,7 +39,7 @@ pub fn req() {
 pub fn rep_ok() {
     let raw_expected = [
         (
-            // Legacy format from Parsec < 3.9, missing the `cryptpad` field
+            // Legacy format from Parsec < 3.9, missing `cryptpad` & `advisory_device_file_protection` fields
             //
             // Generated from Parsec 3.5.3-a.0+dev
             // Content:
@@ -55,13 +55,14 @@ pub fn rep_ok() {
             anonymous_server_cmds::server_config::Rep::Ok {
                 account: anonymous_server_cmds::server_config::AccountConfig::Disabled,
                 cryptpad: libparsec_types::Maybe::Absent,
+                advisory_device_file_protection: libparsec_types::Maybe::Absent,
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Disabled,
             }
         ),
         (
             // Legacy format from Parsec < 3.8, missing the `transit_mount_path` field
-            // Legacy format from Parsec < 3.9, missing the `cryptpad` field
+            // Legacy format from Parsec < 3.9, missing `cryptpad` & `advisory_device_file_protection` fields
             //
             // Generated from Parsec 3.5.3-a.0+dev
             // Content:
@@ -90,6 +91,7 @@ pub fn rep_ok() {
             anonymous_server_cmds::server_config::Rep::Ok {
                 account: anonymous_server_cmds::server_config::AccountConfig::EnabledWithVault,
                 cryptpad: libparsec_types::Maybe::Absent,
+                advisory_device_file_protection: libparsec_types::Maybe::Absent,
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::Spontaneous,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Enabled {
                     server_url: "https://openbao.parsec.invalid".to_string(),
@@ -111,7 +113,7 @@ pub fn rep_ok() {
             }
         ),
         (
-            // Legacy format from Parsec < 3.9, missing the `cryptpad` field
+            // Legacy format from Parsec < 3.9, missing `cryptpad` & `advisory_device_file_protection` fields
             //
             // Generated from Parsec 3.7.2-a.0+dev
             // Content:
@@ -142,6 +144,7 @@ pub fn rep_ok() {
             anonymous_server_cmds::server_config::Rep::Ok {
                 account: anonymous_server_cmds::server_config::AccountConfig::EnabledWithVault,
                 cryptpad: libparsec_types::Maybe::Absent,
+                advisory_device_file_protection: libparsec_types::Maybe::Absent,
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::Spontaneous,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Enabled {
                     server_url: "https://openbao.parsec.invalid".to_string(),
@@ -163,6 +166,8 @@ pub fn rep_ok() {
             }
         ),
         (
+            // Legacy format from Parsec < 3.9, missing `cryptpad` & `advisory_device_file_protection` fields
+            //
             // Generated from Parsec 3.8.1-a.0+dev
             // Content:
             //   status: 'ok'
@@ -179,11 +184,14 @@ pub fn rep_ok() {
             anonymous_server_cmds::server_config::Rep::Ok {
                 account: anonymous_server_cmds::server_config::AccountConfig::Disabled,
                 cryptpad: libparsec_types::Maybe::Present(anonymous_server_cmds::server_config::CryptPadConfig::Disabled),
+                advisory_device_file_protection: libparsec_types::Maybe::Absent,
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Disabled,
             }
         ),
         (
+            // Legacy format from Parsec < 3.9, missing `cryptpad` & `advisory_device_file_protection` fields
+            //
             // Generated from Parsec 3.8.1-a.0+dev
             // Content:
             //   status: 'ok'
@@ -203,6 +211,58 @@ pub fn rep_ok() {
                 cryptpad: libparsec_types::Maybe::Present(anonymous_server_cmds::server_config::CryptPadConfig::Enabled {
                     server_url: "https://cryptpad.parsec.invalid".to_string(),
                 }),
+                advisory_device_file_protection: libparsec_types::Maybe::Absent,
+                organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
+                openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Disabled,
+            }
+        ),
+        (
+            // Generated from Parsec 3.8.2-a.0+dev
+            // Content:
+            //   status: 'ok'
+            //   account: 'DISABLED'
+            //   advisory_device_file_protection: [ ]
+            //   cryptpad: { type: 'DISABLED', }
+            //   openbao: { type: 'DISABLED', }
+            //   organization_bootstrap: 'WITH_BOOTSTRAP_TOKEN'
+            hex!(
+                "86a6737461747573a26f6ba76163636f756e74a844495341424c4544bf61647669736f"
+                "72795f6465766963655f66696c655f70726f74656374696f6e90a86372797074706164"
+                "81a474797065a844495341424c4544a76f70656e62616f81a474797065a84449534142"
+                "4c4544b66f7267616e697a6174696f6e5f626f6f747374726170b4574954485f424f4f"
+                "5453545241505f544f4b454e"
+            ).as_ref(),
+            anonymous_server_cmds::server_config::Rep::Ok {
+                account: anonymous_server_cmds::server_config::AccountConfig::Disabled,
+                cryptpad: libparsec_types::Maybe::Present(anonymous_server_cmds::server_config::CryptPadConfig::Disabled),
+                advisory_device_file_protection: libparsec_types::Maybe::Present(vec![]),
+                organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
+                openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Disabled,
+            }
+        ),
+        (
+            // Generated from Parsec 3.8.2-a.0+dev
+            // Content:
+            //   status: 'ok'
+            //   account: 'DISABLED'
+            //   advisory_device_file_protection: [ 'PASSWORD+TOTP', 'PKI', ]
+            //   cryptpad: { type: 'DISABLED', }
+            //   openbao: { type: 'DISABLED', }
+            //   organization_bootstrap: 'WITH_BOOTSTRAP_TOKEN'
+            hex!(
+                "86a6737461747573a26f6ba76163636f756e74a844495341424c4544bf61647669736f"
+                "72795f6465766963655f66696c655f70726f74656374696f6e92ad50415353574f5244"
+                "2b544f5450a3504b49a8637279707470616481a474797065a844495341424c4544a76f"
+                "70656e62616f81a474797065a844495341424c4544b66f7267616e697a6174696f6e5f"
+                "626f6f747374726170b4574954485f424f4f5453545241505f544f4b454e"
+            ).as_ref(),
+            anonymous_server_cmds::server_config::Rep::Ok {
+                account: anonymous_server_cmds::server_config::AccountConfig::Disabled,
+                cryptpad: libparsec_types::Maybe::Present(anonymous_server_cmds::server_config::CryptPadConfig::Disabled),
+                advisory_device_file_protection: libparsec_types::Maybe::Present(vec![
+                    "PASSWORD+TOTP".to_string(),
+                    "PKI".to_string(),
+                ]),
                 organization_bootstrap: anonymous_server_cmds::server_config::OrganizationBootstrapConfig::WithBootstrapToken,
                 openbao: anonymous_server_cmds::server_config::OpenBaoConfig::Disabled,
             }
