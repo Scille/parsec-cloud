@@ -26,6 +26,7 @@ import {
   ClientListAsyncEnrollmentsError,
   ClientRejectAsyncEnrollmentError,
   DeviceSaveStrategy,
+  EmailSentStatus,
   HumanHandle,
   InvalidCertificateReasonTag,
   ListUserCertificatesError,
@@ -53,6 +54,7 @@ import { generateNoHandleError } from '@/parsec/utils';
 import {
   ClientAcceptAsyncEnrollmentErrorTag,
   ClientRejectAsyncEnrollmentErrorTag,
+  EmailSentStatusTag,
   libparsec,
   ParsecAddr,
   ParsecAsyncEnrollmentAddrAndRedirectionURL,
@@ -151,13 +153,13 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
     request: AsyncEnrollmentUntrusted,
     profile: UserProfile,
     identityStrategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
-  ): Promise<Result<null, ClientAcceptAsyncEnrollmentError>> {
+  ): Promise<Result<EmailSentStatus, ClientAcceptAsyncEnrollmentError>> {
     const handle = getConnectionHandle();
 
     if (!handle) {
       return generateNoHandleError<ClientAcceptAsyncEnrollmentError>();
     }
-    return await libparsec.clientAcceptAsyncEnrollment(handle, profile, request.enrollmentId, identityStrategy);
+    return await libparsec.clientAcceptAsyncEnrollment(handle, profile, request.enrollmentId, identityStrategy, true);
   },
 
   async rejectAsyncEnrollment(request: AsyncEnrollmentUntrusted): Promise<Result<null, ClientRejectAsyncEnrollmentError>> {
@@ -358,7 +360,7 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
     request: AsyncEnrollmentUntrusted,
     _profile: UserProfile,
     _identityStrategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
-  ): Promise<Result<null, ClientAcceptAsyncEnrollmentError>> {
+  ): Promise<Result<EmailSentStatus, ClientAcceptAsyncEnrollmentError>> {
     const handle = getConnectionHandle();
 
     if (!handle) {
@@ -374,7 +376,7 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
       acceptedOn: DateTime.utc(),
     };
 
-    return { ok: true, value: null };
+    return { ok: true, value: { tag: EmailSentStatusTag.Success } };
   },
 
   async rejectAsyncEnrollment(request: AsyncEnrollmentUntrusted): Promise<Result<null, ClientRejectAsyncEnrollmentError>> {
