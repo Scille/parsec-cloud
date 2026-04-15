@@ -2,6 +2,7 @@
 
 .. _doc_hosting_stats_server:
 
+=========================
 Extract server statistics
 =========================
 

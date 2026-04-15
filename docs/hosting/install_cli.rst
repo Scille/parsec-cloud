@@ -2,18 +2,18 @@
 
 .. _doc_hosting_install_cli:
 
-Administrative operations must be performed with Parsec CLI for Linux. They can be performed from another machine.
+==========================
+Install Parsec CLI (Linux)
+==========================
 
-Install Linux CLI
-=================
+In order to deploy and maintain Parsec Server, you would need to perform some operations with
+Parsec CLI for Linux. These operations can be performed from another machine.
 
-Parsec is also available as a command line interface (CLI) for Linux. It is a standalone binary that is provided in our GitHub releases.
+Parsec Command-Line Interface (CLI) is a standalone binary that can be downloaded from GitHub releases page.
 
 .. _Parsec CLI v3.8.2-a.0+dev: https://github.com/Scille/parsec-cloud/releases/download/v3.8.2-a.0+dev/parsec-cli_3.8.2-a.0+dev_linux-x86_64-musl
 
-1. Download the CLI by following this link:
-
-   `Parsec CLI v3.8.2-a.0+dev`_.
+1. Download Parsec CLI: `Parsec CLI v3.8.2-a.0+dev`_.
 
 2. Make the file executable
 
@@ -30,7 +30,7 @@ Parsec is also available as a command line interface (CLI) for Linux. It is a st
 
       ./parsec-cli_3.8.2-a.0+dev_linux-x86_64-musl --version
 
-  The CLI should output its version:
+  The Parsec CLI version should be displayed:
 
   .. code-block::
 

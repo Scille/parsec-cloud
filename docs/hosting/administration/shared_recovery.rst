@@ -4,7 +4,7 @@
 
 .. cspell:words xBCEREHKItJ0lPzzEuk-8q0N
 
-
+===============
 Shared recovery
 ===============
 
@@ -25,9 +25,8 @@ This is based on *Shamir's secret sharing algorithm*. The idea is that even if a
 attacker steals some shares, it is impossible for the attacker to reconstruct
 the secret unless they have stolen the quorum number of shares.
 
-
 Overview
---------
+========
 
 The shared recovery process involves the following steps:
 
@@ -49,7 +48,7 @@ is your device ID by running:
     parsec-cli device list
 
 Shared recovery creation
-------------------------
+========================
 
 To setup shared recovery for a device, run the following command:
 
@@ -67,7 +66,7 @@ organization user list.
 If the threshold is not specified, it will be asked interactively.
 
 Recover access with shared recovery
------------------------------------
+===================================
 
 The shared recovery process must be initiated by one of the recipients, so the
 user needs to contact them and ask them for an invitation to recover their account.
@@ -90,7 +89,7 @@ exchange, until until enough shares have been gathered. At which point
 the new device is registered and access is fully recovered.
 
 An example scenario
--------------------
+===================
 
 The following is a simple scenario to show you the shared recovery process.
 All commands are executed in the same machine for simplicity.

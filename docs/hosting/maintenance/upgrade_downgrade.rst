@@ -4,15 +4,14 @@
 
 .. cspell:words linenos
 
-.. important::
-
-  This section assumes that you deployed Parsec following the instructions from
-  :ref:`Server deployment section <doc_hosting_deployment>`. If you deployed
-  Parsec differently, you might need to adapt this section to your custom
-  deployment.
-
+=====================
 Upgrade Parsec Server
-*********************
+=====================
+
+This section assumes that you deployed Parsec following the instructions from
+:ref:`Server deployment section <doc_hosting_deployment>`.
+If you deployed Parsec differently, you might need to adapt these instructions
+to your custom deployment.
 
 .. warning::
 
@@ -86,7 +85,7 @@ In this guide, we will migrate ``parsec-server`` from version ``v3.0.0`` to ``v3
     docker compose -f parsec-server.docker.yaml restart parsec-server
 
 Downgrade Parsec Server
-***********************
+=======================
 
 .. warning::
 

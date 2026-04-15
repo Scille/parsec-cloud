@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.4.0-a.7+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-14 14:37+0200\n"
-"PO-Revision-Date: 2025-04-14 16:01+0200\n"
+"POT-Creation-Date: 2026-04-15 17:24+0200\n"
+"PO-Revision-Date: 2026-04-15 17:34+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -16,25 +16,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.17.0\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../hosting/maintenance/upgrade_downgrade.rst:9
-msgid ""
-"This section assumes that you deployed Parsec following the instructions "
-"from :ref:`Server deployment section <doc_hosting_deployment>`. If you "
-"deployed Parsec differently, you might need to adapt this section to your "
-"custom deployment."
-msgstr ""
-"Cette section suppose que vous avez déployé Parsec en suivant les "
-"instructions de :ref:`Server deployment section <doc_hosting_deployment>`. "
-"Si vous avez déployé Parsec différemment, vous devrez peut-être adapter "
-"cette section à votre déploiement personnalisé."
-
-#: ../../hosting/maintenance/upgrade_downgrade.rst:15
 msgid "Upgrade Parsec Server"
 msgstr "Mise à jour du serveur Parsec"
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:19
+#: ../../hosting/maintenance/upgrade_downgrade.rst:11
+msgid ""
+"This section assumes that you deployed Parsec following the instructions "
+"from :ref:`Server deployment section <doc_hosting_deployment>`. If you "
+"deployed Parsec differently, you might need to adapt these instructions to "
+"your custom deployment."
+msgstr ""
+"Cette section suppose que vous avez déployé Parsec en suivant les "
+"instructions de :ref:`Server deployment section <doc_hosting_deployment>`. "
+"Si vous avez déployé Parsec différemment, vous devrez peut-être adapter ces "
+"instructions à votre déploiement personnalisé."
+
+#: ../../hosting/maintenance/upgrade_downgrade.rst:18
 msgid ""
 "Before upgrading, make sure to back up the database as explained in the, :"
 "ref:`Backup and Restore section <doc_hosting_maintenance_backup_restore>` in "
@@ -45,7 +45,7 @@ msgstr ""
 "<doc_hosting_maintenance_backup_restore>` au cas où vous auriez besoin de "
 "revenir sur la mise à jour."
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:23
+#: ../../hosting/maintenance/upgrade_downgrade.rst:22
 msgid ""
 "In this guide, we will migrate ``parsec-server`` from version ``v3.0.0`` to "
 "``v3.1.0``."
@@ -53,7 +53,7 @@ msgstr ""
 "Dans ce guide, nous allons migrer ``parsec-server`` de la version ``v3.0.0`` "
 "vers ``v3.1.0``."
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:27
+#: ../../hosting/maintenance/upgrade_downgrade.rst:26
 msgid ""
 "Update the ``parsec-server``'s docker image tag of in docker-compose file "
 "(``parsec-server.docker.yaml``):"
@@ -61,27 +61,27 @@ msgstr ""
 "Mettre à jour le tag docker image de ``parsec-server`` dans le fichier "
 "docker-compose (``parsec-server.docker.yaml`) :"
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:40
+#: ../../hosting/maintenance/upgrade_downgrade.rst:39
 msgid "You need to change the used tag (at line **5**) to ``v3.1.0``."
 msgstr ""
 "Vous devez changer la balise utilisée (à la ligne **5**) en ``v3.1.0``."
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:42
+#: ../../hosting/maintenance/upgrade_downgrade.rst:41
 msgid "List the pending migrations to be applied:"
 msgstr "Liste des migrations en attente à appliquer :"
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:48
+#: ../../hosting/maintenance/upgrade_downgrade.rst:47
 msgid "The output should look like this:"
 msgstr "Le résultat devrait ressembler à ceci :"
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:69
+#: ../../hosting/maintenance/upgrade_downgrade.rst:68
 msgid ""
 "This output is provided as an example. Don't expect it to match your output."
 msgstr ""
 "Ce résultat est fourni à titre d'exemple. Ne vous attendez pas à ce qu'elle "
 "corresponde à la vôtre."
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:71
+#: ../../hosting/maintenance/upgrade_downgrade.rst:70
 msgid ""
 "The lines ending with ``already applied`` are migrations already present on "
 "the database whereas the one ending with ``✔`` are migrations to be applied."
@@ -90,19 +90,19 @@ msgstr ""
 "présentes dans la base de données tandis que celles se terminant par ``✔`` "
 "sont des migrations à appliquer."
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:74
+#: ../../hosting/maintenance/upgrade_downgrade.rst:73
 msgid "Apply the database migration:"
 msgstr "Appliquer la migration de la base de données :"
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:82
+#: ../../hosting/maintenance/upgrade_downgrade.rst:81
 msgid "Restart the ``parsec-server`` container:"
 msgstr "Redémarrer le conteneur ``parsec-server`` :"
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:89
+#: ../../hosting/maintenance/upgrade_downgrade.rst:88
 msgid "Downgrade Parsec Server"
 msgstr "Rétablir une version antérieure du serveur Parsec"
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:93
+#: ../../hosting/maintenance/upgrade_downgrade.rst:92
 msgid ""
 "Rollback is currently limited in Parsec. The only possible way to rollback "
 "is to use the previous database backup. So you will lose the delta of backup "
@@ -113,7 +113,7 @@ msgstr ""
 "précédente. Vous perdrez donc le delta entre la sauvegarde et la base de "
 "données actuelle."
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:97
+#: ../../hosting/maintenance/upgrade_downgrade.rst:96
 msgid ""
 "To roll back to a previous version, let's say we want to downgrade ``parsec-"
 "server`` from version ``v3.1.0`` to ``v3.0.0``."
@@ -121,7 +121,7 @@ msgstr ""
 "Pour revenir à une version antérieure, disons que nous voulons rétrograder "
 "``parsec-server`` de la version ``v3.1.0`` à ``v3.0.0``."
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:99
+#: ../../hosting/maintenance/upgrade_downgrade.rst:98
 msgid ""
 "Downgrade the ``parsec-server``'s docker image tag in the docker-compose "
 "file (``parsec-server.docker.yaml``). Like in :ref:`Update the parsec-server "
@@ -132,13 +132,13 @@ msgstr ""
 "tag parsec-server <update_docker_image_tag>` changer le tag ``v3.1.0`` en "
 "``v3.0.0``."
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:102
+#: ../../hosting/maintenance/upgrade_downgrade.rst:101
 msgid "Replace the current database with the backup on the Postgres database."
 msgstr ""
 "Remplacer la base de données actuelle par la sauvegarde de la base de "
 "données Postgres."
 
-#: ../../hosting/maintenance/upgrade_downgrade.rst:104
+#: ../../hosting/maintenance/upgrade_downgrade.rst:103
 msgid ""
 ":ref:`Restart the parsec-server container<restart_parsec_server_container>`"
 msgstr ""
