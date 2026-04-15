@@ -171,6 +171,11 @@ updates:
       timezone: Europe/Paris
     # Note these groups correspond more or less to the [dependency-groups] in server/pyproject.toml
     groups:
+      server-boto3:
+        patterns:
+          - boto3
+          - boto3-stubs
+          - botocore
       server-dev-test:
         dependency-type: development
         patterns:
@@ -189,7 +194,6 @@ updates:
         dependency-type: development
         patterns:
           - asyncpg-stubs
-          - boto3-stubs
           - types-requests
       server-dev-build:
         dependency-type: development
