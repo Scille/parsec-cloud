@@ -16,6 +16,8 @@ updates:
     labels:
       - I-Dependency
       - I-Github-Actions
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -64,6 +66,8 @@ updates:
       - dependency-name: pyo3
         versions:
           - ">=0.26.0"
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -131,6 +135,8 @@ updates:
     labels:
       - I-Dependency
       - I-Python
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -156,6 +162,8 @@ updates:
     labels:
       - I-Dependency
       - I-Python
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -212,6 +220,8 @@ updates:
     labels:
       - I-Dependency
       - I-Javascript
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -265,6 +275,8 @@ updates:
       # `electron-is-dev@3` require to build the electron app in ESM mode, but capacitor doesn't support it yet.
       - dependency-name: electron-is-dev
         versions: [^3.0.0]
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -287,6 +299,8 @@ updates:
       - I-Bindings
       - I-Dependency
       - I-Javascript
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -303,6 +317,8 @@ updates:
       - I-Bindings
       - I-Dependency
       - I-Javascript
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
@@ -318,6 +334,8 @@ updates:
     labels:
       - I-Dependency
       - I-CICD
+    cooldown:
+      default-days: 10
     schedule:
       interval: weekly
       day: monday
