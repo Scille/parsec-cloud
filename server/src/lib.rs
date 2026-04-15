@@ -61,6 +61,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<UserProfile>()?;
     m.add_class::<DevicePurpose>()?;
     m.add_class::<OpenBaoAuthType>()?;
+    m.add_class::<AdvisoryDeviceFilePrimaryProtection>()?;
 
     m.add_class::<OrganizationID>()?;
     m.add_class::<VlobID>()?;
@@ -87,6 +88,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     // Misc
     m.add_class::<ApiVersion>()?;
     m.add_class::<ValidationCode>()?;
+    m.add_class::<AdvisoryDeviceFileProtection>()?;
 
     // Testbed stuff
     #[cfg(feature = "test-utils")]
