@@ -80,7 +80,7 @@ function fetch_cargo_flags() {
 }
 
 async function build_electron_bindings(cargo_flags) {
-  const CARGO_ARGS = ['cargo', 'build', '--locked', '--verbose', '--message-format=json-render-diagnostics', '--package', 'libparsec_bindings_electron', ...cargo_flags];
+  const CARGO_ARGS = ['cargo', 'build', '--locked', '--message-format=json-render-diagnostics', '--package', 'libparsec_bindings_electron', ...cargo_flags];
   const log = await new Promise((resolve) => {
     const stream = fs.createWriteStream(BUILD_LOG);
     stream.on('ready', () => resolve(stream));
@@ -98,7 +98,7 @@ function process_rust_lib() {
   const NEON_ARGS = [];
   // On Windows only .exe/.bat can be directly executed, `npx.cmd` is the bat version of `npx`
   on_windows() ? NEON_ARGS.push("npx.cmd") : NEON_ARGS.push("npx"),
-  NEON_ARGS.push(...['cargo-cp-artifact', '--npm', 'cdylib', OUTPUT_DIR + '/libparsec.node', '--']);
+    NEON_ARGS.push(...['cargo-cp-artifact', '--npm', 'cdylib', OUTPUT_DIR + '/libparsec.node', '--']);
   if (on_windows()) {
     // `cat` does not exist by default on Windows
     NEON_ARGS.push(...['type', path.win32.normalize(BUILD_LOG)]);
