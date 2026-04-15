@@ -2,6 +2,7 @@
 
 .. _doc_hosting_stats_organization:
 
+===============================
 Extract organization statistics
 ===============================
 

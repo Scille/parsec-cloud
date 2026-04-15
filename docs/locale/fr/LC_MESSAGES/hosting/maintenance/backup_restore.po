@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.4.0-a.7+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-14 16:11+0200\n"
-"PO-Revision-Date: 2025-04-14 16:12+0200\n"
+"POT-Creation-Date: 2026-04-15 17:24+0200\n"
+"PO-Revision-Date: 2026-04-15 17:33+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -16,13 +16,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.17.0\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.9\n"
 
-#: ../../hosting/maintenance/backup_restore.rst:6
+#: ../../hosting/maintenance/backup_restore.rst:7
 msgid "Backup and restore"
 msgstr "Sauvegarde et restauration"
 
-#: ../../hosting/maintenance/backup_restore.rst:10
+#: ../../hosting/maintenance/backup_restore.rst:11
 msgid ""
 "This section assumes that you deployed Parsec following the instructions "
 "from :ref:`Server deployment section <doc_hosting_deployment>`. If you "
@@ -34,11 +34,11 @@ msgstr ""
 "serveur<doc_hosting_deployment>`. Si vous avez déployé Parsec différemment, "
 "vous devrez peut-être adapter cette section à votre déploiement personnalisé."
 
-#: ../../hosting/maintenance/backup_restore.rst:16
+#: ../../hosting/maintenance/backup_restore.rst:17
 msgid "Notes on consistency"
 msgstr "Notes sur la cohérence de données"
 
-#: ../../hosting/maintenance/backup_restore.rst:18
+#: ../../hosting/maintenance/backup_restore.rst:19
 msgid ""
 "User data, stored in the S3 object storage, is accessible thanks to the "
 "metadata stored on the PostgreSQL database. Metadata contains references to "
@@ -49,13 +49,13 @@ msgstr ""
 "PostgreSQL. Les métadonnées contiennent des références à des blocs de "
 "fichiers stockés dans le stockage d'objets."
 
-#: ../../hosting/maintenance/backup_restore.rst:22
+#: ../../hosting/maintenance/backup_restore.rst:23
 msgid "During backup and restore, the following situations may occur:"
 msgstr ""
 "Pendant la sauvegarde et la restauration, les situations suivantes peuvent "
 "se produire :"
 
-#: ../../hosting/maintenance/backup_restore.rst:24
+#: ../../hosting/maintenance/backup_restore.rst:25
 msgid ""
 "The SQL database is up to date, but some objects are missing in the S3 "
 "object storage: this means that some files listed in the metadata may be "
@@ -70,7 +70,7 @@ msgstr ""
 "manquants). Les fichiers concernés seront toujours affichés dans "
 "l'application, mais ils ne pourront pas être téléchargés ou ouverts."
 
-#: ../../hosting/maintenance/backup_restore.rst:30
+#: ../../hosting/maintenance/backup_restore.rst:31
 msgid ""
 "The SQL database is not up to date, but all objects are present: this means "
 "that there will be some objects that are not referenced by any file. Non-"
@@ -83,7 +83,7 @@ msgstr ""
 "seront donc ignorés par Parsec. Tous les fichiers affichés sur l'application "
 "restent accessibles."
 
-#: ../../hosting/maintenance/backup_restore.rst:35
+#: ../../hosting/maintenance/backup_restore.rst:36
 msgid ""
 "The SQL database is not up to date and some objects are not referenced: In "
 "this scenario, the effect of the previous two points are cumulative."
@@ -92,7 +92,7 @@ msgstr ""
 "référencés : Dans ce scénario, les effets des deux points précédents sont "
 "cumulatifs."
 
-#: ../../hosting/maintenance/backup_restore.rst:38
+#: ../../hosting/maintenance/backup_restore.rst:39
 msgid ""
 "It should be noted that no block is deleted or modified from object storage, "
 "even in the case of deleting a file or folder for historical purposes."
@@ -101,7 +101,7 @@ msgstr ""
 "d'objets, même dans le cas de la suppression d'un fichier ou d'un dossier à "
 "des fins historiques."
 
-#: ../../hosting/maintenance/backup_restore.rst:43
+#: ../../hosting/maintenance/backup_restore.rst:44
 msgid ""
 "To maintain data consistency between databases, it is therefore necessary to "
 "**back up the SQL database before backing up the object database**, since "
@@ -113,7 +113,7 @@ msgstr ""
 "base de données objet**, car les objets en trop n'ont pas de conséquences. "
 "La date de sauvegarde à considérer est celle de la base de données SQL."
 
-#: ../../hosting/maintenance/backup_restore.rst:48
+#: ../../hosting/maintenance/backup_restore.rst:49
 msgid ""
 "In conclusion, it is not necessary to guarantee exact consistency between "
 "the databases, as the SQL database is the authoritative source, but it is "
@@ -126,11 +126,11 @@ msgstr ""
 "base de données SQL soit antérieure à la sauvegarde de la base de données "
 "objet."
 
-#: ../../hosting/maintenance/backup_restore.rst:53
+#: ../../hosting/maintenance/backup_restore.rst:54
 msgid "PostgreSQL database"
 msgstr "Base de données PostgreSQL"
 
-#: ../../hosting/maintenance/backup_restore.rst:55
+#: ../../hosting/maintenance/backup_restore.rst:56
 msgid ""
 "Before starting, make sure you have the necessary permissions to perform "
 "these operations and that the PostgreSQL service is running. If you "
@@ -142,34 +142,31 @@ msgstr ""
 "en cours d'exécution. Si vous rencontrez des erreurs, vérifiez les messages "
 "d'erreur pour savoir ce qui ne va pas."
 
-#: ../../hosting/maintenance/backup_restore.rst:60
+#: ../../hosting/maintenance/backup_restore.rst:61
 msgid "Backing up the database"
 msgstr "Sauvegarde de la base de données"
 
-#: ../../hosting/maintenance/backup_restore.rst:62
+#: ../../hosting/maintenance/backup_restore.rst:63
 msgid "You can create a backup file of the database using ``pg_dump``."
 msgstr ""
 "Vous pouvez créer un fichier de sauvegarde de la base de données en "
 "utilisant `pg_dump``."
 
-#: ../../hosting/maintenance/backup_restore.rst:64
+#: ../../hosting/maintenance/backup_restore.rst:65
 msgid "Open a terminal or command prompt and run the following command:"
 msgstr ""
 "Ouvrez un terminal ou une invite de commande et exécutez la commande "
 "suivante :"
 
-#: ../../hosting/maintenance/backup_restore.rst:70
-#: ../../hosting/maintenance/backup_restore.rst:95
+#: ../../hosting/maintenance/backup_restore.rst:71
 msgid "Replacing:"
 msgstr "Remplacement :"
 
-#: ../../hosting/maintenance/backup_restore.rst:72
-#: ../../hosting/maintenance/backup_restore.rst:97
+#: ../../hosting/maintenance/backup_restore.rst:73
 msgid "``$USER``: your PostgreSQL username"
 msgstr "``$USER``: votre nom d'utilisateur PostgreSQL"
 
-#: ../../hosting/maintenance/backup_restore.rst:73
-#: ../../hosting/maintenance/backup_restore.rst:98
+#: ../../hosting/maintenance/backup_restore.rst:74
 msgid ""
 "``$HOST``: the address of the database host (use ``localhost`` if the "
 "database is on your computer)"
@@ -177,8 +174,7 @@ msgstr ""
 "``$HOST`` : l'adresse de l'hôte de la base de données (utilisez "
 "``localhost`` si la base de données est sur votre ordinateur)"
 
-#: ../../hosting/maintenance/backup_restore.rst:74
-#: ../../hosting/maintenance/backup_restore.rst:99
+#: ../../hosting/maintenance/backup_restore.rst:75
 msgid ""
 "``$PORT``: the port on which PostgreSQL listens (by default, this is usually "
 "port ``5432``)"
@@ -186,17 +182,16 @@ msgstr ""
 "``$PORT`` : le port sur lequel PostgreSQL écoute (par défaut, c'est "
 "généralement le port ``5432``)"
 
-#: ../../hosting/maintenance/backup_restore.rst:75
-#: ../../hosting/maintenance/backup_restore.rst:100
+#: ../../hosting/maintenance/backup_restore.rst:76
 msgid "``$DATABASE_NAME``: the name of the database"
 msgstr "``$DATABASE_NAME`` : le nom de la base de données"
 
-#: ../../hosting/maintenance/backup_restore.rst:77
+#: ../../hosting/maintenance/backup_restore.rst:78
 msgid "If your database has a password, you will be prompted to enter it."
 msgstr ""
 "Si votre base de données a un mot de passe, vous serez invité à le saisir."
 
-#: ../../hosting/maintenance/backup_restore.rst:79
+#: ../../hosting/maintenance/backup_restore.rst:80
 msgid ""
 "The above command creates a file ``backup.sql`` which contains all the data "
 "and structure of the SQL database."
@@ -204,11 +199,11 @@ msgstr ""
 "La commande ci-dessus crée un fichier ``backup.sql`` qui contient toutes les "
 "données et la structure de la base de données SQL."
 
-#: ../../hosting/maintenance/backup_restore.rst:83
+#: ../../hosting/maintenance/backup_restore.rst:84
 msgid "Restoring the database"
 msgstr "Restauration de la base de données"
 
-#: ../../hosting/maintenance/backup_restore.rst:85
+#: ../../hosting/maintenance/backup_restore.rst:86
 msgid ""
 "To restore the database from the backup file, you must first ensure that the "
 "target database exists. If it doesn't, create it with PostgreSQL."
@@ -218,46 +213,58 @@ msgstr ""
 "pas le cas, créez-la avec PostgreSQL."
 
 #: ../../hosting/maintenance/backup_restore.rst:89
-msgid "Database creation (if needed)"
-msgstr "Création d'une base de données (si nécessaire)"
+msgid "Create the database (if needed)"
+msgstr "Créez la base de données (si nécessaire)"
 
-#: ../../hosting/maintenance/backup_restore.rst:103
-msgid "Database restore"
-msgstr "Restauration de la base de données"
+#: ../../hosting/maintenance/backup_restore.rst:91
+msgid "To create the database, run the following command:"
+msgstr "Pour créer la base de données, exécutez la commande suivante :"
 
-#: ../../hosting/maintenance/backup_restore.rst:105
+#: ../../hosting/maintenance/backup_restore.rst:97
 msgid ""
-"If the target database exists, you can restore the database with the backup "
-"file with a single command depending on the format of the backup: use "
+"Where ``$USER`` is your PostgreSQL username, ``$HOST`` is the database host "
+"address (use ``localhost`` if the database is on your computer), ``$PORT`` "
+"is the port on which PostgreSQL listens (usually ``5432``) and "
+"``$DATABASE_NAME`` is the database name."
+msgstr ""
+"Où ``$USER`` correspond à votre nom d'utilisateur PostgreSQL, ``$HOST`` à "
+"l'adresse de l'hôte de la base de données (utilisez « localhost » si la base "
+"de données se trouve sur votre ordinateur), ``$PORT`` au port sur lequel "
+"PostgreSQL écoute (généralement « 5432 ») et ``$DATABASE_NAME`` au nom de la "
+"base de données."
+
+#: ../../hosting/maintenance/backup_restore.rst:101
+msgid ""
+"After making sure the database exists, you can restore the database with the "
+"backup file with a single command depending on the format of the backup: use "
 "``psql`` for SQL files or ``pg_restore`` for binary files."
 msgstr ""
-"Si la base de données cible existe, vous pouvez restaurer la base de données "
-"avec le fichier de sauvegarde avec une seule commande en fonction du format "
-"de la sauvegarde : utilisez ``psql`` pour les fichiers SQL ou ``pg_restore`` "
-"pour les fichiers binaires."
+"Après avoir vérifié l'existence de la base de données, vous pouvez restaurer "
+"la base de données avec le fichier de sauvegarde avec une seule commande en "
+"fonction du format de la sauvegarde : utilisez ``psql`` pour les fichiers "
+"SQL ou ``pg_restore`` pour les fichiers binaires."
 
-#: ../../hosting/maintenance/backup_restore.rst:109
-msgid "For an SQL file, as described in the previous section, use:"
-msgstr ""
-"Pour un fichier SQL, comme décrit dans la section précédente, utilisez :"
+#: ../../hosting/maintenance/backup_restore.rst:105
+msgid "For an SQL file, as described above, use:"
+msgstr "Pour un fichier SQL, comme décrit ci-dessus, utilisez :"
 
-#: ../../hosting/maintenance/backup_restore.rst:115
+#: ../../hosting/maintenance/backup_restore.rst:111
 msgid "For a binary file (if you used ``pg_dump`` with ``-Fc`` option), use:"
 msgstr ""
 "Pour un fichier binaire (si vous avez utilisé ``pg_dump`` avec l'option ``-"
 "Fc``), utilisez :"
 
-#: ../../hosting/maintenance/backup_restore.rst:123
+#: ../../hosting/maintenance/backup_restore.rst:119
 msgid "Object storage (S3)"
 msgstr "Stockage d'objets (S3)"
 
-#: ../../hosting/maintenance/backup_restore.rst:125
+#: ../../hosting/maintenance/backup_restore.rst:121
 msgid "This section covers S3 object storage backup and restore in AWS."
 msgstr ""
 "Cette section traite de la sauvegarde et de la restauration du stockage "
 "d'objets S3 dans AWS."
 
-#: ../../hosting/maintenance/backup_restore.rst:127
+#: ../../hosting/maintenance/backup_restore.rst:123
 msgid ""
 "Before starting, make sure your AWS account has the necessary permissions to "
 "access the S3 bucket and perform these operations."
@@ -266,30 +273,30 @@ msgstr ""
 "autorisations nécessaires pour accéder au seau S3 et effectuer ces "
 "opérations."
 
-#: ../../hosting/maintenance/backup_restore.rst:131
+#: ../../hosting/maintenance/backup_restore.rst:127
 msgid "Backing up the bucket"
 msgstr "Sauvegarde du bucket"
 
-#: ../../hosting/maintenance/backup_restore.rst:133
+#: ../../hosting/maintenance/backup_restore.rst:129
 msgid "Use ``aws`` to manage buckets compatible with Amazon's S3 service."
 msgstr ""
 "Utilisez ``aws`` pour gérer les buckets compatibles avec le service S3 "
 "d'Amazon."
 
-#: ../../hosting/maintenance/backup_restore.rst:135
+#: ../../hosting/maintenance/backup_restore.rst:131
 msgid "Synchronize the S3 bucket with a local directory:"
 msgstr "Synchroniser le bucket S3 avec un répertoire local :"
 
-#: ../../hosting/maintenance/backup_restore.rst:141
+#: ../../hosting/maintenance/backup_restore.rst:137
 msgid "Where:"
 msgstr "Où:"
 
-#: ../../hosting/maintenance/backup_restore.rst:143
-#: ../../hosting/maintenance/backup_restore.rst:161
+#: ../../hosting/maintenance/backup_restore.rst:139
+#: ../../hosting/maintenance/backup_restore.rst:157
 msgid "``s3://bucket_name`` is the path to the S3 bucket"
 msgstr "`s`3://nom_du_bucket`` est le chemin vers le bucket S3"
 
-#: ../../hosting/maintenance/backup_restore.rst:144
+#: ../../hosting/maintenance/backup_restore.rst:140
 msgid ""
 "``/path/local/backup`` is the path to the local directory where you want to "
 "store the backup"
@@ -297,7 +304,7 @@ msgstr ""
 "``/path/local/backup`` est le chemin vers le répertoire local où vous voulez "
 "stocker la sauvegarde"
 
-#: ../../hosting/maintenance/backup_restore.rst:146
+#: ../../hosting/maintenance/backup_restore.rst:142
 msgid ""
 "This command will download all files in the \"bucket_name\" bucket to the "
 "local directory specified."
@@ -305,15 +312,15 @@ msgstr ""
 "Cette commande permet de télécharger tous les fichiers du bucket « "
 "bucket_name » dans le répertoire local spécifié."
 
-#: ../../hosting/maintenance/backup_restore.rst:150
+#: ../../hosting/maintenance/backup_restore.rst:146
 msgid "Restoring the bucket"
 msgstr "Restauration du bucket"
 
-#: ../../hosting/maintenance/backup_restore.rst:152
+#: ../../hosting/maintenance/backup_restore.rst:148
 msgid "Restore all objects to an S3 bucket"
 msgstr "Restaurer tous les objets dans un bucket S3"
 
-#: ../../hosting/maintenance/backup_restore.rst:154
+#: ../../hosting/maintenance/backup_restore.rst:150
 msgid ""
 "To restore data from backup, use the ``aws s3 sync`` command in the opposite "
 "direction, i.e. from the local directory to the S3 bucket."
@@ -322,7 +329,7 @@ msgstr ""
 "``aws s3 sync`` dans la direction opposée, c'est-à-dire du répertoire local "
 "vers le bucket S3."
 
-#: ../../hosting/maintenance/backup_restore.rst:162
+#: ../../hosting/maintenance/backup_restore.rst:158
 msgid ""
 "``/path/local/backup`` is the path to the local directory where you stored "
 "the backup."
@@ -330,7 +337,7 @@ msgstr ""
 "``/path/local/backup`` est le chemin vers le répertoire local où vous avez "
 "stocké la sauvegarde."
 
-#: ../../hosting/maintenance/backup_restore.rst:164
+#: ../../hosting/maintenance/backup_restore.rst:160
 msgid ""
 "This command will send all files in the specified local directory to the "
 "\"bucket_name\" bucket."
@@ -338,7 +345,7 @@ msgstr ""
 "Cette commande enverra tous les fichiers du répertoire local spécifié dans "
 "le bucket « bucket_name »."
 
-#: ../../hosting/maintenance/backup_restore.rst:169
+#: ../../hosting/maintenance/backup_restore.rst:165
 msgid ""
 "**Incremental backup**: ``aws s3 sync`` is smart enough to copy only those "
 "files that have been modified. This makes subsequent backups faster after "

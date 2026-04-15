@@ -2,7 +2,7 @@
 
 .. _doc_hosting_freeze_users:
 
-
+============
 Freeze users
 ============
 
@@ -16,7 +16,7 @@ It is exposed in the form of HTTP routes that only requires an administration to
   The *freeze* operation is performed by a *Server administrator* and can be undone. The *revoke* operation is performed by an *Organization administrator* and cannot be undone, it is the definitive removal of the user's rights within the organization.
 
 HTTP ``/users`` route
----------------------
+=====================
 
 This route is made available as ``/administration/organizations/<raw_organization_id>/users`` and requires an administration token.
 
@@ -56,7 +56,7 @@ A successful request returns a JSON object with the following structure:
     }
 
 HTTP ``/users/freeze`` route
-----------------------------
+============================
 
 This route is made available as ``/administration/organizations/<raw_organization_id>/users/freeze`` and requires an administration token.
 
@@ -104,7 +104,7 @@ A successful request returns a JSON dictionary similar to the one below:
     }
 
 HTTP Error handling
--------------------
+===================
 
 The following errors can be returned by both ``/users`` and ``/users/freeze`` routes:
 
@@ -119,7 +119,7 @@ The following error is returned by the ``/users/freeze`` request if the user doe
 .. _note-on-user-identification:
 
 Note on user identification
----------------------------
+===========================
 
 There is a subtle difference between using **Parsec user ID** or **email address** to identify a user.
 

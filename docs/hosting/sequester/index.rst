@@ -2,8 +2,6 @@
 
 .. _doc_hosting_sequester:
 
-.. cspell:words linenos
-
 =================
 Sequester service
 =================

@@ -2,8 +2,9 @@
 
 .. _doc_hosting_maintenance_backup_restore:
 
+==================
 Backup and restore
-******************
+==================
 
 .. important::
 
@@ -85,28 +86,23 @@ Restoring the database
 To restore the database from the backup file, you must first ensure that the
 target database exists. If it doesn't, create it with PostgreSQL.
 
-Database creation (if needed)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. admonition:: Create the database (if needed)
 
-.. code-block:: shell
+  To create the database, run the following command:
 
-  createdb -U $USER -h $HOST -p $PORT "$DATABASE_NAME"
+  .. code-block:: shell
 
-Replacing:
+    createdb -U $USER -h $HOST -p $PORT "$DATABASE_NAME"
 
-* ``$USER``: your PostgreSQL username
-* ``$HOST``: the address of the database host (use ``localhost`` if the database is on your computer)
-* ``$PORT``: the port on which PostgreSQL listens (by default, this is usually port ``5432``)
-* ``$DATABASE_NAME``: the name of the database
+  Where ``$USER`` is your PostgreSQL username, ``$HOST`` is the database host address (use ``localhost``
+  if the database is on your computer), ``$PORT`` is the port on which PostgreSQL listens (usually ``5432``)
+  and ``$DATABASE_NAME`` is the database name.
 
-Database restore
-^^^^^^^^^^^^^^^^
-
-If the target database exists, you can restore the database with the backup file
+After making sure the database exists, you can restore the database with the backup file
 with a single command depending on the format of the backup: use ``psql`` for
 SQL files or ``pg_restore`` for binary files.
 
-For an SQL file, as described in the previous section, use:
+For an SQL file, as described above, use:
 
 .. code-block:: shell
 
