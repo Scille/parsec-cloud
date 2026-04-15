@@ -2,21 +2,20 @@
 
 Parsec testbed server is provided as a Docker image. The instructions below explain how to build and publish a new version of the Docker image.
 
-- [Parsec testbed server in a nutshell](#parsec-testbed-server-in-a-nutshell)
-  - [Introduction](#introduction)
-  - [Testbed server in the CI](#testbed-server-in-the-ci)
-  - [Build and Publish a new testbed server Docker image](#build-and-publish-a-new-testbed-server-docker-image)
-    - [Using GitHub Action](#using-github-action)
-    - [Locally](#locally)
-      - [Setup](#setup)
-        - [Generate a GitHub Personal Access Token](#generate-a-github-personal-access-token)
-          - [How to regenerate your token](#how-to-regenerate-your-token)
-        - [Setup Docker](#setup-docker)
-        - [Setup Docker credential store](#setup-docker-credential-store)
-          - [Setup `pass` credential store](#setup-pass-credential-store)
-        - [Authenticate to Github's Container registry](#authenticate-to-githubs-container-registry)
-      - [Build the testbed server Docker image](#build-the-testbed-server-docker-image)
-      - [Publish the testbed server Docker image](#publish-the-testbed-server-docker-image)
+- [Introduction](#introduction)
+- [Testbed server in the CI](#testbed-server-in-the-ci)
+- [Build and Publish a new testbed server Docker image](#build-and-publish-a-new-testbed-server-docker-image)
+  - [Using GitHub Action](#using-github-action)
+  - [Locally](#locally)
+    - [Setup](#setup)
+      - [Generate a GitHub Personal Access Token](#generate-a-github-personal-access-token)
+        - [How to regenerate your token](#how-to-regenerate-your-token)
+      - [Setup Docker](#setup-docker)
+      - [Setup Docker credential store](#setup-docker-credential-store)
+        - [Setup `pass` credential store](#setup-pass-credential-store)
+      - [Authenticate to Github's Container registry](#authenticate-to-githubs-container-registry)
+    - [Build the testbed server Docker image](#build-the-testbed-server-docker-image)
+    - [Publish the testbed server Docker image](#publish-the-testbed-server-docker-image)
 
 ## Introduction
 
@@ -37,7 +36,7 @@ For example, `https://github.com/Scille/parsec-cloud/blob/master/.github/workflo
 ```yaml
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.8.2-a.0.dev.20557.a5e6554
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.8.2-a.0.dev.20558.6ac9452
 ```
 
 ## Build and Publish a new testbed server Docker image
