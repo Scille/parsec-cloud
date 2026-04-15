@@ -127,7 +127,8 @@ html_theme_options = {
     "collapse_navigation": False,  # Collapse navigation (False makes it tree-like)
     "version_selector": True,  # Display a version selector below the title (only if hosted on RTD and if more than 1 active version)
     "language_selector": True,  # Display a language selector below the title (only if hosted on RTD and if more than 1 active version)
-    # 'navigation_depth': 4,  # Depth of the headers shown in the navigation bar
+    "navigation_depth": 3,  # Depth of the headers shown in the navigation bar
+    "style_external_links": True,  # Display external links with a different style
 }
 
 # The name for this set of Sphinx documents.  If None, it defaults to
