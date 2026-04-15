@@ -103,11 +103,25 @@ class OpenBaoConfig(Structure):
     auths: list[OpenBaoAuthConfig]
 
 
+class AdvisoryDeviceFilePrimaryProtection(Enum):
+    Password = EnumItemUnit()
+    Keyring = EnumItemUnit()
+    PKI = EnumItemUnit()
+    OpenBao = EnumItemUnit()
+    AccountVault = EnumItemUnit()
+
+
+class AdvisoryDeviceFileProtection(Structure):
+    primary: AdvisoryDeviceFilePrimaryProtection
+    with_totp: bool
+
+
 class ServerConfig(Structure):
     account: AccountConfig
     cryptpad: CryptPadConfig | None
     organization_bootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | None
+    advisory_device_file_protection: list[AdvisoryDeviceFileProtection]
 
 
 class GetServerConfigError(ErrorVariant):

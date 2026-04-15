@@ -108,6 +108,7 @@ pub struct ServerConfig {
     pub organization_bootstrap: OrganizationBootstrapConfig,
     pub openbao: Option<OpenBaoConfig>,
     pub cryptpad: Option<CryptPadConfig>,
+    pub advisory_device_file_protection: Vec<AdvisoryDeviceFileProtection>,
 }
 
 pub async fn get_server_config(
@@ -126,6 +127,7 @@ pub async fn get_server_config(
             organization_bootstrap,
             openbao,
             cryptpad,
+            advisory_device_file_protection,
         } => Ok(ServerConfig {
             account,
             organization_bootstrap,
@@ -136,6 +138,14 @@ pub async fn get_server_config(
                    libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Disabled => None,
                    libparsec_protocol::anonymous_server_cmds::v5::server_config::CryptPadConfig::Enabled { server_url } => Some(CryptPadConfig{ server_url }),
                 }
+            },
+            // This field has been introduced in Parsec 3.9
+            advisory_device_file_protection: match advisory_device_file_protection {
+                Maybe::Absent => vec![],
+                Maybe::Present(advisory_device_file_protection) => advisory_device_file_protection.into_iter().filter_map(|raw| {
+                    // Just skip unrecognized items for forward-compatibility
+                    raw.parse().ok()
+                }).collect(),
             },
             openbao: match openbao {
                 libparsec_protocol::anonymous_server_cmds::v5::server_config::OpenBaoConfig::Disabled => None,
