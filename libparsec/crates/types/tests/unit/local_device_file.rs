@@ -1118,3 +1118,73 @@ fn recovery_device_file(alice: &Device) {
 
     p_assert_eq!(device2, expected);
 }
+
+#[test]
+fn test_advisory_device_file_protection_parse_ok() {
+    let cases = [
+        (
+            "PASSWORD",
+            AdvisoryDeviceFilePrimaryProtection::Password,
+            false,
+        ),
+        (
+            "PASSWORD+TOTP",
+            AdvisoryDeviceFilePrimaryProtection::Password,
+            true,
+        ),
+        (
+            "KEYRING",
+            AdvisoryDeviceFilePrimaryProtection::Keyring,
+            false,
+        ),
+        (
+            "KEYRING+TOTP",
+            AdvisoryDeviceFilePrimaryProtection::Keyring,
+            true,
+        ),
+        ("PKI", AdvisoryDeviceFilePrimaryProtection::PKI, false),
+        ("PKI+TOTP", AdvisoryDeviceFilePrimaryProtection::PKI, true),
+        (
+            "OPENBAO",
+            AdvisoryDeviceFilePrimaryProtection::OpenBao,
+            false,
+        ),
+        (
+            "OPENBAO+TOTP",
+            AdvisoryDeviceFilePrimaryProtection::OpenBao,
+            true,
+        ),
+        (
+            "ACCOUNT_VAULT",
+            AdvisoryDeviceFilePrimaryProtection::AccountVault,
+            false,
+        ),
+        (
+            "ACCOUNT_VAULT+TOTP",
+            AdvisoryDeviceFilePrimaryProtection::AccountVault,
+            true,
+        ),
+    ];
+
+    for (s, expected_primary, expected_totp) in cases {
+        let parsed: AdvisoryDeviceFileProtection = s.parse().unwrap();
+        assert_eq!(parsed.primary, expected_primary, "failed for {s}");
+        assert_eq!(parsed.with_totp, expected_totp, "failed for {s}");
+        assert_eq!(parsed.as_str(), s);
+    }
+}
+
+#[test]
+fn test_advisory_device_file_protection_parse_ko() {
+    assert!("DUMMY".parse::<AdvisoryDeviceFileProtection>().is_err());
+    assert!("PASSWORD+DUMMY"
+        .parse::<AdvisoryDeviceFileProtection>()
+        .is_err());
+    assert!("DUMMY+TOTP"
+        .parse::<AdvisoryDeviceFileProtection>()
+        .is_err());
+    assert!("".parse::<AdvisoryDeviceFileProtection>().is_err());
+    assert!("TOTP+PASSWORD"
+        .parse::<AdvisoryDeviceFileProtection>()
+        .is_err());
+}
