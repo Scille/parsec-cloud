@@ -14,70 +14,94 @@
 Server Deployment
 =================
 
-This section covers how to deploy the Parsec server.
+This section describes how to deploy the **Parsec Server** on Linux.
 
-.. _Parsec: https://parsec.cloud
+The steps and requirements described in this section may vary based on your specific needs.
+It is recommended to deploy and observe performance on a pilot project prior to using in production.
 
-Requirements
-************
+.. note::
 
-- `Docker`_ and the `docker-compose`_ plugin.
-- :ref:`Parsec client <doc_userguide_install_parsec>`.
-- :ref:`Parsec CLI <doc_hosting_install_cli>`.
+  Some setup and administrative operations must be performed with **Parsec CLI** on Linux.
+  Please refer to the :ref:`Install Parsec CLI on Linux <doc_hosting_install_cli>` section.
 
-.. _Docker: https://www.docker.com
-.. _docker-compose: https://docs.docker.com/compose/
+Deployment options
+==================
 
-Preamble
-********
+Parsec offers the following deployment options:
 
-The `Parsec`_ server depends on the following external components in order to work properly:
+- :ref:`Container-Based deployment <doc_hosting_deployment_with_docker>`
+- :ref:`Direct installation on Linux server <doc_hosting_deployment_with_linux>`
 
-- A `PostgreSQL`_ database to store the metadata.
-- An `S3 object storage`_ to store the data blocks.
+.. _doc_hosting_deployment_prerequisites:
 
-  .. note::
+Prerequisites
+=============
 
-    The `Parsec`_ server need access to an ``S3 object storage``-like service, not necessarily ``AWS S3``
+The Parsec Server depends on the following components:
 
-- An `SMTP server`_ for sending emails.
-- A `TSL/SSL server certificate`_ for ``HTTPS`` communication with the clients.
-- (Optional) A `Sentry DSN` for telemetry report.
+- A `PostgreSQL`_ database to store Parsec metadata.
+- An S3-like object storage (e.g. `OpenStack Swift`_ or `Amazon S3`_) to store encrypted data.
+- An `SMTP server`_ to allow sending emails from the Parsec Server.
+- A `TSL/SSL server certificate`_ for ``HTTPS`` communication with Parsec client applications.
 
-.. _PostgreSQL: https://www.postgresql.org/
-.. _S3 object storage: https://aws.amazon.com/s3/
-.. _SMTP server: https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol
-.. _TSL/SSL server certificate: https://en.wikipedia.org/wiki/Public_key_certificate#TLS/SSL_server_certificate
-.. _Sentry DSN: https://docs.sentry.io/product/sentry-basics/concepts/dsn-explainer/
+Optionally, the following components can be used to support additional features:
 
-.. warning::
+  - A `Sentry Data Source Name (DSN)`_ to support Parsec Server telemetry reports.
+  - A `CryptPad`_ server to support document editing from Parsec client applications.
+  - An `OpenBAO`_ server to support authentication with SSO.
 
-  For security reasons, the installation of these components is outside the scope of this guide.
-  In order to securely configure and manage them, please refer to their official documentations.
+.. important::
+
+  For security reasons, installation and configuration of these components are not covered in this guide.
+  Please refer to their corresponding official documentation for instructions on how to do it.
 
   This guide provides instructions for quickly settings up mock-ups or basic installs of those components.
   Keep in mind that these instructions are provided for convenience and **should not be used in production**.
 
-Parsec testing infra
-********************
+.. _PostgreSQL: https://www.postgresql.org/
+.. _OpenStack Swift: https://docs.openstack.org/swift/latest/
+.. _Amazon S3: https://aws.amazon.com/s3/
+.. _SMTP server: https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol
+.. _TSL/SSL server certificate: https://en.wikipedia.org/wiki/Public_key_certificate#TLS/SSL_server_certificate
+.. _Sentry Data Source Name (DSN): https://docs.sentry.io/product/sentry-basics/concepts/dsn-explainer/
+.. _CryptPad: https://github.com/cryptpad/cryptpad
+.. _OpenBao: https://github.com/openbao/openbao
 
-.. _with-docker:
+.. _doc_hosting_deployment_system_requirements:
 
-With Docker
+System Requirements
+===================
+
+The following panel describes the minimum software and hardware requirements.
+
+  .. admonition:: Minimum system requirements
+
+    - **Hardware**: 1 vCPU/core with 1GB RAM
+    - **Database**: PostgreSQL v16+, 20GB for metadata storage
+    - **S3 Object Storage**: 2TB for encrypted data storage (around x100 metadata size)
+
+  .. important::
+
+    It is not recommended to deploy both **Parsec Server** and **PostgreSQL database** on a single system for
+    production use, but it is a good option for testing purposes.
+
+
+Preparation
 ===========
 
-.. _gen-tls-certs:
+.. _doc_hosting_deployment_tls_certificates:
 
-Generating the required TLS certificates
-----------------------------------------
+TLS certificates
+----------------
 
-For this guide, the required TLS certificates will be generated with a custom Certificate Authority (CA) created for this purpose.
+This section describe how to generate the required TLS certificates with a custom Certificate Authority (CA)
+created for this purpose.
 
-.. literalinclude:: setup-tls.sh
-  :language: bash
-  :linenos:
+.. warning::
 
-The script will:
+  For a production environment, you should always use certificates issued from a trusted CA.
+
+The ``setup-tls.sh`` script below will allow you to generate everything you need:
 
 1. Generate the CA key & self-signed certificate (``custom-ca.{key,crt}``).
 2. For ``parsec-s3`` and ``parsec-server`` services:
@@ -85,24 +109,26 @@ The script will:
    a. Generate the service key & Certificate Signing Request (CSR) ``parsec-{service}.{key,csr}``.
    b. Generate the certificate using the CSR and the CA.
 
-3. For the service ``parsec-server``:
+3. For ``parsec-server`` service:
 
-   a. Change the group id of the key file to ``1234`` (That is the GID used by the ``parsec-server`` container).
-   b. Change the file mode to give read permission to the group ``1234``.
+   a. Change the key file group ID to ``1234`` (the GID used by the ``parsec-server`` container).
+   b. Change the file mode to give read permission to the group ``1234``. This is required because
+      Docker Compose does not allow to mount the file with the correct permissions in the container.
 
-   .. note::
+.. literalinclude:: setup-tls.sh
+  :language: bash
+  :linenos:
 
-      This is required because ``docker-compose`` does not allow to mount the file with the correct
-      permissions in the container.
+.. _doc_hosting_deployment_setup_env_files:
 
-.. warning::
+Set up the env files
+--------------------
 
-  For production, you should use certificates issued from a trusted CA
+The easiest way to configure the Parsec Sever is by using environment variables.
+These variables can be stored in a file and sourced before running the server.
 
-The env files
--------------
-
-We split the configuration of the parsec server into multiple env files so it's simpler to understand how to configure each part.
+In this guide, the environment variables are stored into multiple files in order to
+better describe how to configure each component.
 
 The administration token
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -125,17 +151,17 @@ The script will generate a random token (:bash:`openssl rand -hex 32`) and creat
   On top of the administration token, ``gen-admin-token.sh`` also generates `FAKE_ACCOUNT_PASSWORD_ALGORITHM_SEED` which
   is a secret used to make unpredictable the password algorithm configuration returned for non-existing accounts.
 
-Database configuration
-^^^^^^^^^^^^^^^^^^^^^^
+Database env file
+^^^^^^^^^^^^^^^^^
 
-Create the file ``parsec-db.env`` with the following content to configure the access to the PostgreSQL database:
+Create the file ``parsec-db.env`` and specify the  the following content to configure the access to the PostgreSQL database:
 
 .. literalinclude:: parsec-db.env
   :language: ini
   :linenos:
 
-SMTP configuration
-^^^^^^^^^^^^^^^^^^
+SMTP env file
+^^^^^^^^^^^^^
 
 Create the file ``parsec-smtp.env`` to configure the access to the SMTP server (``mailhog`` in this case).
 
@@ -145,8 +171,8 @@ We need to set the connection information, the sender information, the default l
   :language: ini
   :linenos:
 
-S3 service configuration
-^^^^^^^^^^^^^^^^^^^^^^^^
+S3 env file
+^^^^^^^^^^^
 
 Create the file ``parsec-s3.env`` with the following content to set the URL for the S3-like service:
 
@@ -158,8 +184,8 @@ Create the file ``parsec-s3.env`` with the following content to set the URL for 
 
    We need to escape the ``:`` with a ``\`` when specifying the port of the service.
 
-Parsec server configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Parsec env file
+^^^^^^^^^^^^^^^
 
 Create the file ``parsec.env`` with the following content to configure the ``parsec-server`` service:
 
@@ -182,12 +208,31 @@ Create the file ``parsec.env`` with the following content to configure the ``par
     --administration-token TOKEN    Secret token to access the Administration API
                                     [env var: PARSEC_ADMINISTRATION_TOKEN; required]
 
-.. _the-docker-compose-file:
+.. _doc_hosting_deployment_with_docker:
 
-The docker-compose file
+Deploy with Docker
+==================
+
+This section describes how to install Parsec Server directly on Linux. This method is an
+alternative to the :ref:`Direct installation on Linux server <doc_hosting_deployment_with_linux>`.
+
+Additional Requirements
 -----------------------
 
-You can use the following `docker-compose`_ file (``parsec-server.docker.yaml``) to deploy the Parsec server for testing:
+In addition to the :ref:`base requirements <doc_hosting_deployment_prerequisites>`, you will need:
+
+- `Docker Engine`_
+- `Docker Compose`_ (plugin)
+
+.. _Docker Engine: https://docs.docker.com/engine/
+.. _Docker Compose: https://docs.docker.com/compose/
+
+.. _doc_hosting_deployment_the_docker_compose_file:
+
+The Docker Compose file
+-----------------------
+
+You can use the following Docker Compose file (``parsec-server.docker.yaml``) to deploy Parsec Server for testing:
 
 .. literalinclude:: parsec-server.docker.yaml
   :language: yaml
@@ -195,21 +240,22 @@ You can use the following `docker-compose`_ file (``parsec-server.docker.yaml``)
 
 It will setup 4 services:
 
-+---------------------+-----------------------------------------------------------------------------+
-| Service name        | Description                                                                 |
-+=====================+=============================================================================+
-| ``parsec-postgres`` | The PostgreSQL database                                                     |
-+---------------------+-----------------------------------------------------------------------------+
-| ``parsec-s3``       | The Object Storage service                                                  |
-+---------------------+-----------------------------------------------------------------------------+
-| ``parsec-smtp``     | A mock SMTP server                                                          |
-+---------------------+-----------------------------------------------------------------------------+
-| ``parsec-server``   | The Parsec server                                                           |
-+---------------------+-----------------------------------------------------------------------------+
-| ``parsec-proxy``    | A Nginx proxy server, used as an example to configure a reverse proxy.      |
-|                     |                                                                             |
-|                     | Learn more about :ref:`using parsec behind a reverse proxy<behind_a_proxy>` |
-+---------------------+-----------------------------------------------------------------------------+
++---------------------+-----------------------------------------------------------------------------------+
+| Service name        | Description                                                                       |
++=====================+===================================================================================+
+| ``parsec-postgres`` | The PostgreSQL database                                                           |
++---------------------+-----------------------------------------------------------------------------------+
+| ``parsec-s3``       | The Object Storage service                                                        |
++---------------------+-----------------------------------------------------------------------------------+
+| ``parsec-smtp``     | A mock SMTP server                                                                |
++---------------------+-----------------------------------------------------------------------------------+
+| ``parsec-server``   | The Parsec Server                                                                 |
++---------------------+-----------------------------------------------------------------------------------+
+| ``parsec-proxy``    | A Nginx proxy server, used as an example to configure a reverse proxy.            |
+|                     |                                                                                   |
+|                     | Learn more about                                                                  |
+|                     | :ref:`using Parsec behind a reverse proxy<doc_hosting_deployment_behind_a_proxy>` |
++---------------------+-----------------------------------------------------------------------------------+
 
 Starting the services
 ---------------------
@@ -253,7 +299,8 @@ To bootstrap the database we just need to apply the migrations with:
 Create the S3 Bucket
 ^^^^^^^^^^^^^^^^^^^^
 
-Access the console at https://127.0.0.1:9090, you will need to use the credential specified in the ``docker-compose`` file at :yaml:`services.parsec-s3.environment.MINIO_ROOT_{USER,PASSWORD}`.
+Access the console at https://127.0.0.1:9090. You will need to use the credential specified in the Docker Compose file
+(``parsec-server.docker.yaml``) at :yaml:`services.parsec-s3.environment.MINIO_ROOT_{USER,PASSWORD}`.
 
 Go to https://127.0.0.1:9090/buckets/add-bucket to create a new bucket named ``parsec`` with the features ``object locking`` toggled on.
 
@@ -274,23 +321,25 @@ You can test ``mailhog`` with:
 
 You can then check if the email is present in the web interface at http://127.0.0.1:8025
 
-On Bare Metal
-=============
+.. _doc_hosting_deployment_with_linux:
 
-If you don't want to install Parsec server via Docker, you can install it on bare metal.
+Deploy with Linux
+=================
 
-Requirements
-------------
+This section describes how to install Parsec Server directly on Linux. This method is an
+alternative to the :ref:`Container-Based deployment <doc_hosting_deployment_with_docker>`.
+
+Additional Requirements
+-----------------------
+
+In addition to the :ref:`base requirements <doc_hosting_deployment_prerequisites>`, you will need:
 
 - Python v3.12 with ``pip`` and ``venv`` modules
-- A S3 like object storage endpoint.
-- A postgres-16 database endpoint.
-- A TLS certificate & key for the server.
 
 Configure the environment
 -------------------------
 
-1. Configure the env files, follow `the env files`_.
+1. Configure the env files, follow :ref:`Set up the env files <doc_hosting_deployment_setup_env_files>`.
 
 Installation
 ------------
@@ -345,7 +394,7 @@ Start the server
     source parsec.env
     set +a
 
-    # Start the parsec server.
+    # Start Parsec Server.
     python -m parsec run
 
 2. Execute the wrapper script ``run-parsec-server``
@@ -356,11 +405,11 @@ Start the server
     Otherwise, you need to execute it with the ``bash`` shell (``bash run-parsec-server``).
 
 
-Start using Parsec server
-*************************
+Start using Parsec Server
+=========================
 
 Create the first organization
-=============================
+-----------------------------
 
 .. code-block:: bash
 
@@ -376,7 +425,7 @@ Create the first organization
 Save the link after ``Bootstrap organization url:`` you will need it to create the first user (owner) of the organization.
 
 Add the first user to the organization
-======================================
+--------------------------------------
 
 First, start ``parsec`` with the custom CA:
 
@@ -387,10 +436,10 @@ First, start ``parsec`` with the custom CA:
 
 After that go to ``Menu``/``Join an organization`` (or ``CTRL+O``) and paste the link from before (should already be filled in the text field). Follow the instructions to create the first user of the organization.
 
-.. _behind_a_proxy:
+.. _doc_hosting_deployment_behind_a_proxy:
 
 Running behind a reverse proxy
-******************************
+==============================
 
 To run Parsec behind a reverse proxy you will need to add the option ``--proxy-trusted-address`` or set the environment variable ``PARSEC_PROXY_TRUSTED_ADDRESS`` to the address of the reverse proxy (e.g.: ``localhost``).
 
@@ -402,7 +451,7 @@ If this option is not set, the gunicorn/uvicorn ``FORWARDED_ALLOW_IPS`` environm
 
   Example: Use the option ``--proxy-trusted-address '::1,10.0.0.42'`` will trust the address ``::1`` and ``10.0.0.42``
 
-An example of a reverse proxy configuration for ``nginx`` can be found in :ref:`the docker compose file <the-docker-compose-file>`:
+An example of a reverse proxy configuration for ``nginx`` can be found in :ref:`the Docker Compose file <doc_hosting_deployment_the_docker_compose_file>`:
 
 .. literalinclude:: parsec-server.docker.yaml
   :language: yaml
@@ -417,7 +466,7 @@ The provided configuration for ``nginx`` is:
   :emphasize-lines: 10,19-22,25,28
   :linenos:
 
-It configures Nginx to serve the domain ``example.com`` by listening on port 80 and 443, and proxy the requests to the Parsec server.
+It configures Nginx to serve the domain ``example.com`` by listening on port 80 and 443, and proxy the requests to the Parsec Server.
 
 The important takeaways are:
 
@@ -435,41 +484,43 @@ The important takeaways are:
 - Set the header ``host`` to the accessible address. Here we force the value to be ``example.com``, but you can set it to ``$host`` like for ``X-Forwarded-Host``.
 
 TLS Recommendation
-******************
+==================
 
 We recommend that connections to the service are made using a TLS layer.
-If you are using a :ref:`reverse proxy<behind_a_proxy>` refer to it's documentation on how to configure TLS:
+If you are using a :ref:`reverse proxy<doc_hosting_deployment_behind_a_proxy>` refer to it's documentation on how to configure TLS:
 
 - `Nginx SSL module configuration <https://nginx.org/en/docs/http/ngx_http_ssl_module.html>`_
 - `Apache httpd SSL Howto <https://httpd.apache.org/docs/current/en/ssl/ssl_howto.html>`__
 - `Traefik TLS configuration <https://doc.traefik.io/traefik/https/tls>`__
 
-Or if you do not use a reverse proxy, see how to configure :ref:`TLS on the server <server-tls-config>`
+Or if you do not use a reverse proxy, see how to configure :ref:`TLS on the server <doc_hosting_deployment_tls_certificates>`
 
-.. _server-tls-config:
+.. _doc_hosting_deployment_server-tls-config:
 
 TLS Server configuration
-************************
+========================
 
-We recommend that when user directly connects to the server (i.e. without using a :ref:`reverse proxy<behind_a_proxy>`)
+We recommend that when user directly connects to the server (i.e. without using a :ref:`reverse proxy<doc_hosting_deployment_behind_a_proxy>`)
 to configure the TLS settings on the server.
 
 We provide 3 options to configure the TLS connection:
 
 .. cspell: ignore Recommandations, sécurité
 
-- ``--ssl-keyfile [env var: PARSEC_SSL_KEYFILE]``: The TLS key file
-- ``--ssl-certfile [env var: PARSEC_SSL_CERTFILE]``: The TLS certificate file
-- ``--ssl-ciphers [env var: PARSEC_SSL_CIPHERS]``: A list of ciphers that can be used when the client & server negotiate which algorithm to use when doing the TLS handcheck
+- ``--ssl-keyfile`` (``PARSEC_SSL_KEYFILE``): The TLS key file
+- ``--ssl-certfile`` (``PARSEC_SSL_CERTFILE``): The TLS certificate file
+- ``--ssl-ciphers`` (``PARSEC_SSL_CIPHERS``): A list of ciphers that can be used when the client & server negotiate which algorithm to use when doing the TLS handcheck
 
   .. note::
 
-    You are not required to provide the ciphers list as we use a default list that was recommended by the `French Cybersecurity Agency (ANSSI) <https://cyber.gouv.fr/en>`__ in `Recommandations de sécurité relatives à TLS <anssi-reco-tls_>`_
+    You are not required to provide the ciphers list as we use a default list that was recommended by the
+    `French Cybersecurity Agency (ANSSI) <https://cyber.gouv.fr/en>`__ in
+    `Recommandations de sécurité relatives à TLS <doc_hosting_deployment_anssi_reco_tls_>`_
 
-.. _anssi-reco-tls: https://cyber.gouv.fr/sites/default/files/2017/07/anssi-guide-recommandations_de_securite_relatives_a_tls-v1.2.pdf
+.. _doc_hosting_deployment_anssi_reco_tls: https://cyber.gouv.fr/sites/default/files/2017/07/anssi-guide-recommandations_de_securite_relatives_a_tls-v1.2.pdf
 
 .. hint::
 
-   If you followed the installation :ref:`using docker <with-docker>`,
-   you should only have to replace the file ``parsec-server.crt`` and ``parsec-server.key`` that where generated during `Generating the required TLS certificates`_.
-   The env variable ``PARSEC_SSL_KEYFILE`` and ``PARSEC_SSL_CERTFILE`` are already configured in ``parsec.env`` that was defined in `Parsec server configuration`_.
+   If you followed the installation described in `Deploy with Docker`_,
+   you should only have to replace the file ``parsec-server.crt`` and ``parsec-server.key`` that where generated on section `TLS certificates`_.
+   The env variable ``PARSEC_SSL_KEYFILE`` and ``PARSEC_SSL_CERTFILE`` are already configured in ``parsec.env`` that was defined in `Parsec env file`_.
