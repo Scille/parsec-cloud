@@ -351,7 +351,9 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
     ROOT_DIR / "docs/hosting/deployment/index.rst": {
-        Tool.PostgreSQL: [ReplaceRegex(r"postgres-\d+", only_major_version("postgres-{version}"))],
+        Tool.PostgreSQL: [
+            ReplaceRegex(r"PostgreSQL v\d+", only_major_version("PostgreSQL v{version}"))
+        ],
         Tool.Python: [
             ReplaceRegex(r"- Python v[0-9.]+", hide_patch_version("- Python v{version}")),
         ],
