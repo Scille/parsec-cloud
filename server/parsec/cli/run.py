@@ -9,7 +9,14 @@ from typing import Any
 
 import click
 
-from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey, TrustAnchor
+from parsec._parsec import (
+    ActiveUsersLimit,
+    AdvisoryDeviceFileProtection,
+    EmailAddress,
+    ParsecAddr,
+    SecretKey,
+    TrustAnchor,
+)
 from parsec._version import __version__ as server_version
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
@@ -193,6 +200,24 @@ password to gain access to his vault).
 """,
     type=click.Choice(AccountConfig),
     default=AccountConfig.DISABLED,
+)
+@click.option(
+    "--advisory-device-file-protection",
+    "advisory_device_file_protection",
+    envvar="PARSEC_ADVISORY_DEVICE_FILE_PROTECTION",
+    show_envvar=True,
+    multiple=True,
+    type=AdvisoryDeviceFileProtection.from_str,
+    metavar="STRATEGY",
+    help="""Advisory device file protection to recommend to clients.
+
+Can be specified multiple times to recommend multiple strategies.
+
+Allowed values: PASSWORD, PASSWORD+TOTP, KEYRING, KEYRING+TOTP, PKI,
+PKI+TOTP, OPENBAO, OPENBAO+TOTP, ACCOUNT_VAULT, ACCOUNT_VAULT+TOTP.
+
+When not specified, no recommendation is made (all strategies accepted).
+""",
 )
 @click.option(
     "--cryptpad-server-url",
@@ -569,6 +594,7 @@ async def run_cmd(
     blockstore: BaseBlockStoreConfig,
     administration_token: str,
     account_config: AccountConfig,
+    advisory_device_file_protection: tuple[AdvisoryDeviceFileProtection, ...],
     cryptpad_server_url: str | None,
     openbao_server_url: str | None,
     openbao_secret_mount_path: str,
@@ -718,6 +744,7 @@ async def run_cmd(
             server_addr=server_addr,
             debug=debug,
             account_config=account_config,
+            advisory_device_file_protection=advisory_device_file_protection,
             cryptpad_config=cryptpad_config,
             openbao_config=openbao_config,
             scws_config=scws_config,

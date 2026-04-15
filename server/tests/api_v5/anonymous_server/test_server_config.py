@@ -2,12 +2,17 @@
 
 import pytest
 
-from parsec._parsec import OpenBaoAuthType, anonymous_server_cmds
+from parsec._parsec import (
+    AdvisoryDeviceFilePrimaryProtection,
+    AdvisoryDeviceFileProtection,
+    OpenBaoAuthType,
+    anonymous_server_cmds,
+)
 from parsec.config import AccountConfig, CryptPadConfig, OpenBaoAuthConfig, OpenBaoConfig
 from tests.common import AnonymousServerRpcClient, Backend, HttpCommonErrorsTester
 
 
-@pytest.mark.parametrize("kind", ("default", "custom"))
+@pytest.mark.parametrize("kind", ("default", "custom", "with_advisory_device_file_protection"))
 async def test_anonymous_server_server_config_ok(
     backend: Backend,
     anonymous_server: AnonymousServerRpcClient,
@@ -20,6 +25,7 @@ async def test_anonymous_server_server_config_ok(
                 organization_bootstrap=anonymous_server_cmds.latest.server_config.OrganizationBootstrapConfig.WITH_BOOTSTRAP_TOKEN,
                 cryptpad=anonymous_server_cmds.latest.server_config.CryptPadConfigDisabled(),
                 openbao=anonymous_server_cmds.latest.server_config.OpenBaoConfigDisabled(),
+                advisory_device_file_protection=[],
             )
 
         case "custom":
@@ -66,6 +72,25 @@ async def test_anonymous_server_server_config_ok(
                         ),
                     ],
                 ),
+                advisory_device_file_protection=[],
+            )
+
+        case "with_advisory_device_file_protection":
+            backend.config.advisory_device_file_protection = (
+                AdvisoryDeviceFileProtection(
+                    primary=AdvisoryDeviceFilePrimaryProtection.PASSWORD, with_totp=True
+                ),
+                AdvisoryDeviceFileProtection(
+                    primary=AdvisoryDeviceFilePrimaryProtection.PKI, with_totp=False
+                ),
+            )
+
+            expected_rep = anonymous_server_cmds.latest.server_config.RepOk(
+                account=anonymous_server_cmds.latest.server_config.AccountConfig.DISABLED,
+                organization_bootstrap=anonymous_server_cmds.latest.server_config.OrganizationBootstrapConfig.WITH_BOOTSTRAP_TOKEN,
+                cryptpad=anonymous_server_cmds.latest.server_config.CryptPadConfigDisabled(),
+                openbao=anonymous_server_cmds.latest.server_config.OpenBaoConfigDisabled(),
+                advisory_device_file_protection=["PASSWORD+TOTP", "PKI"],
             )
 
         case unknown:
