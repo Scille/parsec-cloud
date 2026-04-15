@@ -89,6 +89,11 @@ jobs:
         working-directory: client
         timeout-minutes: 5
 
+      - name: Check knip
+        run: npm run knip
+        working-directory: client
+        timeout-minutes: 2
+
       - name: Setup cache-key
         id: cache-key
         run: >-

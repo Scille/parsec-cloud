@@ -187,6 +187,7 @@ libnss
 librsvg
 libsodium
 linkcheck
+lintignore
 literalinclude
 liveplay
 Ljava
