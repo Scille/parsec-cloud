@@ -148,7 +148,7 @@ pub(super) fn certificates() -> InstalledCertificates {
 /// (tl;dr: run in a PowerShell: `& libparsec\crates\platform_pki\examples\import_testpki_windows.ps1`).
 #[cfg_attr(not(target_os = "windows"), expect(unused))]
 pub(super) async fn initialize_pki_system() -> PkiSystem {
-    #[cfg(all(not(target_arch = "wasm32"), not(feature = "force-scws-on-native")))]
+    #[cfg(not(target_arch = "wasm32"))]
     {
         let pki = PkiSystem::init(std::path::Path::new(""), None)
             .await
@@ -183,7 +183,7 @@ pub(super) async fn initialize_pki_system() -> PkiSystem {
 
         pki
     }
-    #[cfg(any(target_arch = "wasm32", feature = "force-scws-on-native"))]
+    #[cfg(target_arch = "wasm32")]
     {
         // TODO:
         // - Get the Parsec server URL from an environment variable
