@@ -290,7 +290,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         metadata_size = 0
         data_size = 0
         for realm in org.realms.values():
-            if realm.created_on <= at:
+            if not realm.is_deleted and realm.created_on <= at:
                 realms += 1
         for realm in org.realms.values():
             for vlob in realm.vlobs.values():

@@ -1246,9 +1246,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         # All checks are good, now we do the actual deletion
 
         realm.is_deleted = True
-        # For simplicity, we don't actually remove vlobs/blocks/keys bundle, as
-        # the `is_deleted` flag should be enough to simulate this behavior from
-        # the client point of view.
+        realm.vlobs = {}
+        org.blocks = {k: v for k, v in org.blocks.items() if v.realm_id != realm_id}
 
     @override
     async def list_deletion_candidates(

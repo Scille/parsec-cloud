@@ -46,7 +46,7 @@ my_realms AS (
     FROM realm
     INNER JOIN my_org
         ON realm.organization = my_org._id
-    WHERE realm.created_on <= $at
+    WHERE realm.status != 'DELETED' AND realm.created_on <= $at
 )
 
 SELECT
