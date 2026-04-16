@@ -4,10 +4,15 @@ History
 .. towncrier release notes start
 
 
-Parsec v3.7.10-rc.1 (2026-04-15)
+Parsec v3.7.10-rc.2 (2026-04-16)
 --------------------------------
 
-No significant changes.
+Bugfixes
+~~~~~~~~
+
+* Fix Linux Snap version crashing during login with CPU not supporting AVX-512
+  instructions
+  (`#12445 <https://github.com/Scille/parsec-cloud/issues/12445>`__)
 
 
 Parsec v3.7.1 (2025-12-11)
