@@ -13,3 +13,4 @@ Troubleshooting
     cannot_login_customer_area
     macos_finder_errors
     ms_filename_too_long
+    where_to_find_log_files
