@@ -43,6 +43,7 @@ async def pki_init_for_native(
 async def pki_init_for_scws(
     config_dir: Ref[Path],
     parsec_addr: ParsecAddr,
+    scwsapi_js_location: Ref[str],
 ) -> Result[None, PkiSystemInitError]:
     raise NotImplementedError
 
