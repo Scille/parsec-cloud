@@ -27060,6 +27060,10 @@ fn pki_init_for_scws(mut cx: FunctionContext) -> JsResult<JsPromise> {
             }
         }
     };
+    let scwsapi_js_location = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -27068,7 +27072,8 @@ fn pki_init_for_scws(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::pki_init_for_scws(&config_dir, parsec_addr).await;
+            let ret =
+                libparsec::pki_init_for_scws(&config_dir, parsec_addr, &scwsapi_js_location).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
