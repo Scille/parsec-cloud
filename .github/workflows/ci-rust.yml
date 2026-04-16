@@ -76,6 +76,20 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
+      # Rust fmt is fast and doesn't use cache, so run it as early as possible for early exist
+      - name: Check rust code format
+        run: cargo fmt --check --all
+        timeout-minutes: 2
+
+      # SQL lint is fast and doesn't use cache, so run it as early as possible for early exist
+      - name: SQL lint
+        # Cannot use `./misc/lint_sql.py` here since it would require us to install the
+        # whole Python server project.
+        shell: bash -eux {0}
+        run: |
+          pipx install sqlfluff
+          sqlfluff lint --disable-progress-bar --config libparsec/crates/platform_storage/src/native/sql/.sqlfluff  libparsec/crates/platform_storage/src/native/sql/
+
       - uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # pin v1.15.4
         with:
           # We setup the cache by hand, see below
@@ -93,15 +107,6 @@ jobs:
           key: ${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}
         timeout-minutes: 5
 
-      # Install fuse
-      - name: Install build dependencies
-        shell: bash
-        run: |
-          until sudo apt-get -y install fuse3 libfuse3-dev libdbus-1-dev; do
-            echo "Fail to install APT package retrying ...";
-          done
-        timeout-minutes: 5
-
       # Install cargo nextest command
       - uses: taiki-e/install-action@0abfcd587b70a713fdaa7fb502c885e2112acb15 # pin v2.75.7
         with:
@@ -117,6 +122,18 @@ jobs:
             done
           ) | tee -a $GITHUB_OUTPUT
         timeout-minutes: 2
+
+      - name: Retrieve clippy args
+        id: clippy-args
+        shell: bash
+        run: yq -r '"args=" + (.repos | map(.hooks) | flatten | map(select(.id == "clippy"))[0] | .args | join(" "))' .pre-commit-config.yaml | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1
+
+      # Clippy basically compile the project, hence it's faster to run it in
+      # the job where compilation cache is reused !
+      - name: Check cargo-clippy
+        run: cargo clippy ${{ env.CARGO_CI_FLAGS }} --verbose ${{ steps.clippy-args.outputs.args }}
+        timeout-minutes: 10
 
       - name: Test agnostic rust codebase
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }}
@@ -140,6 +157,15 @@ jobs:
 
       - name: unlock keyring
         uses: t1m0thyj/unlock-keyring@728cc718a07b5e7b62c269fc89295e248b24cba7 # pin v1.1.0
+
+      # Install fuse
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          until sudo apt-get -y install fuse3 libfuse3-dev libdbus-1-dev; do
+            echo "Fail to install APT package retrying ...";
+          done
+        timeout-minutes: 5
 
       # The default value is 1000, we increase it to not be limited when executing our mountpoint tests.
       - name: Configure fuse options
@@ -174,7 +200,7 @@ jobs:
           WASM_BINDGEN_TEST_TIMEOUT: 40
         timeout-minutes: 10
 
-      - name: Test platform-async on wasm
+      - name: Test platform-filesystem on wasm
         if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_filesystem
         timeout-minutes: 10
@@ -185,30 +211,6 @@ jobs:
 
       - name: Test CLI
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec-cli
-        timeout-minutes: 10
-
-      - name: Retrieve clippy args
-        id: clippy-args
-        shell: bash
-        run: yq -r '"args=" + (.repos | map(.hooks) | flatten | map(select(.id == "clippy"))[0] | .args | join(" "))' .pre-commit-config.yaml | tee -a $GITHUB_OUTPUT
-        timeout-minutes: 1
-
-      - name: Check rust code format
-        run: cargo fmt --check
-        timeout-minutes: 2
-
-      - name: SQL lint
-        # Cannot use `./misc/lint_sql.py` here since it would require us to install the
-        # whole Python server project.
-        shell: bash -eux {0}
-        run: |
-          pipx install sqlfluff
-          sqlfluff lint --disable-progress-bar --config libparsec/crates/platform_storage/src/native/sql/.sqlfluff  libparsec/crates/platform_storage/src/native/sql/
-
-      # Clippy basically compile the project, hence it's faster to run it in
-      # the job where compilation cache is reused !
-      - name: Check cargo-clippy
-        run: cargo clippy ${{ env.CARGO_CI_FLAGS }} --verbose ${{ steps.clippy-args.outputs.args }}
         timeout-minutes: 10
 
       - name: Check restricted usage with cargo-deny
