@@ -274,6 +274,9 @@ export async function openArchivedWorkspaceContextMenu(
 
   if (data !== undefined) {
     switch (data.action) {
+      case WorkspaceAction.ShowHistory:
+        await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle, readOnly: true } });
+        break;
       case WorkspaceAction.Restore:
         await restoreWorkspace(workspace, informationManager, eventDistributor);
         break;

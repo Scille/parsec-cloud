@@ -2888,6 +2888,8 @@
         "error": "Impossible de récupérer l'historique de l'espace de travail pour la date sélectionnée",
         "loading": "Chargement...",
         "workspace": "Espace de travail :",
+        "archived": "(Archivé)",
+        "deleted": "(Supprimé)",
         "date": "Date de prévisualisation :"
     },
     "fileViewers": {
