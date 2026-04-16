@@ -227,6 +227,7 @@ def debug_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[boo
             is_flag=True,
             # Don't prefix with `PARSEC_` given devs are lazy
             envvar="DEBUG",
+            show_envvar=True,
         ),
         version_option,
     ):
