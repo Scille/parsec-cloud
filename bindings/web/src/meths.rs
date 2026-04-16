@@ -25609,7 +25609,11 @@ pub fn pkiInitForNative(config_dir: String) -> Promise {
 // pki_init_for_scws
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn pkiInitForScws(config_dir: String, parsec_addr: String) -> Promise {
+pub fn pkiInitForScws(
+    config_dir: String,
+    parsec_addr: String,
+    scwsapi_js_location: String,
+) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config_dir = {
             let custom_from_rs_string =
@@ -25623,7 +25627,9 @@ pub fn pkiInitForScws(config_dir: String, parsec_addr: String) -> Promise {
             };
             custom_from_rs_string(parsec_addr).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::pki_init_for_scws(&config_dir, parsec_addr).await;
+
+        let ret =
+            libparsec::pki_init_for_scws(&config_dir, parsec_addr, &scwsapi_js_location).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

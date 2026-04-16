@@ -5823,7 +5823,8 @@ export function pkiInitForNative(
 ): Promise<Result<null, PkiSystemInitError>>
 export function pkiInitForScws(
     config_dir: string,
-    parsec_addr: string
+    parsec_addr: string,
+    scwsapi_js_location: string
 ): Promise<Result<null, PkiSystemInitError>>
 export function pkiListUserCertificates(
 ): Promise<Result<Array<AvailablePkiCertificate>, PkiSystemListUserCertificateError>>
