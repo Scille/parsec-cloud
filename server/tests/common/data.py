@@ -491,7 +491,7 @@ async def wksp1_alice_update_archiving_config(
         author_verify_key=coolorg.alice.signing_key.verify_key,
         realm_archiving_certificate=raw_certif,
     )
-    assert isinstance(outcome, RealmArchivingCertificate)
+    assert isinstance(outcome, RealmArchivingCertificate), outcome
 
     return (certif, raw_certif)
 
