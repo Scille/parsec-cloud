@@ -71,6 +71,20 @@ async function maybeInit(): Promise<LibParsecPlugin> {
     module.libparsecInitSetOnEventCallback((handle: number, event: ClientEvent) => {
       onEventBroadcast.postMessage({ handle, event });
     });
+
+    // Hack ahead:
+    // As part of `pkiInitForScws`, we need to dynamically load `scwsapi.js` in the
+    // context of the ShareWorker.
+    // However this cannot be done using `web_sys`, so we intercept the call to `pkiInitForScws`,
+    // do the import, and finally put the `SCWS` object in the global scope where the actual
+    // `pkiInitForScws` will access it.
+    const originalPkiInitForScws = module.pkiInitForScws.bind(module);
+    module.pkiInitForScws = async (...args: Parameters<typeof module.pkiInitForScws>) => {
+      const scwsapi = await import(/* @vite-ignore */ args[2]);
+      (self as any).SCWS = scwsapi.SCWS;
+      return originalPkiInitForScws(...args);
+    };
+
     console.log('Done initializing libparsec module');
 
     _libparsec = module;
