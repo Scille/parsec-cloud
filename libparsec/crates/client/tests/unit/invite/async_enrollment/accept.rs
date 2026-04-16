@@ -93,7 +93,9 @@ async fn require_greater_timestamp_then_ok(env: &TestbedEnv) {
                 let user_certif =
                     UserCertificate::unsecure_load(req.submitter_user_certificate).unwrap();
                 assert!(*user_certif.timestamp() >= strictly_greater_than);
-                protocol::authenticated_cmds::latest::async_enrollment_accept::Rep::Ok {email_sent:  protocol::authenticated_cmds::latest::async_enrollment_accept::EmailSentStatus::Success}
+                protocol::authenticated_cmds::latest::async_enrollment_accept::Rep::Ok {
+                    email_sent: Maybe::Present(protocol::authenticated_cmds::latest::async_enrollment_accept::EmailSentStatus::Success)
+                }
             }
         },
     );

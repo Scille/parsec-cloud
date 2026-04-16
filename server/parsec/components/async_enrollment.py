@@ -722,7 +722,9 @@ class BaseAsyncEnrollmentComponent:
             submitter_redacted_user_certificate=req.submitter_redacted_user_certificate,
             submitter_device_certificate=req.submitter_device_certificate,
             submitter_redacted_device_certificate=req.submitter_redacted_device_certificate,
-            send_mail=req.send_email,
+            send_mail=(
+                req.send_email or False
+            ),  # if send mail is not specified don't attempt to send mail
         )
         match outcome:
             case (_, _):

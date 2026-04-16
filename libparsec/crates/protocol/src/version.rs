@@ -55,6 +55,7 @@ use libparsec_types::prelude::*;
 //   * Add `cryptpad` field to `server_config` request
 //   * Add `realm_update_archiving` to authenticated commands.
 //   * Add `minimum_archiving_period` field to `OrganizationConfig` event in `events_listen`
+//   * Add `send_email` field to async_enrollment_accept req and `email_sent` status to ok rep
 
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,

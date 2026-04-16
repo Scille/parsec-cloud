@@ -175,15 +175,15 @@ pub(crate) async fn accept_async_enrollment(
                     submitter_redacted_device_certificate,
                     accept_payload,
                     accept_payload_signature,
-                    send_email,
+                    send_email: Maybe::Present(send_email),
                 })
                 .await?;
             return match rep {
                 Rep::Ok {email_sent} => {
                     let status = match email_sent {
-                        ApiEmailSentStatus::Success => EmailSentStatus::Success,
-                        ApiEmailSentStatus::ServerUnavailable => EmailSentStatus::ServerUnavailable,
-                        ApiEmailSentStatus::RecipientRefused => EmailSentStatus::RecipientRefused,
+                        Maybe::Present(ApiEmailSentStatus::Success) | Maybe::Absent => EmailSentStatus::Success,
+                        Maybe::Present(ApiEmailSentStatus::ServerUnavailable) => EmailSentStatus::ServerUnavailable,
+                        Maybe::Present(ApiEmailSentStatus::RecipientRefused) => EmailSentStatus::RecipientRefused,
                     };
                      Ok(status)
                 },
