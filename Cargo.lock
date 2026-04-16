@@ -2468,6 +2468,7 @@ dependencies = [
  "env_logger",
  "error_set",
  "hex-literal",
+ "js-sys",
  "libparsec_platform_http_proxy",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
@@ -2484,6 +2485,7 @@ dependencies = [
  "sha2",
  "thiserror 2.0.18",
  "tokio",
+ "wasm-bindgen",
  "windows-sys 0.61.2",
  "x509-cert",
 ]

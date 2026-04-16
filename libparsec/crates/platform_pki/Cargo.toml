@@ -41,6 +41,10 @@ windows-sys = { workspace = true, features = ["Win32_Security_Cryptography_UI"] 
 cryptoki = { workspace = true }
 percent-encoding = { workspace = true }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
+
 [dev-dependencies]
 # We use clap to provide a CLI for examples.
 clap = { workspace = true, default-features = true, features = ["env", "derive"] }
