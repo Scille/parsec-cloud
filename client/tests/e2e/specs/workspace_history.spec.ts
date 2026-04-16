@@ -1,7 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page, TestInfo } from '@playwright/test';
-import { answerQuestion, createFolder, DisplaySize, expect, importDefaultFiles, ImportDocuments, msTest } from '@tests/e2e/helpers';
+import {
+  answerQuestion,
+  createFolder,
+  DisplaySize,
+  expect,
+  importDefaultFiles,
+  ImportDocuments,
+  mockCryptpadServer,
+  msTest,
+} from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -109,34 +118,41 @@ msTest.describe(() => {
     await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').nth(0)).toHaveText('image.png');
   });
 
-  msTest('Test editor in history', async ({ documents }, testInfo: TestInfo) => {
-    await importDefaultFiles(documents, testInfo, ImportDocuments.Txt, true);
+  msTest('Test editor in history', async ({ parsecEditics }, testInfo: TestInfo) => {
+    await mockCryptpadServer(parsecEditics);
+    await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
     // Give it some time to upload the file
-    await documents.waitForTimeout(1000);
+    await parsecEditics.waitForTimeout(1000);
 
-    await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
-    await expect(documents).toBeWorkspacePage();
-    await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
-    const contextMenu = documents.locator('.workspace-context-menu');
+    await parsecEditics.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
+    await expect(parsecEditics).toBeWorkspacePage();
+    await parsecEditics.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
+    const contextMenu = parsecEditics.locator('.workspace-context-menu');
     await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
-    await expect(documents.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
-    const container = documents.locator('.history-container');
+    await expect(parsecEditics.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
+    const container = parsecEditics.locator('.history-container');
     await expect(container.locator('.head-content__title')).toHaveText('Workspace: wksp1');
-    const folderList = container.locator('.folder-list-main');
-    await expect(folderList.locator('.file-list-item')).toHaveCount(2);
 
-    await folderList.locator('.file-list-item').nth(1).dblclick();
+    const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
 
-    await expect(documents).toBeEditorPage();
-    await expect(documents.locator('.file-handler-topbar').locator('.save-info')).toBeVisible();
-    await expect(documents.locator('.file-handler-topbar').locator('.save-info')).toHaveText('Read only');
+    await entry.locator('.file-last-update').dblclick();
+    await expect(parsecEditics.locator('.file-editor')).toBeVisible();
+    const frame = parsecEditics.frameLocator('.file-editor');
+    await expect(frame.locator('#editor-container')).toBeVisible();
+    const topbar = parsecEditics.locator('.file-handler-topbar');
+    await expect(topbar.locator('.file-handler-topbar__title')).toContainText('document.docx');
+    await expect(topbar.locator('.back-button')).toBeVisible();
+    const topbarButtons = topbar.locator('.file-handler-topbar-buttons').locator('.file-handler-topbar-buttons__item:visible');
+    await expect(topbar.locator('.save-info')).toBeVisible();
+    await expect(topbar.locator('.save-info')).toHaveText('Read only');
+    await expect(topbarButtons).toHaveCount(4);
+    await expect(topbarButtons).toHaveText(['Details', 'Copy link', 'Download', 'Show menu']);
+    await expect(frame.locator('#editor-container')).toHaveText('document.docx');
   });
 
   msTest('Workspace history breadcrumbs', async ({ documents }, testInfo: TestInfo) => {
     msTest.setTimeout(45_000);
     await importDefaultFiles(documents, testInfo, 0, true);
-    // Give it some time to upload the file
-    await documents.waitForTimeout(1000);
 
     async function clickOnBreadcrumb(i: number): Promise<void> {
       await documents.locator('.history-container').locator('.navigation-breadcrumb').locator('ion-breadcrumb').nth(i).click();
@@ -162,6 +178,8 @@ msTest.describe(() => {
     await navigateDown();
     await createFolder(documents, 'Subdir 3');
     await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(['Subdir 3']);
+    // Give it some time to upload the files
+    await documents.waitForTimeout(1000);
     await documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
     await expect(documents).toBeWorkspacePage();
     await expect(documents.locator('.workspace-card-item')).toHaveCount(1);

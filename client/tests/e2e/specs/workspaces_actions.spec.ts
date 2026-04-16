@@ -69,7 +69,7 @@ const MENU = [
 const READER_MENU = [
   {
     title: 'Workspace management',
-    actions: ['Hide this workspace'],
+    actions: ['History', 'Hide this workspace'],
   },
   {
     title: 'Collaboration',

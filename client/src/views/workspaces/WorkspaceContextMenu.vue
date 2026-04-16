@@ -78,7 +78,6 @@
           button
           @click="onClick(WorkspaceAction.ShowHistory)"
           class="ion-no-padding list-group-item"
-          v-show="workspace.selfRole === WorkspaceRole.Manager || workspace.selfRole === WorkspaceRole.Owner"
         >
           <ion-icon
             class="list-group-item__icon"
