@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-#[cfg(all(target_os = "windows", not(feature = "force-scws-on-native")))]
+#[cfg(target_os = "windows")]
 #[path = "windows/mod.rs"]
 pub(crate) mod platform;
-#[cfg(all(target_family = "unix", not(feature = "force-scws-on-native")))]
+#[cfg(all(target_family = "unix", not(target_arch = "wasm32")))]
 #[path = "unix/mod.rs"]
 pub(crate) mod platform;
-#[cfg(any(target_arch = "wasm32", feature = "force-scws-on-native"))]
+#[cfg(target_arch = "wasm32")]
 #[path = "scws/mod.rs"]
 pub(crate) mod platform;
 
@@ -49,11 +49,11 @@ pub enum ShowCertificateSelectionDialogError {
 // list of certificate that we retrieve from the platform certstore.
 pub fn show_certificate_selection_dialog_windows_only(
 ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
-    #[cfg(all(target_os = "windows", not(feature = "force-scws-on-native")))]
+    #[cfg(target_os = "windows")]
     {
         platform::show_certificate_selection_dialog_windows_only()
     }
-    #[cfg(any(not(target_os = "windows"), feature = "force-scws-on-native"))]
+    #[cfg(not(target_os = "windows"))]
     {
         unimplemented!("platform not supported")
     }

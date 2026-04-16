@@ -14,11 +14,6 @@ workspace = true
 [features]
 test-fixture = ["libparsec_tests_lite"]
 test-with-testbed = ["libparsec_testbed"]
-# On web, OS certificates store is accessed using SCWS (a native client running
-# on the machine and exposing an HTTP API on localhost).
-# This feature can be use for development needs to force the use of SCWS on
-# native platform (typically allowing to debug SCWS with the PKI examples).
-force-scws-on-native = []
 
 [dependencies]
 bytes = { workspace = true }
