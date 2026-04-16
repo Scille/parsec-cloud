@@ -21,7 +21,7 @@
         <!-- eslint-disable vue/no-mutating-props -->
         <ms-checkbox
           v-model="entry.isSelected"
-          v-show="entry.isSelected || isHovered || showCheckbox"
+          v-show="(entry.isSelected || isHovered || showCheckbox) && !readOnly"
           @change="$emit('selectedChange', entry, $event)"
           @click.stop
           @dblclick.stop
@@ -79,9 +79,13 @@ const isHovered = ref(false);
 const props = defineProps<{
   entry: WorkspaceHistoryEntryModel;
   showCheckbox: boolean;
+  readOnly: boolean;
 }>();
 
 async function onSelectEntry(entry: WorkspaceHistoryEntryModel, checked: boolean): Promise<void> {
+  if (props.readOnly) {
+    return;
+  }
   emit('selectedChange', entry, checked);
   entry.isSelected = checked;
 }

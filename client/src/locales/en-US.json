@@ -2887,6 +2887,8 @@
         "error": "Failed to retrieve workspace history for the selected date.",
         "loading": "Loading...",
         "workspace": "Workspace:",
+        "archived": "(Archived)",
+        "deleted": "(Deleted)",
         "date": "Preview date:"
     },
     "fileViewers": {

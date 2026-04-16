@@ -32,8 +32,13 @@ msTest('Trash an archived workspace', async ({ workspaces }) => {
   await sidebarArchiveButton.click();
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  await expect(contextMenu.getByRole('group').getByRole('listitem')).toHaveText(['Restore this workspace', 'Delete this workspace']);
-  const binButton = contextMenu.getByRole('listitem').nth(1);
+  await expect(contextMenu.getByRole('group').getByRole('listitem')).toHaveText([
+    'Workspace management',
+    'History',
+    'Restore this workspace',
+    'Delete this workspace',
+  ]);
+  const binButton = contextMenu.getByRole('listitem').nth(3);
   await binButton.click();
   await answerQuestion(workspaces, false);
   await expect(wk).toBeVisible();
@@ -47,7 +52,11 @@ msTest('Trash an archived workspace', async ({ workspaces }) => {
   await expect(wk).toBeVisible();
   await expect(wk.locator('.custom-icon')).toBeVisible();
   await wk.click({ button: 'right' });
-  await expect(contextMenu.getByRole('group').getByRole('listitem')).toHaveText('Restore this workspace');
+  await expect(contextMenu.getByRole('group').getByRole('listitem')).toHaveText([
+    'Workspace management',
+    'History',
+    'Restore this workspace',
+  ]);
 });
 
 msTest('Restore a trashed workspace', async ({ workspaces }) => {
@@ -68,7 +77,7 @@ msTest('Restore a trashed workspace', async ({ workspaces }) => {
   await sidebarArchiveButton.click();
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  await contextMenu.getByRole('listitem').nth(1).click();
+  await contextMenu.getByRole('listitem').nth(3).click();
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
 
@@ -77,7 +86,7 @@ msTest('Restore a trashed workspace', async ({ workspaces }) => {
   await sidebarTrashButton.click();
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  const restoreButton = contextMenu.getByRole('listitem');
+  const restoreButton = contextMenu.getByRole('listitem').nth(2);
   await expect(restoreButton).toHaveText('Restore this workspace');
   await restoreButton.click();
   await answerQuestion(workspaces, false);
@@ -136,7 +145,7 @@ msTest('Check trashed workspace is read-only', async ({ parsecEditics }) => {
 
   // Move workspace to bin
   await wk.click({ button: 'right' });
-  await contextMenu.getByRole('listitem').nth(1).click();
+  await contextMenu.getByRole('listitem').nth(3).click();
   await answerQuestion(parsecEditics, true);
   await expect(parsecEditics).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
   await expect(wk).not.toBeVisible();
@@ -189,8 +198,8 @@ msTest('Trash archived workspace in small display', async ({ workspaces }) => {
   await workspaceCard.locator('.icon-option-container').click();
 
   await expect(popover).toBeVisible();
-  await expect(popover.getByRole('listitem').nth(1)).toHaveText('Delete this workspace');
-  await popover.getByRole('listitem').nth(1).click();
+  await expect(popover.getByRole('listitem').nth(2)).toHaveText('Delete this workspace');
+  await popover.getByRole('listitem').nth(2).click();
 
   await expect(workspaces.locator('.question-modal').locator('.ms-small-display-modal-header__title')).toHaveText('Delete this workspace');
   await answerQuestion(workspaces, true);

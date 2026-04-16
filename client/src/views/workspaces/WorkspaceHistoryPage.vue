@@ -14,6 +14,8 @@
           >
             <span class="body-lg">{{ $msTranslate('workspaceHistory.workspace') }}</span>
             {{ workspaceInfo.name }}
+            <div v-if="isArchived">{{ $msTranslate('workspaceHistory.archived') }}</div>
+            <div v-if="isTrashed">{{ $msTranslate('workspaceHistory.deleted') }}</div>
             <div v-show="querying">
               <ms-spinner />
             </div>
@@ -81,6 +83,16 @@
                 :max-shown="2"
                 :available-width="breadcrumbsWidth"
               />
+              <ion-text
+                class="button-medium read-only-info"
+                v-if="workspaceInfo?.isArchived || workspaceInfo?.isTrashed"
+              >
+                <ion-icon
+                  :icon="eye"
+                  class="read-only-info__icon"
+                />
+                {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
+              </ion-text>
             </div>
             <div
               class="folder-header__actions"
@@ -89,7 +101,7 @@
               <ion-button
                 class="select-button button-medium button-default"
                 @click="entries.selectAll(!allSelected)"
-                v-if="isLargeDisplay && entries.entriesCount() > 0"
+                v-if="isLargeDisplay && entries.entriesCount() > 0 && !(isArchived || isTrashed)"
               >
                 <span v-if="!allSelected">{{ $msTranslate('workspaceHistory.actions.selectAll') }}</span>
                 <span v-else>{{ $msTranslate('workspaceHistory.actions.deselectAll') }}</span>
@@ -102,6 +114,7 @@
               />
               <ion-button
                 id="restore-button"
+                v-show="!(isArchived || isTrashed)"
                 :disabled="!someSelected || querying"
                 @click="onRestoreClicked"
                 class="button-default button-medium"
@@ -131,7 +144,7 @@
             <ion-button
               class="select-button button-medium button-default"
               @click="entries.selectAll(!allSelected)"
-              v-if="entries.entriesCount() > 0"
+              v-if="entries.entriesCount() > 0 && !(isArchived || isTrashed)"
             >
               <span v-if="!allSelected">{{ $msTranslate('workspaceHistory.actions.selectAll') }}</span>
               <span v-else>{{ $msTranslate('workspaceHistory.actions.deselectAll') }}</span>
@@ -167,6 +180,7 @@
                   :key="entry.id"
                   :entry="entry"
                   :show-checkbox="someSelected"
+                  :read-only="isArchived || isTrashed"
                   @click="onEntryClicked(entry)"
                 />
               </ion-list>
@@ -190,7 +204,7 @@ import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOp
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
-import { chevronBack, chevronForward, home, warning } from 'ionicons/icons';
+import { chevronBack, chevronForward, eye, home, warning } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import { Answer, askQuestion, Folder, I18n, MsDatetimePicker, MsImage, MsSearchInput, MsSpinner, useWindowSize } from 'megashark-lib';
 import { computed, inject, onBeforeUnmount, onMounted, onUnmounted, ref, Ref, useTemplateRef, watch } from 'vue';
@@ -210,6 +224,8 @@ const headerButtonsRef = useTemplateRef<HTMLDivElement>('headerButtons');
 const topbarRightRef = useTemplateRef<HTMLDivElement>('topbarRight');
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const pathOpener = usePathOpener();
+const isArchived = ref(false);
+const isTrashed = ref(false);
 
 const entries: Ref<WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>> = ref(
   new WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>(),
@@ -251,6 +267,8 @@ async function loadHistory(): Promise<void> {
     const infoResult = await getWorkspaceInfo(workspaceHandle);
     if (infoResult.ok) {
       workspaceInfo.value = infoResult.value;
+      isArchived.value = workspaceInfo.value.isArchived;
+      isTrashed.value = workspaceInfo.value.isTrashed;
     } else {
       console.error('Failed to retrieve workspace info');
     }
@@ -405,6 +423,7 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
     await pathOpener.openPath(workspaceInfo.value.handle, entry.path, informationManager.value, {
       disallowSystem: true,
       atTime: DateTime.fromJSDate(selectedDateTime.value),
+      readOnly: true,
     });
   } else {
     backStack.push(currentPath.value);
@@ -438,6 +457,10 @@ async function onSearchChanged(value: string): Promise<void> {
 }
 
 async function onRestoreClicked(): Promise<void> {
+  if (isArchived.value || isTrashed.value) {
+    // Restore shouldn't be accessible from archived or deleted workspaces
+    return;
+  }
   const selectedEntries = entries.value.getSelectedEntries();
 
   if (selectedEntries.length === 0 || !workspaceInfo.value) {
@@ -586,6 +609,19 @@ async function onRestoreClicked(): Promise<void> {
 
     #restore-button {
       min-width: 6rem;
+    }
+
+    .read-only-info {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      gap: 0.5rem;
+      color: var(--parsec-color-light-primary-600);
+
+      &__icon {
+        width: 1rem;
+        height: 1rem;
+      }
     }
   }
 

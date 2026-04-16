@@ -23,13 +23,10 @@
           </ion-item>
         </ion-item-group>
 
-        <ion-item-group
-          v-if="!(workspace.isArchived || workspace.isTrashed)"
-          class="list-group"
-        >
+        <ion-item-group class="list-group">
           <ion-item
             button
-            v-show="workspace.selfRole === WorkspaceRole.Owner"
+            v-show="workspace.selfRole === WorkspaceRole.Owner && !(workspace.isArchived || workspace.isTrashed)"
             @click="onClick(WorkspaceAction.Rename)"
             class="ion-no-padding list-group-item"
           >
@@ -44,7 +41,7 @@
 
           <ion-item
             button
-            v-show="isDesktop()"
+            v-show="isDesktop() && !(workspace.isArchived || workspace.isTrashed)"
             @click="onClick(WorkspaceAction.OpenInExplorer)"
             class="ion-no-padding list-group-item"
           >
@@ -89,7 +86,7 @@
 
           <ion-item
             button
-            v-show="!isHidden"
+            v-show="!isHidden && !(workspace.isArchived || workspace.isTrashed)"
             @click="onClick(WorkspaceAction.UnMount)"
             class="ion-no-padding list-group-item"
           >
@@ -104,7 +101,7 @@
 
           <ion-item
             button
-            v-show="isHidden"
+            v-show="isHidden && !(workspace.isArchived || workspace.isTrashed)"
             @click="onClick(WorkspaceAction.Mount)"
             class="ion-no-padding list-group-item"
           >
@@ -118,7 +115,7 @@
           </ion-item>
           <ion-item
             button
-            v-show="workspace.selfRole === WorkspaceRole.Owner"
+            v-show="workspace.selfRole === WorkspaceRole.Owner && !(workspace.isArchived || workspace.isTrashed)"
             @click="onClick(WorkspaceAction.Archive)"
             class="ion-no-padding list-group-item"
           >
@@ -128,6 +125,34 @@
             />
             <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionArchive') }}
+            </ion-text>
+          </ion-item>
+          <ion-item
+            button
+            v-show="(workspace.isArchived || workspace.isTrashed) && workspace.selfRole === WorkspaceRole.Owner"
+            @click="onClick(WorkspaceAction.Restore)"
+            class="ion-no-padding list-group-item"
+          >
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="reload"
+            />
+            <ion-text class="button-large list-group-item__label-small">
+              {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionRestore') }}
+            </ion-text>
+          </ion-item>
+          <ion-item
+            v-show="workspace.isArchived && workspace.selfRole === WorkspaceRole.Owner"
+            button
+            @click="onClick(WorkspaceAction.Trash)"
+            class="ion-no-padding list-group-item"
+          >
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="trash"
+            />
+            <ion-text class="button-large list-group-item__label-small">
+              {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDelete') }}
             </ion-text>
           </ion-item>
         </ion-item-group>

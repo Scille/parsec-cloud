@@ -37,7 +37,12 @@ msTest('Archive workspace', async ({ workspaces }) => {
   await expect(wk.locator('.archived-label')).toBeVisible();
   await expect(wk.locator('.archived-label')).toHaveText('Read only');
   await wk.click({ button: 'right' });
-  await expect(contextMenu.getByRole('group').getByRole('listitem')).toHaveText(['Restore this workspace', 'Delete this workspace']);
+  await expect(contextMenu.getByRole('group').getByRole('listitem')).toHaveText([
+    'Workspace management',
+    'History',
+    'Restore this workspace',
+    'Delete this workspace',
+  ]);
 });
 
 msTest('Restore an archived workspace', async ({ workspaces }) => {
@@ -57,7 +62,7 @@ msTest('Restore an archived workspace', async ({ workspaces }) => {
   await sidebarArchiveButton.click();
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  const restoreButton = contextMenu.getByRole('listitem').nth(0);
+  const restoreButton = contextMenu.getByRole('listitem').nth(2);
   await expect(restoreButton).toHaveText('Restore this workspace');
   await restoreButton.click();
   await answerQuestion(workspaces, false);
