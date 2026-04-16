@@ -10,6 +10,14 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+export enum AdvisoryDeviceFilePrimaryProtection {
+    AccountVault = 'AdvisoryDeviceFilePrimaryProtectionAccountVault',
+    Keyring = 'AdvisoryDeviceFilePrimaryProtectionKeyring',
+    OpenBao = 'AdvisoryDeviceFilePrimaryProtectionOpenBao',
+    PKI = 'AdvisoryDeviceFilePrimaryProtectionPKI',
+    Password = 'AdvisoryDeviceFilePrimaryProtectionPassword',
+}
+
 export enum CancelledGreetingAttemptReason {
     AutomaticallyCancelled = 'CancelledGreetingAttemptReasonAutomaticallyCancelled',
     InconsistentPayload = 'CancelledGreetingAttemptReasonInconsistentPayload',
@@ -204,6 +212,11 @@ export interface AccountOrganizationsRevokedUser {
     currentProfile: UserProfile
 }
 
+export interface AdvisoryDeviceFileProtection {
+    primary: AdvisoryDeviceFilePrimaryProtection
+    withTotp: boolean
+}
+
 export interface AsyncEnrollmentUntrusted {
     enrollmentId: AsyncEnrollmentID
     submittedOn: DateTime
@@ -394,6 +407,7 @@ export interface ServerConfig {
     cryptpad: CryptPadConfig | null
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
+    advisoryDeviceFileProtection: Array<AdvisoryDeviceFileProtection>
 }
 
 export interface ServerOrganizationConfig {
