@@ -513,9 +513,12 @@ CREATE TABLE realm (
     --   whose deletion date has been reached.
     -- - Orphaned realms, i.e. realms shared with users who have all been revoked.
     --
-    -- Note realm deletion doesn't impact the realm's certificates (i.e. only
-    -- vlobs and keys bundles are removed from the database), as members of
+    -- Note realm deletion doesn't impact the realm's certificates as members of
     -- the realm need to fetch them to determine if the deletion is legit.
+    -- Instead only encrypted data are removed from the database:
+    -- - vlobs
+    -- - keys bundles
+    -- - keys bundle accesses (for both users and sequester services)
     status REALM_STATUS NOT NULL DEFAULT 'AVAILABLE',
 
     UNIQUE (organization, realm_id)
@@ -577,6 +580,9 @@ CREATE TABLE realm_keys_bundle (
     certified_by INTEGER REFERENCES device (_id) NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL,
     key_canary BYTEA NOT NULL,
+    -- Note `keys_bundle` is set to an empty buffer if the realm has been deleted
+    -- This is because this info is not part of the ream key rotation certificate
+    -- (realm deletion doesn't impact certificates).
     keys_bundle BYTEA NOT NULL,
 
     UNIQUE (realm, key_index)

@@ -94,6 +94,22 @@ delete_realm_vlob_updates AS (
 delete_vlob_atoms AS (
     DELETE FROM vlob_atom
     WHERE realm = $realm_internal_id
+),
+
+delete_realm_sequester_keys_bundle_access AS (
+    DELETE FROM realm_sequester_keys_bundle_access
+    WHERE realm = $realm_internal_id
+),
+
+delete_realm_keys_bundle_access AS (
+    DELETE FROM realm_keys_bundle_access
+    WHERE realm = $realm_internal_id
+),
+
+clear_realm_keys_bundle AS (
+    UPDATE realm_keys_bundle
+    SET keys_bundle = ''
+    WHERE realm = $realm_internal_id
 )
 
 UPDATE realm
