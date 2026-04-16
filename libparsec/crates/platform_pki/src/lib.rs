@@ -7,7 +7,7 @@ pub(crate) mod platform;
 #[path = "unix/mod.rs"]
 pub(crate) mod platform;
 #[cfg(target_arch = "wasm32")]
-#[path = "scws/mod.rs"]
+#[path = "web/mod.rs"]
 pub(crate) mod platform;
 
 mod shared;
