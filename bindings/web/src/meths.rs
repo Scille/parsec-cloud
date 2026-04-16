@@ -13,6 +13,60 @@ use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
 
+// AdvisoryDeviceFilePrimaryProtection
+
+#[allow(dead_code)]
+fn enum_advisory_device_file_primary_protection_js_to_rs(
+    raw_value: &str,
+) -> Result<libparsec::AdvisoryDeviceFilePrimaryProtection, JsValue> {
+    match raw_value {
+        "AdvisoryDeviceFilePrimaryProtectionAccountVault" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::AccountVault)
+        }
+        "AdvisoryDeviceFilePrimaryProtectionKeyring" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::Keyring)
+        }
+        "AdvisoryDeviceFilePrimaryProtectionOpenBao" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::OpenBao)
+        }
+        "AdvisoryDeviceFilePrimaryProtectionPKI" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::PKI)
+        }
+        "AdvisoryDeviceFilePrimaryProtectionPassword" => {
+            Ok(libparsec::AdvisoryDeviceFilePrimaryProtection::Password)
+        }
+        _ => {
+            let range_error =
+                RangeError::new("Invalid value for enum AdvisoryDeviceFilePrimaryProtection");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn enum_advisory_device_file_primary_protection_rs_to_js(
+    value: libparsec::AdvisoryDeviceFilePrimaryProtection,
+) -> &'static str {
+    match value {
+        libparsec::AdvisoryDeviceFilePrimaryProtection::AccountVault => {
+            "AdvisoryDeviceFilePrimaryProtectionAccountVault"
+        }
+        libparsec::AdvisoryDeviceFilePrimaryProtection::Keyring => {
+            "AdvisoryDeviceFilePrimaryProtectionKeyring"
+        }
+        libparsec::AdvisoryDeviceFilePrimaryProtection::OpenBao => {
+            "AdvisoryDeviceFilePrimaryProtectionOpenBao"
+        }
+        libparsec::AdvisoryDeviceFilePrimaryProtection::PKI => {
+            "AdvisoryDeviceFilePrimaryProtectionPKI"
+        }
+        libparsec::AdvisoryDeviceFilePrimaryProtection::Password => {
+            "AdvisoryDeviceFilePrimaryProtectionPassword"
+        }
+    }
+}
+
 // CancelledGreetingAttemptReason
 
 #[allow(dead_code)]
@@ -784,6 +838,47 @@ fn struct_account_organizations_revoked_user_rs_to_js(
     Reflect::set(&js_obj, &"revokedOn".into(), &js_revoked_on)?;
     let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
     Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
+    Ok(js_obj)
+}
+
+// AdvisoryDeviceFileProtection
+
+#[allow(dead_code)]
+fn struct_advisory_device_file_protection_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::AdvisoryDeviceFileProtection, JsValue> {
+    let primary = {
+        let js_val = Reflect::get(&obj, &"primary".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_advisory_device_file_primary_protection_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let with_totp = {
+        let js_val = Reflect::get(&obj, &"withTotp".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    Ok(libparsec::AdvisoryDeviceFileProtection { primary, with_totp })
+}
+
+#[allow(dead_code)]
+fn struct_advisory_device_file_protection_rs_to_js(
+    rs_obj: libparsec::AdvisoryDeviceFileProtection,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_primary = JsValue::from_str(enum_advisory_device_file_primary_protection_rs_to_js(
+        rs_obj.primary,
+    ));
+    Reflect::set(&js_obj, &"primary".into(), &js_primary)?;
+    let js_with_totp = rs_obj.with_totp.into();
+    Reflect::set(&js_obj, &"withTotp".into(), &js_with_totp)?;
     Ok(js_obj)
 }
 
@@ -3348,11 +3443,26 @@ fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig
             Some(struct_open_bao_config_js_to_rs(js_val)?)
         }
     };
+    let advisory_device_file_protection = {
+        let js_val = Reflect::get(&obj, &"advisoryDeviceFileProtection".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = struct_advisory_device_file_protection_js_to_rs(x)?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
     Ok(libparsec::ServerConfig {
         account,
         cryptpad,
         organization_bootstrap,
         openbao,
+        advisory_device_file_protection,
     })
 }
 
@@ -3378,6 +3488,24 @@ fn struct_server_config_rs_to_js(rs_obj: libparsec::ServerConfig) -> Result<JsVa
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"openbao".into(), &js_openbao)?;
+    let js_advisory_device_file_protection = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.advisory_device_file_protection.len() as u32);
+        for (i, elem) in rs_obj
+            .advisory_device_file_protection
+            .into_iter()
+            .enumerate()
+        {
+            let js_elem = struct_advisory_device_file_protection_rs_to_js(elem)?;
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(
+        &js_obj,
+        &"advisoryDeviceFileProtection".into(),
+        &js_advisory_device_file_protection,
+    )?;
     Ok(js_obj)
 }
 
