@@ -12,6 +12,7 @@ from parsec._parsec import (
 from parsec.components.realm import (
     RealmDelete2DoDeleteMetadataBadOutcome,
 )
+from parsec.components.user import CertificatesBundle
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -110,6 +111,20 @@ async def test_ok(
 ) -> None:
     """Deleting a realm with reached deletion date marks it as deleted."""
 
+    async def _get_certificates() -> CertificatesBundle:
+        outcome = await backend.user.get_certificates(
+            organization_id=workspace_archived_org.organization_id,
+            author=workspace_archived_org.alice.device_id,
+            common_after=None,
+            realm_after={},
+            sequester_after=None,
+            shamir_recovery_after=None,
+        )
+        assert isinstance(outcome, CertificatesBundle)
+        return outcome
+
+    expected_certificates = await _get_certificates()
+
     match kind:
         case "deletion_planned":
             wksp_id = workspace_archived_org.wksp_ready_to_delete_id
@@ -142,3 +157,7 @@ async def test_ok(
             now=DateTime.now(),
         )
         assert outcome == RealmDelete2DoDeleteMetadataBadOutcome.REALM_ALREADY_DELETED
+
+    # Realm deletion should not impact certificates
+    certificates = await _get_certificates()
+    assert certificates == expected_certificates

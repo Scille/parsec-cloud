@@ -1247,6 +1247,13 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         realm.is_deleted = True
         realm.vlobs = {}
+        for key_rotation in realm.key_rotations:
+            # Simulate what is done in PostgreSQL: keep the certificate
+            # but remove the keys bundle and keys bundle accesses
+            key_rotation.keys_bundle = b""
+            key_rotation.per_participant_keys_bundle_accesses.clear()
+            if key_rotation.per_sequester_service_keys_bundle_access:
+                key_rotation.per_sequester_service_keys_bundle_access.clear()
         org.blocks = {k: v for k, v in org.blocks.items() if v.realm_id != realm_id}
 
     @override
