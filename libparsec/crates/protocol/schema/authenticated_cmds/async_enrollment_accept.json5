@@ -43,7 +43,8 @@
                 },
                 {
                     "name": "send_email",
-                    "type": "Boolean"
+                    "type": "Boolean",
+                    "introduced_in": "5.5"
                 }
             ]
         },
@@ -54,7 +55,8 @@
                     // Field used when the invitation is correctly created but the invitation email cannot be sent
                     {
                         "name": "email_sent",
-                        "type": "EmailSentStatus"
+                        "type": "EmailSentStatus",
+                        "introduced_in": "5.5"
                     }
                 ]
             },

@@ -240,6 +240,10 @@ python make.py run-testbed-server # short option `rts`
 
 See the [README for more information on the testbed](./README.md/#starting-the-testbed-server).
 
+> [!NOTE]
+> If you add a field to an existing command, use the "introduced_in" field
+> and don't forget to update the description of the changes [here](../../libparsec/crates/protocol/src/version.rs)
+
 ## 5. Client-side implementation
 
 TODO
