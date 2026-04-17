@@ -7,6 +7,8 @@ from dataclasses import dataclass, field, fields
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from jinja2.environment import Environment
 
 from parsec._parsec import (
@@ -254,8 +256,36 @@ class OpenBaoConfig:
 
 @dataclass(slots=True)
 class ScwsConfig:
-    idopte_public_keys_pem: str
-    web_application_private_key_pem: str
+    # Order of the keys in the file is meaningful as it correspond to the key ID.
+    # For this reasons, we represent the revoked keys in the list as `None`.
+    idopte_public_keys: list[RSAPublicKey | None]
+    web_application_private_key: RSAPrivateKey
+
+    @staticmethod
+    def new(
+        idopte_public_keys_pem: bytes,
+        web_application_private_key_pem: bytes,
+    ) -> ScwsConfig:
+        from parsec.components.scws import parse_idopte_public_keys
+
+        try:
+            idopte_public_keys = parse_idopte_public_keys(idopte_public_keys_pem)
+        except ValueError as exc:
+            raise ValueError(f"Invalid Idopte public keys: {exc}") from exc
+
+        try:
+            private_key = load_pem_private_key(
+                web_application_private_key_pem,
+                password=None,
+            )
+        except ValueError as exc:
+            raise ValueError(f"Invalid web application private key: {exc}") from exc
+
+        assert isinstance(private_key, RSAPrivateKey)
+        return ScwsConfig(
+            idopte_public_keys=idopte_public_keys,
+            web_application_private_key=private_key,
+        )
 
 
 @dataclass(slots=True)
