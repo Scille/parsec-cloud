@@ -16,16 +16,16 @@
         class="breadcrumb-element breadcrumb-normal"
         :key="path.id"
         ref="breadcrumb"
+        @click="$emit('change', path)"
       >
         <ion-icon
           class="main-icon"
           v-if="path.icon"
           :icon="path.icon"
-          @click="$emit('change', path)"
         />
         <div
           class="breadcrumb-text"
-          @click="$emit('change', path)"
+          v-if="path.display || path.title"
         >
           {{ path.display ? path.display : $msTranslate(path.title) }}
         </div>
