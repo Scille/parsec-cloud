@@ -214,6 +214,9 @@ The client would then need to pass those data to the server with the following c
     },
     {
       "status": "invalid_scws_service_challenge_signature"
+    },
+    {
+        "status": "invalid_web_application_challenge_payload"
     }
   ]
 }
