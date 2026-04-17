@@ -253,6 +253,12 @@ class OpenBaoConfig:
 
 
 @dataclass(slots=True)
+class ScwsConfig:
+    idopte_public_keys_pem: str
+    web_application_private_key_pem: str
+
+
+@dataclass(slots=True)
 class CryptPadConfig:
     server_url: str
 
@@ -319,6 +325,8 @@ class BackendConfig:
     # Number of SSE events kept in memory to allow client to catch up on reconnection
     sse_events_cache_size: int = 1024
     backend_mocked_data: dict[OrganizationID, MemoryOrganization] | None = None
+
+    scws_config: ScwsConfig | None = None
 
     def logging_kwargs(self) -> dict[str, str]:
         """
