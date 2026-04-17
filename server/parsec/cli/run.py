@@ -684,14 +684,19 @@ async def run_cmd(
             scws_idopte_public_keys_file is not None
             and scws_web_application_private_key_file is not None
         ):
-            idopte_public_keys_pem = await asyncio.to_thread(scws_idopte_public_keys_file.read_text)
-            web_application_private_key_pem = await asyncio.to_thread(
-                scws_web_application_private_key_file.read_text
-            )
-            scws_config = ScwsConfig(
-                idopte_public_keys_pem=idopte_public_keys_pem,
-                web_application_private_key_pem=web_application_private_key_pem,
-            )
+            try:
+                idopte_public_keys_pem = await asyncio.to_thread(
+                    scws_idopte_public_keys_file.read_bytes
+                )
+                web_application_private_key_pem = await asyncio.to_thread(
+                    scws_web_application_private_key_file.read_bytes
+                )
+                scws_config = ScwsConfig.new(
+                    idopte_public_keys_pem=idopte_public_keys_pem,
+                    web_application_private_key_pem=web_application_private_key_pem,
+                )
+            except ValueError as exc:
+                raise ValueError(f"Invalid SCWS configuration: {exc}") from exc
         elif (
             scws_idopte_public_keys_file is not None
             or scws_web_application_private_key_file is not None
