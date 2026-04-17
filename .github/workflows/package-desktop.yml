@@ -456,6 +456,7 @@ jobs:
         working-directory: client/electron/dist
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # pin v7.0.1
+        if: matrix.platform != 'windows'
         with:
           name: ${{ matrix.artifact_tag }}${{ matrix.hardened && '-hardened' || '' }}-${{ runner.arch }}-electron
           path: |
