@@ -342,6 +342,7 @@ saltlen
 sbox
 scalarmult
 schemafile
+scwsapi
 sdkmanager
 sealedbox
 secho
