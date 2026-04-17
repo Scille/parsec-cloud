@@ -39,6 +39,7 @@ from parsec.config import (
     OpenBaoAuthConfig,
     OpenBaoAuthType,
     OpenBaoConfig,
+    ScwsConfig,
     SmtpEmailConfig,
 )
 from parsec.logging import get_logger
@@ -329,6 +330,20 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
 )
 @pki_server_options
 @click.option(
+    "--scws-idopte-public-keys-file",
+    type=click.Path(exists=True, dir_okay=False, file_okay=True, path_type=Path),
+    envvar="PARSEC_SCWS_IDOPTE_PUBLIC_KEYS_FILE",
+    show_envvar=True,
+    help="PEM file containing Idopte public keys used to verify SCWS service challenge signatures",
+)
+@click.option(
+    "--scws-web-application-private-key-file",
+    type=click.Path(exists=True, dir_okay=False, file_okay=True, path_type=Path),
+    envvar="PARSEC_SCWS_WEB_APPLICATION_PRIVATE_KEY_FILE",
+    show_envvar=True,
+    help="PEM file containing the web application private key used to sign SCWS web application challenges",
+)
+@click.option(
     "--validation-email-rate-limit",
     default=(60, 3),
     type=(int, int),
@@ -567,6 +582,8 @@ async def run_cmd(
     organization_initial_minimum_archiving_period: int,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
     trusted_x509_root_dir: list[TrustAnchor],
+    scws_idopte_public_keys_file: Path | None,
+    scws_web_application_private_key_file: Path | None,
     # (cooldown in seconds, max number of email per hour)
     validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
@@ -663,6 +680,28 @@ async def run_cmd(
                 auths=auths,
             )
 
+        if (
+            scws_idopte_public_keys_file is not None
+            and scws_web_application_private_key_file is not None
+        ):
+            idopte_public_keys_pem = await asyncio.to_thread(scws_idopte_public_keys_file.read_text)
+            web_application_private_key_pem = await asyncio.to_thread(
+                scws_web_application_private_key_file.read_text
+            )
+            scws_config = ScwsConfig(
+                idopte_public_keys_pem=idopte_public_keys_pem,
+                web_application_private_key_pem=web_application_private_key_pem,
+            )
+        elif (
+            scws_idopte_public_keys_file is not None
+            or scws_web_application_private_key_file is not None
+        ):
+            raise ValueError(
+                "Both --scws-idopte-public-keys-file and --scws-web-application-private-key-file must be provided together"
+            )
+        else:
+            scws_config = None
+
         app_config = BackendConfig(
             jinja_env=jinja_env,
             administration_token=administration_token,
@@ -676,6 +715,7 @@ async def run_cmd(
             account_config=account_config,
             cryptpad_config=cryptpad_config,
             openbao_config=openbao_config,
+            scws_config=scws_config,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
             x509_trust_anchor=trusted_x509_root_dir,
