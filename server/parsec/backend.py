@@ -39,6 +39,7 @@ from parsec.components.organization import BaseOrganizationComponent
 from parsec.components.ping import BasePingComponent
 from parsec.components.postgresql import components_factory as postgresql_components_factory
 from parsec.components.realm import BaseRealmComponent
+from parsec.components.scws import ScwsComponent
 from parsec.components.sequester import BaseSequesterComponent, SequesterServiceType
 from parsec.components.shamir import BaseShamirComponent
 from parsec.components.totp import BaseTOTPComponent
@@ -74,23 +75,24 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
         yield Backend(
             config=config,
             mocked_data=components.get("mocked_data"),
-            event_bus=components["event_bus"],
-            webhooks=components["webhooks"],
-            auth=components["auth"],
-            user=components["user"],
-            invite=components["invite"],
-            organization=components["organization"],
-            realm=components["realm"],
-            vlob=components["vlob"],
-            ping=components["ping"],
-            blockstore=components["blockstore"],
-            block=components["block"],
-            sequester=components["sequester"],
-            events=components["events"],
-            shamir=components["shamir"],
             account=components["account"],
             async_enrollment=components["async_enrollment"],
+            auth=components["auth"],
+            block=components["block"],
+            blockstore=components["blockstore"],
+            event_bus=components["event_bus"],
+            events=components["events"],
+            invite=components["invite"],
+            organization=components["organization"],
+            ping=components["ping"],
+            realm=components["realm"],
+            scws=components["scws"],
+            sequester=components["sequester"],
+            shamir=components["shamir"],
             totp=components["totp"],
+            user=components["user"],
+            vlob=components["vlob"],
+            webhooks=components["webhooks"],
         )
 
 
@@ -101,22 +103,24 @@ TEST_BOOTSTRAP_TOKEN = AccessToken.from_hex("672bc6ba9c43455da28344e975dc72b7")
 class Backend:
     config: BackendConfig
     event_bus: EventBus
-    webhooks: WebhooksComponent
-    auth: BaseAuthComponent
-    user: BaseUserComponent
-    invite: BaseInviteComponent
-    organization: BaseOrganizationComponent
-    realm: BaseRealmComponent
-    vlob: BaseVlobComponent
-    ping: BasePingComponent
-    blockstore: BaseBlockStoreComponent
-    block: BaseBlockComponent
-    sequester: BaseSequesterComponent
-    events: BaseEventsComponent
-    shamir: BaseShamirComponent
+
     account: BaseAccountComponent
     async_enrollment: BaseAsyncEnrollmentComponent
+    auth: BaseAuthComponent
+    block: BaseBlockComponent
+    blockstore: BaseBlockStoreComponent
+    events: BaseEventsComponent
+    invite: BaseInviteComponent
+    organization: BaseOrganizationComponent
+    ping: BasePingComponent
+    realm: BaseRealmComponent
+    scws: ScwsComponent
+    sequester: BaseSequesterComponent
+    shamir: BaseShamirComponent
     totp: BaseTOTPComponent
+    user: BaseUserComponent
+    vlob: BaseVlobComponent
+    webhooks: WebhooksComponent
 
     # Only available if `config.db_config.type == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
@@ -125,19 +129,20 @@ class Backend:
 
     def __post_init__(self) -> None:
         self.apis = collect_apis(
-            self.user,
-            self.invite,
-            self.organization,
-            self.realm,
-            self.vlob,
-            self.ping,
-            self.blockstore,
-            self.block,
-            self.events,
-            self.shamir,
             self.account,
             self.async_enrollment,
+            self.block,
+            self.blockstore,
+            self.events,
+            self.invite,
+            self.organization,
+            self.ping,
+            self.realm,
+            self.scws,
+            self.shamir,
             self.totp,
+            self.user,
+            self.vlob,
             # Ping command is only used in tests
             include_ping=self.config.debug,
         )
