@@ -25613,6 +25613,7 @@ pub fn pkiInitForScws(
     config_dir: String,
     parsec_addr: String,
     scwsapi_js_location: String,
+    web_application_certificate: String,
 ) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config_dir = {
@@ -25628,8 +25629,13 @@ pub fn pkiInitForScws(
             custom_from_rs_string(parsec_addr).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret =
-            libparsec::pki_init_for_scws(&config_dir, parsec_addr, &scwsapi_js_location).await;
+        let ret = libparsec::pki_init_for_scws(
+            &config_dir,
+            parsec_addr,
+            &scwsapi_js_location,
+            &web_application_certificate,
+        )
+        .await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
