@@ -82,6 +82,9 @@ async function maybeInit(): Promise<LibParsecPlugin> {
     module.pkiInitForScws = async (...args: Parameters<typeof module.pkiInitForScws>) => {
       const scwsapi = await import(/* @vite-ignore */ args[2]);
       (self as any).SCWS = scwsapi.SCWS;
+      // Also expose the Web application certificate as a global object. This is convenient
+      // since it allows `libparsec_platform_pki::PkiSystem::init()` to be platform-independant.
+      (self as any).WEB_APPLICATION_CERTIFICATE = args[3];
       return originalPkiInitForScws(...args);
     };
 
