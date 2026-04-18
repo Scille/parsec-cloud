@@ -6946,7 +6946,8 @@ export interface LibParsecPlugin {
     pkiInitForScws(
         config_dir: Path,
         parsec_addr: ParsecAddr,
-        scwsapi_js_location: string
+        scwsapi_js_location: string,
+        web_application_certificate: string
     ): Promise<Result<null, PkiSystemInitError>>
     pkiListUserCertificates(
     ): Promise<Result<Array<AvailablePkiCertificate>, PkiSystemListUserCertificateError>>
