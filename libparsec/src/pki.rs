@@ -52,6 +52,11 @@ pub async fn pki_init_for_scws(
     // This shenanigan is needed since `scwsapi.js` has to be loaded dynamically, within
     // the SharedWorker, and the Rust `web_sys` doesn't allow us to call `import` on our own.
     _scwsapi_js_location: &str,
+    // This parameter is also a hack that is stored in the global object by
+    // `client/src/plugins/libparsec/web_shared_worker.ts`.
+    // The platform-specific pki code handling SCWS can access it as the global
+    // `WEB_APPLICATION_CERTIFICATE` object.
+    _web_application_certificate: &str,
 ) -> Result<(), PkiSystemInitError> {
     let mut guard = PKI_SYSTEM.lock().await;
     if guard.is_some() {
