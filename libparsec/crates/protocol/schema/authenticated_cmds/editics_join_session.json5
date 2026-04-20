@@ -1,0 +1,61 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "editics_join_session",
+        "req": {
+            "fields": [
+                {
+                    // The encrypted session key.
+                    // If there is no session for the given `file_id`, a new session will be created
+                    // and the provided encrypted session key would be registered with the session.
+                    // Otherwise the provided encrypted key will be ignored and the registered
+                    // encrypted session key will be returned.
+                    "name": "encrypted_session_key",
+                    "type": "Bytes"
+                },
+                // The key index is used to identify which key in the keys bundle has
+                // been used to encrypt the block.
+                {
+                    "name": "key_index",
+                    "type": "Index"
+                },
+                {
+                    "name": "file_id",
+                    "type": "VlobID"
+                },
+                {
+                    "name": "workspace_id",
+                    "type": "VlobID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // The encrypted session key to use to connect to the editing session.
+                        // If an editing session already existed for the given `file_id`,
+                        // this is the same key as the one provided in the request.
+                        "name": "encrypted_session_key",
+                        "type": "Bytes"
+                    },
+                    // The key index is used to identify which key in the keys bundle has
+                    // been used to encrypt the block.
+                    {
+                        "name": "key_index",
+                        "type": "Index"
+                    }
+                ]
+            },
+            {
+                "status": "workspace_not_found"
+            },
+            {
+                "status": "file_not_found"
+            }
+        ]
+    }
+]
