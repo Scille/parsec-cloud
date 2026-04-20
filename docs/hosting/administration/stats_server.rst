@@ -2,15 +2,15 @@
 
 .. _doc_hosting_stats_server:
 
-=========================
-Extract server statistics
-=========================
+=======================
+Server usage statistics
+=======================
 
-In order to extract server statistics, the administrator needs to provide :
+In order to extract server usage statistics, the administrator needs to provide:
 
-- The parsec metadata server location, through a parsec url ``parsec3://hostname:port``
-- The ``administration_token`` configured in the parsec metadata server
-- The extraction date, ignore everything after the date
+- The Parsec Server address as a Parsec URL ``parsec3://hostname:port``
+- The ``administration_token`` configured in the Parsec Server
+- The extraction date (ignores everything after the date provided)
 - The output filename
 - The output file format which can be CSV or JSON
 

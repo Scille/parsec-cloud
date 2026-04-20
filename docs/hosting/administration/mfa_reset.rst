@@ -11,7 +11,7 @@ reconfigure it (see :ref:`doc_userguide_mfa`).
 
 To reset a user's MFA setup, the server administrator needs to provide:
 
-- The Parsec server address, as a parsec URL ``parsec3://hostname:port``
+- The Parsec server address, as a Parsec URL ``parsec3://hostname:port``
 - The ``administration_token`` configured on the Parsec server
 - The organization ID
 - The user to reset, identified by their email address or their Parsec user ID

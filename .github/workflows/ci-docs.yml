@@ -86,6 +86,9 @@ jobs:
             exit 0
           fi
 
+      - name: Lint docs with sphinx-lint
+        run: poetry run make --environment-overrides lint
+
       - name: Build html documentation
         run: poetry run make --environment-overrides html
         timeout-minutes: 2

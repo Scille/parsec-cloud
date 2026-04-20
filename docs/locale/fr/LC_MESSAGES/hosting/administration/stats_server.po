@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 1980-01-01 00:00+0000\n"
+"POT-Creation-Date: 2026-04-17 12:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -15,43 +15,41 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.15.0\n"
+"Generated-By: Babel 2.17.0\n"
 
-#: ../../hosting/stats_server.rst:6
-msgid "Extract server statistics"
-msgstr "Extraction des statistiques serveur"
+#: ../../hosting/administration/stats_server.rst:7
+msgid "Server usage statistics"
+msgstr "Statistiques d'utilisation du serveur"
 
-#: ../../hosting/stats_server.rst:8
+#: ../../hosting/administration/stats_server.rst:9
 msgid ""
-"In order to extract server statistics, the administrator needs to provide :"
+"In order to extract server usage statistics, the administrator needs to "
+"provide:"
 msgstr ""
-"Afin d'extraire les statistiques serveur, l'administrateur doit fournir :"
+"Afin d'extraire les statistiques d'utilisation du serveur, l'administrateur "
+"doit fournir :"
 
-#: ../../hosting/stats_server.rst:10
-msgid ""
-"The parsec metadata server location, through a parsec url ``parsec3://"
-"hostname:port``"
+#: ../../hosting/administration/stats_server.rst:11
+msgid "The Parsec Server address as a Parsec URL ``parsec3://hostname:port``"
 msgstr ""
-"La localisation du serveur de métadonnées, par une url Parsec``parsec3://"
-"hostname:port``"
+"L'adresse du serveur Parsec, par une url Parsec ``parsec3://hostname:port``"
 
-#: ../../hosting/stats_server.rst:11
-msgid "The ``administration_token`` configured in the parsec metadata server"
-msgstr ""
-"Le ``administration_token`` configuré dans le serveur de métadonnées Parsec"
+#: ../../hosting/administration/stats_server.rst:12
+msgid "The ``administration_token`` configured in the Parsec Server"
+msgstr "Le ``administration_token`` configuré dans le serveur Parsec"
 
-#: ../../hosting/stats_server.rst:12
-msgid "The extraction date, ignore everything after the date"
-msgstr "La date d'extraction, ignore toutes les informations après cette date"
+#: ../../hosting/administration/stats_server.rst:13
+msgid "The extraction date (ignores everything after the date provided)"
+msgstr "La date d'extraction (ignore toutes les informations après cette date)"
 
-#: ../../hosting/stats_server.rst:13
+#: ../../hosting/administration/stats_server.rst:14
 msgid "The output filename"
 msgstr "Le nom du fichier de sortie"
 
-#: ../../hosting/stats_server.rst:14
+#: ../../hosting/administration/stats_server.rst:15
 msgid "The output file format which can be CSV or JSON"
 msgstr "Le format du fichier de sortie, peut être en CSV ou JSON"
 
-#: ../../hosting/stats_server.rst:20
+#: ../../hosting/administration/stats_server.rst:21
 msgid "Example of output:"
 msgstr "Exemple de sortie :"
