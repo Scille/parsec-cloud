@@ -3,7 +3,7 @@
 
 # -*- coding: utf-8 -*-
 #
-# parsec documentation build configuration file, created by
+# Parsec documentation build configuration file, created by
 # sphinx-quickstart on Tue Jul  9 22:26:36 2013.
 #
 # This file is execfile()d with the current directory set to its
@@ -27,6 +27,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_rtd_theme",
     "sphinx_tabs.tabs",
+    "sphinxmermaid",
     # Allow to use svg images in latex build.
     # https://www.sphinx-doc.org/en/master/usage/extensions/imgconverter.html
     "sphinx.ext.imgconverter",

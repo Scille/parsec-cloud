@@ -22,6 +22,8 @@ Parsec can be used by government agencies, SMEs, start-ups, consulting firms, R&
 or independent professionals, providing zero-trust data sharing with a guarantee of
 confidentiality, integrity, authenticity and data history.
 
+.. _doc_userguide_introduction_zero_trust:
+
 The Zero-Trust model
 --------------------
 

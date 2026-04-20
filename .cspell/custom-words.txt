@@ -203,6 +203,7 @@ manylinux
 megashark
 mem*
 memlimit
+menuselection
 metaschema
 Miniserde
 miniserde
@@ -293,6 +294,7 @@ proptest
 pseudoxml
 psqlrc
 psrk
+PSSI
 publickeybytes
 pubout
 pulseaudio
@@ -374,6 +376,7 @@ softprops
 sourcelink
 SPHINXBUILD
 SPHINXLINT
+sphinxmermaid
 SPHINXOPTS
 splashscreen
 splitn
