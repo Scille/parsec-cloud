@@ -150,7 +150,7 @@ msgstr "Sauvegarde de la base de données"
 msgid "You can create a backup file of the database using ``pg_dump``."
 msgstr ""
 "Vous pouvez créer un fichier de sauvegarde de la base de données en "
-"utilisant `pg_dump``."
+"utilisant ``pg_dump``."
 
 #: ../../hosting/maintenance/backup_restore.rst:65
 msgid "Open a terminal or command prompt and run the following command:"
@@ -294,7 +294,7 @@ msgstr "Où:"
 #: ../../hosting/maintenance/backup_restore.rst:139
 #: ../../hosting/maintenance/backup_restore.rst:157
 msgid "``s3://bucket_name`` is the path to the S3 bucket"
-msgstr "`s`3://nom_du_bucket`` est le chemin vers le bucket S3"
+msgstr "``s3://nom_du_bucket`` est le chemin vers le bucket S3"
 
 #: ../../hosting/maintenance/backup_restore.rst:140
 msgid ""

@@ -158,7 +158,7 @@ First, retrieve the invitation token.
     parsec-cli invite list --device bc1
     ✔ Poll server for new certificates
     2 invitations found.
-    844441ca22d27494fcf312e93ef2ad0d	pending	shamir recovery (Bob <bob@example.com>)
+    844441ca22d27494fcf312e93ef2ad0d   pending shamir recovery (Bob <bob@example.com>)
 
 Then it can be use to greet Bob.
 And proceed to a SAS code exchange.

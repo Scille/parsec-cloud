@@ -2,14 +2,14 @@
 
 .. _doc_hosting_stats_organization:
 
-===============================
-Extract organization statistics
-===============================
+=============================
+Organization usage statistics
+=============================
 
-In order to extract organization statistics, the administrator needs to provide :
+In order to extract organization usage statistics, the administrator needs to provide:
 
-- The parsec metadata server location, through a parsec url ``parsec3://hostname:port``
-- The ``administration_token`` configured in the parsec metadata server
+- The Parsec Server address as a Parsec URL ``parsec3://hostname:port``
+- The ``administration_token`` configured in the Parsec Server
 - The organization name
 
 .. code-block:: shell

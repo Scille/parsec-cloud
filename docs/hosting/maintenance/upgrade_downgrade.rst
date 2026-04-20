@@ -15,7 +15,7 @@ to your custom deployment.
 
 .. warning::
 
-  Before upgrading, make sure to back up the database as explained in the,
+  Before upgrading, make sure to back up the database as explained in the
   :ref:`Backup and Restore section <doc_hosting_maintenance_backup_restore>`
   in case you need to roll back the update.
 
@@ -23,7 +23,7 @@ In this guide, we will migrate ``parsec-server`` from version ``v3.0.0`` to ``v3
 
 .. _update_docker_image_tag:
 
-1. Update the ``parsec-server``'s docker image tag of in docker-compose file (``parsec-server.docker.yaml``):
+1. Update the ``parsec-server`` docker image tag of in docker-compose file (``parsec-server.docker.yaml``):
 
   .. code-block:: yaml
     :linenos:

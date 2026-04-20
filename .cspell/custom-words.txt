@@ -373,6 +373,7 @@ softhsm
 softprops
 sourcelink
 SPHINXBUILD
+SPHINXLINT
 SPHINXOPTS
 splashscreen
 splitn

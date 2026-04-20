@@ -6,6 +6,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS  ?=
 SPHINXBUILD ?= sphinx-build
+SPHINXLINT  ?= sphinx-lint
 PAPER       ?=
 POWRAP      ?= powrap
 BUILDDIR    ?= _build
@@ -202,3 +203,7 @@ pseudoxml:
 .PHONY: wrap
 wrap:
 	$(POWRAP) $(shell find locale/ -type f -name '*.po')
+
+.PHONY: lint
+lint:
+	$(SPHINXLINT) hosting userguide locale index.rst history.rst

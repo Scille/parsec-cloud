@@ -351,7 +351,7 @@ msgid ""
 "sidebar) in the upper-left corner. Either select the user or right-click on "
 "them and select ``Change profile``."
 msgstr ""
-"Pour changer le profil d'un utilisateur, rendez vous dans ``Utilisateurs "
+"Pour changer le profil d'un utilisateur, rendez vous dans ``Utilisateurs`` "
 "dans le coin supérieur gauche. Vous pouvez soit sélectionner l'utilisateur, "
 "ou faire un clic droit dessus et sélectionner ``Modifier le profil``."
 
