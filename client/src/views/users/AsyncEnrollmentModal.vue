@@ -74,7 +74,7 @@
           </div>
           <certificate-selection
             :purpose="CertificatePurpose.Both"
-            @certificate-selected="certificate = $event.handle"
+            @certificate-selected="certificate = $event.reference"
           />
         </div>
         <div v-if="state === JoinRequestState.MethodSSO && serverConfig?.openbao">
@@ -156,11 +156,12 @@ import { userNameValidator } from '@/common/validators';
 import ConnectSso from '@/components/devices/ConnectSso.vue';
 import CertificateSelection from '@/components/misc/CertificateSelection.vue';
 import {
-  buildParsecAddr,
   CertificatePurpose,
+  closeCertificate,
   getOpenBaoEmails,
   makeRequestOpenBaoIdentityStrategy,
   makeRequestPkiIdentityStrategy,
+  openCertificate,
   ParsecAsyncEnrollmentAddr,
   ParsedParsecAddrAsyncEnrollment,
   requestJoinOrganization,
@@ -184,7 +185,7 @@ import {
   MsReportTheme,
   Translatable,
 } from 'megashark-lib';
-import { computed, onMounted, ref, toRaw } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 enum JoinRequestState {
   ChooseMethod = 'choose-method',
@@ -278,8 +279,12 @@ async function onNextButtonClicked(): Promise<boolean> {
       window.electronAPI.log('error', 'Invalid state for async enrollment with PKI');
       return false;
     }
-    const serverAddr = await buildParsecAddr(props.addr);
-    const result = await requestJoinOrganization(props.link, makeRequestPkiIdentityStrategy(serverAddr, toRaw(certificate.value)));
+    const certResult = await openCertificate(certificate.value);
+    if (!certResult.ok) {
+      error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.problemWithRequestCertificate';
+      return false;
+    }
+    const result = await requestJoinOrganization(props.link, makeRequestPkiIdentityStrategy(certResult.value));
     if (!result.ok) {
       switch (result.error.tag) {
         case SubmitAsyncEnrollmentErrorTag.EmailAlreadyEnrolled: {
@@ -303,6 +308,7 @@ async function onNextButtonClicked(): Promise<boolean> {
       }
       return false;
     }
+    await closeCertificate(certResult.value);
     return modalController.dismiss(null, MsModalResult.Confirm);
   } else if (state.value === JoinRequestState.MethodSSO) {
     if (!fullName.value || !email.value || !openBaoClient.value) {

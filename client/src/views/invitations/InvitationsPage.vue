@@ -185,6 +185,7 @@ import InviteModal from '@/components/invitations/InviteModal.vue';
 import {
   acceptAsyncEnrollment,
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
+  AcceptFinalizeAsyncEnrollmentIdentityStrategyTag,
   AsyncEnrollmentIdentitySystemTag,
   AsyncEnrollmentUntrusted,
   cancelInvitation,
@@ -192,6 +193,7 @@ import {
   ClientCancelInvitationErrorTag,
   ClientNewUserInvitationError,
   ClientNewUserInvitationErrorTag,
+  closeCertificate,
   getAsyncEnrollmentAddr,
   getCurrentAvailableDevice,
   getServerConfig,
@@ -201,6 +203,7 @@ import {
   listUserInvitations,
   makeAcceptOpenBaoIdentityStrategy,
   makeAcceptPkiIdentityStrategy,
+  openCertificate,
   ParsecAddr,
   inviteUser as parsecInviteUser,
   rejectAsyncEnrollment,
@@ -235,7 +238,7 @@ import {
   useWindowSize,
   WindowSizeBreakpoints,
 } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, Ref, ref, toRaw, useTemplateRef, watch } from 'vue';
+import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const { isLargeDisplay, isSmallDisplay, windowWidth } = useWindowSize();
 const view = ref(InvitationView.EmailInvitation);
@@ -290,7 +293,7 @@ onMounted(async (): Promise<void> => {
     if (configResult.ok) {
       serverConfig.value = configResult.value;
     }
-    pkiAvailable.value = await isSmartcardAvailable(serverAddr.value);
+    pkiAvailable.value = await isSmartcardAvailable();
   }
 
   await refreshAll();
@@ -617,7 +620,11 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
     if (role !== MsModalResult.Confirm || !data.certificate || !serverAddr.value) {
       return;
     }
-    strategy = makeAcceptPkiIdentityStrategy(serverAddr.value, toRaw(data.certificate) as X509CertificateReference);
+    const certResult = await openCertificate(data.certificate);
+    if (!certResult.ok) {
+      return;
+    }
+    strategy = makeAcceptPkiIdentityStrategy(certResult.value);
   } else if (request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao && !openBaoClient.value) {
     if (!serverConfig.value?.openbao || serverConfig.value.openbao.auths.length === 0) {
       return;
@@ -698,6 +705,9 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
       }),
       PresentationMode.Toast,
     );
+  }
+  if (strategy.tag === AcceptFinalizeAsyncEnrollmentIdentityStrategyTag.PKI) {
+    await closeCertificate(strategy.pkiPrivateKeyHandle);
   }
 }
 

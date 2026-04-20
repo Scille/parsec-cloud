@@ -160,7 +160,6 @@ import {
   ClaimInProgressErrorTag,
   constructAccessStrategy,
   DeviceClaim,
-  DeviceSaveStrategy,
   getServerConfig,
   OrganizationID,
   ParsedParsecAddrTag,
@@ -325,7 +324,7 @@ async function nextStep(): Promise<void> {
   }
   if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
     const deviceName = getDefaultDeviceName();
-    const strategy = authChoiceRef.value?.getSaveStrategy();
+    const strategy = await authChoiceRef.value?.getSaveStrategy();
     if (!strategy) {
       return;
     }
@@ -358,7 +357,7 @@ async function nextStep(): Promise<void> {
       level: InformationLevel.Success,
     });
     props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
-    const saveStrategy: DeviceSaveStrategy | undefined = authChoiceRef.value?.getSaveStrategy();
+    const saveStrategy = await authChoiceRef.value?.getSaveStrategy();
     if (!saveStrategy) return;
     const accessStrategy = constructAccessStrategy(claimer.value.device, saveStrategy.primaryProtection, saveStrategy.totpProtection);
     await modalController.dismiss({ device: claimer.value.device, access: accessStrategy }, MsModalResult.Confirm);

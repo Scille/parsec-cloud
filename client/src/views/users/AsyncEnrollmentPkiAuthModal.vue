@@ -42,7 +42,7 @@ import { ref } from 'vue';
 const certificate = ref<X509CertificateReference | undefined>(undefined);
 
 async function onCertificateSelected(cert: CertificateWithDetailsValid): Promise<void> {
-  certificate.value = cert.handle;
+  certificate.value = cert.reference;
   await onOkClicked();
 }
 

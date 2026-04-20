@@ -22,9 +22,9 @@ export {
   AsyncEnrollmentIdentitySystemTag,
   AvailableDeviceTypeTag,
   AvailablePendingAsyncEnrollmentIdentitySystemTag,
+  AvailablePkiCertificateTag,
   BootstrapOrganizationErrorTag,
   CancelledGreetingAttemptReason,
-  CertificateWithDetailsTag,
   ClaimerRetrieveInfoErrorTag,
   ClaimFinalizeErrorTag,
   ClaimInProgressErrorTag,
@@ -43,6 +43,7 @@ export {
   ClientListWorkspaceUsersErrorTag,
   ClientNewDeviceInvitationErrorTag,
   ClientNewUserInvitationErrorTag,
+  ClientRejectAsyncEnrollmentErrorTag,
   ClientRenameWorkspaceErrorTag,
   ClientRevokeUserErrorTag,
   ClientShareWorkspaceErrorTag,
@@ -59,7 +60,6 @@ export {
   GetServerConfigErrorTag,
   GreetInProgressErrorTag,
   ImportRecoveryDeviceErrorTag,
-  InvalidCertificateReasonTag,
   InvitationEmailSentStatus,
   InvitationStatus,
   InviteListInvitationCreatedByTag,
@@ -143,9 +143,10 @@ export type {
   AvailableDeviceTypePKI,
   AvailablePendingAsyncEnrollmentIdentitySystem,
   AvailablePendingAsyncEnrollmentIdentitySystemPKI,
+  AvailablePkiCertificate,
+  AvailablePkiCertificateInvalid,
   BootstrapOrganizationError,
   CertificateBasedInfoOrigin,
-  CertificateWithDetails,
   ClaimerRetrieveInfoError,
   ClaimFinalizeError,
   ClaimInProgressError,
@@ -220,7 +221,6 @@ export type {
   InviteListItem,
   ListAvailableDeviceError,
   ListInvitationsError,
-  ListUserCertificatesError,
   MountpointToOsPathError,
   MountpointUnmountError,
   NewInvitationInfo,
@@ -228,6 +228,7 @@ export type {
   OpenBaoListSelfEmailsError,
   ParsecAddr,
   ParsecAsyncEnrollmentAddr,
+  ParsecAsyncEnrollmentAddrAndRedirectionURL,
   EntryStat as ParsecEntryStat,
   ParsecInvitationAddr,
   ParsecInvitationRedirectionURL,
@@ -243,6 +244,8 @@ export type {
   ParsedParsecAddrServer,
   ParsedParsecAddrWorkspacePath,
   ParseParsecAddrError,
+  PkiSystemInitError,
+  PkiSystemListUserCertificateError,
   Result,
   SASCode,
   SecretKey,
@@ -273,6 +276,7 @@ export type {
   UserGreetInProgress3Info,
   UserGreetInProgress4Info,
   InviteListItemUser as UserInvitation,
+  UserX509CertificateDetails,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
   WorkspaceDecryptPathAddrError,
@@ -313,7 +317,7 @@ import type {
   HumanHandle,
   OrganizationID,
   AuthMethodInfo as ParsecAuthMethodInfo,
-  CertificateWithDetailsValid as ParsecCertificateWithDetailsValid,
+  AvailablePkiCertificateValid as ParsecAvailablePkiCertificateValid,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
   ParsecInvitationAddrAndRedirectionURL,
@@ -339,6 +343,7 @@ type ConnectionHandle = Handle;
 type MountpointHandle = Handle;
 type SystemPath = Path;
 type AccountHandle = Handle;
+type PkiHandle = Handle;
 
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean;
@@ -488,7 +493,7 @@ interface AsyncEnrollmentRequest {
   organizationId: OrganizationID;
 }
 
-interface CertificateWithDetailsValid extends ParsecCertificateWithDetailsValid {
+interface CertificateWithDetailsValid extends ParsecAvailablePkiCertificateValid {
   getName: () => string;
   isExpired: () => boolean;
   getSerial: () => string;
@@ -529,6 +534,7 @@ export {
   OrganizationInfoErrorTag,
   OwnDeviceInfo,
   ParsecOrganizationAddr,
+  PkiHandle,
   RegistrationDevice,
   SystemPath,
   UserID,

@@ -23,6 +23,7 @@ import {
   ParsecAccount,
   Platform,
   detectBrowser,
+  initPki,
   isElectron,
   listStartedClients,
   logout,
@@ -195,6 +196,7 @@ async function setupApp(): Promise<void> {
   if (!isElectron()) {
     setupWebElectronAPI(injectionProvider);
   }
+  await initPki();
   await ResourcesManager.instance().loadAll();
 
   await storageManagerInstance.init();

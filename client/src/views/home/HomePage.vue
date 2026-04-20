@@ -111,6 +111,7 @@ import {
   PrimaryProtectionStrategy,
   archiveDevice,
   buildParsecAddr,
+  closeCertificate,
   confirmJoinRequest,
   constructAccessStrategy,
   constructSaveStrategy,
@@ -127,6 +128,7 @@ import {
   listJoinRequests,
   makeAcceptOpenBaoIdentityStrategy,
   makeAcceptPkiIdentityStrategy,
+  openCertificate,
   parseParsecAddr,
   login as parsecLogin,
 } from '@/parsec';
@@ -530,7 +532,7 @@ async function handleAsyncEnrollment(link: string): Promise<void> {
   }
 
   const addr = await buildParsecAddr(addrResult.value);
-  const pkiAvailable = await isSmartcardAvailable(addr);
+  const pkiAvailable = await isSmartcardAvailable();
   const serverConfigResult = await getServerConfig(addr);
 
   // We don't have PKI and openbao is not configured on the server, can't do anything
@@ -644,9 +646,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
       return;
     }
 
-    const addr = await buildParsecAddr(addrResult.value);
-
-    if (!(await isSmartcardAvailable(addr))) {
+    if (!(await isSmartcardAvailable())) {
       // Should never happen.
       informationManager.present(
         new Information({
@@ -659,8 +659,12 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
       return;
     }
     const identitySystem = request.enrollment.identitySystem as AvailablePendingAsyncEnrollmentIdentitySystemPKI;
-    identityStrategy = makeAcceptPkiIdentityStrategy(serverAddr, toRaw(identitySystem.certificateRef));
-    primaryProtection = PrimaryProtectionStrategy.useSmartcard(toRaw(identitySystem.certificateRef));
+    const certResult = await openCertificate(identitySystem.certificateRef);
+    if (!certResult.ok) {
+      return;
+    }
+    identityStrategy = makeAcceptPkiIdentityStrategy(certResult.value);
+    primaryProtection = PrimaryProtectionStrategy.useSmartcard(certResult.value);
   } else if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.OpenBao) {
     const serverConfigResult = await getServerConfig(serverAddr);
 
@@ -846,13 +850,11 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useKeyring()));
     } else if (device.ty.tag === AvailableDeviceTypeTag.PKI) {
       window.electronAPI.log('debug', 'Logging in with Smartcard');
-      await login(
-        device,
-        constructAccessStrategy(
-          device,
-          PrimaryProtectionStrategy.useSmartcard(toRaw((device.ty as AvailableDeviceTypePKI).certificateRef)),
-        ),
-      );
+      const certResult = await openCertificate((device.ty as AvailableDeviceTypePKI).certificateRef);
+      if (!certResult.ok) {
+        return;
+      }
+      await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useSmartcard(certResult.value)));
     } else if (device.ty.tag === AvailableDeviceTypeTag.AccountVault) {
       try {
         const handle = ParsecAccount.getHandle();
@@ -1007,6 +1009,9 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
   }
 
   const result = await parsecLogin(device, access);
+  if (access.primaryProtection.tag === DevicePrimaryProtectionStrategyTag.PKI) {
+    await closeCertificate(access.primaryProtection.pkiPrivateKeyHandle);
+  }
   if (result.ok) {
     window.electronAPI.log('debug', 'getOrganizationCreationDate');
     const creationDateResult = await getOrganizationCreationDate(result.value);

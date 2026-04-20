@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DevicePrimaryProtectionStrategyTag, libparsec, TOTPOpaqueKeyID, X509CertificateReference } from '@/plugins/libparsec';
+import { DevicePrimaryProtectionStrategyTag, libparsec, TOTPOpaqueKeyID } from '@/plugins/libparsec';
 
 import { ParsecAccount } from '@/parsec/account';
 import { getClientConfig } from '@/parsec/internals';
@@ -25,6 +25,7 @@ import {
   DeviceSaveStrategy,
   ListAvailableDeviceError,
   OrganizationID,
+  PkiHandle,
   Result,
   SecretKey,
   UpdateDeviceError,
@@ -256,10 +257,10 @@ export const PrimaryProtectionStrategy = {
       tag: DevicePrimaryProtectionStrategyTag.Keyring,
     };
   },
-  useSmartcard(certificateRef: X509CertificateReference): DevicePrimaryProtectionStrategyPKI {
+  useSmartcard(pkiHandle: PkiHandle): DevicePrimaryProtectionStrategyPKI {
     return {
       tag: DevicePrimaryProtectionStrategyTag.PKI,
-      certificateRef: certificateRef,
+      pkiPrivateKeyHandle: pkiHandle,
     };
   },
   useOpenBao(connInfo: OpenBaoConnectionInfo): DevicePrimaryProtectionStrategyOpenBao {

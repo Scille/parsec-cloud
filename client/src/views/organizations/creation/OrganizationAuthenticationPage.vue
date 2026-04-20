@@ -85,8 +85,9 @@ const valid = asyncComputed(async () => {
 });
 
 async function authenticationChosen(): Promise<void> {
-  if (chooseAuthenticationRef.value?.getSaveStrategy()) {
-    emits('authenticationChosen', chooseAuthenticationRef.value.getSaveStrategy() as DeviceSaveStrategy);
+  const strategy = await chooseAuthenticationRef.value?.getSaveStrategy();
+  if (strategy) {
+    emits('authenticationChosen', strategy);
   }
 }
 

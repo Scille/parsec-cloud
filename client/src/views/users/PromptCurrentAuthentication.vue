@@ -35,12 +35,13 @@ import {
   AvailableDeviceTypeTag,
   DevicePrimaryProtectionStrategy,
   OpenBaoAuthConfigTag,
+  openCertificate,
   PrimaryProtectionStrategy,
   ServerConfig,
 } from '@/parsec';
 import { openBaoConnect, OpenBaoErrorType } from '@/services/openBao';
 import { MsPasswordInput, MsSpinner } from 'megashark-lib';
-import { onMounted, ref, toRaw, useTemplateRef } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   device: AvailableDevice;
@@ -64,12 +65,14 @@ onMounted(async () => {
     case AvailableDeviceTypeTag.Keyring:
       emits('authenticationSelected', PrimaryProtectionStrategy.useKeyring());
       return;
-    case AvailableDeviceTypeTag.PKI:
-      emits(
-        'authenticationSelected',
-        PrimaryProtectionStrategy.useSmartcard(toRaw((props.device.ty as AvailableDeviceTypePKI).certificateRef)),
-      );
+    case AvailableDeviceTypeTag.PKI: {
+      const certResult = await openCertificate((props.device.ty as AvailableDeviceTypePKI).certificateRef);
+      if (!certResult.ok) {
+        break;
+      }
+      emits('authenticationSelected', PrimaryProtectionStrategy.useSmartcard(certResult.value));
       return;
+    }
     case AvailableDeviceTypeTag.Password:
       if (passwordInputRef.value) {
         await passwordInputRef.value.setFocus();
