@@ -1,0 +1,268 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2026.
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-20 16:39+0200\n"
+"PO-Revision-Date: 2026-04-20 16:46+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.9\n"
+
+#: ../../hosting/architecture.rst:7
+msgid "Application Architecture"
+msgstr "Architecture de l'application"
+
+#: ../../hosting/architecture.rst:9
+msgid ""
+"Parsec allows you to easily and securely share your data in the cloud with "
+"complete confidentiality thanks to client-side end-to-end encryption and "
+"zero-trust security."
+msgstr ""
+"Parsec vous permet de partager facilement et en toute sécurité vos données "
+"dans le cloud, en toute confidentialité, grâce à un chiffrement de bout en "
+"bout côté client et à une sécurité de type « zéro-trust »."
+
+#: ../../hosting/architecture.rst:13
+msgid "Overview"
+msgstr "Aperçu"
+
+#: ../../hosting/architecture.rst:15
+msgid "The following key software components are involved in Parsec:"
+msgstr ""
+"Les principaux composants logiciels suivants sont impliqués dans Parsec :"
+
+#: ../../hosting/architecture.rst:17
+msgid ""
+"**Parsec client application** (desktop, web): responsible for data "
+"encryption and signing, as well as all security functions related to the "
+"user data to be protected. User data is fully encrypted client-side."
+msgstr ""
+"**Application cliente Parsec** (application de bureau, application web) : "
+"chargée du chiffrement et de la signature des données, ainsi que de toutes "
+"les fonctions de sécurité liées aux données utilisateur à protéger. Les "
+"données utilisateur sont entièrement chiffrées côté client."
+
+#: ../../hosting/architecture.rst:21
+msgid ""
+"**Parsec Server**: responsible for the access control layer as well as "
+"managing storage for encrypted data and metadata. The Parsec Server can be "
+"self-hosted, providing IT administrators full control over security, "
+"integrations and customization."
+msgstr ""
+"**Serveur Parsec** : chargé de la couche de contrôle d'accès ainsi que de la "
+"gestion du stockage des données et métadonnées chiffrées. Le serveur Parsec "
+"peut être hébergé en interne, ce qui offre aux administrateurs informatiques "
+"un contrôle total sur la sécurité, les intégrations et la personnalisation."
+
+#: ../../hosting/architecture.rst:25
+msgid "**PostgreSQL DB**: stores encrypted metadata."
+msgstr "**Base de données PostgreSQL** : stocke des métadonnées chiffrées."
+
+#: ../../hosting/architecture.rst:27
+msgid ""
+"**S3-like Object Storage** (such as OpenStack Swift, Amazon S3): stores "
+"encrypted data blocks."
+msgstr ""
+"**Stockage d'objets de type S3** (tel qu'OpenStack Swift ou Amazon S3) : "
+"stocke des blocs de données chiffrés."
+
+#: ../../hosting/architecture.rst:29 ../../hosting/architecture.rst:33
+msgid ""
+"A single Parsec Server managing access and data for multiple Organizations"
+msgstr ""
+"Un seul serveur Parsec gérant les accès et les données pour plusieurs "
+"organisations"
+
+#: ../../hosting/architecture.rst:36
+msgid "Key Parsec concepts"
+msgstr "Principaux concepts de Parsec"
+
+#: ../../hosting/architecture.rst:38
+msgid "**User**: the person accessing an Organization."
+msgstr "**Utilisateur** : la personne qui accède à une organisation."
+
+#: ../../hosting/architecture.rst:40
+msgid ""
+"**Workstation**: the physical support to access the Organization (such as "
+"desktop computer, laptop or mobile phone)"
+msgstr ""
+"**Poste de travail** : le support physique permettant d'accéder à "
+"l'organisation (tel qu'un ordinateur de bureau, un ordinateur portable ou un "
+"téléphone mobile)"
+
+#: ../../hosting/architecture.rst:43
+msgid ""
+"**Device**: the logical support to access the Organization. A Device is an "
+"encrypted file stored locally (in the File System or in the Web Browser "
+"storage) containing the keys allowing the User to access the Organization "
+"and sign its changes. The User has a Device for each workstation, but may "
+"also have have multiple Devices for a single workstation (this is the case "
+"if the user access the Organization from both the Desktop and Web "
+"applications)."
+msgstr ""
+"**Appareil** : support logique permettant d'accéder à l'organisation. Un "
+"appareil est un fichier chiffré stocké localement (dans le système de "
+"fichiers ou dans la mémoire du navigateur Web) contenant les clés qui "
+"permettent à l'utilisateur d'accéder à l'organisation et de signer ses "
+"modifications. L'utilisateur dispose d'un appareil pour chaque poste de "
+"travail, mais peut également avoir plusieurs appareils pour un même poste de "
+"travail (c'est le cas si l'utilisateur accède à l'organisation à la fois "
+"depuis l'application de bureau et depuis l'application Web)."
+
+#: ../../hosting/architecture.rst:49
+msgid ""
+"**Workspace**: the trust perimeter for sharing data. Data added to a "
+"Workspace is only shared and accessible to Users of the Workspace. User "
+"access to a Workspace is managed by the Workspace owner or designated "
+"managers (see :ref:`Parsec Workspaces <doc_userguide_parsec_workspaces>`)."
+msgstr ""
+"**Espace de travail** : le périmètre de confiance pour le partage des "
+"données. Les données ajoutées à un espace de travail ne sont partagées et "
+"accessibles qu'aux utilisateurs de cet espace. L'accès des utilisateurs à un "
+"espace de travail est géré par le propriétaire de l'espace ou par les "
+"gestionnaires désignés (voir :ref:`Espaces de travail Parsec "
+"<doc_userguide_parsec_workspaces>`)."
+
+#: ../../hosting/architecture.rst:53
+msgid ""
+"**Organization**: the trust perimeter for User management. It can be seen as "
+"a User Directory of trusted Users who have been invited and granted access "
+"to the Organization. Depending on their profile, Users can see the list of "
+"all Users from the Organization. In contrast, only Users having access to a "
+"Workspace know about its existence (not even Administrators can know of its "
+"existence if the Workspace have not been shared with them) Users and "
+"Workspace always belong to a single Organization."
+msgstr ""
+"**Organisation** : le périmètre de confiance pour la gestion des "
+"utilisateurs. Elle peut être considérée comme un annuaire regroupant les "
+"utilisateurs de confiance qui ont été invités et auxquels l'accès à "
+"l'organisation a été accordé. En fonction de leur profil, les utilisateurs "
+"peuvent consulter la liste de tous les utilisateurs de l'organisation. En "
+"revanche, seuls les utilisateurs ayant accès à un espace de travail ont "
+"connaissance de son existence (même les administrateurs ne peuvent pas en "
+"connaître l'existence si l'espace de travail n'a pas été partagé avec eux). "
+"Les utilisateurs et les espaces de travail appartiennent toujours à une "
+"seule organisation."
+
+#: ../../hosting/architecture.rst:61
+msgid "Security Model"
+msgstr "Modèle de sécurité"
+
+#: ../../hosting/architecture.rst:63
+msgid ""
+"Parsec is designed to protect data security at all costs, regardless of who "
+"controls the Parsec Server, the PostgreSQL database or the Object Storage."
+msgstr ""
+"Parsec est conçu pour garantir la sécurité des données à tout prix, quel que "
+"soit l'administrateur du serveur Parsec, de la base de données PostgreSQL ou "
+"du stockage d'objets."
+
+#: ../../hosting/architecture.rst:66
+msgid ""
+"In this sense, no trust is placed in the Parsec Server in order to reach "
+"Zero-Trust level of confidentiality. Only users have the keys to decipher "
+"data stored in Parsec. Take a look at :ref:`Parsec Zero-Trust Model "
+"<doc_userguide_introduction_zero_trust>` for more detail."
+msgstr ""
+"En ce sens, aucune confiance n'est accordée au serveur Parsec afin "
+"d'atteindre un niveau de confidentialité « zéro trust ». Seuls les "
+"utilisateurs disposent des clés permettant de déchiffrer les données "
+"stockées dans Parsec. Pour plus de détails, consultez :ref:`Modèle « zéro "
+"trust » de Parsec <doc_userguide_introduction_zero_trust>`."
+
+#: ../../hosting/architecture.rst:71
+msgid "Data security perimeter"
+msgstr "Périmètre de sécurité des données"
+
+#: ../../hosting/architecture.rst:73
+msgid "From a data security perspective, there are three zones:"
+msgstr "Du point de vue de la sécurité des données, on distingue trois zones :"
+
+#: ../../hosting/architecture.rst:75
+msgid ""
+"**User Workstation**: the trusted zone is limited to the user's workstation "
+"on which the Parsec client application is installed. Within an organization, "
+"the workstations should comply with required regulations, including being up "
+"to date with operating system security patches and adhering to the "
+"organization's security policy (eg. PSSI)."
+msgstr ""
+"**Poste de travail de l'utilisateur** : la zone de confiance se limite au "
+"poste de travail de l'utilisateur sur lequel l'application client Parsec est "
+"installée. Au sein d'une organisation, les postes de travail doivent "
+"respecter les réglementations en vigueur, notamment en matière de mise à "
+"jour des correctifs de sécurité du système d'exploitation et de conformité à "
+"la politique de sécurité de l'organisation (par exemple, PSSI)."
+
+#: ../../hosting/architecture.rst:80
+msgid ""
+"**Parsec Server**: the server managing encrypted metadata is hosted either "
+"in the cloud or on-premise, therefore is considered a less a less secure "
+"environment. As such, it can be queried from any workstation connected to "
+"the Internet. Parsec server has no knowledge of the data being exchanged but "
+"does know which user is accessing it and thus can restrict write access to "
+"users with sufficient permissions."
+msgstr ""
+"**Serveur Parsec** : le serveur qui gère les métadonnées chiffrées est "
+"hébergé soit dans le cloud, soit sur site ; il est donc considéré comme un "
+"environnement moins sécurisé. À ce titre, il peut être interrogé depuis "
+"n'importe quel poste de travail connecté à Internet. Le serveur Parsec n'a "
+"pas connaissance des données échangées, mais il sait quel utilisateur y "
+"accède et peut ainsi limiter l'accès en écriture aux utilisateurs disposant "
+"des autorisations nécessaires."
+
+#: ../../hosting/architecture.rst:85
+msgid ""
+"**Object Storage**: the encrypted blocks containing the user data to be "
+"protected are stored in the cloud, and thus also in a less secure zone. "
+"Client applications access data via the Parsec Server, which applies a layer "
+"of access control."
+msgstr ""
+"**Stockage objet** : les blocs chiffrés contenant les données utilisateur à "
+"protéger sont stockés dans le cloud, et donc également dans une zone moins "
+"sécurisée. Les applications clientes accèdent aux données via le serveur "
+"Parsec, qui applique une couche de contrôle d'accès."
+
+#: ../../hosting/architecture.rst:90
+msgid "Client-side encryption"
+msgstr "Chiffrement côté client"
+
+#: ../../hosting/architecture.rst:92
+msgid ""
+"Parsec secures your data before it is stored in the cloud (or on-premise) "
+"Object Storage."
+msgstr ""
+"Parsec sécurise vos données avant leur stockage dans le cloud (ou sur site) "
+"via le stockage objet."
+
+#: ../../hosting/architecture.rst:94
+msgid "This is done in 3 steps:"
+msgstr "Cela se fait en trois étapes :"
+
+#: ../../hosting/architecture.rst:96
+msgid "Split each file into blocks before encryption;"
+msgstr "Diviser chaque fichier en blocs avant de le chiffrer ;"
+
+#: ../../hosting/architecture.rst:97
+msgid ""
+"Encrypt each block using the key shared by users having access to this data;"
+msgstr ""
+"Chiffrer chaque bloc à l'aide de la clé partagée par les utilisateurs ayant "
+"accès à la donnée ;"
+
+#: ../../hosting/architecture.rst:98
+msgid ""
+"Encrypt metadata (such as directory structure and sharing information) using "
+"the key shared by users having access to this data;"
+msgstr ""
+"Chiffrer les métadonnées (telles que la structure des répertoires et les "
+"informations de partage) à l'aide de la clé partagée par les utilisateurs "
+"ayant accès à la donnée ;"

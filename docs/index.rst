@@ -47,6 +47,7 @@ You can also use the search function in the top left corner.
 
     hosting/introduction
     hosting/install_cli
+    hosting/architecture
     hosting/deployment/index
     hosting/maintenance/index
     hosting/administration/index

@@ -6,17 +6,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-15 17:24+0200\n"
+"POT-Creation-Date: 2026-04-20 15:25+0200\n"
 "PO-Revision-Date: 2026-04-15 17:36+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.17.0\n"
-"X-Generator: Poedit 3.9\n"
 
 #: ../../hosting/install_cli.rst:7
 msgid "Install Parsec CLI (Linux)"
@@ -25,42 +24,45 @@ msgstr "Installation de Parsec CLI sur Linux"
 #: ../../hosting/install_cli.rst:9
 msgid ""
 "In order to deploy and maintain Parsec Server, you would need to perform "
-"some operations with Parsec CLI for Linux. These operations can be performed "
-"from another machine."
+"some operations with Parsec :abbr:`CLI (Command-Line Interface)` for Linux. "
+"These operations can be performed from another machine."
 msgstr ""
 "Pour déployer et gérer Parsec Server, vous devrez effectuer certaines "
-"opérations à l'aide de l'interface CLI de Parsec pour Linux. Ces opérations "
-"peuvent être effectuées depuis un autre ordinateur."
+"opérations à l'aide de l'interface de ligne de commande (CLI) de Parsec pour "
+"Linux. Ces opérations peuvent être effectuées depuis un autre ordinateur."
 
 #: ../../hosting/install_cli.rst:12
 msgid ""
-"Parsec Command-Line Interface (CLI) is a standalone binary that can be "
-"downloaded from GitHub releases page."
+"Parsec :abbr:`CLI (Command-Line Interface)` is a standalone binary that can "
+"be downloaded from GitHub releases page."
 msgstr ""
 "L'interface de ligne de commande (CLI) de Parsec est un binaire autonome qui "
 "peut être téléchargé depuis la page des versions sur GitHub."
 
-#: ../../hosting/install_cli.rst:16
-msgid "Download Parsec CLI: `Parsec CLI v3.8.2-a.0+dev`_."
-msgstr "Téléchargez Parsec CLI: `Parsec CLI v3.8.2-a.0+dev`_."
-
 #: ../../hosting/install_cli.rst:18
+msgid "Download `Parsec CLI`_."
+msgstr "Téléchargez `Parsec CLI`_."
+
+#: ../../hosting/install_cli.rst:20
 msgid "Make the file executable"
 msgstr "Rendre le fichier exécutable"
 
-#: ../../hosting/install_cli.rst:20
-msgid "Right-click/Properties/Allow executing file as program"
+#: ../../hosting/install_cli.rst:22
+msgid ""
+"Right-click on file, then :menuselection:`Properties --> Allow executing "
+"file as program`"
 msgstr ""
-"Clic droit/Propriétés/Autoriser l'exécution du fichier en tant que programme"
+"Clic droit sur le fichier, puis :menuselection:`Propriétés --> Autoriser "
+"l'exécution du fichier en tant que programme`"
 
-#: ../../hosting/install_cli.rst:21
-msgid "Or use the `chmod` command:"
-msgstr "Ou utilisez la commande `chmod` :"
+#: ../../hosting/install_cli.rst:23
+msgid "Or use the :command:`chmod` command:"
+msgstr "Ou utilisez la commande :command:`chmod` :"
 
-#: ../../hosting/install_cli.rst:27
+#: ../../hosting/install_cli.rst:29
 msgid "Verify the installation by running the following command:"
 msgstr "Vérifiez l'installation en exécutant la commande suivante :"
 
-#: ../../hosting/install_cli.rst:33
+#: ../../hosting/install_cli.rst:35
 msgid "The Parsec CLI version should be displayed:"
 msgstr "La version de Parsec CLI doit s'afficher:"

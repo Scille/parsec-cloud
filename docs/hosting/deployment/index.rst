@@ -16,6 +16,9 @@ Server Deployment
 
 This section describes how to deploy the **Parsec Server** on Linux.
 
+Before you begin, take a look at the :ref:`Application architecture <doc_hosting_architecture>` section for an
+overview of software systems and interactions involved with the Parsec Server.
+
 The steps and requirements described in this section may vary based on your specific needs.
 It is recommended to deploy and observe performance on a pilot project prior to using in production.
 

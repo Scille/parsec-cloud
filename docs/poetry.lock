@@ -606,6 +606,20 @@ regex = "*"
 tests = ["pytest", "pytest-cov"]
 
 [[package]]
+name = "sphinx-mermaid"
+version = "0.0.8"
+description = "Mermaid graph support for sphinx generated documentations"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "sphinx_mermaid-0.0.8-py2.py3-none-any.whl", hash = "sha256:03cbad30c04130e5644c5112b4b2da7850d142f897876ac5aea83c8b5965bf76"},
+]
+
+[package.dependencies]
+sphinx = "*"
+
+[[package]]
 name = "sphinx-rtd-theme"
 version = "3.1.0"
 description = "Read the Docs theme for Sphinx"
@@ -809,4 +823,4 @@ zstd = ["backports-zstd (>=1.0.0) ; python_version < \"3.14\""]
 [metadata]
 lock-version = "2.1"
 python-versions = "~=3.12.0"
-content-hash = "27ab9fca01d67452955f222be2ac72bb97d7a06855ef1d073d0463347e2e0ad0"
+content-hash = "3e3effe9d8dc5694955345b6561c65e7969344f3e50741ea54e415b516e9a38e"
