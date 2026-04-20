@@ -245,6 +245,7 @@ import {
   getFileHandlerMode,
   getWorkspaceHandle,
   navigateTo,
+  routerGoBack,
   Routes,
   watchRoute,
 } from '@/router';
@@ -715,6 +716,7 @@ async function showDetails(): Promise<void> {
 }
 
 async function openEditor(path: FsPath): Promise<void> {
+  await routerGoBack();
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
     await pathOpener.openPath(workspaceHandle, path, informationManager.value, { readOnly: false });
