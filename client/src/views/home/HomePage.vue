@@ -852,6 +852,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       window.electronAPI.log('debug', 'Logging in with Smartcard');
       const certResult = await openCertificate((device.ty as AvailableDeviceTypePKI).certificateRef);
       if (!certResult.ok) {
+        await handleLoginError(device, { tag: ClientStartErrorTag.Internal, error: `${certResult.error.tag} (${certResult.error.error})` });
         return;
       }
       await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useSmartcard(certResult.value)));
@@ -915,6 +916,15 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
     informationManager.present(
       new Information({
         message: 'HomePage.loginErrors.openBaoFailed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  } else if (device.ty.tag === AvailableDeviceTypeTag.PKI) {
+    window.electronAPI.log('error', `Failed to login with PKI: ${error.tag} (${error.error})`);
+    informationManager.present(
+      new Information({
+        message: 'HomePage.loginErrors.pkiFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

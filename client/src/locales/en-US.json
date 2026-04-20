@@ -281,7 +281,8 @@
             "keyringFailedUsedRecovery": "Use a recovery file",
             "keyringFailedAbort": "No",
             "vaultFailed": "Could not log in using Parsec Account.",
-            "openBaoFailed": "Could not log in using Single Sign-On. Make sure you are online."
+            "openBaoFailed": "Could not log in using Single Sign-On. Make sure you are online.",
+            "pkiFailed": "Could not log in using the smartcard. Make sure it is available."
         },
         "bmsOrganizationNotFound": "Could not find the organization {organization} on this device.",
         "noDevices": {

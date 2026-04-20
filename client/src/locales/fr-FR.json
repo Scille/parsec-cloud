@@ -280,7 +280,8 @@
             "keyringFailedUsedRecovery": "Utiliser un fichier de récupération",
             "keyringFailedAbort": "Non",
             "vaultFailed": "Impossible de se connecter avec Parsec Account.",
-            "openBaoFailed": "Impossible de se connecter avec l'authentification unique. Assurez vous d'être en ligne."
+            "openBaoFailed": "Impossible de se connecter avec l'authentification unique. Assurez vous d'être en ligne.",
+            "pkiFailed": "Impossible de se connecter avec la carte. Assurez-vous qu'elle est disponible."
         },
         "bmsOrganizationNotFound": "Impossible de trouver l'organisation {organization} sur cet appareil.",
         "noDevices": {
