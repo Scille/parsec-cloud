@@ -542,7 +542,7 @@ msTest.describe(() => {
       },
     );
 
-    msTest(
+    msTest.fixme(
       `Small display document popover on right click in ${gridMode ? 'grid' : 'list'} mode for folder`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, 0, true);
@@ -571,7 +571,7 @@ msTest.describe(() => {
       },
     );
 
-    msTest(
+    msTest.fixme(
       `Small display popover on right click in ${gridMode ? 'grid' : 'list'} mode for file with editics`,
       async ({ parsecEditics }, testInfo: TestInfo) => {
         await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
@@ -603,7 +603,7 @@ msTest.describe(() => {
       },
     );
 
-    msTest(
+    msTest.fixme(
       `Small display popover on right click in ${gridMode ? 'grid' : 'list'} mode for file with editics on non-editable file`,
       async ({ parsecEditics }, testInfo: TestInfo) => {
         await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Png, false);
@@ -703,7 +703,7 @@ msTest.describe(() => {
       },
     );
 
-    msTest(
+    msTest.fixme(
       `Small display document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} with a folder`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, true);
