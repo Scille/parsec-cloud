@@ -114,6 +114,7 @@ import {
   DevicePrimaryProtectionStrategy,
   ServerConfig,
   UpdateDeviceErrorTag,
+  closeCertificate,
   constructAccessStrategy,
   fetchTotpOpaqueKey,
   isAuthenticationValid,
@@ -243,7 +244,7 @@ async function onCurrentAuthenticationSelected(protection?: DevicePrimaryProtect
 }
 
 async function changeAuthentication(): Promise<void> {
-  const saveStrategy = chooseAuthRef.value?.getSaveStrategy();
+  const saveStrategy = await chooseAuthRef.value?.getSaveStrategy();
   if (!saveStrategy || !currentAuth.value) {
     return;
   }
@@ -260,6 +261,13 @@ async function changeAuthentication(): Promise<void> {
     ),
     saveStrategy,
   );
+
+  if (currentAuth.value && currentAuth.value.tag === DevicePrimaryProtectionStrategyTag.PKI) {
+    await closeCertificate(currentAuth.value.pkiPrivateKeyHandle);
+  }
+  if (saveStrategy.primaryProtection.tag === DevicePrimaryProtectionStrategyTag.PKI) {
+    await closeCertificate(saveStrategy.primaryProtection.pkiPrivateKeyHandle);
+  }
 
   if (result.ok) {
     props.informationManager.present(
@@ -289,6 +297,9 @@ async function changeAuthentication(): Promise<void> {
 }
 
 async function cancel(): Promise<boolean> {
+  if (currentAuth.value && currentAuth.value.tag === DevicePrimaryProtectionStrategyTag.PKI) {
+    await closeCertificate(currentAuth.value.pkiPrivateKeyHandle);
+  }
   return modalController.dismiss(null, MsModalResult.Cancel);
 }
 </script>

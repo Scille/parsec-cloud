@@ -177,11 +177,12 @@ import {
   isKeyringAvailable,
   isSmartcardAvailable,
   isWeb,
+  openCertificate,
 } from '@/parsec';
 import { OpenBaoClient, OpenBaoErrorType, isSSOProviderHandled, openBaoConnect } from '@/services/openBao';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { MsChoosePasswordInput, MsSpinner } from 'megashark-lib';
-import { computed, onMounted, ref, toRaw, useTemplateRef } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 const authentication = ref<DevicePrimaryProtectionStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);
@@ -216,7 +217,7 @@ defineEmits<{
 
 onMounted(async () => {
   keyringAvailable.value = props.activeAuth === AvailableDeviceTypeTag.Keyring ? true : await isKeyringAvailable();
-  smartcardAvailable.value = await isSmartcardAvailable(props.serverAddr);
+  smartcardAvailable.value = await isSmartcardAvailable();
 });
 
 async function onChange(_value: any): Promise<void> {
@@ -260,7 +261,7 @@ async function changeAuthenticationMethod(): Promise<void> {
   error.value = '';
 }
 
-function getSaveStrategy(): DeviceSaveStrategy | undefined {
+async function getSaveStrategy(): Promise<DeviceSaveStrategy | undefined> {
   if (authentication.value === DevicePrimaryProtectionStrategyTag.Keyring) {
     return constructSaveStrategy(PrimaryProtectionStrategy.useKeyring());
   } else if (authentication.value === DevicePrimaryProtectionStrategyTag.OpenBao) {
@@ -271,7 +272,10 @@ function getSaveStrategy(): DeviceSaveStrategy | undefined {
     return constructSaveStrategy(PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()));
   } else if (authentication.value === DevicePrimaryProtectionStrategyTag.PKI) {
     if (certif.value) {
-      return constructSaveStrategy(PrimaryProtectionStrategy.useSmartcard(toRaw(certif.value.handle)));
+      const certResult = await openCertificate(certif.value.reference);
+      if (certResult.ok) {
+        return constructSaveStrategy(PrimaryProtectionStrategy.useSmartcard(certResult.value));
+      }
     }
     return undefined;
   } else if (choosePasswordRef.value?.password) {

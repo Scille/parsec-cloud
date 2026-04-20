@@ -301,7 +301,7 @@ async function finishRecovery(): Promise<void> {
     state.value = ImportDevicePageState.Start;
     return;
   }
-  const saveStrategy = chooseAuthRef.value.getSaveStrategy();
+  const saveStrategy = await chooseAuthRef.value.getSaveStrategy();
   if (!saveStrategy) {
     return;
   }
