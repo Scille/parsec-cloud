@@ -8,6 +8,11 @@ interface AssertReturnType {
   pass: boolean;
 }
 
+export enum AuthMethodDisabledReason {
+  NotAvailable = 'not-available',
+  Forbidden = 'forbidden',
+}
+
 // Helper function for file handler page assertions
 async function checkFileHandlerPage(page: MsPage, mode?: 'view' | 'edit'): Promise<AssertReturnType> {
   try {
@@ -488,6 +493,12 @@ export const expect = baseExpect.extend({
   async toHaveAuthentication(
     authRadio: Locator,
     state?: { passwordDisabled?: boolean; ssoDisabled?: boolean; pkiDisabled?: boolean; keyringDisabled?: boolean },
+    reason?: {
+      password?: AuthMethodDisabledReason;
+      sso?: AuthMethodDisabledReason;
+      pki?: AuthMethodDisabledReason;
+      keyring?: AuthMethodDisabledReason;
+    },
   ): Promise<AssertReturnType> {
     await baseExpect(authRadio).toHaveCount(4);
     await baseExpect(authRadio.nth(0).locator('.authentication-card-text__title')).toHaveText('Password');
@@ -497,20 +508,37 @@ export const expect = baseExpect.extend({
 
     if (state?.passwordDisabled) {
       await baseExpect(authRadio.nth(0)).toHaveClass(/radio-disabled/);
+      if (reason?.password) {
+        await baseExpect(authRadio.nth(0).locator('.authentication-card-text__description')).toHaveText(
+          'This organization does not allow this authentication method.',
+        );
+      }
     } else {
       await baseExpect(authRadio.nth(0)).not.toHaveClass(/radio-disabled/);
     }
     if (state?.keyringDisabled) {
       await baseExpect(authRadio.nth(1)).toHaveClass(/radio-disabled/);
-      await baseExpect(authRadio.nth(1).locator('.authentication-card-text__description')).toHaveText('Unavailable on web');
+      if (reason?.keyring === AuthMethodDisabledReason.Forbidden) {
+        await baseExpect(authRadio.nth(1).locator('.authentication-card-text__description')).toHaveText(
+          'This organization does not allow this authentication method.',
+        );
+      } else {
+        await baseExpect(authRadio.nth(1).locator('.authentication-card-text__description')).toHaveText('Unavailable on web');
+      }
     } else {
       await baseExpect(authRadio.nth(1)).not.toHaveClass(/radio-disabled/);
     }
     if (state?.pkiDisabled) {
       await baseExpect(authRadio.nth(2)).toHaveClass(/radio-disabled/);
-      await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText(
-        'Smartcard authentication is unavailable.',
-      );
+      if (reason?.pki === AuthMethodDisabledReason.Forbidden) {
+        await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText(
+          'This organization does not allow this authentication method.',
+        );
+      } else {
+        await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText(
+          'Smartcard authentication is unavailable.',
+        );
+      }
     } else {
       await baseExpect(authRadio.nth(2)).not.toHaveClass(/radio-disabled/);
       await baseExpect(authRadio.nth(2).locator('.authentication-card-text__description')).toHaveText(
@@ -519,9 +547,15 @@ export const expect = baseExpect.extend({
     }
     if (state?.ssoDisabled) {
       await baseExpect(authRadio.nth(3)).toHaveClass(/radio-disabled/);
-      await baseExpect(authRadio.nth(3).locator('.authentication-card-text__description')).toHaveText(
-        'This method is not allowed by this server.',
-      );
+      if (reason?.sso === AuthMethodDisabledReason.Forbidden) {
+        await baseExpect(authRadio.nth(3).locator('.authentication-card-text__description')).toHaveText(
+          'This organization does not allow this authentication method.',
+        );
+      } else {
+        await baseExpect(authRadio.nth(3).locator('.authentication-card-text__description')).toHaveText(
+          'This method is not allowed by this server.',
+        );
+      }
     } else {
       await baseExpect(authRadio.nth(3)).not.toHaveClass(/radio-disabled/);
       await baseExpect(authRadio.nth(3).locator('.authentication-card-text__description')).toHaveText('Login with an external account');

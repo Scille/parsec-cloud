@@ -1430,6 +1430,7 @@
                 "unavailable": "This method is not allowed by this server."
             }
         },
+        "forbidden": "This organization does not allow this authentication method.",
         "methodChosen": "Method chosen:",
         "active": "Active method",
         "update": "Change method",

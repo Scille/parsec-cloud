@@ -171,11 +171,6 @@ for (const error of ['timeout', '400', 'popup']) {
 
     await authContainer.locator('.proconnect-button').click();
 
-    if (error === 'timeout') {
-      await expect(authContainer.locator('.authentication-card')).toHaveTheClass('authentication-card--disabled');
-      await expect(authContainer.locator('.authentication-card').locator('.authentication-card__update-button')).toBeTrulyDisabled();
-    }
-
     await expect(authNext).toBeTrulyDisabled();
     await expect(formError).toBeVisible();
     if (error === 'popup') {

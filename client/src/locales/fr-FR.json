@@ -1432,6 +1432,7 @@
                 "unavailable": "Cette méthode n'est pas autorisée par ce serveur."
             }
         },
+        "forbidden": "Cette organisation n'autorise pas cette méthode d'authentification.",
         "methodChosen": "Méthode choisie :",
         "active": "Méthode active",
         "update": "Change de méthode",

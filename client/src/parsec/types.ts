@@ -18,6 +18,7 @@ export {
   AccountRecoverProceedErrorTag,
   AccountRecoverSendValidationEmailErrorTag,
   AccountRegisterNewDeviceErrorTag,
+  AdvisoryDeviceFilePrimaryProtection,
   AnyClaimRetrievedInfoTag,
   AsyncEnrollmentIdentitySystemTag,
   AvailableDeviceTypeTag,
@@ -52,7 +53,6 @@ export {
   ClientStartWorkspaceErrorTag,
   ClientStopErrorTag,
   ClientUserUpdateProfileErrorTag,
-  DevicePrimaryProtectionStrategyTag,
   DevicePurpose,
   EmailSentStatusTag,
   EntryStatTag,
@@ -249,7 +249,6 @@ export type {
   Result,
   SASCode,
   SecretKey,
-  ServerConfig,
   ShowCertificateSelectionDialogError,
   SizeInt,
   SubmitAsyncEnrollmentError,
@@ -322,6 +321,7 @@ import type {
   EntryStatFolder as ParsecEntryStatFolder,
   ParsecInvitationAddrAndRedirectionURL,
   ParsecOrganizationAddr,
+  ServerConfig as ParsecServerConfig,
   UserInfo as ParsecUserInfo,
   WorkspaceHistoryEntryStatFile as ParsecWorkspaceHistoryEntryStatFile,
   WorkspaceHistoryEntryStatFolder as ParsecWorkspaceHistoryEntryStatFolder,
@@ -333,7 +333,7 @@ import type {
   VlobID,
 } from '@/plugins/libparsec';
 
-import { InvitationType, RealmRole as WorkspaceRole } from '@/plugins/libparsec';
+import { DevicePrimaryProtectionStrategyTag, InvitationType, RealmRole as WorkspaceRole } from '@/plugins/libparsec';
 
 type WorkspaceHistoryHandle = Handle;
 type WorkspaceHandle = Handle;
@@ -505,6 +505,11 @@ enum CertificatePurpose {
   Both = 'certificate-sign-encrypt',
 }
 
+interface ServerConfig extends ParsecServerConfig {
+  isAuthMethodAllowed: (strategy: DevicePrimaryProtectionStrategyTag) => boolean;
+  doesAuthMethodRequireTotp: (strategy: DevicePrimaryProtectionStrategyTag) => boolean;
+}
+
 export {
   AccessToken,
   AccountHandle,
@@ -515,6 +520,7 @@ export {
   CertificateWithDetailsValid,
   ConnectionHandle,
   DateTime,
+  DevicePrimaryProtectionStrategyTag,
   EntryID,
   EntryStat,
   EntryStatFile,
@@ -536,6 +542,7 @@ export {
   ParsecOrganizationAddr,
   PkiHandle,
   RegistrationDevice,
+  ServerConfig,
   SystemPath,
   UserID,
   UserInfo,

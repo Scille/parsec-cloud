@@ -5,11 +5,13 @@ import { getClientInfo } from '@/parsec/login';
 import {
   ArchiveDeviceError,
   AvailableDevice,
+  AvailableDeviceTypeTag,
   ClientExportRecoveryDeviceError,
   ClientListUserDevicesError,
   ClientListUserDevicesErrorTag,
   ClientNewDeviceInvitationError,
   DeviceInfo,
+  DevicePrimaryProtectionStrategyTag,
   DevicePurpose,
   DeviceSaveStrategy,
   ImportRecoveryDeviceError,
@@ -109,4 +111,14 @@ export async function createDeviceInvitation(sendEmail: boolean): Promise<Result
     return result;
   }
   return generateNoHandleError<ClientNewDeviceInvitationError>();
+}
+
+export function getPrimaryProtectionTypeForDeviceType(deviceType: AvailableDeviceTypeTag): DevicePrimaryProtectionStrategyTag | undefined {
+  return new Map<AvailableDeviceTypeTag, DevicePrimaryProtectionStrategyTag>([
+    [AvailableDeviceTypeTag.AccountVault, DevicePrimaryProtectionStrategyTag.AccountVault],
+    [AvailableDeviceTypeTag.Keyring, DevicePrimaryProtectionStrategyTag.Keyring],
+    [AvailableDeviceTypeTag.OpenBao, DevicePrimaryProtectionStrategyTag.OpenBao],
+    [AvailableDeviceTypeTag.PKI, DevicePrimaryProtectionStrategyTag.PKI],
+    [AvailableDeviceTypeTag.Password, DevicePrimaryProtectionStrategyTag.Password],
+  ]).get(deviceType);
 }

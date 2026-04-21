@@ -66,7 +66,7 @@
         >
           <choose-authentication
             ref="chooseAuth"
-            :active-auth="currentDevice.ty.tag"
+            :active-auth="getPrimaryProtectionTypeForDeviceType(currentDevice.ty.tag)"
             :server-config="serverConfig"
             :server-addr="currentDevice.serverAddr"
           />
@@ -117,6 +117,7 @@ import {
   closeCertificate,
   constructAccessStrategy,
   fetchTotpOpaqueKey,
+  getPrimaryProtectionTypeForDeviceType,
   isAuthenticationValid,
   updateDeviceChangeAuthentication,
 } from '@/parsec';

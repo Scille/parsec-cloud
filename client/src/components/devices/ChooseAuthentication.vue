@@ -26,10 +26,11 @@
           label-placement="end"
           justify="start"
           :value="DevicePrimaryProtectionStrategyTag.Password"
+          :disabled="authMethodIsDisabled(DevicePrimaryProtectionStrategyTag.Password)"
         >
           <authentication-card
             @click="onMethodSelected(DevicePrimaryProtectionStrategyTag.Password)"
-            :state="getAuthCardState(AvailableDeviceTypeTag.Password)"
+            :state="getAuthCardState(DevicePrimaryProtectionStrategyTag.Password)"
             :auth-method="DevicePrimaryProtectionStrategyTag.Password"
           />
         </ion-radio>
@@ -38,12 +39,11 @@
           label-placement="end"
           justify="start"
           :value="DevicePrimaryProtectionStrategyTag.Keyring"
-          :disabled="!keyringAvailable || activeAuth === AvailableDeviceTypeTag.Keyring"
+          :disabled="authMethodIsDisabled(DevicePrimaryProtectionStrategyTag.Keyring)"
         >
           <authentication-card
             :auth-method="DevicePrimaryProtectionStrategyTag.Keyring"
-            :state="getAuthCardState(AvailableDeviceTypeTag.Keyring)"
-            :disabled="!keyringAvailable"
+            :state="getAuthCardState(DevicePrimaryProtectionStrategyTag.Keyring)"
           />
         </ion-radio>
 
@@ -52,13 +52,12 @@
           label-placement="end"
           justify="start"
           :value="DevicePrimaryProtectionStrategyTag.PKI"
-          :disabled="!smartcardAvailable"
+          :disabled="authMethodIsDisabled(DevicePrimaryProtectionStrategyTag.PKI)"
         >
           <authentication-card
             @click="onMethodSelected(DevicePrimaryProtectionStrategyTag.PKI)"
-            :state="getAuthCardState(AvailableDeviceTypeTag.PKI)"
+            :state="getAuthCardState(DevicePrimaryProtectionStrategyTag.PKI)"
             :auth-method="DevicePrimaryProtectionStrategyTag.PKI"
-            :disabled="!smartcardAvailable"
           />
         </ion-radio>
 
@@ -67,13 +66,12 @@
           label-placement="end"
           :value="DevicePrimaryProtectionStrategyTag.OpenBao"
           justify="start"
-          :disabled="!openBaoAuthAvailable || activeAuth === AvailableDeviceTypeTag.OpenBao"
+          :disabled="authMethodIsDisabled(DevicePrimaryProtectionStrategyTag.OpenBao)"
         >
           <authentication-card
-            :state="getAuthCardState(AvailableDeviceTypeTag.OpenBao)"
+            :state="getAuthCardState(DevicePrimaryProtectionStrategyTag.OpenBao)"
             @click="onMethodSelected(DevicePrimaryProtectionStrategyTag.OpenBao)"
             :auth-method="DevicePrimaryProtectionStrategyTag.OpenBao"
-            :disabled="!openBaoAuthAvailable"
           />
         </ion-radio>
       </ion-radio-group>
@@ -87,7 +85,7 @@
         <div class="method-chosen">
           <authentication-card
             :auth-method="DevicePrimaryProtectionStrategyTag.Keyring"
-            :state="AuthenticationCardState.Update"
+            :state="querying ? AuthenticationCardState.Disabled : AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
         </div>
@@ -98,7 +96,7 @@
         <div class="method-chosen">
           <authentication-card
             :auth-method="DevicePrimaryProtectionStrategyTag.Password"
-            :state="AuthenticationCardState.Update"
+            :state="querying ? AuthenticationCardState.Disabled : AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
         </div>
@@ -113,7 +111,7 @@
         <div class="method-chosen">
           <authentication-card
             :auth-method="DevicePrimaryProtectionStrategyTag.PKI"
-            :state="AuthenticationCardState.Update"
+            :state="querying ? AuthenticationCardState.Disabled : AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod"
           />
         </div>
@@ -127,8 +125,7 @@
         <div class="method-chosen">
           <authentication-card
             :auth-method="DevicePrimaryProtectionStrategyTag.OpenBao"
-            :state="AuthenticationCardState.Update"
-            :disabled="querying"
+            :state="querying ? AuthenticationCardState.Disabled : AuthenticationCardState.Update"
             @update-clicked="changeAuthenticationMethod()"
           />
         </div>
@@ -164,7 +161,6 @@ import CertificateSelection from '@/components/misc/CertificateSelection.vue';
 import authenticationCard from '@/components/profile/AuthenticationCard.vue';
 import { AuthenticationCardState } from '@/components/profile/types';
 import {
-  AvailableDeviceTypeTag,
   CertificatePurpose,
   CertificateWithDetailsValid,
   DevicePrimaryProtectionStrategyTag,
@@ -200,7 +196,7 @@ const openBaoAuthAvailable = computed(() => {
 
 const props = defineProps<{
   showTitle?: boolean;
-  activeAuth?: AvailableDeviceTypeTag;
+  activeAuth?: DevicePrimaryProtectionStrategyTag;
   serverConfig?: ServerConfig;
   serverAddr: ParsecAddr;
 }>();
@@ -216,7 +212,7 @@ defineEmits<{
 }>();
 
 onMounted(async () => {
-  keyringAvailable.value = props.activeAuth === AvailableDeviceTypeTag.Keyring ? true : await isKeyringAvailable();
+  keyringAvailable.value = props.activeAuth === DevicePrimaryProtectionStrategyTag.Keyring ? true : await isKeyringAvailable();
   smartcardAvailable.value = await isSmartcardAvailable();
 });
 
@@ -226,21 +222,24 @@ async function onChange(_value: any): Promise<void> {
   }
 }
 
-function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState {
+function getAuthCardState(auth: DevicePrimaryProtectionStrategyTag): AuthenticationCardState {
+  if (props.serverConfig && !props.serverConfig.isAuthMethodAllowed(auth)) {
+    return AuthenticationCardState.Forbidden;
+  }
   switch (auth) {
-    case AvailableDeviceTypeTag.Password:
+    case DevicePrimaryProtectionStrategyTag.Password:
       return AuthenticationCardState.Default;
-    case AvailableDeviceTypeTag.Keyring:
+    case DevicePrimaryProtectionStrategyTag.Keyring:
       if (!keyringAvailable.value) {
         return AuthenticationCardState.Unavailable;
       }
       return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
-    case AvailableDeviceTypeTag.PKI:
+    case DevicePrimaryProtectionStrategyTag.PKI:
       if (!smartcardAvailable.value) {
         return AuthenticationCardState.Unavailable;
       }
       return auth === props.activeAuth ? AuthenticationCardState.Active : AuthenticationCardState.Default;
-    case AvailableDeviceTypeTag.OpenBao:
+    case DevicePrimaryProtectionStrategyTag.OpenBao:
       if (!openBaoAuthAvailable.value) {
         return AuthenticationCardState.Unavailable;
       }
@@ -248,6 +247,11 @@ function getAuthCardState(auth: AvailableDeviceTypeTag): AuthenticationCardState
     default:
       return AuthenticationCardState.Default;
   }
+}
+
+function authMethodIsDisabled(auth: DevicePrimaryProtectionStrategyTag): boolean {
+  const state = getAuthCardState(auth);
+  return [AuthenticationCardState.Disabled, AuthenticationCardState.Forbidden, AuthenticationCardState.Unavailable].includes(state);
 }
 
 async function onMethodSelected(method: DevicePrimaryProtectionStrategyTag): Promise<void> {
