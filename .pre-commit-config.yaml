@@ -254,7 +254,6 @@ repos:
             --tests,
             --bins,
             --lib,
-            --exclude=libparsec_bindings_android,
             --exclude=libparsec_bindings_web,
             --exclude=libparsec_bindings_electron,
             --fix,
