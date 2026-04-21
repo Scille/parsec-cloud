@@ -39,7 +39,8 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 
     if (displaySize === 'large') {
       await expect(container.locator('#organization-filter-select')).toHaveText('Organization name');
-      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join']);
+      await expect(topBar.locator('.topbar-right').locator('#create-organization-button')).toHaveText(['Create or join']);
+      await expect(topBar.locator('.topbar-right').locator('#recover-button-header')).toHaveText(['Lost your access?']);
       await expect(home.locator('.homepage-sidebar')).toBeVisible();
       await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
         'About',
@@ -50,7 +51,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
         'Customer area',
       ]);
     } else {
-      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join']);
+      await expect(topBar.locator('.topbar-right').locator('#create-organization-button')).toHaveText(['Create or join']);
       await expect(home.locator('.homepage-sidebar')).toBeHidden();
       await expect(home.locator('.menu-secondary')).toBeHidden();
       await home.locator('.menu-button').isVisible();
@@ -331,11 +332,11 @@ msTest('Empty home page recover', async ({ context }) => {
   await expect(container).toBeVisible();
 
   const recoverBtn = container.locator('.recovery-no-devices').locator('ion-button');
-  await expect(page.locator('.recovery-content')).toBeHidden();
+  await expect(page.locator('.choose-recovery-device-modal')).toBeHidden();
   await recoverBtn.click();
-  await expect(page.locator('.recovery-content')).toBeVisible();
-  await page.locator('.topbar-left__back-button').click();
-  await expect(page.locator('.recovery-content')).toBeHidden();
+  await expect(page.locator('.choose-recovery-device-modal')).toBeVisible();
+  await page.locator('.closeBtn').click();
+  await expect(page.locator('.choose-recovery-device-modal')).toBeHidden();
   await page.release();
 });
 

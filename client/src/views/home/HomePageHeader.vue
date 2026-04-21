@@ -81,6 +81,14 @@
       </div>
       <div class="topbar-right">
         <ion-button
+          @click="$emit('recoverClick')"
+          size="default"
+          class="button-default topbar-right-button button-medium"
+          id="recover-button-header"
+        >
+          <span class="topbar-right-button__text">{{ $msTranslate('HomePage.lostDevice') }}</span>
+        </ion-button>
+        <ion-button
           @click="emits('createOrJoinOrganizationClick', $event)"
           size="default"
           id="create-organization-button"
@@ -292,6 +300,7 @@ const emits = defineEmits<{
   (e: 'createOrJoinOrganizationClick', event: Event): void;
   (e: 'changeTab', tab: AccountSettingsTabs): void;
   (e: 'settingsClick'): void;
+  (e: 'recoverClick'): void;
 }>();
 </script>
 
@@ -391,9 +400,11 @@ const emits = defineEmits<{
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    min-height: 4rem;
 
     @include ms.responsive-breakpoint('xs') {
       width: 100%;
+      min-height: auto;
     }
 
     &-text {
@@ -466,6 +477,39 @@ const emits = defineEmits<{
     justify-content: flex-end;
     align-items: center;
     margin-left: auto;
+
+    &-button {
+      background: var(--parsec-color-light-secondary-white);
+      color: var(--parsec-color-light-secondary-soft-text);
+      border-radius: var(--parsec-radius-12);
+      transition: all 150ms linear;
+      border: 1px solid var(--parsec-color-light-secondary-medium);
+      box-shadow: var(--parsec-shadow-input);
+      min-height: 2.25rem !important;
+
+      & * {
+        pointer-events: none;
+      }
+
+      &::part(native) {
+        border-radius: var(--parsec-radius-12);
+        padding: 0.625rem 0.75rem;
+        --background: none;
+        --background-hover: none;
+        --background-focused: transparent;
+        --background-activated: transparent;
+      }
+
+      ion-icon {
+        font-size: 1rem;
+        margin-left: 0.5rem;
+      }
+
+      &:hover {
+        color: var(--parsec-color-light-secondary-text);
+        border: 1px solid var(--parsec-color-light-secondary-light);
+      }
+    }
   }
 
   .menu-button {
@@ -478,38 +522,6 @@ const emits = defineEmits<{
     &__icon {
       font-size: 1.75rem;
     }
-  }
-}
-
-#create-organization-button {
-  background: var(--parsec-color-light-secondary-white);
-  color: var(--parsec-color-light-secondary-soft-text);
-  border-radius: var(--parsec-radius-12);
-  transition: all 150ms linear;
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  box-shadow: var(--parsec-shadow-input);
-
-  & * {
-    pointer-events: none;
-  }
-
-  &::part(native) {
-    border-radius: var(--parsec-radius-12);
-    padding: 0.625rem 0.75rem;
-    --background: none;
-    --background-hover: none;
-    --background-focused: transparent;
-    --background-activated: transparent;
-  }
-
-  ion-icon {
-    font-size: 1rem;
-    margin-left: 0.5rem;
-  }
-
-  &:hover {
-    color: var(--parsec-color-light-secondary-text);
-    border: 1px solid var(--parsec-color-light-secondary-light);
   }
 }
 

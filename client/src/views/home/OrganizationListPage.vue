@@ -301,16 +301,6 @@
           />
         </div>
       </div>
-      <div class="recovery-devices">
-        <ion-text class="body">{{ $msTranslate('HomePage.lostDevice') }}</ion-text>
-        <ion-button
-          @click="$emit('recoverClick')"
-          fill="clear"
-          class="button-medium"
-        >
-          {{ $msTranslate('HomePage.recoverDevice') }}
-        </ion-button>
-      </div>
     </template>
   </div>
 </template>
@@ -545,7 +535,6 @@ async function openDocumentation(): Promise<void> {
   flex-direction: column;
   gap: 1.5rem;
   overflow: hidden;
-  margin-bottom: 4rem;
   height: 100%;
   border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
   padding: 2rem 2rem 0 2rem;
@@ -619,26 +608,6 @@ async function openDocumentation(): Promise<void> {
       margin-top: 0.5rem;
       color: var(--parsec-color-light-secondary-grey);
     }
-  }
-}
-
-.recovery-devices {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  border-top: 1px solid var(--parsec-color-light-secondary-medium);
-  width: 100%;
-  gap: 0.5rem;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  padding: 0.5rem 0.5rem 1.5rem;
-  color: var(--parsec-color-light-secondary-grey);
-  bottom: 0;
-  left: 0;
-  z-index: 10;
-
-  @include ms.responsive-breakpoint('sm') {
-    position: fixed;
   }
 }
 

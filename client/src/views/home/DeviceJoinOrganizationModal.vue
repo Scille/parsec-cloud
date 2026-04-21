@@ -2,6 +2,7 @@
 
 <template>
   <ion-page
+    id="device-join-organization-modal"
     class="modal-stepper"
     :class="DeviceJoinOrganizationStep[pageStep]"
   >
@@ -34,13 +35,14 @@
       <ion-header
         class="modal-header"
         v-if="isLargeDisplay"
+        v-show="pageStep !== DeviceJoinOrganizationStep.Finish"
       >
         <ion-title class="modal-header__title title-h3">
           {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
           v-if="steps[pageStep]?.subtitle"
-          class="modal-header__text body"
+          class="modal-header__text body-lg"
         >
           {{ $msTranslate(steps[pageStep]?.subtitle) }}
         </ion-text>
@@ -57,7 +59,7 @@
           @close-clicked="cancelModal()"
           :title="'DevicesPage.addDevice'"
           :icon="phonePortrait"
-          :steps="steps.slice(1, steps.length - 1)"
+          :steps="steps.slice(1, steps.length)"
           :current-step="pageStep - 1"
         />
       </template>
@@ -109,18 +111,35 @@
             :server-addr="serverAddr"
           />
         </div>
+
         <!-- part 5 (finish the process)-->
         <div
           v-show="pageStep === DeviceJoinOrganizationStep.Finish"
-          class="step final-step"
+          class="final-step"
         >
-          <ms-informative-text :icon="checkmarkCircle">
-            {{ $msTranslate('ClaimDeviceModal.subtitles.done') }}
-          </ms-informative-text>
+          <ms-image
+            :image="ResourcesManager.instance().get(Resources.LogoIcon, LogoIconWhite) as string"
+            class="final-step__logo"
+          />
+          <ion-text class="final-step__title title-h3">
+            {{ $msTranslate('ClaimDeviceModal.titles.done') }}
+          </ion-text>
+          <ion-button
+            fill="solid"
+            size="default"
+            @click="nextStep()"
+            class="final-step__button"
+          >
+            {{ $msTranslate('ClaimDeviceModal.buttons.login') }}
+          </ion-button>
         </div>
       </div>
+
       <!-- the buttons must be only enabled if all fields are filled in -->
-      <ion-footer class="modal-footer">
+      <ion-footer
+        class="modal-footer"
+        v-show="pageStep !== DeviceJoinOrganizationStep.Finish"
+      >
         <div class="modal-footer-buttons">
           <ion-button
             fill="solid"
@@ -168,14 +187,16 @@ import {
 } from '@/parsec';
 import { ParsecAddr, ParsecInvitationAddr, ParsecInvitationRedirectionURL } from '@/plugins/libparsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-import { checkmarkCircle, close, phonePortrait } from 'ionicons/icons';
+import { close, phonePortrait } from 'ionicons/icons';
 import {
   Answer,
   askQuestion,
   asyncComputed,
-  MsInformativeText,
+  LogoIconWhite,
+  MsImage,
   MsModalResult,
   MsReportText,
   MsReportTheme,
@@ -223,14 +244,6 @@ const steps = computed(() => [
   {
     title: 'ClaimDeviceModal.titles.authentication',
     subtitle: 'ClaimDeviceModal.subtitles.authentication',
-  },
-  {
-    title: {
-      key: 'ClaimDeviceModal.titles.done',
-      data: {
-        org: organizationName.value,
-      },
-    },
   },
 ]);
 

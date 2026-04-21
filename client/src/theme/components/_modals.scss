@@ -142,6 +142,12 @@
       color: var(--parsec-color-light-secondary-grey);
     }
   }
+
+  &#device-join-organization-modal:is(.Finish) {
+    .modal {
+      padding: 0;
+    }
+  }
 }
 
 .settings-modal {
@@ -259,6 +265,12 @@
       position: relative;
       padding: 2rem 2rem 0 2rem;
       height: auto;
+    }
+  }
+
+  &:has(.Finish) {
+    &::part(content) {
+      max-width: var(--parsec-modal-width-sm);
     }
   }
 }
@@ -591,6 +603,98 @@
       @include ms.responsive-breakpoint('sm') {
         width: 100%;
         --border-color: var(--parsec-color-light-secondary-medium);
+      }
+    }
+  }
+}
+
+.choose-recovery-device-modal,
+.import-recovery-device-modal {
+  &:has(.final-step) {
+    &::part(content) {
+      max-width: var(--parsec-modal-width-sm);
+    }
+
+    .ms-modal {
+      padding: 0;
+    }
+  }
+}
+
+.import-recovery-device-modal,
+.choose-recovery-device-modal,
+.device-join-organization-modal,
+.join-organization-modal {
+  .final-step {
+    padding: 4rem;
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 1;
+    justify-content: center;
+    background: var(--parsec-color-light-gradient-background);
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 2rem 1rem 6rem;
+      height: 100vh;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: -5rem;
+      opacity: 0.5;
+      width: 30rem;
+      height: 30rem;
+      background-image: url('@/assets/images/background/background-shapes-large.svg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: top left;
+      z-index: 0;
+      transition: all 0.3s ease-in-out;
+
+      @include ms.responsive-breakpoint('sm') {
+        width: 100%;
+        height: 100%;
+        background-position: center;
+      }
+    }
+
+    &__logo {
+      width: 3rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        height: auto;
+      }
+    }
+
+    &__title {
+      color: var(--parsec-color-light-secondary-white);
+      text-align: center;
+      line-height: 1.7rem;
+      max-width: 18rem;
+    }
+
+    &__button {
+      width: auto;
+      position: relative;
+      z-index: 3;
+
+      @include ms.responsive-breakpoint('sm') {
+        width: 100%;
+      }
+
+      &::part(native) {
+        border-radius: var(--parsec-radius-8);
+        --background-hover: var(--parsec-color-light-secondary-premiere);
+        font-size: 1rem;
+        color: var(--parsec-color-light-primary-600);
+        background: var(--parsec-color-light-secondary-white);
       }
     }
   }

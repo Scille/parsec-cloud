@@ -40,21 +40,31 @@ for (const authMode of ['password', 'sso']) {
     await expect(myProfilePage).toShowToast('Files downloaded', 'Success');
 
     await logout(myProfilePage);
-    await expect(myProfilePage.locator('.recovery-devices').locator('ion-button')).toHaveText('Recover my session');
-    await myProfilePage.locator('.recovery-devices').locator('ion-button').click();
+    await expect(myProfilePage.locator('#recover-button-header')).toHaveText('Lost your access?');
+    await myProfilePage.locator('#recover-button-header').click();
 
-    const importStep = myProfilePage.locator('#recovery-import-step');
-    const authStep = myProfilePage.locator('#recovery-auth-step');
-    const doneStep = myProfilePage.locator('#recovery-success-step');
+    const chooseRecoveryModal = myProfilePage.locator('.choose-recovery-device-modal');
+    const importRecoveryModal = myProfilePage.locator('.import-recovery-device-modal');
+    const authPage = myProfilePage.locator('.choose-auth-page');
+    const recoveryMethodChoices = chooseRecoveryModal.locator('.recovery-method-item');
+    const recoveryFilesContent = importRecoveryModal.locator('.recovery-device-files-page');
 
-    await expect(importStep).toBeVisible();
-    await expect(authStep).toBeHidden();
-    await expect(doneStep).toBeHidden();
+    await expect(chooseRecoveryModal).toBeVisible();
+    await expect(recoveryFilesContent).toBeHidden();
 
-    const importItems = importStep.locator('.recovery-list-item');
-    await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('div')).toHaveText('No file selected');
-    await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('ion-button')).toHaveText('Browse');
-    await expect(importItems.nth(1)).toHaveTheClass('disabled');
+    await expect(recoveryMethodChoices).toHaveCount(2);
+    await expect(recoveryMethodChoices.locator('.recovery-method-item__title')).toHaveText([
+      'Another connected device/browser',
+      'Recovery file',
+    ]);
+
+    await recoveryMethodChoices.nth(1).click();
+    await expect(recoveryMethodChoices.nth(1)).toHaveClass(/recovery-method-item--selected/);
+    await chooseRecoveryModal.locator('#next-button').click();
+    await expect(recoveryFilesContent).toBeVisible();
+
+    const importItems = importRecoveryModal.locator('.recovery-device-files-page').locator('.recovery-item');
+    await expect(importItems.nth(0).locator('.file-waiting__button')).toContainText('Add recovery file (.psrk)');
 
     const fileChooserPromise = myProfilePage.waitForEvent('filechooser');
     await importItems.nth(0).locator('ion-button').click();
@@ -67,47 +77,39 @@ for (const authMode of ['password', 'sso']) {
         buffer: fileContent,
       },
     ]);
-    await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('div')).toHaveText(
-      'Parsec_Recovery_File_TestbedOrgXX.psrk',
-    );
-    await expect(importItems.nth(1)).not.toHaveTheClass('disabled');
-    await expect(myProfilePage.locator('#to-password-change-btn')).toBeTrulyDisabled();
-    await fillIonInput(importItems.nth(1).locator('div.recovery-list-item__input'), passphraseContent);
-    await expect(myProfilePage.locator('#to-password-change-btn')).toBeTrulyEnabled();
-    await myProfilePage.locator('#to-password-change-btn').click();
+    await expect(importItems.nth(0).locator('.file-added__name')).toHaveText('Parsec_Recovery_File_TestbedOrgXX.psrk');
+    await expect(importRecoveryModal.locator('#next-button')).toBeTrulyDisabled();
+    await fillIonInput(importItems.nth(1).locator('ion-input.recovery-item__input'), passphraseContent);
+    await expect(importRecoveryModal.locator('#next-button')).toBeTrulyEnabled();
+    await expect(importRecoveryModal.locator('#next-button')).toBeVisible();
+    await expect(importRecoveryModal.locator('.ms-modal-footer-buttons').locator('ion-button').nth(1)).toHaveText('Continue');
+    await importRecoveryModal.locator('.ms-modal-footer-buttons').locator('ion-button').nth(1).click();
 
-    await expect(importStep).toBeHidden();
-    await expect(authStep).toBeVisible();
-    await expect(doneStep).toBeHidden();
+    await expect(authPage).toBeVisible();
 
-    const authContainer = authStep.locator('.choose-auth-page');
-    await expect(authContainer).toBeVisible();
-    const authNext = myProfilePage.locator('#validate-password-btn');
-    await expect(authNext).toHaveText('Confirm');
-
-    const authRadio = authContainer.locator('.radio-list-item:visible');
+    const authRadio = authPage.locator('.radio-list-item:visible');
     await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true, ssoDisabled: false });
 
+    const nextButtonAuth = importRecoveryModal.locator('#next-button');
     if (authMode === 'password') {
       await authRadio.nth(0).click();
 
-      await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
-      await expect(authNext).toHaveDisabledAttribute();
-      await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+      await fillIonInput(authPage.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
+      await expect(nextButtonAuth).toHaveDisabledAttribute();
+      await fillIonInput(authPage.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
     } else {
       await authRadio.nth(3).click();
-      await expect(authContainer.locator('.proconnect-button')).toBeVisible();
-      await authContainer.locator('.proconnect-button').click();
+      await expect(authPage.locator('.proconnect-button')).toBeVisible();
+      await authPage.locator('.proconnect-button').click();
     }
-    await expect(authNext).toNotHaveDisabledAttribute();
-    await authNext.click();
+    await expect(nextButtonAuth).toNotHaveDisabledAttribute();
+    await nextButtonAuth.click();
 
-    await expect(importStep).toBeHidden();
-    await expect(authStep).toBeHidden();
+    const doneStep = myProfilePage.locator('.final-step');
     await expect(doneStep).toBeVisible();
 
-    await expect(doneStep.locator('.success-card__title')).toHaveText('Authentication was successfully updated!');
-    await doneStep.locator('ion-button').click();
+    await expect(doneStep.locator('.final-step__title')).toHaveText('Your session has been recovered!');
+    await doneStep.locator('.final-step__button').click();
     await expect(myProfilePage).toBeWorkspacePage();
     await logout(myProfilePage);
 
@@ -180,19 +182,31 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     await expect(myProfilePage).toShowToast('Files downloaded', 'Success');
 
     await logout(myProfilePage);
-    await expect(myProfilePage.locator('.recovery-devices').locator('ion-button')).toHaveText('Recover my session');
-    await myProfilePage.locator('.recovery-devices').locator('ion-button').click();
+    await expect(myProfilePage.locator('#recover-button-header')).toHaveText('Lost your access?');
+    await myProfilePage.locator('#recover-button-header').click();
 
-    const importStep = myProfilePage.locator('#recovery-import-step');
-    const authStep = myProfilePage.locator('#recovery-auth-step');
+    const chooseRecoveryModal = myProfilePage.locator('.choose-recovery-device-modal');
+    const importRecoveryModal = myProfilePage.locator('.import-recovery-device-modal');
+    const recoveryMethodChoices = chooseRecoveryModal.locator('.recovery-method-item');
+    const recoveryFilesContent = importRecoveryModal.locator('.recovery-device-files-page');
+    const authStep = importRecoveryModal.locator('.choose-auth-page');
 
-    await expect(importStep).toBeVisible();
-    await expect(authStep).toBeHidden();
+    await expect(chooseRecoveryModal).toBeVisible();
+    await expect(recoveryFilesContent).toBeHidden();
 
-    const importItems = importStep.locator('.recovery-list-item');
-    await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('div')).toHaveText('No file selected');
-    await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('ion-button')).toHaveText('Browse');
-    await expect(importItems.nth(1)).toHaveTheClass('disabled');
+    await expect(recoveryMethodChoices).toHaveCount(2);
+    await expect(recoveryMethodChoices.locator('.recovery-method-item__title')).toHaveText([
+      'Another connected device/browser',
+      'Recovery file',
+    ]);
+
+    await recoveryMethodChoices.nth(1).click();
+    await expect(recoveryMethodChoices.nth(1)).toHaveClass(/recovery-method-item--selected/);
+    await chooseRecoveryModal.locator('#next-button').click();
+    await expect(recoveryFilesContent).toBeVisible();
+
+    const importItems = recoveryFilesContent.locator('.recovery-item');
+    await expect(importItems.nth(0).locator('.file-waiting__button')).toContainText('Add recovery file (.psrk)');
 
     const fileChooserPromise = myProfilePage.waitForEvent('filechooser');
     await importItems.nth(0).locator('ion-button').click();
@@ -205,24 +219,21 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
         buffer: error === 'invalid-file' ? Buffer.from('meow', 'utf8') : fileContent,
       },
     ]);
-    await expect(importItems.nth(0).locator('.recovery-list-item__button').locator('div')).toHaveText(
-      'Parsec_Recovery_File_TestbedOrgXX.psrk',
-    );
-    await expect(importItems.nth(1)).not.toHaveTheClass('disabled');
-    await expect(importStep.locator('#to-password-change-btn')).toBeTrulyDisabled();
+    await expect(importItems.nth(0).locator('.file-added__name')).toHaveText('Parsec_Recovery_File_TestbedOrgXX.psrk');
+    await expect(importRecoveryModal.locator('#next-button')).toBeTrulyDisabled();
     await fillIonInput(
-      importItems.nth(1).locator('div.recovery-list-item__input'),
+      importItems.nth(1).locator('ion-input.recovery-item__input'),
       error === 'invalid-passphrase' ? 'UIKY-S9H9-KOII-QD51-9LHH-PHCE-JO28-T7TO-4JAO-9UR8-EO05-EJCZ-OH9P' : passphraseContent,
     );
-    await expect(importStep.locator('#to-password-change-btn')).toBeTrulyEnabled();
-    await importStep.locator('#to-password-change-btn').click();
+    await expect(importRecoveryModal.locator('#next-button')).toBeTrulyEnabled();
+    await importRecoveryModal.locator('#next-button').click();
 
     await expect(myProfilePage).toShowToast(
       error === 'invalid-file' ? 'Invalid recovery file.' : 'The secret key does not match the recovery file.',
       'Error',
     );
 
-    await expect(importStep).toBeVisible();
+    await expect(recoveryFilesContent).toBeVisible();
     await expect(authStep).toBeHidden();
   });
 }
