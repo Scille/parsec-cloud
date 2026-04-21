@@ -17,6 +17,7 @@ Requirements:
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import re
 import shutil
@@ -26,6 +27,7 @@ from functools import lru_cache
 from hashlib import sha256
 from http.client import HTTPResponse
 from pathlib import Path
+from typing import Any
 from urllib.request import HTTPRedirectHandler, Request, urlopen
 from zipfile import ZipFile
 
@@ -49,9 +51,15 @@ CLI_SIGN_TIMESTAMP_SERVER = "http://time.certum.pl"
 GUI_SIGN_SCRIPT_NAME = "sign-windows-package.cmd"
 
 
+@functools.wraps(subprocess.run)
+def run_cmds(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+    print(f">> {' '.join(iter(args))}")
+    return subprocess.run(args, **kwargs)
+
+
 def get_github_token() -> str:
-    process = subprocess.run(
-        "gh auth token", capture_output=True, shell=True, check=True, text=True
+    process = run_cmds(
+        ["gh", "auth", "token"], capture_output=True, shell=True, check=True, text=True
     )
     return process.stdout.strip()
 
@@ -180,8 +188,8 @@ def get_release_tag(version: str):
     # - `v[...]` when the release is published
     # Just check which one exists
     for release_tag in (version, f"refs/tags/{version}"):
-        process = subprocess.run(
-            f"gh release view {release_tag} --repo {REPOSITORY}",
+        process = run_cmds(
+            ["gh", "release", "view", release_tag, "--repo", REPOSITORY],
             shell=True,
             text=True,
             capture_output=True,
@@ -194,12 +202,11 @@ def get_release_tag(version: str):
 def upload_assets(path: Path, version: str, expected_files: int) -> None:
     files = list(path.iterdir())
     assert len(files) == expected_files
-    files_str = " ".join(str(p.resolve()) for p in files)
+    files_str = (str(p.resolve()) for p in files)
     print(f"Uploading {expected_files} files to release {version} on repository {REPOSITORY}...")
     release_tag = get_release_tag(version)
-    print(f">> gh release upload {release_tag} {files_str} --repo {REPOSITORY}")
-    subprocess.run(
-        f"gh release upload {release_tag} {files_str} --repo {REPOSITORY}",
+    run_cmds(
+        ["gh", "release", "upload", release_tag, *(files_str), "--repo", REPOSITORY],
         shell=True,
         check=True,
         text=True,
@@ -254,7 +261,7 @@ def sign_cli(version: str | None, workdir: Path) -> None:
     # Sign executable
     signtool_exe = get_signtool_path()
 
-    subprocess.run(
+    run_cmds(
         [
             # see https://learn.microsoft.com/en-us/windows/win32/seccrypto/signtool#sign-command-options
             signtool_exe,
@@ -299,7 +306,7 @@ def sign_gui(version: str | None, workdir: Path, hardened: bool = False) -> None
 
     token = get_github_token()
     artifact = get_artifact(
-        GUI_ARTIFACT_NAME if not hardened else GUI_HARDENED_ARTIFACT_NAME,
+        GUI_HARDENED_ARTIFACT_NAME if hardened else GUI_ARTIFACT_NAME,
         token,
         version,
     )
@@ -315,7 +322,11 @@ def sign_gui(version: str | None, workdir: Path, hardened: bool = False) -> None
     # 3) Build & sign using the sub-script embedded in the artifact
 
     script = (destination / GUI_SIGN_SCRIPT_NAME).resolve()
-    subprocess.run([script], check=True, cwd=destination)
+    run_cmds(
+        [str(script)] + (["-Hardened"] if hardened else []),
+        check=True,
+        cwd=destination,
+    )
     assets_directory = destination / "upload"
     assert assets_directory.exists()
 

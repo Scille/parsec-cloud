@@ -2,4 +2,5 @@
 :: using a single command from the pre-built windows artefact.
 
 :: This is meant to be run in the `client/electron` directory.
-powershell.exe -executionpolicy bypass -file scripts\sign-windows-package.ps1
+@echo on
+powershell.exe -ExecutionPolicy Bypass -File scripts\sign-windows-package.ps1 %*
