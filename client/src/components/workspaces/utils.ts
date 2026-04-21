@@ -8,6 +8,7 @@ import {
   WorkspaceInfo,
   WorkspaceName,
   WorkspaceRole,
+  getClientInfo,
   getClientProfile,
   getSystemPath,
   getWorkspaceInfo,
@@ -32,7 +33,8 @@ import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { Answer, Clipboard, DisplayState, MsModalResult, Translatable, askQuestion, getTextFromUser } from 'megashark-lib';
+import { DateTime, DurationLike } from 'luxon';
+import { Answer, Clipboard, DisplayState, I18n, MsModalResult, Translatable, askQuestion, getTextFromUser } from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -351,16 +353,25 @@ async function restoreWorkspace(
 }
 
 async function trashWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager, eventDistributor: EventDistributor) {
+  let minimumArchivingPeriod: DurationLike = { days: 30 };
+  const clientResult = await getClientInfo();
+  if (clientResult.ok) {
+    minimumArchivingPeriod = { seconds: Number(clientResult.value.serverOrganizationConfig.minimumArchivingPeriod) };
+  }
+  const deletionDate = DateTime.now().plus(minimumArchivingPeriod);
   const answer = await askQuestion(
     'WorkspacesPage.trashWorkspace.title',
-    { key: 'WorkspacesPage.trashWorkspace.subtitle', data: { workspace: workspace.name } },
+    {
+      key: 'WorkspacesPage.trashWorkspace.subtitle',
+      data: { workspace: workspace.name, deletionDate: I18n.translate(I18n.formatDate(deletionDate)) },
+    },
     { yesText: 'WorkspacesPage.trashWorkspace.yes', noText: 'WorkspacesPage.trashWorkspace.no', yesIsDangerous: true },
   );
   if (answer === Answer.No) {
     return;
   }
 
-  const result = await parsecTrashWorkspace(workspace.id);
+  const result = await parsecTrashWorkspace(workspace.id, deletionDate);
 
   informationManager.present(
     new Information({

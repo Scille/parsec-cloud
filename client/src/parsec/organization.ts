@@ -158,6 +158,7 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
       organizationAddr: clientInfoResult.value.organizationAddr,
       organizationId: clientInfoResult.value.organizationId,
       creationDate: creationDateResult.ok ? creationDateResult.value : undefined,
+      minimumArchivingPeriod: Number(clientInfoResult.value.serverOrganizationConfig.minimumArchivingPeriod),
     },
   };
 }

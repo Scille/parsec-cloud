@@ -347,14 +347,14 @@ export async function restoreWorkspace(workspace: WorkspaceID): Promise<Result<n
   return await libparsec.clientArchiveWorkspace(handle, workspace, { tag: RealmArchivingConfigurationTag.Available });
 }
 
-export async function trashWorkspace(workspace: WorkspaceID): Promise<Result<null, ClientArchiveWorkspaceError>> {
+export async function trashWorkspace(workspace: WorkspaceID, deletionDate: DateTime): Promise<Result<null, ClientArchiveWorkspaceError>> {
   const handle = getConnectionHandle();
   if (!handle) {
     return generateNoHandleError<ClientArchiveWorkspaceError>();
   }
   return await libparsec.clientArchiveWorkspace(handle, workspace, {
     tag: RealmArchivingConfigurationTag.DeletionPlanned,
-    deletionDate: DateTime.now().plus({ days: 30 }).toMillis() as any as DateTime,
+    deletionDate: deletionDate.toMillis() as any as DateTime,
   });
 }
 
