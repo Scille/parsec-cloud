@@ -182,7 +182,6 @@
         "topbar": {
             "welcome": "Welcome to Parsec",
             "backToList": "Return to organizations",
-            "backToLogin": "Return to login",
             "back": "Return",
             "settings": "Settings",
             "devices": "My devices",
@@ -524,7 +523,7 @@
     },
     "JoinByLinkModal": {
         "pageTitle": "Join an organization",
-        "pleaseEnterUrl": "If you have received an invitation link, please paste it below.",
+        "pleaseEnterUrl": "Please paste below the link you got from your other device/browser.",
         "join": "Join"
     },
     "QuestionModal": {
@@ -1540,23 +1539,81 @@
     "ImportRecoveryDevicePage": {
         "titles": {
             "forgottenPassword": "Forgotten password",
-            "recoveryFile": "Recovery file",
-            "recoveryKey": "Secret key",
-            "setNewPassword": "Choose a new password",
-            "setNewAuthentication": "Choose a new authentication method",
-            "passwordChanged": "Authentication was successfully updated!"
+            "authChanged": "Authentication was successfully updated!"
         },
         "subtitles": {
             "recoveryFilesMustExistWarning": "You must have created a recovery file in order to reset your authentication method.",
-            "password": "Password",
-            "passwordModified": "You can now login with your new authentication.",
-            "noFileSelected": "No file selected"
+            "setNewAuthentication": "Choose a new authentication method"
         },
         "actions": {
             "browse": "Browse",
             "next": "Next",
             "validateAuth": "Confirm",
             "login": "Login"
+        },
+        "modal": {
+            "title": "How would you like to restore your session?",
+            "subtitle": "The device or browser you used to access your organization is no longer available? Choose a recovery method below to register a new one.",
+            "actions": {
+                "next": "Continue",
+                "chooseMethod": "Continue with this recovery method"
+            },
+            "options": {
+                "otherConnectedDevice": {
+                    "title": "Another connected device/browser",
+                    "subtitle": "Available only when another device or browser in your organization is connected.",
+                    "badge": "Recommended"
+                },
+                "recoveryFile": {
+                    "title": "Recovery file",
+                    "subtitle": "You must have created a recovery file and a secret key."
+                },
+                "shamir": {
+                    "title": "Trusted users",
+                    "subtitle": "You must have created a circle of trust with at least three people."
+                }
+            },
+            "connectedDevice": {
+                "title": "Recover from another connected device/browser",
+                "subtitle": "Follow these steps to restore your device from your other connected device or browser.",
+                "joinLinkSubtitle": "Please paste below the link you retrieved from your other device/browser.",
+                "joinLinkInputLabel": "Paste the invitation link",
+                "joinLinkConfirmLink": "Confirm link",
+                "steps": {
+                    "step1": "Sign in on your existing device",
+                    "step2": "Go to your profile, then click My devices",
+                    "step3": "Click Add a device",
+                    "step4": "Copy (or scan) the link from the window"
+                }
+            },
+            "recoveryFile": {
+                "title": "Recover with recovery files",
+                "subtitle": "You need to add your recovery file and enter the secret key you saved to recover your access from this device/browser.",
+                "itemRecoveryFile": "Recovery file",
+                "itemRecoveryKey": "Secret key",
+                "actions": {
+                    "addRecoveryFile": "Add recovery file (.psrk)",
+                    "updateRecoveryFile": "Update"
+                }
+            },
+            "shamir": {
+                "title": "Recover with trusted users",
+                "subtitle": "Follow the steps below to restore your session using your circle of trust.",
+                "steps": {
+                    "contactTrustedMembers": "Contact your trusted circle members",
+                    "requestRecovery": "Ask them to share the recovery information",
+                    "enterVerificationCode": "Enter the verification code you receive",
+                    "chooseNewAuthentication": "Choose your new authentication method"
+                }
+            },
+            "authentication": {
+                "title": "Choose a new authentication method",
+                "subtitle": "Select an available authentication method to recover this device/browser. You can then use this new authentication method to log in to the organization and you can change it at any time."
+            },
+            "done": {
+                "title": "Your session has been recovered!",
+                "login": "Log in to the organization"
+            }
         },
         "errors": {
             "fileErrorMessage": "Invalid recovery file.",
@@ -1613,7 +1670,7 @@
         "continueWith": "Continue with {greeter}",
         "waitingForAnyHost": "(Waiting for an administrator)",
         "waitingForHost": "Waiting for the administrator",
-        "linkFormLabel": "Invitation link",
+        "linkFormLabel": "Paste the invitation link",
         "linkFormPlaceholder": "parsec3://example.com/Org?...",
         "successMessage": "You successfully joined the organization.",
         "stepTitles": {
@@ -2081,7 +2138,7 @@
         "buttons": {
             "understand": "I understand!",
             "confirm": "Confirm",
-            "login": "Log in"
+            "login": "Log in to the organization"
         },
         "currentDevice": "Current device",
         "newDevice": "Your new device",
@@ -2181,7 +2238,7 @@
         },
         "modal": {
             "title": "Recovery files",
-            "confirmation": "I confirm that I have copied my secret key and downloaded my recovery file."
+            "confirmation": "I confirm that I have saved my secret key and downloaded my recovery file."
         },
         "done": {
             "recreateQuestionTitle": "Create new recovery files?",

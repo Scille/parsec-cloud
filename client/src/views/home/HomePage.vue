@@ -20,6 +20,7 @@
               @settings-click="goToAccountSettings"
               @create-or-join-organization-click="openCreateOrJoin"
               @change-tab="onChangeTab"
+              @recover-click="openChooseRecoveryModal"
               :display-create-join="deviceList.length > 0"
               :back-button-title="getBackButtonTitle()"
               :show-secondary-menu="state !== HomePageState.AccountSettings"
@@ -36,7 +37,7 @@
                   @join-organization-click="onJoinOrganizationClicked"
                   @join-organization-with-link-click="openJoinByLinkModal"
                   @bootstrap-organization-with-link-click="openCreateOrganizationModal"
-                  @recover-click="onForgottenPasswordClicked"
+                  @recover-click="openChooseRecoveryModal"
                   @create-or-join-organization-click="openCreateOrJoin"
                   @invitation-click="onInvitationClicked"
                   @join-request-click="onJoinRequestClicked"
@@ -54,15 +55,9 @@
                   v-if="selectedDevice"
                   :device="selectedDevice"
                   @login-click="login"
-                  @forgotten-password-click="onForgottenPasswordClicked"
+                  @forgotten-password-click="openChooseRecoveryModal"
                   :login-in-progress="loginInProgress"
                   ref="loginPage"
-                />
-              </template>
-              <template v-else-if="state === HomePageState.ForgottenPassword">
-                <import-recovery-device-page
-                  :device="selectedDevice"
-                  @organization-selected="login"
                 />
               </template>
               <template v-else-if="state === HomePageState.AccountSettings">
@@ -144,7 +139,9 @@ import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/
 import AccountSettingsPage from '@/views/account/AccountSettingsPage.vue';
 import { AccountSettingsTabs } from '@/views/account/types';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
-import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
+import ChooseRecoveryMethodModal from '@/views/devices/ChooseRecoveryMethodModal.vue';
+import ImportRecoveryDevice from '@/views/devices/ImportRecoveryDevice.vue';
+import { RecoveryMethod } from '@/views/devices/types';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import HomePageHeader from '@/views/home/HomePageHeader.vue';
@@ -174,7 +171,6 @@ import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, toRaw, us
 enum HomePageState {
   OrganizationList = 'organization-list',
   Login = 'login',
-  ForgottenPassword = 'forgotten-password',
   CustomerArea = 'customer-area',
   AccountSettings = 'account-settings',
 }
@@ -202,9 +198,7 @@ let intervalId: any = null;
 
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
 const showBackButton = computed(() => {
-  return [HomePageState.Login, HomePageState.ForgottenPassword, HomePageState.CustomerArea, HomePageState.AccountSettings].includes(
-    state.value,
-  );
+  return [HomePageState.Login, HomePageState.CustomerArea, HomePageState.AccountSettings].includes(state.value);
 });
 
 let hotkeys: HotkeyGroup | null = null;
@@ -444,16 +438,16 @@ async function onInvitationClicked(invitation: AccountInvitation): Promise<void>
   await openJoinByLinkModal(invitationAddr);
 }
 
-async function onJoinOrganizationClicked(): Promise<void> {
+async function onJoinOrganizationClicked(showRecoveryText?: boolean): Promise<void> {
   const link = await getTextFromUser(
     {
-      title: 'JoinByLinkModal.pageTitle',
-      subtitle: 'JoinByLinkModal.pleaseEnterUrl',
+      title: showRecoveryText ? 'ImportRecoveryDevicePage.modal.connectedDevice.title' : 'JoinByLinkModal.pageTitle',
+      subtitle: showRecoveryText ? 'ImportRecoveryDevicePage.modal.connectedDevice.joinLinkSubtitle' : 'JoinByLinkModal.pleaseEnterUrl',
       trim: true,
       validator: claimAndBootstrapLinkValidator,
-      inputLabel: 'JoinOrganization.linkFormLabel',
+      inputLabel: showRecoveryText ? 'ImportRecoveryDevicePage.modal.connectedDevice.joinLinkInputLabel' : 'JoinOrganization.linkFormLabel',
       placeholder: 'JoinOrganization.linkFormPlaceholder',
-      okButtonText: 'JoinByLinkModal.join',
+      okButtonText: showRecoveryText ? 'ImportRecoveryDevicePage.modal.connectedDevice.joinLinkConfirmLink' : 'JoinByLinkModal.join',
     },
     isLargeDisplay.value,
   );
@@ -900,7 +894,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       });
       if (answer === Answer.Yes) {
         selectedDevice.value = device;
-        state.value = HomePageState.ForgottenPassword;
+        await openChooseRecoveryModal(device);
       }
     } else {
       informationManager.present(
@@ -1056,22 +1050,43 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
 }
 
 async function backToPreviousPage(): Promise<void> {
-  if (state.value === HomePageState.ForgottenPassword && selectedDevice.value) {
-    state.value = HomePageState.Login;
-  } else if (
-    state.value === HomePageState.Login ||
-    state.value === HomePageState.ForgottenPassword ||
-    state.value === HomePageState.CustomerArea ||
-    state.value === HomePageState.AccountSettings
-  ) {
-    state.value = HomePageState.OrganizationList;
-    selectedDevice.value = undefined;
-  }
+  state.value = HomePageState.OrganizationList;
 }
 
-function onForgottenPasswordClicked(device?: AvailableDevice): void {
-  selectedDevice.value = device;
-  state.value = HomePageState.ForgottenPassword;
+async function openChooseRecoveryModal(device?: AvailableDevice): Promise<void> {
+  const modal = await modalController.create({
+    component: ChooseRecoveryMethodModal,
+    cssClass: 'choose-recovery-device-modal',
+    canDismiss: true,
+    backdropDismiss: true,
+    showBackdrop: true,
+  });
+  await modal.present();
+  const { role, data } = await modal.onWillDismiss();
+
+  if (role === MsModalResult.Confirm && data?.recoveryMethod === RecoveryMethod.ConnectedDevice) {
+    await onJoinOrganizationClicked(true);
+    return;
+  }
+
+  if (role === MsModalResult.Confirm && data?.recoveryMethod === RecoveryMethod.RecoveryFile) {
+    const recoveryModal = await modalController.create({
+      component: ImportRecoveryDevice,
+      cssClass: 'import-recovery-device-modal',
+      canDismiss: true,
+      backdropDismiss: true,
+      showBackdrop: true,
+      componentProps: {
+        device: device,
+        informationManager,
+      },
+    });
+    await recoveryModal.present();
+    const { role: recoveryRole, data: recoveryData } = await recoveryModal.onWillDismiss();
+    if (recoveryRole === MsModalResult.Confirm && recoveryData?.device && recoveryData?.access) {
+      await login(recoveryData.device, recoveryData.access);
+    }
+  }
 }
 
 async function goToCustomerAreaLogin(): Promise<void> {
@@ -1088,8 +1103,6 @@ function getBackButtonTitle(): string {
   }
   if (state.value === HomePageState.Login) {
     return 'HomePage.topbar.backToList';
-  } else if (state.value === HomePageState.ForgottenPassword) {
-    return 'HomePage.topbar.backToLogin';
   } else if (state.value === HomePageState.CustomerArea) {
     return 'HomePage.topbar.backToList';
   } else if (state.value === HomePageState.AccountSettings) {

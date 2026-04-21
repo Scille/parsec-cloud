@@ -155,13 +155,10 @@ msTest('Greet device whole process on small display', async ({ myProfilePage }) 
   await joinData.nextButton.scrollIntoViewIfNeeded();
   await expect(joinData.nextButton).not.toHaveDisabledAttribute();
   await joinData.nextButton.click();
-  await expect(joinData.title).toHaveText('Device has been added!');
-  await expect(joinData.modal.locator('.final-step').locator('.container-textinfo__text')).toHaveText(
-    'The device has been created and added to this organization. You can now use it to connect to Parsec.',
-  );
-  await expect(joinData.nextButton).toHaveText('Log in');
-  await expect(joinData.nextButton).not.toHaveDisabledAttribute();
-  await joinData.nextButton.click();
+  await expect(joinData.modal.locator('.final-step__title')).toHaveText('Device has been added!');
+  await expect(joinData.modal.locator('.final-step__button')).toHaveText('Log in to the organization');
+  await expect(joinData.modal.locator('.final-step__button')).not.toHaveDisabledAttribute();
+  await joinData.modal.locator('.final-step__button').click();
   await expect(joinData.modal).toBeHidden();
   await expect(secondTab).toShowToast('You can now access your organization from your new device.', 'Success');
   // Automatically logged in
@@ -247,13 +244,10 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
   await joinData.nextButton.scrollIntoViewIfNeeded();
   await expect(joinData.nextButton).not.toHaveDisabledAttribute();
   await joinData.nextButton.click();
-  await expect(joinData.title).toHaveText('Device has been added!');
-  await expect(joinData.modal.locator('.final-step').locator('.container-textinfo__text')).toHaveText(
-    'The device has been created and added to this organization. You can now use it to connect to Parsec.',
-  );
-  await expect(joinData.nextButton).toHaveText('Log in');
-  await expect(joinData.nextButton).not.toHaveDisabledAttribute();
-  await joinData.nextButton.click();
+  await expect(joinData.modal.locator('.final-step__title')).toHaveText('Device has been added!');
+  await expect(joinData.modal.locator('.final-step__button')).toHaveText('Log in to the organization');
+  await expect(joinData.modal.locator('.final-step__button')).not.toHaveDisabledAttribute();
+  await joinData.modal.locator('.final-step__button').click();
   await expect(joinData.modal).toBeHidden();
   await expect(secondTab).toShowToast('You can now access your organization from your new device.', 'Success');
   // Automatically logged in

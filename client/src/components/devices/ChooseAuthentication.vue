@@ -344,7 +344,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
 
 <style scoped lang="scss">
 .choose-auth-list {
-  padding: 0;
+  padding: 0 0 0.25rem;
 
   &__label {
     color: var(--parsec-color-light-primary-700);

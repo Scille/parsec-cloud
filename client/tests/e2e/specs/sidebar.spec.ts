@@ -136,21 +136,20 @@ msTest('Sidebar recommendations checklist in large display', async ({ workspaces
   const profilePage = workspaces;
   await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
   await profilePage.locator('.menu-list__item').nth(3).click();
-  const recoveryFileSection = profilePage.locator('.recovery-section--file');
-  await expect(recoveryFileSection).toBeVisible();
-  await recoveryFileSection.locator('.action-button').click();
+  const recovery = profilePage.locator('.recovery');
+  await expect(profilePage.locator('.export-recovery-device-modal')).toBeHidden();
+  await recovery.locator('.recovery-section--file').locator('.action-button').click();
+  const exportRecoveryDeviceModal = profilePage.locator('.export-recovery-device-modal');
+  await expect(exportRecoveryDeviceModal).toBeVisible();
+  const recoveryItems = exportRecoveryDeviceModal.locator('.step-item');
+  await expect(recoveryItems).toHaveCount(2);
 
-  const exportRecoveryModal = profilePage.locator('.export-recovery-device-modal');
-  await expect(exportRecoveryModal).toBeVisible();
-
-  const recoveryDownloadPromise = profilePage.waitForEvent('download');
-  await exportRecoveryModal.locator('.recovery-file .input-action-button').click();
-  await recoveryDownloadPromise;
-
-  const confirmationCheckbox = exportRecoveryModal.locator('.confirmation-checkbox');
-  await confirmationCheckbox.click();
-  await exportRecoveryModal.locator('#next-button').click();
-  await expect(exportRecoveryModal).toBeHidden();
+  await recoveryItems.nth(0).locator('.input-action-button').nth(1).click();
+  await recoveryItems.nth(1).locator('.input-action-button').click();
+  await exportRecoveryDeviceModal.locator('.confirmation-checkbox').click();
+  await expect(exportRecoveryDeviceModal.locator('#next-button')).toBeEnabled();
+  await exportRecoveryDeviceModal.locator('#next-button').click();
+  await expect(exportRecoveryDeviceModal).toBeHidden();
   await expect(checklist).toBeHidden();
 });
 
@@ -221,24 +220,23 @@ msTest('Sidebar recommendations checklist in small display', async ({ workspaces
   workspaces.locator('.menu-list__item').nth(3).click();
   const profilePage = workspaces;
   await expect(profilePage.locator('.menu-list__item').nth(3)).toHaveText('Access recovery');
+  const recovery = profilePage.locator('.recovery');
+  await expect(profilePage.locator('.export-recovery-device-modal')).toBeHidden();
+  await recovery.locator('.recovery-section--file').locator('.action-button').click();
 
-  const recoveryFileSection = profilePage.locator('.recovery-section--file');
-  await expect(recoveryFileSection).toBeVisible();
-  await recoveryFileSection.locator('.action-button').click();
+  const exportRecoveryDeviceModal = profilePage.locator('.export-recovery-device-modal');
+  await expect(exportRecoveryDeviceModal).toBeVisible();
+  const recoveryItems = exportRecoveryDeviceModal.locator('.step-item');
+  await expect(recoveryItems).toHaveCount(2);
 
-  const exportRecoveryModal = profilePage.locator('.export-recovery-device-modal');
-  await expect(exportRecoveryModal).toBeVisible();
-
-  const recoveryDownloadPromise = profilePage.waitForEvent('download');
-  await exportRecoveryModal.locator('.recovery-file .input-action-button').click();
-  await recoveryDownloadPromise;
-
-  const confirmationCheckbox = exportRecoveryModal.locator('.confirmation-checkbox');
-  await confirmationCheckbox.click();
-  await exportRecoveryModal.locator('#next-button').click();
-  await expect(exportRecoveryModal).toBeHidden();
+  await recoveryItems.nth(0).locator('.input-action-button').nth(1).click();
+  await recoveryItems.nth(1).locator('.input-action-button').click();
+  await exportRecoveryDeviceModal.locator('.confirmation-checkbox').click();
+  await expect(exportRecoveryDeviceModal.locator('#next-button')).toBeEnabled();
+  await exportRecoveryDeviceModal.locator('#next-button').click();
 
   await workspaces.locator('#tab-bar').locator('.tab-bar-menu-button').nth(1).click();
+  await expect(exportRecoveryDeviceModal).toBeHidden();
   await expect(checklistModal).toBeHidden();
 });
 
