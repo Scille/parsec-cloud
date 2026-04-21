@@ -117,10 +117,13 @@ allow = [
     "Apache-2.0 WITH LLVM-exception",
     "BSD-2-Clause",
     "BSD-3-Clause",
+    "Unicode-DFS-2016",
     "ISC",
     "Zlib",
     "MPL-2.0",
     "Unicode-3.0",
+    "OpenSSL",
+    "CDLA-Permissive-2.0",
 ]
 # The confidence threshold for detecting a license from license text.
 # The higher the value, the more closely the license text must be to the
@@ -137,7 +140,7 @@ exceptions = [
 
 # Determines what happens when one of the licenses that appears in the allow list is not encountered in the dependency graph.
 # https://embarkstudios.github.io/cargo-deny/checks/licenses/cfg.html#the-unused-allowed-license-field-optional
-unused-allowed-license = "warn"
+unused-allowed-license = "allow"
 
 # Some crates don't have (easily) machine readable licensing information,
 # adding a clarification entry for it allows you to manually specify the
