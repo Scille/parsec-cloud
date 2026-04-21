@@ -865,7 +865,7 @@
         },
         "trashWorkspace": {
             "title": "Supprimer cet espace de travail",
-            "subtitle": "Vous êtes sur le point de supprimer l'espace de travail {workspace}. Il sera toujours accessible en lecture seule pour tous les utilisateurs y ayant accès pendant 30 jours. Êtes-vous sûr de vouloir continuer ?",
+            "subtitle": "Vous êtes sur le point de supprimer l'espace de travail {workspace}. Il sera accessible en lecture seule pour tous les utilisateurs y ayant accès, jusqu'à sa suppression définitive le {deletionDate}. Êtes-vous sûr de vouloir continuer ?",
             "yes": "Supprimer",
             "no": "Cancel",
             "info": "Vos espaces de travail supprimés restent consultables en lecture seule pour tous les utilisateurs y ayant accès jusqu'à leur suppression définitive. Les propriétaires d'espaces supprimés peuvent les restaurer avant cette échéance.",

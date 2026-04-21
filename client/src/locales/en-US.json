@@ -864,7 +864,7 @@
         },
         "trashWorkspace": {
             "title": "Delete this workspace",
-            "subtitle": "You are about to delete the workspace {workspace}. It will remain accessible in read-only for all users who have access to it for 30 days. Are you sure you want to proceed?",
+            "subtitle": "You are about to delete the workspace {workspace}. It will remain accessible in read-only for all users who have access to it, and be permanently deleted on {deletionDate}. Are you sure you want to proceed?",
             "yes": "Delete",
             "no": "Cancel",
             "info": "Your deleted workspaces will remain accessible in read-only for all users who have access to them, until their permanent deletion. Deleted workspace owners can restore them before this date.",

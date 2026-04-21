@@ -61,7 +61,7 @@
             v-if="workspace.isTrashed && workspace.deletionDate"
             class="deletion-date"
           >
-            {{ $msTranslate(I18n.formatDate(workspace.deletionDate, 'short')) }}
+            {{ $msTranslate(I18n.formatDate(workspace.deletionDate)) }}
           </span>
         </ion-text>
         <ion-text
