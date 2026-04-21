@@ -71,6 +71,7 @@ export {
   ParsedParsecAddrTag,
   ParseParsecAddrErrorTag,
   PendingAsyncEnrollmentInfoTag,
+  PkiSystemInitErrorTag,
   Platform,
   RealmArchivingConfigurationTag,
   ShowCertificateSelectionDialogErrorTag,

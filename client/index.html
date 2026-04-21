@@ -49,7 +49,7 @@
       1. Adding `scwsapi.js` somewhere in the web application resources (typically in `assets/scws/scwsapi-2c8127e9.js`,
          note the hash-based suffix to avoid cache issue whenever this file needs to be updated).
       2. Configuring `scws-scwsapi_js-location` meta attribute (e.g. `<meta name="scws-scwsapi_js-location" content="/assets/scws/scwsapi-2c8127e9.js" />` )
-      2. Configuring `scws-web_application_certificate` meta attribute (e.g. `<meta name="scws-web_application_certificate" content="dmFyIElzPU9iamVjdC5kZ..." />` )
+      3. Configuring `scws-web_application_certificate` meta attribute (e.g. `<meta name="scws-web_application_certificate" content="dmFyIElzPU9iamVjdC5kZ..." />` )
 
       See:
       - https://idopte.fr/doc_scws.php
@@ -61,6 +61,10 @@
     />
     <meta
       name="scws-web_application_certificate"
+      content=""
+    />
+    <meta
+      name="scws-web_parsec_server"
       content=""
     />
 
