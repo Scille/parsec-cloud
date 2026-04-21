@@ -9,6 +9,26 @@ export enum DisplaySize {
   Large = 'large',
 }
 
+export enum AllowedAuthenticationMethod {
+  AccountVault = 'AdvisoryDeviceFilePrimaryProtectionAccountVault',
+  Keyring = 'AdvisoryDeviceFilePrimaryProtectionKeyring',
+  OpenBao = 'AdvisoryDeviceFilePrimaryProtectionOpenBao',
+  PKI = 'AdvisoryDeviceFilePrimaryProtectionPKI',
+  Password = 'AdvisoryDeviceFilePrimaryProtectionPassword',
+}
+
+export interface ProtectionMethod {
+  primary: AllowedAuthenticationMethod;
+  withTotp: boolean;
+}
+
+export const AllowAllProtectionMethods = [
+  { primary: AllowedAuthenticationMethod.Password, withTotp: false },
+  { primary: AllowedAuthenticationMethod.Keyring, withTotp: false },
+  { primary: AllowedAuthenticationMethod.OpenBao, withTotp: false },
+  { primary: AllowedAuthenticationMethod.PKI, withTotp: false },
+];
+
 export interface SetupOptions {
   testbedPath?: string;
   skipTestbed?: boolean;
@@ -29,6 +49,7 @@ export interface SetupOptions {
   enableStripe?: boolean;
   enableUpdateEvent?: boolean;
   mockPki?: boolean;
+  allowedProtectionMethods?: Array<ProtectionMethod>;
 }
 
 export interface MsPage extends Page {

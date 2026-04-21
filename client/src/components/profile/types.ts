@@ -8,4 +8,5 @@ export enum AuthenticationCardState {
   Update = 'update',
   Disabled = 'disabled',
   Unavailable = 'unavailable',
+  Forbidden = 'forbidden',
 }

@@ -28,9 +28,15 @@
       </ion-text>
       <ion-text
         class="authentication-card-text__description body"
-        v-if="config.unavailableExplanation && state === AuthenticationCardState.Unavailable"
+        v-if="
+          (config.unavailableExplanation && state === AuthenticationCardState.Unavailable) || state === AuthenticationCardState.Forbidden
+        "
       >
-        {{ $msTranslate(config.unavailableExplanation) }}
+        {{
+          state === AuthenticationCardState.Forbidden
+            ? $msTranslate('Authentication.forbidden')
+            : $msTranslate(config.unavailableExplanation)
+        }}
       </ion-text>
     </div>
     <ion-icon
@@ -70,11 +76,19 @@ import { computed, onMounted, ref } from 'vue';
 const props = defineProps<{
   state: AuthenticationCardState;
   authMethod: DevicePrimaryProtectionStrategyTag;
-  disabled?: boolean;
 }>();
 
 const showDescription = computed(() => {
-  return ![AuthenticationCardState.Active, AuthenticationCardState.Current, AuthenticationCardState.Unavailable].includes(props.state);
+  return ![
+    AuthenticationCardState.Active,
+    AuthenticationCardState.Current,
+    AuthenticationCardState.Unavailable,
+    AuthenticationCardState.Forbidden,
+  ].includes(props.state);
+});
+
+const disabled = computed(() => {
+  return [AuthenticationCardState.Forbidden, AuthenticationCardState.Unavailable, AuthenticationCardState.Disabled].includes(props.state);
 });
 
 const config = computed(() => methodConfig[props.authMethod]);
@@ -174,8 +188,9 @@ function keyringUnavailableMessage(): Translatable {
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: 0.25rem 0;
+    padding: 0.625rem 0;
     gap: 0.25rem;
+    overflow: hidden;
 
     &__header {
       color: var(--parsec-color-light-secondary-grey);
@@ -187,8 +202,11 @@ function keyringUnavailableMessage(): Translatable {
     }
 
     &__description {
-      color: var(--parsec-color-light-secondary-grey);
+      color: var(--parsec-color-light-secondary-hard-grey);
       margin-top: -0.25rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: wrap;
     }
   }
 
@@ -274,7 +292,8 @@ function keyringUnavailableMessage(): Translatable {
       filter: grayscale(1);
     }
 
-    .authentication-card-text__title {
+    .authentication-card-text__title,
+    .authentication-card-text__description {
       color: var(--parsec-color-light-secondary-text);
       opacity: 0.7;
     }
