@@ -128,7 +128,7 @@ Miscellaneous internal changes
 
 
 
-Parsec v3.7.10-rc.3 (2026-04-20)
+Parsec v3.7.10-rc.4 (2026-04-22)
 --------------------------------
 
 Bugfixes
