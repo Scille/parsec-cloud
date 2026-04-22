@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use dialoguer::Confirm;
+
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
@@ -18,17 +20,12 @@ pub async fn forget_all_certificates(_args: Args, client: &StartedClient) -> any
 
     println!("You are about to clear the local certificates database for device:");
     println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
-    println!("Are you sure? (y/n)");
 
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input)?;
-
-    match input.trim() {
-        "y" => {
-            client.forget_all_certificates().await?;
-            println!("The local certificates database has been cleared");
-        }
-        _ => eprintln!("Operation cancelled"),
+    if !Confirm::new().with_prompt("Are you sure?").interact()? {
+        println!("Operation cancelled");
+    } else {
+        client.forget_all_certificates().await?;
+        println!("The local certificates database has been cleared");
     }
 
     Ok(())

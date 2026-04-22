@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use dialoguer::Confirm;
 use libparsec::{
     AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
     ParsecAddr,
@@ -93,27 +94,19 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
     println!("Current server URL: {YELLOW}{}{RESET}", device.server_addr);
     println!("New server URL: {YELLOW}{}{RESET}", args.server_url);
-    println!("Are you sure? (y/n)");
 
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input)?;
+    if !Confirm::new().with_prompt("Are you sure? ").interact()? {
+        println!("Operation cancelled");
+    } else {
+        libparsec::update_device_overwrite_server_addr(
+            &args.config_dir,
+            access_strategy,
+            args.server_url.clone(),
+        )
+        .await?;
 
-    match input.trim() {
-        "y" => (),
-        _ => {
-            eprintln!("Operation cancelled");
-            return Ok(());
-        }
+        println!("Device updated successfully");
     }
-
-    libparsec::update_device_overwrite_server_addr(
-        &args.config_dir,
-        access_strategy,
-        args.server_url.clone(),
-    )
-    .await?;
-
-    println!("Device updated successfully");
 
     Ok(())
 }

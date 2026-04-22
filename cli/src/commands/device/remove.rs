@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use dialoguer::Confirm;
 use libparsec::AvailableDevice;
 use libparsec_client::remove_device;
 
@@ -37,17 +38,12 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     println!("You are about to remove the following device:");
     println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
-    println!("Are you sure? (y/n)");
 
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input)?;
-
-    match input.trim() {
-        "y" => {
-            remove_device(&config, &device).await?;
-            println!("The device has been removed");
-        }
-        _ => eprintln!("Operation cancelled"),
+    if !Confirm::new().with_prompt("Are you sure? ").interact()? {
+        println!("Operation cancelled");
+    } else {
+        remove_device(&config, &device).await?;
+        println!("The device has been removed");
     }
 
     Ok(())

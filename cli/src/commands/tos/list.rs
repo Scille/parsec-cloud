@@ -36,7 +36,10 @@ pub(super) fn display_tos(tos: &Tos) -> anyhow::Result<()> {
         "Terms of Service updated on {}:",
         tos.updated_on.to_rfc3339()
     )?;
-    for (locale, url) in &tos.per_locale_urls {
+
+    let mut sorted = tos.per_locale_urls.iter().collect::<Vec<_>>();
+    sorted.sort_by_key(|(locale, _url)| *locale);
+    for (locale, url) in sorted {
         writeln!(stdout, "{BULLET_CHAR} {locale}: {url}")?;
     }
     Ok(())
