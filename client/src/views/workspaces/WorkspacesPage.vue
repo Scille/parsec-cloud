@@ -764,7 +764,7 @@ async function onFilterUpdate(): Promise<void> {
 }
 
 async function onMenuUpdate(menu: WorkspaceMenu): Promise<void> {
-  if (isSmallDisplay.value && workspaceMenuState.value === menu) {
+  if (workspaceMenuState.value === menu) {
     menu = WorkspaceMenu.All;
   }
   await navigateTo(Routes.Workspaces, { query: { workspaceMenu: menu } });
