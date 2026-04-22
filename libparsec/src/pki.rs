@@ -38,25 +38,6 @@ pub async fn pki_init_for_native(config_dir: &std::path::Path) -> Result<(), Pki
 pub async fn pki_init_for_scws(
     config_dir: &std::path::Path,
     parsec_addr: libparsec_types::ParsecAddr,
-    // This parameter is a hack:
-    // - It contains where `scwsapi.js` should be loaded from (e.g. `/assets/scwsapi.js`)
-    // - It is obtained by the GUI from a meta attribute in `index.html`...
-    // - ...then it is used in `client/src/plugins/libparsec/web_shared_worker.ts` to
-    //   do the actual import of the scwsapi module, which is then set as an attribute of the
-    //   global object.
-    // - Finally we end up here. At this point the location is no longer needed since we can
-    //   directly access the global `SCWS` object...
-    // - ...but we won't do it here ! Otherwise this crate would not be platform-independent.
-    //   So instead it is done somewhere deep inside `libparsec_platform_pki::PkiSystem::init`.
-    //
-    // This shenanigan is needed since `scwsapi.js` has to be loaded dynamically, within
-    // the SharedWorker, and the Rust `web_sys` doesn't allow us to call `import` on our own.
-    _scwsapi_js_location: &str,
-    // This parameter is also a hack that is stored in the global object by
-    // `client/src/plugins/libparsec/web_shared_worker.ts`.
-    // The platform-specific pki code handling SCWS can access it as the global
-    // `WEB_APPLICATION_CERTIFICATE` object.
-    _web_application_certificate: &str,
 ) -> Result<(), PkiSystemInitError> {
     let mut guard = PKI_SYSTEM.lock().await;
     if guard.is_some() {
