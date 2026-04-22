@@ -1,21 +1,17 @@
-use std::io::{BufReader, Write};
-
 use libparsec::{tmp_path, ParsecAddr, TmpPath};
 use libparsec_tests_fixtures::prelude::*;
 
 use crate::{
     bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    wait_for,
 };
-use parsec_cli::utils::YELLOW;
 
 #[rstest::rstest]
 #[tokio::test]
 async fn ok(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    let mut process = crate::std_cmd!(
+    let cmd = crate::std_cmd!(
         "device",
         "overwrite-server-url",
         "--device",
@@ -23,38 +19,23 @@ async fn ok(tmp_path: TmpPath) {
         "--server-url",
         "https://new.invalid:123",
         "--password-stdin"
-    )
-    .stdin(std::process::Stdio::piped())
-    .stderr(std::process::Stdio::inherit())
-    .stdout(std::process::Stdio::piped())
-    .spawn()
-    .unwrap();
+    );
+    let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
 
-    let mut stdout = BufReader::new(process.stdout.as_mut().unwrap());
-    let stdin = process.stdin.as_mut().unwrap();
-
-    stdin.write_all(DEFAULT_DEVICE_PASSWORD.as_bytes()).unwrap();
-    stdin.write_all(b"\n").unwrap();
-
-    let mut buf = String::new();
-    wait_for(&mut stdout, &mut buf, "Are you sure? (y/n)");
+    p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
 
     let old_server_addr: ParsecAddr = alice.organization_addr.clone().into();
-    assert!(
-        buf.contains(&format!("Current server URL: {YELLOW}{old_server_addr}")),
-        "stdout: {buf}"
-    );
-    assert!(
-        buf.contains(&format!(
-            "New server URL: {YELLOW}parsec3://new.invalid:123"
-        )),
-        "stdout: {buf}"
-    );
+    p.exp_string(&format!("Current server URL: {old_server_addr}"))
+        .unwrap();
 
-    stdin.write_all(b"y\n").unwrap();
+    p.exp_regex(".*New server URL: parsec3://new.invalid:123.*")
+        .unwrap();
+    p.exp_regex(".*Are you sure?.*").unwrap();
 
-    wait_for(&mut stdout, &mut buf, "Device updated successfully");
-    process.wait().unwrap();
+    p.send_line("y").unwrap();
+
+    p.exp_regex("Device updated successfully").unwrap();
+    p.exp_eof().unwrap();
 
     // TODO: Inspect the device content once `device info` CLI command is available
 }

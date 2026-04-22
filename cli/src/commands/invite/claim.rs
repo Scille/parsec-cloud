@@ -20,7 +20,7 @@ use libparsec::{
 use libparsec_client::{DeviceSaveStrategy, ShamirRecoveryClaimFinalizeCtx};
 
 use crate::utils::*;
-use dialoguer::{FuzzySelect, Input};
+use dialoguer::{Confirm, FuzzySelect, Input};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, data_dir, password_stdin]
@@ -105,18 +105,13 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                 let ctx = step5_shamir(device_ctx).await?;
                 match ctx {
                     ShamirRecoveryClaimMaybeFinalizeCtx::Offline(ctx) => {
-                        let retry = FuzzySelect::new()
-                            .default(0)
-                            .with_prompt("Unable to join server, do you want to retry ?")
-                            .items(["yes", "no"])
-                            .interact()?;
-
-                        if retry == 0 {
-                            // yes
+                        if Confirm::new()
+                            .with_prompt("Unable to join server, do you want to retry?")
+                            .interact()?
+                        {
                             device_ctx = ctx;
                             continue;
                         } else {
-                            // no
                             return Err(anyhow!("Server offline, try again later."));
                         }
                     }
