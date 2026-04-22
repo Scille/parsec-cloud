@@ -9,5 +9,6 @@ Before diving into technical details, take a look at :ref:`Introduction to Parse
 
 - :ref:`Application architecture<doc_hosting_architecture>` - An overview of Parsec architecture and deployment scenarios.
 - :ref:`Server deployment<doc_hosting_deployment>` - A detailed guide to deploy your own Parsec Server.
+- :ref:`Client deployment<doc_hosting_client_deployment>` - The different options to deploy Parsec client application to your users.
 - :ref:`Server maintenance<doc_hosting_maintenance>` - How to manage backups and maintain Parsec Server up to date.
 - :ref:`Server administration<doc_hosting_administration>` - Monitoring and administrative tasks.

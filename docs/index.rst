@@ -49,6 +49,7 @@ You can also use the search function in the top left corner.
     hosting/install_cli
     hosting/architecture
     hosting/deployment/index
+    hosting/client_deploy
     hosting/maintenance/index
     hosting/administration/index
     hosting/sequester/index
