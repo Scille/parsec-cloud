@@ -1,14 +1,15 @@
 pub mod change_authentication;
 pub mod export_recovery_device;
+pub mod forget_local;
 pub mod import_recovery_device;
 pub mod list;
 pub mod overwrite_server_url;
-pub mod remove;
 
 #[derive(clap::Subcommand)]
 pub enum Group {
-    /// Remove device
-    Remove(remove::Args),
+    /// Forget a local device
+    /// It will still exist on the server but not locally anymore
+    ForgetLocal(forget_local::Args),
     /// List all devices
     List(list::Args),
     /// Change authentication medium for a device
@@ -26,7 +27,7 @@ pub enum Group {
 
 pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
     match command {
-        Group::Remove(args) => remove::main(args).await,
+        Group::ForgetLocal(args) => forget_local::main(args).await,
         Group::List(args) => list::main(args).await,
         Group::ChangeAuthentication(args) => change_authentication::main(args).await,
         Group::ExportRecoveryDevice(args) => export_recovery_device::main(args).await,

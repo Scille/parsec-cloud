@@ -14,7 +14,7 @@ crate::clap_parser_with_shared_opts_builder!(
 pub async fn main(args: Args) -> anyhow::Result<()> {
     let Args { device, config_dir } = args;
     log::trace!(
-        "Removing device {} (confdir={})",
+        "Forgetting local device {} (confdir={})",
         device.as_deref().unwrap_or("N/A"),
         config_dir.display(),
     );
@@ -36,14 +36,14 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         ..
     } = &device;
 
-    println!("You are about to remove the following device:");
+    println!("You are about to forget the following local device:");
     println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
 
-    if !Confirm::new().with_prompt("Are you sure? ").interact()? {
+    if !Confirm::new().with_prompt("Are you sure?").interact()? {
         println!("Operation cancelled");
     } else {
         remove_device(&config, &device).await?;
-        println!("The device has been removed");
+        println!("The local device has been forgotten");
     }
 
     Ok(())
