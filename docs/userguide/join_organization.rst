@@ -128,9 +128,8 @@ Request to join the organization
 
   .. admonition:: Using a PKI
 
-    1. Click on ``Add a certificate`` to open the certificate selection dialog
-    2. Select the certificate matching your infrastructure
-    3. Click ``Continue``
+    1. Select the certificate matching your infrastructure
+    2. Click ``Continue``
 
 4. Your join request has been sent and you should now see it with the **Pending** status.
 5. Once accepted, a button ``Add to my organizations`` will appear on your request. Click on it to log into the organization.
