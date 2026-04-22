@@ -1,0 +1,507 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2026.
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-24 15:42+0200\n"
+"PO-Revision-Date: 2026-04-24 15:54+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.9\n"
+
+#: ../../hosting/client_deploy.rst:7
+msgid "Client Deployment"
+msgstr "Déploiement du client"
+
+#: ../../hosting/client_deploy.rst:9
+msgid ""
+"This section describes your options to deploy **Parsec client application** "
+"to your users in order to access your :ref:`self-hosted instance of Parsec "
+"Server <doc_hosting_deployment>`."
+msgstr ""
+"Cette section décrit les différentes options qui s'offrent à vous pour "
+"déployer l'**application client Parsec** auprès de vos utilisateurs afin "
+"qu'ils puissent accéder à votre :ref:`instance auto-hébergée de Parsec "
+"Server <doc_hosting_deployment>`."
+
+#: ../../hosting/client_deploy.rst:13
+msgid "Parsec client applications"
+msgstr "Applications clientes Parsec"
+
+#: ../../hosting/client_deploy.rst:15
+msgid "The Parsec client application is available in two flavours:"
+msgstr "L'application client Parsec est disponible en deux versions :"
+
+#: ../../hosting/client_deploy.rst:17
+msgid "🖥️ **Parsec Desktop App** available for Linux, Windows and macOS."
+msgstr ""
+"🖥️ **Application de bureau Parsec** disponible pour Linux, Windows et macOS."
+
+#: ../../hosting/client_deploy.rst:18
+msgid ""
+"🌐 **Parsec Web App** compatible with modern browsers such as Firefox or "
+"Chrome."
+msgstr ""
+"🌐 **Application Web Parsec** compatible avec les navigateurs modernes tels "
+"que Firefox ou Chrome."
+
+#: ../../hosting/client_deploy.rst:20
+msgid ""
+"They both provide the same features and user experience, with a few "
+"exceptions related to natural platform limitations (e.g. file system "
+"mountpoints are not supported by web browsers)."
+msgstr ""
+"Ils offrent toutes deux les mêmes fonctionnalités et la même expérience "
+"utilisateur, à quelques exceptions près liées aux limites inhérentes à la "
+"plateforme (par exemple, les points de montage du système de fichiers ne "
+"sont pas pris en charge par les navigateurs Web)."
+
+#: ../../hosting/client_deploy.rst:23
+msgid ""
+"Here are some examples of features that are naturally only available in the "
+"desktop app:"
+msgstr ""
+"Voici quelques exemples de fonctionnalités qui, bien entendu, ne sont "
+"disponibles que dans l'application de bureau :"
+
+#: ../../hosting/client_deploy.rst:25
+msgid "Opening your files with software installed on your computer"
+msgstr ""
+"Ouvrir vos fichiers à l'aide des logiciels installés sur votre ordinateur"
+
+#: ../../hosting/client_deploy.rst:26
+msgid ""
+"Accessing your workspace as you would with a regular drive on your computer"
+msgstr ""
+"Accéder à votre espace de travail comme vous le feriez avec un disque dur "
+"classique sur votre ordinateur"
+
+#: ../../hosting/client_deploy.rst:27
+msgid ""
+"Offline login and System Authentication (see :ref:`Authentication "
+"<doc_hosting_client_deploy_authentication>` section below)"
+msgstr ""
+"Connexion hors ligne et authentification système (voir la section :ref:"
+"`Authentification <doc_hosting_client_deploy_authentication>` ci-dessous)"
+
+#: ../../hosting/client_deploy.rst:32
+msgid ""
+"**Parsec CLI** is also a client application, although not intended for "
+"regular users. With Parsec CLI you can perform certain tasks from the "
+"command-line and thus automate your Parsec workflows such as creating "
+"workspaces and importing files."
+msgstr ""
+"**Parsec CLI** est également une application cliente, bien qu'elle ne soit "
+"pas destinée aux utilisateurs lambda. Avec Parsec CLI, vous pouvez effectuer "
+"certaines tâches depuis la ligne de commande et ainsi automatiser vos flux "
+"de travail Parsec, comme la création d'espaces de travail et l'importation "
+"de fichiers."
+
+#: ../../hosting/client_deploy.rst:39
+msgid "Distribution channels & updates"
+msgstr "Canaux de distribution et mises à jour"
+
+#: ../../hosting/client_deploy.rst:42
+msgid "🖥️ Parsec Desktop App"
+msgstr "🖥️ Application de bureau Parsec"
+
+#: ../../hosting/client_deploy.rst:44
+msgid ""
+"Parsec Desktop App can be downloaded from the Parsec website for Windows and "
+"macOS. For Linux, it is recommended to install it from the Snap Store. See :"
+"ref:`Install Parsec app <doc_userguide_install_parsec>` for more details."
+msgstr ""
+"L'application de bureau Parsec peut être téléchargée depuis le site web de "
+"Parsec pour Windows et macOS. Pour Linux, il est recommandé de l'installer "
+"depuis le Snap Store. Voir :ref:`Installer l'application Parsec "
+"<doc_userguide_install_parsec>` pour plus de détails."
+
+#: ../../hosting/client_deploy.rst:48
+msgid ""
+"For security reasons, **automatic updates are enabled by default**. The "
+"desktop app checks for updates when launched. If a more recent version is "
+"available, and could be downloaded, the user is notified and prompted to "
+"install the downloaded version."
+msgstr ""
+"Pour des raisons de sécurité, **les mises à jour automatiques sont activées "
+"par défaut**. L'application de bureau vérifie la disponibilité de mises à "
+"jour dès son lancement. Si une version plus récente est disponible et peut "
+"être téléchargée, l'utilisateur en est informé et invité à installer la "
+"version téléchargée."
+
+#: ../../hosting/client_deploy.rst:54
+msgid ""
+"Please note that it is currently **not possible to disable automatic "
+"updates**."
+msgstr ""
+"Veuillez noter qu'il n'est actuellement **pas possible de désactiver les "
+"mises à jour automatiques**."
+
+#: ../../hosting/client_deploy.rst:56
+msgid ""
+"Using Parsec Desktop App may therefore disrupt your service if a recently "
+"published version is not compatible with the version of your self-hosted "
+"Parsec Server."
+msgstr ""
+"L'utilisation de l'application de bureau Parsec peut donc entraîner des "
+"perturbations de votre service si une version récemment publiée n'est pas "
+"compatible avec la version de votre serveur Parsec auto-hébergé."
+
+#: ../../hosting/client_deploy.rst:59
+msgid ""
+"We do our best to maintain compatibility, but the changes aren't tested "
+"against every possible previous version. If keeping the service up and "
+"running is critical for you, please consider providing only the Parsec Web "
+"App to your users."
+msgstr ""
+"Nous faisons tout notre possible pour garantir la compatibilité, mais les "
+"modifications ne sont pas testées avec toutes les versions antérieures "
+"possibles. Si la continuité du service est essentielle pour vous, nous vous "
+"recommandons de ne proposer à vos utilisateurs que l'application Web Parsec."
+
+#: ../../hosting/client_deploy.rst:64
+msgid "🌐 Parsec Web App"
+msgstr "🌐 Application Web Parsec"
+
+#: ../../hosting/client_deploy.rst:66
+msgid ""
+"Parsec Web App is enabled and hosted by the Parsec Server itself. The web "
+"application is usually hosted in a custom subdomain (such as `parsec.your-"
+"domain.com`) chosen during server deployment."
+msgstr ""
+"L'application Web Parsec est activée et hébergée par le serveur Parsec lui-"
+"même. Elle est généralement hébergée sur un sous-domaine personnalisé (tel "
+"que `parsec.votre-domaine.com`) choisi lors du déploiement du serveur."
+
+#: ../../hosting/client_deploy.rst:69
+msgid ""
+"Users can therefore access the application by entering the URL in a web "
+"browser."
+msgstr ""
+"Les utilisateurs peuvent donc accéder à l'application en saisissant l'URL "
+"dans un navigateur Web."
+
+#: ../../hosting/client_deploy.rst:71
+msgid ""
+"The Parsec Web App version is **always in sync with the Parsec Server that "
+"host it**."
+msgstr ""
+"La version de l'application Web Parsec est **toujours synchronisée avec le "
+"serveur Parsec qui l'héberge**."
+
+#: ../../hosting/client_deploy.rst:75
+msgid ""
+"This is the recommended application for users to access your self-hosted "
+"Parsec server: it avoids any potential disruptions that might result from "
+"future releases."
+msgstr ""
+"Il s'agit de l'application recommandée pour que les utilisateurs puissent "
+"accéder à votre serveur Parsec auto-hébergé : elle permet d'éviter toute "
+"perturbation potentielle qui pourrait résulter de futures mises à jour."
+
+#: ../../hosting/client_deploy.rst:82
+msgid "Authentication"
+msgstr "Authentification"
+
+#: ../../hosting/client_deploy.rst:84
+msgid ""
+"Authentication is one of the most critical aspects of Parsec. Understanding "
+"how it works is essential for the security of your data."
+msgstr ""
+"L'authentification est l'un des aspects les plus critiques de Parsec. Il est "
+"essentiel de comprendre son fonctionnement pour garantir la sécurité de vos "
+"données."
+
+#: ../../hosting/client_deploy.rst:88
+msgid "The device file"
+msgstr "Le fichier d'appareil"
+
+#: ../../hosting/client_deploy.rst:90
+msgid ""
+"To be able to access an Organization in Parsec, the user needs to set up a "
+"*Device*. This is done when the user joins an Organization or, once logged-"
+"in, if the user adds new devices to access the same Organization."
+msgstr ""
+"Pour pouvoir accéder à une organisation dans Parsec, l'utilisateur doit "
+"configurer un *appareil*. Cette opération s'effectue lorsque l'utilisateur "
+"rejoint une organisation ou, une fois connecté, s'il ajoute de nouveaux "
+"appareils pour accéder à cette même organisation."
+
+#: ../../hosting/client_deploy.rst:93
+msgid ""
+"Each access point (desktop or browser) requires a specific device to "
+"authenticate."
+msgstr ""
+"Chaque point d'accès (ordinateur de bureau ou navigateur) nécessite un "
+"appareil spécifique pour s'authentifier."
+
+#: ../../hosting/client_deploy.rst:97
+msgid ""
+"For each device, Parsec creates a *device file* to store information about "
+"the Organization (server URL, organization ID), the User (User ID, Profile, "
+"Name, Email), the Device (Device ID, authentication method) and, most "
+"importantly, a set of keys allowing to sign, to receive messages and to "
+"encrypt data locally."
+msgstr ""
+"Pour chaque appareil, Parsec crée un *fichier d'appareil* afin d'y stocker "
+"des informations concernant l'organisation (URL du serveur, identifiant de "
+"l'organisation), l'utilisateur (identifiant de l'utilisateur, profil, nom, "
+"adresse e-mail), l'appareil (identifiant de l'appareil, méthode "
+"d'authentification) et, surtout, un jeu de clés permettant de signer, de "
+"recevoir des messages et de chiffrer les données localement."
+
+#: ../../hosting/client_deploy.rst:103
+msgid ""
+"The device file is encrypted to protect all the sensitive information stored "
+"in it."
+msgstr ""
+"Le fichier du périphérique est crypté afin de protéger toutes les "
+"informations sensibles qui y sont stockées."
+
+#: ../../hosting/client_deploy.rst:105
+msgid ""
+"The mechanism used to encrypt the device file depends on the *authentication "
+"method* selected by the user during device set up."
+msgstr ""
+"Le mécanisme utilisé pour chiffrer le fichier de l'appareil dépend de la "
+"*méthode d'authentification* choisie par l'utilisateur lors de la "
+"configuration de l'appareil."
+
+#: ../../hosting/client_deploy.rst:109
+msgid "Supported authentication methods"
+msgstr "Méthodes d'authentification prises en charge"
+
+#: ../../hosting/client_deploy.rst:111
+msgid "Parsec supports the following authentication methods:"
+msgstr "Parsec prend en charge les méthodes d'authentification suivantes :"
+
+#: ../../hosting/client_deploy.rst:113
+msgid ""
+"**Password**: the device file is protected with a key derived from the user-"
+"provided password."
+msgstr ""
+"**Mot de passe** : le fichier de périphérique est protégé par une clé "
+"dérivée du mot de passe fourni par l'utilisateur."
+
+#: ../../hosting/client_deploy.rst:115
+msgid ""
+"**System Authentication**: the device file is protected with a key stored at "
+"the OS-level credential store (Keychain, Secret Service). Not available on "
+"the web app."
+msgstr ""
+"**Authentification système** : le fichier de l'appareil est protégé par une "
+"clé stockée dans le magasin d'identifiants du système d'exploitation "
+"(Keychain, Secret Service). Non disponible sur l'application web."
+
+#: ../../hosting/client_deploy.rst:118
+msgid ""
+"**SmartCard**: The device file is protected with a X.509 certificate from a "
+"smart card. A :abbr:`PKI (Public key infrastructure)` is required in order "
+"to issue and validate certificates."
+msgstr ""
+"**Carte à puce** : Le fichier de périphérique est protégé par un certificat "
+"X.509 provenant d'une carte à puce. Une :abbr:`PKI (infrastructure à clé "
+"publique)` est nécessaire pour émettre et valider les certificats."
+
+#: ../../hosting/client_deploy.rst:121
+msgid ""
+"**Single sign-on**: the devices file is protected with an SSO-based key "
+"retrieval via OpenBAO."
+msgstr ""
+"**Authentification unique** : le fichier des appareils est protégé par un "
+"système de récupération de clé basé sur l'authentification unique via "
+"OpenBAO."
+
+#: ../../hosting/client_deploy.rst:124
+msgid "MFA (TOTP)"
+msgstr "MFA (TOTP)"
+
+#: ../../hosting/client_deploy.rst:126
+msgid ""
+"Regardless of the authentication method, users can enable :abbr:`MFA (Multi-"
+"factor authentication)` as a secondary layer of protection for the device "
+"file."
+msgstr ""
+"Quelle que soit la méthode d'authentification utilisée, les utilisateurs "
+"peuvent activer :abbr:`MFA (authentification multifactorielle)` comme niveau "
+"de protection supplémentaire pour le fichier de l'appareil."
+
+#: ../../hosting/client_deploy.rst:129
+msgid ""
+"MFA is based on standard :abbr:`TOTP (Time-based One Time Password)` codes "
+"that are generated by an authenticator application from a mobile phone. See :"
+"ref:`Multi-factor authentication <doc_userguide_mfa>` for more information."
+msgstr ""
+"L'authentification multifacteur (MFA) repose sur des codes :abbr:`TOTP (Time-"
+"based One Time Password)` standard, générés par une application "
+"d'authentification depuis un téléphone mobile. Pour plus d'informations, "
+"consultez :ref:`Authentification multifacteur <doc_userguide_mfa>`."
+
+#: ../../hosting/client_deploy.rst:133 ../../hosting/client_deploy.rst:148
+msgid "Offline login"
+msgstr "Connexion hors ligne"
+
+#: ../../hosting/client_deploy.rst:135
+msgid ""
+"When the user accesses documents in Parsec, data is downloaded and stored "
+"encrypted in a local cache (either the file system or the browser storage "
+"depending on the app)."
+msgstr ""
+"Lorsque l'utilisateur accède à des documents dans Parsec, les données sont "
+"téléchargées et stockées sous forme cryptée dans un cache local (soit dans "
+"le système de fichiers, soit dans la mémoire du navigateur, selon "
+"l'application)."
+
+#: ../../hosting/client_deploy.rst:138
+msgid ""
+"Parsec allows to access this data offline, provided that the user is able to "
+"authenticate and thus decrypt the local device file. Only data that has been "
+"previously downloaded by Parsec is available while offline. This is known as "
+"\"Offline login\"."
+msgstr ""
+"Parsec permet d'accéder à ces données hors ligne, à condition que "
+"l'utilisateur puisse s'authentifier et ainsi déchiffrer le fichier local de "
+"l'appareil. Seules les données préalablement téléchargées par Parsec sont "
+"disponibles hors ligne. C'est ce qu'on appelle la « connexion hors ligne »."
+
+#: ../../hosting/client_deploy.rst:142
+msgid ""
+"The downside of offline login is that it enables offline attacks on the "
+"device file: an attacker that is able to access or retrieve the device file "
+"is able to perform attempts to break the file encryption."
+msgstr ""
+"L'inconvénient de la connexion hors ligne est qu'elle rend possible des "
+"attaques hors ligne contre le fichier de l'appareil : un pirate informatique "
+"capable d'accéder au fichier de l'appareil ou de le récupérer peut tenter de "
+"contourner le chiffrement de ce fichier."
+
+#: ../../hosting/client_deploy.rst:145
+msgid ""
+"The following table summarizes which support offline login and their "
+"resistance to offline attacks."
+msgstr ""
+"Le tableau suivant récapitule les supports prenant en charge la connexion "
+"hors ligne ainsi que leur résistance aux attaques hors ligne."
+
+#: ../../hosting/client_deploy.rst:148
+msgid "Strategy"
+msgstr "Stratégie"
+
+#: ../../hosting/client_deploy.rst:148
+msgid "Offline attack resistance"
+msgstr "Résistance aux attaques hors ligne"
+
+#: ../../hosting/client_deploy.rst:150
+msgid "Password"
+msgstr "Mot de passe"
+
+#: ../../hosting/client_deploy.rst:150 ../../hosting/client_deploy.rst:151
+#: ../../hosting/client_deploy.rst:152
+msgid "✅"
+msgstr "✅"
+
+#: ../../hosting/client_deploy.rst:150
+msgid "Moderate (key stretching)"
+msgstr "Modéré (key stretching)"
+
+#: ../../hosting/client_deploy.rst:151
+msgid "Keyring"
+msgstr "Keyring"
+
+#: ../../hosting/client_deploy.rst:151
+msgid "Low (tied to OS session)"
+msgstr "Faible (lié à la session du système d'exploitation)"
+
+#: ../../hosting/client_deploy.rst:152
+msgid "SmartCard"
+msgstr "Carte à puce"
+
+#: ../../hosting/client_deploy.rst:152 ../../hosting/client_deploy.rst:153
+msgid "High"
+msgstr "Élevé"
+
+#: ../../hosting/client_deploy.rst:153
+msgid "SSO"
+msgstr "SSO"
+
+#: ../../hosting/client_deploy.rst:153
+msgid "❌"
+msgstr "❌"
+
+#: ../../hosting/client_deploy.rst:158
+msgid ""
+"When MFA is enabled, *offline login* is not available because the client "
+"application needs to communicate with the Parsec Server during login to "
+"verify the TOTP code."
+msgstr ""
+"Lorsque l'authentification MFA est activée, la *connexion hors ligne* n'est "
+"pas disponible, car l'application cliente doit communiquer avec le serveur "
+"Parsec lors de la connexion afin de vérifier le code TOTP."
+
+#: ../../hosting/client_deploy.rst:164
+msgid "Release schedule"
+msgstr "Calendrier de releases"
+
+#: ../../hosting/client_deploy.rst:166
+msgid ""
+"Parsec releases do not follow a fixed schedule. Recent feature releases have "
+"been published around every two to three months. We intend to keep up this "
+"pace, although we can't guarantee it."
+msgstr ""
+"Les mises à jour de Parsec ne suivent pas un calendrier fixe. Les dernières "
+"mises à jour fonctionnelles ont été publiées tous les deux à trois mois "
+"environ. Nous avons l'intention de maintenir ce rythme, même si nous ne "
+"pouvons pas le garantir."
+
+#: ../../hosting/client_deploy.rst:169
+msgid ""
+"Patch releases can be published at any time to fix major bugs or security "
+"issues."
+msgstr ""
+"Des correctifs peuvent être publiés à tout moment afin de corriger des "
+"bogues majeurs ou des failles de sécurité."
+
+#: ../../hosting/client_deploy.rst:175
+msgid "Privacy"
+msgstr "Confidentialité"
+
+#: ../../hosting/client_deploy.rst:177
+msgid ""
+"Both desktop and web apps include automatic error reporting to help us "
+"improving Parsec."
+msgstr ""
+"Les applications de bureau et les applications Web intègrent toutes deux une "
+"fonctionnalité de signalement automatique des erreurs afin de nous aider à "
+"améliorer Parsec."
+
+#: ../../hosting/client_deploy.rst:179
+msgid ""
+"Error reporting is enabled by default. Users can disable it at any time by "
+"going to:"
+msgstr ""
+"La fonction de signalement des erreurs est activée par défaut. Les "
+"utilisateurs peuvent la désactiver à tout moment en se rendant à l'adresse "
+"suivante :"
+
+#: ../../hosting/client_deploy.rst:181
+msgid ":menuselection:`Settings --> Configuration --> Send error reports`"
+msgstr ""
+":menuselection:`Paramètres --> Configuration --> Envoyer les rapports "
+"d'erreur`"
+
+#: ../../hosting/client_deploy.rst:183
+msgid ""
+"Organizations with data handling policies should inform users about this "
+"feature and provide guidance on whether to disable it."
+msgstr ""
+"Les organisations disposant de politiques de traitement des données "
+"devraient informer les utilisateurs de cette fonctionnalité et leur fournir "
+"des conseils quant à l'opportunité de la désactiver."

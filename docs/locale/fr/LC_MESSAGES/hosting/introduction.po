@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.1-a.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-17 12:16+0200\n"
-"PO-Revision-Date: 2026-04-20 17:04+0200\n"
+"POT-Creation-Date: 2026-04-24 15:42+0200\n"
+"PO-Revision-Date: 2026-04-24 15:43+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -59,13 +59,21 @@ msgstr ""
 
 #: ../../hosting/introduction.rst:12
 msgid ""
+":ref:`Client deployment<doc_hosting_client_deployment>` - The different "
+"options to deploy Parsec client application to your users."
+msgstr ""
+":ref:`Déploiement du client<doc_hosting_deployment>` - Les différentes "
+"options pour déployer l'application cliente Parsec à vos utilisateurs."
+
+#: ../../hosting/introduction.rst:13
+msgid ""
 ":ref:`Server maintenance<doc_hosting_maintenance>` - How to manage backups "
 "and maintain Parsec Server up to date."
 msgstr ""
 ":ref:`Maintenance du serveur<doc_hosting_maintenance>` - Comment gérer les "
 "sauvegardes et maintenir le serveur Parsec à jour."
 
-#: ../../hosting/introduction.rst:13
+#: ../../hosting/introduction.rst:14
 msgid ""
 ":ref:`Server administration<doc_hosting_administration>` - Monitoring and "
 "administrative tasks."
