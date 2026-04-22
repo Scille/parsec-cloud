@@ -7,7 +7,7 @@
       id="connected-header"
     >
       <ion-text
-        v-if="isSmallDisplay && workspaceArchiveState && workspaceArchiveState.isArchived"
+        v-if="isSmallDisplay && currentWorkspace?.isArchived"
         class="header-archived button-large"
       >
         <ion-icon
@@ -17,7 +17,7 @@
         {{ $msTranslate('WorkspacesPage.archiveWorkspace.isArchived') }}
       </ion-text>
       <ion-text
-        v-if="isSmallDisplay && workspaceArchiveState && workspaceArchiveState.isTrashed"
+        v-if="isSmallDisplay && currentWorkspace?.isTrashed"
         class="header-archived button-large"
       >
         <ion-icon
@@ -65,10 +65,10 @@
               {{ $msTranslate(routeTitle) }}
             </ion-label>
             <ion-text
-              v-if="currentRouteIs(Routes.History) && workspaceName && isSmallDisplay"
+              v-if="currentRouteIs(Routes.History) && currentWorkspace?.name && isSmallDisplay"
               class="topbar-left-text__workspace subtitles-sm"
             >
-              {{ workspaceName }}
+              {{ currentWorkspace.name }}
             </ion-text>
           </div>
 
@@ -77,7 +77,7 @@
             v-if="currentRouteIs(Routes.Documents) || (currentRouteIs(Routes.Workspaces) && isLargeDisplay)"
           >
             <header-breadcrumbs
-              :workspace-name="workspaceName"
+              :workspace-name="currentWorkspace?.name ?? ''"
               :path-nodes="fullPath"
               @change="onNodeSelected"
               :from-header-page="true"
@@ -234,7 +234,7 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { ClientInfo, Path, UserProfile, WorkspaceRole, getClientInfo, getWorkspaceInfo, getWorkspaceName, isMobile } from '@/parsec';
+import { ClientInfo, Path, UserProfile, WorkspaceInfo, WorkspaceRole, getClientInfo, getWorkspaceInfo, isMobile } from '@/parsec';
 import {
   ProfilePages,
   Routes,
@@ -294,14 +294,13 @@ import {
   search,
   trash,
 } from 'ionicons/icons';
-import { MsImage, MsModalResult, SidebarToggle, Translatable, asyncComputed, useWindowSize } from 'megashark-lib';
+import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 let eventDistributorCbId: string | null = null;
-const workspaceName = ref('');
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
 const { isHeaderVisible } = useHeaderControl();
 const userInfo: Ref<ClientInfo | null> = ref(null);
@@ -342,8 +341,8 @@ const showSecurityChecklistSmallDisplay = computed(() => {
     isSmallDisplay.value &&
     securityWarningsCount.value > 0 &&
     securityWarnings.value &&
-    !workspaceArchiveState.value.isArchived &&
-    !workspaceArchiveState.value.isTrashed
+    !currentWorkspace.value?.isArchived &&
+    !currentWorkspace.value?.isTrashed
   );
 });
 const workspaceSwitchModalTitle = computed(() => {
@@ -355,21 +354,7 @@ const workspaceSwitchModalTitle = computed(() => {
   return 'HeaderPage.titles.workspaces';
 });
 
-interface WorkspaceArchiveState {
-  isArchived: boolean;
-  isTrashed: boolean;
-}
-
-const workspaceArchiveState = asyncComputed(async (): Promise<WorkspaceArchiveState> => {
-  const workspaceHandle = getWorkspaceHandle();
-  if (workspaceHandle) {
-    const wInfo = await getWorkspaceInfo(workspaceHandle);
-    if (wInfo.ok) {
-      return { isArchived: wInfo.value.isArchived, isTrashed: wInfo.value.isTrashed };
-    }
-  }
-  return { isArchived: false, isTrashed: false };
-});
+const currentWorkspace: Ref<WorkspaceInfo | undefined> = ref(undefined);
 
 const routeTitle = computed((): Translatable => {
   switch (getCurrentRouteName()) {
@@ -421,6 +406,8 @@ async function onNodeSelected(node: RouterPathNode): Promise<void> {
 }
 
 async function updateRoute(): Promise<void> {
+  currentWorkspace.value = undefined;
+
   if (!currentRouteIsFileRoute()) {
     fullPath.value = [];
     return;
@@ -439,15 +426,18 @@ async function updateRoute(): Promise<void> {
   } else if (currentRouteIs(Routes.Documents)) {
     const workspaceHandle = getWorkspaceHandle();
     if (workspaceHandle) {
-      workspaceName.value = await getWorkspaceName(workspaceHandle, true);
+      const wInfo = await getWorkspaceInfo(workspaceHandle);
+      if (wInfo.ok) {
+        currentWorkspace.value = wInfo.value;
+      }
     }
 
     const finalPath: RouterPathNode[] = [];
 
     let firstItem = { icon: home, title: '', route: Routes.Workspaces };
-    if (workspaceArchiveState.value.isArchived) {
+    if (currentWorkspace.value?.isArchived) {
       firstItem = { icon: archive, title: 'HeaderPage.breadcrumbs.archived', route: Routes.Archived };
-    } else if (workspaceArchiveState.value.isTrashed) {
+    } else if (currentWorkspace.value?.isTrashed) {
       firstItem = { icon: trash, title: 'HeaderPage.breadcrumbs.trashed', route: Routes.Trash };
     }
 
@@ -461,7 +451,7 @@ async function updateRoute(): Promise<void> {
     const workspacePath = await Path.parse(getDocumentPath());
     finalPath.push({
       id: 1,
-      display: workspaceName.value,
+      display: currentWorkspace.value?.name ?? '',
       route: Routes.Documents,
       popoverIcon: home,
       query: { documentPath: '/', workspaceHandle: workspaceHandle },
@@ -507,14 +497,7 @@ onMounted(async () => {
   await updateRoute();
 
   eventDistributorCbId = await eventDistributor.value.registerCallback(
-    [
-      Events.WorkspaceCreated,
-      Events.MenuAction,
-      Events.WorkspaceRoleUpdate,
-      Events.DeviceCreated,
-      Events.WorkspaceUpdated,
-      Events.WorkspaceArchiveSync,
-    ],
+    [Events.WorkspaceCreated, Events.MenuAction, Events.WorkspaceRoleUpdate, Events.DeviceCreated, Events.WorkspaceUpdated],
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
         securityWarnings.value = await getSecurityWarnings();
@@ -528,9 +511,10 @@ onMounted(async () => {
         if (updateData.newRole === null || updateData.newRole === WorkspaceRole.Owner) {
           securityWarnings.value = await getSecurityWarnings();
         }
-      } else if (event === Events.Online || event === Events.WorkspaceArchiveSync) {
+      } else if (event === Events.Online) {
         securityWarnings.value = await getSecurityWarnings();
       } else if (event === Events.WorkspaceUpdated) {
+        securityWarnings.value = await getSecurityWarnings();
         await updateRoute();
       }
     },

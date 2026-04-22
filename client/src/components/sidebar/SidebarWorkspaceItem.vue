@@ -11,19 +11,19 @@
   >
     <div class="sidebar-item-workspace">
       <ion-icon
-        v-if="isHidden && !workspace.isArchived && !workspace.isTrashed"
-        :icon="eyeOff"
-        class="sidebar-item-workspace__hide"
-      />
-      <ion-icon
         v-if="workspace.isArchived"
         :icon="archive"
-        class="sidebar-item-workspace__hide"
+        class="sidebar-item-workspace__icon"
       />
       <ion-icon
-        v-if="workspace.isTrashed"
+        v-else-if="workspace.isTrashed"
         :icon="trash"
-        class="sidebar-item-workspace__hide"
+        class="sidebar-item-workspace__icon"
+      />
+      <ion-icon
+        v-else-if="isHidden"
+        :icon="eyeOff"
+        class="sidebar-item-workspace__icon"
       />
       <ion-text
         class="sidebar-item-workspace__label"
@@ -86,7 +86,7 @@ async function onContextMenu(event: Event): Promise<void> {
     justify-content: space-between;
     width: 100%;
 
-    &__hide {
+    &__icon {
       margin-right: 0.5rem;
       font-size: 1rem;
       color: var(--parsec-color-light-primary-30);

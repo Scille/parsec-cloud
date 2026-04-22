@@ -183,13 +183,13 @@
           <div class="sidebar-content-organization">
             <div
               class="sidebar-content-workspaces current-workspace"
-              v-if="currentWorkspace"
+              v-if="currentWorkspace && !currentRouteIs(Routes.History)"
             >
               <sidebar-workspace-item
                 :workspace="currentWorkspace"
                 :is-hidden="workspaceAttributes.isHidden(currentWorkspace.id)"
                 @workspace-click="goToWorkspace"
-                @context-menu-requested="onOpenWorkspaceContextMenu(currentWorkspace, $event)"
+                @context-menu-requested="onOpenWorkspaceContextMenu($event)"
               />
             </div>
 
@@ -476,7 +476,7 @@ import {
   warning,
 } from 'ionicons/icons';
 import { Duration } from 'luxon';
-import { asyncComputed, ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
+import { ChevronExpand, I18n, LogoIconGradient, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
 import { computed, inject, onMounted, onUnmounted, Ref, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -523,7 +523,9 @@ const securityWarningsCount = computed(() => {
 const { isSmallDisplay, windowWidth } = useWindowSize();
 const isReadOnly = computed(() => {
   if (currentWorkspace.value) {
-    return currentWorkspace.value.selfRole === WorkspaceRole.Reader || currentWorkspace.value.isArchived;
+    return (
+      currentWorkspace.value.selfRole === WorkspaceRole.Reader || currentWorkspace.value.isArchived || currentWorkspace.value.isTrashed
+    );
   }
   return false;
 });
@@ -541,16 +543,7 @@ const watchSidebarWidthCancel = watch(sidebarWidth, async (value: number) => {
   emits('sidebarWidthChanged', value);
 });
 
-const currentWorkspace = asyncComputed(async () => {
-  const handle = getWorkspaceHandle();
-  if (handle) {
-    const wInfo = await getWorkspaceInfo(handle);
-    if (wInfo.ok) {
-      return wInfo.value;
-    }
-  }
-  return undefined;
-});
+const currentWorkspace: Ref<WorkspaceInfo | undefined> = ref(undefined);
 
 async function refreshPendingJoinRequests(): Promise<void> {
   if (props.userInfo.currentProfile !== UserProfile.Admin) {
@@ -584,6 +577,16 @@ async function loadAll(): Promise<void> {
     workspaces.value = result.value.sort((w1, w2) => w1.name.toLocaleLowerCase().localeCompare(w2.name.toLocaleLowerCase()));
   } else {
     window.electronAPI.log('error', `Failed to list workspaces ${JSON.stringify(result.error)}`);
+  }
+
+  const handle = getWorkspaceHandle();
+  if (handle) {
+    const wInfo = await getWorkspaceInfo(handle);
+    if (wInfo.ok) {
+      currentWorkspace.value = wInfo.value;
+    }
+  } else {
+    currentWorkspace.value = undefined;
   }
 
   loggedInDevices.value = await getLoggedInDevices();
@@ -674,6 +677,7 @@ const watchRouteCancel = watchRoute(async (newRoute) => {
   if (newRoute.query.workspaceMenu && Object.values(WorkspaceMenu).includes(newRoute.query.workspaceMenu as WorkspaceMenu)) {
     workspaceMenuState.value = newRoute.query.workspaceMenu as WorkspaceMenu;
   }
+  await loadAll();
 });
 
 onMounted(async () => {
@@ -688,7 +692,6 @@ onMounted(async () => {
       Events.WorkspaceMountpointsSync,
       Events.InvitationUpdated,
       Events.AsyncEnrollmentUpdated,
-      Events.WorkspaceArchiveSync,
     ],
     async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated) {
@@ -700,6 +703,7 @@ onMounted(async () => {
           await recentDocumentManager.refreshWorkspaces(connectionHandle);
         }
         await loadAll();
+        securityWarnings.value = await getSecurityWarnings();
       } else if (event === Events.WorkspaceMountpointsSync) {
         const { workspaceId, isMounted } = data as WorkspaceMountpointInfo;
         const workspace = workspaces.value.find((w) => w.id === workspaceId);
@@ -746,7 +750,7 @@ onMounted(async () => {
         if (updateData.newRole === null || updateData.newRole === WorkspaceRole.Owner) {
           securityWarnings.value = await getSecurityWarnings();
         }
-      } else if (event === Events.Online || event === Events.WorkspaceArchiveSync) {
+      } else if (event === Events.Online) {
         securityWarnings.value = await getSecurityWarnings();
       } else if (event === Events.InvitationUpdated || event === Events.AsyncEnrollmentUpdated) {
         await refreshPendingJoinRequests();
@@ -888,13 +892,16 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
   recentDocumentManager.removeFile(file);
 }
 
-async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event): Promise<void> {
-  if (workspace.isArchived || workspace.isTrashed) {
-    await openArchivedWorkspaceContextMenu(event, workspace, eventDistributor.value, informationManager.value, true);
+async function onOpenWorkspaceContextMenu(event: Event): Promise<void> {
+  if (!currentWorkspace.value) {
+    return;
+  }
+  if (currentWorkspace.value.isArchived || currentWorkspace.value.isTrashed) {
+    await openArchivedWorkspaceContextMenu(event, currentWorkspace.value, informationManager.value, true);
   } else {
     await openWorkspaceContextMenu(
       event,
-      workspace,
+      currentWorkspace.value,
       workspaceAttributes,
       eventDistributor.value,
       informationManager.value,

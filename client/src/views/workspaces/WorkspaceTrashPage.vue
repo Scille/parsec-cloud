@@ -79,7 +79,6 @@ import { openArchivedWorkspaceContextMenu } from '@/components/workspaces/utils'
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { listTrashedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
 import { currentRouteIs, navigateTo, navigateToWorkspace, Routes } from '@/router';
-import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { arrowBack } from 'ionicons/icons';
@@ -90,7 +89,6 @@ const querying = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const { isLargeDisplay } = useWindowSize();
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
-const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 
 const filteredWorkspaces = computed(() => {
   return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => a.name.localeCompare(b.name));
@@ -126,7 +124,7 @@ async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openArchivedWorkspaceContextMenu(event, workspace, eventDistributor.value, informationManager.value, false, isLargeDisplay.value);
+  await openArchivedWorkspaceContextMenu(event, workspace, informationManager.value, false, isLargeDisplay.value);
   await refreshTrashedWorkspacesList();
 
   if (onFinished) {
