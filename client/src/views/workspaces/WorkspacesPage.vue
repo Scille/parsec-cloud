@@ -366,7 +366,6 @@ onMounted(async (): Promise<void> => {
         case Events.WorkspaceUpdated:
         case Events.WorkspaceCreated:
         case Events.WorkspaceMountpointsSync:
-        case Events.WorkspaceArchiveSync:
           await refreshWorkspacesList();
           break;
         case Events.MenuAction:

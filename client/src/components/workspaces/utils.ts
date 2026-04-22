@@ -216,7 +216,7 @@ export async function openWorkspaceContextMenu(
         }
         break;
       case WorkspaceAction.Archive:
-        await archiveWorkspace(workspace, informationManager, eventDistributor);
+        await archiveWorkspace(workspace, informationManager);
         break;
       default:
         console.warn('No WorkspaceAction match found');
@@ -227,7 +227,6 @@ export async function openWorkspaceContextMenu(
 export async function openArchivedWorkspaceContextMenu(
   event: Event,
   workspace: WorkspaceInfo,
-  eventDistributor: EventDistributor,
   informationManager: InformationManager,
   fromSidebar = false,
   isLargeDisplay = true,
@@ -280,10 +279,10 @@ export async function openArchivedWorkspaceContextMenu(
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
       case WorkspaceAction.Restore:
-        await restoreWorkspace(workspace, informationManager, eventDistributor);
+        await restoreWorkspace(workspace, informationManager);
         break;
       case WorkspaceAction.Trash:
-        await trashWorkspace(workspace, informationManager, eventDistributor);
+        await trashWorkspace(workspace, informationManager);
         break;
       default:
         console.warn('No WorkspaceAction match found');
@@ -291,11 +290,7 @@ export async function openArchivedWorkspaceContextMenu(
   }
 }
 
-async function archiveWorkspace(
-  workspace: WorkspaceInfo,
-  informationManager: InformationManager,
-  eventDistributor: EventDistributor,
-): Promise<void> {
+async function archiveWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
   const answer = await askQuestion(
     'WorkspacesPage.archiveWorkspace.title',
     { key: 'WorkspacesPage.archiveWorkspace.subtitle', data: { workspace: workspace.name } },
@@ -316,16 +311,9 @@ async function archiveWorkspace(
     }),
     PresentationMode.Toast,
   );
-  if (result.ok) {
-    await eventDistributor.dispatchEvent(Events.WorkspaceArchiveSync, { workspaceId: workspace.id, isArchived: true });
-  }
 }
 
-async function restoreWorkspace(
-  workspace: WorkspaceInfo,
-  informationManager: InformationManager,
-  eventDistributor: EventDistributor,
-): Promise<void> {
+async function restoreWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
   const answer = await askQuestion(
     'WorkspacesPage.restoreWorkspace.title',
     { key: `WorkspacesPage.restoreWorkspace.subtitle${workspace.isTrashed ? 'Trashed' : 'Archived'}`, data: { workspace: workspace.name } },
@@ -347,12 +335,9 @@ async function restoreWorkspace(
     }),
     PresentationMode.Toast,
   );
-  if (result.ok) {
-    await eventDistributor.dispatchEvent(Events.WorkspaceArchiveSync, { workspaceId: workspace.id, isArchived: false });
-  }
 }
 
-async function trashWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager, eventDistributor: EventDistributor) {
+async function trashWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager) {
   let minimumArchivingPeriod: DurationLike = { days: 30 };
   const clientResult = await getClientInfo();
   if (clientResult.ok) {
@@ -383,9 +368,6 @@ async function trashWorkspace(workspace: WorkspaceInfo, informationManager: Info
     }),
     PresentationMode.Toast,
   );
-  if (result.ok) {
-    await eventDistributor.dispatchEvent(Events.WorkspaceTrashSync, { workspaceId: workspace.id });
-  }
 }
 
 export async function showWorkspace(
