@@ -290,7 +290,7 @@ export async function createWorkspace(workspacesPage: MsPage, name: string): Pro
       await expect(workspacesPage.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(workspacesCount + 1);
     }
 
-    await expect(workspacesPage.locator('.workspace-categories-menu-item').nth(0)).toContainClass('active');
+    await expect(workspacesPage.locator('#sidebar-all-workspaces')).toContainClass('active');
   }
   await dismissToast(workspacesPage);
 }

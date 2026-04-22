@@ -43,7 +43,7 @@ msTest('Sidebar in workspaces page', async ({ workspaces }) => {
   const currentWorkspace = sidebar.locator('#sidebar-workspaces').locator('.current-workspace').locator('.sidebar-item');
   await expect(currentWorkspace).toBeVisible();
   await expect(sidebar.locator('#sidebar-all-workspaces')).toHaveText('My workspaces');
-  await sidebar.locator('.sidebar-content-organization-button').nth(0).click();
+  await sidebar.locator('#sidebar-all-workspaces').click();
   await expect(currentWorkspace).toBeHidden();
 });
 
@@ -433,25 +433,28 @@ msTest.describe(() => {
     const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
     const workspaceCategoriesMenuItem = workspaceCategoriesMenu.locator('.workspace-categories-menu-item');
     const workspaceCategoriesSidebar = workspaces.locator('#sidebar-workspaces');
-    const workspaceCategoriesSidebarItem = workspaceCategoriesSidebar.locator('.sidebar-content-organization-button');
+    const workspaceCategoriesSidebarItem = workspaceCategoriesSidebar.locator('.sidebar-content-organization-filters-button');
+    const allWorkspacesButton = workspaces.locator('#sidebar-all-workspaces');
 
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText([
-      'My workspaces',
+    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred', 'Hidden']);
+
+    await expect(workspaceCategoriesSidebar.locator('.sidebar-content-organization-filters-button__text')).toHaveText([
       'Recent',
       'Starred',
       'Hidden',
     ]);
+    await expect(allWorkspacesButton).toHaveClass(/active/);
 
-    async function checkActiveCategories(activeItemsClicked: Locator, activeItemsResult: Locator, activeIndex: number): Promise<void> {
-      for (let i = 0; i < activeIndex; i++) {
-        await activeItemsClicked.nth(i).click();
-        await expect(activeItemsClicked.nth(i)).toHaveClass(/active/);
-        await expect(activeItemsResult.nth(i)).toHaveClass(/active/);
-      }
+    for (const index of [0, 1, 2]) {
+      await workspaceCategoriesMenuItem.nth(index).click();
+      await expect(workspaceCategoriesMenuItem.nth(index)).toHaveClass(/active/);
+      await expect(workspaceCategoriesSidebarItem.nth(index)).toHaveClass(/active/);
+
+      await allWorkspacesButton.click();
+      await expect(allWorkspacesButton).toHaveClass(/active/);
+      await expect(workspaceCategoriesMenuItem.nth(index)).not.toHaveClass(/active/);
+      await expect(workspaceCategoriesSidebarItem.nth(index)).not.toHaveClass(/active/);
     }
-
-    await checkActiveCategories(workspaceCategoriesMenuItem, workspaceCategoriesSidebarItem, 4);
-    await checkActiveCategories(workspaceCategoriesSidebarItem, workspaceCategoriesMenuItem, 4);
   });
 });
 
