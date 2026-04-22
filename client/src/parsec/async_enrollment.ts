@@ -105,12 +105,7 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
         console.error(`Failed to import scwsapi: ${err.toString()}`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `Failed to import scwsapi (${err.toString()})` } };
       }
-      return await libparsec.pkiInitForScws(
-        window.getConfigDir(),
-        parsecServerTag.content,
-        scwsapiLocationTag.content,
-        scwsapiAppCertificateTag.content,
-      );
+      return await libparsec.pkiInitForScws(window.getConfigDir(), parsecServerTag.content);
     } else {
       return await libparsec.pkiInitForNative(window.getConfigDir());
     }
