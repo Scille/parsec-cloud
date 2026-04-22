@@ -6,17 +6,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-12 17:20+0100\n"
+"POT-Creation-Date: 2026-04-22 17:02+0200\n"
 "PO-Revision-Date: 2026-03-12 17:39+0100\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.17.0\n"
-"X-Generator: Poedit 3.8\n"
 
 #: ../../userguide/join_organization.rst:6
 msgid "Join an organization"
@@ -165,7 +164,7 @@ msgstr ""
 "partir de votre profil)."
 
 #: ../../userguide/join_organization.rst:81
-#: ../../userguide/join_organization.rst:139
+#: ../../userguide/join_organization.rst:138
 msgid ""
 "You are ready for your :ref:`first steps with Parsec! "
 "<doc_userguide_first_steps>`"
@@ -251,7 +250,7 @@ msgstr ""
 "``Continuer``"
 
 #: ../../userguide/join_organization.rst:127
-#: ../../userguide/join_organization.rst:133
+#: ../../userguide/join_organization.rst:132
 msgid "Click ``Continue``"
 msgstr "Cliquez sur ``Continuer``"
 
@@ -260,16 +259,10 @@ msgid "Using a PKI"
 msgstr "Utilisation d'une infrastructure à clé publique (PKI)"
 
 #: ../../userguide/join_organization.rst:131
-msgid "Click on ``Add a certificate`` to open the certificate selection dialog"
-msgstr ""
-"Cliquez sur ``Ajouter un certificat`` pour ouvrir la boîte de dialogue de "
-"sélection des certificats"
-
-#: ../../userguide/join_organization.rst:132
 msgid "Select the certificate matching your infrastructure"
 msgstr "Sélectionnez le certificat correspondant à votre infrastructure"
 
-#: ../../userguide/join_organization.rst:135
+#: ../../userguide/join_organization.rst:134
 msgid ""
 "Your join request has been sent and you should now see it with the "
 "**Pending** status."
@@ -277,7 +270,7 @@ msgstr ""
 "Votre demande d'adhésion a été envoyée et devrait désormais apparaître avec "
 "le statut **En attente**."
 
-#: ../../userguide/join_organization.rst:136
+#: ../../userguide/join_organization.rst:135
 msgid ""
 "Once accepted, a button ``Add to my organizations`` will appear on your "
 "request. Click on it to log into the organization. You may need to re-"

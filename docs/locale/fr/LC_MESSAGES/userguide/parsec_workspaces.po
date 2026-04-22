@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-06 13:15+0200\n"
+"POT-Creation-Date: 2026-04-27 10:53+0200\n"
 "PO-Revision-Date: 2024-09-19 17:35+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -356,11 +356,11 @@ msgstr ""
 "Seuls les espaces sur lesquels vous êtes `Gestionnaire` ou `Propriétaire` "
 "seront pris en compte."
 
-#: ../../userguide/parsec_workspaces.rst:180
+#: ../../userguide/parsec_workspaces.rst:182
 msgid "Browse workspace history and restore files"
 msgstr "Explorer l'historique d'un espace de travail et restaurer des fichiers"
 
-#: ../../userguide/parsec_workspaces.rst:182
+#: ../../userguide/parsec_workspaces.rst:184
 msgid ""
 "Parsec allows you to browse a workspace at a given time, showing you all the "
 "files as they were. You will need to have the **Owner** or **Manager** roles "
@@ -372,11 +372,11 @@ msgstr ""
 "être **Propriétaire** or **Gérant** de l'espace. ``Historique des versions`` "
 "est disponible dans le menu contextuel de l'espace de travail."
 
-#: ../../userguide/parsec_workspaces.rst:186
+#: ../../userguide/parsec_workspaces.rst:188
 msgid "Browse workspace history"
 msgstr "Explorer l'historique d'un espace de travail"
 
-#: ../../userguide/parsec_workspaces.rst:191
+#: ../../userguide/parsec_workspaces.rst:193
 msgid ""
 "Once you enter the History mode, you can navigate inside the workspace as "
 "you normally would."
@@ -384,11 +384,11 @@ msgstr ""
 "Dans le mode Historique, vous pouvez naviguer normalement dans l'espace de "
 "travail."
 
-#: ../../userguide/parsec_workspaces.rst:193
+#: ../../userguide/parsec_workspaces.rst:195
 msgid "Workspace history"
 msgstr "Historique de l'espaces de travail"
 
-#: ../../userguide/parsec_workspaces.rst:197
+#: ../../userguide/parsec_workspaces.rst:199
 msgid ""
 "If you change the date or time, files and folders will be automatically "
 "updated to reflect the state of the workspace at this moment. You can only "
@@ -399,11 +399,11 @@ msgstr ""
 "ne pouvez que sélectionner une date et une heure entre la date de création "
 "de l'espace et maintenant."
 
-#: ../../userguide/parsec_workspaces.rst:200
+#: ../../userguide/parsec_workspaces.rst:202
 msgid "Select a date and time"
 msgstr "Choisissez une date et une heure"
 
-#: ../../userguide/parsec_workspaces.rst:205
+#: ../../userguide/parsec_workspaces.rst:207
 msgid ""
 "If you want to restore a file or a folder, select it and click ``Restore``. "
 "This will replace the current version of the file with the version from the "
@@ -413,11 +413,11 @@ msgstr ""
 "sélectionner et cliquer sur ``Restaurer``. La version actuelle du fichier "
 "sera remplacée par la version choisie."
 
-#: ../../userguide/parsec_workspaces.rst:207
+#: ../../userguide/parsec_workspaces.rst:209
 msgid "Restore a file"
 msgstr "Restaurer un fichier"
 
-#: ../../userguide/parsec_workspaces.rst:213
+#: ../../userguide/parsec_workspaces.rst:215
 msgid ""
 "If you make a mistake, don't worry, the file history is incremental and "
 "therefore it is never deleted! Let's take an example with a file named "
@@ -427,7 +427,7 @@ msgstr ""
 "supprimé !Prenons en exemple un fichier nommé **Fichier.txt** dont le "
 "contenu a été mis à jour comme suit :"
 
-#: ../../userguide/parsec_workspaces.rst:215
+#: ../../userguide/parsec_workspaces.rst:217
 msgid ""
 "On April 1st, **Creation** of the file with the content **AAA**. This is "
 "**version 1**."
@@ -435,7 +435,7 @@ msgstr ""
 "Le 1er avril, **Création** du fichier avec le contenu **AAA**. Il s'agit de "
 "la **version 1**."
 
-#: ../../userguide/parsec_workspaces.rst:216
+#: ../../userguide/parsec_workspaces.rst:218
 msgid ""
 "On April 5th, **Update** of the file with the content **BBB** (replacing the "
 "previous content). This is **version 2**."
@@ -443,7 +443,7 @@ msgstr ""
 "Le 5 avril, **Mise à jour** du fichier avec le contenu **BBB** (remplaçant "
 "le contenu précédent). Il s'agit de la **version 2**."
 
-#: ../../userguide/parsec_workspaces.rst:217
+#: ../../userguide/parsec_workspaces.rst:219
 msgid ""
 "On April 7th, **Update** of the file with the content **CCC** (replacing the "
 "previous content). This is **version 3**."
@@ -451,7 +451,7 @@ msgstr ""
 "Le 7 avril, **Mise à jour** du fichier avec le contenu **CCC** (remplaçant "
 "le contenu précédent). Il s'agit de la **version 3**."
 
-#: ../../userguide/parsec_workspaces.rst:219
+#: ../../userguide/parsec_workspaces.rst:221
 msgid ""
 "If you look at this workspace history on April 6th, the content of the file "
 "will be **BBB**. Should you chose to restore this version, the content of "
@@ -466,7 +466,7 @@ msgstr ""
 "supprimée, et si vous changez d'avis plus tard, vous serez capable de la "
 "restaurer."
 
-#: ../../userguide/parsec_workspaces.rst:222
+#: ../../userguide/parsec_workspaces.rst:224
 msgid ""
 "You can also explore the workspace history from a specific file. This will "
 "open the history page directly where the file is stored."
@@ -474,6 +474,127 @@ msgstr ""
 "Vous pouvez également explorer l'historique d'un espace depuis un fichier "
 "spécifique. L'historique sera ouvert directement au bon chemin."
 
-#: ../../userguide/parsec_workspaces.rst:224
+#: ../../userguide/parsec_workspaces.rst:226
 msgid "Open workspace history from a file"
 msgstr "Ouvrir l'historique de l'espace de travail depuis un fichier"
+
+#: ../../userguide/parsec_workspaces.rst:232
+msgid "Archive a workspace"
+msgstr "Archiver un espace de travail"
+
+#: ../../userguide/parsec_workspaces.rst:234
+msgid ""
+"A workspace can be **Archived** by one of its **Owners** by selecting the "
+"corresponding button on its contextual menu."
+msgstr ""
+"Un espace de travail peut être **Archivé** par l'un de ses **Propriétaires** "
+"en sélectionnant l'option correspondante dans son menu contextuel."
+
+#: ../../userguide/parsec_workspaces.rst:236
+msgid "Workspace context archive button"
+msgstr "Bouton d'archivage de menu contextuel"
+
+#: ../../userguide/parsec_workspaces.rst:240
+msgid ""
+"An archived workspace is set to `read-only` for all users it has been shared "
+"with, regardless of their :ref:`roles "
+"<doc_userguide_parsec_workspaces_roles>`. Archived workspaces can be "
+"consulted in the ``Archived`` section accessible from the sidebar. The :ref:"
+"`workspace history <doc_userguide_parsec_workspaces_history>` can be "
+"accessed in `read-only` as well."
+msgstr ""
+"Un espace de travail archivé reste accessible en `lecture seule` pour tous "
+"les utilisateurs y ayant accès, indépendamment de leurs :ref:`rôles "
+"<doc_userguide_parsec_workspaces_roles>`. Les espaces de travail archivés "
+"sont consultables depuis la section ``Archivés`` accessible depuis la barre "
+"latérale de l'application. L':ref:`historique "
+"<doc_userguide_parsec_workspaces_history>` de l'espace archivé est aussi "
+"accessible en `lecture seule`."
+
+#: ../../userguide/parsec_workspaces.rst:242
+msgid "Workspace archived sidebar button"
+msgstr "Bouton d'archivage de barre latérale"
+
+#: ../../userguide/parsec_workspaces.rst:246
+msgid ""
+"The archiving date can be seen on the corresponding workspace card. It can "
+"be browsed normally as any standard workspace."
+msgstr ""
+"La date d'archivage est visible sur l'espace de travail. Il est possible d'y "
+"naviguer comme dans un espace de travail standard."
+
+#: ../../userguide/parsec_workspaces.rst:248
+msgid "Workspace archived card"
+msgstr "Carte d'espace archivé"
+
+#: ../../userguide/parsec_workspaces.rst:252
+msgid ""
+"Archived workspace **Owners** can restore them from the workspace contextual "
+"menu to revert the operation and restore write operations on the workspace."
+msgstr ""
+"Les **Propriétaires** d'espaces de travail archivés peuvent les restaurer "
+"depuis le menu contextuel pour annuler l'opération, et restaurer les droits "
+"en écriture sur l'espace de travail."
+
+#: ../../userguide/parsec_workspaces.rst:254
+msgid "Workspace archived context"
+msgstr "Menu contextuel d'espace archivé"
+
+#: ../../userguide/parsec_workspaces.rst:260
+msgid "Delete a workspace"
+msgstr "Supprimer un espace de travail"
+
+#: ../../userguide/parsec_workspaces.rst:262
+msgid ""
+"An **archived** workspace **Owner** can set it to be **deleted** by "
+"selecting the corresponding button on its contextual menu."
+msgstr ""
+"Un **Propriétaire** d'un espace de travail **archivé** peut planifier sa "
+"**suppression** en sélectionnant l'option correspondante dans son menu "
+"contextuel."
+
+#: ../../userguide/parsec_workspaces.rst:264
+msgid "Workspace context delete button"
+msgstr "Bouton de suppression d'espace"
+
+#: ../../userguide/parsec_workspaces.rst:268
+msgid ""
+"Once set to deletion, a workspace will be stored to the **Bin** accessible "
+"from the sidebar. It will remain in this state for a set amount of time, "
+"determined by the `server`."
+msgstr ""
+"Une fois la suppression planifiée, un espace de travail sera déplacé dans la "
+"**Corbeille** accessible depuis la barre latérale. Il restera dans cet état "
+"jusqu'à sa suppression définitive au terme d'un délai déterminé par le "
+"serveur."
+
+#: ../../userguide/parsec_workspaces.rst:270
+msgid "Workspace deleted sidebar button"
+msgstr "Bouton de corbeille barre latérale"
+
+#: ../../userguide/parsec_workspaces.rst:274
+msgid ""
+"Until this date, users who had access to it can consult its content in `read-"
+"only` as well as its :ref:`history "
+"<doc_userguide_parsec_workspaces_history>` in `read-only`."
+msgstr ""
+"Jusqu'à cette date, les utilisateurs y ayant accès peuvent consulter son "
+"contenu en `lecture seule`, de même que son :ref:`historique "
+"<doc_userguide_parsec_workspaces_history>` en `lecture seule`."
+
+#: ../../userguide/parsec_workspaces.rst:276
+msgid "Workspace deleted card"
+msgstr "Carte d'espace supprimé"
+
+#: ../../userguide/parsec_workspaces.rst:280
+msgid "Workspace deleted context"
+msgstr "Menu contextuel d'espace supprimé"
+
+#: ../../userguide/parsec_workspaces.rst:284
+msgid ""
+"**Owners** of workspaces set to be **deleted** can restore them before the "
+"deletion date from the workspace contextual menu to cancel the operation."
+msgstr ""
+"Les **Propriétaires** d'espaces de travail programmés pour une "
+"**suppression** peuvent les restaurer avant la date de suppression "
+"définitive depuis leur menu contextuel pour annuler l'opération."
