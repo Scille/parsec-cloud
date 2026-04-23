@@ -34,7 +34,9 @@ async fn invite_shared_recovery(tmp_path: TmpPath) {
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
-async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
+#[case("http")]
+#[case("parsec3")]
+async fn invite_shared_recovery_dance(tmp_path: TmpPath, #[case] scheme: &str) {
     let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     crate::shared_recovery_create(&alice, &bob, None);
@@ -84,7 +86,13 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
 
     // spawn claimer thread
 
-    let program_claimer = crate::std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
+    let addr = match scheme {
+        "parsec3" => invitation_addr.to_url().to_string(),
+        "http" => invitation_addr.to_http_redirection_url().to_string(),
+        _ => unimplemented!(),
+    };
+
+    let program_claimer = crate::std_cmd!("invite", "claim", &addr);
 
     let p_claimer = Arc::new(Mutex::new(
         crate::spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),

@@ -9,7 +9,9 @@ use parsec_cli::commands::organization::create::create_organization_req;
 
 #[rstest::rstest]
 #[tokio::test]
-async fn bootstrap_organization(tmp_path: TmpPath) {
+#[case("http")]
+#[case("parsec3")]
+async fn bootstrap_organization(tmp_path: TmpPath, #[case] scheme: &str) {
     bootstrap_cli_test(&tmp_path).await.unwrap();
 
     let organization_id = unique_org_id();
@@ -21,13 +23,18 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
             .await
             .unwrap();
 
+    let addr = match scheme {
+        "parsec3" => organization_addr.to_string(),
+        "http" => organization_addr.to_http_redirection_url().to_string(),
+        _ => unimplemented!(),
+    };
     log::debug!("Bootstrapping organization {organization_id}");
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
         "organization",
         "bootstrap",
         "--addr",
-        &organization_addr.to_string(),
+        &addr,
         "--device-label",
         "pc",
         "--label",
