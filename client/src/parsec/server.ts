@@ -37,7 +37,6 @@ export async function getServerConfig(serverAddr: string): Promise<Result<Server
     };
     (result.value as ServerConfig).doesAuthMethodRequireTotp = (strategy: DevicePrimaryProtectionStrategyTag) => {
       return (
-        result.value.advisoryDeviceFileProtection.length === 0 ||
         result.value.advisoryDeviceFileProtection.find(
           (fileProtection) => fileProtection.primary === STRATEGY_CONVERSION.get(strategy) && fileProtection.withTotp,
         ) !== undefined

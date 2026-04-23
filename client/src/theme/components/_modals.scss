@@ -835,6 +835,23 @@
   }
 }
 
+.totp-required-modal {
+  &::part(content) {
+    max-width: 25rem;
+  }
+
+  .ms-modal {
+    padding: 1.5rem;
+  }
+
+  .ms-modal-content {
+    @include ms.responsive-breakpoint('sm') {
+      margin-top: 0;
+      padding: 0;
+    }
+  }
+}
+
 .workspace-history-modal {
   &::part(content) {
     max-width: var(--parsec-modal-width-lg);
