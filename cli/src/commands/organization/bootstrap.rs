@@ -4,7 +4,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use libparsec::{
     AvailableDevice, ClientConfig, DeviceLabel, DevicePrimaryProtectionStrategy,
-    DeviceSaveStrategy, EmailAddress, HumanHandle, ParsecOrganizationBootstrapAddr, Password,
+    DeviceSaveStrategy, EmailAddress, HumanHandle, ParsecOrganizationBootstrapAddr, Password, Url,
 };
 
 use crate::utils::*;
@@ -12,9 +12,10 @@ use crate::utils::*;
 #[derive(clap::Parser)]
 pub struct Args {
     /// Bootstrap address
-    /// (e.g: parsec3://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a)
+    /// (e.g: parsec3://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a
+    /// or http://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a)
     #[arg(short, long)]
-    addr: ParsecOrganizationBootstrapAddr,
+    addr: Url,
     /// Device label
     #[arg(short, long)]
     device_label: DeviceLabel,
@@ -71,6 +72,8 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         password_stdin,
         sequester_key,
     } = args;
+    let addr = ParsecOrganizationBootstrapAddr::from_any(addr.as_str())?;
+
     log::trace!("Bootstrapping organization (addr={addr})");
 
     let human_handle = HumanHandle::new(email, &label)
