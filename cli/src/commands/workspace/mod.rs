@@ -2,11 +2,14 @@ pub mod archive;
 pub mod create;
 pub mod import;
 pub mod list;
+pub mod list_users;
 pub mod share;
 pub mod sync;
 
 #[derive(clap::Subcommand)]
 pub enum Group {
+    /// List workspace users and their roles
+    ListUsers(list_users::Args),
     /// Archive workspace
     Archive(archive::Args),
     /// Create new workspace
@@ -23,6 +26,7 @@ pub enum Group {
 
 pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
     match command {
+        Group::ListUsers(args) => list_users::main(args).await,
         Group::Archive(args) => archive::main(args).await,
         Group::Create(args) => create::main(args).await,
         Group::List(args) => list::main(args).await,

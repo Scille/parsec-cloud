@@ -25,7 +25,7 @@ use libparsec::{
     ClientConfig, OrganizationID, ParsecAddr, TmpPath, PARSEC_BASE_CONFIG_DIR,
     PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
 };
-use parsec_cli::utils::{GREEN, RED, RESET};
+use parsec_cli::utils::{GREEN, RED, RESET, YELLOW};
 use std::sync::Arc;
 
 pub use parsec_cli::testenv_utils;
