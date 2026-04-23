@@ -63,6 +63,7 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
   }
 
   async function processEvent(distributor: EventDistributor): Promise<void> {
+    const EVENT_DELAY = (window as any).TESTING ? 500 : 3000;
     switch (event.tag) {
       case ClientEventTag.Online:
         distributor.dispatchEvent(Events.Online);
@@ -71,7 +72,7 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         distributor.dispatchEvent(Events.Offline);
         break;
       case ClientEventTag.MustAcceptTos:
-        distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: 2000 });
+        distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: EVENT_DELAY });
         break;
       case ClientEventTag.InvitationChanged:
         distributor.dispatchEvent(Events.InvitationUpdated, {
@@ -98,18 +99,17 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         });
         break;
       case ClientEventTag.IncompatibleServer:
-        window.electronAPI.log('warn', `IncompatibleServerEvent: ${JSON.stringify(event)}`);
         distributor.dispatchEvent(
           Events.IncompatibleServer,
           { version: event.apiVersion, supportedVersions: event.supportedApiVersion },
-          { delay: 5000 },
+          { delay: EVENT_DELAY },
         );
         break;
       case ClientEventTag.RevokedSelfUser:
-        distributor.dispatchEvent(Events.ClientRevoked, undefined, { delay: 1000 });
+        distributor.dispatchEvent(Events.ClientRevoked, undefined, { delay: EVENT_DELAY });
         break;
       case ClientEventTag.ExpiredOrganization:
-        distributor.dispatchEvent(Events.ExpiredOrganization, undefined, { delay: 1000 });
+        distributor.dispatchEvent(Events.ExpiredOrganization, undefined, { delay: EVENT_DELAY });
         break;
       case ClientEventTag.WorkspaceLocallyCreated:
         distributor.dispatchEvent(Events.WorkspaceCreated);
@@ -118,7 +118,7 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         distributor.dispatchEvent(Events.WorkspaceUpdated);
         break;
       case ClientEventTag.WorkspaceWatchedEntryChanged:
-        distributor.dispatchEvent(Events.EntryUpdated, undefined, { aggregateTime: 1000 });
+        distributor.dispatchEvent(Events.EntryUpdated, undefined, { aggregateTime: EVENT_DELAY });
         break;
       case ClientEventTag.WorkspaceOpsInboundSyncDone:
         distributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'inbound' });
@@ -139,10 +139,10 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStopped, { handle: handle });
         break;
       case ClientEventTag.OrganizationNotFound:
-        distributor.dispatchEvent(Events.OrganizationNotFound, undefined, { delay: 1000 });
+        distributor.dispatchEvent(Events.OrganizationNotFound, undefined, { delay: EVENT_DELAY });
         break;
       case ClientEventTag.FrozenSelfUser:
-        distributor.dispatchEvent(Events.ClientFrozen, undefined, { delay: 1000 });
+        distributor.dispatchEvent(Events.ClientFrozen, undefined, { delay: EVENT_DELAY });
         break;
       case ClientEventTag.AsyncEnrollmentUpdated:
         distributor.dispatchEvent(Events.AsyncEnrollmentUpdated);

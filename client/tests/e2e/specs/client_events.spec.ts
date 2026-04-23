@@ -113,3 +113,49 @@ If you think this is a mistake or have any issues, please contact an administrat
   );
   await expect(connected).toBeHomePage();
 });
+
+msTest('Multiple simultaneous events', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventRevokedSelfUser');
+  await sendEvent(connected, 'ClientEventIncompatibleServer');
+  await sendEvent(connected, 'ClientEventExpiredOrganization');
+
+  const modal = connected.locator('.information-modal');
+
+  // Should always occur in the same order
+  await connected.waitForTimeout(500);
+
+  // Checking manually to make sure there's only one modal opened at once
+
+  await expect(modal).toBeVisible();
+  await expect(modal).toHaveCount(1);
+  await expect(modal.locator('.container-textinfo')).toHaveText(
+    'Your application and the server are not compatible. \
+Online features will not be available. \
+Please check that your application is up-to-date, \
+and if so, contact an administrator.',
+  );
+  await expect(modal.locator('.container-textinfo')).toHaveTheClass('ms-error');
+  await modal.locator('#next-button').click();
+
+  await connected.waitForTimeout(500);
+
+  await expect(modal).toBeVisible();
+  await expect(modal).toHaveCount(1);
+  await expect(modal.locator('.container-textinfo')).toHaveText('This organization has expired. Please contact an administrator.');
+  await expect(modal.locator('.container-textinfo')).toHaveTheClass('ms-error');
+  await modal.locator('#next-button').click();
+
+  await connected.waitForTimeout(500);
+
+  await expect(modal).toBeVisible();
+  await expect(modal).toHaveCount(1);
+  await expect(modal.locator('.container-textinfo')).toHaveText(
+    "You have been revoked from this organization. \
+You will be logged out and won't be able to access it anymore. \
+If you think this is a mistake or have any issues, please contact an administrator.",
+  );
+  await expect(modal.locator('.container-textinfo')).toHaveTheClass('ms-error');
+  await modal.locator('#next-button').click();
+
+  await expect(connected).toBeHomePage();
+});
