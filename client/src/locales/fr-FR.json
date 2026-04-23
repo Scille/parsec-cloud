@@ -1516,7 +1516,19 @@
                     "notSetup": "L'authentification multifacteur n'est pas configurée.",
                     "wrongAuthentication": "L'authentification est incorrecte. Veuillez réessayer."
                 }
+            },
+            "modalRequired": {
+                "title": "Authentification multifacteur requise",
+                "subtitle": "Votre organisation requiert une authentification multifacteur. Veuillez la configurer pour accéder à cette organisation.",
+                "configureButton": "Configurer le MFA",
+                "cancelButton": "Se déconnecter"
             }
+        },
+        "modalCurrentAuthNotAllow": {
+            "title": "Méthode d'authentification actuelle interdite",
+            "subtitle": "La méthode d'authentification actuelle n'est pas autorisée par l'organisation. Veuillez en choisir une autre.",
+            "yesText": "Changer de méthode d'authentification",
+            "noText": "Se déconnecter"
         }
     },
     "PasswordInputModal": {
@@ -2107,6 +2119,7 @@
         },
         "titleCurrentPassword": "Saisissez votre mot de passe",
         "titleCurrentOpenBao": "Connectez-vous à votre fournisseur de SSO",
+        "titleCurrentCertificate": "Connectez-vous avec votre PKI",
         "titleNewAuthentication": "Changer de méthode d'authentification",
         "titleTotp": "Code d'authentification multi-facteurs",
         "password": "Mot de passe",

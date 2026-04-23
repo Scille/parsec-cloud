@@ -3,7 +3,7 @@
 <template>
   <ion-page class="mfa-activation-modal">
     <ms-modal
-      :title="currentStep === Steps.PromptAuthentication ? 'MyProfilePage.titleCurrentPassword' : 'Authentication.mfa.title'"
+      :title="currentStep === Steps.PromptAuthentication ? promptAuthTitle : 'Authentication.mfa.title'"
       :close-button="{ visible: currentStep !== Steps.Finalization }"
       :confirm-button="{
         disabled: !nextButton.enabled || querying,
@@ -35,14 +35,6 @@
             v-if="url"
             class="step-container"
           >
-            <!-- Should be added when organization requires mfa -->
-            <ms-report-text
-              :theme="MsReportTheme.Info"
-              v-show="false"
-            >
-              {{ $msTranslate('Authentication.mfa.info') }}
-            </ms-report-text>
-
             <div class="step-info">
               <ion-text class="step-info__title title-h4">{{ $msTranslate('Authentication.mfa.step1.title') }}</ion-text>
               <ion-text class="step-info__title body-lg">{{ $msTranslate('Authentication.mfa.step1.description') }}</ion-text>
@@ -147,6 +139,7 @@
 import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg';
 import {
   AvailableDevice,
+  AvailableDeviceTypeTag,
   constructAccessStrategy,
   constructSaveStrategy,
   createTotpOpaqueKey,
@@ -183,9 +176,9 @@ enum Steps {
 
 const props = defineProps<{
   params:
-    | { mode: 'setup'; device: AvailableDevice }
+    | { mode: 'setup'; device: AvailableDevice; currentAuth?: DevicePrimaryProtectionStrategy }
     | { mode: 'reset'; link: ParsecTOTPResetAddr }
-    | { mode: 'activate'; device: AvailableDevice };
+    | { mode: 'activate'; device: AvailableDevice; currentAuth?: DevicePrimaryProtectionStrategy };
 }>();
 
 const { isLargeDisplay } = useWindowSize();
@@ -210,6 +203,19 @@ const nextButton = computed(() => {
     return { enabled: verifyCode.value.length > 0, label: 'Authentication.mfa.buttons.next' };
   } else {
     return { enabled: true, label: 'Authentication.mfa.buttons.done' };
+  }
+});
+
+const promptAuthTitle = computed(() => {
+  if (props.params.mode !== 'setup' && props.params.mode !== 'activate') {
+    return '';
+  }
+  if (props.params.device.ty.tag === AvailableDeviceTypeTag.OpenBao) {
+    return 'MyProfilePage.titleCurrentOpenBao';
+  } else if (props.params.device.ty.tag === AvailableDeviceTypeTag.PKI) {
+    return 'MyProfilePage.titleCurrentCertificate';
+  } else {
+    return 'MyProfilePage.titleCurrentPassword';
   }
 });
 
@@ -246,11 +252,19 @@ onMounted(async () => {
     }
     code.value = statusResult.value.base32TotpSecret;
     url.value = await generateTotpUrl(code.value, props.params.device.organizationId);
+    if (props.params.currentAuth) {
+      primaryProtection.value = props.params.currentAuth;
+      await onNextButtonClicked();
+    }
   } else if (props.params.mode === 'activate') {
     const serverConfigResult = await getServerConfig(props.params.device.serverAddr);
 
     if (serverConfigResult.ok) {
       serverConfig.value = serverConfigResult.value;
+    }
+    if (props.params.currentAuth) {
+      primaryProtection.value = props.params.currentAuth;
+      await onNextButtonClicked();
     }
   } else {
     const parseResult = await parseParsecAddr(props.params.link);

@@ -46,7 +46,7 @@
               </span>
               <span
                 v-if="!currentDevice.totpOpaqueKeyId"
-                class="tag"
+                class="tag button-medium"
               >
                 {{ $msTranslate('Authentication.mfa.inactive') }}
               </span>
@@ -66,6 +66,13 @@
             <ion-text class="authentication-item-header__label title-h4">{{ $msTranslate('Authentication.mfa.title') }}</ion-text>
             <ms-report-text :theme="MsReportTheme.Error">{{ $msTranslate('Authentication.mfa.error.emptyStatus') }}</ms-report-text>
           </div>
+          <ms-report-text
+            class="authentication-item--mandatory"
+            v-if="mandatoryTotp"
+            :theme="MsReportTheme.Warning"
+          >
+            {{ $msTranslate('Authentication.mfa.info') }}
+          </ms-report-text>
           <div class="authentication-item-content">
             <ion-text class="authentication-item-content__description body-lg">
               {{ $msTranslate('Authentication.mfa.description') }}
@@ -82,6 +89,7 @@
               </ion-text>
             </ion-button>
             <ion-toggle
+              :disabled="totpActivated && mandatoryTotp"
               v-model="totpActivated"
               @ion-change="toggleTotp"
               v-if="totpStatus && totpStatus.tag === TOTPSetupStatusTag.Confirmed"
@@ -106,8 +114,10 @@ import {
   AvailableDevice,
   AvailableDeviceTypeTag,
   getCurrentAvailableDevice,
-  getServerConfig,
+  getCurrentServerConfig,
+  getPrimaryProtectionTypeForDeviceType,
   getTotpStatus,
+  ServerConfig,
   TOTPSetupStatus,
   TOTPSetupStatusTag,
 } from '@/parsec';
@@ -125,7 +135,17 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 const error = ref('');
 const totpStatus = ref<TOTPSetupStatus | undefined>(undefined);
 const totpActivated = ref(false);
-
+const serverConfig = ref<ServerConfig | undefined>(undefined);
+const mandatoryTotp = computed(() => {
+  if (!serverConfig.value || !currentDevice.value) {
+    return false;
+  }
+  const protectionType = getPrimaryProtectionTypeForDeviceType(currentDevice.value.ty.tag);
+  if (!protectionType) {
+    return false;
+  }
+  return serverConfig.value.doesAuthMethodRequireTotp(protectionType);
+});
 const authMethodLabel = computed(() => {
   if (!currentDevice.value) return '';
 
@@ -146,10 +166,8 @@ async function openChangeAuthentication(): Promise<void> {
     return;
   }
 
-  const configResult = await getServerConfig(currentDevice.value.serverAddr);
-
   if (currentDevice.value.ty.tag === AvailableDeviceTypeTag.OpenBao) {
-    if (!configResult.ok || !configResult.value.openbao) {
+    if (!serverConfig.value?.openbao) {
       error.value = 'Authentication.invalidOpenBaoData';
       return;
     }
@@ -172,7 +190,7 @@ async function openChangeAuthentication(): Promise<void> {
     componentProps: {
       currentDevice: currentDevice.value,
       informationManager: informationManager.value,
-      serverConfig: configResult.ok ? configResult.value : undefined,
+      serverConfig: serverConfig.value,
     },
   });
   await modal.present();
@@ -197,6 +215,11 @@ async function refresh(): Promise<void> {
   const totpStatusResult = await getTotpStatus();
 
   totpStatus.value = totpStatusResult.ok ? totpStatusResult.value : undefined;
+
+  const serverConfigResult = await getCurrentServerConfig();
+  if (serverConfigResult.ok) {
+    serverConfig.value = serverConfigResult.value;
+  }
 
   const deviceResult = await getCurrentAvailableDevice();
 
@@ -449,10 +472,11 @@ async function deleteTotp(): Promise<void> {
 
     &-active .tag,
     &-inactive .tag {
-      padding: 0.125rem 0.375rem;
-      border-radius: var(--parsec-radius-8);
-      font-size: 0.825rem;
-      font-weight: 500;
+      flex-shrink: 0;
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--parsec-radius-12);
+      white-space: nowrap;
+      margin-left: auto;
     }
 
     &-active .tag {
@@ -462,7 +486,7 @@ async function deleteTotp(): Promise<void> {
 
     &-inactive .tag {
       color: var(--parsec-color-light-danger-700);
-      background: var(--parsec-color-light-danger-100);
+      background: var(--parsec-color-light-danger-50);
     }
 
     .authentication-item-button {
