@@ -85,3 +85,39 @@ async fn bootstrap_organization_with_sequester(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::contains("Organization bootstrapped"));
 }
+
+#[rstest::rstest]
+#[tokio::test]
+async fn bootstrap_organization_password_stdin(tmp_path: TmpPath) {
+    bootstrap_cli_test(&tmp_path).await.unwrap();
+
+    let organization_id = unique_org_id();
+    let addr = std::env::var(TESTBED_SERVER).unwrap().parse().unwrap();
+
+    log::debug!("Creating organization {organization_id}");
+    let organization_addr =
+        create_organization_req(&organization_id, &addr, DEFAULT_ADMINISTRATION_TOKEN)
+            .await
+            .unwrap();
+
+    log::debug!("Bootstrapping organization {organization_id}");
+    let cmd = crate::std_cmd!(
+        "organization",
+        "bootstrap",
+        "--addr",
+        &organization_addr.to_string(),
+        "--device-label",
+        "pc",
+        "--label",
+        "Alice",
+        "--email",
+        "alice@example.com"
+    );
+    let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
+    p.exp_string("New device password").unwrap();
+    p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+    p.exp_string("Confirm password").unwrap();
+    p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+    p.exp_string("Organization bootstrapped").unwrap();
+    p.exp_eof().unwrap();
+}

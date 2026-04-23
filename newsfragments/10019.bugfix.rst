@@ -1,0 +1,1 @@
+[CLI] Bootstrap organization asks for password confirmation.
