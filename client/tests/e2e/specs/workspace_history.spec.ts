@@ -210,8 +210,8 @@ msTest.describe(() => {
     const smallBreadcrumbsButton = documents.locator('.history-container').locator('.breadcrumb-file-mobile');
 
     await expect(documents.locator('.history-container').locator('.navigation-breadcrumb').locator('ion-breadcrumbs')).not.toBeVisible();
-    await expect(documents.locator('.topbar-left-text__workspace')).toHaveText('wksp1');
     const currentFolder = documents.locator('.history-container').locator('.breadcrumb-file-mobile__title');
+    await expect(currentFolder).toHaveText('wksp1');
     await navigateDown();
     await expect(currentFolder).toHaveText('Dir_Folder');
     await expect(currentFolder).toBeVisible();
