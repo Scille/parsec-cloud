@@ -499,7 +499,11 @@ export async function sendUpdateEvent(page: MsPage): Promise<void> {
   });
 }
 
-type Events = 'ClientEventMustAcceptTos' | 'ClientEventIncompatibleServer' | 'ClientEventRevokedSelfUser';
+type Events =
+  | 'ClientEventMustAcceptTos'
+  | 'ClientEventIncompatibleServer'
+  | 'ClientEventRevokedSelfUser'
+  | 'ClientEventExpiredOrganization';
 
 export async function sendEvent(page: MsPage, event: Events): Promise<void> {
   const url = new URL(page.url());

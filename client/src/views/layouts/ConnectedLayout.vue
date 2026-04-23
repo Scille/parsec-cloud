@@ -47,15 +47,35 @@ import { DateTime } from 'luxon';
 import { MsModalResult, openSpinnerModal } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, provide, Ref, ref } from 'vue';
 
+enum Modals {
+  TOS = 'tos',
+  Update = 'update',
+  OrganizationNotFound = 'organization-not-found',
+  IncompatibleServer = 'incompatible-server',
+  ExpiredOrganization = 'expired-organization',
+  Revoked = 'revoked',
+  Frozen = 'frozen',
+}
+
+// Order matters, some modal should take priority
+const modalsSequencer = new Map<Modals, boolean>([
+  [Modals.OrganizationNotFound, false],
+  [Modals.IncompatibleServer, false],
+  [Modals.ExpiredOrganization, false],
+  [Modals.Revoked, false],
+  [Modals.Frozen, false],
+  [Modals.TOS, false],
+  [Modals.Update, false],
+]);
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const { isUpdatePromptAllowed, suppressUpdatePrompt } = useUpdateManager();
 let injections: Injections;
 const initialized = ref(false);
-const modalOpened = ref(false);
-let timeoutId: number | null = null;
+let timeoutId: any = null;
 let callbackId: string | null = null;
 const lastAccepted: Ref<DateTime | null> = ref(null);
+const updateAvailableData = ref<UpdateAvailabilityData | undefined>(undefined);
 
 const refreshWarning = useRefreshWarning();
 
@@ -119,16 +139,15 @@ onMounted(async () => {
   window.electronAPI.getUpdateAvailability();
 
   if (clientInfoResult.value.mustAcceptTos) {
-    await showTOSModal();
+    modalsSequencer.set(Modals.TOS, true);
   }
   refreshWarning.warnOnRefresh();
+  watchModals();
 });
 
 onUnmounted(async () => {
-  if (timeoutId !== null) {
-    window.clearTimeout(timeoutId);
-    timeoutId = null;
-  }
+  window.clearTimeout(timeoutId);
+  timeoutId = null;
   if (injections && callbackId !== null) {
     injections.eventDistributor.removeCallback(callbackId);
   }
@@ -140,7 +159,8 @@ async function eventCallback(event: Events, data?: EventData): Promise<void> {
       await logout();
       break;
     case Events.TOSAcceptRequired:
-      await tryOpeningTOSModal();
+      window.electronAPI.log('info', `Toggling modal ${Modals.TOS}`);
+      modalsSequencer.set(Modals.TOS, true);
       break;
     case Events.EntryDeleted:
       recentDocumentManager.removeFileById((data as EntryDeletedData).entryId);
@@ -152,103 +172,230 @@ async function eventCallback(event: Events, data?: EventData): Promise<void> {
       });
       break;
     case Events.OrganizationNotFound:
-      await injections.informationManager.present(
-        new Information({
-          message: 'globalErrors.organizationNotFound',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Modal,
-      );
+      window.electronAPI.log('info', `Toggling modal ${Modals.OrganizationNotFound}`);
+      modalsSequencer.set(Modals.OrganizationNotFound, true);
       break;
     case Events.IncompatibleServer:
-      injections.informationManager.present(
-        new Information({
-          message: 'notification.incompatibleServer',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Notification,
-      );
-      await injections.informationManager.present(
-        new Information({
-          message: 'globalErrors.incompatibleServer',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Modal,
-      );
+      window.electronAPI.log('info', `Toggling modal ${Modals.IncompatibleServer}`);
+      modalsSequencer.set(Modals.IncompatibleServer, true);
       break;
     case Events.ExpiredOrganization:
-      injections.informationManager.present(
-        new Information({
-          message: 'notification.expiredOrganization',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Notification,
-      );
-      await injections.informationManager.present(
-        new Information({
-          message: 'globalErrors.expiredOrganization',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Modal,
-      );
+      window.electronAPI.log('info', `Toggling modal ${Modals.ExpiredOrganization}`);
+      modalsSequencer.set(Modals.ExpiredOrganization, true);
       break;
     case Events.ClientRevoked:
-      await injections.informationManager.present(
-        new Information({
-          message: 'globalErrors.clientRevoked',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Modal,
-      );
-      const clientInfo = await getClientInfo();
-      let currentDevices: Array<AvailableDevice> = [];
-      if (clientInfo.ok) {
-        currentDevices = (await listAvailableDevices(false)).filter((device) => device.userId === clientInfo.value.userId);
-      }
-      for (const device of currentDevices) {
-        await archiveDevice(device);
-      }
-      await logout();
+      window.electronAPI.log('info', `Toggling modal ${Modals.Revoked}`);
+      modalsSequencer.set(Modals.Revoked, true);
       break;
     case Events.ClientFrozen:
-      await injections.informationManager.present(
-        new Information({
-          message: 'globalErrors.clientFrozen',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Modal,
-      );
+      window.electronAPI.log('info', `Toggling modal ${Modals.Frozen}`);
+      modalsSequencer.set(Modals.Frozen, true);
       break;
     case Events.UpdateAvailability: {
-      const updateData = data as UpdateAvailabilityData;
-      await showUpdateModal(updateData);
+      window.electronAPI.log('info', `Toggling modal ${Modals.Update}`);
+      modalsSequencer.set(Modals.Update, true);
+      updateAvailableData.value = data as UpdateAvailabilityData;
       break;
     }
   }
 }
 
-async function tryOpeningTOSModal(): Promise<void> {
-  if (modalOpened.value) {
+async function watchModals(): Promise<void> {
+  const CALLBACKS = new Map([
+    [Modals.ExpiredOrganization, onExpiredOrganization],
+    [Modals.Frozen, onFrozen],
+    [Modals.IncompatibleServer, onIncompatibleServer],
+    [Modals.OrganizationNotFound, onOrganizationNotFound],
+    [Modals.Revoked, onClientRevoked],
+    [Modals.TOS, onTermsOfService],
+    [Modals.Update, onAppUpdate],
+  ]);
+  for (const [modal, toggled] of modalsSequencer.entries()) {
+    if (toggled && !(await modalController.getTop())) {
+      const cb = CALLBACKS.get(modal);
+      if (cb) {
+        modalsSequencer.set(modal, false);
+        window.electronAPI.log('info', `Showing ${modal} modal`);
+        await cb();
+      }
+    }
+  }
+  timeoutId = window.setTimeout(watchModals, (window as any).TESTING ? 500 : 5000);
+}
+
+async function onFrozen(): Promise<void> {
+  await injections.informationManager.present(
+    new Information({
+      message: 'globalErrors.clientFrozen',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Modal,
+  );
+}
+
+async function onIncompatibleServer(): Promise<void> {
+  injections.informationManager.present(
+    new Information({
+      message: 'notification.incompatibleServer',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Notification,
+  );
+  await injections.informationManager.present(
+    new Information({
+      message: 'globalErrors.incompatibleServer',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Modal,
+  );
+}
+
+async function onOrganizationNotFound(): Promise<void> {
+  await injections.informationManager.present(
+    new Information({
+      message: 'globalErrors.organizationNotFound',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Modal,
+  );
+}
+
+async function onExpiredOrganization(): Promise<void> {
+  injections.informationManager.present(
+    new Information({
+      message: 'notification.expiredOrganization',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Notification,
+  );
+  await injections.informationManager.present(
+    new Information({
+      message: 'globalErrors.expiredOrganization',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Modal,
+  );
+}
+
+async function onClientRevoked(): Promise<void> {
+  await injections.informationManager.present(
+    new Information({
+      message: 'globalErrors.clientRevoked',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Modal,
+  );
+  const clientInfo = await getClientInfo();
+  let currentDevices: Array<AvailableDevice> = [];
+  if (clientInfo.ok) {
+    currentDevices = (await listAvailableDevices(false)).filter((device) => device.userId === clientInfo.value.userId);
+  }
+  for (const device of currentDevices) {
+    await archiveDevice(device);
+  }
+  await logout();
+}
+
+async function onTermsOfService(): Promise<void> {
+  const result = await getTOS();
+
+  if (!result.ok) {
     return;
   }
-  if ((await modalController.getTop()) || injections.fileOperationManager.hasOperations()) {
-    if (timeoutId !== null) {
-      window.clearTimeout(timeoutId);
-    }
-    // Try again in 10 seconds
-    timeoutId = window.setTimeout(async () => {
-      await tryOpeningTOSModal();
-    }, 10000);
-  } else {
-    if (timeoutId) {
-      window.clearInterval(timeoutId);
-      timeoutId = null;
-    }
-    await showTOSModal();
+  if (!result.value.perLocaleUrls.size) {
+    window.electronAPI.log('warn', 'Received empty Terms of Service dictionary');
+    return;
   }
+  if (result.value.updatedOn.toMillis() === lastAccepted.value?.toMillis()) {
+    window.electronAPI.log('warn', 'Already accepted those TOS');
+    return;
+  }
+  const tosModal = await modalController.create({
+    component: TOSModal,
+    cssClass: 'modal-tos',
+    componentProps: {
+      tosLinks: result.value.perLocaleUrls,
+    },
+    canDismiss: true,
+    backdropDismiss: false,
+    showBackdrop: true,
+  });
+  await tosModal.present();
+  const { role } = await tosModal.onDidDismiss();
+  await tosModal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
+    const acceptResult = await acceptTOS(result.value.updatedOn);
+    if (acceptResult.ok) {
+      lastAccepted.value = result.value.updatedOn;
+      injections.informationManager.present(
+        new Information({
+          message: 'CreateOrganization.acceptTOS.update.confirmationMessage',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
+      // Early return here. If the user didn't accept the TOS or the acceptance fails,
+      // we will log them out.
+      return;
+    } else {
+      window.electronAPI.log('error', `Error when accepting the TOS: ${JSON.stringify(acceptResult.error)}`);
+      injections.informationManager.present(
+        new Information({
+          message: 'CreateOrganization.acceptTOS.update.acceptError',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  }
+
+  await logout();
+}
+
+async function onAppUpdate(): Promise<void> {
+  if (!isUpdatePromptAllowed() || !updateAvailableData.value) {
+    return;
+  }
+
+  const existingModal = await modalController.getTop();
+  if (existingModal) {
+    window.electronAPI.log('debug', 'An existing modal is opened, skipping update prompt');
+    return;
+  }
+
+  if (!updateAvailableData.value.version) {
+    window.electronAPI.log('error', 'Version missing from update data');
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: UpdateAppModal,
+    canDismiss: true,
+    cssClass: 'update-app-modal',
+    backdropDismiss: false,
+    componentProps: {
+      currentVersion: APP_VERSION,
+      targetVersion: updateAvailableData.value.version,
+    },
+  });
+  await modal.present();
+  const { role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
+    window.electronAPI.prepareUpdate();
+  }
+  suppressUpdatePrompt();
 }
 
 async function logout(): Promise<void> {
+  window.clearTimeout(timeoutId);
+  timeoutId = null;
+  const top = await modalController.getTop();
+  if (top) {
+    await top.dismiss();
+  }
   const modal = await openSpinnerModal('HomePage.topbar.logoutWait');
   const menuCtrls = useUploadMenu();
   menuCtrls.hide();
@@ -293,98 +440,5 @@ async function logout(): Promise<void> {
 
   await modal.dismiss();
   await navigateTo(Routes.Home, { replace: true, skipHandle: true });
-}
-
-async function showTOSModal(): Promise<void> {
-  const result = await getTOS();
-
-  if (!result.ok) {
-    return;
-  }
-  if (!result.value.perLocaleUrls.size) {
-    window.electronAPI.log('warn', 'Received empty Terms of Service dictionary');
-    return;
-  }
-  if (result.value.updatedOn.toMillis() === lastAccepted.value?.toMillis()) {
-    window.electronAPI.log('warn', 'Already accepted those TOS');
-    return;
-  }
-  modalOpened.value = true;
-  const tosModal = await modalController.create({
-    component: TOSModal,
-    cssClass: 'modal-tos',
-    componentProps: {
-      tosLinks: result.value.perLocaleUrls,
-    },
-    canDismiss: true,
-    backdropDismiss: false,
-    showBackdrop: true,
-  });
-  await tosModal.present();
-  const { role } = await tosModal.onDidDismiss();
-  await tosModal.dismiss();
-
-  if (role === MsModalResult.Confirm) {
-    const acceptResult = await acceptTOS(result.value.updatedOn);
-    if (acceptResult.ok) {
-      lastAccepted.value = result.value.updatedOn;
-      injections.informationManager.present(
-        new Information({
-          message: 'CreateOrganization.acceptTOS.update.confirmationMessage',
-          level: InformationLevel.Info,
-        }),
-        PresentationMode.Toast,
-      );
-      modalOpened.value = false;
-      // Early return here. If the user didn't accept the TOS or the acceptance fails,
-      // we will log them out.
-      return;
-    } else {
-      window.electronAPI.log('error', `Error when accepting the TOS: ${JSON.stringify(acceptResult.error)}`);
-      injections.informationManager.present(
-        new Information({
-          message: 'CreateOrganization.acceptTOS.update.acceptError',
-          level: InformationLevel.Info,
-        }),
-        PresentationMode.Toast,
-      );
-    }
-  }
-
-  await logout();
-}
-
-async function showUpdateModal(updateData: UpdateAvailabilityData): Promise<void> {
-  if (!isUpdatePromptAllowed()) return;
-
-  const existingModal = await modalController.getTop();
-  if (existingModal) {
-    window.electronAPI.log('debug', 'An existing modal is opened, skipping update prompt');
-    return;
-  }
-
-  if (!updateData.version) {
-    window.electronAPI.log('error', 'Version missing from update data');
-    return;
-  }
-
-  const modal = await modalController.create({
-    component: UpdateAppModal,
-    canDismiss: true,
-    cssClass: 'update-app-modal',
-    backdropDismiss: false,
-    componentProps: {
-      currentVersion: APP_VERSION,
-      targetVersion: updateData.version,
-    },
-  });
-  await modal.present();
-  const { role } = await modal.onWillDismiss();
-  await modal.dismiss();
-
-  if (role === MsModalResult.Confirm) {
-    window.electronAPI.prepareUpdate();
-  }
-  suppressUpdatePrompt();
 }
 </script>
