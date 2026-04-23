@@ -278,7 +278,7 @@ async function changeAuthentication(): Promise<void> {
       }),
       PresentationMode.Toast,
     );
-    await modalController.dismiss(undefined, MsModalResult.Confirm);
+    await modalController.dismiss({ auth: saveStrategy }, MsModalResult.Confirm);
   } else {
     switch (result.error.tag) {
       case UpdateDeviceErrorTag.DecryptionFailed: {

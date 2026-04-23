@@ -15,11 +15,18 @@ import {
   acceptTOS,
   archiveDevice,
   AvailableDevice,
+  DeviceSaveStrategy,
   getClientInfo,
+  getCurrentAvailableDevice,
+  getCurrentServerConfig,
+  getPrimaryProtectionTypeForDeviceType,
   getTOS,
+  getTotpStatus,
   listAvailableDevices,
   listStartedClients,
   logout as parsecLogout,
+  ServerConfig,
+  TOTPSetupStatusTag,
 } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { APP_VERSION } from '@/services/environment';
@@ -42,19 +49,24 @@ import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useUpdateManager } from '@/services/updateManager';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import TOSModal from '@/views/organizations/TOSModal.vue';
+import TotpRequiredModal from '@/views/profile/TotpRequiredModal.vue';
+import ActivateTotpModal from '@/views/totp/ActivateTotpModal.vue';
+import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
 import { IonPage, IonRouterOutlet, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { MsModalResult, openSpinnerModal } from 'megashark-lib';
+import { Answer, askQuestion, MsModalResult, openSpinnerModal } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, provide, Ref, ref } from 'vue';
 
 enum Modals {
   TOS = 'tos',
-  Update = 'update',
+  AppUpdateAvailable = 'app-update-available',
   OrganizationNotFound = 'organization-not-found',
   IncompatibleServer = 'incompatible-server',
   ExpiredOrganization = 'expired-organization',
   Revoked = 'revoked',
   Frozen = 'frozen',
+  UpdateAuthentication = 'update-authentication',
+  SetupTOTP = 'setup-totp',
 }
 
 // Order matters, some modal should take priority
@@ -65,7 +77,9 @@ const modalsSequencer = new Map<Modals, boolean>([
   [Modals.Revoked, false],
   [Modals.Frozen, false],
   [Modals.TOS, false],
-  [Modals.Update, false],
+  [Modals.AppUpdateAvailable, false],
+  [Modals.UpdateAuthentication, false],
+  [Modals.SetupTOTP, false],
 ]);
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -76,6 +90,7 @@ let timeoutId: any = null;
 let callbackId: string | null = null;
 const lastAccepted: Ref<DateTime | null> = ref(null);
 const updateAvailableData = ref<UpdateAvailabilityData | undefined>(undefined);
+const serverConfig = ref<ServerConfig | undefined>(undefined);
 
 const refreshWarning = useRefreshWarning();
 
@@ -143,6 +158,7 @@ onMounted(async () => {
   }
   refreshWarning.warnOnRefresh();
   watchModals();
+  await checkAuthentication();
 });
 
 onUnmounted(async () => {
@@ -192,11 +208,35 @@ async function eventCallback(event: Events, data?: EventData): Promise<void> {
       modalsSequencer.set(Modals.Frozen, true);
       break;
     case Events.UpdateAvailability: {
-      window.electronAPI.log('info', `Toggling modal ${Modals.Update}`);
-      modalsSequencer.set(Modals.Update, true);
+      window.electronAPI.log('info', `Toggling modal ${Modals.AppUpdateAvailable}`);
+      modalsSequencer.set(Modals.AppUpdateAvailable, true);
       updateAvailableData.value = data as UpdateAvailabilityData;
       break;
     }
+  }
+}
+
+async function checkAuthentication(): Promise<void> {
+  const serverConfigResult = await getCurrentServerConfig();
+  if (!serverConfigResult.ok || serverConfigResult.value.advisoryDeviceFileProtection.length === 0) {
+    return;
+  }
+  serverConfig.value = serverConfigResult.value;
+  const currentDevice = await getCurrentAvailableDevice();
+  if (!currentDevice.ok) {
+    return;
+  }
+  const primaryProtectionTag = getPrimaryProtectionTypeForDeviceType(currentDevice.value.ty.tag);
+  if (!primaryProtectionTag) {
+    return;
+  }
+  if (!serverConfig.value.isAuthMethodAllowed(primaryProtectionTag)) {
+    window.electronAPI.log('info', `Authentication method ${primaryProtectionTag} is not allowed by the server`);
+    modalsSequencer.set(Modals.UpdateAuthentication, true);
+  } else if (serverConfig.value.doesAuthMethodRequireTotp(primaryProtectionTag) && !currentDevice.value.totpOpaqueKeyId) {
+    // else if because if we change the authentication method, we can't be sure that the next one will require TOTP
+    window.electronAPI.log('info', `The server requires TOTP to be set for authentication method ${primaryProtectionTag}`);
+    modalsSequencer.set(Modals.SetupTOTP, true);
   }
 }
 
@@ -208,7 +248,9 @@ async function watchModals(): Promise<void> {
     [Modals.OrganizationNotFound, onOrganizationNotFound],
     [Modals.Revoked, onClientRevoked],
     [Modals.TOS, onTermsOfService],
-    [Modals.Update, onAppUpdate],
+    [Modals.AppUpdateAvailable, onAppUpdate],
+    [Modals.UpdateAuthentication, onUpdateAuthentication],
+    [Modals.SetupTOTP, onSetupTOTP],
   ]);
   for (const [modal, toggled] of modalsSequencer.entries()) {
     if (toggled && !(await modalController.getTop())) {
@@ -221,6 +263,108 @@ async function watchModals(): Promise<void> {
     }
   }
   timeoutId = window.setTimeout(watchModals, (window as any).TESTING ? 500 : 5000);
+}
+
+async function onUpdateAuthentication(): Promise<void> {
+  if (!serverConfig.value) {
+    return;
+  }
+  const currentDevice = await getCurrentAvailableDevice();
+  if (!currentDevice.ok) {
+    return;
+  }
+
+  const answer = await askQuestion('Authentication.modalCurrentAuthNotAllow.title', 'Authentication.modalCurrentAuthNotAllow.subtitle', {
+    yesText: 'Authentication.modalCurrentAuthNotAllow.yesText',
+    noText: 'Authentication.modalCurrentAuthNotAllow.noText',
+  });
+
+  if (answer === Answer.No) {
+    await logout();
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: UpdateAuthenticationModal,
+    cssClass: 'change-authentication-modal',
+    componentProps: {
+      currentDevice: currentDevice.value,
+      informationManager: informationManager.value,
+      serverConfig: serverConfig.value,
+      forced: true,
+    },
+    canDismiss: true,
+    backdropDismiss: false,
+    showBackdrop: true,
+  });
+  await modal.present();
+  const { role, data } = await modal.onWillDismiss();
+  await modal.dismiss();
+  if (role === MsModalResult.Confirm) {
+    const result = await getCurrentAvailableDevice();
+    if (result.ok && !result.value.totpOpaqueKeyId) {
+      const primaryProtectionTag = getPrimaryProtectionTypeForDeviceType(result.value.ty.tag);
+      if (primaryProtectionTag && serverConfig.value.doesAuthMethodRequireTotp(primaryProtectionTag)) {
+        await onSetupTOTP(data?.auth);
+      }
+    }
+  } else {
+    await logout();
+  }
+}
+
+async function onSetupTOTP(currentAuth?: DeviceSaveStrategy): Promise<void> {
+  const totpStatusResult = await getTotpStatus();
+  const deviceResult = await getCurrentAvailableDevice();
+
+  if (!deviceResult.ok) {
+    return;
+  }
+
+  const totpRequiredModal = await modalController.create({
+    component: TotpRequiredModal,
+    cssClass: 'totp-required-modal',
+    canDismiss: true,
+    backdropDismiss: false,
+    showBackdrop: true,
+  });
+  await totpRequiredModal.present();
+  const { role: totpRequiredRole } = await totpRequiredModal.onDidDismiss();
+  await totpRequiredModal.dismiss();
+
+  if (totpRequiredRole !== MsModalResult.Confirm) {
+    await logout();
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: ActivateTotpModal,
+    cssClass: 'activate-totp-modal',
+    componentProps: {
+      params: {
+        mode: totpStatusResult.ok && totpStatusResult.value.tag === TOTPSetupStatusTag.Confirmed ? 'activate' : 'setup',
+        device: deviceResult.value,
+        currentAuth: currentAuth?.primaryProtection,
+      },
+    },
+    canDismiss: true,
+    backdropDismiss: false,
+    showBackdrop: true,
+  });
+  await modal.present();
+  const { role } = await modal.onDidDismiss();
+  await modal.dismiss();
+  if (role !== MsModalResult.Confirm) {
+    await logout();
+  } else {
+    injections.informationManager.present(
+      new Information({
+        message: 'Authentication.mfa.mfaSuccess.description',
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 }
 
 async function onFrozen(): Promise<void> {

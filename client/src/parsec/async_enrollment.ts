@@ -82,17 +82,17 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
 
       const scwsapiLocationTag = document.querySelector(`meta[name="${SCWS_LOCATION_NAME}"`) as HTMLMetaElement | null;
       if (!scwsapiLocationTag?.content) {
-        console.log(`Not meta tag '${SCWS_LOCATION_NAME}' present`);
+        console.log(`No meta tag '${SCWS_LOCATION_NAME}' present`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `Not meta tag '${SCWS_LOCATION_NAME}' present` } };
       }
       const scwsapiAppCertificateTag = document.querySelector(`meta[name="${SCWS_APP_CERTIFICATE}"`) as HTMLMetaElement | null;
       if (!scwsapiAppCertificateTag?.content) {
-        console.log(`Not meta tag '${SCWS_APP_CERTIFICATE}' present`);
+        console.log(`No meta tag '${SCWS_APP_CERTIFICATE}' present`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `Not meta tag '${SCWS_APP_CERTIFICATE}' present` } };
       }
       const parsecServerTag = document.querySelector(`meta[name="${WEB_PARSEC_SERVER}"`) as HTMLMetaElement | null;
       if (!parsecServerTag?.content) {
-        console.log(`Not meta tag '${WEB_PARSEC_SERVER}' present`);
+        console.log(`No meta tag '${WEB_PARSEC_SERVER}' present`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `Not meta tag '${WEB_PARSEC_SERVER}' present` } };
       }
 

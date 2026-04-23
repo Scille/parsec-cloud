@@ -1513,7 +1513,19 @@
                     "notSetup": "Multi-factor authentication is not set up.",
                     "wrongAuthentication": "The authentication is incorrect. Please try again."
                 }
+            },
+            "modalRequired": {
+                "title": "Multi-factor authentication required",
+                "subtitle": "Your organization requires multi-factor authentication. Please set it up to access this organization.",
+                "configureButton": "Configure MFA",
+                "cancelButton": "Log out"
             }
+        },
+        "modalCurrentAuthNotAllow": {
+            "title": "Current authentication method not allowed",
+            "subtitle": "The current authentication method is not allowed by the organization. Please choose a different method.",
+            "yesText": "Change authentication method",
+            "noText": "Log out"
         }
     },
     "PasswordInputModal": {
@@ -2105,6 +2117,7 @@
         },
         "titleCurrentPassword": "Enter your current password",
         "titleCurrentOpenBao": "Connect to your SSO provider",
+        "titleCurrentCertificate": "Connect with your PKI",
         "titleNewAuthentication": "Change authentication method",
         "titleTotp": "Multi-factor authentication code",
         "password": "Password",
