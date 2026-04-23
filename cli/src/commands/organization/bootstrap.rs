@@ -76,7 +76,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     let human_handle = HumanHandle::new(email, &label)
         .map_err(|e| anyhow::anyhow!("Cannot create human handle: {e}"))?;
 
-    let password = read_password(if password_stdin {
+    let password = choose_password(if password_stdin {
         ReadPasswordFrom::Stdin
     } else {
         ReadPasswordFrom::Tty {
