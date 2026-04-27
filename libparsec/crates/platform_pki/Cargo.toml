@@ -47,6 +47,9 @@ wasm-bindgen = { workspace = true }
 scwsapi = { workspace = true }
 scwsapi-sys = { workspace = true }
 
+libparsec_client_connection = { workspace = true }
+libparsec_protocol = { workspace = true }
+
 [dev-dependencies]
 # We use clap to provide a CLI for examples.
 clap = { workspace = true, default-features = true, features = ["env", "derive"] }

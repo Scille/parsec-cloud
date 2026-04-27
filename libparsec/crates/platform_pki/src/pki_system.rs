@@ -90,7 +90,6 @@ pub struct PkiSystem {
 
 impl PkiSystem {
     pub async fn init(
-        #[cfg_attr(not(feature = "test-with-testbed"), expect(unused))]
         config_dir: &std::path::Path,
         scws_config: Option<PkiScwsConfig>,
     ) -> Result<Self, PkiSystemInitError> {
@@ -100,13 +99,13 @@ impl PkiSystem {
                 crate::testbed::MaybeWithTestbed::WithTestbed(testbed)
             } else {
                 crate::testbed::MaybeWithTestbed::WithPlatform(
-                    crate::platform::PlatformPkiSystem::init(scws_config).await?,
+                    crate::platform::PlatformPkiSystem::init(config_dir, scws_config).await?,
                 )
             }
         };
 
         #[cfg(not(feature = "test-with-testbed"))]
-        let platform = { crate::platform::PlatformPkiSystem::init(scws_config).await? };
+        let platform = { crate::platform::PlatformPkiSystem::init(config_dir, scws_config).await? };
 
         Ok(Self { platform })
     }
