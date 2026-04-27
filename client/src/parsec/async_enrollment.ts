@@ -74,7 +74,15 @@ import { toRaw } from 'vue';
 const _ASYNC_ENROLLMENT_PARSEC_API = {
   async initPki(): Promise<Result<null, PkiSystemInitError>> {
     if (isWeb()) {
-      // Retrieve information from the meta tags defined in index.html
+      // Retrieve information from the meta tags defined in index.html and use it to
+      // init the PKI with SCWS.
+      // We're juggling with three different contexts here:
+      // - The GUI has access to the `document` object necessary to retrieve the meta tags
+      // - The web worker (assuming the browser supports shared worker) runs in a different context
+      //   and needs to set up a global state
+      // - libparsec runs in the context of the worker but cannot import javascript libraries dynamically
+      // So we do some loading part here, we forward the elements to a proxy inside the worker that wraps "pkiInitForScws"
+      // to import the module and set a global state, and finally the real `libparsec.pkiInitForScws` is called.
 
       const WEB_PARSEC_SERVER = 'scws-web_parsec_server';
       const SCWS_LOCATION_NAME = 'scws-scwsapi_js-location';
@@ -96,6 +104,8 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${WEB_PARSEC_SERVER}' present` } };
       }
 
+      // Signature differs between what the proxy expects and what libparsec has defined,
+      // so we just cast. Trust me bro.
       return await (libparsec.pkiInitForScws as any)(
         window.getConfigDir(),
         parsecServerTag.content,
