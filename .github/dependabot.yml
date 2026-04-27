@@ -174,8 +174,8 @@ updates:
       server-boto3:
         patterns:
           - boto3
-          - boto3-stubs
           - botocore
+          - types-boto3
       server-dev-test:
         dependency-type: development
         patterns:
