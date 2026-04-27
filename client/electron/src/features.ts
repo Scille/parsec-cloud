@@ -28,7 +28,7 @@ export default class FeaturesFlag {
   }
 
   hardened(): boolean {
-    return this.data.hardened;
+    return this.data?.hardened ?? false;
   }
 }
 
