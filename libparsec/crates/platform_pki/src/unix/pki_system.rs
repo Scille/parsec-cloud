@@ -10,7 +10,10 @@ use libparsec_types::prelude::*;
 pub struct PlatformPkiSystem {}
 
 impl PlatformPkiSystem {
-    pub async fn init(_scws_config: Option<PkiScwsConfig>) -> Result<Self, PkiSystemInitError> {
+    pub async fn init(
+        _config_dir: &std::path::Path,
+        _scws_config: Option<PkiScwsConfig>,
+    ) -> Result<Self, PkiSystemInitError> {
         Err(PkiSystemInitError::NotAvailable)
     }
 
