@@ -44,6 +44,8 @@ percent-encoding = { workspace = true }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 js-sys = { workspace = true }
 wasm-bindgen = { workspace = true }
+scwsapi = { workspace = true }
+scwsapi-sys = { workspace = true }
 
 [dev-dependencies]
 # We use clap to provide a CLI for examples.

@@ -5,6 +5,7 @@ use crate::{
     PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
 };
 use libparsec_types::prelude::*;
+use wasm_bindgen::JsCast;
 
 #[derive(Debug)]
 pub struct PlatformPkiSystem {}
@@ -16,17 +17,23 @@ impl PlatformPkiSystem {
         // which dynamically imported `scwsapi.js` before calling `pki_init_for_scws` (which itself is
         // expected to call us).
         let global = js_sys::global();
-        let scws = js_sys::Reflect::get(&global, &wasm_bindgen::JsValue::from_str("SCWS"))
+        let raw_scws = js_sys::Reflect::get(&global, &wasm_bindgen::JsValue::from_str("SCWS"))
             .map_err(|e| {
                 PkiSystemInitError::Internal(anyhow::anyhow!(
                     "Failed to access global `SCWS` object: {e:?}"
                 ))
             })?;
-        if scws.is_undefined() || scws.is_null() {
-            return Err(PkiSystemInitError::Internal(anyhow::anyhow!(
-                "Global `SCWS` object not found, `scwsapi.js` was not loaded"
-            )));
+        if raw_scws.is_undefined() {
+            return Err(PkiSystemInitError::NotAvailable);
         }
+        let _scws: scwsapi::Scws = raw_scws
+            .dyn_into::<scwsapi_sys::Scws>()
+            .map_err(|e| {
+                PkiSystemInitError::Internal(anyhow::anyhow!(
+                    "Cast cast SCWS object to correct type ({e:?})"
+                ))
+            })
+            .map(Into::into)?;
 
         Err(PkiSystemInitError::NotAvailable)
     }
