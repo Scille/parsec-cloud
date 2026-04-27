@@ -8,10 +8,6 @@
                     "severity": 1,
                     "code": 2,
                     "message": 3
-                },
-                {
-                    "regexp": "^\\s+┌─ (.*):(\\d+):(\\d+)$",
-                    "file": 1
                 }
             ]
         }
