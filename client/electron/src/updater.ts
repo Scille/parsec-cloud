@@ -229,8 +229,6 @@ class CustomGithubProvider extends GitHubProvider {
 
         // Current entry GitHub tag.
         const hrefTag = hrefElement[1];
-        logger.debug(`hrefTag: ${hrefTag}`);
-
         const rawHrefChannel =
           hrefTag === PreReleaseTypes.Nightly ? PreReleaseTypes.Nightly : (semver.prerelease(hrefTag)?.[0] as string) || null;
         const hrefChannel = PRERELEASE_TYPE_ALIAS[rawHrefChannel] || rawHrefChannel;
@@ -240,12 +238,9 @@ class CustomGithubProvider extends GitHubProvider {
 
         const channelMismatch = isChannelMissmatch(currentChannel, hrefChannel);
 
-        logger.debug({
-          hrefChannel,
-          shouldFetchVersion,
-          isCustomChannel,
-          channelMismatch,
-        });
+        logger.debug(
+          `Channel: ${hrefChannel}, ShouldFetchVersion: ${shouldFetchVersion}, IsCustomChannel: ${isCustomChannel}, ChannelMismatch: ${channelMismatch}, hrefTag: ${hrefTag}`,
+        );
         if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
           latestRelease = element;
           tag = hrefTag;
@@ -253,7 +248,6 @@ class CustomGithubProvider extends GitHubProvider {
         }
 
         const isNextPreRelease = hrefChannel && hrefChannel === currentChannel;
-        logger.debug({ isNextPreRelease });
         if (isNextPreRelease) {
           latestRelease = element;
           tag = hrefTag;
@@ -330,7 +324,7 @@ export function createAppUpdater(): AppUpdater | undefined {
     const updater = new AppUpdater(publishOption);
     return updater;
   } catch (error: any) {
-    logger.error(error);
+    logger.error(error.toString());
     return undefined;
   }
 }
@@ -340,12 +334,12 @@ export interface UpdateAvailable {
 }
 
 export enum UpdaterState {
-  Idle,
-  CheckingForUpdate,
-  UpdateAvailable,
-  UpdateNotAvailable,
-  DownloadingUpdate,
-  UpdateDownloaded,
+  Idle = 'idle',
+  CheckingForUpdate = 'checking-for-update',
+  UpdateAvailable = 'update-available',
+  UpdateNotAvailable = 'update-not-available',
+  DownloadingUpdate = 'downloading-update',
+  UpdateDownloaded = 'update-downloaded',
 }
 
 export type ListenerSignature = {
@@ -405,17 +399,13 @@ export default class AppUpdater {
     this.updater.autoDownload = true;
     this.updater.autoInstallOnAppQuit = false;
 
-    this.logger.info(`App version: ${this.updater.currentVersion}`);
-    this.logger.debug(`Nightly build: ${publishOption.nightlyBuild}`);
-    this.logger.debug(`Auto download: ${this.updater.autoDownload}`);
-    this.logger.debug(`Auto install on app quit: ${this.updater.autoInstallOnAppQuit}`);
-    this.logger.debug(`Allow prerelease: ${this.updater.allowPrerelease}`);
-    this.logger.debug(`Allow downgrade: ${this.updater.allowDowngrade}`);
-    this.logger.debug(`Update channel: ${this.updater.channel}`);
+    this.logger.info(
+      `AppVersion: ${this.updater.currentVersion}, Nightly: ${publishOption.nightlyBuild}, AutoDownload: ${this.updater.autoDownload}, InstallOnQuit: ${this.updater.autoInstallOnAppQuit}, AllowPreRelease: ${this.updater.allowPrerelease}, AllowDowngrade: ${this.updater.allowDowngrade}, UpdateChannel: ${this.updater.channel}`,
+    );
 
     // https://www.electron.build/auto-update#event-error
     this.updater.on('error', (error) => {
-      this.logger.error('Update error', error);
+      this.logger.error(`Update error: ${error.toString()}`);
       this.state = UpdaterState.Idle;
       this.lastError = error;
       this.emit(this.state);
@@ -479,7 +469,7 @@ export default class AppUpdater {
         return { version: this.lastUpdateInfo!.version };
       }
     } catch (error: any) {
-      this.logger.error('Could not check for updates', error);
+      this.logger.error(`Could not check for updates: ${error.toString()}`);
     }
   }
 
@@ -492,7 +482,7 @@ export default class AppUpdater {
       this.updater.quitAndInstall();
       return true;
     } catch (error: any) {
-      this.logger.error('Could not install update', error);
+      this.logger.error(`Could not install update: ${error}`);
       return false;
     }
   }
