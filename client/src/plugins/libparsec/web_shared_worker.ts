@@ -81,7 +81,7 @@ async function maybeInit(): Promise<LibParsecPlugin> {
           return async (configDir: string, parsecAddr: string, scwsLocation: string, certificate: string) => {
             try {
               console.log('Loading SCWS...');
-              const scwsapi = await import(scwsLocation);
+              const scwsapi = await import(/* @vite-ignore */ scwsLocation);
               (globalThis as any).SCWS = scwsapi.SCWS;
               (globalThis as any).WEB_APPLICATION_CERTIFICATE = certificate;
             } catch (err: any) {
