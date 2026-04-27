@@ -300,6 +300,24 @@ async function withoutSharedWorker(): Promise<any> {
         };
       }
 
+      // SCWS needs to be dynamically loaded.
+      // We're loading it in TypeScript and attaching it to the global context.
+      if (name === 'pkiInitForScws') {
+        return async (configDir: string, parsecAddr: string, scwsLocation: string, certificate: string) => {
+          try {
+            console.log('Loading SCWS...');
+            const scwsapi = await import(scwsLocation);
+            (globalThis as any).SCWS = scwsapi.SCWS;
+            (globalThis as any).WEB_APPLICATION_CERTIFICATE = certificate;
+          } catch (err: any) {
+            console.error(`Failed to import scwsapi: ${err.toString()}`);
+            return { ok: false, error: { tag: 'PkiSystemInitErrorNotAvailable', error: `Failed to import scwsapi (${err.toString()})` } };
+          }
+
+          return await module.pkiInitForScws(configDir, parsecAddr);
+        };
+      }
+
       return module[name];
     }
   }

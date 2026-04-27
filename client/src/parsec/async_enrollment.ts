@@ -82,30 +82,26 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
 
       const scwsapiLocationTag = document.querySelector(`meta[name="${SCWS_LOCATION_NAME}"`) as HTMLMetaElement | null;
       if (!scwsapiLocationTag?.content) {
-        console.log(`Not meta tag '${SCWS_LOCATION_NAME}' present`);
-        return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `Not meta tag '${SCWS_LOCATION_NAME}' present` } };
+        console.log(`No meta tag '${SCWS_LOCATION_NAME}' present`);
+        return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${SCWS_LOCATION_NAME}' present` } };
       }
       const scwsapiAppCertificateTag = document.querySelector(`meta[name="${SCWS_APP_CERTIFICATE}"`) as HTMLMetaElement | null;
       if (!scwsapiAppCertificateTag?.content) {
-        console.log(`Not meta tag '${SCWS_APP_CERTIFICATE}' present`);
-        return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `Not meta tag '${SCWS_APP_CERTIFICATE}' present` } };
+        console.log(`No meta tag '${SCWS_APP_CERTIFICATE}' present`);
+        return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${SCWS_APP_CERTIFICATE}' present` } };
       }
       const parsecServerTag = document.querySelector(`meta[name="${WEB_PARSEC_SERVER}"`) as HTMLMetaElement | null;
       if (!parsecServerTag?.content) {
-        console.log(`Not meta tag '${WEB_PARSEC_SERVER}' present`);
-        return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `Not meta tag '${WEB_PARSEC_SERVER}' present` } };
+        console.log(`No meta tag '${WEB_PARSEC_SERVER}' present`);
+        return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${WEB_PARSEC_SERVER}' present` } };
       }
 
-      try {
-        // Import scwsapi dynamically and make it available in the global scope
-        const scwsapi = await import(scwsapiLocationTag.content);
-        (globalThis as any).SCWS = scwsapi.SCWS;
-        (globalThis as any).WEB_APPLICATION_CERTIFICATE = scwsapiAppCertificateTag.content;
-      } catch (err: any) {
-        console.error(`Failed to import scwsapi: ${err.toString()}`);
-        return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `Failed to import scwsapi (${err.toString()})` } };
-      }
-      return await libparsec.pkiInitForScws(window.getConfigDir(), parsecServerTag.content);
+      return await (libparsec.pkiInitForScws as any)(
+        window.getConfigDir(),
+        parsecServerTag.content,
+        scwsapiLocationTag.content,
+        scwsapiAppCertificateTag.content,
+      );
     } else {
       return await libparsec.pkiInitForNative(window.getConfigDir());
     }
