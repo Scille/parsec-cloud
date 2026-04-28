@@ -39,9 +39,23 @@ impl PlatformPkiPrivateKey {
 
     pub async fn decrypt(
         &self,
-        _algorithm: PKIEncryptionAlgorithm,
-        _ciphertext: &[u8],
+        algorithm: PKIEncryptionAlgorithm,
+        ciphertext: &[u8],
     ) -> Result<Bytes, PkiPrivateKeyDecryptError> {
-        unimplemented!("platform not supported")
+        let scws_algo = match algorithm {
+            PKIEncryptionAlgorithm::RsaesOaepSha256 => scwsapi::EncryptionAlgorithm::RsaOaepSha256,
+        };
+        self.0
+            .decrypt(scws_algo, ciphertext)
+            .await
+            .map(Bytes::from)
+            .map_err(|e| match e {
+                scwsapi::DecryptError::CannotGenerateEncryptionConfig(_) => {
+                    PkiPrivateKeyDecryptError::Internal(e.into())
+                }
+                scwsapi::DecryptError::Decrypt(js_value) => PkiPrivateKeyDecryptError::Decrypt(
+                    anyhow::anyhow!("Cannot decrypt ciphertext ({js_value:?})"),
+                ),
+            })
     }
 }
