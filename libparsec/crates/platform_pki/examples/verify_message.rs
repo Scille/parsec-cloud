@@ -47,6 +47,11 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("Failed to get validation path")?;
 
+    let certificate_revocation_lists = pki
+        .get_certificate_revocation_lists()
+        .await
+        .context("Failed to get certificate revocation lists")?;
+
     match verify_message(
         &data,
         &args.signature,
@@ -54,6 +59,7 @@ async fn main() -> anyhow::Result<()> {
         path.leaf.as_ref(),
         path.intermediates.iter().map(|c| c.as_ref()),
         &[path.root],
+        &certificate_revocation_lists,
         DateTime::now(),
     ) {
         Ok(_) => println!("The message has a correct signature"),

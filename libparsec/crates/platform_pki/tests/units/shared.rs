@@ -18,6 +18,7 @@ fn test_verify_cert_ok(certificates: &InstalledCertificates) {
         &bob_end_entity_cert,
         &[],
         &[certificates.black_mesa_trust_anchor()],
+        &[certificates.black_mesa_certificate_revocation_list()],
         DateTime::now(),
     )
     .unwrap();
@@ -32,6 +33,7 @@ fn test_verify_unknown_issuer(certificates: &InstalledCertificates) {
         &bob_end_entity_cert,
         &[],
         &[], // No trusted root, so always invalid
+        &[],
         DateTime::now(),
     )
     .map(|_| ())
@@ -50,6 +52,7 @@ fn test_verify_with_intermediate(certificates: &InstalledCertificates) {
         &mallory_sign_end_entity_cert,
         &[glados_dev_team_der],
         &[certificates.aperture_science_trust_anchor()],
+        &[],
         DateTime::now(),
     )
     .unwrap();

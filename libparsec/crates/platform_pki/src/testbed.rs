@@ -21,8 +21,9 @@ use crate::{
     AvailablePkiCertificate, PkiCertificate, PkiCertificateGetDerError,
     PkiCertificateGetValidationPathError, PkiCertificateRequestPrivateKeyError,
     PkiCertificateToReferenceError, PkiPrivateKey, PkiPrivateKeyDecryptError,
-    PkiPrivateKeySignError, PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
-    X509CertificateDer, X509EndCertificate, X509TrustAnchor, X509ValidationPathOwned,
+    PkiPrivateKeySignError, PkiSystemGetCertificateRevocationListsError,
+    PkiSystemListUserCertificateError, PkiSystemOpenCertificateError, X509CertificateDer,
+    X509CertificateRevocationList, X509EndCertificate, X509TrustAnchor, X509ValidationPathOwned,
 };
 
 // Embedded test certificates (PEM format, converted to DER at init time)
@@ -44,8 +45,19 @@ const APERTURE_SCIENCE_PEM: &[u8] = include_bytes!("../test-pki/Root/aperture_sc
 // Intermediate CAs
 const GLADOS_DEV_TEAM_PEM: &[u8] = include_bytes!("../test-pki/Intermediate/glados_dev_team.crt");
 
-fn load_cert_der(pem: &[u8]) -> X509CertificateDer<'static> {
+// Certificate revocation list (CRL)
+const BLACK_MESA_CERTIFICATE_REVOCATION_LIST_PEM: &[u8] =
+    include_bytes!("../test-pki/CRL/black_mesa.crl");
+
+fn load_cert_der_from_pem(pem: &[u8]) -> X509CertificateDer<'static> {
     X509CertificateDer::from_pem_slice(pem).expect("Failed to read PEM certificate")
+}
+
+fn load_crl_from_pem(pem: &[u8]) -> webpki::OwnedCertRevocationList {
+    let der = rustls_pki_types::CertificateRevocationListDer::from_pem_slice(pem)
+        .expect("Failed to read PEM CRL certificate");
+    webpki::OwnedCertRevocationList::from_der(der.as_ref())
+        .expect("Failed to read PEM CRL certificate")
 }
 
 fn load_private_key(pem: &[u8]) -> RsaPrivateKey {
@@ -74,6 +86,7 @@ struct TestbedCertificates {
     pub user_certs: Vec<Arc<TestbedCertEntry>>,
     pub trust_anchors: Vec<X509TrustAnchor<'static>>,
     pub intermediate_certs: Vec<X509CertificateDer<'static>>,
+    pub certificate_revocation_lists: Vec<webpki::OwnedCertRevocationList>,
 }
 
 #[derive(Debug)]
@@ -111,7 +124,7 @@ impl TestbedPkiSystem {
         let user_certs = user_cert_data
             .into_iter()
             .map(|(label, cert_pem, key_pem)| {
-                let cert_der = load_cert_der(cert_pem);
+                let cert_der = load_cert_der_from_pem(cert_pem);
                 let cert_ref = compute_cert_ref(cert_der.as_ref());
                 let private_key = load_private_key(key_pem);
                 Arc::new(TestbedCertEntry {
@@ -123,8 +136,8 @@ impl TestbedPkiSystem {
             })
             .collect();
 
-        let black_mesa_der = load_cert_der(BLACK_MESA_PEM);
-        let aperture_science_der = load_cert_der(APERTURE_SCIENCE_PEM);
+        let black_mesa_der = load_cert_der_from_pem(BLACK_MESA_PEM);
+        let aperture_science_der = load_cert_der_from_pem(APERTURE_SCIENCE_PEM);
 
         let trust_anchors = vec![
             webpki::anchor_from_trusted_cert(&black_mesa_der)
@@ -135,13 +148,18 @@ impl TestbedPkiSystem {
                 .to_owned(),
         ];
 
-        let intermediate_certs = vec![load_cert_der(GLADOS_DEV_TEAM_PEM)];
+        let intermediate_certs = vec![load_cert_der_from_pem(GLADOS_DEV_TEAM_PEM)];
+
+        let certificate_revocation_lists = vec![load_crl_from_pem(
+            BLACK_MESA_CERTIFICATE_REVOCATION_LIST_PEM,
+        )];
 
         Self {
             certificates: Arc::new(TestbedCertificates {
                 user_certs,
                 trust_anchors,
                 intermediate_certs,
+                certificate_revocation_lists,
             }),
         }
     }
@@ -175,6 +193,21 @@ impl TestbedPkiSystem {
             })
             .collect();
         Ok(certs)
+    }
+
+    pub async fn get_certificate_revocation_lists(
+        &self,
+    ) -> Result<
+        Vec<X509CertificateRevocationList<'static>>,
+        PkiSystemGetCertificateRevocationListsError,
+    > {
+        let crls = self
+            .certificates
+            .certificate_revocation_lists
+            .iter()
+            .map(|crl| crl.to_owned().into())
+            .collect();
+        Ok(crls)
     }
 }
 
@@ -225,6 +258,9 @@ impl TestbedPkiCertificate {
             &cert,
             &intermediate_refs,
             &self.certificates.trust_anchors,
+            // Don't bother with CLR here since we are no really verifying the certificate
+            // (we already know it is valid) but just fetching the verification path
+            &[],
             DateTime::now(),
         )
         .unwrap();

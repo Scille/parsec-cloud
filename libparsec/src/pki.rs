@@ -55,7 +55,8 @@ pub async fn pki_init_for_scws(
     Ok(())
 }
 
-async fn get_pki_system() -> anyhow::Result<std::sync::Arc<libparsec_platform_pki::PkiSystem>> {
+pub(crate) async fn get_pki_system(
+) -> anyhow::Result<std::sync::Arc<libparsec_platform_pki::PkiSystem>> {
     let guard = PKI_SYSTEM.lock().await;
     guard
         .as_ref()

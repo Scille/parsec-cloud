@@ -3,8 +3,10 @@
 use std::fmt::Debug;
 
 use crate::{
-    AvailablePkiCertificate, PkiCertificate, PkiScwsConfig, PkiSystemInitError,
+    AvailablePkiCertificate, PkiCertificate, PkiScwsConfig,
+    PkiSystemGetCertificateRevocationListsError, PkiSystemInitError,
     PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
+    X509CertificateRevocationList,
 };
 use futures::{StreamExt, TryStreamExt};
 use libparsec_types::prelude::*;
@@ -199,5 +201,14 @@ async fn ask_server_to_sign_scws_challenge(
             log::warn!("Unknown server status {unknown_status} (reason: {reason:?})");
             Err(PkiSystemInitError::NotAvailable)
         }
+    }
+
+    pub async fn get_certificate_revocation_lists(
+        &self,
+    ) -> Result<
+        Vec<X509CertificateRevocationList<'static>>,
+        PkiSystemGetCertificateRevocationListsError,
+    > {
+        unimplemented!("platform not supported");
     }
 }

@@ -2,7 +2,10 @@
 
 use libparsec_types::prelude::*;
 
-use crate::{PkiCertificate, UserX509CertificateDetails, UserX509CertificateLoadError};
+use crate::{
+    PkiCertificate, UserX509CertificateDetails, UserX509CertificateLoadError,
+    X509CertificateRevocationList,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum PkiSystemInitError {
@@ -22,6 +25,12 @@ pub enum PkiSystemOpenCertificateError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum PkiSystemListUserCertificateError {
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PkiSystemGetCertificateRevocationListsError {
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -148,6 +157,33 @@ impl PkiSystem {
         #[cfg(not(feature = "test-with-testbed"))]
         {
             self.platform.list_user_certificates().await
+        }
+    }
+
+    /// Return the certificate revocation lists (CRLs) known by the OS.
+    ///
+    /// CRLs are published by certificate authorities (CAs) and must be taken
+    /// into account whenever we validate a certificate.
+    pub async fn get_certificate_revocation_lists(
+        &self,
+    ) -> Result<
+        Vec<X509CertificateRevocationList<'static>>,
+        PkiSystemGetCertificateRevocationListsError,
+    > {
+        #[cfg(feature = "test-with-testbed")]
+        {
+            match &self.platform {
+                crate::testbed::MaybeWithTestbed::WithTestbed(testbed) => {
+                    testbed.get_certificate_revocation_lists().await
+                }
+                crate::testbed::MaybeWithTestbed::WithPlatform(platform) => {
+                    platform.get_certificate_revocation_lists().await
+                }
+            }
+        }
+        #[cfg(not(feature = "test-with-testbed"))]
+        {
+            self.platform.get_certificate_revocation_lists().await
         }
     }
 }
