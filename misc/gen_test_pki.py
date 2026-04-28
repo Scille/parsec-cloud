@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shlex
 import subprocess
+import tempfile
 from argparse import ArgumentParser
 from base64 import b64encode
 from binascii import unhexlify
@@ -18,6 +19,7 @@ ROOT_DIR = Path(__file__).parent.parent.resolve()
 ROOT_CERT_DIR = Path("Root")
 INTERMEDIATE_CERT_DIR = Path("Intermediate")
 LEAF_CERT_DIR = Path("Cert")
+CRL_DIR = Path("CRL")
 
 SCRIPT_LAST_MODIFICATION = Path(__file__).stat().st_mtime
 
@@ -75,6 +77,7 @@ class CertificateConfig:
     """Certificate is not valid after that date"""
     type: CertificateType = CertificateType.Leaf
     extensions: dict[str, str] = field(default_factory=dict)
+    revoked: bool = False
     signing: list[CertificateConfig] = field(default_factory=list)
     """Certificates that will by signed by this certificate"""
 
@@ -132,6 +135,37 @@ TRUSTCHAINS = [
                 not_before=not_before,
                 not_after=not_before,  # Not a typo, we want old-boby cert to be expired
                 extensions={BASIC_CONSTRAINTS: "CA:FALSE"},
+            ),
+            CertificateConfig(
+                name="revoked_anomalous_materials_laboratories",
+                type=CertificateType.Intermediate,
+                subject={
+                    COMMON_NAME: "Anomalous Materials Laboratories",
+                    ORGANIZATIONAL_UNIT: "Anomalous Materials Laboratories",
+                },
+                key_algorithm=RSAKeyAlgorithm(length=2048),
+                not_before=not_before,
+                not_after=not_after,
+                revoked=True,
+                extensions={BASIC_CONSTRAINTS: "CA:TRUE"},
+                signing=[
+                    CertificateConfig(
+                        name="gordon",
+                        subject={COMMON_NAME: "Gordon", EMAIL_ADDRESS: "gordon@black-mesa.corp"},
+                        key_algorithm=RSAKeyAlgorithm(length=2048),
+                        not_before=not_before,
+                        not_after=not_after,
+                        extensions={SUBJECT_ALT_NAME: f"{SAN_EMAIL}:gordon@black-mesa.corp"},
+                    ),
+                ],
+            ),
+            CertificateConfig(
+                name="revoked_breen",
+                subject={COMMON_NAME: "Breen", EMAIL_ADDRESS: "breen@black-mesa.corp"},
+                key_algorithm=RSAKeyAlgorithm(length=2048),
+                not_before=not_before,
+                not_after=not_after,
+                revoked=True,
             ),
         ],
     ),
@@ -191,6 +225,9 @@ def main(output_dir: Path) -> None:
         "",
     ]
 
+    all_revoked: dict[str, list[CertificateConfig]] = {}
+    """Maps root certificate name to the list of revoked children"""
+
     for chain in TRUSTCHAINS:
         certifs = create_trustchain(chain, None, output_dir)
         for name, fingerprint in certifs.items():
@@ -199,6 +236,24 @@ def main(output_dir: Path) -> None:
             readme_file_content.append(
                 f"- {name}: SHA256={hex_fingerprint} (aka `{coded_fingerprint}`)"
             )
+
+        revoked = [child for child in chain.signing if child.revoked]
+        if revoked:
+            all_revoked[chain.name] = revoked
+
+    for root_name, revoked_certs in all_revoked.items():
+        generate_crl(root_name, revoked_certs, output_dir)
+
+    if all_revoked:
+        readme_file_content.append("")
+        readme_file_content.append("CRL files:")
+        readme_file_content.append("")
+        for root_name, revoked_certs in all_revoked.items():
+            revoked_names = ", ".join(c.name for c in revoked_certs)
+            readme_file_content.append(
+                f"- {CRL_DIR / root_name}.crl: revokes {revoked_names} (signed by {root_name})"
+            )
+        readme_file_content.append("")
 
     readme_file = output_dir / "README.md"
     readme_file.write_text("\n".join(readme_file_content))
@@ -379,6 +434,89 @@ def generate_pkcs12_file(
             chain.name,
         ]
     )
+
+
+def generate_crl(
+    root_name: str,
+    revoked_certs: list[CertificateConfig],
+    output_dir: Path,
+) -> None:
+    ca_workdir = output_dir / ROOT_CERT_DIR
+    ca_cert = ca_workdir / (root_name + ".crt")
+    ca_key = ca_workdir / (root_name + ".key")
+
+    crl_workdir = output_dir / CRL_DIR
+    crl_workdir.mkdir(parents=True, exist_ok=True)
+    crl_file = crl_workdir / (root_name + ".crl")
+
+    # By default `openssl ca` reads config from `/usr/lib/ssl/openssl.cnf`,
+    # we must overwrite this with our own config.
+    #
+    # This is typically needed since OpenSSL CRLs are tracked with an index
+    # and a database that are handled as files.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+
+        index_file = tmpdir_path / "index.txt"
+        index_file.touch()
+        index_attr_file = tmpdir_path / "index.txt.attr"
+        index_attr_file.write_text("unique_subject = no\n")
+        crlnumber_file = tmpdir_path / "crlnumber"
+        crlnumber_file.write_text("1000\n")
+
+        openssl_conf = tmpdir_path / "openssl.cnf"
+        openssl_conf.write_text(
+            f"""[ca]
+default_ca = CA_default
+
+[CA_default]
+database = {index_file}
+crlnumber = {crlnumber_file}
+default_md = sha256
+# How long before next CRL, we use 100 years so the validation
+# never complains a new CRL should have been issued.
+default_crl_days = 36500
+"""
+        )
+
+        # Revoke each certificate
+        for cert in revoked_certs:
+            cert_workdir = output_dir / cert.type.get_path()
+            cert_file = cert_workdir / (cert.name + ".crt")
+            check_run(
+                [
+                    "openssl",
+                    "ca",
+                    "-config",
+                    openssl_conf,
+                    "-cert",
+                    ca_cert,
+                    "-keyfile",
+                    ca_key,
+                    "-revoke",
+                    cert_file,
+                ]
+            )
+
+        # Build the CRL
+        check_run(
+            [
+                "openssl",
+                "ca",
+                "-config",
+                openssl_conf,
+                "-cert",
+                ca_cert,
+                "-keyfile",
+                ca_key,
+                # cspell: disable-next-line
+                "-gencrl",
+                "-out",
+                crl_file,
+            ]
+        )
+
+    print(f"Generated CRL {crl_file}")
 
 
 if __name__ == "__main__":
