@@ -308,7 +308,7 @@ async function withoutSharedWorker(): Promise<any> {
             console.log('Loading SCWS...');
             const scwsapi = await import(/* @vite-ignore */ scwsLocation);
             (globalThis as any).SCWS = scwsapi.SCWS;
-            (globalThis as any).WEB_APPLICATION_CERTIFICATE = certificate;
+            (globalThis as any).SCWS_WEBAPP_CERT = certificate;
           } catch (err: any) {
             console.error(`Failed to import scwsapi: ${err.toString()}`);
             return { ok: false, error: { tag: 'PkiSystemInitErrorNotAvailable', error: `Failed to import scwsapi (${err.toString()})` } };
