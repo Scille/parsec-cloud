@@ -3,7 +3,9 @@
 use libparsec_tests_lite::prelude::*;
 
 use super::utils::{certificates, initialize_pki_system, InstalledCertificates};
-use crate::{AvailablePkiCertificate, PkiSystemOpenCertificateError};
+use crate::{
+    AvailablePkiCertificate, PkiCertificateGetValidationPathError, PkiSystemOpenCertificateError,
+};
 
 // Root certificates subject fields
 const BLACK_MESA_CA_SUBJECT: &[u8] =
@@ -51,6 +53,44 @@ async fn open_certificate_and_get_validation_path() {
             .any(|w| w == BLACK_MESA_CA_SUBJECT),
         "Missing expected root certificate with subject: {:?}",
         String::from_utf8_lossy(BLACK_MESA_CA_SUBJECT),
+    );
+}
+
+#[parsec_test]
+async fn certificate_and_get_validation_path_ko_revoked() {
+    let pki = initialize_pki_system().await;
+
+    let revoked_breen_ref = crate::X509CertificateReference::from(
+        super::utils::REVOKED_BREEN_SHA256_CERT_HASH
+            .parse::<crate::X509CertificateHash>()
+            .unwrap(),
+    );
+    let cert = pki
+        .open_certificate(&revoked_breen_ref)
+        .await
+        .expect("revoked_breen's certificate should be installed");
+    p_assert_matches!(
+        cert.get_validation_path()
+            .await
+            .map(|_| "<not displayable>"),
+        Err(PkiCertificateGetValidationPathError::Untrusted)
+    );
+
+    // Gordon is not itself revoked, however the intermediate CA that signed it is
+    let gordon_ref = crate::X509CertificateReference::from(
+        super::utils::GORDON_SHA256_CERT_HASH
+            .parse::<crate::X509CertificateHash>()
+            .unwrap(),
+    );
+    let cert = pki
+        .open_certificate(&gordon_ref)
+        .await
+        .expect("gordon's certificate should be installed");
+    p_assert_matches!(
+        cert.get_validation_path()
+            .await
+            .map(|_| "<not displayable>"),
+        Err(PkiCertificateGetValidationPathError::Untrusted)
     );
 }
 

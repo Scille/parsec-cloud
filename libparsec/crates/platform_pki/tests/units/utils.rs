@@ -18,14 +18,28 @@ pub(super) const MALLORY_SIGN_SHA256_CERT_HASH: &str =
     "sha256-00e71WWTQGUjt0GQWPqhYzL8a8NPY3qNS/WhVfeXj9Q=";
 pub(super) const MALLORY_ENCRYPT_SHA256_CERT_HASH: &str =
     "sha256-lPHjEH4TmPMO377j8OoL18hnUBEqNy0CfhNoP60+seY=";
+pub(super) const REVOKED_BREEN_SHA256_CERT_HASH: &str =
+    "sha256-p9YzDOHNGEj3ISK+Dv0RzO5g5d1Wrz1+XVJEPPq/6D8=";
+pub(super) const GORDON_SHA256_CERT_HASH: &str =
+    "sha256-tG3h0VQR0KPp2bkIDFvZBw4p/4TwaRCcmvvE6B1d/RI=";
+pub(super) const REVOKED_ANOMALOUS_MATERIALS_LABORATORIES_SHA256_CERT_HASH: &str =
+    "sha256-d7lBBLECnoJ9R7VKc3W0egTtzCMAup9LNbz8cln8x4Q=";
+pub(super) const GLADOS_DEV_TEAM_SHA256_CERT_HASH: &str =
+    "sha256-4kC1hYV+2l6l5c6qtfLAqJNBPB8ETqAGKriNrAN8mUGVU=";
+pub(super) const APERTURE_SCIENCE_SHA256_CERT_HASH: &str =
+    "sha256-+rumDH+peXOqrXywKiTQTwfBE6gBiq4jawDfJlBlVRg=";
 
 const ALICE_PEM: &[u8] = include_bytes!("../../test-pki/Cert/alice.crt");
 const BOB_PEM: &[u8] = include_bytes!("../../test-pki/Cert/bob.crt");
 const MALLORY_ENCRYPT_PEM: &[u8] = include_bytes!("../../test-pki/Cert/mallory-encrypt.crt");
 const MALLORY_SIGN_PEM: &[u8] = include_bytes!("../../test-pki/Cert/mallory-sign.crt");
 const OLD_BOBY_PEM: &[u8] = include_bytes!("../../test-pki/Cert/old-boby.crt");
+const REVOKED_BREEN_PEM: &[u8] = include_bytes!("../../test-pki/Cert/revoked_breen.crt");
+const GORDON_PEM: &[u8] = include_bytes!("../../test-pki/Cert/gordon.crt");
 const GLADOS_DEV_TEAM_PEM: &[u8] =
     include_bytes!("../../test-pki/Intermediate/glados_dev_team.crt");
+const REVOKED_ANOMALOUS_MATERIALS_LABORATORIES_PEM: &[u8] =
+    include_bytes!("../../test-pki/Intermediate/revoked_anomalous_materials_laboratories.crt");
 const APERTURE_SCIENCE_PEM: &[u8] = include_bytes!("../../test-pki/Root/aperture_science.crt");
 const BLACK_MESA_PEM: &[u8] = include_bytes!("../../test-pki/Root/black_mesa.crt");
 const BLACK_MESA_CERTIFICATE_REVOCATION_LIST_PEM: &[u8] =
@@ -72,21 +86,28 @@ impl InstalledCertificates {
     }
 
     #[expect(dead_code)]
+    pub fn revoked_breen_cert_ref(&self) -> X509CertificateReference {
+        Self::make_cert_ref(REVOKED_BREEN_SHA256_CERT_HASH)
+    }
+
+    #[expect(dead_code)]
+    pub fn gordon_cert_ref(&self) -> X509CertificateReference {
+        Self::make_cert_ref(GORDON_SHA256_CERT_HASH)
+    }
+
+    #[expect(dead_code)]
     pub fn glados_dev_team_cert_ref(&self) -> X509CertificateReference {
-        X509CertificateReference::from(
-            "sha256-4kC1hYV+2l6l5c6qtfLAqJNBPB8ETqAGKriNrAN8mUGVU="
-                .parse::<X509CertificateHash>()
-                .unwrap(),
-        )
+        Self::make_cert_ref(GLADOS_DEV_TEAM_SHA256_CERT_HASH)
+    }
+
+    #[expect(dead_code)]
+    pub fn revoked_anomalous_materials_laboratories_cert_ref(&self) -> X509CertificateReference {
+        Self::make_cert_ref(REVOKED_ANOMALOUS_MATERIALS_LABORATORIES_SHA256_CERT_HASH)
     }
 
     #[expect(dead_code)]
     pub fn aperture_science_cert_ref(&self) -> X509CertificateReference {
-        X509CertificateReference::from(
-            "sha256-+rumDH+peXOqrXywKiTQTwfBE6gBiq4jawDfJlBlVRg="
-                .parse::<X509CertificateHash>()
-                .unwrap(),
-        )
+        Self::make_cert_ref(APERTURE_SCIENCE_SHA256_CERT_HASH)
     }
 
     fn make_cert_ref(sha256_hash: &str) -> X509CertificateReference {
@@ -122,8 +143,20 @@ impl InstalledCertificates {
         load_cert_der_from_pem(APERTURE_SCIENCE_PEM)
     }
 
+    pub fn revoked_breen_der_cert(&self) -> X509CertificateDer<'static> {
+        load_cert_der_from_pem(REVOKED_BREEN_PEM)
+    }
+
+    pub fn gordon_der_cert(&self) -> X509CertificateDer<'static> {
+        load_cert_der_from_pem(GORDON_PEM)
+    }
+
     pub fn glados_dev_team_der_cert(&self) -> X509CertificateDer<'static> {
         load_cert_der_from_pem(GLADOS_DEV_TEAM_PEM)
+    }
+
+    pub fn revoked_anomalous_materials_laboratories_der_cert(&self) -> X509CertificateDer<'static> {
+        load_cert_der_from_pem(REVOKED_ANOMALOUS_MATERIALS_LABORATORIES_PEM)
     }
 
     pub fn black_mesa_trust_anchor(&self) -> crate::X509TrustAnchor<'static> {

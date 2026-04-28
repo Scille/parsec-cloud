@@ -25,6 +25,42 @@ fn test_verify_cert_ok(certificates: &InstalledCertificates) {
 }
 
 #[rstest]
+fn test_verify_revoked_cert(certificates: &InstalledCertificates) {
+    let revoked_breen_der = certificates.revoked_breen_der_cert();
+    let revoked_breen_cert = X509EndCertificate::try_from(&revoked_breen_der).unwrap();
+
+    p_assert_matches!(
+        verify_certificate(
+            &revoked_breen_cert,
+            &[],
+            &[certificates.black_mesa_trust_anchor()],
+            &[certificates.black_mesa_certificate_revocation_list()],
+            DateTime::now(),
+        )
+        .map(|_| "<not displayable>"),
+        Err(webpki::Error::CertRevoked)
+    );
+}
+
+#[rstest]
+fn test_verify_with_revoked_intermediate(certificates: &InstalledCertificates) {
+    let gordon_der = certificates.gordon_der_cert();
+    let gordon_cert = X509EndCertificate::try_from(&gordon_der).unwrap();
+
+    p_assert_matches!(
+        verify_certificate(
+            &gordon_cert,
+            &[certificates.revoked_anomalous_materials_laboratories_der_cert()],
+            &[certificates.black_mesa_trust_anchor()],
+            &[certificates.black_mesa_certificate_revocation_list()],
+            DateTime::now(),
+        )
+        .map(|_| "<not displayable>"),
+        Err(webpki::Error::CertRevoked)
+    );
+}
+
+#[rstest]
 fn test_verify_unknown_issuer(certificates: &InstalledCertificates) {
     let bob_der = certificates.bob_der_cert();
     let bob_end_entity_cert = X509EndCertificate::try_from(&bob_der).unwrap();
