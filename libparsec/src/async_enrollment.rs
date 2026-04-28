@@ -630,6 +630,15 @@ mod strategy {
                     pki_certificate.get_validation_path().await.map_err(|err| {
                         AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
                     })?;
+                let pki_system = crate::pki::get_pki_system()
+                    .await
+                    .map_err(AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference)?;
+                let certificate_revocation_lists = pki_system
+                    .get_certificate_revocation_lists()
+                    .await
+                    .map_err(|err| {
+                        AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
+                    })?;
 
                 // 2. Validate certificate trustchain and payload signature
 
@@ -640,6 +649,7 @@ mod strategy {
                     &submitter_cert,
                     intermediate_certs.iter().map(|x| x.as_ref()),
                     &[validation_path.root],
+                    &certificate_revocation_lists,
                     DateTime::now(),
                 )
                 .map_err(|err| AcceptAsyncEnrollmentError::BadSubmitPayload(err.into()))?;
@@ -753,6 +763,17 @@ mod strategy {
                             err.into(),
                         )
                     })?;
+                let pki_system = crate::pki::get_pki_system().await.map_err(
+                    SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference,
+                )?;
+                let certificate_revocation_lists = pki_system
+                    .get_certificate_revocation_lists()
+                    .await
+                    .map_err(|err| {
+                        SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                            err.into(),
+                        )
+                    })?;
 
                 // 2. Validate certificate trustchain and payload signature
 
@@ -763,6 +784,7 @@ mod strategy {
                     &accepter_cert,
                     intermediate_certs.iter().map(|x| x.as_ref()),
                     &[validation_path.root],
+                    &certificate_revocation_lists,
                     DateTime::now(),
                 )
                 .map_err(|err| {

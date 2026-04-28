@@ -74,6 +74,7 @@ async fn testbed_sign_verify(env: &TestbedEnv) {
     // Verify the signature using the certificate
 
     let validation_path = cert.get_validation_path().await.unwrap();
+    let certificate_revocation_lists = pki.get_certificate_revocation_lists().await.unwrap();
     verify_message(
         payload.as_ref(),
         &signature,
@@ -81,6 +82,7 @@ async fn testbed_sign_verify(env: &TestbedEnv) {
         validation_path.leaf.as_ref(),
         validation_path.intermediates.iter().map(|x| x.as_ref()),
         &[validation_path.root],
+        &certificate_revocation_lists,
         "2026-06-01T00:00:00Z".parse().unwrap(),
     )
     .unwrap();
@@ -107,4 +109,13 @@ async fn testbed_to_reference(env: &TestbedEnv) {
     let cert = pki.open_certificate(&alice_ref).await.unwrap();
     let computed_ref = cert.to_reference().await.unwrap();
     p_assert_eq!(computed_ref.hash, alice_ref.hash);
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn testbed_get_certificate_revocation_lists(env: &TestbedEnv) {
+    let pki = init_pki(env).await;
+
+    let crls = pki.get_certificate_revocation_lists().await.unwrap();
+    // There is a single certificate revocation list containing two revocations
+    p_assert_eq!(crls.len(), 1);
 }

@@ -25,6 +25,7 @@ async fn sign_and_verify(certificates: &InstalledCertificates) {
         &certificates.alice_der_cert(),
         [].into_iter(),
         &[certificates.black_mesa_trust_anchor()],
+        &[certificates.black_mesa_certificate_revocation_list()],
         now,
     )
     .unwrap();
@@ -55,6 +56,7 @@ async fn verify(certificates: &InstalledCertificates) {
         &certificates.alice_der_cert(),
         [].into_iter(),
         &[certificates.black_mesa_trust_anchor()],
+        &[certificates.black_mesa_certificate_revocation_list()],
         now,
     )
     .unwrap();
@@ -101,6 +103,7 @@ async fn verify_message_ko_outdated_certificate(certificates: &InstalledCertific
             &certificates.alice_der_cert(),
             validation_path.intermediates.iter().map(|c| c.as_ref()),
             &[validation_path.root],
+            &[],
             "9999-01-01T00:00:00Z".parse().unwrap(),
         ),
         Err(crate::VerifyMessageError::X509CertificateUntrusted(
@@ -138,6 +141,7 @@ async fn verify_message_ko_different_certificate(certificates: &InstalledCertifi
             &certificates.bob_der_cert(),
             validation_path.intermediates.iter().map(|c| c.as_ref()),
             &[validation_path.root],
+            &[],
             DateTime::now(),
         ),
         Err(crate::VerifyMessageError::InvalidSignature(
@@ -174,6 +178,7 @@ async fn verify_message_ko_different_payload(certificates: &InstalledCertificate
             &validation_path.leaf,
             validation_path.intermediates.iter().map(|c| c.as_ref()),
             &[validation_path.root],
+            &[],
             DateTime::now(),
         ),
         Err(crate::VerifyMessageError::InvalidSignature(

@@ -9,9 +9,11 @@ use libparsec_types::prelude::*;
 
 use super::{find_in_store, schannel_utils, PlatformPkiCertificate};
 use crate::{
-    AvailablePkiCertificate, PkiCertificate, PkiScwsConfig, PkiSystemInitError,
+    AvailablePkiCertificate, PkiCertificate, PkiScwsConfig,
+    PkiSystemGetCertificateRevocationListsError, PkiSystemInitError,
     PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
-    ShowCertificateSelectionDialogError, X509CertificateDer, X509TrustAnchor,
+    ShowCertificateSelectionDialogError, X509CertificateDer, X509CertificateRevocationList,
+    X509TrustAnchor,
 };
 
 #[derive(Debug)]
@@ -50,6 +52,17 @@ impl PlatformPkiSystem {
             .certs()
             .map(|cert| AvailablePkiCertificate::load_der(cert.friendly_name().ok(), cert.to_der()))
             .collect())
+    }
+
+    pub async fn get_certificate_revocation_lists(
+        &self,
+    ) -> Result<
+        Vec<X509CertificateRevocationList<'static>>,
+        PkiSystemGetCertificateRevocationListsError,
+    > {
+        list_x509_certificate_revocation_lists()
+            .await
+            .map_err(|err| PkiSystemGetCertificateRevocationListsError::Internal(err.into()))
     }
 }
 
@@ -146,6 +159,51 @@ pub(super) fn get_id_and_hash_from_cert_context(
     let hash = hash_from_certificate_context(context)?;
 
     Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
+}
+
+pub(super) type ListX509CertificateRevocationListsError = ListX509CertificatesError;
+
+/// Enumerate all certificate revocation lists (CRLs) found in the current user
+/// "ROOT" certificate store.
+pub(super) async fn list_x509_certificate_revocation_lists(
+) -> Result<Vec<X509CertificateRevocationList<'static>>, ListX509CertificateRevocationListsError> {
+    let store = CertStore::open_current_user("ROOT")
+        .map_err(ListX509CertificateRevocationListsError::CannotOpenStore)?;
+    let raw_store = schannel_utils::get_raw_store(&store);
+
+    let mut crls = vec![];
+    let mut prev: *mut windows_sys::Win32::Security::Cryptography::CRL_CONTEXT =
+        core::ptr::null_mut();
+    loop {
+        // SAFETY: `raw_store` is a valid `HCERTSTORE` obtained from `store`.
+        // `prev` is either NULL on the first iteration or the value returned by
+        // the previous call to `CertEnumCRLsInStore`. Per the documentation,
+        // the function takes ownership of (and frees) `prev` when non-null.
+        let next = unsafe {
+            windows_sys::Win32::Security::Cryptography::CertEnumCRLsInStore(raw_store, prev)
+        };
+        if next.is_null() {
+            break;
+        }
+
+        // SAFETY: `next` is a non-null pointer to a `CRL_CONTEXT` whose
+        // lifetime is managed by the cert store enumeration. `pbCrlEncoded`
+        // points to `cbCrlEncoded` bytes of valid memory.
+        let crl_der: Vec<u8> = unsafe {
+            let crl_ctx = &*next;
+            std::slice::from_raw_parts(crl_ctx.pbCrlEncoded, crl_ctx.cbCrlEncoded as usize)
+        }
+        .to_vec();
+
+        match webpki::OwnedCertRevocationList::from_der(&crl_der) {
+            Ok(crl) => crls.push(crl.into()),
+            Err(err) => log::warn!("Invalid certificate revocation list (CRL): {err}"),
+        }
+
+        prev = next;
+    }
+
+    Ok(crls)
 }
 
 #[derive(Debug, thiserror::Error)]

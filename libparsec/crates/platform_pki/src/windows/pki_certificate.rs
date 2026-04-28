@@ -66,6 +66,10 @@ impl PlatformPkiCertificate {
     pub async fn get_validation_path(
         &self,
     ) -> Result<X509ValidationPathOwned, PkiCertificateGetValidationPathError> {
+        let certificate_revocation_lists = super::list_x509_certificate_revocation_lists()
+            .await
+            .context("Cannot list certificate revocation lists")
+            .map_err(PkiCertificateGetValidationPathError::Internal)?;
         let raw_trusted_roots = super::list_x509_trust_anchors()
             .await
             .context("Cannot list trusted roots")
@@ -83,9 +87,15 @@ impl PlatformPkiCertificate {
             .context("Invalid leaf certificate")
             .map_err(PkiCertificateGetValidationPathError::Internal)?;
         let now = DateTime::now();
-        let path = verify_certificate(&end_cert, &raw_intermediates, &raw_trusted_roots, now)
-            .inspect_err(|e| log::warn!("Failed to verify certificate: {e}"))
-            .map_err(|_| PkiCertificateGetValidationPathError::Untrusted)?;
+        let path = verify_certificate(
+            &end_cert,
+            &raw_intermediates,
+            &raw_trusted_roots,
+            &certificate_revocation_lists,
+            now,
+        )
+        .inspect_err(|e| log::warn!("Failed to verify certificate: {e}"))
+        .map_err(|_| PkiCertificateGetValidationPathError::Untrusted)?;
 
         let intermediates = path
             .intermediate_certificates()

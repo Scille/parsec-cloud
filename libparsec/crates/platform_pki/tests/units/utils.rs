@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::{PkiSystem, X509CertificateDer, X509CertificateHash, X509CertificateReference};
+use crate::{
+    PkiSystem, X509CertificateDer, X509CertificateHash, X509CertificateReference,
+    X509CertificateRevocationList,
+};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 use rustls_pki_types::pem::PemObject;
@@ -25,10 +28,20 @@ const GLADOS_DEV_TEAM_PEM: &[u8] =
     include_bytes!("../../test-pki/Intermediate/glados_dev_team.crt");
 const APERTURE_SCIENCE_PEM: &[u8] = include_bytes!("../../test-pki/Root/aperture_science.crt");
 const BLACK_MESA_PEM: &[u8] = include_bytes!("../../test-pki/Root/black_mesa.crt");
+const BLACK_MESA_CERTIFICATE_REVOCATION_LIST_PEM: &[u8] =
+    include_bytes!("../../test-pki/CRL/black_mesa.crl");
 
-fn load_pem_and_return_der(pem: &[u8]) -> X509CertificateDer<'static> {
+fn load_cert_der_from_pem(pem: &[u8]) -> X509CertificateDer<'static> {
     X509CertificateDer::from_pem_slice(pem)
         .unwrap_or_else(|e| panic!("Failed to read PEM certificate: {e}"))
+}
+
+fn load_crl_from_pem(pem: &[u8]) -> X509CertificateRevocationList<'static> {
+    let der = rustls_pki_types::CertificateRevocationListDer::from_pem_slice(pem)
+        .expect("Failed to read PEM CRL certificate");
+    webpki::OwnedCertRevocationList::from_der(der.as_ref())
+        .expect("Failed to read PEM CRL certificate")
+        .into()
 }
 
 pub(super) struct InstalledCertificates {}
@@ -81,42 +94,48 @@ impl InstalledCertificates {
     }
 
     pub fn alice_der_cert(&self) -> X509CertificateDer<'static> {
-        load_pem_and_return_der(ALICE_PEM)
+        load_cert_der_from_pem(ALICE_PEM)
     }
 
     pub fn bob_der_cert(&self) -> X509CertificateDer<'static> {
-        load_pem_and_return_der(BOB_PEM)
+        load_cert_der_from_pem(BOB_PEM)
     }
 
     #[expect(dead_code)]
     pub fn old_boby_der_cert(&self) -> X509CertificateDer<'static> {
-        load_pem_and_return_der(OLD_BOBY_PEM)
+        load_cert_der_from_pem(OLD_BOBY_PEM)
     }
 
     pub fn black_mesa_der_cert(&self) -> X509CertificateDer<'static> {
-        load_pem_and_return_der(BLACK_MESA_PEM)
+        load_cert_der_from_pem(BLACK_MESA_PEM)
     }
 
     pub fn mallory_sign_der_cert(&self) -> X509CertificateDer<'static> {
-        load_pem_and_return_der(MALLORY_SIGN_PEM)
+        load_cert_der_from_pem(MALLORY_SIGN_PEM)
     }
 
     pub fn mallory_encrypt_der_cert(&self) -> X509CertificateDer<'static> {
-        load_pem_and_return_der(MALLORY_ENCRYPT_PEM)
+        load_cert_der_from_pem(MALLORY_ENCRYPT_PEM)
     }
 
     pub fn aperture_science_der_cert(&self) -> X509CertificateDer<'static> {
-        load_pem_and_return_der(APERTURE_SCIENCE_PEM)
+        load_cert_der_from_pem(APERTURE_SCIENCE_PEM)
     }
 
     pub fn glados_dev_team_der_cert(&self) -> X509CertificateDer<'static> {
-        load_pem_and_return_der(GLADOS_DEV_TEAM_PEM)
+        load_cert_der_from_pem(GLADOS_DEV_TEAM_PEM)
     }
 
     pub fn black_mesa_trust_anchor(&self) -> crate::X509TrustAnchor<'static> {
         webpki::anchor_from_trusted_cert(&self.black_mesa_der_cert())
             .unwrap()
             .to_owned()
+    }
+
+    pub fn black_mesa_certificate_revocation_list(
+        &self,
+    ) -> crate::X509CertificateRevocationList<'static> {
+        load_crl_from_pem(BLACK_MESA_CERTIFICATE_REVOCATION_LIST_PEM)
     }
 
     pub fn aperture_science_trust_anchor(&self) -> crate::X509TrustAnchor<'static> {
