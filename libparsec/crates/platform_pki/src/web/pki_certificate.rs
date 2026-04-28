@@ -38,3 +38,9 @@ impl PlatformPkiCertificate {
         unimplemented!("platform not supported")
     }
 }
+
+impl From<scwsapi::Certificate> for PlatformPkiCertificate {
+    fn from(value: scwsapi::Certificate) -> Self {
+        Self(value)
+    }
+}
