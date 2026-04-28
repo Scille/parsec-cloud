@@ -9,12 +9,15 @@ use crate::{
     X509ValidationPathOwned,
 };
 
-#[derive(Debug)]
-pub struct PlatformPkiCertificate {}
+#[derive(Debug, Clone)]
+pub struct PlatformPkiCertificate(scwsapi::Certificate);
 
 impl PlatformPkiCertificate {
     pub async fn get_der(&self) -> Result<CertificateDer<'static>, PkiCertificateGetDerError> {
-        unimplemented!("platform not supported");
+        self.0
+            .get_der()
+            .await
+            .map_err(|e| PkiCertificateGetDerError::Internal(e.into()))
     }
 
     pub async fn request_private_key(
