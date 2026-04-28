@@ -36,7 +36,7 @@ async fn testbed_list_user_certificates(env: &TestbedEnv) {
     let pki = init_pki(env).await;
     let certs = pki.list_user_certificates().await.unwrap();
     // We have alice, bob, mallory-sign, mallory-encrypt
-    assert_eq!(certs.len(), 4);
+    p_assert_eq!(certs.len(), 4);
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -50,11 +50,11 @@ async fn testbed_encrypt_decrypt(env: &TestbedEnv) {
     let (algo, encrypted) = encrypt_message(cert.get_der().await.unwrap(), payload.as_ref())
         .await
         .unwrap();
-    assert_eq!(algo, PKIEncryptionAlgorithm::RsaesOaepSha256);
+    p_assert_eq!(algo, PKIEncryptionAlgorithm::RsaesOaepSha256);
 
     let key = cert.request_private_key().await.unwrap();
     let decrypted = key.decrypt(algo, &encrypted).await.unwrap();
-    assert_eq!(*decrypted, *payload);
+    p_assert_eq!(*decrypted, *payload);
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -69,7 +69,7 @@ async fn testbed_sign_verify(env: &TestbedEnv) {
 
     let key = cert.request_private_key().await.unwrap();
     let (algo, signature) = key.sign(payload.as_ref()).await.unwrap();
-    assert_eq!(algo, PkiSignatureAlgorithm::RsassaPssSha256);
+    p_assert_eq!(algo, PkiSignatureAlgorithm::RsassaPssSha256);
 
     // Verify the signature using the certificate
 
@@ -96,7 +96,7 @@ async fn testbed_get_validation_path(env: &TestbedEnv) {
     let path = cert.get_validation_path().await.unwrap();
     // Alice's cert is directly signed by black_mesa root, so no intermediates
     assert!(path.intermediates.is_empty());
-    assert_eq!(path.leaf, cert.get_der().await.unwrap());
+    p_assert_eq!(path.leaf, cert.get_der().await.unwrap());
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -106,5 +106,5 @@ async fn testbed_to_reference(env: &TestbedEnv) {
     let alice_ref = certificates().alice_cert_ref();
     let cert = pki.open_certificate(&alice_ref).await.unwrap();
     let computed_ref = cert.to_reference().await.unwrap();
-    assert_eq!(computed_ref.hash, alice_ref.hash);
+    p_assert_eq!(computed_ref.hash, alice_ref.hash);
 }
