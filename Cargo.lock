@@ -2471,6 +2471,7 @@ dependencies = [
  "data-encoding",
  "env_logger",
  "error_set",
+ "futures",
  "hex-literal",
  "js-sys",
  "libparsec_client_connection",

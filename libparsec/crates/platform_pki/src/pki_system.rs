@@ -46,7 +46,7 @@ pub enum AvailablePkiCertificate {
         /// COMMON_NAME is often not that friendly...).
         ///
         /// See: https://learn.microsoft.com/en-us/uwp/api/windows.security.cryptography.certificates.certificate.friendlyname
-        friendly_name: String, // May be different that `X509CertificateDetails.common_name` TODO: give an example
+        friendly_name: String, // May be different that `X509CertificateDetails.common_name`
         details: UserX509CertificateDetails,
     },
     Invalid {
@@ -56,7 +56,7 @@ pub enum AvailablePkiCertificate {
 }
 
 impl AvailablePkiCertificate {
-    pub fn load_der(der: &[u8]) -> Self {
+    pub fn load_der(friendly_name: Option<String>, der: &[u8]) -> Self {
         use sha2::Digest as _;
 
         let digest = sha2::Sha256::digest(der);
@@ -66,7 +66,7 @@ impl AvailablePkiCertificate {
         match UserX509CertificateDetails::load_der(der) {
             Ok(details) => Self::Valid {
                 reference,
-                friendly_name: details.common_name.clone(),
+                friendly_name: friendly_name.unwrap_or_else(|| details.common_name.clone()),
                 details,
             },
             Err(invalid_reason) => Self::Invalid {

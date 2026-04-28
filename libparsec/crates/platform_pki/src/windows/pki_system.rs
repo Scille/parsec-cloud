@@ -48,7 +48,7 @@ impl PlatformPkiSystem {
         Ok(self
             .my_cert_store
             .certs()
-            .map(|cert| AvailablePkiCertificate::load_der(&cert.to_der()))
+            .map(|cert| AvailablePkiCertificate::load_der(cert.friendly_name().ok(), cert.to_der()))
             .collect())
     }
 }
@@ -217,6 +217,8 @@ pub fn show_certificate_selection_dialog_windows_only(
 }
 
 fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
+    use windows_sys::Win32::Security::Cryptography::UI::CryptUIDlgSelectCertificateFromStore;
+
     let raw_store = schannel_utils::get_raw_store(store);
 
     // SAFETY: We use `CryptUIDlgSelectCertificateFromStore` by providing it with a correct pointer
@@ -226,7 +228,6 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
     // https://learn.microsoft.com/en-us/windows/win32/api/cryptuiapi/nf-cryptuiapi-cryptuidlgselectcertificatefromstore
     // Rust doc:
     // https://docs.rs/windows-sys/latest/windows_sys/Win32/Security/Cryptography/UI/fn.CryptUIDlgSelectCertificateFromStore.html
-    use windows_sys::Win32::Security::Cryptography::UI::CryptUIDlgSelectCertificateFromStore;
     unsafe {
         let raw_cert_context = CryptUIDlgSelectCertificateFromStore(
             raw_store,

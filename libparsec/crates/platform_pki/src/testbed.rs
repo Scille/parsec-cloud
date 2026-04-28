@@ -63,6 +63,7 @@ fn compute_cert_ref(der: &[u8]) -> X509CertificateReference {
 
 #[derive(Debug)]
 pub(crate) struct TestbedCertEntry {
+    pub label: &'static str,
     pub cert_der: X509CertificateDer<'static>,
     pub cert_ref: X509CertificateReference,
     pub private_key: RsaPrivateKey,
@@ -96,20 +97,25 @@ pub(crate) struct TestbedPkiSystem {
 
 impl TestbedPkiSystem {
     fn new() -> Self {
-        let user_cert_data: Vec<(&[u8], &[u8])> = vec![
-            (ALICE_PEM, ALICE_KEY_PEM),
-            (BOB_PEM, BOB_KEY_PEM),
-            (MALLORY_SIGN_PEM, MALLORY_SIGN_KEY_PEM),
-            (MALLORY_ENCRYPT_PEM, MALLORY_ENCRYPT_KEY_PEM),
+        let user_cert_data = vec![
+            ("alice", ALICE_PEM, ALICE_KEY_PEM),
+            ("bob", BOB_PEM, BOB_KEY_PEM),
+            ("mallory sign", MALLORY_SIGN_PEM, MALLORY_SIGN_KEY_PEM),
+            (
+                "mallory encrypt",
+                MALLORY_ENCRYPT_PEM,
+                MALLORY_ENCRYPT_KEY_PEM,
+            ),
         ];
 
         let user_certs = user_cert_data
             .into_iter()
-            .map(|(cert_pem, key_pem)| {
+            .map(|(label, cert_pem, key_pem)| {
                 let cert_der = load_cert_der(cert_pem);
                 let cert_ref = compute_cert_ref(cert_der.as_ref());
                 let private_key = load_private_key(key_pem);
                 Arc::new(TestbedCertEntry {
+                    label,
                     cert_der,
                     cert_ref,
                     private_key,
@@ -164,7 +170,9 @@ impl TestbedPkiSystem {
             .certificates
             .user_certs
             .iter()
-            .map(|entry| AvailablePkiCertificate::load_der(&entry.cert_der))
+            .map(|entry| {
+                AvailablePkiCertificate::load_der(Some(entry.label.to_owned()), &entry.cert_der)
+            })
             .collect();
         Ok(certs)
     }

@@ -6,11 +6,11 @@ use crate::{
     AvailablePkiCertificate, PkiCertificate, PkiScwsConfig, PkiSystemInitError,
     PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
 };
+use futures::{StreamExt, TryStreamExt};
 use libparsec_types::prelude::*;
 use wasm_bindgen::JsCast;
 
 pub struct PlatformPkiSystem {
-    #[expect(dead_code)]
     scws: scwsapi::Scws,
 }
 
@@ -63,7 +63,38 @@ impl PlatformPkiSystem {
     pub async fn list_user_certificates(
         &self,
     ) -> Result<Vec<AvailablePkiCertificate>, PkiSystemListUserCertificateError> {
-        unimplemented!("platform not supported");
+        self.scws
+            .iter_working_reader()
+            .then(|token| async move {
+                futures::stream::iter(token.iter_objects().await.filter_map(|obj| {
+                    if let scwsapi::Object::Certificate(cert) = obj {
+                        Some(cert)
+                    } else {
+                        None
+                    }
+                }))
+                .then(|raw_cert| async move {
+                    let cert = super::PlatformPkiCertificate::from(raw_cert);
+                    cert.get_der()
+                        .await
+                        .map(|der| {
+                            AvailablePkiCertificate::load_der(
+                                Some(cert.certificate.ck_label()),
+                                der.as_ref(),
+                            )
+                        })
+                        .map_err(|e| {
+                            PkiSystemListUserCertificateError::Internal(anyhow::anyhow!(
+                                "Cannot obtain DER for certificate {name}: {e}",
+                                name = cert.certificate.ck_label()
+                            ))
+                        })
+                })
+                .try_collect::<Vec<_>>()
+                .await
+            })
+            .try_concat()
+            .await
     }
 }
 
