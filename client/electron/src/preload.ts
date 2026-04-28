@@ -88,7 +88,7 @@ process.once('loaded', async () => {
   });
 
   try {
-    const libparsec = await import('./libparsec');
+    const libparsec = require('./libparsec');
     contextBridge.exposeInMainWorld('libparsec_plugin', libparsec);
   } catch (error: any) {
     console.error(error);

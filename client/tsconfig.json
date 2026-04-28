@@ -5,7 +5,7 @@
         "strict": true,
         "jsx": "preserve",
         "importHelpers": true,
-        "moduleResolution": "Node",
+        "moduleResolution": "Bundler",
         "skipLibCheck": true,
         "resolveJsonModule": true,
         "esModuleInterop": true,
@@ -13,11 +13,10 @@
         "strictFunctionTypes": true,
         "useDefineForClassFields": true,
         "sourceMap": true,
-        "baseUrl": ".",
         "types": ["node", "vite/client", "w3c-image-capture"],
         "paths": {
-            "@/*": ["src/*"],
-            "@tests/*": ["tests/*"]
+            "@/*": ["./src/*"],
+            "@tests/*": ["./tests/*"]
         },
         "lib": ["ESNext", "DOM", "DOM.Iterable", "ScriptHost"]
     },

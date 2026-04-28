@@ -144,7 +144,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
           removeEntry: async (_name: string, _options?: FileSystemRemoveOptions): Promise<void> => {},
           resolve: async (_descendant: FileSystemHandle): Promise<string[] | null> => null,
           isSameEntry: async (_other: FileSystemHandle): Promise<boolean> => false,
-        };
+        } as unknown as FileSystemDirectoryHandle;
       };
     },
     { ...opts, testbedServer: TESTBED_SERVER },

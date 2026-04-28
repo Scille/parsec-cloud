@@ -60,7 +60,7 @@
         "file-type": "^21.3.2",
         "fs-extra": "^11.3.3",
         "luxon": "^3.5.0",
-        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#5dc4f58b56e32ce51f23982dcbf111a0e9fb5792",
+        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#6dbfbd41ef0116f39d456525fecee2d88726cf9b",
         "native-file-system-adapter": "^3.0.1",
         "pdfjs-dist": "^5.4.624",
         "qrcode-vue3": "^1.7.1",
