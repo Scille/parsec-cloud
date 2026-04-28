@@ -196,8 +196,8 @@ rustls-webpki = { version = "0.103.10", default-features = false }
 ruzstd = { version = "0.8.2", default-features = true }
 # Crate to interact with windows credential store, it's used notably in `native-tls` crate.
 schannel = { version = "0.1.29", default-features = false }
-scwsapi = { git = "https://github.com/Scille/scwsapi-rs.git", rev = "edd1e37200d4e503db3f224202bcf8a9db74277b", default-features = false }
-scwsapi-sys = { git = "https://github.com/Scille/scwsapi-rs.git", rev = "edd1e37200d4e503db3f224202bcf8a9db74277b", default-features = false }
+scwsapi = { git = "https://github.com/Scille/scwsapi-rs.git", rev = "aee3414b2a1a6afd815931a0dfda73d84d1daff1", default-features = false }
+scwsapi-sys = { git = "https://github.com/Scille/scwsapi-rs.git", rev = "aee3414b2a1a6afd815931a0dfda73d84d1daff1", default-features = false }
 sentry = { version = "0.47.0", default-features = false }
 sentry-log = { version = "0.47.0", default-features = false }
 serde = { version = "1.0.228", default-features = false }
