@@ -133,9 +133,9 @@ msgid ""
 "user-identification>` section below for more information):"
 msgstr ""
 "La requête peut également utiliser le champ ``user_email`` au lieu de "
-"``user_id`` pour identifier l'utilisateur de Parsec (voir la section :ref:"
-"`note on user identification <note-on-user-identification>` ci-dessous pour "
-"plus d'informations) :"
+"``user_id`` pour identifier l'utilisateur de Parsec (voir la "
+"section :ref:`note on user identification <note-on-user-identification>` ci-"
+"dessous pour plus d'informations) :"
 
 #: ../../hosting/freeze_users.rst:87
 msgid "Here's an example of running the request using ``curl`` and ``jq``:"

@@ -188,8 +188,8 @@ msgid ""
 "Ask the user to open the link and follow the steps to :ref:`request to join "
 "the organization <doc_userguide_join_organization_request>`."
 msgstr ""
-"Demandez à l'utilisateur d'ouvrir le lien et de suivre les étapes pour :ref:"
-"`demander à rejoindre l'organisation "
+"Demandez à l'utilisateur d'ouvrir le lien et de suivre les étapes "
+"pour :ref:`demander à rejoindre l'organisation "
 "<doc_userguide_join_organization_request>`."
 
 #: ../../userguide/manage_organization.rst:73
@@ -243,12 +243,12 @@ msgstr ""
 #: ../../userguide/manage_organization.rst:96
 msgid ""
 "Revocation is irreversible. If the revoked user needs to re-join the "
-"organization, it will need to go through the standard procedure to :ref:"
-"`join an organization <doc_userguide_join_organization>`"
+"organization, it will need to go through the standard procedure "
+"to :ref:`join an organization <doc_userguide_join_organization>`"
 msgstr ""
 "La révocation est irréversible. Si l'utilisateur révoqué a besoin de "
-"réintégrer l'organisation, il devra suivre la procédure standard pour :ref:"
-"`rejoindre une organisation <doc_userguide_join_organization>`"
+"réintégrer l'organisation, il devra suivre la procédure standard "
+"pour :ref:`rejoindre une organisation <doc_userguide_join_organization>`"
 
 #: ../../userguide/manage_organization.rst:101
 msgid ""

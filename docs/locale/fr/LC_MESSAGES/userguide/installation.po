@@ -186,8 +186,8 @@ msgid ""
 "Get the latest version from the `macFUSE website <https://osxfuse.github.io/"
 ">`_."
 msgstr ""
-"Téléchargez la dernière version sur le `site web de macFUSE <https://osxfuse."
-"github.io/>`_."
+"Téléchargez la dernière version sur le `site web de macFUSE <https://"
+"osxfuse.github.io/>`_."
 
 #: ../../userguide/installation.rst:121
 msgid "macFUSE download screen"

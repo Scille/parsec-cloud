@@ -309,8 +309,8 @@ msgid ""
 "This command will download all files in the \"bucket_name\" bucket to the "
 "local directory specified."
 msgstr ""
-"Cette commande permet de télécharger tous les fichiers du bucket « "
-"bucket_name » dans le répertoire local spécifié."
+"Cette commande permet de télécharger tous les fichiers du bucket "
+"« bucket_name » dans le répertoire local spécifié."
 
 #: ../../hosting/maintenance/backup_restore.rst:146
 msgid "Restoring the bucket"

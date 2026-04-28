@@ -193,8 +193,8 @@ msgstr ""
 #: ../../userguide/troubleshooting/cannot_login_organization.rst:68
 msgid "The Parsec version you are using (displayed in the About dialog)"
 msgstr ""
-"La version de Parsec que vous utilisez (affichée dans la boîte de dialogue « "
-"À propos »)"
+"La version de Parsec que vous utilisez (affichée dans la boîte de dialogue "
+"« À propos »)"
 
 #: ../../userguide/troubleshooting/cannot_login_organization.rst:69
 msgid ""

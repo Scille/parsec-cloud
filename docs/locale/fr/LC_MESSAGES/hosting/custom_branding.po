@@ -209,8 +209,8 @@ msgid ""
 "Copy the following ``.json`` code excerpts to ``custom_en-US.json`` and "
 "``custom_fr-FR.json`` files"
 msgstr ""
-"Copiez les extraits ``.json`` ci-après dans des fichiers ``custom_en-US."
-"json``  et ``custom_fr-FR.json`` respectivement"
+"Copiez les extraits ``.json`` ci-après dans des fichiers ``custom_en-"
+"US.json``  et ``custom_fr-FR.json`` respectivement"
 
 #: ../../hosting/custom_branding.rst:77
 msgid "Edit the original text values (but not the keys)"

@@ -54,7 +54,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "Parsec"
+project = "Parsec Documentation"
 copyright = "2016-present, Scille SAS"
 
 # The version info for the project you're documenting, acts as replacement

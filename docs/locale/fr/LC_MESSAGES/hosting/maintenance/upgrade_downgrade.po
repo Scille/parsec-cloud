@@ -35,9 +35,10 @@ msgstr ""
 
 #: ../../hosting/maintenance/upgrade_downgrade.rst:18
 msgid ""
-"Before upgrading, make sure to back up the database as explained in the :ref:"
-"`Backup and Restore section <doc_hosting_maintenance_backup_restore>` in "
-"case you need to roll back the update."
+"Before upgrading, make sure to back up the database as explained in "
+"the :ref:`Backup and Restore section "
+"<doc_hosting_maintenance_backup_restore>` in case you need to roll back the "
+"update."
 msgstr ""
 "Avant de procéder à la mise à jour, assurez-vous de sauvegarder la base de "
 "données comme expliqué dans la section :ref:`Sauvegarde et restauration "

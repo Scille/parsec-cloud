@@ -77,16 +77,16 @@ System Requirements
 
 The following panel describes the minimum software and hardware requirements.
 
-  .. admonition:: Minimum system requirements
+.. admonition:: Minimum system requirements
 
-    - **Hardware**: 1 vCPU/core with 1GB RAM
-    - **Database**: PostgreSQL v16+, 20GB for metadata storage
-    - **S3 Object Storage**: 2TB for encrypted data storage (around x100 metadata size)
+  - **Hardware**: 1 vCPU/core with 1GB RAM
+  - **Database**: PostgreSQL v16+, 20GB for metadata storage
+  - **S3 Object Storage**: 2TB for encrypted data storage (around x100 metadata size)
 
-  .. important::
+.. important::
 
-    It is not recommended to deploy both **Parsec Server** and **PostgreSQL database** on a single system for
-    production use, but it is a good option for testing purposes.
+  It is not recommended to deploy both **Parsec Server** and **PostgreSQL database** on a single system for
+  production use, but it is a good option for testing purposes.
 
 
 Preparation
@@ -117,6 +117,9 @@ The ``setup-tls.sh`` script below will allow you to generate everything you need
    a. Change the key file group ID to ``1234`` (the GID used by the ``parsec-server`` container).
    b. Change the file mode to give read permission to the group ``1234``. This is required because
       Docker Compose does not allow to mount the file with the correct permissions in the container.
+
+.. admonition:: Example
+  :collapsible: open
 
 .. literalinclude:: setup-tls.sh
   :language: bash
@@ -349,15 +352,15 @@ Installation
 
 1. Set up a virtual env:
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    python -m venv venv
+  python -m venv venv
 
 2. Configure your shell to use the virtual env:
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    source venv/bin/activate
+  source venv/bin/activate
 
 3. Install ``parsec-server``
 
@@ -367,45 +370,45 @@ Installation
 
   .. code-block:: bash
 
-    python -m pip install 'parsec-cloud==3.8.2-a.0+dev'
+python -m pip install 'parsec-cloud==3.8.2-a.0+dev'
 
 4. Prepare the database by applying the migrations:
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    source venv/bin/activate
-    set -a
-    source parsec-db.env
-    python -m parsec migrate
+  source venv/bin/activate
+  set -a
+  source parsec-db.env
+  python -m parsec migrate
 
 Start the server
 ----------------
 
 1. Create a wrapper script ``run-parsec-server``
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    # Load the virtualenv.
-    source venv/bin/activate
+  # Load the virtualenv.
+  source venv/bin/activate
 
-    # Load the env file into the environment table.
-    set -a
-    source parsec-admin-token.env
-    source parsec-db.env
-    source parsec-smtp.env
-    source parsec-s3.env
-    source parsec.env
-    set +a
+  # Load the env file into the environment table.
+  set -a
+  source parsec-admin-token.env
+  source parsec-db.env
+  source parsec-smtp.env
+  source parsec-s3.env
+  source parsec.env
+  set +a
 
-    # Start Parsec Server.
-    python -m parsec run
+  # Start Parsec Server.
+  python -m parsec run
 
 2. Execute the wrapper script ``run-parsec-server``
 
-  .. note::
+.. note::
 
-    To run the wrapper with only ``run-parsec-server`` you need to have set the executable mode on the script file (``chmod +x run-parsec-server``).
-    Otherwise, you need to execute it with the ``bash`` shell (``bash run-parsec-server``).
+  To run the wrapper with only ``run-parsec-server`` you need to have set the executable mode on the script file (``chmod +x run-parsec-server``).
+  Otherwise, you need to execute it with the ``bash`` shell (``bash run-parsec-server``).
 
 
 Start using Parsec Server
@@ -527,3 +530,4 @@ We provide 3 options to configure the TLS connection:
    If you followed the installation described in `Deploy with Docker`_,
    you should only have to replace the file ``parsec-server.crt`` and ``parsec-server.key`` that where generated on section `TLS certificates`_.
    The env variable ``PARSEC_SSL_KEYFILE`` and ``PARSEC_SSL_CERTFILE`` are already configured in ``parsec.env`` that was defined in `Parsec env file`_.
+

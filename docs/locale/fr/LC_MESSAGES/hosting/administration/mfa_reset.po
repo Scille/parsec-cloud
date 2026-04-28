@@ -29,8 +29,8 @@ msgstr ""
 "Lorsqu'un utilisateur perd l'accès à son application d'authentification (par "
 "exemple, en cas de perte ou de remplacement de son téléphone), sa "
 "configuration MFA doit être réinitialisée par un **administrateur de "
-"serveur** avant que l'utilisateur puisse la reconfigurer (voir :ref:"
-"`doc_userguide_mfa`)."
+"serveur** avant que l'utilisateur puisse la reconfigurer "
+"(voir :ref:`doc_userguide_mfa`)."
 
 #: ../../hosting/administration/mfa_reset.rst:12
 msgid "To reset a user's MFA setup, the server administrator needs to provide:"
@@ -41,8 +41,8 @@ msgstr ""
 #: ../../hosting/administration/mfa_reset.rst:14
 msgid "The Parsec server address, as a Parsec URL ``parsec3://hostname:port``"
 msgstr ""
-"L'adresse du serveur Parsec, en tant qu'URL Parsec ``parsec3://hostname:"
-"port``"
+"L'adresse du serveur Parsec, en tant qu'URL Parsec ``parsec3://"
+"hostname:port``"
 
 #: ../../hosting/administration/mfa_reset.rst:15
 msgid "The ``administration_token`` configured on the Parsec server"

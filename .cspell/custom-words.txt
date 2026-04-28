@@ -120,6 +120,7 @@ fetchval
 filechooser
 fileprovider
 firacode
+fixedfooter
 fncychap
 folderish
 fontpkg

@@ -18,7 +18,7 @@ Parsec is available for Linux, Mac, and Windows operating systems.
 
       1. Download the latest stable version of the Windows installer:
 
-      .. image:: screens/download-parsec.png
+      .. image:: screens/download-parsec.svg
           :align: center
           :alt: download parsec
           :target: `Download Parsec`_
@@ -79,7 +79,7 @@ Parsec is available for Linux, Mac, and Windows operating systems.
 
       1. Download the latest stable version of the **AppImage** file:
 
-      .. image:: screens/download-parsec.png
+      .. image:: screens/download-parsec.svg
           :align: center
           :alt: download parsec
           :target: `Download Parsec`_
@@ -99,7 +99,7 @@ Parsec is available for Linux, Mac, and Windows operating systems.
 
       1. Download the latest stable version of the **macOS installer**:
 
-      .. image:: screens/download-parsec.png
+      .. image:: screens/download-parsec.svg
           :align: center
           :alt: download parsec
           :target: `Download Parsec`_

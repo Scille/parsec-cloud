@@ -207,8 +207,8 @@ msgstr "🧑‍💻 Facile à héberger soi-même."
 
 #: ../../userguide/introduction.rst:90
 msgid ""
-"You can easily deploy Parsec on your own infrastructure. Take a look at the :"
-"ref:`Hosting guide <doc_hosting_intro>`."
+"You can easily deploy Parsec on your own infrastructure. Take a look at "
+"the :ref:`Hosting guide <doc_hosting_intro>`."
 msgstr ""
 "Vous pouvez facilement déployer Parsec sur votre propre infrastructure. "
 "Consultez le :ref:`Guide d'Hébergement <doc_hosting_intro>`."
