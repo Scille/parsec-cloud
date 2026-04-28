@@ -4,9 +4,9 @@ use libparsec_types::prelude::*;
 use rustls_pki_types::CertificateDer;
 
 use crate::{
-    PkiCertificateGetDerError, PkiCertificateGetValidationPathError,
-    PkiCertificateRequestPrivateKeyError, PkiCertificateToReferenceError, PkiPrivateKey,
-    X509ValidationPathOwned,
+    platform::PlatformPkiPrivateKey, PkiCertificateGetDerError,
+    PkiCertificateGetValidationPathError, PkiCertificateRequestPrivateKeyError,
+    PkiCertificateToReferenceError, PkiPrivateKey, X509ValidationPathOwned,
 };
 
 #[derive(Debug, Clone)]
@@ -23,7 +23,14 @@ impl PlatformPkiCertificate {
     pub async fn request_private_key(
         &self,
     ) -> Result<PkiPrivateKey, PkiCertificateRequestPrivateKeyError> {
-        unimplemented!("platform not supported");
+        self.0
+            .request_private_key()
+            .await
+            .map_err(|e| PkiCertificateRequestPrivateKeyError::Internal(e.into()))?
+            .ok_or(PkiCertificateRequestPrivateKeyError::NotFound)
+            .map(|private_key| PkiPrivateKey {
+                platform: PlatformPkiPrivateKey(private_key),
+            })
     }
 
     pub async fn to_reference(
