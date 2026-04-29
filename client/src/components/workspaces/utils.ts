@@ -338,16 +338,18 @@ async function restoreWorkspace(workspace: WorkspaceInfo, informationManager: In
 }
 
 async function trashWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager) {
-  let minimumArchivingPeriodInSeconds = 30 * 24 * 3600; // 30 days
+  let realmMinimumArchivingPeriodBeforeDeletionInSeconds = 30 * 24 * 3600; // 30 days
   const clientResult = await getClientInfo();
   if (clientResult.ok) {
-    minimumArchivingPeriodInSeconds = Number(clientResult.value.serverOrganizationConfig.minimumArchivingPeriod);
+    realmMinimumArchivingPeriodBeforeDeletionInSeconds = Number(
+      clientResult.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion,
+    );
   }
   // The real deletion date will only be determined once the realm archiving certificate is created.
   // Typically the more the user waits before accepting the confirmation prompt, the more the actual
   // deletion date will differs. In any case we are talking of just a couple of seconds of difference
   // which is no big deal since the archiving period is supposed to be a multiple-days long period.
-  const estimatedDeletionDate = DateTime.now().plus({ seconds: minimumArchivingPeriodInSeconds });
+  const estimatedDeletionDate = DateTime.now().plus({ seconds: realmMinimumArchivingPeriodBeforeDeletionInSeconds });
   const answer = await askQuestion(
     'WorkspacesPage.trashWorkspace.title',
     {
@@ -360,7 +362,7 @@ async function trashWorkspace(workspace: WorkspaceInfo, informationManager: Info
     return;
   }
 
-  const result = await parsecTrashWorkspace(workspace.id, minimumArchivingPeriodInSeconds);
+  const result = await parsecTrashWorkspace(workspace.id, realmMinimumArchivingPeriodBeforeDeletionInSeconds);
 
   informationManager.present(
     new Information({
