@@ -334,7 +334,9 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--organization-initial-realm-minimum-archiving-period-before-deletion",
     envvar="PARSEC_ORGANIZATION_INITIAL_REALM_MINIMUM_ARCHIVING_PERIOD_BEFORE_DELETION",
     show_envvar=True,
-    help="Minimum archiving period in seconds used to configure newly created organizations",
+    help="""Minimum archiving period mandatory when scheduling a realm for deletion
+used to configure newly created organizations
+""",
     default=3600 * 24 * 30,
     show_default="2592000 seconds i.e. 30 days",
     type=int,
