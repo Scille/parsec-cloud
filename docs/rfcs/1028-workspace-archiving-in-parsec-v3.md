@@ -277,7 +277,7 @@ The two new response status to add to the affected commands are:
             [...]
 ```
 
-### 2.3 - `OrganizationConfig` SSE event updated with `minimum_archiving_period`
+### 2.3 - `OrganizationConfig` SSE event updated with `realm_minimum_archiving_period_before_deletion`
 
 The `OrganizationConfig` variant of the `APIEvent` union (in `events_listen`) is extended with
 a new field so that clients learn the minimum archiving period without an extra round-trip:
@@ -290,7 +290,7 @@ a new field so that clients learn the minimum archiving period without an extra 
                             // [...existing fields...]
                             {
                                 // In seconds; default 2592000 (30 days)
-                                "name": "minimum_archiving_period",
+                                "name": "realm_minimum_archiving_period_before_deletion",
                                 "type": "Integer",
                                 "introduced_in": "5.5"
                             }
@@ -302,12 +302,14 @@ a new field so that clients learn the minimum archiving period without an extra 
 
 The administration REST API already exposes `minimum_archiving_period` (in seconds) both in the
 `GET /administration/organizations/<organization_id>` response and as an optional field in the
-`PATCH /administration/organizations/<organization_id>` request body.  No new changes are
-required here.
+`PATCH /administration/organizations/<organization_id>` request body.
+
+Only change required is to rename this field as `realm_minimum_archiving_period_before_deletion` in
+order to better understand what it is about.
 
 ## 3 - Server CLI
 
-The `--organization-initial-minimum-archiving-period` option is missing and should be
+The `--organization-initial-realm-minimum-archiving-period-before-deletion` option is missing and should be
 added to the the server CLI.
 
 ## 4 - Behavior
@@ -348,9 +350,9 @@ The following rules apply during this window:
    (see section 5).
 
 > [!NOTE]
-> The `minimum_archiving_period` should minimize the need for "un-delete" by forcing the
-> workspace to stay in an "about to be deleted" state long enough for the users to notice this
-> way a mistake.
+> The `realm_minimum_archiving_period_before_deletion` should minimize the need for "un-delete" by
+> forcing the workspace to stay in an "about to be deleted" state long enough for the users to notice
+> this way a mistake.
 >
 > However, since the client can no longer access the workspace once the deletion deadline as been
 > reached, this create a typical pattern where only then the users realized the deletion was a mistake.
