@@ -378,7 +378,7 @@ the archiving configuration of a workspace:
 ```bash
 parsec-cli workspace archive --device $DEVICE --workspace $WORKSPACE_ID --archived
 parsec-cli workspace archive --device $DEVICE --workspace $WORKSPACE_ID \
-    --deletion-planned 2026-05-18T00:00:00Z
+    --deletion-planned-in-seconds 2592000
 parsec-cli workspace archive --device $DEVICE --workspace $WORKSPACE_ID --available
 ```
 
