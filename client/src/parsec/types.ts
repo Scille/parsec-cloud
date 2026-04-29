@@ -74,6 +74,7 @@ export {
   PkiSystemInitErrorTag,
   Platform,
   RealmArchivingConfigurationTag,
+  RequestedRealmArchivingConfigurationTag,
   ShowCertificateSelectionDialogErrorTag,
   SubmitAsyncEnrollmentErrorTag,
   SubmitAsyncEnrollmentIdentityStrategyTag,
