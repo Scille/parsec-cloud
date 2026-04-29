@@ -52,10 +52,12 @@ npm run test:e2e:headless
 
 ## Web dev
 
-> Libparsec is not yet available on web platform :(
-
 ```bash
 npm run web:open
+
+# Use `TESTBED_SERVER` to have the application connect to the testbed server and start with
+# a CoolOrg testbed template (see `libparsec/crates/testbed/src/templates/coolorg.rs`).
+TESTBED_SERVER='parsec3://127.0.0.1:6770?no_ssl=true' npm run web:open
 ```
 
 ## Electron dev
@@ -66,6 +68,16 @@ npm run electron:copy
 
 # Update electron directory after main project changes and launch the desktop app
 npm run electron:open
+
+# Typical development configuration:
+# - `TESTBED_SERVER`: The application connects to the testbed server and start with a CoolOrg testbed
+#   template (see `libparsec/crates/testbed/src/templates/coolorg.rs`).
+# - `SKIP_VITE_BUILD_FOR_NATIVE`: Disable building the GUI (see `client/scripts/vite_build_for_native.cjs`). This is
+#   useful when working on libparsec (since the GUI code doesn't change).
+# - `PARSEC_RUST_LOG_FILE`: Send libparsec logs to a file. But default libparsec logs are written to stderr which is hard
+#   to obtain on electron (partly because native modules run in a separated process, partly because the Javascript ecosystem
+#   is a big half-broken mess...).
+SKIP_VITE_BUILD_FOR_NATIVE= TESTBED_SERVER='parsec3://127.0.0.1:6770?no_ssl=true' PARSEC_RUST_LOG_FILE=parsec.log npm run electron:open
 
 # Generate electron dist for release
 npm run electron:dist
