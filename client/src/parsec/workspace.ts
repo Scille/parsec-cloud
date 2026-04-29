@@ -20,6 +20,7 @@ import {
   ParsecWorkspacePathAddr,
   ParsecWorkspacePathAddrAndRedirectionURL,
   RealmArchivingConfigurationTag,
+  RequestedRealmArchivingConfigurationTag,
   Result,
   SystemPath,
   UserID,
@@ -336,7 +337,7 @@ export async function archiveWorkspace(workspace: WorkspaceID): Promise<Result<n
   if (!handle) {
     return generateNoHandleError<ClientArchiveWorkspaceError>();
   }
-  return await libparsec.clientArchiveWorkspace(handle, workspace, { tag: RealmArchivingConfigurationTag.Archived });
+  return await libparsec.clientArchiveWorkspace(handle, workspace, { tag: RequestedRealmArchivingConfigurationTag.Archived });
 }
 
 export async function restoreWorkspace(workspace: WorkspaceID): Promise<Result<null, ClientArchiveWorkspaceError>> {
@@ -344,17 +345,20 @@ export async function restoreWorkspace(workspace: WorkspaceID): Promise<Result<n
   if (!handle) {
     return generateNoHandleError<ClientArchiveWorkspaceError>();
   }
-  return await libparsec.clientArchiveWorkspace(handle, workspace, { tag: RealmArchivingConfigurationTag.Available });
+  return await libparsec.clientArchiveWorkspace(handle, workspace, { tag: RequestedRealmArchivingConfigurationTag.Available });
 }
 
-export async function trashWorkspace(workspace: WorkspaceID, deletionDate: DateTime): Promise<Result<null, ClientArchiveWorkspaceError>> {
+export async function trashWorkspace(
+  workspace: WorkspaceID,
+  archivingPeriodInSeconds: number,
+): Promise<Result<null, ClientArchiveWorkspaceError>> {
   const handle = getConnectionHandle();
   if (!handle) {
     return generateNoHandleError<ClientArchiveWorkspaceError>();
   }
   return await libparsec.clientArchiveWorkspace(handle, workspace, {
-    tag: RealmArchivingConfigurationTag.DeletionPlanned,
-    deletionDate: deletionDate.toMillis() as any as DateTime,
+    tag: RequestedRealmArchivingConfigurationTag.DeletionPlanned,
+    archivingPeriodInSeconds,
   });
 }
 

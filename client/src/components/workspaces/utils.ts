@@ -33,7 +33,7 @@ import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { DateTime, DurationLike } from 'luxon';
+import { DateTime } from 'luxon';
 import { Answer, Clipboard, DisplayState, I18n, MsModalResult, Translatable, askQuestion, getTextFromUser } from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
@@ -338,17 +338,21 @@ async function restoreWorkspace(workspace: WorkspaceInfo, informationManager: In
 }
 
 async function trashWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager) {
-  let minimumArchivingPeriod: DurationLike = { days: 30 };
+  let minimumArchivingPeriodInSeconds = 30 * 24 * 3600; // 30 days
   const clientResult = await getClientInfo();
   if (clientResult.ok) {
-    minimumArchivingPeriod = { seconds: Number(clientResult.value.serverOrganizationConfig.minimumArchivingPeriod) };
+    minimumArchivingPeriodInSeconds = Number(clientResult.value.serverOrganizationConfig.minimumArchivingPeriod);
   }
-  const deletionDate = DateTime.now().plus(minimumArchivingPeriod);
+  // The real deletion date will only be determined once the realm archiving certificate is created.
+  // Typically the more the user waits before accepting the confirmation prompt, the more the actual
+  // deletion date will differs. In any case we are talking of just a couple of seconds of difference
+  // which is no big deal since the archiving period is supposed to be a multiple-days long period.
+  const estimatedDeletionDate = DateTime.now().plus({ seconds: minimumArchivingPeriodInSeconds });
   const answer = await askQuestion(
     'WorkspacesPage.trashWorkspace.title',
     {
       key: 'WorkspacesPage.trashWorkspace.subtitle',
-      data: { workspace: workspace.name, deletionDate: I18n.translate(I18n.formatDate(deletionDate)) },
+      data: { workspace: workspace.name, deletionDate: I18n.translate(I18n.formatDate(estimatedDeletionDate)) },
     },
     { yesText: 'WorkspacesPage.trashWorkspace.yes', noText: 'WorkspacesPage.trashWorkspace.no', yesIsDangerous: true },
   );
@@ -356,7 +360,7 @@ async function trashWorkspace(workspace: WorkspaceInfo, informationManager: Info
     return;
   }
 
-  const result = await parsecTrashWorkspace(workspace.id, deletionDate);
+  const result = await parsecTrashWorkspace(workspace.id, minimumArchivingPeriodInSeconds);
 
   informationManager.present(
     new Information({
