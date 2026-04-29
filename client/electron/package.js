@@ -103,11 +103,6 @@ const WIN_SIGN_OPTIONS = {
 /**
  * @type {Partial<import('app-builder-lib').MacConfiguration>}
  */
-const MACOS_SIGN_OPTIONS = {
-  notarize: {
-    teamId: process.env.APPLE_TEAM_ID,
-  },
-};
 
 function buildArtifactName() {
   const buildName = OPTS.hardened
@@ -189,15 +184,12 @@ const options = {
     guid: '2f56a772-db54-4a32-b264-28c42970f684',
   },
 
-  afterSign: OPTS.sign === false || OPTS.platform !== 'darwin' ? undefined : 'scripts/after-sign.js',
-
   mac: {
     target: 'default',
     category: 'public.app-category.productivity',
     hardenedRuntime: true,
     entitlements: './macOS/entitlements.plist',
     entitlementsInherit: './macOS/entitlements.plist',
-    ...(OPTS.sign ? MACOS_SIGN_OPTIONS : {}),
     // https://www.electron.build/mac#binaries
     binaries: ['build/src/libparsec.node'],
   },
