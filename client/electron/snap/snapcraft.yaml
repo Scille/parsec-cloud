@@ -132,6 +132,7 @@ parts:
       - # Define a placeholder for the token, it will be replaced by the CI/CD pipeline.
         SENTRY_AUTH_TOKEN: __TOKEN__
       - VITE_MODE: development
+      - NPM_CONFIG_LOGLEVEL: silent
     override-build: |
       set -x
 
@@ -167,7 +168,7 @@ parts:
       fi
 
       # Package
-      node package.js --mode prod --platform linux dir
+      node package.cjs --mode prod --platform linux dir
 
       cp -vr dist/linux-unpacked "$CRAFT_PART_INSTALL"/app
 

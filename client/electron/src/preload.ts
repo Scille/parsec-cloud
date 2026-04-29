@@ -1,20 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-require('./rt/electron-rt');
-import * as fs from 'fs';
-
-// User Defined Preload scripts below
-
 import { contextBridge, ipcRenderer } from 'electron';
+import * as fs from 'fs';
+import { createRequire } from 'module';
 import path from 'path';
-import { PageToWindowChannel } from './communicationChannels';
+import { PageToWindowChannel } from './communicationChannels.js';
+const _require = createRequire(import.meta.url);
 
-import unhandled from 'electron-unhandled';
+contextBridge.exposeInMainWorld('CapacitorCustomPlatform', { name: 'electron', plugins: {} });
 
-// Graceful handling of unhandled errors.
-unhandled({
-  showDialog: false,
-  logger: (error: Error) => ipcRenderer.send(PageToWindowChannel.Log, 'error', `Unhandled error in renderer: ${String(error)}`),
+process.on('uncaughtException', (error: Error) => {
+  ipcRenderer.send(PageToWindowChannel.Log, 'error', `Unhandled error in renderer: ${String(error)}`);
 });
 
 let CUSTOM_BRANDING_FOLDER = './';
@@ -71,7 +67,7 @@ process.once('loaded', async () => {
       ipcRenderer.send(PageToWindowChannel.OpenPopup, url);
       return true;
     },
-    readCustomFile: (file: string): Promise<ArrayBuffer> => {
+    readCustomFile: (file: string): Promise<ArrayBuffer | undefined> => {
       return new Promise((resolve, _reject) => {
         // make sure that it's only a file name to avoid path injections
         file = path.basename(file);
@@ -88,7 +84,7 @@ process.once('loaded', async () => {
   });
 
   try {
-    const libparsec = require('./libparsec');
+    const libparsec = _require('./libparsec');
     contextBridge.exposeInMainWorld('libparsec_plugin', libparsec);
   } catch (error: any) {
     console.error(error);
