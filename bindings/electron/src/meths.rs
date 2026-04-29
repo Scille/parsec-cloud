@@ -3177,8 +3177,8 @@ fn struct_server_organization_config_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "activeUsersLimit")?;
         variant_active_users_limit_js_to_rs(cx, js_val)?
     };
-    let minimum_archiving_period = {
-        let js_val: Handle<JsBigInt> = obj.get(cx, "minimumArchivingPeriod")?;
+    let realm_minimum_archiving_period_before_deletion = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "realmMinimumArchivingPeriodBeforeDeletion")?;
         {
             let v = js_val
                 .to_u64(cx)
@@ -3189,7 +3189,7 @@ fn struct_server_organization_config_js_to_rs<'a>(
     Ok(libparsec::ServerOrganizationConfig {
         user_profile_outsider_allowed,
         active_users_limit,
-        minimum_archiving_period,
+        realm_minimum_archiving_period_before_deletion,
     })
 }
 
@@ -3207,8 +3207,13 @@ fn struct_server_organization_config_rs_to_js<'a>(
     )?;
     let js_active_users_limit = variant_active_users_limit_rs_to_js(cx, rs_obj.active_users_limit)?;
     js_obj.set(cx, "activeUsersLimit", js_active_users_limit)?;
-    let js_minimum_archiving_period = JsBigInt::from_u64(cx, rs_obj.minimum_archiving_period);
-    js_obj.set(cx, "minimumArchivingPeriod", js_minimum_archiving_period)?;
+    let js_realm_minimum_archiving_period_before_deletion =
+        JsBigInt::from_u64(cx, rs_obj.realm_minimum_archiving_period_before_deletion);
+    js_obj.set(
+        cx,
+        "realmMinimumArchivingPeriodBeforeDeletion",
+        js_realm_minimum_archiving_period_before_deletion,
+    )?;
     Ok(js_obj)
 }
 

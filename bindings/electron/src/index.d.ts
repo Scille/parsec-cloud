@@ -348,7 +348,7 @@ export interface ServerConfig {
 export interface ServerOrganizationConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
-    minimumArchivingPeriod: number
+    realmMinimumArchivingPeriodBeforeDeletion: number
 }
 
 

@@ -3311,8 +3311,8 @@ fn struct_server_organization_config_js_to_rs(
         let js_val = Reflect::get(&obj, &"activeUsersLimit".into())?;
         variant_active_users_limit_js_to_rs(js_val)?
     };
-    let minimum_archiving_period = {
-        let js_val = Reflect::get(&obj, &"minimumArchivingPeriod".into())?;
+    let realm_minimum_archiving_period_before_deletion = {
+        let js_val = Reflect::get(&obj, &"realmMinimumArchivingPeriodBeforeDeletion".into())?;
         {
             let v = u64::try_from(js_val)
                 .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
@@ -3322,7 +3322,7 @@ fn struct_server_organization_config_js_to_rs(
     Ok(libparsec::ServerOrganizationConfig {
         user_profile_outsider_allowed,
         active_users_limit,
-        minimum_archiving_period,
+        realm_minimum_archiving_period_before_deletion,
     })
 }
 
@@ -3339,11 +3339,12 @@ fn struct_server_organization_config_rs_to_js(
     )?;
     let js_active_users_limit = variant_active_users_limit_rs_to_js(rs_obj.active_users_limit)?;
     Reflect::set(&js_obj, &"activeUsersLimit".into(), &js_active_users_limit)?;
-    let js_minimum_archiving_period = JsValue::from(rs_obj.minimum_archiving_period);
+    let js_realm_minimum_archiving_period_before_deletion =
+        JsValue::from(rs_obj.realm_minimum_archiving_period_before_deletion);
     Reflect::set(
         &js_obj,
-        &"minimumArchivingPeriod".into(),
-        &js_minimum_archiving_period,
+        &"realmMinimumArchivingPeriodBeforeDeletion".into(),
+        &js_realm_minimum_archiving_period_before_deletion,
     )?;
     Ok(js_obj)
 }
