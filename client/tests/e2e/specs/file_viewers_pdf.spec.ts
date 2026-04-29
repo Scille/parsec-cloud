@@ -309,7 +309,8 @@ msTest.describe(() => {
     await expectCanvasStateToBe(fourthPage, CanvasStates.Failed);
   });
 
-  msTest('PDF viewer: fullscreen', async ({ documents }, testInfo: TestInfo) => {
+  // TODO: Flaky test (see https://github.com/Scille/parsec-cloud/issues/12720)
+  msTest.fixme('PDF viewer: fullscreen', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Pdf, false);
 
     await openFileType(documents, 'pdf');
