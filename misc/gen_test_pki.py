@@ -274,22 +274,25 @@ def create_trustchain(
 
     # Create key file
     key_file = workdir / (chain.name + ".key")
-
-    print(f"Creating key {key_file} of type {chain.key_algorithm}")
-    key_file.parent.mkdir(parents=True, exist_ok=True)
-    chain.key_algorithm.run_openssl_cmd(key_file)
-
     cert_file = workdir / (chain.name + ".crt")
-    print(f"Creating cert {cert_file}")
-    cert_file.parent.mkdir(parents=True, exist_ok=True)
-
-    if signer is None:
-        generate_self_signed_cert(chain, key_file, cert_file)
-    else:
-        generate_signed_cert(chain, signer, key_file, cert_file, output_dir)
-
     pkcs12_file = workdir / (chain.name + ".pfx")
-    generate_pkcs12_file(chain, cert_file, key_file, pkcs12_file)
+
+    if key_file.exists():
+        print(f"Skipping {key_file} creation since it already exists")
+    else:
+        print(f"Creating key {key_file} of type {chain.key_algorithm}")
+        key_file.parent.mkdir(parents=True, exist_ok=True)
+        chain.key_algorithm.run_openssl_cmd(key_file)
+
+        print(f"Creating cert {cert_file}")
+        cert_file.parent.mkdir(parents=True, exist_ok=True)
+
+        if signer is None:
+            generate_self_signed_cert(chain, key_file, cert_file)
+        else:
+            generate_signed_cert(chain, signer, key_file, cert_file, output_dir)
+
+        generate_pkcs12_file(chain, cert_file, key_file, pkcs12_file)
 
     generated = {}
 
