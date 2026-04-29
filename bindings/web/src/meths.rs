@@ -16366,6 +16366,90 @@ fn variant_remove_device_data_error_rs_to_js(
     Ok(js_obj)
 }
 
+// RequestedRealmArchivingConfiguration
+
+#[allow(dead_code)]
+fn variant_requested_realm_archiving_configuration_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::RequestedRealmArchivingConfiguration, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "RequestedRealmArchivingConfigurationArchived" => {
+            Ok(libparsec::RequestedRealmArchivingConfiguration::Archived)
+        }
+        "RequestedRealmArchivingConfigurationAvailable" => {
+            Ok(libparsec::RequestedRealmArchivingConfiguration::Available)
+        }
+        "RequestedRealmArchivingConfigurationDeletionPlanned" => {
+            let archiving_period_in_seconds = {
+                let js_val = Reflect::get(&obj, &"archivingPeriodInSeconds".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            Ok(
+                libparsec::RequestedRealmArchivingConfiguration::DeletionPlanned {
+                    archiving_period_in_seconds,
+                },
+            )
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a RequestedRealmArchivingConfiguration",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_requested_realm_archiving_configuration_rs_to_js(
+    rs_obj: libparsec::RequestedRealmArchivingConfiguration,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::RequestedRealmArchivingConfiguration::Archived => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"RequestedRealmArchivingConfigurationArchived".into(),
+            )?;
+        }
+        libparsec::RequestedRealmArchivingConfiguration::Available => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"RequestedRealmArchivingConfigurationAvailable".into(),
+            )?;
+        }
+        libparsec::RequestedRealmArchivingConfiguration::DeletionPlanned {
+            archiving_period_in_seconds,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"RequestedRealmArchivingConfigurationDeletionPlanned".into(),
+            )?;
+            let js_archiving_period_in_seconds = JsValue::from(archiving_period_in_seconds);
+            Reflect::set(
+                &js_obj,
+                &"archivingPeriodInSeconds".into(),
+                &js_archiving_period_in_seconds,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // SelfShamirRecoveryInfo
 
 #[allow(dead_code)]
@@ -23063,7 +23147,8 @@ pub fn clientArchiveWorkspace(client: u32, realm_id: String, configuration: Obje
             custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let configuration = configuration.into();
-        let configuration = variant_realm_archiving_configuration_js_to_rs(configuration)?;
+        let configuration =
+            variant_requested_realm_archiving_configuration_js_to_rs(configuration)?;
 
         let ret = libparsec::client_archive_workspace(client, realm_id, configuration).await;
         Ok(match ret {

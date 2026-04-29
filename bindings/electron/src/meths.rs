@@ -14865,6 +14865,80 @@ fn variant_remove_device_data_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// RequestedRealmArchivingConfiguration
+
+#[allow(dead_code)]
+fn variant_requested_realm_archiving_configuration_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::RequestedRealmArchivingConfiguration> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "RequestedRealmArchivingConfigurationArchived" => {
+            Ok(libparsec::RequestedRealmArchivingConfiguration::Archived)
+        }
+        "RequestedRealmArchivingConfigurationAvailable" => {
+            Ok(libparsec::RequestedRealmArchivingConfiguration::Available)
+        }
+        "RequestedRealmArchivingConfigurationDeletionPlanned" => {
+            let archiving_period_in_seconds = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "archivingPeriodInSeconds")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            Ok(
+                libparsec::RequestedRealmArchivingConfiguration::DeletionPlanned {
+                    archiving_period_in_seconds,
+                },
+            )
+        }
+        _ => cx.throw_type_error("Object is not a RequestedRealmArchivingConfiguration"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_requested_realm_archiving_configuration_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::RequestedRealmArchivingConfiguration,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::RequestedRealmArchivingConfiguration::Archived => {
+            let js_tag = JsString::try_new(cx, "RequestedRealmArchivingConfigurationArchived")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::RequestedRealmArchivingConfiguration::Available => {
+            let js_tag = JsString::try_new(cx, "RequestedRealmArchivingConfigurationAvailable")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::RequestedRealmArchivingConfiguration::DeletionPlanned {
+            archiving_period_in_seconds,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "RequestedRealmArchivingConfigurationDeletionPlanned")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_archiving_period_in_seconds =
+                JsNumber::new(cx, archiving_period_in_seconds as f64);
+            js_obj.set(
+                cx,
+                "archivingPeriodInSeconds",
+                js_archiving_period_in_seconds,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // SelfShamirRecoveryInfo
 
 #[allow(dead_code)]
@@ -22388,7 +22462,7 @@ fn client_archive_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let configuration = {
         let js_val = cx.argument::<JsObject>(2)?;
-        variant_realm_archiving_configuration_js_to_rs(&mut cx, js_val)?
+        variant_requested_realm_archiving_configuration_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
