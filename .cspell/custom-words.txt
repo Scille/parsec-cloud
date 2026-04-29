@@ -296,6 +296,7 @@ psqlrc
 psrk
 PSSI
 publickeybytes
+pubkeys
 pubout
 pulseaudio
 PWDEBUG
