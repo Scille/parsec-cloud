@@ -79,8 +79,8 @@ pub use crate::certif::{
     CertifListWorkspaceUsersError as ClientListWorkspaceUsersError,
     CertifRevokeUserError as ClientRevokeUserError,
     CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError,
-    CertifUpdateUserProfileError as ClientUserUpdateProfileError, DeviceInfo, UserInfo,
-    WorkspaceUserAccessInfo,
+    CertifUpdateUserProfileError as ClientUserUpdateProfileError, DeviceInfo,
+    RequestedRealmArchivingConfiguration, UserInfo, WorkspaceUserAccessInfo,
 };
 pub use crate::invite::{
     AcceptAsyncEnrollmentError as ClientAcceptAsyncEnrollmentError,
@@ -450,7 +450,7 @@ impl Client {
     pub async fn archive_workspace(
         &self,
         realm_id: VlobID,
-        configuration: RealmArchivingConfiguration,
+        configuration: RequestedRealmArchivingConfiguration,
     ) -> Result<(), ClientArchiveWorkspaceError> {
         workspace_archive::archive_workspace(self, realm_id, configuration).await
     }

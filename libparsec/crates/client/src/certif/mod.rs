@@ -45,7 +45,7 @@ pub use list::{
 };
 pub use manifest_validate::{CertifValidateManifestError, InvalidManifestError};
 pub use poll::CertifPollServerError;
-pub use realm_archive::CertifArchiveRealmError;
+pub use realm_archive::{CertifArchiveRealmError, RequestedRealmArchivingConfiguration};
 pub use realm_create::CertifEnsureRealmCreatedError;
 pub use realm_decrypt_name::{CertifDecryptCurrentRealmNameError, InvalidEncryptedRealmNameError};
 pub use realm_key_rotation::CertifRotateRealmKeyError;
@@ -674,7 +674,7 @@ impl CertificateOps {
     pub async fn archive_realm(
         &self,
         realm_id: VlobID,
-        configuration: RealmArchivingConfiguration,
+        configuration: RequestedRealmArchivingConfiguration,
     ) -> Result<CertificateBasedActionOutcome, CertifArchiveRealmError> {
         realm_archive::archive_realm(self, realm_id, configuration).await
     }

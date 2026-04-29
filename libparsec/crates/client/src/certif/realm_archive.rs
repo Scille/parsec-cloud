@@ -10,6 +10,28 @@ use super::{
 };
 use crate::EventTooMuchDriftWithServerClock;
 
+/// Cannot simply use `RealmArchivingConfiguration` to specify the
+/// archiving configuration since this type contains a datetime for
+/// the deletion date.
+///
+/// Indeed: the minimal archiving period before deletion is checked
+/// by subtracting the deletion date with the realm archiving
+/// certificate's timestamp, which is currently not yet decided.
+///
+/// Hence passing the deletion date here would create invalid certificate,
+/// typically when the caller want to use the minimal archiving period (which
+/// would always be too short since the certificate timestamp is obtained
+/// later on).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RequestedRealmArchivingConfiguration {
+    Available,
+    Archived,
+    DeletionPlanned {
+        // Don't use `Duration` since it is cumbersome to expose to the bindings
+        archiving_period_in_seconds: u32,
+    },
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum CertifArchiveRealmError {
     #[error("Component has stopped")]
@@ -47,12 +69,24 @@ impl From<CertifStoreError> for CertifArchiveRealmError {
 pub(super) async fn archive_realm(
     ops: &CertificateOps,
     realm_id: VlobID,
-    configuration: RealmArchivingConfiguration,
+    configuration: RequestedRealmArchivingConfiguration,
 ) -> Result<CertificateBasedActionOutcome, CertifArchiveRealmError> {
     let mut timestamp = ops.device.now();
     // Loop is needed to deal with server requiring greater timestamp
     loop {
         // 1) Generate the certificate
+
+        let configuration = match configuration {
+            RequestedRealmArchivingConfiguration::Available => {
+                RealmArchivingConfiguration::Available
+            }
+            RequestedRealmArchivingConfiguration::Archived => RealmArchivingConfiguration::Archived,
+            RequestedRealmArchivingConfiguration::DeletionPlanned {
+                archiving_period_in_seconds,
+            } => RealmArchivingConfiguration::DeletionPlanned {
+                deletion_date: timestamp + Duration::seconds(archiving_period_in_seconds as i64),
+            },
+        };
 
         let certif = RealmArchivingCertificate {
             author: ops.device.device_id,

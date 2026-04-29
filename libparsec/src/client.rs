@@ -11,8 +11,9 @@ pub use libparsec_client::{
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
     ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
     ClientSetupShamirRecoveryError, ClientShareWorkspaceError, ClientUserUpdateProfileError,
-    DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
-    ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo, RequestedRealmArchivingConfiguration,
+    SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo,
+    WorkspaceUserAccessInfo,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -634,7 +635,7 @@ pub async fn client_share_workspace(
 pub async fn client_archive_workspace(
     client: Handle,
     realm_id: VlobID,
-    configuration: RealmArchivingConfiguration,
+    configuration: RequestedRealmArchivingConfiguration,
 ) -> Result<(), ClientArchiveWorkspaceError> {
     let client = borrow_client(client)?;
 

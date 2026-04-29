@@ -15,16 +15,19 @@ use libparsec_types::prelude::*;
 use super::utils::client_factory;
 use crate::{
     ClientArchiveWorkspaceError, EventNewCertificates, EventWorkspacesSelfListChanged,
-    WorkspaceInfo,
+    RequestedRealmArchivingConfiguration, WorkspaceInfo,
 };
 
 #[parsec_test(testbed = "coolorg")]
-#[case::archived(RealmArchivingConfiguration::Archived)]
-#[case::available(RealmArchivingConfiguration::Available)]
-#[case::deletion_planned(RealmArchivingConfiguration::DeletionPlanned {
-    deletion_date: DateTime::from_ymd_hms_us(2030, 1, 1, 0, 0, 0, 0).unwrap()
+#[case::archived(RequestedRealmArchivingConfiguration::Archived)]
+#[case::available(RequestedRealmArchivingConfiguration::Available)]
+#[case::deletion_planned(RequestedRealmArchivingConfiguration::DeletionPlanned {
+    archiving_period_in_seconds: 30 * 24 * 2600 // In 30 days
 })]
-async fn ok(#[case] configuration: RealmArchivingConfiguration, env: &TestbedEnv) {
+async fn ok(
+    #[case] requested_archiving_configuration: RequestedRealmArchivingConfiguration,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
     let alice = env.local_device("alice@dev1");
@@ -69,7 +72,7 @@ async fn ok(#[case] configuration: RealmArchivingConfiguration, env: &TestbedEnv
     let mut spy = client.event_bus.spy.start_expecting();
 
     client
-        .archive_workspace(wksp1_id, configuration)
+        .archive_workspace(wksp1_id, requested_archiving_configuration)
         .await
         .unwrap();
 
@@ -109,11 +112,31 @@ async fn ok(#[case] configuration: RealmArchivingConfiguration, env: &TestbedEnv
             timestamp: "2000-01-09T00:00:00Z".parse().unwrap()
         }
     );
-    p_assert_eq!(archiving_configuration, configuration);
-    p_assert_matches!(
-        archiving_configuration_origin,
-        CertificateBasedInfoOrigin::Certificate { .. }
-    );
+
+    let archiving_configuration_origin_timestamp =
+        if let CertificateBasedInfoOrigin::Certificate { timestamp } =
+            archiving_configuration_origin
+        {
+            timestamp
+        } else {
+            panic!(
+                "Expected `CertificateBasedInfoOrigin::Certificate {{ ... }}`, got `{:?}`",
+                archiving_configuration_origin
+            );
+        };
+
+    let expected_archiving_configuration = match requested_archiving_configuration {
+        RequestedRealmArchivingConfiguration::Available => RealmArchivingConfiguration::Available,
+        RequestedRealmArchivingConfiguration::Archived => RealmArchivingConfiguration::Archived,
+        RequestedRealmArchivingConfiguration::DeletionPlanned {
+            archiving_period_in_seconds,
+        } => {
+            let deletion_date = archiving_configuration_origin_timestamp
+                + Duration::seconds(archiving_period_in_seconds as i64);
+            RealmArchivingConfiguration::DeletionPlanned { deletion_date }
+        }
+    };
+    p_assert_eq!(archiving_configuration, expected_archiving_configuration);
 }
 
 #[parsec_test(testbed = "coolorg", with_server)]
@@ -128,7 +151,7 @@ async fn ok_require_bootstrap_before_archive(env: &TestbedEnv) {
         .unwrap();
 
     client
-        .archive_workspace(wid, RealmArchivingConfiguration::Archived)
+        .archive_workspace(wid, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap();
 }
@@ -149,7 +172,7 @@ async fn ok_placeholder_workspace(env: &TestbedEnv) {
     let client = client_factory(&env.discriminant_dir, alice).await;
 
     client
-        .archive_workspace(wksp2_id, RealmArchivingConfiguration::Archived)
+        .archive_workspace(wksp2_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap();
 }
@@ -162,7 +185,7 @@ async fn to_unknown_workspace(env: &TestbedEnv) {
     let client = client_factory(&env.discriminant_dir, alice).await;
 
     let err = client
-        .archive_workspace(dummy_id, RealmArchivingConfiguration::Archived)
+        .archive_workspace(dummy_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
     p_assert_matches!(err, ClientArchiveWorkspaceError::WorkspaceNotFound);
@@ -176,7 +199,7 @@ async fn not_allowed(env: &TestbedEnv) {
     let client = client_factory(&env.discriminant_dir, bob).await;
 
     let err = client
-        .archive_workspace(wksp1_id, RealmArchivingConfiguration::Archived)
+        .archive_workspace(wksp1_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 

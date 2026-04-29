@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{DateTime, RealmArchivingConfiguration};
+use libparsec::RequestedRealmArchivingConfiguration;
 
 use crate::utils::*;
 
@@ -11,9 +11,10 @@ crate::clap_parser_with_shared_opts_builder!(
         /// Archive the workspace in read-only mode
         #[arg(long, group = "mode")]
         archived: bool,
-        /// Plan workspace deletion at the given date (RFC 3339, e.g. 2026-05-18T00:00:00Z)
+        /// Plan workspace deletion, i.e. the workspace will be available for
+        /// deletion once the archiving period (provided in seconds) is elapsed
         #[arg(long, group = "mode")]
-        deletion_planned: Option<DateTime>,
+        deletion_planned_in_seconds: Option<u32>,
         /// Make the workspace available again
         #[arg(long, group = "mode")]
         available: bool,
@@ -26,17 +27,19 @@ pub async fn archive_workspace(args: Args, client: &StartedClient) -> anyhow::Re
     let Args {
         workspace: wid,
         archived,
-        deletion_planned,
+        deletion_planned_in_seconds,
         available,
         ..
     } = args;
 
     let configuration = if archived {
-        RealmArchivingConfiguration::Archived
-    } else if let Some(deletion_date) = deletion_planned {
-        RealmArchivingConfiguration::DeletionPlanned { deletion_date }
+        RequestedRealmArchivingConfiguration::Archived
+    } else if let Some(archiving_period_in_seconds) = deletion_planned_in_seconds {
+        RequestedRealmArchivingConfiguration::DeletionPlanned {
+            archiving_period_in_seconds,
+        }
     } else if available {
-        RealmArchivingConfiguration::Available
+        RequestedRealmArchivingConfiguration::Available
     } else {
         unreachable!("clap argument group should enforce exactly one mode");
     };

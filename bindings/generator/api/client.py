@@ -3,6 +3,7 @@
 
 from .addr import ParsecOrganizationAddr
 from .common import (
+    U32,
     U64,
     DateTime,
     DeviceID,
@@ -524,10 +525,18 @@ class ClientArchiveWorkspaceError(ErrorVariant):
         pass
 
 
+class RequestedRealmArchivingConfiguration(Variant):
+    Available = VariantItemUnit()
+    Archived = VariantItemUnit()
+
+    class DeletionPlanned:
+        archiving_period_in_seconds: U32
+
+
 async def client_archive_workspace(
     client: Handle,
     realm_id: VlobID,
-    configuration: RealmArchivingConfiguration,
+    configuration: RequestedRealmArchivingConfiguration,
 ) -> Result[None, ClientArchiveWorkspaceError]:
     raise NotImplementedError
 
