@@ -31,21 +31,8 @@ from parsec.components.realm import (
 )
 from parsec.events import EventRealmCertificate
 
-_q_get_org_and_realm_archiving_status = Q("""
-WITH my_last_realm_archiving AS (
-    SELECT
-        configuration,
-        deletion_date
-    FROM realm_archiving
-    WHERE realm = $realm_internal_id
-    ORDER BY certified_on DESC
-    LIMIT 1
-)
-
-SELECT
-    organization.minimum_archiving_period,
-    (SELECT my_last_realm_archiving.configuration FROM my_last_realm_archiving) AS last_archiving_configuration,
-    (SELECT my_last_realm_archiving.deletion_date FROM my_last_realm_archiving) AS last_archiving_deletion_date
+_q_get_org_realm_minimum_archiving_period_before_deletion = Q("""
+SELECT organization.minimum_archiving_period
 FROM organization
 WHERE organization._id = $organization_internal_id
 """)
@@ -144,9 +131,8 @@ async def realm_update_archiving(
             return RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
     row = await conn.fetchrow(
-        *_q_get_org_and_realm_archiving_status(
+        *_q_get_org_realm_minimum_archiving_period_before_deletion(
             organization_internal_id=db_common.organization_internal_id,
-            realm_internal_id=db_realm.realm_internal_id,
         )
     )
     assert row is not None
@@ -154,21 +140,6 @@ async def realm_update_archiving(
     match row["minimum_archiving_period"]:
         case int() as minimum_archiving_period:
             pass
-        case _:
-            assert False, row
-
-    match row["last_archiving_configuration"]:
-        case None:
-            # No archiving record yet, realm is implicitly AVAILABLE
-            pass
-        case str() as last_archiving_configuration:
-            if last_archiving_configuration == "DELETION_PLANNED":
-                match row["last_archiving_deletion_date"]:
-                    case DateTime() as last_deletion_date:
-                        if last_deletion_date <= now:
-                            return RealmUpdateArchivingStoreBadOutcome.REALM_DELETED
-                    case _:
-                        assert False, row
         case _:
             assert False, row
 
