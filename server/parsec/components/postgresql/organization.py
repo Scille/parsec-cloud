@@ -75,7 +75,7 @@ SELECT
     user_profile_outsider_allowed,
     sequester_authority_certificate,
     sequester_authority_verify_key_der,
-    minimum_archiving_period,
+    realm_minimum_archiving_period_before_deletion,
     tos_updated_on,
     tos_per_locale_urls
 FROM organization
@@ -122,12 +122,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         # `None` stands for "no limit"
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
-        minimum_archiving_period: UnsetType | int = Unset,
+        realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
         force_bootstrap_token: AccessToken | None = None,
     ) -> AccessToken | OrganizationCreateBadOutcome:
-        if minimum_archiving_period is not Unset:
-            assert minimum_archiving_period >= 0  # Sanity check
+        if realm_minimum_archiving_period_before_deletion is not Unset:
+            assert realm_minimum_archiving_period_before_deletion >= 0  # Sanity check
 
         bootstrap_token = force_bootstrap_token or AccessToken.new()
         if active_users_limit is Unset:
@@ -136,8 +136,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed = (
                 self._config.organization_initial_user_profile_outsider_allowed
             )
-        if minimum_archiving_period is Unset:
-            minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
+        if realm_minimum_archiving_period_before_deletion is Unset:
+            realm_minimum_archiving_period_before_deletion = (
+                self._config.organization_initial_realm_minimum_archiving_period_before_deletion
+            )
         optional_tos = self._config.organization_initial_tos if tos is Unset else tos
 
         outcome = await organization_create(
@@ -146,7 +148,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             id,
             active_users_limit,
             user_profile_outsider_allowed,
-            minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion,
             optional_tos,
             bootstrap_token,
         )
@@ -232,8 +234,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             case _:
                 assert False, row
 
-        match row["minimum_archiving_period"]:
-            case int() as minimum_archiving_period if minimum_archiving_period >= 0:
+        match row["realm_minimum_archiving_period_before_deletion"]:
+            case int() as realm_minimum_archiving_period_before_deletion if (
+                realm_minimum_archiving_period_before_deletion >= 0
+            ):
                 pass
             case _:
                 assert False, row
@@ -250,7 +254,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             sequester_authority_certificate=sequester_authority_certificate,
             sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             sequester_services_certificates=sequester_services_certificates,
-            minimum_archiving_period=minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion=realm_minimum_archiving_period_before_deletion,
             tos=tos,
         )
 
@@ -325,11 +329,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         is_expired: UnsetType | bool = Unset,
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
-        minimum_archiving_period: UnsetType | int = Unset,
+        realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
         tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
-        if minimum_archiving_period is not Unset:
-            assert minimum_archiving_period >= 0  # Sanity check
+        if realm_minimum_archiving_period_before_deletion is not Unset:
+            assert realm_minimum_archiving_period_before_deletion >= 0  # Sanity check
 
         return await organization_update(
             conn,
@@ -338,7 +342,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             is_expired,
             active_users_limit,
             user_profile_outsider_allowed,
-            minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion,
             tos,
         )
 

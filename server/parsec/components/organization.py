@@ -65,7 +65,7 @@ class OrganizationDump:
     is_expired: bool
     active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
-    minimum_archiving_period: int
+    realm_minimum_archiving_period_before_deletion: int
     tos: TermsOfService | None
 
 
@@ -172,7 +172,7 @@ class Organization:
     bootstrap_token: AccessToken | None
     is_expired: bool
     created_on: DateTime
-    minimum_archiving_period: int
+    realm_minimum_archiving_period_before_deletion: int
     bootstrapped_on: DateTime | None
     root_verify_key: VerifyKey | None
     user_profile_outsider_allowed: bool
@@ -253,7 +253,7 @@ class BaseOrganizationComponent:
         # `None` stands for "no limit"
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
-        minimum_archiving_period: UnsetType | int = Unset,
+        realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
         force_bootstrap_token: AccessToken | None = None,
     ) -> AccessToken | OrganizationCreateBadOutcome:
@@ -311,7 +311,7 @@ class BaseOrganizationComponent:
         # `None` stands for "no limit"
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
-        minimum_archiving_period: UnsetType | int = Unset,
+        realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
         tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         raise NotImplementedError

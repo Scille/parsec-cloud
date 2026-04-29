@@ -32,7 +32,7 @@ from parsec.components.realm import (
 from parsec.events import EventRealmCertificate
 
 _q_get_org_realm_minimum_archiving_period_before_deletion = Q("""
-SELECT organization.minimum_archiving_period
+SELECT organization.realm_minimum_archiving_period_before_deletion
 FROM organization
 WHERE organization._id = $organization_internal_id
 """)
@@ -137,14 +137,14 @@ async def realm_update_archiving(
     )
     assert row is not None
 
-    match row["minimum_archiving_period"]:
-        case int() as minimum_archiving_period:
+    match row["realm_minimum_archiving_period_before_deletion"]:
+        case int() as realm_minimum_archiving_period_before_deletion:
             pass
         case _:
             assert False, row
 
     # Check minimum archiving period for DeletionPlanned configuration
-    min_deletion_date = certif.timestamp.add(seconds=minimum_archiving_period)
+    min_deletion_date = certif.timestamp.add(seconds=realm_minimum_archiving_period_before_deletion)
     if (
         certif.configuration.deletion_date is not None
         and certif.configuration.deletion_date < min_deletion_date

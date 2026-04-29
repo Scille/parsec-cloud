@@ -47,8 +47,8 @@ async def test_create_organization_auth(
         "bad_type_user_profile_outsider_allowed",
         "bad_type_active_users_limit",
         "bad_value_active_users_limit",
-        "bad_type_minimum_archiving_period",
-        "bad_value_minimum_archiving_period",
+        "bad_type_realm_minimum_archiving_period_before_deletion",
+        "bad_value_realm_minimum_archiving_period_before_deletion",
         "bad_type_tos",
         "bad_value_tos",
     ),
@@ -70,10 +70,14 @@ async def test_bad_data(administration_client: httpx.AsyncClient, kind: str) -> 
             body_args = {"json": {"id": "CoolOrg", "active_users_limit": "42"}}
         case "bad_value_active_users_limit":
             body_args = {"json": {"id": "CoolOrg", "active_users_limit": -1}}
-        case "bad_type_minimum_archiving_period":
-            body_args = {"json": {"id": "CoolOrg", "minimum_archiving_period": "42"}}
-        case "bad_value_minimum_archiving_period":
-            body_args = {"json": {"id": "CoolOrg", "minimum_archiving_period": -1}}
+        case "bad_type_realm_minimum_archiving_period_before_deletion":
+            body_args = {
+                "json": {"id": "CoolOrg", "realm_minimum_archiving_period_before_deletion": "42"}
+            }
+        case "bad_value_realm_minimum_archiving_period_before_deletion":
+            body_args = {
+                "json": {"id": "CoolOrg", "realm_minimum_archiving_period_before_deletion": -1}
+            }
         case "bad_type_tos":
             body_args = {"json": {"id": "CoolOrg", "tos": "{}"}}
         case "bad_value_tos":
@@ -103,7 +107,7 @@ class CreateOrganizationParams(TypedDict):
     active_user_limit: NotRequired[int | None]
     user_profile_outsider_allowed: NotRequired[bool]
     tos: NotRequired[dict[str, str]]
-    minimum_archiving_period: NotRequired[int]
+    realm_minimum_archiving_period_before_deletion: NotRequired[int]
 
 
 @pytest.fixture(params=("default", "custom"))
@@ -114,7 +118,9 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
         case "custom":
             backend.config.organization_initial_active_users_limit = ActiveUsersLimit.limited_to(10)
             backend.config.organization_initial_user_profile_outsider_allowed = False
-            backend.config.organization_initial_minimum_archiving_period = 1000
+            backend.config.organization_initial_realm_minimum_archiving_period_before_deletion = (
+                1000
+            )
             backend.config.organization_initial_tos = {
                 "fr_FR": "https://parsec.invalid/tos_fr.pdf",
                 "en_US": "https://parsec.invalid/tos_en.pdf",
@@ -131,7 +137,7 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
         {
             "active_user_limit": 2,
             "user_profile_outsider_allowed": True,
-            "minimum_archiving_period": 1,
+            "realm_minimum_archiving_period_before_deletion": 1,
             "tos": {
                 "en_HK": "https://parsec.invalid/tos_en.pdf",
                 "cn_HK": "https://parsec.invalid/tos_cn.pdf",
@@ -177,9 +183,10 @@ async def test_ok(
         backend.config.organization_initial_user_profile_outsider_allowed,
     )
 
-    # Expected minimum_archiving_period
+    # Expected realm_minimum_archiving_period_before_deletion
     expected_minimum_archiving_period = args.get(
-        "minimum_archiving_period", backend.config.organization_initial_minimum_archiving_period
+        "realm_minimum_archiving_period_before_deletion",
+        backend.config.organization_initial_realm_minimum_archiving_period_before_deletion,
     )
 
     # Expected tos
@@ -201,7 +208,7 @@ async def test_ok(
         is_expired=False,
         active_users_limit=expected_active_users_limit,
         user_profile_outsider_allowed=expected_user_profile_outsider_allowed,
-        minimum_archiving_period=expected_minimum_archiving_period,
+        realm_minimum_archiving_period_before_deletion=expected_minimum_archiving_period,
         tos=expected_tos,
     )
 
@@ -219,7 +226,7 @@ async def test_overwrite_existing(
         id=org_id,
         active_users_limit=ActiveUsersLimit.limited_to(1),
         user_profile_outsider_allowed=False,
-        minimum_archiving_period=2,
+        realm_minimum_archiving_period_before_deletion=2,
         tos={"en_HK": "https://parsec.invalid/tos_en.pdf"},
         force_bootstrap_token=bootstrap_token,
     )
@@ -234,7 +241,7 @@ async def test_overwrite_existing(
         is_expired=False,
         active_users_limit=ActiveUsersLimit.limited_to(1),
         user_profile_outsider_allowed=False,
-        minimum_archiving_period=2,
+        realm_minimum_archiving_period_before_deletion=2,
         tos=TermsOfService(
             updated_on=t0, per_locale_urls={"en_HK": "https://parsec.invalid/tos_en.pdf"}
         ),
@@ -247,7 +254,7 @@ async def test_overwrite_existing(
             "organization_id": org_id.str,
             "active_user_limit": None,
             "user_profile_outsider_allowed": True,
-            "minimum_archiving_period": 1000,
+            "realm_minimum_archiving_period_before_deletion": 1000,
             "tos": {"cn_HK": "https://parsec.invalid/tos_cn.pdf"},
         },
     )
@@ -265,7 +272,7 @@ async def test_overwrite_existing(
         is_expired=False,
         active_users_limit=ActiveUsersLimit.NO_LIMIT,
         user_profile_outsider_allowed=True,
-        minimum_archiving_period=1000,
+        realm_minimum_archiving_period_before_deletion=1000,
         tos=TermsOfService(
             updated_on=ANY, per_locale_urls={"cn_HK": "https://parsec.invalid/tos_cn.pdf"}
         ),

@@ -135,7 +135,7 @@ CREATE TABLE organization (
     sequester_authority_certificate BYTEA,
     -- NULL for non-sequestered organization
     sequester_authority_verify_key_der BYTEA,
-    minimum_archiving_period INTEGER NOT NULL,
+    realm_minimum_archiving_period_before_deletion INTEGER NOT NULL,
     -- NULL if no Term Of Service (TOS) is set
     tos_updated_on TIMESTAMPTZ,
     -- NULL if no Term Of Service (TOS) is set

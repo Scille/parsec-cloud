@@ -115,7 +115,7 @@ class CreateOrganizationIn(BaseModel):
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | UnsetType = Unset
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
-    minimum_archiving_period: NonNegativeInt | UnsetType = Unset
+    realm_minimum_archiving_period_before_deletion: NonNegativeInt | UnsetType = Unset
     tos: dict[TosLocale, TosUrl] | UnsetType = Unset
 
 
@@ -182,7 +182,7 @@ async def administration_create_organizations(
         id=body.organization_id,
         user_profile_outsider_allowed=body.user_profile_outsider_allowed,
         active_users_limit=body.active_users_limit,
-        minimum_archiving_period=body.minimum_archiving_period,
+        realm_minimum_archiving_period_before_deletion=body.realm_minimum_archiving_period_before_deletion,
         tos=body.tos,
     )
     match outcome:
@@ -220,7 +220,7 @@ class GetOrganizationOut(BaseModel):
     is_expired: bool
     user_profile_outsider_allowed: bool
     active_users_limit: int | None
-    minimum_archiving_period: NonNegativeInt
+    realm_minimum_archiving_period_before_deletion: NonNegativeInt
     tos: GetOrganizationOutTos | None
 
 
@@ -248,7 +248,7 @@ async def administration_get_organization(
         is_expired=organization.is_expired,
         user_profile_outsider_allowed=organization.user_profile_outsider_allowed,
         active_users_limit=organization.active_users_limit.to_maybe_int(),
-        minimum_archiving_period=organization.minimum_archiving_period,
+        realm_minimum_archiving_period_before_deletion=organization.realm_minimum_archiving_period_before_deletion,
         tos=None
         if organization.tos is None
         else GetOrganizationOutTos(
@@ -270,7 +270,7 @@ class PatchOrganizationIn(BaseModel):
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | UnsetType = Unset
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
-    minimum_archiving_period: NonNegativeInt | UnsetType = Unset
+    realm_minimum_archiving_period_before_deletion: NonNegativeInt | UnsetType = Unset
     tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
 
 
@@ -292,7 +292,7 @@ async def administration_patch_organization(
         is_expired=body.is_expired,
         active_users_limit=body.active_users_limit,
         user_profile_outsider_allowed=body.user_profile_outsider_allowed,
-        minimum_archiving_period=body.minimum_archiving_period,
+        realm_minimum_archiving_period_before_deletion=body.realm_minimum_archiving_period_before_deletion,
         tos=body.tos,
     )
     match outcome:

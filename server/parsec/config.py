@@ -352,7 +352,9 @@ class BackendConfig:
     )
     organization_initial_user_profile_outsider_allowed: bool = True
     # Note minimum archiving period must be a positive value !
-    organization_initial_minimum_archiving_period: int = 2592000  # seconds (i.e 30 days)
+    organization_initial_realm_minimum_archiving_period_before_deletion: int = (
+        2592000  # seconds (i.e 30 days)
+    )
     organization_initial_tos: dict[TosLocale, TosUrl] | None = None
 
     # Number of SSE events kept in memory to allow client to catch up on reconnection
@@ -373,8 +375,8 @@ class BackendConfig:
     def __post_init__(self):
         # Sanity checks
         assert self.sse_keepalive is None or self.sse_keepalive >= 0, self.sse_keepalive
-        assert self.organization_initial_minimum_archiving_period >= 0, (
-            self.organization_initial_minimum_archiving_period
+        assert self.organization_initial_realm_minimum_archiving_period_before_deletion >= 0, (
+            self.organization_initial_realm_minimum_archiving_period_before_deletion
         )
         assert self.email_rate_limit_cooldown_delay >= 0, self.email_rate_limit_cooldown_delay
         assert self.email_rate_limit_max_per_hour >= 0, self.email_rate_limit_max_per_hour

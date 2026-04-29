@@ -51,7 +51,7 @@ async def test_authenticated_realm_update_archiving_ok(
         # Can provide multiple time the same configuration
         _alice_archiving_certificate(coolorg, RealmArchivingConfiguration.AVAILABLE, timestamp=t2),
         _alice_archiving_certificate(coolorg, RealmArchivingConfiguration.ARCHIVED, timestamp=t3),
-        # Deletion_date must be at least 30 days (minimum_archiving_period) in the future
+        # Deletion_date must be at least 30 days (realm_minimum_archiving_period_before_deletion) in the future
         _alice_archiving_certificate(
             coolorg,
             RealmArchivingConfiguration.deletion_planned(t3.add(days=30, seconds=1)),
@@ -175,7 +175,7 @@ async def test_authenticated_realm_update_archiving_archiving_period_too_short(
 ) -> None:
     timestamp = DateTime.now()
     absolute_minimum_deletion_date = timestamp.add(
-        seconds=backend.config.organization_initial_minimum_archiving_period
+        seconds=backend.config.organization_initial_realm_minimum_archiving_period_before_deletion
     )
 
     certif = _alice_archiving_certificate(

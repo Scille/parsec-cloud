@@ -449,7 +449,7 @@ class Backend:
                     is_expired=event.is_expired,
                     active_users_limit=event.active_users_limit,
                     user_profile_outsider_allowed=event.user_profile_outsider_allowed,
-                    minimum_archiving_period=event.minimum_archiving_period,
+                    realm_minimum_archiving_period_before_deletion=event.realm_minimum_archiving_period_before_deletion,
                     tos=event.tos,
                 )
                 assert outcome is None, outcome
