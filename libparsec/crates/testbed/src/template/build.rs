@@ -967,7 +967,7 @@ impl_event_builder!(
         is_expired: Option<bool>,
         active_users_limit: Option<ActiveUsersLimit>,
         user_profile_outsider_allowed: Option<bool>,
-        minimum_archiving_period: Option<u64>,
+        realm_minimum_archiving_period_before_deletion: Option<u64>,
         tos: Option<HashMap<String, String>>,
     ]
 );

@@ -3201,7 +3201,7 @@ no_certificate_event!(
         /// `None` represents unset (i.e. `Unset` in Python)
         user_profile_outsider_allowed: Option<bool>,
         /// `None` represents unset (i.e. `Unset` in Python)
-        minimum_archiving_period: Option<u64>,
+        realm_minimum_archiving_period_before_deletion: Option<u64>,
         /// - `None` represents unset (i.e. `Unset` in Python)
         /// - An empty hashmap represents removing the ToS (i.e. `None` in Python)
         ///
@@ -3218,7 +3218,7 @@ impl TestbedEventUpdateOrganization {
         is_expired: Option<bool>,
         active_users_limit: Option<ActiveUsersLimit>,
         user_profile_outsider_allowed: Option<bool>,
-        minimum_archiving_period: Option<u64>,
+        realm_minimum_archiving_period_before_deletion: Option<u64>,
         tos: Option<HashMap<String, String>>,
     ) -> Self {
         let timestamp = builder.counters.next_timestamp();
@@ -3227,7 +3227,7 @@ impl TestbedEventUpdateOrganization {
             is_expired,
             active_users_limit,
             user_profile_outsider_allowed,
-            minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion,
             tos,
         }
     }
