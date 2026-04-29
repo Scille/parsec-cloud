@@ -173,7 +173,7 @@ async def realm_update_archiving(
             assert False, row
 
     # Check minimum archiving period for DeletionPlanned configuration
-    min_deletion_date = now.add(seconds=minimum_archiving_period)
+    min_deletion_date = certif.timestamp.add(seconds=minimum_archiving_period)
     if (
         certif.configuration.deletion_date is not None
         and certif.configuration.deletion_date < min_deletion_date
