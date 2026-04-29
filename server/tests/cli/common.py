@@ -189,10 +189,12 @@ async def cli_with_running_backend_testbed(backend_asgi_app, *devices):
         task_group.cancel_scope.cancel()
 
 
-async def cli_invoke_in_thread(cmd: str, input: str | None = None) -> Result:
-    runner = CliRunner()
+async def cli_invoke_in_thread(
+    cmd: str, runner: CliRunner | None = None, input: str | None = None, env: dict[str, str] = {}
+) -> Result:
+    runner = runner or CliRunner()
     # We must run the command from another thread given it will create it own asyncio loop
     # Pass DEBUG environment variable for better output on crash
     return await anyio.to_thread.run_sync(
-        lambda: runner.invoke(cli, cmd, input=input, env={"DEBUG": "1"})
+        lambda: runner.invoke(cli, cmd, input=input, env={"DEBUG": "1", **env})
     )

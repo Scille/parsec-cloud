@@ -30,6 +30,7 @@ from parsec.cli.options import (
     sentry_config_options,
 )
 from parsec.cli.pki import pki_server_options
+from parsec.cli.scws import scws_server_options
 from parsec.cli.utils import (
     cli_exception_handler,
 )
@@ -355,21 +356,10 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
 """,
     show_default="no TOS",
 )
+# Add option to load trusted CA for server to do a pre-check during async-enrollment
 @pki_server_options
-@click.option(
-    "--scws-idopte-public-keys-file",
-    type=click.Path(exists=True, dir_okay=False, file_okay=True, path_type=Path),
-    envvar="PARSEC_SCWS_IDOPTE_PUBLIC_KEYS_FILE",
-    show_envvar=True,
-    help="PEM file containing Idopte public keys used to verify SCWS service challenge signatures",
-)
-@click.option(
-    "--scws-web-application-private-key-file",
-    type=click.Path(exists=True, dir_okay=False, file_okay=True, path_type=Path),
-    envvar="PARSEC_SCWS_WEB_APPLICATION_PRIVATE_KEY_FILE",
-    show_envvar=True,
-    help="PEM file containing the web application private key used to sign SCWS web application challenges",
-)
+# Add scws related options (scws public keys, scws service private key)
+@scws_server_options
 @click.option(
     "--validation-email-rate-limit",
     default=(60, 3),
@@ -610,8 +600,7 @@ async def run_cmd(
     organization_initial_realm_minimum_archiving_period_before_deletion: int,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
     trusted_x509_root_dir: list[X509TrustAnchor],
-    scws_idopte_public_keys_file: Path | None,
-    scws_web_application_private_key_file: Path | None,
+    scws_config: ScwsConfig | None,
     # (cooldown in seconds, max number of email per hour)
     validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
@@ -707,33 +696,6 @@ async def run_cmd(
                 transit_mount_path=openbao_transit_mount_path,
                 auths=auths,
             )
-
-        if (
-            scws_idopte_public_keys_file is not None
-            and scws_web_application_private_key_file is not None
-        ):
-            try:
-                idopte_public_keys_pem = await asyncio.to_thread(
-                    scws_idopte_public_keys_file.read_bytes
-                )
-                web_application_private_key_pem = await asyncio.to_thread(
-                    scws_web_application_private_key_file.read_bytes
-                )
-                scws_config = ScwsConfig.new(
-                    idopte_public_keys_pem=idopte_public_keys_pem,
-                    web_application_private_key_pem=web_application_private_key_pem,
-                )
-            except ValueError as exc:
-                raise ValueError(f"Invalid SCWS configuration: {exc}") from exc
-        elif (
-            scws_idopte_public_keys_file is not None
-            or scws_web_application_private_key_file is not None
-        ):
-            raise ValueError(
-                "Both --scws-idopte-public-keys-file and --scws-web-application-private-key-file must be provided together"
-            )
-        else:
-            scws_config = None
 
         app_config = BackendConfig(
             jinja_env=jinja_env,
