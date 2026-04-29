@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct PlatformPkiCertificate(scwsapi::Certificate);
+pub struct PlatformPkiCertificate(pub(super) scwsapi::Certificate);
 
 impl PlatformPkiCertificate {
     pub async fn get_der(&self) -> Result<CertificateDer<'static>, PkiCertificateGetDerError> {
