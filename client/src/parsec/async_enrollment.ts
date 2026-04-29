@@ -98,7 +98,7 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
 
       try {
         // Import scwsapi dynamically and make it available in the global scope
-        const scwsapi = await import(scwsapiLocationTag.content);
+        const scwsapi = await import(/* @vite-ignore */ scwsapiLocationTag.content);
         (globalThis as any).SCWS = scwsapi.SCWS;
         (globalThis as any).WEB_APPLICATION_CERTIFICATE = scwsapiAppCertificateTag.content;
       } catch (err: any) {
