@@ -8,7 +8,9 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::certif::{CertifArchiveRealmError, CertificateBasedActionOutcome};
+use crate::certif::{
+    CertifArchiveRealmError, CertificateBasedActionOutcome, RequestedRealmArchivingConfiguration,
+};
 
 use super::utils::certificates_ops_factory;
 
@@ -24,15 +26,16 @@ async fn ok(
     env: &TestbedEnv,
 ) {
     let configuration = match kind {
-        "available" => RealmArchivingConfiguration::Available,
-        "archived" => RealmArchivingConfiguration::Archived,
-        "deletion_planned_deadline_soon" => RealmArchivingConfiguration::DeletionPlanned {
-            // Yeah, like you say, *soon*...
-            deletion_date: DateTime::from_ymd_hms_us(2999, 1, 1, 0, 0, 0, 0).unwrap(),
+        "available" => RequestedRealmArchivingConfiguration::Available,
+        "archived" => RequestedRealmArchivingConfiguration::Archived,
+        "deletion_planned_deadline_soon" => RequestedRealmArchivingConfiguration::DeletionPlanned {
+            archiving_period_in_seconds: 30 * 24 * 3600, // In 30 days
         },
-        "deletion_planned_deadline_reached" => RealmArchivingConfiguration::DeletionPlanned {
-            deletion_date: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
-        },
+        "deletion_planned_deadline_reached" => {
+            RequestedRealmArchivingConfiguration::DeletionPlanned {
+                archiving_period_in_seconds: 0,
+            }
+        }
         unknown => panic!("Unknown kind: {unknown}"),
     };
     let realm_id = env
@@ -83,7 +86,7 @@ async fn server_error_author_not_allowed(env: &TestbedEnv) {
     });
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -113,7 +116,7 @@ async fn server_error_realm_not_found(env: &TestbedEnv) {
     });
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -143,7 +146,7 @@ async fn server_error_realm_deleted(env: &TestbedEnv) {
     });
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -173,7 +176,7 @@ async fn server_error_archiving_period_too_short(env: &TestbedEnv) {
     });
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -208,7 +211,7 @@ async fn server_error_timestamp_out_of_ballpark(env: &TestbedEnv) {
     });
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -252,7 +255,7 @@ async fn server_error_require_greater_timestamp(env: &TestbedEnv) {
     });
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -282,7 +285,7 @@ async fn server_error_invalid_certificate(env: &TestbedEnv) {
     });
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -315,7 +318,7 @@ async fn server_error_unknown_status(env: &TestbedEnv) {
     });
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -351,7 +354,7 @@ async fn loop_require_greater_timestamp(env: &TestbedEnv) {
     );
 
     let res = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap();
 
@@ -375,7 +378,7 @@ async fn offline(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -407,7 +410,7 @@ async fn invalid_response(env: &TestbedEnv) {
     });
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 
@@ -438,7 +441,7 @@ async fn stopped(env: &TestbedEnv) {
     ops.stop().await.unwrap();
 
     let err = ops
-        .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+        .archive_realm(realm_id, RequestedRealmArchivingConfiguration::Archived)
         .await
         .unwrap_err();
 

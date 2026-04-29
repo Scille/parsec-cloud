@@ -9,7 +9,7 @@ use crate::{
     certif::{
         CertifArchiveRealmError, CertifBootstrapWorkspaceError, CertifPollServerError,
         CertificateBasedActionOutcome, InvalidCertificateError, InvalidEncryptedRealmNameError,
-        InvalidKeysBundleError,
+        InvalidKeysBundleError, RequestedRealmArchivingConfiguration,
     },
     ClientRefreshWorkspacesListError,
 };
@@ -48,7 +48,7 @@ pub enum ClientArchiveWorkspaceError {
 pub async fn archive_workspace(
     client: &Client,
     realm_id: VlobID,
-    configuration: RealmArchivingConfiguration,
+    configuration: RequestedRealmArchivingConfiguration,
 ) -> Result<(), ClientArchiveWorkspaceError> {
     // 0) Quick check to filter out invalid realm ID.
     // This is useful given otherwise the next step will create a realm with
