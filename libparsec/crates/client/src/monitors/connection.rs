@@ -69,13 +69,16 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
         APIEvent::OrganizationConfig {
             active_users_limit,
             user_profile_outsider_allowed,
-            minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion,
             sse_keepalive_seconds: _,
         } => {
             let event = EventServerConfigNotified {
                 active_users_limit,
                 user_profile_outsider_allowed,
-                minimum_archiving_period: minimum_archiving_period.unwrap_or(0).max(0) as u64,
+                realm_minimum_archiving_period_before_deletion:
+                    realm_minimum_archiving_period_before_deletion
+                        .unwrap_or(0)
+                        .max(0) as u64,
             };
             event_bus.send(&event);
         }
