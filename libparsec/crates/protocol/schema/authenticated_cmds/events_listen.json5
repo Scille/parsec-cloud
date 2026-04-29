@@ -53,7 +53,7 @@
                             },
                             {
                                 // In seconds; default 2592000 (30 days)
-                                "name": "minimum_archiving_period",
+                                "name": "realm_minimum_archiving_period_before_deletion",
                                 "type": "Integer",
                                 "introduced_in": "5.5"
                             }
