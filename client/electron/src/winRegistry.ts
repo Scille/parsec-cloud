@@ -1,7 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { createRequire } from 'module';
 import { join } from 'path';
-import { electronIsDev } from './utils';
+import { electronIsDev } from './utils.js';
+
+const _require = createRequire(import.meta.url);
 
 export class WinRegistry {
   private regedit: any = null;
@@ -11,7 +14,7 @@ export class WinRegistry {
     this.APP_GUID = appGuid;
     if (process.platform === 'win32') {
       try {
-        const reg = require('regedit');
+        const reg = _require('regedit');
         if (!electronIsDev) {
           const vbsDirectory = join(appPath, '../vbs');
           reg.setExternalVBSLocation(vbsDirectory);
@@ -43,6 +46,7 @@ export class WinRegistry {
       return (longPathValue.value as any as number) === 1;
     } catch (e: any) {
       console.info(`Error while trying to obtain 'LongPathsEnabled' value: ${e.toString()}`);
+      return false;
     }
   }
 

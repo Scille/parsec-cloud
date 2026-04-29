@@ -3,14 +3,19 @@
 import type { CustomPublishOptions, ProgressInfo, UpdateInfo, XElement } from 'builder-util-runtime';
 import { newError, parseXml } from 'builder-util-runtime';
 import log from 'electron-log';
-import type { BaseUpdater, AppUpdater as _AppUpdater } from 'electron-updater';
-import { CancellationToken } from 'electron-updater';
-import { GitHubProvider, computeReleaseNotes } from 'electron-updater/out/providers/GitHubProvider';
-import { parseUpdateInfo, type ProviderRuntimeOptions } from 'electron-updater/out/providers/Provider';
-import { getChannelFilename, newUrlFromBase } from 'electron-updater/out/util';
+import electronLogNode from 'electron-log/node.js';
+import type { CancellationToken, AppUpdater as _AppUpdater } from 'electron-updater';
+import { GitHubProvider, computeReleaseNotes } from 'electron-updater/out/providers/GitHubProvider.js';
+import { parseUpdateInfo, type ProviderRuntimeOptions } from 'electron-updater/out/providers/Provider.js';
+import { getChannelFilename, newUrlFromBase } from 'electron-updater/out/util.js';
+import { createRequire } from 'module';
+import { machine } from 'os';
 import * as semver from 'semver';
-import type { CustomPublishOptions as CustomGitHubOptions } from '../assets/publishConfig';
-import { FEATURE_FLAGS } from './features';
+import type { CustomPublishOptions as CustomGitHubOptions } from '../assets/publishConfig.js';
+import { FEATURE_FLAGS } from './features.js';
+
+const _require = createRequire(import.meta.url);
+const _eu = _require('electron-updater') as typeof import('electron-updater');
 
 // Greatly inspired by (it isn't exported by `electron-updater`)
 // https://github.com/electron-userland/electron-builder/blob/77f977435c99247d5db395895618b150f5006e8f/packages/electron-updater/src/providers/GitHubProvider.ts#L11-L13
@@ -93,7 +98,6 @@ class CustomGithubProvider extends GitHubProvider {
    * @returns {string}
    */
   protected override getChannelFilePrefix() {
-    const { machine } = require('node:os');
     const arch = process.env['TEST_UPDATER_ARCH'] || this.options.buildMachineArch || machine();
 
     let platform: string = this.runtimeOptions.platform;
@@ -109,7 +113,7 @@ class CustomGithubProvider extends GitHubProvider {
   }
 
   async getLatestVersion(): Promise<GithubUpdateInfo> {
-    const cancellationToken = new CancellationToken();
+    const cancellationToken = new _eu.CancellationToken();
 
     // 1. Fetch the latest release.
     this.logger.debug('Fetching release feed');
@@ -117,7 +121,7 @@ class CustomGithubProvider extends GitHubProvider {
     this.logger.debug('Finding latest release');
     const latestReleaseData = await this.findLatestRelease(feed, cancellationToken);
 
-    if (latestReleaseData.tag === null) {
+    if (!latestReleaseData.tag) {
       throw newError('No published versions on GitHub', ErrorCodes.NoPublishedVersions);
     }
 
@@ -130,13 +134,13 @@ class CustomGithubProvider extends GitHubProvider {
     this.logger.debug('Fetching channel file');
     const fetchData = async (channelName: string) => {
       channelFile = getChannelFilename(channelName);
-      channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(latestReleaseData.tag, channelFile), this.baseUrl);
+      channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(latestReleaseData.tag ?? '', channelFile), this.baseUrl);
       const requestOptions = this.createRequestOptions(channelFileUrl);
       try {
         return await this.executor.request(requestOptions, cancellationToken);
-      } catch (e) {
+      } catch (e: any) {
         throw newError(
-          `Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`,
+          `Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.toString()}`,
           ErrorCodes.ChannelFileNotFound,
         );
       }
@@ -146,11 +150,11 @@ class CustomGithubProvider extends GitHubProvider {
       const channel = this.updater.allowPrerelease
         ? this.getCustomChannelName(String(semver.prerelease(latestReleaseData.tag)?.[0]) || 'latest')
         : this.getDefaultChannelName();
-      rawData = await fetchData(channel);
+      rawData = (await fetchData(channel)) ?? '';
     } catch (e) {
       if (this.updater.allowPrerelease) {
         // Fallback to the default channel if the custom channel doesn't exist.
-        rawData = await fetchData(this.getDefaultChannelName());
+        rawData = (await fetchData(this.getDefaultChannelName())) ?? '';
       } else {
         throw e;
       }
@@ -159,7 +163,7 @@ class CustomGithubProvider extends GitHubProvider {
     // 3. Parse the channel file.
     this.logger.debug('Parsing channel file');
     const result = parseUpdateInfo(rawData, channelFile, channelFileUrl);
-    if (result.releaseName === null) {
+    if (result.releaseName === null && latestReleaseData.feedElement) {
       result.releaseName = latestReleaseData.feedElement.elementValueOrEmpty('title');
     }
 
@@ -184,18 +188,21 @@ class CustomGithubProvider extends GitHubProvider {
       { accept: 'application/xml, application/atom+xml, text/xml, */*' },
       cancellationToken,
     );
+    if (!feedXml) {
+      throw new Error('No XML');
+    }
     return parseXml(feedXml);
   }
 
   private async findLatestRelease(feed: XElement, cancellationToken: CancellationToken): Promise<GithubReleaseData> {
     let latestRelease: XElement | null = feed.element('entry', false, 'No published versions on GitHub');
-    let tag: string | null = null;
+    let tag: string | undefined = undefined;
 
     try {
       if (this.updater.allowPrerelease) {
-        [tag, latestRelease] = this.findLatestPreRelease(tag, latestRelease, feed);
+        [tag, latestRelease] = this.findLatestPreRelease(tag ?? '', latestRelease, feed);
       } else {
-        tag = await this.getLatestTagName(cancellationToken);
+        tag = (await this.getLatestTagName(cancellationToken)) ?? undefined;
         for (const element of feed.getElements('entry')) {
           if (HREF_REGEXP.exec(element.element('link').attribute('href'))![1] === tag) {
             latestRelease = element;
@@ -203,8 +210,8 @@ class CustomGithubProvider extends GitHubProvider {
           }
         }
       }
-    } catch (e) {
-      throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feed}`, ErrorCodes.InvalidReleaseFeed);
+    } catch (e: any) {
+      throw newError(`Cannot parse releases feed: ${e.toString()},\nXML:\n${feed}`, ErrorCodes.InvalidReleaseFeed);
     }
 
     return { tag, feedElement: latestRelease };
@@ -231,6 +238,9 @@ class CustomGithubProvider extends GitHubProvider {
         const hrefTag = hrefElement[1];
         const rawHrefChannel =
           hrefTag === PreReleaseTypes.Nightly ? PreReleaseTypes.Nightly : (semver.prerelease(hrefTag)?.[0] as string) || null;
+        if (!rawHrefChannel) {
+          throw new Error('No rawHrefChannel');
+        }
         const hrefChannel = PRERELEASE_TYPE_ALIAS[rawHrefChannel] || rawHrefChannel;
 
         const shouldFetchVersion = !currentChannel || PRERELEASE_TYPES.includes(currentChannel);
@@ -263,6 +273,9 @@ class CustomGithubProvider extends GitHubProvider {
       return PreReleaseTypes.Nightly;
     }
     const rawCurrentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion)?.[0] as string) || null;
+    if (!rawCurrentChannel) {
+      throw new Error('No rawCurrentChannel');
+    }
     return PRERELEASE_TYPE_ALIAS[rawCurrentChannel] || rawCurrentChannel;
   }
 
@@ -282,9 +295,9 @@ class CustomGithubProvider extends GitHubProvider {
 
       const releaseInfo: GithubReleaseInfo = JSON.parse(rawData);
       return releaseInfo.tag_name;
-    } catch (e) {
+    } catch (e: any) {
       throw newError(
-        `Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`,
+        `Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.toString()}`,
         ErrorCodes.LatestVersionNotFound,
       );
     }
@@ -302,7 +315,7 @@ class CustomGithubProvider extends GitHubProvider {
 function loadPublishOption(): (CustomPublishOptions & CustomGitHubOptions) | undefined {
   let data = undefined;
   try {
-    data = require('../assets/publishConfig.json');
+    data = _require('../assets/publishConfig.json');
   } catch {
     return undefined;
   }
@@ -352,7 +365,7 @@ export type ListenerSignature = {
 };
 
 export default class AppUpdater {
-  private updater: BaseUpdater;
+  private updater: _AppUpdater;
   private state: UpdaterState = UpdaterState.Idle;
   private lastUpdateInfo: UpdateInfo | undefined = undefined;
   private lastError: Error | undefined = undefined;
@@ -372,18 +385,15 @@ export default class AppUpdater {
     switch (process.platform) {
       case 'darwin':
         this.logger.debug('Using MacUpdater');
-        const { MacUpdater } = require('electron-updater');
-        this.updater = new MacUpdater();
+        this.updater = new _eu.MacUpdater();
         break;
       case 'win32':
         this.logger.debug('Using NsisUpdater');
-        const { NsisUpdater } = require('electron-updater');
-        this.updater = new NsisUpdater();
+        this.updater = new _eu.NsisUpdater();
         break;
       default:
         this.logger.debug(`Using default autoUpdater (platform: ${process.platform})`);
-        const { autoUpdater } = require('electron-updater');
-        this.updater = autoUpdater;
+        this.updater = _eu.autoUpdater;
         break;
     }
 
@@ -391,7 +401,7 @@ export default class AppUpdater {
       throw new TypeError('Updater is undefined');
     }
 
-    this.updater.logger = require('electron-log/node');
+    this.updater.logger = electronLogNode;
 
     publishOption.nightlyBuild = (process.env.FORCE_NIGHTLY || '0') === '1' || publishOption.nightlyBuild;
 
@@ -462,7 +472,7 @@ export default class AppUpdater {
       try {
         await this.updater.checkForUpdates();
       } catch (error) {
-        this.lastError = error;
+        this.lastError = error as Error;
         this.state = UpdaterState.Idle;
       }
       if (this.state === UpdaterState.UpdateAvailable) {
@@ -477,7 +487,7 @@ export default class AppUpdater {
     try {
       if (!this.isUpdateDownloaded()) {
         this.logger.warn('quitAndInstall() called but update has not been downloaded yet');
-        return;
+        return false;
       }
       this.updater.quitAndInstall();
       return true;

@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { CustomPublishOptions, ParsecFeatures } from '../assets/publishConfig';
+import { createRequire } from 'module';
+import type { CustomPublishOptions, ParsecFeatures } from '../assets/publishConfig.js';
+
+const _require = createRequire(import.meta.url);
 
 const DEFAULT_FEATURES: ParsecFeatures = {
   hardened: false,
@@ -12,7 +15,7 @@ export default class FeaturesFlag {
   constructor() {
     let data: CustomPublishOptions | undefined = undefined;
     try {
-      data = require('../assets/publishConfig.json');
+      data = _require('../assets/publishConfig.json');
     } catch {}
     this.data = data ? data.features : DEFAULT_FEATURES;
 

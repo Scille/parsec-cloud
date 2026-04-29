@@ -289,7 +289,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / "client/electron/assets/installer.nsh": {
         Tool.WinFSP: [ReplaceRegex(r'WINFSP_VERSION ".*"', 'WINFSP_VERSION "{version}"')],
     },
-    ROOT_DIR / "client/electron/scripts/before-pack.js": {
+    ROOT_DIR / "client/electron/scripts/before-pack.cjs": {
         Tool.WinFSP: [
             ReplaceRegex(r"WINFSP_VERSION = '.*'", "WINFSP_VERSION = '{version}'"),
             ReplaceRegex(
@@ -305,7 +305,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / "client/electron/assets/electron-publisher-custom.js": {
         Tool.Parsec: [ReplaceRegex(r"VERSION = '.*';", "VERSION = '{version}';")]
     },
-    ROOT_DIR / "client/electron/package.js": {
+    ROOT_DIR / "client/electron/package.cjs": {
         Tool.Parsec: [ReplaceRegex(r"buildVersion: '.*',", "buildVersion: '{version}',")],
     },
     ROOT_DIR / "client/electron/package.json": {

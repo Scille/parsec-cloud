@@ -5,16 +5,16 @@ import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor
 import * as Sentry from '@sentry/electron/main';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, MenuItem, app, dialog, ipcMain, shell } from 'electron';
-import log from 'electron-log/main';
+import log from 'electron-log/main.js';
 import unhandled from 'electron-unhandled';
-import { electronIsDev } from './utils';
+import { electronIsDev } from './utils.js';
 
 import fs from 'fs';
 import path from 'path';
-import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels';
-import { setupContentSecurityPolicy } from './cspRules';
-import { FEATURE_FLAGS } from './features';
-import { ElectronCapacitorApp, setupReloadWatcher } from './setup';
+import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels.js';
+import { setupContentSecurityPolicy } from './cspRules.js';
+import { FEATURE_FLAGS } from './features.js';
+import { ElectronCapacitorApp, setupReloadWatcher } from './setup.js';
 
 const PARSEC_CONFIG_DIR_NAME = 'parsec3';
 const ELECTRON_CONFIG_DIR_NAME = electronIsDev ? 'app-dev' : 'app';
@@ -153,7 +153,7 @@ if (!lock) {
     if (commandLine.length > 0) {
       const lastArg = commandLine.at(-1);
       // We're only interested in potential Parsec links
-      if (lastArg.startsWith('parsec3://')) {
+      if (lastArg && lastArg.startsWith('parsec3://')) {
         openLink(lastArg);
       }
     }

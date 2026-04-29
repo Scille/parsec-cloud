@@ -5,27 +5,28 @@ import { CapElectronEventEmitter, setupCapacitorElectronPlugins } from '@capacit
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, shell } from 'electron';
-import log from 'electron-log/main';
+import log from 'electron-log/main.js';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import fs from 'fs';
 import { join } from 'path';
-import { WindowToPageChannel } from './communicationChannels';
-import { Env } from './envVariables';
-import { FEATURE_FLAGS } from './features';
-import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
-import { electronIsDev } from './utils';
-import { WinRegistry } from './winRegistry';
+import { WindowToPageChannel } from './communicationChannels.js';
+import { Env } from './envVariables.js';
+import { FEATURE_FLAGS } from './features.js';
+import AppUpdater, { UpdaterState, createAppUpdater } from './updater.js';
+import { electronIsDev } from './utils.js';
+import { WinRegistry } from './winRegistry.js';
 
 const AUTHORIZED_PROTOCOLS = ['http', 'https', 'parsec3'];
 const CHECK_UPDATE_INTERVAL = 1000 * 60 * 60; // 1 hour
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
-const reloadWatcher = {
+const reloadWatcher: any = {
   debouncer: null,
   ready: false,
   watcher: null,
 };
+
 export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): void {
   reloadWatcher.watcher = chokidar
     .watch(join(app.getAppPath(), 'app'), {
@@ -52,15 +53,15 @@ export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): 
 
 // Define our class to manage our app.
 export class ElectronCapacitorApp {
-  private MainWindow: BrowserWindow;
-  private TrayIcon: Tray;
+  private MainWindow!: BrowserWindow;
+  private TrayIcon!: Tray;
   private CapacitorFileConfig: CapacitorElectronConfig;
   private TrayMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [];
   private AppMenuBarMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
     { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
     { role: 'viewMenu' },
   ];
-  private mainWindowState;
+  private mainWindowState!: windowStateKeeper.State;
   private loadWebApp;
   private customScheme: string;
   private config: object;
@@ -93,7 +94,7 @@ export class ElectronCapacitorApp {
     for (let i = 1; i < process.argv.length; i++) {
       const arg = process.argv.at(i);
       // We're only interested in potential Parsec links
-      if (arg.startsWith('parsec3://')) {
+      if (arg && arg.startsWith('parsec3://')) {
         if (this.storedLink) {
           this.log('warn', `Multiple links were passed as arguments, using only the first: ${this.storedLink}`);
         } else {
@@ -135,7 +136,7 @@ export class ElectronCapacitorApp {
 
       // Check periodically if an update is available
       setInterval(async () => {
-        await this.updater.checkForUpdates();
+        await this.updater?.checkForUpdates();
       }, CHECK_UPDATE_INTERVAL);
     } else if (!electronIsDev) {
       this.log('warn', 'Could not enable application updates');
@@ -143,12 +144,12 @@ export class ElectronCapacitorApp {
   }
 
   // Helper function to load in the app.
-  private async loadMainWindow(thisRef: any): Promise<void> {
-    await thisRef.loadWebApp(thisRef.MainWindow);
+  private async loadMainWindow(): Promise<void> {
+    await this.loadWebApp(this.MainWindow);
   }
 
   async quitApp(): Promise<void> {
-    await this.winRegistry.removeMountpointFromQuickAccess();
+    await this.winRegistry?.removeMountpointFromQuickAccess();
     app.quit();
   }
 
@@ -234,7 +235,7 @@ export class ElectronCapacitorApp {
   updateMountpoint(path: string): void {
     this.log('debug', 'Updating mountpoint');
     fs.mkdirSync(path, { recursive: true });
-    this.winRegistry.addMountpointToQuickAccess(path, this.getIconPaths().tray);
+    this.winRegistry?.addMountpointToQuickAccess(path, this.getIconPaths().tray);
   }
 
   isTrayEnabled(): boolean {
@@ -363,7 +364,7 @@ export class ElectronCapacitorApp {
         this.storedLink = '';
       }
 
-      this.winRegistry.areLongPathsEnabled().then((longPathsEnabled) => {
+      this.winRegistry?.areLongPathsEnabled().then((longPathsEnabled) => {
         if (!longPathsEnabled) {
           this.sendEvent(WindowToPageChannel.LongPathsDisabled);
         }
@@ -412,7 +413,7 @@ export class ElectronCapacitorApp {
     this.MainWindow.hide();
     this.log('debug', `MainWindow created at '${this.MainWindow.getPosition()}' with size '${this.MainWindow.getSize()}'`);
 
-    if (this.CapacitorFileConfig.backgroundColor) {
+    if (this.CapacitorFileConfig?.electron?.backgroundColor) {
       this.MainWindow.setBackgroundColor(this.CapacitorFileConfig.electron.backgroundColor);
     }
 
@@ -490,7 +491,7 @@ export class ElectronCapacitorApp {
     // Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
 
     this.log('debug', 'Loading MainWindow');
-    this.loadMainWindow(this);
+    this.loadMainWindow();
 
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
