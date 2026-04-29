@@ -204,16 +204,37 @@ async def test_authenticated_realm_update_archiving_realm_deleted(
 
 async def test_authenticated_realm_update_archiving_archiving_period_too_short(
     coolorg: CoolorgRpcClients,
+    backend: Backend,
 ) -> None:
-    # deletion_date is only 1 day in the future, less than the 30-day minimum
-    deletion_date = DateTime.now().add(days=1)
+    timestamp = DateTime.now()
+    absolute_minimum_deletion_date = timestamp.add(
+        seconds=backend.config.organization_initial_minimum_archiving_period
+    )
+
     certif = _alice_archiving_certificate(
-        coolorg, RealmArchivingConfiguration.deletion_planned(deletion_date)
+        coolorg,
+        RealmArchivingConfiguration.deletion_planned(
+            absolute_minimum_deletion_date.subtract(microseconds=1)
+        ),
+        timestamp=timestamp,
     )
     rep = await coolorg.alice.realm_update_archiving(
         archiving_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
     )
     assert rep == authenticated_cmds.latest.realm_update_archiving.RepArchivingPeriodTooShort()
+
+    # Ensure the absolute minimal archiving period can be used (i.e. the server uses the certificate
+    # timestamp as the starting time instead of the current time to avoid having a check that depends
+    # on the request's lag)
+    certif = _alice_archiving_certificate(
+        coolorg,
+        RealmArchivingConfiguration.deletion_planned(absolute_minimum_deletion_date),
+        timestamp=timestamp,
+    )
+    rep = await coolorg.alice.realm_update_archiving(
+        archiving_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+    )
+    assert rep == authenticated_cmds.latest.realm_update_archiving.RepOk()
 
 
 @pytest.mark.parametrize("kind", ("dummy_data", "bad_author"))
