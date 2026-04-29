@@ -37,6 +37,7 @@
         "regedit": "^5.1.4",
         "tslib": "^2.8.1"
     },
+    "//": "⚠️ Updating Electron requires to also update `build.target` config in `client/vite.config.ts`",
     "devDependencies": {
         "@electron/notarize": "^2.5.0",
         "@sentry/cli": "^2.42.2",
