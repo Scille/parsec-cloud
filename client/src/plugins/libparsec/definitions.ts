@@ -4123,6 +4123,28 @@ export interface RemoveDeviceDataErrorFailedToRemoveData {
 export type RemoveDeviceDataError =
   | RemoveDeviceDataErrorFailedToRemoveData
 
+// RequestedRealmArchivingConfiguration
+export enum RequestedRealmArchivingConfigurationTag {
+    Archived = 'RequestedRealmArchivingConfigurationArchived',
+    Available = 'RequestedRealmArchivingConfigurationAvailable',
+    DeletionPlanned = 'RequestedRealmArchivingConfigurationDeletionPlanned',
+}
+
+export interface RequestedRealmArchivingConfigurationArchived {
+    tag: RequestedRealmArchivingConfigurationTag.Archived
+}
+export interface RequestedRealmArchivingConfigurationAvailable {
+    tag: RequestedRealmArchivingConfigurationTag.Available
+}
+export interface RequestedRealmArchivingConfigurationDeletionPlanned {
+    tag: RequestedRealmArchivingConfigurationTag.DeletionPlanned
+    archivingPeriodInSeconds: U32
+}
+export type RequestedRealmArchivingConfiguration =
+  | RequestedRealmArchivingConfigurationArchived
+  | RequestedRealmArchivingConfigurationAvailable
+  | RequestedRealmArchivingConfigurationDeletionPlanned
+
 // SelfShamirRecoveryInfo
 export enum SelfShamirRecoveryInfoTag {
     Deleted = 'SelfShamirRecoveryInfoDeleted',
@@ -6646,7 +6668,7 @@ export interface LibParsecPlugin {
     clientArchiveWorkspace(
         client: Handle,
         realm_id: VlobID,
-        configuration: RealmArchivingConfiguration
+        configuration: RequestedRealmArchivingConfiguration
     ): Promise<Result<null, ClientArchiveWorkspaceError>>
     clientCancelInvitation(
         client: Handle,

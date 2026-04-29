@@ -3435,6 +3435,23 @@ export type RemoveDeviceDataError =
   | RemoveDeviceDataErrorFailedToRemoveData
 
 
+// RequestedRealmArchivingConfiguration
+export interface RequestedRealmArchivingConfigurationArchived {
+    tag: "RequestedRealmArchivingConfigurationArchived"
+}
+export interface RequestedRealmArchivingConfigurationAvailable {
+    tag: "RequestedRealmArchivingConfigurationAvailable"
+}
+export interface RequestedRealmArchivingConfigurationDeletionPlanned {
+    tag: "RequestedRealmArchivingConfigurationDeletionPlanned"
+    archiving_period_in_seconds: number
+}
+export type RequestedRealmArchivingConfiguration =
+  | RequestedRealmArchivingConfigurationArchived
+  | RequestedRealmArchivingConfigurationAvailable
+  | RequestedRealmArchivingConfigurationDeletionPlanned
+
+
 // SelfShamirRecoveryInfo
 export interface SelfShamirRecoveryInfoDeleted {
     tag: "SelfShamirRecoveryInfoDeleted"
@@ -5524,7 +5541,7 @@ export function clientAcceptTos(
 export function clientArchiveWorkspace(
     client: number,
     realm_id: string,
-    configuration: RealmArchivingConfiguration
+    configuration: RequestedRealmArchivingConfiguration
 ): Promise<Result<null, ClientArchiveWorkspaceError>>
 export function clientCancelInvitation(
     client: number,
