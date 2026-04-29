@@ -354,7 +354,7 @@ export async function trashWorkspace(workspace: WorkspaceID, deletionDate: DateT
   }
   return await libparsec.clientArchiveWorkspace(handle, workspace, {
     tag: RealmArchivingConfigurationTag.DeletionPlanned,
-    deletionDate: deletionDate.toMillis() as any as DateTime,
+    deletionDate: deletionDate.toSeconds() as any as DateTime,
   });
 }
 
