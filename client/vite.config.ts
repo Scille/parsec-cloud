@@ -162,6 +162,20 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
   ],
   build: {
     sourcemap: true,
+    // Without an explicit target, Vite is supposed to pick a good enough default (i.e.
+    // `baseline-widely-available`, see https://v7.vite.dev/config/build-options#build-target).
+    //
+    // However this clashes with `vite-plugin-top-level-await` that overwrites it with its own (too old) default,
+    // that causes issue with `using` declarations (TC39 Explicit Resource Management),
+    // see https://github.com/Menci/vite-plugin-top-level-await/issues/77.
+    //
+    // So we have to be explicit here:
+    // - For native, Electron 41 ships Chrome 146 (see https://www.electronjs.org/blog/electron-41-0).
+    // - For web, we use whatever our current version of Vite considers baseline-widely-available
+    //   (see https://github.com/vitejs/vite/blob/cc383e07b66d4c5a9768fcb570e0af812cb8d999/packages/vite/src/node/constants.ts#L90-L95).
+    //
+    // Also see https://oxc.rs/docs/guide/usage/transformer/lowering#target for allowed target values.
+    target: platform === 'native' ? 'chrome146' : ['chrome107', 'edge107', 'firefox104', 'safari16'],
   },
   resolve: {
     alias: {
