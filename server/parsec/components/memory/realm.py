@@ -603,12 +603,6 @@ class MemoryRealmComponent(BaseRealmComponent):
                 if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
                     return RealmUpdateArchivingStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
-                # Check if realm is already deleted
-                if realm.archivings:
-                    maybe_deletion_date = realm.archivings[-1].cooked.configuration.deletion_date
-                    if maybe_deletion_date is not None and maybe_deletion_date <= now:
-                        return RealmUpdateArchivingStoreBadOutcome.REALM_DELETED
-
                 # Check minimum archiving period for DeletionPlanned configuration
                 if certif.configuration.deletion_date is not None:
                     min_deletion_date = certif.timestamp.add(seconds=org.minimum_archiving_period)

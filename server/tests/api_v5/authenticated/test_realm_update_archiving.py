@@ -169,39 +169,6 @@ async def test_authenticated_realm_update_archiving_realm_not_found(
     assert rep == authenticated_cmds.latest.realm_update_archiving.RepRealmNotFound()
 
 
-async def test_authenticated_realm_update_archiving_realm_deleted(
-    coolorg: CoolorgRpcClients,
-    backend: Backend,
-) -> None:
-    # First schedule deletion in the "past" (i.e., with a date that has already passed)
-    # We do this by directly calling the backend method with a past deletion_date and now
-    past_deletion_date = DateTime.now().subtract(days=1)
-    past_timestamp = DateTime.now().subtract(days=60)
-
-    certif = RealmArchivingCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=past_timestamp,
-        realm_id=coolorg.wksp1_id,
-        configuration=RealmArchivingConfiguration.deletion_planned(past_deletion_date),
-    )
-    # Use backend directly to bypass the minimum_archiving_period check and set a past deletion
-    outcome = await backend.realm.update_archiving(
-        now=past_timestamp,
-        organization_id=coolorg.organization_id,
-        author=coolorg.alice.device_id,
-        author_verify_key=coolorg.alice.signing_key.verify_key,
-        realm_archiving_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
-    )
-    assert isinstance(outcome, RealmArchivingCertificate)
-
-    # Now try to update archiving on a deleted realm
-    certif2 = _alice_archiving_certificate(coolorg, RealmArchivingConfiguration.AVAILABLE)
-    rep = await coolorg.alice.realm_update_archiving(
-        archiving_certificate=certif2.dump_and_sign(coolorg.alice.signing_key),
-    )
-    assert rep == authenticated_cmds.latest.realm_update_archiving.RepRealmDeleted()
-
-
 async def test_authenticated_realm_update_archiving_archiving_period_too_short(
     coolorg: CoolorgRpcClients,
     backend: Backend,
@@ -324,8 +291,8 @@ async def test_authenticated_realm_update_archiving_timestamp_out_of_ballpark(
     assert rep.client_timestamp == timestamp_out_of_ballpark
 
 
-async def test_authenticated_realm_update_archiving_realm_deleted_from_workspace_archived(
-    workspace_archived_org: WorkspaceArchivedOrgRpcClients, backend: Backend
+async def test_authenticated_realm_update_archiving_realm_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
 ) -> None:
     certif = RealmArchivingCertificate(
         author=workspace_archived_org.alice.device_id,
@@ -337,6 +304,21 @@ async def test_authenticated_realm_update_archiving_realm_deleted_from_workspace
         archiving_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
     )
     assert rep == authenticated_cmds.latest.realm_update_archiving.RepRealmDeleted()
+
+
+async def test_authenticated_realm_update_archiving_realm_deletion_date_reached_but_not_yet_deleted(
+    workspace_archived_org: WorkspaceArchivedOrgRpcClients,
+) -> None:
+    certif = RealmArchivingCertificate(
+        author=workspace_archived_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=workspace_archived_org.wksp_ready_to_delete_id,
+        configuration=RealmArchivingConfiguration.AVAILABLE,
+    )
+    rep = await workspace_archived_org.alice.realm_update_archiving(
+        archiving_certificate=certif.dump_and_sign(workspace_archived_org.alice.signing_key),
+    )
+    assert rep == authenticated_cmds.latest.realm_update_archiving.RepOk()
 
 
 async def test_authenticated_realm_update_archiving_http_common_errors(
