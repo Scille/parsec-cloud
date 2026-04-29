@@ -296,7 +296,7 @@ async fn ok_with_changes(
             wksp1.stat_entry_by_id(VlobID::default()).await,
             Err(WorkspaceStatEntryError::Stopped)
         );
-        // Re-opening it show show an empty local storage
+        // Re-opening it shows an empty local storage
         let mut storage = libparsec_platform_storage::workspace::WorkspaceStorage::start(
             &env.discriminant_dir,
             &alice,
