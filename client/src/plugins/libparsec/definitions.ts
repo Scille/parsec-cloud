@@ -401,7 +401,7 @@ export interface ServerConfig {
 export interface ServerOrganizationConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
-    minimumArchivingPeriod: U64
+    realmMinimumArchivingPeriodBeforeDeletion: U64
 }
 
 export interface ShamirRecoveryClaimInProgress1Info {
