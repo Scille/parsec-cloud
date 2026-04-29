@@ -23,7 +23,7 @@ SELECT
     is_expired,
     active_users_limit,
     user_profile_outsider_allowed,
-    minimum_archiving_period,
+    realm_minimum_archiving_period_before_deletion,
     tos_updated_on,
     tos_per_locale_urls,
     (root_verify_key IS NOT NULL) AS is_bootstrapped
@@ -82,8 +82,10 @@ async def organization_test_dump_organizations(
             case _:
                 assert False, row
 
-        match row["minimum_archiving_period"]:
-            case int() as minimum_archiving_period if minimum_archiving_period >= 0:
+        match row["realm_minimum_archiving_period_before_deletion"]:
+            case int() as realm_minimum_archiving_period_before_deletion if (
+                realm_minimum_archiving_period_before_deletion >= 0
+            ):
                 pass
             case _:
                 assert False, row
@@ -106,7 +108,7 @@ async def organization_test_dump_organizations(
             is_expired=is_expired,
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
-            minimum_archiving_period=minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion=realm_minimum_archiving_period_before_deletion,
             tos=tos,
         )
 

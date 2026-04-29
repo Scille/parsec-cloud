@@ -533,17 +533,17 @@ event_wrapper!(
         is_expired: PyObject,
         active_users_limit: PyObject,
         user_profile_outsider_allowed: PyObject,
-        minimum_archiving_period: PyObject,
+        realm_minimum_archiving_period_before_deletion: PyObject,
         tos: PyObject,
     ],
     |py, x: &TestbedEventUpdateOrganization| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, is_expired={}, active_users_limit={}, user_profile_outsider_allowed={}, minimum_archiving_period={}, tos={}",
+            "timestamp={:?}, is_expired={}, active_users_limit={}, user_profile_outsider_allowed={}, realm_minimum_archiving_period_before_deletion={}, tos={}",
             x.timestamp.0,
             x.is_expired.bind(py).repr()?.to_str()?,
             x.active_users_limit.bind(py).repr()?.to_str()?,
             x.user_profile_outsider_allowed.bind(py).repr()?.to_str()?,
-            x.minimum_archiving_period.bind(py).repr()?.to_str()?,
+            x.realm_minimum_archiving_period_before_deletion.bind(py).repr()?.to_str()?,
             x.tos.bind(py).repr()?.to_str()?,
         ))
     }
@@ -1145,9 +1145,13 @@ fn event_to_pyobject(
                         user_profile_outsider_allowed.into_py_any(py)?
                     }
                 },
-                minimum_archiving_period: match x.minimum_archiving_period {
+                realm_minimum_archiving_period_before_deletion: match x
+                    .realm_minimum_archiving_period_before_deletion
+                {
                     None => unset_tag.clone().unbind(),
-                    Some(minimum_archiving_period) => minimum_archiving_period.into_py_any(py)?,
+                    Some(realm_minimum_archiving_period_before_deletion) => {
+                        realm_minimum_archiving_period_before_deletion.into_py_any(py)?
+                    }
                 },
                 tos: match &x.tos {
                     None => unset_tag.clone().unbind(),

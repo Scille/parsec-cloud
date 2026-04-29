@@ -200,7 +200,7 @@ new_organization_ids AS (
         _created_on,
         sequester_authority_certificate,
         sequester_authority_verify_key_der,
-        minimum_archiving_period
+        realm_minimum_archiving_period_before_deletion
     )
     SELECT
         $target_id AS organization_id,
@@ -214,7 +214,7 @@ new_organization_ids AS (
         _created_on,
         sequester_authority_certificate,
         sequester_authority_verify_key_der,
-        minimum_archiving_period
+        realm_minimum_archiving_period_before_deletion
     FROM organization
     WHERE organization_id = $source_id
     RETURNING _id

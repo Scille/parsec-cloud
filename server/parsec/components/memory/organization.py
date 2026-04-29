@@ -66,12 +66,12 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         id: OrganizationID,
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
-        minimum_archiving_period: UnsetType | int = Unset,
+        realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
         force_bootstrap_token: AccessToken | None = None,
     ) -> AccessToken | OrganizationCreateBadOutcome:
-        if minimum_archiving_period is not Unset:
-            assert minimum_archiving_period >= 0  # Sanity check
+        if realm_minimum_archiving_period_before_deletion is not Unset:
+            assert realm_minimum_archiving_period_before_deletion >= 0  # Sanity check
 
         bootstrap_token = force_bootstrap_token or AccessToken.new()
         org = self._data.organizations.get(id)
@@ -86,9 +86,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 self._config.organization_initial_user_profile_outsider_allowed
             )
         assert isinstance(user_profile_outsider_allowed, bool)
-        if minimum_archiving_period is Unset:
-            minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
-        assert isinstance(minimum_archiving_period, int)
+        if realm_minimum_archiving_period_before_deletion is Unset:
+            realm_minimum_archiving_period_before_deletion = (
+                self._config.organization_initial_realm_minimum_archiving_period_before_deletion
+            )
+        assert isinstance(realm_minimum_archiving_period_before_deletion, int)
         if tos is Unset:
             if self._config.organization_initial_tos is None:
                 cooked_tos = None
@@ -104,7 +106,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             bootstrap_token=bootstrap_token,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             active_users_limit=active_users_limit,
-            minimum_archiving_period=minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion=realm_minimum_archiving_period_before_deletion,
             tos=cooked_tos,
             created_on=now,
         )
@@ -138,7 +140,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             root_verify_key=org.root_verify_key,
             user_profile_outsider_allowed=org.user_profile_outsider_allowed,
             active_users_limit=org.active_users_limit,
-            minimum_archiving_period=org.minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion=org.realm_minimum_archiving_period_before_deletion,
             sequester_authority_certificate=org.sequester_authority_certificate,
             sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             sequester_services_certificates=sequester_services_certificates,
@@ -351,11 +353,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         is_expired: UnsetType | bool = Unset,
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
-        minimum_archiving_period: UnsetType | int = Unset,
+        realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
         tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
-        if minimum_archiving_period is not Unset:
-            assert minimum_archiving_period >= 0  # Sanity check
+        if realm_minimum_archiving_period_before_deletion is not Unset:
+            assert realm_minimum_archiving_period_before_deletion >= 0  # Sanity check
 
         try:
             org = self._data.organizations[id]
@@ -368,8 +370,10 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             org.active_users_limit = active_users_limit
         if user_profile_outsider_allowed is not Unset:
             org.user_profile_outsider_allowed = user_profile_outsider_allowed
-        if minimum_archiving_period is not Unset:
-            org.minimum_archiving_period = minimum_archiving_period
+        if realm_minimum_archiving_period_before_deletion is not Unset:
+            org.realm_minimum_archiving_period_before_deletion = (
+                realm_minimum_archiving_period_before_deletion
+            )
         if tos is not Unset:
             if tos is None:
                 org.tos = None
@@ -414,7 +418,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 is_expired=org.is_expired,
                 active_users_limit=org.active_users_limit,
                 user_profile_outsider_allowed=org.user_profile_outsider_allowed,
-                minimum_archiving_period=org.minimum_archiving_period,
+                realm_minimum_archiving_period_before_deletion=org.realm_minimum_archiving_period_before_deletion,
                 tos=org.tos,
             )
         return items

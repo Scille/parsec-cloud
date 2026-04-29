@@ -153,7 +153,7 @@ class MemoryOrganization:
     cooked_sequester_authority: SequesterAuthorityCertificate | None = None
     root_verify_key: VerifyKey | None = field(default=None, repr=False)
     is_expired: bool = False
-    minimum_archiving_period: int = 2592000  # 30 days
+    realm_minimum_archiving_period_before_deletion: int = 2592000  # 30 days
     tos: TermsOfService | None = None
 
     # None for non-sequestered organization

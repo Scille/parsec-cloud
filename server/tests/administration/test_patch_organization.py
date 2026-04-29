@@ -33,8 +33,8 @@ async def test_get_organization_auth(
         "bad_type_user_profile_outsider_allowed",
         "bad_type_active_users_limit",
         "bad_value_active_users_limit",
-        "bad_type_minimum_archiving_period",
-        "bad_value_minimum_archiving_period",
+        "bad_type_realm_minimum_archiving_period_before_deletion",
+        "bad_value_realm_minimum_archiving_period_before_deletion",
         "bad_type_tos",
         "bad_value_tos",
     ),
@@ -58,10 +58,10 @@ async def test_bad_data(
             body_args = {"json": {"active_users_limit": "42"}}
         case "bad_value_active_users_limit":
             body_args = {"json": {"active_users_limit": -1}}
-        case "bad_type_minimum_archiving_period":
-            body_args = {"json": {"minimum_archiving_period": "42"}}
-        case "bad_value_minimum_archiving_period":
-            body_args = {"json": {"minimum_archiving_period": -1}}
+        case "bad_type_realm_minimum_archiving_period_before_deletion":
+            body_args = {"json": {"realm_minimum_archiving_period_before_deletion": "42"}}
+        case "bad_value_realm_minimum_archiving_period_before_deletion":
+            body_args = {"json": {"realm_minimum_archiving_period_before_deletion": -1}}
         case "bad_type_tos":
             body_args = {"json": {"tos": "{}"}}
         case "bad_value_tos":
@@ -102,12 +102,12 @@ class PatchOrganizationParams(TypedDict):
         {"is_expired": True},
         {"active_users_limit": 1},
         {"user_profile_outsider_allowed": False},
-        {"minimum_archiving_period": 1},
+        {"realm_minimum_archiving_period_before_deletion": 1},
         {
             "is_expired": False,
             "active_users_limit": None,
             "user_profile_outsider_allowed": True,
-            "minimum_archiving_period": 0,
+            "realm_minimum_archiving_period_before_deletion": 0,
             "tos": {"en_HK": "https://parsec.invalid/tos_en"},
         },
     ),
@@ -134,7 +134,9 @@ async def test_ok(
         is_expired=params.get("is_expired", False),
         active_users_limit=ActiveUsersLimit.from_maybe_int(params.get("active_users_limit", None)),
         user_profile_outsider_allowed=params.get("user_profile_outsider_allowed", True),
-        minimum_archiving_period=params.get("minimum_archiving_period", 2592000),
+        realm_minimum_archiving_period_before_deletion=params.get(
+            "realm_minimum_archiving_period_before_deletion", 2592000
+        ),
         tos=TermsOfService(updated_on=ANY, per_locale_urls=params["tos"])
         if "tos" in params
         else None,

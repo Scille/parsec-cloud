@@ -99,7 +99,7 @@ WITH my_organization AS (
         is_expired,
         user_profile_outsider_allowed,
         active_users_limit,
-        minimum_archiving_period
+        realm_minimum_archiving_period_before_deletion
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -147,7 +147,9 @@ SELECT
     (SELECT is_expired FROM my_organization) AS organization_is_expired,
     (SELECT user_profile_outsider_allowed FROM my_organization) AS organization_user_profile_outsider_allowed,
     (SELECT active_users_limit FROM my_organization) AS organization_active_users_limit,
-    (SELECT minimum_archiving_period FROM my_organization) AS organization_minimum_archiving_period,
+    (
+        SELECT realm_minimum_archiving_period_before_deletion FROM my_organization
+    ) AS organization_realm_minimum_archiving_period_before_deletion,
     (SELECT _id FROM my_user) AS user_internal_id,
     (SELECT revoked FROM my_user) AS user_is_revoked,
     (SELECT user_id FROM my_user) AS user_id,
@@ -205,8 +207,8 @@ class PGEventsComponent(BaseEventsComponent):
             case _:
                 assert False, row
 
-        match row["organization_minimum_archiving_period"]:
-            case int() as organization_minimum_archiving_period:
+        match row["organization_realm_minimum_archiving_period_before_deletion"]:
+            case int() as organization_realm_minimum_archiving_period_before_deletion:
                 pass
             case _:
                 assert False, row
@@ -255,7 +257,7 @@ class PGEventsComponent(BaseEventsComponent):
             organization_id=organization_id,
             user_profile_outsider_allowed=organization_user_profile_outsider_allowed,
             active_users_limit=organization_active_users_limit,
-            minimum_archiving_period=organization_minimum_archiving_period,
+            realm_minimum_archiving_period_before_deletion=organization_realm_minimum_archiving_period_before_deletion,
         )
 
         return org_config, user_current_profile, user_realms

@@ -115,7 +115,7 @@ async def test_anonymous_organization_bootstrap_ok(
     if config.spontaneous:
         backend.config.organization_initial_active_users_limit = ActiveUsersLimit.limited_to(3)
         backend.config.organization_initial_user_profile_outsider_allowed = False
-        backend.config.organization_initial_minimum_archiving_period = 42
+        backend.config.organization_initial_realm_minimum_archiving_period_before_deletion = 42
         backend.config.organization_initial_tos = {"cn_HK": "https://parsec.invalid/tos_cn.pdf"}
 
     rep = await anonymous_client.organization_bootstrap(
@@ -141,8 +141,8 @@ async def test_anonymous_organization_bootstrap_ok(
             == backend.config.organization_initial_user_profile_outsider_allowed
         )
         assert (
-            org.minimum_archiving_period
-            == backend.config.organization_initial_minimum_archiving_period
+            org.realm_minimum_archiving_period_before_deletion
+            == backend.config.organization_initial_realm_minimum_archiving_period_before_deletion
         )
         assert backend.config.organization_initial_tos is not None  # Sanity check to please typing
         assert org.tos == TermsOfService(

@@ -605,7 +605,9 @@ class MemoryRealmComponent(BaseRealmComponent):
 
                 # Check minimum archiving period for DeletionPlanned configuration
                 if certif.configuration.deletion_date is not None:
-                    min_deletion_date = certif.timestamp.add(seconds=org.minimum_archiving_period)
+                    min_deletion_date = certif.timestamp.add(
+                        seconds=org.realm_minimum_archiving_period_before_deletion
+                    )
                     if certif.configuration.deletion_date < min_deletion_date:
                         return RealmUpdateArchivingStoreBadOutcome.ARCHIVING_PERIOD_TOO_SHORT
 
