@@ -95,6 +95,16 @@ impl PlatformPkiSystem {
             .try_concat()
             .await
     }
+
+    pub async fn get_certificate_revocation_lists(
+        &self,
+    ) -> Result<
+        Vec<X509CertificateRevocationList<'static>>,
+        PkiSystemGetCertificateRevocationListsError,
+    > {
+        // SCWS currently doesn't support CRLs
+        Ok(vec![])
+    }
 }
 
 // Retrieve the `SCWS` object from the global scope.
@@ -201,14 +211,5 @@ async fn ask_server_to_sign_scws_challenge(
             log::warn!("Unknown server status {unknown_status} (reason: {reason:?})");
             Err(PkiSystemInitError::NotAvailable)
         }
-    }
-
-    pub async fn get_certificate_revocation_lists(
-        &self,
-    ) -> Result<
-        Vec<X509CertificateRevocationList<'static>>,
-        PkiSystemGetCertificateRevocationListsError,
-    > {
-        unimplemented!("platform not supported");
     }
 }
