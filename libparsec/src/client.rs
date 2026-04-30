@@ -10,10 +10,10 @@ pub use libparsec_client::{
     ClientGetUserInfoError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
     ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
-    ClientSetupShamirRecoveryError, ClientShareWorkspaceError, ClientUserUpdateProfileError,
-    DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo, RequestedRealmArchivingConfiguration,
-    SelfShamirRecoveryInfo, ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo,
-    WorkspaceUserAccessInfo,
+    ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
+    ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo,
+    OtherShamirRecoveryInfo, RequestedRealmArchivingConfiguration, SelfShamirRecoveryInfo,
+    ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
@@ -626,6 +626,19 @@ pub async fn client_share_workspace(
     let client = borrow_client(client)?;
 
     client.share_workspace(realm_id, recipient, role).await
+}
+
+/*
+ * Client self-promote to workspace owner
+ */
+
+pub async fn client_self_promote_to_workspace_owner(
+    client: Handle,
+    realm_id: VlobID,
+) -> Result<(), ClientSelfPromoteToWorkspaceOwnerError> {
+    let client = borrow_client(client)?;
+
+    client.self_promote_to_workspace_owner(realm_id).await
 }
 
 /*
