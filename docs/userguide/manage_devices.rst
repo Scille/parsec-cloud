@@ -140,6 +140,11 @@ When trying to log in, click on ``Forgot your password?``.
 
 You will be able to import the Recovery File and type in the Secret Key.
 
+.. image:: screens/choose-recovery-device-method.png
+    :align: center
+    :width: 400
+    :alt: Choose recovery device method
+
 .. image:: screens/import_recovery_device.png
     :align: center
     :width: 400
