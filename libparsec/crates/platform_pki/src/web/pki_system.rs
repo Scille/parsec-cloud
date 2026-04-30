@@ -10,6 +10,7 @@ use crate::{
 };
 use futures::{StreamExt, TryStreamExt};
 use libparsec_types::prelude::*;
+use sha2::Digest;
 use wasm_bindgen::JsCast;
 
 pub struct PlatformPkiSystem {
@@ -57,9 +58,91 @@ impl PlatformPkiSystem {
 
     pub async fn open_certificate(
         &self,
-        _cert_ref: &X509CertificateReference,
+        cert_ref: &X509CertificateReference,
     ) -> Result<PkiCertificate, PkiSystemOpenCertificateError> {
-        unimplemented!("platform not supported")
+        let expected_cert_hash = &cert_ref.hash;
+        let uri = cert_ref.get_uri::<X509Pkcs11URI>();
+        log::debug!("Looking for certificate matching the reference: {cert_ref:?}");
+        let cert = self
+            .scws
+            .iter_working_reader()
+            .filter_map(|token| async move {
+                let cert_it = token
+                    .iter_objects()
+                    .await
+                    .filter_map(|obj| {
+                        if let scwsapi::Object::Certificate(cert) = obj {
+                            Some(cert)
+                        } else {
+                            None
+                        }
+                    })
+                    .inspect(|cert| {
+                        log::trace!(
+                            r#"Found certificate with id:{:?} and label:"{}""#,
+                            cert.ck_id(),
+                            cert.ck_label()
+                        )
+                    })
+                    // Apply some pre-filter on the certificate using the URI
+                    .filter(|cert| {
+                        if let Some(uri) = uri {
+                            if let Some(expected_label) = &uri.label {
+                                if expected_label != cert.ck_label().as_bytes() {
+                                    return false;
+                                }
+                            }
+                            if let Some(expected_id) = &uri.id {
+                                let Ok(id) = cert.ck_id() else {
+                                    return false;
+                                };
+                                return *id == *expected_id;
+                            }
+                        }
+                        true
+                    })
+                    .map(super::PlatformPkiCertificate::from);
+                futures::stream::iter(cert_it)
+                    .filter_map(|cert| async move {
+                        let der = match cert.get_der().await.map_err(|e| {
+                            PkiSystemOpenCertificateError::Internal(anyhow::anyhow!(
+                                "Cannot obtain DER for certificate {name}: {e}",
+                                name = cert.0.ck_label()
+                            ))
+                        }) {
+                            Ok(v) => v,
+                            // Abort if we cannot get the DER of a given certificate.
+                            Err(e) => return Some(Err(e)),
+                        };
+
+                        // Test for the fingerprint of the certificate
+                        match expected_cert_hash {
+                            X509CertificateHash::SHA256(expected_hash) => {
+                                let cert_hash = sha2::Sha256::digest(&der);
+                                if cert_hash.as_slice() == expected_hash.as_ref() {
+                                    Some(Ok(cert))
+                                } else {
+                                    None
+                                }
+                            }
+                        }
+                    })
+                    .map_ok(|cert| PkiCertificate {
+                        #[cfg(not(feature = "test-with-testbed"))]
+                        platform: cert,
+                        #[cfg(feature = "test-with-testbed")]
+                        platform: crate::testbed::MaybeWithTestbed::WithPlatform(cert),
+                    })
+                    .boxed_local()
+                    .try_next()
+                    .await
+                    .transpose()
+            })
+            .boxed_local()
+            .try_next()
+            .await
+            .and_then(|maybe_cert| maybe_cert.ok_or(PkiSystemOpenCertificateError::NotFound));
+        cert
     }
 
     pub async fn list_user_certificates(

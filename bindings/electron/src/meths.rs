@@ -5570,6 +5570,153 @@ fn struct_x509_certificate_reference_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// X509Pkcs11URI
+
+#[allow(dead_code)]
+fn struct_x509_pkcs11_uri_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::X509Pkcs11URI> {
+    let id = {
+        let js_val: Handle<JsValue> = obj.get(cx, "id")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsTypedArray<u8>, _>(cx)?;
+                Some({
+                    let custom_from_rs_bytes =
+                        |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                })
+            }
+        }
+    };
+    let label = {
+        let js_val: Handle<JsValue> = obj.get(cx, "label")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsTypedArray<u8>, _>(cx)?;
+                Some({
+                    let custom_from_rs_bytes =
+                        |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                    #[allow(clippy::unnecessary_mut_passed)]
+                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                        Ok(val) => val,
+                        // err can't infer type in some case, because of the previous `try_into`
+                        #[allow(clippy::useless_format)]
+                        Err(err) => return cx.throw_type_error(format!("{}", err)),
+                    }
+                })
+            }
+        }
+    };
+    let issuer = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "issuer")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let subject = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "subject")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    let serial = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serial")?;
+        {
+            let custom_from_rs_bytes =
+                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            #[allow(clippy::unnecessary_mut_passed)]
+            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                Ok(val) => val,
+                // err can't infer type in some case, because of the previous `try_into`
+                #[allow(clippy::useless_format)]
+                Err(err) => return cx.throw_type_error(format!("{}", err)),
+            }
+        }
+    };
+    Ok(libparsec::X509Pkcs11URI {
+        id,
+        label,
+        issuer,
+        subject,
+        serial,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_x509_pkcs11_uri_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::X509Pkcs11URI,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_id = match rs_obj.id {
+        Some(elem) => {
+            let rs_buff = { elem };
+            let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+            js_buff
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "id", js_id)?;
+    let js_label = match rs_obj.label {
+        Some(elem) => {
+            let rs_buff = { elem };
+            let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+            js_buff
+        }
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "label", js_label)?;
+    let js_issuer = {
+        let rs_buff = { rs_obj.issuer };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "issuer", js_issuer)?;
+    let js_subject = {
+        let rs_buff = { rs_obj.subject };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "subject", js_subject)?;
+    let js_serial = {
+        let rs_buff = { rs_obj.serial };
+        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
+        js_buff
+    };
+    js_obj.set(cx, "serial", js_serial)?;
+    Ok(js_obj)
+}
+
 // X509WindowsCngURI
 
 #[allow(dead_code)]
@@ -19152,10 +19299,7 @@ fn variant_x509_uri_flavor_value_js_to_rs<'a>(
         "X509URIFlavorValuePKCS11" => {
             let x0 = {
                 let js_val: Handle<JsObject> = obj.get(cx, "x0")?;
-                {
-                    let _ = js_val;
-                    libparsec::X509Pkcs11URI
-                }
+                struct_x509_pkcs11_uri_js_to_rs(cx, js_val)?
             };
             Ok(libparsec::X509URIFlavorValue::PKCS11(x0))
         }
@@ -19180,10 +19324,7 @@ fn variant_x509_uri_flavor_value_rs_to_js<'a>(
         libparsec::X509URIFlavorValue::PKCS11(x0, ..) => {
             let js_tag = JsString::try_new(cx, "X509URIFlavorValuePKCS11").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = {
-                let _ = x0;
-                cx.undefined()
-            };
+            let js_x0 = struct_x509_pkcs11_uri_rs_to_js(cx, x0)?;
             js_obj.set(cx, "x0", js_x0)?;
         }
         libparsec::X509URIFlavorValue::WindowsCNG(x0, ..) => {
