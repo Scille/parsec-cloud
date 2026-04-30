@@ -120,6 +120,7 @@ fetchval
 filechooser
 fileprovider
 firacode
+fixedfooter
 fncychap
 folderish
 fontpkg
@@ -186,6 +187,7 @@ libicutest
 libnss
 librsvg
 libsodium
+linenodiv
 linkcheck
 literalinclude
 liveplay
