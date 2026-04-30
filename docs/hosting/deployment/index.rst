@@ -77,16 +77,16 @@ System Requirements
 
 The following panel describes the minimum software and hardware requirements.
 
-  .. admonition:: Minimum system requirements
+.. admonition:: Minimum system requirements
 
-    - **Hardware**: 1 vCPU/core with 1GB RAM
-    - **Database**: PostgreSQL v16+, 20GB for metadata storage
-    - **S3 Object Storage**: 2TB for encrypted data storage (around x100 metadata size)
+  - **Hardware**: 1 vCPU/core with 1GB RAM
+  - **Database**: PostgreSQL v16+, 20GB for metadata storage
+  - **S3 Object Storage**: 2TB for encrypted data storage (around x100 metadata size)
 
-  .. important::
+.. important::
 
-    It is not recommended to deploy both **Parsec Server** and **PostgreSQL database** on a single system for
-    production use, but it is a good option for testing purposes.
+  It is not recommended to deploy both **Parsec Server** and **PostgreSQL database** on a single system for
+  production use, but it is a good option for testing purposes.
 
 
 Preparation
@@ -118,9 +118,12 @@ The ``setup-tls.sh`` script below will allow you to generate everything you need
    b. Change the file mode to give read permission to the group ``1234``. This is required because
       Docker Compose does not allow to mount the file with the correct permissions in the container.
 
-.. literalinclude:: setup-tls.sh
-  :language: bash
-  :linenos:
+.. admonition:: Example
+   :collapsible: open
+
+   .. literalinclude:: setup-tls.sh
+     :language: bash
+     :linenos:
 
 .. _doc_hosting_deployment_setup_env_files:
 
@@ -159,9 +162,12 @@ Database env file
 
 Create the file ``parsec-db.env`` and specify the  the following content to configure the access to the PostgreSQL database:
 
-.. literalinclude:: parsec-db.env
-  :language: ini
-  :linenos:
+.. admonition:: Example
+   :collapsible: open
+
+   .. literalinclude:: parsec-db.env
+     :language: ini
+     :linenos:
 
 SMTP env file
 ^^^^^^^^^^^^^
@@ -170,18 +176,24 @@ Create the file ``parsec-smtp.env`` to configure the access to the SMTP server (
 
 We need to set the connection information, the sender information, the default language the emails are sent in:
 
-.. literalinclude:: parsec-smtp.env
-  :language: ini
-  :linenos:
+.. admonition:: Example
+   :collapsible: open
+
+   .. literalinclude:: parsec-smtp.env
+     :language: ini
+     :linenos:
 
 S3 env file
 ^^^^^^^^^^^
 
 Create the file ``parsec-s3.env`` with the following content to set the URL for the S3-like service:
 
-.. literalinclude:: parsec-s3.env
-  :language: ini
-  :linenos:
+.. admonition:: Example
+   :collapsible: open
+
+   .. literalinclude:: parsec-s3.env
+     :language: ini
+     :linenos:
 
 .. note::
 
@@ -192,9 +204,12 @@ Parsec env file
 
 Create the file ``parsec.env`` with the following content to configure the ``parsec-server`` service:
 
-.. literalinclude:: parsec.env
-  :language: ini
-  :linenos:
+.. admonition:: Example
+   :collapsible: open
+
+   .. literalinclude:: parsec.env
+     :language: ini
+     :linenos:
 
 .. note::
 
@@ -237,9 +252,12 @@ The Docker Compose file
 
 You can use the following Docker Compose file (``parsec-server.docker.yaml``) to deploy Parsec Server for testing:
 
-.. literalinclude:: parsec-server.docker.yaml
-  :language: yaml
-  :linenos:
+.. admonition:: Example
+   :collapsible: open
+
+   .. literalinclude:: parsec-server.docker.yaml
+     :language: yaml
+     :linenos:
 
 It will setup 4 services:
 
@@ -371,41 +389,41 @@ Installation
 
 4. Prepare the database by applying the migrations:
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    source venv/bin/activate
-    set -a
-    source parsec-db.env
-    python -m parsec migrate
+  source venv/bin/activate
+  set -a
+  source parsec-db.env
+  python -m parsec migrate
 
 Start the server
 ----------------
 
 1. Create a wrapper script ``run-parsec-server``
 
-  .. code-block:: bash
+.. code-block:: bash
 
-    # Load the virtualenv.
-    source venv/bin/activate
+  # Load the virtualenv.
+  source venv/bin/activate
 
-    # Load the env file into the environment table.
-    set -a
-    source parsec-admin-token.env
-    source parsec-db.env
-    source parsec-smtp.env
-    source parsec-s3.env
-    source parsec.env
-    set +a
+  # Load the env file into the environment table.
+  set -a
+  source parsec-admin-token.env
+  source parsec-db.env
+  source parsec-smtp.env
+  source parsec-s3.env
+  source parsec.env
+  set +a
 
-    # Start Parsec Server.
-    python -m parsec run
+  # Start Parsec Server.
+  python -m parsec run
 
 2. Execute the wrapper script ``run-parsec-server``
 
-  .. note::
+.. note::
 
-    To run the wrapper with only ``run-parsec-server`` you need to have set the executable mode on the script file (``chmod +x run-parsec-server``).
-    Otherwise, you need to execute it with the ``bash`` shell (``bash run-parsec-server``).
+  To run the wrapper with only ``run-parsec-server`` you need to have set the executable mode on the script file (``chmod +x run-parsec-server``).
+  Otherwise, you need to execute it with the ``bash`` shell (``bash run-parsec-server``).
 
 
 Start using Parsec Server
@@ -456,18 +474,24 @@ If this option is not set, the gunicorn/uvicorn ``FORWARDED_ALLOW_IPS`` environm
 
 An example of a reverse proxy configuration for ``nginx`` can be found in :ref:`the Docker Compose file <doc_hosting_deployment_the_docker_compose_file>`:
 
-.. literalinclude:: parsec-server.docker.yaml
-  :language: yaml
-  :linenos:
-  :start-at: parsec-proxy
-  :end-before: parsec-postgres
+.. admonition:: Example
+   :collapsible: open
+
+   .. literalinclude:: parsec-server.docker.yaml
+     :language: yaml
+     :linenos:
+     :start-at: parsec-proxy
+     :end-before: parsec-postgres
 
 The provided configuration for ``nginx`` is:
 
-.. literalinclude:: parsec-nginx.conf
-  :language: nginx
-  :emphasize-lines: 10,19-22,25,28
-  :linenos:
+.. admonition:: Example
+   :collapsible: open
+
+   .. literalinclude:: parsec-nginx.conf
+     :language: nginx
+     :emphasize-lines: 10,19-22,25,28
+     :linenos:
 
 It configures Nginx to serve the domain ``example.com`` by listening on port 80 and 443, and proxy the requests to the Parsec Server.
 

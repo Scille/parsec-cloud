@@ -91,12 +91,12 @@ Your identity will be verified with an identity provider. You and the administra
 to go through this process together. You first make a request to join an organization, and the
 administrator accepts it later.
 
-  .. important::
+.. important::
 
-    An identity provider is required to use this option. Those currently supported are:
+  An identity provider is required to use this option. Those currently supported are:
 
-      - a **Public Key Infrastructure** (PKI). Supported only on Windows.
-      - a **Single-Sign On** (SSO) provider. Only **ProConnect** is supported at the moment.
+    - a **Public Key Infrastructure** (PKI). Supported only on Windows.
+    - a **Single-Sign On** (SSO) provider. Only **ProConnect** is supported at the moment.
 
 
 .. _doc_userguide_join_organization_request:
@@ -119,17 +119,17 @@ Request to join the organization
 
 3. Depending on your system, you may have to select the identity provider you would like to use (PKI or SSO).
 
-  .. admonition:: Using an SSO (ProConnect)
+.. admonition:: Using an SSO (ProConnect)
 
-    1. Select your SSO provider
-    2. Authenticate with your SSO provider as usual
-    3. Enter your **name**, select your **email address** and click ``Continue``
-    4. Click ``Continue``
+  1. Select your SSO provider
+  2. Authenticate with your SSO provider as usual
+  3. Enter your **name**, select your **email address** and click ``Continue``
+  4. Click ``Continue``
 
-  .. admonition:: Using a PKI
+.. admonition:: Using a PKI
 
-    1. Select the certificate matching your infrastructure
-    2. Click ``Continue``
+  1. Select the certificate matching your infrastructure
+  2. Click ``Continue``
 
 4. Your join request has been sent and you should now see it with the **Pending** status.
 5. Once accepted, a button ``Add to my organizations`` will appear on your request. Click on it to log into the organization.
