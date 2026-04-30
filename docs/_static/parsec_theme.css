@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Albert+Sans&display=swap");
+
 
 /*
   BLUE PRINCIPAL #006eff - :hover #004edf
@@ -8,8 +8,72 @@
   LIGHT GRAY     #f1f2f2
 */
 
-body {
+body, h1, h2, h3, h4, h5, h6, p {
   font-family: "Albert Sans", Roboto, "Helvetica Neue", sans-serif !important;
+}
+
+@media screen and (max-width: 768px) {
+  .wy-nav-content-wrap.shift {
+    left: 0;
+    max-width: 100%;
+    padding-bottom: 0;
+  }
+
+  .wy-side-scroll {
+    position: initial !important;
+  }
+
+  .wy-nav-top {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  .wy-nav-top i {
+    font-size: 24px;
+    padding: 0.25rem;
+    float: none;
+    position: absolute;
+    cursor: pointer;
+    right: 1rem;
+    top: 1.125rem;
+    color: #121d43;
+  }
+
+  .wy-nav-top a {
+    margin: 0.5rem 2rem 0;
+    color: #121d43 !important;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+}
+
+.wy-grid-for-nav {
+  overflow: hidden;
+}
+
+.wy-nav-content-wrap {
+  overflow: auto;
+  height: 100%;
+}
+
+.wy-menu-vertical li.current a {
+    border-right: none;
+}
+
+.wy-nav-content {
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+.wy-nav-content .style-external-links {
+  padding-bottom: 3rem;
+}
+
+.wy-side-scroll {
+  position: fixed;
+  padding-bottom: 3rem;
+  background: #ffffff;
 }
 
 .wy-nav-content-wrap,
@@ -19,15 +83,52 @@ body {
   background-color: rgba(0, 0, 0, 0);
 }
 
-.wy-side-nav-search > a img.logo,
-.wy-side-nav-search .wy-dropdown > a img.logo {
-  height: 120px;
-  margin-top: 25px;
+.wy-nav-side {
+  border-right: 1px solid #EAEAF1;
 }
 
-.wy-side-nav-search > div.version {
-  color: #aaaaaa;
-  visibility: hidden;
+.wy-side-nav-search > a img.logo,
+.wy-side-nav-search .wy-dropdown > a img.logo {
+  height: auto;
+  max-width: 200px;
+  margin: 1rem;
+}
+
+.switch-menus {
+  display: flex !important;
+  gap: 1rem;
+}
+
+.switch-menus .version-switch,
+.switch-menus .language-switch {
+  background-color: #ffffff;
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.05), 0 1px 4px 0 rgba(0, 0, 0, 0.03), 0 0 1px 0 rgba(0, 0, 0, 0.20);
+  border-radius: 8px;
+  width: 100%;
+  display: flex !important;
+  padding: 0.5rem 12px;
+  justify-content: space-between;
+}
+
+.switch-menus .language-switch:hover,
+.switch-menus .version-switch:hover {
+  background-color: #e0e0e0;
+}
+
+.switch-menus .version-switch::after,
+.switch-menus .language-switch::after {
+  color: #51517B !important;
+  opacity: 0.5;
+  display: flex !important;
+  width: 1.5em;
+  align-items: center;
+}
+
+.switch-menus select {
+  text-align-last: left !important;
+  color: #51517B !important;
+  width: 100% !important;
+  margin: 0;
 }
 
 a,
@@ -49,12 +150,16 @@ a:visited:hover,
 }
 
 .wy-menu-vertical a {
-  color: #aaaaaa;
+  color: #3D3D5C;
+}
+
+.wy-menu-vertical li {
+  border-radius: 6px;
 }
 
 .wy-menu-vertical a:hover {
-  color: #ffffff;
-  background-color: #006eff;
+  color: hsl(214, 100%, 45%);
+  background-color: hsl(214deg 100% 45% / 13%);
 }
 
 .wy-menu-vertical li.current,
@@ -72,16 +177,44 @@ a:visited:hover,
 }
 
 .wy-menu-vertical li.current a:hover {
-  color: #ffffff;
-  background-color: #0066ff;
+  color: hsl(214, 100%, 45%);
+  background-color: hsl(214deg 100% 45% / 13%);
+}
+
+.wy-menu-vertical a button.toctree-expand {
+  color: #51517B;
+}
+
+.wy-menu-vertical a:hover button.toctree-expand {
+  color: hsl(214, 100%, 45%);
 }
 
 .wy-menu-vertical p.caption {
-  color: #006eff;
+  color: #51517B;
+}
+
+.wy-menu-vertical > ul {
+  margin-left: 1rem;
+}
+
+.wy-menu-vertical li.toctree-l2.current li.toctree-l3>a {
+  padding: .4045em 1.618em .4045em 2em;
+}
+
+.wy-side-nav-search {
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #EAEAF1;
 }
 
 .wy-side-nav-search input[type="text"] {
-  border-color: #006eff;
+  border-color: #006eff9f;
+  padding: 8px 12px;
+  font-size: 0.9375rem;
+}
+
+.wy-side-nav-search input[type="text"]:hover {
+  border-color: #0066ff;
 }
 
 .wy-menu-vertical li span.toctree-expand:before {
@@ -102,10 +235,7 @@ h4,
 h5,
 h6 {
   color: #121d43;
-}
-
-.highlight {
-  background: #f1f2f2;
+  font-weight: 600 !important;
 }
 
 .rst-content tt.literal,
@@ -126,33 +256,121 @@ h6 {
 .rst-content .seealso,
 .rst-content .tip,
 .rst-content .warning {
-  border: 1px solid #e1e4e5;
-  padding-top: 20px;
   background-color: rgba(0, 0, 0, 0);
   color: #121d43;
 }
 
 /* Specific color by admonition class */
+.rst-content details.admonition {
+  position: relative;
+}
+
+.rst-content details.admonition summary {
+  cursor: pointer;
+}
+
+.rst-content details.admonition::after {
+  content: "\f078";
+  font-family: 'FontAwesome';
+  position: absolute;
+  top: 0.75rem;
+  right: 1.75rem;
+  font-size: 0.875rem;
+  color: #353535cf;
+}
+
+.rst-content details.admonition[open]::after {
+  content: "\f077";
+}
+
+.rst-content .admonition {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  border-radius: 10px;
+}
+
+.rst-content .admonition:has(div[class^=highlight]) {
+  gap: 0 !important;
+}
+
+.rst-content .admonition-title {
+  margin: 0px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: hsl(213, 92%, 45%);
+  position: relative;
+  z-index: 3;
+}
+
+.rst-content .admonition.note,
+.rst-content .admonition.seealso {
+  background-color: hsl(213, 92%, 94%);
+}
 
 .rst-content .note .admonition-title,
 .rst-content .seealso .admonition-title {
-  background-color: rgba(0, 0, 0, 0);
-  color: #006eff;
+  background-color: transparent;
+  color: hsl(213, 92%, 45%);
+}
+
+.rst-content .admonition.hint,
+.rst-content .admonition.tip {
+  background-color: hsl(158, 28%, 94%);
 }
 
 .rst-content .hint .admonition-title,
-.rst-content .important .admonition-title,
 .rst-content .tip .admonition-title {
-  background-color: rgba(0, 0, 0, 0);
-  color: #1abc9c;
+  background-color: transparent;
+  color: hsl(158, 28%, 45%);
+}
+
+.rst-content .admonition.admonition-todo,
+.rst-content .admonition.attention,
+.rst-content .admonition.important,
+.rst-content .admonition.caution,
+.rst-content .admonition.warning {
+  background-color: hsl(40, 100%, 94%);
 }
 
 .rst-content .admonition-todo .admonition-title,
 .rst-content .attention .admonition-title,
+.rst-content .important .admonition-title,
 .rst-content .caution .admonition-title,
 .rst-content .warning .admonition-title {
-  background-color: rgba(0, 0, 0, 0);
-  color: #ffc107;
+  background-color: transparent;
+  color: hsl(40, 100%, 45%);
+}
+
+.rst-content .admonition .admonition-title::before,
+.rst-content .admonition.note .admonition-title::before,
+.rst-content .admonition.seealso .admonition-title::before {
+  content: "\f05a";
+}
+
+.rst-content .admonition.hint .admonition-title::before,
+.rst-content .admonition.tip .admonition-title::before {
+  content: "\f0eb"
+}
+
+.rst-content .admonition.admonition-todo .admonition-title::before {
+  content: "\f0ae";
+}
+
+.rst-content .admonition.important .admonition-title::before,
+.rst-content .admonition.attention .admonition-title::before {
+  content: "\f06a";
+}
+
+.rst-content .admonition.caution .admonition-title::before,
+.rst-content .admonition.warning .admonition-title::before {
+  content: "\f071";
+}
+
+.rst-content .admonition p {
+  margin: 0;
 }
 
 .ethical-dark-theme div.ethical-sidebar {
@@ -227,4 +445,73 @@ img {
   display: inline-block;
   padding: 10px;
   vertical-align: middle;
+}
+
+.rst-content code {
+  font-size: 0.825rem !important;
+  background: #EFEFEF;
+  border: 1px solid #D4D4D4;
+  border-radius: 6px;
+  padding: 3px 6px;
+  color: #D20040;
+}
+
+.rst-content .linenodiv pre, .rst-content div[class^=highlight] pre, .rst-content pre.literal-block, div[class^=highlight] pre span {
+  font-size: 0.825rem !important;
+  border: none !important;
+}
+
+.rst-content blockquote {
+  border-left: 2px solid #D4D4D4;
+  background-color: #00000008;
+  padding: 16px;
+  margin-left: 0;
+}
+
+.rst-content blockquote p,
+.rst-content blockquote ul {
+  margin: 0;
+}
+
+.highlight-jinja {
+  border-radius: 8px;
+}
+
+.highlight:not(code) span {
+  font-size: 1rem;
+}
+
+/* Hide ethical ads */
+[data-ea-style=fixedfooter].loaded,
+.ethical-rtd {
+  display: none;
+}
+
+.container.bottom-right {
+  bottom: 0;
+}
+
+.rst-footer-buttons .btn {
+  display: flex;
+  padding: 12px 16px;
+  gap: 0.5rem;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.rst-footer-buttons .btn:focus,
+.rst-footer-buttons .btn:hover {
+  outline: 2px solid #c1c1c1;
+  outline-offset: 2px;
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.05);
+}
+
+.highlight:has(pre) {
+  border-radius: 8px;
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.05), 0 1px 4px 0 rgba(0, 0, 0, 0.03), 0 0 1px 0 rgba(0, 0, 0, 0.20);
+  margin-top: 0.5rem !important;
+}
+
+.rst-content div[class^=highlight], .rst-content pre.literal-block {
+  border: none !important;
 }
