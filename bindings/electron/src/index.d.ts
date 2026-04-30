@@ -550,6 +550,7 @@ export interface WorkspaceInfo {
     selfRoleOrigin: CertificateBasedInfoOrigin
     archivingConfiguration: RealmArchivingConfiguration
     archivingConfigurationOrigin: CertificateBasedInfoOrigin
+    canSelfPromoteToOwner: boolean
 }
 
 
@@ -2339,6 +2340,64 @@ export type ClientRevokeUserError =
   | ClientRevokeUserErrorTimestampOutOfBallpark
   | ClientRevokeUserErrorUserIsSelf
   | ClientRevokeUserErrorUserNotFound
+
+
+// ClientSelfPromoteToWorkspaceOwnerError
+export interface ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists"
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorAuthorIsOutsider {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorAuthorIsOutsider"
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed"
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorInternal {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorInternal"
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate"
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorOffline {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorOffline"
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted"
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorStopped {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorStopped"
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound {
+    tag: "ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound"
+    error: string
+}
+export type ClientSelfPromoteToWorkspaceOwnerError =
+  | ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists
+  | ClientSelfPromoteToWorkspaceOwnerErrorAuthorIsOutsider
+  | ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed
+  | ClientSelfPromoteToWorkspaceOwnerErrorInternal
+  | ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate
+  | ClientSelfPromoteToWorkspaceOwnerErrorOffline
+  | ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted
+  | ClientSelfPromoteToWorkspaceOwnerErrorStopped
+  | ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark
+  | ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound
 
 
 // ClientSetupShamirRecoveryError
@@ -5646,6 +5705,10 @@ export function clientRevokeUser(
     client: number,
     user: string
 ): Promise<Result<null, ClientRevokeUserError>>
+export function clientSelfPromoteToWorkspaceOwner(
+    client: number,
+    realm_id: string
+): Promise<Result<null, ClientSelfPromoteToWorkspaceOwnerError>>
 export function clientSetupShamirRecovery(
     client_handle: number,
     per_recipient_shares: Map<string, number>,
