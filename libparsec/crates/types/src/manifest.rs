@@ -191,6 +191,24 @@ pub enum RealmRole {
     Reader,
 }
 
+impl std::cmp::Ord for RealmRole {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let priority = |x| match x {
+            RealmRole::Owner => 4,
+            RealmRole::Manager => 3,
+            RealmRole::Contributor => 2,
+            RealmRole::Reader => 1,
+        };
+        priority(*self).cmp(&priority(*other))
+    }
+}
+
+impl PartialOrd for RealmRole {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 impl RealmRole {
     pub fn can_read(&self) -> bool {
         true

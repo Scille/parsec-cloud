@@ -29,7 +29,6 @@ from parsec.components.memory.datamodel import (
     MemoryRealmRename,
     MemoryRealmUserRole,
 )
-from parsec.components.postgresql.realm_self_promote_to_owner import _role_to_priority
 from parsec.components.realm import (
     BadKeyIndex,
     BaseRealmComponent,
@@ -511,7 +510,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
             async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
                 author_current_role: RealmRole | None = None
-                highest_active_priority: int = 0
+                highest_active_role: RealmRole | None = None
                 for user in org.active_users():
                     role = realm.get_current_role_for(user.cooked.user_id)
                     if role is None:
@@ -520,13 +519,13 @@ class MemoryRealmComponent(BaseRealmComponent):
                         return RealmSelfPromoteToOwnerActiveOwnerAlreadyExists(
                             last_realm_certificate_timestamp=realm_topic_last_timestamp
                         )
-                    highest_active_priority = max(highest_active_priority, _role_to_priority(role))
+                    if highest_active_role is None:
+                        highest_active_role = role
+                    else:
+                        highest_active_role = max(highest_active_role, role)
                     if user.cooked.user_id == author_user_id:
                         author_current_role = role
-                if (
-                    author_current_role is None
-                    or _role_to_priority(author_current_role) < highest_active_priority
-                ):
+                if author_current_role is None or author_current_role < highest_active_role:
                     return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
                 # Ensure we are not breaking causality by adding a newer timestamp.
