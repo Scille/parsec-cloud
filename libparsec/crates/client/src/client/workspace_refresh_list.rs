@@ -7,8 +7,8 @@ use super::Client;
 use crate::{
     certif::{
         CertifDecryptCurrentRealmNameError, CertifGetCurrentSelfRealmsRoleError,
-        CertifGetRealmArchivingConfigurationError, InvalidEncryptedRealmNameError,
-        InvalidKeysBundleError,
+        CertifGetRealmArchivingConfigurationError, CertifGetRealmCanSelfPromoteToOwnerError,
+        InvalidEncryptedRealmNameError, InvalidKeysBundleError,
     },
     event_bus::EventWorkspacesSelfListChanged,
     user::UserStoreUpdateError,
@@ -162,6 +162,19 @@ pub async fn refresh_workspaces_list(
             },
         }?;
 
+        let can_self_promote_to_owner = client
+            .certificates_ops
+            .get_realm_can_self_promote_to_owner(*workspace_id)
+            .await
+            .map_err(|err| match err {
+                CertifGetRealmCanSelfPromoteToOwnerError::Internal(err) => err
+                    .context("Cannot retrieve workspace self-promote status")
+                    .into(),
+                CertifGetRealmCanSelfPromoteToOwnerError::Stopped => {
+                    ClientRefreshWorkspacesListError::Stopped
+                }
+            })?;
+
         local_workspaces.push(LocalUserManifestWorkspaceEntry {
             id: *workspace_id,
             name,
@@ -172,7 +185,7 @@ pub async fn refresh_workspaces_list(
             },
             archiving_configuration: archiving_configuration.into(),
             archiving_configuration_origin: archiving_configuration_origin.into(),
-            can_self_promote_to_owner: false.into(), // TODO: `CertificateOps::get_realm_can_self_promote_to_owner` not implemented yet
+            can_self_promote_to_owner: can_self_promote_to_owner.into(),
         });
     }
 
