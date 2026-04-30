@@ -591,6 +591,11 @@ export interface X509CertificateReference {
 }
 
 export interface X509Pkcs11URI {
+    id: Bytes | null
+    label: Bytes | null
+    issuer: Bytes
+    subject: Bytes
+    serial: Bytes
 }
 
 export interface X509WindowsCngURI {

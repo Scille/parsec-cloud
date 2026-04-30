@@ -5831,6 +5831,115 @@ fn struct_x509_certificate_reference_rs_to_js(
     Ok(js_obj)
 }
 
+// X509Pkcs11URI
+
+#[allow(dead_code)]
+fn struct_x509_pkcs11_uri_js_to_rs(obj: JsValue) -> Result<libparsec::X509Pkcs11URI, JsValue> {
+    let id = {
+        let js_val = Reflect::get(&obj, &"id".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
+                            Ok(v.to_vec().into())
+                        };
+                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?,
+            )
+        }
+    };
+    let label = {
+        let js_val = Reflect::get(&obj, &"label".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<Uint8Array>()
+                    .map(|x| x.to_vec())
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
+                    .and_then(|x| {
+                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
+                            Ok(v.to_vec().into())
+                        };
+                        custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+                    })?,
+            )
+        }
+    };
+    let issuer = {
+        let js_val = Reflect::get(&obj, &"issuer".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let subject = {
+        let js_val = Reflect::get(&obj, &"subject".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    let serial = {
+        let js_val = Reflect::get(&obj, &"serial".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map(|x| x.to_vec())
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
+            .and_then(|x| {
+                let custom_from_rs_bytes =
+                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
+            })?
+    };
+    Ok(libparsec::X509Pkcs11URI {
+        id,
+        label,
+        issuer,
+        subject,
+        serial,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_x509_pkcs11_uri_rs_to_js(rs_obj: libparsec::X509Pkcs11URI) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_id = match rs_obj.id {
+        Some(val) => JsValue::from(Uint8Array::from(val.as_ref())),
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"id".into(), &js_id)?;
+    let js_label = match rs_obj.label {
+        Some(val) => JsValue::from(Uint8Array::from(val.as_ref())),
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"label".into(), &js_label)?;
+    let js_issuer = JsValue::from(Uint8Array::from(rs_obj.issuer.as_ref()));
+    Reflect::set(&js_obj, &"issuer".into(), &js_issuer)?;
+    let js_subject = JsValue::from(Uint8Array::from(rs_obj.subject.as_ref()));
+    Reflect::set(&js_obj, &"subject".into(), &js_subject)?;
+    let js_serial = JsValue::from(Uint8Array::from(rs_obj.serial.as_ref()));
+    Reflect::set(&js_obj, &"serial".into(), &js_serial)?;
+    Ok(js_obj)
+}
+
 // X509WindowsCngURI
 
 #[allow(dead_code)]
@@ -21293,10 +21402,7 @@ fn variant_x509_uri_flavor_value_js_to_rs(
         "X509URIFlavorValuePKCS11" => {
             let x1 = {
                 let js_val = Reflect::get(&obj, &"x1".into())?;
-                {
-                    let _ = js_val;
-                    libparsec::X509Pkcs11URI
-                }
+                struct_x509_pkcs11_uri_js_to_rs(js_val)?
             };
             Ok(libparsec::X509URIFlavorValue::PKCS11(x1))
         }
@@ -21321,10 +21427,7 @@ fn variant_x509_uri_flavor_value_rs_to_js(
     match rs_obj {
         libparsec::X509URIFlavorValue::PKCS11(x1, ..) => {
             Reflect::set(&js_obj, &"tag".into(), &"X509URIFlavorValuePKCS11".into())?;
-            let js_x1 = {
-                let _ = x1;
-                JsValue::UNDEFINED
-            };
+            let js_x1 = struct_x509_pkcs11_uri_rs_to_js(x1)?;
             Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
         libparsec::X509URIFlavorValue::WindowsCNG(x1, ..) => {

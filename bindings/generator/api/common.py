@@ -385,8 +385,12 @@ class X509WindowsCngURI(Structure):
     serial_number: BytesVec
 
 
-class X509Pkcs11URI(UnitStructure):
-    pass
+class X509Pkcs11URI(Structure):
+    id: Bytes | None
+    label: Bytes | None
+    issuer: Bytes
+    subject: Bytes
+    serial: Bytes
 
 
 class X509URIFlavorValue(Variant):

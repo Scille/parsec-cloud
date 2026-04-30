@@ -103,8 +103,16 @@ pub struct UserX509CertificateDetails {
 
 impl UserX509CertificateDetails {
     pub fn load_der(der: &[u8]) -> Result<Self, UserX509CertificateLoadError> {
-        let info = crate::x509::X509CertificateInformation::load_der(der)
-            .map_err(|_| UserX509CertificateLoadError::InvalidCertificateDer)?;
+        crate::x509::X509CertificateInformation::load_der(der)
+            .map_err(|_| UserX509CertificateLoadError::InvalidCertificateDer)
+            .and_then(TryFrom::try_from)
+    }
+}
+
+impl TryFrom<crate::x509::X509CertificateInformation> for UserX509CertificateDetails {
+    type Error = UserX509CertificateLoadError;
+
+    fn try_from(info: crate::x509::X509CertificateInformation) -> Result<Self, Self::Error> {
         let emails = info
             .emails()
             .map(EmailAddress::from_str)

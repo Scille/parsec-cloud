@@ -2,6 +2,7 @@
 
 use std::{fmt::Display, str::FromStr};
 
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
 use crate::DataError;
@@ -165,10 +166,23 @@ impl From<X509WindowsCngURI> for X509URIFlavorValue {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-// TODO: See if we store raw pkcs11 attribute in a list
-// Or a string representing a valid pkcs11-URI (following RFC-7512)
-// Or something else
-pub struct X509Pkcs11URI;
+pub struct X509Pkcs11URI {
+    /// Key identifier for key.
+    ///
+    /// Used to link together a certificate & private key.
+    /// That information is provided/configured by the smartcard so it may not be present.
+    pub id: Option<Bytes>,
+    /// Label of the object.
+    ///
+    /// That information is provided/configured by the smartcard so it may not be present.
+    pub label: Option<Bytes>,
+    /// Issuer of the certificate.
+    pub issuer: Bytes,
+    /// Subject of the certificate.
+    pub subject: Bytes,
+    /// Serial number of the certificate.
+    pub serial: Bytes,
+}
 
 impl X509URIFlavor for X509Pkcs11URI {
     const HEADER: &'static str = "pkcs11";

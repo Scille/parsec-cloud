@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_types::prelude::*;
+use x509_cert::der::{Decode, Encode, SliceReader};
 
 use crate::{PkiCertificate, UserX509CertificateDetails, UserX509CertificateLoadError};
 
@@ -63,18 +64,45 @@ impl AvailablePkiCertificate {
         let hash = X509CertificateHash::SHA256(Box::new(digest.into()));
 
         let reference: X509CertificateReference = hash.into();
-        match UserX509CertificateDetails::load_der(der) {
+        let cert = match decode_certificate(der) {
+            Ok(v) => v,
+            Err(_) => {
+                return Self::Invalid {
+                    reference,
+                    invalid_reason: UserX509CertificateLoadError::InvalidCertificateDer,
+                }
+            }
+        };
+        let uri = X509Pkcs11URI {
+            id: None,
+            label: friendly_name
+                .as_ref()
+                .map(|s| Bytes::copy_from_slice(s.as_bytes())),
+            issuer: cert.tbs_certificate.issuer.to_der().expect("").into(),
+            subject: cert.tbs_certificate.subject.to_der().expect("").into(),
+            serial: Bytes::copy_from_slice(cert.tbs_certificate.serial_number.as_bytes()),
+        };
+        let reference = reference.add_or_replace_uri(uri);
+        match crate::x509::X509CertificateInformation::try_from(cert)
+            .map_err(|_| UserX509CertificateLoadError::InvalidCertificateDer)
+            .and_then(UserX509CertificateDetails::try_from)
+        {
             Ok(details) => Self::Valid {
                 reference,
                 friendly_name: friendly_name.unwrap_or_else(|| details.common_name.clone()),
                 details,
             },
+
             Err(invalid_reason) => Self::Invalid {
                 reference,
-                invalid_reason,
+                invalid_reason: invalid_reason.into(),
             },
         }
     }
+}
+
+fn decode_certificate(der: &[u8]) -> Result<x509_cert::Certificate, crate::x509::X509LoadError> {
+    x509_cert::Certificate::decode(&mut SliceReader::new(der)?).map_err(Into::into)
 }
 
 #[derive(Debug)]
