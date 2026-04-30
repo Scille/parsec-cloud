@@ -25,9 +25,9 @@ pub(super) const GORDON_SHA256_CERT_HASH: &str =
 pub(super) const REVOKED_ANOMALOUS_MATERIALS_LABORATORIES_SHA256_CERT_HASH: &str =
     "sha256-vdvxLsg5jA0fqiLxpwrkBPVU6ad/ZK4/YrImQ4Wt2hw=";
 pub(super) const GLADOS_DEV_TEAM_SHA256_CERT_HASH: &str =
-    "sha256-4kC1hYV+2l6l5c6qtfLAqJNBPB8ETqAGKriNrAN8mUGVU=";
+    "sha256-SutQOKE6uFNzrG6BI0VM5hYz9BbPquqb/BFvUhJ+LQY=";
 pub(super) const APERTURE_SCIENCE_SHA256_CERT_HASH: &str =
-    "sha256-+rumDH+peXOqrXywKiTQTwfBE6gBiq4jawDfJlBlVRg=";
+    "sha256-YtqVkLM7ehZT8D1PHD6K383EPtFkxuGfQmLLMYXnWp4=";
 
 const ALICE_PEM: &[u8] = include_bytes!("../../test-pki/Cert/alice.crt");
 const BOB_PEM: &[u8] = include_bytes!("../../test-pki/Cert/bob.crt");
