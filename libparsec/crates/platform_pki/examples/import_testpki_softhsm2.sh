@@ -52,3 +52,8 @@ for cert in "$IMPORT_PATH"/Cert/*.crt; do
     key_file=${cert/%.crt/.key}
     import_object "$id" "$key_file" privkey
 done
+
+for crl in "$IMPORT_PATH"/CRL/*.crl; do
+    id=$(get_id_from_cert "$crl")
+    import_object "$id" "$crl" data
+done
