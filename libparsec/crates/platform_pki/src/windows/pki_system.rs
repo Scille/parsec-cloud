@@ -16,6 +16,23 @@ use crate::{
     X509TrustAnchor,
 };
 
+// Windows has multiple certificate stores.
+// - `My`: User's certificates, typically to get access to the Smartcards
+// - `Trust`: Certificate Trust Lists (CTLs), we don't use this so we can ignore this store.
+// - `CA`: Intermediate CA certificates & their Certificate Revocation Lists (CRLs)
+// - `Root`: Self-signed root CA certificates & their Certificate Revocation Lists (CRLs)
+//
+// On top of that, these store exist twice: as `LocalMachine` (e.g. `LocalMachine/CA`) and `CurrentUser` (e.g. `CA`),
+// however the `CurrentUser` inherit the content of `LocalMachine` so we just have to use the former.
+//
+// see:
+// - https://learn.microsoft.com/en-us/windows/win32/seccrypto/system-store-locations
+// - https://learn.microsoft.com/en-us/windows/win32/seccrypto/managing-certificates-with-certificate-stores
+// - https://learn.microsoft.com/en-us/windows-hardware/drivers/install/local-machine-and-current-user-certificate-stores
+const LEAF_CERTIFICATE_STORE: &str = "My";
+const INTERMEDIATE_CERTIFICATE_STORE: &str = "CA";
+const ROOT_CERTIFICATE_STORE: &str = "Root";
+
 #[derive(Debug)]
 pub struct PlatformPkiSystem {
     my_cert_store: CertStore,
@@ -26,7 +43,7 @@ impl PlatformPkiSystem {
         _config_dir: &std::path::Path,
         _scws_config: Option<PkiScwsConfig>,
     ) -> Result<Self, PkiSystemInitError> {
-        CertStore::open_current_user("My")
+        CertStore::open_current_user(LEAF_CERTIFICATE_STORE)
             .map(|store| Self {
                 my_cert_store: store,
             })
@@ -76,10 +93,6 @@ fn wrap_platform_certificate(platform: PlatformPkiCertificate) -> PkiCertificate
     PkiCertificate {
         platform: crate::testbed::MaybeWithTestbed::WithPlatform(platform),
     }
-}
-
-fn open_store() -> std::io::Result<CertStore> {
-    CertStore::open_current_user("My")
 }
 
 fn get_hash_algo(hash: &X509CertificateHash) -> HashAlgorithm {
@@ -163,15 +176,24 @@ pub(super) fn get_id_and_hash_from_cert_context(
 
 pub(super) type ListX509CertificateRevocationListsError = ListX509CertificatesError;
 
-/// Enumerate all certificate revocation lists (CRLs) found in the current user
-/// "ROOT" certificate store.
 pub(super) async fn list_x509_certificate_revocation_lists(
 ) -> Result<Vec<X509CertificateRevocationList<'static>>, ListX509CertificateRevocationListsError> {
-    let store = CertStore::open_current_user("ROOT")
-        .map_err(ListX509CertificateRevocationListsError::CannotOpenStore)?;
-    let raw_store = schannel_utils::get_raw_store(&store);
-
     let mut crls = vec![];
+    // Need to look in both stores to get CRL from root *and* intermediate CAs
+    for store_name in [INTERMEDIATE_CERTIFICATE_STORE, ROOT_CERTIFICATE_STORE] {
+        let store = CertStore::open_current_user(store_name)
+            .map_err(ListX509CertificateRevocationListsError::CannotOpenStore)?;
+        collect_crls_from_store(&store, &mut crls);
+    }
+    Ok(crls)
+}
+
+fn collect_crls_from_store(
+    store: &CertStore,
+    crls: &mut Vec<X509CertificateRevocationList<'static>>,
+) {
+    let raw_store = schannel_utils::get_raw_store(store);
+
     let mut prev: *mut windows_sys::Win32::Security::Cryptography::CRL_CONTEXT =
         core::ptr::null_mut();
     loop {
@@ -202,8 +224,6 @@ pub(super) async fn list_x509_certificate_revocation_lists(
 
         prev = next;
     }
-
-    Ok(crls)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -216,8 +236,8 @@ pub(super) type ListX509TrustAnchors = ListX509CertificatesError;
 
 pub(super) async fn list_x509_trust_anchors(
 ) -> Result<Vec<X509TrustAnchor<'static>>, ListX509TrustAnchors> {
-    let store =
-        CertStore::open_current_user("Root").map_err(ListX509TrustAnchors::CannotOpenStore)?;
+    let store = CertStore::open_current_user(ROOT_CERTIFICATE_STORE)
+        .map_err(ListX509TrustAnchors::CannotOpenStore)?;
 
     let res = store
         .certs()
@@ -255,7 +275,7 @@ pub(super) type ListIntermediateX509CertificatesError = ListX509CertificatesErro
 
 pub(super) async fn list_intermediate_x509_certificates(
 ) -> Result<Vec<X509CertificateDer<'static>>, ListIntermediateX509CertificatesError> {
-    let store = CertStore::open_current_user("CA")
+    let store = CertStore::open_current_user(INTERMEDIATE_CERTIFICATE_STORE)
         .map_err(ListIntermediateX509CertificatesError::CannotOpenStore)?;
 
     Ok(store
@@ -266,7 +286,8 @@ pub(super) async fn list_intermediate_x509_certificates(
 
 pub fn show_certificate_selection_dialog_windows_only(
 ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
-    let store = open_store().map_err(ShowCertificateSelectionDialogError::CannotOpenStore)?;
+    let store = CertStore::open_current_user(LEAF_CERTIFICATE_STORE)
+        .map_err(ShowCertificateSelectionDialogError::CannotOpenStore)?;
     ask_user_to_select_certificate(&store)
         .as_ref()
         .map(get_id_and_hash_from_cert_context)
