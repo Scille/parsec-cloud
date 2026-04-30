@@ -122,6 +122,8 @@ def _role_to_priority(role: RealmRole) -> int:
         case RealmRole.OWNER:
             return 4
         case unknown:
+            # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+            # (see https://github.com/Scille/parsec-cloud/issues/12725)
             assert False, unknown
 
 
