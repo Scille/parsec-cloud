@@ -45,22 +45,15 @@ pub(super) async fn get_realm_can_self_promote_to_owner(
                 }
             }
 
-            let role_to_priority = |role: RealmRole| match role {
-                RealmRole::Reader => 1u8,
-                RealmRole::Contributor => 2,
-                RealmRole::Manager => 3,
-                RealmRole::Owner => 4,
-            };
-
-            let author_role_priority = match current_roles.get(&ops.device.user_id) {
+            let author_role = match current_roles.get(&ops.device.user_id) {
                 // There is nothing to promote if we are already OWNER, and nothing we can do
                 // if we are not part of the realm!
                 None | Some(RealmRole::Owner) => return Ok(false),
-                Some(role) => role_to_priority(*role),
+                Some(role) => *role,
             };
 
             let more_senior_members = current_roles.into_iter().filter_map(|(user_id, role)| {
-                if role_to_priority(role) > author_role_priority {
+                if role > author_role {
                     Some(user_id)
                 } else {
                     None

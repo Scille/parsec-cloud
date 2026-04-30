@@ -798,7 +798,7 @@ impl TryFrom<email_address_parser::EmailAddress> for EmailAddress {
  * UserProfile
  */
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 /// `UserProfile` represents the different profiles a user can have in the organization.
 ///
@@ -814,6 +814,23 @@ pub enum UserProfile {
     /// cannot be shared and the outsider cannot be OWNER/MANAGER
     /// on a realm shared with him)
     Outsider,
+}
+
+impl std::cmp::Ord for UserProfile {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let priority = |x| match x {
+            UserProfile::Admin => 3,
+            UserProfile::Standard => 2,
+            UserProfile::Outsider => 1,
+        };
+        priority(*self).cmp(&priority(*other))
+    }
+}
+
+impl PartialOrd for UserProfile {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

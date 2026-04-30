@@ -253,6 +253,14 @@ macro_rules! gen_proto {
 
 macro_rules! gen_py_wrapper_class_for_enum {
     ($class: ident, $wrapped_enum: ty $(,[$pyo3_name: literal, $fn_name: ident, $field_value: path])+  $(,)?) => {
+        crate::binding_utils::gen_py_wrapper_class_for_enum!(__internal__, $class, $wrapped_enum, $( [$pyo3_name, $fn_name, $field_value], )+);
+        crate::binding_utils::gen_proto!($class, __richcmp__, eq);
+    };
+    ($class: ident, $wrapped_enum: ty $(,[$pyo3_name: literal, $fn_name: ident, $field_value: path])+, __richcmp__, ord $(,)?) => {
+        crate::binding_utils::gen_py_wrapper_class_for_enum!(__internal__, $class, $wrapped_enum, $( [$pyo3_name, $fn_name, $field_value], )+);
+        crate::binding_utils::gen_proto!($class, __richcmp__, ord);
+    };
+    (__internal__, $class: ident, $wrapped_enum: ty $(,[$pyo3_name: literal, $fn_name: ident, $field_value: path])+  $(,)?) => {
         #[pyclass]
         #[derive(Clone, PartialEq, Eq, Hash)]
         // 2nd element is a dummy type to ensure the struct must be constructed
@@ -260,7 +268,6 @@ macro_rules! gen_py_wrapper_class_for_enum {
         pub(crate) struct $class(pub $wrapped_enum);
 
         crate::binding_utils::gen_proto!($class, __repr__);
-        crate::binding_utils::gen_proto!($class, __richcmp__, eq);
         crate::binding_utils::gen_proto!($class, __hash__);
         crate::binding_utils::gen_proto!($class, __copy__);
         crate::binding_utils::gen_proto!($class, __deepcopy__);
