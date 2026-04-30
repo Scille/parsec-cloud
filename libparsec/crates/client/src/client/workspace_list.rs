@@ -24,6 +24,10 @@ pub struct WorkspaceInfo {
     pub self_role_origin: CertificateBasedInfoOrigin,
     pub archiving_configuration: RealmArchivingConfiguration,
     pub archiving_configuration_origin: CertificateBasedInfoOrigin,
+    /// If all OWNERs have been revoked, it is up to a user with the highest role
+    /// to self-promote himself to OWNER.
+    /// If `true`, we are among those users... This is our chance to become king of the Realm!
+    pub can_self_promote_to_owner: bool,
 }
 
 pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
@@ -58,6 +62,7 @@ pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
                 .archiving_configuration_origin
                 .clone()
                 .unwrap_or(CertificateBasedInfoOrigin::Placeholder);
+            let can_self_promote_to_owner = entry.can_self_promote_to_owner.unwrap_or(false);
 
             WorkspaceInfo {
                 id: entry.id,
@@ -69,6 +74,7 @@ pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
                 self_role_origin: entry.role_origin.clone(),
                 archiving_configuration,
                 archiving_configuration_origin,
+                can_self_promote_to_owner,
             }
         })
         .collect();
