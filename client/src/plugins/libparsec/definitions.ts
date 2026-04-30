@@ -576,6 +576,7 @@ export interface WorkspaceInfo {
     selfRoleOrigin: CertificateBasedInfoOrigin
     archivingConfiguration: RealmArchivingConfiguration
     archivingConfigurationOrigin: CertificateBasedInfoOrigin
+    canSelfPromoteToOwner: boolean
 }
 
 export interface WorkspaceUserAccessInfo {
@@ -2777,6 +2778,70 @@ export type ClientRevokeUserError =
   | ClientRevokeUserErrorTimestampOutOfBallpark
   | ClientRevokeUserErrorUserIsSelf
   | ClientRevokeUserErrorUserNotFound
+
+// ClientSelfPromoteToWorkspaceOwnerError
+export enum ClientSelfPromoteToWorkspaceOwnerErrorTag {
+    ActiveOwnerAlreadyExists = 'ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists',
+    AuthorNotAllowed = 'ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed',
+    Internal = 'ClientSelfPromoteToWorkspaceOwnerErrorInternal',
+    InvalidCertificate = 'ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate',
+    Offline = 'ClientSelfPromoteToWorkspaceOwnerErrorOffline',
+    RealmDeleted = 'ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted',
+    Stopped = 'ClientSelfPromoteToWorkspaceOwnerErrorStopped',
+    TimestampOutOfBallpark = 'ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark',
+    WorkspaceNotFound = 'ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound',
+}
+
+export interface ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.ActiveOwnerAlreadyExists
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorInternal {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.Internal
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorOffline {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.Offline
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.RealmDeleted
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorStopped {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.Stopped
+    error: string
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound {
+    tag: ClientSelfPromoteToWorkspaceOwnerErrorTag.WorkspaceNotFound
+    error: string
+}
+export type ClientSelfPromoteToWorkspaceOwnerError =
+  | ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists
+  | ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed
+  | ClientSelfPromoteToWorkspaceOwnerErrorInternal
+  | ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate
+  | ClientSelfPromoteToWorkspaceOwnerErrorOffline
+  | ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted
+  | ClientSelfPromoteToWorkspaceOwnerErrorStopped
+  | ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark
+  | ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound
 
 // ClientSetupShamirRecoveryError
 export enum ClientSetupShamirRecoveryErrorTag {
@@ -6768,6 +6833,10 @@ export interface LibParsecPlugin {
         client: Handle,
         user: UserID
     ): Promise<Result<null, ClientRevokeUserError>>
+    clientSelfPromoteToWorkspaceOwner(
+        client: Handle,
+        realm_id: VlobID
+    ): Promise<Result<null, ClientSelfPromoteToWorkspaceOwnerError>>
     clientSetupShamirRecovery(
         client_handle: Handle,
         per_recipient_shares: Map<UserID, NonZeroU8>,
