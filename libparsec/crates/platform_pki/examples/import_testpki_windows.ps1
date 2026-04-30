@@ -11,6 +11,9 @@
 .PARAMETER NoCleanup
         If set, do not wait for ENTER to automatically remove the imported PKI on exit
 #>
+
+# cspell: words delstore hashfile
+
 [CmdletBinding()]
 param(
     [switch] $OnlyCleanup,
