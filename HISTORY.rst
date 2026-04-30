@@ -1,8 +1,11 @@
+=======
 History
 =======
 
-.. towncrier release notes start
+Parsec v3.x
+===========
 
+.. towncrier release notes start
 
 Parsec v3.8.1 (2026-03-17)
 --------------------------
@@ -1071,6 +1074,11 @@ features are still to be ported to v3 (see
 `v3-porting <https://github.com/Scille/parsec-cloud/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Av3-porting>`__
 issues)
 
+
+Parsec v2.x
+===========
+
+
 Parsec v2.17.0 (2024-02-13)
 ---------------------------
 
@@ -2022,7 +2030,7 @@ Parsec v2.2.3 (2021-01-29)
 --------------------------
 
 Features
---------
+~~~~~~~~
 
 * Added MacOS version for release
 
@@ -2043,7 +2051,7 @@ Parsec v2.2.1 (2020-12-15)
 --------------------------
 
 Features
---------
+~~~~~~~~
 
 * Improve backend HTTP welcome page, we no longer use html like it's 1997
   (`#1603 <https://github.com/Scille/parsec-cloud/issues/1603>`__)
@@ -2225,6 +2233,10 @@ Parsec v2.0.0 (2020-09-03)
 --------------------------
 
 No significant changes.
+
+
+Parsec v1.x
+===========
 
 
 Parsec v1.15.2 (2020-09-02)
