@@ -309,8 +309,7 @@ msTest.describe(() => {
     await expectCanvasStateToBe(fourthPage, CanvasStates.Failed);
   });
 
-  // TODO: Flaky test (see https://github.com/Scille/parsec-cloud/issues/12720)
-  msTest.fixme('PDF viewer: fullscreen', async ({ documents }, testInfo: TestInfo) => {
+  msTest('PDF viewer: fullscreen', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Pdf, false);
 
     await openFileType(documents, 'pdf');
@@ -318,14 +317,15 @@ msTest.describe(() => {
     const fullscreenButton = bottomBar.locator('.file-controls-fullscreen');
 
     // Fullscreen
-    const isNotFullScreen = await documents.evaluate(() => {
-      return document.fullscreenElement === null;
-    });
-    await expect(isNotFullScreen).toBe(true);
-    await fullscreenButton.click();
-    const isFullScreen = await documents.evaluate(() => {
+    let isFullScreen = await documents.evaluate(() => {
       return document.fullscreenElement !== null;
     });
-    await expect(isFullScreen).toBe(true);
+    expect(isFullScreen).toBe(false);
+    await fullscreenButton.click();
+    await documents.waitForTimeout(100);
+    isFullScreen = await documents.evaluate(() => {
+      return document.fullscreenElement !== null;
+    });
+    expect(isFullScreen).toBe(true);
   });
 });
