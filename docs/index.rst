@@ -10,11 +10,6 @@
 Parsec Documentation
 ====================
 
-.. image:: parsec_doc_logo.png
-    :align: center
-    :alt: parsec banner
-    :class: extra-margin-bottom·
-
 Welcome to the Parsec documentation. Take a look at the :ref:`Introduction <doc_userguide_introduction>`
 to get an overview of what Parsec can do for you.
 

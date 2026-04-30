@@ -212,11 +212,13 @@ If you want to restore a file or a folder, select it and click ``Restore``. This
 
 .. note::
 
-  If you make a mistake, don't worry, the file history is incremental and therefore it is never deleted! Let's take an example with a file named **File.txt** whose content has been updated as follows:
+  If you make a mistake, don't worry, the file history is incremental and therefore it is never deleted!
 
-    #. On April 1st, **Creation** of the file with the content **AAA**. This is **version 1**.
-    #. On April 5th, **Update** of the file with the content **BBB** (replacing the previous content). This is **version 2**.
-    #. On April 7th, **Update** of the file with the content **CCC** (replacing the previous content). This is **version 3**.
+Let's take an example with a file named **File.txt** whose content has been updated as follows:
+
+  #. On April 1st, **Creation** of the file with the content **AAA**. This is **version 1**.
+  #. On April 5th, **Update** of the file with the content **BBB** (replacing the previous content). This is **version 2**.
+  #. On April 7th, **Update** of the file with the content **CCC** (replacing the previous content). This is **version 3**.
 
   If you look at this workspace history on April 6th, the content of the file will be **BBB**. Should you chose to restore this version, the content of **File.txt** (**CCC** currently) will be replaced by **BBB**. This will be **version 4**, which means that **version 3** has not been deleted, and if you later change your mind, you will still be able to restore it.
 
@@ -242,6 +244,7 @@ An archived workspace is set to `read-only` for all users it has been shared wit
 .. image:: screens/workspace_archived_sidebar.png
     :align: center
     :alt: Workspace archived sidebar button
+    :width: 300
 
 The archiving date can be seen on the corresponding workspace card. It can be browsed normally as any standard workspace.
 
@@ -270,15 +273,16 @@ Once set to deletion, a workspace will be stored to the **Bin** accessible from 
 .. image:: screens/workspace_deleted_sidebar.png
     :align: center
     :alt: Workspace deleted sidebar button
+    :width: 300
 
 Until this date, users who had access to it can consult its content in `read-only` as well as its :ref:`history <doc_userguide_parsec_workspaces_history>` in `read-only`.
 
-.. image:: screens/workspace_deleted_card.png
-    :align: left
-    :alt: Workspace deleted card
+.. list-table::
+   :widths: 50 50
 
-.. image:: screens/workspace_deleted_context.png
-    :align: right
-    :alt: Workspace deleted context
+   * - .. image:: screens/workspace_deleted_card.png
+          :alt: Workspace deleted card
+     - .. image:: screens/workspace_deleted_context.png
+          :alt: Workspace deleted context
 
 **Owners** of workspaces set to be **deleted** can restore them before the deletion date from the workspace contextual menu to cancel the operation.
