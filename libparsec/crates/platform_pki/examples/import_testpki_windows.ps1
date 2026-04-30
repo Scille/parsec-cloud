@@ -18,7 +18,7 @@ param(
     [string] $ImportPath = ".\test-pki"
 )
 
-# Store the thumbprints of the imported certificates here for later cleanup
+# Store the thumbprints of the imported certificates and CRLs (stored with a `CRL:` prefix) here for later cleanup
 $register_file = ".\.imported-test-pki.txt"
 
 function Cleanup-Test-PKI {
@@ -27,8 +27,14 @@ function Cleanup-Test-PKI {
         return
     }
 
-    $thumbprints = Get-Content -Path $register_file
+    $entries = Get-Content -Path $register_file
 
+    # Remove CRLs tracked with the "CRL:<sha1-hash>" prefix
+    $entries | Where-Object { $_ -match "^CRL:(.+)$" } | ForEach-Object {
+        certutil -user -delstore "CA" $Matches[1]
+    }
+
+    $thumbprints = $entries | Where-Object { $_ -notmatch "^CRL:" }
     # Need to filter out store containers (which lack a Thumbprint property) to only keep actual certificates
     Get-ChildItem -Recurse Cert:\CurrentUser `
         | Where-Object { $_ -is [System.Security.Cryptography.X509Certificates.X509Certificate2] } `
@@ -93,6 +99,12 @@ function ImportNRegister-Certificates {
 ImportNRegister-Certificates -ImportPath $ImportPath\Root -Store Root
 ImportNRegister-Certificates -ImportPath $ImportPath\Intermediate -Store CA
 ImportNRegister-Certificates -ImportPath $ImportPath\Cert -Store MY -UsePfx
+# Import CRL files: PowerShell has no native CRL cmdlet, so certutil is used.
+Get-ChildItem -Path $ImportPath\CRL -Filter "*.crl" | ForEach-Object {
+    certutil -user -addstore -f "CA" $_.FullName
+    $hash = (certutil -hashfile $_.FullName SHA1)[1] -replace " ",""
+    "CRL:$hash" | Add-Content -Path $register_file
+}
 
 if ($NoCleanup) {
     Write-Output "Certificates are installed and ready to use."
