@@ -114,6 +114,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
                 case unknown:
                     # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                    # (see https://github.com/Scille/parsec-cloud/issues/12725)
                     assert False, unknown
 
             # We only accept the last key
@@ -262,6 +263,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
                     case unknown:
                         # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                        # (see https://github.com/Scille/parsec-cloud/issues/12725)
                         assert False, unknown
 
                 # We only accept the last key
@@ -391,6 +393,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             case unknown:
                 # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                # (see https://github.com/Scille/parsec-cloud/issues/12725)
                 assert False, unknown
 
         output = []
@@ -472,6 +475,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             case unknown:
                 # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                # (see https://github.com/Scille/parsec-cloud/issues/12725)
                 assert False, unknown
 
         output = []
@@ -554,6 +558,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             case unknown:
                 # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                # (see https://github.com/Scille/parsec-cloud/issues/12725)
                 assert False, unknown
 
         items = {}
