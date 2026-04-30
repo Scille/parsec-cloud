@@ -54,7 +54,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "Parsec"
+project = "Parsec Documentation"
 copyright = "2016-present, Scille SAS"
 
 # The version info for the project you're documenting, acts as replacement
@@ -96,7 +96,7 @@ exclude_patterns = ["_build", ".venv"]
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
+pygments_style = "material"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
