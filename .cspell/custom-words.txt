@@ -246,6 +246,7 @@ ntns
 nvlobs
 onlyoffice
 openbao
+opensc
 ops*
 opses
 opslimit
