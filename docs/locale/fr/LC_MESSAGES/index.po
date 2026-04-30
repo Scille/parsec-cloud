@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-16 12:07+0200\n"
+"POT-Creation-Date: 2026-04-30 19:03+0200\n"
 "PO-Revision-Date: 2024-09-18 17:46+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../index.rst:25
+#: ../../index.rst:20
 msgid "User Guide"
 msgstr "Guide Utilisateur"
 
-#: ../../index.rst:42
+#: ../../index.rst:38
 msgid "Hosting Guide"
 msgstr "Guide d'Hébergement"
 
-#: ../../index.rst:56
+#: ../../index.rst:55
 msgid "Development"
 msgstr "Développement"
 
@@ -43,10 +43,6 @@ msgid "Parsec Documentation"
 msgstr "Documentation de Parsec"
 
 #: ../../index.rst:13
-msgid "parsec banner"
-msgstr "bannière parsec"
-
-#: ../../index.rst:18
 msgid ""
 "Welcome to the Parsec documentation. Take a look at the :ref:`Introduction "
 "<doc_userguide_introduction>` to get an overview of what Parsec can do for "
@@ -56,7 +52,7 @@ msgstr ""
 "la :ref:`page d’introduction <doc_userguide_introduction>` pour avoir un "
 "aperçu de ce que Parsec peut vous apporter."
 
-#: ../../index.rst:21
+#: ../../index.rst:16
 msgid ""
 "The table of contents displayed below and in the sidebar should let you "
 "easily navigate the documentation. You can also use the search function in "
