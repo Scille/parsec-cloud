@@ -6,16 +6,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-07 13:55+0000\n"
-"PO-Revision-Date: 2024-09-18 19:41+0200\n"
+"POT-Creation-Date: 2026-05-04 12:43+0200\n"
+"PO-Revision-Date: 2026-05-04 12:44+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language: fr\n"
 "Language-Team: fr <dev-parsec@scille.fr>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.9\n"
 
 #: ../../userguide/manage_devices.rst:6
 msgid "Manage your devices"
@@ -177,7 +178,7 @@ msgid ""
 "dashes."
 msgstr ""
 "une clé secrète, une combinaison de lettres et de chiffres séparés par des "
-"tirets"
+"tirets."
 
 #: ../../userguide/manage_devices.rst:84
 msgid ""
@@ -247,11 +248,11 @@ msgstr ""
 msgid "Download the recovery file and passphrase"
 msgstr "Téléchargez le fichier de récupération et la clé secrète"
 
-#: ../../userguide/manage_devices.rst:127
+#: ../../userguide/manage_devices.rst:129
 msgid "Use a recovery file to get back access"
 msgstr "Utiliser un fichier de récupération pour rétablir l'accès"
 
-#: ../../userguide/manage_devices.rst:129
+#: ../../userguide/manage_devices.rst:131
 msgid ""
 "If you forget your password and you have both the Recovery File and the "
 "Secret Key, you can use them and gain access back."
@@ -260,23 +261,27 @@ msgstr ""
 "fichier de récupération et la clé secrète, vous pouvez les importer pour "
 "récupérer l'accès à vos données."
 
-#: ../../userguide/manage_devices.rst:132
-msgid "When trying to log in, click on ``Forgot your password?``."
-msgstr "Au moment de la connexion, cliquez sur ``Mot de passe oublié ?``"
-
 #: ../../userguide/manage_devices.rst:134
-#: ../../userguide/manage_devices.rst:141
-#: ../../userguide/manage_devices.rst:146
+msgid "When trying to log in, click on ``Forgot your password?``."
+msgstr "Au moment de la connexion, cliquez sur ``Mot de passe oublié ?``."
+
+#: ../../userguide/manage_devices.rst:136
+#: ../../userguide/manage_devices.rst:148
+#: ../../userguide/manage_devices.rst:153
 msgid "Click on password forgotten"
 msgstr "Cliquez sur mot de passe oublié"
 
-#: ../../userguide/manage_devices.rst:139
+#: ../../userguide/manage_devices.rst:141
 msgid ""
 "You will be able to import the Recovery File and type in the Secret Key."
 msgstr ""
 "Vous pouvez importer le fichier de récupération et entrer la clé secrète."
 
-#: ../../userguide/manage_devices.rst:152
+#: ../../userguide/manage_devices.rst:143
+msgid "Choose recovery device method"
+msgstr ""
+
+#: ../../userguide/manage_devices.rst:159
 msgid ""
 "Once imported, Parsec will create a new device and you will be able to log "
 "into your organization by clicking ``Next``."
