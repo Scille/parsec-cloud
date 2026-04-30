@@ -105,6 +105,7 @@ export async function listWorkspaces(
           selfRoleOrigin: wkInfo.selfRoleOrigin,
           archivingConfiguration: wkInfo.archivingConfiguration,
           archivingConfigurationOrigin: wkInfo.archivingConfigurationOrigin,
+          canSelfPromoteToOwner: wkInfo.canSelfPromoteToOwner,
           sharing: [],
           size: 0,
           lastUpdated: DateTime.now(),
