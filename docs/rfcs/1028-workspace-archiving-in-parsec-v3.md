@@ -247,22 +247,23 @@ Authenticated API:
 
 The table below mirrors the one from RFC 1002 but is adapted to the v3 command set.
 
-| v3 command                 | archived | deleted |
-|----------------------------|----------|---------|
-| `realm_create`             |          |         |
-| `realm_share`              |          | ✔️      |
-| `realm_unshare`            |          | ✔️      |
-| `realm_rename`             |          | ✔️      |
-| `realm_rotate_key`         |          | ✔️      |
-| `realm_get_keys_bundle`    |          | ✔️      |
-| `realm_update_archiving`   |          | ✔️      |
-| `vlob_create`              | ✔️       | ✔️      |
-| `vlob_read_batch`          |          | ✔️      |
-| `vlob_read_versions`       |          | ✔️      |
-| `vlob_update`              | ✔️       | ✔️      |
-| `vlob_poll_changes`        |          | ✔️      |
-| `block_read`               |          | ✔️      |
-| `block_create`             | ✔️       | ✔️      |
+| v3 command                    | archived | deleted |
+|-------------------------------|----------|---------|
+| `realm_create`                |          |         |
+| `realm_share`                 |          | ✔️      |
+| `realm_unshare`               |          | ✔️      |
+| `realm_rename`                |          | ✔️      |
+| `realm_rotate_key`            |          | ✔️      |
+| `realm_self_promote_to_owner` |          | ✔️      |
+| `realm_get_keys_bundle`       |          | ✔️      |
+| `realm_update_archiving`      |          | ✔️      |
+| `vlob_create`                 | ✔️       | ✔️      |
+| `vlob_read_batch`             |          | ✔️      |
+| `vlob_read_versions`          |          | ✔️      |
+| `vlob_update`                 | ✔️       | ✔️      |
+| `vlob_poll_changes`           |          | ✔️      |
+| `block_read`                  |          | ✔️      |
+| `block_create`                | ✔️       | ✔️      |
 
 The two new response status to add to the affected commands are:
 
@@ -273,7 +274,7 @@ The two new response status to add to the affected commands are:
             },
             {
                 "status": "realm_deleted"
-            }
+            },
             [...]
 ```
 
