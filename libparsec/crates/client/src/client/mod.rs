@@ -20,6 +20,7 @@ mod workspace_list;
 mod workspace_needs;
 mod workspace_refresh_list;
 mod workspace_rename;
+mod workspace_self_promote;
 mod workspace_share;
 mod workspace_start;
 
@@ -41,6 +42,7 @@ pub use self::{
     workspace_needs::ClientProcessWorkspacesNeedsError,
     workspace_refresh_list::ClientRefreshWorkspacesListError,
     workspace_rename::ClientRenameWorkspaceError,
+    workspace_self_promote::ClientSelfPromoteToWorkspaceOwnerError,
     workspace_share::ClientShareWorkspaceError,
     workspace_start::ClientStartWorkspaceError,
 };
@@ -441,6 +443,18 @@ impl Client {
         role: Option<RealmRole>,
     ) -> Result<(), ClientShareWorkspaceError> {
         workspace_share::share_workspace(self, realm_id, recipient, role).await
+    }
+
+    /// Self-promote the current user to OWNER role in the given workspace.
+    ///
+    /// This is only allowed if all current OWNERs of the workspace have been
+    /// revoked and the current user has the highest remaining role (and is not
+    /// OUTSIDER).
+    pub async fn self_promote_to_workspace_owner(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<(), ClientSelfPromoteToWorkspaceOwnerError> {
+        workspace_self_promote::self_promote_to_workspace_owner(self, realm_id).await
     }
 
     /// Archive, unarchive or plan deletion for a workspace, this function requires to be online.

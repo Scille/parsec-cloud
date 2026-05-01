@@ -23,7 +23,9 @@ async fn ok_with_changes(
         "renamed",
         "archived",
         "deletion_planned",
-        "deletion_date_reached"
+        "deletion_date_reached",
+        "can_self_promote_to_owner",
+        "cannot_self_promote_to_owner_when_outsider"
     )]
     kind: &str,
     env: &TestbedEnv,
@@ -55,6 +57,7 @@ async fn ok_with_changes(
                 },
                 archiving_configuration: RealmArchivingConfiguration::Available,
                 archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder,
+                can_self_promote_to_owner: false,
             });
 
             // ...provide Alice's client with an additional local-only workspace.
@@ -75,6 +78,7 @@ async fn ok_with_changes(
                             archiving_configuration: RealmArchivingConfiguration::Available.into(),
                             archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder
                                 .into(),
+                            can_self_promote_to_owner: false.into(),
                         });
                 });
 
@@ -88,6 +92,7 @@ async fn ok_with_changes(
                 self_role_origin: CertificateBasedInfoOrigin::Placeholder,
                 archiving_configuration: RealmArchivingConfiguration::Available,
                 archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder,
+                can_self_promote_to_owner: false,
             });
 
             builder.certificates_storage_fetch_certificates("alice@dev1");
@@ -113,6 +118,7 @@ async fn ok_with_changes(
                         },
                         archiving_configuration: RealmArchivingConfiguration::Available,
                         archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder,
+                        can_self_promote_to_owner: false,
                     });
                 }
                 "unsharing" => {
@@ -174,6 +180,36 @@ async fn ok_with_changes(
 
                     expected_workspaces.remove(0);
                     expected_wksp1_local_storage_removed = true;
+                }
+                "can_self_promote_to_owner" => {
+                    // Alice is already OWNER, so we must transfer ownership to Bob...
+                    builder.share_realm(wksp1_id, "bob", Some(RealmRole::Owner));
+                    builder.share_realm(wksp1_id, "alice", Some(RealmRole::Reader));
+                    // ..and Bob gets revoked, so now there is no more OWNER!
+                    builder.revoke_user("bob");
+
+                    expected_workspaces[0].self_role = RealmRole::Reader;
+                    expected_workspaces[0].self_role_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-22T00:00:00Z".parse().unwrap(),
+                        };
+                    expected_workspaces[0].can_self_promote_to_owner = true;
+                }
+                "cannot_self_promote_to_owner_when_outsider" => {
+                    // Alice is already OWNER, so we must transfer ownership to Bob...
+                    builder.share_realm(wksp1_id, "bob", Some(RealmRole::Owner));
+                    builder.share_realm(wksp1_id, "alice", Some(RealmRole::Reader));
+                    // ..and Bob gets revoked, so now there is no more OWNER!
+                    builder.revoke_user("bob");
+                    // However Alice also becomes OUTSIDER, so she cannot self-promote!
+                    builder.update_user_profile("mallory", UserProfile::Admin);
+                    builder.update_user_profile("alice", UserProfile::Outsider);
+
+                    expected_workspaces[0].self_role = RealmRole::Reader;
+                    expected_workspaces[0].self_role_origin =
+                        CertificateBasedInfoOrigin::Certificate {
+                            timestamp: "2000-01-22T00:00:00Z".parse().unwrap(),
+                        };
                 }
                 unknown => panic!("Unknown kind: {unknown}"),
             }

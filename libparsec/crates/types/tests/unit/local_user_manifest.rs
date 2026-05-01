@@ -35,6 +35,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
         //         type: 'CERTIFICATE',
         //         timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
         //       },
+        //       can_self_promote_to_owner: True,
         //       id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
         //       name: 'wksp1',
         //       name_origin: {
@@ -53,6 +54,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
         //         type: 'CERTIFICATE',
         //         timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
         //       },
+        //       can_self_promote_to_owner: False,
         //       id: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b),
         //       name: 'wksp2',
         //       name_origin: {
@@ -74,6 +76,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
         //         type: 'CERTIFICATE',
         //         timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
         //       },
+        //       can_self_promote_to_owner: True,
         //       id: ext(2, 0xa21a40e7408d4aa8b5ffa42bb6a7c832),
         //       name: 'wksp3',
         //       name_origin: {
@@ -89,6 +92,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
         //     {
         //       archiving_configuration: { type: 'AVAILABLE', },
         //       archiving_configuration_origin: { type: 'PLACEHOLDER', },
+        //       can_self_promote_to_owner: False,
         //       id: ext(2, 0x14e08a65e3514e33b95c9de2d52a31a6),
         //       name: 'wksp4',
         //       name_origin: { type: 'PLACEHOLDER', },
@@ -98,21 +102,22 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
         //   ]
         //   speculative: False
         &hex!(
-            "d4a770fb955e91003d8914389211c0e9a23fdddb74b074a2917d1bc2ba4ea7674b873f"
-            "7294b2126d7f629a241ecf5963af98e808645cc03fa8d17bcddb032c76f8244d31c11e"
-            "ea1e88b41c899c5be28a17203becd34e74bed1819017171524879bb05d097f417bb3f7"
-            "3e83276c21750b8ba376381af38c035358a7f4c310a49095c44c477fcb591bf84b0d49"
-            "f453f5a7e47690a5f32fce4a2a9e9865e433727db032a00ce8c8f0a4bc42cfe1fa2b9c"
-            "6122d5bb2869a3bd5d41101fedb8f2aeb937aced1cba29080ba566314e8c6abf65733e"
-            "d1c936ed11986cae7b27bad34c6b489258a5d49a59e363194ec9d7a60ffe0cb4a16fac"
-            "d2ab577bd427d531f938c2aad9f9c31e607c04536176d972026943642d211b306d004e"
-            "862d30368c76c976b567715c6e595cfe2613101d1c74cbc0871cb85092ab896f4d6a99"
-            "701cd5fd8da023fc1576ecabb1ace5cfe26efce7093b9f6a7a65ddd35c11f5b86584c7"
-            "f8275401f0b561911614cc82f3dcbcdc35a4de0fbe65fbbbc5b93d8ef8643c93740b09"
-            "b4d18e9b5d2f1a6239f7cfddc7381913b4e32390f4b37f0554f4fa47049b1194e3a0b4"
-            "1ced0684227a2f98e80f16a7b39adb05387c8bbe8f4e866bccf01f04b9026edce70dff"
-            "a32f61ab853cee35ab5686fc2a61643d4613891382e7fb198bc6c38b7c79d5907f2310"
-            "44b3f24ec024aeb078e413072954db16e2eaca71"
+            "662271930de147bd0c250446b9968f4239b4f696c204380b8745bcb24193fbc562a390"
+            "3b1aaa222309c645f35f14413c4eb26c78c7582d338b5c1edd26cd040b0c4a3869c574"
+            "f7b03f02f742a5242b975dc0ef6396a7b0a3f1009d60b037cd281676e942a8e479a349"
+            "ad55b913e4f82beb7a90e99fcb8b234fc31f424203dcedf2f8fb89c05247eb201d1572"
+            "ba226d589047562d6fe9a4fcc2ffbd1fa7dd6f24e5d3fbc4ae4cb8597ad9f409078609"
+            "2d5c65ee6d7ee5273a3cf4c1ae9aeeea4f1adb1381f9a615ed0efa5b26825e4a9bc508"
+            "9567db78acd275efab31b372488cde5d88ad220cf08e8cca469cd7f8c3da6389ddc420"
+            "a89c6fd14f583e9bacebf3032377e571bcbdd144a208ecd5dadafb72a4d617201b3770"
+            "5e9c39a074ce46e4545dc349f94d55ff3ecf5deb5d13c4cbb9115dd1805e4708a18e82"
+            "6a55049395594940f67440c1bc125be4774f8abe47a3ca79d6e06f039c13bd9c811119"
+            "fae0a49bb40f601a19be2b25ba0a9f0a657ea27c2b1698c3d80fbb8ba706cbd641a608"
+            "4fbf9a3d50a0e18a6244fc552fd965a0dc9253ef5946b211e009e281436bc751590e99"
+            "b73f4b76a3356788f94ba1bfdd8ab9f81516238459cdf42558173f3f5809923aac3703"
+            "9936cb828e2b28e7c4d629b396f01794ead2260e57f225491b8ed545245aebf26a0248"
+            "bdee2931c0077918c39833c69f12b4f9e562360f37d785066ef6d5ecfeaf223cf75fc1"
+            "33a5d413b5edbe54307979dceeaf6c1c243da34415"
         )[..],
         LocalUserManifest {
             updated: now,
@@ -135,6 +140,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     role_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
                     archiving_configuration: RealmArchivingConfiguration::Available.into(),
                     archiving_configuration_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now }.into(),
+                    can_self_promote_to_owner: true.into(),
                 },
                 LocalUserManifestWorkspaceEntry {
                     name: "wksp2".parse().unwrap(),
@@ -144,6 +150,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     role_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
                     archiving_configuration: RealmArchivingConfiguration::Archived.into(),
                     archiving_configuration_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now }.into(),
+                    can_self_promote_to_owner: false.into(),
                 },
                 LocalUserManifestWorkspaceEntry {
                     name: "wksp3".parse().unwrap(),
@@ -155,6 +162,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                         deletion_date: "2025-01-01T00:00:00Z".parse().unwrap(),
                     }.into(),
                     archiving_configuration_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now }.into(),
+                    can_self_promote_to_owner: true.into(),
                 },
                 LocalUserManifestWorkspaceEntry {
                     name: "wksp4".parse().unwrap(),
@@ -164,6 +172,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
                     archiving_configuration: RealmArchivingConfiguration::Available.into(),
                     archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+                    can_self_promote_to_owner: false.into(),
                 },
             ],
         }
@@ -190,6 +199,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
         //     {
         //       archiving_configuration: { type: 'AVAILABLE', },
         //       archiving_configuration_origin: { type: 'PLACEHOLDER', },
+        //       can_self_promote_to_owner: False,
         //       id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
         //       name: 'wksp1',
         //       name_origin: {
@@ -205,17 +215,18 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
         //   ]
         //   speculative: False
         &hex!(
-            "717bc4b82e12aeaf0ffb00f95e900a5f314e3bb26f7761fda9d13aaddb3a43a00292b4"
-            "a8aad8b5f7c317e84e8dea8ed8f6f7b6815c6978179f53a460a92ea3ef4c53091362bc"
-            "e8df494ee69c5ba639c14685882d391417711255edf24d0a31482db3a38bfaa4bfc38b"
-            "651c15aa3e4311c27702169fd6e22b6881afe3fdf6acfbf9b12227a27a6a722ed3e966"
-            "932a2724807e233d7f60e5159f4e1d407b9d227425c11aa5f08dfa981c1a090615d54d"
-            "d5d1d045f253a35bec2b11b48079d15298f3534b1e36452fe9d00f6fa4460d03bcf454"
-            "bffe82ae900bbc9376e000b6c22888201b95acccc2f069eb4c63531b89d9802c824e83"
-            "2a1dfe26fd91fa14b50bae13253337f144c659bc7acaefa2a6504c851b69e0d1513648"
-            "4bfa60af95b37a5bd8f99ab7089baef714e1fc8d2124e9c05ca243b94c4082999da08c"
-            "de40f74331362837a8aee9ee436753e016c4d73460a88eaefab91cb12d5e69b8f6473a"
-            "31c511f17dc90a851d78d4b7"
+            "746a8147fef43f798fa40474149075c05642096db67b98434e90108751a8942484ccd7"
+            "2dc0d25147e2d341a26132018dd1e679b261dace6669f83bb6b1cf8ac1336abb551192"
+            "7f3b40a1af9351c924db940d0c9e2f4a064897e2060d193f3fd229dc10e437daff1b96"
+            "973269420cc52b9c8ce7195d7813a5ae92e94d7caed47bb1c0df8379cac9a8f1efffe9"
+            "b3d03c3d75ebdd4a2efccdaf2c1e9a55319d324acbf3b95cf56567b8ccb96471b8a2f6"
+            "9063ea0bc4bad59a4c70564eca6812200337511e71c28a185c4745729de265e1c11b0e"
+            "d5dd057464c598ba0aca17dbd25d224725f2dc680b7ef3815e25273b170a8a68d3248f"
+            "f9140b4e861539d1deef9577d6a20f685d72bf11fd0ac44237ce672ea806d7bf276bcf"
+            "cf3bfba1211cab250a2edd7513c06041de78c30977f322c85866055617a44ac4b23159"
+            "fbe1d0d0ced8ddb98ca10543e9e4aa683de5e16987643bfaa73adde5dc0803dd57fe55"
+            "bc70dd41c8bba6a01610b95963c0fa745f16a6448ae6ab09fbcd961bcb3d81334b2781"
+            "1e19ad6b"
         )[..],
         LocalUserManifest {
             updated: now,
@@ -238,6 +249,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     role_origin: CertificateBasedInfoOrigin::Certificate { timestamp: now },
                     archiving_configuration: RealmArchivingConfiguration::Available.into(),
                     archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+                    can_self_promote_to_owner: false.into(),
                 },
             ],
         }
@@ -318,6 +330,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     role_origin: CertificateBasedInfoOrigin::Certificate { timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap() },
                     archiving_configuration: Maybe::Absent,
                     archiving_configuration_origin: Maybe::Absent,
+                    can_self_promote_to_owner: Maybe::Absent,
                 },
                 LocalUserManifestWorkspaceEntry {
                     name: "wksp2".parse().unwrap(),
@@ -327,6 +340,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
                     archiving_configuration: Maybe::Absent,
                     archiving_configuration_origin: Maybe::Absent,
+                    can_self_promote_to_owner: Maybe::Absent,
                 },
             ],
         }
@@ -392,6 +406,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     role_origin: CertificateBasedInfoOrigin::Placeholder,
                     archiving_configuration: Maybe::Absent,
                     archiving_configuration_origin: Maybe::Absent,
+                    can_self_promote_to_owner: Maybe::Absent,
                 }
             ],
         }
@@ -618,6 +633,7 @@ fn local_user_manifest_get_local_workspace_entry(timestamp: DateTime) {
                 },
                 archiving_configuration: RealmArchivingConfiguration::Available.into(),
                 archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+                can_self_promote_to_owner: false.into(),
             },
             LocalUserManifestWorkspaceEntry {
                 name: "wksp2".parse().unwrap(),
@@ -627,6 +643,7 @@ fn local_user_manifest_get_local_workspace_entry(timestamp: DateTime) {
                 role_origin: CertificateBasedInfoOrigin::Placeholder,
                 archiving_configuration: RealmArchivingConfiguration::Available.into(),
                 archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+                can_self_promote_to_owner: false.into(),
             },
         ],
         speculative: false,
@@ -649,6 +666,7 @@ fn local_user_manifest_workspace_entry_is_read_only() {
         role_origin: CertificateBasedInfoOrigin::Placeholder,
         archiving_configuration: RealmArchivingConfiguration::Available.into(),
         archiving_configuration_origin: CertificateBasedInfoOrigin::Placeholder.into(),
+        can_self_promote_to_owner: false.into(),
     };
 
     let far_in_the_future = "2999-01-01T00:00:00Z".parse().unwrap();
