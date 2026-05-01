@@ -1510,16 +1510,8 @@ async fn check_realm_role_certificate_consistency(
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
 
-        let role_to_priority = |role: RealmRole| match role {
-            RealmRole::Reader => 1u8,
-            RealmRole::Contributor => 2,
-            RealmRole::Manager => 3,
-            RealmRole::Owner => 4,
-        };
-
-        let author_role_priority = role_to_priority(author_current_role);
         let more_senior_members = current_roles.into_iter().filter_map(|(user_id, role)| {
-            if role_to_priority(role) > author_role_priority {
+            if role > author_current_role {
                 Some(user_id)
             } else {
                 None
