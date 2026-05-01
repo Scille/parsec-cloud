@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  node-version: 22.14.0
+  node-version: 22.22.2
   wasm-pack-version: 0.12.1
   libparsec-cache-version: 1
 
