@@ -5607,6 +5607,13 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
         let js_val = Reflect::get(&obj, &"archivingConfigurationOrigin".into())?;
         variant_certificate_based_info_origin_js_to_rs(js_val)?
     };
+    let can_self_promote_to_owner = {
+        let js_val = Reflect::get(&obj, &"canSelfPromoteToOwner".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
     Ok(libparsec::WorkspaceInfo {
         id,
         is_started,
@@ -5617,6 +5624,7 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
         self_role_origin,
         archiving_configuration,
         archiving_configuration_origin,
+        can_self_promote_to_owner,
     })
 }
 
@@ -5659,6 +5667,12 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
         &js_obj,
         &"archivingConfigurationOrigin".into(),
         &js_archiving_configuration_origin,
+    )?;
+    let js_can_self_promote_to_owner = rs_obj.can_self_promote_to_owner.into();
+    Reflect::set(
+        &js_obj,
+        &"canSelfPromoteToOwner".into(),
+        &js_can_self_promote_to_owner,
     )?;
     Ok(js_obj)
 }
@@ -10808,6 +10822,123 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientRevokeUserErrorUserNotFound".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientSelfPromoteToWorkspaceOwnerError
+
+#[allow(dead_code)]
+fn variant_client_self_promote_to_workspace_owner_error_rs_to_js(
+    rs_obj: libparsec::ClientSelfPromoteToWorkspaceOwnerError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::ActiveOwnerAlreadyExists { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists".into(),
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSelfPromoteToWorkspaceOwnerErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSelfPromoteToWorkspaceOwnerErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted".into(),
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSelfPromoteToWorkspaceOwnerErrorStopped".into(),
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::WorkspaceNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound".into(),
             )?;
         }
     }
@@ -24087,6 +24218,40 @@ pub fn clientRevokeUser(client: u32, user: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_revoke_user_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_self_promote_to_workspace_owner
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientSelfPromoteToWorkspaceOwner(client: u32, realm_id: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_self_promote_to_workspace_owner(client, realm_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_self_promote_to_workspace_owner_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
