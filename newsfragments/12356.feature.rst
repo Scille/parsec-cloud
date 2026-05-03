@@ -1,1 +1,0 @@
-Added a workspace deletion feature along with a workspace bin page

@@ -7,6 +7,49 @@ Parsec v3.x
 
 .. towncrier release notes start
 
+
+Parsec v3.8.2-a.0.dev.20576+c3d3ecf (2026-05-03)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Add a file search feature to look for files inside a workspace
+  (`#12403 <https://github.com/Scille/parsec-cloud/issues/12403>`__)
+
+* Added a workspace deletion feature along with a workspace bin page
+  (`#12356 <https://github.com/Scille/parsec-cloud/issues/12356>`__)
+
+* Added a workspace archiving feature along with an archived workspaces page
+  (`#12355 <https://github.com/Scille/parsec-cloud/issues/12355>`__)
+
+* [CLI] Add workspace list-users command to list users and their role in a
+  workspace.
+  (`#9159 <https://github.com/Scille/parsec-cloud/issues/9159>`__)
+
+* Workspace local cache is now automatically deleted when the workspace is no
+  longer accessible
+  (`#12465 <https://github.com/Scille/parsec-cloud/issues/12465>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fix Linux Snap version crashing during login with CPU not supporting AVX-512
+  instructions
+  (`#12445 <https://github.com/Scille/parsec-cloud/issues/12445>`__)
+
+* [CLI] Organization bootstrap and invite claim now accept urls with http
+  scheme.
+  (`#12629 <https://github.com/Scille/parsec-cloud/issues/12629>`__)
+
+* [CLI] Rename ``device remove`` to ``device forget_local``.
+  (`#8857 <https://github.com/Scille/parsec-cloud/issues/8857>`__)
+
+* [CLI] Bootstrap organization asks for password confirmation.
+  (`#10019 <https://github.com/Scille/parsec-cloud/issues/10019>`__)
+
+
 Parsec v3.8.1 (2026-03-17)
 --------------------------
 
