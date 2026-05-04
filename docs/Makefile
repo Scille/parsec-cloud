@@ -164,7 +164,6 @@ gettext:
 	$(RM) \
 		$(BUILDDIR)/locale/history.pot \
 		$(BUILDDIR)/locale/hosting/deployment/index.pot \
-		$(BUILDDIR)/locale/hosting/maintenance/index.pot
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
 
