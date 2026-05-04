@@ -175,8 +175,8 @@ msTest('Update email', async ({ clientArea }) => {
   await expect(modal).toBeVisible();
   const okButton = modal.locator('#next-button');
   await expect(okButton).toBeTrulyDisabled();
-  const title = modal.locator('.ms-modal-header__title-container');
-  const subtitle = modal.locator('.ms-modal-header__text');
+  const title = modal.locator('.ms-modal-header__title');
+  const subtitle = modal.locator('.ms-modal-header__subtitle');
   const inputs = modal.locator('ion-input');
   await expect(title).toHaveText('Change your email');
   await expect(subtitle).toHaveText('If you update your email address, keep in mind that you will have to log in with this new address.');
@@ -236,8 +236,8 @@ for (const params of [
 
     const okButton = modal.locator('#next-button');
     await expect(okButton).toBeTrulyDisabled();
-    const title = modal.locator('.ms-modal-header__title-container');
-    const subtitle = modal.locator('.ms-modal-header__text');
+    const title = modal.locator('.ms-modal-header__title');
+    const subtitle = modal.locator('.ms-modal-header__subtitle');
     const inputs = modal.locator('ion-input');
     await expect(title).toHaveText('Change your email');
     await expect(subtitle).toHaveText('If you update your email address, keep in mind that you will have to log in with this new address.');
