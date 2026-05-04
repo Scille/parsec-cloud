@@ -10,6 +10,21 @@
 
     <div class="card-content">
       <div class="info-list">
+        <!-- Workspace deletion delay -->
+        <div class="info-list-item">
+          <ion-label class="info-list-item__title body">
+            {{ $msTranslate('OrganizationPage.configuration.workspaceDeletionDelay') }}
+          </ion-label>
+          <div class="info-list-item__value cell-title info">
+            {{
+              $msTranslate(
+                orgInfo.realmMinimumArchivingPeriodBeforeDeletion === 0
+                  ? 'WorkspacesPage.trashWorkspace.deletionDelay.immediate'
+                  : formatWorkspaceDeletionDelay(orgInfo.realmMinimumArchivingPeriodBeforeDeletion),
+              )
+            }}
+          </div>
+        </div>
         <!-- Outsider profile -->
         <div class="info-list-item">
           <ion-label class="info-list-item__title body">
@@ -73,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatWorkspaceDeletionDelay } from '@/components/workspaces/utils';
 import { OrganizationInfo } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
@@ -153,18 +169,24 @@ async function copyAddress(address: string): Promise<void> {
         color: var(--parsec-color-light-secondary-hard-grey);
       }
 
-      .success {
-        color: var(--parsec-color-light-success-700);
+      &__value.cell-title {
         padding: 0.125rem 0.5rem;
         border-radius: var(--parsec-radius-32);
+      }
+
+      .success {
+        color: var(--parsec-color-light-success-700);
         background: var(--parsec-color-light-success-50);
       }
 
       .warning {
         color: var(--parsec-color-light-warning-700);
-        padding: 0.125rem 0.5rem;
-        border-radius: var(--parsec-radius-32);
         background: var(--parsec-color-light-warning-50);
+      }
+
+      .info {
+        color: var(--parsec-color-light-secondary-text);
+        background: var(--parsec-color-light-secondary-premiere);
       }
     }
   }

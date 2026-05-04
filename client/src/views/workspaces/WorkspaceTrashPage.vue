@@ -8,7 +8,12 @@
         v-if="filteredWorkspaces.length > 0 && !querying"
       >
         <ion-text class="workspace-trash-info__title subtitles-normal">
-          {{ $msTranslate('WorkspacesPage.trashWorkspace.info') }}
+          {{
+            $msTranslate({
+              key: 'WorkspacesPage.trashWorkspace.info',
+              data: { duration: $msTranslate(formatWorkspaceDeletionDelay(workspaceDeletionDelay)) },
+            })
+          }}
         </ion-text>
         <ion-text class="workspace-trash-info__count body">
           {{
@@ -37,7 +42,12 @@
             class="no-trashed-workspaces__image"
           />
           <ion-text class="body-lg">
-            {{ $msTranslate('WorkspacesPage.categoriesMenu.noTrashedWorkspaces') }}
+            {{
+              $msTranslate({
+                key: 'WorkspacesPage.categoriesMenu.noTrashedWorkspaces',
+                data: { duration: $msTranslate(formatWorkspaceDeletionDelay(workspaceDeletionDelay)) },
+              })
+            }}
           </ion-text>
           <ion-button
             class="no-trashed-workspaces__button button-medium button-default"
@@ -75,9 +85,9 @@
 
 <script setup lang="ts">
 import NoTrashedWorkspaces from '@/assets/images/no-trashed-workspaces.svg?raw';
-import { openArchivedWorkspaceContextMenu } from '@/components/workspaces/utils';
+import { formatWorkspaceDeletionDelay, openArchivedWorkspaceContextMenu } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
-import { listTrashedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
+import { getClientInfo, listTrashedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
 import { currentRouteIs, navigateTo, navigateToWorkspace, Routes } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
@@ -89,12 +99,17 @@ const querying = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const { isLargeDisplay } = useWindowSize();
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const workspaceDeletionDelay: Ref<number> = ref(0);
 
 const filteredWorkspaces = computed(() => {
   return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => a.name.localeCompare(b.name));
 });
 
 onMounted(async (): Promise<void> => {
+  const clientInfo = await getClientInfo();
+  if (clientInfo.ok) {
+    workspaceDeletionDelay.value = Number(clientInfo.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion);
+  }
   await refreshTrashedWorkspacesList();
 });
 
@@ -124,7 +139,14 @@ async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openArchivedWorkspaceContextMenu(event, workspace, informationManager.value, false, isLargeDisplay.value);
+  await openArchivedWorkspaceContextMenu(
+    event,
+    workspace,
+    informationManager.value,
+    workspaceDeletionDelay.value,
+    false,
+    isLargeDisplay.value,
+  );
   await refreshTrashedWorkspacesList();
 
   if (onFinished) {

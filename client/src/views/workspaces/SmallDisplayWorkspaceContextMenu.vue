@@ -142,7 +142,7 @@
             </ion-text>
           </ion-item>
           <ion-item
-            v-show="workspace.isArchived && workspace.selfRole === WorkspaceRole.Owner"
+            v-show="!workspace.isTrashed && workspace.selfRole === WorkspaceRole.Owner"
             button
             @click="onClick(WorkspaceAction.Trash)"
             class="ion-no-padding list-group-item item-danger"
@@ -152,7 +152,13 @@
               :icon="trash"
             />
             <ion-text class="button-large list-group-item__label">
-              {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDelete') }}
+              {{
+                $msTranslate(
+                  workspaceDeletionDelay > 0
+                    ? 'WorkspacesPage.workspaceContextMenu.actionScheduleDeletion'
+                    : 'WorkspacesPage.workspaceContextMenu.actionDelete',
+                )
+              }}
             </ion-text>
           </ion-item>
         </ion-item-group>
@@ -232,6 +238,7 @@ function onClick(action: WorkspaceAction): Promise<boolean> {
 defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
+  workspaceDeletionDelay: number;
   isFavorite: boolean;
   isHidden: boolean;
 }>();

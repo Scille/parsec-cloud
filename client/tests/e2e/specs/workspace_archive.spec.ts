@@ -41,7 +41,7 @@ msTest('Archive workspace', async ({ workspaces }) => {
     'Workspace management',
     'History',
     'Restore this workspace',
-    'Delete this workspace',
+    'Move to Bin',
   ]);
 });
 

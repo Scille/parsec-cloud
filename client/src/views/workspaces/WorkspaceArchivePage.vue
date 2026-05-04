@@ -77,7 +77,7 @@
 import NoArchivedWorkspaces from '@/assets/images/no-archived-workspaces.svg?raw';
 import { openArchivedWorkspaceContextMenu } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
-import { listArchivedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
+import { getClientInfo, listArchivedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
 import { currentRouteIs, navigateTo, navigateToWorkspace, Routes } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
@@ -89,6 +89,7 @@ const querying = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const { isLargeDisplay } = useWindowSize();
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const workspaceDeletionDelay = ref(0);
 
 const filteredWorkspaces = computed(() => {
   return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => a.name.localeCompare(b.name));
@@ -116,6 +117,11 @@ async function refreshArchivedWorkspacesList(): Promise<void> {
       PresentationMode.Toast,
     );
   }
+
+  const infoResult = await getClientInfo();
+  if (infoResult.ok) {
+    workspaceDeletionDelay.value = Number(infoResult.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion);
+  }
   querying.value = false;
 }
 
@@ -124,7 +130,14 @@ async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openArchivedWorkspaceContextMenu(event, workspace, informationManager.value, false, isLargeDisplay.value);
+  await openArchivedWorkspaceContextMenu(
+    event,
+    workspace,
+    informationManager.value,
+    workspaceDeletionDelay.value,
+    false,
+    isLargeDisplay.value,
+  );
   await refreshArchivedWorkspacesList();
 
   if (onFinished) {

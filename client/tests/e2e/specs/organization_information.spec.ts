@@ -30,13 +30,15 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     }
 
     await expect(configContainer.locator('.info-list-item').locator('.info-list-item__title')).toHaveText([
+      'Workspace deletion delay',
       'External profile',
       'User limit (excluding users with External profile)',
       'Server address',
     ]);
-    await expect(configContainer.locator('.info-list-item').nth(0).locator('.info-list-item__value')).toHaveText(['Enabled']);
-    await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Unlimited']);
-    await expect(configContainer.locator('.info-list-item').nth(2).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
+    await expect(configContainer.locator('.info-list-item').nth(0).locator('.info-list-item__value')).toHaveText(['30 days']);
+    await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Enabled']);
+    await expect(configContainer.locator('.info-list-item').nth(2).locator('.info-list-item__value')).toHaveText(['Unlimited']);
+    await expect(configContainer.locator('.info-list-item').nth(3).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
 
     const userCategories = usersContainer.locator('.users-list-item');
     await expect(userCategories.nth(0).locator('.users-list-item__title')).toHaveText('3');
@@ -75,13 +77,15 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     }
 
     await expect(configContainer.locator('.info-list-item').locator('.info-list-item__title')).toHaveText([
+      'Workspace deletion delay',
       'External profile',
       'User limit (excluding users with External profile)',
       'Server address',
     ]);
-    await expect(configContainer.locator('.info-list-item').nth(0).locator('.info-list-item__value')).toHaveText(['Enabled']);
-    await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Unlimited']);
-    await expect(configContainer.locator('.info-list-item').nth(2).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
+    await expect(configContainer.locator('.info-list-item').nth(0).locator('.info-list-item__value')).toHaveText(['30 days']);
+    await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Enabled']);
+    await expect(configContainer.locator('.info-list-item').nth(2).locator('.info-list-item__value')).toHaveText(['Unlimited']);
+    await expect(configContainer.locator('.info-list-item').nth(3).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
 
     const userCategories = usersContainer.locator('.users-list-item');
     await expect(userCategories.nth(0).locator('.users-list-item__title')).toHaveText('3');

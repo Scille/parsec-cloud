@@ -53,6 +53,15 @@ export const workspaceNameValidator: IValidator = async function (value: string)
   return (await isValidWorkspaceName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
 };
 
+export const matchingStringValidator = (toMatch: string): IValidator =>
+  async function (value: string) {
+    value = value.trim();
+    if (value.length === 0) {
+      return { validity: Validity.Intermediate };
+    }
+    return toMatch.localeCompare(value) === 0 ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+  };
+
 export const entryNameValidator = (
   isFile: boolean,
   options?: { workspaceHandle: WorkspaceHandle; path: FsPath; extension?: string },

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { workspaceNameValidator } from '@/common/validators';
+import { matchingStringValidator, workspaceNameValidator } from '@/common/validators';
 import {
   ClientRenameWorkspaceErrorTag,
   UserProfile,
@@ -34,7 +34,17 @@ import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Answer, Clipboard, DisplayState, I18n, MsModalResult, Translatable, askQuestion, getTextFromUser } from 'megashark-lib';
+import {
+  Answer,
+  Clipboard,
+  DisplayState,
+  I18n,
+  MsModalResult,
+  Translatable,
+  askQuestion,
+  getTextFromUser,
+  useWindowSize,
+} from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -130,6 +140,7 @@ export async function openWorkspaceContextMenu(
   eventDistributor: EventDistributor,
   informationManager: InformationManager,
   storageManager: StorageManager,
+  workspaceDeletionDelay: number,
   fromSidebar = false,
   isLargeDisplay = true,
 ): Promise<void> {
@@ -148,6 +159,7 @@ export async function openWorkspaceContextMenu(
       componentProps: {
         workspace: workspace,
         clientProfile: clientProfile,
+        workspaceDeletionDelay: workspaceDeletionDelay,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
         isHidden: workspaceAttributes.isHidden(workspace.id),
       },
@@ -166,6 +178,7 @@ export async function openWorkspaceContextMenu(
       componentProps: {
         workspace: workspace,
         clientProfile: clientProfile,
+        workspaceDeletionDelay: workspaceDeletionDelay,
         isFavorite: workspaceAttributes.isFavorite(workspace.id),
         isHidden: workspaceAttributes.isHidden(workspace.id),
       },
@@ -218,6 +231,9 @@ export async function openWorkspaceContextMenu(
       case WorkspaceAction.Archive:
         await archiveWorkspace(workspace, informationManager);
         break;
+      case WorkspaceAction.Trash:
+        await trashWorkspace(workspace, informationManager);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
@@ -228,6 +244,7 @@ export async function openArchivedWorkspaceContextMenu(
   event: Event,
   workspace: WorkspaceInfo,
   informationManager: InformationManager,
+  workspaceDeletionDelay: number,
   fromSidebar = false,
   isLargeDisplay = true,
 ): Promise<void> {
@@ -246,6 +263,7 @@ export async function openArchivedWorkspaceContextMenu(
       componentProps: {
         workspace: workspace,
         clientProfile: clientProfile,
+        workspaceDeletionDelay: workspaceDeletionDelay,
         isFavorite: false,
         isHidden: false,
       },
@@ -264,6 +282,7 @@ export async function openArchivedWorkspaceContextMenu(
       componentProps: {
         workspace: workspace,
         clientProfile: clientProfile,
+        workspaceDeletionDelay: workspaceDeletionDelay,
         isFavorite: false,
         isHidden: false,
       },
@@ -338,6 +357,7 @@ async function restoreWorkspace(workspace: WorkspaceInfo, informationManager: In
 }
 
 async function trashWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager) {
+  const { isLargeDisplay } = useWindowSize();
   let realmMinimumArchivingPeriodBeforeDeletionInSeconds = 30 * 24 * 3600; // 30 days
   const clientResult = await getClientInfo();
   if (clientResult.ok) {
@@ -351,14 +371,53 @@ async function trashWorkspace(workspace: WorkspaceInfo, informationManager: Info
   // which is no big deal since the archiving period is supposed to be a multiple-days long period.
   const estimatedDeletionDate = DateTime.now().plus({ seconds: realmMinimumArchivingPeriodBeforeDeletionInSeconds });
   const answer = await askQuestion(
-    'WorkspacesPage.trashWorkspace.title',
+    'WorkspacesPage.trashWorkspace.question.title',
     {
-      key: 'WorkspacesPage.trashWorkspace.subtitle',
-      data: { workspace: workspace.name, deletionDate: I18n.translate(I18n.formatDate(estimatedDeletionDate)) },
+      key:
+        realmMinimumArchivingPeriodBeforeDeletionInSeconds > 0
+          ? 'WorkspacesPage.trashWorkspace.question.subtitleBin'
+          : 'WorkspacesPage.trashWorkspace.question.subtitleDelete',
+      data: {
+        workspace: workspace.name,
+        deletionDelay: I18n.translate(formatWorkspaceDeletionDelay(realmMinimumArchivingPeriodBeforeDeletionInSeconds)),
+      },
     },
-    { yesText: 'WorkspacesPage.trashWorkspace.yes', noText: 'WorkspacesPage.trashWorkspace.no', yesIsDangerous: true },
+    {
+      yesText: 'WorkspacesPage.trashWorkspace.question.yes',
+      noText: 'WorkspacesPage.trashWorkspace.question.no',
+    },
   );
   if (answer === Answer.No) {
+    return;
+  }
+
+  const workspaceName = await getTextFromUser(
+    {
+      title: 'WorkspacesPage.trashWorkspace.title',
+      subtitle: {
+        key:
+          realmMinimumArchivingPeriodBeforeDeletionInSeconds > 0
+            ? 'WorkspacesPage.trashWorkspace.subtitleBin'
+            : 'WorkspacesPage.trashWorkspace.subtitleDelete',
+        data: { workspace: workspace.name, deletionDate: I18n.translate(I18n.formatDate(estimatedDeletionDate)) },
+      },
+      trim: true,
+      validator: matchingStringValidator(workspace.name),
+      inputLabel: {
+        key: 'WorkspacesPage.trashWorkspace.label',
+        data: { workspace: workspace.name },
+      },
+      placeholder: workspace.name,
+      okButtonText:
+        realmMinimumArchivingPeriodBeforeDeletionInSeconds === 0
+          ? 'WorkspacesPage.trashWorkspace.yesDelete'
+          : 'WorkspacesPage.trashWorkspace.yesBin',
+    },
+    isLargeDisplay.value,
+  );
+
+  if (workspaceName !== workspace.name) {
+    // Shouldn't happen
     return;
   }
 
@@ -660,4 +719,23 @@ export function compareWorkspaceRoles(role1: WorkspaceRole, role2: WorkspaceRole
     return 1;
   }
   return 0;
+}
+
+export function formatWorkspaceDeletionDelay(duration: number | undefined): Translatable {
+  if (duration === undefined) {
+    return 'WorkspacesPage.trashWorkspace.deletionDelay.default';
+  } else if (duration < 60) {
+    return { key: 'WorkspacesPage.trashWorkspace.deletionDelay.seconds', data: { amount: duration }, count: duration };
+  } else if (duration < 3600) {
+    // 60 * 60
+    duration = ~~(duration / 60);
+    return { key: 'WorkspacesPage.trashWorkspace.deletionDelay.minutes', data: { amount: duration }, count: duration };
+  } else if (duration < 86400) {
+    // 60 * 60 * 24
+    duration = ~~(duration / 3600);
+    return { key: 'WorkspacesPage.trashWorkspace.deletionDelay.hours', data: { amount: duration }, count: duration };
+  } else {
+    duration = ~~(duration / 86400);
+    return { key: 'WorkspacesPage.trashWorkspace.deletionDelay.days', data: { amount: duration }, count: duration };
+  }
 }
