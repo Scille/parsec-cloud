@@ -1192,12 +1192,31 @@
             "revokedUsers": "Revoked | Revoked",
             "activeUsers": "Active | Active",
             "frozenUsers": "Frozen | Frozen",
-            "title": "Users",
+            "adminUsers": "Administrator | Administrators",
+            "memberUsers": "Member | Members",
+            "externalUsers": "External | Externals",
+            "mfaActive": "Active | Active",
+            "mfaInactive": "Inactive | Inactive",
+            "title": "User overview",
+            "subtitle": "Click on a category to see details",
+            "listTitle": "User status",
+            "profileTitle": "User profiles",
+            "mfaTitle": "Multi-factor authentication",
             "seeUsers": "See all users",
             "addUser": "Add a user",
             "invitations": {
                 "emailInvitations": "Email invitations",
                 "linkRequests": "Join Requests"
+            },
+            "modal": {
+                "titleActive": "Active users",
+                "titleRevoked": "Revoked users",
+                "titleFrozen": "Frozen users",
+                "titleAdmins": "Administrator users",
+                "titleStandards": "Standard users",
+                "titleOutsiders": "External users",
+                "loading": "Loading users...",
+                "noUsers": "No users found in this category"
             }
         },
         "size": {
@@ -1214,6 +1233,7 @@
             "allowed": "Enabled",
             "forbidden": "Disabled",
             "title": "Configuration",
+            "mfaRequired": "Multi-factor authentication requirement",
             "serverAddr": "Server address",
             "copyPath": "Copied",
             "copyFailed": "Failed to copy the organization address. Your browser or device does not seem to support copy/paste."
