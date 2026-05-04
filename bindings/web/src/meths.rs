@@ -4,6 +4,8 @@
  * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
  */
 
+// cspell: words useless_asref
+
 #[allow(unused_imports)]
 use js_sys::*;
 use std::str::FromStr;
@@ -426,7 +428,10 @@ fn struct_account_info_js_to_rs(obj: JsValue) -> Result<libparsec::AccountInfo, 
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let in_use_auth_method = {
@@ -442,7 +447,10 @@ fn struct_account_info_js_to_rs(obj: JsValue) -> Result<libparsec::AccountInfo, 
                         libparsec::AccountAuthMethodID::from_hex(s.as_str())
                             .map_err(|e| e.to_string())
                     };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let human_handle = {
@@ -465,6 +473,7 @@ fn struct_account_info_rs_to_js(rs_obj: libparsec::AccountInfo) -> Result<JsValu
         };
         match custom_to_rs_string(rs_obj.server_addr) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -475,6 +484,7 @@ fn struct_account_info_rs_to_js(rs_obj: libparsec::AccountInfo) -> Result<JsValu
             |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.in_use_auth_method) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -567,7 +577,10 @@ fn struct_account_organizations_active_user_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let user_id = {
@@ -581,7 +594,10 @@ fn struct_account_organizations_active_user_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let created_on = {
@@ -592,7 +608,8 @@ fn struct_account_organizations_active_user_js_to_rs(
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -640,6 +657,7 @@ fn struct_account_organizations_active_user_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -651,7 +669,7 @@ fn struct_account_organizations_active_user_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -736,7 +754,10 @@ fn struct_account_organizations_revoked_user_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let user_id = {
@@ -750,7 +771,10 @@ fn struct_account_organizations_revoked_user_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let created_on = {
@@ -761,7 +785,8 @@ fn struct_account_organizations_revoked_user_js_to_rs(
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -773,7 +798,8 @@ fn struct_account_organizations_revoked_user_js_to_rs(
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -809,6 +835,7 @@ fn struct_account_organizations_revoked_user_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -820,7 +847,7 @@ fn struct_account_organizations_revoked_user_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -831,7 +858,7 @@ fn struct_account_organizations_revoked_user_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.revoked_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -899,7 +926,10 @@ fn struct_async_enrollment_untrusted_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
                     libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let submitted_on = {
@@ -910,7 +940,8 @@ fn struct_async_enrollment_untrusted_js_to_rs(
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -925,7 +956,10 @@ fn struct_async_enrollment_untrusted_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let untrusted_requested_human_handle = {
@@ -955,6 +989,7 @@ fn struct_async_enrollment_untrusted_rs_to_js(
             |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.enrollment_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -966,7 +1001,7 @@ fn struct_async_enrollment_untrusted_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.submitted_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -1008,7 +1043,10 @@ fn struct_auth_method_info_js_to_rs(obj: JsValue) -> Result<libparsec::AuthMetho
                         libparsec::AccountAuthMethodID::from_hex(s.as_str())
                             .map_err(|e| e.to_string())
                     };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let created_on = {
@@ -1019,7 +1057,8 @@ fn struct_auth_method_info_js_to_rs(obj: JsValue) -> Result<libparsec::AuthMetho
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -1063,6 +1102,7 @@ fn struct_auth_method_info_rs_to_js(rs_obj: libparsec::AuthMethodInfo) -> Result
             |x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.auth_method_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1074,14 +1114,20 @@ fn struct_auth_method_info_rs_to_js(rs_obj: libparsec::AuthMethodInfo) -> Result
         };
         let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
-    let js_created_by_ip = JsValue::from_str(rs_obj.created_by_ip.as_ref());
+    let js_created_by_ip = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.created_by_ip.as_ref())
+    };
     Reflect::set(&js_obj, &"createdByIp".into(), &js_created_by_ip)?;
-    let js_created_by_user_agent = JsValue::from_str(rs_obj.created_by_user_agent.as_ref());
+    let js_created_by_user_agent = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.created_by_user_agent.as_ref())
+    };
     Reflect::set(
         &js_obj,
         &"createdByUserAgent".into(),
@@ -1106,7 +1152,10 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let created_on = {
@@ -1117,7 +1166,8 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -1129,7 +1179,8 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -1144,7 +1195,10 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let organization_id = {
@@ -1158,7 +1212,10 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let user_id = {
@@ -1172,7 +1229,10 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let device_id = {
@@ -1186,7 +1246,10 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                 let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                     libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let human_handle = {
@@ -1204,7 +1267,10 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let totp_opaque_key_id = {
@@ -1224,7 +1290,10 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
                                 libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?,
             )
         }
@@ -1261,6 +1330,7 @@ fn struct_available_device_rs_to_js(
         };
         match custom_to_rs_string(rs_obj.key_file_path) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1272,7 +1342,7 @@ fn struct_available_device_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -1283,7 +1353,7 @@ fn struct_available_device_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.protected_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -1294,6 +1364,7 @@ fn struct_available_device_rs_to_js(
         };
         match custom_to_rs_string(rs_obj.server_addr) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1306,6 +1377,7 @@ fn struct_available_device_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1316,6 +1388,7 @@ fn struct_available_device_rs_to_js(
             |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1331,6 +1404,7 @@ fn struct_available_device_rs_to_js(
                 |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -1359,7 +1433,10 @@ fn struct_available_pending_async_enrollment_js_to_rs(
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let submitted_on = {
@@ -1370,7 +1447,8 @@ fn struct_available_pending_async_enrollment_js_to_rs(
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -1385,7 +1463,10 @@ fn struct_available_pending_async_enrollment_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let enrollment_id = {
@@ -1399,7 +1480,10 @@ fn struct_available_pending_async_enrollment_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
                     libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let requested_device_label = {
@@ -1413,7 +1497,10 @@ fn struct_available_pending_async_enrollment_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let requested_human_handle = {
@@ -1448,6 +1535,7 @@ fn struct_available_pending_async_enrollment_rs_to_js(
         };
         match custom_to_rs_string(rs_obj.file_path) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1459,7 +1547,7 @@ fn struct_available_pending_async_enrollment_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.submitted_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -1471,6 +1559,7 @@ fn struct_available_pending_async_enrollment_rs_to_js(
             };
         match custom_to_rs_string(rs_obj.addr) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1481,6 +1570,7 @@ fn struct_available_pending_async_enrollment_rs_to_js(
             |x: libparsec::AsyncEnrollmentID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.enrollment_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1519,7 +1609,10 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let data_base_dir = {
@@ -1532,7 +1625,10 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let mountpoint_mount_strategy = {
@@ -1601,6 +1697,7 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
         };
         match custom_to_rs_string(rs_obj.config_dir) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1614,6 +1711,7 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
         };
         match custom_to_rs_string(rs_obj.data_base_dir) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1636,7 +1734,11 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
     let js_with_monitors = rs_obj.with_monitors.into();
     Reflect::set(&js_obj, &"withMonitors".into(), &js_with_monitors)?;
     let js_prevent_sync_pattern = match rs_obj.prevent_sync_pattern {
-        Some(val) => JsValue::from_str(val.as_ref()),
+        Some(val) =>
+        {
+            #[allow(clippy::useless_asref)]
+            JsValue::from_str(val.as_ref())
+        }
         None => JsValue::NULL,
     };
     Reflect::set(
@@ -1667,7 +1769,10 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::ParsecOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let organization_id = {
@@ -1681,7 +1786,10 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let device_id = {
@@ -1695,7 +1803,10 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                 let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                     libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let user_id = {
@@ -1709,7 +1820,10 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let device_label = {
@@ -1723,7 +1837,10 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let human_handle = {
@@ -1791,6 +1908,7 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
             };
         match custom_to_rs_string(rs_obj.organization_addr) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1803,6 +1921,7 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
             |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1813,6 +1932,7 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1862,7 +1982,10 @@ fn struct_crypt_pad_config_js_to_rs(obj: JsValue) -> Result<libparsec::CryptPadC
 #[allow(dead_code)]
 fn struct_crypt_pad_config_rs_to_js(rs_obj: libparsec::CryptPadConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_server_url = JsValue::from_str(rs_obj.server_url.as_ref());
+    let js_server_url = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.server_url.as_ref())
+    };
     Reflect::set(&js_obj, &"serverUrl".into(), &js_server_url)?;
     Ok(js_obj)
 }
@@ -1883,7 +2006,10 @@ fn struct_device_access_strategy_js_to_rs(
             .and_then(|x| {
                 let custom_from_rs_string =
                     |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let totp_protection = {
@@ -1905,7 +2031,10 @@ fn struct_device_access_strategy_js_to_rs(
                                     libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
                                         .map_err(|e| e.to_string())
                                 };
-                            custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            custom_from_rs_string(x).map_err(|e| {
+                                #[allow(clippy::useless_asref)]
+                                TypeError::new(e.as_ref())
+                            })
                         })?
                 },
                 {
@@ -1947,6 +2076,7 @@ fn struct_device_access_strategy_rs_to_js(
         };
         match custom_to_rs_string(rs_obj.key_file) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -1962,6 +2092,7 @@ fn struct_device_access_strategy_rs_to_js(
                     |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(x1) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -1996,8 +2127,7 @@ fn struct_device_claim_finalize_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::DeviceClaimFinalizeInfo { handle })
@@ -2029,8 +2159,7 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let greeter_user_id = {
@@ -2044,7 +2173,10 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let greeter_human_handle = {
@@ -2062,7 +2194,10 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let greeter_sas_choices = {
@@ -2082,7 +2217,10 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?;
                 converted.push(x_converted);
             }
@@ -2110,6 +2248,7 @@ fn struct_device_claim_in_progress1_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -2156,8 +2295,7 @@ fn struct_device_claim_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let claimer_sas = {
@@ -2171,7 +2309,10 @@ fn struct_device_claim_in_progress2_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     Ok(libparsec::DeviceClaimInProgress2Info {
@@ -2208,8 +2349,7 @@ fn struct_device_claim_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::DeviceClaimInProgress3Info { handle })
@@ -2241,8 +2381,7 @@ fn struct_device_greet_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let greeter_sas = {
@@ -2256,7 +2395,10 @@ fn struct_device_greet_in_progress1_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     Ok(libparsec::DeviceGreetInProgress1Info {
@@ -2293,8 +2435,7 @@ fn struct_device_greet_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let claimer_sas = {
@@ -2308,7 +2449,10 @@ fn struct_device_greet_in_progress2_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let claimer_sas_choices = {
@@ -2328,7 +2472,10 @@ fn struct_device_greet_in_progress2_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?;
                 converted.push(x_converted);
             }
@@ -2384,8 +2531,7 @@ fn struct_device_greet_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::DeviceGreetInProgress3Info { handle })
@@ -2417,8 +2563,7 @@ fn struct_device_greet_in_progress4_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let requested_device_label = {
@@ -2432,7 +2577,10 @@ fn struct_device_greet_in_progress4_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     Ok(libparsec::DeviceGreetInProgress4Info {
@@ -2473,8 +2621,7 @@ fn struct_device_greet_initial_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::DeviceGreetInitialInfo { handle })
@@ -2505,7 +2652,10 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
                 let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                     libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let purpose = {
@@ -2530,7 +2680,10 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let created_on = {
@@ -2541,7 +2694,8 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -2560,7 +2714,10 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?,
             )
         }
@@ -2582,6 +2739,7 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
             |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -2597,7 +2755,7 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
         };
         let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -2608,6 +2766,7 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
                 |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -2643,7 +2802,10 @@ fn struct_device_save_strategy_js_to_rs(
                                     libparsec::TOTPOpaqueKeyID::from_hex(s.as_str())
                                         .map_err(|e| e.to_string())
                                 };
-                            custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            custom_from_rs_string(x).map_err(|e| {
+                                #[allow(clippy::useless_asref)]
+                                TypeError::new(e.as_ref())
+                            })
                         })?
                 },
                 {
@@ -2686,6 +2848,7 @@ fn struct_device_save_strategy_rs_to_js(
                     |x: libparsec::TOTPOpaqueKeyID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(x1) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -2719,7 +2882,10 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
                 let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                     libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let created = {
@@ -2730,7 +2896,8 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -2742,7 +2909,8 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -2756,8 +2924,7 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let is_placeholder = {
@@ -2779,6 +2946,7 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
         {
             let v = u64::try_from(js_val)
                 .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -2801,6 +2969,7 @@ fn struct_file_stat_rs_to_js(rs_obj: libparsec::FileStat) -> Result<JsValue, JsV
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -2812,7 +2981,7 @@ fn struct_file_stat_rs_to_js(rs_obj: libparsec::FileStat) -> Result<JsValue, JsV
         };
         let v = match custom_to_rs_f64(rs_obj.created) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -2823,7 +2992,7 @@ fn struct_file_stat_rs_to_js(rs_obj: libparsec::FileStat) -> Result<JsValue, JsV
         };
         let v = match custom_to_rs_f64(rs_obj.updated) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -2854,7 +3023,10 @@ fn struct_human_handle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, 
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let label = {
@@ -2885,6 +3057,7 @@ fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValu
             };
             match custom_to_rs_string(custom_getter(&rs_obj)) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -2898,7 +3071,10 @@ fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValu
             }
             a(obj)
         };
-        JsValue::from_str(custom_getter(&rs_obj).as_ref())
+        {
+            #[allow(clippy::useless_asref)]
+            JsValue::from_str(custom_getter(&rs_obj).as_ref())
+        }
     };
     Reflect::set(&js_obj, &"label".into(), &js_label)?;
     Ok(js_obj)
@@ -2924,7 +3100,10 @@ fn struct_new_invitation_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             },
             {
@@ -2938,7 +3117,10 @@ fn struct_new_invitation_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             libparsec::Url::parse(&s).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             },
         )
@@ -2954,7 +3136,10 @@ fn struct_new_invitation_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
                     libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let email_sent_status = {
@@ -2991,6 +3176,7 @@ fn struct_new_invitation_info_rs_to_js(
                 };
             match custom_to_rs_string(x1) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -3001,6 +3187,7 @@ fn struct_new_invitation_info_rs_to_js(
                 |addr: libparsec::Url| -> Result<String, &'static str> { Ok(addr.to_string()) };
             match custom_to_rs_string(x2) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -3014,6 +3201,7 @@ fn struct_new_invitation_info_rs_to_js(
             |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.token) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -3075,11 +3263,17 @@ fn struct_open_bao_config_js_to_rs(obj: JsValue) -> Result<libparsec::OpenBaoCon
 #[allow(dead_code)]
 fn struct_open_bao_config_rs_to_js(rs_obj: libparsec::OpenBaoConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_server_url = JsValue::from_str(rs_obj.server_url.as_ref());
+    let js_server_url = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.server_url.as_ref())
+    };
     Reflect::set(&js_obj, &"serverUrl".into(), &js_server_url)?;
     let js_secret = variant_open_bao_secret_config_rs_to_js(rs_obj.secret)?;
     Reflect::set(&js_obj, &"secret".into(), &js_secret)?;
-    let js_transit_mount_path = JsValue::from_str(rs_obj.transit_mount_path.as_ref());
+    let js_transit_mount_path = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.transit_mount_path.as_ref())
+    };
     Reflect::set(&js_obj, &"transitMountPath".into(), &js_transit_mount_path)?;
     let js_auths = {
         // Array::new_with_length allocates with `undefined` value, that's why we `set` value
@@ -3167,6 +3361,7 @@ fn struct_organization_info_js_to_rs(obj: JsValue) -> Result<libparsec::Organiza
         {
             let v = u64::try_from(js_val)
                 .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -3175,6 +3370,7 @@ fn struct_organization_info_js_to_rs(obj: JsValue) -> Result<libparsec::Organiza
         {
             let v = u64::try_from(js_val)
                 .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -3316,6 +3512,7 @@ fn struct_server_organization_config_js_to_rs(
         {
             let v = u64::try_from(js_val)
                 .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -3365,8 +3562,7 @@ fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let greeter_user_id = {
@@ -3380,7 +3576,10 @@ fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let greeter_human_handle = {
@@ -3398,7 +3597,10 @@ fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let greeter_sas_choices = {
@@ -3418,7 +3620,10 @@ fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?;
                 converted.push(x_converted);
             }
@@ -3446,6 +3651,7 @@ fn struct_shamir_recovery_claim_in_progress1_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -3492,8 +3698,7 @@ fn struct_shamir_recovery_claim_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let claimer_sas = {
@@ -3507,7 +3712,10 @@ fn struct_shamir_recovery_claim_in_progress2_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     Ok(libparsec::ShamirRecoveryClaimInProgress2Info {
@@ -3544,8 +3752,7 @@ fn struct_shamir_recovery_claim_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::ShamirRecoveryClaimInProgress3Info { handle })
@@ -3577,8 +3784,7 @@ fn struct_shamir_recovery_claim_initial_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let greeter_user_id = {
@@ -3592,7 +3798,10 @@ fn struct_shamir_recovery_claim_initial_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let greeter_human_handle = {
@@ -3618,6 +3827,7 @@ fn struct_shamir_recovery_claim_initial_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -3648,8 +3858,7 @@ fn struct_shamir_recovery_claim_share_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::ShamirRecoveryClaimShareInfo { handle })
@@ -3681,8 +3890,7 @@ fn struct_shamir_recovery_greet_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let greeter_sas = {
@@ -3696,7 +3904,10 @@ fn struct_shamir_recovery_greet_in_progress1_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     Ok(libparsec::ShamirRecoveryGreetInProgress1Info {
@@ -3733,8 +3944,7 @@ fn struct_shamir_recovery_greet_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let claimer_sas = {
@@ -3748,7 +3958,10 @@ fn struct_shamir_recovery_greet_in_progress2_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let claimer_sas_choices = {
@@ -3768,7 +3981,10 @@ fn struct_shamir_recovery_greet_in_progress2_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?;
                 converted.push(x_converted);
             }
@@ -3824,8 +4040,7 @@ fn struct_shamir_recovery_greet_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::ShamirRecoveryGreetInProgress3Info { handle })
@@ -3857,8 +4072,7 @@ fn struct_shamir_recovery_greet_initial_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::ShamirRecoveryGreetInitialInfo { handle })
@@ -3891,7 +4105,10 @@ fn struct_shamir_recovery_recipient_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let human_handle = {
@@ -3909,7 +4126,8 @@ fn struct_shamir_recovery_recipient_js_to_rs(
                     libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                         .map_err(|_| "Out-of-bound datetime")
                 };
-                let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                #[allow(clippy::let_and_return)]
                 v
             })
         }
@@ -3964,6 +4182,7 @@ fn struct_shamir_recovery_recipient_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -3978,7 +4197,7 @@ fn struct_shamir_recovery_recipient_rs_to_js(
             };
             let v = match custom_to_rs_f64(val) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(err))),
             };
             JsValue::from(v)
         }
@@ -3989,7 +4208,7 @@ fn struct_shamir_recovery_recipient_rs_to_js(
         let custom_to_rs_u8 = |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
         let v = match custom_to_rs_u8(rs_obj.shares) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -4016,8 +4235,7 @@ fn struct_started_workspace_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let id = {
@@ -4031,7 +4249,10 @@ fn struct_started_workspace_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                     libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let name = {
@@ -4045,7 +4266,10 @@ fn struct_started_workspace_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, _> {
                     s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let name_origin = {
@@ -4094,8 +4318,7 @@ fn struct_started_workspace_info_js_to_rs(
                             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
                             }
-                            let v = v as u32;
-                            v
+                            v as u32
                         }
                     },
                     {
@@ -4109,7 +4332,10 @@ fn struct_started_workspace_info_js_to_rs(
                                 let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
                                     Ok(std::path::PathBuf::from(s))
                                 };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?
                     },
                 );
@@ -4143,6 +4369,7 @@ fn struct_started_workspace_info_rs_to_js(
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -4189,6 +4416,7 @@ fn struct_started_workspace_info_rs_to_js(
                     };
                     match custom_to_rs_string(x2) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -4252,7 +4480,8 @@ fn struct_tos_js_to_rs(obj: JsValue) -> Result<libparsec::Tos, JsValue> {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -4268,8 +4497,14 @@ fn struct_tos_rs_to_js(rs_obj: libparsec::Tos) -> Result<JsValue, JsValue> {
     let js_per_locale_urls = {
         let js_map = Map::new();
         for (key, value) in rs_obj.per_locale_urls.into_iter() {
-            let js_key = JsValue::from_str(key.as_ref());
-            let js_value = JsValue::from_str(value.as_ref());
+            let js_key = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(key.as_ref())
+            };
+            let js_value = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(value.as_ref())
+            };
             js_map.set(&js_key, &js_value);
         }
         js_map.into()
@@ -4281,7 +4516,7 @@ fn struct_tos_rs_to_js(rs_obj: libparsec::Tos) -> Result<JsValue, JsValue> {
         };
         let v = match custom_to_rs_f64(rs_obj.updated_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -4305,8 +4540,7 @@ fn struct_user_claim_finalize_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::UserClaimFinalizeInfo { handle })
@@ -4338,8 +4572,7 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let greeter_user_id = {
@@ -4353,7 +4586,10 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let greeter_human_handle = {
@@ -4371,7 +4607,10 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let greeter_sas_choices = {
@@ -4391,7 +4630,10 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?;
                 converted.push(x_converted);
             }
@@ -4419,6 +4661,7 @@ fn struct_user_claim_in_progress1_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -4465,8 +4708,7 @@ fn struct_user_claim_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let claimer_sas = {
@@ -4480,7 +4722,10 @@ fn struct_user_claim_in_progress2_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     Ok(libparsec::UserClaimInProgress2Info {
@@ -4517,8 +4762,7 @@ fn struct_user_claim_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::UserClaimInProgress3Info { handle })
@@ -4550,8 +4794,7 @@ fn struct_user_claim_initial_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let greeter_user_id = {
@@ -4565,7 +4808,10 @@ fn struct_user_claim_initial_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let greeter_human_handle = {
@@ -4594,7 +4840,8 @@ fn struct_user_claim_initial_info_js_to_rs(
                     libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                         .map_err(|_| "Out-of-bound datetime")
                 };
-                let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                #[allow(clippy::let_and_return)]
                 v
             })
         }
@@ -4620,6 +4867,7 @@ fn struct_user_claim_initial_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.greeter_user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -4641,7 +4889,7 @@ fn struct_user_claim_initial_info_rs_to_js(
             };
             let v = match custom_to_rs_f64(val) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(err))),
             };
             JsValue::from(v)
         }
@@ -4671,8 +4919,7 @@ fn struct_user_greet_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let greeter_sas = {
@@ -4686,7 +4933,10 @@ fn struct_user_greet_in_progress1_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     Ok(libparsec::UserGreetInProgress1Info {
@@ -4723,8 +4973,7 @@ fn struct_user_greet_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let claimer_sas = {
@@ -4738,7 +4987,10 @@ fn struct_user_greet_in_progress2_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let claimer_sas_choices = {
@@ -4758,7 +5010,10 @@ fn struct_user_greet_in_progress2_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?;
                 converted.push(x_converted);
             }
@@ -4814,8 +5069,7 @@ fn struct_user_greet_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::UserGreetInProgress3Info { handle })
@@ -4847,8 +5101,7 @@ fn struct_user_greet_in_progress4_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let requested_human_handle = {
@@ -4866,7 +5119,10 @@ fn struct_user_greet_in_progress4_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                     libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     Ok(libparsec::UserGreetInProgress4Info {
@@ -4914,8 +5170,7 @@ fn struct_user_greet_initial_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     Ok(libparsec::UserGreetInitialInfo { handle })
@@ -4948,7 +5203,10 @@ fn struct_user_greeting_administrator_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let human_handle = {
@@ -4977,7 +5235,8 @@ fn struct_user_greeting_administrator_js_to_rs(
                     libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                         .map_err(|_| "Out-of-bound datetime")
                 };
-                let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                #[allow(clippy::let_and_return)]
                 v
             })
         }
@@ -5000,6 +5259,7 @@ fn struct_user_greeting_administrator_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -5017,7 +5277,7 @@ fn struct_user_greeting_administrator_rs_to_js(
             };
             let v = match custom_to_rs_f64(val) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(err))),
             };
             JsValue::from(v)
         }
@@ -5046,7 +5306,10 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let human_handle = {
@@ -5072,7 +5335,8 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -5091,7 +5355,10 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?,
             )
         }
@@ -5107,7 +5374,8 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                     libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                         .map_err(|_| "Out-of-bound datetime")
                 };
-                let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                #[allow(clippy::let_and_return)]
                 v
             })
         }
@@ -5127,7 +5395,10 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?,
             )
         }
@@ -5151,6 +5422,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -5166,7 +5438,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
         };
         let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -5177,6 +5449,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
                 |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -5191,7 +5464,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
             };
             let v = match custom_to_rs_f64(val) {
                 Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                Err(err) => return Err(JsValue::from(TypeError::new(err))),
             };
             JsValue::from(v)
         }
@@ -5204,6 +5477,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
                 |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -5264,7 +5538,8 @@ fn struct_user_x509_certificate_details_js_to_rs(
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -5276,7 +5551,8 @@ fn struct_user_x509_certificate_details_js_to_rs(
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -5304,7 +5580,10 @@ fn struct_user_x509_certificate_details_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?;
                 converted.push(x_converted);
             }
@@ -5343,7 +5622,10 @@ fn struct_user_x509_certificate_details_rs_to_js(
     rs_obj: libparsec::UserX509CertificateDetails,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_common_name = JsValue::from_str(rs_obj.common_name.as_ref());
+    let js_common_name = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.common_name.as_ref())
+    };
     Reflect::set(&js_obj, &"commonName".into(), &js_common_name)?;
     let js_subject = {
         // Array::new_with_length allocates with `undefined` value, that's why we `set` value
@@ -5371,7 +5653,7 @@ fn struct_user_x509_certificate_details_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.not_before) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -5382,7 +5664,7 @@ fn struct_user_x509_certificate_details_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.not_after) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -5399,6 +5681,7 @@ fn struct_user_x509_certificate_details_rs_to_js(
                 };
                 match custom_to_rs_string(elem) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -5432,7 +5715,10 @@ fn struct_workspace_history_file_stat_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                     libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let created = {
@@ -5443,7 +5729,8 @@ fn struct_workspace_history_file_stat_js_to_rs(
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -5455,7 +5742,8 @@ fn struct_workspace_history_file_stat_js_to_rs(
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -5469,8 +5757,7 @@ fn struct_workspace_history_file_stat_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            let v = v as u32;
-            v
+            v as u32
         }
     };
     let size = {
@@ -5478,6 +5765,7 @@ fn struct_workspace_history_file_stat_js_to_rs(
         {
             let v = u64::try_from(js_val)
                 .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
             v
         }
     };
@@ -5500,6 +5788,7 @@ fn struct_workspace_history_file_stat_rs_to_js(
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -5511,7 +5800,7 @@ fn struct_workspace_history_file_stat_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.created) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -5522,7 +5811,7 @@ fn struct_workspace_history_file_stat_rs_to_js(
         };
         let v = match custom_to_rs_f64(rs_obj.updated) {
             Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            Err(err) => return Err(JsValue::from(TypeError::new(err))),
         };
         JsValue::from(v)
     };
@@ -5549,7 +5838,10 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
                 let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                     libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let is_started = {
@@ -5577,7 +5869,10 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
                 let custom_from_rs_string = |s: String| -> Result<_, _> {
                     s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let name_origin = {
@@ -5628,6 +5923,7 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -5680,7 +5976,10 @@ fn struct_workspace_user_access_info_js_to_rs(
                 let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                     libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     let human_handle = {
@@ -5727,6 +6026,7 @@ fn struct_workspace_user_access_info_rs_to_js(
             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.user_id) {
             Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
             Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
         }
         .as_ref()
@@ -5773,7 +6073,10 @@ fn struct_x509_certificate_reference_js_to_rs(
                     <libparsec::X509CertificateHash as std::str::FromStr>::from_str(s.as_str())
                         .map_err(|e| e.to_string())
                 };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
             })?
     };
     {
@@ -5822,6 +6125,7 @@ fn struct_x509_certificate_reference_rs_to_js(
             };
             match custom_to_rs_string(custom_getter(&rs_obj)) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -5950,8 +6254,7 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             Ok(
@@ -5972,6 +6275,7 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::OpenBao {
             openbao_server_url,
             openbao_transit_mount_path,
@@ -5985,27 +6289,41 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao".into(),
             )?;
-            let js_openbao_server_url = JsValue::from_str(openbao_server_url.as_ref());
+            let js_openbao_server_url = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_server_url.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
-            let js_openbao_transit_mount_path =
-                JsValue::from_str(openbao_transit_mount_path.as_ref());
+            let js_openbao_transit_mount_path = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_transit_mount_path.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoTransitMountPath".into(),
                 &js_openbao_transit_mount_path,
             )?;
-            let js_openbao_secret_mount_path =
-                JsValue::from_str(openbao_secret_mount_path.as_ref());
+            let js_openbao_secret_mount_path = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_secret_mount_path.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoSecretMountPath".into(),
                 &js_openbao_secret_mount_path,
             )?;
-            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
+            let js_openbao_entity_id = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_entity_id.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
-            let js_openbao_auth_token = JsValue::from_str(openbao_auth_token.as_ref());
+            let js_openbao_auth_token = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_auth_token.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
             pki_private_key_handle,
             ..
@@ -6063,7 +6381,10 @@ fn variant_account_auth_method_strategy_js_to_rs(
                     .and_then(|x| {
                         let custom_from_rs_string =
                             |s: String| -> Result<_, String> { Ok(s.into()) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::AccountAuthMethodStrategy::Password { password })
@@ -6080,6 +6401,7 @@ fn variant_account_auth_method_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountAuthMethodStrategy::MasterSecret { master_secret, .. } => {
             Reflect::set(
                 &js_obj,
@@ -6089,6 +6411,7 @@ fn variant_account_auth_method_strategy_rs_to_js(
             let js_master_secret = JsValue::from(Uint8Array::from(master_secret.as_ref()));
             Reflect::set(&js_obj, &"masterSecret".into(), &js_master_secret)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountAuthMethodStrategy::Password { password, .. } => {
             Reflect::set(
                 &js_obj,
@@ -6155,6 +6478,7 @@ fn variant_account_create_auth_method_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateAuthMethodError::BadVaultKeyAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6162,6 +6486,7 @@ fn variant_account_create_auth_method_error_rs_to_js(
                 &"AccountCreateAuthMethodErrorBadVaultKeyAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateAuthMethodError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6169,6 +6494,7 @@ fn variant_account_create_auth_method_error_rs_to_js(
                 &"AccountCreateAuthMethodErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateAuthMethodError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6190,9 +6516,11 @@ fn variant_account_create_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountCreateErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateError::InvalidValidationCode { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6200,9 +6528,11 @@ fn variant_account_create_error_rs_to_js(
                 &"AccountCreateErrorInvalidValidationCode".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateError::Offline { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountCreateErrorOffline".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateError::SendValidationEmailRequired { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6224,6 +6554,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6231,6 +6562,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorBadVaultKeyAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6238,6 +6570,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6245,6 +6578,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6252,6 +6586,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6259,6 +6594,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::LoadDeviceTOTPDecryptionFailed {
             ..
         } => {
@@ -6268,6 +6604,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6275,6 +6612,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6282,6 +6620,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchOffline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6289,6 +6628,7 @@ fn variant_account_create_registration_device_error_rs_to_js(
                 &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6310,6 +6650,7 @@ fn variant_account_create_send_validation_email_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateSendValidationEmailError::EmailRecipientRefused { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6317,6 +6658,7 @@ fn variant_account_create_send_validation_email_error_rs_to_js(
                 &"AccountCreateSendValidationEmailErrorEmailRecipientRefused".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateSendValidationEmailError::EmailSendingRateLimited {
             wait_until,
             ..
@@ -6332,12 +6674,13 @@ fn variant_account_create_send_validation_email_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(wait_until) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"waitUntil".into(), &js_wait_until)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateSendValidationEmailError::EmailServerUnavailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6345,6 +6688,7 @@ fn variant_account_create_send_validation_email_error_rs_to_js(
                 &"AccountCreateSendValidationEmailErrorEmailServerUnavailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateSendValidationEmailError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6352,6 +6696,7 @@ fn variant_account_create_send_validation_email_error_rs_to_js(
                 &"AccountCreateSendValidationEmailErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateSendValidationEmailError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6373,6 +6718,7 @@ fn variant_account_delete_proceed_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDeleteProceedError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6380,6 +6726,7 @@ fn variant_account_delete_proceed_error_rs_to_js(
                 &"AccountDeleteProceedErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDeleteProceedError::InvalidValidationCode { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6387,6 +6734,7 @@ fn variant_account_delete_proceed_error_rs_to_js(
                 &"AccountDeleteProceedErrorInvalidValidationCode".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDeleteProceedError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6394,6 +6742,7 @@ fn variant_account_delete_proceed_error_rs_to_js(
                 &"AccountDeleteProceedErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDeleteProceedError::SendValidationEmailRequired { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6415,6 +6764,7 @@ fn variant_account_delete_send_validation_email_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDeleteSendValidationEmailError::EmailRecipientRefused { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6422,6 +6772,7 @@ fn variant_account_delete_send_validation_email_error_rs_to_js(
                 &"AccountDeleteSendValidationEmailErrorEmailRecipientRefused".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDeleteSendValidationEmailError::EmailSendingRateLimited {
             wait_until,
             ..
@@ -6437,12 +6788,13 @@ fn variant_account_delete_send_validation_email_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(wait_until) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"waitUntil".into(), &js_wait_until)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDeleteSendValidationEmailError::EmailServerUnavailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6450,6 +6802,7 @@ fn variant_account_delete_send_validation_email_error_rs_to_js(
                 &"AccountDeleteSendValidationEmailErrorEmailServerUnavailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDeleteSendValidationEmailError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6457,6 +6810,7 @@ fn variant_account_delete_send_validation_email_error_rs_to_js(
                 &"AccountDeleteSendValidationEmailErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDeleteSendValidationEmailError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6478,6 +6832,7 @@ fn variant_account_disable_auth_method_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDisableAuthMethodError::AuthMethodAlreadyDisabled { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6485,6 +6840,7 @@ fn variant_account_disable_auth_method_error_rs_to_js(
                 &"AccountDisableAuthMethodErrorAuthMethodAlreadyDisabled".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDisableAuthMethodError::AuthMethodNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6492,6 +6848,7 @@ fn variant_account_disable_auth_method_error_rs_to_js(
                 &"AccountDisableAuthMethodErrorAuthMethodNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDisableAuthMethodError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6499,6 +6856,7 @@ fn variant_account_disable_auth_method_error_rs_to_js(
                 &"AccountDisableAuthMethodErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDisableAuthMethodError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6506,6 +6864,7 @@ fn variant_account_disable_auth_method_error_rs_to_js(
                 &"AccountDisableAuthMethodErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountDisableAuthMethodError::SelfDisableNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6527,6 +6886,7 @@ fn variant_account_info_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountInfoError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountInfoErrorInternal".into())?;
         }
@@ -6544,6 +6904,7 @@ fn variant_account_list_auth_methods_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountListAuthMethodsError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6551,6 +6912,7 @@ fn variant_account_list_auth_methods_error_rs_to_js(
                 &"AccountListAuthMethodsErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountListAuthMethodsError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6572,6 +6934,7 @@ fn variant_account_list_invitations_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountListInvitationsError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6579,6 +6942,7 @@ fn variant_account_list_invitations_error_rs_to_js(
                 &"AccountListInvitationsErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountListInvitationsError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6600,6 +6964,7 @@ fn variant_account_list_organizations_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountListOrganizationsError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6607,6 +6972,7 @@ fn variant_account_list_organizations_error_rs_to_js(
                 &"AccountListOrganizationsErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountListOrganizationsError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6628,6 +6994,7 @@ fn variant_account_list_registration_devices_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountListRegistrationDevicesError::BadVaultKeyAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6635,6 +7002,7 @@ fn variant_account_list_registration_devices_error_rs_to_js(
                 &"AccountListRegistrationDevicesErrorBadVaultKeyAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountListRegistrationDevicesError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6642,6 +7010,7 @@ fn variant_account_list_registration_devices_error_rs_to_js(
                 &"AccountListRegistrationDevicesErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountListRegistrationDevicesError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6663,6 +7032,7 @@ fn variant_account_login_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountLoginError::BadPasswordAlgorithm { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6670,9 +7040,11 @@ fn variant_account_login_error_rs_to_js(
                 &"AccountLoginErrorBadPasswordAlgorithm".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountLoginError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountLoginErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountLoginError::Offline { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountLoginErrorOffline".into())?;
         }
@@ -6718,7 +7090,10 @@ fn variant_account_login_strategy_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let password = {
@@ -6731,7 +7106,10 @@ fn variant_account_login_strategy_js_to_rs(
                     .and_then(|x| {
                         let custom_from_rs_string =
                             |s: String| -> Result<_, String> { Ok(s.into()) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::AccountLoginStrategy::Password { email, password })
@@ -6748,6 +7126,7 @@ fn variant_account_login_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountLoginStrategy::MasterSecret { master_secret, .. } => {
             Reflect::set(
                 &js_obj,
@@ -6757,6 +7136,7 @@ fn variant_account_login_strategy_rs_to_js(
             let js_master_secret = JsValue::from(Uint8Array::from(master_secret.as_ref()));
             Reflect::set(&js_obj, &"masterSecret".into(), &js_master_secret)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountLoginStrategy::Password {
             email, password, ..
         } => {
@@ -6771,6 +7151,7 @@ fn variant_account_login_strategy_rs_to_js(
                 };
                 match custom_to_rs_string(email) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -6793,6 +7174,7 @@ fn variant_account_logout_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountLogoutError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountLogoutErrorInternal".into())?;
         }
@@ -6810,6 +7192,7 @@ fn variant_account_recover_proceed_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRecoverProceedError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6817,6 +7200,7 @@ fn variant_account_recover_proceed_error_rs_to_js(
                 &"AccountRecoverProceedErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRecoverProceedError::InvalidValidationCode { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6824,6 +7208,7 @@ fn variant_account_recover_proceed_error_rs_to_js(
                 &"AccountRecoverProceedErrorInvalidValidationCode".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRecoverProceedError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6831,6 +7216,7 @@ fn variant_account_recover_proceed_error_rs_to_js(
                 &"AccountRecoverProceedErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRecoverProceedError::SendValidationEmailRequired { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6852,6 +7238,7 @@ fn variant_account_recover_send_validation_email_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRecoverSendValidationEmailError::EmailRecipientRefused { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6859,6 +7246,7 @@ fn variant_account_recover_send_validation_email_error_rs_to_js(
                 &"AccountRecoverSendValidationEmailErrorEmailRecipientRefused".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRecoverSendValidationEmailError::EmailSendingRateLimited {
             wait_until,
             ..
@@ -6874,12 +7262,13 @@ fn variant_account_recover_send_validation_email_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(wait_until) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"waitUntil".into(), &js_wait_until)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRecoverSendValidationEmailError::EmailServerUnavailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6887,6 +7276,7 @@ fn variant_account_recover_send_validation_email_error_rs_to_js(
                 &"AccountRecoverSendValidationEmailErrorEmailServerUnavailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRecoverSendValidationEmailError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6894,6 +7284,7 @@ fn variant_account_recover_send_validation_email_error_rs_to_js(
                 &"AccountRecoverSendValidationEmailErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRecoverSendValidationEmailError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6915,6 +7306,7 @@ fn variant_account_register_new_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::BadVaultKeyAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6922,6 +7314,7 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorBadVaultKeyAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::CorruptedRegistrationDevice { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6929,6 +7322,7 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorCorruptedRegistrationDevice".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6936,6 +7330,7 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::InvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6943,6 +7338,7 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorInvalidPath".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::NoSpaceAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6950,6 +7346,7 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorNoSpaceAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6957,6 +7354,7 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6964,6 +7362,7 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::RemoteOpaqueKeyUploadOffline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6971,6 +7370,7 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorRemoteOpaqueKeyUploadOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::TimestampOutOfBallpark { .. } => {
             Reflect::set(
                 &js_obj,
@@ -6978,6 +7378,7 @@ fn variant_account_register_new_device_error_rs_to_js(
                 &"AccountRegisterNewDeviceErrorTimestampOutOfBallpark".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountRegisterNewDeviceError::UnknownRegistrationDevice { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7006,6 +7407,7 @@ fn variant_active_users_limit_js_to_rs(
                 {
                     let v = u64::try_from(js_val)
                         .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -7027,8 +7429,14 @@ fn variant_active_users_limit_rs_to_js(
         libparsec::ActiveUsersLimit::LimitedTo(x1, ..) => {
             Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitLimitedTo".into())?;
             let js_x1 = JsValue::from(x1);
-            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into(),
+            )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ActiveUsersLimit::NoLimit { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitNoLimit".into())?;
         }
@@ -7058,8 +7466,7 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             let greeter_user_id = {
@@ -7073,7 +7480,10 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let greeter_human_handle = {
@@ -7097,8 +7507,7 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             let claimer_user_id = {
@@ -7112,7 +7521,10 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let claimer_human_handle = {
@@ -7131,7 +7543,8 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -7198,8 +7611,7 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             let claimer_email = {
@@ -7213,7 +7625,10 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created_by = {
@@ -7262,6 +7677,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AnyClaimRetrievedInfo::Device {
             handle,
             greeter_user_id,
@@ -7280,6 +7696,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(greeter_user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -7292,6 +7709,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
                 &js_greeter_human_handle,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AnyClaimRetrievedInfo::ShamirRecovery {
             handle,
             claimer_user_id,
@@ -7315,6 +7733,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -7339,7 +7758,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(shamir_recovery_created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -7363,7 +7782,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -7371,6 +7790,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
             let js_is_recoverable = is_recoverable.into();
             Reflect::set(&js_obj, &"isRecoverable".into(), &js_is_recoverable)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AnyClaimRetrievedInfo::User {
             handle,
             claimer_email,
@@ -7388,6 +7808,7 @@ fn variant_any_claim_retrieved_info_rs_to_js(
                 };
                 match custom_to_rs_string(claimer_email) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -7425,9 +7846,11 @@ fn variant_archive_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ArchiveDeviceError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ArchiveDeviceErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ArchiveDeviceError::NoSpaceAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7504,6 +7927,7 @@ fn variant_async_enrollment_identity_system_rs_to_js(
                 &"AsyncEnrollmentIdentitySystemOpenBao".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AsyncEnrollmentIdentitySystem::PKI {
             x509_root_certificate_common_name,
             x509_root_certificate_subject,
@@ -7514,8 +7938,10 @@ fn variant_async_enrollment_identity_system_rs_to_js(
                 &"tag".into(),
                 &"AsyncEnrollmentIdentitySystemPKI".into(),
             )?;
-            let js_x509_root_certificate_common_name =
-                JsValue::from_str(x509_root_certificate_common_name.as_ref());
+            let js_x509_root_certificate_common_name = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(x509_root_certificate_common_name.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"x509RootCertificateCommonName".into(),
@@ -7529,13 +7955,17 @@ fn variant_async_enrollment_identity_system_rs_to_js(
                 &js_x509_root_certificate_subject,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AsyncEnrollmentIdentitySystem::PKICorrupted { reason, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"AsyncEnrollmentIdentitySystemPKICorrupted".into(),
             )?;
-            let js_reason = JsValue::from_str(reason.as_ref());
+            let js_reason = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(reason.as_ref())
+            };
             Reflect::set(&js_obj, &"reason".into(), &js_reason)?;
         }
     }
@@ -7598,6 +8028,7 @@ fn variant_available_device_type_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailableDeviceType::AccountVault { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7605,25 +8036,33 @@ fn variant_available_device_type_rs_to_js(
                 &"AvailableDeviceTypeAccountVault".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailableDeviceType::Keyring { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeKeyring".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailableDeviceType::OpenBao {
             openbao_preferred_auth_id,
             openbao_entity_id,
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"AvailableDeviceTypeOpenBao".into())?;
-            let js_openbao_preferred_auth_id =
-                JsValue::from_str(openbao_preferred_auth_id.as_ref());
+            let js_openbao_preferred_auth_id = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_preferred_auth_id.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoPreferredAuthId".into(),
                 &js_openbao_preferred_auth_id,
             )?;
-            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
+            let js_openbao_entity_id = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_entity_id.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailableDeviceType::PKI {
             certificate_ref, ..
         } => {
@@ -7631,6 +8070,7 @@ fn variant_available_device_type_rs_to_js(
             let js_certificate_ref = struct_x509_certificate_reference_rs_to_js(certificate_ref)?;
             Reflect::set(&js_obj, &"certificateRef".into(), &js_certificate_ref)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailableDeviceType::Password { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7638,6 +8078,7 @@ fn variant_available_device_type_rs_to_js(
                 &"AvailableDeviceTypePassword".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailableDeviceType::Recovery { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7703,6 +8144,7 @@ fn variant_available_pending_async_enrollment_identity_system_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::OpenBao {
             openbao_entity_id,
             openbao_preferred_auth_id,
@@ -7713,16 +8155,22 @@ fn variant_available_pending_async_enrollment_identity_system_rs_to_js(
                 &"tag".into(),
                 &"AvailablePendingAsyncEnrollmentIdentitySystemOpenBao".into(),
             )?;
-            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
+            let js_openbao_entity_id = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_entity_id.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
-            let js_openbao_preferred_auth_id =
-                JsValue::from_str(openbao_preferred_auth_id.as_ref());
+            let js_openbao_preferred_auth_id = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_preferred_auth_id.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoPreferredAuthId".into(),
                 &js_openbao_preferred_auth_id,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailablePendingAsyncEnrollmentIdentitySystem::PKI {
             certificate_ref, ..
         } => {
@@ -7798,6 +8246,7 @@ fn variant_available_pki_certificate_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailablePkiCertificate::Invalid {
             reference,
             invalid_reason,
@@ -7814,6 +8263,7 @@ fn variant_available_pki_certificate_rs_to_js(
                 variant_user_x509_certificate_load_error_rs_to_js(invalid_reason)?;
             Reflect::set(&js_obj, &"invalidReason".into(), &js_invalid_reason)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AvailablePkiCertificate::Valid {
             reference,
             friendly_name,
@@ -7827,7 +8277,10 @@ fn variant_available_pki_certificate_rs_to_js(
             )?;
             let js_reference = struct_x509_certificate_reference_rs_to_js(reference)?;
             Reflect::set(&js_obj, &"reference".into(), &js_reference)?;
-            let js_friendly_name = JsValue::from_str(friendly_name.as_ref());
+            let js_friendly_name = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(friendly_name.as_ref())
+            };
             Reflect::set(&js_obj, &"friendlyName".into(), &js_friendly_name)?;
             let js_details = struct_user_x509_certificate_details_rs_to_js(details)?;
             Reflect::set(&js_obj, &"details".into(), &js_details)?;
@@ -7846,6 +8299,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::AlreadyUsedToken { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7853,6 +8307,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorAlreadyUsedToken".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7860,6 +8315,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::InvalidSequesterAuthorityVerifyKey { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7867,6 +8323,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorInvalidSequesterAuthorityVerifyKey".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7874,6 +8331,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorInvalidToken".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7881,6 +8339,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::OrganizationExpired { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7888,6 +8347,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorOrganizationExpired".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::SaveDeviceInvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7895,6 +8355,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorSaveDeviceInvalidPath".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::SaveDeviceNoSpaceAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7902,6 +8363,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorSaveDeviceNoSpaceAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7909,6 +8371,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::SaveDeviceRemoteOpaqueKeyUploadOffline {
             ..
         } => {
@@ -7918,6 +8381,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorSaveDeviceRemoteOpaqueKeyUploadOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::BootstrapOrganizationError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -7936,7 +8400,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -7947,7 +8411,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -7977,9 +8441,11 @@ fn variant_cancel_error_rs_to_js(rs_obj: libparsec::CancelError) -> Result<JsVal
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::CancelError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"CancelErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::CancelError::NotBound { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"CancelErrorNotBound".into())?;
         }
@@ -8007,7 +8473,8 @@ fn variant_certificate_based_info_origin_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -8028,6 +8495,7 @@ fn variant_certificate_based_info_origin_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::CertificateBasedInfoOrigin::Certificate { timestamp, .. } => {
             Reflect::set(
                 &js_obj,
@@ -8040,7 +8508,7 @@ fn variant_certificate_based_info_origin_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -8067,9 +8535,11 @@ fn variant_claim_finalize_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimFinalizeError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClaimFinalizeErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimFinalizeError::InvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8077,6 +8547,7 @@ fn variant_claim_finalize_error_rs_to_js(
                 &"ClaimFinalizeErrorInvalidPath".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimFinalizeError::NoSpaceAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8084,6 +8555,7 @@ fn variant_claim_finalize_error_rs_to_js(
                 &"ClaimFinalizeErrorNoSpaceAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimFinalizeError::RemoteOpaqueKeyUploadFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8091,6 +8563,7 @@ fn variant_claim_finalize_error_rs_to_js(
                 &"ClaimFinalizeErrorRemoteOpaqueKeyUploadFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimFinalizeError::RemoteOpaqueKeyUploadOffline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8112,6 +8585,7 @@ fn variant_claim_in_progress_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::ActiveUsersLimitReached { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8119,6 +8593,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorActiveUsersLimitReached".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::AlreadyUsedOrDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8126,6 +8601,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorAlreadyUsedOrDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::Cancelled { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8133,6 +8609,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorCancelled".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8140,6 +8617,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorCorruptedConfirmation".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::CorruptedSharedSecretKey { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8147,6 +8625,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorCorruptedSharedSecretKey".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::GreeterNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8154,6 +8633,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorGreeterNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::GreetingAttemptCancelled {
             origin,
             reason,
@@ -8176,12 +8656,13 @@ fn variant_claim_in_progress_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8189,6 +8670,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::NotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8196,6 +8678,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8203,6 +8686,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::OrganizationExpired { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8210,6 +8694,7 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorOrganizationExpired".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimInProgressError::PeerReset { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8231,6 +8716,7 @@ fn variant_claimer_greeter_abort_operation_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimerGreeterAbortOperationError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8252,6 +8738,7 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimerRetrieveInfoError::AlreadyUsedOrDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8259,6 +8746,7 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
                 &"ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimerRetrieveInfoError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8266,6 +8754,7 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
                 &"ClaimerRetrieveInfoErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimerRetrieveInfoError::NotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8273,6 +8762,7 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
                 &"ClaimerRetrieveInfoErrorNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimerRetrieveInfoError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8280,6 +8770,7 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
                 &"ClaimerRetrieveInfoErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClaimerRetrieveInfoError::OrganizationExpired { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8301,6 +8792,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::ActiveUsersLimitReached { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8308,6 +8800,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorActiveUsersLimitReached".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::AuthorNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8315,6 +8808,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorAuthorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::BadSubmitPayload { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8322,6 +8816,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorBadSubmitPayload".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::EnrollmentNoLongerAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8329,6 +8824,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorEnrollmentNoLongerAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::EnrollmentNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8336,6 +8832,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorEnrollmentNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::HumanHandleAlreadyTaken { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8343,6 +8840,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorHumanHandleAlreadyTaken".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::IdentityStrategyMismatch { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8350,6 +8848,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorIdentityStrategyMismatch".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8357,6 +8856,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8364,6 +8864,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::OpenBaoBadServerResponse { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8371,6 +8872,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorOpenBaoBadServerResponse".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::OpenBaoBadURL { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8378,6 +8880,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorOpenBaoBadURL".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::OpenBaoNoServerResponse { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8385,6 +8888,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorOpenBaoNoServerResponse".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8392,6 +8896,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorPKICannotOpenCertificateStore".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8399,6 +8904,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference {
             ..
         } => {
@@ -8408,6 +8914,7 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptAsyncEnrollmentError::TimestampOutOfBallpark { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8429,6 +8936,7 @@ fn variant_client_accept_tos_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptTosError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8436,9 +8944,11 @@ fn variant_client_accept_tos_error_rs_to_js(
                 &"ClientAcceptTosErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptTosError::NoTos { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientAcceptTosErrorNoTos".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptTosError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8446,6 +8956,7 @@ fn variant_client_accept_tos_error_rs_to_js(
                 &"ClientAcceptTosErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientAcceptTosError::TosMismatch { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8467,6 +8978,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::ArchivingPeriodTooShort { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8474,6 +8986,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &"ClientArchiveWorkspaceErrorArchivingPeriodTooShort".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::AuthorNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8481,6 +8994,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &"ClientArchiveWorkspaceErrorAuthorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8488,6 +9002,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &"ClientArchiveWorkspaceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8495,6 +9010,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &"ClientArchiveWorkspaceErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::InvalidEncryptedRealmName { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8502,6 +9018,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &"ClientArchiveWorkspaceErrorInvalidEncryptedRealmName".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8509,6 +9026,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &"ClientArchiveWorkspaceErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8516,6 +9034,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &"ClientArchiveWorkspaceErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8523,6 +9042,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &"ClientArchiveWorkspaceErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -8541,7 +9061,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -8552,7 +9072,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -8570,6 +9090,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &js_ballpark_client_late_offset,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::WorkspaceDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8577,6 +9098,7 @@ fn variant_client_archive_workspace_error_rs_to_js(
                 &"ClientArchiveWorkspaceErrorWorkspaceDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientArchiveWorkspaceError::WorkspaceNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8598,6 +9120,7 @@ fn variant_client_cancel_invitation_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientCancelInvitationError::AlreadyCancelled { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8605,6 +9128,7 @@ fn variant_client_cancel_invitation_error_rs_to_js(
                 &"ClientCancelInvitationErrorAlreadyCancelled".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientCancelInvitationError::Completed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8612,6 +9136,7 @@ fn variant_client_cancel_invitation_error_rs_to_js(
                 &"ClientCancelInvitationErrorCompleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientCancelInvitationError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8619,6 +9144,7 @@ fn variant_client_cancel_invitation_error_rs_to_js(
                 &"ClientCancelInvitationErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientCancelInvitationError::NotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8626,6 +9152,7 @@ fn variant_client_cancel_invitation_error_rs_to_js(
                 &"ClientCancelInvitationErrorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientCancelInvitationError::NotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8633,6 +9160,7 @@ fn variant_client_cancel_invitation_error_rs_to_js(
                 &"ClientCancelInvitationErrorNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientCancelInvitationError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8654,6 +9182,7 @@ fn variant_client_create_workspace_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientCreateWorkspaceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8661,6 +9190,7 @@ fn variant_client_create_workspace_error_rs_to_js(
                 &"ClientCreateWorkspaceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientCreateWorkspaceError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8682,6 +9212,7 @@ fn variant_client_delete_shamir_recovery_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientDeleteShamirRecoveryError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8689,6 +9220,7 @@ fn variant_client_delete_shamir_recovery_error_rs_to_js(
                 &"ClientDeleteShamirRecoveryErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientDeleteShamirRecoveryError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8696,6 +9228,7 @@ fn variant_client_delete_shamir_recovery_error_rs_to_js(
                 &"ClientDeleteShamirRecoveryErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientDeleteShamirRecoveryError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8703,6 +9236,7 @@ fn variant_client_delete_shamir_recovery_error_rs_to_js(
                 &"ClientDeleteShamirRecoveryErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientDeleteShamirRecoveryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -8710,6 +9244,7 @@ fn variant_client_delete_shamir_recovery_error_rs_to_js(
                 &"ClientDeleteShamirRecoveryErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientDeleteShamirRecoveryError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -8728,7 +9263,7 @@ fn variant_client_delete_shamir_recovery_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -8739,7 +9274,7 @@ fn variant_client_delete_shamir_recovery_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -8796,7 +9331,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::ClientStarted { device_id })
@@ -8813,7 +9351,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::ClientStopped { device_id })
@@ -8834,7 +9375,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let greeting_attempt = {
@@ -8850,7 +9394,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                 libparsec::GreetingAttemptID::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::GreetingAttemptCancelled {
@@ -8872,7 +9419,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let greeting_attempt = {
@@ -8888,7 +9438,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                 libparsec::GreetingAttemptID::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::GreetingAttemptJoined {
@@ -8910,7 +9463,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let greeting_attempt = {
@@ -8926,7 +9482,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                 libparsec::GreetingAttemptID::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::GreetingAttemptReady {
@@ -8946,7 +9505,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             libparsec::ApiVersion::try_from(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let supported_api_version = {
@@ -8967,7 +9529,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                     libparsec::ApiVersion::try_from(s.as_str())
                                         .map_err(|e| e.to_string())
                                 };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         converted.push(x_converted);
                     }
@@ -9007,7 +9572,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let status = {
@@ -9073,7 +9641,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -9085,7 +9654,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -9122,7 +9692,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let entry_id = {
@@ -9136,7 +9709,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsInboundSyncDone { realm_id, entry_id })
@@ -9153,7 +9729,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let entry_id = {
@@ -9167,7 +9746,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncAborted { realm_id, entry_id })
@@ -9184,7 +9766,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let entry_id = {
@@ -9198,7 +9783,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncDone { realm_id, entry_id })
@@ -9215,7 +9803,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let entry_id = {
@@ -9229,7 +9820,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let blocks = {
@@ -9237,6 +9831,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                 {
                     let v = u64::try_from(js_val)
                         .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -9245,6 +9840,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                 {
                     let v = u64::try_from(js_val)
                         .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -9253,6 +9849,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                 {
                     let v = u64::try_from(js_val)
                         .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -9276,7 +9873,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let entry_id = {
@@ -9290,7 +9890,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted { realm_id, entry_id })
@@ -9307,7 +9910,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let entry_id = {
@@ -9321,7 +9927,10 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ClientEvent::WorkspaceWatchedEntryChanged { realm_id, entry_id })
@@ -9337,6 +9946,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
 fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::AsyncEnrollmentUpdated { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9344,15 +9954,20 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"ClientEventAsyncEnrollmentUpdated".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::ClientErrorResponse { error_type, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"ClientEventClientErrorResponse".into(),
             )?;
-            let js_error_type = JsValue::from_str(error_type.as_ref());
+            let js_error_type = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(error_type.as_ref())
+            };
             Reflect::set(&js_obj, &"errorType".into(), &js_error_type)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::ClientStarted { device_id, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventClientStarted".into())?;
             let js_device_id = JsValue::from_str({
@@ -9360,12 +9975,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(device_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::ClientStopped { device_id, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventClientStopped".into())?;
             let js_device_id = JsValue::from_str({
@@ -9373,12 +9990,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(device_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::ExpiredOrganization { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9386,9 +10005,11 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"ClientEventExpiredOrganization".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::FrozenSelfUser { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventFrozenSelfUser".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::GreetingAttemptCancelled {
             token,
             greeting_attempt,
@@ -9404,6 +10025,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9416,12 +10038,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     };
                 match custom_to_rs_string(greeting_attempt) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"greetingAttempt".into(), &js_greeting_attempt)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::GreetingAttemptJoined {
             token,
             greeting_attempt,
@@ -9437,6 +10061,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9449,12 +10074,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     };
                 match custom_to_rs_string(greeting_attempt) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"greetingAttempt".into(), &js_greeting_attempt)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::GreetingAttemptReady {
             token,
             greeting_attempt,
@@ -9470,6 +10097,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9482,12 +10110,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     };
                 match custom_to_rs_string(greeting_attempt) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"greetingAttempt".into(), &js_greeting_attempt)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::IncompatibleServer {
             api_version,
             supported_api_version,
@@ -9504,6 +10134,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 };
                 match custom_to_rs_string(api_version) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9519,6 +10150,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                         };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -9535,15 +10167,20 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &js_supported_api_version,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::InvalidCertificate { detail, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"ClientEventInvalidCertificate".into(),
             )?;
-            let js_detail = JsValue::from_str(detail.as_ref());
+            let js_detail = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(detail.as_ref())
+            };
             Reflect::set(&js_obj, &"detail".into(), &js_detail)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::InvitationAlreadyUsedOrDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9551,6 +10188,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"ClientEventInvitationAlreadyUsedOrDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::InvitationChanged { token, status, .. } => {
             Reflect::set(
                 &js_obj,
@@ -9562,6 +10200,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9570,15 +10209,19 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::MustAcceptTos { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventMustAcceptTos".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::Offline { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventOffline".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::Online { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventOnline".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::OrganizationNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9586,14 +10229,20 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"ClientEventOrganizationNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::Ping { ping, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventPing".into())?;
-            let js_ping = JsValue::from_str(ping.as_ref());
+            let js_ping = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(ping.as_ref())
+            };
             Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::RevokedSelfUser { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventRevokedSelfUser".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::ServerConfigChanged { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9601,6 +10250,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"ClientEventServerConfigChanged".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::ServerInvalidResponseContent {
             protocol_decode_error,
             ..
@@ -9610,22 +10260,30 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventServerInvalidResponseContent".into(),
             )?;
-            let js_protocol_decode_error = JsValue::from_str(protocol_decode_error.as_ref());
+            let js_protocol_decode_error = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(protocol_decode_error.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"protocolDecodeError".into(),
                 &js_protocol_decode_error,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::ServerInvalidResponseStatus { status_code, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"ClientEventServerInvalidResponseStatus".into(),
             )?;
-            let js_status_code = JsValue::from_str(status_code.as_ref());
+            let js_status_code = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(status_code.as_ref())
+            };
             Reflect::set(&js_obj, &"statusCode".into(), &js_status_code)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::TooMuchDriftWithServerClock {
             server_timestamp,
             client_timestamp,
@@ -9644,7 +10302,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -9655,7 +10313,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -9673,6 +10331,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &js_ballpark_client_late_offset,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WebClientNotAllowedByOrganization { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9680,6 +10339,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"ClientEventWebClientNotAllowedByOrganization".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WorkspaceLocallyCreated { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9687,6 +10347,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"ClientEventWorkspaceLocallyCreated".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WorkspaceOpsInboundSyncDone {
             realm_id, entry_id, ..
         } => {
@@ -9700,6 +10361,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9710,12 +10372,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WorkspaceOpsOutboundSyncAborted {
             realm_id, entry_id, ..
         } => {
@@ -9729,6 +10393,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9739,12 +10404,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WorkspaceOpsOutboundSyncDone {
             realm_id, entry_id, ..
         } => {
@@ -9758,6 +10425,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9768,12 +10436,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WorkspaceOpsOutboundSyncProgress {
             realm_id,
             entry_id,
@@ -9792,6 +10462,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9802,6 +10473,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9814,6 +10486,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             let js_blocksize = JsValue::from(blocksize);
             Reflect::set(&js_obj, &"blocksize".into(), &js_blocksize)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted {
             realm_id, entry_id, ..
         } => {
@@ -9827,6 +10500,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9837,12 +10511,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WorkspaceWatchedEntryChanged {
             realm_id, entry_id, ..
         } => {
@@ -9856,6 +10532,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(realm_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -9866,12 +10543,14 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(entry_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientEvent::WorkspacesSelfListChanged { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9893,6 +10572,7 @@ fn variant_client_export_recovery_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientExportRecoveryDeviceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9900,6 +10580,7 @@ fn variant_client_export_recovery_device_error_rs_to_js(
                 &"ClientExportRecoveryDeviceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientExportRecoveryDeviceError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9907,6 +10588,7 @@ fn variant_client_export_recovery_device_error_rs_to_js(
                 &"ClientExportRecoveryDeviceErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientExportRecoveryDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9914,6 +10596,7 @@ fn variant_client_export_recovery_device_error_rs_to_js(
                 &"ClientExportRecoveryDeviceErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientExportRecoveryDeviceError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9921,6 +10604,7 @@ fn variant_client_export_recovery_device_error_rs_to_js(
                 &"ClientExportRecoveryDeviceErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientExportRecoveryDeviceError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -9939,7 +10623,7 @@ fn variant_client_export_recovery_device_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -9950,7 +10634,7 @@ fn variant_client_export_recovery_device_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -9982,6 +10666,7 @@ fn variant_client_forget_all_certificates_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientForgetAllCertificatesError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -9989,6 +10674,7 @@ fn variant_client_forget_all_certificates_error_rs_to_js(
                 &"ClientForgetAllCertificatesErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientForgetAllCertificatesError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10010,6 +10696,7 @@ fn variant_client_get_async_enrollment_addr_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetAsyncEnrollmentAddrError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10031,6 +10718,7 @@ fn variant_client_get_organization_bootstrap_date_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetOrganizationBootstrapDateError::BootstrapDateNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10038,6 +10726,7 @@ fn variant_client_get_organization_bootstrap_date_error_rs_to_js(
                 &"ClientGetOrganizationBootstrapDateErrorBootstrapDateNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetOrganizationBootstrapDateError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10045,6 +10734,7 @@ fn variant_client_get_organization_bootstrap_date_error_rs_to_js(
                 &"ClientGetOrganizationBootstrapDateErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetOrganizationBootstrapDateError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10052,6 +10742,7 @@ fn variant_client_get_organization_bootstrap_date_error_rs_to_js(
                 &"ClientGetOrganizationBootstrapDateErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetOrganizationBootstrapDateError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10059,6 +10750,7 @@ fn variant_client_get_organization_bootstrap_date_error_rs_to_js(
                 &"ClientGetOrganizationBootstrapDateErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetOrganizationBootstrapDateError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10080,6 +10772,7 @@ fn variant_client_get_self_shamir_recovery_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetSelfShamirRecoveryError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10087,6 +10780,7 @@ fn variant_client_get_self_shamir_recovery_error_rs_to_js(
                 &"ClientGetSelfShamirRecoveryErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetSelfShamirRecoveryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10108,12 +10802,15 @@ fn variant_client_get_tos_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetTosError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientGetTosErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetTosError::NoTos { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientGetTosErrorNoTos".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetTosError::Offline { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientGetTosErrorOffline".into())?;
         }
@@ -10131,6 +10828,7 @@ fn variant_client_get_user_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetUserDeviceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10138,6 +10836,7 @@ fn variant_client_get_user_device_error_rs_to_js(
                 &"ClientGetUserDeviceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetUserDeviceError::NonExisting { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10145,6 +10844,7 @@ fn variant_client_get_user_device_error_rs_to_js(
                 &"ClientGetUserDeviceErrorNonExisting".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetUserDeviceError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10166,6 +10866,7 @@ fn variant_client_get_user_info_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetUserInfoError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10173,6 +10874,7 @@ fn variant_client_get_user_info_error_rs_to_js(
                 &"ClientGetUserInfoErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetUserInfoError::NonExisting { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10180,6 +10882,7 @@ fn variant_client_get_user_info_error_rs_to_js(
                 &"ClientGetUserInfoErrorNonExisting".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientGetUserInfoError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10201,9 +10904,11 @@ fn variant_client_info_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientInfoError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientInfoErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientInfoError::Stopped { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientInfoErrorStopped".into())?;
         }
@@ -10221,6 +10926,7 @@ fn variant_client_list_async_enrollments_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListAsyncEnrollmentsError::AuthorNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10228,6 +10934,7 @@ fn variant_client_list_async_enrollments_error_rs_to_js(
                 &"ClientListAsyncEnrollmentsErrorAuthorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListAsyncEnrollmentsError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10235,6 +10942,7 @@ fn variant_client_list_async_enrollments_error_rs_to_js(
                 &"ClientListAsyncEnrollmentsErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListAsyncEnrollmentsError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10256,6 +10964,7 @@ fn variant_client_list_frozen_users_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListFrozenUsersError::AuthorNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10263,6 +10972,7 @@ fn variant_client_list_frozen_users_error_rs_to_js(
                 &"ClientListFrozenUsersErrorAuthorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListFrozenUsersError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10270,6 +10980,7 @@ fn variant_client_list_frozen_users_error_rs_to_js(
                 &"ClientListFrozenUsersErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListFrozenUsersError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10291,6 +11002,7 @@ fn variant_client_list_shamir_recoveries_for_others_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListShamirRecoveriesForOthersError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10298,6 +11010,7 @@ fn variant_client_list_shamir_recoveries_for_others_error_rs_to_js(
                 &"ClientListShamirRecoveriesForOthersErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListShamirRecoveriesForOthersError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10319,6 +11032,7 @@ fn variant_client_list_user_devices_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListUserDevicesError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10326,6 +11040,7 @@ fn variant_client_list_user_devices_error_rs_to_js(
                 &"ClientListUserDevicesErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListUserDevicesError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10347,6 +11062,7 @@ fn variant_client_list_users_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListUsersError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10354,6 +11070,7 @@ fn variant_client_list_users_error_rs_to_js(
                 &"ClientListUsersErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListUsersError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10375,6 +11092,7 @@ fn variant_client_list_workspace_users_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListWorkspaceUsersError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10382,6 +11100,7 @@ fn variant_client_list_workspace_users_error_rs_to_js(
                 &"ClientListWorkspaceUsersErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListWorkspaceUsersError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10403,6 +11122,7 @@ fn variant_client_list_workspaces_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientListWorkspacesError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10424,6 +11144,7 @@ fn variant_client_new_device_invitation_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewDeviceInvitationError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10431,6 +11152,7 @@ fn variant_client_new_device_invitation_error_rs_to_js(
                 &"ClientNewDeviceInvitationErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewDeviceInvitationError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10452,6 +11174,7 @@ fn variant_client_new_shamir_recovery_invitation_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewShamirRecoveryInvitationError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10459,6 +11182,7 @@ fn variant_client_new_shamir_recovery_invitation_error_rs_to_js(
                 &"ClientNewShamirRecoveryInvitationErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewShamirRecoveryInvitationError::NotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10466,6 +11190,7 @@ fn variant_client_new_shamir_recovery_invitation_error_rs_to_js(
                 &"ClientNewShamirRecoveryInvitationErrorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewShamirRecoveryInvitationError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10473,6 +11198,7 @@ fn variant_client_new_shamir_recovery_invitation_error_rs_to_js(
                 &"ClientNewShamirRecoveryInvitationErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewShamirRecoveryInvitationError::UserNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10494,6 +11220,7 @@ fn variant_client_new_user_invitation_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewUserInvitationError::AlreadyMember { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10501,6 +11228,7 @@ fn variant_client_new_user_invitation_error_rs_to_js(
                 &"ClientNewUserInvitationErrorAlreadyMember".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewUserInvitationError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10508,6 +11236,7 @@ fn variant_client_new_user_invitation_error_rs_to_js(
                 &"ClientNewUserInvitationErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewUserInvitationError::NotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10515,6 +11244,7 @@ fn variant_client_new_user_invitation_error_rs_to_js(
                 &"ClientNewUserInvitationErrorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientNewUserInvitationError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10536,6 +11266,7 @@ fn variant_client_organization_info_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientOrganizationInfoError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10543,6 +11274,7 @@ fn variant_client_organization_info_error_rs_to_js(
                 &"ClientOrganizationInfoErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientOrganizationInfoError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10564,6 +11296,7 @@ fn variant_client_reject_async_enrollment_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRejectAsyncEnrollmentError::AuthorNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10571,6 +11304,7 @@ fn variant_client_reject_async_enrollment_error_rs_to_js(
                 &"ClientRejectAsyncEnrollmentErrorAuthorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRejectAsyncEnrollmentError::EnrollmentNoLongerAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10578,6 +11312,7 @@ fn variant_client_reject_async_enrollment_error_rs_to_js(
                 &"ClientRejectAsyncEnrollmentErrorEnrollmentNoLongerAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRejectAsyncEnrollmentError::EnrollmentNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10585,6 +11320,7 @@ fn variant_client_reject_async_enrollment_error_rs_to_js(
                 &"ClientRejectAsyncEnrollmentErrorEnrollmentNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRejectAsyncEnrollmentError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10592,6 +11328,7 @@ fn variant_client_reject_async_enrollment_error_rs_to_js(
                 &"ClientRejectAsyncEnrollmentErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRejectAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10613,6 +11350,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::AuthorNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10620,6 +11358,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorAuthorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10627,6 +11366,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10634,6 +11374,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::InvalidEncryptedRealmName { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10641,6 +11382,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorInvalidEncryptedRealmName".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10648,6 +11390,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::NoKey { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10655,6 +11398,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorNoKey".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10662,6 +11406,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10669,6 +11414,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10676,6 +11422,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -10694,7 +11441,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -10705,7 +11452,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -10723,6 +11470,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &js_ballpark_client_late_offset,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRenameWorkspaceError::WorkspaceNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10744,6 +11492,7 @@ fn variant_client_revoke_user_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::AuthorNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10751,6 +11500,7 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &"ClientRevokeUserErrorAuthorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10758,6 +11508,7 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &"ClientRevokeUserErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10765,6 +11516,7 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &"ClientRevokeUserErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10772,9 +11524,11 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &"ClientRevokeUserErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::NoKey { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientRevokeUserErrorNoKey".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10782,6 +11536,7 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &"ClientRevokeUserErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10789,6 +11544,7 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &"ClientRevokeUserErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::TimestampOutOfBallpark { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10796,6 +11552,7 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &"ClientRevokeUserErrorTimestampOutOfBallpark".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::UserIsSelf { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10803,6 +11560,7 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &"ClientRevokeUserErrorUserIsSelf".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientRevokeUserError::UserNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10824,6 +11582,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::AuthorAmongRecipients { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10831,6 +11590,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &"ClientSetupShamirRecoveryErrorAuthorAmongRecipients".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10838,6 +11598,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &"ClientSetupShamirRecoveryErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10845,6 +11606,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &"ClientSetupShamirRecoveryErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10852,6 +11614,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &"ClientSetupShamirRecoveryErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::RecipientNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10859,6 +11622,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &"ClientSetupShamirRecoveryErrorRecipientNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::RecipientRevoked { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10866,6 +11630,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &"ClientSetupShamirRecoveryErrorRecipientRevoked".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::ShamirRecoveryAlreadyExists { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10873,6 +11638,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &"ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10880,6 +11646,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &"ClientSetupShamirRecoveryErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::ThresholdBiggerThanSumOfShares { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10887,6 +11654,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &"ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -10905,7 +11673,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -10916,7 +11684,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -10934,6 +11702,7 @@ fn variant_client_setup_shamir_recovery_error_rs_to_js(
                 &js_ballpark_client_late_offset,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientSetupShamirRecoveryError::TooManyShares { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10955,6 +11724,7 @@ fn variant_client_share_workspace_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::AuthorNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10962,6 +11732,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorAuthorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10969,6 +11740,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10976,6 +11748,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10983,6 +11756,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10990,6 +11764,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -10997,6 +11772,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::RecipientIsSelf { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11004,6 +11780,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorRecipientIsSelf".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::RecipientNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11011,6 +11788,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorRecipientNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::RecipientRevoked { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11018,6 +11796,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorRecipientRevoked".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::RoleIncompatibleWithOutsider { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11025,6 +11804,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorRoleIncompatibleWithOutsider".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11032,6 +11812,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -11050,7 +11831,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -11061,7 +11842,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -11079,6 +11860,7 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &js_ballpark_client_late_offset,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientShareWorkspaceError::WorkspaceNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11100,6 +11882,7 @@ fn variant_client_start_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::DeviceUsedByAnotherProcess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11107,9 +11890,11 @@ fn variant_client_start_error_rs_to_js(
                 &"ClientStartErrorDeviceUsedByAnotherProcess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientStartErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11117,6 +11902,7 @@ fn variant_client_start_error_rs_to_js(
                 &"ClientStartErrorLoadDeviceDecryptionFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::LoadDeviceInvalidData { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11124,6 +11910,7 @@ fn variant_client_start_error_rs_to_js(
                 &"ClientStartErrorLoadDeviceInvalidData".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::LoadDeviceInvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11131,6 +11918,7 @@ fn variant_client_start_error_rs_to_js(
                 &"ClientStartErrorLoadDeviceInvalidPath".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::LoadDeviceRemoteOpaqueKeyFetchFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11138,6 +11926,7 @@ fn variant_client_start_error_rs_to_js(
                 &"ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::LoadDeviceRemoteOpaqueKeyFetchOffline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11145,6 +11934,7 @@ fn variant_client_start_error_rs_to_js(
                 &"ClientStartErrorLoadDeviceRemoteOpaqueKeyFetchOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::LoadDeviceTOTPDecryptionFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11166,6 +11956,7 @@ fn variant_client_start_invitation_greet_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartInvitationGreetError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11187,6 +11978,7 @@ fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartShamirRecoveryInvitationGreetError::CorruptedShareData { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11194,6 +11986,7 @@ fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
                 &"ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartShamirRecoveryInvitationGreetError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11201,6 +11994,7 @@ fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
                 &"ClientStartShamirRecoveryInvitationGreetErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartShamirRecoveryInvitationGreetError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11208,6 +12002,7 @@ fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
                 &"ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartShamirRecoveryInvitationGreetError::InvitationNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11215,6 +12010,7 @@ fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
                 &"ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartShamirRecoveryInvitationGreetError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11222,6 +12018,7 @@ fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
                 &"ClientStartShamirRecoveryInvitationGreetErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryDeleted {
             ..
         } => {
@@ -11231,6 +12028,7 @@ fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
                 &"ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryNotFound {
             ..
         } => {
@@ -11240,6 +12038,7 @@ fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
                 &"ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryUnusable {
             ..
         } => {
@@ -11249,6 +12048,7 @@ fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
                 &"ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartShamirRecoveryInvitationGreetError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11270,6 +12070,7 @@ fn variant_client_start_workspace_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartWorkspaceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11277,6 +12078,7 @@ fn variant_client_start_workspace_error_rs_to_js(
                 &"ClientStartWorkspaceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartWorkspaceError::WorkspaceNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11298,6 +12100,7 @@ fn variant_client_stop_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStopError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientStopErrorInternal".into())?;
         }
@@ -11315,6 +12118,7 @@ fn variant_client_totp_setup_confirm_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientTOTPSetupConfirmError::AlreadySetup { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11322,6 +12126,7 @@ fn variant_client_totp_setup_confirm_error_rs_to_js(
                 &"ClientTOTPSetupConfirmErrorAlreadySetup".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientTOTPSetupConfirmError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11329,6 +12134,7 @@ fn variant_client_totp_setup_confirm_error_rs_to_js(
                 &"ClientTOTPSetupConfirmErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientTOTPSetupConfirmError::InvalidOneTimePassword { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11336,6 +12142,7 @@ fn variant_client_totp_setup_confirm_error_rs_to_js(
                 &"ClientTOTPSetupConfirmErrorInvalidOneTimePassword".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientTOTPSetupConfirmError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11357,6 +12164,7 @@ fn variant_client_totp_create_opaque_key_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientTotpCreateOpaqueKeyError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11364,6 +12172,7 @@ fn variant_client_totp_create_opaque_key_error_rs_to_js(
                 &"ClientTotpCreateOpaqueKeyErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientTotpCreateOpaqueKeyError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11385,6 +12194,7 @@ fn variant_client_totp_setup_status_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientTotpSetupStatusError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11392,6 +12202,7 @@ fn variant_client_totp_setup_status_error_rs_to_js(
                 &"ClientTotpSetupStatusErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientTotpSetupStatusError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11413,6 +12224,7 @@ fn variant_client_user_update_profile_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientUserUpdateProfileError::AuthorNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11420,6 +12232,7 @@ fn variant_client_user_update_profile_error_rs_to_js(
                 &"ClientUserUpdateProfileErrorAuthorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientUserUpdateProfileError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11427,6 +12240,7 @@ fn variant_client_user_update_profile_error_rs_to_js(
                 &"ClientUserUpdateProfileErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientUserUpdateProfileError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11434,6 +12248,7 @@ fn variant_client_user_update_profile_error_rs_to_js(
                 &"ClientUserUpdateProfileErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientUserUpdateProfileError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11441,6 +12256,7 @@ fn variant_client_user_update_profile_error_rs_to_js(
                 &"ClientUserUpdateProfileErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientUserUpdateProfileError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11448,6 +12264,7 @@ fn variant_client_user_update_profile_error_rs_to_js(
                 &"ClientUserUpdateProfileErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientUserUpdateProfileError::TimestampOutOfBallpark { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11455,6 +12272,7 @@ fn variant_client_user_update_profile_error_rs_to_js(
                 &"ClientUserUpdateProfileErrorTimestampOutOfBallpark".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientUserUpdateProfileError::UserIsSelf { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11462,6 +12280,7 @@ fn variant_client_user_update_profile_error_rs_to_js(
                 &"ClientUserUpdateProfileErrorUserIsSelf".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientUserUpdateProfileError::UserNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11469,6 +12288,7 @@ fn variant_client_user_update_profile_error_rs_to_js(
                 &"ClientUserUpdateProfileErrorUserNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientUserUpdateProfileError::UserRevoked { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11502,8 +12322,7 @@ fn variant_device_primary_protection_strategy_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             Ok(libparsec::DevicePrimaryProtectionStrategy::AccountVault { account_handle })
@@ -11580,8 +12399,7 @@ fn variant_device_primary_protection_strategy_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             Ok(libparsec::DevicePrimaryProtectionStrategy::PKI {
@@ -11599,7 +12417,10 @@ fn variant_device_primary_protection_strategy_js_to_rs(
                     .and_then(|x| {
                         let custom_from_rs_string =
                             |s: String| -> Result<_, String> { Ok(s.into()) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::DevicePrimaryProtectionStrategy::Password { password })
@@ -11616,6 +12437,7 @@ fn variant_device_primary_protection_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::DevicePrimaryProtectionStrategy::AccountVault { account_handle, .. } => {
             Reflect::set(
                 &js_obj,
@@ -11632,6 +12454,7 @@ fn variant_device_primary_protection_strategy_rs_to_js(
                 &"DevicePrimaryProtectionStrategyKeyring".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::DevicePrimaryProtectionStrategy::OpenBao {
             openbao_server_url,
             openbao_secret_mount_path,
@@ -11646,34 +12469,50 @@ fn variant_device_primary_protection_strategy_rs_to_js(
                 &"tag".into(),
                 &"DevicePrimaryProtectionStrategyOpenBao".into(),
             )?;
-            let js_openbao_server_url = JsValue::from_str(openbao_server_url.as_ref());
+            let js_openbao_server_url = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_server_url.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
-            let js_openbao_secret_mount_path =
-                JsValue::from_str(openbao_secret_mount_path.as_ref());
+            let js_openbao_secret_mount_path = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_secret_mount_path.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoSecretMountPath".into(),
                 &js_openbao_secret_mount_path,
             )?;
-            let js_openbao_transit_mount_path =
-                JsValue::from_str(openbao_transit_mount_path.as_ref());
+            let js_openbao_transit_mount_path = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_transit_mount_path.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoTransitMountPath".into(),
                 &js_openbao_transit_mount_path,
             )?;
-            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
+            let js_openbao_entity_id = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_entity_id.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
-            let js_openbao_auth_token = JsValue::from_str(openbao_auth_token.as_ref());
+            let js_openbao_auth_token = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_auth_token.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
-            let js_openbao_preferred_auth_id =
-                JsValue::from_str(openbao_preferred_auth_id.as_ref());
+            let js_openbao_preferred_auth_id = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_preferred_auth_id.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoPreferredAuthId".into(),
                 &js_openbao_preferred_auth_id,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::DevicePrimaryProtectionStrategy::PKI {
             pki_private_key_handle,
             ..
@@ -11690,6 +12529,7 @@ fn variant_device_primary_protection_strategy_rs_to_js(
                 &js_pki_private_key_handle,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::DevicePrimaryProtectionStrategy::Password { password, .. } => {
             Reflect::set(
                 &js_obj,
@@ -11754,8 +12594,16 @@ fn variant_distinguished_name_value_rs_to_js(
                 &"tag".into(),
                 &"DistinguishedNameValueCommonName".into(),
             )?;
-            let js_x1 = JsValue::from_str(x1.as_ref());
-            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
+            let js_x1 = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(x1.as_ref())
+            };
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into(),
+            )?;
         }
         libparsec::DistinguishedNameValue::EmailAddress(x1, ..) => {
             Reflect::set(
@@ -11763,8 +12611,16 @@ fn variant_distinguished_name_value_rs_to_js(
                 &"tag".into(),
                 &"DistinguishedNameValueEmailAddress".into(),
             )?;
-            let js_x1 = JsValue::from_str(x1.as_ref());
-            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
+            let js_x1 = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(x1.as_ref())
+            };
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -11794,6 +12650,7 @@ fn variant_email_sent_status_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::EmailSentStatus::RecipientRefused { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11801,6 +12658,7 @@ fn variant_email_sent_status_rs_to_js(
                 &"EmailSentStatusRecipientRefused".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::EmailSentStatus::ServerUnavailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -11808,6 +12666,7 @@ fn variant_email_sent_status_rs_to_js(
                 &"EmailSentStatusServerUnavailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::EmailSentStatus::Success { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"EmailSentStatusSuccess".into())?;
         }
@@ -11842,7 +12701,10 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                                         libparsec::VlobID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?,
                     )
                 }
@@ -11858,7 +12720,10 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let parent = {
@@ -11872,7 +12737,10 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created = {
@@ -11883,7 +12751,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -11895,7 +12764,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -11909,8 +12779,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             let is_placeholder = {
@@ -11932,6 +12801,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                 {
                     let v = u64::try_from(js_val)
                         .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -11946,7 +12816,10 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::EntryStat::File {
@@ -11980,7 +12853,10 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                                         libparsec::VlobID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?,
                     )
                 }
@@ -11996,7 +12872,10 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let parent = {
@@ -12010,7 +12889,10 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created = {
@@ -12021,7 +12903,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -12033,7 +12916,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -12047,8 +12931,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             let is_placeholder = {
@@ -12076,7 +12959,10 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::EntryStat::Folder {
@@ -12099,6 +12985,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
 fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::EntryStat::File {
             confinement_point,
             id,
@@ -12119,6 +13006,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(val) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -12131,6 +13019,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -12141,6 +13030,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -12152,7 +13042,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                 };
                 let v = match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -12163,7 +13053,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                 };
                 let v = match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -12181,12 +13071,14 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::EntryStat::Folder {
             confinement_point,
             id,
@@ -12206,6 +13098,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(val) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -12218,6 +13111,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -12228,6 +13122,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -12239,7 +13134,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                 };
                 let v = match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -12250,7 +13145,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                 };
                 let v = match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -12266,6 +13161,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -12286,6 +13182,7 @@ fn variant_get_server_config_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GetServerConfigError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12293,6 +13190,7 @@ fn variant_get_server_config_error_rs_to_js(
                 &"GetServerConfigErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GetServerConfigError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12314,6 +13212,7 @@ fn variant_greet_in_progress_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::ActiveUsersLimitReached { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12321,6 +13220,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorActiveUsersLimitReached".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::AlreadyDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12328,6 +13228,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorAlreadyDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::Cancelled { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12335,6 +13236,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorCancelled".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::CorruptedInviteUserData { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12342,6 +13244,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorCorruptedInviteUserData".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::CorruptedSharedSecretKey { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12349,6 +13252,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorCorruptedSharedSecretKey".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::DeviceAlreadyExists { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12356,6 +13260,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorDeviceAlreadyExists".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::GreeterNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12363,6 +13268,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorGreeterNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::GreetingAttemptCancelled {
             origin,
             reason,
@@ -12385,12 +13291,13 @@ fn variant_greet_in_progress_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::HumanHandleAlreadyTaken { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12398,6 +13305,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorHumanHandleAlreadyTaken".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12405,6 +13313,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::NonceMismatch { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12412,6 +13321,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorNonceMismatch".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::NotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12419,6 +13329,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12426,6 +13337,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::PeerReset { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12433,6 +13345,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorPeerReset".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -12451,7 +13364,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -12462,7 +13375,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -12480,6 +13393,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &js_ballpark_client_late_offset,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::UserAlreadyExists { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12487,6 +13401,7 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorUserAlreadyExists".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::GreetInProgressError::UserCreateNotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12508,6 +13423,7 @@ fn variant_import_recovery_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::DecryptionFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12515,6 +13431,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorDecryptionFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12522,6 +13439,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12529,6 +13447,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::InvalidData { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12536,6 +13455,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorInvalidData".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::InvalidPassphrase { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12543,6 +13463,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorInvalidPassphrase".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::InvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12550,6 +13471,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorInvalidPath".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::NoSpaceAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12557,6 +13479,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorNoSpaceAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12564,6 +13487,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::RemoteOpaqueKeyUploadFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12571,6 +13495,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::RemoteOpaqueKeyUploadOffline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12578,6 +13503,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorRemoteOpaqueKeyUploadOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -12585,6 +13511,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ImportRecoveryDeviceError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -12603,7 +13530,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -12614,7 +13541,7 @@ fn variant_import_recovery_device_error_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -12670,7 +13597,10 @@ fn variant_invite_info_invitation_created_by_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let human_handle = {
@@ -12694,15 +13624,20 @@ fn variant_invite_info_invitation_created_by_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::InviteInfoInvitationCreatedBy::ExternalService { service_label, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"InviteInfoInvitationCreatedByExternalService".into(),
             )?;
-            let js_service_label = JsValue::from_str(service_label.as_ref());
+            let js_service_label = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(service_label.as_ref())
+            };
             Reflect::set(&js_obj, &"serviceLabel".into(), &js_service_label)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::InviteInfoInvitationCreatedBy::User {
             user_id,
             human_handle,
@@ -12718,6 +13653,7 @@ fn variant_invite_info_invitation_created_by_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -12764,7 +13700,10 @@ fn variant_invite_list_invitation_created_by_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let human_handle = {
@@ -12788,15 +13727,20 @@ fn variant_invite_list_invitation_created_by_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::InviteListInvitationCreatedBy::ExternalService { service_label, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"InviteListInvitationCreatedByExternalService".into(),
             )?;
-            let js_service_label = JsValue::from_str(service_label.as_ref());
+            let js_service_label = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(service_label.as_ref())
+            };
             Reflect::set(&js_obj, &"serviceLabel".into(), &js_service_label)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::InviteListInvitationCreatedBy::User {
             user_id,
             human_handle,
@@ -12812,6 +13756,7 @@ fn variant_invite_list_invitation_created_by_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -12849,7 +13794,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                     libparsec::ParsecInvitationAddr::from_any(&s)
                                         .map_err(|e| e.to_string())
                                 };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?
                     },
                     {
@@ -12863,7 +13811,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                                     libparsec::Url::parse(&s).map_err(|e| e.to_string())
                                 };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?
                     },
                 )
@@ -12881,7 +13832,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created_on = {
@@ -12892,7 +13846,8 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -12935,7 +13890,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                     libparsec::ParsecInvitationAddr::from_any(&s)
                                         .map_err(|e| e.to_string())
                                 };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?
                     },
                     {
@@ -12949,7 +13907,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                                     libparsec::Url::parse(&s).map_err(|e| e.to_string())
                                 };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?
                     },
                 )
@@ -12967,7 +13928,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created_on = {
@@ -12978,7 +13942,8 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -12997,7 +13962,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let shamir_recovery_created_on = {
@@ -13008,7 +13976,8 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -13049,7 +14018,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                     libparsec::ParsecInvitationAddr::from_any(&s)
                                         .map_err(|e| e.to_string())
                                 };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?
                     },
                     {
@@ -13063,7 +14035,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                 let custom_from_rs_string = |s: String| -> Result<_, String> {
                                     libparsec::Url::parse(&s).map_err(|e| e.to_string())
                                 };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?
                     },
                 )
@@ -13081,7 +14056,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created_on = {
@@ -13092,7 +14070,8 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -13111,7 +14090,10 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                         let custom_from_rs_string = |s: String| -> Result<_, String> {
                             libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let status = {
@@ -13146,6 +14128,7 @@ fn variant_invite_list_item_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::InviteListItem::Device {
             addr,
             token,
@@ -13166,6 +14149,7 @@ fn variant_invite_list_item_rs_to_js(
                         };
                     match custom_to_rs_string(x1) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -13178,6 +14162,7 @@ fn variant_invite_list_item_rs_to_js(
                         };
                     match custom_to_rs_string(x2) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -13191,6 +14176,7 @@ fn variant_invite_list_item_rs_to_js(
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -13202,7 +14188,7 @@ fn variant_invite_list_item_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -13212,6 +14198,7 @@ fn variant_invite_list_item_rs_to_js(
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::InviteListItem::ShamirRecovery {
             addr,
             token,
@@ -13238,6 +14225,7 @@ fn variant_invite_list_item_rs_to_js(
                         };
                     match custom_to_rs_string(x1) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -13250,6 +14238,7 @@ fn variant_invite_list_item_rs_to_js(
                         };
                     match custom_to_rs_string(x2) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -13263,6 +14252,7 @@ fn variant_invite_list_item_rs_to_js(
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -13274,7 +14264,7 @@ fn variant_invite_list_item_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -13286,6 +14276,7 @@ fn variant_invite_list_item_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -13297,7 +14288,7 @@ fn variant_invite_list_item_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(shamir_recovery_created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -13309,6 +14300,7 @@ fn variant_invite_list_item_rs_to_js(
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::InviteListItem::User {
             addr,
             token,
@@ -13330,6 +14322,7 @@ fn variant_invite_list_item_rs_to_js(
                         };
                     match custom_to_rs_string(x1) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -13342,6 +14335,7 @@ fn variant_invite_list_item_rs_to_js(
                         };
                     match custom_to_rs_string(x2) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -13355,6 +14349,7 @@ fn variant_invite_list_item_rs_to_js(
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -13366,7 +14361,7 @@ fn variant_invite_list_item_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -13379,6 +14374,7 @@ fn variant_invite_list_item_rs_to_js(
                 };
                 match custom_to_rs_string(claimer_email) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -13401,6 +14397,7 @@ fn variant_list_available_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ListAvailableDeviceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13408,6 +14405,7 @@ fn variant_list_available_device_error_rs_to_js(
                 &"ListAvailableDeviceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ListAvailableDeviceError::StorageNotAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13429,6 +14427,7 @@ fn variant_list_invitations_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ListInvitationsError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13436,6 +14435,7 @@ fn variant_list_invitations_error_rs_to_js(
                 &"ListInvitationsErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ListInvitationsError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13470,7 +14470,10 @@ fn variant_mountpoint_mount_strategy_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
                             Ok(std::path::PathBuf::from(s))
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::MountpointMountStrategy::Directory { base_dir })
@@ -13489,6 +14492,7 @@ fn variant_mountpoint_mount_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::MountpointMountStrategy::Directory { base_dir, .. } => {
             Reflect::set(
                 &js_obj,
@@ -13503,6 +14507,7 @@ fn variant_mountpoint_mount_strategy_rs_to_js(
                 };
                 match custom_to_rs_string(base_dir) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -13537,6 +14542,7 @@ fn variant_mountpoint_to_os_path_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::MountpointToOsPathError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13558,6 +14564,7 @@ fn variant_mountpoint_unmount_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::MountpointUnmountError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13657,22 +14664,30 @@ fn variant_open_bao_auth_config_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OpenBaoAuthConfig::OIDCHexagone { mount_path, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"OpenBaoAuthConfigOIDCHexagone".into(),
             )?;
-            let js_mount_path = JsValue::from_str(mount_path.as_ref());
+            let js_mount_path = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(mount_path.as_ref())
+            };
             Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OpenBaoAuthConfig::OIDCProConnect { mount_path, .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"OpenBaoAuthConfigOIDCProConnect".into(),
             )?;
-            let js_mount_path = JsValue::from_str(mount_path.as_ref());
+            let js_mount_path = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(mount_path.as_ref())
+            };
             Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
         }
     }
@@ -13689,6 +14704,7 @@ fn variant_open_bao_list_self_emails_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OpenBaoListSelfEmailsError::BadServerResponse { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13696,6 +14712,7 @@ fn variant_open_bao_list_self_emails_error_rs_to_js(
                 &"OpenBaoListSelfEmailsErrorBadServerResponse".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OpenBaoListSelfEmailsError::BadURL { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13703,6 +14720,7 @@ fn variant_open_bao_list_self_emails_error_rs_to_js(
                 &"OpenBaoListSelfEmailsErrorBadURL".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OpenBaoListSelfEmailsError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13710,6 +14728,7 @@ fn variant_open_bao_list_self_emails_error_rs_to_js(
                 &"OpenBaoListSelfEmailsErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OpenBaoListSelfEmailsError::NoServerResponse { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13755,9 +14774,13 @@ fn variant_open_bao_secret_config_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OpenBaoSecretConfig::KV2 { mount_path, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"OpenBaoSecretConfigKV2".into())?;
-            let js_mount_path = JsValue::from_str(mount_path.as_ref());
+            let js_mount_path = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(mount_path.as_ref())
+            };
             Reflect::set(&js_obj, &"mountPath".into(), &js_mount_path)?;
         }
     }
@@ -13834,7 +14857,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created_on = {
@@ -13845,7 +14871,8 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -13860,7 +14887,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let threshold = {
@@ -13916,7 +14946,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         let value = {
                             let v = js_value
@@ -13950,7 +14983,8 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -13965,7 +14999,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::OtherShamirRecoveryInfo::Deleted {
@@ -13990,7 +15027,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created_on = {
@@ -14001,7 +15041,8 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -14016,7 +15057,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let threshold = {
@@ -14072,7 +15116,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         let value = {
                             let v = js_value
@@ -14118,7 +15165,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created_on = {
@@ -14129,7 +15179,8 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -14144,7 +15195,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let threshold = {
@@ -14200,7 +15254,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         let value = {
                             let v = js_value
@@ -14245,7 +15302,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         converted.push(x_converted);
                     }
@@ -14273,7 +15333,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created_on = {
@@ -14284,7 +15347,8 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -14299,7 +15363,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let threshold = {
@@ -14355,7 +15422,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         let value = {
                             let v = js_value
@@ -14400,7 +15470,10 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         converted.push(x_converted);
                     }
@@ -14430,6 +15503,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OtherShamirRecoveryInfo::Deleted {
             user_id,
             created_on,
@@ -14450,6 +15524,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -14461,7 +15536,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -14471,6 +15546,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -14481,7 +15557,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -14494,6 +15570,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -14505,7 +15582,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                         let v = match custom_to_rs_u8(value) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -14524,7 +15601,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(deleted_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -14534,12 +15611,14 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(deleted_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"deletedBy".into(), &js_deleted_by)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OtherShamirRecoveryInfo::SetupAllValid {
             user_id,
             created_on,
@@ -14558,6 +15637,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -14569,7 +15649,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -14579,6 +15659,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -14589,7 +15670,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -14602,6 +15683,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -14613,7 +15695,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                         let v = match custom_to_rs_u8(value) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -14627,6 +15709,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 &js_per_recipient_shares,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OtherShamirRecoveryInfo::SetupButUnusable {
             user_id,
             created_on,
@@ -14646,6 +15729,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -14657,7 +15741,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -14667,6 +15751,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -14677,7 +15762,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -14690,6 +15775,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -14701,7 +15787,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                         let v = match custom_to_rs_u8(value) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -14723,6 +15809,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -14735,6 +15822,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
             };
             Reflect::set(&js_obj, &"revokedRecipients".into(), &js_revoked_recipients)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
             user_id,
             created_on,
@@ -14754,6 +15842,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -14765,7 +15854,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -14775,6 +15864,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -14785,7 +15875,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -14798,6 +15888,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -14809,7 +15900,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                         let v = match custom_to_rs_u8(value) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -14831,6 +15922,7 @@ fn variant_other_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -14857,6 +15949,7 @@ fn variant_parse_parsec_addr_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParseParsecAddrError::InvalidUrl { .. } => {
             Reflect::set(
                 &js_obj,
@@ -14899,6 +15992,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -14928,7 +16022,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::OrganizationID::try_from(s.as_str())
                                 .map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ParsedParsecAddr::AsyncEnrollment {
@@ -14959,6 +16056,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -14988,7 +16086,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::OrganizationID::try_from(s.as_str())
                                 .map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let token = {
@@ -15004,7 +16105,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ParsedParsecAddr::InvitationDevice {
@@ -15036,6 +16140,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15065,7 +16170,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::OrganizationID::try_from(s.as_str())
                                 .map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let token = {
@@ -15081,7 +16189,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ParsedParsecAddr::InvitationShamirRecovery {
@@ -15113,6 +16224,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15142,7 +16254,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::OrganizationID::try_from(s.as_str())
                                 .map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let token = {
@@ -15158,7 +16273,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ParsedParsecAddr::InvitationUser {
@@ -15190,6 +16308,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15219,7 +16338,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::OrganizationID::try_from(s.as_str())
                                 .map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ParsedParsecAddr::Organization {
@@ -15250,6 +16372,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15279,7 +16402,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::OrganizationID::try_from(s.as_str())
                                 .map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let token = {
@@ -15325,6 +16451,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15354,7 +16481,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::OrganizationID::try_from(s.as_str())
                                 .map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ParsedParsecAddr::PkiEnrollment {
@@ -15385,6 +16515,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15429,6 +16560,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15458,7 +16590,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::OrganizationID::try_from(s.as_str())
                                 .map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let user_id = {
@@ -15472,7 +16607,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let token = {
@@ -15488,7 +16626,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                                 libparsec::AccessToken::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::ParsedParsecAddr::TOTPReset {
@@ -15521,6 +16662,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         return Err(JsValue::from(TypeError::new("Not an u16 number")));
                     }
                     let v = v as u16;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15550,7 +16692,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                             libparsec::OrganizationID::try_from(s.as_str())
                                 .map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let workspace_id = {
@@ -15564,7 +16709,10 @@ fn variant_parsed_parsec_addr_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let key_index = {
@@ -15572,6 +16720,7 @@ fn variant_parsed_parsec_addr_js_to_rs(
                 {
                     let v = u64::try_from(js_val)
                         .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15605,6 +16754,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::AsyncEnrollment {
             hostname,
             port,
@@ -15618,7 +16768,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrAsyncEnrollment".into(),
             )?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15629,6 +16782,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::InvitationDevice {
             hostname,
             port,
@@ -15643,7 +16797,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrInvitationDevice".into(),
             )?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15658,12 +16815,14 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::InvitationShamirRecovery {
             hostname,
             port,
@@ -15678,7 +16837,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrInvitationShamirRecovery".into(),
             )?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15693,12 +16855,14 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::InvitationUser {
             hostname,
             port,
@@ -15713,7 +16877,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrInvitationUser".into(),
             )?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15728,12 +16895,14 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::Organization {
             hostname,
             port,
@@ -15747,7 +16916,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrOrganization".into(),
             )?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15758,6 +16930,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::OrganizationBootstrap {
             hostname,
             port,
@@ -15772,7 +16945,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrOrganizationBootstrap".into(),
             )?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15783,11 +16959,16 @@ fn variant_parsed_parsec_addr_rs_to_js(
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
             let js_token = match token {
-                Some(val) => JsValue::from_str(val.as_ref()),
+                Some(val) =>
+                {
+                    #[allow(clippy::useless_asref)]
+                    JsValue::from_str(val.as_ref())
+                }
                 None => JsValue::NULL,
             };
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::PkiEnrollment {
             hostname,
             port,
@@ -15801,7 +16982,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrPkiEnrollment".into(),
             )?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15812,6 +16996,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             let js_organization_id = JsValue::from_str(organization_id.as_ref());
             Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::Server {
             hostname,
             port,
@@ -15820,7 +17005,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"ParsedParsecAddrServer".into())?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15829,6 +17017,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
             let js_use_ssl = use_ssl.into();
             Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::TOTPReset {
             hostname,
             port,
@@ -15840,7 +17029,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"ParsedParsecAddrTOTPReset".into())?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15855,6 +17047,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -15865,12 +17058,14 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::AccessToken| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(token) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ParsedParsecAddr::WorkspacePath {
             hostname,
             port,
@@ -15887,7 +17082,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &"tag".into(),
                 &"ParsedParsecAddrWorkspacePath".into(),
             )?;
-            let js_hostname = JsValue::from_str(hostname.as_ref());
+            let js_hostname = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(hostname.as_ref())
+            };
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
             let js_port = JsValue::from(port);
             Reflect::set(&js_obj, &"port".into(), &js_port)?;
@@ -15902,6 +17100,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(workspace_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -15936,7 +17135,8 @@ fn variant_pending_async_enrollment_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15948,7 +17148,8 @@ fn variant_pending_async_enrollment_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15966,7 +17167,8 @@ fn variant_pending_async_enrollment_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15978,7 +17180,8 @@ fn variant_pending_async_enrollment_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -15996,7 +17199,8 @@ fn variant_pending_async_enrollment_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -16008,7 +17212,8 @@ fn variant_pending_async_enrollment_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -16026,7 +17231,8 @@ fn variant_pending_async_enrollment_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -16044,6 +17250,7 @@ fn variant_pending_async_enrollment_info_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PendingAsyncEnrollmentInfo::Accepted {
             submitted_on,
             accepted_on,
@@ -16060,7 +17267,7 @@ fn variant_pending_async_enrollment_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(submitted_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -16071,12 +17278,13 @@ fn variant_pending_async_enrollment_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(accepted_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"acceptedOn".into(), &js_accepted_on)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PendingAsyncEnrollmentInfo::Cancelled {
             submitted_on,
             cancelled_on,
@@ -16093,7 +17301,7 @@ fn variant_pending_async_enrollment_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(submitted_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -16104,12 +17312,13 @@ fn variant_pending_async_enrollment_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(cancelled_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"cancelledOn".into(), &js_cancelled_on)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PendingAsyncEnrollmentInfo::Rejected {
             submitted_on,
             rejected_on,
@@ -16126,7 +17335,7 @@ fn variant_pending_async_enrollment_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(submitted_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -16137,12 +17346,13 @@ fn variant_pending_async_enrollment_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(rejected_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"rejectedOn".into(), &js_rejected_on)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PendingAsyncEnrollmentInfo::Submitted { submitted_on, .. } => {
             Reflect::set(
                 &js_obj,
@@ -16155,7 +17365,7 @@ fn variant_pending_async_enrollment_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(submitted_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -16175,6 +17385,7 @@ fn variant_pki_open_user_certificate_private_key_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PkiOpenUserCertificatePrivateKeyError::CertificateNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -16182,6 +17393,7 @@ fn variant_pki_open_user_certificate_private_key_error_rs_to_js(
                 &"PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PkiOpenUserCertificatePrivateKeyError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -16189,6 +17401,7 @@ fn variant_pki_open_user_certificate_private_key_error_rs_to_js(
                 &"PkiOpenUserCertificatePrivateKeyErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PkiOpenUserCertificatePrivateKeyError::PrivateKeyNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -16210,6 +17423,7 @@ fn variant_pki_private_key_close_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PkiPrivateKeyCloseError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -16231,9 +17445,11 @@ fn variant_pki_system_init_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PkiSystemInitError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"PkiSystemInitErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PkiSystemInitError::NotAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -16255,6 +17471,7 @@ fn variant_pki_system_list_user_certificate_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::PkiSystemListUserCertificateError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -16292,7 +17509,8 @@ fn variant_realm_archiving_configuration_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -16324,6 +17542,7 @@ fn variant_realm_archiving_configuration_rs_to_js(
                 &"RealmArchivingConfigurationAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::RealmArchivingConfiguration::DeletionPlanned { deletion_date, .. } => {
             Reflect::set(
                 &js_obj,
@@ -16336,7 +17555,7 @@ fn variant_realm_archiving_configuration_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(deletion_date) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -16356,6 +17575,7 @@ fn variant_remove_device_data_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::RemoveDeviceDataError::FailedToRemoveData { .. } => {
             Reflect::set(
                 &js_obj,
@@ -16395,8 +17615,7 @@ fn variant_requested_realm_archiving_configuration_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             Ok(
@@ -16431,6 +17650,7 @@ fn variant_requested_realm_archiving_configuration_rs_to_js(
                 &"RequestedRealmArchivingConfigurationAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::RequestedRealmArchivingConfiguration::DeletionPlanned {
             archiving_period_in_seconds,
             ..
@@ -16471,7 +17691,8 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -16486,7 +17707,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let threshold = {
@@ -16542,7 +17766,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         let value = {
                             let v = js_value
@@ -16576,7 +17803,8 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -16591,7 +17819,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::SelfShamirRecoveryInfo::Deleted {
@@ -16613,7 +17844,8 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -16628,7 +17860,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let threshold = {
@@ -16684,7 +17919,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         let value = {
                             let v = js_value
@@ -16726,7 +17964,8 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -16741,7 +17980,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let threshold = {
@@ -16797,7 +18039,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         let value = {
                             let v = js_value
@@ -16842,7 +18087,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         converted.push(x_converted);
                     }
@@ -16866,7 +18114,8 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -16881,7 +18130,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let threshold = {
@@ -16937,7 +18189,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         let value = {
                             let v = js_value
@@ -16982,7 +18237,10 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         converted.push(x_converted);
                     }
@@ -17011,6 +18269,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SelfShamirRecoveryInfo::Deleted {
             created_on,
             created_by,
@@ -17031,7 +18290,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17041,6 +18300,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -17051,7 +18311,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17064,6 +18324,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -17075,7 +18336,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                         let v = match custom_to_rs_u8(value) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -17094,7 +18355,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(deleted_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17104,12 +18365,14 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(deleted_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"deletedBy".into(), &js_deleted_by)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SelfShamirRecoveryInfo::NeverSetup { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17117,6 +18380,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 &"SelfShamirRecoveryInfoNeverSetup".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SelfShamirRecoveryInfo::SetupAllValid {
             created_on,
             created_by,
@@ -17135,7 +18399,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17145,6 +18409,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -17155,7 +18420,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17168,6 +18433,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -17179,7 +18445,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                         let v = match custom_to_rs_u8(value) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -17193,6 +18459,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 &js_per_recipient_shares,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SelfShamirRecoveryInfo::SetupButUnusable {
             created_on,
             created_by,
@@ -17212,7 +18479,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17222,6 +18489,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -17232,7 +18500,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17245,6 +18513,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -17256,7 +18525,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                         let v = match custom_to_rs_u8(value) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -17278,6 +18547,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -17290,6 +18560,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
             };
             Reflect::set(&js_obj, &"revokedRecipients".into(), &js_revoked_recipients)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SelfShamirRecoveryInfo::SetupWithRevokedRecipients {
             created_on,
             created_by,
@@ -17309,7 +18580,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17319,6 +18590,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(created_by) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -17329,7 +18601,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17342,6 +18614,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -17353,7 +18626,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                         let v = match custom_to_rs_u8(value) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -17375,6 +18648,7 @@ fn variant_self_shamir_recovery_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(elem) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -17401,6 +18675,7 @@ fn variant_shamir_recovery_claim_add_share_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimAddShareError::CorruptedSecret { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17408,6 +18683,7 @@ fn variant_shamir_recovery_claim_add_share_error_rs_to_js(
                 &"ShamirRecoveryClaimAddShareErrorCorruptedSecret".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimAddShareError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17415,6 +18691,7 @@ fn variant_shamir_recovery_claim_add_share_error_rs_to_js(
                 &"ShamirRecoveryClaimAddShareErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimAddShareError::RecipientNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17448,8 +18725,7 @@ fn variant_shamir_recovery_claim_maybe_finalize_info_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             Ok(libparsec::ShamirRecoveryClaimMaybeFinalizeInfo::Finalize { handle })
@@ -17465,8 +18741,7 @@ fn variant_shamir_recovery_claim_maybe_finalize_info_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             Ok(libparsec::ShamirRecoveryClaimMaybeFinalizeInfo::Offline { handle })
@@ -17483,6 +18758,7 @@ fn variant_shamir_recovery_claim_maybe_finalize_info_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimMaybeFinalizeInfo::Finalize { handle, .. } => {
             Reflect::set(
                 &js_obj,
@@ -17492,6 +18768,7 @@ fn variant_shamir_recovery_claim_maybe_finalize_info_rs_to_js(
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimMaybeFinalizeInfo::Offline { handle, .. } => {
             Reflect::set(
                 &js_obj,
@@ -17527,8 +18804,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             let claimer_user_id = {
@@ -17542,7 +18818,10 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let claimer_human_handle = {
@@ -17557,7 +18836,8 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -17628,7 +18908,10 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                                         libparsec::UserID::from_hex(s.as_str())
                                             .map_err(|e| e.to_string())
                                     };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                custom_from_rs_string(x).map_err(|e| {
+                                    #[allow(clippy::useless_asref)]
+                                    TypeError::new(e.as_ref())
+                                })
                             })?;
                         let value = {
                             let v = js_value
@@ -17685,8 +18968,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             let claimer_user_id = {
@@ -17700,7 +18982,10 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let claimer_human_handle = {
@@ -17727,6 +19012,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimMaybeRecoverDeviceInfo::PickRecipient {
             handle,
             claimer_user_id,
@@ -17750,6 +19036,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -17767,7 +19054,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(shamir_recovery_created_on) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17791,7 +19078,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                     |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                 let v = match custom_to_rs_u8(threshold) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -17804,6 +19091,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                             |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(key) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -17815,7 +19103,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                             |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
                         let v = match custom_to_rs_u8(value) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -17827,6 +19115,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
             let js_is_recoverable = is_recoverable.into();
             Reflect::set(&js_obj, &"isRecoverable".into(), &js_is_recoverable)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimMaybeRecoverDeviceInfo::RecoverDevice {
             handle,
             claimer_user_id,
@@ -17845,6 +19134,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(claimer_user_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -17871,6 +19161,7 @@ fn variant_shamir_recovery_claim_pick_recipient_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimPickRecipientError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17878,6 +19169,7 @@ fn variant_shamir_recovery_claim_pick_recipient_error_rs_to_js(
                 &"ShamirRecoveryClaimPickRecipientErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimPickRecipientError::RecipientAlreadyPicked { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17885,6 +19177,7 @@ fn variant_shamir_recovery_claim_pick_recipient_error_rs_to_js(
                 &"ShamirRecoveryClaimPickRecipientErrorRecipientAlreadyPicked".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimPickRecipientError::RecipientNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17892,6 +19185,7 @@ fn variant_shamir_recovery_claim_pick_recipient_error_rs_to_js(
                 &"ShamirRecoveryClaimPickRecipientErrorRecipientNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimPickRecipientError::RecipientRevoked { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17913,6 +19207,7 @@ fn variant_shamir_recovery_claim_recover_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimRecoverDeviceError::AlreadyUsed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17920,6 +19215,7 @@ fn variant_shamir_recovery_claim_recover_device_error_rs_to_js(
                 &"ShamirRecoveryClaimRecoverDeviceErrorAlreadyUsed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimRecoverDeviceError::CipheredDataNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17927,6 +19223,7 @@ fn variant_shamir_recovery_claim_recover_device_error_rs_to_js(
                 &"ShamirRecoveryClaimRecoverDeviceErrorCipheredDataNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimRecoverDeviceError::CorruptedCipheredData { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17934,6 +19231,7 @@ fn variant_shamir_recovery_claim_recover_device_error_rs_to_js(
                 &"ShamirRecoveryClaimRecoverDeviceErrorCorruptedCipheredData".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimRecoverDeviceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17941,6 +19239,7 @@ fn variant_shamir_recovery_claim_recover_device_error_rs_to_js(
                 &"ShamirRecoveryClaimRecoverDeviceErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimRecoverDeviceError::NotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17948,6 +19247,7 @@ fn variant_shamir_recovery_claim_recover_device_error_rs_to_js(
                 &"ShamirRecoveryClaimRecoverDeviceErrorNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimRecoverDeviceError::OrganizationExpired { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17955,6 +19255,7 @@ fn variant_shamir_recovery_claim_recover_device_error_rs_to_js(
                 &"ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShamirRecoveryClaimRecoverDeviceError::RegisterNewDeviceError { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17976,6 +19277,7 @@ fn variant_show_certificate_selection_dialog_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShowCertificateSelectionDialogError::CannotGetCertificateInfo { .. } => {
             Reflect::set(
                 &js_obj,
@@ -17983,6 +19285,7 @@ fn variant_show_certificate_selection_dialog_error_rs_to_js(
                 &"ShowCertificateSelectionDialogErrorCannotGetCertificateInfo".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ShowCertificateSelectionDialogError::CannotOpenStore { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18004,6 +19307,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::EmailAlreadyEnrolled { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18011,6 +19315,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::EmailAlreadySubmitted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18018,6 +19323,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorEmailAlreadySubmitted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18025,6 +19331,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::InvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18032,6 +19339,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorInvalidPath".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::NoSpaceAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18039,6 +19347,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorNoSpaceAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18046,6 +19355,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::OpenBaoBadServerResponse { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18053,6 +19363,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorOpenBaoBadServerResponse".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::OpenBaoBadURL { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18060,6 +19371,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorOpenBaoBadURL".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::OpenBaoNoServerResponse { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18067,6 +19379,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorOpenBaoNoServerResponse".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::PKICannotOpenCertificateStore { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18074,6 +19387,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorPKICannotOpenCertificateStore".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::PKIServerInvalidX509Trustchain { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18081,6 +19395,7 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18177,8 +19492,7 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
@@ -18197,6 +19511,7 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::OpenBao {
             requested_human_handle,
             openbao_server_url,
@@ -18218,34 +19533,50 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
                 &"requestedHumanHandle".into(),
                 &js_requested_human_handle,
             )?;
-            let js_openbao_server_url = JsValue::from_str(openbao_server_url.as_ref());
+            let js_openbao_server_url = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_server_url.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoServerUrl".into(), &js_openbao_server_url)?;
-            let js_openbao_transit_mount_path =
-                JsValue::from_str(openbao_transit_mount_path.as_ref());
+            let js_openbao_transit_mount_path = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_transit_mount_path.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoTransitMountPath".into(),
                 &js_openbao_transit_mount_path,
             )?;
-            let js_openbao_secret_mount_path =
-                JsValue::from_str(openbao_secret_mount_path.as_ref());
+            let js_openbao_secret_mount_path = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_secret_mount_path.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoSecretMountPath".into(),
                 &js_openbao_secret_mount_path,
             )?;
-            let js_openbao_entity_id = JsValue::from_str(openbao_entity_id.as_ref());
+            let js_openbao_entity_id = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_entity_id.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoEntityId".into(), &js_openbao_entity_id)?;
-            let js_openbao_auth_token = JsValue::from_str(openbao_auth_token.as_ref());
+            let js_openbao_auth_token = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_auth_token.as_ref())
+            };
             Reflect::set(&js_obj, &"openbaoAuthToken".into(), &js_openbao_auth_token)?;
-            let js_openbao_preferred_auth_id =
-                JsValue::from_str(openbao_preferred_auth_id.as_ref());
+            let js_openbao_preferred_auth_id = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(openbao_preferred_auth_id.as_ref())
+            };
             Reflect::set(
                 &js_obj,
                 &"openbaoPreferredAuthId".into(),
                 &js_openbao_preferred_auth_id,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
             pki_private_key_handle,
             ..
@@ -18276,6 +19607,7 @@ fn variant_submitter_cancel_async_enrollment_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterCancelAsyncEnrollmentError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18283,6 +19615,7 @@ fn variant_submitter_cancel_async_enrollment_error_rs_to_js(
                 &"SubmitterCancelAsyncEnrollmentErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterCancelAsyncEnrollmentError::NotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18290,6 +19623,7 @@ fn variant_submitter_cancel_async_enrollment_error_rs_to_js(
                 &"SubmitterCancelAsyncEnrollmentErrorNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterCancelAsyncEnrollmentError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18297,6 +19631,7 @@ fn variant_submitter_cancel_async_enrollment_error_rs_to_js(
                 &"SubmitterCancelAsyncEnrollmentErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterCancelAsyncEnrollmentError::StorageNotAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18318,57 +19653,75 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::BadAcceptPayload{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorBadAcceptPayload".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileCannotRetrieveCiphertextKey{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileCannotRetrieveCiphertextKey".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidData{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidData".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentFileInvalidPath{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorEnrollmentFileInvalidPath".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::EnrollmentNotFoundOnServer{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorEnrollmentNotFoundOnServer".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::IdentityStrategyMismatch{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorIdentityStrategyMismatch".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::Internal{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorNoSpaceAvailable".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::NotAccepted{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorNotAccepted".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::Offline{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOffline".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoBadServerResponse{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadServerResponse".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoBadURL{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOpenBaoBadURL".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::OpenBaoNoServerResponse{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorOpenBaoNoServerResponse".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::PKICannotOpenCertificateStore{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadFailed{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadFailed".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceRemoteOpaqueKeyUploadOffline".into())?;
         }
@@ -18386,6 +19739,7 @@ fn variant_submitter_get_async_enrollment_info_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterGetAsyncEnrollmentInfoError::EnrollmentNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18393,6 +19747,7 @@ fn variant_submitter_get_async_enrollment_info_error_rs_to_js(
                 &"SubmitterGetAsyncEnrollmentInfoErrorEnrollmentNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterGetAsyncEnrollmentInfoError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18400,6 +19755,7 @@ fn variant_submitter_get_async_enrollment_info_error_rs_to_js(
                 &"SubmitterGetAsyncEnrollmentInfoErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterGetAsyncEnrollmentInfoError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18421,6 +19777,7 @@ fn variant_submitter_list_local_async_enrollments_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterListLocalAsyncEnrollmentsError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18428,6 +19785,7 @@ fn variant_submitter_list_local_async_enrollments_error_rs_to_js(
                 &"SubmitterListLocalAsyncEnrollmentsErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterListLocalAsyncEnrollmentsError::StorageNotAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18475,11 +19833,15 @@ fn variant_totp_setup_status_rs_to_js(
         libparsec::TOTPSetupStatus::Confirmed => {
             Reflect::set(&js_obj, &"tag".into(), &"TOTPSetupStatusConfirmed".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TOTPSetupStatus::Unconfirmed {
             base32_totp_secret, ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"TOTPSetupStatusUnconfirmed".into())?;
-            let js_base32_totp_secret = JsValue::from_str(base32_totp_secret.as_ref());
+            let js_base32_totp_secret = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(base32_totp_secret.as_ref())
+            };
             Reflect::set(&js_obj, &"base32TotpSecret".into(), &js_base32_totp_secret)?;
         }
     }
@@ -18494,9 +19856,11 @@ fn variant_testbed_error_rs_to_js(rs_obj: libparsec::TestbedError) -> Result<JsV
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TestbedError::Disabled { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"TestbedErrorDisabled".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TestbedError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"TestbedErrorInternal".into())?;
         }
@@ -18514,6 +19878,7 @@ fn variant_totp_fetch_opaque_key_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpFetchOpaqueKeyError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18521,6 +19886,7 @@ fn variant_totp_fetch_opaque_key_error_rs_to_js(
                 &"TotpFetchOpaqueKeyErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpFetchOpaqueKeyError::InvalidOneTimePassword { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18528,6 +19894,7 @@ fn variant_totp_fetch_opaque_key_error_rs_to_js(
                 &"TotpFetchOpaqueKeyErrorInvalidOneTimePassword".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpFetchOpaqueKeyError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18535,6 +19902,7 @@ fn variant_totp_fetch_opaque_key_error_rs_to_js(
                 &"TotpFetchOpaqueKeyErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpFetchOpaqueKeyError::Throttled { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18556,6 +19924,7 @@ fn variant_totp_setup_confirm_anonymous_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpSetupConfirmAnonymousError::BadToken { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18563,6 +19932,7 @@ fn variant_totp_setup_confirm_anonymous_error_rs_to_js(
                 &"TotpSetupConfirmAnonymousErrorBadToken".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpSetupConfirmAnonymousError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18570,6 +19940,7 @@ fn variant_totp_setup_confirm_anonymous_error_rs_to_js(
                 &"TotpSetupConfirmAnonymousErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpSetupConfirmAnonymousError::InvalidOneTimePassword { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18577,6 +19948,7 @@ fn variant_totp_setup_confirm_anonymous_error_rs_to_js(
                 &"TotpSetupConfirmAnonymousErrorInvalidOneTimePassword".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpSetupConfirmAnonymousError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18598,6 +19970,7 @@ fn variant_totp_setup_status_anonymous_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpSetupStatusAnonymousError::BadToken { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18605,6 +19978,7 @@ fn variant_totp_setup_status_anonymous_error_rs_to_js(
                 &"TotpSetupStatusAnonymousErrorBadToken".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpSetupStatusAnonymousError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18612,6 +19986,7 @@ fn variant_totp_setup_status_anonymous_error_rs_to_js(
                 &"TotpSetupStatusAnonymousErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::TotpSetupStatusAnonymousError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18633,6 +20008,7 @@ fn variant_update_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UpdateDeviceError::DecryptionFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18640,9 +20016,11 @@ fn variant_update_device_error_rs_to_js(
                 &"UpdateDeviceErrorDecryptionFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UpdateDeviceError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"UpdateDeviceErrorInternal".into())?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UpdateDeviceError::InvalidData { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18650,6 +20028,7 @@ fn variant_update_device_error_rs_to_js(
                 &"UpdateDeviceErrorInvalidData".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UpdateDeviceError::InvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18657,6 +20036,7 @@ fn variant_update_device_error_rs_to_js(
                 &"UpdateDeviceErrorInvalidPath".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UpdateDeviceError::NoSpaceAvailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18664,6 +20044,7 @@ fn variant_update_device_error_rs_to_js(
                 &"UpdateDeviceErrorNoSpaceAvailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18671,6 +20052,7 @@ fn variant_update_device_error_rs_to_js(
                 &"UpdateDeviceErrorRemoteOpaqueKeyOperationFailed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UpdateDeviceError::RemoteOpaqueKeyOperationOffline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18678,6 +20060,7 @@ fn variant_update_device_error_rs_to_js(
                 &"UpdateDeviceErrorRemoteOpaqueKeyOperationOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UpdateDeviceError::TOTPDecryptionFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18699,6 +20082,7 @@ fn variant_user_claim_list_initial_infos_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UserClaimListInitialInfosError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18745,6 +20129,7 @@ fn variant_user_x509_certificate_load_error_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UserX509CertificateLoadError::InvalidCertificateDer { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18752,6 +20137,7 @@ fn variant_user_x509_certificate_load_error_rs_to_js(
                 &"UserX509CertificateLoadErrorInvalidCertificateDer".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UserX509CertificateLoadError::InvalidEmail { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18759,6 +20145,7 @@ fn variant_user_x509_certificate_load_error_rs_to_js(
                 &"UserX509CertificateLoadErrorInvalidEmail".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UserX509CertificateLoadError::InvalidTime { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18766,6 +20153,7 @@ fn variant_user_x509_certificate_load_error_rs_to_js(
                 &"UserX509CertificateLoadErrorInvalidTime".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UserX509CertificateLoadError::NoCommonName { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18787,6 +20175,7 @@ fn variant_wait_for_device_available_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WaitForDeviceAvailableError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18808,6 +20197,7 @@ fn variant_workspace_create_file_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::EntryExists { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18815,6 +20205,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorEntryExists".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18822,6 +20213,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18829,6 +20221,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18836,6 +20229,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18843,6 +20237,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18850,6 +20245,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18857,6 +20253,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::ParentNotAFolder { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18864,6 +20261,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorParentNotAFolder".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::ParentNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18871,6 +20269,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorParentNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::ReadOnlyRealm { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18878,6 +20277,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorReadOnlyRealm".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18885,6 +20285,7 @@ fn variant_workspace_create_file_error_rs_to_js(
                 &"WorkspaceCreateFileErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFileError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18906,6 +20307,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::EntryExists { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18913,6 +20315,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorEntryExists".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18920,6 +20323,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18927,6 +20331,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18934,6 +20339,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18941,6 +20347,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18948,6 +20355,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18955,6 +20363,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::ParentNotAFolder { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18962,6 +20371,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorParentNotAFolder".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::ParentNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18969,6 +20379,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorParentNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::ReadOnlyRealm { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18976,6 +20387,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorReadOnlyRealm".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -18983,6 +20395,7 @@ fn variant_workspace_create_folder_error_rs_to_js(
                 &"WorkspaceCreateFolderErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceCreateFolderError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19004,6 +20417,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::CorruptedData { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19011,6 +20425,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &"WorkspaceDecryptPathAddrErrorCorruptedData".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::CorruptedKey { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19018,6 +20433,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &"WorkspaceDecryptPathAddrErrorCorruptedKey".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19025,6 +20441,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &"WorkspaceDecryptPathAddrErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19032,6 +20449,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &"WorkspaceDecryptPathAddrErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19039,6 +20457,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &"WorkspaceDecryptPathAddrErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::KeyNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19046,6 +20465,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &"WorkspaceDecryptPathAddrErrorKeyNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::NotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19053,6 +20473,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &"WorkspaceDecryptPathAddrErrorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19060,6 +20481,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &"WorkspaceDecryptPathAddrErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19067,6 +20489,7 @@ fn variant_workspace_decrypt_path_addr_error_rs_to_js(
                 &"WorkspaceDecryptPathAddrErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceDecryptPathAddrError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19088,6 +20511,7 @@ fn variant_workspace_fd_close_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdCloseError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19095,6 +20519,7 @@ fn variant_workspace_fd_close_error_rs_to_js(
                 &"WorkspaceFdCloseErrorBadFileDescriptor".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdCloseError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19102,6 +20527,7 @@ fn variant_workspace_fd_close_error_rs_to_js(
                 &"WorkspaceFdCloseErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdCloseError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19123,6 +20549,7 @@ fn variant_workspace_fd_flush_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdFlushError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19130,6 +20557,7 @@ fn variant_workspace_fd_flush_error_rs_to_js(
                 &"WorkspaceFdFlushErrorBadFileDescriptor".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdFlushError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19137,6 +20565,7 @@ fn variant_workspace_fd_flush_error_rs_to_js(
                 &"WorkspaceFdFlushErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdFlushError::NotInWriteMode { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19144,6 +20573,7 @@ fn variant_workspace_fd_flush_error_rs_to_js(
                 &"WorkspaceFdFlushErrorNotInWriteMode".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdFlushError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19165,6 +20595,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19172,6 +20603,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorBadFileDescriptor".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19179,6 +20611,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::InvalidBlockAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19186,6 +20619,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorInvalidBlockAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19193,6 +20627,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19200,6 +20635,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19207,6 +20643,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::NotInReadMode { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19214,6 +20651,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorNotInReadMode".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19221,6 +20659,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19228,6 +20667,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::ServerBlockstoreUnavailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19235,6 +20675,7 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorServerBlockstoreUnavailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdReadError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19256,6 +20697,7 @@ fn variant_workspace_fd_resize_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdResizeError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19263,6 +20705,7 @@ fn variant_workspace_fd_resize_error_rs_to_js(
                 &"WorkspaceFdResizeErrorBadFileDescriptor".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdResizeError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19270,6 +20713,7 @@ fn variant_workspace_fd_resize_error_rs_to_js(
                 &"WorkspaceFdResizeErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdResizeError::NotInWriteMode { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19291,6 +20735,7 @@ fn variant_workspace_fd_stat_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdStatError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19298,6 +20743,7 @@ fn variant_workspace_fd_stat_error_rs_to_js(
                 &"WorkspaceFdStatErrorBadFileDescriptor".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdStatError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19319,6 +20765,7 @@ fn variant_workspace_fd_write_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdWriteError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19326,6 +20773,7 @@ fn variant_workspace_fd_write_error_rs_to_js(
                 &"WorkspaceFdWriteErrorBadFileDescriptor".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdWriteError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19333,6 +20781,7 @@ fn variant_workspace_fd_write_error_rs_to_js(
                 &"WorkspaceFdWriteErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceFdWriteError::NotInWriteMode { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19354,6 +20803,7 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceGeneratePathAddrError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19361,6 +20811,7 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
                 &"WorkspaceGeneratePathAddrErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceGeneratePathAddrError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19368,6 +20819,7 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
                 &"WorkspaceGeneratePathAddrErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceGeneratePathAddrError::NoKey { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19375,6 +20827,7 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
                 &"WorkspaceGeneratePathAddrErrorNoKey".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceGeneratePathAddrError::NotAllowed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19382,6 +20835,7 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
                 &"WorkspaceGeneratePathAddrErrorNotAllowed".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceGeneratePathAddrError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19389,6 +20843,7 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
                 &"WorkspaceGeneratePathAddrErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceGeneratePathAddrError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19396,6 +20851,7 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
                 &"WorkspaceGeneratePathAddrErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceGeneratePathAddrError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19430,7 +20886,10 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let parent = {
@@ -19444,7 +20903,10 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created = {
@@ -19455,7 +20917,8 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -19467,7 +20930,8 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -19481,8 +20945,7 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             let size = {
@@ -19490,6 +20953,7 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                 {
                     let v = u64::try_from(js_val)
                         .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -19504,7 +20968,10 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::WorkspaceHistoryEntryStat::File {
@@ -19529,7 +20996,10 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let parent = {
@@ -19543,7 +21013,10 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                             libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let created = {
@@ -19554,7 +21027,8 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -19566,7 +21040,8 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                             .map_err(|_| "Out-of-bound datetime")
                     };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    let v = custom_from_rs_f64(v).map_err(TypeError::new)?;
+                    #[allow(clippy::let_and_return)]
                     v
                 }
             };
@@ -19580,8 +21055,7 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             let last_updater = {
@@ -19595,7 +21069,10 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                             libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(libparsec::WorkspaceHistoryEntryStat::Folder {
@@ -19619,6 +21096,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryEntryStat::File {
             id,
             parent,
@@ -19639,6 +21117,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -19649,6 +21128,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -19660,7 +21140,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -19671,7 +21151,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -19685,12 +21165,14 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
             });
             Reflect::set(&js_obj, &"lastUpdater".into(), &js_last_updater)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryEntryStat::Folder {
             id,
             parent,
@@ -19710,6 +21192,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -19720,6 +21203,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(parent) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -19731,7 +21215,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -19742,7 +21226,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                 };
                 let v = match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                 };
                 JsValue::from(v)
             };
@@ -19754,6 +21238,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
                     |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
                 match custom_to_rs_string(last_updater) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -19774,6 +21259,7 @@ fn variant_workspace_history_fd_close_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdCloseError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19781,6 +21267,7 @@ fn variant_workspace_history_fd_close_error_rs_to_js(
                 &"WorkspaceHistoryFdCloseErrorBadFileDescriptor".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdCloseError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19802,6 +21289,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19809,6 +21297,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorBadFileDescriptor".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19816,6 +21305,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::InvalidBlockAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19823,6 +21313,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorInvalidBlockAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19830,6 +21321,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19837,6 +21329,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19844,6 +21337,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19851,6 +21345,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19858,6 +21353,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::ServerBlockstoreUnavailable { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19865,6 +21361,7 @@ fn variant_workspace_history_fd_read_error_rs_to_js(
                 &"WorkspaceHistoryFdReadErrorServerBlockstoreUnavailable".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdReadError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19886,6 +21383,7 @@ fn variant_workspace_history_fd_stat_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdStatError::BadFileDescriptor { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19893,6 +21391,7 @@ fn variant_workspace_history_fd_stat_error_rs_to_js(
                 &"WorkspaceHistoryFdStatErrorBadFileDescriptor".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryFdStatError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19914,6 +21413,7 @@ fn variant_workspace_history_internal_only_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryInternalOnlyError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19935,6 +21435,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::EntryNotAFile { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19942,6 +21443,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorEntryNotAFile".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19949,6 +21451,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19956,6 +21459,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19963,6 +21467,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::InvalidHistory { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19970,6 +21475,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorInvalidHistory".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19977,6 +21483,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19984,6 +21491,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19991,6 +21499,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -19998,6 +21507,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20005,6 +21515,7 @@ fn variant_workspace_history_open_file_error_rs_to_js(
                 &"WorkspaceHistoryOpenFileErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryOpenFileError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20041,7 +21552,10 @@ fn variant_workspace_history_realm_export_decryptor_js_to_rs(
                                 libparsec::SequesterServiceID::from_hex(s.as_str())
                                     .map_err(|e| e.to_string())
                             };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             let private_key_pem_path = {
@@ -20055,7 +21569,10 @@ fn variant_workspace_history_realm_export_decryptor_js_to_rs(
                         let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
                             Ok(std::path::PathBuf::from(s))
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?
             };
             Ok(
@@ -20084,6 +21601,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryRealmExportDecryptor::SequesterService {
             sequester_service_id,
             private_key_pem_path,
@@ -20101,6 +21619,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js(
                     };
                 match custom_to_rs_string(sequester_service_id) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -20118,6 +21637,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js(
                 };
                 match custom_to_rs_string(private_key_pem_path) {
                     Ok(ok) => ok,
+                    #[allow(clippy::unnecessary_to_owned)]
                     Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                 }
                 .as_ref()
@@ -20128,6 +21648,7 @@ fn variant_workspace_history_realm_export_decryptor_rs_to_js(
                 &js_private_key_pem_path,
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryRealmExportDecryptor::User { access, .. } => {
             Reflect::set(
                 &js_obj,
@@ -20151,6 +21672,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20158,6 +21680,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20165,6 +21688,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20172,6 +21696,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::InvalidHistory { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20179,6 +21704,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorInvalidHistory".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20186,6 +21712,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20193,6 +21720,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::NewerThanHigherBound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20200,6 +21728,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorNewerThanHigherBound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20207,6 +21736,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20214,6 +21744,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::OlderThanLowerBound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20221,6 +21752,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorOlderThanLowerBound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20228,6 +21760,7 @@ fn variant_workspace_history_set_timestamp_of_interest_error_rs_to_js(
                 &"WorkspaceHistorySetTimestampOfInterestErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistorySetTimestampOfInterestError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20249,6 +21782,7 @@ fn variant_workspace_history_start_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::CannotOpenRealmExportDatabase { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20256,6 +21790,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorCannotOpenRealmExportDatabase".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::IncompleteRealmExportDatabase { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20263,6 +21798,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorIncompleteRealmExportDatabase".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20270,6 +21806,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20277,6 +21814,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20284,6 +21822,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20291,6 +21830,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::InvalidRealmExportDatabase { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20298,6 +21838,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorInvalidRealmExportDatabase".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::NoHistory { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20305,6 +21846,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorNoHistory".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20312,6 +21854,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20319,6 +21862,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20326,6 +21870,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20333,6 +21878,7 @@ fn variant_workspace_history_start_error_rs_to_js(
                 &"WorkspaceHistoryStartErrorStopped".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStartError::UnsupportedRealmExportDatabaseVersion { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20354,6 +21900,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20361,6 +21908,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20368,6 +21916,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20375,6 +21924,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::InvalidHistory { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20382,6 +21932,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorInvalidHistory".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20389,6 +21940,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20396,6 +21948,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20403,6 +21956,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20410,6 +21964,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20417,6 +21972,7 @@ fn variant_workspace_history_stat_entry_error_rs_to_js(
                 &"WorkspaceHistoryStatEntryErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatEntryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20438,6 +21994,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::EntryIsFile { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20445,6 +22002,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorEntryIsFile".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20452,6 +22010,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20459,6 +22018,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20466,6 +22026,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::InvalidHistory { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20473,6 +22034,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorInvalidHistory".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20480,6 +22042,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20487,6 +22050,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20494,6 +22058,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20501,6 +22066,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20508,6 +22074,7 @@ fn variant_workspace_history_stat_folder_children_error_rs_to_js(
                 &"WorkspaceHistoryStatFolderChildrenErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceHistoryStatFolderChildrenError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20529,6 +22096,7 @@ fn variant_workspace_info_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceInfoError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"WorkspaceInfoErrorInternal".into())?;
         }
@@ -20546,6 +22114,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20553,6 +22122,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &"WorkspaceIsFileContentLocalErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20560,6 +22130,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &"WorkspaceIsFileContentLocalErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20567,6 +22138,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &"WorkspaceIsFileContentLocalErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20574,6 +22146,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &"WorkspaceIsFileContentLocalErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20581,6 +22154,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &"WorkspaceIsFileContentLocalErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20588,6 +22162,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &"WorkspaceIsFileContentLocalErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::NotAFile { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20595,6 +22170,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &"WorkspaceIsFileContentLocalErrorNotAFile".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20602,6 +22178,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &"WorkspaceIsFileContentLocalErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20609,6 +22186,7 @@ fn variant_workspace_is_file_content_local_error_rs_to_js(
                 &"WorkspaceIsFileContentLocalErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceIsFileContentLocalError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20630,6 +22208,7 @@ fn variant_workspace_mount_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMountError::Disabled { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20637,6 +22216,7 @@ fn variant_workspace_mount_error_rs_to_js(
                 &"WorkspaceMountErrorDisabled".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMountError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20658,6 +22238,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::CannotMoveRoot { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20665,6 +22246,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorCannotMoveRoot".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::DestinationExists { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20672,6 +22254,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorDestinationExists".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::DestinationNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20679,6 +22262,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorDestinationNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20686,6 +22270,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20693,6 +22278,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20700,6 +22286,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20707,6 +22294,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20714,6 +22302,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20721,6 +22310,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::ReadOnlyRealm { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20728,6 +22318,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorReadOnlyRealm".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20735,6 +22326,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::SourceNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20742,6 +22334,7 @@ fn variant_workspace_move_entry_error_rs_to_js(
                 &"WorkspaceMoveEntryErrorSourceNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceMoveEntryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20763,6 +22356,7 @@ fn variant_workspace_open_file_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20770,6 +22364,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorEntryExistsInCreateNewMode".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::EntryNotAFile { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20777,6 +22372,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorEntryNotAFile".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20784,6 +22380,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20791,6 +22388,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20798,6 +22396,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20805,6 +22404,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20812,6 +22412,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20819,6 +22420,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20826,6 +22428,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::ReadOnlyRealm { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20833,6 +22436,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorReadOnlyRealm".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20840,6 +22444,7 @@ fn variant_workspace_open_file_error_rs_to_js(
                 &"WorkspaceOpenFileErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceOpenFileError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20861,6 +22466,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::CannotRemoveRoot { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20868,6 +22474,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorCannotRemoveRoot".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::EntryIsFile { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20875,6 +22482,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorEntryIsFile".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::EntryIsFolder { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20882,6 +22490,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorEntryIsFolder".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::EntryIsNonEmptyFolder { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20889,6 +22498,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorEntryIsNonEmptyFolder".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20896,6 +22506,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20903,6 +22514,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20910,6 +22522,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20917,6 +22530,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20924,6 +22538,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20931,6 +22546,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20938,6 +22554,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::ReadOnlyRealm { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20945,6 +22562,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorReadOnlyRealm".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20952,6 +22570,7 @@ fn variant_workspace_remove_entry_error_rs_to_js(
                 &"WorkspaceRemoveEntryErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceRemoveEntryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20973,6 +22592,7 @@ fn variant_workspace_stat_entry_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatEntryError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20980,6 +22600,7 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &"WorkspaceStatEntryErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatEntryError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20987,6 +22608,7 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &"WorkspaceStatEntryErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatEntryError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -20994,6 +22616,7 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &"WorkspaceStatEntryErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatEntryError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21001,6 +22624,7 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &"WorkspaceStatEntryErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatEntryError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21008,6 +22632,7 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &"WorkspaceStatEntryErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatEntryError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21015,6 +22640,7 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &"WorkspaceStatEntryErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatEntryError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21022,6 +22648,7 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &"WorkspaceStatEntryErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatEntryError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21029,6 +22656,7 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &"WorkspaceStatEntryErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatEntryError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21050,6 +22678,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::EntryIsFile { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21057,6 +22686,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &"WorkspaceStatFolderChildrenErrorEntryIsFile".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21064,6 +22694,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &"WorkspaceStatFolderChildrenErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21071,6 +22702,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &"WorkspaceStatFolderChildrenErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21078,6 +22710,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &"WorkspaceStatFolderChildrenErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21085,6 +22718,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &"WorkspaceStatFolderChildrenErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21092,6 +22726,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &"WorkspaceStatFolderChildrenErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21099,6 +22734,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &"WorkspaceStatFolderChildrenErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21106,6 +22742,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &"WorkspaceStatFolderChildrenErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21113,6 +22750,7 @@ fn variant_workspace_stat_folder_children_error_rs_to_js(
                 &"WorkspaceStatFolderChildrenErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStatFolderChildrenError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21134,6 +22772,7 @@ fn variant_workspace_stop_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStopError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"WorkspaceStopErrorInternal".into())?;
         }
@@ -21163,8 +22802,7 @@ fn variant_workspace_storage_cache_size_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    let v = v as u32;
-                    v
+                    v as u32
                 }
             };
             Ok(libparsec::WorkspaceStorageCacheSize::Custom { size })
@@ -21182,6 +22820,7 @@ fn variant_workspace_storage_cache_size_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStorageCacheSize::Custom { size, .. } => {
             Reflect::set(
                 &js_obj,
@@ -21191,6 +22830,7 @@ fn variant_workspace_storage_cache_size_rs_to_js(
             let js_size = JsValue::from(size);
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceStorageCacheSize::Default { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21212,6 +22852,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceWatchEntryOneShotError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21219,6 +22860,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &"WorkspaceWatchEntryOneShotErrorEntryNotFound".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceWatchEntryOneShotError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21226,6 +22868,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &"WorkspaceWatchEntryOneShotErrorInternal".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceWatchEntryOneShotError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21233,6 +22876,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &"WorkspaceWatchEntryOneShotErrorInvalidCertificate".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceWatchEntryOneShotError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21240,6 +22884,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &"WorkspaceWatchEntryOneShotErrorInvalidKeysBundle".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceWatchEntryOneShotError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21247,6 +22892,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &"WorkspaceWatchEntryOneShotErrorInvalidManifest".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceWatchEntryOneShotError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21254,6 +22900,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &"WorkspaceWatchEntryOneShotErrorNoRealmAccess".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceWatchEntryOneShotError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21261,6 +22908,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &"WorkspaceWatchEntryOneShotErrorOffline".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceWatchEntryOneShotError::RealmDeleted { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21268,6 +22916,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &"WorkspaceWatchEntryOneShotErrorRealmDeleted".into(),
             )?;
         }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::WorkspaceWatchEntryOneShotError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
@@ -21325,7 +22974,12 @@ fn variant_x509_uri_flavor_value_rs_to_js(
                 let _ = x1;
                 JsValue::UNDEFINED
             };
-            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into(),
+            )?;
         }
         libparsec::X509URIFlavorValue::WindowsCNG(x1, ..) => {
             Reflect::set(
@@ -21334,7 +22988,12 @@ fn variant_x509_uri_flavor_value_rs_to_js(
                 &"X509URIFlavorValueWindowsCNG".into(),
             )?;
             let js_x1 = struct_x509_windows_cng_uri_rs_to_js(x1)?;
-            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -21352,20 +23011,29 @@ pub fn accountCreate1SendValidationEmail(
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let email = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(email).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::account_create_1_send_validation_email(&config_dir, addr, email).await;
         Ok(match ret {
@@ -21373,6 +23041,7 @@ pub fn accountCreate1SendValidationEmail(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -21403,21 +23072,30 @@ pub fn accountCreate2CheckValidationCode(
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let email = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(email).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::account_create_2_check_validation_code(
             &config_dir,
@@ -21431,6 +23109,7 @@ pub fn accountCreate2CheckValidationCode(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -21462,14 +23141,20 @@ pub fn accountCreate3Proceed(
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let human_handle = human_handle.into();
@@ -21492,6 +23177,7 @@ pub fn accountCreate3Proceed(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -21524,6 +23210,7 @@ pub fn accountCreateAuthMethod(account: u32, auth_method_strategy: Object) -> Pr
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -21561,6 +23248,7 @@ pub fn accountCreateRegistrationDevice(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -21589,6 +23277,7 @@ pub fn accountDelete1SendValidationEmail(account: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -21617,6 +23306,7 @@ pub fn accountDelete2Proceed(account: u32, validation_code: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -21643,7 +23333,10 @@ pub fn accountDisableAuthMethod(account: u32, auth_method_id: String) -> Promise
             let custom_from_rs_string = |s: String| -> Result<libparsec::AccountAuthMethodID, _> {
                 libparsec::AccountAuthMethodID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(auth_method_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(auth_method_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::account_disable_auth_method(account, auth_method_id).await;
         Ok(match ret {
@@ -21651,6 +23344,7 @@ pub fn accountDisableAuthMethod(account: u32, auth_method_id: String) -> Promise
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -21752,6 +23446,7 @@ pub fn accountListInvitations(account: u32) -> Promise {
                                     let custom_to_rs_string = |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
                                     match custom_to_rs_string(x1) {
                                         Ok(ok) => ok,
+                                        #[allow(clippy::unnecessary_to_owned)]
                                         Err(err) => {
                                             return Err(JsValue::from(TypeError::new(
                                                 &err.to_string(),
@@ -21768,6 +23463,7 @@ pub fn accountListInvitations(account: u32) -> Promise {
                                         };
                                     match custom_to_rs_string(x2) {
                                         Ok(ok) => ok,
+                                        #[allow(clippy::unnecessary_to_owned)]
                                         Err(err) => {
                                             return Err(JsValue::from(TypeError::new(
                                                 &err.to_string(),
@@ -21789,6 +23485,7 @@ pub fn accountListInvitations(account: u32) -> Promise {
                                     };
                                 match custom_to_rs_string(x3) {
                                     Ok(ok) => ok,
+                                    #[allow(clippy::unnecessary_to_owned)]
                                     Err(err) => {
                                         return Err(JsValue::from(TypeError::new(&err.to_string())))
                                     }
@@ -21870,6 +23567,7 @@ pub fn accountListRegistrationDevices(account: u32) -> Promise {
                                     };
                                 match custom_to_rs_string(x2) {
                                     Ok(ok) => ok,
+                                    #[allow(clippy::unnecessary_to_owned)]
                                     Err(err) => {
                                         return Err(JsValue::from(TypeError::new(&err.to_string())))
                                     }
@@ -21905,13 +23603,19 @@ pub fn accountLogin(config_dir: String, addr: String, login_strategy: Object) ->
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let login_strategy = login_strategy.into();
         let login_strategy = variant_account_login_strategy_js_to_rs(login_strategy)?;
@@ -21947,6 +23651,7 @@ pub fn accountLogout(account: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -21976,20 +23681,29 @@ pub fn accountRecover1SendValidationEmail(
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let email = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(email).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret =
             libparsec::account_recover_1_send_validation_email(&config_dir, addr, email).await;
@@ -21998,6 +23712,7 @@ pub fn accountRecover1SendValidationEmail(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -22029,21 +23744,30 @@ pub fn accountRecover2Proceed(
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let email = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(email).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let auth_method_strategy = auth_method_strategy.into();
         let auth_method_strategy =
@@ -22062,6 +23786,7 @@ pub fn accountRecover2Proceed(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -22094,19 +23819,28 @@ pub fn accountRegisterNewDevice(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(organization_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(organization_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let user_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(user_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(user_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let new_device_label = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(new_device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(new_device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let save_strategy = save_strategy.into();
         let save_strategy = struct_device_save_strategy_js_to_rs(save_strategy)?;
@@ -22146,13 +23880,19 @@ pub fn archiveDevice(config_dir: String, device_path: String) -> Promise {
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let device_path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(device_path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(device_path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::archive_device(&config_dir, &device_path).await;
@@ -22161,6 +23901,7 @@ pub fn archiveDevice(config_dir: String, device_path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -22197,8 +23938,10 @@ pub fn bootstrapOrganization(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(bootstrap_organization_addr)
-                .map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(bootstrap_organization_addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let save_strategy = save_strategy.into();
         let save_strategy = struct_device_save_strategy_js_to_rs(save_strategy)?;
@@ -22210,8 +23953,12 @@ pub fn bootstrapOrganization(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
+        #[allow(clippy::manual_map, clippy::needless_match)]
         let sequester_authority_verify_key_pem = match sequester_authority_verify_key_pem {
             Some(sequester_authority_verify_key_pem) => Some(sequester_authority_verify_key_pem),
             None => None,
@@ -22250,6 +23997,7 @@ pub fn bootstrapOrganization(
 #[wasm_bindgen]
 pub fn buildParsecAddr(hostname: String, port: Option<u16>, use_ssl: bool) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        #[allow(clippy::manual_map, clippy::needless_match)]
         let port = match port {
             Some(port) => Some(port),
             None => None,
@@ -22262,6 +24010,7 @@ pub fn buildParsecAddr(hostname: String, port: Option<u16>, use_ssl: bool) -> Pr
                 };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -22278,13 +24027,19 @@ pub fn buildParsecOrganizationBootstrapAddr(addr: String, organization_id: Strin
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let organization_id = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(organization_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(organization_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::build_parsec_organization_bootstrap_addr(addr, organization_id);
         Ok(JsValue::from_str({
@@ -22294,6 +24049,7 @@ pub fn buildParsecOrganizationBootstrapAddr(addr: String, organization_id: Strin
                 };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -22312,6 +24068,7 @@ pub fn cancel(canceller: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -22368,6 +24125,7 @@ pub fn claimerDeviceInProgress1DoDenyTrust(canceller: u32, handle: u32) -> Promi
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -22449,7 +24207,10 @@ pub fn claimerDeviceInProgress3DoClaim(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(requested_device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(requested_device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::claimer_device_in_progress_3_do_claim(
             canceller,
@@ -22512,6 +24273,7 @@ pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -22541,7 +24303,10 @@ pub fn claimerRetrieveInfo(config: Object, addr: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::claimer_retrieve_info(config, addr).await;
         Ok(match ret {
@@ -22631,6 +24396,7 @@ pub fn claimerShamirRecoveryInProgress1DoDenyTrust(canceller: u32, handle: u32) 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -22762,7 +24528,10 @@ pub fn claimerShamirRecoveryPickRecipient(handle: u32, recipient_user_id: String
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(recipient_user_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(recipient_user_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::claimer_shamir_recovery_pick_recipient(handle, recipient_user_id);
         Ok(match ret {
@@ -22793,7 +24562,10 @@ pub fn claimerShamirRecoveryRecoverDevice(handle: u32, requested_device_label: S
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(requested_device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(requested_device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret =
             libparsec::claimer_shamir_recovery_recover_device(handle, requested_device_label).await;
@@ -22855,6 +24627,7 @@ pub fn claimerUserInProgress1DoDenyTrust(canceller: u32, handle: u32) -> Promise
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -22936,7 +24709,10 @@ pub fn claimerUserInProgress3DoClaim(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(requested_device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(requested_device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let requested_human_handle = requested_human_handle.into();
         let requested_human_handle = struct_human_handle_js_to_rs(requested_human_handle)?;
@@ -23067,7 +24843,10 @@ pub fn clientAcceptAsyncEnrollment(
             let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
                 libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(enrollment_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let identity_strategy = identity_strategy.into();
         let identity_strategy =
@@ -23110,7 +24889,7 @@ pub fn clientAcceptTos(client: u32, tos_updated_on: f64) -> Promise {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            custom_from_rs_f64(tos_updated_on).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_f64(tos_updated_on).map_err(TypeError::new)
         }?;
 
         let ret = libparsec::client_accept_tos(client, tos_updated_on).await;
@@ -23119,6 +24898,7 @@ pub fn clientAcceptTos(client: u32, tos_updated_on: f64) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -23145,7 +24925,10 @@ pub fn clientArchiveWorkspace(client: u32, realm_id: String, configuration: Obje
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(realm_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let configuration = configuration.into();
         let configuration =
@@ -23157,6 +24940,7 @@ pub fn clientArchiveWorkspace(client: u32, realm_id: String, configuration: Obje
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -23183,7 +24967,10 @@ pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
                 libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(token).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_cancel_invitation(client, token).await;
         Ok(match ret {
@@ -23191,6 +24978,7 @@ pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -23217,7 +25005,10 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(name).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(name).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_create_workspace(client, name).await;
         Ok(match ret {
@@ -23229,6 +25020,7 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -23258,6 +25050,7 @@ pub fn clientDeleteShamirRecovery(client_handle: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -23284,7 +25077,10 @@ pub fn clientExportRecoveryDevice(client_handle: u32, device_label: String) -> P
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_export_recovery_device(client_handle, device_label).await;
         Ok(match ret {
@@ -23295,7 +25091,10 @@ pub fn clientExportRecoveryDevice(client_handle: u32, device_label: String) -> P
                     let (x1, x2) = value;
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
-                    let js_value = JsValue::from_str(x1.as_ref());
+                    let js_value = {
+                        #[allow(clippy::useless_asref)]
+                        JsValue::from_str(x1.as_ref())
+                    };
                     js_array.set(0, js_value);
                     let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
                     js_array.set(1, js_value);
@@ -23326,6 +25125,7 @@ pub fn clientForgetAllCertificates(client: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -23361,6 +25161,7 @@ pub fn clientGetAsyncEnrollmentAddr(client: u32) -> Promise {
                         let custom_to_rs_string = |addr: libparsec::ParsecAsyncEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
                         match custom_to_rs_string(x1) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -23375,6 +25176,7 @@ pub fn clientGetAsyncEnrollmentAddr(client: u32) -> Promise {
                             };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -23414,7 +25216,7 @@ pub fn clientGetOrganizationBootstrapDate(client_handle: u32) -> Promise {
                     };
                     let v = match custom_to_rs_f64(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
                     JsValue::from(v)
                 };
@@ -23491,7 +25293,10 @@ pub fn clientGetUserDevice(client: u32, device: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                 libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(device).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(device).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_get_user_device(client, device).await;
         Ok(match ret {
@@ -23531,7 +25336,10 @@ pub fn clientGetUserInfo(client: u32, user_id: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(user_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(user_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_get_user_info(client, user_id).await;
         Ok(match ret {
@@ -23632,6 +25440,7 @@ pub fn clientListFrozenUsers(client_handle: u32) -> Promise {
                                 };
                             match custom_to_rs_string(elem) {
                                 Ok(ok) => ok,
+                                #[allow(clippy::unnecessary_to_owned)]
                                 Err(err) => {
                                     return Err(JsValue::from(TypeError::new(&err.to_string())))
                                 }
@@ -23731,7 +25540,10 @@ pub fn clientListUserDevices(client: u32, user: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(user).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(user).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_list_user_devices(client, user).await;
         Ok(match ret {
@@ -23803,7 +25615,10 @@ pub fn clientListWorkspaceUsers(client: u32, realm_id: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(realm_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_list_workspace_users(client, realm_id).await;
         Ok(match ret {
@@ -23904,7 +25719,10 @@ pub fn clientNewShamirRecoveryInvitation(
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(claimer_user_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(claimer_user_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret =
@@ -23938,7 +25756,10 @@ pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: b
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(claimer_email).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(claimer_email).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::client_new_user_invitation(client, claimer_email, send_email).await;
@@ -23995,7 +25816,10 @@ pub fn clientRejectAsyncEnrollment(client: u32, enrollment_id: String) -> Promis
             let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
                 libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(enrollment_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_reject_async_enrollment(client, enrollment_id).await;
         Ok(match ret {
@@ -24003,6 +25827,7 @@ pub fn clientRejectAsyncEnrollment(client: u32, enrollment_id: String) -> Promis
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24029,13 +25854,19 @@ pub fn clientRenameWorkspace(client: u32, realm_id: String, new_name: String) ->
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(realm_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let new_name = {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(new_name).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(new_name).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_rename_workspace(client, realm_id, new_name).await;
         Ok(match ret {
@@ -24043,6 +25874,7 @@ pub fn clientRenameWorkspace(client: u32, realm_id: String, new_name: String) ->
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24069,7 +25901,10 @@ pub fn clientRevokeUser(client: u32, user: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(user).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(user).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_revoke_user(client, user).await;
         Ok(match ret {
@@ -24077,6 +25912,7 @@ pub fn clientRevokeUser(client: u32, user: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24131,7 +25967,10 @@ pub fn clientSetupShamirRecovery(
                         let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                             libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        custom_from_rs_string(x).map_err(|e| {
+                            #[allow(clippy::useless_asref)]
+                            TypeError::new(e.as_ref())
+                        })
                     })?;
                 let value = {
                     let v = js_value
@@ -24170,6 +26009,7 @@ pub fn clientSetupShamirRecovery(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24201,14 +26041,21 @@ pub fn clientShareWorkspace(
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(realm_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let recipient = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(recipient).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(recipient).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
+        #[allow(clippy::manual_map, clippy::needless_match)]
         let role = match role {
             Some(role) => {
                 let role = enum_realm_role_js_to_rs(&role)?;
@@ -24224,6 +26071,7 @@ pub fn clientShareWorkspace(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24281,7 +26129,10 @@ pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
                 libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(token).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_start_device_invitation_greet(client, token).await;
         Ok(match ret {
@@ -24312,7 +26163,10 @@ pub fn clientStartShamirRecoveryInvitationGreet(client: u32, token: String) -> P
             let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
                 libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(token).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_start_shamir_recovery_invitation_greet(client, token).await;
         Ok(match ret {
@@ -24344,7 +26198,10 @@ pub fn clientStartUserInvitationGreet(client: u32, token: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::AccessToken, _> {
                 libparsec::AccessToken::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(token).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_start_user_invitation_greet(client, token).await;
         Ok(match ret {
@@ -24375,7 +26232,10 @@ pub fn clientStartWorkspace(client: u32, realm_id: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(realm_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_start_workspace(client, realm_id).await;
         Ok(match ret {
@@ -24406,7 +26266,10 @@ pub fn clientStartWorkspaceHistory(client: u32, realm_id: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(realm_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::client_start_workspace_history(client, realm_id).await;
         Ok(match ret {
@@ -24439,6 +26302,7 @@ pub fn clientStop(client: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24477,6 +26341,7 @@ pub fn clientTotpCreateOpaqueKey(client: u32) -> Promise {
                             };
                         match custom_to_rs_string(x1) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -24513,6 +26378,7 @@ pub fn clientTotpSetupConfirm(client: u32, one_time_password: String) -> Promise
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24564,7 +26430,10 @@ pub fn clientUpdateUserProfile(client_handle: u32, user: String, new_profile: St
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(user).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(user).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let new_profile = enum_user_profile_js_to_rs(&new_profile)?;
 
@@ -24574,6 +26443,7 @@ pub fn clientUpdateUserProfile(client_handle: u32, user: String, new_profile: St
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24605,6 +26475,7 @@ pub fn getDefaultConfigDir() -> Promise {
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -24626,6 +26497,7 @@ pub fn getDefaultDataBaseDir() -> Promise {
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -24647,6 +26519,7 @@ pub fn getDefaultMountpointBaseDir() -> Promise {
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -24672,14 +26545,20 @@ pub fn getServerConfig(config_dir: String, addr: String) -> Promise {
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::get_server_config(&config_dir, addr).await;
         Ok(match ret {
@@ -24738,6 +26617,7 @@ pub fn greeterDeviceInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promi
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24819,7 +26699,10 @@ pub fn greeterDeviceInProgress4DoCreate(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret =
             libparsec::greeter_device_in_progress_4_do_create(canceller, handle, device_label)
@@ -24829,6 +26712,7 @@ pub fn greeterDeviceInProgress4DoCreate(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24910,6 +26794,7 @@ pub fn greeterShamirRecoveryInProgress2DoDenyTrust(canceller: u32, handle: u32) 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -24968,6 +26853,7 @@ pub fn greeterShamirRecoveryInProgress3DoGetClaimRequests(canceller: u32, handle
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -25046,6 +26932,7 @@ pub fn greeterUserInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promise
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -25132,7 +27019,10 @@ pub fn greeterUserInProgress4DoCreate(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let profile = enum_user_profile_js_to_rs(&profile)?;
 
@@ -25149,6 +27039,7 @@ pub fn greeterUserInProgress4DoCreate(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -25211,7 +27102,10 @@ pub fn importRecoveryDevice(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let save_strategy = save_strategy.into();
         let save_strategy = struct_device_save_strategy_js_to_rs(save_strategy)?;
@@ -25295,7 +27189,10 @@ pub fn listAvailableDevices(path: String) -> Promise {
         let path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::list_available_devices(&path).await;
@@ -25367,6 +27264,7 @@ pub fn listStartedClients() -> Promise {
                             };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -25392,7 +27290,10 @@ pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(parsec_path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(parsec_path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::mountpoint_to_os_path(mountpoint, parsec_path).await;
         Ok(match ret {
@@ -25407,6 +27308,7 @@ pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
                     };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -25436,6 +27338,7 @@ pub fn mountpointUnmount(mountpoint: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -25490,7 +27393,10 @@ pub fn openbaoListSelfEmails(
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(value.len() as u32);
                     for (i, elem) in value.into_iter().enumerate() {
-                        let js_elem = JsValue::from_str(elem.as_ref());
+                        let js_elem = {
+                            #[allow(clippy::useless_asref)]
+                            JsValue::from_str(elem.as_ref())
+                        };
                         js_array.set(i as u32, js_elem);
                     }
                     js_array.into()
@@ -25543,7 +27449,10 @@ pub fn pathFilename(path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::path_filename(&path);
         Ok(match ret {
@@ -25562,13 +27471,19 @@ pub fn pathJoin(parent: String, child: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(parent).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(parent).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let child = {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(child).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(child).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::path_join(&parent, &child);
         Ok(JsValue::from_str({
@@ -25577,6 +27492,7 @@ pub fn pathJoin(parent: String, child: String) -> Promise {
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -25593,7 +27509,10 @@ pub fn pathNormalize(path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::path_normalize(path);
         Ok(JsValue::from_str({
@@ -25602,6 +27521,7 @@ pub fn pathNormalize(path: String) -> Promise {
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -25618,7 +27538,10 @@ pub fn pathParent(path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::path_parent(&path);
         Ok(JsValue::from_str({
@@ -25627,6 +27550,7 @@ pub fn pathParent(path: String) -> Promise {
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
+                #[allow(clippy::unnecessary_to_owned)]
                 Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
             }
             .as_ref()
@@ -25643,7 +27567,10 @@ pub fn pathSplit(path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::path_split(&path);
         Ok({
@@ -25666,7 +27593,10 @@ pub fn pkiInitForNative(config_dir: String) -> Promise {
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::pki_init_for_native(&config_dir).await;
@@ -25675,6 +27605,7 @@ pub fn pkiInitForNative(config_dir: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -25700,14 +27631,20 @@ pub fn pkiInitForScws(config_dir: String, parsec_addr: String) -> Promise {
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let parsec_addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(parsec_addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(parsec_addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::pki_init_for_scws(&config_dir, parsec_addr).await;
         Ok(match ret {
@@ -25715,6 +27652,7 @@ pub fn pkiInitForScws(config_dir: String, parsec_addr: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -25804,6 +27742,7 @@ pub fn pkiPrivateKeyClose(handle: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -25833,7 +27772,10 @@ pub fn removeDeviceData(config: Object, device_id: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                 libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(device_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(device_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::remove_device_data(config, device_id).await;
         Ok(match ret {
@@ -25841,6 +27783,7 @@ pub fn removeDeviceData(config: Object, device_id: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -25904,14 +27847,20 @@ pub fn submitAsyncEnrollment(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let requested_device_label = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(requested_device_label).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(requested_device_label).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let identity_strategy = identity_strategy.into();
         let identity_strategy =
@@ -25960,13 +27909,19 @@ pub fn submitterCancelAsyncEnrollment(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let enrollment_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
                 libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(enrollment_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::submitter_cancel_async_enrollment(config, addr, enrollment_id).await;
         Ok(match ret {
@@ -25974,6 +27929,7 @@ pub fn submitterCancelAsyncEnrollment(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -26007,7 +27963,10 @@ pub fn submitterFinalizeAsyncEnrollment(
         let enrollment_file = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(enrollment_file).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(enrollment_file).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let new_device_save_strategy = new_device_save_strategy.into();
@@ -26060,13 +28019,19 @@ pub fn submitterGetAsyncEnrollmentInfo(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAsyncEnrollmentAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let enrollment_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::AsyncEnrollmentID, _> {
                 libparsec::AsyncEnrollmentID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(enrollment_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(enrollment_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::submitter_get_async_enrollment_info(config, addr, enrollment_id).await;
         Ok(match ret {
@@ -26096,7 +28061,10 @@ pub fn submitterListAsyncEnrollments(config_dir: String) -> Promise {
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::submitter_list_async_enrollments(&config_dir).await;
@@ -26136,14 +28104,20 @@ pub fn testCheckMailbox(server_addr: String, email: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(server_addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(server_addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let email = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(email).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(email).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::test_check_mailbox(&server_addr, &email).await;
@@ -26166,6 +28140,7 @@ pub fn testCheckMailbox(server_addr: String, email: String) -> Promise {
                                     };
                                 match custom_to_rs_string(x1) {
                                     Ok(ok) => ok,
+                                    #[allow(clippy::unnecessary_to_owned)]
                                     Err(err) => {
                                         return Err(JsValue::from(TypeError::new(&err.to_string())))
                                     }
@@ -26180,14 +28155,15 @@ pub fn testCheckMailbox(server_addr: String, email: String) -> Promise {
                                     };
                                 let v = match custom_to_rs_f64(x2) {
                                     Ok(ok) => ok,
-                                    Err(err) => {
-                                        return Err(JsValue::from(TypeError::new(err.as_ref())))
-                                    }
+                                    Err(err) => return Err(JsValue::from(TypeError::new(err))),
                                 };
                                 JsValue::from(v)
                             };
                             js_array.set(1, js_value);
-                            let js_value = JsValue::from_str(x3.as_ref());
+                            let js_value = {
+                                #[allow(clippy::useless_asref)]
+                                JsValue::from_str(x3.as_ref())
+                            };
                             js_array.set(2, js_value);
                             js_array.into()
                         };
@@ -26217,7 +28193,10 @@ pub fn testDropTestbed(path: String) -> Promise {
         let path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::test_drop_testbed(&path).await;
@@ -26226,6 +28205,7 @@ pub fn testDropTestbed(path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -26251,7 +28231,10 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
         let discriminant_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(discriminant_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
         Ok(match ret {
@@ -26263,6 +28246,7 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
                         let custom_to_rs_string = |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
                         match custom_to_rs_string(val) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -26293,7 +28277,10 @@ pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
         let discriminant_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(discriminant_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
         Ok(match ret {
@@ -26327,7 +28314,10 @@ pub fn testNewAccount(server_addr: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(server_addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(server_addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::test_new_account(&server_addr).await;
@@ -26364,13 +28354,17 @@ pub fn testNewAccount(server_addr: String) -> Promise {
 #[wasm_bindgen]
 pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        #[allow(clippy::manual_map, clippy::needless_match)]
         let test_server = match test_server {
             Some(test_server) => {
                 let test_server = {
                     let custom_from_rs_string = |s: String| -> Result<_, String> {
                         libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
                     };
-                    custom_from_rs_string(test_server).map_err(|e| TypeError::new(e.as_ref()))
+                    custom_from_rs_string(test_server).map_err(|e| {
+                        #[allow(clippy::useless_asref)]
+                        TypeError::new(e.as_ref())
+                    })
                 }?;
 
                 Some(test_server)
@@ -26391,6 +28385,7 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
                     };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -26428,25 +28423,37 @@ pub fn totpFetchOpaqueKey(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(server_addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(server_addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let organization_id = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(organization_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(organization_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let user_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(user_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(user_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let opaque_key_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::TOTPOpaqueKeyID, _> {
                 libparsec::TOTPOpaqueKeyID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(opaque_key_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(opaque_key_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::totp_fetch_opaque_key(
@@ -26493,7 +28500,10 @@ pub fn totpSetupConfirmAnonymous(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::totp_setup_confirm_anonymous(config, addr, one_time_password).await;
@@ -26502,6 +28512,7 @@ pub fn totpSetupConfirmAnonymous(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -26531,7 +28542,10 @@ pub fn totpSetupStatusAnonymous(config: Object, addr: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecTOTPResetAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::totp_setup_status_anonymous(config, addr).await;
         Ok(match ret {
@@ -26565,7 +28579,10 @@ pub fn updateDeviceChangeAuthentication(
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let current_auth = current_auth.into();
@@ -26608,7 +28625,10 @@ pub fn updateDeviceOverwriteServerAddr(
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let access = access.into();
@@ -26618,7 +28638,10 @@ pub fn updateDeviceOverwriteServerAddr(
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(new_server_addr).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(new_server_addr).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret =
             libparsec::update_device_overwrite_server_addr(&config_dir, access, new_server_addr)
@@ -26634,6 +28657,7 @@ pub fn updateDeviceOverwriteServerAddr(
                         };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -26730,14 +28754,20 @@ pub fn waitForDeviceAvailable(config_dir: String, device_id: String) -> Promise 
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(config_dir).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let device_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                 libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(device_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(device_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::wait_for_device_available(&config_dir, device_id).await;
         Ok(match ret {
@@ -26745,6 +28775,7 @@ pub fn waitForDeviceAvailable(config_dir: String, device_id: String) -> Promise 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -26771,7 +28802,10 @@ pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_create_file(workspace, path).await;
         Ok(match ret {
@@ -26783,6 +28817,7 @@ pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -26810,7 +28845,10 @@ pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_create_folder(workspace, path).await;
         Ok(match ret {
@@ -26822,6 +28860,7 @@ pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -26849,7 +28888,10 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_create_folder_all(workspace, path).await;
         Ok(match ret {
@@ -26861,6 +28903,7 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -26888,7 +28931,10 @@ pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecWorkspacePathAddr::from_any(&s).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(link).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(link).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::workspace_decrypt_path_addr(workspace, &link).await;
@@ -26902,6 +28948,7 @@ pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
                     };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()
@@ -26937,6 +28984,7 @@ pub fn workspaceFdClose(workspace: u32, fd: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -26971,6 +29019,7 @@ pub fn workspaceFdFlush(workspace: u32, fd: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -27036,6 +29085,7 @@ pub fn workspaceFdResize(workspace: u32, fd: u32, length: u64, truncate_only: bo
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -27199,7 +29249,10 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::workspace_generate_path_addr(workspace, &path).await;
@@ -27215,6 +29268,7 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
                         let custom_to_rs_string = |addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
                         match custom_to_rs_string(x1) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -27229,6 +29283,7 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
                             };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -27268,6 +29323,7 @@ pub fn workspaceHistoryFdClose(workspace_history: u32, fd: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -27363,7 +29419,7 @@ pub fn workspaceHistoryGetTimestampHigherBound(workspace_history: u32) -> Promis
                     };
                     let v = match custom_to_rs_f64(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
                     JsValue::from(v)
                 };
@@ -27397,7 +29453,7 @@ pub fn workspaceHistoryGetTimestampLowerBound(workspace_history: u32) -> Promise
                     };
                     let v = match custom_to_rs_f64(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
                     JsValue::from(v)
                 };
@@ -27431,7 +29487,7 @@ pub fn workspaceHistoryGetTimestampOfInterest(workspace_history: u32) -> Promise
                     };
                     let v = match custom_to_rs_f64(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
                     JsValue::from(v)
                 };
@@ -27458,7 +29514,10 @@ pub fn workspaceHistoryOpenFile(workspace_history: u32, path: String) -> Promise
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_history_open_file(workspace_history, path).await;
         Ok(match ret {
@@ -27470,7 +29529,7 @@ pub fn workspaceHistoryOpenFile(workspace_history: u32, path: String) -> Promise
                         |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
                     let v = match custom_to_rs_u32(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
                     JsValue::from(v)
                 };
@@ -27497,7 +29556,10 @@ pub fn workspaceHistoryOpenFileAndGetId(workspace_history: u32, path: String) ->
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_history_open_file_and_get_id(workspace_history, path).await;
         Ok(match ret {
@@ -27513,7 +29575,7 @@ pub fn workspaceHistoryOpenFileAndGetId(workspace_history: u32, path: String) ->
                             |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
                         let v = match custom_to_rs_u32(x1) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -27523,6 +29585,7 @@ pub fn workspaceHistoryOpenFileAndGetId(workspace_history: u32, path: String) ->
                             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -27555,7 +29618,10 @@ pub fn workspaceHistoryOpenFileById(workspace_history: u32, entry_id: String) ->
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(entry_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_history_open_file_by_id(workspace_history, entry_id).await;
         Ok(match ret {
@@ -27567,7 +29633,7 @@ pub fn workspaceHistoryOpenFileById(workspace_history: u32, entry_id: String) ->
                         |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
                     let v = match custom_to_rs_u32(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
                     JsValue::from(v)
                 };
@@ -27595,7 +29661,7 @@ pub fn workspaceHistorySetTimestampOfInterest(workspace_history: u32, toi: f64) 
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
                     .map_err(|_| "Out-of-bound datetime")
             };
-            custom_from_rs_f64(toi).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_f64(toi).map_err(TypeError::new)
         }?;
 
         let ret =
@@ -27605,6 +29671,7 @@ pub fn workspaceHistorySetTimestampOfInterest(workspace_history: u32, toi: f64) 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -27638,7 +29705,10 @@ pub fn workspaceHistoryStartWithRealmExport(
         let export_db_path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            custom_from_rs_string(export_db_path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(export_db_path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let mut decryptors_converted = Vec::with_capacity(decryptors.len());
         for js_elem in decryptors.iter() {
@@ -27682,7 +29752,10 @@ pub fn workspaceHistoryStatEntry(workspace_history: u32, path: String) -> Promis
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::workspace_history_stat_entry(workspace_history, &path).await;
@@ -27714,7 +29787,10 @@ pub fn workspaceHistoryStatEntryById(workspace_history: u32, entry_id: String) -
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(entry_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_history_stat_entry_by_id(workspace_history, entry_id).await;
         Ok(match ret {
@@ -27745,7 +29821,10 @@ pub fn workspaceHistoryStatFolderChildren(workspace_history: u32, path: String) 
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::workspace_history_stat_folder_children(workspace_history, &path).await;
@@ -27794,7 +29873,10 @@ pub fn workspaceHistoryStatFolderChildrenById(workspace_history: u32, entry_id: 
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(entry_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret =
             libparsec::workspace_history_stat_folder_children_by_id(workspace_history, entry_id)
@@ -27846,6 +29928,7 @@ pub fn workspaceHistoryStop(workspace_history: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -27897,7 +29980,10 @@ pub fn workspaceIsFileContentLocal(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_is_file_content_local(workspace, path).await;
         Ok(match ret {
@@ -27943,6 +30029,7 @@ pub fn workspaceMount(workspace: u32) -> Promise {
                         };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -27975,13 +30062,19 @@ pub fn workspaceMoveEntry(workspace: u32, src: String, dst: String, mode: Object
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(src).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(src).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let dst = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(dst).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(dst).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let mode = mode.into();
         let mode = variant_move_entry_mode_js_to_rs(mode)?;
@@ -27992,6 +30085,7 @@ pub fn workspaceMoveEntry(workspace: u32, src: String, dst: String, mode: Object
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -28018,7 +30112,10 @@ pub fn workspaceOpenFile(workspace: u32, path: String, mode: Object) -> Promise 
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let mode = mode.into();
         let mode = struct_open_options_js_to_rs(mode)?;
@@ -28033,7 +30130,7 @@ pub fn workspaceOpenFile(workspace: u32, path: String, mode: Object) -> Promise 
                         |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
                     let v = match custom_to_rs_u32(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
                     JsValue::from(v)
                 };
@@ -28060,7 +30157,10 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let mode = mode.into();
         let mode = struct_open_options_js_to_rs(mode)?;
@@ -28079,7 +30179,7 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                             |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
                         let v = match custom_to_rs_u32(x1) {
                             Ok(ok) => ok,
-                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                            Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
                         JsValue::from(v)
                     };
@@ -28089,6 +30189,7 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,
+                            #[allow(clippy::unnecessary_to_owned)]
                             Err(err) => {
                                 return Err(JsValue::from(TypeError::new(&err.to_string())))
                             }
@@ -28121,7 +30222,10 @@ pub fn workspaceOpenFileById(workspace: u32, entry_id: String, mode: Object) -> 
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(entry_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let mode = mode.into();
         let mode = struct_open_options_js_to_rs(mode)?;
@@ -28136,7 +30240,7 @@ pub fn workspaceOpenFileById(workspace: u32, entry_id: String, mode: Object) -> 
                         |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
                     let v = match custom_to_rs_u32(value) {
                         Ok(ok) => ok,
-                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
                     JsValue::from(v)
                 };
@@ -28163,7 +30267,10 @@ pub fn workspaceRemoveEntry(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_remove_entry(workspace, path).await;
         Ok(match ret {
@@ -28171,6 +30278,7 @@ pub fn workspaceRemoveEntry(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -28197,7 +30305,10 @@ pub fn workspaceRemoveFile(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_remove_file(workspace, path).await;
         Ok(match ret {
@@ -28205,6 +30316,7 @@ pub fn workspaceRemoveFile(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -28231,7 +30343,10 @@ pub fn workspaceRemoveFolder(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_remove_folder(workspace, path).await;
         Ok(match ret {
@@ -28239,6 +30354,7 @@ pub fn workspaceRemoveFolder(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -28265,7 +30381,10 @@ pub fn workspaceRemoveFolderAll(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_remove_folder_all(workspace, path).await;
         Ok(match ret {
@@ -28273,6 +30392,7 @@ pub fn workspaceRemoveFolderAll(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -28305,19 +30425,28 @@ pub fn workspaceRenameEntryById(
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(src_parent_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(src_parent_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let src_name = {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(src_name).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(src_name).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let dst_name = {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(dst_name).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(dst_name).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let mode = mode.into();
         let mode = variant_move_entry_mode_js_to_rs(mode)?;
@@ -28335,6 +30464,7 @@ pub fn workspaceRenameEntryById(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -28361,7 +30491,10 @@ pub fn workspaceStatEntry(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::workspace_stat_entry(workspace, &path).await;
@@ -28393,7 +30526,10 @@ pub fn workspaceStatEntryById(workspace: u32, entry_id: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(entry_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_stat_entry_by_id(workspace, entry_id).await;
         Ok(match ret {
@@ -28424,7 +30560,10 @@ pub fn workspaceStatEntryByIdIgnoreConfinementPoint(workspace: u32, entry_id: St
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(entry_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret =
             libparsec::workspace_stat_entry_by_id_ignore_confinement_point(workspace, entry_id)
@@ -28457,7 +30596,10 @@ pub fn workspaceStatFolderChildren(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
 
         let ret = libparsec::workspace_stat_folder_children(workspace, &path).await;
@@ -28506,7 +30648,10 @@ pub fn workspaceStatFolderChildrenById(workspace: u32, entry_id: String) -> Prom
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
-            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(entry_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_stat_folder_children_by_id(workspace, entry_id).await;
         Ok(match ret {
@@ -28556,6 +30701,7 @@ pub fn workspaceStop(workspace: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
+                    #[allow(clippy::let_unit_value)]
                     let _ = value;
                     JsValue::null()
                 };
@@ -28582,7 +30728,10 @@ pub fn workspaceWatchEntryOneshot(workspace: u32, path: String) -> Promise {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
             };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            custom_from_rs_string(path).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
         }?;
         let ret = libparsec::workspace_watch_entry_oneshot(workspace, path).await;
         Ok(match ret {
@@ -28594,6 +30743,7 @@ pub fn workspaceWatchEntryOneshot(workspace: u32, path: String) -> Promise {
                         |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
                         Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
                     }
                     .as_ref()

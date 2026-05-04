@@ -50,7 +50,7 @@ impl PlatformPkiCertificate {
         if trust.status().is_err() {
             return Err(PkiCertificateGetValidationPathError::Untrusted);
         }
-        let mut certs: VecDeque<_> = trust.cert_path().into_iter().collect();
+        let mut certs: VecDeque<_> = trust.cert_path().collect();
 
         // Current cert
         let leaf = certs
@@ -72,7 +72,7 @@ impl PlatformPkiCertificate {
             .get_der()
             .await
             .map_err(|e| PkiCertificateGetValidationPathError::Internal(e.into()))?;
-        let root = webpki::anchor_from_trusted_cert(&root.into())
+        let root = webpki::anchor_from_trusted_cert(&root)
             .map(|anchor| anchor.to_owned())
             .map_err(|e| PkiCertificateGetValidationPathError::Internal(e.into()))?;
 

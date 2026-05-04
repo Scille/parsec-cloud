@@ -39,13 +39,13 @@ impl Storage {
             "Listing file entries in {} with extension {extension}",
             dir.display()
         );
-        let dir = match self.root_dir.get_directory_from_path(&dir, None).await {
+        let dir = match self.root_dir.get_directory_from_path(dir, None).await {
             Ok(dir) => dir,
             Err(GetDirectoryHandleError::NotFound { .. }) => {
                 log::debug!("Could not find devices dir");
                 return Ok(Vec::new());
             }
-            Err(e) => return Err(e.into()),
+            Err(e) => return Err(e),
         };
         let mut files = Vec::new();
         let dirs_to_explore = Rc::new(Mutex::new(Vec::from([dir])));
@@ -87,7 +87,7 @@ impl Storage {
 
         let new_file = self
             .root_dir
-            .get_file_from_path(&new, Some(OpenOptions::create()))
+            .get_file_from_path(new, Some(OpenOptions::create()))
             .await?;
         new_file.write_all(&old_data).await?;
 

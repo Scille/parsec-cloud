@@ -373,7 +373,7 @@ impl File {
         let blob = file.deref();
         let array_buffer = JsFuture::from(blob.array_buffer())
             .await
-            .map_err(|e| ReadToEndError::Promise(e))
+            .map_err(ReadToEndError::Promise)
             .inspect_err(|e| log::error!("Failed to get blob array buffer: {e:?}"))
             .and_then(|v| {
                 v.dyn_into::<js_sys::ArrayBuffer>()
@@ -424,10 +424,10 @@ impl File {
                 Err(e) => WriteAllError::Write(e),
             })?
             .await
-            .map_err(|e| WriteAllError::Write(e))?;
+            .map_err(WriteAllError::Write)?;
         wasm_bindgen_futures::JsFuture::from(stream.close())
             .await
-            .map_err(|e| WriteAllError::Close(e))
+            .map_err(WriteAllError::Close)
             .and(Ok(()))
     }
 }

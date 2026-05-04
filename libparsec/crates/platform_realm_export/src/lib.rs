@@ -2,8 +2,7 @@
 
 // Given a realm export comes as a file database (of typically multiple Go), it
 // can only be accessed from the native platform.
-#[cfg(target_arch = "wasm32")]
-compile_error!("Realm export is not supported on web !");
+#![cfg(not(target_arch = "wasm32"))]
 
 #[cfg(not(target_arch = "wasm32"))]
 mod native;

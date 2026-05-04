@@ -18,7 +18,7 @@ pub async fn save_content(path: &std::path::Path, content: &[u8]) -> Result<(), 
     };
     let file = parent
         .as_ref()
-        .unwrap_or(&store.root_dir())
+        .unwrap_or(store.root_dir())
         .get_file(
             path.file_name()
                 .and_then(std::ffi::OsStr::to_str)
@@ -26,5 +26,5 @@ pub async fn save_content(path: &std::path::Path, content: &[u8]) -> Result<(), 
             Some(OpenOptions::create()),
         )
         .await?;
-    file.write_all(&content).await.map_err(Into::into)
+    file.write_all(content).await.map_err(Into::into)
 }
