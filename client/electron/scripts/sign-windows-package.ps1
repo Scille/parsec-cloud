@@ -16,7 +16,7 @@ param(
     [switch] $Hardened
 )
 # Check node version
-$expected_node_version = "v22.14.0"
+$expected_node_version = "v22.22.2"
 $node_version = node --version
 $need_to_install_node = ($LastExitCode -ne 0) -or (-Not ($node_version -eq $expected_node_version))
 
