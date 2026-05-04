@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { workspaceNameValidator } from '@/common/validators';
+import { matchingStringValidator, workspaceNameValidator } from '@/common/validators';
 import {
   ClientRenameWorkspaceErrorTag,
   UserProfile,
@@ -21,6 +21,7 @@ import {
   trashWorkspace as parsecTrashWorkspace,
   unmountWorkspace,
 } from '@/parsec';
+import { ClientArchiveWorkspaceErrorTag } from '@/plugins/libparsec';
 import { Routes, navigateTo } from '@/router';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -34,7 +35,17 @@ import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Answer, Clipboard, DisplayState, I18n, MsModalResult, Translatable, askQuestion, getTextFromUser } from 'megashark-lib';
+import {
+  Answer,
+  Clipboard,
+  DisplayState,
+  I18n,
+  MsModalResult,
+  MsReportTheme,
+  Translatable,
+  askQuestion,
+  getTextFromUser,
+} from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -218,6 +229,9 @@ export async function openWorkspaceContextMenu(
       case WorkspaceAction.Archive:
         await archiveWorkspace(workspace, informationManager);
         break;
+      case WorkspaceAction.Trash:
+        await trashWorkspace(workspace, informationManager, isLargeDisplay);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
@@ -282,7 +296,7 @@ export async function openArchivedWorkspaceContextMenu(
         await restoreWorkspace(workspace, informationManager);
         break;
       case WorkspaceAction.Trash:
-        await trashWorkspace(workspace, informationManager);
+        await trashWorkspace(workspace, informationManager, isLargeDisplay);
         break;
       default:
         console.warn('No WorkspaceAction match found');
@@ -337,43 +351,110 @@ async function restoreWorkspace(workspace: WorkspaceInfo, informationManager: In
   );
 }
 
-async function trashWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager) {
-  let realmMinimumArchivingPeriodBeforeDeletionInSeconds = 30 * 24 * 3600; // 30 days
+async function trashWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager, isLargeDisplay: boolean) {
+  let minimumArchivingPeriodInSeconds = 30 * 24 * 3600; // 30 days
   const clientResult = await getClientInfo();
+
   if (clientResult.ok) {
-    realmMinimumArchivingPeriodBeforeDeletionInSeconds = Number(
-      clientResult.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion,
-    );
+    minimumArchivingPeriodInSeconds = Number(clientResult.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion);
   }
   // The real deletion date will only be determined once the realm archiving certificate is created.
   // Typically the more the user waits before accepting the confirmation prompt, the more the actual
   // deletion date will differs. In any case we are talking of just a couple of seconds of difference
   // which is no big deal since the archiving period is supposed to be a multiple-days long period.
-  const estimatedDeletionDate = DateTime.now().plus({ seconds: realmMinimumArchivingPeriodBeforeDeletionInSeconds });
+  const estimatedDeletionDate = DateTime.now().plus({ seconds: minimumArchivingPeriodInSeconds });
+
+  // Warn about the operation
   const answer = await askQuestion(
-    'WorkspacesPage.trashWorkspace.title',
+    'WorkspacesPage.trashWorkspace.question.title',
     {
-      key: 'WorkspacesPage.trashWorkspace.subtitle',
-      data: { workspace: workspace.name, deletionDate: I18n.translate(I18n.formatDate(estimatedDeletionDate)) },
+      key:
+        minimumArchivingPeriodInSeconds > 0
+          ? 'WorkspacesPage.trashWorkspace.question.subtitleBin'
+          : 'WorkspacesPage.trashWorkspace.question.subtitleDelete',
+      data: {
+        workspace: workspace.name,
+        deletionDelay: I18n.translate(formatWorkspaceDeletionDelay(minimumArchivingPeriodInSeconds)),
+      },
     },
-    { yesText: 'WorkspacesPage.trashWorkspace.yes', noText: 'WorkspacesPage.trashWorkspace.no', yesIsDangerous: true },
+    {
+      yesText: 'WorkspacesPage.trashWorkspace.question.yes',
+      noText: 'WorkspacesPage.trashWorkspace.question.no',
+    },
   );
   if (answer === Answer.No) {
     return;
   }
 
-  const result = await parsecTrashWorkspace(workspace.id, realmMinimumArchivingPeriodBeforeDeletionInSeconds);
-
-  informationManager.present(
-    new Information({
-      message: {
-        key: result.ok ? 'WorkspacesPage.trashWorkspace.trash.success' : 'WorkspacesPage.trashWorkspace.trash.fail',
+  // Ask for confirmation by inputting the workspace name
+  const workspaceName = await getTextFromUser(
+    {
+      title: 'WorkspacesPage.trashWorkspace.title',
+      subtitle: {
+        key:
+          minimumArchivingPeriodInSeconds > 0
+            ? 'WorkspacesPage.trashWorkspace.subtitleBin'
+            : 'WorkspacesPage.trashWorkspace.subtitleDelete',
+        data: { workspace: workspace.name, deletionDate: I18n.translate(I18n.formatDate(estimatedDeletionDate)) },
+      },
+      trim: true,
+      validator: matchingStringValidator(workspace.name),
+      inputLabel: {
+        key: 'WorkspacesPage.trashWorkspace.label',
         data: { workspace: workspace.name },
       },
-      level: result.ok ? InformationLevel.Success : InformationLevel.Error,
-    }),
-    PresentationMode.Toast,
+      placeholder: I18n.valueAsTranslatable(workspace.name),
+      okButtonText:
+        minimumArchivingPeriodInSeconds > 0 ? 'WorkspacesPage.trashWorkspace.yesBin' : 'WorkspacesPage.trashWorkspace.yesDelete',
+      theme: MsReportTheme.Error,
+    },
+    isLargeDisplay,
   );
+
+  if (!workspaceName || workspaceName.localeCompare(workspace.name) !== 0) {
+    // Shouldn't happen
+    return;
+  }
+
+  const result = await parsecTrashWorkspace(workspace.id, minimumArchivingPeriodInSeconds);
+
+  let message: Translatable = '';
+  let level: InformationLevel;
+
+  if (result.ok) {
+    message = {
+      key:
+        minimumArchivingPeriodInSeconds > 0
+          ? 'WorkspacesPage.trashWorkspace.trash.successBin'
+          : 'WorkspacesPage.trashWorkspace.trash.successDelete',
+      data: { workspace: workspace.name },
+    };
+    level = InformationLevel.Success;
+  } else {
+    switch (result.error.tag) {
+      case ClientArchiveWorkspaceErrorTag.ArchivingPeriodTooShort:
+      //   message = 'WorkspacesPage.trashWorkspace.error.tooShort';
+      //   break;
+      // TODO: when implementing custom duration, either re-enable or delete locale
+      case ClientArchiveWorkspaceErrorTag.Offline:
+        message = 'WorkspacesPage.trashWorkspace.error.offline';
+        break;
+      case ClientArchiveWorkspaceErrorTag.WorkspaceDeleted:
+      case ClientArchiveWorkspaceErrorTag.WorkspaceNotFound:
+        message = 'WorkspacesPage.trashWorkspace.error.notFound';
+        break;
+      default:
+        message = {
+          key:
+            minimumArchivingPeriodInSeconds > 0
+              ? 'WorkspacesPage.trashWorkspace.error.failBin'
+              : 'WorkspacesPage.trashWorkspace.error.failDelete',
+          data: { workspace: workspace.name },
+        };
+    }
+    level = InformationLevel.Error;
+  }
+  informationManager.present(new Information({ message: message, level: level }), PresentationMode.Toast);
 }
 
 export async function showWorkspace(
@@ -660,4 +741,23 @@ export function compareWorkspaceRoles(role1: WorkspaceRole, role2: WorkspaceRole
     return 1;
   }
   return 0;
+}
+
+export function formatWorkspaceDeletionDelay(duration: number | undefined): Translatable {
+  if (duration === undefined) {
+    return 'WorkspacesPage.trashWorkspace.deletionDelay.default';
+  } else if (duration < 60) {
+    return { key: 'WorkspacesPage.trashWorkspace.deletionDelay.seconds', data: { amount: duration }, count: duration };
+  } else if (duration < 3600) {
+    // 60 * 60
+    duration = ~~(duration / 60);
+    return { key: 'WorkspacesPage.trashWorkspace.deletionDelay.minutes', data: { amount: duration }, count: duration };
+  } else if (duration < 86400) {
+    // 60 * 60 * 24
+    duration = ~~(duration / 3600);
+    return { key: 'WorkspacesPage.trashWorkspace.deletionDelay.hours', data: { amount: duration }, count: duration };
+  } else {
+    duration = ~~(duration / 86400);
+    return { key: 'WorkspacesPage.trashWorkspace.deletionDelay.days', data: { amount: duration }, count: duration };
+  }
 }

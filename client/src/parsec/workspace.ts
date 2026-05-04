@@ -68,7 +68,7 @@ function getArchivedTimestamp(configTag: RealmArchivingConfigurationTag, originI
 
 function getDeletionDate(config: RealmArchivingConfiguration): DateTime | undefined {
   if (config.tag === RealmArchivingConfigurationTag.DeletionPlanned) {
-    return DateTime.fromMillis(config.deletionDate as any as number);
+    return DateTime.fromSeconds(config.deletionDate as any as number);
   }
   return undefined;
 }
