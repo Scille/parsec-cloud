@@ -6,6 +6,7 @@ import {
   createFolder,
   DisplaySize,
   expect,
+  fillInputModal,
   importDefaultFiles,
   ImportDocuments,
   mockCryptpadServer,
@@ -277,22 +278,22 @@ msTest.describe(() => {
       const sidebarArchiveButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
       const sidebarTrashButton = documents.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-trashed-workspaces');
       const wk = documents.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
-
-      // Archive workspace
-      await wk.click({ button: 'right' });
       const contextMenu = documents.locator('.workspace-context-menu');
-      await contextMenu.getByRole('listitem').nth(4).click();
-      await answerQuestion(documents, true);
-      await expect(documents).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
-      await expect(wk).not.toBeVisible();
-      await sidebarArchiveButton.click();
 
-      if (page === 'trashed') {
-        // Move workspace to bin
-        await expect(wk).toBeVisible();
+      if (page === 'archived') {
+        // Archive workspace
         await wk.click({ button: 'right' });
-        await contextMenu.getByRole('listitem').nth(3).click();
+        await contextMenu.getByRole('listitem').nth(4).click();
         await answerQuestion(documents, true);
+        await expect(documents).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
+        await expect(wk).not.toBeVisible();
+        await sidebarArchiveButton.click();
+      } else if (page === 'trashed') {
+        // Move workspace to bin
+        await wk.click({ button: 'right' });
+        await contextMenu.getByRole('listitem').nth(5).click();
+        await answerQuestion(documents, true);
+        await fillInputModal(documents, 'wksp1');
         await expect(documents).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
         await sidebarTrashButton.click();
       }

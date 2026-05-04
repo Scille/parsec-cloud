@@ -158,9 +158,7 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
       organizationAddr: clientInfoResult.value.organizationAddr,
       organizationId: clientInfoResult.value.organizationId,
       creationDate: creationDateResult.ok ? creationDateResult.value : undefined,
-      realmMinimumArchivingPeriodBeforeDeletion: Number(
-        clientInfoResult.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion,
-      ),
+      workspaceDeletionDelay: Number(clientInfoResult.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion),
     },
   };
 }

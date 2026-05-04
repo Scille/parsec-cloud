@@ -282,6 +282,7 @@
 
             <!-- Trashed -->
             <ion-text
+              v-show="workspaceDeletionDelay > 0 || hasTrashedWorkspaces"
               @click="navigateTo(Routes.Trash)"
               :class="{ active: currentRouteIs(Routes.Trash) }"
               class="sidebar-content-organization-button button-medium"
@@ -507,6 +508,8 @@ const isTrialOrg = ref(false);
 const pathOpener = usePathOpener();
 const pendingRequestsCount = ref(0);
 const workspaceMenuState = ref<WorkspaceMenu>(WorkspaceMenu.All);
+const workspaceDeletionDelay = ref(0);
+const hasTrashedWorkspaces = computed(() => workspaces.value.find((wk) => wk.isTrashed) !== undefined);
 
 const securityWarnings = ref<SecurityWarnings | undefined>();
 const securityWarningsCount = computed(() => {
@@ -773,6 +776,7 @@ onMounted(async () => {
   if (clientInfoResult.ok) {
     // clientInfoResult.organizationIsExpired;
     isExpired.value = false;
+    workspaceDeletionDelay.value = Number(clientInfoResult.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion);
   }
 
   await loadAll();

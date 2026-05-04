@@ -471,7 +471,7 @@ interface OrganizationInfo {
   organizationAddr: ParsecOrganizationAddr;
   organizationId: OrganizationID;
   creationDate?: DateTime;
-  realmMinimumArchivingPeriodBeforeDeletion?: number;
+  workspaceDeletionDelay: number;
 }
 
 interface AccountInvitation {

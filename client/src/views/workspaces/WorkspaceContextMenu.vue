@@ -160,7 +160,7 @@
           </ion-text>
         </ion-item>
         <ion-item
-          v-show="workspace.isArchived && workspace.selfRole === WorkspaceRole.Owner"
+          v-show="!workspace.isTrashed && workspace.selfRole === WorkspaceRole.Owner"
           button
           @click="onClick(WorkspaceAction.Trash)"
           class="ion-no-padding list-group-item item-danger"
