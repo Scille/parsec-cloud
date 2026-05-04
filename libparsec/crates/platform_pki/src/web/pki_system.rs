@@ -3,6 +3,7 @@
 use std::fmt::Debug;
 
 use crate::{
+    x509::{DistinguishedNameValue, X509CertificateInformation},
     AvailablePkiCertificate, PkiCertificate, PkiScwsConfig,
     PkiSystemGetCertificateRevocationListsError, PkiSystemInitError,
     PkiSystemListUserCertificateError, PkiSystemOpenCertificateError,
@@ -295,4 +296,54 @@ async fn ask_server_to_sign_scws_challenge(
             Err(PkiSystemInitError::NotAvailable)
         }
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum GetCertificateUriError {
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
+pub(super) async fn get_certificate_uri(
+    cert: &scwsapi::Certificate,
+) -> Result<X509Pkcs11URI, GetCertificateUriError> {
+    let id = if let Ok(id) = cert.ck_id() {
+        Some(Bytes::copy_from_slice(&id))
+    } else {
+        None
+    };
+    let label = Some(Bytes::copy_from_slice(cert.ck_label().as_bytes()));
+    let der = cert
+        .get_der()
+        .await
+        .map_err(|e| GetCertificateUriError::Internal(e.into()))?;
+    let details = X509CertificateInformation::load_der(der.as_ref())
+        .map_err(|e| GetCertificateUriError::Internal(e.into()))?;
+
+    let issuer = Bytes::copy_from_slice(extract(&details.issuer).as_bytes());
+    let serial = Bytes::copy_from_slice(&details.serial);
+    let subject = Bytes::copy_from_slice(extract(&details.subject).as_bytes());
+    Ok(X509Pkcs11URI {
+        id,
+        label,
+        issuer,
+        serial,
+        subject,
+    })
+}
+
+// see https://idopte.fr/scwsapi/javascript/2_API/objects.html#Certificate.subject
+fn extract(dnv: &Vec<DistinguishedNameValue>) -> String {
+    dnv.iter()
+        .fold(None, |acc, i| {
+            if let Some(DistinguishedNameValue::CommonName(_)) = acc {
+                acc
+            } else {
+                Some(i.clone())
+            }
+        })
+        .map_or("".to_string(), |i| match i {
+            DistinguishedNameValue::CommonName(cn) => cn,
+            DistinguishedNameValue::EmailAddress(ea) => ea,
+        })
 }
