@@ -16,6 +16,7 @@ export * from '@/parsec/organization';
 export * from '@/parsec/path';
 export * from '@/parsec/search';
 export * from '@/parsec/server';
+export * from '@/parsec/shamir';
 export * from '@/parsec/terms_of_service';
 export * from '@/parsec/totp';
 export * from '@/parsec/types';

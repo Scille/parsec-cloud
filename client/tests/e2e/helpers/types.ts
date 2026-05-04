@@ -50,6 +50,7 @@ export interface SetupOptions {
   enableUpdateEvent?: boolean;
   mockPki?: boolean;
   allowedProtectionMethods?: Array<ProtectionMethod>;
+  enableShamir?: boolean;
 }
 
 export interface MsPage extends Page {
