@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+import enum
 import sys
 from collections.abc import Generator
 from dataclasses import dataclass
@@ -10,10 +11,12 @@ from time import sleep
 from urllib.error import URLError
 from urllib.request import urlopen
 
+import anyio
 import pytest
 import trustme
+from click.testing import CliRunner
 
-from tests.cli.common import cli_running
+from tests.cli.common import cli_invoke_in_thread, cli_running
 from tests.common.client import CoolorgRpcClients
 
 
@@ -93,3 +96,42 @@ def test_run(coolorg: CoolorgRpcClients, unused_tcp_port: int, tmp_path: Path, s
 
             assert rep.status == 200
             break
+
+
+class PassMode(enum.Enum):
+    Env = enum.auto()
+    Option = enum.auto()
+
+
+@pytest.mark.parametrize("pass_pkey_file_as", (PassMode.Env, PassMode.Option))
+@pytest.mark.parametrize("pass_pkey_content_as", (PassMode.Env, PassMode.Option))
+async def test_run_conflicting_scws_pkey_opts(
+    unused_tcp_port: int, pass_pkey_file_as: PassMode, pass_pkey_content_as: PassMode
+):
+    runner = CliRunner()
+    env = {}
+    cmd = f"run --dev --port={unused_tcp_port} --host=127.0.0.1"
+    test_key = anyio.Path("test.key")
+
+    match pass_pkey_content_as:
+        case PassMode.Env:
+            env["PARSEC_SCWS_WEB_APPLICATION_PRIVATE_KEY_CONTENT"] = "foo"
+        case PassMode.Option:
+            cmd += " --scws-web-application-private-key-content=foo"
+
+    match pass_pkey_file_as:
+        case PassMode.Env:
+            env["PARSEC_SCWS_WEB_APPLICATION_PRIVATE_KEY_FILE"] = str(test_key)
+        case PassMode.Option:
+            cmd += f" --scws-web-application-private-key-file={test_key}"
+
+    with runner.isolated_filesystem():
+        await test_key.touch()
+        result = await cli_invoke_in_thread(
+            cmd,
+            runner=runner,
+            env=env,
+        )
+
+    assert "Error: Cannot have both a file & content set for SCWS private key" in result.output
+    assert result.exit_code == 2
