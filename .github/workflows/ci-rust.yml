@@ -155,6 +155,11 @@ jobs:
         env:
           RUST_LOG: ${{ env.TEST_RUST_LOG }}
 
+      - name: Clippy on wasm
+        if: inputs.run-wasm-tests
+        run: cargo clippy --target wasm32-unknown-unknown -p libparsec_bindings_web ${{ steps.crates.outputs.platform }}
+        timeout-minutes: 10
+
       - name: Test platform-async on wasm
         if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_async
