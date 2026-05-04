@@ -724,7 +724,8 @@
             "actionShow": "Afficher cet espace",
             "actionArchive": "Archiver cet espace",
             "actionRestore": "Restaurer cet espace",
-            "actionDelete": "Supprimer cet espace",
+            "actionScheduleDeletion": "Mettre à la corbeille",
+            "actionDelete": "Supprimer définitivement",
             "actionAddFavorite": "Ajouter aux favoris",
             "actionRemoveFavorite": "Supprimer des favoris"
         },
@@ -786,7 +787,7 @@
             "noFavoriteWorkspaces": "Vous n'avez encore aucun espace de travail favori. Les espaces favoris apparaîtront ici.",
             "noHiddenWorkspaces": "Vous n'avez encore aucun espace de travail masqué. Les espaces masqués apparaîtront ici.",
             "noArchivedWorkspaces": "Vos espaces de travail archivés seront consultables en lecture seule uniquement. Le partage ne sera plus actif tant qu'ils seront archivés. Les propriétaires d'espaces de travail archivés peuvent les restaurer.",
-            "noTrashedWorkspaces": "Vos espaces de travail supprimés seront consultables en lecture seule uniquement. Ils seront définitivement supprimés après une période déterminée. Les propriétaires d'espaces de travail supprimés peuvent les restaurer avant cette échéance.",
+            "noTrashedWorkspaces": "Vos espaces de travail programmés pour suppression peuvent être consultés ici en lecture seule durant {duration}, durée après laquelle ils seront définitivement supprimés. Les propriétaires d'espaces de travail en attente de suppression peuvent les restaurer avant cette échéance.",
             "showHiddenWorkspaces": "Afficher les espaces masqués"
         },
         "showHideWorkspace": {
@@ -865,18 +866,35 @@
         },
         "trashWorkspace": {
             "title": "Supprimer cet espace de travail",
-            "subtitle": "Vous êtes sur le point de supprimer l'espace de travail {workspace}. Il sera accessible en lecture seule pour tous les utilisateurs y ayant accès, jusqu'à sa suppression définitive le {deletionDate}. Êtes-vous sûr de vouloir continuer ?",
-            "yes": "Supprimer",
-            "no": "Cancel",
-            "info": "Vos espaces de travail supprimés restent consultables en lecture seule pour tous les utilisateurs y ayant accès jusqu'à leur suppression définitive. Les propriétaires d'espaces supprimés peuvent les restaurer avant cette échéance.",
+            "subtitleBin": "Vous êtes sur le point de programmer la suppression de l'espace de travail {workspace}. Il restera accessible en lecture seule jusqu'à sa suppression le {deletionDate}. Êtes-vous sûr de vouloir continuer ?",
+            "subtitleDelete": "Vous êtes sur le point de supprimer l'espace de travail {workspace}. Ses données et historique seront définitivement supprimés et vous ne pourrez pas le restaurer. Êtes-vous sûr de vouloir continuer ?",
+            "label": "Saisissez '{workspace}' pour confirmer",
+            "yesBin": "Mettre à la corbeille",
+            "yesDelete": "Supprimer définitivement",
+            "info": "Vos espaces de travail programmés pour suppression restent consultables en lecture seule durant {duration}, suite à quoi ils seront supprimés définitivement. Les propriétaires d'espaces supprimés peuvent les restaurer avant cette échéance.",
             "loading": "Chargement de la corbeille...",
             "backToWorkspace": "Retour à mes espaces de travail",
             "count": "1 espace de travail | {count} espaces de travail",
+            "question": {
+                "title": "Informations importantes",
+                "subtitleBin": "Si vous supprimez l'espace de travail {workspace}, ses données, ses métadonnées et son historique seront supprimés de l'organisation. Il deviendra inaccessible pour tous les utilisateurs. Il sera déplacé à la corbeille puis supprimé définitivement après {deletionDelay}.",
+                "subtitleDelete": "Si vous supprimez l'espace de travail {workspace}, ses données, ses métadonnées et son historique seront supprimés de l'organisation. Il deviendra inaccessible pour tous les utilisateurs.",
+                "yes": "J'ai compris",
+                "no": "Annuler"
+            },
             "trash": {
                 "success": "L'espace {workspace} a bien été mis à la corbeille.",
                 "fail": "Impossible de mettre l'espace {workspace} à la corbeille."
             },
-            "timestamp": "Suppression prévue le :"
+            "timestamp": "Suppression prévue le :",
+            "deletionDelay": {
+                "default": "30 jours",
+                "immediate": "Immédiat",
+                "seconds": "{amount} seconde | {amount} secondes",
+                "minutes": "{amount} minute | {amount} minutes",
+                "hours": "{amount} heure | {amount} heures",
+                "days": "{amount} jour | {amount} jours"
+            }
         }
     },
     "FoldersPage": {
@@ -1219,7 +1237,8 @@
             "title": "Configuration",
             "serverAddr": "Adresse du serveur",
             "copyPath": "Copié",
-            "copyFailed": "Impossible de copier l'adresse de l'organisation. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller."
+            "copyFailed": "Impossible de copier l'adresse de l'organisation. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
+            "workspaceDeletionDelay": "Délai de suppression d'espace de travail"
         }
     },
     "common": {

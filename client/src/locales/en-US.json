@@ -724,6 +724,7 @@
             "actionShow": "Show this workspace",
             "actionArchive": "Archive this workspace",
             "actionRestore": "Restore this workspace",
+            "actionScheduleDeletion": "Move to Bin",
             "actionDelete": "Delete this workspace",
             "actionCopyLink": "Copy link",
             "actionAddFavorite": "Add as starred",
@@ -787,7 +788,7 @@
             "noFavoriteWorkspaces": "You have not set starred any workspaces yet. Starred workspaces will be listed here.",
             "noHiddenWorkspaces": "You have not hidden any workspaces yet. Hidden workspaces will be listed here.",
             "noArchivedWorkspaces": "Your archived workspaces can be consulted here in read-only. Sharing is disabled unless the workspace is restored. Archived workspace owners can restore them.",
-            "noTrashedWorkspaces": "Your deleted workspaces can be consulted here in read-only. They will be permanently deleted after a set period. Deleted workspace owners can restore them before this date.",
+            "noTrashedWorkspaces": "Workspaces scheduled for deletion can be consulted here in read-only for {duration}, after which they will be permanently deleted. Owners of workspaces set for deletion can restore them before this date.",
             "showHiddenWorkspaces": "Show hidden workspaces"
         },
         "showHideWorkspace": {
@@ -864,18 +865,35 @@
         },
         "trashWorkspace": {
             "title": "Delete this workspace",
-            "subtitle": "You are about to delete the workspace {workspace}. It will remain accessible in read-only for all users who have access to it, and be permanently deleted on {deletionDate}. Are you sure you want to proceed?",
-            "yes": "Delete",
-            "no": "Cancel",
-            "info": "Your deleted workspaces will remain accessible in read-only for all users who have access to them, until their permanent deletion. Deleted workspace owners can restore them before this date.",
+            "subtitleBin": "You are about to schedule for deletion the workspace {workspace}. It will remain accessible in read-only until its deletion on {deletionDate}. Are you sure you want to proceed?",
+            "subtitleDelete": "You are about to delete the workspace {workspace}. Its data and history will be permanently deleted and you won't be able to restore it. Are you sure you want to proceed?",
+            "label": "Input '{workspace}' to proceed",
+            "yesBin": "Move to bin",
+            "yesDelete": "Permanently delete",
+            "info": "Workspaces scheduled for deletion will remain accessible in read-only for {duration}, after which they will be permanently deleted. Workspace owners can restore them before this date.",
             "loading": "Loading your deleted workspaces...",
             "backToWorkspace": "Back to my workspaces",
             "count": "1 workspace | {count} workspaces",
+            "question": {
+                "title": "Important information",
+                "subtitleBin": "If you delete the workspace {workspace}, its data, metadata and history will be deleted from the organization. It will become inaccessible to all users. The workspace will be moved to the bin and permanently deleted after {deletionDelay}.",
+                "subtitleDelete": "If you delete the workspace {workspace}, its data, metadata and history will be deleted from the organization. It will become inaccessible to all users.",
+                "yes": "I understand",
+                "no": "Cancel"
+            },
             "trash": {
                 "success": "The workspace {workspace} has successfully been moved to the bin.",
                 "fail": "Failed to move the workspace {workspace} to the bin."
             },
-            "timestamp": "Planned deletion date:"
+            "timestamp": "Planned deletion date:",
+            "deletionDelay": {
+                "default": "30 days",
+                "immediate": "Immediate",
+                "seconds": "{amount} second | {amount} seconds",
+                "minutes": "{amount} minute | {amount} minutes",
+                "hours": "{amount} hour | {amount} hours",
+                "days": "{amount} day | {amount} days"
+            }
         }
     },
     "FoldersPage": {
@@ -1217,7 +1235,8 @@
             "title": "Configuration",
             "serverAddr": "Server address",
             "copyPath": "Copied",
-            "copyFailed": "Failed to copy the organization address. Your browser or device does not seem to support copy/paste."
+            "copyFailed": "Failed to copy the organization address. Your browser or device does not seem to support copy/paste.",
+            "workspaceDeletionDelay": "Workspace deletion delay"
         }
     },
     "common": {

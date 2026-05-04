@@ -719,6 +719,7 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
     eventDistributor.value,
     informationManager.value,
     storageManager,
+    Number(userInfo.value?.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion) ?? 0,
     false,
     isLargeDisplay.value,
   );

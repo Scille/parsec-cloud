@@ -10,6 +10,21 @@
 
     <div class="card-content">
       <div class="info-list">
+        <!-- Workspace deletion delay -->
+        <div class="info-list-item">
+          <ion-label class="info-list-item__title body">
+            {{ $msTranslate('OrganizationPage.configuration.workspaceDeletionDelay') }}
+          </ion-label>
+          <div class="info-list-item__value cell-title">
+            {{
+              $msTranslate(
+                orgInfo.realmMinimumArchivingPeriodBeforeDeletion === 0
+                  ? 'WorkspacesPage.trashWorkspace.deletionDelay.immediate'
+                  : formatWorkspaceDeletionDelay(orgInfo.realmMinimumArchivingPeriodBeforeDeletion),
+              )
+            }}
+          </div>
+        </div>
         <!-- Outsider profile -->
         <div class="info-list-item">
           <ion-label class="info-list-item__title body">
@@ -73,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatWorkspaceDeletionDelay } from '@/components/workspaces/utils';
 import { OrganizationInfo } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';

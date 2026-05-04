@@ -282,6 +282,7 @@
 
             <!-- Trashed -->
             <ion-text
+              v-show="workspaceDeletionDelay > 0"
               @click="navigateTo(Routes.Trash)"
               :class="{ active: currentRouteIs(Routes.Trash) }"
               class="sidebar-content-organization-button button-medium"
@@ -507,6 +508,7 @@ const isTrialOrg = ref(false);
 const pathOpener = usePathOpener();
 const pendingRequestsCount = ref(0);
 const workspaceMenuState = ref<WorkspaceMenu>(WorkspaceMenu.All);
+const workspaceDeletionDelay = ref(0);
 
 const securityWarnings = ref<SecurityWarnings | undefined>();
 const securityWarningsCount = computed(() => {
@@ -773,6 +775,7 @@ onMounted(async () => {
   if (clientInfoResult.ok) {
     // clientInfoResult.organizationIsExpired;
     isExpired.value = false;
+    workspaceDeletionDelay.value = Number(clientInfoResult.value.serverOrganizationConfig.realmMinimumArchivingPeriodBeforeDeletion);
   }
 
   await loadAll();
@@ -897,7 +900,7 @@ async function onOpenWorkspaceContextMenu(event: Event): Promise<void> {
     return;
   }
   if (currentWorkspace.value.isArchived || currentWorkspace.value.isTrashed) {
-    await openArchivedWorkspaceContextMenu(event, currentWorkspace.value, informationManager.value, true);
+    await openArchivedWorkspaceContextMenu(event, currentWorkspace.value, informationManager.value, workspaceDeletionDelay.value, true);
   } else {
     await openWorkspaceContextMenu(
       event,
@@ -906,6 +909,7 @@ async function onOpenWorkspaceContextMenu(event: Event): Promise<void> {
       eventDistributor.value,
       informationManager.value,
       storageManager,
+      workspaceDeletionDelay.value,
       true,
     );
   }
