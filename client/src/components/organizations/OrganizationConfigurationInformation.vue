@@ -15,7 +15,7 @@
           <ion-label class="info-list-item__title body">
             {{ $msTranslate('OrganizationPage.configuration.workspaceDeletionDelay') }}
           </ion-label>
-          <div class="info-list-item__value cell-title">
+          <div class="info-list-item__value cell-title info">
             {{
               $msTranslate(
                 orgInfo.realmMinimumArchivingPeriodBeforeDeletion === 0
@@ -169,18 +169,24 @@ async function copyAddress(address: string): Promise<void> {
         color: var(--parsec-color-light-secondary-hard-grey);
       }
 
-      .success {
-        color: var(--parsec-color-light-success-700);
+      &__value.cell-title {
         padding: 0.125rem 0.5rem;
         border-radius: var(--parsec-radius-32);
+      }
+
+      .success {
+        color: var(--parsec-color-light-success-700);
         background: var(--parsec-color-light-success-50);
       }
 
       .warning {
         color: var(--parsec-color-light-warning-700);
-        padding: 0.125rem 0.5rem;
-        border-radius: var(--parsec-radius-32);
         background: var(--parsec-color-light-warning-50);
+      }
+
+      .info {
+        color: var(--parsec-color-light-secondary-text);
+        background: var(--parsec-color-light-secondary-premiere);
       }
     }
   }
