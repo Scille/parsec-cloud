@@ -5354,6 +5354,10 @@ fn struct_workspace_info_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "archivingConfigurationOrigin")?;
         variant_certificate_based_info_origin_js_to_rs(cx, js_val)?
     };
+    let can_self_promote_to_owner = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "canSelfPromoteToOwner")?;
+        js_val.value(cx)
+    };
     Ok(libparsec::WorkspaceInfo {
         id,
         is_started,
@@ -5364,6 +5368,7 @@ fn struct_workspace_info_js_to_rs<'a>(
         self_role_origin,
         archiving_configuration,
         archiving_configuration_origin,
+        can_self_promote_to_owner,
     })
 }
 
@@ -5407,6 +5412,8 @@ fn struct_workspace_info_rs_to_js<'a>(
         "archivingConfigurationOrigin",
         js_archiving_configuration_origin,
     )?;
+    let js_can_self_promote_to_owner = JsBoolean::new(cx, rs_obj.can_self_promote_to_owner);
+    js_obj.set(cx, "canSelfPromoteToOwner", js_can_self_promote_to_owner)?;
     Ok(js_obj)
 }
 
@@ -9968,6 +9975,118 @@ fn variant_client_revoke_user_error_rs_to_js<'a>(
         }
         libparsec::ClientRevokeUserError::UserNotFound { .. } => {
             let js_tag = JsString::try_new(cx, "ClientRevokeUserErrorUserNotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientSelfPromoteToWorkspaceOwnerError
+
+#[allow(dead_code)]
+fn variant_client_self_promote_to_workspace_owner_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientSelfPromoteToWorkspaceOwnerError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::ActiveOwnerAlreadyExists { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSelfPromoteToWorkspaceOwnerErrorActiveOwnerAlreadyExists",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::AuthorNotAllowed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorAuthorNotAllowed")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSelfPromoteToWorkspaceOwnerErrorInvalidCertificate",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorRealmDeleted")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSelfPromoteToWorkspaceOwnerErrorStopped")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSelfPromoteToWorkspaceOwnerErrorTimestampOutOfBallpark",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientSelfPromoteToWorkspaceOwnerError::WorkspaceNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSelfPromoteToWorkspaceOwnerErrorWorkspaceNotFound",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -24204,6 +24323,74 @@ fn client_revoke_user(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_self_promote_to_workspace_owner
+fn client_self_promote_to_workspace_owner(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let realm_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_self_promote_to_workspace_owner(client, realm_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_self_promote_to_workspace_owner_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_setup_shamir_recovery
 fn client_setup_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -32295,6 +32482,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientRenameWorkspace", client_rename_workspace)?;
     cx.export_function("clientRevokeUser", client_revoke_user)?;
+    cx.export_function(
+        "clientSelfPromoteToWorkspaceOwner",
+        client_self_promote_to_workspace_owner,
+    )?;
     cx.export_function("clientSetupShamirRecovery", client_setup_shamir_recovery)?;
     cx.export_function("clientShareWorkspace", client_share_workspace)?;
     cx.export_function("clientStart", client_start)?;

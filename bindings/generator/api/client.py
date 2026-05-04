@@ -357,6 +357,7 @@ class WorkspaceInfo(Structure):
     self_role_origin: CertificateBasedInfoOrigin
     archiving_configuration: RealmArchivingConfiguration
     archiving_configuration_origin: CertificateBasedInfoOrigin
+    can_self_promote_to_owner: bool
 
 
 async def client_list_workspaces(
@@ -538,6 +539,45 @@ async def client_archive_workspace(
     realm_id: VlobID,
     configuration: RequestedRealmArchivingConfiguration,
 ) -> Result[None, ClientArchiveWorkspaceError]:
+    raise NotImplementedError
+
+
+class ClientSelfPromoteToWorkspaceOwnerError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class WorkspaceNotFound:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+    class ActiveOwnerAlreadyExists:
+        pass
+
+    class Offline:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_self_promote_to_workspace_owner(
+    client: Handle,
+    realm_id: VlobID,
+) -> Result[None, ClientSelfPromoteToWorkspaceOwnerError]:
     raise NotImplementedError
 
 

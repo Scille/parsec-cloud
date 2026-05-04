@@ -67,6 +67,7 @@ describe('Workspace Card', () => {
     isBootstrapped: true,
     archivingConfiguration: { tag: RealmArchivingConfigurationTag.Available },
     archivingConfigurationOrigin: { tag: CertificateBasedInfoOriginTag.Placeholder },
+    canSelfPromoteToOwner: false,
     isArchived: false,
     isTrashed: false,
     mountpoints: [[42, '/']],

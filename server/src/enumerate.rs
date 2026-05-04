@@ -103,7 +103,9 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
         contributor,
         libparsec_types::RealmRole::Contributor
     ],
-    ["READER", reader, libparsec_types::RealmRole::Reader]
+    ["READER", reader, libparsec_types::RealmRole::Reader],
+    __richcmp__,
+    ord
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
@@ -111,7 +113,9 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     libparsec_types::UserProfile,
     ["ADMIN", admin, libparsec_types::UserProfile::Admin],
     ["STANDARD", standard, libparsec_types::UserProfile::Standard],
-    ["OUTSIDER", outsider, libparsec_types::UserProfile::Outsider]
+    ["OUTSIDER", outsider, libparsec_types::UserProfile::Outsider],
+    __richcmp__,
+    ord
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
