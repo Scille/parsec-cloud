@@ -4,9 +4,10 @@ use std::collections::VecDeque;
 
 use libparsec_types::prelude::*;
 use rustls_pki_types::CertificateDer;
+use sha2::Digest;
 
 use crate::{
-    platform::PlatformPkiPrivateKey, PkiCertificateGetDerError,
+    platform::PlatformPkiPrivateKey, shared::get_certificate_pkcs11_uri, PkiCertificateGetDerError,
     PkiCertificateGetValidationPathError, PkiCertificateRequestPrivateKeyError,
     PkiCertificateToReferenceError, PkiPrivateKey, X509ValidationPathOwned,
 };
@@ -38,7 +39,21 @@ impl PlatformPkiCertificate {
     pub async fn to_reference(
         &self,
     ) -> Result<X509CertificateReference, PkiCertificateToReferenceError> {
-        unimplemented!("platform not supported");
+        let der = self.0.get_der().await.map_err(|_| {
+            PkiCertificateToReferenceError::Internal(anyhow::anyhow!("unable to get der"))
+        })?;
+
+        let id = self.0.ck_id().map(Bytes::from).ok();
+        let label = Some(Bytes::copy_from_slice(self.0.ck_label().as_bytes()));
+        let uri = get_certificate_pkcs11_uri(&der, id, label)
+            .await
+            .map_err(|e| PkiCertificateToReferenceError::Internal(e.into()))?;
+
+        let digest = sha2::Sha256::digest(der);
+        let hash: X509CertificateReference =
+            X509CertificateHash::SHA256(Box::new(digest.into())).into();
+
+        Ok(hash.add_or_replace_uri(uri))
     }
 
     pub async fn get_validation_path(
