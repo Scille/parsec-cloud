@@ -76,7 +76,7 @@
         "@ionic/cli": "^7.2.1",
         "@playwright/test": "^1.59.1",
         "@sentry/vite-plugin": "^5.2.0",
-        "@types/adm-zip": "^0.5.7",
+        "@types/adm-zip": "^0.5.8",
         "@types/luxon": "^3.3.4",
         "@types/mark.js": "^8.11.12",
         "@types/node": "^25.6.0",
@@ -117,6 +117,6 @@
         "vite-plugin-top-level-await": "^1.5.0",
         "vitest": "4.0.18",
         "vue-eslint-parser": "^10.4.0",
-        "vue-tsc": "^3.2.6"
+        "vue-tsc": "^3.2.7"
     }
 }
