@@ -16,7 +16,7 @@ msTest('Submit bug report', async ({ connected }, testInfo: TestInfo) => {
   await expect(modal).toBeVisible();
   const error = modal.locator('.report-error');
   await expect(error).toBeHidden();
-  await expect(modal.locator('.ms-modal-header__title-container')).toHaveText('Report a bug');
+  await expect(modal.locator('.ms-modal-header__title')).toHaveText('Report a bug');
   const sendButton = modal.locator('#next-button');
   await expect(sendButton).toHaveText('Send report');
   await expect(sendButton).toBeTrulyDisabled();
@@ -76,7 +76,7 @@ msTest('Submit bug report failed', async ({ connected }) => {
   await expect(modal).toBeVisible();
   const error = modal.locator('.report-error');
   await expect(error).toBeHidden();
-  await expect(modal.locator('.ms-modal-header__title-container')).toHaveText('Report a bug');
+  await expect(modal.locator('.ms-modal-header__title')).toHaveText('Report a bug');
   const sendButton = modal.locator('#next-button');
   await expect(sendButton).toHaveText('Send report');
   await expect(sendButton).toBeTrulyDisabled();
