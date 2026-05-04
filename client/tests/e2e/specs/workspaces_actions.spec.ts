@@ -54,7 +54,7 @@ async function openContextMenu(page: Page, mode: Mode, method: OpenMenuMethod): 
 const MENU = [
   {
     title: 'Workspace management',
-    actions: ['Rename', 'History', 'Hide this workspace', 'Archive this workspace'],
+    actions: ['Rename', 'History', 'Hide this workspace', 'Archive this workspace', 'Move to Bin'],
   },
   {
     title: 'Collaboration',
@@ -194,7 +194,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(favorites).toBeVisible();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(9).click();
+    await popover.getByRole('listitem').nth(10).click();
     await expect(popover).toBeHidden();
     if (mode === 'sidebar') {
       await workspaces.locator('.sidebar').locator('#sidebar-all-workspaces').click();
@@ -217,7 +217,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeHidden();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(7).click();
+    await popover.getByRole('listitem').nth(8).click();
     await expect(workspaces.locator('.workspace-sharing-modal')).toBeVisible();
     await expect(workspaces.locator('.ms-modal-header__title')).toHaveText('Share the workspace');
     await expect(workspaces.locator('.sharing-modal__title')).toHaveText('wksp1');

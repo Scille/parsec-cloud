@@ -787,7 +787,7 @@
             "noFavoriteWorkspaces": "Vous n'avez encore aucun espace de travail favori. Les espaces favoris apparaîtront ici.",
             "noHiddenWorkspaces": "Vous n'avez encore aucun espace de travail masqué. Les espaces masqués apparaîtront ici.",
             "noArchivedWorkspaces": "Vos espaces de travail archivés seront consultables en lecture seule uniquement. Le partage ne sera plus actif tant qu'ils seront archivés. Les propriétaires d'espaces de travail archivés peuvent les restaurer.",
-            "noTrashedWorkspaces": "Vos espaces de travail programmés pour suppression peuvent être consultés ici en lecture seule durant {duration}, durée après laquelle ils seront définitivement supprimés. Les propriétaires d'espaces de travail en attente de suppression peuvent les restaurer avant cette échéance.",
+            "noTrashedWorkspaces": "Vos espaces de travail programmés pour suppression peuvent être consultés ici en lecture seule durant {duration}, durée après laquelle ils seront définitivement supprimés. Les propriétaires d'espaces de travail peuvent les restaurer avant cette échéance.",
             "showHiddenWorkspaces": "Afficher les espaces masqués"
         },
         "showHideWorkspace": {
