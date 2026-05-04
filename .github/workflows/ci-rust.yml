@@ -103,7 +103,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@58e862542551f667fa44c8a2a4a1d64ad477c96a # pin v2.75.17
+      - uses: taiki-e/install-action@787505cde8a44ea468a00478fe52baf23b15bccd # pin v2.75.21
         with:
           tool: nextest@0.9.114, wasm-pack@0.13.1, cargo-deny@0.19.0, cargo-udeps@0.1.56
 
@@ -139,7 +139,7 @@ jobs:
           RUST_LOG: ${{ env.TEST_RUST_LOG }}
 
       - name: unlock keyring
-        uses: t1m0thyj/unlock-keyring@728cc718a07b5e7b62c269fc89295e248b24cba7 # pin v1.1.0
+        uses: t1m0thyj/unlock-keyring@cbcf205c879ebd86add70bab3a6abfcce59a5cae # pin v1.2.0
 
       # The default value is 1000, we increase it to not be limited when executing our mountpoint tests.
       - name: Configure fuse options
@@ -306,7 +306,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@58e862542551f667fa44c8a2a4a1d64ad477c96a # pin v2.75.17
+      - uses: taiki-e/install-action@787505cde8a44ea468a00478fe52baf23b15bccd # pin v2.75.21
         with:
           tool: nextest@0.9.114
 
