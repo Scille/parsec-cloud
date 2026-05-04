@@ -67,7 +67,7 @@ async function initModals(hostPage: MsPage, guestPage: MsPage): Promise<[ModalDa
     modal: greetModal,
     nextButton: greetModal.locator('#next-button'),
     title: greetModal.locator('.modal-header__title'),
-    subtitle: greetModal.locator('.modal-header__text'),
+    subtitle: greetModal.locator('.modal-header__subtitle'),
     content: greetModal.locator('.modal-content'),
     closeButton: greetModal.locator('.closeBtn'),
   };
@@ -355,7 +355,7 @@ msTest('Host selects no SAS code', async ({ myProfilePage }) => {
   const questionModal = myProfilePage.locator('.question-modal');
   await expect(questionModal).toBeVisible();
   await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
-  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+  await expect(questionModal.locator('.ms-modal-header__subtitle')).toHaveText(
     "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
   );
   await questionModal.locator('#cancel-button').click();
@@ -491,7 +491,7 @@ msTest('Guest selects no SAS code', async ({ myProfilePage }) => {
   const questionModal = secondTab.locator('.question-modal');
   await expect(questionModal).toBeVisible();
   await expect(questionModal.locator('.ms-modal-header__title')).toHaveText('No matching code');
-  await expect(questionModal.locator('.ms-modal-header__text')).toHaveText(
+  await expect(questionModal.locator('.ms-modal-header__subtitle')).toHaveText(
     "If you can't find the matching code, quit and start the process over. If the problem persists, please contact your administrator.",
   );
   await questionModal.locator('#cancel-button').click();

@@ -34,7 +34,7 @@ export async function answerQuestion(page: MsPage, positiveAnswer: boolean, opti
       if (smallDisplay) {
         await expect(modal.locator('.ms-small-display-modal-header__text')).toHaveText(options.expectedQuestionText);
       } else {
-        await expect(modal.locator('.ms-modal-header__text')).toHaveText(options.expectedQuestionText);
+        await expect(modal.locator('.ms-modal-header__subtitle')).toHaveText(options.expectedQuestionText);
       }
     }
     if (options.expectedPositiveText) {
