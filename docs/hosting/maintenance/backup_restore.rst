@@ -6,6 +6,8 @@
 Backup and restore
 ==================
 
+This section explains how to manage backups for PostgreSQL database and the Object Storage.
+
 .. important::
 
   This section assumes that you deployed Parsec following the instructions from
@@ -13,42 +15,38 @@ Backup and restore
   Parsec differently, you might need to adapt this section to your custom
   deployment.
 
-Notes on consistency
-====================
+Notes on data consistency
+=========================
 
-User data, stored in the S3 object storage, is accessible thanks to the metadata
-stored on the PostgreSQL database. Metadata contains references to file blocks
-stored in the object storage.
+The user data accessible to the user depends primarily on the metadata stored in the PostgreSQL
+database and secondly on the Object Storage. This is because the metadata contain references to
+file blocks stored in the Object Storage.
 
 During backup and restore, the following situations may occur:
 
-* The SQL database is up to date, but some objects are missing in the S3 object
-  storage: this means that some files listed in the metadata may be missing
-  some objects. Parsec will consider it a *file corruption* (only for files
-  with missing objects). The affected files will still be displayed on the
-  application, but they cannot be downloaded or opened.
+* The PostgreSQL database is up to date, but some referenced objects are missing in the Object Storage:
+  Parsec will consider files with missing objects as *corrupted*. These files should still be
+  visible to the user, but they cannot be downloaded or opened.
 
-* The SQL database is not up to date, but all objects are present: this means
-  that there will be some objects that are not referenced by any file.
-  Non-referenced objects are considered *orphaned* and therefore will be ignored
-  by Parsec. All files displayed on the application will still be accessible.
+* The PostgreSQL database is not up to date, and there are some objects non referenced by any in the Object Storage:
+  Objects that are not referenced by any file are considered *orphaned* and therefore will be
+  ignored by Parsec. All files displayed in Parsec should still be accessible.
 
-* The SQL database is not up to date and some objects are not referenced:
+* The PostgreSQL database is not up to date and some objects are not referenced:
   In this scenario, the effect of the previous two points are cumulative.
 
-It should be noted that no block is deleted or modified from object storage,
+It should be noted that no block is deleted or modified from the Object Storage,
 even in the case of deleting a file or folder for historical purposes.
 
 .. important::
 
-  To maintain data consistency between databases, it is therefore necessary to
-  **back up the SQL database before backing up the object database**, since
-  excess objects have no consequences. The backup date to be considered is that
-  of the SQL database.
+  To ensure data consistency between databases, you must **back up the PostgreSQL database
+  *before* backing up the Object Storage**, as any excess objects will have no consequences.
+  The backup date to consider is that of the PostgreSQL database.
 
-In conclusion, it is not necessary to guarantee exact consistency between the
-databases, as the SQL database is the authoritative source, but it is only
-required that the SQL database backup is earlier than the backup of the object database.
+In conclusion, it is not necessary to ensure exact consistency between the databases,
+since the PostgreSQL database is the authoritative source; rather the PostgreSQL database
+backup simply needs to be older (previous) than the  Object Storage backup.
 
 PostgreSQL database
 ===================
@@ -60,7 +58,7 @@ errors, check the error messages for clues as to what might be going wrong.
 Backing up the database
 -----------------------
 
-You can create a backup file of the database using ``pg_dump``.
+You can create a backup file of the database using :command:`pg_dump`.
 
 Open a terminal or command prompt and run the following command:
 
@@ -68,17 +66,14 @@ Open a terminal or command prompt and run the following command:
 
   pg_dump -U $USER -h $HOST -p $PORT "$DATABASE_NAME" > backup.sql
 
-Replacing:
-
-* ``$USER``: your PostgreSQL username
-* ``$HOST``: the address of the database host (use ``localhost`` if the database is on your computer)
-* ``$PORT``: the port on which PostgreSQL listens (by default, this is usually port ``5432``)
-* ``$DATABASE_NAME``: the name of the database
+Where ``$USER`` is your PostgreSQL username, ``$HOST`` is the database host address (use ``localhost``
+if the database is on your computer), ``$PORT`` is the port on which PostgreSQL listens (usually ``5432``)
+and ``$DATABASE_NAME`` is the database name.
 
 If your database has a password, you will be prompted to enter it.
 
-The above command creates a file ``backup.sql`` which contains all the data and
-structure of the SQL database.
+The previous command will create a ``backup.sql`` file containing the structure of the
+PostgreSQL database and all its data.
 
 Restoring the database
 ----------------------
@@ -98,27 +93,30 @@ target database exists. If it doesn't, create it with PostgreSQL.
   if the database is on your computer), ``$PORT`` is the port on which PostgreSQL listens (usually ``5432``)
   and ``$DATABASE_NAME`` is the database name.
 
-After making sure the database exists, you can restore the database with the backup file
-with a single command depending on the format of the backup: use ``psql`` for
-SQL files or ``pg_restore`` for binary files.
+After making sure the database exists, you can restore the database with the ``backup.sql`` file
+with a single command depending on the format of the backup.
 
-For an SQL file, as described above, use:
-
-.. code-block:: shell
-
-  psql -U USER -h HOST -p PORT -d "DATABASE_NAME" < backup.sql
-
-For a binary file (if you used ``pg_dump`` with ``-Fc`` option), use:
+For an SQL file, use :command:`psql`:
 
 .. code-block:: shell
 
-  pg_restore -U USER -h HOST -p PORT -d "DATABASE_NAME" -1 backup.bin
+  psql -U $USER -h $HOST -p $PORT -d "$DATABASE_NAME" < backup.sql
+
+For a binary file (if you used :command:`pg_dump -Fc`), use :command:`pg_restore`:
+
+.. code-block:: shell
+
+  pg_restore -U $USER -h $HOST -p $PORT -d "$DATABASE_NAME" -1 backup.bin
+
+Where ``$USER`` is your PostgreSQL username, ``$HOST`` is the database host address (use ``localhost``
+if the database is on your computer), ``$PORT`` is the port on which PostgreSQL listens (usually ``5432``)
+and ``$DATABASE_NAME`` is the database name.
 
 
-Object storage (S3)
+Object Storage (S3)
 ===================
 
-This section covers S3 object storage backup and restore in AWS.
+This section covers Object Storage backup and restore in AWS S3.
 
 Before starting, make sure your AWS account has the necessary permissions to
 access the S3 bucket and perform these operations.
@@ -126,7 +124,7 @@ access the S3 bucket and perform these operations.
 Backing up the bucket
 ---------------------
 
-Use ``aws`` to manage buckets compatible with Amazon's S3 service.
+Use :command:`aws` to manage buckets compatible with Amazon's S3 service.
 
 Synchronize the S3 bucket with a local directory:
 
@@ -147,7 +145,7 @@ Restoring the bucket
 
 Restore all objects to an S3 bucket
 
-To restore data from backup, use the ``aws s3 sync`` command in the opposite
+To restore data from backup, use :command:`aws s3 sync` in the opposite
 direction, i.e. from the local directory to the S3 bucket.
 
 .. code-block:: shell

@@ -1,0 +1,238 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Marcos Medrano <marcos.medrano@scille.fr>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.4.0-a.7+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-09 18:55+0200\n"
+"PO-Revision-Date: 2026-05-09 20:08+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.9\n"
+
+#: ../../hosting/maintenance/upgrade.rst:9
+msgid "Upgrade Parsec Server"
+msgstr "Mise à jour de Parsec Server"
+
+#: ../../hosting/maintenance/upgrade.rst:11
+msgid ""
+"This section describes the general steps required to upgrade Parsec Server."
+msgstr ""
+"Cette section décrit les étapes générales à suivre pour mettre à jour Parsec "
+"Server."
+
+#: ../../hosting/maintenance/upgrade.rst:13
+msgid ""
+"This section assumes that you deployed Parsec following the instructions "
+"from :ref:`Server deployment section <doc_hosting_deployment>`. If you "
+"deployed Parsec differently, you might need to adapt this section to your "
+"custom deployment."
+msgstr ""
+"Cette section part du principe que vous avez déployé Parsec en suivant les "
+"instructions de la section :ref:`Déploiement du serveur "
+"<doc_hosting_deployment>`. Si vous avez déployé Parsec d'une autre manière, "
+"vous devrez peut-être adapter cette section à votre déploiement personnalisé."
+
+#: ../../hosting/maintenance/upgrade.rst:17
+msgid ""
+"Follow the steps below depending on the method used to install Parsec Server:"
+msgstr ""
+"Suivez les étapes ci-dessous en fonction de la méthode utilisée pour "
+"installer Parsec Server :"
+
+#: ../../hosting/maintenance/upgrade.rst:19
+msgid ""
+":ref:`Upgrade with Docker <doc_hosting_maintenance_upgrade_docker>`, if you "
+"installed Parsec Server with Docker."
+msgstr ""
+":ref:`Mise à jour avec Docker <doc_hosting_maintenance_upgrade_docker>`, si "
+"vous avez installé Parsec Server avec Docker."
+
+#: ../../hosting/maintenance/upgrade.rst:20
+msgid ""
+":ref:`Upgrade on Linux <doc_hosting_maintenance_upgrade_linux>`, if you "
+"installed Parsec Server directly on Linux."
+msgstr ""
+":ref:`Mise à niveau sous Linux <doc_hosting_maintenance_upgrade_linux>`, si "
+"vous avez installé Parsec Server directement sous Linux."
+
+#: ../../hosting/maintenance/upgrade.rst:26
+msgid "Upgrade with Docker"
+msgstr "Mise à jour avec Docker"
+
+#: ../../hosting/maintenance/upgrade.rst:30
+#: ../../hosting/maintenance/upgrade.rst:114
+msgid ""
+"Before upgrading, make sure to back up the database as explained in the :ref:"
+"`Backup and Restore section <doc_hosting_maintenance_backup_restore>` in "
+"case you need to roll back the update."
+msgstr ""
+"Avant de procéder à la mise à jour, assurez-vous de sauvegarder la base de "
+"données comme expliqué dans la section :ref:`Sauvegarde et restauration "
+"<doc_hosting_maintenance_backup_restore>` au cas où vous auriez besoin de "
+"revenir sur la mise à jour."
+
+#: ../../hosting/maintenance/upgrade.rst:34
+msgid ""
+"The following steps show how to upgrade the ``parsec-server`` service from "
+"version ``v3.0.0`` to ``v3.1.0``."
+msgstr ""
+"Les étapes suivantes expliquent comment mettre à niveau le service ``parsec-"
+"server`` de la version ``v3.0.0`` à la version ``v3.1.0``."
+
+#: ../../hosting/maintenance/upgrade.rst:36
+msgid ""
+"Update the ``parsec-server`` Docker image tag in ``parsec-server.docker."
+"yaml`` from this:"
+msgstr ""
+"Mettre à jour le tag de l'image Docker de ``parsec-server`` dans ``parsec-"
+"server.docker.yaml``, de ceci :"
+
+#: ../../hosting/maintenance/upgrade.rst:48
+msgid "To this:"
+msgstr "À cela :"
+
+#: ../../hosting/maintenance/upgrade.rst:60
+msgid "List migrations to be applied:"
+msgstr "Lister les migrations à appliquer :"
+
+#: ../../hosting/maintenance/upgrade.rst:66
+msgid "The output should look like this:"
+msgstr "Le résultat devrait ressembler à ceci :"
+
+#: ../../hosting/maintenance/upgrade.rst:87
+msgid ""
+"This output is provided as an example. Don't expect it to match your output."
+msgstr ""
+"Ce résultat est fourni à titre d'exemple. Ne vous attendez pas à ce qu'il "
+"corresponde au vôtre."
+
+#: ../../hosting/maintenance/upgrade.rst:89
+msgid ""
+"The lines ending with ``already applied`` are migrations already applied on "
+"the database whereas the one ending with ``✔`` are migrations to be applied."
+msgstr ""
+"Les lignes se terminant par ``already applied`` sont des migrations déjà "
+"présentes dans la base de données tandis que celles se terminant par ``✔`` "
+"sont des migrations à appliquer."
+
+#: ../../hosting/maintenance/upgrade.rst:92
+msgid "Apply database migrations:"
+msgstr "Appliquer les migrations de la base de données :"
+
+#: ../../hosting/maintenance/upgrade.rst:100
+msgid "Restart the ``parsec-server`` container:"
+msgstr "Redémarrer le conteneur ``parsec-server`` :"
+
+#: ../../hosting/maintenance/upgrade.rst:110
+msgid "Upgrade on Linux"
+msgstr "Mise à jour sous Linux"
+
+#: ../../hosting/maintenance/upgrade.rst:120
+msgid ""
+"Some :ref:`Parsec customizations <doc_hosting_custom_branding>` require you "
+"to modify source files *inside* the installation directory. This files are "
+"overwritten during upgrade so you have to make a copy before starting, and "
+"restore them after upgrade."
+msgstr ""
+"Certaines :ref:`personnalisations de Parsec <doc_hosting_custom_branding>` "
+"nécessitent de modifier les fichiers source *à l'intérieur* du répertoire "
+"d'installation. Ces fichiers étant écrasés lors de la mise à jour, vous "
+"devez en faire une copie avant de commencer, puis les restaurer après la "
+"mise à jour."
+
+#: ../../hosting/maintenance/upgrade.rst:124
+msgid ""
+"Since Parsec v3.5, email templates and server pages can be loaded from a "
+"template directory *outside* the installation directory. This is achieved by "
+"using ``--template-dir`` option when running Parsec Server."
+msgstr ""
+"Depuis la version 3.5 de Parsec, les modèles d'e-mails et les pages serveur "
+"peuvent être chargés à partir d'un répertoire de modèles situé *en dehors* "
+"du répertoire d'installation. Pour ce faire, il suffit d'utiliser l'option "
+"``--template-dir`` lors du lancement de Parsec Server."
+
+#: ../../hosting/maintenance/upgrade.rst:128
+msgid ""
+"The following steps show how to upgrade Parsec Server directly on Linux."
+msgstr ""
+"Les étapes suivantes expliquent comment mettre à jour Parsec Server "
+"directement sous Linux."
+
+#: ../../hosting/maintenance/upgrade.rst:130
+msgid "Stop the running Parsec Server"
+msgstr "Arrêtez le serveur Parsec en cours d'exécution"
+
+#: ../../hosting/maintenance/upgrade.rst:132
+#: ../../hosting/maintenance/upgrade.rst:152
+msgid "This step would depend on how you run Parsec Server."
+msgstr "Cette étape dépendra de la manière dont vous exécutez Parsec Server."
+
+#: ../../hosting/maintenance/upgrade.rst:134
+#: ../../hosting/maintenance/upgrade.rst:154
+msgid ""
+"For example if you used :command:`systemctl` you would run something like:"
+msgstr ""
+"Par exemple, si vous utilisiez la commande :command:`systemctl`, vous "
+"exécuteriez quelque chose comme :"
+
+#: ../../hosting/maintenance/upgrade.rst:140
+msgid "Install Parsec Server and apply database migrations"
+msgstr ""
+"Installez Parsec Server et appliquez les migrations de la base de données"
+
+#: ../../hosting/maintenance/upgrade.rst:142
+msgid ""
+"Follow the steps described in :ref:`Deploy with Linux "
+"<doc_hosting_deployment_with_linux>`."
+msgstr ""
+"Suivez les étapes décrites dans :ref:`Déploiement sous Linux "
+"<doc_hosting_deployment_with_linux>`."
+
+#: ../../hosting/maintenance/upgrade.rst:144
+msgid "Check that the right version is installed"
+msgstr "Vérifiez que la bonne version est installée"
+
+#: ../../hosting/maintenance/upgrade.rst:150
+msgid "Restart Parsec Server"
+msgstr "Redémarrez Parsec Server"
+
+#: ../../hosting/maintenance/upgrade.rst:160
+msgid "Check that the Parsec Server is up and running."
+msgstr "Vérifiez que Parsec Server est opérationnel."
+
+#: ../../hosting/maintenance/upgrade.rst:162
+msgid ""
+"Open a web browser and go to the URL were you have deployed your Parsec "
+"Server."
+msgstr ""
+"Ouvrez un navigateur Web et rendez-vous à l'adresse où vous avez déployé "
+"Parsec Server."
+
+#: ../../hosting/maintenance/upgrade.rst:164
+msgid ""
+"**If web application is enabled**: you should be redirected to the Welcome "
+"page."
+msgstr ""
+"**Si l'application web est activée** : vous devriez être redirigé vers la "
+"page d'accueil."
+
+#: ../../hosting/maintenance/upgrade.rst:166
+msgid ""
+"**If web application is not enabled**: you should see the page that the "
+"server is running."
+msgstr ""
+"**Si l'application web n'est pas activée** : vous devriez voir la page du "
+"serveur qui tourne correctement."
+
+#: ../../hosting/maintenance/upgrade.rst:168
+msgid "Parsec Server is up and running"
+msgstr "Parsec Server est opérationnel"
