@@ -47,20 +47,15 @@ impl PlatformPkiCertificate {
     pub async fn to_reference(
         &self,
     ) -> Result<X509CertificateReference, PkiCertificateToReferenceError> {
-        let uri = super::get_certificate_uri(&self.0);
-        let hash = self
-            .0
-            .fingerprint(schannel::cert_context::HashAlgorithm::sha256())
-            .and_then(|buf| {
-                buf.try_into().map_err(|_| {
-                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Not a sha256 hash")
-                })
-            })
-            .map(X509CertificateHash::SHA256)
-            .context("Cannot get cert fingerprint")
-            .map_err(PkiCertificateToReferenceError::Internal)?;
-
-        Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
+        crate::shared::uri::get_certificate_ref(
+            None,
+            self.0.friendly_name().map(|s| s.as_bytes().into()).ok(),
+            self.0.to_der(),
+        )
+        .map(|(cert_ref, _)| cert_ref)
+        .map_err(|(_, e)| e)
+        .context("Cannot get reference")
+        .map_err(PkiCertificateToReferenceError::Internal)
     }
 
     pub async fn get_validation_path(

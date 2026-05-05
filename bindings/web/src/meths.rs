@@ -6150,9 +6150,8 @@ fn struct_x509_pkcs11_uri_js_to_rs(obj: JsValue) -> Result<libparsec::X509Pkcs11
                     .map(|x| x.to_vec())
                     .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
-                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
-                            Ok(v.to_vec().into())
-                        };
+                        let custom_from_rs_bytes =
+                            |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
                         custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
                     })?,
             )
@@ -6169,35 +6168,32 @@ fn struct_x509_pkcs11_uri_js_to_rs(obj: JsValue) -> Result<libparsec::X509Pkcs11
                     .map(|x| x.to_vec())
                     .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
-                        let custom_from_rs_bytes = |v: &[u8]| -> Result<libparsec::Bytes, String> {
-                            Ok(v.to_vec().into())
-                        };
+                        let custom_from_rs_bytes =
+                            |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
                         custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
                     })?,
             )
         }
     };
-    let issuer = {
-        let js_val = Reflect::get(&obj, &"issuer".into())?;
+    let der_issuer = {
+        let js_val = Reflect::get(&obj, &"derIssuer".into())?;
         js_val
             .dyn_into::<Uint8Array>()
             .map(|x| x.to_vec())
             .map_err(|_| TypeError::new("Not a Uint8Array"))
             .and_then(|x| {
-                let custom_from_rs_bytes =
-                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
                 custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
-    let subject = {
-        let js_val = Reflect::get(&obj, &"subject".into())?;
+    let der_subject = {
+        let js_val = Reflect::get(&obj, &"derSubject".into())?;
         js_val
             .dyn_into::<Uint8Array>()
             .map(|x| x.to_vec())
             .map_err(|_| TypeError::new("Not a Uint8Array"))
             .and_then(|x| {
-                let custom_from_rs_bytes =
-                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
                 custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
@@ -6208,16 +6204,15 @@ fn struct_x509_pkcs11_uri_js_to_rs(obj: JsValue) -> Result<libparsec::X509Pkcs11
             .map(|x| x.to_vec())
             .map_err(|_| TypeError::new("Not a Uint8Array"))
             .and_then(|x| {
-                let custom_from_rs_bytes =
-                    |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
                 custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
             })?
     };
     Ok(libparsec::X509Pkcs11URI {
         id,
         label,
-        issuer,
-        subject,
+        der_issuer,
+        der_subject,
         serial,
     })
 }
@@ -6235,10 +6230,10 @@ fn struct_x509_pkcs11_uri_rs_to_js(rs_obj: libparsec::X509Pkcs11URI) -> Result<J
         None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"label".into(), &js_label)?;
-    let js_issuer = JsValue::from(Uint8Array::from(rs_obj.issuer.as_ref()));
-    Reflect::set(&js_obj, &"issuer".into(), &js_issuer)?;
-    let js_subject = JsValue::from(Uint8Array::from(rs_obj.subject.as_ref()));
-    Reflect::set(&js_obj, &"subject".into(), &js_subject)?;
+    let js_der_issuer = JsValue::from(Uint8Array::from(rs_obj.der_issuer.as_ref()));
+    Reflect::set(&js_obj, &"derIssuer".into(), &js_der_issuer)?;
+    let js_der_subject = JsValue::from(Uint8Array::from(rs_obj.der_subject.as_ref()));
+    Reflect::set(&js_obj, &"derSubject".into(), &js_der_subject)?;
     let js_serial = JsValue::from(Uint8Array::from(rs_obj.serial.as_ref()));
     Reflect::set(&js_obj, &"serial".into(), &js_serial)?;
     Ok(js_obj)

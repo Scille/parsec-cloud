@@ -105,25 +105,33 @@ impl UserX509CertificateDetails {
     pub fn load_der(der: &[u8]) -> Result<Self, UserX509CertificateLoadError> {
         let info = crate::x509::X509CertificateInformation::load_der(der)
             .map_err(|_| UserX509CertificateLoadError::InvalidCertificateDer)?;
-        let emails = info
+        Self::try_from(info)
+    }
+}
+
+impl TryFrom<crate::x509::X509CertificateInformation> for UserX509CertificateDetails {
+    type Error = UserX509CertificateLoadError;
+
+    fn try_from(value: crate::x509::X509CertificateInformation) -> Result<Self, Self::Error> {
+        let emails = value
             .emails()
             .map(EmailAddress::from_str)
             .collect::<Result<_, _>>()
             .map_err(|_| UserX509CertificateLoadError::InvalidEmail)?;
 
-        let common_name = match info.common_name() {
+        let common_name = match value.common_name() {
             Some(common_name) => common_name.to_string(),
             None => return Err(UserX509CertificateLoadError::NoCommonName),
         };
-        let subject = info.subject;
-        let issuer = info.issuer;
+        let subject = value.subject;
+        let issuer = value.issuer;
 
-        let can_encrypt = info.extensions.can_encrypt();
-        let can_sign = info.extensions.can_sign();
-        let serial = info.serial;
+        let can_encrypt = value.extensions.can_encrypt();
+        let can_sign = value.extensions.can_sign();
+        let serial = value.serial;
 
-        let not_before = x509_cert_time_to_datetime(info.validity.not_before)?;
-        let not_after = x509_cert_time_to_datetime(info.validity.not_after)?;
+        let not_before = x509_cert_time_to_datetime(value.validity.not_before)?;
+        let not_after = x509_cert_time_to_datetime(value.validity.not_after)?;
 
         Ok(Self {
             common_name,

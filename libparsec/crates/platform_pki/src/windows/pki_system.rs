@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use futures::future::Either;
 use schannel::{
     cert_context::{CertContext, HashAlgorithm},
     cert_store::CertStore,
@@ -67,7 +68,9 @@ impl PlatformPkiSystem {
         Ok(self
             .my_cert_store
             .certs()
-            .map(|cert| AvailablePkiCertificate::load_der(cert.friendly_name().ok(), cert.to_der()))
+            .map(|cert| {
+                AvailablePkiCertificate::load_der(None, cert.friendly_name().ok(), cert.to_der())
+            })
             .collect())
     }
 
@@ -117,12 +120,23 @@ fn open_certificate(
     certificate_ref: &X509CertificateReference,
 ) -> Option<CertContext> {
     certificate_ref
-        .get_uri::<X509WindowsCngURI>()
-        .and_then(|uri| {
-            log::trace!("Looking for cert with uri: {uri}");
-            let mut uri = uri.clone();
-            find_in_store::find_cert_in_store(store, find_in_store::CertFilter::cert_id(&mut uri))
-                .next()
+        .get_uri::<X509Pkcs11URI>()
+        .cloned()
+        .map(Either::Left)
+        .or_else(|| {
+            certificate_ref
+                .get_uri::<X509WindowsCngURI>()
+                .cloned()
+                .map(Either::Right)
+        })
+        .and_then(|mut filter| {
+            let (issuer, serial) = match &mut filter {
+                Either::Left(pkcs11) => (pkcs11.der_issuer.as_mut(), pkcs11.serial.as_mut()),
+                Either::Right(uri) => (uri.issuer.as_mut(), uri.serial_number.as_mut()),
+            };
+            log::trace!("Looking for cert with issuer:{issuer:x?} serial:{serial:x?}");
+            let filter = find_in_store::CertFilter::cert_id(issuer, serial);
+            find_in_store::find_cert_in_store(store, filter).next()
         })
         .inspect(|_v| log::trace!("Certificate found using uri"))
         .or_else(|| {

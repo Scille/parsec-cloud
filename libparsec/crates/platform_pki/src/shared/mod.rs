@@ -2,10 +2,9 @@
 
 mod encrypt;
 mod info;
-mod uri;
+pub(crate) mod uri;
 mod verify;
 
 pub use encrypt::*;
 pub use info::*;
-pub use uri::*;
 pub use verify::*;

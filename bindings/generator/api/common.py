@@ -386,11 +386,11 @@ class X509WindowsCngURI(Structure):
 
 
 class X509Pkcs11URI(Structure):
-    id: Bytes | None
-    label: Bytes | None
-    issuer: Bytes
-    subject: Bytes
-    serial: Bytes
+    id: BytesVec | None
+    label: BytesVec | None
+    der_issuer: BytesVec
+    der_subject: BytesVec
+    serial: BytesVec
 
 
 class X509URIFlavorValue(Variant):

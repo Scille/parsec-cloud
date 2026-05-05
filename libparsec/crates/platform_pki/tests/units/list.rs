@@ -24,7 +24,7 @@ async fn list_user_certificates(certificates: &InstalledCertificates) {
 
     // Should at least found Alice's certificate
     let alice_reference = certificates.alice_cert_ref();
-    assert!(certs.iter().find(|c| matches!(c, AvailablePkiCertificate::Valid{ reference, .. } if *reference == alice_reference)).is_some());
+    assert!(certs.iter().any(|c| matches!(c, AvailablePkiCertificate::Valid { reference, .. } if reference.hash == alice_reference.hash)));
 }
 
 #[parsec_test]

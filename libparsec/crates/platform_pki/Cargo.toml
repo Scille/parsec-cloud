@@ -36,6 +36,7 @@ libparsec_platform_http_proxy = { workspace = true }
 [target.'cfg(target_os = "windows")'.dependencies]
 schannel = { workspace = true }
 windows-sys = { workspace = true, features = ["Win32_Security_Cryptography_UI"] }
+futures = { workspace = true }
 
 [target.'cfg(target_os = "linux")'.dev-dependencies]
 cryptoki = { workspace = true }

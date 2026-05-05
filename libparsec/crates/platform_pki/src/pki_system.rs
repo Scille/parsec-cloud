@@ -65,14 +65,24 @@ pub enum AvailablePkiCertificate {
 }
 
 impl AvailablePkiCertificate {
-    pub fn load_der(friendly_name: Option<String>, der: &[u8]) -> Self {
-        use sha2::Digest as _;
-
-        let digest = sha2::Sha256::digest(der);
-        let hash = X509CertificateHash::SHA256(Box::new(digest.into()));
-
-        let reference: X509CertificateReference = hash.into();
-        match UserX509CertificateDetails::load_der(der) {
+    pub fn load_der(id: Option<Vec<u8>>, friendly_name: Option<String>, der: &[u8]) -> Self {
+        let (reference, parsed_cert) = match crate::shared::uri::get_certificate_ref(
+            id,
+            friendly_name.as_ref().map(|name| name.as_bytes().into()),
+            der,
+        ) {
+            Ok(v) => v,
+            Err((partial_ref, _e)) => {
+                return Self::Invalid {
+                    reference: partial_ref,
+                    invalid_reason: UserX509CertificateLoadError::InvalidCertificateDer,
+                }
+            }
+        };
+        match crate::x509::X509CertificateInformation::try_from(parsed_cert)
+            .map_err(|_| UserX509CertificateLoadError::InvalidCertificateDer)
+            .and_then(UserX509CertificateDetails::try_from)
+        {
             Ok(details) => Self::Valid {
                 reference,
                 friendly_name: friendly_name.unwrap_or_else(|| details.common_name.clone()),

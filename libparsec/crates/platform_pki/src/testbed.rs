@@ -189,7 +189,11 @@ impl TestbedPkiSystem {
             .user_certs
             .iter()
             .map(|entry| {
-                AvailablePkiCertificate::load_der(Some(entry.label.to_owned()), &entry.cert_der)
+                AvailablePkiCertificate::load_der(
+                    None,
+                    Some(entry.label.to_owned()),
+                    &entry.cert_der,
+                )
             })
             .collect();
         Ok(certs)
