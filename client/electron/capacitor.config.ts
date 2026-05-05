@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { CapacitorElectronConfig } from '@capacitor-community/electron';
-
-const config: CapacitorElectronConfig = {
+const config = {
   appId: 'com.scille.parsec',
   appName: 'Parsec',
   webDir: 'dist',

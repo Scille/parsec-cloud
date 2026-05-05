@@ -17,8 +17,7 @@
     "scripts": {
         "libparsec:copy": "node ./scripts/copy_bindings.cjs",
         "build": "npm run libparsec:copy && tsc",
-        "electron:copy": "npx cap copy @capacitor-community/electron",
-        "electron:open": "npx cap open @capacitor-community/electron",
+        "electron:copy": "node ../scripts/copy_to_electron.cjs",
         "electron:start-live": "npm run build && node ./live-runner.cjs",
         "electron:start": "npm run build && electron --inspect=5858 ./",
         "electron:release": "npm run build && node package.cjs --mode prod",
@@ -27,7 +26,6 @@
         "sentry:sourcemaps": "sentry-cli sourcemaps inject --org scille --project parsec3-frontend ./build && sentry-cli sourcemaps upload --org scille --project parsec3-frontend ./build"
     },
     "dependencies": {
-        "@capacitor-community/electron": "github:Scille/capacitor-electron",
         "@sentry/electron": "^7.11.0",
         "builder-util-runtime": "9.5.1",
         "chokidar": "~5.0.0",
