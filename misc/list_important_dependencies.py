@@ -143,7 +143,6 @@ def list_dependencies_from_toml_file[T: Dependencies](
 
 def list_javascript_deps(versions: dict[str, str]) -> set[Dependency]:
     IMPORTANT_JAVASCRIPT_DEPS = (
-        "@capacitor-community/electron",
         "@ionic/core",
         "@ionic/storage",
         "@ionic/vue",

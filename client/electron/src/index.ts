@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import type { CapacitorElectronConfig } from '@capacitor-community/electron';
-import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
 import * as Sentry from '@sentry/electron/main';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, MenuItem, app, dialog, ipcMain, shell } from 'electron';
@@ -11,6 +9,7 @@ import { electronIsDev } from './utils.js';
 
 import fs from 'fs';
 import path from 'path';
+import capacitorConfig from '../capacitor.config.js';
 import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels.js';
 import { setupContentSecurityPolicy } from './cspRules.js';
 import { FEATURE_FLAGS } from './features.js';
@@ -83,11 +82,8 @@ if (!electronIsDev) {
 // https://docs.sentry.io/platforms/javascript/guides/electron/#app-userdata-directory
 initSentry();
 
-// Get Config options from capacitor.config
-const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig();
-
 // Initialize our app. You can pass menu templates into the app here.
-const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig, appMenuBarMenuTemplate);
+const myCapacitorApp = new ElectronCapacitorApp(capacitorConfig, appMenuBarMenuTemplate);
 
 function openLink(link: string): void {
   if (myCapacitorApp.pageIsInitialized) {
@@ -103,10 +99,11 @@ if (!lock) {
   app.quit();
 } else {
   // If deep linking is enabled then we will set it up here.
-  if (capacitorFileConfig.electron?.deepLinkingEnabled) {
-    setupElectronDeepLinking(myCapacitorApp, {
-      customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'parsec3',
-    });
+  if (capacitorConfig.electron?.deepLinkingEnabled) {
+    const customProtocol = capacitorConfig.electron.deepLinkingCustomProtocol ?? 'parsec3';
+    if (!app.isDefaultProtocolClient(customProtocol)) {
+      app.setAsDefaultProtocolClient(customProtocol);
+    }
   }
 
   // If we are in Dev mode, use the file watcher components.

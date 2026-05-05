@@ -147,7 +147,7 @@ parts:
       # install electron dependencies (as it would use `npm install` instead of `npm clean-install`).
       npm install --ignore-scripts
       npm run native:build -- --mode $VITE_MODE
-      npm exec cap copy @capacitor-community/electron
+      npm run electron:copy:webapp
 
       cd electron
       npm clean-install

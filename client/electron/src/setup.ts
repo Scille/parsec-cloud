@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import type { CapacitorElectronConfig } from '@capacitor-community/electron';
-import { CapElectronEventEmitter, setupCapacitorElectronPlugins } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, shell } from 'electron';
@@ -16,6 +14,16 @@ import { FEATURE_FLAGS } from './features.js';
 import AppUpdater, { UpdaterState, createAppUpdater } from './updater.js';
 import { electronIsDev } from './utils.js';
 import { WinRegistry } from './winRegistry.js';
+
+export interface CapacitorElectronConfig {
+  electron?: {
+    customUrlScheme?: string;
+    trayIconAndMenuEnabled?: boolean;
+    deepLinkingEnabled?: boolean;
+    deepLinkingCustomProtocol?: string;
+    backgroundColor?: string;
+  };
+}
 
 const AUTHORIZED_PROTOCOLS = ['http', 'https', 'parsec3'];
 const CHECK_UPDATE_INTERVAL = 1000 * 60 * 60; // 1 hour
@@ -433,7 +441,6 @@ export class ElectronCapacitorApp {
         if (electronIsDev || process.env.OPEN_DEV_TOOLS == 'true') {
           this.MainWindow.webContents.openDevTools({ mode: 'detach' });
         }
-        CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
       }, 400);
     });
 
@@ -519,8 +526,5 @@ export class ElectronCapacitorApp {
         event.preventDefault();
       }
     });
-
-    // Link electron plugins into the system.
-    setupCapacitorElectronPlugins();
   }
 }
