@@ -383,8 +383,7 @@ import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/c
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { SidebarMenuList, SidebarRecentFileItem, SidebarWorkspaceItem } from '@/components/sidebar';
-import { openWorkspaceContextMenu } from '@/components/workspaces';
-import { openArchivedWorkspaceContextMenu } from '@/components/workspaces/utils';
+import { useWorkspaceContextMenu } from '@/components/workspaces';
 import {
   ClientInfo,
   getAsyncEnrollmentAddr,
@@ -489,6 +488,7 @@ const emits = defineEmits<{
   (event: 'windowWidthChanged'): void;
 }>();
 
+const workspaceContextMenu = useWorkspaceContextMenu(true);
 const workspaceAttributes = useWorkspaceAttributes();
 const customTabBar = useCustomTabBar();
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
@@ -901,17 +901,9 @@ async function onOpenWorkspaceContextMenu(event: Event): Promise<void> {
     return;
   }
   if (currentWorkspace.value.isArchived || currentWorkspace.value.isTrashed) {
-    await openArchivedWorkspaceContextMenu(event, currentWorkspace.value, informationManager.value, true);
+    await workspaceContextMenu.openArchivedContextMenu(event, currentWorkspace.value);
   } else {
-    await openWorkspaceContextMenu(
-      event,
-      currentWorkspace.value,
-      workspaceAttributes,
-      eventDistributor.value,
-      informationManager.value,
-      storageManager,
-      true,
-    );
+    await workspaceContextMenu.openContextMenu(event, currentWorkspace.value);
   }
 }
 

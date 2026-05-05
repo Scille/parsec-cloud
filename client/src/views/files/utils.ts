@@ -12,114 +12,117 @@ import { StorageManager } from '@/services/storageManager';
 import { FileAction, FileContextMenu, FileOperationConflictsModal, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
 import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { Answer, askQuestion, I18n, MsModalResult } from 'megashark-lib';
+import { Answer, askQuestion, I18n, MsModalResult, useWindowSize } from 'megashark-lib';
 import { showSaveFilePicker } from 'native-file-system-adapter';
 
-export async function openGlobalContextMenu(
-  event: Event,
-  isReadOnly: boolean,
-  isLargeDisplay: boolean,
-  isFolderEmpty: boolean,
-): Promise<{ action: FolderGlobalAction } | undefined> {
-  let data: { action: FolderGlobalAction } | undefined;
+export function useFileContextMenu() {
+  const { isLargeDisplay } = useWindowSize();
 
-  if (isLargeDisplay) {
-    if (isReadOnly) {
-      return;
+  async function openGlobalContextMenu(event: Event, isReadOnly: boolean, isEmpty: boolean): Promise<FolderGlobalAction | undefined> {
+    let action: FolderGlobalAction | undefined;
+
+    if (isLargeDisplay.value) {
+      if (isReadOnly) {
+        return;
+      }
+
+      const popover = await popoverController.create({
+        component: FolderGlobalContextMenu,
+        cssClass: 'folder-global-context-menu',
+        event: event,
+        reference: event.type === 'contextmenu' ? 'event' : 'trigger',
+        translucent: true,
+        showBackdrop: false,
+        dismissOnSelect: true,
+        alignment: 'start',
+        componentProps: {
+          isReadOnly: isReadOnly,
+        },
+      });
+      await popover.present();
+      action = (await popover.onDidDismiss()).data?.action;
+      await popover.dismiss();
+    } else {
+      const modal = await modalController.create({
+        component: SmallDisplayCategoryFileContextMenu,
+        cssClass: 'file-context-sheet-modal',
+        canDismiss: true,
+        breakpoints: [0, 0.5],
+        expandToScroll: true,
+        initialBreakpoint: 0.5,
+        showBackdrop: true,
+        componentProps: {
+          disableSelect: isEmpty,
+        },
+      });
+
+      await modal.present();
+      action = (await modal.onWillDismiss()).data?.action;
+      await modal.dismiss();
+    }
+    return action;
+  }
+
+  async function openEntryContextMenu(
+    event: Event,
+    entry: EntryModel,
+    selectedEntries: EntryModel[],
+    isReadOnly: boolean,
+    navigateFromAnywhere?: boolean,
+  ): Promise<FileAction | undefined> {
+    let action: FileAction | undefined;
+
+    if (isLargeDisplay.value) {
+      const popover = await popoverController.create({
+        component: FileContextMenu,
+        cssClass: 'file-context-menu',
+        event: event,
+        reference: event.type === 'contextmenu' ? 'event' : 'trigger',
+        translucent: true,
+        showBackdrop: false,
+        dismissOnSelect: true,
+        alignment: 'start',
+        componentProps: {
+          isReadOnly: isReadOnly,
+          multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
+          isFile: entry.isFile(),
+          isEditable: isFileEditable(entry.name),
+          navigateFromAnywhere: navigateFromAnywhere,
+        },
+      });
+
+      await popover.present();
+      action = (await popover.onDidDismiss()).data?.action;
+      await popover.dismiss();
+    } else {
+      const modal = await modalController.create({
+        component: SmallDisplayFileContextMenu,
+        cssClass: 'file-context-sheet-modal',
+        breakpoints: [0, 0.5, 1],
+        initialBreakpoint: 0.5,
+        expandToScroll: false,
+        showBackdrop: true,
+        componentProps: {
+          isReadOnly: isReadOnly,
+          multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
+          isFile: entry.isFile(),
+          isEditable: isFileEditable(entry.name),
+          navigateFromAnywhere: navigateFromAnywhere,
+        },
+      });
+
+      await modal.present();
+      action = (await modal.onDidDismiss()).data?.action;
+      await modal.dismiss();
     }
 
-    const popover = await popoverController.create({
-      component: FolderGlobalContextMenu,
-      cssClass: 'folder-global-context-menu',
-      event: event,
-      reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-      translucent: true,
-      showBackdrop: false,
-      dismissOnSelect: true,
-      alignment: 'start',
-      componentProps: {
-        isReadOnly: isReadOnly,
-      },
-    });
-    await popover.present();
-    data = (await popover.onDidDismiss()).data;
-    await popover.dismiss();
-  } else {
-    const modal = await modalController.create({
-      component: SmallDisplayCategoryFileContextMenu,
-      cssClass: 'file-context-sheet-modal',
-      canDismiss: true,
-      breakpoints: [0, 0.5],
-      expandToScroll: true,
-      initialBreakpoint: 0.5,
-      showBackdrop: true,
-      componentProps: {
-        disableSelect: isFolderEmpty,
-      },
-    });
-
-    await modal.present();
-    data = (await modal.onWillDismiss()).data;
-    await modal.dismiss();
-  }
-  return data;
-}
-
-export async function openEntryContextMenu(
-  event: Event,
-  entry: EntryModel,
-  selectedEntries: EntryModel[],
-  isReadOnly: boolean,
-  isLargeDisplay: boolean,
-  navigateFromAnywhere?: boolean,
-): Promise<{ action: FileAction } | undefined> {
-  let data: { action: FileAction } | undefined;
-
-  if (isLargeDisplay) {
-    const popover = await popoverController.create({
-      component: FileContextMenu,
-      cssClass: 'file-context-menu',
-      event: event,
-      reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-      translucent: true,
-      showBackdrop: false,
-      dismissOnSelect: true,
-      alignment: 'start',
-      componentProps: {
-        isReadOnly: isReadOnly,
-        multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
-        isFile: entry.isFile(),
-        isEditable: isFileEditable(entry.name),
-        navigateFromAnywhere: navigateFromAnywhere,
-      },
-    });
-
-    await popover.present();
-    data = (await popover.onDidDismiss()).data;
-    await popover.dismiss();
-  } else {
-    const modal = await modalController.create({
-      component: SmallDisplayFileContextMenu,
-      cssClass: 'file-context-sheet-modal',
-      breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 0.5,
-      expandToScroll: false,
-      showBackdrop: true,
-      componentProps: {
-        isReadOnly: isReadOnly,
-        multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
-        isFile: entry.isFile(),
-        isEditable: isFileEditable(entry.name),
-        navigateFromAnywhere: navigateFromAnywhere,
-      },
-    });
-
-    await modal.present();
-    data = (await modal.onDidDismiss()).data;
-    await modal.dismiss();
+    return action;
   }
 
-  return data;
+  return {
+    openGlobalContextMenu,
+    openEntryContextMenu,
+  };
 }
 
 export async function askDownloadConfirmation(): Promise<{ result: MsModalResult; noReminder?: boolean }> {

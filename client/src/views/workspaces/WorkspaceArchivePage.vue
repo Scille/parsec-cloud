@@ -75,19 +75,19 @@
 
 <script setup lang="ts">
 import NoArchivedWorkspaces from '@/assets/images/no-archived-workspaces.svg?raw';
-import { openArchivedWorkspaceContextMenu } from '@/components/workspaces/utils';
+import { useWorkspaceContextMenu } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { listArchivedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
 import { currentRouteIs, navigateTo, navigateToWorkspace, Routes } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { arrowBack } from 'ionicons/icons';
-import { MsImage, MsSpinner, useWindowSize } from 'megashark-lib';
+import { MsImage, MsSpinner } from 'megashark-lib';
 import { computed, inject, onMounted, Ref, ref } from 'vue';
 
+const contextMenu = useWorkspaceContextMenu(false);
 const querying = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
-const { isLargeDisplay } = useWindowSize();
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 
 const filteredWorkspaces = computed(() => {
@@ -124,7 +124,7 @@ async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openArchivedWorkspaceContextMenu(event, workspace, informationManager.value, false, isLargeDisplay.value);
+  await contextMenu.openArchivedContextMenu(event, workspace);
   await refreshArchivedWorkspacesList();
 
   if (onFinished) {

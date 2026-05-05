@@ -23,11 +23,11 @@ import {
 } from '@/parsec';
 import { ClientArchiveWorkspaceErrorTag } from '@/plugins/libparsec';
 import { Routes, navigateTo } from '@/router';
-import { EventDistributor, Events } from '@/services/eventDistributor';
-import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
-import { StorageManager } from '@/services/storageManager';
-import { WorkspaceAttributes } from '@/services/workspaceAttributes';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { WorkspaceAttributes, useWorkspaceAttributes } from '@/services/workspaceAttributes';
 import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
@@ -45,7 +45,9 @@ import {
   Translatable,
   askQuestion,
   getTextFromUser,
+  useWindowSize,
 } from 'megashark-lib';
+import { Ref, inject } from 'vue';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -134,71 +136,70 @@ export async function workspaceShareClick(
   await modal.onWillDismiss();
 }
 
-export async function openWorkspaceContextMenu(
-  event: Event,
-  workspace: WorkspaceInfo,
-  workspaceAttributes: WorkspaceAttributes,
-  eventDistributor: EventDistributor,
-  informationManager: InformationManager,
-  storageManager: StorageManager,
-  fromSidebar = false,
-  isLargeDisplay = true,
-): Promise<void> {
-  const clientProfile = await getClientProfile();
-  let data: { action: WorkspaceAction } | undefined;
+export function useWorkspaceContextMenu(fromSidebar = false) {
+  const workspaceAttributes = useWorkspaceAttributes();
+  const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+  const storageManager: StorageManager = inject(StorageManagerKey)!;
+  const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
+  const { isLargeDisplay } = useWindowSize();
 
-  if (isLargeDisplay) {
-    const popover = await popoverController.create({
-      component: WorkspaceContextMenu,
-      cssClass: fromSidebar ? 'workspace-context-menu workspace-context-menu-sidebar' : 'workspace-context-menu',
-      event: event,
-      reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-      translucent: true,
-      showBackdrop: false,
-      dismissOnSelect: true,
-      componentProps: {
-        workspace: workspace,
-        clientProfile: clientProfile,
-        isFavorite: workspaceAttributes.isFavorite(workspace.id),
-        isHidden: workspaceAttributes.isHidden(workspace.id),
-      },
-    });
+  async function openContextMenu(event: Event, workspace: WorkspaceInfo): Promise<void> {
+    const clientProfile = await getClientProfile();
+    let action: WorkspaceAction | undefined;
 
-    await popover.present();
-    data = (await popover.onDidDismiss()).data;
-  } else {
-    const modal = await modalController.create({
-      component: SmallDisplayWorkspaceContextMenu,
-      cssClass: 'workspace-context-sheet-modal',
-      showBackdrop: true,
-      breakpoints: [0, 0.5, 1],
-      expandToScroll: false,
-      initialBreakpoint: 0.5,
-      componentProps: {
-        workspace: workspace,
-        clientProfile: clientProfile,
-        isFavorite: workspaceAttributes.isFavorite(workspace.id),
-        isHidden: workspaceAttributes.isHidden(workspace.id),
-      },
-    });
+    if (isLargeDisplay.value) {
+      const popover = await popoverController.create({
+        component: WorkspaceContextMenu,
+        cssClass: fromSidebar ? 'workspace-context-menu workspace-context-menu-sidebar' : 'workspace-context-menu',
+        event: event,
+        reference: event.type === 'contextmenu' ? 'event' : 'trigger',
+        translucent: true,
+        showBackdrop: false,
+        dismissOnSelect: true,
+        componentProps: {
+          workspace: workspace,
+          clientProfile: clientProfile,
+          isFavorite: workspaceAttributes.isFavorite(workspace.id),
+          isHidden: workspaceAttributes.isHidden(workspace.id),
+        },
+      });
 
-    await modal.present();
-    data = (await modal.onDidDismiss()).data;
-  }
+      await popover.present();
+      action = (await popover.onDidDismiss()).data?.action;
+    } else {
+      const modal = await modalController.create({
+        component: SmallDisplayWorkspaceContextMenu,
+        cssClass: 'workspace-context-sheet-modal',
+        showBackdrop: true,
+        breakpoints: [0, 0.5, 1],
+        expandToScroll: false,
+        initialBreakpoint: 0.5,
+        componentProps: {
+          workspace: workspace,
+          clientProfile: clientProfile,
+          isFavorite: workspaceAttributes.isFavorite(workspace.id),
+          isHidden: workspaceAttributes.isHidden(workspace.id),
+        },
+      });
 
-  if (data !== undefined) {
-    switch (data.action) {
+      await modal.present();
+      action = (await modal.onDidDismiss()).data?.action;
+    }
+
+    switch (action) {
+      case undefined:
+        break;
       case WorkspaceAction.Share:
-        await workspaceShareClick(workspace, informationManager, eventDistributor);
+        await workspaceShareClick(workspace, informationManager.value, eventDistributor.value);
         break;
       case WorkspaceAction.CopyLink:
-        await copyLinkToClipboard(workspace, informationManager);
+        await copyLinkToClipboard(workspace, informationManager.value);
         break;
       case WorkspaceAction.OpenInExplorer:
-        await seeInExplorer(workspace, informationManager, workspaceAttributes, eventDistributor);
+        await seeInExplorer(workspace, informationManager.value, workspaceAttributes, eventDistributor.value);
         break;
       case WorkspaceAction.Rename:
-        await openRenameWorkspaceModal(workspace, informationManager, isLargeDisplay);
+        await openRenameWorkspaceModal(workspace, informationManager.value, isLargeDisplay.value);
         break;
       case WorkspaceAction.Favorite:
         workspaceAttributes.toggleFavorite(workspace.id);
@@ -208,7 +209,7 @@ export async function openWorkspaceContextMenu(
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
       case WorkspaceAction.Mount:
-        await showWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
+        await showWorkspace(workspace, workspaceAttributes, informationManager.value, eventDistributor.value);
         break;
       case WorkspaceAction.UnMount:
         if (isDesktop()) {
@@ -217,91 +218,92 @@ export async function openWorkspaceContextMenu(
             await unmountWorkspaceConfirmation(
               workspaceAttributes,
               refreshWorkspaces.value,
-              informationManager,
-              eventDistributor,
+              informationManager.value,
+              eventDistributor.value,
               storageManager,
             );
           }
         } else {
-          await hideWorkspace(workspace, workspaceAttributes, informationManager, eventDistributor);
+          await hideWorkspace(workspace, workspaceAttributes, informationManager.value, eventDistributor.value);
         }
         break;
       case WorkspaceAction.Archive:
-        await archiveWorkspace(workspace, informationManager);
+        await archiveWorkspace(workspace, informationManager.value);
         break;
       case WorkspaceAction.Trash:
-        await trashWorkspace(workspace, informationManager, isLargeDisplay);
+        await trashWorkspace(workspace, informationManager.value, isLargeDisplay.value);
         break;
       default:
         console.warn('No WorkspaceAction match found');
+        break;
     }
   }
-}
 
-export async function openArchivedWorkspaceContextMenu(
-  event: Event,
-  workspace: WorkspaceInfo,
-  informationManager: InformationManager,
-  fromSidebar = false,
-  isLargeDisplay = true,
-): Promise<void> {
-  const clientProfile = await getClientProfile();
-  let data: { action: WorkspaceAction } | undefined;
+  async function openArchivedContextMenu(event: Event, workspace: WorkspaceInfo): Promise<void> {
+    const clientProfile = await getClientProfile();
+    let action: WorkspaceAction | undefined;
 
-  if (isLargeDisplay) {
-    const popover = await popoverController.create({
-      component: WorkspaceContextMenu,
-      cssClass: fromSidebar ? 'workspace-context-menu workspace-context-menu-sidebar' : 'workspace-context-menu',
-      event: event,
-      reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-      translucent: true,
-      showBackdrop: false,
-      dismissOnSelect: true,
-      componentProps: {
-        workspace: workspace,
-        clientProfile: clientProfile,
-        isFavorite: false,
-        isHidden: false,
-      },
-    });
+    if (isLargeDisplay.value) {
+      const popover = await popoverController.create({
+        component: WorkspaceContextMenu,
+        cssClass: fromSidebar ? 'workspace-context-menu workspace-context-menu-sidebar' : 'workspace-context-menu',
+        event: event,
+        reference: event.type === 'contextmenu' ? 'event' : 'trigger',
+        translucent: true,
+        showBackdrop: false,
+        dismissOnSelect: true,
+        componentProps: {
+          workspace: workspace,
+          clientProfile: clientProfile,
+          isFavorite: false,
+          isHidden: false,
+        },
+      });
 
-    await popover.present();
-    data = (await popover.onDidDismiss()).data;
-  } else {
-    const modal = await modalController.create({
-      component: SmallDisplayWorkspaceContextMenu,
-      cssClass: 'workspace-context-sheet-modal',
-      showBackdrop: true,
-      breakpoints: [0, 0.5, 1],
-      expandToScroll: false,
-      initialBreakpoint: 0.5,
-      componentProps: {
-        workspace: workspace,
-        clientProfile: clientProfile,
-        isFavorite: false,
-        isHidden: false,
-      },
-    });
+      await popover.present();
+      action = (await popover.onDidDismiss()).data?.action;
+    } else {
+      const modal = await modalController.create({
+        component: SmallDisplayWorkspaceContextMenu,
+        cssClass: 'workspace-context-sheet-modal',
+        showBackdrop: true,
+        breakpoints: [0, 0.5, 1],
+        expandToScroll: false,
+        initialBreakpoint: 0.5,
+        componentProps: {
+          workspace: workspace,
+          clientProfile: clientProfile,
+          isFavorite: false,
+          isHidden: false,
+        },
+      });
 
-    await modal.present();
-    data = (await modal.onDidDismiss()).data;
-  }
+      await modal.present();
+      action = (await modal.onDidDismiss()).data?.action;
+    }
 
-  if (data !== undefined) {
-    switch (data.action) {
+    switch (action) {
+      case undefined:
+        break;
       case WorkspaceAction.ShowHistory:
         await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
       case WorkspaceAction.Restore:
-        await restoreWorkspace(workspace, informationManager);
+        await restoreWorkspace(workspace, informationManager.value);
         break;
       case WorkspaceAction.Trash:
-        await trashWorkspace(workspace, informationManager, isLargeDisplay);
+        await trashWorkspace(workspace, informationManager.value, isLargeDisplay.value);
         break;
       default:
         console.warn('No WorkspaceAction match found');
+        break;
     }
   }
+
+  return {
+    openContextMenu,
+    openArchivedContextMenu,
+  };
 }
 
 async function archiveWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {

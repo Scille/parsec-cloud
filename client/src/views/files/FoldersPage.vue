@@ -346,13 +346,12 @@ import {
   FileAction,
   FileDetailsModal,
   FolderGlobalAction,
-  openEntryContextMenu as _openEntryContextMenu,
-  openGlobalContextMenu as _openGlobalContextMenu,
   downloadArchive,
   downloadEntry,
   getDuplicatePolicy,
   isFolderGlobalAction,
   openDownloadConfirmationModal,
+  useFileContextMenu,
 } from '@/views/files';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 import { IonContent, IonIcon, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
@@ -414,6 +413,7 @@ const routeWatchCancel = watchRoute(async () => {
   await listFolder({ selectFile: query.selectFile, sameFolder: samePath });
 });
 
+const contextMenu = useFileContextMenu();
 const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
@@ -1728,17 +1728,19 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
 }
 
 async function openGlobalContextMenu(event: Event): Promise<void> {
-  const data = await _openGlobalContextMenu(
+  if (!workspaceInfo.value) {
+    return;
+  }
+  const action = await contextMenu.openGlobalContextMenu(
     event,
     isReadOnly.value,
-    isLargeDisplay.value,
     folders.value.entriesCount() + files.value.entriesCount() === 0,
   );
 
-  if (!data || !workspaceInfo.value) {
+  if (!action) {
     return;
   }
-  await performFolderAction(data.action);
+  await performFolderAction(action);
 }
 
 async function dispatchContextMenuAction(action: FileAction, entry: EntryModel, selectedEntries: Array<EntryModel>): Promise<void> {
@@ -1774,15 +1776,11 @@ async function dispatchContextMenuAction(action: FileAction, entry: EntryModel, 
 
 async function onSearchResultContextMenu(event: Event, entry: parsec.SearchResult, onFinished?: () => void): Promise<void> {
   await onSelectionCancel();
-  const data = await _openEntryContextMenu(event, { ...entry.stats, isSelected: false }, [], isReadOnly.value, isLargeDisplay.value, true);
+  const action = await contextMenu.openEntryContextMenu(event, { ...entry.stats, isSelected: false }, [], isReadOnly.value, true);
 
-  if (!data) {
-    if (onFinished) {
-      onFinished();
-    }
-    return;
+  if (action) {
+    await dispatchContextMenuAction(action, { ...entry.stats, isSelected: false }, []);
   }
-  await dispatchContextMenuAction(data.action, { ...entry.stats, isSelected: false }, []);
   if (onFinished) {
     onFinished();
   }
@@ -1790,15 +1788,11 @@ async function onSearchResultContextMenu(event: Event, entry: parsec.SearchResul
 
 async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
   const selectedEntries = getSelectedEntries();
-  const data = await _openEntryContextMenu(event, entry, selectedEntries, isReadOnly.value, isLargeDisplay.value);
+  const action = await contextMenu.openEntryContextMenu(event, entry, selectedEntries, isReadOnly.value);
 
-  if (!data) {
-    if (onFinished) {
-      onFinished();
-    }
-    return;
+  if (action) {
+    await dispatchContextMenuAction(action, entry, selectedEntries);
   }
-  await dispatchContextMenuAction(data.action, entry, selectedEntries);
   if (onFinished) {
     onFinished();
   }
