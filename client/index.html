@@ -45,6 +45,9 @@
       1. The `scwsapi.js` middleware (as, for copyright reasons, it is not shipped with Parsec).
       2. The web application certificate (as it differs for each application)
 
+      On top of that, the private key corresponding to the web application certificate is
+      expected to be configured on the Parsec server serving this page.
+
       This is done by:
       1. Adding `scwsapi.js` somewhere in the web application resources (typically in `assets/scws/scwsapi-2c8127e9.js`,
          note the hash-based suffix to avoid cache issue whenever this file needs to be updated).
@@ -61,10 +64,6 @@
     />
     <meta
       name="scws-web_application_certificate"
-      content=""
-    />
-    <meta
-      name="scws-web_parsec_server"
       content=""
     />
 
