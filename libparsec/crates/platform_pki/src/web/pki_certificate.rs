@@ -30,8 +30,12 @@ impl PlatformPkiCertificate {
             .await
             .map_err(|e| PkiCertificateRequestPrivateKeyError::Internal(e.into()))?
             .ok_or(PkiCertificateRequestPrivateKeyError::NotFound)
+            .map(PlatformPkiPrivateKey)
             .map(|private_key| PkiPrivateKey {
-                platform: PlatformPkiPrivateKey(private_key),
+                #[cfg(not(feature = "test-with-testbed"))]
+                platform: private_key,
+                #[cfg(feature = "test-with-testbed")]
+                platform: crate::testbed::MaybeWithTestbed::WithPlatform(private_key),
             })
     }
 
