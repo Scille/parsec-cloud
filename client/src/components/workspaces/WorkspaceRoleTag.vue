@@ -23,9 +23,10 @@ defineProps<{
   color: var(--parsec-color-light-secondary-text);
   display: flex;
   align-items: center;
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  border-radius: var(--parsec-radius-12);
 
   &-text {
-    background-color: none;
     padding: 0.2rem 0.5rem;
     color: var(--parsec-color-light-secondary-text);
   }

@@ -1,7 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { expect, fillInputModal, getClipboardText, login, msTest, resizePage } from '@tests/e2e/helpers';
+import {
+  answerQuestion,
+  createWorkspace,
+  expect,
+  fillInputModal,
+  getClipboardText,
+  login,
+  logout,
+  msTest,
+  resizePage,
+  revokeUser,
+  shareWorkspace,
+} from '@tests/e2e/helpers';
 
 type Mode = 'grid' | 'list' | 'sidebar';
 
@@ -271,4 +283,33 @@ msTest('Check if action bar updates when resizing the window', async ({ connecte
   await expect(connected.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('New workspace');
   await connected.keyboard.press('Escape');
   await expect(connected.locator('.popover-viewport')).toBeHidden();
+});
+
+msTest('Take workspace ownership', async ({ home }) => {
+  await login(home, 'Boby McBobFace');
+  await expect(home).toBeWorkspacePage();
+  await createWorkspace(home, 'BOB WORKSPACE');
+  await shareWorkspace(home, 'BOB WORKSPACE', 'Alicey McAliceFace', 'Contributor');
+  await logout(home);
+  await login(home, 'Alicey McAliceFace');
+  await home.locator('.sidebar').locator('#sidebar-users').click();
+  await expect(home).toHavePageTitle('Users');
+  await expect(home).toBeUserPage();
+  await revokeUser(home, 'Boby McBobFace');
+  await home.locator('.sidebar').locator('#sidebar-all-workspaces').click();
+  await expect(home).toBeWorkspacePage();
+  const workspace = home.locator('.workspace-card-item', { hasText: 'BOB WORKSPACE' });
+  await expect(workspace.locator('.missing-ownership-label')).toBeVisible();
+  await expect(workspace.locator('.missing-ownership-label')).toHaveText('Missing ownership');
+  await workspace.locator('.missing-ownership-label').click();
+  await answerQuestion(home, true, {
+    expectedNegativeText: 'Not now',
+    expectedPositiveText: 'Claim ownership',
+    expectedQuestionText: 'No owner is set for the workspace BOB WORKSPACE. You can claim the ownership for yourself.',
+    expectedTitleText: 'Owner required for this workspace',
+  });
+  await expect(home).toShowToast('You claimed ownership of the workspace BOB WORKSPACE.', 'Success');
+  await expect(workspace.locator('.missing-ownership-label')).toBeHidden();
+  await expect(workspace.locator('.workspace-card-bottom__role')).toBeVisible();
+  await expect(workspace.locator('.workspace-card-bottom__role')).toHaveText('Owner');
 });

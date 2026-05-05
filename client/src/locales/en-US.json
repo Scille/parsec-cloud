@@ -726,7 +726,17 @@
             "actionDelete": "Delete this workspace",
             "actionCopyLink": "Copy link",
             "actionAddFavorite": "Add as starred",
-            "actionRemoveFavorite": "Remove as starred"
+            "actionRemoveFavorite": "Remove as starred",
+            "actionTakeOwnership": "Claim ownership"
+        },
+        "missingOwnership": {
+            "label": "Missing ownership",
+            "title": "Owner required for this workspace",
+            "subtitle": "No owner is set for the workspace {workspace}. You can claim the ownership for yourself.",
+            "yes": "Claim ownership",
+            "no": "Not now",
+            "failed": "Failed to claim ownership of the workspace.",
+            "success": "You claimed ownership of the workspace {workspace}."
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Create a new workspace",
