@@ -84,7 +84,8 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
       // So we do some loading part here, we forward the elements to a proxy inside the worker that wraps "pkiInitForScws"
       // to import the module and set a global state, and finally the real `libparsec.pkiInitForScws` is called.
 
-      const WEB_PARSEC_SERVER = 'scws-web_parsec_server';
+      const parsecServerAddr = window.origin;
+
       const SCWS_LOCATION_NAME = 'scws-scwsapi_js-location';
       const SCWS_APP_CERTIFICATE = 'scws-web_application_certificate';
 
@@ -98,17 +99,12 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
         console.log(`No meta tag '${SCWS_APP_CERTIFICATE}' present`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${SCWS_APP_CERTIFICATE}' present` } };
       }
-      const parsecServerTag = document.querySelector(`meta[name="${WEB_PARSEC_SERVER}"`) as HTMLMetaElement | null;
-      if (!parsecServerTag?.content) {
-        console.log(`No meta tag '${WEB_PARSEC_SERVER}' present`);
-        return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${WEB_PARSEC_SERVER}' present` } };
-      }
 
       // Signature differs between what the proxy expects and what libparsec has defined,
       // so we just cast. Trust me bro.
       return await (libparsec.pkiInitForScws as any)(
         window.getConfigDir(),
-        parsecServerTag.content,
+        parsecServerAddr,
         scwsapiLocationTag.content,
         scwsapiAppCertificateTag.content,
       );
