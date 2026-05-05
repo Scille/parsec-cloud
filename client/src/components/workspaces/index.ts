@@ -3,7 +3,7 @@
 export {
   WORKSPACES_PAGE_DATA_KEY,
   WorkspaceDefaultData,
-  openWorkspaceContextMenu,
+  useWorkspaceContextMenu,
   workspaceShareClick,
 } from '@/components/workspaces/utils';
 

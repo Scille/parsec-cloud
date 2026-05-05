@@ -225,10 +225,9 @@ import {
   WorkspaceDefaultData,
   WorkspaceFilter,
   WorkspacesPageSavedData,
-  openWorkspaceContextMenu,
   workspaceShareClick,
 } from '@/components/workspaces';
-import { WorkspacesPageFilters, compareWorkspaceRoles } from '@/components/workspaces/utils';
+import { WorkspacesPageFilters, compareWorkspaceRoles, useWorkspaceContextMenu } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceCategoriesMenu from '@/components/workspaces/WorkspaceCategoriesMenu.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
@@ -287,6 +286,7 @@ enum SortWorkspaceBy {
   LastUpdate = 'lastUpdate',
 }
 
+const contextMenu = useWorkspaceContextMenu(false);
 const workspaceAttributes = useWorkspaceAttributes();
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -712,16 +712,7 @@ async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openWorkspaceContextMenu(
-    event,
-    workspace,
-    workspaceAttributes,
-    eventDistributor.value,
-    informationManager.value,
-    storageManager,
-    false,
-    isLargeDisplay.value,
-  );
+  await contextMenu.openContextMenu(event, workspace);
   await refreshWorkspacesList();
 
   if (onFinished) {
