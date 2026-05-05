@@ -25,10 +25,11 @@
         "ios:copy": "npm run native:build && npx cap copy ios",
         "ios:copy:release": "npm run native:build && npx cap copy ios",
         "ios:open": "npm run ios:copy && npx cap open ios",
-        "electron:copy": "npm run native:build && npx cap copy @capacitor-community/electron",
-        "electron:copy:dev": "npm run native:build:dev  && npx cap copy @capacitor-community/electron",
+        "electron:copy:webapp": "node ./scripts/copy_to_electron.cjs",
+        "electron:copy": "npm run native:build && npm run electron:copy:webapp",
+        "electron:copy:dev": "npm run native:build:dev && npm run electron:copy:webapp",
         "electron:install": "cd electron && npm install --no-ignore-scripts",
-        "electron:open": "npm run electron:copy:dev && npx cap open @capacitor-community/electron",
+        "electron:open": "npm run electron:copy:dev && cd electron && npm run electron:start",
         "electron:release": "npm run electron:copy && cd electron && npm run electron:release",
         "electron:hardened": "npm run electron:copy && cd electron && npm run electron:hardened",
         "electron:release:dev": "npm run electron:copy:dev && cd electron && npm run electron:release",
@@ -41,7 +42,6 @@
         "knip:fix": "knip --fix"
     },
     "dependencies": {
-        "@capacitor-community/electron": "github:Scille/capacitor-electron",
         "@capacitor/android": "^7.4.4",
         "@capacitor/core": "^7.4.4",
         "@capacitor/splash-screen": "^7.0.3",

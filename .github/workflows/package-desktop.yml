@@ -342,7 +342,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8092
 
       - name: Copy client build result to electron
-        run: npm exec cap copy @capacitor-community/electron
+        run: npm run electron:copy:webapp
         working-directory: client
         timeout-minutes: 1
 
