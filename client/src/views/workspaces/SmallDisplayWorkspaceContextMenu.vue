@@ -25,6 +25,20 @@
 
         <ion-item-group class="list-group">
           <ion-item
+            v-if="workspace.canSelfPromoteToOwner"
+            button
+            @click="onClick(WorkspaceAction.TakeOwnership)"
+            class="ion-no-padding list-group-item item-action"
+          >
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="repeat"
+            />
+            <ion-text class="button-large list-group-item__label">
+              {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionTakeOwnership') }}
+            </ion-text>
+          </ion-item>
+          <ion-item
             button
             v-show="workspace.selfRole === WorkspaceRole.Owner && !(workspace.isArchived || workspace.isTrashed)"
             @click="onClick(WorkspaceAction.Rename)"
@@ -222,7 +236,21 @@
 import { UserProfile, WorkspaceInfo, WorkspaceRole, isDesktop } from '@/parsec';
 import { WorkspaceAction } from '@/views/workspaces/types';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonPage, IonText, modalController } from '@ionic/vue';
-import { archive, cloudy, eye, eyeOff, informationCircle, link, open, reload, shareSocial, star, time, trash } from 'ionicons/icons';
+import {
+  archive,
+  cloudy,
+  eye,
+  eyeOff,
+  informationCircle,
+  link,
+  open,
+  reload,
+  repeat,
+  shareSocial,
+  star,
+  time,
+  trash,
+} from 'ionicons/icons';
 import { MsImage, RenameIcon } from 'megashark-lib';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {

@@ -19,6 +19,7 @@ import {
   renameWorkspace as parsecRenameWorkspace,
   restoreWorkspace as parsecRestoreWorkspace,
   trashWorkspace as parsecTrashWorkspace,
+  selfPromoteToWorkspaceOwner,
   unmountWorkspace,
 } from '@/parsec';
 import { ClientArchiveWorkspaceErrorTag } from '@/plugins/libparsec';
@@ -233,6 +234,9 @@ export function useWorkspaceContextMenu(fromSidebar = false) {
       case WorkspaceAction.Trash:
         await trashWorkspace(workspace, informationManager.value, isLargeDisplay.value);
         break;
+      case WorkspaceAction.TakeOwnership:
+        await takeOwnershipOfWorkspace(workspace, informationManager.value);
+        break;
       default:
         console.warn('No WorkspaceAction match found');
         break;
@@ -304,6 +308,45 @@ export function useWorkspaceContextMenu(fromSidebar = false) {
     openContextMenu,
     openArchivedContextMenu,
   };
+}
+
+export async function takeOwnershipOfWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
+  const answer = await askQuestion(
+    'WorkspacesPage.missingOwnership.title',
+    { key: 'WorkspacesPage.missingOwnership.subtitle', data: { workspace: workspace.name } },
+    {
+      yesText: 'WorkspacesPage.missingOwnership.yes',
+      noText: 'WorkspacesPage.missingOwnership.no',
+    },
+  );
+  if (answer !== Answer.Yes) {
+    return;
+  }
+  const result = await selfPromoteToWorkspaceOwner(workspace.id);
+  if (!result.ok) {
+    informationManager.present(
+      new Information({
+        message: {
+          key: 'WorkspacesPage.missingOwnership.failed',
+        },
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    informationManager.present(
+      new Information({
+        message: {
+          key: 'WorkspacesPage.missingOwnership.success',
+          data: {
+            workspace: workspace.name,
+          },
+        },
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 }
 
 async function archiveWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {

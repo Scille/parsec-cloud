@@ -190,6 +190,7 @@
               @favorite-click="onWorkspaceFavoriteClick"
               @menu-click="onOpenWorkspaceContextMenu"
               @share-click="onWorkspaceShareClick"
+              @self-promote-click="onSelfPromoteClick"
             />
           </ion-list>
         </div>
@@ -208,6 +209,7 @@
             @favorite-click="onWorkspaceFavoriteClick"
             @menu-click="onOpenWorkspaceContextMenu"
             @share-click="onWorkspaceShareClick"
+            @self-promote-click="onSelfPromoteClick"
           />
         </div>
       </div>
@@ -224,10 +226,13 @@ import {
   WORKSPACES_PAGE_DATA_KEY,
   WorkspaceDefaultData,
   WorkspaceFilter,
+  WorkspacesPageFilters,
   WorkspacesPageSavedData,
+  compareWorkspaceRoles,
+  takeOwnershipOfWorkspace,
+  useWorkspaceContextMenu,
   workspaceShareClick,
 } from '@/components/workspaces';
-import { WorkspacesPageFilters, compareWorkspaceRoles, useWorkspaceContextMenu } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceCategoriesMenu from '@/components/workspaces/WorkspaceCategoriesMenu.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
@@ -492,6 +497,11 @@ async function onDisplayStateChange(): Promise<void> {
     { displayState: displayView.value },
     WorkspaceDefaultData,
   );
+}
+
+async function onSelfPromoteClick(workspace: WorkspaceInfo): Promise<void> {
+  await takeOwnershipOfWorkspace(workspace, informationManager.value);
+  refreshWorkspacesList();
 }
 
 async function refreshWorkspacesList(): Promise<void> {

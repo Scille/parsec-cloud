@@ -195,6 +195,22 @@
           }
         }
       }
+
+      &.item-action {
+        .list-group-item__label,
+        .list-group-item__icon {
+          color: var(--parsec-color-light-primary-500);
+        }
+
+        &:hover {
+          background: var(--parsec-color-light-primary-50);
+
+          .list-group-item__label,
+          .list-group-item__icon {
+            color: var(--parsec-color-light-primary-700);
+          }
+        }
+      }
     }
   }
 

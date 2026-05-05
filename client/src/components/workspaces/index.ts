@@ -3,6 +3,8 @@
 export {
   WORKSPACES_PAGE_DATA_KEY,
   WorkspaceDefaultData,
+  compareWorkspaceRoles,
+  takeOwnershipOfWorkspace,
   useWorkspaceContextMenu,
   workspaceShareClick,
 } from '@/components/workspaces/utils';

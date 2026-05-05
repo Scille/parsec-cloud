@@ -94,8 +94,13 @@
       </div>
     </div>
     <div class="workspace-card-bottom">
+      <workspace-missing-ownership
+        v-if="workspace.canSelfPromoteToOwner"
+        :show-text="true"
+        @click.stop="$emit('selfPromoteClick', workspace, $event)"
+      />
       <workspace-role-tag
-        v-if="!workspace.isArchived"
+        v-else-if="!workspace.isArchived"
         class="workspace-card-bottom__role"
         :role="workspace.selfRole"
       />
@@ -107,7 +112,7 @@
       </ion-text>
       <div class="workspace-card-bottom__icons">
         <div
-          v-show="clientProfile !== UserProfile.Outsider && !workspace.isArchived"
+          v-show="clientProfile !== UserProfile.Outsider && !workspace.isArchived && !workspace.canSelfPromoteToOwner"
           class="icon-share-container"
           @click.stop="$emit('shareClick', workspace, $event)"
         >
@@ -133,6 +138,7 @@
 <script setup lang="ts">
 import { formatFileSize } from '@/common/file';
 import { WorkspaceRoleTag } from '@/components/workspaces';
+import WorkspaceMissingOwnership from '@/components/workspaces/WorkspaceMissingOwnership.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonIcon, IonText } from '@ionic/vue';
 import { archive, cloudDone, cloudOffline, ellipsisHorizontal, eyeOff, shareSocial, star, trash } from 'ionicons/icons';
@@ -154,6 +160,7 @@ const emits = defineEmits<{
   (e: 'favoriteClick', workspace: WorkspaceInfo, event?: Event): void;
   (e: 'menuClick', workspace: WorkspaceInfo, event: Event, onFinished: () => void): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
+  (e: 'selfPromoteClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
 
 async function onOptionsClick(event: Event): Promise<void> {
@@ -300,6 +307,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   justify-content: space-between;
   align-items: center;
   padding: 0.375rem;
+  position: relative;
 
   &__icons {
     color: var(--parsec-color-light-secondary-hard-grey);

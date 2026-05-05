@@ -9,6 +9,7 @@ import {
   ClientListWorkspacesError,
   ClientListWorkspaceUsersError,
   ClientRenameWorkspaceError,
+  ClientSelfPromoteToWorkspaceOwnerError,
   ClientShareWorkspaceError,
   ClientStartWorkspaceError,
   ConnectionHandle,
@@ -430,4 +431,12 @@ export async function getSystemPath(
     return { ok: false, error: { tag: MountpointToOsPathErrorTag.Internal, error: 'not mounted' } };
   }
   return await libparsec.mountpointToOsPath(infoResult.value.mountpoints[0][0], entryPath);
+}
+
+export async function selfPromoteToWorkspaceOwner(workspaceId: WorkspaceID): Promise<Result<null, ClientSelfPromoteToWorkspaceOwnerError>> {
+  const handle = getConnectionHandle();
+  if (!handle) {
+    return generateNoHandleError<ClientSelfPromoteToWorkspaceOwnerError>();
+  }
+  return await libparsec.clientSelfPromoteToWorkspaceOwner(handle, workspaceId);
 }

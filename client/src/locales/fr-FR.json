@@ -725,7 +725,17 @@
             "actionRestore": "Restaurer cet espace",
             "actionDelete": "Supprimer définitivement",
             "actionAddFavorite": "Ajouter aux favoris",
-            "actionRemoveFavorite": "Supprimer des favoris"
+            "actionRemoveFavorite": "Supprimer des favoris",
+            "actionTakeOwnership": "Devenir propriétaire"
+        },
+        "missingOwnership": {
+            "label": "Propriétaire manquant",
+            "title": "Propriétaire requis pour cet espace de travail",
+            "subtitle": "Aucun propriétaire n'est défini pour l'espace de travail {workspace}. Vous pouvez en devenir propriétaire.",
+            "yes": "M'attribuer le rôle de propriétaire",
+            "no": "Pas maintenant",
+            "failed": "Impossible de devenir propriétaire de l'espace de travail.",
+            "success": "Vous êtes désormais propriétaire de l'espace de travail {workspace}."
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Créer un nouvel espace de travail",

@@ -15,6 +15,7 @@ enum WorkspaceAction {
   Archive = 'workspace-archive',
   Restore = 'workspace-restore',
   Trash = 'workspace-trash',
+  TakeOwnership = 'workspace-take-ownership',
 }
 
 enum WorkspaceMenu {

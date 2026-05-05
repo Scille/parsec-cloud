@@ -60,18 +60,24 @@
       <!-- role user -->
       <div class="workspace-role">
         <workspace-role-tag
-          v-if="!workspace.isArchived"
+          v-if="!workspace.isArchived && windowWidth > WindowSizeBreakpoints.XS"
           :role="workspace.selfRole"
           class="workspace-role-tag"
         />
         <ion-label
-          v-else
+          v-if="workspace.isArchived"
           class="archived-label"
         >
           <ion-text class="button-small archived-label-text">
             {{ $msTranslate('WorkspacesPage.archiveWorkspace.readOnly') }}
           </ion-text>
         </ion-label>
+        <workspace-missing-ownership
+          class="missing-ownership"
+          v-if="workspace.canSelfPromoteToOwner"
+          :show-text="isLargeDisplay && workspace.canSelfPromoteToOwner"
+          @click.stop="$emit('selfPromoteClick', workspace, $event)"
+        />
       </div>
 
       <!-- user avatars -->
@@ -149,6 +155,7 @@
 <script setup lang="ts">
 import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
+import WorkspaceMissingOwnership from '@/components/workspaces/WorkspaceMissingOwnership.vue';
 import WorkspaceRoleTag from '@/components/workspaces/WorkspaceRoleTag.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
@@ -172,6 +179,7 @@ const emits = defineEmits<{
   (e: 'favoriteClick', workspace: WorkspaceInfo, event?: Event): void;
   (e: 'menuClick', workspace: WorkspaceInfo, event: Event, onFinished: () => void): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
+  (e: 'selfPromoteClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
 
 async function onOptionsClick(event: Event): Promise<void> {
@@ -335,10 +343,13 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 .workspace-role {
   min-width: 8rem;
-  max-width: 6vw;
+  width: 100%;
+  height: 100%;
+  max-width: 15vw;
   flex-grow: 2;
   position: relative;
   z-index: 10;
+  gap: 0.5rem;
 
   .workspace-role-tag {
     border: 1px solid var(--parsec-color-light-secondary-medium);
@@ -346,13 +357,20 @@ async function onOptionsClick(event: Event): Promise<void> {
     background: var(--parsec-color-light-secondary-white);
   }
 
+  @include ms.responsive-breakpoint('lg') {
+    min-width: 13rem;
+    max-width: 11rem;
+  }
+
   @include ms.responsive-breakpoint('md') {
-    min-width: 5rem;
-    max-width: 8rem;
+    min-width: 11rem;
+    max-width: 11rem;
   }
 
   @include ms.responsive-breakpoint('sm') {
     padding-inline: 0.125rem;
+    min-width: 5rem;
+    max-width: 8rem;
   }
 
   .archived-label {
@@ -367,6 +385,22 @@ async function onOptionsClick(event: Event): Promise<void> {
       background-color: none;
       padding: 0.2rem 0.5rem;
       color: var(--parsec-color-light-primary-500);
+    }
+  }
+
+  .missing-ownership {
+    flex-shrink: 0;
+    left: 0;
+    height: fit-content;
+  }
+
+  &:has(.missing-ownership) {
+    .workspace-role-tag {
+      display: none;
+
+      @include ms.responsive-breakpoint('sm') {
+        display: flex;
+      }
     }
   }
 }

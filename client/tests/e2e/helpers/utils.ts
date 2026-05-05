@@ -295,6 +295,38 @@ export async function createWorkspace(workspacesPage: MsPage, name: string): Pro
   await dismissToast(workspacesPage);
 }
 
+export async function shareWorkspace(
+  workspacesPage: MsPage,
+  workspaceName: string,
+  withUser: string,
+  role: 'Reader' | 'Contributor' | 'Manager' | 'Owner' | 'Not shared',
+): Promise<void> {
+  const modal = workspacesPage.locator('.workspace-sharing-modal');
+  await expect(modal).toBeHidden();
+  await workspacesPage.locator('.workspace-card-item', { hasText: workspaceName }).locator('.icon-share-container').click();
+  await expect(modal).toBeVisible();
+  const user = modal.locator('.workspace-user-role', { hasText: withUser });
+  await user.locator('.dropdown-button').click();
+  const roleDropdown = workspacesPage.locator('.dropdown-popover');
+  const roles = roleDropdown.getByRole('listitem');
+  await roles.locator('.option-text__label', { hasText: role }).click();
+  await expect(workspacesPage).toShowToast(`${withUser}'s role has been updated to ${role}.`, 'Success');
+  await modal.locator('.closeBtn').click();
+  await expect(modal).toBeHidden();
+}
+
+export async function revokeUser(usersPage: MsPage, user: string): Promise<void> {
+  const item = usersPage.locator('#users-page-user-list').locator('.user-list-item', { hasText: user });
+  await item.hover();
+  const menu = usersPage.locator('#user-context-menu');
+  await expect(menu).toBeHidden();
+  await item.locator('.options-button').click();
+  await expect(menu).toBeVisible();
+  await menu.locator('.list-group-item', { hasText: 'Revoke this user' }).click();
+  await answerQuestion(usersPage, true);
+  await expect(usersPage).toShowToast(`${user} has been revoked. They can no longer access this organization.`, 'Success');
+}
+
 export async function createFolder(documentsPage: MsPage, name: string): Promise<void> {
   const displaySize = await documentsPage.getDisplaySize();
   if (displaySize === DisplaySize.Small) {
@@ -396,6 +428,7 @@ export async function login(homePage: Page, name: string): Promise<void> {
   await homePage.locator('.login-button').click();
   await expect(homePage.locator('#connected-header')).toContainText('My workspaces');
   await expect(homePage).toBeWorkspacePage();
+  await expect(homePage.locator('.topbar-right').locator('.text-content-name')).toHaveText(name);
 }
 
 export async function logout(page: MsPage): Promise<void> {
