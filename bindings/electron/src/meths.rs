@@ -5586,7 +5586,7 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
                 let js_val = js_val.downcast_or_throw::<JsTypedArray<u8>, _>(cx)?;
                 Some({
                     let custom_from_rs_bytes =
-                        |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                        |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
                     #[allow(clippy::unnecessary_mut_passed)]
                     match custom_from_rs_bytes(js_val.as_slice(cx)) {
                         Ok(val) => val,
@@ -5607,7 +5607,7 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
                 let js_val = js_val.downcast_or_throw::<JsTypedArray<u8>, _>(cx)?;
                 Some({
                     let custom_from_rs_bytes =
-                        |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+                        |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
                     #[allow(clippy::unnecessary_mut_passed)]
                     match custom_from_rs_bytes(js_val.as_slice(cx)) {
                         Ok(val) => val,
@@ -5619,11 +5619,10 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
             }
         }
     };
-    let issuer = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "issuer")?;
+    let der_issuer = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derIssuer")?;
         {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(cx)) {
                 Ok(val) => val,
@@ -5633,11 +5632,10 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
             }
         }
     };
-    let subject = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "subject")?;
+    let der_subject = {
+        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "derSubject")?;
         {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(cx)) {
                 Ok(val) => val,
@@ -5650,8 +5648,7 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
     let serial = {
         let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serial")?;
         {
-            let custom_from_rs_bytes =
-                |v: &[u8]| -> Result<libparsec::Bytes, String> { Ok(v.to_vec().into()) };
+            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
             #[allow(clippy::unnecessary_mut_passed)]
             match custom_from_rs_bytes(js_val.as_slice(cx)) {
                 Ok(val) => val,
@@ -5664,8 +5661,8 @@ fn struct_x509_pkcs11_uri_js_to_rs<'a>(
     Ok(libparsec::X509Pkcs11URI {
         id,
         label,
-        issuer,
-        subject,
+        der_issuer,
+        der_subject,
         serial,
     })
 }
@@ -5696,18 +5693,18 @@ fn struct_x509_pkcs11_uri_rs_to_js<'a>(
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "label", js_label)?;
-    let js_issuer = {
-        let rs_buff = { rs_obj.issuer };
+    let js_der_issuer = {
+        let rs_buff = { rs_obj.der_issuer };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
-    js_obj.set(cx, "issuer", js_issuer)?;
-    let js_subject = {
-        let rs_buff = { rs_obj.subject };
+    js_obj.set(cx, "derIssuer", js_der_issuer)?;
+    let js_der_subject = {
+        let rs_buff = { rs_obj.der_subject };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
         js_buff
     };
-    js_obj.set(cx, "subject", js_subject)?;
+    js_obj.set(cx, "derSubject", js_der_subject)?;
     let js_serial = {
         let rs_buff = { rs_obj.serial };
         let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;

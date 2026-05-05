@@ -163,7 +163,11 @@ impl PlatformPkiSystem {
                     cert.get_der()
                         .await
                         .map(|der| {
-                            AvailablePkiCertificate::load_der(Some(cert.0.ck_label()), der.as_ref())
+                            AvailablePkiCertificate::load_der(
+                                cert.0.ck_id().ok(),
+                                Some(cert.0.ck_label()),
+                                der.as_ref(),
+                            )
                         })
                         .map_err(|e| {
                             PkiSystemListUserCertificateError::Internal(anyhow::anyhow!(

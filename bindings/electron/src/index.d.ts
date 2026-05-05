@@ -570,8 +570,8 @@ export interface X509CertificateReference {
 export interface X509Pkcs11URI {
     id: Uint8Array | null
     label: Uint8Array | null
-    issuer: Uint8Array
-    subject: Uint8Array
+    derIssuer: Uint8Array
+    derSubject: Uint8Array
     serial: Uint8Array
 }
 

@@ -4,10 +4,9 @@ use std::collections::VecDeque;
 
 use libparsec_types::prelude::*;
 use rustls_pki_types::CertificateDer;
-use sha2::Digest;
 
 use crate::{
-    platform::PlatformPkiPrivateKey, shared::get_certificate_pkcs11_uri, PkiCertificateGetDerError,
+    platform::PlatformPkiPrivateKey, PkiCertificateGetDerError,
     PkiCertificateGetValidationPathError, PkiCertificateRequestPrivateKeyError,
     PkiCertificateToReferenceError, PkiPrivateKey, X509ValidationPathOwned,
 };
@@ -47,17 +46,16 @@ impl PlatformPkiCertificate {
             PkiCertificateToReferenceError::Internal(anyhow::anyhow!("unable to get der"))
         })?;
 
-        let id = self.0.ck_id().map(Bytes::from).ok();
-        let label = Some(Bytes::copy_from_slice(self.0.ck_label().as_bytes()));
-        let uri = get_certificate_pkcs11_uri(&der, id, label)
-            .await
-            .map_err(|e| PkiCertificateToReferenceError::Internal(e.into()))?;
+        let id = self.0.ck_id().ok();
+        let label = Some(self.0.ck_label().as_bytes().into());
 
-        let digest = sha2::Sha256::digest(der);
-        let hash: X509CertificateReference =
-            X509CertificateHash::SHA256(Box::new(digest.into())).into();
-
-        Ok(hash.add_or_replace_uri(uri))
+        crate::shared::uri::get_certificate_ref(id, label, &der)
+            .map_err(|(_, e)| {
+                PkiCertificateToReferenceError::Internal(anyhow::anyhow!(
+                    "Cannot get certificate reference: {e}"
+                ))
+            })
+            .map(|(cert_ref, _)| cert_ref)
     }
 
     pub async fn get_validation_path(

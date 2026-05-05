@@ -1,46 +1,35 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::fmt::Debug;
+use libparsec_types::prelude::{X509CertificateHash, X509CertificateReference, X509Pkcs11URI};
 
-use libparsec_types::prelude::*;
-use rustls_pki_types::CertificateDer;
+use sha2::Digest;
+use x509_cert::der::{Decode, Encode, Error as DERError, SliceReader};
 
-use x509_cert::der::{Decode, Encode, SliceReader};
-
-#[derive(Debug, thiserror::Error)]
-pub enum GetCertificateUriError {
-    #[error(transparent)]
-    Internal(anyhow::Error),
-}
-
-#[allow(unused)]
-pub(crate) async fn get_certificate_pkcs11_uri(
-    der: &CertificateDer<'_>,
-    id: Option<Bytes>,
-    label: Option<Bytes>,
-) -> Result<X509Pkcs11URI, GetCertificateUriError> {
-    let cert = x509_cert::Certificate::decode(
-        &mut SliceReader::new(der).map_err(|e| GetCertificateUriError::Internal(e.into()))?,
-    )
-    .map_err(|e| GetCertificateUriError::Internal(e.into()))?
-    .tbs_certificate;
-
-    let issuer = Bytes::from(
-        cert.issuer
-            .to_der()
-            .map_err(|e| GetCertificateUriError::Internal(e.into()))?,
-    );
-    let serial = Bytes::copy_from_slice(cert.serial_number.as_bytes());
-    let subject = Bytes::from(
-        cert.subject
-            .to_der()
-            .map_err(|e| GetCertificateUriError::Internal(e.into()))?,
-    );
-    Ok(X509Pkcs11URI {
+pub(crate) fn get_certificate_ref(
+    id: Option<Vec<u8>>,
+    label: Option<Vec<u8>>,
+    cert_der: &[u8],
+) -> Result<(X509CertificateReference, x509_cert::Certificate), (X509CertificateReference, DERError)>
+{
+    let hash = sha2::Sha256::digest(cert_der);
+    let hash = X509CertificateHash::SHA256(Box::new(hash.into()));
+    let partial_ref = X509CertificateReference::from(hash);
+    let cert_detail = SliceReader::new(cert_der)
+        .and_then(|mut reader| x509_cert::Certificate::decode(&mut reader))
+        .map_err(|e| (partial_ref.clone(), e))?;
+    let cert = &cert_detail.tbs_certificate;
+    let der_issuer = cert.issuer.to_der().map_err(|e| (partial_ref.clone(), e))?;
+    let serial = cert.serial_number.as_bytes().into();
+    let der_subject = cert
+        .subject
+        .to_der()
+        .map_err(|e| (partial_ref.clone(), e))?;
+    let uri = X509Pkcs11URI {
         id,
         label,
-        issuer,
+        der_issuer,
         serial,
-        subject,
-    })
+        der_subject,
+    };
+    Ok((partial_ref.add_or_replace_uri(uri), cert_detail))
 }

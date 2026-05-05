@@ -6,8 +6,6 @@ use schannel::{cert_context::CertContext, cert_store::CertStore};
 use std::os::raw::c_void;
 use windows_sys::Win32::Security::Cryptography;
 
-use libparsec_types::prelude::*;
-
 /// Possible filter to use
 /// A detailed list can be found here:
 /// https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-certfindcertificateinstore
@@ -51,14 +49,14 @@ impl<'a> CertFilter<'a> {
 }
 
 impl<'a> CertFilter<'a> {
-    pub fn cert_id(uri: &'a mut X509WindowsCngURI) -> Self {
+    pub fn cert_id(issuer: &'a mut [u8], serial_number: &'a mut [u8]) -> Self {
         let issuer = Cryptography::CRYPT_INTEGER_BLOB {
-            cbData: uri.issuer.len() as u32,
-            pbData: uri.issuer.as_mut_ptr(),
+            cbData: issuer.len() as u32,
+            pbData: issuer.as_mut_ptr(),
         };
         let serial_number = Cryptography::CRYPT_INTEGER_BLOB {
-            cbData: uri.serial_number.len() as u32,
-            pbData: uri.serial_number.as_mut_ptr(),
+            cbData: serial_number.len() as u32,
+            pbData: serial_number.as_mut_ptr(),
         };
         let cert_id = Cryptography::CERT_ID {
             dwIdChoice: Cryptography::CERT_ID_ISSUER_SERIAL_NUMBER,

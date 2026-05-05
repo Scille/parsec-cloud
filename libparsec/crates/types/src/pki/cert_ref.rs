@@ -2,7 +2,6 @@
 
 use std::{fmt::Display, str::FromStr};
 
-use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 
 use crate::DataError;
@@ -171,17 +170,17 @@ pub struct X509Pkcs11URI {
     ///
     /// Used to link together a certificate & private key.
     /// That information is provided/configured by the smartcard so it may not be present.
-    pub id: Option<Bytes>,
+    pub id: Option<Vec<u8>>,
     /// Label of the object.
     ///
     /// That information is provided/configured by the smartcard so it may not be present.
-    pub label: Option<Bytes>,
+    pub label: Option<Vec<u8>>,
     /// Issuer of the certificate.
-    pub issuer: Bytes,
+    pub der_issuer: Vec<u8>,
     /// Subject of the certificate.
-    pub subject: Bytes,
+    pub der_subject: Vec<u8>,
     /// Serial number of the certificate.
-    pub serial: Bytes,
+    pub serial: Vec<u8>,
 }
 
 impl X509URIFlavor for X509Pkcs11URI {
