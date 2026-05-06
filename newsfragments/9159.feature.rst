@@ -1,1 +1,0 @@
-[CLI] Add workspace list-users command to list users and their role in a workspace.
