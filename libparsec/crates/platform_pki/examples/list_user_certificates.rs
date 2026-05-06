@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #![allow(clippy::unwrap_used)]
+mod utils;
 
 use anyhow::Context;
 use libparsec_platform_pki::{AvailablePkiCertificate, PkiSystem};
@@ -22,8 +23,13 @@ async fn main() -> anyhow::Result<()> {
 
     for (i, cert) in certs.iter().enumerate() {
         match cert {
-            AvailablePkiCertificate::Valid { reference, .. } => {
-                println!("Certificate #{i} fingerprint={}", reference.hash);
+            AvailablePkiCertificate::Valid {
+                reference,
+                friendly_name,
+                ..
+            } => {
+                println!("Certificate #{i} (AKA {friendly_name})");
+                println!("  fingerprint: {}", reference.hash);
                 let cert = pki
                     .open_certificate(reference)
                     .await
@@ -34,6 +40,7 @@ async fn main() -> anyhow::Result<()> {
                     "  content: {}",
                     data_encoding::BASE64.encode_display(der.as_ref())
                 );
+                println!("  reference: {}", utils::EncodedCertRef(reference.clone()));
             }
 
             AvailablePkiCertificate::Invalid {
@@ -44,6 +51,7 @@ async fn main() -> anyhow::Result<()> {
                     "Certificate #{i} fingerprint={} INVALID (reason: {})",
                     reference.hash, invalid_reason
                 );
+                println!("  reference: {}", utils::EncodedCertRef(reference.clone()));
             }
         }
         println!();
