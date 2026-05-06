@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::PathBuf;
+use std::{fmt::Display, path::PathBuf};
 
 use anyhow::Context;
 use bytes::Bytes;
@@ -8,7 +8,7 @@ use clap::{
     builder::{NonEmptyStringValueParser, TypedValueParser},
     error::{Error, ErrorKind},
 };
-use libparsec_types::X509CertificateHash;
+use libparsec_types::{X509CertificateHash, X509CertificateReference};
 
 // Not all examples uses `Base64Parser` so it is not always used.
 #[allow(dead_code)]
@@ -63,6 +63,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct CertificateSRIHashParser;
 
@@ -107,5 +108,16 @@ impl ContentOpts {
                 .map(Into::into),
             (Some(_), Some(_)) | (None, None) => unreachable!("Handled by clap"),
         }
+    }
+}
+
+#[allow(dead_code)]
+pub struct EncodedCertRef(pub X509CertificateReference);
+
+impl Display for EncodedCertRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let blob = rmp_serde::to_vec(&self.0).expect("Cannot encode cert reference");
+
+        data_encoding::BASE64.encode_display(&blob).fmt(f)
     }
 }

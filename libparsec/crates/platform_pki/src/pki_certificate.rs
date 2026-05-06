@@ -131,4 +131,20 @@ impl PkiCertificate {
             self.platform.get_validation_path().await
         }
     }
+
+    pub async fn get_issuer_and_serial(&self) -> (Vec<u8>, Vec<u8>) {
+        #[cfg(feature = "test-with-testbed")]
+        {
+            match &self.platform {
+                crate::testbed::MaybeWithTestbed::WithPlatform(plt) => {
+                    plt.get_issuer_and_serial().await
+                }
+                crate::testbed::MaybeWithTestbed::WithTestbed(_) => {
+                    panic!("Not supported for testbed");
+                }
+            }
+        }
+        #[cfg(not(feature = "test-with-testbed"))]
+        self.platform.get_issuer_and_serial().await
+    }
 }

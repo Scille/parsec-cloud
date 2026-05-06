@@ -34,4 +34,8 @@ impl PlatformPkiCertificate {
     ) -> Result<X509ValidationPathOwned, PkiCertificateGetValidationPathError> {
         unimplemented!("platform not supported")
     }
+
+    pub async fn get_issuer_and_serial(&self) -> (Vec<u8>, Vec<u8>) {
+        unimplemented!("platform not supported")
+    }
 }

@@ -180,6 +180,8 @@ pub struct X509Pkcs11URI {
     /// Subject of the certificate.
     pub der_subject: Vec<u8>,
     /// Serial number of the certificate.
+    ///
+    /// Should be in big-endian format
     pub serial: Vec<u8>,
 }
 

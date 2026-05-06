@@ -131,8 +131,21 @@ fn open_certificate(
         })
         .and_then(|mut filter| {
             let (issuer, serial) = match &mut filter {
-                Either::Left(pkcs11) => (pkcs11.der_issuer.as_mut(), pkcs11.serial.as_mut()),
-                Either::Right(uri) => (uri.issuer.as_mut(), uri.serial_number.as_mut()),
+                Either::Left(pkcs11) => {
+                    let issuer = pkcs11.der_issuer.as_mut();
+                    let serial = pkcs11.serial.as_mut();
+                    // We need to revers the bytes order of serial as Windows expect the serial to
+                    // be in little-endian as indicated in the description of `SerialNumber` in:
+                    // https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/ns-wincrypt-cert_info
+                    serial.reverse()(issuer, serial)
+                }
+                Either::Right(uri) => (
+                    uri.issuer.as_mut(),
+                    // We do not need to reverse that value as it would have comme from
+                    // `CERT_CONTEXT->pCertInfo->SerialNumber` which would already have the correct
+                    // endian.
+                    uri.serial_number.as_mut(),
+                ),
             };
             log::trace!("Looking for cert with issuer:{issuer:x?} serial:{serial:x?}");
             let filter = find_in_store::CertFilter::cert_id(issuer, serial);

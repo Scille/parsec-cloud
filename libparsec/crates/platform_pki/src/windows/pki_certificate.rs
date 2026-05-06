@@ -104,6 +104,33 @@ impl PlatformPkiCertificate {
             leaf,
         })
     }
+
+    pub async fn get_issuer_and_serial(&self) -> (Vec<u8>, Vec<u8>) {
+        let raw_context = super::schannel_utils::cert_context_to_raw(&self.0);
+        // SAFETY: The raw pointer come from the inner valid pointer of `cert_context`
+        // that is of type `Cryptography::CERT_CONTEXT`
+        let cert_info = unsafe { *(*raw_context).pCertInfo };
+
+        // SAFETY: Issuer is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
+        let issuer = unsafe {
+            std::slice::from_raw_parts(cert_info.Issuer.pbData, cert_info.Issuer.cbData as usize)
+        }
+        .to_vec();
+        // SAFETY: SerialNumber is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
+        let mut serial_number = unsafe {
+            std::slice::from_raw_parts(
+                cert_info.SerialNumber.pbData,
+                cert_info.SerialNumber.cbData as usize,
+            )
+        }
+        .to_vec();
+
+        // Windows provide the serial_number as little-endian, for consistency, we convert it to
+        // big-endian by reversing bytes order
+        use std::ops::DerefMut;
+        serial_number.deref_mut().reverse();
+        (issuer, serial_number)
+    }
 }
 
 #[cfg(not(feature = "test-with-testbed"))]
