@@ -1,1 +1,0 @@
-[CLI] Organization bootstrap and invite claim now accept urls with http scheme.

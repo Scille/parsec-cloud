@@ -1,1 +1,0 @@
-Added a workspace archiving feature along with an archived workspaces page
