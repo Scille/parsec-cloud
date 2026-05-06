@@ -157,7 +157,7 @@ async def realm_self_promote_to_owner(
             return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_REVOKED
 
     if db_common.user_current_profile == UserProfile.OUTSIDER:
-        return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_ALLOWED
+        return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_IS_OUTSIDER
 
     # 2) Validate certificate
 

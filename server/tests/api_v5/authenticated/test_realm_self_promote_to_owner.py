@@ -111,7 +111,6 @@ async def test_authenticated_realm_self_promote_to_owner_ok(
     (
         "not_a_member",
         "lower_role_than_highest",
-        "outsider",
     ),
 )
 async def test_authenticated_realm_self_promote_to_owner_author_not_allowed(
@@ -119,34 +118,27 @@ async def test_authenticated_realm_self_promote_to_owner_author_not_allowed(
     backend: Backend,
     kind: str,
 ) -> None:
+    # In wksp1, Bob is READER and Alice is the active OWNER
+
     match kind:
         case "not_a_member":
-            # In wksp1, Bob is READER and Alice is the active OWNER
-            await bob_becomes_admin_and_changes_alice(coolorg, backend, new_alice_profile=None)
-            author = coolorg.mallory
+            # Bob is no longer part of the workspace
+            await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, None)
+            author = coolorg.bob
 
         case "lower_role_than_highest":
-            # In wksp1, Bob is READER and Alice is the active OWNER
             # Update Bob role twice, this way he used to be higher than Mallory
             await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.MANAGER)
             await wksp1_alice_gives_role(
                 coolorg, backend, coolorg.mallory.user_id, RealmRole.CONTRIBUTOR
             )
             await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.READER)
-            await bob_becomes_admin_and_changes_alice(coolorg, backend, new_alice_profile=None)
             author = coolorg.bob
-
-        case "outsider":
-            # Mallory has OUTSIDER profile and is given the same role than Bob in wksp1
-            await wksp1_alice_gives_role(
-                coolorg, backend, coolorg.mallory.user_id, RealmRole.READER
-            )
-            # In wksp1, Bob is READER and Alice is the active OWNER
-            await bob_becomes_admin_and_changes_alice(coolorg, backend, new_alice_profile=None)
-            author = coolorg.mallory
 
         case unknown:
             assert False, unknown
+
+    await bob_becomes_admin_and_changes_alice(coolorg, backend, new_alice_profile=None)
 
     certif = RealmRoleCertificate(
         author=author.device_id,
@@ -159,6 +151,31 @@ async def test_authenticated_realm_self_promote_to_owner_author_not_allowed(
         realm_role_certificate=certif.dump_and_sign(author.signing_key)
     )
     assert rep == authenticated_cmds.latest.realm_self_promote_to_owner.RepAuthorNotAllowed()
+
+
+async def test_authenticated_realm_self_promote_to_owner_author_is_outsider(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    # In wksp1, Bob is READER and Alice is the active OWNER
+
+    # Mallory has OUTSIDER profile and is given the same role than Bob in wksp1
+    await wksp1_alice_gives_role(coolorg, backend, coolorg.mallory.user_id, RealmRole.READER)
+
+    await bob_becomes_admin_and_changes_alice(coolorg, backend, new_alice_profile=None)
+    author = coolorg.mallory
+
+    certif = RealmRoleCertificate(
+        author=author.device_id,
+        timestamp=DateTime.now(),
+        realm_id=coolorg.wksp1_id,
+        user_id=author.user_id,
+        role=RealmRole.OWNER,
+    )
+    rep = await author.realm_self_promote_to_owner(
+        realm_role_certificate=certif.dump_and_sign(author.signing_key)
+    )
+    assert rep == authenticated_cmds.latest.realm_self_promote_to_owner.RepAuthorIsOutsider()
 
 
 async def test_authenticated_realm_self_promote_to_owner_realm_not_found(

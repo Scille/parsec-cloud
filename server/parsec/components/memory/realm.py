@@ -484,7 +484,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_REVOKED
 
             if author_user.current_profile == UserProfile.OUTSIDER:
-                return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_ALLOWED
+                return RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_IS_OUTSIDER
 
             assert author_verify_key == author_device.cooked.verify_key
             match realm_self_promote_to_owner_validate(
