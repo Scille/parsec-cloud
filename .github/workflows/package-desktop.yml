@@ -456,7 +456,9 @@ jobs:
         working-directory: client/electron/dist
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # pin v7.0.1
-        if: matrix.platform != 'windows'
+        # Skip uploading unsigned windows artifact when called by releaser script
+        # Will upload them otherwise considering it's for testing something (manual run, PR that change something, ...)
+        if: matrix.platform != 'windows' || github.event_name != 'workflow_call'
         with:
           name: ${{ matrix.artifact_tag }}${{ matrix.hardened && '-hardened' || '' }}-${{ runner.arch }}-electron
           path: |
