@@ -180,6 +180,13 @@ pub struct X509Pkcs11URI {
     /// Subject of the certificate.
     pub der_subject: Vec<u8>,
     /// Serial number of the certificate.
+    ///
+    /// It is a positive integer assigned by the CA (cf. https://datatracker.ietf.org/doc/html/rfc5280#section-4.1.2.2).
+    /// It is stored here as an unsigned integer in big-endian, as it is the format used in X509 certificate format
+    /// (i.e. ASN.1 DER's INTEGER type, cf. https://datatracker.ietf.org/doc/html/rfc5280#section-4.1 and https://en.wikipedia.org/wiki/X.690)
+    ///
+    /// Be aware that Windows provide you the serial number in little-endian if the value is coming
+    /// from [`CERT_INFO`](https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/ns-wincrypt-cert_info)
     pub serial: Vec<u8>,
 }
 

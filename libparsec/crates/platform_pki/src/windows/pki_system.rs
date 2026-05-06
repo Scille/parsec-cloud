@@ -134,8 +134,14 @@ fn open_certificate(
         })
         .and_then(|mut filter| {
             let (issuer, serial) = match &mut filter {
-                URIFlavor::Pkcs11(pkcs11) => (pkcs11.der_issuer.as_mut(), pkcs11.serial.as_mut()),
-                URIFlavor::WindowsCng(uri) => (uri.issuer.as_mut(), uri.serial_number.as_mut()),
+                URIFlavor::Pkcs11(pkcs11) => get_issuer_serial_from_pkcs11_uri(pkcs11),
+                URIFlavor::WindowsCng(uri) => (
+                    uri.issuer.as_mut(),
+                    // We do not need to reverse that value as it would have comme from
+                    // `CERT_CONTEXT->pCertInfo->SerialNumber` which would already have the correct
+                    // endian.
+                    uri.serial_number.as_mut(),
+                ),
             };
             log::trace!("Looking for cert with issuer:{issuer:x?} serial:{serial:x?}");
             let filter = find_in_store::CertFilter::cert_id(issuer, serial);
@@ -154,6 +160,20 @@ fn open_certificate(
                 }
             })
         })
+}
+
+// Use a function to be able to test the obtained issuer and serial to be similar to the one
+// obtained in CERT_INFO for a given certificate.
+pub(crate) fn get_issuer_serial_from_pkcs11_uri(
+    pkcs11: &mut X509Pkcs11URI,
+) -> (&mut [u8], &mut [u8]) {
+    let issuer = pkcs11.der_issuer.as_mut();
+    let serial: &mut [u8] = pkcs11.serial.as_mut();
+    // We need to revers the bytes order of serial as Windows expect the serial to
+    // be in little-endian as indicated in the description of `SerialNumber` in:
+    // https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/ns-wincrypt-cert_info
+    serial.reverse();
+    (issuer, serial)
 }
 
 pub(super) fn get_certificate_uri(cert_context: &CertContext) -> X509WindowsCngURI {
