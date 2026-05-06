@@ -7,6 +7,78 @@ Parsec v3.x
 
 .. towncrier release notes start
 
+
+Parsec v3.9.0 (2026-05-21)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Added a workspace deletion feature along with a workspace bin page
+  (`#12356 <https://github.com/Scille/parsec-cloud/issues/12356>`__)
+
+* [CLI] Added workspace list-users command to list users and their role in a
+  workspace
+  (`#9159 <https://github.com/Scille/parsec-cloud/issues/9159>`__)
+
+* Added a workspace archiving feature along with an archived workspaces page
+  (`#12355 <https://github.com/Scille/parsec-cloud/issues/12355>`__)
+
+* Workspace local cache is now automatically deleted when the workspace is no
+  longer accessible
+  (`#12465 <https://github.com/Scille/parsec-cloud/issues/12465>`__)
+
+* Added a file search feature to look for files inside a workspace
+  (`#12403 <https://github.com/Scille/parsec-cloud/issues/12403>`__)
+
+* Added an e-mail notification when a PKI request is accepted
+  (`#11551 <https://github.com/Scille/parsec-cloud/issues/11551>`__)
+
+* Added a server setting to enable or prevent specific authentication methods
+  (`#12673 <https://github.com/Scille/parsec-cloud/pull/12673>`__)
+
+* Enabled history browsing in read-only for Reader and Contributor roles
+  (`#12633 <https://github.com/Scille/parsec-cloud/pull/12633>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* [CLI] Bootstrap organization asks for password confirmation
+  (`#10019 <https://github.com/Scille/parsec-cloud/issues/10019>`__)
+
+* [CLI] Rename ``device remove`` to ``device forget_local``
+  (`#8857 <https://github.com/Scille/parsec-cloud/issues/8857>`__)
+
+* [CLI] Organization bootstrap and invite claim now accept urls with http
+  scheme
+  (`#12629 <https://github.com/Scille/parsec-cloud/issues/12629>`__)
+
+* Fix Linux Snap version crashing during login with CPU not supporting AVX-512
+  instructions
+  (`#12445 <https://github.com/Scille/parsec-cloud/issues/12445>`__)
+
+* Fixed a bug where files in a workspace history could be edited and overwrite
+  current versions
+  (`#12633 <https://github.com/Scille/parsec-cloud/pull/12633>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added the option to sort users in the users list by clicking on the header
+  items.
+  (`#11779 <https://github.com/Scille/parsec-cloud/issues/11779>`__)
+
+* Updated the device recovery / lost authentication section.
+  (`#12568 <https://github.com/Scille/parsec-cloud/issues/12568>`__)
+
+* Updated workspace category display header to match the small display version,
+  and updated the sidebar category items to fit with the new Archived and Bin
+  sections.
+  (`#12602 <https://github.com/Scille/parsec-cloud/issues/12602>`__)
+
+
 Parsec v3.8.1 (2026-03-17)
 --------------------------
 
