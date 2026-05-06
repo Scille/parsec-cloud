@@ -9,7 +9,7 @@ use crate::{
     X509CertificateDer, X509EndCertificate, X509ValidationPathOwned,
 };
 
-pub struct PlatformPkiCertificate(schannel::cert_context::CertContext);
+pub struct PlatformPkiCertificate(pub(crate) schannel::cert_context::CertContext);
 
 impl std::fmt::Debug for PlatformPkiCertificate {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

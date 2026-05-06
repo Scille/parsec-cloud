@@ -4,7 +4,7 @@ mod find_in_store;
 mod pki_certificate;
 mod pki_private_key;
 mod pki_system;
-mod schannel_utils;
+pub(crate) mod schannel_utils;
 
 pub use pki_certificate::*;
 pub use pki_private_key::*;

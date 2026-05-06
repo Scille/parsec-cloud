@@ -16,7 +16,7 @@ pub(super) unsafe fn cert_context_from_raw(
     RawPointer::from_ptr(raw_context as *mut std::os::raw::c_void)
 }
 
-pub(super) fn cert_context_to_raw(cert_context: &CertContext) -> *const Cryptography::CERT_CONTEXT {
+pub(crate) fn cert_context_to_raw(cert_context: &CertContext) -> *const Cryptography::CERT_CONTEXT {
     // SAFETY: Ideally we would use `schannel::Inner::as_inner` to get the already typed type, but it's a
     // private trait.
     // Instead, the following that require to cast to the correct type.
