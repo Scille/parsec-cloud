@@ -637,7 +637,7 @@ async def run_cmd(
 
     with cli_exception_handler(debug):
         if not skip_database_migrations_check:
-            _check_database_migrations_applied(db)
+            await _check_database_migrations_applied(db)
 
         email_config: EmailConfig
         if email_host == "MOCKED":
@@ -842,7 +842,7 @@ async def _run_backend(
             await retry_policy.pause()
 
 
-def _check_database_migrations_applied(db_config: BaseDatabaseConfig) -> None:
+async def _check_database_migrations_applied(db_config: BaseDatabaseConfig) -> None:
     if db_config.is_mocked():
         return
 
@@ -851,7 +851,7 @@ def _check_database_migrations_applied(db_config: BaseDatabaseConfig) -> None:
 
     migrations = retrieve_migrations()
     assert isinstance(db_config, PostgreSQLDatabaseConfig)
-    result = asyncio.run(apply_migrations(db_config.url, migrations, dry_run=True))
+    result = await apply_migrations(db_config.url, migrations, dry_run=True)
     if result.new_apply:
         raise SystemExit(
             f"Database requires {len(result.new_apply)} migration(s). Run `parsec migrate` to apply them."
