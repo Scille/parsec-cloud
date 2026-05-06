@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use futures::future::Either;
 use schannel::{
     cert_context::{CertContext, HashAlgorithm},
     cert_store::CertStore,
@@ -119,20 +118,24 @@ fn open_certificate(
     store: &CertStore,
     certificate_ref: &X509CertificateReference,
 ) -> Option<CertContext> {
+    enum URIFlavor {
+        Pkcs11(X509Pkcs11URI),
+        WindowsCng(X509WindowsCngURI),
+    }
     certificate_ref
         .get_uri::<X509Pkcs11URI>()
         .cloned()
-        .map(Either::Left)
+        .map(URIFlavor::Pkcs11)
         .or_else(|| {
             certificate_ref
                 .get_uri::<X509WindowsCngURI>()
                 .cloned()
-                .map(Either::Right)
+                .map(URIFlavor::WindowsCng)
         })
         .and_then(|mut filter| {
             let (issuer, serial) = match &mut filter {
-                Either::Left(pkcs11) => (pkcs11.der_issuer.as_mut(), pkcs11.serial.as_mut()),
-                Either::Right(uri) => (uri.issuer.as_mut(), uri.serial_number.as_mut()),
+                URIFlavor::Pkcs11(pkcs11) => (pkcs11.der_issuer.as_mut(), pkcs11.serial.as_mut()),
+                URIFlavor::WindowsCng(uri) => (uri.issuer.as_mut(), uri.serial_number.as_mut()),
             };
             log::trace!("Looking for cert with issuer:{issuer:x?} serial:{serial:x?}");
             let filter = find_in_store::CertFilter::cert_id(issuer, serial);
