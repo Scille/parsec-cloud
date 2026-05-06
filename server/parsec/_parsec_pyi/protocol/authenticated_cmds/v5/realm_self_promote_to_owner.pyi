@@ -29,6 +29,11 @@ class RepOk(Rep):
         self,
     ) -> None: ...
 
+class RepAuthorIsOutsider(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepAuthorNotAllowed(Rep):
     def __init__(
         self,
