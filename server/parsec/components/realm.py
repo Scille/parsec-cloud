@@ -390,6 +390,7 @@ class RealmSelfPromoteToOwnerStoreBadOutcome(BadOutcomeEnum):
     REALM_DELETED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
+    AUTHOR_IS_OUTSIDER = auto()
     AUTHOR_NOT_ALLOWED = auto()
 
 
@@ -1034,6 +1035,8 @@ class BaseRealmComponent:
                 return authenticated_cmds.latest.realm_self_promote_to_owner.RepRealmNotFound()
             case RealmSelfPromoteToOwnerStoreBadOutcome.REALM_DELETED:
                 return authenticated_cmds.latest.realm_self_promote_to_owner.RepRealmDeleted()
+            case RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_IS_OUTSIDER:
+                return authenticated_cmds.latest.realm_self_promote_to_owner.RepAuthorIsOutsider()
             case RealmSelfPromoteToOwnerStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_self_promote_to_owner.RepAuthorNotAllowed()
             case RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_NOT_FOUND:
