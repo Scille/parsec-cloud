@@ -69,6 +69,28 @@ pub fn rep_ok() {
     p_assert_eq!(data2, expected);
 }
 
+pub fn rep_author_is_outsider() {
+    // Generated from Parsec 3.8.2-a.0+dev
+    // Content:
+    //   status: 'author_is_outsider'
+    let raw = hex!("81a6737461747573b2617574686f725f69735f6f75747369646572");
+
+    let expected = authenticated_cmds::realm_self_promote_to_owner::Rep::AuthorIsOutsider;
+
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = authenticated_cmds::realm_self_promote_to_owner::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::realm_self_promote_to_owner::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
 pub fn rep_author_not_allowed() {
     // Generated from Parsec 3.7.2-a.0+dev
     // Content:
