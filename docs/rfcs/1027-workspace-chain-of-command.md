@@ -77,7 +77,10 @@ Authenticated API:
                 "status": "ok"
             },
             {
-                // Author has profile OUTSIDER or is not among the workspace's active members with the highest role.
+                "status": "author_is_outsider"
+            },
+            {
+                // Author is not among the workspace's active members with the highest role.
                 "status": "author_not_allowed"
             },
             {
