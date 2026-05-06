@@ -183,9 +183,10 @@ The self-promotion uses the existing `RealmRoleCertificate`
                 // ...
                 // New field
                 {
-                    // If all OWNERs have been revoked, it is up to a user with the highest role
-                    // to self-promote themselves to OWNER.
-                    // If `true`, we are among those users and can call `self_promote_to_workspace_owner`.
+                    // If all OWNERs have been revoked, it is up to a non-OUTSIDER user
+                    // with the highest role to self-promote themselves to OWNER.
+                    // If `true`, we are among those users... This is our chance to
+                    // become king of the Realm!
                     "name": "can_self_promote_to_owner",
                     "type": "Boolean",
                     // Introduced in Parsec 3.9.0
@@ -234,9 +235,10 @@ pub struct WorkspaceInfo {
     pub is_bootstrapped: bool,
 
     // New fields
-    /// If all OWNERs have been revoked, it is up to a user with the highest role
-    /// to self-promote himself to OWNER.
-    /// If `true`, we are among those users... This is our chance to become king of the Realm!
+    /// If all OWNERs have been revoked, it is up to a non-OUTSIDER user
+    /// with the highest role to self-promote themselves to OWNER.
+    /// If `true`, we are among those users... This is our chance to
+    /// become king of the Realm!
     pub can_self_promote_to_owner: bool,
 }
 
