@@ -151,6 +151,8 @@ export async function openDocument(
     return undefined;
   }
 
+  window.electronAPI.log('debug', `Trying to open document on server '${CRYPTPAD_SERVER}'`);
+
   function sendMessageToFrame(command: CryptpadCommAPI.Commands, data?: any): void {
     if (!frame.contentWindow) {
       throw new CryptpadError(CryptpadErrorCodes.FrameNotLoaded);
