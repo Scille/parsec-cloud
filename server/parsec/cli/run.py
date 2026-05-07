@@ -332,11 +332,13 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     type=bool,
 )
 @click.option(
-    "--organization-initial-realm-minimum-archiving-period-before-deletion",
-    envvar="PARSEC_ORGANIZATION_INITIAL_REALM_MINIMUM_ARCHIVING_PERIOD_BEFORE_DELETION",
+    "--organization-initial-realm-deletion-min-archiving-period",
+    envvar="PARSEC_ORGANIZATION_INITIAL_REALM_DELETION_MIN_ARCHIVING_PERIOD",
     show_envvar=True,
-    help="""Minimum archiving period mandatory when scheduling a realm for deletion
-used to configure newly created organizations
+    help="""Deleting a realm is done by first scheduling it for deletion with an archiving period.
+
+This value is the minimum mandatory archiving period used to configure newly
+created organizations.
 """,
     default=3600 * 24 * 30,
     show_default="2592000 seconds i.e. 30 days",
@@ -597,7 +599,7 @@ async def run_cmd(
     organization_bootstrap_webhook: str | None,
     organization_initial_active_users_limit: int | None,
     organization_initial_user_profile_outsider_allowed: bool,
-    organization_initial_realm_minimum_archiving_period_before_deletion: int,
+    organization_initial_realm_deletion_min_archiving_period: int,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
     trusted_x509_root_dir: list[X509TrustAnchor],
     scws_config: ScwsConfig | None,
@@ -721,7 +723,7 @@ async def run_cmd(
             if organization_initial_active_users_limit is not None
             else ActiveUsersLimit.NO_LIMIT,
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
-            organization_initial_realm_minimum_archiving_period_before_deletion=organization_initial_realm_minimum_archiving_period_before_deletion,
+            organization_initial_realm_deletion_min_archiving_period=organization_initial_realm_deletion_min_archiving_period,
             organization_initial_tos=organization_initial_tos,
             email_rate_limit_cooldown_delay=max(validation_email_rate_limit[0], 0),
             email_rate_limit_max_per_hour=max(validation_email_rate_limit[1], 0),

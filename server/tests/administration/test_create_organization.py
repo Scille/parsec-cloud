@@ -118,9 +118,7 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
         case "custom":
             backend.config.organization_initial_active_users_limit = ActiveUsersLimit.limited_to(10)
             backend.config.organization_initial_user_profile_outsider_allowed = False
-            backend.config.organization_initial_realm_minimum_archiving_period_before_deletion = (
-                1000
-            )
+            backend.config.organization_initial_realm_deletion_min_archiving_period = 1000
             backend.config.organization_initial_tos = {
                 "fr_FR": "https://parsec.invalid/tos_fr.pdf",
                 "en_US": "https://parsec.invalid/tos_en.pdf",
@@ -186,7 +184,7 @@ async def test_ok(
     # Expected realm_minimum_archiving_period_before_deletion
     expected_minimum_archiving_period = args.get(
         "realm_minimum_archiving_period_before_deletion",
-        backend.config.organization_initial_realm_minimum_archiving_period_before_deletion,
+        backend.config.organization_initial_realm_deletion_min_archiving_period,
     )
 
     # Expected tos

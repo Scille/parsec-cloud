@@ -38,7 +38,7 @@ class MemoryAuthComponent(BaseAuthComponent):
                     bootstrap_token=None,
                     user_profile_outsider_allowed=self._config.organization_initial_user_profile_outsider_allowed,
                     active_users_limit=self._config.organization_initial_active_users_limit,
-                    realm_minimum_archiving_period_before_deletion=self._config.organization_initial_realm_minimum_archiving_period_before_deletion,
+                    realm_minimum_archiving_period_before_deletion=self._config.organization_initial_realm_deletion_min_archiving_period,
                     tos=None
                     if self._config.organization_initial_tos is None
                     else TermsOfService(

@@ -175,7 +175,7 @@ async def test_authenticated_realm_update_archiving_archiving_period_too_short(
 ) -> None:
     timestamp = DateTime.now()
     absolute_minimum_deletion_date = timestamp.add(
-        seconds=backend.config.organization_initial_realm_minimum_archiving_period_before_deletion
+        seconds=backend.config.organization_initial_realm_deletion_min_archiving_period
     )
 
     certif = _alice_archiving_certificate(
