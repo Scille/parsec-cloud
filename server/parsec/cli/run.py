@@ -332,11 +332,13 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     type=bool,
 )
 @click.option(
-    "--organization-initial-realm-minimum-archiving-period-before-deletion",
-    envvar="PARSEC_ORGANIZATION_INITIAL_REALM_MINIMUM_ARCHIVING_PERIOD_BEFORE_DELETION",
+    "--organization-initial-realm-deletion-min-archiving-period",
+    envvar="PARSEC_ORGANIZATION_INITIAL_REALM_DELETION_MIN_ARCHIVING_PERIOD",
     show_envvar=True,
-    help="""Minimum archiving period mandatory when scheduling a realm for deletion
-used to configure newly created organizations
+    help="""Deleting a realm is done by first scheduling it for deletion with an archiving period.
+
+This value is the minimum mandatory archiving period used to configure newly
+created organizations.
 """,
     default=3600 * 24 * 30,
     show_default="2592000 seconds i.e. 30 days",
