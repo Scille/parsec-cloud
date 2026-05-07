@@ -138,7 +138,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             )
         if realm_minimum_archiving_period_before_deletion is Unset:
             realm_minimum_archiving_period_before_deletion = (
-                self._config.organization_initial_realm_minimum_archiving_period_before_deletion
+                self._config.organization_initial_realm_deletion_min_archiving_period
             )
         optional_tos = self._config.organization_initial_tos if tos is Unset else tos
 

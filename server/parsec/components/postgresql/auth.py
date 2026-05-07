@@ -200,7 +200,7 @@ class PGAuthComponent(BaseAuthComponent):
                     id=organization_id,
                     active_users_limit=self._config.organization_initial_active_users_limit,
                     user_profile_outsider_allowed=self._config.organization_initial_user_profile_outsider_allowed,
-                    realm_minimum_archiving_period_before_deletion=self._config.organization_initial_realm_minimum_archiving_period_before_deletion,
+                    realm_minimum_archiving_period_before_deletion=self._config.organization_initial_realm_deletion_min_archiving_period,
                     tos_per_locale_urls=self._config.organization_initial_tos,
                     bootstrap_token=None,
                 )
