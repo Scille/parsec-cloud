@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import WorkspaceFilterPopover from '@/components/workspaces/WorkspaceFilterPopover.vue';
-import { WorkspacesPageFilters } from '@/components/workspaces/utils';
+import { WorkspacesPageFilters } from '@/components/workspaces/types';
 import { IonButton, IonIcon, popoverController } from '@ionic/vue';
 import { filter } from 'ionicons/icons';
 import { computed } from 'vue';

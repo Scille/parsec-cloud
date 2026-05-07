@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { matchingStringValidator, workspaceNameValidator } from '@/common/validators';
+import { RoleUpdateAuthorization } from '@/components/workspaces/types';
 import {
   ClientRenameWorkspaceErrorTag,
   UserProfile,
-  WorkspaceID,
   WorkspaceInfo,
   WorkspaceName,
   WorkspaceRole,
@@ -39,7 +39,6 @@ import { DateTime } from 'luxon';
 import {
   Answer,
   Clipboard,
-  DisplayState,
   I18n,
   MsModalResult,
   MsReportTheme,
@@ -49,32 +48,6 @@ import {
   useWindowSize,
 } from 'megashark-lib';
 import { Ref, inject } from 'vue';
-
-export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
-
-interface RoleUpdateAuthorization {
-  authorized: boolean;
-  reason?: Translatable;
-}
-
-export interface WorkspacesPageSavedData {
-  displayState?: DisplayState;
-  favoriteList?: WorkspaceID[];
-  hiddenList?: WorkspaceID[];
-}
-
-export interface WorkspacesPageFilters {
-  owner: boolean;
-  manager: boolean;
-  contributor: boolean;
-  reader: boolean;
-}
-
-export const WorkspaceDefaultData: Required<WorkspacesPageSavedData> = {
-  displayState: DisplayState.Grid,
-  favoriteList: [],
-  hiddenList: [],
-};
 
 export function canChangeRole(
   clientProfile: UserProfile,

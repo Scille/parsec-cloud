@@ -889,7 +889,7 @@ async function openRecentFile(file: RecentFile): Promise<void> {
   }
   const config = await storageManager.retrieveConfig();
 
-  await pathOpener.openPath(file.workspaceHandle, file.path, informationManager.value, { skipViewers: config.skipViewers });
+  await pathOpener.openPath(file.workspaceHandle, file.path, { skipViewers: config.skipViewers });
 }
 
 async function removeRecentFile(file: RecentFile): Promise<void> {
