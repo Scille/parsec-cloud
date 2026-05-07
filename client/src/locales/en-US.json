@@ -2267,7 +2267,7 @@
         "device": {
             "title": "Trusted devices or browsers",
             "description": "Add secondary devices or browsers (Chrome or Firefox) as backup accesses to this organization.",
-            "activeDevices": "1 other active device/browser | {count} other active devices/browsers",
+            "otherActiveDevices": "{count} other active devices/browsers",
             "action": "Add a device"
         },
         "trustedUser": {

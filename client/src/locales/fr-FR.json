@@ -2268,7 +2268,7 @@
         "device": {
             "title": "Appareils ou navigateurs de récupération",
             "description": "Ajoutez des appareils ou des navigateurs (Chrome ou Firefox) secondaires comme accès alternatifs à cette organisation.",
-            "activeDevices": "1 autre appareil/navigateur actif | {count} autres appareils/navigateurs actifs",
+            "otherActiveDevices": "{count} autres appareils/navigateurs actifs",
             "action": "Ajouter un appareil"
         },
         "trustedUser": {
