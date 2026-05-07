@@ -1671,7 +1671,7 @@ async function openEntry(entryToOpen: EntryModel, options: OpenPathOptions): Pro
     }
   }
 
-  await pathOpener.openPath(workspaceHandle, entry.path, informationManager.value, options);
+  await pathOpener.openPath(workspaceHandle, entry.path, options);
   selectionEnabled.value = false;
 }
 
@@ -1687,7 +1687,7 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
     case FolderGlobalAction.ImportFolder:
       return await fileInputsRef.value?.importFolder();
     case FolderGlobalAction.OpenInExplorer:
-      return await pathOpener.openPath(workspaceInfo.value.handle, currentPath.value, informationManager.value, { skipViewers: true });
+      return await pathOpener.openPath(workspaceInfo.value.handle, currentPath.value, { skipViewers: true });
     case FolderGlobalAction.ToggleSelect:
       return await toggleSelection();
     case FolderGlobalAction.SelectAll:
@@ -1857,7 +1857,7 @@ async function seeInExplorer(entries: EntryModel[]): Promise<void> {
     }
   }
 
-  await pathOpener.showInExplorer(workspaceInfo.value.handle, entries[0].path, informationManager.value);
+  await pathOpener.showInExplorer(workspaceInfo.value.handle, entries[0].path);
 }
 
 async function onDropAsReader(): Promise<void> {

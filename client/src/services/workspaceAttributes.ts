@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { WorkspaceDefaultData, WORKSPACES_PAGE_DATA_KEY, WorkspacesPageSavedData } from '@/components/workspaces';
+import { WorkspaceDefaultData, WORKSPACES_PAGE_DATA_KEY, WorkspacesPageSavedData } from '@/components/workspaces/types';
 import { WorkspaceID } from '@/parsec';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { inject, Ref, ref, toRaw } from 'vue';

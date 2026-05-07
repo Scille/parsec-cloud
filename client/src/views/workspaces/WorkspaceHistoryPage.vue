@@ -203,7 +203,6 @@ import { EntryName, FsPath, getWorkspaceInfo, Path, WorkspaceHistory, WorkspaceI
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
 import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
-import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import usePathOpener from '@/services/pathOpener';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { chevronBack, chevronForward, eye, home, warning } from 'ionicons/icons';
@@ -212,7 +211,6 @@ import { Answer, askQuestion, Folder, I18n, MsDatetimePicker, MsImage, MsSearchI
 import { computed, inject, onBeforeUnmount, onMounted, onUnmounted, ref, Ref, useTemplateRef, watch } from 'vue';
 
 const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
-const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
 const selectedDateTime = ref(DateTime.now().toJSDate());
 const backStack: FsPath[] = [];
@@ -424,7 +422,7 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
       return;
     }
 
-    await pathOpener.openPath(workspaceInfo.value.handle, entry.path, informationManager.value, {
+    await pathOpener.openPath(workspaceInfo.value.handle, entry.path, {
       disallowSystem: true,
       atTime: DateTime.fromJSDate(selectedDateTime.value),
       readOnly: true,

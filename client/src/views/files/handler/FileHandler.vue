@@ -717,7 +717,7 @@ async function showDetails(): Promise<void> {
 async function openEditor(path: FsPath): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
-    await pathOpener.openPath(workspaceHandle, path, informationManager.value, { readOnly: false });
+    await pathOpener.openPath(workspaceHandle, path, { readOnly: false });
   }
 }
 
