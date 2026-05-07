@@ -307,8 +307,12 @@ async function getCryptpadServer(): Promise<string | null> {
     CryptpadServerCache.set(connHandle, null);
     return null;
   }
-  CryptpadServerCache.set(connHandle, result.value.cryptpad.serverUrl);
-  return result.value.cryptpad.serverUrl;
+  let serverUrl = result.value.cryptpad.serverUrl;
+  if (!result.value.cryptpad.serverUrl.startsWith('https://') && !result.value.cryptpad.serverUrl.startsWith('http://')) {
+    serverUrl = `https://${result.value.cryptpad.serverUrl}`;
+  }
+  CryptpadServerCache.set(connHandle, serverUrl);
+  return serverUrl;
 }
 
 export const Env = {

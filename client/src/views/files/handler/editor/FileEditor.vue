@@ -261,6 +261,7 @@ async function loadEditor(): Promise<void> {
         showErrorTips.value = true;
 
         if (err instanceof CryptpadError) {
+          window.electronAPI.log('info', `Failed to load Cryptpad: ${err}`);
           switch (err.code) {
             case CryptpadErrorCodes.InitFailed:
               error.value = EditorErrorMessage.EditableOnlyOnSystem;
@@ -289,7 +290,7 @@ async function loadEditor(): Promise<void> {
               break;
           }
         } else {
-          window.electronAPI.log('error', `Unhandled error: ${err} `);
+          window.electronAPI.log('error', `Unhandled error: ${err}`);
         }
         emits('fileError');
         loadFinished.value = true;
