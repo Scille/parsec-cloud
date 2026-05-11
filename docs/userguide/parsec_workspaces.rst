@@ -233,13 +233,15 @@ You can also explore the workspace history from a specific file. This will open 
 Archive a workspace
 -------------------
 
-A workspace can be **Archived** by one of its **Owners** by selecting the corresponding button on its contextual menu.
+A workspace can be **Archived** by one of its **Owners** by selecting the corresponding action on its contextual menu.
 
 .. image:: screens/workspace_archive_contextual_menu.png
     :align: center
     :alt: Workspace context archive button
 
-An archived workspace is set to `read-only` for all users it has been shared with, regardless of their :ref:`roles <doc_userguide_parsec_workspaces_roles>`. Archived workspaces can be consulted in the ``Archived`` section accessible from the sidebar. The :ref:`workspace history <doc_userguide_parsec_workspaces_history>` can be accessed in `read-only` as well.
+An archived workspace is set to *read-only* for all users it has been shared with, regardless of their :ref:`roles <doc_userguide_parsec_workspaces_roles>`.
+Archived workspaces can be consulted in the ``Archived`` section accessible from the sidebar.
+The :ref:`workspace history <doc_userguide_parsec_workspaces_history>` can be accessed in *read-only* as well.
 
 .. image:: screens/workspace_archived_sidebar.png
     :align: center
@@ -262,20 +264,30 @@ Archived workspace **Owners** can restore them from the workspace contextual men
 Delete a workspace
 -------------------
 
-An **archived** workspace **Owner** can set it to be **deleted** by selecting the corresponding button on its contextual menu.
+A workspace can set it to be **Deleted** by one of its **Owners** by selecting the corresponding action on its contextual menu.
 
 .. image:: screens/workspace_delete_contextual_menu.png
     :align: center
     :alt: Workspace context delete button
 
-Once set to deletion, a workspace will be stored to the **Bin** accessible from the sidebar. It will remain in this state for a set amount of time, determined by the `server`.
+Once set to deletion, a workspace will be moved to the **Bin** accessible from the sidebar.
+It will remain there for a period of time determined by your Organization.
 
 .. image:: screens/workspace_deleted_sidebar.png
     :align: center
     :alt: Workspace deleted sidebar button
     :width: 300
 
-Until this date, users who had access to it can consult its content in `read-only` as well as its :ref:`history <doc_userguide_parsec_workspaces_history>` in `read-only`.
+Until the deletion date:
+
+- Users who had access to it can consult its content in *read-only* as well as its
+  :ref:`history <doc_userguide_parsec_workspaces_history>` in *read-only*.
+- Workspace **Owners** can restore it from the workspace contextual menu to prevent deletion.
+
+.. important::
+
+  Once the deletion date has passed, the data will no longer be accessible and the workspace can
+  no longer be restored.
 
 .. list-table::
    :widths: 50 50
@@ -284,5 +296,3 @@ Until this date, users who had access to it can consult its content in `read-onl
           :alt: Workspace deleted card
      - .. image:: screens/workspace_deleted_context.png
           :alt: Workspace deleted context
-
-**Owners** of workspaces set to be **deleted** can restore them before the deletion date from the workspace contextual menu to cancel the operation.
