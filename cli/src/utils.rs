@@ -401,9 +401,13 @@ pub fn choose_password(from: ReadPasswordFrom) -> anyhow::Result<Password> {
     match from {
         ReadPasswordFrom::Stdin => {
             let stdin = std::io::stdin();
-            rpassword::read_password_from_bufread(&mut stdin.lock())
-                .map(Into::into)
-                .map_err(anyhow::Error::from)
+            rpassword::read_password_with_config(
+                rpassword::ConfigBuilder::default()
+                    .input_reader(stdin.lock())
+                    .build(),
+            )
+            .map(Into::into)
+            .map_err(anyhow::Error::from)
         }
         ReadPasswordFrom::Tty { prompt } => loop {
             let password = rpassword::prompt_password(prompt)?.into();
@@ -498,7 +502,11 @@ pub fn read_password(read_from: ReadPasswordFrom) -> anyhow::Result<libparsec::P
     match read_from {
         ReadPasswordFrom::Stdin => {
             let stdin = std::io::stdin();
-            rpassword::read_password_from_bufread(&mut stdin.lock())
+            rpassword::read_password_with_config(
+                rpassword::ConfigBuilder::default()
+                    .input_reader(stdin.lock())
+                    .build(),
+            )
         }
         ReadPasswordFrom::Tty { prompt } => rpassword::prompt_password(prompt),
     }
