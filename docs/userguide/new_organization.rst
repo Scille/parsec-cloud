@@ -34,7 +34,8 @@ create your organization:
 1. Start by clicking ``Create an organization`` on the welcome screen.
 2. Select ``Create my organization on Parsec``.
 3. Log in with your customer account.
-4. Enter the organization name (this name cannot be changed later).
+4. Enter the organization name (**this name cannot be changed later**,
+   see :ref:`About Organization Names <doc_userguide_new_organization_naming>`).
 5. Choose the preferred authentication method (this can be changed later from
    your profile).
 6. Check the information entered and confirm.
@@ -62,6 +63,7 @@ required.
 
 You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps>`
 
+.. _doc_userguide_new_organization_custom:
 
 Create an organization on my own Parsec server
 ----------------------------------------------
@@ -77,3 +79,22 @@ You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps
 .. note::
 
   You can read more about hosting Parsec server in the :ref:`Deployment Guide <doc_hosting_deployment>`.
+
+
+.. _doc_userguide_new_organization_naming:
+
+About Organization Names
+------------------------
+
+The following naming rules must be respected:
+
+- Name must be unique, there cannot be two Organizations with the same name.
+- Name may only contain alphanumeric characters, underscores or hyphens (no spaces nor accents)
+- Name must begin with an alphanumeric character
+- Name is limited to 32 characters
+
+.. important::
+
+  The name you choose for your organization is not considered confidential information since the
+  name can be linked to external documents (such as invoices) and is visible to Parsec Server
+  administrators.

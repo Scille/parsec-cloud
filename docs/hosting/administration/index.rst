@@ -1,3 +1,5 @@
+.. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 .. _doc_hosting_administration:
 
 =====================
@@ -10,6 +12,7 @@ This section covers how to manage Parsec Server and perform common administrativ
     :maxdepth: 1
     :name: section-hosting-administration-guide
 
+    create_organization
     stats_server
     stats_organization
     freeze_users
