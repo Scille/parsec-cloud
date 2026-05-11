@@ -436,41 +436,6 @@ Start the server
      ./run-parsec-server
 
 
-Start using Parsec Server
-=========================
-
-Create an Organization
-----------------------
-
-Follow the steps below to create an Organization (replace ``ORG_NAME`` with the desired name for your organization)
-
-#. Create the organization
-
-   .. code-block:: console
-
-     $ set -a
-     $ source parsec-admin-token.env
-     $ export SSL_CAFILE=$PWD/custom-ca.crt
-     $ parsec-cli organization create --addr parsec3://127.0.0.1:6777
-     [...]
-     Bootstrap organization url: [...]
-
-   Save the **Bootstrap organization url** to create the first user (owner) of the Organization.
-
-#. Start Parsec with the custom CA:
-
-   .. code-block:: console
-
-     $ export SSL_CAFILE=$PWD/custom-ca.crt
-     $ parsec
-
-#. Bootstrap the Organization (create its first User)
-
-   #. Got to :menuselection:`Menu --> Join an organization``
-   #. Paste the **Bootstrap organization url** from before (should already be filled in the text field)
-   #. Follow the instructions to create the first user of the Organization.
-
-
 .. _doc_hosting_deployment_behind_a_proxy:
 
 Running behind a reverse proxy
