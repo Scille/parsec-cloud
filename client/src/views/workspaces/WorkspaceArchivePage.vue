@@ -79,16 +79,19 @@ import { useWorkspaceContextMenu } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { listArchivedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
 import { currentRouteIs, navigateTo, navigateToWorkspace, Routes } from '@/router';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { arrowBack } from 'ionicons/icons';
 import { MsImage, MsSpinner } from 'megashark-lib';
-import { computed, inject, onMounted, Ref, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, Ref, ref } from 'vue';
 
 const contextMenu = useWorkspaceContextMenu(false);
 const querying = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
+let eventCbId: string | null = null;
 
 const filteredWorkspaces = computed(() => {
   return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => a.name.localeCompare(b.name));
@@ -96,6 +99,13 @@ const filteredWorkspaces = computed(() => {
 
 onMounted(async (): Promise<void> => {
   await refreshArchivedWorkspacesList();
+  eventCbId = await eventDistributor.value.registerCallback([Events.WorkspaceUpdated], refreshArchivedWorkspacesList);
+});
+
+onUnmounted(async () => {
+  if (eventCbId) {
+    eventDistributor.value.removeCallback(eventCbId);
+  }
 });
 
 async function refreshArchivedWorkspacesList(): Promise<void> {
