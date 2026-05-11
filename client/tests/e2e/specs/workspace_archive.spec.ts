@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, DisplaySize, expect, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, DisplaySize, expect, login, msTest } from '@tests/e2e/helpers';
+import { DateTime } from 'luxon';
 
 msTest('Archive workspace', async ({ workspaces }) => {
   const sidebarArchiveButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
@@ -168,4 +169,63 @@ msTest('Archive workspace in small display', async ({ workspaces }) => {
   await archivedCard.click();
   await expect(workspaces.locator('.header-archived')).toBeVisible();
   await expect(workspaces.locator('.header-archived')).toHaveText('Archived workspace (read-only)');
+});
+
+msTest('Check workspace archiving sync on second client', async ({ workspaces }) => {
+  const secondTab = await workspaces.openNewTab();
+  await login(secondTab, 'Boby McBobFace');
+
+  const aliceSidebarArchiveButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
+  const bobSidebarArchiveButton = secondTab.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
+
+  const bobWk = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await expect(bobWk).toBeVisible();
+  await bobSidebarArchiveButton.click();
+  await expect(bobWk).not.toBeVisible();
+
+  // Archive workspace
+  const aliceWk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+  await aliceWk.click({ button: 'right' });
+  const contextMenu = workspaces.locator('.workspace-context-menu');
+  await contextMenu.getByRole('listitem').nth(4).click();
+  await answerQuestion(workspaces, true);
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
+
+  // Check on first tab
+  await expect(aliceWk).not.toBeVisible();
+  await aliceSidebarArchiveButton.click();
+  await expect(aliceWk).toBeVisible();
+
+  // Check on second tab
+  await expect(bobWk).toBeVisible();
+
+  // Restore workspace
+  await aliceWk.click({ button: 'right' });
+  await contextMenu.getByRole('listitem').nth(2).click();
+  await answerQuestion(workspaces, true);
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been restored.', 'Success');
+
+  // Check both tabs
+  await expect(aliceWk).not.toBeVisible();
+  await expect(bobWk).not.toBeVisible();
+});
+
+msTest('Check archived workspace displayed timestamp', async ({ workspaces }) => {
+  const sidebarArchiveButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
+  const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+
+  // Archive workspace
+  await wk.click({ button: 'right' });
+  const contextMenu = workspaces.locator('.workspace-context-menu');
+  await contextMenu.getByRole('listitem').nth(4).click();
+  const archivingTimestamp = DateTime.now();
+  await answerQuestion(workspaces, true);
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
+
+  // Check timestamp
+  await sidebarArchiveButton.click();
+  const wkTimestamp = wk.locator('.workspace-card-content__update');
+  await expect(wkTimestamp).toContainText('Archived on: ');
+  await expect(wkTimestamp).toContainText(`${archivingTimestamp.day}`);
+  await expect(wkTimestamp).toContainText(`${archivingTimestamp.year}`);
 });
