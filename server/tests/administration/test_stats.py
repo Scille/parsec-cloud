@@ -249,7 +249,7 @@ async def test_ok(
     stats = await server_stats()
     assert stats == expected_server_stats
 
-    # Finally ensure deleted organization are not costing any space
+    # Finally ensure deleted workspaces are not costing any space
 
     deletion_date = DateTime.now().add(days=31)
     outcome = await wksp1_alice_update_archiving_config(
