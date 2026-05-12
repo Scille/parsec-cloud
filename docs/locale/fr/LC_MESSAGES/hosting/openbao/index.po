@@ -1,0 +1,295 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2026.
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-12 17:48+0200\n"
+"PO-Revision-Date: 2026-05-12 17:49+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.9\n"
+
+#: ../../hosting/openbao/index.rst:7
+msgid "Single Sign-On with OpenBao"
+msgstr "Authentification unique avec OpenBao"
+
+#: ../../hosting/openbao/index.rst:9
+msgid ""
+"This section explains how to enable :abbr:`SSO (Single Sign-On)` in Parsec "
+"via `OpenBao`_."
+msgstr ""
+"Cette section explique comment activer l'authentification unique (SSO) dans "
+"Parsec via `OpenBao`_."
+
+#: ../../hosting/openbao/index.rst:13
+msgid "Overview"
+msgstr "Présentation"
+
+#: ../../hosting/openbao/index.rst:15
+msgid ""
+"Parsec supports :abbr:`SSO (Single Sign-On)` via an `OpenBao`_ server "
+"connected to an :abbr:`OIDC (OpenID Connect)` identity provider. This "
+"integration serves two purposes:"
+msgstr ""
+"Parsec prend en charge l'authentification unique (SSO) via un serveur "
+"`OpenBao`_ connecté à un fournisseur d'identité OIDC (OpenID Connect). Cette "
+"intégration répond à deux objectifs :"
+
+#: ../../hosting/openbao/index.rst:19
+msgid "Device protection"
+msgstr "Protection de l'appareil"
+
+#: ../../hosting/openbao/index.rst:20
+msgid ""
+"Parsec stores cryptographic device keys on the user's machine. These keys "
+"are protected by different mechanism depending on the selected :ref:"
+"`authentication method <doc_hosting_client_deploy_authentication_methods>`."
+msgstr ""
+"Parsec stocke les clés cryptographiques sur l'ordinateur de l'utilisateur. "
+"Ces clés sont protégées par différents mécanismes selon la :ref:`méthode "
+"d'authentification <doc_hosting_client_deploy_authentication_methods>` "
+"sélectionnée."
+
+#: ../../hosting/openbao/index.rst:24
+msgid ""
+"With SSO, the keys are encrypted using the user's SSO identity. This way, an "
+"attacker who manages to steal the key file cannot decrypt it without also "
+"controlling the user's SSO account."
+msgstr ""
+"Avec le SSO, les clés sont chiffrées à l'aide de l'identité SSO de "
+"l'utilisateur. Ainsi, un pirate qui parviendrait à dérober le fichier de "
+"clés ne pourrait pas le déchiffrer sans contrôler également le compte SSO de "
+"l'utilisateur."
+
+#: ../../hosting/openbao/index.rst:27
+msgid "Asynchronous enrollment"
+msgstr "Enrôlement asynchrone"
+
+#: ../../hosting/openbao/index.rst:28
+msgid ""
+"When a new user wants to join a Parsec organization, they normally go "
+"through a *synchronous enrollment*: both the new user and the organization "
+"administrator must be online at the same time and exchange codes to validate "
+"each other identity."
+msgstr ""
+"Lorsqu'un nouvel utilisateur souhaite rejoindre une organisation Parsec, il "
+"passe généralement par un *enrôlement synchrone* : c'est-à-dire que le "
+"nouvel utilisateur et l'administrateur de l'organisation doivent être en "
+"ligne en même temps et échanger des codes pour valider mutuellement leur "
+"identité."
+
+#: ../../hosting/openbao/index.rst:32
+msgid ""
+"With SSO, the identity is provided for both parties which means the "
+"enrollment can be done in an *asynchronous way*: the user sends a request to "
+"join, and the administrator approves (or reject) the join request later (no "
+"simultaneous presence is required)."
+msgstr ""
+"Avec SSO, l'identité est fournie pour les deux parties, ce qui signifie que "
+"l'inscription peut se faire de manière *asynchrone* : l'utilisateur envoie "
+"une demande pour rejoindre l'organisation, et l'administrateur approuve (ou "
+"rejette) cette demande ultérieurement (aucune présence simultanée n'est "
+"requise)."
+
+#: ../../hosting/openbao/index.rst:38
+msgid ""
+"`OpenBao`_ is an open-source secrets manager (a fork of HashiCorp Vault) "
+"managed by the Linux Foundation's :abbr:`OpenSSF (Open Source Security "
+"Foundation)` community."
+msgstr ""
+"`OpenBao`_ est un gestionnaire de secrets open source (un fork de HashiCorp "
+"Vault) géré par la communauté :abbr:`OpenSSF (Open Source Security "
+"Foundation)` de la Linux Foundation."
+
+#: ../../hosting/openbao/index.rst:41
+msgid ""
+"In Parsec, OpenBao can be seen as the cryptographic back-end for SSO "
+"support, allowing:"
+msgstr ""
+"Dans Parsec, OpenBao peut être considéré comme le backend cryptographique "
+"permettant l'authentification unique (SSO), ce qui offre les possibilités "
+"suivantes :"
+
+#: ../../hosting/openbao/index.rst:43
+msgid "User authentication via OIDC"
+msgstr "Authentification des utilisateurs via OIDC"
+
+#: ../../hosting/openbao/index.rst:44
+msgid "Encrypted device key file storage"
+msgstr "Stockage du fichier chiffré de clés de l'appareil"
+
+#: ../../hosting/openbao/index.rst:45
+msgid "Operations signature during enrollment"
+msgstr "Signature des opérations lors de l'enrôlement"
+
+#: ../../hosting/openbao/index.rst:48
+msgid "Architecture"
+msgstr "Architecture"
+
+#: ../../hosting/openbao/index.rst:61
+msgid ""
+"The Parsec client authenticates the user against an **OpenID provider** "
+"(such as a corporate or government SSO). OpenBao is configured to trust that "
+"provider, so the resulting *token* is usable on OpenBao."
+msgstr ""
+"Le client Parsec authentifie l'utilisateur auprès d'un **fournisseur "
+"OpenID** (tel qu'un SSO d'entreprise ou du gouvernement). OpenBao est "
+"configuré pour faire confiance à ce fournisseur ; le *token* ainsi obtenu "
+"est donc utilisable sur OpenBao."
+
+#: ../../hosting/openbao/index.rst:65
+msgid "The Parsec client uses the *token* to call **OpenBao** to either:"
+msgstr "Le client Parsec utilise le *token* pour appeler **OpenBao** afin de :"
+
+#: ../../hosting/openbao/index.rst:67
+msgid ""
+"Store or retrieve the encrypted device keys (\"Device protection\" use-"
+"case), or"
+msgstr ""
+"Stocker ou récupérer les clés chiffrées de l'appareil (cas d'utilisation « "
+"Protection de l'appareil »), ou"
+
+#: ../../hosting/openbao/index.rst:68
+msgid ""
+"Sign/verify an enrollment payload using the user's per-entity transit key "
+"(\"Asynchronous enrollment\" use-case)."
+msgstr ""
+"Signer / vérifier une payload d'enrôlement à l'aide de la clé de transit par "
+"entité de l'utilisateur (cas d'utilisation « Enrôlement asynchrone »)."
+
+#: ../../hosting/openbao/index.rst:71
+msgid ""
+"For asynchronous enrollment, the signed enrollment request is then send to "
+"the **Parsec Server**, for later retrieval by the organization administrator "
+"(which can then verify its signature using OpenBao)."
+msgstr ""
+"Dans le cas d'un enrôlement asynchrone, la demande d'enrôlement signée est "
+"ensuite envoyée au **serveur Parsec**, afin que l'administrateur de "
+"l'organisation puisse la récupérer ultérieurement (celui-ci pourra alors "
+"vérifier sa signature à l'aide d'OpenBao)."
+
+#: ../../hosting/openbao/index.rst:76
+msgid "Requirements"
+msgstr "Prérequis"
+
+#: ../../hosting/openbao/index.rst:78
+msgid ""
+"A running `OpenBao`_ instance reachable by both users and the Parsec Server."
+msgstr ""
+"Une instance `OpenBao`_ déployée et accessible à la fois par les "
+"utilisateurs et par le serveur Parsec."
+
+#: ../../hosting/openbao/index.rst:79
+msgid "An OIDC-compatible identity provider"
+msgstr "Un fournisseur d'identité compatible OIDC"
+
+#: ../../hosting/openbao/index.rst:80
+msgid "The :command:`bao` CLI tool to configure OpenBao."
+msgstr "L'outil :command:`bao` pour configurer OpenBao."
+
+#: ../../hosting/openbao/index.rst:83
+msgid "OpenBao configuration"
+msgstr "Configuration OpenBao"
+
+#: ../../hosting/openbao/index.rst:85
+msgid ""
+"The following steps are required to configure OpenBao to enable SSO in "
+"Parsec."
+msgstr ""
+"Les étapes suivantes sont nécessaires pour configurer OpenBao afin d'activer "
+"l'authentification unique (SSO) dans Parsec."
+
+#: ../../hosting/openbao/index.rst:87
+msgid ""
+"Before starting, make sure to define the ``OPENBAO_SERVER_URL`` variable "
+"with your OpenBao instance URL:"
+msgstr ""
+"Avant de commencer, veuillez définir la variable ``OPENBAO_SERVER_URL`` avec "
+"l'adresse de votre instance OpenBao :"
+
+#: ../../hosting/openbao/index.rst:95
+msgid "Enable the required secrets engines"
+msgstr "Activer les moteurs de secrets requis"
+
+#: ../../hosting/openbao/index.rst:106
+msgid "Enable and configure the OIDC auth method"
+msgstr "Activer et configurer la méthode d'authentification OIDC"
+
+#: ../../hosting/openbao/index.rst:108
+msgid ""
+"The path ``parsec_oidc`` is used below for the OIDC auth method. If you want "
+"you can specify a different mount path."
+msgstr ""
+"Le chemin ``parsec_oidc`` est utilisé ci-dessous pour la méthode "
+"d'authentification OIDC. Si vous le souhaitez, vous pouvez indiquer un autre "
+"chemin de montage."
+
+#: ../../hosting/openbao/index.rst:111
+msgid ""
+"Use your client credentials to replace ``<your-client-id>`` and load the "
+"secret from a ``client-secret.txt`` file so it is not displayed in the "
+"command line and to prevent it to show up in the shell history."
+msgstr ""
+"Utilisez les identifiants de votre client pour remplacer ``<your-client-"
+"id>`` et chargez le secret à partir d'un fichier ``client-secret.txt`` afin "
+"qu'il n'apparaisse pas dans la ligne de commande et qu'il ne soit pas "
+"enregistré dans l'historique du shell."
+
+#: ../../hosting/openbao/index.rst:128
+msgid "Configure the OIDC role"
+msgstr "Configurez le rôle OIDC"
+
+#: ../../hosting/openbao/index.rst:130
+msgid ""
+"The role maps a field from the OIDC token to the OpenBao entity. Parsec uses "
+"the ``email`` claim to identify users, so that the enrollment workflow can "
+"verify that the email in the enrollment payload matches the authenticated "
+"user's email."
+msgstr ""
+"Ce rôle établit une correspondance entre un champ du token OIDC et l'entité "
+"OpenBao. Parsec utilise la revendication ``email`` pour identifier les "
+"utilisateurs, afin que le processus d'enrôlement puisse vérifier que "
+"l'adresse e-mail figurant dans la charge utile d'enrôlement correspond bien "
+"à celle de l'utilisateur authentifié."
+
+#: ../../hosting/openbao/index.rst:143
+msgid ""
+"``allowed_redirect_uris`` must include all redirect URIs that the Parsec "
+"client will use. Consult your OpenBao deployment documentation for the exact "
+"values."
+msgstr ""
+"La variable ``allowed_redirect_uris`` doit inclure toutes les URI de "
+"redirection que le client Parsec utilisera. Consultez la documentation de "
+"déploiement d'OpenBao pour connaître les valeurs exactes."
+
+#: ../../hosting/openbao/index.rst:147
+msgid "ACL policy"
+msgstr "Politique relative à l'ACL"
+
+#: ../../hosting/openbao/index.rst:149
+msgid ""
+"To define the :abbr:`ACL (Access Control List)` policy, create a file "
+"``parsec-default.hcl`` with the following content:"
+msgstr ""
+"Afin de définir la politique :abbr:`ACL (Access Control List)`, créez un "
+"fichier ``parsec-default.hcl`` avec le contenu suivant :"
+
+#: ../../hosting/openbao/index.rst:152
+msgid "parsec-default.hcl"
+msgstr "parsec-default.hcl"
+
+#: ../../hosting/openbao/index.rst:159
+msgid "Apply the policy:"
+msgstr "Appliquez-la :"
+
+#: ../../hosting/openbao/index.rst:166
+msgid "Verify the setup"
+msgstr "Vérifiez la configuration"

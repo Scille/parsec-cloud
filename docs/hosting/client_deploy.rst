@@ -105,6 +105,8 @@ importantly, a set of keys allowing to sign, to receive messages and to encrypt 
   The mechanism used to encrypt the device file depends on the *authentication method* selected by the user during
   device set up.
 
+.. _doc_hosting_client_deploy_authentication_methods:
+
 Supported authentication methods
 --------------------------------
 
