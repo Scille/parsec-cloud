@@ -188,6 +188,7 @@ libnss
 librsvg
 libsodium
 linenodiv
+linenos
 linkcheck
 lintignore
 literalinclude
