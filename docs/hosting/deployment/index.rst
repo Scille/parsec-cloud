@@ -19,7 +19,7 @@ It is recommended to deploy and observe performance on a pilot project prior to 
 .. note::
 
   Some setup and administrative operations must be performed with **Parsec CLI** on Linux.
-  Please refer to the :ref:`Install Parsec CLI on Linux <doc_hosting_install_cli>` section.
+  Please refer to the :ref:`Install Parsec CLI on Linux <doc_cli_install_cli>` section.
 
 Deployment options
 ==================

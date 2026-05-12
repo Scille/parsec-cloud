@@ -1,0 +1,186 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec
+# Documentation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-22 15:11+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../cli/invite.rst:8
+msgid "Invite CLI commands"
+msgstr "Commandes CLI invitation"
+
+#: ../../cli/invite.rst:12
+msgid "Definitions"
+msgstr "Définitions"
+
+#: ../../cli/invite.rst:14
+msgid "Claimer"
+msgstr "Claimer"
+
+#: ../../cli/invite.rst:15
+msgid "The guest accepting the invitation"
+msgstr "l'invité qui accepte l'invitation"
+
+#: ../../cli/invite.rst:17
+msgid "Greeter"
+msgstr "Greeter"
+
+#: ../../cli/invite.rst:18
+msgid ""
+"The host inviting the claimer into the Organization. May be the creator of "
+"the invitation."
+msgstr ""
+"l'hôte qui invite le Claimer dans l'organization. Il peut s'agir du créateur "
+"de l'invitation."
+
+#: ../../cli/invite.rst:21
+msgid "General principles"
+msgstr "Principes généraux"
+
+#: ../../cli/invite.rst:23
+msgid "The invitation follows a 3 step process:"
+msgstr "L'invitation se compose de trois étapes"
+
+#: ../../cli/invite.rst:25
+msgid ""
+"The invitation is created (the command depends on the type of invitation)"
+msgstr ""
+"L'invitation est créée (la commande utilisée dépend du type d'invitation)"
+
+#: ../../cli/invite.rst:26
+msgid ""
+"The Claimer uses the invitation link to claim the invitation (with the "
+"invite claim command)"
+msgstr ""
+"Le Claimer utilise le lien d'invitation pour revendiquer l'invitation (avec "
+"la commande ``invite claim``)"
+
+#: ../../cli/invite.rst:27
+msgid ""
+"The Greeter validates the Claimer's claim with the invitation token (with "
+"the invite greet command)"
+msgstr ""
+"Le Greeter valide la revendication du Claimer's avec le token d'invitation "
+"(avec la commande ``invite greet``)"
+
+#: ../../cli/invite.rst:29
+msgid ""
+"Steps 2 and 3 must occur simultaneously because there are synchronization "
+"points between the Claimer and the Greeter. Using the CLI these "
+"synchronization points will be noted as a circling dot and will become a ✔ "
+"when the wait will end."
+msgstr ""
+"Les étapes 2 et 3 doivent avoir lieu simultanément car des points de "
+"synchronisation entre le Claimer et le Greeter ont lieu. Avant d'être fini "
+"un point de synchronisation sera signifié par un point qui tourne qui "
+"deviendra un ✔."
+
+#: ../../cli/invite.rst:33
+msgid "The creation step will provide:"
+msgstr "L'étape de création va fournir"
+
+#: ../../cli/invite.rst:35
+msgid "an invitation link that will be used by the Claimer"
+msgstr "un line d'invitation qui sera utilisé par le Claimer"
+
+#: ../../cli/invite.rst:36
+msgid "an invitation token that will be used by the Greeter."
+msgstr "un token d'invitation qui sera utilisé par le Greeter."
+
+#: ../../cli/invite.rst:38
+msgid ""
+"The invitation may have been sent by email depending on the server's "
+"configuration, but the invitation creator can directly transmit it to the "
+"Claimer by any secure channel."
+msgstr ""
+"L'invitation peut ête envoyé par email selon la configuration du server. "
+"Mais le créateur de l'invitation peut la transmettre directement au Claimer "
+"par une voie de communication sécurisée de son choix."
+
+#: ../../cli/invite.rst:41
+msgid "The invitation token can also be retrieved listing all invitations."
+msgstr ""
+"Le token d'invitation peut aussi être récupéré en listant toutes les "
+"invitations"
+
+#: ../../cli/invite.rst:44
+msgid "User Invitation"
+msgstr "Invitation utilisateur"
+
+#: ../../cli/invite.rst:47 ../../cli/invite.rst:112
+msgid "Creation"
+msgstr "Création"
+
+#: ../../cli/invite.rst:49
+msgid "The following command creates the invitation for `<user@example.com>`."
+msgstr "La commande suivant créée l'invitation pour `<user@example.com>`."
+
+#: ../../cli/invite.rst:60 ../../cli/invite.rst:124
+msgid "Claim"
+msgstr "Claim"
+
+#: ../../cli/invite.rst:62
+msgid "That new user can claim the invitation."
+msgstr "Ce nouvel utilisateur peut revendiquer l'invitation."
+
+#: ../../cli/invite.rst:87 ../../cli/invite.rst:146
+msgid "Greet"
+msgstr "Greet"
+
+#: ../../cli/invite.rst:89
+msgid ""
+"The Greeter can greet the new user. The device here is any device belonging "
+"to the greeter."
+msgstr ""
+"Le Greeter peut accueillir le nouvel utilisateur. L'appareil ici est "
+"n'importe quel appareil qui appartient au Greeter."
+
+#: ../../cli/invite.rst:109
+msgid "Device Invitation"
+msgstr "Invitation d'appareil"
+
+#: ../../cli/invite.rst:114
+msgid ""
+"Any user can have any device they want. The device specified here is an "
+"existing device."
+msgstr ""
+"Un utilisateur peut avoir un nombre arbitraire d'appareil. L'appareil ici "
+"doit exister au préalable."
+
+#: ../../cli/invite.rst:126
+msgid "The user can claim the new device."
+msgstr "L'utilisateur peut revendiquer un nouvel appareil."
+
+#: ../../cli/invite.rst:148
+msgid ""
+"The user must have access to an existing device and execute this command "
+"while they a claiming the new device."
+msgstr ""
+"L'utilisateur doit avoir en même temps accès à son appareil existant et "
+"exécuter cette commande en revendiquant sont nouvel appareil."
+
+#: ../../cli/invite.rst:168
+msgid "List pending invitations"
+msgstr "Lister les invitations en cours"
+
+#: ../../cli/invite.rst:170
+msgid ""
+"Use the following command to list invitations that have been created but not "
+"yet completed."
+msgstr ""
+"Cette commande liste les invitations qui ont été créée mais pas encore "
+"complétées."

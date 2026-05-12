@@ -1,0 +1,89 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec
+# Documentation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-20 16:24+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../cli/install_cli.rst:7
+msgid "Install Parsec CLI (Linux)"
+msgstr "Installer la CLI Parsec (Linux)"
+
+#: ../../cli/install_cli.rst:9
+msgid ""
+"In order to deploy and maintain Parsec Server, you would need to perform "
+"some operations with Parsec :abbr:`CLI (Command-Line Interface)` for Linux. "
+"These operations can be performed from another machine."
+msgstr ""
+"Pour déployer et gérer Parsec Server, vous devrez effectuer certaines "
+"opérations à l'aide de Parsec :abbr:`CLI (Interface de ligne de commande)` "
+"sous Linux. Ces opérations peuvent être effectuées depuis un autre "
+"ordinateur."
+
+#: ../../cli/install_cli.rst:12
+msgid ""
+"Parsec :abbr:`CLI (Command-Line Interface)` is a standalone binary that can "
+"be downloaded from GitHub releases page."
+msgstr ""
+"L'interface de ligne de commande (CLI) de Parsec est un binaire autonome qui "
+"peut être téléchargé depuis la page des versions sur GitHub."
+
+#: ../../cli/install_cli.rst:17
+msgid "Download `Parsec CLI`_."
+msgstr "Téléchargez `Parsec CLI`_."
+
+#: ../../cli/install_cli.rst:19
+msgid "Make the file executable"
+msgstr "Rendre le fichier exécutable :"
+
+#: ../../cli/install_cli.rst:21
+msgid ""
+"Right-click on file, then :menuselection:`Properties --> Allow executing "
+"file as program`"
+msgstr ""
+"Clic droit sur le fichier, puis :menuselection:`Propriétés --> Autoriser "
+"l'exécution du fichier en tant que programme`"
+
+#: ../../cli/install_cli.rst:22
+msgid "Or use the :command:`chmod` command:"
+msgstr "Ou utilisez la commande :command:`chmod` :"
+
+#: ../../cli/install_cli.rst:28
+msgid "Verify the installation by running the following command:"
+msgstr "Vérifiez l'installation en exécutant la commande suivante :"
+
+#: ../../cli/install_cli.rst:34
+msgid "The Parsec CLI version should be displayed:"
+msgstr "Ce qui devrait afficher la version installée :"
+
+#: ../../cli/install_cli.rst:40
+msgid "For convenience, put the executable in ``~/.local/bin``"
+msgstr "Par soucis de praticité, copiez l'exécutable dans ``~/.local/bin``"
+
+#: ../../cli/install_cli.rst:46
+msgid "and make a symbolic link"
+msgstr "et faites un lien symbolique"
+
+#: ../../cli/install_cli.rst:53
+msgid "You will be able to execute ``parsec-cli`` from anywhere."
+msgstr "Vous pourrez exécuter ``parsec-cli`` depuis n'importe quel endroit."
+
+#: ../../cli/install_cli.rst:55
+msgid "To update, follow the previous steps with the new version."
+msgstr ""
+"Pour mettre à jour, suivez les étapes décrites précédemment avec la nouvelle "
+"version."

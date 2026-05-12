@@ -41,7 +41,6 @@ You can also use the search function in the top left corner.
     :name: section-hosting-guide
 
     hosting/introduction
-    hosting/install_cli
     hosting/architecture
     hosting/deployment/index
     hosting/client_deploy
@@ -50,6 +49,20 @@ You can also use the search function in the top left corner.
     hosting/sequester/index
     hosting/openbao/index
     hosting/custom_branding
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Parsec CLI
+    :name: section-cli
+
+    cli/introduction
+    cli/install_cli
+    cli/first_steps
+    cli/invite
+    cli/device
+    cli/user
+    cli/workspace
+    cli/cheat_sheet
 
 .. only:: html
 

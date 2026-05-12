@@ -1,0 +1,167 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec
+# Documentation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-22 15:15+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../cli/device.rst:7
+msgid "Device CLI commands"
+msgstr "Commandes CLI appareil"
+
+#: ../../cli/device.rst:9
+msgid ""
+"In this context, a device is not a physical device but the encrypted file "
+"containing the keys allowing the user to access the Organization."
+msgstr ""
+"Dans ce contexte, un appareil n'est pas un appareil physique mais le fichier "
+"chiffré qui contient les clefs permettant à un utilisateur d'accéder à une "
+"organisation."
+
+#: ../../cli/device.rst:11
+msgid ""
+"For more see :ref:`Key Parsec concepts <doc_hosting_architecture_concepts>`"
+msgstr ""
+"Pour plus de détails, voir :ref:`concepts importants "
+"<doc_hosting_architecture_concepts>`"
+
+#: ../../cli/device.rst:14
+msgid "List"
+msgstr "Lister"
+
+#: ../../cli/device.rst:16
+msgid ""
+"List all devices available locally. The information provided for each device "
+"is:"
+msgstr ""
+"Liste tous les appareils disponible localement. Les informations fournies "
+"pour chaque appareil sont:"
+
+#: ../../cli/device.rst:18
+msgid "short id"
+msgstr "id abrégé"
+
+#: ../../cli/device.rst:19
+msgid "organization name"
+msgstr "nom de l'organization"
+
+#: ../../cli/device.rst:20
+msgid "user name"
+msgstr "nom d'utilisateur"
+
+#: ../../cli/device.rst:21
+msgid "email"
+msgstr "courriel"
+
+#: ../../cli/device.rst:22
+msgid "device label"
+msgstr "nom d'appareil"
+
+#: ../../cli/device.rst:23
+msgid "parsec server address"
+msgstr "adresse du serveur parsec"
+
+#: ../../cli/device.rst:36
+msgid "Forget-local"
+msgstr "Oublier localement"
+
+#: ../../cli/device.rst:38
+msgid ""
+"This command deletes locally the selected device. This does not involve any "
+"server operation."
+msgstr ""
+"Cette commande supprime localement l'appareil sélectionné. Cette opération "
+"n'implique pas le serveur."
+
+#: ../../cli/device.rst:42
+msgid ""
+"Please note that if the device file exists elsewhere, it can still be used "
+"to access the organization on this server. In other words, this command does "
+"not replace user revocation in case of a compromised device."
+msgstr ""
+"Si le fichier contenant l'appareil existe ailleurs, il peut toujours être "
+"utilisé pour accéder à l'organisation. En d'autres termes, cette commande ne "
+"remplace pas la révocation d'un utilisateur en cas d'appareil compromis."
+
+#: ../../cli/device.rst:57
+msgid "Change authentication"
+msgstr "Changer d'authentification"
+
+#: ../../cli/device.rst:59
+msgid ""
+"This command changes the authentication method to password or keyring. Other "
+"authentication methods are supported by the GUI."
+msgstr ""
+"Cette commande change la méthode d'authentification pour une "
+"authentification par mot de passe ou par keyring. D'autres méthodes "
+"d'authentification sont supportées dans la GUI."
+
+#: ../../cli/device.rst:74
+msgid ""
+"In this example, the authentication method has not changed per se, but the "
+"password itself has been updated."
+msgstr ""
+"Dans cet example, la méthode d'authentification n'a pas été changée en tant "
+"que telle, mais c'est le mot de passe qui a changé."
+
+#: ../../cli/device.rst:79
+msgid "Recovery file"
+msgstr "Fichier de récupération"
+
+#: ../../cli/device.rst:81
+msgid ""
+"In case you lose access to your device or are unable to authenticate, you "
+"can setup a recovery device. It consists of two parts that MUST be stored "
+"separately: the encrypted recovery device file and the passphrase."
+msgstr ""
+" Dans le cas où l'accès à l'appareil ou l'authentification sont impossible, "
+"un appareil de récupération peut être configurer au préalable. Il s'agit de "
+"deux parties qui DOIVENT être stockées séparément: le fichier chiffré de "
+"récupération et le mot de passe associé."
+
+#: ../../cli/device.rst:85
+msgid "These two elements can be used to create a new device."
+msgstr "Ces deux éléments peuvent être utilisé pour créer un nouvel appareil."
+
+#: ../../cli/device.rst:87
+msgid ""
+"The inaccessible device cannot be removed from the server, but you can "
+"safely remove it from your local files (see :ref:`forget local "
+"<cli_device_forget_local>`)."
+msgstr ""
+"L'appareil inaccessible ne peut pas être supprimé du serveur, mais il peut "
+"être supprimé en toute sécurité des fichiers locaux (voir :ref:`oublier "
+"localement <cli_device_forget_local>`)."
+
+#: ../../cli/device.rst:91
+msgid "Export recovery device"
+msgstr "Exporter l'appareil de récupération"
+
+#: ../../cli/device.rst:93
+msgid "This step must be done before you lose access to you device."
+msgstr ""
+"Cette étape doit avoir lieu avant la perte de l'accès à l'appareil concerné."
+
+#: ../../cli/device.rst:104
+msgid "Import recovery device"
+msgstr "Importer l'appareil de récupération"
+
+#: ../../cli/device.rst:106
+msgid "This step should be done after you lose access to your device."
+msgstr ""
+"Cette étape devrait ête faite après la perte de l'accès à l'appareil "
+"concerné."

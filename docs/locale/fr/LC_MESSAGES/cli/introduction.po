@@ -1,0 +1,44 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec
+# Documentation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-22 15:11+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../cli/introduction.rst:7
+msgid "Introduction"
+msgstr "Introduction"
+
+#: ../../cli/introduction.rst:9
+msgid "The CLI purpose is twofold:"
+msgstr "L'objectif de la CLI est double"
+
+#: ../../cli/introduction.rst:11
+msgid ""
+"a bare-bones alternative to Parsec Desktop or Web application (e.g. to "
+"automate periodic file imports)"
+msgstr ""
+"une alternative simple à l'application Parsec Desktop ou Web (par exemple "
+"pour pouvoir automatiser l'import de fichiers)"
+
+#: ../../cli/introduction.rst:12
+msgid ""
+"a way to access specific Parsec operations that are not available on the GUI "
+"(e.g. monitoring server usage)"
+msgstr ""
+"une façon d'avoir accès à des opérations spécifique qui ne sont pas "
+"disponibles sur la GUI (par exemple: monitoring de l'usage server)"
