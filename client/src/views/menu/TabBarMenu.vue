@@ -288,7 +288,7 @@ async function openMenuModal(): Promise<void> {
       }
 
       &.active {
-        --background: var(--parsec-color-light-secondary-inversed-contrast);
+        --background: var(--parsec-color-light-primary-50);
         --background-activated: var(--parsec-color-light-primary-600);
         --color: var(--parsec-color-light-primary-600);
 

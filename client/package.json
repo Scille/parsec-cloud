@@ -59,7 +59,7 @@
         "fs-extra": "^11.3.3",
         "ionicons": "^8.0.9",
         "luxon": "^3.5.0",
-        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#d47b426fe7b23ba88c3bb8dd746d28faef2a90ec",
+        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#db78e1fd3e92b0da0a68995ba72c3b7b9d97a60f",
         "native-file-system-adapter": "^3.0.1",
         "pdfjs-dist": "^5.4.624",
         "tslib": "^2.8.1",

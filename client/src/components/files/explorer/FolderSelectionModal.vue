@@ -510,6 +510,7 @@ async function cancel(): Promise<boolean> {
 }
 
 .file-item {
+  flex-shrink: 0;
   --show-full-highlight: 0;
   --background: var(--parsec-color-light-secondary-white);
   cursor: pointer;

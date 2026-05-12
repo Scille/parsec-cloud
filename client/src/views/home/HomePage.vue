@@ -888,7 +888,6 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
     window.electronAPI.log('debug', 'Handling Keyring login error');
     if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed) {
       const answer = await askQuestion('HomePage.loginErrors.keyringFailedTitle', 'HomePage.loginErrors.keyringFailedQuestion', {
-        yesIsDangerous: false,
         yesText: 'HomePage.loginErrors.keyringFailedUsedRecovery',
         noText: 'HomePage.loginErrors.keyringFailedAbort',
       });
