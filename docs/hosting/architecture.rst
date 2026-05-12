@@ -39,6 +39,7 @@ The following key software components are involved in Parsec:
 ⛁ Object Storage (such as OpenStack Swift, Amazon S3)
   Responsible for storing the encrypted data blocks.
 
+.. _doc_hosting_architecture_concepts:
 
 Key Parsec concepts
 ===================

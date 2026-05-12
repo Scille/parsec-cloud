@@ -1,0 +1,125 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec
+# Documentation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-22 15:11+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../cli/workspace.rst:7
+msgid "Workspace CLI commands"
+msgstr "Commandes CLI espace de travail"
+
+#: ../../cli/workspace.rst:10
+msgid "Create"
+msgstr "Création"
+
+#: ../../cli/workspace.rst:12
+msgid "To create a workspace."
+msgstr "Pour créer un espace de travail"
+
+#: ../../cli/workspace.rst:23
+msgid "List"
+msgstr "Liste"
+
+#: ../../cli/workspace.rst:25
+msgid "To list workspaces the current user has access to."
+msgstr ""
+"Pour lister les espaces de travail auxquels l'utilisateur courant à accès."
+
+#: ../../cli/workspace.rst:36
+msgid "Share"
+msgstr "Partage"
+
+#: ../../cli/workspace.rst:38
+msgid ""
+"This is to share a workspace to a user. To get the workspace id and the user "
+"id use `workspace list` and `user list` (see :ref:`workspace list "
+"<cli_workspace_list>` and :ref:`user list <cli_user_list>` ) The possible "
+"roles (by most rights to less rights) are owner, manager, contributor, "
+"reader."
+msgstr ""
+"Cette commande partage un espace de travail à un utilisateur. Pour obtenir "
+"l'id de l'espace de travail et de l'utilisateur utiliser `workspace list` et "
+"`user list` (voir :ref:`liste espace de travail <cli_workspace_list>` et :"
+"ref:`liste utilisateur <cli_user_list>` ). Les rôles possibles sont (de "
+"celui ayant le plus de droits à celui en ayant le moins) owner "
+"(propriétaire), manager (gestionnaire), contributor (contributeur), reader "
+"(lecteur)"
+
+#: ../../cli/workspace.rst:49
+msgid "List user"
+msgstr "Liste utilisateurs"
+
+#: ../../cli/workspace.rst:51
+msgid "To list users that have access to the given workspace"
+msgstr "Pour lister les utilisateurs ayant accès à un espace de travail donné."
+
+#: ../../cli/workspace.rst:64
+msgid "Import"
+msgstr "Import"
+
+#: ../../cli/workspace.rst:66
+msgid "To import a local file or folder to a workspace."
+msgstr ""
+"Pour importer un fichier ou un répertoire local dans l'espace de travail"
+
+#: ../../cli/workspace.rst:69
+msgid ""
+"The destination path must be absolute. Unless the ``--parents`` option is "
+"specified, the parent directories must exist. The ``--update`` option allows "
+"to control how existing files are updated."
+msgstr ""
+"Le chemin de destination doit être absolu. Sauf si l'option ``--parents`` "
+"est spécifiée, les répertoires parents doivent exister. L'option ``--"
+"update`` permet de choisir comment les fichiers existants sont mis à jour."
+
+#: ../../cli/workspace.rst:81
+msgid "Archive or delete"
+msgstr "Archiver ou supprimer"
+
+#: ../../cli/workspace.rst:83
+msgid "To change the accessibility status of the workspace:"
+msgstr "Pour changer le statut d'accessibilité de l'espace de travail:"
+
+#: ../../cli/workspace.rst:85
+msgid "available: the workspace can be edited and shared normally"
+msgstr "available (disponible) : l'espace de travail peut être édité"
+
+#: ../../cli/workspace.rst:86
+msgid ""
+"archived: the workspace is still accessible to its members but in read-only"
+msgstr ""
+"archived (archivé) : l'espace de travail est toujours accessible à ses "
+"membres, mais est en lecture seule"
+
+#: ../../cli/workspace.rst:87
+msgid ""
+"deletion-planned-in-seconds: the workspace will be deleted in the specified "
+"amount of seconds. There is a minimum delay that depends on server "
+"configuration."
+msgstr ""
+"deletion-planned-in-seconds (suppression planifiée dans x secondes): "
+"l'espace de travail va ête supprimé dans le temps imparti. Le délai dépend "
+"de la configuration du serveur"
+
+#: ../../cli/workspace.rst:109
+msgid "List workspace content"
+msgstr "Lister le contenu de l'espace de travail"
+
+#: ../../cli/workspace.rst:119
+msgid "Remove file from workspace"
+msgstr "Supprimer un fichier de l'espace de travail"

@@ -1,0 +1,82 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec
+# Documentation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-22 15:11+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../cli/first_steps.rst:7
+msgid "First steps"
+msgstr "Premiers pas"
+
+#: ../../cli/first_steps.rst:9
+msgid "Now that you have installed the Parsec CLI, let's start using it."
+msgstr "Maintenant que la CLI Parsec est installée, utilisons la."
+
+#: ../../cli/first_steps.rst:13
+msgid ""
+"The outputs displayed in this documentation are examples and may vary from "
+"yours depending on your CLI version."
+msgstr ""
+"Les sorties affichées dans cette documentation sont des exemples et peuvent "
+"être différentes selon votre version de CLI"
+
+#: ../../cli/first_steps.rst:17
+msgid "Help"
+msgstr "Aide"
+
+#: ../../cli/first_steps.rst:19
+msgid ""
+"When in need for information about the Parsec CLI, you can always use `help` "
+"as a command of its own,"
+msgstr ""
+"En cas de besoin d'informations à propos de la CLI Parsec, `help` peut être "
+"utilisé comme une commande à part entière."
+
+#: ../../cli/first_steps.rst:49
+msgid "or as an option available for any command,"
+msgstr "ou comme une option disponible pour n'importe quelle commande,"
+
+#: ../../cli/first_steps.rst:70
+msgid "or a group of commands,"
+msgstr "ou un groupe de commandes"
+
+#: ../../cli/first_steps.rst:93
+msgid "or subcommand"
+msgstr "ou une sous commande"
+
+#: ../../cli/first_steps.rst:108
+msgid "Commonly used parameters"
+msgstr "Paramètres couramment utilisés"
+
+#: ../../cli/first_steps.rst:110
+msgid ""
+"``--device``, ``-d``: the short id of the device used to authenticate the "
+"operation. This is needed when a command needs to perform authenticated "
+"operations."
+msgstr ""
+"``--device``, ``-d``: l'id abrégé du l'appareil utilisé pour authentifier "
+"l'opération. Cette option est requise lorsqu'une commande à besoin "
+"d'effectuer des opérations authentifiées."
+
+#: ../../cli/first_steps.rst:111
+msgid ""
+"``--password-stdin``: to read the password from stdin. This is useful to "
+"automate CLI usage."
+msgstr ""
+"``--password-stdin``: pour lire le mot de passe depuis l'entrée standard. "
+"Peut servir à automatisé l'usage de la CLI"
