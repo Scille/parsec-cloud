@@ -190,3 +190,7 @@ fn init_logger(config: &ClientConfig) {
 
 #[cfg(feature = "cli-tests")]
 pub use libparsec_tests_fixtures::{tmp_path, TmpPath};
+
+#[cfg(test)]
+#[path = "../tests/units/mod.rs"]
+mod tests;

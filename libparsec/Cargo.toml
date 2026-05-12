@@ -51,3 +51,8 @@ libparsec_platform_mountpoint = { workspace = true }
 libparsec_platform_ipc = { workspace = true }
 
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
+
+[dev-dependencies]
+libparsec_tests_lite = { workspace = true }
+libparsec_tests_fixtures = { workspace = true }
+libparsec_platform_filesystem = { workspace = true }
