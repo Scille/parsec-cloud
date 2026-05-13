@@ -210,7 +210,7 @@ mod unix_only {
                         panic!("Invalid attribute `value`");
                     };
                     let digest = sha2::Sha256::digest(value);
-                    let hash = X509CertificateHash::SHA256( Box::new(digest.into()) );
+                    let hash = X509CertificateHash::SHA256(digest.into());
                     println!("    fingerprint-sha256: {hash}")
                 }
             }

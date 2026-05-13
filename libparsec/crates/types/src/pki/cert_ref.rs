@@ -7,10 +7,10 @@ use serde::{Deserialize, Serialize};
 use crate::DataError;
 
 #[derive(
-    Clone, Eq, PartialEq, serde_with::SerializeDisplay, serde_with::DeserializeFromStr, Debug,
+    Clone, Copy, Eq, PartialEq, serde_with::SerializeDisplay, serde_with::DeserializeFromStr, Debug,
 )]
 pub enum X509CertificateHash {
-    SHA256(Box<[u8; 32]>),
+    SHA256([u8; 32]),
 }
 
 impl X509CertificateHash {

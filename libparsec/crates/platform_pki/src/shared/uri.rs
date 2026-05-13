@@ -12,7 +12,7 @@ pub(crate) fn get_certificate_ref(
 ) -> Result<(X509CertificateReference, x509_cert::Certificate), (X509CertificateReference, DERError)>
 {
     let hash = sha2::Sha256::digest(cert_der);
-    let hash = X509CertificateHash::SHA256(Box::new(hash.into()));
+    let hash = X509CertificateHash::SHA256(hash.into());
     let partial_ref = X509CertificateReference::from(hash);
     let cert_detail = SliceReader::new(cert_der)
         .and_then(|mut reader| x509_cert::Certificate::decode(&mut reader))
