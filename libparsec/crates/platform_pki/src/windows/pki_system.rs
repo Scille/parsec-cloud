@@ -118,38 +118,16 @@ fn open_certificate(
     store: &CertStore,
     certificate_ref: &X509CertificateReference,
 ) -> Option<CertContext> {
-    enum URIFlavor {
-        Pkcs11(X509Pkcs11URI),
-        WindowsCng(X509WindowsCngURI),
-    }
-    certificate_ref
-        .get_uri::<X509Pkcs11URI>()
-        .cloned()
-        .map(URIFlavor::Pkcs11)
-        .or_else(|| {
-            certificate_ref
-                .get_uri::<X509WindowsCngURI>()
-                .cloned()
-                .map(URIFlavor::WindowsCng)
-        })
-        .and_then(|mut filter| {
-            let (issuer, serial) = match &mut filter {
-                URIFlavor::Pkcs11(pkcs11) => get_issuer_serial_from_pkcs11_uri(pkcs11),
-                URIFlavor::WindowsCng(uri) => (
-                    uri.issuer.as_mut(),
-                    // We do not need to reverse that value as it would have comme from
-                    // `CERT_CONTEXT->pCertInfo->SerialNumber` which would already have the correct
-                    // endian.
-                    uri.serial_number.as_mut(),
-                ),
-            };
+    match &certificate_ref.uri {
+        Maybe::Present(uri) => {
+            let mut uri = uri.to_owned();
+            let (issuer, serial) = get_issuer_serial_from_pkcs11_uri(&mut uri);
             log::trace!("Looking for cert with issuer:{issuer:x?} serial:{serial:x?}");
             let filter = find_in_store::CertFilter::cert_id(issuer, serial);
             find_in_store::find_cert_in_store(store, filter).next()
-        })
-        .inspect(|_v| log::trace!("Certificate found using uri"))
-        .or_else(|| {
-            log::trace!("Certificate not found by uri, trying by fingerprint");
+        }
+        Maybe::Absent => {
+            log::trace!("Certificate reference has no uri, fallback to fingerprint");
             let hash_algo = get_hash_algo(&certificate_ref.hash);
             store.certs().find(|candidate: &CertContext| {
                 let Ok(cert_hash) = candidate.fingerprint(hash_algo) else {
@@ -159,7 +137,8 @@ fn open_certificate(
                     X509CertificateHash::SHA256(data) => data.as_ref() == cert_hash.as_slice(),
                 }
             })
-        })
+        }
+    }
 }
 
 // Use a function to be able to test the obtained issuer and serial to be similar to the one
@@ -174,41 +153,6 @@ pub(crate) fn get_issuer_serial_from_pkcs11_uri(
     // https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/ns-wincrypt-cert_info
     serial.reverse();
     (issuer, serial)
-}
-
-pub(super) fn get_certificate_uri(cert_context: &CertContext) -> X509WindowsCngURI {
-    let raw_context = schannel_utils::cert_context_to_raw(cert_context);
-    // SAFETY: The raw pointer come from the inner valid pointer of `cert_context`
-    // that is of type `Cryptography::CERT_CONTEXT`
-    let cert_info = unsafe { *(*raw_context).pCertInfo };
-
-    // SAFETY: Issuer is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
-    let issuer = unsafe {
-        std::slice::from_raw_parts(cert_info.Issuer.pbData, cert_info.Issuer.cbData as usize)
-    }
-    .to_vec();
-    // SAFETY: SerialNumber is of type `CRYPT_INTEGER_BLOB` and is obtain from a valid cert_context.
-    let serial_number = unsafe {
-        std::slice::from_raw_parts(
-            cert_info.SerialNumber.pbData,
-            cert_info.SerialNumber.cbData as usize,
-        )
-    }
-    .to_vec();
-
-    X509WindowsCngURI {
-        issuer,
-        serial_number,
-    }
-}
-
-pub(super) fn get_id_and_hash_from_cert_context(
-    context: &CertContext,
-) -> std::io::Result<X509CertificateReference> {
-    let uri = get_certificate_uri(context);
-    let hash = hash_from_certificate_context(context)?;
-
-    Ok(X509CertificateReference::from(hash).add_or_replace_uri(uri))
 }
 
 pub(super) type ListX509CertificateRevocationListsError = ListX509CertificatesError;
@@ -325,9 +269,17 @@ pub fn show_certificate_selection_dialog_windows_only(
 ) -> Result<Option<X509CertificateReference>, ShowCertificateSelectionDialogError> {
     let store = CertStore::open_current_user(LEAF_CERTIFICATE_STORE)
         .map_err(ShowCertificateSelectionDialogError::CannotOpenStore)?;
+
     ask_user_to_select_certificate(&store)
         .as_ref()
-        .map(get_id_and_hash_from_cert_context)
+        .map(|context| {
+            let hash = hash_from_certificate_context(context)?;
+
+            Ok(X509CertificateReference {
+                uri: Maybe::Absent,
+                hash,
+            })
+        })
         .transpose()
         .map_err(ShowCertificateSelectionDialogError::CannotGetCertificateInfo)
 }

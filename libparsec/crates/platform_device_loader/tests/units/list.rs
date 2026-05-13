@@ -175,11 +175,16 @@ async fn list_devices(tmp_path: TmpPath) {
             .parse()
             .unwrap(),
         device_label: "PC1".parse().unwrap(),
-        certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
-            .add_or_replace_uri(X509WindowsCngURI {
-                issuer: b"foo".into(),
-                serial_number: b"bar".into(),
+        certificate_ref: X509CertificateReference {
+            uri: Maybe::Present(X509Pkcs11URI {
+                id: Some(b"<id>".into()),
+                label: Some(b"<label>".into()),
+                der_issuer: b"<der_issuer>".into(),
+                der_subject: b"<der_subject>".into(),
+                serial: b"<serial>".into(),
             }),
+            hash: X509CertificateHash::fake_sha256(),
+        },
         algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
         encrypted_key: hex!("de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a")
             .as_ref()
@@ -191,7 +196,7 @@ async fn list_devices(tmp_path: TmpPath) {
         "***expected: {:?}",
         DeviceFile::PKI(pki_expected.clone()).dump()
     );
-    // Generated from Parsec 3.7.2-a.0+dev
+    // Generated from Parsec 3.8.2-a.0+dev
     // Content:
     //   type: 'pki'
     //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
@@ -203,7 +208,13 @@ async fn list_devices(tmp_path: TmpPath) {
     //   human_handle: [ 'mallory@parsec.invalid', 'Mallory McMalloryFace', ]
     //   device_label: 'PC1'
     //   certificate_ref: {
-    //     uris: [ { windowscng: { issuer: 0x666f6f, serial_number: 0x626172, }, }, ],
+    //     uri: {
+    //       id: 0x3c69643e,
+    //       label: 0x3c6c6162656c3e,
+    //       der_issuer: 0x3c6465725f6973737565723e,
+    //       der_subject: 0x3c6465725f7375626a6563743e,
+    //       serial: 0x3c73657269616c3e,
+    //     },
     //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
     //   }
     //   algorithm: 'RSAES-OAEP-SHA256'
@@ -218,13 +229,15 @@ async fn list_devices(tmp_path: TmpPath) {
         "6465766963655f6964d802de203a11031c00100000000000000000ac68756d616e5f68"
         "616e646c6592b66d616c6c6f7279407061727365632e696e76616c6964b54d616c6c6f"
         "7279204d634d616c6c6f727946616365ac6465766963655f6c6162656ca3504331af63"
-        "657274696669636174655f72656682a4757269739181aa77696e646f7773636e6782a6"
-        "697373756572c403666f6fad73657269616c5f6e756d626572c403626172a468617368"
-        "d9337368613235362d4141414141414141414141414141414141414141414141414141"
-        "41414141414141414141414141414141413da9616c676f726974686db152534145532d"
-        "4f4145502d534841323536ad656e637279707465645f6b6579c420de5c59cfcc0c52bf"
-        "997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19aaa63697068657274657874"
-        "c40c3c636970686572746578743eb2746f74705f6f70617175655f6b65795f6964c0"
+        "657274696669636174655f72656682a375726985a26964c4043c69643ea56c6162656c"
+        "c4073c6c6162656c3eaa6465725f697373756572c40c3c6465725f6973737565723eab"
+        "6465725f7375626a656374c40d3c6465725f7375626a6563743ea673657269616cc408"
+        "3c73657269616c3ea468617368d9337368613235362d41414141414141414141414141"
+        "4141414141414141414141414141414141414141414141414141414141413da9616c67"
+        "6f726974686db152534145532d4f4145502d534841323536ad656e637279707465645f"
+        "6b6579c420de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83f"
+        "d19aaa63697068657274657874c40c3c636970686572746578743eb2746f74705f6f70"
+        "617175655f6b65795f6964c0"
     )
     .as_ref();
 

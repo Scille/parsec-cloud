@@ -392,6 +392,7 @@ fn keyring_device_file(alice: &Device) {
 fn pki_device_file(alice: &Device) {
     for (raw, expected) in [
         (
+            // PKI with TOTP
             // Generated from Parsec 3.8.2-a.0+dev
             // Content:
             //   type: 'pki'
@@ -404,17 +405,13 @@ fn pki_device_file(alice: &Device) {
             //   human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ]
             //   device_label: 'My dev1 machine'
             //   certificate_ref: {
-            //     uris: [
-            //       {
-            //         pkcs11: {
-            //           id: [ 60, 105, 100, 62, ],
-            //           label: [ 60, 108, 97, 98, 101, 108, 62, ],
-            //           der_issuer: [ 60, 105, 115, 115, 117, 101, 114, 62, ],
-            //           der_subject: [ 60, 115, 117, 98, 106, 101, 99, 116, 62, ],
-            //           serial: [ 60, 115, 101, 114, 105, 97, 108, 62, ],
-            //         },
-            //       },
-            //     ],
+            //     uri: {
+            //       id: 0x3c69643e,
+            //       label: 0x3c6c6162656c3e,
+            //       der_issuer: 0x3c6465725f6973737565723e,
+            //       der_subject: 0x3c6465725f7375626a6563743e,
+            //       serial: 0x3c73657269616c3e,
+            //     },
             //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
             //   }
             //   algorithm: 'RSAES-OAEP-SHA256'
@@ -443,41 +440,43 @@ fn pki_device_file(alice: &Device) {
                 "6465766963655f6964d802de10a11cec0010000000000000000000ac68756d616e5f68"
                 "616e646c6592b1616c696365406578616d706c652e636f6db2416c69636579204d6341"
                 "6c69636546616365ac6465766963655f6c6162656caf4d792064657631206d61636869"
-                "6e65af63657274696669636174655f72656682a4757269739181a6706b6373313185a2"
-                "6964943c69643ea56c6162656c973c6c6162656c3eaa6465725f697373756572983c69"
-                "73737565723eab6465725f7375626a656374993c7375626a6563743ea673657269616c"
-                "983c73657269616c3ea468617368d9337368613235362d414141414141414141414141"
-                "414141414141414141414141414141414141414141414141414141414141413da9616c"
-                "676f726974686db152534145532d4f4145502d534841323536ad656e63727970746564"
-                "5f6b6579c403666f6faa63697068657274657874c50211a73aff77a2aa692b4393e094"
-                "bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb99f492a87063e368cebe38dc"
-                "1f20c65273cb3254480cc9e4b519a53241205b531b41edfa749419b83aeb0fb46cc2e2"
-                "1ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e747ec82d"
-                "38734d7943e17009d091d699871aaf964b8426292d0a405ea3e868dca65028dae317a0"
-                "311af3a958f86541edaef33d49e05056ccb038cc9f7dae40a336dd207eea4341229ba7"
-                "efa39aa0df28d0d33d91fba49dd63f3814c162fff9083674acd6cc8b621b869c801d0a"
-                "527474e7da6cd51053803529542d39c9e6794353be278c39ec06cb20560a01e80db86a"
-                "20df80808f2115ff28afdc2cf9da5099218d4c873dfcbf78e88e4e63ddfcf883de5527"
-                "b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9f1029ce2b66d2fb856edb1c7"
-                "01f32c33fa4ca5d0789f52ce2091c48270324f5f631000f6ded1f0c5e1ae94831f488f"
-                "aeff93d8e0c2e26411b499dea920a14733fbea42dd95a8ec13726f33c45f0c19f6e6b9"
-                "b37adde46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0ea48fe"
-                "4180e801eac583e96fd9fae329358f54f57d46c22f845e3d083f6d6deaf09d821eaaad"
-                "bbd945ac6f8131b70427794db0dedba44fcb6224654859605a2bbeb979e7d73f233724"
-                "ab4846b38c94ce603de796f866d0d90fb0badd037a135cca4d018eb2746f74705f6f70"
-                "617175655f6b65795f6964d8028fdb73524fdd495194e877a5fafbe0a1"
+                "6e65af63657274696669636174655f72656682a375726985a26964c4043c69643ea56c"
+                "6162656cc4073c6c6162656c3eaa6465725f697373756572c40c3c6465725f69737375"
+                "65723eab6465725f7375626a656374c40d3c6465725f7375626a6563743ea673657269"
+                "616cc4083c73657269616c3ea468617368d9337368613235362d414141414141414141"
+                "414141414141414141414141414141414141414141414141414141414141414141413d"
+                "a9616c676f726974686db152534145532d4f4145502d534841323536ad656e63727970"
+                "7465645f6b6579c403666f6faa63697068657274657874c50211a73aff77a2aa692b43"
+                "93e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb99f492a87063e368ce"
+                "be38dc1f20c65273cb3254480cc9e4b519a53241205b531b41edfa749419b83aeb0fb4"
+                "6cc2e21ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e74"
+                "7ec82d38734d7943e17009d091d699871aaf964b8426292d0a405ea3e868dca65028da"
+                "e317a0311af3a958f86541edaef33d49e05056ccb038cc9f7dae40a336dd207eea4341"
+                "229ba7efa39aa0df28d0d33d91fba49dd63f3814c162fff9083674acd6cc8b621b869c"
+                "801d0a527474e7da6cd51053803529542d39c9e6794353be278c39ec06cb20560a01e8"
+                "0db86a20df80808f2115ff28afdc2cf9da5099218d4c873dfcbf78e88e4e63ddfcf883"
+                "de5527b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9f1029ce2b66d2fb856"
+                "edb1c701f32c33fa4ca5d0789f52ce2091c48270324f5f631000f6ded1f0c5e1ae9483"
+                "1f488faeff93d8e0c2e26411b499dea920a14733fbea42dd95a8ec13726f33c45f0c19"
+                "f6e6b9b37adde46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0"
+                "ea48fe4180e801eac583e96fd9fae329358f54f57d46c22f845e3d083f6d6deaf09d82"
+                "1eaaadbbd945ac6f8131b70427794db0dedba44fcb6224654859605a2bbeb979e7d73f"
+                "233724ab4846b38c94ce603de796f866d0d90fb0badd037a135cca4d018eb2746f7470"
+                "5f6f70617175655f6b65795f6964d8028fdb73524fdd495194e877a5fafbe0a1"
             )
             .as_ref(),
             DeviceFile::PKI(DeviceFilePKI {
                 encrypted_key: b"foo".as_ref().into(),
-                certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
-                    .add_or_replace_uri(X509Pkcs11URI {
+                certificate_ref: X509CertificateReference {
+                    uri: Maybe::Present(X509Pkcs11URI {
                         id: Some(b"<id>".into()),
                         label: Some(b"<label>".into()),
-                        der_issuer: b"<issuer>".into(),
-                        der_subject: b"<subject>".into(),
+                        der_issuer: b"<der_issuer>".into(),
+                        der_subject: b"<der_subject>".into(),
                         serial: b"<serial>".into(),
                     }),
+                    hash: X509CertificateHash::fake_sha256(),
+                },
                 algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
                 ciphertext: hex!(
                     "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"
@@ -513,6 +512,7 @@ fn pki_device_file(alice: &Device) {
             }),
         ),
         (
+            // PKI without TOTP
             // Generated from Parsec 3.8.2-a.0+dev
             // Content:
             //   type: 'pki'
@@ -525,17 +525,13 @@ fn pki_device_file(alice: &Device) {
             //   human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ]
             //   device_label: 'My dev1 machine'
             //   certificate_ref: {
-            //     uris: [
-            //       {
-            //         pkcs11: {
-            //           id: None,
-            //           label: None,
-            //           der_issuer: [ 60, 105, 115, 115, 117, 101, 114, 62, ],
-            //           der_subject: [ 60, 115, 117, 98, 106, 101, 99, 116, 62, ],
-            //           serial: [ 60, 115, 101, 114, 105, 97, 108, 62, ],
-            //         },
-            //       },
-            //     ],
+            //     uri: {
+            //       id: None,
+            //       label: None,
+            //       der_issuer: 0x3c6465725f6973737565723e,
+            //       der_subject: 0x3c6465725f7375626a6563743e,
+            //       serial: 0x3c73657269616c3e,
+            //     },
             //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
             //   }
             //   algorithm: 'RSAES-OAEP-SHA256'
@@ -564,41 +560,43 @@ fn pki_device_file(alice: &Device) {
                 "6465766963655f6964d802de10a11cec0010000000000000000000ac68756d616e5f68"
                 "616e646c6592b1616c696365406578616d706c652e636f6db2416c69636579204d6341"
                 "6c69636546616365ac6465766963655f6c6162656caf4d792064657631206d61636869"
-                "6e65af63657274696669636174655f72656682a4757269739181a6706b6373313185a2"
-                "6964c0a56c6162656cc0aa6465725f697373756572983c6973737565723eab6465725f"
-                "7375626a656374993c7375626a6563743ea673657269616c983c73657269616c3ea468"
-                "617368d9337368613235362d4141414141414141414141414141414141414141414141"
-                "41414141414141414141414141414141414141413da9616c676f726974686db1525341"
-                "45532d4f4145502d534841323536ad656e637279707465645f6b6579c403666f6faa63"
-                "697068657274657874c50211a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960"
-                "caf27165b787fb412ed2aeeb99f492a87063e368cebe38dc1f20c65273cb3254480cc9"
-                "e4b519a53241205b531b41edfa749419b83aeb0fb46cc2e21ae25782a1ab8fd3a32ca3"
-                "b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e747ec82d38734d7943e17009d091d6"
-                "99871aaf964b8426292d0a405ea3e868dca65028dae317a0311af3a958f86541edaef3"
-                "3d49e05056ccb038cc9f7dae40a336dd207eea4341229ba7efa39aa0df28d0d33d91fb"
-                "a49dd63f3814c162fff9083674acd6cc8b621b869c801d0a527474e7da6cd510538035"
-                "29542d39c9e6794353be278c39ec06cb20560a01e80db86a20df80808f2115ff28afdc"
-                "2cf9da5099218d4c873dfcbf78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12de"
-                "2fc6337dd1709f6f5922e3d9f1029ce2b66d2fb856edb1c701f32c33fa4ca5d0789f52"
-                "ce2091c48270324f5f631000f6ded1f0c5e1ae94831f488faeff93d8e0c2e26411b499"
-                "dea920a14733fbea42dd95a8ec13726f33c45f0c19f6e6b9b37adde46ce49465ebad63"
-                "bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0ea48fe4180e801eac583e96fd9fa"
-                "e329358f54f57d46c22f845e3d083f6d6deaf09d821eaaadbbd945ac6f8131b7042779"
-                "4db0dedba44fcb6224654859605a2bbeb979e7d73f233724ab4846b38c94ce603de796"
-                "f866d0d90fb0badd037a135cca4d018eb2746f74705f6f70617175655f6b65795f6964"
-                "c0"
+                "6e65af63657274696669636174655f72656682a375726985a26964c0a56c6162656cc0"
+                "aa6465725f697373756572c40c3c6465725f6973737565723eab6465725f7375626a65"
+                "6374c40d3c6465725f7375626a6563743ea673657269616cc4083c73657269616c3ea4"
+                "68617368d9337368613235362d41414141414141414141414141414141414141414141"
+                "4141414141414141414141414141414141414141413da9616c676f726974686db15253"
+                "4145532d4f4145502d534841323536ad656e637279707465645f6b6579c403666f6faa"
+                "63697068657274657874c50211a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d0109"
+                "60caf27165b787fb412ed2aeeb99f492a87063e368cebe38dc1f20c65273cb3254480c"
+                "c9e4b519a53241205b531b41edfa749419b83aeb0fb46cc2e21ae25782a1ab8fd3a32c"
+                "a3b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e747ec82d38734d7943e17009d091"
+                "d699871aaf964b8426292d0a405ea3e868dca65028dae317a0311af3a958f86541edae"
+                "f33d49e05056ccb038cc9f7dae40a336dd207eea4341229ba7efa39aa0df28d0d33d91"
+                "fba49dd63f3814c162fff9083674acd6cc8b621b869c801d0a527474e7da6cd5105380"
+                "3529542d39c9e6794353be278c39ec06cb20560a01e80db86a20df80808f2115ff28af"
+                "dc2cf9da5099218d4c873dfcbf78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12"
+                "de2fc6337dd1709f6f5922e3d9f1029ce2b66d2fb856edb1c701f32c33fa4ca5d0789f"
+                "52ce2091c48270324f5f631000f6ded1f0c5e1ae94831f488faeff93d8e0c2e26411b4"
+                "99dea920a14733fbea42dd95a8ec13726f33c45f0c19f6e6b9b37adde46ce49465ebad"
+                "63bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0ea48fe4180e801eac583e96fd9"
+                "fae329358f54f57d46c22f845e3d083f6d6deaf09d821eaaadbbd945ac6f8131b70427"
+                "794db0dedba44fcb6224654859605a2bbeb979e7d73f233724ab4846b38c94ce603de7"
+                "96f866d0d90fb0badd037a135cca4d018eb2746f74705f6f70617175655f6b65795f69"
+                "64c0"
             )
             .as_ref(),
             DeviceFile::PKI(DeviceFilePKI {
                 encrypted_key: b"foo".as_ref().into(),
-                certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
-                    .add_or_replace_uri(X509Pkcs11URI {
+                certificate_ref: X509CertificateReference {
+                    uri: Maybe::Present(X509Pkcs11URI {
                         id: None,
                         label: None,
-                        der_issuer: b"<issuer>".into(),
-                        der_subject: b"<subject>".into(),
+                        der_issuer: b"<der_issuer>".into(),
+                        der_subject: b"<der_subject>".into(),
                         serial: b"<serial>".into(),
                     }),
+                    hash: X509CertificateHash::fake_sha256(),
+                },
                 algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
                 ciphertext: hex!(
                     "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"
@@ -632,7 +630,8 @@ fn pki_device_file(alice: &Device) {
             }),
         ),
         (
-            // Legacy format from Parsec < 3.9, certificate_ref uris uses WindowsCNG instead of PKCS11
+            // Legacy format from Parsec < 3.9, certificate_ref contains the deprecated `uris` and miss the new `uri` field
+            // PKI without TOTP
             // Generated from Parsec 3.7.2-a.0+dev
             // Content:
             //   type: 'pki'
@@ -700,11 +699,10 @@ fn pki_device_file(alice: &Device) {
             .as_ref(),
             DeviceFile::PKI(DeviceFilePKI {
                 encrypted_key: b"foo".as_ref().into(),
-                certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
-                    .add_or_replace_uri(X509WindowsCngURI {
-                        issuer: b"foo".into(),
-                        serial_number: b"bar".into(),
-                    }),
+                certificate_ref: X509CertificateReference {
+                    uri: Maybe::Absent,
+                    hash: X509CertificateHash::fake_sha256(),
+                },
                 algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
                 ciphertext: hex!(
                     "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"
@@ -740,7 +738,8 @@ fn pki_device_file(alice: &Device) {
             }),
         ),
         (
-            // Legacy format from Parsec < 3.9, certificate_ref uris uses WindowsCNG instead of PKCS11
+            // Legacy format from Parsec < 3.9, certificate_ref contains the deprecated `uris` and miss the new `uri` field
+            // PKI with TOTP
             // Generated from Parsec 3.7.2-a.0+dev
             // Content:
             //   type: 'pki'
@@ -808,11 +807,10 @@ fn pki_device_file(alice: &Device) {
             .as_ref(),
             DeviceFile::PKI(DeviceFilePKI {
                 encrypted_key: b"foo".as_ref().into(),
-                certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
-                    .add_or_replace_uri(X509WindowsCngURI {
-                        issuer: b"foo".into(),
-                        serial_number: b"bar".into(),
-                    }),
+                certificate_ref: X509CertificateReference {
+                    uri: Maybe::Absent,
+                    hash: X509CertificateHash::fake_sha256(),
+                },
                 algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
                 ciphertext: hex!(
                     "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"
@@ -851,13 +849,13 @@ fn pki_device_file(alice: &Device) {
         let device = DeviceFile::load(raw).unwrap();
         p_assert_eq!(device, expected);
 
-        // Also must manually check the X509 certificate reference URIs since
-        // they are ignored during comparison
+        // Also must manually check the X509 certificate reference URI since
+        // it is ignored during comparison
         match (&device, &expected) {
             (DeviceFile::PKI(device_pki), DeviceFile::PKI(expected_pki)) => {
                 p_assert_eq!(
-                    device_pki.certificate_ref.uris().collect::<Vec<_>>(),
-                    expected_pki.certificate_ref.uris().collect::<Vec<_>>()
+                    device_pki.certificate_ref.uri,
+                    expected_pki.certificate_ref.uri
                 );
             }
             _ => unreachable!(),
