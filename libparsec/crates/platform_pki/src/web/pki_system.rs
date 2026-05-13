@@ -61,7 +61,7 @@ impl PlatformPkiSystem {
         cert_ref: &X509CertificateReference,
     ) -> Result<PkiCertificate, PkiSystemOpenCertificateError> {
         let expected_cert_hash = &cert_ref.hash;
-        let uri = cert_ref.get_uri::<X509Pkcs11URI>();
+        let uri = &cert_ref.uri;
         log::debug!("Looking for certificate matching the reference: {cert_ref:?}");
         let cert = self
             .scws
@@ -86,7 +86,7 @@ impl PlatformPkiSystem {
                     })
                     // Apply some pre-filter on the certificate using the URI
                     .filter(|cert| {
-                        if let Some(uri) = uri {
+                        if let Maybe::Present(uri) = uri {
                             if let Some(expected_label) = &uri.label {
                                 if expected_label != cert.ck_label().as_bytes() {
                                     return false;
