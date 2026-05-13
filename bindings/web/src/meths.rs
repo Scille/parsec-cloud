@@ -6061,18 +6061,12 @@ fn struct_workspace_user_access_info_rs_to_js(
 fn struct_x509_certificate_reference_js_to_rs(
     obj: JsValue,
 ) -> Result<libparsec::X509CertificateReference, JsValue> {
-    let uris = {
-        let js_val = Reflect::get(&obj, &"uris".into())?;
-        {
-            let js_val = js_val
-                .dyn_into::<Array>()
-                .map_err(|_| TypeError::new("Not an array"))?;
-            let mut converted = Vec::with_capacity(js_val.length() as usize);
-            for x in js_val.iter() {
-                let x_converted = variant_x509_uri_flavor_value_js_to_rs(x)?;
-                converted.push(x_converted);
-            }
-            converted
+    let uri = {
+        let js_val = Reflect::get(&obj, &"uri".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(struct_x509_pkcs11_uri_js_to_rs(js_val)?)
         }
     };
     let hash = {
@@ -6094,16 +6088,18 @@ fn struct_x509_certificate_reference_js_to_rs(
             })?
     };
     {
-        let custom_init = |uris: Vec<libparsec::X509URIFlavorValue>,
+        let custom_init = |uri: Option<libparsec::X509Pkcs11URI>,
                            hash: libparsec::X509CertificateHash|
          -> Result<_, String> {
-            let mut cert_ref = libparsec::X509CertificateReference::from(hash);
-            for uri in uris {
-                cert_ref = cert_ref.add_or_replace_uri_wrapped(uri);
-            }
-            Ok(cert_ref)
+            Ok(libparsec::X509CertificateReference {
+                uri: match uri {
+                    Some(uri) => libparsec::Maybe::Present(uri),
+                    None => libparsec::Maybe::Absent,
+                },
+                hash,
+            })
         };
-        custom_init(uris, hash).map_err(|e| e.into())
+        custom_init(uri, hash).map_err(|e| e.into())
     }
 }
 
@@ -6112,27 +6108,23 @@ fn struct_x509_certificate_reference_rs_to_js(
     rs_obj: libparsec::X509CertificateReference,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_uris = {
+    let js_uri = {
         let custom_getter =
-            |o: &libparsec::X509CertificateReference| -> Vec<libparsec::X509URIFlavorValue> {
-                o.uris().cloned().collect()
+            |o: &libparsec::X509CertificateReference| -> Option<libparsec::X509Pkcs11URI> {
+                match &o.uri {
+                    libparsec::Maybe::Present(uri) => Some(uri.to_owned()),
+                    libparsec::Maybe::Absent => None,
+                }
             };
-        {
-            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-            let js_array = Array::new_with_length(custom_getter(&rs_obj).len() as u32);
-            for (i, elem) in custom_getter(&rs_obj).into_iter().enumerate() {
-                let js_elem = variant_x509_uri_flavor_value_rs_to_js(elem)?;
-                js_array.set(i as u32, js_elem);
-            }
-            js_array.into()
+        match custom_getter(&rs_obj) {
+            Some(val) => struct_x509_pkcs11_uri_rs_to_js(val)?,
+            None => JsValue::NULL,
         }
     };
-    Reflect::set(&js_obj, &"uris".into(), &js_uris)?;
+    Reflect::set(&js_obj, &"uri".into(), &js_uri)?;
     let js_hash = {
         let custom_getter =
-            |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash {
-                o.hash.clone()
-            };
+            |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash { o.hash };
         JsValue::from_str({
             let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
                 Ok(std::string::ToString::to_string(&v))
@@ -6250,52 +6242,6 @@ fn struct_x509_pkcs11_uri_rs_to_js(rs_obj: libparsec::X509Pkcs11URI) -> Result<J
     Reflect::set(&js_obj, &"derSubject".into(), &js_der_subject)?;
     let js_serial = JsValue::from(Uint8Array::from(rs_obj.serial.as_ref()));
     Reflect::set(&js_obj, &"serial".into(), &js_serial)?;
-    Ok(js_obj)
-}
-
-// X509WindowsCngURI
-
-#[allow(dead_code)]
-fn struct_x509_windows_cng_uri_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::X509WindowsCngURI, JsValue> {
-    let issuer = {
-        let js_val = Reflect::get(&obj, &"issuer".into())?;
-        js_val
-            .dyn_into::<Uint8Array>()
-            .map(|x| x.to_vec())
-            .map_err(|_| TypeError::new("Not a Uint8Array"))
-            .and_then(|x| {
-                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
-    };
-    let serial_number = {
-        let js_val = Reflect::get(&obj, &"serialNumber".into())?;
-        js_val
-            .dyn_into::<Uint8Array>()
-            .map(|x| x.to_vec())
-            .map_err(|_| TypeError::new("Not a Uint8Array"))
-            .and_then(|x| {
-                let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
-                custom_from_rs_bytes(&x).map_err(|e| TypeError::new(e.as_ref()))
-            })?
-    };
-    Ok(libparsec::X509WindowsCngURI {
-        issuer,
-        serial_number,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_x509_windows_cng_uri_rs_to_js(
-    rs_obj: libparsec::X509WindowsCngURI,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_issuer = JsValue::from(Uint8Array::from(rs_obj.issuer.as_ref()));
-    Reflect::set(&js_obj, &"issuer".into(), &js_issuer)?;
-    let js_serial_number = JsValue::from(Uint8Array::from(rs_obj.serial_number.as_ref()));
-    Reflect::set(&js_obj, &"serialNumber".into(), &js_serial_number)?;
     Ok(js_obj)
 }
 
@@ -6673,86 +6619,52 @@ fn variant_account_create_registration_device_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorBadVaultKeyAccess".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorBadVaultKeyAccess".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorInternal".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::Internal{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorInternal".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceBadAccessStrategy{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceCiphertextKeyGenerationFailed{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceTOTPDecryptionFailed {
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorOffline".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceTOTPDecryptionFailed{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchOffline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::Offline{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorOffline".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark".into(),
-            )?;
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchOffline{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark".into())?;
         }
     }
     Ok(js_obj)
@@ -12145,6 +12057,22 @@ fn variant_client_start_error_rs_to_js(
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientStartErrorInternal".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientStartError::LoadDeviceBadAccessStrategy { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorLoadDeviceBadAccessStrategy".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientStartError::LoadDeviceCiphertextKeyGenerationFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed".into(),
+            )?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
@@ -20261,6 +20189,22 @@ fn variant_update_device_error_rs_to_js(
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
         #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::UpdateDeviceError::BadAccessStrategy { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorBadAccessStrategy".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::UpdateDeviceError::CiphertextKeyGenerationFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorCiphertextKeyGenerationFailed".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::UpdateDeviceError::DecryptionFailed { .. } => {
             Reflect::set(
                 &js_obj,
@@ -23174,71 +23118,6 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceWatchEntryOneShotErrorStopped".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// X509URIFlavorValue
-
-#[allow(dead_code)]
-fn variant_x509_uri_flavor_value_js_to_rs(
-    obj: JsValue,
-) -> Result<libparsec::X509URIFlavorValue, JsValue> {
-    let tag = Reflect::get(&obj, &"tag".into())?;
-    let tag = tag
-        .as_string()
-        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
-    match tag.as_str() {
-        "X509URIFlavorValuePKCS11" => {
-            let x1 = {
-                let js_val = Reflect::get(&obj, &"x1".into())?;
-                struct_x509_pkcs11_uri_js_to_rs(js_val)?
-            };
-            Ok(libparsec::X509URIFlavorValue::PKCS11(x1))
-        }
-        "X509URIFlavorValueWindowsCNG" => {
-            let x1 = {
-                let js_val = Reflect::get(&obj, &"x1".into())?;
-                struct_x509_windows_cng_uri_js_to_rs(js_val)?
-            };
-            Ok(libparsec::X509URIFlavorValue::WindowsCNG(x1))
-        }
-        _ => Err(JsValue::from(TypeError::new(
-            "Object is not a X509URIFlavorValue",
-        ))),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_x509_uri_flavor_value_rs_to_js(
-    rs_obj: libparsec::X509URIFlavorValue,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    match rs_obj {
-        libparsec::X509URIFlavorValue::PKCS11(x1, ..) => {
-            Reflect::set(&js_obj, &"tag".into(), &"X509URIFlavorValuePKCS11".into())?;
-            let js_x1 = struct_x509_pkcs11_uri_rs_to_js(x1)?;
-            Reflect::set(
-                &js_obj,
-                &"x1".into(),
-                #[expect(clippy::useless_conversion)]
-                &js_x1.into(),
-            )?;
-        }
-        libparsec::X509URIFlavorValue::WindowsCNG(x1, ..) => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"X509URIFlavorValueWindowsCNG".into(),
-            )?;
-            let js_x1 = struct_x509_windows_cng_uri_rs_to_js(x1)?;
-            Reflect::set(
-                &js_obj,
-                &"x1".into(),
-                #[expect(clippy::useless_conversion)]
-                &js_x1.into(),
             )?;
         }
     }
