@@ -32,7 +32,7 @@ pub async fn list_files(
         let mut entries_stream = match tokio::fs::read_dir(&dir).await {
             Ok(v) => v,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                log::info!(
+                log::debug!(
                     "Path {} not found while attempting to list entries",
                     dir.display()
                 );
