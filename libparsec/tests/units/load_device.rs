@@ -6,9 +6,7 @@
 
 use std::path::PathBuf;
 
-use libparsec_platform_device_loader::{
-    get_default_data_base_dir, AvailableDevice, AvailableDeviceType,
-};
+use libparsec_platform_device_loader::{AvailableDevice, AvailableDeviceType};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
