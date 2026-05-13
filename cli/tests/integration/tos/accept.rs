@@ -27,6 +27,7 @@ async fn config_tos(
     tos
 }
 
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
 async fn test_accept_tos(tmp_path: TmpPath) {
@@ -87,6 +88,7 @@ async fn no_tos(tmp_path: TmpPath) {
     .stdout(predicates::str::contains("No Terms of Service available"));
 }
 
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
 async fn did_not_accept_tos(#[values("no", "No", "NO")] reply: &str, tmp_path: TmpPath) {

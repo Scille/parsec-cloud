@@ -1,10 +1,13 @@
+#[cfg(target_family = "unix")]
 use libparsec::{tmp_path, TmpPath};
 
+#[cfg(target_family = "unix")]
 use crate::{
     bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
 async fn poll_and_forget(tmp_path: TmpPath) {
