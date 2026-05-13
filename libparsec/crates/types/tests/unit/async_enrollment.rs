@@ -128,6 +128,71 @@ fn async_enrollment_local_pending() {
 fn async_enrollment_local_pending_cleartext_content(alice: &Device) {
     for (raw, expected) in [
         (
+            // Generated from Parsec 3.9.0-rc.2+dev
+            // Content:
+            //   type: 'async_enrollment_local_pending_cleartext_content'
+            //   server_url: 'http://alice_dev1.example.com:9999/'
+            //   organization_id: 'CoolOrg'
+            //   submitted_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
+            //   enrollment_id: ext(2, 0x008ed852852b413b9f765ef290a7b23b)
+            //   requested_device_label: 'My dev1 machine'
+            //   requested_human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ]
+            //   identity_system: {
+            //     type: 'PKI',
+            //     algorithm: 'RSAES-OAEP-SHA256',
+            //     certificate_ref: {
+            //       uri: {
+            //         id: 0x3c69643e,
+            //         label: 0x3c6c6162656c3e,
+            //         der_issuer: 0x3c6465725f6973737565723e,
+            //         der_subject: 0x3c6465725f7375626a6563743e,
+            //         serial: 0x3c73657269616c3e,
+            //       },
+            //       hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+            //     },
+            //     encrypted_key: 0x3c656e637279707465645f6b65793e,
+            //   }
+            hex!(
+                "0028b52ffd0058950c0016995a40308d930ec000611aa45108a24158be8a5e0b4c0fe8"
+                "1a756b72418010b95dc9decc57598bd26efb1243c43d4c1c1cc4204a6bf1af80eb35a6"
+                "6329469c9ffccd0642004e004a009bcd06359dc5634535915b5c5c7f7bc7b169341b55"
+                "373c108ad45afa8bbe9eb47ccbe9b645deb43dbafd487ef2d5c6e666dc96a7629c547e"
+                "9dc46a4b107a8575c986d71f06eb00c57b5adc3bbefef6bdebad0ba726382a261d5250"
+                "b83e70260423202b1c2c152b8f512c2816702e1300582e27e4dcf76ea63c562df1a11e"
+                "714e07268f574eee868165fbd009d26c360174dfcd710837bd036964604c103a990f8e"
+                "c923d3e1983a2029146ca6f313db8808123e483450ef8ad5c59a5bfe31e8ae3d701d18"
+                "ec8ee3a4d220c5c3e3930dae6c94052f19ba46612e02526420c36e61dfbbc2a8934761"
+                "30653432301aac0a42b03658224503b2d898be8a90a20259bb57f05875e91f09292290"
+                "d15bb5f2d2bf1329129085901e4701b2c72046985a2419421e0d00661e411c042c638a"
+                "6940985b57cd012b93d8651d63354c59bc5c46a8556a20a6611829"
+            )
+            .as_ref(),
+            AsyncEnrollmentLocalPendingCleartextContent {
+                server_url: alice.organization_addr.clone().into(),
+                organization_id: alice.organization_id().to_owned(),
+                submitted_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                enrollment_id: AsyncEnrollmentID::from_hex("008ed852852b413b9f765ef290a7b23b")
+                    .unwrap(),
+                requested_device_label: alice.device_label.clone(),
+                requested_human_handle: alice.human_handle.clone(),
+                identity_system: AsyncEnrollmentLocalPendingIdentitySystem::PKI {
+                    encrypted_key: Bytes::from_static(b"<encrypted_key>"),
+                    certificate_ref: X509CertificateReference {
+                        uri: Maybe::Present(X509Pkcs11URI {
+                            id: Some(b"<id>".into()),
+                            label: Some(b"<label>".into()),
+                            der_issuer: b"<der_issuer>".into(),
+                            der_subject: b"<der_subject>".into(),
+                            serial: b"<serial>".into(),
+                        }),
+                        hash: X509CertificateHash::fake_sha256(),
+                    },
+                    algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
+                },
+            },
+        ),
+        (
+            // Legacy format from Parsec < 3.9, certificate_ref contains the deprecated `uris` and miss the new `uri` field
             // Generated from Parsec 3.7.2-a.0+dev
             // Content:
             //   type: 'async_enrollment_local_pending_cleartext_content'
@@ -175,13 +240,10 @@ fn async_enrollment_local_pending_cleartext_content(alice: &Device) {
                 requested_human_handle: alice.human_handle.clone(),
                 identity_system: AsyncEnrollmentLocalPendingIdentitySystem::PKI {
                     encrypted_key: Bytes::from_static(b"<encrypted_key>"),
-                    certificate_ref: X509CertificateReference::from(
-                        X509CertificateHash::fake_sha256(),
-                    )
-                    .add_or_replace_uri(X509WindowsCngURI {
-                        issuer: b"foo".into(),
-                        serial_number: b"bar".into(),
-                    }),
+                    certificate_ref: X509CertificateReference {
+                        uri: Maybe::Absent,
+                        hash: X509CertificateHash::fake_sha256(),
+                    },
                     algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
                 },
             },
@@ -239,6 +301,22 @@ fn async_enrollment_local_pending_cleartext_content(alice: &Device) {
 
         let payload = AsyncEnrollmentLocalPendingCleartextContent::load(raw).unwrap();
         p_assert_eq!(payload, expected);
+
+        // For PKI, must manually check the X509 certificate reference URI since
+        // it is ignored during comparison
+        if let AsyncEnrollmentLocalPendingIdentitySystem::PKI {
+            certificate_ref: expected_certificate_ref,
+            ..
+        } = &expected.identity_system
+        {
+            let payload_certificate_ref = match &payload.identity_system {
+                AsyncEnrollmentLocalPendingIdentitySystem::PKI {
+                    certificate_ref, ..
+                } => certificate_ref,
+                _ => unreachable!(),
+            };
+            p_assert_eq!(payload_certificate_ref.uri, expected_certificate_ref.uri,);
+        }
 
         // Also test roundtrip
 
