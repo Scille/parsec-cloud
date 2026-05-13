@@ -392,6 +392,247 @@ fn keyring_device_file(alice: &Device) {
 fn pki_device_file(alice: &Device) {
     for (raw, expected) in [
         (
+            // Generated from Parsec 3.8.2-a.0+dev
+            // Content:
+            //   type: 'pki'
+            //   created_on: ext(1, 1262304000000000) i.e. 2010-01-01T01:00:00Z
+            //   protected_on: ext(1, 1263081600000000) i.e. 2010-01-10T01:00:00Z
+            //   server_url: 'https://parsec.invalid/'
+            //   organization_id: 'CoolOrg'
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10a11cec0010000000000000000000)
+            //   human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ]
+            //   device_label: 'My dev1 machine'
+            //   certificate_ref: {
+            //     uris: [
+            //       {
+            //         pkcs11: {
+            //           id: [ 60, 105, 100, 62, ],
+            //           label: [ 60, 108, 97, 98, 101, 108, 62, ],
+            //           der_issuer: [ 60, 105, 115, 115, 117, 101, 114, 62, ],
+            //           der_subject: [ 60, 115, 117, 98, 106, 101, 99, 116, 62, ],
+            //           serial: [ 60, 115, 101, 114, 105, 97, 108, 62, ],
+            //         },
+            //       },
+            //     ],
+            //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+            //   }
+            //   algorithm: 'RSAES-OAEP-SHA256'
+            //   encrypted_key: 0x666f6f
+            //   ciphertext:
+            //     0xa73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb99f492a8
+            //     7063e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41edfa749419b83aeb0fb4
+            //     6cc2e21ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e747ec82d3873
+            //     4d7943e17009d091d699871aaf964b8426292d0a405ea3e868dca65028dae317a0311af3a958f865
+            //     41edaef33d49e05056ccb038cc9f7dae40a336dd207eea4341229ba7efa39aa0df28d0d33d91fba4
+            //     9dd63f3814c162fff9083674acd6cc8b621b869c801d0a527474e7da6cd51053803529542d39c9e6
+            //     794353be278c39ec06cb20560a01e80db86a20df80808f2115ff28afdc2cf9da5099218d4c873dfc
+            //     bf78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9f1029ce2
+            //     b66d2fb856edb1c701f32c33fa4ca5d0789f52ce2091c48270324f5f631000f6ded1f0c5e1ae9483
+            //     1f488faeff93d8e0c2e26411b499dea920a14733fbea42dd95a8ec13726f33c45f0c19f6e6b9b37a
+            //     dde46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0ea48fe4180e801eac583
+            //     e96fd9fae329358f54f57d46c22f845e3d083f6d6deaf09d821eaaadbbd945ac6f8131b70427794d
+            //     b0dedba44fcb6224654859605a2bbeb979e7d73f233724ab4846b38c94ce603de796f866d0d90fb0
+            //     badd037a135cca4d018e
+            //   totp_opaque_key_id: ext(2, 0x8fdb73524fdd495194e877a5fafbe0a1)
+            hex!(
+                "8ea474797065a3706b69aa637265617465645f6f6ed70100047c0f0d84c000ac70726f"
+                "7465637465645f6f6ed70100047cc41a172000aa7365727665725f75726cb768747470"
+                "733a2f2f7061727365632e696e76616c69642faf6f7267616e697a6174696f6e5f6964"
+                "a7436f6f6c4f7267a7757365725f6964d802a11cec00100000000000000000000000a9"
+                "6465766963655f6964d802de10a11cec0010000000000000000000ac68756d616e5f68"
+                "616e646c6592b1616c696365406578616d706c652e636f6db2416c69636579204d6341"
+                "6c69636546616365ac6465766963655f6c6162656caf4d792064657631206d61636869"
+                "6e65af63657274696669636174655f72656682a4757269739181a6706b6373313185a2"
+                "6964943c69643ea56c6162656c973c6c6162656c3eaa6465725f697373756572983c69"
+                "73737565723eab6465725f7375626a656374993c7375626a6563743ea673657269616c"
+                "983c73657269616c3ea468617368d9337368613235362d414141414141414141414141"
+                "414141414141414141414141414141414141414141414141414141414141413da9616c"
+                "676f726974686db152534145532d4f4145502d534841323536ad656e63727970746564"
+                "5f6b6579c403666f6faa63697068657274657874c50211a73aff77a2aa692b4393e094"
+                "bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb99f492a87063e368cebe38dc"
+                "1f20c65273cb3254480cc9e4b519a53241205b531b41edfa749419b83aeb0fb46cc2e2"
+                "1ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e747ec82d"
+                "38734d7943e17009d091d699871aaf964b8426292d0a405ea3e868dca65028dae317a0"
+                "311af3a958f86541edaef33d49e05056ccb038cc9f7dae40a336dd207eea4341229ba7"
+                "efa39aa0df28d0d33d91fba49dd63f3814c162fff9083674acd6cc8b621b869c801d0a"
+                "527474e7da6cd51053803529542d39c9e6794353be278c39ec06cb20560a01e80db86a"
+                "20df80808f2115ff28afdc2cf9da5099218d4c873dfcbf78e88e4e63ddfcf883de5527"
+                "b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9f1029ce2b66d2fb856edb1c7"
+                "01f32c33fa4ca5d0789f52ce2091c48270324f5f631000f6ded1f0c5e1ae94831f488f"
+                "aeff93d8e0c2e26411b499dea920a14733fbea42dd95a8ec13726f33c45f0c19f6e6b9"
+                "b37adde46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0ea48fe"
+                "4180e801eac583e96fd9fae329358f54f57d46c22f845e3d083f6d6deaf09d821eaaad"
+                "bbd945ac6f8131b70427794db0dedba44fcb6224654859605a2bbeb979e7d73f233724"
+                "ab4846b38c94ce603de796f866d0d90fb0badd037a135cca4d018eb2746f74705f6f70"
+                "617175655f6b65795f6964d8028fdb73524fdd495194e877a5fafbe0a1"
+            )
+            .as_ref(),
+            DeviceFile::PKI(DeviceFilePKI {
+                encrypted_key: b"foo".as_ref().into(),
+                certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
+                    .add_or_replace_uri(X509Pkcs11URI {
+                        id: Some(b"<id>".into()),
+                        label: Some(b"<label>".into()),
+                        der_issuer: b"<issuer>".into(),
+                        der_subject: b"<subject>".into(),
+                        serial: b"<serial>".into(),
+                    }),
+                algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
+                ciphertext: hex!(
+                    "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"
+                    "99f492a87063e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41ed"
+                    "fa749419b83aeb0fb46cc2e21ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca66"
+                    "12d87e7f34a89b6e747ec82d38734d7943e17009d091d699871aaf964b8426292d0a40"
+                    "5ea3e868dca65028dae317a0311af3a958f86541edaef33d49e05056ccb038cc9f7dae"
+                    "40a336dd207eea4341229ba7efa39aa0df28d0d33d91fba49dd63f3814c162fff90836"
+                    "74acd6cc8b621b869c801d0a527474e7da6cd51053803529542d39c9e6794353be278c"
+                    "39ec06cb20560a01e80db86a20df80808f2115ff28afdc2cf9da5099218d4c873dfcbf"
+                    "78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9"
+                    "f1029ce2b66d2fb856edb1c701f32c33fa4ca5d0789f52ce2091c48270324f5f631000"
+                    "f6ded1f0c5e1ae94831f488faeff93d8e0c2e26411b499dea920a14733fbea42dd95a8"
+                    "ec13726f33c45f0c19f6e6b9b37adde46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5"
+                    "c86d713226e098aca0ea48fe4180e801eac583e96fd9fae329358f54f57d46c22f845e"
+                    "3d083f6d6deaf09d821eaaadbbd945ac6f8131b70427794db0dedba44fcb6224654859"
+                    "605a2bbeb979e7d73f233724ab4846b38c94ce603de796f866d0d90fb0badd037a135c"
+                    "ca4d018e"
+                )
+                .as_ref()
+                .into(),
+                created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
+                protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
+                server_url: "parsec3://parsec.invalid".parse().unwrap(),
+                organization_id: alice.organization_id().to_owned(),
+                user_id: alice.user_id,
+                device_id: alice.device_id,
+                human_handle: alice.human_handle.clone(),
+                device_label: alice.device_label.clone(),
+                totp_opaque_key_id: Some(
+                    TOTPOpaqueKeyID::from_hex("8fdb73524fdd495194e877a5fafbe0a1").unwrap(),
+                ),
+            }),
+        ),
+        (
+            // Generated from Parsec 3.8.2-a.0+dev
+            // Content:
+            //   type: 'pki'
+            //   created_on: ext(1, 1262304000000000) i.e. 2010-01-01T01:00:00Z
+            //   protected_on: ext(1, 1263081600000000) i.e. 2010-01-10T01:00:00Z
+            //   server_url: 'https://parsec.invalid/'
+            //   organization_id: 'CoolOrg'
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10a11cec0010000000000000000000)
+            //   human_handle: [ 'alice@example.com', 'Alicey McAliceFace', ]
+            //   device_label: 'My dev1 machine'
+            //   certificate_ref: {
+            //     uris: [
+            //       {
+            //         pkcs11: {
+            //           id: None,
+            //           label: None,
+            //           der_issuer: [ 60, 105, 115, 115, 117, 101, 114, 62, ],
+            //           der_subject: [ 60, 115, 117, 98, 106, 101, 99, 116, 62, ],
+            //           serial: [ 60, 115, 101, 114, 105, 97, 108, 62, ],
+            //         },
+            //       },
+            //     ],
+            //     hash: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+            //   }
+            //   algorithm: 'RSAES-OAEP-SHA256'
+            //   encrypted_key: 0x666f6f
+            //   ciphertext:
+            //     0xa73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb99f492a8
+            //     7063e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41edfa749419b83aeb0fb4
+            //     6cc2e21ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e747ec82d3873
+            //     4d7943e17009d091d699871aaf964b8426292d0a405ea3e868dca65028dae317a0311af3a958f865
+            //     41edaef33d49e05056ccb038cc9f7dae40a336dd207eea4341229ba7efa39aa0df28d0d33d91fba4
+            //     9dd63f3814c162fff9083674acd6cc8b621b869c801d0a527474e7da6cd51053803529542d39c9e6
+            //     794353be278c39ec06cb20560a01e80db86a20df80808f2115ff28afdc2cf9da5099218d4c873dfc
+            //     bf78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9f1029ce2
+            //     b66d2fb856edb1c701f32c33fa4ca5d0789f52ce2091c48270324f5f631000f6ded1f0c5e1ae9483
+            //     1f488faeff93d8e0c2e26411b499dea920a14733fbea42dd95a8ec13726f33c45f0c19f6e6b9b37a
+            //     dde46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0ea48fe4180e801eac583
+            //     e96fd9fae329358f54f57d46c22f845e3d083f6d6deaf09d821eaaadbbd945ac6f8131b70427794d
+            //     b0dedba44fcb6224654859605a2bbeb979e7d73f233724ab4846b38c94ce603de796f866d0d90fb0
+            //     badd037a135cca4d018e
+            //   totp_opaque_key_id: None
+            hex!(
+                "8ea474797065a3706b69aa637265617465645f6f6ed70100047c0f0d84c000ac70726f"
+                "7465637465645f6f6ed70100047cc41a172000aa7365727665725f75726cb768747470"
+                "733a2f2f7061727365632e696e76616c69642faf6f7267616e697a6174696f6e5f6964"
+                "a7436f6f6c4f7267a7757365725f6964d802a11cec00100000000000000000000000a9"
+                "6465766963655f6964d802de10a11cec0010000000000000000000ac68756d616e5f68"
+                "616e646c6592b1616c696365406578616d706c652e636f6db2416c69636579204d6341"
+                "6c69636546616365ac6465766963655f6c6162656caf4d792064657631206d61636869"
+                "6e65af63657274696669636174655f72656682a4757269739181a6706b6373313185a2"
+                "6964c0a56c6162656cc0aa6465725f697373756572983c6973737565723eab6465725f"
+                "7375626a656374993c7375626a6563743ea673657269616c983c73657269616c3ea468"
+                "617368d9337368613235362d4141414141414141414141414141414141414141414141"
+                "41414141414141414141414141414141414141413da9616c676f726974686db1525341"
+                "45532d4f4145502d534841323536ad656e637279707465645f6b6579c403666f6faa63"
+                "697068657274657874c50211a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960"
+                "caf27165b787fb412ed2aeeb99f492a87063e368cebe38dc1f20c65273cb3254480cc9"
+                "e4b519a53241205b531b41edfa749419b83aeb0fb46cc2e21ae25782a1ab8fd3a32ca3"
+                "b8fca4a0ffc8a301b62aca6612d87e7f34a89b6e747ec82d38734d7943e17009d091d6"
+                "99871aaf964b8426292d0a405ea3e868dca65028dae317a0311af3a958f86541edaef3"
+                "3d49e05056ccb038cc9f7dae40a336dd207eea4341229ba7efa39aa0df28d0d33d91fb"
+                "a49dd63f3814c162fff9083674acd6cc8b621b869c801d0a527474e7da6cd510538035"
+                "29542d39c9e6794353be278c39ec06cb20560a01e80db86a20df80808f2115ff28afdc"
+                "2cf9da5099218d4c873dfcbf78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12de"
+                "2fc6337dd1709f6f5922e3d9f1029ce2b66d2fb856edb1c701f32c33fa4ca5d0789f52"
+                "ce2091c48270324f5f631000f6ded1f0c5e1ae94831f488faeff93d8e0c2e26411b499"
+                "dea920a14733fbea42dd95a8ec13726f33c45f0c19f6e6b9b37adde46ce49465ebad63"
+                "bfd8106e2d1fb7bc2ff3fea5c86d713226e098aca0ea48fe4180e801eac583e96fd9fa"
+                "e329358f54f57d46c22f845e3d083f6d6deaf09d821eaaadbbd945ac6f8131b7042779"
+                "4db0dedba44fcb6224654859605a2bbeb979e7d73f233724ab4846b38c94ce603de796"
+                "f866d0d90fb0badd037a135cca4d018eb2746f74705f6f70617175655f6b65795f6964"
+                "c0"
+            )
+            .as_ref(),
+            DeviceFile::PKI(DeviceFilePKI {
+                encrypted_key: b"foo".as_ref().into(),
+                certificate_ref: X509CertificateReference::from(X509CertificateHash::fake_sha256())
+                    .add_or_replace_uri(X509Pkcs11URI {
+                        id: None,
+                        label: None,
+                        der_issuer: b"<issuer>".into(),
+                        der_subject: b"<subject>".into(),
+                        serial: b"<serial>".into(),
+                    }),
+                algorithm: PKIEncryptionAlgorithm::RsaesOaepSha256,
+                ciphertext: hex!(
+                    "a73aff77a2aa692b4393e094bfd2c2ccad4b0a8d010960caf27165b787fb412ed2aeeb"
+                    "99f492a87063e368cebe38dc1f20c65273cb3254480cc9e4b519a53241205b531b41ed"
+                    "fa749419b83aeb0fb46cc2e21ae25782a1ab8fd3a32ca3b8fca4a0ffc8a301b62aca66"
+                    "12d87e7f34a89b6e747ec82d38734d7943e17009d091d699871aaf964b8426292d0a40"
+                    "5ea3e868dca65028dae317a0311af3a958f86541edaef33d49e05056ccb038cc9f7dae"
+                    "40a336dd207eea4341229ba7efa39aa0df28d0d33d91fba49dd63f3814c162fff90836"
+                    "74acd6cc8b621b869c801d0a527474e7da6cd51053803529542d39c9e6794353be278c"
+                    "39ec06cb20560a01e80db86a20df80808f2115ff28afdc2cf9da5099218d4c873dfcbf"
+                    "78e88e4e63ddfcf883de5527b4b234ca63c286a7aa12de2fc6337dd1709f6f5922e3d9"
+                    "f1029ce2b66d2fb856edb1c701f32c33fa4ca5d0789f52ce2091c48270324f5f631000"
+                    "f6ded1f0c5e1ae94831f488faeff93d8e0c2e26411b499dea920a14733fbea42dd95a8"
+                    "ec13726f33c45f0c19f6e6b9b37adde46ce49465ebad63bfd8106e2d1fb7bc2ff3fea5"
+                    "c86d713226e098aca0ea48fe4180e801eac583e96fd9fae329358f54f57d46c22f845e"
+                    "3d083f6d6deaf09d821eaaadbbd945ac6f8131b70427794db0dedba44fcb6224654859"
+                    "605a2bbeb979e7d73f233724ab4846b38c94ce603de796f866d0d90fb0badd037a135c"
+                    "ca4d018e"
+                )
+                .as_ref()
+                .into(),
+                created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
+                protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
+                server_url: "parsec3://parsec.invalid".parse().unwrap(),
+                organization_id: alice.organization_id().to_owned(),
+                user_id: alice.user_id,
+                device_id: alice.device_id,
+                human_handle: alice.human_handle.clone(),
+                device_label: alice.device_label.clone(),
+                totp_opaque_key_id: None,
+            }),
+        ),
+        (
+            // Legacy format from Parsec < 3.9, certificate_ref uris uses WindowsCNG instead of PKCS11
             // Generated from Parsec 3.7.2-a.0+dev
             // Content:
             //   type: 'pki'
@@ -499,6 +740,7 @@ fn pki_device_file(alice: &Device) {
             }),
         ),
         (
+            // Legacy format from Parsec < 3.9, certificate_ref uris uses WindowsCNG instead of PKCS11
             // Generated from Parsec 3.7.2-a.0+dev
             // Content:
             //   type: 'pki'
@@ -608,6 +850,18 @@ fn pki_device_file(alice: &Device) {
 
         let device = DeviceFile::load(raw).unwrap();
         p_assert_eq!(device, expected);
+
+        // Also must manually check the X509 certificate reference URIs since
+        // they are ignored during comparison
+        match (&device, &expected) {
+            (DeviceFile::PKI(device_pki), DeviceFile::PKI(expected_pki)) => {
+                p_assert_eq!(
+                    device_pki.certificate_ref.uris().collect::<Vec<_>>(),
+                    expected_pki.certificate_ref.uris().collect::<Vec<_>>()
+                );
+            }
+            _ => unreachable!(),
+        }
 
         // Also test roundtrip
 
