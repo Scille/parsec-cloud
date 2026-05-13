@@ -563,7 +563,7 @@ export interface WorkspaceUserAccessInfo {
 
 
 export interface X509CertificateReference {
-    uris: Array<X509URIFlavorValue>
+    uri: X509Pkcs11URI | null
     hash: string
 }
 
@@ -574,12 +574,6 @@ export interface X509Pkcs11URI {
     derIssuer: Uint8Array
     derSubject: Uint8Array
     serial: Uint8Array
-}
-
-
-export interface X509WindowsCngURI {
-    issuer: Uint8Array
-    serialNumber: Uint8Array
 }
 
 
@@ -683,6 +677,14 @@ export interface AccountCreateRegistrationDeviceErrorInternal {
     tag: "AccountCreateRegistrationDeviceErrorInternal"
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy {
+    tag: "AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy"
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed {
+    tag: "AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed"
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed {
     tag: "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed"
     error: string
@@ -718,6 +720,8 @@ export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
 export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorBadVaultKeyAccess
   | AccountCreateRegistrationDeviceErrorInternal
+  | AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy
+  | AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData
   | AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath
@@ -2545,6 +2549,14 @@ export interface ClientStartErrorInternal {
     tag: "ClientStartErrorInternal"
     error: string
 }
+export interface ClientStartErrorLoadDeviceBadAccessStrategy {
+    tag: "ClientStartErrorLoadDeviceBadAccessStrategy"
+    error: string
+}
+export interface ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed {
+    tag: "ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed"
+    error: string
+}
 export interface ClientStartErrorLoadDeviceDecryptionFailed {
     tag: "ClientStartErrorLoadDeviceDecryptionFailed"
     error: string
@@ -2572,6 +2584,8 @@ export interface ClientStartErrorLoadDeviceTOTPDecryptionFailed {
 export type ClientStartError =
   | ClientStartErrorDeviceUsedByAnotherProcess
   | ClientStartErrorInternal
+  | ClientStartErrorLoadDeviceBadAccessStrategy
+  | ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed
   | ClientStartErrorLoadDeviceDecryptionFailed
   | ClientStartErrorLoadDeviceInvalidData
   | ClientStartErrorLoadDeviceInvalidPath
@@ -4023,6 +4037,14 @@ export type TotpSetupStatusAnonymousError =
 
 
 // UpdateDeviceError
+export interface UpdateDeviceErrorBadAccessStrategy {
+    tag: "UpdateDeviceErrorBadAccessStrategy"
+    error: string
+}
+export interface UpdateDeviceErrorCiphertextKeyGenerationFailed {
+    tag: "UpdateDeviceErrorCiphertextKeyGenerationFailed"
+    error: string
+}
 export interface UpdateDeviceErrorDecryptionFailed {
     tag: "UpdateDeviceErrorDecryptionFailed"
     error: string
@@ -4056,6 +4078,8 @@ export interface UpdateDeviceErrorTOTPDecryptionFailed {
     error: string
 }
 export type UpdateDeviceError =
+  | UpdateDeviceErrorBadAccessStrategy
+  | UpdateDeviceErrorCiphertextKeyGenerationFailed
   | UpdateDeviceErrorDecryptionFailed
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
@@ -5371,20 +5395,6 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorOffline
   | WorkspaceWatchEntryOneShotErrorRealmDeleted
   | WorkspaceWatchEntryOneShotErrorStopped
-
-
-// X509URIFlavorValue
-export interface X509URIFlavorValuePKCS11 {
-    tag: "X509URIFlavorValuePKCS11"
-    x1: X509Pkcs11URI
-}
-export interface X509URIFlavorValueWindowsCNG {
-    tag: "X509URIFlavorValueWindowsCNG"
-    x1: X509WindowsCngURI
-}
-export type X509URIFlavorValue =
-  | X509URIFlavorValuePKCS11
-  | X509URIFlavorValueWindowsCNG
 
 
 export function accountCreate1SendValidationEmail(

@@ -5496,16 +5496,15 @@ fn struct_x509_certificate_reference_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
 ) -> NeonResult<libparsec::X509CertificateReference> {
-    let uris = {
-        let js_val: Handle<JsArray> = obj.get(cx, "uris")?;
+    let uri = {
+        let js_val: Handle<JsValue> = obj.get(cx, "uri")?;
         {
-            let size = js_val.len(cx);
-            let mut v = Vec::with_capacity(size as usize);
-            for i in 0..size {
-                let js_item: Handle<JsObject> = js_val.get(cx, i)?;
-                v.push(variant_x509_uri_flavor_value_js_to_rs(cx, js_item)?);
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                Some(struct_x509_pkcs11_uri_js_to_rs(cx, js_val)?)
             }
-            v
         }
     };
     let hash = {
@@ -5522,16 +5521,18 @@ fn struct_x509_certificate_reference_js_to_rs<'a>(
         }
     };
     {
-        let custom_init = |uris: Vec<libparsec::X509URIFlavorValue>,
+        let custom_init = |uri: Option<libparsec::X509Pkcs11URI>,
                            hash: libparsec::X509CertificateHash|
          -> Result<_, String> {
-            let mut cert_ref = libparsec::X509CertificateReference::from(hash);
-            for uri in uris {
-                cert_ref = cert_ref.add_or_replace_uri_wrapped(uri);
-            }
-            Ok(cert_ref)
+            Ok(libparsec::X509CertificateReference {
+                uri: match uri {
+                    Some(uri) => libparsec::Maybe::Present(uri),
+                    None => libparsec::Maybe::Absent,
+                },
+                hash,
+            })
         };
-        custom_init(uris, hash).or_else(|e| cx.throw_error(e))
+        custom_init(uri, hash).or_else(|e| cx.throw_error(e))
     }
 }
 
@@ -5541,27 +5542,23 @@ fn struct_x509_certificate_reference_rs_to_js<'a>(
     rs_obj: libparsec::X509CertificateReference,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_uris = {
+    let js_uri = {
         let custom_getter =
-            |o: &libparsec::X509CertificateReference| -> Vec<libparsec::X509URIFlavorValue> {
-                o.uris().cloned().collect()
+            |o: &libparsec::X509CertificateReference| -> Option<libparsec::X509Pkcs11URI> {
+                match &o.uri {
+                    libparsec::Maybe::Present(uri) => Some(uri.to_owned()),
+                    libparsec::Maybe::Absent => None,
+                }
             };
-        {
-            // JsArray::new allocates with `undefined` value, that's why we `set` value
-            let js_array = JsArray::new(cx, custom_getter(&rs_obj).len());
-            for (i, elem) in custom_getter(&rs_obj).into_iter().enumerate() {
-                let js_elem = variant_x509_uri_flavor_value_rs_to_js(cx, elem)?;
-                js_array.set(cx, i as u32, js_elem)?;
-            }
-            js_array
+        match custom_getter(&rs_obj) {
+            Some(elem) => struct_x509_pkcs11_uri_rs_to_js(cx, elem)?.as_value(cx),
+            None => JsNull::new(cx).as_value(cx),
         }
     };
-    js_obj.set(cx, "uris", js_uris)?;
+    js_obj.set(cx, "uri", js_uri)?;
     let js_hash = {
         let custom_getter =
-            |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash {
-                o.hash.clone()
-            };
+            |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash { o.hash };
         JsString::try_new(cx, {
             let custom_to_rs_string = |v| -> Result<_, std::convert::Infallible> {
                 Ok(std::string::ToString::to_string(&v))
@@ -5718,66 +5715,6 @@ fn struct_x509_pkcs11_uri_rs_to_js<'a>(
         js_buff
     };
     js_obj.set(cx, "serial", js_serial)?;
-    Ok(js_obj)
-}
-
-// X509WindowsCngURI
-
-#[allow(dead_code)]
-fn struct_x509_windows_cng_uri_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::X509WindowsCngURI> {
-    let issuer = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "issuer")?;
-        {
-            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    let serial_number = {
-        let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "serialNumber")?;
-        {
-            let custom_from_rs_bytes = |v: &[u8]| -> Result<Vec<u8>, String> { Ok(v.to_vec()) };
-            #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
-                Ok(val) => val,
-                // err can't infer type in some case, because of the previous `try_into`
-                #[allow(clippy::useless_format)]
-                Err(err) => return cx.throw_type_error(format!("{}", err)),
-            }
-        }
-    };
-    Ok(libparsec::X509WindowsCngURI {
-        issuer,
-        serial_number,
-    })
-}
-
-#[allow(dead_code)]
-fn struct_x509_windows_cng_uri_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::X509WindowsCngURI,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_issuer = {
-        let rs_buff = { rs_obj.issuer };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "issuer", js_issuer)?;
-    let js_serial_number = {
-        let rs_buff = { rs_obj.serial_number };
-        let js_buff = JsTypedArray::from_slice(cx, rs_buff.as_ref())?;
-        js_buff
-    };
-    js_obj.set(cx, "serialNumber", js_serial_number)?;
     Ok(js_obj)
 }
 
@@ -6071,78 +6008,52 @@ fn variant_account_create_registration_device_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess")
-                    .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::BadVaultKeyAccess{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorBadVaultKeyAccess").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal")
-                .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::Internal{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceBadAccessStrategy{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceCiphertextKeyGenerationFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceDecryptionFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceTOTPDecryptionFailed {
-            ..
-        } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidData{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidData").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline")
-                .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceInvalidPath{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::LoadDeviceTOTPDecryptionFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceTOTPDecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchOffline { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::Offline{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark",
-            )
-            .or_throw(cx)?;
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchFailed{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::RemoteOpaqueKeyFetchOffline{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorRemoteOpaqueKeyFetchOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::AccountCreateRegistrationDeviceError::TimestampOutOfBallpark{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -10493,6 +10404,19 @@ fn variant_client_start_error_rs_to_js<'a>(
         }
         libparsec::ClientStartError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "ClientStartErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::LoadDeviceBadAccessStrategy { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientStartErrorLoadDeviceBadAccessStrategy")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::LoadDeviceCiphertextKeyGenerationFailed { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientStartError::LoadDeviceDecryptionFailed { .. } => {
@@ -17230,6 +17154,16 @@ fn variant_update_device_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
+        libparsec::UpdateDeviceError::BadAccessStrategy { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UpdateDeviceErrorBadAccessStrategy").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UpdateDeviceError::CiphertextKeyGenerationFailed { .. } => {
+            let js_tag = JsString::try_new(cx, "UpdateDeviceErrorCiphertextKeyGenerationFailed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::UpdateDeviceError::DecryptionFailed { .. } => {
             let js_tag = JsString::try_new(cx, "UpdateDeviceErrorDecryptionFailed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -19404,56 +19338,6 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// X509URIFlavorValue
-
-#[allow(dead_code)]
-fn variant_x509_uri_flavor_value_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::X509URIFlavorValue> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "X509URIFlavorValuePKCS11" => {
-            let x0 = {
-                let js_val: Handle<JsObject> = obj.get(cx, "x0")?;
-                struct_x509_pkcs11_uri_js_to_rs(cx, js_val)?
-            };
-            Ok(libparsec::X509URIFlavorValue::PKCS11(x0))
-        }
-        "X509URIFlavorValueWindowsCNG" => {
-            let x0 = {
-                let js_val: Handle<JsObject> = obj.get(cx, "x0")?;
-                struct_x509_windows_cng_uri_js_to_rs(cx, js_val)?
-            };
-            Ok(libparsec::X509URIFlavorValue::WindowsCNG(x0))
-        }
-        _ => cx.throw_type_error("Object is not a X509URIFlavorValue"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_x509_uri_flavor_value_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::X509URIFlavorValue,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::X509URIFlavorValue::PKCS11(x0, ..) => {
-            let js_tag = JsString::try_new(cx, "X509URIFlavorValuePKCS11").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = struct_x509_pkcs11_uri_rs_to_js(cx, x0)?;
-            js_obj.set(cx, "x0", js_x0)?;
-        }
-        libparsec::X509URIFlavorValue::WindowsCNG(x0, ..) => {
-            let js_tag = JsString::try_new(cx, "X509URIFlavorValueWindowsCNG").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = struct_x509_windows_cng_uri_rs_to_js(cx, x0)?;
-            js_obj.set(cx, "x0", js_x0)?;
         }
     }
     Ok(js_obj)
