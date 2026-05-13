@@ -380,11 +380,6 @@ class X509CertificateHash(StrBasedType):
     custom_to_rs_string = DISPLAY_TO_STRING
 
 
-class X509WindowsCngURI(Structure):
-    issuer: BytesVec
-    serial_number: BytesVec
-
-
 class X509Pkcs11URI(Structure):
     id: BytesVec | None
     label: BytesVec | None
@@ -393,32 +388,32 @@ class X509Pkcs11URI(Structure):
     serial: BytesVec
 
 
-class X509URIFlavorValue(Variant):
-    WindowsCNG = VariantItemTuple(X509WindowsCngURI)
-    PKCS11 = VariantItemTuple(X509Pkcs11URI)
-
-
 class X509CertificateReference(Structure):
-    uris: list[X509URIFlavorValue]
+    uri: X509Pkcs11URI | None
     hash: X509CertificateHash
     custom_getters: ClassVar = {
-        "uris": """
-        |o: &libparsec::X509CertificateReference| -> Vec<libparsec::X509URIFlavorValue> {
-            o.uris().cloned().collect()
+        "uri": """
+        |o: &libparsec::X509CertificateReference| -> Option<libparsec::X509Pkcs11URI> {
+            match &o.uri {
+                libparsec::Maybe::Present(uri) => Some(uri.to_owned()),
+                libparsec::Maybe::Absent => None,
+            }
         }
         """,
         "hash": """
         |o: &libparsec::X509CertificateReference| -> libparsec::X509CertificateHash {
-            o.hash.clone()
+            o.hash
         }
         """,
     }
     custom_init: str = """
-        |uris: Vec<libparsec::X509URIFlavorValue>, hash: libparsec::X509CertificateHash| -> Result<_, String> {
-            let mut cert_ref = libparsec::X509CertificateReference::from(hash);
-            for uri in uris {
-                cert_ref = cert_ref.add_or_replace_uri_wrapped(uri);
-            }
-            Ok(cert_ref)
+        |uri: Option<libparsec::X509Pkcs11URI>, hash: libparsec::X509CertificateHash| -> Result<_, String> {
+            Ok(libparsec::X509CertificateReference {
+                uri: match uri {
+                    Some(uri) => libparsec::Maybe::Present(uri),
+                    None => libparsec::Maybe::Absent,
+                },
+                hash,
+            })
         }
     """

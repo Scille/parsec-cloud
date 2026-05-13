@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_tests_lite::parsec_test;
-use libparsec_types::X509Pkcs11URI;
 use x509_cert::der::Decode;
 
 use crate::test::utils::{certificates, initialize_pki_system, InstalledCertificates};
@@ -30,9 +29,7 @@ async fn ensure_corresponding_serial_number(certificates: &InstalledCertificates
         })
         .unwrap();
 
-    let got_uri = got_ref
-        .get_uri::<X509Pkcs11URI>()
-        .expect("No pkcs11 uri for reference");
+    let got_uri = got_ref.uri.to_owned().expect("No pkcs11 uri for reference");
 
     let alice_der = certificates.alice_der_cert();
     let alice_parsed_cert = x509_cert::der::SliceReader::new(&alice_der)

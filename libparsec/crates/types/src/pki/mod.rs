@@ -4,10 +4,7 @@ mod cert_ref;
 
 use std::{fmt::Display, str::FromStr};
 
-pub use cert_ref::{
-    X509CertificateHash, X509CertificateReference, X509Pkcs11URI, X509URIFlavorValue,
-    X509WindowsCngURI,
-};
+pub use cert_ref::{X509CertificateHash, X509CertificateReference, X509Pkcs11URI};
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, serde_with::DeserializeFromStr, serde_with::SerializeDisplay,
