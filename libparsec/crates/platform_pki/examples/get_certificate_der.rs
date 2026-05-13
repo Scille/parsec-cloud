@@ -70,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
 
     {
         let digest = sha2::Sha256::digest(der_bytes);
-        let hash = X509CertificateHash::SHA256(Box::new(digest.into()));
+        let hash = X509CertificateHash::SHA256(digest.into());
         println!("Manually calculated fingerprint: {hash}");
     }
     println!(
