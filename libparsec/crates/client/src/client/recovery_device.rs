@@ -190,9 +190,7 @@ impl From<SaveDeviceError> for ImportRecoveryDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
             SaveDeviceError::NoSpaceAvailable => ImportRecoveryDeviceError::NoSpaceAvailable,
-            SaveDeviceError::InvalidPath => {
-                ImportRecoveryDeviceError::InvalidPath(anyhow::anyhow!("invalid path"))
-            }
+            SaveDeviceError::InvalidPath(error) => ImportRecoveryDeviceError::InvalidPath(error),
             SaveDeviceError::Internal(error) => ImportRecoveryDeviceError::Internal(error),
             SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
                 ImportRecoveryDeviceError::RemoteOpaqueKeyUploadOffline { server, error }

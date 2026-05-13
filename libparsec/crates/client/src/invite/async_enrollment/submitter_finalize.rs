@@ -299,10 +299,8 @@ pub async fn submitter_finalize_async_enrollment(
         SaveDeviceError::NoSpaceAvailable => {
             SubmitterFinalizeAsyncEnrollmentError::NoSpaceAvailable
         }
-        SaveDeviceError::InvalidPath => {
-            SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath(anyhow::anyhow!(
-                "invalid path while saving device"
-            ))
+        SaveDeviceError::InvalidPath(error) => {
+            SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath(error)
         }
         SaveDeviceError::RemoteOpaqueKeyUploadOffline { server, error } => {
             SubmitterFinalizeAsyncEnrollmentError::SaveDeviceRemoteOpaqueKeyUploadOffline {

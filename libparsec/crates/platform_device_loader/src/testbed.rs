@@ -15,8 +15,9 @@ use crate::{
     device::ArchiveDeviceError, AvailableDevice, AvailableDeviceType,
     AvailablePendingAsyncEnrollment, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
     DeviceSaveStrategy, ListPendingAsyncEnrollmentsError, LoadDeviceError,
-    LoadPendingAsyncEnrollmentError, RemoveDeviceError, RemovePendingAsyncEnrollmentError,
-    SaveAsyncEnrollmentLocalPendingError, SaveDeviceError, UpdateDeviceError,
+    LoadPendingAsyncEnrollmentError, RemoteOperationServer, RemoveDeviceError,
+    RemovePendingAsyncEnrollmentError, SaveAsyncEnrollmentLocalPendingError, SaveDeviceError,
+    UpdateDeviceError,
 };
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
@@ -325,11 +326,17 @@ pub(crate) fn maybe_load_device(
             fn check_access_and_save_strategy_match(
                 access: &DeviceAccessStrategy,
                 c_save_strategy: &DeviceSaveStrategy,
-            ) -> bool {
+            ) -> Result<(), LoadDeviceError> {
                 match (&access.totp_protection, &c_save_strategy.totp_protection) {
                     (None, None) => (),
-                    (Some((_, key)), Some((_, c_key))) if key == c_key => (),
-                    _ => return false,
+                    (Some((_, key)), Some((_, c_key))) => {
+                        if key != c_key {
+                            return Err(LoadDeviceError::TOTPDecryptionFailed(anyhow::anyhow!(
+                                "TOTP keys mismatch"
+                            )));
+                        }
+                    }
+                    _ => return Err(LoadDeviceError::BadAccessStrategy { what: "TOTP" }),
                 }
 
                 match (
@@ -339,27 +346,53 @@ pub(crate) fn maybe_load_device(
                     (
                         DevicePrimaryProtectionStrategy::Password { password: pwd, .. },
                         DevicePrimaryProtectionStrategy::Password { password: c_pwd },
-                    ) => c_pwd == pwd,
+                    ) => {
+                        if c_pwd == pwd {
+                            Ok(())
+                        } else {
+                            Err(LoadDeviceError::DecryptionFailed(anyhow::anyhow!(
+                                "Password mismatch"
+                            )))
+                        }
+                    }
                     (
                         DevicePrimaryProtectionStrategy::Keyring,
                         DevicePrimaryProtectionStrategy::Keyring,
-                    ) => true,
+                    ) => Ok(()),
                     (
                         DevicePrimaryProtectionStrategy::AccountVault { operations, .. },
                         DevicePrimaryProtectionStrategy::AccountVault {
                             operations: c_operations,
                         },
-                    ) => operations.account_email() == c_operations.account_email(),
+                    ) => {
+                        if operations.account_email() == c_operations.account_email() {
+                            Ok(())
+                        } else {
+                            Err(LoadDeviceError::RemoteOpaqueKeyFetchFailed {
+                                server: RemoteOperationServer::ParsecAccount,
+                                error: anyhow::anyhow!("AccountVault email mismatch"),
+                            })
+                        }
+                    }
                     (
                         DevicePrimaryProtectionStrategy::OpenBao { operations, .. },
                         DevicePrimaryProtectionStrategy::OpenBao {
                             operations: c_operations,
                         },
-                    ) => operations.openbao_entity_id() == c_operations.openbao_entity_id(),
+                    ) => {
+                        if operations.openbao_entity_id() == c_operations.openbao_entity_id() {
+                            Ok(())
+                        } else {
+                            Err(LoadDeviceError::RemoteOpaqueKeyFetchFailed {
+                                server: RemoteOperationServer::OpenBao,
+                                error: anyhow::anyhow!("OpenBao entity ID mismatch"),
+                            })
+                        }
+                    }
                     (
                         DevicePrimaryProtectionStrategy::PKI { .. },
                         DevicePrimaryProtectionStrategy::PKI { .. },
-                    ) => true,
+                    ) => Ok(()),
                     // Don't use a `_ => None` fallthrough match here to avoid
                     // silent bug whenever a new variant is added :/
                     (
@@ -373,7 +406,7 @@ pub(crate) fn maybe_load_device(
                         | DevicePrimaryProtectionStrategy::Keyring
                         | DevicePrimaryProtectionStrategy::AccountVault { .. }
                         | DevicePrimaryProtectionStrategy::OpenBao { .. },
-                    ) => false,
+                    ) => Err(LoadDeviceError::BadAccessStrategy { what: "type" }),
                 }
             }
 
@@ -385,11 +418,10 @@ pub(crate) fn maybe_load_device(
                         if access.key_file != *c_key_file {
                             return None;
                         }
-                        if check_access_and_save_strategy_match(access, c_save_strategy) {
-                            Some(Ok(c_device.to_owned()))
-                        } else {
-                            Some(Err(LoadDeviceError::DecryptionFailed))
-                        }
+                        Some(
+                            check_access_and_save_strategy_match(access, c_save_strategy)
+                                .map(|_| c_device.to_owned()),
+                        )
                     });
 
             if found.is_some() {
@@ -399,27 +431,30 @@ pub(crate) fn maybe_load_device(
             if !cache.destroyed.contains(&access.key_file) {
                 // 2) Try to load from the template
 
-                let decryption_success = match (&access.totp_protection, &access.primary_protection)
-                {
+                // We don't try to resolve the path of `key_file` into an absolute one here !
+                // This is because in practice the path is always provided absolute given it
+                // is obtained in the first place by `list_template_available_devices`.
+                let env = test_get_testbed(config_dir).expect("Must exist");
+                let (device, created_on) = load_local_device_from_template(&access.key_file, &env)?; // Short circuit if not found
+
+                match (&access.totp_protection, &access.primary_protection) {
                     (None, DevicePrimaryProtectionStrategy::Password { password, .. }) => {
-                        let decryption_success = password.as_str() == KEY_FILE_PASSWORD;
-                        decryption_success
+                        if password.as_str() != KEY_FILE_PASSWORD {
+                            return Some(Err(LoadDeviceError::DecryptionFailed(anyhow::anyhow!(
+                                "Password mismatch"
+                            ))));
+                        }
                     }
                     // We consider all device created from the template are password-protected without TOTP.
                     (Some(_), DevicePrimaryProtectionStrategy::Password { .. })
                     | (_, DevicePrimaryProtectionStrategy::Keyring)
                     | (_, DevicePrimaryProtectionStrategy::PKI { .. })
                     | (_, DevicePrimaryProtectionStrategy::AccountVault { .. })
-                    | (_, DevicePrimaryProtectionStrategy::OpenBao { .. }) => false,
+                    | (_, DevicePrimaryProtectionStrategy::OpenBao { .. }) => {
+                        return Some(Err(LoadDeviceError::BadAccessStrategy { what: "type" }))
+                    }
                 };
-                // We don't try to resolve the path of `key_file` into an absolute one here !
-                // This is because in practice the path is always provided absolute given it
-                // is obtained in the first place by `list_template_available_devices`.
-                let env = test_get_testbed(config_dir).expect("Must exist");
-                let (device, created_on) = load_local_device_from_template(&access.key_file, &env)?; // Short circuit if not found
-                if !decryption_success {
-                    return Some(Err(LoadDeviceError::DecryptionFailed));
-                }
+
                 // Save strategy contains more informations than access strategy, so we have
                 // to mock the missing stuff here.
                 let save_strategy = access.to_owned().into();
@@ -495,11 +530,17 @@ pub(crate) fn maybe_update_device(
             Err(e) => {
                 return Some(Err(match e {
                     LoadDeviceError::StorageNotAvailable => UpdateDeviceError::NoSpaceAvailable,
-                    LoadDeviceError::InvalidPath(_) => UpdateDeviceError::InvalidPath,
-                    LoadDeviceError::InvalidData => UpdateDeviceError::InvalidData,
-                    LoadDeviceError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
-                    LoadDeviceError::TOTPDecryptionFailed => {
-                        UpdateDeviceError::TOTPDecryptionFailed
+                    LoadDeviceError::InvalidPath(e) => UpdateDeviceError::InvalidPath(e),
+                    LoadDeviceError::InvalidData(e) => UpdateDeviceError::InvalidData(e),
+                    LoadDeviceError::BadAccessStrategy { what } => {
+                        UpdateDeviceError::BadAccessStrategy { what }
+                    }
+                    LoadDeviceError::CiphertextKeyGenerationFailed(e) => {
+                        UpdateDeviceError::CiphertextKeyGenerationFailed(e)
+                    }
+                    LoadDeviceError::DecryptionFailed(e) => UpdateDeviceError::DecryptionFailed(e),
+                    LoadDeviceError::TOTPDecryptionFailed(e) => {
+                        UpdateDeviceError::TOTPDecryptionFailed(e)
                     }
                     LoadDeviceError::Internal(err) => UpdateDeviceError::Internal(err),
                     LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {

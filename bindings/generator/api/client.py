@@ -59,6 +59,12 @@ class ClientStartError(ErrorVariant):
     class LoadDeviceInvalidData:
         pass
 
+    class LoadDeviceBadAccessStrategy:
+        pass
+
+    class LoadDeviceCiphertextKeyGenerationFailed:
+        pass
+
     class LoadDeviceDecryptionFailed:
         pass
 

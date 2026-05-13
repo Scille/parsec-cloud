@@ -150,11 +150,11 @@ pub(super) async fn load_ciphertext_key_keyring(
 
         log::trace!("Obtained passphrase from keyring entry");
         let key = SecretKey::from_recovery_passphrase(passphrase)
-            .map_err(|_| LoadCiphertextKeyError::DecryptionFailed)?;
+            .map_err(|e| LoadCiphertextKeyError::CiphertextKeyGenerationFailed(e.into()))?;
 
         Ok(key)
     } else {
-        Err(LoadCiphertextKeyError::InvalidData)
+        Err(LoadCiphertextKeyError::BadAccessStrategy { what: "type" })
     }
 }
 

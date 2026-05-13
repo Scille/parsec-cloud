@@ -16,14 +16,18 @@ use crate::{
 pub enum UpdateDeviceError {
     #[error("No space available")]
     NoSpaceAvailable,
-    #[error("Path is invalid")]
-    InvalidPath,
-    #[error("Cannot deserialize file content")]
-    InvalidData,
-    #[error("Failed to decrypt file content")]
-    DecryptionFailed,
-    #[error("Decryption failed with the key obtained from TOTP challenge")]
-    TOTPDecryptionFailed,
+    #[error("Invalid path: {0}")]
+    InvalidPath(anyhow::Error),
+    #[error("Invalid data: {0}")]
+    InvalidData(anyhow::Error),
+    #[error("Device file doesn't match the access strategy (invalid {what})")]
+    BadAccessStrategy { what: &'static str },
+    #[error("Ciphertext key generation failed: {0}")]
+    CiphertextKeyGenerationFailed(anyhow::Error),
+    #[error("Decryption failed with the key obtained from TOTP challenge: {0}")]
+    TOTPDecryptionFailed(anyhow::Error),
+    #[error("Decryption failed: {0}")]
+    DecryptionFailed(anyhow::Error),
     /// Note only a subset of load/save strategies requires server access to
     /// fetch/upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -58,7 +62,7 @@ impl From<SaveDeviceError> for UpdateDeviceError {
             }
             SaveDeviceError::Internal(error) => UpdateDeviceError::Internal(error),
             SaveDeviceError::NoSpaceAvailable => UpdateDeviceError::NoSpaceAvailable,
-            SaveDeviceError::InvalidPath => UpdateDeviceError::InvalidPath,
+            SaveDeviceError::InvalidPath(e) => UpdateDeviceError::InvalidPath(e),
         }
     }
 }
@@ -67,10 +71,10 @@ impl From<LoadFileError> for UpdateDeviceError {
     fn from(value: LoadFileError) -> Self {
         match value {
             LoadFileError::StorageNotAvailable => UpdateDeviceError::NoSpaceAvailable,
-            LoadFileError::NotAFile
+            e @ (LoadFileError::NotAFile
             | LoadFileError::InvalidParent
             | LoadFileError::InvalidPath
-            | LoadFileError::NotFound => UpdateDeviceError::InvalidPath,
+            | LoadFileError::NotFound) => UpdateDeviceError::InvalidPath(e.into()),
             LoadFileError::Internal(error) => UpdateDeviceError::Internal(error),
         }
     }
@@ -113,13 +117,18 @@ pub async fn update_device_change_authentication(
     // 1. Load the current device keys file...
 
     let file_content = load_file(current_key_file).await?;
-    let device_file =
-        DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
+    let device_file = DeviceFile::load(&file_content).map_err(|e| {
+        UpdateDeviceError::InvalidData(anyhow::anyhow!("Failed to load device file: {e}"))
+    })?;
     let ciphertext_key = load_ciphertext_key(current_access, &device_file)
         .await
         .map_err(|err| match err {
-            LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
-            LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
+            LoadCiphertextKeyError::BadAccessStrategy { what } => {
+                UpdateDeviceError::BadAccessStrategy { what }
+            }
+            LoadCiphertextKeyError::CiphertextKeyGenerationFailed(e) => {
+                UpdateDeviceError::CiphertextKeyGenerationFailed(e)
+            }
             LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
             LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
                 UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
@@ -131,9 +140,13 @@ pub async fn update_device_change_authentication(
     let totp_opaque_key = current_access.totp_protection.as_ref().map(|(_, key)| key);
     let device = decrypt_device_file(&device_file, &ciphertext_key, totp_opaque_key).map_err(
         |err| match err {
-            DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
-            DecryptDeviceFileError::TOTPDecrypt(_) => UpdateDeviceError::TOTPDecryptionFailed,
-            DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
+            DecryptDeviceFileError::Decrypt(e) => UpdateDeviceError::DecryptionFailed(e.into()),
+            DecryptDeviceFileError::TOTPDecrypt(e) => {
+                UpdateDeviceError::TOTPDecryptionFailed(e.into())
+            }
+            DecryptDeviceFileError::Load(e) => UpdateDeviceError::InvalidData(anyhow::anyhow!(
+                "Failed to load decrypted device: {e}"
+            )),
         },
     )?;
 
@@ -174,14 +187,19 @@ pub async fn update_device_overwrite_server_addr(
     // 1. Load the current device keys file...
 
     let file_content = load_file(key_file).await?;
-    let device_file =
-        DeviceFile::load(&file_content).map_err(|_| UpdateDeviceError::InvalidData)?;
+    let device_file = DeviceFile::load(&file_content).map_err(|e| {
+        UpdateDeviceError::InvalidData(anyhow::anyhow!("Failed to load device file: {e}"))
+    })?;
     let ciphertext_key =
         load_ciphertext_key(strategy, &device_file)
             .await
             .map_err(|err| match err {
-                LoadCiphertextKeyError::InvalidData => UpdateDeviceError::InvalidData,
-                LoadCiphertextKeyError::DecryptionFailed => UpdateDeviceError::DecryptionFailed,
+                LoadCiphertextKeyError::BadAccessStrategy { what } => {
+                    UpdateDeviceError::BadAccessStrategy { what }
+                }
+                LoadCiphertextKeyError::CiphertextKeyGenerationFailed(e) => {
+                    UpdateDeviceError::CiphertextKeyGenerationFailed(e)
+                }
                 LoadCiphertextKeyError::Internal(err) => UpdateDeviceError::Internal(err),
                 LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
                     UpdateDeviceError::RemoteOpaqueKeyOperationOffline { server, error }
@@ -193,9 +211,13 @@ pub async fn update_device_overwrite_server_addr(
     let totp_opaque_key = strategy.totp_protection.as_ref().map(|(_, key)| key);
     let mut device = decrypt_device_file(&device_file, &ciphertext_key, totp_opaque_key).map_err(
         |err| match err {
-            DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
-            DecryptDeviceFileError::TOTPDecrypt(_) => UpdateDeviceError::TOTPDecryptionFailed,
-            DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
+            DecryptDeviceFileError::Decrypt(e) => UpdateDeviceError::DecryptionFailed(e.into()),
+            DecryptDeviceFileError::TOTPDecrypt(e) => {
+                UpdateDeviceError::TOTPDecryptionFailed(e.into())
+            }
+            DecryptDeviceFileError::Load(e) => UpdateDeviceError::InvalidData(anyhow::anyhow!(
+                "Failed to load decrypted device: {e}"
+            )),
         },
     )?;
 
