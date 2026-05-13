@@ -74,8 +74,9 @@ async function maybeInit(): Promise<LibParsecPlugin> {
       onEventBroadcast.postMessage({ handle, event });
     });
 
-    const wrappedLibparsec = new Proxy(module, {
-      get(target, prop, receiver) {
+    // Proxy an empty object instead of `module` to avoid invariant problems.
+    const wrappedLibparsec = new Proxy({} as typeof module, {
+      get(_target, prop, _receiver) {
         // SCWS needs to be dynamically loaded.
         // We're loading it in TypeScript inside the shared worker and attaching
         // it to the global context.
@@ -91,10 +92,10 @@ async function maybeInit(): Promise<LibParsecPlugin> {
               return { ok: false, error: { tag: 'PkiSystemInitErrorNotAvailable', error: `Failed to import scwsapi (${err.toString()})` } };
             }
 
-            return await target.pkiInitForScws(configDir, parsecAddr);
+            return await module.pkiInitForScws(configDir, parsecAddr);
           };
         }
-        return Reflect.get(target, prop, receiver);
+        return (module as any)[prop];
       },
     });
 
