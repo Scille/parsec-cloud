@@ -1,7 +1,10 @@
+#[cfg(target_family = "unix")]
 use libparsec::{tmp_path, TmpPath};
 
+#[cfg(target_family = "unix")]
 use crate::{bootstrap_cli_test, testenv_utils::TestOrganization};
 
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
 async fn forget_device(tmp_path: TmpPath) {

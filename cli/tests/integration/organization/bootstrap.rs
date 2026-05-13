@@ -86,6 +86,7 @@ async fn bootstrap_organization_with_sequester(tmp_path: TmpPath) {
     .stdout(predicates::str::contains("Organization bootstrapped"));
 }
 
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
 async fn bootstrap_organization_password_stdin(tmp_path: TmpPath) {
