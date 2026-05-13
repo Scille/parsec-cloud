@@ -69,7 +69,7 @@ fn load_private_key(pem: &[u8]) -> RsaPrivateKey {
 
 fn compute_cert_ref(der: &[u8]) -> X509CertificateReference {
     let digest = sha2::Sha256::digest(der);
-    let hash = X509CertificateHash::SHA256(Box::new(digest.into()));
+    let hash = X509CertificateHash::SHA256(digest.into());
     X509CertificateReference::from(hash)
 }
 

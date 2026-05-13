@@ -12,7 +12,7 @@ use crate::prelude::*;
 )]
 #[case::sha256(
     "sha256-qNfTEzy56Dy76VIZhGzLeb6QiW40lDu1PS0HqoKBBOk=",
-    X509CertificateHash::SHA256(Box::new(hex!("a8d7d3133cb9e83cbbe95219846ccb79be90896e34943bb53d2d07aa828104e9")))
+    X509CertificateHash::SHA256(hex!("a8d7d3133cb9e83cbbe95219846ccb79be90896e34943bb53d2d07aa828104e9"))
 )]
 fn serde_cert_hash(#[case] raw: &'static str, #[case] expected: X509CertificateHash) {
     serde_test::assert_tokens(&expected, &[Token::BorrowedStr(raw)]);
