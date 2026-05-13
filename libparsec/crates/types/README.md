@@ -39,7 +39,7 @@ based on these schemas.
 > 2. Ensure the test prints the expected structure (e.g. `println!("***expected: {:?}", expected.dump());`).
 >    Note the `***expected:` prefix which is going to be used in the next step.
 > 3. Run the tests and pipe its result to the `misc/test_expected_payload_cooker.py` script
->    (i.e. `cargo nextest r -p libparsec_types 2>&1 | python misc/test_expected_payload_cooker.py`).
+>    (i.e. `cargo nextest r -p libparsec_types 2>&1 | poetry -C server run python ../misc/test_expected_payload_cooker.py`).
 >    Since each failing test gets its output printed to stderr, the script is able
 >    to retrieve the `***expected:` pattern for our currently invalid tests and
 >    display a nicely formatted representation of the serialized expected structure.
