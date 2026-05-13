@@ -92,16 +92,22 @@ pub async fn wait_for_device_available(
 pub enum ClientStartError {
     #[error("Device already used by another process")]
     DeviceUsedByAnotherProcess,
-    #[error("Cannot load device file: invalid path ({})", .0)]
+    #[error("Cannot load device file: Invalid path: {0}")]
     LoadDeviceInvalidPath(anyhow::Error),
-    #[error("Cannot load device file: invalid data")]
-    LoadDeviceInvalidData,
-    #[error("Cannot load device file: decryption failed")]
-    LoadDeviceDecryptionFailed,
+    #[error("Cannot load device file: Invalid data: {0}")]
+    LoadDeviceInvalidData(anyhow::Error),
     #[error(
-        "Cannot load device file: decryption failed with the key obtained from TOTP challenge"
+        "Cannot load device file: Device file doesn't match the access strategy (invalid {what})"
     )]
-    LoadDeviceTOTPDecryptionFailed,
+    LoadDeviceBadAccessStrategy { what: &'static str },
+    #[error("Cannot load device file: Ciphertext key generation failed: {0}")]
+    LoadDeviceCiphertextKeyGenerationFailed(anyhow::Error),
+    #[error(
+        "Cannot load device file: Decryption failed with the key obtained from TOTP challenge: {0}"
+    )]
+    LoadDeviceTOTPDecryptionFailed(anyhow::Error),
+    #[error("Cannot load device file: Decryption failed: {0}")]
+    LoadDeviceDecryptionFailed(anyhow::Error),
     /// Client start is a fully offline operation, except for some device
     /// access strategies (e.g. account vault), where the ciphertext key
     /// protecting the device is itself encrypted by an opaque key that
@@ -132,9 +138,15 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
         match value {
             e @ LoadDeviceError::StorageNotAvailable => Self::LoadDeviceInvalidPath(e.into()),
             LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
-            LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
-            LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
-            LoadDeviceError::TOTPDecryptionFailed => Self::LoadDeviceTOTPDecryptionFailed,
+            LoadDeviceError::InvalidData(err) => Self::LoadDeviceInvalidData(err),
+            LoadDeviceError::BadAccessStrategy { what } => {
+                Self::LoadDeviceBadAccessStrategy { what }
+            }
+            LoadDeviceError::CiphertextKeyGenerationFailed(err) => {
+                Self::LoadDeviceCiphertextKeyGenerationFailed(err)
+            }
+            LoadDeviceError::DecryptionFailed(err) => Self::LoadDeviceDecryptionFailed(err),
+            LoadDeviceError::TOTPDecryptionFailed(err) => Self::LoadDeviceTOTPDecryptionFailed(err),
             LoadDeviceError::Internal(e) => Self::Internal(e),
             LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
                 Self::LoadDeviceRemoteOpaqueKeyFetchOffline { server, error }

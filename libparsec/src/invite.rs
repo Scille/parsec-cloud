@@ -177,8 +177,8 @@ pub async fn bootstrap_organization(
             SaveDeviceError::NoSpaceAvailable => {
                 BootstrapOrganizationError::SaveDeviceNoSpaceAvailable
             }
-            SaveDeviceError::InvalidPath => {
-                BootstrapOrganizationError::SaveDeviceInvalidPath(anyhow::anyhow!("invalid path"))
+            SaveDeviceError::InvalidPath(err) => {
+                BootstrapOrganizationError::SaveDeviceInvalidPath(err)
             }
         })?;
 

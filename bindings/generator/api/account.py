@@ -308,10 +308,16 @@ class AccountCreateRegistrationDeviceError(ErrorVariant):
     class LoadDeviceInvalidData:
         pass
 
-    class LoadDeviceDecryptionFailed:
+    class LoadDeviceBadAccessStrategy:
+        pass
+
+    class LoadDeviceCiphertextKeyGenerationFailed:
         pass
 
     class LoadDeviceTOTPDecryptionFailed:
+        pass
+
+    class LoadDeviceDecryptionFailed:
         pass
 
     class BadVaultKeyAccess:

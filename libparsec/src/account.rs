@@ -361,16 +361,22 @@ pub async fn account_delete_2_proceed(
 
 #[derive(Debug, thiserror::Error)]
 pub enum AccountCreateRegistrationDeviceError {
-    #[error("Cannot load device file: invalid path ({})", .0)]
+    #[error("Cannot load device file: Invalid path: {0}")]
     LoadDeviceInvalidPath(anyhow::Error),
-    #[error("Cannot load device file: invalid data")]
-    LoadDeviceInvalidData,
-    #[error("Cannot load device file: decryption failed")]
-    LoadDeviceDecryptionFailed,
+    #[error("Cannot load device file: Invalid data: {0}")]
+    LoadDeviceInvalidData(anyhow::Error),
     #[error(
-        "Cannot load device file: decryption failed with the key obtained from TOTP challenge"
+        "Cannot load device file: Device file doesn't match the access strategy (invalid {what})"
     )]
-    LoadDeviceTOTPDecryptionFailed,
+    LoadDeviceBadAccessStrategy { what: &'static str },
+    #[error("Cannot load device file: Ciphertext key generation failed: {0}")]
+    LoadDeviceCiphertextKeyGenerationFailed(anyhow::Error),
+    #[error(
+        "Cannot load device file: Decryption failed with the key obtained from TOTP challenge: {0}"
+    )]
+    LoadDeviceTOTPDecryptionFailed(anyhow::Error),
+    #[error("Cannot load device file: Decryption failed: {0}")]
+    LoadDeviceDecryptionFailed(anyhow::Error),
     #[error("Cannot decrypt the vault key access returned by the server: {0}")]
     BadVaultKeyAccess(DataError),
     #[error("Cannot communicate with the server: {0}")]
@@ -410,9 +416,15 @@ impl From<LoadDeviceError> for AccountCreateRegistrationDeviceError {
         match value {
             e @ LoadDeviceError::StorageNotAvailable => Self::LoadDeviceInvalidPath(e.into()),
             LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
-            LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
-            LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
-            LoadDeviceError::TOTPDecryptionFailed => Self::LoadDeviceTOTPDecryptionFailed,
+            LoadDeviceError::InvalidData(err) => Self::LoadDeviceInvalidData(err),
+            LoadDeviceError::BadAccessStrategy { what } => {
+                Self::LoadDeviceBadAccessStrategy { what }
+            }
+            LoadDeviceError::CiphertextKeyGenerationFailed(err) => {
+                Self::LoadDeviceCiphertextKeyGenerationFailed(err)
+            }
+            LoadDeviceError::DecryptionFailed(err) => Self::LoadDeviceDecryptionFailed(err),
+            LoadDeviceError::TOTPDecryptionFailed(err) => Self::LoadDeviceTOTPDecryptionFailed(err),
             LoadDeviceError::Internal(e) => Self::Internal(e),
             LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error } => {
                 Self::RemoteOpaqueKeyFetchOffline { server, error }

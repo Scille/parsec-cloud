@@ -60,7 +60,7 @@ async fn bad_file_content(tmp_path: TmpPath) {
 
     let access = DeviceAccessStrategy::new_password(key_file, "P@ssw0rd.".to_owned().into());
     let outcome = load_device(&tmp_path, &access).await;
-    p_assert_matches!(outcome, Err(LoadDeviceError::InvalidData));
+    p_assert_matches!(outcome, Err(LoadDeviceError::InvalidData(_)));
 }
 
 #[parsec_test]
@@ -92,7 +92,7 @@ async fn invalid_salt_size(tmp_path: TmpPath) {
 
     let access = DeviceAccessStrategy::new_password(key_file, "P@ssw0rd.".to_owned().into());
     let outcome = load_device(&tmp_path, &access).await;
-    p_assert_matches!(outcome, Err(LoadDeviceError::InvalidData));
+    p_assert_matches!(outcome, Err(LoadDeviceError::InvalidData(_)));
 }
 
 #[parsec_test(testbed = "empty")]
@@ -150,7 +150,7 @@ async fn testbed(env: &TestbedEnv) {
     };
     p_assert_matches!(
         load_device(&env.discriminant_dir, &alice2_access_bad_strategy).await,
-        Err(LoadDeviceError::DecryptionFailed)
+        Err(LoadDeviceError::BadAccessStrategy { what: "type" })
     );
 
     let alice2_access_unexpected_totp = {
@@ -161,7 +161,7 @@ async fn testbed(env: &TestbedEnv) {
     };
     p_assert_matches!(
         load_device(&env.discriminant_dir, &alice2_access_unexpected_totp).await,
-        Err(LoadDeviceError::DecryptionFailed)
+        Err(LoadDeviceError::BadAccessStrategy { what: "TOTP" })
     );
 
     // Bad password
@@ -172,7 +172,7 @@ async fn testbed(env: &TestbedEnv) {
     );
     p_assert_matches!(
         load_device(&env.discriminant_dir, &bad_password_access).await,
-        Err(LoadDeviceError::DecryptionFailed)
+        Err(LoadDeviceError::DecryptionFailed(_))
     );
 
     // Bad path (key file is missing)
@@ -200,7 +200,7 @@ async fn testbed(env: &TestbedEnv) {
     };
     p_assert_matches!(
         load_device(&env.discriminant_dir, &bad_ciphertext_access).await,
-        Err(LoadDeviceError::DecryptionFailed)
+        Err(LoadDeviceError::BadAccessStrategy { what: "type" })
     );
 
     // Remove actually removes ?
@@ -231,10 +231,11 @@ async fn testbed(env: &TestbedEnv) {
 
     let zack_key_file = env.discriminant_dir.join("zack_new_device.keys");
     let zack_human_handle = HumanHandle::from_raw("zack@example.invalid", "Zack").unwrap();
+    let zack_totp = (TOTPOpaqueKeyID::default(), SecretKey::generate());
     let zack = save_device(
         &env.discriminant_dir,
         &DeviceSaveStrategy {
-            totp_protection: None,
+            totp_protection: Some(zack_totp.clone()),
             primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
                 operations: Arc::new(MockedAccountVaultOperations::new(
                     zack_human_handle.email().to_owned(),
@@ -261,7 +262,7 @@ async fn testbed(env: &TestbedEnv) {
 
     let zack_access = DeviceAccessStrategy {
         key_file: zack_key_file,
-        totp_protection: None,
+        totp_protection: Some(zack_totp.clone()),
         primary_protection: DevicePrimaryProtectionStrategy::AccountVault {
             operations: Arc::new(MockedAccountVaultOperations::new(
                 zack_human_handle.email().to_owned(),
@@ -272,6 +273,18 @@ async fn testbed(env: &TestbedEnv) {
         .await
         .unwrap();
     p_assert_eq!(device.device_id, zack.device_id);
+
+    // Bad TOTP
+
+    let bad_totp_access = {
+        let mut bad_totp_access = zack_access.clone();
+        bad_totp_access.totp_protection = Some((zack_totp.0, SecretKey::generate()));
+        bad_totp_access
+    };
+    p_assert_matches!(
+        load_device(&env.discriminant_dir, &bad_totp_access).await,
+        Err(LoadDeviceError::TOTPDecryptionFailed(_))
+    );
 
     // Updated device
 

@@ -135,7 +135,7 @@ pub enum DecryptDeviceFileError {
     TOTPDecrypt(CryptoError),
     #[error("Failed to decrypt device file: {0}")]
     Decrypt(CryptoError),
-    #[error("Failed to load device: {0}")]
+    #[error("Failed to load decrypted device: {0}")]
     Load(&'static str),
 }
 

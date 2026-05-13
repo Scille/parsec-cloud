@@ -15,8 +15,8 @@ use crate::{
 pub enum SaveDeviceError {
     #[error("No space available")]
     NoSpaceAvailable,
-    #[error("Path is invalid")]
-    InvalidPath,
+    #[error("Invalid path: {0}")]
+    InvalidPath(anyhow::Error),
     /// Note only a subset of save strategies requires server access to
     /// upload an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -43,11 +43,11 @@ pub enum SaveDeviceError {
 impl From<SaveContentError> for SaveDeviceError {
     fn from(value: SaveContentError) -> Self {
         match value {
-            SaveContentError::NotAFile
+            e @ (SaveContentError::NotAFile
             | SaveContentError::InvalidParent
             | SaveContentError::InvalidPath
             | SaveContentError::ParentNotFound
-            | SaveContentError::CannotEdit => SaveDeviceError::InvalidPath,
+            | SaveContentError::CannotEdit) => SaveDeviceError::InvalidPath(e.into()),
 
             SaveContentError::StorageNotAvailable | SaveContentError::NoSpaceLeft => {
                 SaveDeviceError::NoSpaceAvailable
