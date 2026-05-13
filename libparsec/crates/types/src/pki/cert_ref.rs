@@ -63,7 +63,7 @@ impl FromStr for X509CertificateHash {
 }
 
 #[serde_with::serde_as]
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, Serialize, Deserialize)]
 pub struct X509CertificateReference {
     /// List of URI to reference a given certificate.
     ///
@@ -72,6 +72,17 @@ pub struct X509CertificateReference {
     #[serde_as(as = "serde_with::VecSkipError<_>")]
     uris: Vec<X509URIFlavorValue>,
     pub hash: X509CertificateHash,
+}
+
+impl std::cmp::PartialEq for X509CertificateReference {
+    fn eq(&self, other: &Self) -> bool {
+        // Ignore URIs since they are only hints to find the certificate.
+        // Typically Parsec <3.9 on Windows used a `X509URIFlavorValue::WindowsCNG` but
+        // now we use `X509URIFlavorValue::PKCS11` on all platforms (i.e. the URIs in
+        // a local device file created with Parsec <3.9 on Windows would fail to compare
+        // in Parsec >=3.9 with the URIs in the device access strategy).
+        self.hash == other.hash
+    }
 }
 
 use private::X509URIFlavor;
@@ -216,7 +227,10 @@ impl From<X509Pkcs11URI> for X509URIFlavorValue {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum X509URIFlavorValue {
+    /// This is a legacy variant, it is still supported for backward compatibility
+    /// with device files created with Parsec <3.9 on Windows.
     WindowsCNG(X509WindowsCngURI),
+    /// Since Parsec 3.9, all platforms (including Windows) use this variant.
     PKCS11(X509Pkcs11URI),
 }
 
