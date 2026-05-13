@@ -73,14 +73,18 @@ pub async fn load_available_device(
 pub enum LoadDeviceError {
     #[error("Device storage is not available")]
     StorageNotAvailable,
-    #[error("Invalid path: {}", .0)]
+    #[error("Invalid path: {0}")]
     InvalidPath(anyhow::Error),
-    #[error("Invalid data")]
-    InvalidData,
-    #[error("Decryption failed with the key obtained from TOTP challenge")]
-    TOTPDecryptionFailed,
-    #[error("Decryption failed")]
-    DecryptionFailed,
+    #[error("Invalid data: {0}")]
+    InvalidData(anyhow::Error),
+    #[error("Device file doesn't match the access strategy (invalid {what})")]
+    BadAccessStrategy { what: &'static str },
+    #[error("Ciphertext key generation failed: {0}")]
+    CiphertextKeyGenerationFailed(anyhow::Error),
+    #[error("Decryption failed with the key obtained from TOTP challenge: {0}")]
+    TOTPDecryptionFailed(anyhow::Error),
+    #[error("Decryption failed: {0}")]
+    DecryptionFailed(anyhow::Error),
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -129,13 +133,19 @@ pub async fn load_device(
     }
 
     let file_content = load_file(&access.key_file).await?;
-    let device_file = DeviceFile::load(&file_content).map_err(|_| LoadDeviceError::InvalidData)?;
+    let device_file = DeviceFile::load(&file_content).map_err(|e| {
+        LoadDeviceError::InvalidData(anyhow::Error::from(e).context("Failed to load device file"))
+    })?;
     let ciphertext_key =
         load_ciphertext_key(access, &device_file)
             .await
             .map_err(|err| match err {
-                LoadCiphertextKeyError::InvalidData => LoadDeviceError::InvalidData,
-                LoadCiphertextKeyError::DecryptionFailed => LoadDeviceError::DecryptionFailed,
+                LoadCiphertextKeyError::BadAccessStrategy { what } => {
+                    LoadDeviceError::BadAccessStrategy { what }
+                }
+                LoadCiphertextKeyError::CiphertextKeyGenerationFailed(e) => {
+                    LoadDeviceError::CiphertextKeyGenerationFailed(e)
+                }
                 LoadCiphertextKeyError::Internal(err) => LoadDeviceError::Internal(err),
                 LoadCiphertextKeyError::RemoteOpaqueKeyFetchOffline { server, error } => {
                     LoadDeviceError::RemoteOpaqueKeyFetchOffline { server, error }
@@ -147,9 +157,13 @@ pub async fn load_device(
     let totp_opaque_key = access.totp_protection.as_ref().map(|(_, key)| key);
     let device = decrypt_device_file(&device_file, &ciphertext_key, totp_opaque_key).map_err(
         |err| match err {
-            DecryptDeviceFileError::TOTPDecrypt(_) => LoadDeviceError::TOTPDecryptionFailed,
-            DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
-            DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
+            DecryptDeviceFileError::TOTPDecrypt(e) => {
+                LoadDeviceError::TOTPDecryptionFailed(e.into())
+            }
+            DecryptDeviceFileError::Decrypt(e) => LoadDeviceError::DecryptionFailed(e.into()),
+            DecryptDeviceFileError::Load(e) => LoadDeviceError::InvalidData(anyhow::anyhow!(
+                "Failed to load decrypted device: {e}"
+            )),
         },
     )?;
 

@@ -5,7 +5,7 @@ use std::{path::Path, sync::Arc};
 use super::utils::MockedAccountVaultOperations;
 use crate::{
     load_device, save_device, update_device_change_authentication, DeviceAccessStrategy,
-    DevicePrimaryProtectionStrategy,
+    DevicePrimaryProtectionStrategy, LoadDeviceError,
 };
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
@@ -89,9 +89,10 @@ async fn same_key_file(tmp_path: TmpPath) {
         device
     );
 
-    load_device(Path::new(""), &access_strategy)
-        .await
-        .unwrap_err();
+    p_assert_matches!(
+        load_device(Path::new(""), &access_strategy).await,
+        Err(LoadDeviceError::DecryptionFailed(_))
+    );
 }
 
 #[parsec_test]
@@ -167,9 +168,10 @@ async fn different_key_file(tmp_path: TmpPath) {
         device
     );
 
-    load_device(Path::new(""), &access_strategy)
-        .await
-        .unwrap_err();
+    p_assert_matches!(
+        load_device(Path::new(""), &access_strategy).await,
+        Err(LoadDeviceError::InvalidPath(_))
+    );
 }
 
 #[parsec_test(testbed = "empty")]
@@ -198,9 +200,10 @@ async fn testbed_same_key_file(env: &TestbedEnv) {
     load_device(&env.discriminant_dir, &new_access_strategy)
         .await
         .unwrap();
-    load_device(&env.discriminant_dir, &current_access)
-        .await
-        .unwrap_err();
+    p_assert_matches!(
+        load_device(&env.discriminant_dir, &current_access).await,
+        Err(LoadDeviceError::DecryptionFailed(_))
+    );
 }
 
 #[parsec_test(testbed = "empty")]
@@ -238,7 +241,8 @@ async fn testbed_different_key_file(env: &TestbedEnv) {
     load_device(&env.discriminant_dir, &new_access_strategy)
         .await
         .unwrap();
-    load_device(&env.discriminant_dir, &current_access)
-        .await
-        .unwrap_err();
+    p_assert_matches!(
+        load_device(&env.discriminant_dir, &current_access).await,
+        Err(LoadDeviceError::InvalidPath(_))
+    );
 }
