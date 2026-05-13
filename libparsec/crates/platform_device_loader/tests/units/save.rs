@@ -203,7 +203,7 @@ async fn testbed(env: &TestbedEnv) {
     // Finally roundtrip check
     p_assert_matches!(
         load_device(&env.discriminant_dir, &old_access).await,
-        Err(LoadDeviceError::DecryptionFailed)
+        Err(LoadDeviceError::BadAccessStrategy { what: "TOTP" })
     );
     let reloaded_device = load_device(&env.discriminant_dir, &new_access_strategy)
         .await

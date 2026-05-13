@@ -134,6 +134,12 @@ class UpdateDeviceError(ErrorVariant):
     class InvalidData:
         pass
 
+    class BadAccessStrategy:
+        pass
+
+    class CiphertextKeyGenerationFailed:
+        pass
+
     class TOTPDecryptionFailed:
         pass
 

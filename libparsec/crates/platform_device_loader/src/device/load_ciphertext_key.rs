@@ -10,10 +10,10 @@ use libparsec_types::prelude::*;
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum LoadCiphertextKeyError {
     /// Typically returned if the access strategy doesn't match the device type
-    #[error("Invalid data")]
-    InvalidData,
-    #[error("Decryption failed")]
-    DecryptionFailed,
+    #[error("Device file doesn't match the access strategy (invalid {what})")]
+    BadAccessStrategy { what: &'static str },
+    #[error("Ciphertext key generation failed: {0}")]
+    CiphertextKeyGenerationFailed(anyhow::Error),
     /// Note only a subset of load strategies requires server access to
     /// fetch an opaque key that itself protects the ciphertext key
     /// (e.g. account vault).
@@ -56,29 +56,29 @@ pub(super) async fn load_ciphertext_key(
                 let ciphertext_key = device
                     .algorithm
                     .compute_secret_key(password)
-                    .map_err(|_| LoadCiphertextKeyError::InvalidData)?;
+                    .map_err(|e| LoadCiphertextKeyError::CiphertextKeyGenerationFailed(e.into()))?;
 
                 Ok(ciphertext_key)
             } else {
-                Err(LoadCiphertextKeyError::InvalidData)
+                Err(LoadCiphertextKeyError::BadAccessStrategy { what: "type" })
             }
         }
 
         DevicePrimaryProtectionStrategy::PKI { operations, .. } => {
             if let DeviceFile::PKI(device) = device_file {
                 if device.certificate_ref != *operations.certificate_ref() {
-                    return Err(LoadCiphertextKeyError::InvalidData);
+                    return Err(LoadCiphertextKeyError::BadAccessStrategy {
+                        what: "certificate reference",
+                    });
                 }
 
                 let raw = operations
                     .decrypt_opaque_key(device.algorithm, device.encrypted_key.as_ref())
                     .await
                     .map_err(|err| match err {
-                        PkiOperationsDecryptOpaqueKeyError::UnsupportedAlgorithm => {
-                            LoadCiphertextKeyError::InvalidData
-                        }
-                        PkiOperationsDecryptOpaqueKeyError::DecryptionFailed(_) => {
-                            LoadCiphertextKeyError::DecryptionFailed
+                        e @ (PkiOperationsDecryptOpaqueKeyError::UnsupportedAlgorithm
+                        | PkiOperationsDecryptOpaqueKeyError::DecryptionFailed(_)) => {
+                            LoadCiphertextKeyError::CiphertextKeyGenerationFailed(e.into())
                         }
                         PkiOperationsDecryptOpaqueKeyError::Internal(e) => {
                             LoadCiphertextKeyError::Internal(e)
@@ -87,7 +87,7 @@ pub(super) async fn load_ciphertext_key(
 
                 Ok(raw)
             } else {
-                Err(LoadCiphertextKeyError::InvalidData)
+                Err(LoadCiphertextKeyError::BadAccessStrategy { what: "type" })
             }
         }
 
@@ -117,7 +117,7 @@ pub(super) async fn load_ciphertext_key(
                     })?;
                 Ok(ciphertext_key)
             } else {
-                Err(LoadCiphertextKeyError::InvalidData)
+                Err(LoadCiphertextKeyError::BadAccessStrategy { what: "type" })
             }
         }
 
@@ -143,7 +143,7 @@ pub(super) async fn load_ciphertext_key(
                     })?;
                 Ok(ciphertext_key)
             } else {
-                Err(LoadCiphertextKeyError::InvalidData)
+                Err(LoadCiphertextKeyError::BadAccessStrategy { what: "type" })
             }
         }
     }
