@@ -89,3 +89,31 @@ fn serde_cert_ref_skip_unknown_uris() {
 
     serde_test::assert_de_tokens(&expected_cert_ref.compact(), &got_tokens);
 }
+
+#[test]
+fn cert_ref_eq_ignore_uris() {
+    let cert1_hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        .parse::<X509CertificateHash>()
+        .unwrap();
+    let cert2_hash = "sha256-0000000000000000000000000000000000000000000="
+        .parse::<X509CertificateHash>()
+        .unwrap();
+    let uri1 = X509WindowsCngURI {
+        issuer: b"Black Mesa".into(),
+        serial_number: b"12345".into(),
+    };
+    let uri2 = X509Pkcs11URI {
+        id: None,
+        label: None,
+        der_issuer: b"Black Mesa".into(),
+        der_subject: b"Test".into(),
+        serial: b"12345".into(),
+    };
+
+    let cert1_ref1 = X509CertificateReference::from(cert1_hash).add_or_replace_uri(uri1.clone());
+    let cert1_ref2 = X509CertificateReference::from(cert1_hash).add_or_replace_uri(uri2.clone());
+    p_assert_eq!(cert1_ref1, cert1_ref2);
+
+    let cert2_ref1 = X509CertificateReference::from(cert2_hash).add_or_replace_uri(uri1);
+    p_assert_ne!(cert1_ref1, cert2_ref1);
+}
