@@ -37,9 +37,6 @@ async fn info_shared_recovery_ok(tmp_path: TmpPath) {
         "--recipients",
         &bob.human_handle.email().to_string(),
         &toto.human_handle.email().to_string(),
-        "--weights",
-        "1",
-        "1",
         "--threshold",
         "1",
         "--no-confirmation"
