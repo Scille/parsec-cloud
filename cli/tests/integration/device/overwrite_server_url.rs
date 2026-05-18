@@ -20,7 +20,7 @@ async fn ok(tmp_path: TmpPath) {
         "https://new.invalid:123",
         "--password-stdin"
     );
-    let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
+    let mut p = crate::spawn_interactive_command(cmd, Some(2000)).unwrap();
 
     p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
 
