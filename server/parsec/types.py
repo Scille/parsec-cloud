@@ -245,11 +245,8 @@ VlobIDField = Annotated[
 ]
 DateTimeField = Annotated[
     DateTime,
-    get_pydantic_schema(
-        DateTime,
-        lambda v: DateTime.from_rfc3339(v),
-        lambda v: v.to_rfc3339() if isinstance(v, DateTime) else v,
-    ),
+    PlainValidator(lambda v: v if isinstance(v, DateTime) else DateTime.from_rfc3339(str(v))),
+    PlainSerializer(lambda v: v.to_rfc3339() if isinstance(v, DateTime) else v, return_type=str),
 ]
 
 UserProfileField = Annotated[
