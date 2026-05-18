@@ -188,9 +188,6 @@ fn shared_recovery_create(
             "--recipients",
             &bob.human_handle.email().to_string(),
             &toto.human_handle.email().to_string(),
-            "--weights",
-            "1",
-            "1",
             "--threshold",
             "1",
             "--no-confirmation"
@@ -207,8 +204,6 @@ fn shared_recovery_create(
             &alice.device_id.hex(),
             "--recipients",
             &bob.human_handle.email().to_string(),
-            "--weights",
-            "1",
             "--threshold",
             "1",
             "--no-confirmation"
