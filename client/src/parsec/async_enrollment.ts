@@ -54,7 +54,6 @@ import {
   SubmitterListLocalAsyncEnrollmentsError,
   UserProfile,
   X509CertificateReference,
-  X509URIFlavorValueTag,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import {
@@ -274,15 +273,13 @@ const REQUESTS = new Array<AsyncEnrollmentRequest>();
 
 function generateFakeCertificateReference(): X509CertificateReference {
   return {
-    uris: [
-      {
-        tag: X509URIFlavorValueTag.WindowsCNG,
-        x1: {
-          issuer: new Uint8Array(),
-          serialNumber: new Uint8Array(),
-        },
-      },
-    ],
+    uri: {
+      id: null,
+      label: null,
+      derIssuer: new Uint8Array(),
+      derSubject: new Uint8Array(),
+      serial: new Uint8Array(),
+    },
     hash: crypto.randomUUID(),
   };
 }
@@ -642,15 +639,13 @@ const _ASYNC_ENROLLMENT_MOCKED_API = {
     return {
       ok: true,
       value: {
-        uris: [
-          {
-            tag: X509URIFlavorValueTag.WindowsCNG,
-            x1: {
-              issuer: new Uint8Array(),
-              serialNumber: new Uint8Array(),
-            },
-          },
-        ],
+        uri: {
+          id: null,
+          label: null,
+          derIssuer: new Uint8Array(),
+          derSubject: new Uint8Array(),
+          serial: new Uint8Array(),
+        },
         // cspell:disable-next-line
         hash: 'ijkl',
       },

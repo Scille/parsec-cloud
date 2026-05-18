@@ -109,7 +109,6 @@ export {
   WorkspaceStatEntryErrorTag,
   WorkspaceStatFolderChildrenErrorTag,
   WorkspaceStopErrorTag,
-  X509URIFlavorValueTag,
 } from '@/plugins/libparsec';
 export type {
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
