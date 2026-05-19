@@ -26,7 +26,15 @@
         "unexpected": "An unexpected error occurred. Please try again.",
         "smallDisplayWarning": "We are currently working on small displays for Parsec so it's not yet fully compatible. We strongly recommend that you use a larger display to access it.",
         "incompatibleEnvironment": "Your browser is not compatible with Parsec yet.",
-        "incompatibleWithSafari": "Parsec does not yet support Safari. Please use another browser such as Chrome, Firefox or Edge."
+        "incompatibleWithSafari": "Parsec does not yet support Safari. Please use another browser such as Chrome, Firefox or Edge.",
+        "clockDesync": {
+            "title": "Your device clock is incorrect",
+            "message": "Your computer's date or time appears to be out of sync with the server. This can cause connection issues. Please check your system date, time, and time zone settings, then try again."
+        },
+        "webAppNotAllowed": {
+            "title": "Desktop application required",
+            "message": "Your organization does not allow access from the web application for security reasons. Please use the desktop application to continue. If you believe this is an error, contact your organization administrator."
+        }
     },
     "formatter": {
         "version": "(v{version})"

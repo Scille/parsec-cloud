@@ -67,6 +67,8 @@ enum Modals {
   Frozen = 'frozen',
   UpdateAuthentication = 'update-authentication',
   SetupTOTP = 'setup-totp',
+  WebClientNotAllowed = 'web-client-not-allowed',
+  ClockDesync = 'clock-desync',
 }
 
 // Order matters, some modal should take priority
@@ -76,6 +78,8 @@ const modalsSequencer = new Map<Modals, boolean>([
   [Modals.ExpiredOrganization, false],
   [Modals.Revoked, false],
   [Modals.Frozen, false],
+  [Modals.WebClientNotAllowed, false],
+  [Modals.ClockDesync, false],
   [Modals.TOS, false],
   [Modals.AppUpdateAvailable, false],
   [Modals.UpdateAuthentication, false],
@@ -141,6 +145,8 @@ onMounted(async () => {
       Events.ClientRevoked,
       Events.ClientFrozen,
       Events.UpdateAvailability,
+      Events.ClockDesync,
+      Events.WebClientNotAllowed,
     ],
     eventCallback,
   );
@@ -203,6 +209,14 @@ async function eventCallback(event: Events, data?: EventData): Promise<void> {
       window.electronAPI.log('info', `Toggling modal ${Modals.Revoked}`);
       modalsSequencer.set(Modals.Revoked, true);
       break;
+    case Events.WebClientNotAllowed:
+      window.electronAPI.log('info', `Toggling modal ${Modals.WebClientNotAllowed}`);
+      modalsSequencer.set(Modals.WebClientNotAllowed, true);
+      break;
+    case Events.ClockDesync:
+      window.electronAPI.log('info', `Toggling modal ${Modals.ClockDesync}`);
+      modalsSequencer.set(Modals.ClockDesync, true);
+      break;
     case Events.ClientFrozen:
       window.electronAPI.log('info', `Toggling modal ${Modals.Frozen}`);
       modalsSequencer.set(Modals.Frozen, true);
@@ -251,6 +265,8 @@ async function watchModals(): Promise<void> {
     [Modals.AppUpdateAvailable, onAppUpdate],
     [Modals.UpdateAuthentication, onUpdateAuthentication],
     [Modals.SetupTOTP, onSetupTOTP],
+    [Modals.ClockDesync, onClockDesync],
+    [Modals.WebClientNotAllowed, onWebAppNotAllowed],
   ]);
   for (const [modal, toggled] of modalsSequencer.entries()) {
     if (toggled && !(await modalController.getTop())) {
@@ -263,6 +279,29 @@ async function watchModals(): Promise<void> {
     }
   }
   timeoutId = window.setTimeout(watchModals, (window as any).TESTING ? 500 : 5000);
+}
+
+async function onClockDesync(): Promise<void> {
+  await injections.informationManager.present(
+    new Information({
+      title: 'globalErrors.clockDesync.title',
+      message: 'globalErrors.clockDesync.message',
+      level: InformationLevel.Warning,
+    }),
+    PresentationMode.Modal,
+  );
+}
+
+async function onWebAppNotAllowed(): Promise<void> {
+  await injections.informationManager.present(
+    new Information({
+      title: 'globalErrors.webAppNotAllowed.title',
+      message: 'globalErrors.webAppNotAllowed.message',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Modal,
+  );
+  await logout();
 }
 
 async function onUpdateAuthentication(): Promise<void> {

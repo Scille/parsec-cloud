@@ -536,7 +536,9 @@ type Events =
   | 'ClientEventMustAcceptTos'
   | 'ClientEventIncompatibleServer'
   | 'ClientEventRevokedSelfUser'
-  | 'ClientEventExpiredOrganization';
+  | 'ClientEventExpiredOrganization'
+  | 'ClientEventWebClientNotAllowedByOrganization'
+  | 'ClientEventTooMuchDriftWithServerClock';
 
 export async function sendEvent(page: MsPage, event: Events): Promise<void> {
   const url = new URL(page.url());
