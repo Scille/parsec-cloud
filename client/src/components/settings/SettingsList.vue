@@ -245,7 +245,6 @@ onUnmounted(async (): Promise<void> => {
   padding-top: 0px;
   padding-bottom: 0px;
   gap: 2rem;
-  contain: initial;
 
   &-container {
     display: flex;

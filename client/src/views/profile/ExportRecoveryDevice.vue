@@ -46,10 +46,7 @@
                 class="button-icon"
                 :icon="codeCopied ? checkmarkCircle : copy"
               />
-              <span
-                v-show="codeCopied === undefined"
-                v-if="isLargeDisplay"
-              >
+              <span v-show="codeCopied === undefined">
                 {{ $msTranslate('Authentication.mfa.step2.buttonCopy') }}
               </span>
               <span
@@ -313,6 +310,12 @@ async function downloadFile(
 
   &:is(.recovery-file) {
     .input-action {
+      &-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
       &-icon {
         background: var(--parsec-color-light-secondary-premiere);
         color: var(--parsec-color-light-secondary-text);
@@ -321,6 +324,7 @@ async function downloadFile(
         padding: 0.5rem;
         border-radius: var(--parsec-radius-8);
         font-size: 1.25rem;
+        flex-shrink: 0;
       }
 
       &-button {
