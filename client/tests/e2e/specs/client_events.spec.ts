@@ -159,3 +159,25 @@ If you think this is a mistake or have any issues, please contact an administrat
 
   await expect(connected).toBeHomePage();
 });
+
+msTest('Test desync clock', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventTooMuchDriftWithServerClock');
+  await connected.waitForTimeout(2000);
+  await expect(connected).toShowInformationModal(
+    // eslint-disable-next-line max-len
+    "Your computer's date or time appears to be out of sync with the server. This can cause connection issues. Please check your system date, time, and time zone settings, then try again.",
+    'Warning',
+  );
+  await expect(connected).toBeWorkspacePage();
+});
+
+msTest('Test web client not allowed', async ({ connected }) => {
+  await sendEvent(connected, 'ClientEventWebClientNotAllowedByOrganization');
+  await connected.waitForTimeout(2000);
+  await expect(connected).toShowInformationModal(
+    // eslint-disable-next-line max-len
+    'Your organization does not allow access from the web application for security reasons. Please use the desktop application to continue. If you believe this is an error, contact your organization administrator.',
+    'Error',
+  );
+  await expect(connected).toBeHomePage();
+});

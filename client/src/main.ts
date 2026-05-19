@@ -146,6 +146,13 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         break;
       case ClientEventTag.AsyncEnrollmentUpdated:
         distributor.dispatchEvent(Events.AsyncEnrollmentUpdated);
+        break;
+      case ClientEventTag.TooMuchDriftWithServerClock:
+        distributor.dispatchEvent(Events.ClockDesync);
+        break;
+      case ClientEventTag.WebClientNotAllowedByOrganization:
+        distributor.dispatchEvent(Events.WebClientNotAllowed);
+        break;
       // Ignore this for now;
       case ClientEventTag.ServerConfigChanged:
         break;

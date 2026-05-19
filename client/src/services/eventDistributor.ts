@@ -51,6 +51,8 @@ enum Events {
   WorkspaceMountpointsSync = 'workspace-mountpoints-sync',
   OpenContextMenu = 'open-context-menu',
   AsyncEnrollmentUpdated = 'async-enrollment-updated',
+  ClockDesync = 'clock-desync',
+  WebClientNotAllowed = 'web-client-not-allowed',
 }
 
 interface WorkspaceCreatedData {
