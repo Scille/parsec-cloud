@@ -43,12 +43,16 @@ impl PlatformPkiSystem {
         _config_dir: &std::path::Path,
         _scws_config: Option<PkiScwsConfig>,
     ) -> Result<Self, PkiSystemInitError> {
-        CertStore::open_current_user(LEAF_CERTIFICATE_STORE)
+        let store = CertStore::open_current_user(LEAF_CERTIFICATE_STORE)
             .map(|store| Self {
                 my_cert_store: store,
             })
             .context("Cannot open windows cert store")
-            .map_err(PkiSystemInitError::Internal)
+            .map_err(PkiSystemInitError::Internal)?;
+        configure_auto_resync_store(&store.my_cert_store)
+            .context("Failed to configure auto resync for certificate store")
+            .map_err(PkiSystemInitError::Internal)?;
+        Ok(store)
     }
 
     pub async fn open_certificate(
@@ -312,4 +316,46 @@ fn ask_user_to_select_certificate(store: &CertStore) -> Option<CertContext> {
             Some(schannel_utils::cert_context_from_raw(raw_cert_context))
         }
     }
+}
+
+/// Try our best to configure auto-resync for a given certificate store.
+///
+/// Without auto-resync, a certificate created after opening the store will be ignored (not in cache).
+/// This is typically an issue when a user start Parsec first (hence opening the certificate store)
+/// and only then plug its personal Smartcard to the machine.
+///
+/// The support of auto-resync is provider specific, we try to enable it but will not fail if not supported.
+///
+/// ## Errors
+///
+/// Will error if auto-resync is supported, but the configuration fails nevertheless.
+fn configure_auto_resync_store(store: &CertStore) -> std::io::Result<()> {
+    use windows_sys::Win32::Security::Cryptography;
+
+    let raw_store = schannel_utils::get_raw_store(store);
+
+    // SAFETY: `CertControlStore` is provided with correct pointer following the documentation
+    //
+    // The store pointer come from a valid certificate store.
+    //
+    // https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-certcontrolstore
+    unsafe {
+        let res = Cryptography::CertControlStore(
+            raw_store,
+            0, // When dwCtrlType is set to RESYNC, dwFlags must be set to 0
+            Cryptography::CERT_STORE_CTRL_AUTO_RESYNC, // Automatically re-sync store on enumeration
+            // or find call
+            core::ptr::null(), // Do not need to provide a handle when dwCtrlType is set to auto resync.
+        );
+
+        if res == windows_sys::Win32::Foundation::FALSE {
+            let err = std::io::Error::last_os_error();
+            if err.kind() != std::io::ErrorKind::Unsupported {
+                return Err(err);
+            } else {
+                log::warn!("Certificate store does not support auto resync");
+            }
+        }
+    }
+    Ok(())
 }
