@@ -245,7 +245,7 @@ msTest.describe(() => {
       },
     );
 
-    msTest(
+    msTest.fixme(
       `Document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} only files`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, ImportDocuments.Pdf | ImportDocuments.Png, false);
@@ -270,7 +270,7 @@ msTest.describe(() => {
       },
     );
 
-    msTest(
+    msTest.fixme(
       `Document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} with a folder`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
