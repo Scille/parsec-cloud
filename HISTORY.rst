@@ -8,7 +8,7 @@ Parsec v3.x
 .. towncrier release notes start
 
 
-Parsec v3.9.0-rc.1 (2026-05-11)
+Parsec v3.9.0-rc.2 (2026-05-19)
 -------------------------------
 
 Features
