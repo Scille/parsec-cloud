@@ -1906,14 +1906,14 @@ files = [
 
 [[package]]
 name = "sqlfluff"
-version = "4.1.0"
+version = "4.2.1"
 description = "The SQL Linter for Humans"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "sqlfluff-4.1.0-py3-none-any.whl", hash = "sha256:ae11123ca4a697abadbd2783f85f04e58c36e7dd26ae8024f400efccc6a44631"},
-    {file = "sqlfluff-4.1.0.tar.gz", hash = "sha256:83dd4c081afb48c0af861833015a18b13d52726bfe52a286246dbd7a64b7d111"},
+    {file = "sqlfluff-4.2.1-py3-none-any.whl", hash = "sha256:ea84f196c41f45df40a851b0881cb3fbb660570e07acbbfd304ff4e9b893424d"},
+    {file = "sqlfluff-4.2.1.tar.gz", hash = "sha256:32f43fbf6721e57f1a5a87d71df0d94b84ecba6ed65727266c7fa60991110fb9"},
 ]
 
 [package.dependencies]
@@ -1924,14 +1924,14 @@ diff-cover = ">=2.5.0"
 Jinja2 = "*"
 pathspec = "*"
 platformdirs = "*"
-pytest = "*"
 pyyaml = ">=5.1"
 regex = "*"
 tblib = "*"
 tqdm = "*"
 
 [package.extras]
-rs = ["sqlfluffrs (==4.1.0)"]
+rs = ["sqlfluffrs (==4.2.1)"]
+testutils = ["pytest"]
 
 [[package]]
 name = "starlette"
