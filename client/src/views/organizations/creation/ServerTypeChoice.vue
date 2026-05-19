@@ -40,7 +40,7 @@
           {{ $msTranslate('CreateOrganization.server.saas') }}
         </ion-text>
         <ion-icon
-          v-if="serverChoice === ServerType.Saas"
+          v-if="serverChoice === ServerType.Saas && isSmallDisplay"
           class="server-choice-item__checkmark"
           :icon="checkmarkCircle"
         />
@@ -63,7 +63,7 @@
           <span class="body">{{ $msTranslate('CreateOrganization.server.trial.description') }}</span>
         </ion-text>
         <ion-icon
-          v-if="serverChoice === ServerType.Trial"
+          v-if="serverChoice === ServerType.Trial && isSmallDisplay"
           class="server-choice-item__checkmark"
           :icon="checkmarkCircle"
         />
@@ -100,8 +100,10 @@ import { ServerType } from '@/services/parsecServers';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { IonButton, IonFooter, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { I18n, MsImage } from 'megashark-lib';
+import { I18n, MsImage, useWindowSize } from 'megashark-lib';
 import { ref } from 'vue';
+
+const { isSmallDisplay } = useWindowSize();
 
 const emits = defineEmits<{
   (e: 'serverChosen', serverType: ServerType): void;
@@ -130,7 +132,7 @@ function getImagePath(): string {
 
 <style scoped lang="scss">
 .server-page {
-  padding: 2rem;
+  padding: 1.5rem;
   display: flex;
   width: 100%;
 
@@ -190,14 +192,13 @@ function getImagePath(): string {
     }
 
     &__checkmark {
-      position: absolute;
-      top: 0.5rem;
-      right: 2rem;
-      color: var(--parsec-color-light-primary-600);
-      font-size: 1.5rem;
-      z-index: 3;
-
       @include ms.responsive-breakpoint('sm') {
+        position: absolute;
+        top: 0.5rem;
+        right: 2rem;
+        color: var(--parsec-color-light-primary-600);
+        font-size: 1.5rem;
+        z-index: 3;
         top: 1rem;
         right: 1rem;
       }

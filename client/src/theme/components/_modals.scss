@@ -12,9 +12,44 @@
   }
 }
 
+ion-modal {
+  scrollbar-color: var(--parsec-color-light-scrollbar-thumb) #ffffff;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  background-color: hsla(0, 0%, 0%, 0.25);
+
+  @media screen and (max-height: 700px) {
+    align-items: start;
+    overflow: auto;
+    padding: 1.5rem 0;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-bottom: 0;
+  }
+
+  &::part(backdrop) {
+    visibility: hidden;
+
+    @include ms.responsive-breakpoint('sm') {
+      visibility: visible;
+    }
+  }
+
+  &::part(content) {
+    @include ms.responsive-breakpoint('sm') {
+      max-height: 90dvh;
+      overflow: auto;
+    }
+  }
+}
+
 .modal-default::part(content) {
   @media only screen and (max-height: 700px) {
     max-width: var(--parsec-modal-width-md);
+    width: 100%;
   }
 }
 
@@ -23,22 +58,37 @@
 }
 
 /* -- modal-stepper -- */
+// Only apply the scroll fix to join/device-join modals where it's needed.
+// greet-organization-modal and role-assignment-modal have their own working scroll mechanism.
+// Note: DeviceJoinOrganizationModal also uses cssClass 'join-organization-modal'.
+.join-organization-modal {
+  .ion-page.modal-stepper {
+    display: flex;
+  }
+}
+
 .modal-stepper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
   .ms-wizard-stepper {
     height: auto !important;
+    flex-shrink: 0;
   }
 
   // global
   .modal {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
     padding: 1.5rem;
 
     @include ms.responsive-breakpoint('sm') {
       padding: 0;
-    }
-
-    &.wizardTrue {
-      padding-top: 2.5rem;
-      height: auto !important;
+      overflow: auto;
     }
 
     &-header {
@@ -71,6 +121,12 @@
 
     &-content {
       --background: transparent;
+      flex: 1;
+      min-height: 0;
+
+      @include ms.responsive-breakpoint('sm') {
+        min-height: initial;
+      }
 
       .step {
         display: flex;
@@ -84,6 +140,8 @@
     }
 
     &-footer {
+      flex-shrink: 0;
+
       @include ms.responsive-breakpoint('sm') {
         padding: 1rem 1.5rem 3rem;
       }
@@ -150,6 +208,17 @@
   }
 }
 
+.tab-menu-modal {
+  @include ms.responsive-breakpoint('sm') {
+    position: relative;
+    bottom: 3rem;
+  }
+
+  #fab-modal {
+    padding-bottom: 2rem;
+  }
+}
+
 .settings-modal {
   &::part(content) {
     min-width: var(--parsec-modal-width-lg);
@@ -172,10 +241,6 @@
     --height: auto;
   }
 
-  @media only screen and (max-height: 500px) {
-    --height: 90vh;
-  }
-
   &::part(content) {
     border-radius: var(--parsec-radius-12);
     max-width: var(--parsec-modal-width-sm);
@@ -195,7 +260,7 @@
   }
 
   .modal-content {
-    padding: 2rem;
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -222,24 +287,9 @@
   .Authentication {
     --height: 100%;
     height: 100%;
-
-    @media only screen and (max-height: 580px) {
-      --height: 500px;
-      height: 500px;
-    }
-
-    @media only screen and (max-height: 500px) {
-      --height: 90vh;
-      height: 90vh;
-    }
   }
 
   .Authentication {
-    @media only screen and (max-height: 700px) {
-      --height: 90vh;
-      height: 90vh;
-    }
-
     .modal-footer {
       position: sticky;
       bottom: 0;
@@ -267,12 +317,6 @@
       height: auto;
     }
   }
-
-  &:has(.Finish) {
-    &::part(content) {
-      max-width: var(--parsec-modal-width-sm);
-    }
-  }
 }
 
 .create-organization-modal {
@@ -283,7 +327,7 @@
   }
 
   .page-modal-container {
-    padding: 2rem;
+    padding: 1.5rem;
     display: flex;
     height: auto;
     width: 100%;
@@ -484,18 +528,13 @@
 
 .settings-modal {
   &::part(content) {
-    min-width: var(--parsec-modal-width-lg);
+    max-width: var(--parsec-modal-width-md);
     --height: 600px;
 
     @include ms.responsive-breakpoint('sm') {
       min-width: 100%;
       max-width: 100%;
       --height: 100%;
-    }
-
-    @media only screen and (max-height: 700px) {
-      --height: 90vh;
-      height: 90vh;
     }
   }
 
@@ -507,13 +546,22 @@
   .settings-list {
     gap: 0.5rem !important;
 
+    &-group {
+      padding: 1rem 0 0 !important;
+      box-shadow: none !important;
+      border: 1px solid var(--parsec-color-light-secondary-medium);
+
+      &:not(:last-child) {
+        margin-bottom: 1rem !important;
+      }
+    }
+
     &-group__title {
-      padding: 0 !important;
       font-size: 1rem !important;
     }
 
-    .settings-list__item {
-      padding: 1.25rem 1.5rem 1.25rem 0.5rem !important;
+    &__item {
+      padding: 1.25rem 1.5rem 1.25rem 1.5rem !important;
     }
   }
 }
@@ -541,7 +589,7 @@
   }
 
   .WaitForGuest .modal {
-    @media only screen and (max-height: 800px) {
+    @include ms.responsive-breakpoint('sm') {
       --height: 90vh;
       height: 90vh;
       overflow: auto;
@@ -559,16 +607,6 @@
     --height: 100%;
     height: 100%;
     overflow: auto;
-
-    @media only screen and (max-height: 580px) {
-      --height: 500px;
-      height: 500px;
-    }
-
-    @media only screen and (max-height: 500px) {
-      --height: 90vh;
-      height: 90vh;
-    }
   }
 
   // manage the two columns on Contact details step
@@ -718,19 +756,12 @@
     overflow: hidden;
     padding: 0;
 
-    @include ms.responsive-breakpoint('sm') {
-    }
-
     &-header {
       padding: 2rem 2rem 0;
       margin-bottom: 0.5rem;
 
       @include ms.responsive-breakpoint('sm') {
-        padding: 0;
-
-        &__title-container {
-          margin-bottom: 0;
-        }
+        padding: 1.5rem 0 0 1.5rem;
       }
     }
 
@@ -1092,11 +1123,6 @@
 .bug-report-modal {
   &::part(content) {
     --max-height: 800px;
-
-    @media only screen and (max-height: 800px) {
-      --height: 90vh;
-      height: 90vh;
-    }
   }
 
   .ms-modal {
@@ -1177,17 +1203,21 @@
   }
 }
 
-.invite-modal:has(.has-multiple-emails) {
-  .ms-modal {
-    overflow: auto;
+.invite-modal {
+  &::part(content) {
+    @include ms.responsive-breakpoint('sm') {
+      height: 90%;
+    }
+  }
+
+  &:has(.has-multiple-emails) {
+    .ms-modal {
+      overflow: auto;
+    }
   }
 
   &::part(content) {
     max-width: var(--parsec-modal-width-md);
-    @media only screen and (max-height: 600px) {
-      --height: 90vh;
-      height: 90vh;
-    }
   }
 }
 
@@ -1291,12 +1321,6 @@
   .information {
     .ms-modal {
       height: 100%;
-
-      @media only screen and (max-height: 800px) {
-        --height: 90vh;
-        height: 90vh;
-        overflow: auto;
-      }
     }
   }
 
@@ -1320,12 +1344,6 @@
 
   .ms-modal {
     height: 100%;
-
-    @media only screen and (max-height: 400px) {
-      --height: 90vh;
-      height: 90vh;
-      overflow: auto;
-    }
   }
 
   .ms-modal-footer-buttons {
