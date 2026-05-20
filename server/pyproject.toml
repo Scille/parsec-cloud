@@ -82,7 +82,6 @@ trustme = "^1.2.1"
 # type-stubs
 asyncpg-stubs = "^0.29.1"
 types-boto3 = "^1.42.96"
-types-requests = "^2.32.4"
 # other dependencies
 poetry-lock-package = "^0.5.2"
 # used only in misc/test_expected_payload_cooker.py

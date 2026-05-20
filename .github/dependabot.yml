@@ -190,11 +190,6 @@ updates:
           - pyright
           - ruff
           - sqlfluff
-      server-dev-types:
-        dependency-type: development
-        patterns:
-          - asyncpg-stubs
-          - types-requests
       server-dev-build:
         dependency-type: development
         patterns:
