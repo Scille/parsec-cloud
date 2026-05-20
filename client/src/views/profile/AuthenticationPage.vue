@@ -2,7 +2,10 @@
 
 <template>
   <div class="authentication-container">
-    <template v-if="currentDevice">
+    <template v-if="querying">
+      <ms-spinner />
+    </template>
+    <template v-else-if="currentDevice">
       <div class="authentication-content">
         <div class="authentication-item">
           <div class="authentication-item-header">
@@ -127,12 +130,13 @@ import DeleteTotpModal from '@/views/totp/DeleteTotpModal.vue';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
 import { IonButton, IonIcon, IonText, IonToggle, modalController, ToggleCustomEvent } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
-import { Answer, askQuestion, MsModalResult, MsReportText, MsReportTheme, Translatable } from 'megashark-lib';
+import { Answer, askQuestion, MsModalResult, MsReportText, MsReportTheme, MsSpinner, Translatable } from 'megashark-lib';
 import { computed, inject, onMounted, Ref, ref } from 'vue';
 
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const error = ref('');
+const querying = ref(true);
 const totpStatus = ref<TOTPSetupStatus | undefined>(undefined);
 const totpActivated = ref(false);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
@@ -212,30 +216,35 @@ onMounted(async () => {
 });
 
 async function refresh(): Promise<void> {
-  const totpStatusResult = await getTotpStatus();
+  try {
+    querying.value = true;
+    const totpStatusResult = await getTotpStatus();
 
-  totpStatus.value = totpStatusResult.ok ? totpStatusResult.value : undefined;
+    totpStatus.value = totpStatusResult.ok ? totpStatusResult.value : undefined;
 
-  const serverConfigResult = await getCurrentServerConfig();
-  if (serverConfigResult.ok) {
-    serverConfig.value = serverConfigResult.value;
-  }
+    const serverConfigResult = await getCurrentServerConfig();
+    if (serverConfigResult.ok) {
+      serverConfig.value = serverConfigResult.value;
+    }
 
-  const deviceResult = await getCurrentAvailableDevice();
+    const deviceResult = await getCurrentAvailableDevice();
 
-  if (!deviceResult.ok) {
-    informationManager.value.present(
-      new Information({
-        message: 'MyProfilePage.errors.failedToRetrieveInformation',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    error.value = 'MyProfilePage.errors.failedToRetrieveInformation';
-  } else {
-    error.value = '';
-    currentDevice.value = deviceResult.value;
-    totpActivated.value = currentDevice.value.totpOpaqueKeyId !== null;
+    if (!deviceResult.ok) {
+      informationManager.value.present(
+        new Information({
+          message: 'MyProfilePage.errors.failedToRetrieveInformation',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+      error.value = 'MyProfilePage.errors.failedToRetrieveInformation';
+    } else {
+      error.value = '';
+      currentDevice.value = deviceResult.value;
+      totpActivated.value = currentDevice.value.totpOpaqueKeyId !== null;
+    }
+  } finally {
+    querying.value = false;
   }
 }
 
