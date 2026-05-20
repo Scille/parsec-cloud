@@ -29,7 +29,7 @@ Parsec is a cloud-based application for simple and cryptographically secure file
 Getting started
 ===============
 
-Take a look at the :ref:`Introduction <https://docs.parsec.cloud/en/latest/userguide/introduction.html>`
+Take a look at the `User Guide <https://docs.parsec.cloud/en/latest/userguide/introduction.html>`_
 to get an overview of what Parsec can do for you and to learn about what security guarantees it provides for your data.
 
 Install
