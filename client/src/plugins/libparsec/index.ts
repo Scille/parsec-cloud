@@ -56,6 +56,7 @@ const FUNCTIONS_TO_SLOW_DOWN: Array<string> = [
   'bootstrapOrganization',
   'clientInfo',
   'clientListInvitations',
+  'clientTotpSetupStatus',
 ];
 
 const MOCKS: Array<{ name: string; funct: (..._args: Array<any>) => Promise<any> }> = [];
