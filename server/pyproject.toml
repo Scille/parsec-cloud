@@ -85,9 +85,10 @@ types-boto3 = "^1.42.96"
 types-requests = "^2.32.4"
 # other dependencies
 poetry-lock-package = "^0.5.2"
-# used only for request/response serialization tests in libparsec 'protocol' crate
-# see misc/test_expected_payload_cooker.py
+# used only in misc/test_expected_payload_cooker.py
+# to generate payloads for libparsec protocol serialization tests
 msgpack = "^1.1.2"
+pynacl = "^1.6.2"
 
 [tool.poetry.group.testbed-server]
 optional = true
