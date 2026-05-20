@@ -53,8 +53,6 @@ const config = {
   ignoreDependencies: [
     // used during signature of electron artifact for macOS
     '@electron/notarize',
-    // not used in code but in scripts commands
-    '@ionic/cli',
     // an electron-builder utility, only used in partial imports for typing
     'app-builder-lib',
     // only used in electron/assets

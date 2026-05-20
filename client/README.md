@@ -12,7 +12,7 @@ For general setup, take a look at [development quickstart guide](../docs/develop
 npm install
 ```
 
-Among other things, it installs `Ionic` / `Vue` / `Capacitor` CLI locally, you can use them with npx like this: `npx ionic --help`
+Among other things, it installs `Vue` / `Capacitor` CLI locally, you can use them with npx like this: `npx cap --help`
 
 If you plan on running Electron, you may also want to launch `npm install` inside the electron directory, or it will be run automatically when you start Electron for the first time.
 
