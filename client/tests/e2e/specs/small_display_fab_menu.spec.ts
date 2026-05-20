@@ -75,17 +75,19 @@ msTest('Fab button and menu as standard and reader', async ({ workspacesStandard
 
   // No button in reader workspace
   await workspacesStandard.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-  await expect(fabButton).toBeHidden();
+  await expect(fabButton).toBeVisible();
 
   // No button in organization management
   await tabBarButtons.nth(2).click();
   await expect(workspacesStandard).toBeOrganizationPage();
-  await expect(fabButton).toBeHidden();
+  await expect(fabButton).toBeVisible();
+  await expect(fabButton).toContainClass('disabled');
 
   // No button in profile page
   await tabBarButtons.nth(3).click();
   await expect(workspacesStandard).toBeMyProfilePage();
-  await expect(fabButton).toBeHidden();
+  await expect(fabButton).toBeVisible();
+  await expect(fabButton).toContainClass('disabled');
 });
 
 msTest('Fab button and menu as external', async ({ workspacesExternal }) => {

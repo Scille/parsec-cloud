@@ -478,6 +478,7 @@ onUnmounted(async () => {
     background: var(--parsec-color-light-secondary-white);
     box-shadow: var(--parsec-shadow-strong);
     border-radius: var(--parsec-radius-18) var(--parsec-radius-18) 0 0;
+    height: stretch;
   }
 
   .profile-menu {
@@ -706,8 +707,13 @@ onUnmounted(async () => {
   padding: 1rem 0rem;
 
   @include ms.responsive-breakpoint('sm') {
+    border-top: none;
     padding: 0;
     margin-top: 0;
+    padding: 1rem 2rem 2rem;
+  }
+
+  @include ms.responsive-breakpoint('xs') {
     padding: 1rem 1.5rem 2rem;
   }
 
@@ -723,6 +729,9 @@ onUnmounted(async () => {
     color: var(--parsec-color-light-danger-500);
 
     @include ms.responsive-breakpoint('sm') {
+      border: 1px solid var(--parsec-color-light-secondary-medium);
+      box-shadow: var(--parsec-shadow-input);
+      padding: 0.75rem 1rem;
       justify-content: center;
       margin-inline: 0;
     }
