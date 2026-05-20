@@ -44,10 +44,11 @@
 
     <div
       class="tab-bar-menu fab-button-container"
-      v-show="actions.length > 0"
+      v-show="showFab"
     >
       <ion-fab
         class="fab-content"
+        :class="{ disabled: actions.length === 0 }"
         size="small"
         id="add-menu-fab-button"
         @click="!isMenuOpen ? openMenuModal() : closeMenuModal()"
@@ -103,10 +104,16 @@ import { MenuAction } from '@/views/menu/types';
 import { IonFab, IonFabButton, IonIcon, IonText, modalController } from '@ionic/vue';
 import { business, folder, personCircle, prism } from 'ionicons/icons';
 import { AddIcon, MsImage, MsModalResult } from 'megashark-lib';
-import { onMounted, ref, Ref } from 'vue';
+import { computed, onMounted, ref, Ref } from 'vue';
 
 const isMenuOpen = ref(false);
 const userInfo: Ref<ClientInfo | null> = ref(null);
+
+const showFab = computed((): boolean => {
+  if (!userInfo.value) return false;
+  const isOutsider = userInfo.value.currentProfile === UserProfile.Outsider;
+  return !isOutsider || currentRouteIs(Routes.Documents);
+});
 
 const props = defineProps<{
   actions: Array<Array<MenuAction>>;
@@ -295,6 +302,20 @@ async function openMenuModal(): Promise<void> {
         .fab-icon {
           --fill-color: var(--parsec-color-light-primary-600);
           transform: rotate(45deg);
+        }
+      }
+    }
+
+    .fab-content.disabled {
+      cursor: not-allowed;
+      pointer-events: none;
+
+      .fab-button {
+        --background: var(--parsec-color-light-secondary-text);
+        opacity: 0.4;
+
+        .fab-icon {
+          --fill-color: var(--parsec-color-light-secondary-white);
         }
       }
     }
