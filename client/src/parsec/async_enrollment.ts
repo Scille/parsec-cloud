@@ -83,19 +83,29 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
       // So we do some loading part here, we forward the elements to a proxy inside the worker that wraps "pkiInitForScws"
       // to import the module and set a global state, and finally the real `libparsec.pkiInitForScws` is called.
 
-      const parsecServerAddr = window.origin;
+      const parsedRes = await libparsec.tryConvertHttpToParsecAddr(window.origin);
+      if (!parsedRes.ok) {
+        console.warn(`PKI: Failed to parse ${window.origin} into a parsec addr`);
+        return {
+          ok: false,
+          error: {
+            tag: PkiSystemInitErrorTag.NotAvailable,
+            error: `Cannot parse origin: ${parsedRes.error.tag}: ${parsedRes.error.error}`,
+          },
+        };
+      }
 
       const SCWS_LOCATION_NAME = 'scws-scwsapi_js-location';
       const SCWS_APP_CERTIFICATE = 'scws-web_application_certificate';
 
       const scwsapiLocationTag = document.querySelector(`meta[name="${SCWS_LOCATION_NAME}"`) as HTMLMetaElement | null;
       if (!scwsapiLocationTag?.content) {
-        console.log(`No meta tag '${SCWS_LOCATION_NAME}' present`);
+        console.log(`PKI: No meta tag '${SCWS_LOCATION_NAME}' present`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${SCWS_LOCATION_NAME}' present` } };
       }
       const scwsapiAppCertificateTag = document.querySelector(`meta[name="${SCWS_APP_CERTIFICATE}"`) as HTMLMetaElement | null;
       if (!scwsapiAppCertificateTag?.content) {
-        console.log(`No meta tag '${SCWS_APP_CERTIFICATE}' present`);
+        console.log(`PKI: No meta tag '${SCWS_APP_CERTIFICATE}' present`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${SCWS_APP_CERTIFICATE}' present` } };
       }
 
@@ -103,7 +113,7 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
       // so we just cast. Trust me bro.
       return await (libparsec.pkiInitForScws as any)(
         window.getConfigDir(),
-        parsecServerAddr,
+        parsedRes.value,
         scwsapiLocationTag.content,
         scwsapiAppCertificateTag.content,
       );

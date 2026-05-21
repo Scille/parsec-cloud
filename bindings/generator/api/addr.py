@@ -12,6 +12,7 @@ from .common import (
     StrBasedType,
     UserID,
     Variant,
+    VariantItemTuple,
     VlobID,
 )
 
@@ -232,4 +233,28 @@ def build_parsec_addr(
     port: U16 | None,
     use_ssl: bool,
 ) -> ParsecAddr:
+    raise NotImplementedError
+
+
+class AddrError(ErrorVariant):
+    class InvalidUrl: ...
+
+    class NotARedirection: ...
+
+    class InvalidUrlScheme:
+        expected: str
+
+    class InvalidParamValue:
+        param: str
+        help: str
+
+    DuplicateParam = VariantItemTuple(str)
+    MissingParam = VariantItemTuple(str)
+
+    class ShouldNotHaveAPath: ...
+
+    class InvalidOrganizationID: ...
+
+
+def try_convert_http_to_parsec_addr(http_url: Ref[str]) -> Result[ParsecAddr, AddrError]:
     raise NotImplementedError
