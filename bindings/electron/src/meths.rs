@@ -27141,47 +27141,6 @@ fn openbao_list_self_emails(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// parse_http_url
-fn parse_http_url(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let url = {
-        let js_val = cx.argument::<JsString>(0)?;
-        js_val.value(&mut cx)
-    };
-    let ret = libparsec::parse_http_url(url);
-    let js_ret = match ret {
-        Ok(ok) => {
-            let js_obj = JsObject::new(&mut cx);
-            let js_tag = JsBoolean::new(&mut cx, true);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_value = JsString::try_new(&mut cx, {
-                let custom_to_rs_string =
-                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-                        Ok(addr.to_url().into())
-                    };
-                match custom_to_rs_string(ok) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err.to_string()),
-                }
-            })
-            .or_throw(&mut cx)?;
-            js_obj.set(&mut cx, "value", js_value)?;
-            js_obj
-        }
-        Err(err) => {
-            let js_obj = cx.empty_object();
-            let js_tag = JsBoolean::new(&mut cx, false);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err = variant_addr_error_rs_to_js(&mut cx, err)?;
-            js_obj.set(&mut cx, "error", js_err)?;
-            js_obj
-        }
-    };
-    let (deferred, promise) = cx.promise();
-    deferred.resolve(&mut cx, js_ret);
-    Ok(promise)
-}
-
 // parse_parsec_addr
 fn parse_parsec_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -28709,6 +28668,47 @@ fn totp_setup_status_anonymous(mut cx: FunctionContext) -> JsResult<JsPromise> {
             });
         });
 
+    Ok(promise)
+}
+
+// try_convert_http_to_parsec_addr
+fn try_convert_http_to_parsec_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let http_url = {
+        let js_val = cx.argument::<JsString>(0)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::try_convert_http_to_parsec_addr(&http_url);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = JsString::try_new(&mut cx, {
+                let custom_to_rs_string =
+                    |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(ok) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err.to_string()),
+                }
+            })
+            .or_throw(&mut cx)?;
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_addr_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
     Ok(promise)
 }
 
@@ -32730,7 +32730,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("mountpointUnmount", mountpoint_unmount)?;
     cx.export_function("newCanceller", new_canceller)?;
     cx.export_function("openbaoListSelfEmails", openbao_list_self_emails)?;
-    cx.export_function("parseHttpUrl", parse_http_url)?;
     cx.export_function("parseParsecAddr", parse_parsec_addr)?;
     cx.export_function("pathFilename", path_filename)?;
     cx.export_function("pathJoin", path_join)?;
@@ -32782,6 +32781,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("totpFetchOpaqueKey", totp_fetch_opaque_key)?;
     cx.export_function("totpSetupConfirmAnonymous", totp_setup_confirm_anonymous)?;
     cx.export_function("totpSetupStatusAnonymous", totp_setup_status_anonymous)?;
+    cx.export_function(
+        "tryConvertHttpToParsecAddr",
+        try_convert_http_to_parsec_addr,
+    )?;
     cx.export_function(
         "updateDeviceChangeAuthentication",
         update_device_change_authentication,

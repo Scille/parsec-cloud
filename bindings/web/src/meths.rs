@@ -27663,42 +27663,6 @@ pub fn openbaoListSelfEmails(
     }))
 }
 
-// parse_http_url
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn parseHttpUrl(url: String) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let ret = libparsec::parse_http_url(url);
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string =
-                        |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
-                            Ok(addr.to_url().into())
-                        };
-                    match custom_to_rs_string(value) {
-                        Ok(ok) => ok,
-                        #[allow(clippy::unnecessary_to_owned)]
-                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
-                    }
-                    .as_ref()
-                });
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_addr_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    }))
-}
-
 // parse_parsec_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -28844,6 +28808,42 @@ pub fn totpSetupStatusAnonymous(config: Object, addr: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_totp_setup_status_anonymous_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// try_convert_http_to_parsec_addr
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn tryConvertHttpToParsecAddr(http_url: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::try_convert_http_to_parsec_addr(&http_url);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_addr_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

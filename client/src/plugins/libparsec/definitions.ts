@@ -7095,9 +7095,6 @@ export interface LibParsecPlugin {
         openbao_entity_id: string,
         openbao_auth_token: string
     ): Promise<Result<Array<string>, OpenBaoListSelfEmailsError>>
-    parseHttpUrl(
-        url: string
-    ): Promise<Result<ParsecAddr, AddrError>>
     parseParsecAddr(
         url: string
     ): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>>
@@ -7201,6 +7198,9 @@ export interface LibParsecPlugin {
         config: ClientConfig,
         addr: ParsecTOTPResetAddr
     ): Promise<Result<TOTPSetupStatus, TotpSetupStatusAnonymousError>>
+    tryConvertHttpToParsecAddr(
+        http_url: string
+    ): Promise<Result<ParsecAddr, AddrError>>
     updateDeviceChangeAuthentication(
         config_dir: Path,
         current_auth: DeviceAccessStrategy,

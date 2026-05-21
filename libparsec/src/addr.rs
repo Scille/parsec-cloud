@@ -200,6 +200,6 @@ pub fn build_parsec_addr(hostname: String, port: Option<u16>, use_ssl: bool) -> 
     ParsecAddr::new(hostname, port, use_ssl)
 }
 
-pub fn parse_http_url(url: String) -> Result<ParsecAddr, AddrError> {
-    ParsecAddr::from_http_url(&url)
+pub fn try_convert_http_to_parsec_addr(http_url: &str) -> Result<ParsecAddr, AddrError> {
+    ParsecAddr::from_http_url(http_url)
 }

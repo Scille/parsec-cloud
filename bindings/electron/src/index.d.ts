@@ -5943,9 +5943,6 @@ export function openbaoListSelfEmails(
     openbao_entity_id: string,
     openbao_auth_token: string
 ): Promise<Result<Array<string>, OpenBaoListSelfEmailsError>>
-export function parseHttpUrl(
-    url: string
-): Promise<Result<string, AddrError>>
 export function parseParsecAddr(
     url: string
 ): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>>
@@ -6049,6 +6046,9 @@ export function totpSetupStatusAnonymous(
     config: ClientConfig,
     addr: string
 ): Promise<Result<TOTPSetupStatus, TotpSetupStatusAnonymousError>>
+export function tryConvertHttpToParsecAddr(
+    http_url: string
+): Promise<Result<string, AddrError>>
 export function updateDeviceChangeAuthentication(
     config_dir: string,
     current_auth: DeviceAccessStrategy,

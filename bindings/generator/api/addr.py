@@ -256,5 +256,5 @@ class AddrError(ErrorVariant):
     class InvalidOrganizationID: ...
 
 
-def parse_http_url(url: str) -> Result[ParsecAddr, AddrError]:
+def try_convert_http_to_parsec_addr(http_url: Ref[str]) -> Result[ParsecAddr, AddrError]:
     raise NotImplementedError
