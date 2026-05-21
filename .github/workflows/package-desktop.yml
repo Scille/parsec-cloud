@@ -476,7 +476,7 @@ jobs:
             client/electron/build
             client/electron/assets
             client/electron/scripts
-            client/electron/package.js
+            client/electron/package.cjs
             client/electron/package.json
             client/electron/package-lock.json
             client/electron/sign-windows-package.cmd
