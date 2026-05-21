@@ -244,7 +244,7 @@ import {
   getDocumentPath,
   getFileHandlerMode,
   getWorkspaceHandle,
-  navigateTo,
+  routerGoBack,
   Routes,
   watchRoute,
 } from '@/router';
@@ -416,12 +416,12 @@ async function _getFileInfoAt(
       }
       return info;
     } catch (e: any) {
-      window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
+      window.electronAPI.log('error', `Can't get file content: ${e.toString()}`);
     } finally {
       await history.closeFile(fd);
     }
   } catch (e: any) {
-    window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
+    window.electronAPI.log('error', `Can't get file content: ${e.toString()}`);
   } finally {
     await history.stop();
   }
@@ -469,13 +469,13 @@ async function _getFileInfo(
     }
     return info;
   } catch (e: any) {
-    window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
+    window.electronAPI.log('error', `Can't get file content: ${e.toString()}`);
   } finally {
     await closeFile(workspaceHandle, fd);
   }
 }
 
-async function loadFile(): Promise<void> {
+async function loadFile(): Promise<boolean> {
   loaded.value = false;
   contentInfo.value = undefined;
   detectedFileType.value = null;
@@ -484,7 +484,7 @@ async function loadFile(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
-    return;
+    return false;
   }
   const path = getDocumentPath();
   if (!path) {
@@ -493,7 +493,7 @@ async function loadFile(): Promise<void> {
   const fileName = await Path.filename(path);
   if (!fileName) {
     window.electronAPI.log('error', 'Failed to retrieve the file name');
-    return;
+    return false;
   }
 
   const timestamp = Number(getCurrentRouteQuery().timestamp);
@@ -504,7 +504,7 @@ async function loadFile(): Promise<void> {
   const fileInfoSerialized = getCurrentRouteQuery().fileTypeInfo;
   if (!fileInfoSerialized) {
     window.electronAPI.log('error', 'Failed to retrieve file type info');
-    return;
+    return false;
   }
   const fileInfo: DetectedFileType = Base64.toObject(fileInfoSerialized) as DetectedFileType;
   detectedFileType.value = fileInfo;
@@ -516,18 +516,9 @@ async function loadFile(): Promise<void> {
   if (!info) {
     contentInfo.value = undefined;
     handlerComponent.value = null;
-    informationManager.value.present(
-      new Information({
-        message: 'fileViewers.errors.titles.genericError',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    if (!timestamp) {
-      await openWithSystem(path);
-    }
-    await navigateTo(Routes.Documents, { query: { workspaceHandle: workspaceHandle, documentPath: await Path.parent(path) } });
-    return;
+    detectedFileType.value = null;
+
+    return false;
   }
 
   contentInfo.value = info;
@@ -539,6 +530,7 @@ async function loadFile(): Promise<void> {
   loadComponent();
 
   loaded.value = true;
+  return true;
 }
 
 function loadComponent(): void {
@@ -610,7 +602,19 @@ onMounted(async () => {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
 
-  await loadFile();
+  if (!(await loadFile())) {
+    informationManager.value.present(
+      new Information({
+        message: 'fileViewers.errors.titles.genericError',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    loaded.value = true;
+    pathOpener.pathOpened();
+    await routerGoBack();
+    return;
+  }
 
   hideHeader();
 
