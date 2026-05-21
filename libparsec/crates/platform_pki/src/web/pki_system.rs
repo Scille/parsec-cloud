@@ -217,14 +217,7 @@ fn get_scws_values_from_global_context() -> Result<(scwsapi::Scws, String), PkiS
     if !raw_scws.is_object() || !raw_webapp_cert.is_string() {
         return Err(PkiSystemInitError::NotAvailable);
     }
-    let scws: scwsapi::Scws = raw_scws
-        .dyn_into::<scwsapi_sys::Scws>()
-        .map_err(|e| {
-            PkiSystemInitError::Internal(anyhow::anyhow!(
-                "Cannot cast SCWS object to correct type ({e:?})"
-            ))
-        })
-        .map(Into::into)?;
+    let scws: scwsapi::Scws = scwsapi_sys::Scws::from(raw_scws).into();
     let cert = raw_webapp_cert
         .dyn_into::<js_sys::JsString>()
         .map_err(|e| {
