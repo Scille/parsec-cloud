@@ -24,32 +24,16 @@ python-analyze:
 
 rust-android-binding: &rust-android-binding bindings/android/**
 
-android: &android client/android/**
-
 android-dependencies-project: &android-dependencies-project
   # Bindings configuration
   - bindings/android/gradle/verification-metadata.xml
   - bindings/android/*.gradle
   - bindings/android/*.lockfile
   - bindings/android/*.properties
-  # Client configuration
-  - client/android/gradle/verification-metadata.xml
-  - client/android/*.gradle
-  - client/android/*.lockfile
-  - client/android/*.properties
-  # App configuration
-  - client/android/app/*.gradle
-  - client/android/app/*.lockfile
-  - client/android/app/*.properties
-  # Capacitor cordova plugins
-  - client/android/capacitor-cordova-android-plugins/*.gradle
-  - client/android/capacitor-cordova-android-plugins/*.lockfile
-  - client/android/capacitor-cordova-android-plugins/*.properties
 
 java-analyze:
   - *codeql-workflow
   - *rust-android-binding
-  - *android
   - *android-dependencies-project
 
 electron: &electron
