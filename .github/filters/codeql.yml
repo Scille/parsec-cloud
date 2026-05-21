@@ -22,20 +22,6 @@ python-analyze:
   - *python
   - *python-dependencies-project
 
-rust-android-binding: &rust-android-binding bindings/android/**
-
-android-dependencies-project: &android-dependencies-project
-  # Bindings configuration
-  - bindings/android/gradle/verification-metadata.xml
-  - bindings/android/*.gradle
-  - bindings/android/*.lockfile
-  - bindings/android/*.properties
-
-java-analyze:
-  - *codeql-workflow
-  - *rust-android-binding
-  - *android-dependencies-project
-
 electron: &electron
   - client/electron/**
 
