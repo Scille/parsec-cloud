@@ -199,3 +199,7 @@ pub fn build_parsec_organization_bootstrap_addr(
 pub fn build_parsec_addr(hostname: String, port: Option<u16>, use_ssl: bool) -> ParsecAddr {
     ParsecAddr::new(hostname, port, use_ssl)
 }
+
+pub fn try_convert_http_to_parsec_addr(http_url: &str) -> Result<ParsecAddr, AddrError> {
+    ParsecAddr::from_http_url(http_url)
+}
