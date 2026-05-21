@@ -292,7 +292,7 @@ def sign_cli(version: str | None, workdir: Path) -> None:
         pass
     assets_directory.mkdir(parents=True, exist_ok=True)
     shutil.copy(target, assets_directory)
-    with (assets_directory / f"{target.name}.sha256").open("w") as f:
+    with (assets_directory / f"{target.name}.sha256").open("w", encoding="utf8") as f:
         f.write(sha256((assets_directory / target.name).read_bytes()).hexdigest())
 
     # 5) Upload assets to Github release
@@ -314,7 +314,7 @@ def sign_gui(version: str | None, workdir: Path, hardened: bool = False) -> None
     # 2) Unzip and check the artifact
 
     destination = download_and_unzip_artifact(artifact, token, workdir)
-    with (destination / "package.json").open() as f:
+    with (destination / "package.json").open(encoding="utf8") as f:
         package = json.load(f)
     if f"v{package['version']}" != artifact.version:
         raise RuntimeError(f"Version mismatch: {artifact.version} != v{package['version']}")
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     if version is not None and version[:1].isdigit():
         version = f"v{version}"
 
-    workdir = Path(namespace.workdir)
+    workdir = Path(namespace.workdir).resolve()
     workdir.mkdir(parents=True, exist_ok=True)
 
     if not namespace.what or "cli" in namespace.what:
