@@ -1079,6 +1079,55 @@ export type ActiveUsersLimit =
   | ActiveUsersLimitNoLimit
 
 
+// AddrError
+export interface AddrErrorDuplicateParam {
+    tag: "AddrErrorDuplicateParam"
+    error: string
+    x1: string
+}
+export interface AddrErrorInvalidOrganizationID {
+    tag: "AddrErrorInvalidOrganizationID"
+    error: string
+}
+export interface AddrErrorInvalidParamValue {
+    tag: "AddrErrorInvalidParamValue"
+    error: string
+    param: string
+    help: string
+}
+export interface AddrErrorInvalidUrl {
+    tag: "AddrErrorInvalidUrl"
+    error: string
+}
+export interface AddrErrorInvalidUrlScheme {
+    tag: "AddrErrorInvalidUrlScheme"
+    error: string
+    expected: string
+}
+export interface AddrErrorMissingParam {
+    tag: "AddrErrorMissingParam"
+    error: string
+    x1: string
+}
+export interface AddrErrorNotARedirection {
+    tag: "AddrErrorNotARedirection"
+    error: string
+}
+export interface AddrErrorShouldNotHaveAPath {
+    tag: "AddrErrorShouldNotHaveAPath"
+    error: string
+}
+export type AddrError =
+  | AddrErrorDuplicateParam
+  | AddrErrorInvalidOrganizationID
+  | AddrErrorInvalidParamValue
+  | AddrErrorInvalidUrl
+  | AddrErrorInvalidUrlScheme
+  | AddrErrorMissingParam
+  | AddrErrorNotARedirection
+  | AddrErrorShouldNotHaveAPath
+
+
 // AnyClaimRetrievedInfo
 export interface AnyClaimRetrievedInfoDevice {
     tag: "AnyClaimRetrievedInfoDevice"
@@ -5894,6 +5943,9 @@ export function openbaoListSelfEmails(
     openbao_entity_id: string,
     openbao_auth_token: string
 ): Promise<Result<Array<string>, OpenBaoListSelfEmailsError>>
+export function parseHttpUrl(
+    url: string
+): Promise<Result<string, AddrError>>
 export function parseParsecAddr(
     url: string
 ): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>>

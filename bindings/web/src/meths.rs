@@ -7474,6 +7474,91 @@ fn variant_active_users_limit_rs_to_js(
     Ok(js_obj)
 }
 
+// AddrError
+
+#[allow(dead_code)]
+fn variant_addr_error_rs_to_js(rs_obj: libparsec::AddrError) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AddrError::DuplicateParam(x1, ..) => {
+            Reflect::set(&js_obj, &"tag".into(), &"AddrErrorDuplicateParam".into())?;
+            let js_x1 = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(x1.as_ref())
+            };
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::AddrError::InvalidOrganizationID { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AddrErrorInvalidOrganizationID".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::AddrError::InvalidParamValue { param, help, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AddrErrorInvalidParamValue".into())?;
+            let js_param = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(param.as_ref())
+            };
+            Reflect::set(&js_obj, &"param".into(), &js_param)?;
+            let js_help = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(help.as_ref())
+            };
+            Reflect::set(&js_obj, &"help".into(), &js_help)?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::AddrError::InvalidUrl { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AddrErrorInvalidUrl".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::AddrError::InvalidUrlScheme { expected, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AddrErrorInvalidUrlScheme".into())?;
+            let js_expected = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(expected.as_ref())
+            };
+            Reflect::set(&js_obj, &"expected".into(), &js_expected)?;
+        }
+        libparsec::AddrError::MissingParam(x1, ..) => {
+            Reflect::set(&js_obj, &"tag".into(), &"AddrErrorMissingParam".into())?;
+            let js_x1 = {
+                #[allow(clippy::useless_asref)]
+                JsValue::from_str(x1.as_ref())
+            };
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::AddrError::NotARedirection { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AddrErrorNotARedirection".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::AddrError::ShouldNotHaveAPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AddrErrorShouldNotHaveAPath".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // AnyClaimRetrievedInfo
 
 #[allow(dead_code)]
@@ -27571,6 +27656,42 @@ pub fn openbaoListSelfEmails(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_open_bao_list_self_emails_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// parse_http_url
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn parseHttpUrl(url: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::parse_http_url(url);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        #[allow(clippy::unnecessary_to_owned)]
+                        Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_addr_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

@@ -1227,6 +1227,65 @@ export type ActiveUsersLimit =
   | ActiveUsersLimitLimitedTo
   | ActiveUsersLimitNoLimit
 
+// AddrError
+export enum AddrErrorTag {
+    DuplicateParam = 'AddrErrorDuplicateParam',
+    InvalidOrganizationID = 'AddrErrorInvalidOrganizationID',
+    InvalidParamValue = 'AddrErrorInvalidParamValue',
+    InvalidUrl = 'AddrErrorInvalidUrl',
+    InvalidUrlScheme = 'AddrErrorInvalidUrlScheme',
+    MissingParam = 'AddrErrorMissingParam',
+    NotARedirection = 'AddrErrorNotARedirection',
+    ShouldNotHaveAPath = 'AddrErrorShouldNotHaveAPath',
+}
+
+export interface AddrErrorDuplicateParam {
+    tag: AddrErrorTag.DuplicateParam
+    error: string
+    x1: string
+}
+export interface AddrErrorInvalidOrganizationID {
+    tag: AddrErrorTag.InvalidOrganizationID
+    error: string
+}
+export interface AddrErrorInvalidParamValue {
+    tag: AddrErrorTag.InvalidParamValue
+    error: string
+    param: string
+    help: string
+}
+export interface AddrErrorInvalidUrl {
+    tag: AddrErrorTag.InvalidUrl
+    error: string
+}
+export interface AddrErrorInvalidUrlScheme {
+    tag: AddrErrorTag.InvalidUrlScheme
+    error: string
+    expected: string
+}
+export interface AddrErrorMissingParam {
+    tag: AddrErrorTag.MissingParam
+    error: string
+    x1: string
+}
+export interface AddrErrorNotARedirection {
+    tag: AddrErrorTag.NotARedirection
+    error: string
+}
+export interface AddrErrorShouldNotHaveAPath {
+    tag: AddrErrorTag.ShouldNotHaveAPath
+    error: string
+}
+export type AddrError =
+  | AddrErrorDuplicateParam
+  | AddrErrorInvalidOrganizationID
+  | AddrErrorInvalidParamValue
+  | AddrErrorInvalidUrl
+  | AddrErrorInvalidUrlScheme
+  | AddrErrorMissingParam
+  | AddrErrorNotARedirection
+  | AddrErrorShouldNotHaveAPath
+
 // AnyClaimRetrievedInfo
 export enum AnyClaimRetrievedInfoTag {
     Device = 'AnyClaimRetrievedInfoDevice',
@@ -7036,6 +7095,9 @@ export interface LibParsecPlugin {
         openbao_entity_id: string,
         openbao_auth_token: string
     ): Promise<Result<Array<string>, OpenBaoListSelfEmailsError>>
+    parseHttpUrl(
+        url: string
+    ): Promise<Result<ParsecAddr, AddrError>>
     parseParsecAddr(
         url: string
     ): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>>
