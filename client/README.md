@@ -14,7 +14,7 @@ npm install
 
 Among other things, it installs `Ionic` / `Vue` / `Capacitor` CLI locally, you can use them with npx like this: `npx ionic --help`
 
-This command will also automatically execute `npm install` in the electron directory, this is normally done by `npx cap add @capacitor-community/electron`, nevertheless since we have custom configuration in this folder, we can't override it.
+If you plan on running Electron, you may also want to launch `npm install` inside the electron directory, or it will be run automatically when you start Electron for the first time.
 
 ### Libparsec bindings
 
@@ -87,47 +87,6 @@ npm run electron:dist -- -- --linux snap  # To generate a subset (see `npx elect
 
 > The `libparsec.node` will be automatically copied by electron on build (see
 > `libparsec` script defined in `client/electron/package.json`)
-
-## Android dev
-
-```bash
-# Update android directory after main project changes
-npm run android:copy
-
-# Update android directory after main project changes and launch an Android Studio project
-npm run android:open
-```
-
-Libparsec is automatically (re)built as needed.
-
-<!-- TODO: iOS platform not yet available
-## iOS dev
-
-```bash
-# In /client
-# Update iOS folder after main project changes
-npm run ios:copy
-# ----
-# Update iOS folder after main project changes and launch a XCode project
-npm run ios:open
-``` -->
-
-## BONUS - How to start a blank Ionic project with Electron
-
-```bash
-# Pre-requirements
-npm install -g @ionic/cli native-run cordova-res
-# Location must be where you want the project folder
-ionic start blank-project blank --type=vue --capacitor
-pushd blank-project
-npm install @capacitor-community/electron
-# Ionic project must be build at least one time before adding capacitor plugins
-ionic build
-# Then we add the capacitor platforms
-npx cap add @capacitor-community/electron
-ionic cap add android
-ionic cap add ios
-```
 
 ## Variables
 

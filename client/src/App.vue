@@ -7,11 +7,5 @@
 </template>
 
 <script setup lang="ts">
-import { SplashScreen } from '@capacitor/splash-screen';
 import { IonApp, IonRouterOutlet } from '@ionic/vue';
-import { onMounted } from 'vue';
-
-onMounted(async (): Promise<void> => {
-  SplashScreen.hide();
-});
 </script>

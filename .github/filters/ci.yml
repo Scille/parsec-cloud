@@ -130,15 +130,6 @@ python-jobs:
 # rust-electron-binding: &rust-electron-binding bindings/electron
 # new-client-electron: &new-client-electron: /client/electron
 
-# TODO: We currently don't test the android application
-# So we don't have to watch the android binding (likewise for the client code related to android)
-# rust-android-binding: &rust-android-binding bindings/android
-# new-client-android: &new-client-android: /client/android
-
-# TODO: We currently don't test the ios application
-# So we don't have to watch the client code related to the ios application
-# new-client-ios: &new-client-ios /client/ios
-
 web: &web
   - client/public/**
   - client/resources/**

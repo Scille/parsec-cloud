@@ -19,12 +19,6 @@
         "web:release": "vite build",
         "native:build": "npm run electron:install && node ./scripts/vite_build_for_native.cjs",
         "native:build:dev": "npm run electron:install && node ./scripts/vite_build_for_native.cjs --mode development",
-        "android:copy": "npm run native:build && npx cap copy android",
-        "android:copy:release": "npm run native:build && npx cap copy android",
-        "android:open": "npm run android:copy && npx cap open android",
-        "ios:copy": "npm run native:build && npx cap copy ios",
-        "ios:copy:release": "npm run native:build && npx cap copy ios",
-        "ios:open": "npm run ios:copy && npx cap open ios",
         "electron:copy:webapp": "node ./scripts/copy_to_electron.cjs",
         "electron:copy": "npm run native:build && npm run electron:copy:webapp",
         "electron:copy:dev": "npm run native:build:dev && npm run electron:copy:webapp",
@@ -42,9 +36,7 @@
         "knip:fix": "knip --fix"
     },
     "dependencies": {
-        "@capacitor/android": "^7.4.4",
         "@capacitor/core": "^7.4.4",
-        "@capacitor/splash-screen": "^7.0.3",
         "@ionic/core": "^8.8.1",
         "@ionic/storage": "^4.0.0",
         "@ionic/vue": "^8.8.1",

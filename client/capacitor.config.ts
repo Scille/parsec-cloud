@@ -6,15 +6,6 @@ const config: CapacitorConfig = {
   appId: 'com.scille.parsec',
   appName: 'Parsec',
   webDir: 'dist',
-  plugins: {
-    SplashScreen: {
-      launchAutoHide: false,
-      androidScaleType: 'CENTER_CROP',
-      splashFullScreen: true,
-      splashImmersive: false,
-      backgroundColor: '#121212',
-    },
-  },
 };
 
 export default config;
