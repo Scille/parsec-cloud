@@ -83,10 +83,16 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
       // So we do some loading part here, we forward the elements to a proxy inside the worker that wraps "pkiInitForScws"
       // to import the module and set a global state, and finally the real `libparsec.pkiInitForScws` is called.
 
-      const parsedRes = await libparsec.tryConvertHttpToParsecAddr(window.origin)
+      const parsedRes = await libparsec.tryConvertHttpToParsecAddr(window.origin);
       if (!parsedRes.ok) {
         console.warn(`PKI: Failed to parse ${window.origin} into a parsec addr`);
-        return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `Cannot parse origin: ${parsedRes.error.tag}: ${parsedRes.error.error}` } };
+        return {
+          ok: false,
+          error: {
+            tag: PkiSystemInitErrorTag.NotAvailable,
+            error: `Cannot parse origin: ${parsedRes.error.tag}: ${parsedRes.error.error}`,
+          },
+        };
       }
 
       const SCWS_LOCATION_NAME = 'scws-scwsapi_js-location';
