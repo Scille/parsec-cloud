@@ -10,6 +10,7 @@ import {
   importDefaultFiles,
   ImportDocuments,
   mockCryptpadServer,
+  mockLibParsec,
   msTest,
 } from '@tests/e2e/helpers';
 
@@ -117,6 +118,35 @@ msTest.describe(() => {
 
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler').locator('.file-handler-topbar').locator('ion-text').nth(0)).toHaveText('image.png');
+  });
+
+  msTest('Test viewer fail to open in history', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
+    // Give it some time to upload the file
+    await documents.waitForTimeout(1000);
+
+    await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').locator('ion-button').click();
+    await expect(documents).toBeWorkspacePage();
+    await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
+    const contextMenu = documents.locator('.workspace-context-menu');
+    await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+    await expect(documents.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
+    await expect(documents).toBeWorkspaceHistoryPage();
+    const container = documents.locator('.history-container');
+    await expect(container.locator('.head-content__title')).toHaveText('Workspace: wksp1');
+    const folderList = container.locator('.folder-list-main');
+    await expect(folderList.locator('.file-list-item')).toHaveCount(2);
+
+    await mockLibParsec(documents, [
+      {
+        name: 'workspaceHistoryFdRead',
+        result: { ok: false, error: { tag: 'WorkspaceHistoryFdReadErrorStopped', error: 'Failed' } },
+      },
+    ]);
+
+    await folderList.locator('.file-list-item').nth(1).dblclick();
+    await expect(documents).toShowToast('Failed to open the file', 'Error');
+    await expect(documents).toBeWorkspaceHistoryPage();
   });
 
   msTest('Test editor in history', async ({ parsecEditics }, testInfo: TestInfo) => {

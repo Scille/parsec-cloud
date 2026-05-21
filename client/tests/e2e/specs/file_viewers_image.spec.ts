@@ -1,7 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { TestInfo } from '@playwright/test';
-import { expect, importDefaultFiles, ImportDocuments, msTest, openFileType, testFileViewerZoomLevel } from '@tests/e2e/helpers';
+import {
+  expect,
+  importDefaultFiles,
+  ImportDocuments,
+  mockLibParsec,
+  msTest,
+  openFileType,
+  testFileViewerZoomLevel,
+} from '@tests/e2e/helpers';
 
 msTest.describe(() => {
   msTest.use({
@@ -21,6 +29,21 @@ msTest.describe(() => {
     const bottomBar = documents.locator('.file-viewer-bottombar');
     const zoom = bottomBar.locator('.zoom-controls');
     await expect(zoom).toHaveCount(1);
+  });
+
+  msTest('Image viewer opening error', async ({ documents }, testInfo: TestInfo) => {
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+
+    await mockLibParsec(documents, [
+      {
+        name: 'workspaceFdRead',
+        result: { ok: false, error: { tag: 'WorkspaceFdReadErrorInternal', error: 'Failed' } },
+      },
+    ]);
+
+    await documents.locator('.folder-container').locator('.file-list-item').nth(0).locator('.label-name').click();
+    await expect(documents).toShowToast('Failed to open the file', 'Error');
+    await expect(documents).toBeDocumentPage();
   });
 
   msTest('Image viewer zoom', async ({ documents }, testInfo: TestInfo) => {
