@@ -307,8 +307,9 @@ async function withoutSharedWorker(): Promise<any> {
       if (name === 'pkiInitForScws') {
         return async (configDir: string, parsecAddr: string, scwsLocation: string, certificate: string) => {
           try {
-            console.log('Loading SCWS...');
+            console.log(`Loading SCWS from ${scwsLocation} for worker...`);
             const scwsapi = await import(/* @vite-ignore */ scwsLocation);
+            console.log('Imported SCWS', scwsapi);
             (globalThis as any).SCWS = scwsapi.SCWS;
             (globalThis as any).SCWS_WEBAPP_CERT = certificate;
           } catch (err: any) {
