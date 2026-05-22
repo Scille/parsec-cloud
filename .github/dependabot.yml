@@ -228,8 +228,7 @@ updates:
       timezone: Europe/Paris
     groups:
       client-prod-ionic:
-        # Disabled dependency-type because @ionic/cli is a dev dependency
-        # dependency-type: production
+        dependency-type: production
         patterns:
           - "@ionic/*"
       client-prod-capacitor:
