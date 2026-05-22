@@ -42,8 +42,8 @@ You can also use the search function in the top left corner.
 
     hosting/introduction
     hosting/architecture
-    hosting/deployment/index
     hosting/client-deploy
+    hosting/deployment/server-deploy
     hosting/maintenance/index
     hosting/administration/index
     hosting/sequester/index
