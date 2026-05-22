@@ -1,0 +1,18 @@
+diff --git a/docs/hosting/deployment/parsec-nginx.conf b/docs/hosting/deployment/parsec-nginx.conf
+index 10fe651e02..bf2080be9c 100644
+--- a/docs/hosting/deployment/parsec-nginx.conf
++++ b/docs/hosting/deployment/parsec-nginx.conf
+@@ -17,6 +17,13 @@ http {
+         ssl_certificate     /certs/proxy.crt;
+         ssl_certificate_key /certs/proxy.key;
+ 
++        include /etc/nginx/mime.types;
++
++        location /client/.* {
++            alias /var/www/parsec-web/;
++            try_files $uri /client/index.html;
++        }
++
+         location ~ ^/authenticated/.*/events$ {
+             proxy_pass https://parsec-server:6777;
+ 

@@ -364,6 +364,13 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ),
         ],
     },
+    ROOT_DIR / "docs/hosting/deployment/webapp-deploy.rst": {
+        Tool.Parsec: [
+            ReplaceRegex(
+                r"download/v.+/parsec-web-.+\.zip", "download/v{version}/parsec-web-{version}.zip"
+            )
+        ],
+    },
     ROOT_DIR / "docs/hosting/deployment/parsec-server.docker.yaml": {
         Tool.Parsec: [
             ReplaceRegex(

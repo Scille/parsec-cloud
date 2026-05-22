@@ -1,0 +1,21 @@
+diff --git a/docs/hosting/deployment/parsec-server.docker.yaml b/docs/hosting/deployment/parsec-server.docker.yaml
+index 2623f44d3d..81def1cc39 100644
+--- a/docs/hosting/deployment/parsec-server.docker.yaml
++++ b/docs/hosting/deployment/parsec-server.docker.yaml
+@@ -58,6 +58,7 @@ services:
+       - parsec-postgres
+     image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.1-a.0+dev
+     restart: on-failure
++    command: run --with-client-web-app=/web
+     container_name: parsec-server
+     env_file:
+       - parsec.env
+@@ -67,6 +68,8 @@ services:
+       - parsec-admin-token.env
+     environment:
+       AWS_CA_BUNDLE: /run/secrets/mini-ca-crt
++    volumes:
++      - ./parsec-web:/web:ro
+     secrets:
+       - mini-ca-crt
+       - parsec-pem-crt
