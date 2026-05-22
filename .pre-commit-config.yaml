@@ -14,10 +14,10 @@ repos:
       - id: mixed-line-ending
         alias: eol
       - id: trailing-whitespace
-        exclude_types: [svg]
+        exclude_types: [svg, diff]
       - id: end-of-file-fixer
         alias: eof
-        exclude_types: [svg]
+        exclude_types: [svg, diff]
         # `libparsec/version` must not have a trailing newline !
         exclude: ^libparsec/version$
 
