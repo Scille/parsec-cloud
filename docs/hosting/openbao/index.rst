@@ -6,17 +6,20 @@
 Single Sign-On with OpenBao
 ===========================
 
-This section explains how to enable :abbr:`SSO (Single Sign-On)` in Parsec via `OpenBao`_.
+This section explains how to enable :abbr:`SSO (Single Sign-On)` in Parsec via `OpenBao`_,
+an open-source secrets manager from the Linux Foundation's `OpenSSF`_ community.
 
+.. _OpenBao: https://openbao.org
+.. _OpenSSF: https://openssf.org
 
 Overview
 ========
 
 Parsec supports :abbr:`SSO (Single Sign-On)` via an `OpenBao`_ server connected to an
 :abbr:`OIDC (OpenID Connect)` identity provider.
-This integration serves two purposes:
+This integration serves the following purposes:
 
-Device protection
+User Authentication & Device protection
    Parsec stores cryptographic device keys on the user's machine. These keys are protected by
    different mechanism depending on the selected
    :ref:`authentication method <doc_hosting_client_deploy_authentication_methods>`.
@@ -33,16 +36,25 @@ Asynchronous enrollment
    *asynchronous way*: the user sends a request to join, and the administrator approves (or reject)
    the join request later (no simultaneous presence is required).
 
-.. note::
+.. note:: Only `ProConnect`_ OIDC is fully supported for the moment.
 
-  `OpenBao`_ is an open-source secrets manager (a fork of HashiCorp Vault) managed by the
-  Linux Foundation's :abbr:`OpenSSF (Open Source Security Foundation)` community.
+.. _ProConnect: https://www.proconnect.gouv.fr/
 
-  In Parsec, OpenBao can be seen as the cryptographic back-end for SSO support, allowing:
+Security
+========
 
-  - User authentication via OIDC
-  - Encrypted device key file storage
-  - Operations signature during enrollment
+The security level of storing opaque keys in OpenBao is lower than traditional
+approaches, such as storing the keys on the OS Keyring or deriving them from a
+strong password.
+
+On the other hand, if your users are already familiar with SSO and use it for
+other services, they probably already have an account which will greatly
+simplify both Parsec login and enrolment.
+
+This is therefore a typical trade-off between security and user-friendliness
+and the decision to whether use this method or not must be made by the server
+administrator and should be consistent with your own threat model.
+
 
 Architecture
 ============
@@ -179,4 +191,69 @@ Verify the setup
    transit/sign/entity-$(bao token lookup -format=json | jq -r '.data.entity_id')
 
 
-.. _OpenBao: https://openbao.org
+Parsec Server configuration
+===========================
+
+Once OpenBao server is set up, you will need to configure your Parsec Server.
+
+Following the same approach used during deployment, create a file to store the
+required environment variables (enter the ``OPENBAO_SERVER_URL`` from before):
+
+.. admonition:: parsec-openbao.env
+   :collapsible: open
+
+   .. literalinclude:: parsec-openbao.env
+      :language: bash
+
+
+Parsec Server with Docker
+-------------------------
+
+If you deployed Parsec Server with Docker, edit the Docker Compose file to add
+``parsec-openbao.env``:
+
+.. admonition:: parsec-server.docker.yaml
+   :collapsible: open
+
+   .. code-block:: yaml
+      :emphasize-lines: 7
+
+          env_file:
+            - parsec.env
+            - parsec-s3.env
+            - parsec-db.env
+            - parsec-smtp.env
+            - parsec-admin-token.env
+            - parsec-openbao.env
+
+And then restart the server.
+
+Parsec Server on Linux
+----------------------
+
+If you deployed Parsec Server directly on Linux, edit your run script to add
+``parsec-openbao.env``:
+
+.. admonition:: run-parsec-server
+   :collapsible: open
+
+   .. code-block:: bash
+      :emphasize-lines: 6
+
+      # Load the virtual env
+      source venv/bin/activate
+
+      # Load the env files into the environment table
+      set -a
+      source parsec-openbao.env
+      source parsec-admin-token.env
+      source parsec-db.env
+      source parsec-smtp.env
+      source parsec-s3.env
+      source parsec.env
+      set +a
+
+      # Start Parsec Server
+      python -m parsec run
+
+And then restart the server.
