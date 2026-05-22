@@ -30,7 +30,7 @@ permissions:
 jobs:
   python-analyze:
     name: 🐍 Python static code Analysis
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       poetry-version: 2.2.1
     steps:
@@ -92,84 +92,9 @@ jobs:
         with:
           category: /language:python
 
-  # Disabled till we fix Android with Vite
-  # see issue: #4395
-  # java-analyze:
-  #   name: ☕ Java static code Analysis
-  #   runs-on: ubuntu-22.04
-  #   env:
-  #     NDK_VERSION: 23.2.8568313
-  #     SDK_VERSION: 30.0.3
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin v6.0.2
-  #       timeout-minutes: 5
-
-  #     - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # pin v4.0.1
-  #       id: changes
-  #       with:
-  #         filters: .github/filters/codeql.yml
-
-  #     - name: Check modified path that require `java-analysis` to run
-  #       id: should-run-java-analysis
-  #       if: >-
-  #         steps.changes.outputs.java-analyze == 'true'
-  #         || contains(github.ref, 'gh-readonly-queue')
-  #         || github.ref == 'refs/heads/master'
-  #       run: echo "run=true" >> $GITHUB_OUTPUT
-  #       shell: bash
-
-  #     - name: Add android cmdline tools to path
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       run: echo "$ANDROID_HOME/cmdline-tools/latest/bin" > $GITHUB_PATH
-
-  #     - name: Install dependencies for Android
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}" "build-tools;${{ env.SDK_VERSION }}"
-
-  #     - name: Install dependencies for ionic project
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       run: npm clean-install
-  #       working-directory: client
-
-  #     - name: Build ionic for Android
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       run: |
-  #         npm run android:copy:release
-  #       working-directory: client
-  #       env:
-  #         GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
-
-  #     # Initializes the CodeQL tools for scanning.
-  #     - name: Initialize CodeQL
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       uses: github/codeql-action/init@68bde559dea0fdcac2102bfdf6230c5f70eb485e # pin v4.35.4
-  #       with:
-  #         languages: java
-  #         # If you wish to specify custom queries, you can do so here or in a config file.
-  #         # By default, queries listed here will override any specified in a config file.
-  #         # Prefix the list here with "+" to use these queries and those in the config file.
-
-  #         # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
-  #         # queries: security-extended,security-and-quality
-
-  #     - name: Autobuild android
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       uses: github/codeql-action/autobuild@68bde559dea0fdcac2102bfdf6230c5f70eb485e # pin v4.35.4
-  #       with:
-  #         working-directory: client/android
-  #       env:
-  #         GRADLE_LIBPARSEC_BUILD_STRATEGY: no_build
-
-  #     - name: Perform CodeQL Analysis
-  #       if: steps.should-run-java-analysis.outputs.run == 'true'
-  #       uses: github/codeql-action/analyze@68bde559dea0fdcac2102bfdf6230c5f70eb485e # pin v4.35.4
-  #       with:
-  #         category: /language:java
-
   javascript-analyze:
     name: 🌐 Javascript static code Analysis
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # pin v6.0.2
