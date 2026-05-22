@@ -163,7 +163,7 @@ gettext:
 	$(SPHINXBUILD) --nitpicky --builder gettext $(I18NSPHINXOPTS) . $(BUILDDIR)/locale
 	$(RM) \
 		$(BUILDDIR)/locale/history.pot \
-		$(BUILDDIR)/locale/hosting/deployment/index.pot \
+		$(BUILDDIR)/locale/hosting/deployment/server-deploy.pot \
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
 

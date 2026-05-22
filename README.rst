@@ -43,7 +43,7 @@ for detailed instructions on each platform.
 Self-hosted
 ===========
 
-To deploy your own Parsec server, take a look at `Parsec Server Deployment <https://docs.parsec.cloud/en/latest/hosting/deployment/index.html>`_.
+To deploy your own Parsec server, take a look at `Parsec Server Deployment <https://docs.parsec.cloud/en/latest/hosting/deployment/server-deploy.html>`_.
 
 Security
 ========
