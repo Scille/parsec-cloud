@@ -398,6 +398,9 @@ Installation
      $ source parsec-db.env
      $ python -m parsec migrate
 
+
+.. _doc_hosting_deployment_start_server:
+
 Start the server
 ----------------
 
