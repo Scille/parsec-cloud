@@ -9,6 +9,7 @@ Web application deployment
 The following sections will configure the web application using the docker compose configuration detailed in :ref:`Container-Based deployment <doc_hosting_deployment_with_docker>`.
 The steps can easily be adapted or ignored if you used the direct install method.
 
+
 Obtaining the web application
 =============================
 
@@ -100,3 +101,12 @@ This section describes how to configure the reverse proxy configuration to serve
    .. code-block:: shell
 
       patch -t -i parsec-nginx.conf.patch
+
+Further configuration
+=====================
+
+.. toctree::
+  :maxdepth: 1
+  :name: section-hosting-deployment-webapp
+
+  idopte-pki-web

@@ -364,7 +364,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ),
         ],
     },
-    ROOT_DIR / "docs/hosting/deployment/webapp-deploy.rst": {
+    ROOT_DIR / "docs/hosting/deployment/webapp/index.rst": {
         Tool.Parsec: [
             ReplaceRegex(
                 r"download/v.+/parsec-web-.+\.zip", "download/v{version}/parsec-web-{version}.zip"
