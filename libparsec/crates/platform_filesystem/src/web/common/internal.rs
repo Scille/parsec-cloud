@@ -39,7 +39,13 @@ impl Storage {
             "Listing file entries in {} with extension {extension}",
             dir.display()
         );
-        let dir = match self.root_dir.get_directory_from_path(dir, None).await {
+        // Use create:true to work around an Edge quirk in SharedWorker context where
+        // getDirectoryHandle without create:true throws AbortError instead of NotFoundError.
+        let dir = match self
+            .root_dir
+            .get_directory_from_path(dir, Some(OpenOptions::create()))
+            .await
+        {
             Ok(dir) => dir,
             Err(GetDirectoryHandleError::NotFound { .. }) => {
                 log::debug!("Could not find devices dir");
