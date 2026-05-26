@@ -3,6 +3,7 @@
 import {
   entryStat,
   FsPath,
+  isPathConfined,
   isValidDeviceName,
   isValidEmail,
   isValidEntryName,
@@ -64,7 +65,7 @@ export const matchingStringValidator = (toMatch: string): IValidator =>
 
 export const entryNameValidator = (
   isFile: boolean,
-  options?: { workspaceHandle: WorkspaceHandle; path: FsPath; extension?: string },
+  options?: { checkExists: { workspaceHandle: WorkspaceHandle; path: FsPath }; checkConfined?: boolean; allowedExtensions?: Array<string> },
 ): IValidator =>
   async function (value: string) {
     value = value.trim();
@@ -79,15 +80,42 @@ export const entryNameValidator = (
         },
       };
     }
-    if (options) {
-      const fullPath = await Path.join(options.path, `${value}${options.extension ?? ''}`);
-      const statsResult = await entryStat(options.workspaceHandle, fullPath);
+    // pathJoin will fail anyway for those conditions, this way we avoid "unjustified" error messages in the logs
+    if (value.includes('/') || value === '.') {
+      return {
+        validity: Validity.Invalid,
+      };
+    }
+    if (options?.allowedExtensions && !options.allowedExtensions.some((allowedExt) => value.endsWith(`.${allowedExt}`))) {
+      const ext = Path.getFileExtension(value);
+      return {
+        validity: Validity.Invalid,
+        reason: {
+          key: ext ? 'validators.fileName.unauthorizedExtension' : 'validators.fileName.missingExtension',
+          data: { allowedExtensions: options.allowedExtensions.join(', ') },
+          count: options.allowedExtensions.length,
+        },
+      };
+    }
+    if (options?.checkExists) {
+      const fullPath = await Path.join(options.checkExists.path, value);
+      const statsResult = await entryStat(options.checkExists.workspaceHandle, fullPath);
 
       if (statsResult.ok) {
         return {
           validity: Validity.Invalid,
           reason: {
             key: statsResult.value.isFile() ? 'validators.fileName.fileAlreadyExists' : 'validators.fileName.folderAlreadyExists',
+          },
+        };
+      }
+    }
+    if (options?.checkConfined) {
+      if (await isPathConfined(value)) {
+        return {
+          validity: Validity.Invalid,
+          reason: {
+            key: 'validators.fileName.isConfined',
           },
         };
       }

@@ -82,6 +82,28 @@ for (const mode of ['list', 'grid']) {
   });
 }
 
+msTest('Import by drag and drop ignores confined files', async ({ workspaces }) => {
+  await createWorkspace(workspaces, 'New_Workspace');
+  await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+  await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+
+  const documents = workspaces;
+  const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
+  await dragAndDropFile(
+    documents,
+    dropZone,
+    [],
+    [
+      { name: 'file.txt', content: btoa('a') },
+      { name: '.DS_Store', content: btoa('b') },
+    ],
+  );
+  await checkFilesUploaded(documents, 1, 1);
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await expect(entries).toHaveCount(1);
+  await expect(entries.nth(0).locator('.label-name')).toHaveText('file.txt');
+});
+
 for (const mode of ['list', 'grid']) {
   msTest(`Import by drag and drop on folder in ${mode} mode`, async ({ workspaces }, testInfo: TestInfo) => {
     // Start with an empty workspace

@@ -133,4 +133,4 @@ function detectFileContentType(name: EntryName): DetectedFileType {
   return detectFile(name, DETECTABLE_FILES);
 }
 
-export { DetectedFileType, detectFileContentType, detectOpenableFile, FileContentType, getMimeTypeFromBuffer };
+export { DetectedFileType, detectFileContentType, detectOpenableFile, FileContentType, getMimeTypeFromBuffer, OPENABLE_FILES };

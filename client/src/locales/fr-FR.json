@@ -2310,7 +2310,10 @@
             "fileTooLong": "Le nom du fichier est trop long, la limite est de {limit} caractères.",
             "folderTooLong": "Le nom du dossier est trop long, la limite est de {limit} caractères.",
             "fileAlreadyExists": "Un fichier du même nom existe déjà.",
-            "folderAlreadyExists": "Un dossier du même nom existe déjà."
+            "folderAlreadyExists": "Un dossier du même nom existe déjà.",
+            "isConfined": "Ce nom est réservé.",
+            "unauthorizedExtension": "L'extension de fichier n'est pas autorisée. L'extension doit être '{allowedExtensions}'. | L'extension de fichier n'est pas autorisée. L'extension doit être parmi '{allowedExtensions}'.",
+            "missingExtension": "L'extension de fichier n'est pas présente. L'extension doit être '{allowedExtensions}'. | L'extension de fichier n'est pas présente. L'extension doit être parmi '{allowedExtensions}'."
         },
         "claimLink": {
             "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
