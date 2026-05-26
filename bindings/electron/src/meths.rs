@@ -26734,6 +26734,31 @@ fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// is_path_confined
+fn is_path_confined(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        js_val.value(&mut cx)
+    };
+    let ret = libparsec::is_path_confined(client, &path);
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // libparsec_init_native_only_init
 fn libparsec_init_native_only_init(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -32715,6 +32740,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("importRecoveryDevice", import_recovery_device)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
+    cx.export_function("isPathConfined", is_path_confined)?;
     cx.export_function(
         "libparsecInitNativeOnlyInit",
         libparsec_init_native_only_init,

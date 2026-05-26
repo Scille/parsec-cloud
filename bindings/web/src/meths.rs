@@ -27395,6 +27395,16 @@ pub fn isKeyringAvailable() -> Promise {
     }))
 }
 
+// is_path_confined
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn isPathConfined(client: u32, path: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::is_path_confined(client, &path);
+        Ok(ret.into())
+    }))
+}
+
 // libparsec_init_native_only_init
 #[allow(non_snake_case)]
 #[wasm_bindgen]

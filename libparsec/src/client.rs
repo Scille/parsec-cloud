@@ -759,3 +759,14 @@ pub async fn client_pki_get_addr(
     let client = borrow_client(client)?;
     Ok(client.pki_get_addr().await)
 }
+
+pub fn is_path_confined(client: Handle, path: &str) -> bool {
+    let Ok(client) = borrow_client(client) else {
+        return false;
+    };
+    let pattern = &client.config().prevent_sync_pattern;
+    std::path::Path::new(path).components().any(|c| match c {
+        std::path::Component::Normal(name) => name.to_str().is_some_and(|s| pattern.is_match(s)),
+        _ => false,
+    })
+}

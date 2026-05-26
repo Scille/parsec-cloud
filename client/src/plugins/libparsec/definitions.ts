@@ -7066,6 +7066,10 @@ export interface LibParsecPlugin {
     ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
     isKeyringAvailable(
     ): Promise<boolean>
+    isPathConfined(
+        client: Handle,
+        path: string
+    ): Promise<boolean>
     libparsecInitNativeOnlyInit(
         config: ClientConfig
     ): Promise<null>

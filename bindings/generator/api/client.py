@@ -939,3 +939,7 @@ async def client_get_organization_bootstrap_date(
     client_handle: Handle,
 ) -> Result[DateTime, ClientGetOrganizationBootstrapDateError]:
     raise NotImplementedError
+
+
+def is_path_confined(client: Handle, path: Ref[str]) -> bool:
+    raise NotImplementedError
