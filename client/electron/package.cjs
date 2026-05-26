@@ -188,6 +188,7 @@ const options = {
     target: 'default',
     category: 'public.app-category.productivity',
     hardenedRuntime: true,
+    forceCodeSigning: OPTS.sign,
     entitlements: './macOS/entitlements.plist',
     entitlementsInherit: './macOS/entitlements.plist',
     // https://www.electron.build/mac#binaries
