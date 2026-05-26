@@ -45,7 +45,7 @@ You can also use the search function in the top left corner.
     hosting/client-deploy
     hosting/deployment/server-deploy
     hosting/deployment/s3-deploy
-    hosting/deployment/webapp-deploy
+    hosting/deployment/webapp/index
     hosting/maintenance/index
     hosting/administration/index
     hosting/sequester/index

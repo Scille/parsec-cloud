@@ -164,7 +164,8 @@ gettext:
 	$(RM) \
 		$(BUILDDIR)/locale/history.pot \
 		$(BUILDDIR)/locale/hosting/deployment/server-deploy.pot \
-		$(BUILDDIR)/locale/hosting/deployment/webapp-deploy.pot \
+		$(BUILDDIR)/locale/hosting/deployment/webapp/index.pot \
+		$(BUILDDIR)/locale/hosting/deployment/webapp/idopte-pki-web.pot \
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
 
