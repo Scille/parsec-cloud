@@ -5914,6 +5914,10 @@ export function importRecoveryDevice(
 ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
 export function isKeyringAvailable(
 ): Promise<boolean>
+export function isPathConfined(
+    client: number,
+    path: string
+): Promise<boolean>
 export function libparsecInitNativeOnlyInit(
     config: ClientConfig
 ): Promise<null>
