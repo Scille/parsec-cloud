@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { libparsec } from '@/plugins/libparsec';
+import { getConnectionHandle } from '@/router';
 
 export async function isValidWorkspaceName(name: string): Promise<boolean> {
   return await libparsec.validateEntryName(name);
@@ -32,4 +33,13 @@ export async function isValidEntryName(name: string): Promise<boolean> {
 
 export async function isValidOrganizationName(name: string): Promise<boolean> {
   return await libparsec.validateOrganizationId(name);
+}
+
+export async function isPathConfined(name: string): Promise<boolean> {
+  const handle = getConnectionHandle();
+
+  if (handle !== null) {
+    return await libparsec.isPathConfined(handle, name);
+  }
+  return false;
 }

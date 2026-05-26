@@ -272,7 +272,7 @@ import {
 
 import DocumentNew from '@/assets/images/add-document.svg?raw';
 import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
-import { FileContentType } from '@/common/fileTypes';
+import { FileContentType, OPENABLE_FILES } from '@/common/fileTypes';
 import {
   EntryCollection,
   EntryModel,
@@ -936,15 +936,34 @@ async function startImportFiles(files: Array<File>, destinationFolder?: EntryNam
   if (destinationFolder && destinationFolder !== '/') {
     destination = await Path.join(destination, destinationFolder);
   }
-  for (const file of files) {
+
+  // Reverse iteration to be able to remove entries from the list
+  for (let i = files.length - 1; i >= 0; i--) {
+    const file = files[i];
     if (!(file as any).relativePath) {
       (file as any).relativePath = `/${file.name}`;
+    }
+    const confined = await parsec.isPathConfined((file as any).relativePath);
+    if (confined) {
+      files.splice(i, 1);
+      continue;
     }
     const importPath = await Path.joinPaths(destination, (file as any).relativePath);
     const result = await entryStat(workspaceInfo.value.handle, importPath);
     if (result.ok && result.value.isFile()) {
       existing.add(file);
     }
+  }
+
+  if (files.length === 0) {
+    informationManager.value.present(
+      new Information({
+        message: 'FoldersPage.noFilesToImport',
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
   }
 
   const dupPolicy = await getDuplicatePolicy(existing);
@@ -1057,45 +1076,28 @@ async function onSearchResultClick(entry: parsec.SearchResult): Promise<void> {
   await onEntryClick({ ...entry.stats, isSelected: false });
 }
 
-// Create a complex file requires a template (an empty .docx is a zip containing XMLs, not an empty file).
-interface CreateTemplateFileParams {
-  useTemplate: true;
-  type: FileContentType.Spreadsheet | FileContentType.Document | FileContentType.Presentation;
-}
-
-// Create an arbitrary empty file with the given extension (an empty .txt is just an empty file)
-interface CreateRawFileParams {
-  useTemplate: false;
-  ext: string;
-}
-
-async function createNewFile(name: EntryName, fileParams: CreateTemplateFileParams | CreateRawFileParams): Promise<void> {
+async function createNewFile(name: EntryName, fileType: FileContentType): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
   const modal = await openSpinnerModal();
   try {
-    if (fileParams.useTemplate) {
-      let ext: string = '';
+    if ([FileContentType.Document, FileContentType.Presentation, FileContentType.Spreadsheet].includes(fileType)) {
       let template: Uint8Array;
-      switch (fileParams.type) {
+      switch (fileType) {
         case FileContentType.Document:
-          ext = 'docx';
           template = (await import('@/parsec/file_templates/docx_template')).default;
           break;
         case FileContentType.Spreadsheet:
-          ext = 'xlsx';
           template = (await import('@/parsec/file_templates/xlsx_template')).default;
           break;
         case FileContentType.Presentation:
-          ext = 'pptx';
           template = (await import('@/parsec/file_templates/pptx_template')).default;
           break;
         default:
-          fileParams.type satisfies never;
           return;
       }
-      const path = await parsec.Path.join(currentPath.value, `${name}.${ext}`);
+      const path = await parsec.Path.join(currentPath.value, name);
       const fdResult = await parsec.openFile(workspaceInfo.value.handle, path, { createNew: true, create: true, write: true });
       if (!fdResult.ok) {
         informationManager.value.present(
@@ -1124,8 +1126,8 @@ async function createNewFile(name: EntryName, fileParams: CreateTemplateFilePara
       } finally {
         await parsec.closeFile(workspaceInfo.value.handle, fdResult.value);
       }
-    } else {
-      const path = await parsec.Path.join(currentPath.value, `${name}.${fileParams.ext}`);
+    } else if (fileType === FileContentType.Text) {
+      const path = await parsec.Path.join(currentPath.value, name);
       const createResult = await parsec.createFile(workspaceInfo.value.handle, path);
       if (!createResult.ok) {
         informationManager.value.present(
@@ -1136,6 +1138,8 @@ async function createNewFile(name: EntryName, fileParams: CreateTemplateFilePara
           PresentationMode.Toast,
         );
       }
+    } else {
+      window.electronAPI.log('error', `Cannot create a new document of type ${fileType}`);
     }
   } finally {
     await modal.dismiss();
@@ -1165,7 +1169,10 @@ async function createFolder(): Promise<void> {
     {
       title: 'FoldersPage.CreateFolderModal.title',
       trim: true,
-      validator: entryNameValidator(false, { workspaceHandle: workspaceInfo.value.handle, path: currentPath.value }),
+      validator: entryNameValidator(false, {
+        checkExists: { workspaceHandle: workspaceInfo.value.handle, path: currentPath.value },
+        checkConfined: true,
+      }),
       inputLabel: 'FoldersPage.CreateFolderModal.label',
       placeholder: 'FoldersPage.CreateFolderModal.placeholder',
       okButtonText: 'FoldersPage.CreateFolderModal.create',
@@ -1227,23 +1234,28 @@ async function getNewFileName(fileType: FileContentType): Promise<string | null>
 
   let defaultNewName = '';
   let ext = '';
+  let allowedExts: Array<string> = [];
 
   switch (fileType) {
     case FileContentType.Document:
       defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.document');
-      ext = '.docx';
+      ext = 'docx';
+      allowedExts = [ext];
       break;
     case FileContentType.Spreadsheet:
       defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.spreadsheet');
-      ext = '.xlsx';
+      ext = 'xlsx';
+      allowedExts = [ext];
       break;
     case FileContentType.Presentation:
       defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.presentation');
-      ext = '.pptx';
+      ext = 'pptx';
+      allowedExts = [ext];
       break;
     case FileContentType.Text:
       defaultNewName = I18n.translate('FoldersPage.createFile.defaultName.text');
-      ext = '.txt';
+      ext = 'txt';
+      allowedExts = OPENABLE_FILES.TEXTS;
       break;
     default:
       break;
@@ -1257,11 +1269,15 @@ async function getNewFileName(fileType: FileContentType): Promise<string | null>
     {
       title: 'FoldersPage.createFile.fileName',
       trim: true,
-      validator: entryNameValidator(true, { workspaceHandle: workspaceInfo.value.handle, path: currentPath.value, extension: ext }),
+      validator: entryNameValidator(true, {
+        checkExists: { workspaceHandle: workspaceInfo.value.handle, path: currentPath.value },
+        checkConfined: true,
+        allowedExtensions: allowedExts,
+      }),
       inputLabel: 'FoldersPage.createFile.label',
       placeholder: 'FoldersPage.createFile.placeholder',
       okButtonText: 'FoldersPage.createFile.create',
-      defaultValue: defaultNewName,
+      defaultValue: `${defaultNewName}.${ext}`,
       selectionRange: [0, defaultNewName.length],
     },
     isLargeDisplay.value,
@@ -1290,11 +1306,7 @@ async function onCreateNewFileClicked(event: Event): Promise<void> {
   if (!name) {
     return;
   }
-  if (result.data.fileType === FileContentType.Text) {
-    await createNewFile(name, { useTemplate: false, ext: 'txt' });
-  } else {
-    await createNewFile(name, { useTemplate: true, type: result.data.fileType });
-  }
+  await createNewFile(name, result.data.fileType);
 }
 
 function getSelectedEntries(): EntryModel[] {
@@ -1401,9 +1413,11 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
       title: entry.isFile() ? 'FoldersPage.RenameModal.fileTitle' : 'FoldersPage.RenameModal.folderTitle',
       trim: true,
       validator: entryNameValidator(entry.isFile(), {
-        workspaceHandle: workspaceInfo.value.handle,
-        path: currentPath.value,
-        extension: '',
+        checkExists: {
+          workspaceHandle: workspaceInfo.value.handle,
+          path: currentPath.value,
+        },
+        checkConfined: true,
       }),
       inputLabel: entry.isFile() ? 'FoldersPage.RenameModal.fileLabel' : 'FoldersPage.RenameModal.folderLabel',
       placeholder: entry.isFile() ? 'FoldersPage.RenameModal.filePlaceholder' : 'FoldersPage.RenameModal.folderPlaceholder',
@@ -1697,28 +1711,28 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
     case FolderGlobalAction.CreateFileDocument: {
       const name = await getNewFileName(FileContentType.Document);
       if (name) {
-        await createNewFile(name, { useTemplate: true, type: FileContentType.Document });
+        await createNewFile(name, FileContentType.Document);
       }
       break;
     }
     case FolderGlobalAction.CreateFileSpreadsheet: {
       const name = await getNewFileName(FileContentType.Spreadsheet);
       if (name) {
-        await createNewFile(name, { useTemplate: true, type: FileContentType.Spreadsheet });
+        await createNewFile(name, FileContentType.Spreadsheet);
       }
       break;
     }
     case FolderGlobalAction.CreateFilePresentation: {
       const name = await getNewFileName(FileContentType.Presentation);
       if (name) {
-        await createNewFile(name, { useTemplate: true, type: FileContentType.Presentation });
+        await createNewFile(name, FileContentType.Presentation);
       }
       break;
     }
     case FolderGlobalAction.CreateFileText: {
       const name = await getNewFileName(FileContentType.Text);
       if (name) {
-        await createNewFile(name, { useTemplate: false, ext: 'txt' });
+        await createNewFile(name, FileContentType.Text);
       }
       break;
     }

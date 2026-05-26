@@ -2309,7 +2309,10 @@
             "fileTooLong": "File name is too long, limit is {limit} characters.",
             "folderTooLong": "Folder name is too long, limit is {limit} characters.",
             "fileAlreadyExists": "A file with this name already exists.",
-            "folderAlreadyExists": "A folder with this name already exists."
+            "folderAlreadyExists": "A folder with this name already exists.",
+            "isConfined": "This name is restricted.",
+            "unauthorizedExtension": "The file extension is not allowed. Must be  '{allowedExtensions}'. | The file extension is not allowed. Must be one of '{allowedExtensions}'.",
+            "missingExtension": "The file extension is missing. Must be  '{allowedExtensions}'. | The file extension is missing. Must be one of '{allowedExtensions}'."
         },
         "claimLink": {
             "invalidProtocol": "Link should start with 'parsec3://'.",
