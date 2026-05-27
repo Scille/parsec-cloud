@@ -378,8 +378,8 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             )
         ],
     },
-    ROOT_DIR / "docs/hosting/custom_branding.rst": {Tool.Parsec: [PARSEC_REPO_SRC_BASE_URL]},
-    ROOT_DIR / "docs/cli/install_cli.rst": {
+    ROOT_DIR / "docs/hosting/custom-branding.rst": {Tool.Parsec: [PARSEC_REPO_SRC_BASE_URL]},
+    ROOT_DIR / "docs/cli/install-cli.rst": {
         Tool.Parsec: [
             ReplaceRegex(
                 r".. _Parsec CLI: https://github.com/Scille/parsec-cloud/releases/download/v.*/parsec-cli_.*_linux-x86_64-musl",

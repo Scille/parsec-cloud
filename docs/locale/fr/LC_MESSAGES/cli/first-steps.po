@@ -19,15 +19,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../cli/first_steps.rst:7
+#: ../../cli/first-steps.rst:7
 msgid "First steps"
 msgstr "Premiers pas"
 
-#: ../../cli/first_steps.rst:9
+#: ../../cli/first-steps.rst:9
 msgid "Now that you have installed the Parsec CLI, let's start using it."
 msgstr "Maintenant que la CLI Parsec est installée, utilisons la."
 
-#: ../../cli/first_steps.rst:13
+#: ../../cli/first-steps.rst:13
 msgid ""
 "The outputs displayed in this documentation are examples and may vary from "
 "yours depending on your CLI version."
@@ -35,11 +35,11 @@ msgstr ""
 "Les sorties affichées dans cette documentation sont des exemples et peuvent "
 "être différentes selon votre version de CLI"
 
-#: ../../cli/first_steps.rst:17
+#: ../../cli/first-steps.rst:17
 msgid "Help"
 msgstr "Aide"
 
-#: ../../cli/first_steps.rst:19
+#: ../../cli/first-steps.rst:19
 msgid ""
 "When in need for information about the Parsec CLI, you can always use `help` "
 "as a command of its own,"
@@ -47,23 +47,23 @@ msgstr ""
 "En cas de besoin d'informations à propos de la CLI Parsec, `help` peut être "
 "utilisé comme une commande à part entière."
 
-#: ../../cli/first_steps.rst:49
+#: ../../cli/first-steps.rst:49
 msgid "or as an option available for any command,"
 msgstr "ou comme une option disponible pour n'importe quelle commande,"
 
-#: ../../cli/first_steps.rst:70
+#: ../../cli/first-steps.rst:70
 msgid "or a group of commands,"
 msgstr "ou un groupe de commandes"
 
-#: ../../cli/first_steps.rst:93
+#: ../../cli/first-steps.rst:93
 msgid "or subcommand"
 msgstr "ou une sous commande"
 
-#: ../../cli/first_steps.rst:108
+#: ../../cli/first-steps.rst:108
 msgid "Commonly used parameters"
 msgstr "Paramètres couramment utilisés"
 
-#: ../../cli/first_steps.rst:110
+#: ../../cli/first-steps.rst:110
 msgid ""
 "``--device``, ``-d``: the short id of the device used to authenticate the "
 "operation. This is needed when a command needs to perform authenticated "
@@ -73,7 +73,7 @@ msgstr ""
 "l'opération. Cette option est requise lorsqu'une commande à besoin "
 "d'effectuer des opérations authentifiées."
 
-#: ../../cli/first_steps.rst:111
+#: ../../cli/first-steps.rst:111
 msgid ""
 "``--password-stdin``: to read the password from stdin. This is useful to "
 "automate CLI usage."

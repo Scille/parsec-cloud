@@ -18,17 +18,17 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 "X-Generator: Poedit 3.8\n"
 
-#: ../../userguide/manage_organization.rst:6
+#: ../../userguide/manage-organization.rst:6
 msgid "Manage your organization"
 msgstr "Gérer votre organisation"
 
-#: ../../userguide/manage_organization.rst:8
+#: ../../userguide/manage-organization.rst:8
 msgid "Now that our organization is ready, we can start inviting new users."
 msgstr ""
 "Maintenant que notre organisation est prête, nous pouvons commencer à "
 "inviter de nouveaux utilisateurs."
 
-#: ../../userguide/manage_organization.rst:10
+#: ../../userguide/manage-organization.rst:10
 msgid ""
 "In Parsec, inviting a new user to join your organization is a critical "
 "operation that aims at building trust towards the user and the device that "
@@ -38,7 +38,7 @@ msgstr ""
 "est une opération critique qui vise à établir la confiance envers "
 "l'utilisateur et l'appareil qui sera utilisé pour se connecter à Parsec."
 
-#: ../../userguide/manage_organization.rst:14
+#: ../../userguide/manage-organization.rst:14
 msgid ""
 "The process requires both the guest (the invited user) and the host (you) to "
 "be connected to the Parsec server at the same time."
@@ -46,15 +46,15 @@ msgstr ""
 "Pour ce faire, l'utilisateur invité et l'utilisateur hôte (vous) doivent "
 "être connectés au serveur Parsec en même temps."
 
-#: ../../userguide/manage_organization.rst:18
+#: ../../userguide/manage-organization.rst:18
 msgid "Invite a user"
 msgstr "Inviter un utilisateur"
 
-#: ../../userguide/manage_organization.rst:20
+#: ../../userguide/manage-organization.rst:20
 msgid "Parsec provides two ways to invite users:"
 msgstr "Parsec propose deux façons d'inviter des utilisateurs :"
 
-#: ../../userguide/manage_organization.rst:22
+#: ../../userguide/manage-organization.rst:22
 msgid ""
 "**Invite by email address**: the user will receive an email with a link to "
 "join your organization. Both you and the user have to be available at the "
@@ -66,7 +66,7 @@ msgstr ""
 "devez être disponibles en même temps et suivre ensemble la procédure afin de "
 "vérifier l'identité de l'utilisateur."
 
-#: ../../userguide/manage_organization.rst:26
+#: ../../userguide/manage-organization.rst:26
 msgid ""
 "**Invite by join request**: the user will request to join the organization "
 "using a generic link. The user identity is verified with an external "
@@ -77,7 +77,7 @@ msgstr ""
 "vérifiée auprès d'un fournisseur d'identité externe. Vous pouvez ensuite "
 "*accepter* ou *refuser* la demande à tout moment."
 
-#: ../../userguide/manage_organization.rst:32
+#: ../../userguide/manage-organization.rst:32
 msgid ""
 "An identity provider is required to use this option. Those currently "
 "supported are:"
@@ -85,13 +85,13 @@ msgstr ""
 "Un fournisseur d'identité est nécessaire pour utiliser cette option. Ceux "
 "qui sont actuellement pris en charge sont :"
 
-#: ../../userguide/manage_organization.rst:34
+#: ../../userguide/manage-organization.rst:34
 msgid "a **Public Key Infrastructure** (PKI). Supported only on Windows."
 msgstr ""
 "une **infrastructure à clé publique** (PKI). Prise en charge uniquement sous "
 "Windows."
 
-#: ../../userguide/manage_organization.rst:35
+#: ../../userguide/manage-organization.rst:35
 msgid ""
 "a **Single-Sign On** (SSO) provider. Only **ProConnect** is supported at the "
 "moment."
@@ -99,16 +99,16 @@ msgstr ""
 "un fournisseur d'authentification unique (SSO). Seul **ProConnect** est pris "
 "en charge pour le moment."
 
-#: ../../userguide/manage_organization.rst:39
+#: ../../userguide/manage-organization.rst:39
 msgid "Invite a user by email address"
 msgstr "Inviter un utilisateur par adresse e-mail"
 
-#: ../../userguide/manage_organization.rst:41
-#: ../../userguide/manage_organization.rst:90
+#: ../../userguide/manage-organization.rst:41
+#: ../../userguide/manage-organization.rst:90
 msgid "In the sidebar, go to ``Users``"
 msgstr "Dans la barre latérale, rendez vous dans ``Utilisateurs``"
 
-#: ../../userguide/manage_organization.rst:42
+#: ../../userguide/manage-organization.rst:42
 msgid ""
 "Click ``Invite a user`` and enter an email address to send the **invitation "
 "link**"
@@ -116,7 +116,7 @@ msgstr ""
 "Cliquez sur ``Inviter un utilisateur`` et entrez son adresse e-mail pour "
 "envoyer un **lien d'invitation**"
 
-#: ../../userguide/manage_organization.rst:44
+#: ../../userguide/manage-organization.rst:44
 msgid ""
 "A blue button will appear at the top, informing you that you have an "
 "invitation waiting to be validated."
@@ -124,11 +124,11 @@ msgstr ""
 "Un bouton bleu apparaît en haut, vous informant que vous avez une invitation "
 "qui attend d'être validée."
 
-#: ../../userguide/manage_organization.rst:47
+#: ../../userguide/manage-organization.rst:47
 msgid "Pending invitations"
 msgstr "Invitations en attente"
 
-#: ../../userguide/manage_organization.rst:51
+#: ../../userguide/manage-organization.rst:51
 msgid ""
 "Ask the user to open the invitation link and follow the steps to :ref:`start "
 "the invitation process <doc_userguide_join_organization_start_invitation>`."
@@ -137,7 +137,7 @@ msgstr ""
 "pour :ref:`lancer le processus d'invitation "
 "<doc_userguide_join_organization>`."
 
-#: ../../userguide/manage_organization.rst:54
+#: ../../userguide/manage-organization.rst:54
 msgid ""
 "Click on ``Greet`` and wait for the guest to proceed to :ref:`verify your "
 "identity with a code exchange "
@@ -147,7 +147,7 @@ msgstr ""
 "votre identité à l'aide d'un échange de code "
 "<doc_userguide_join_organization_token_exchange>`."
 
-#: ../../userguide/manage_organization.rst:57
+#: ../../userguide/manage-organization.rst:57
 msgid ""
 "Confirm the user details and set the :ref:`user profile "
 "<doc_userguide_manage_organization_profiles>`."
@@ -155,16 +155,16 @@ msgstr ""
 "Confirmez les détails de l'utilisateur et définissez son :ref:`profil "
 "d'utilisateur <doc_userguide_manage_organization_profiles>`."
 
-#: ../../userguide/manage_organization.rst:59
-#: ../../userguide/manage_organization.rst:78
+#: ../../userguide/manage-organization.rst:59
+#: ../../userguide/manage-organization.rst:78
 msgid "The user can now login to your organization."
 msgstr "L'utilisateur peut désormais se connecter à votre organisation."
 
-#: ../../userguide/manage_organization.rst:63
+#: ../../userguide/manage-organization.rst:63
 msgid "Invite a user by join request"
 msgstr "Inviter un utilisateur par demande"
 
-#: ../../userguide/manage_organization.rst:65
+#: ../../userguide/manage-organization.rst:65
 msgid ""
 "In the sidebar, go to ``Invitations & Join Requests`` and then ``Join "
 "requests (PKI/SSO)``"
@@ -172,7 +172,7 @@ msgstr ""
 "Dans la barre latérale, accédez à ``Invitations & Demandes``, puis à "
 "``Demandes par lien (PKI/SSO)``"
 
-#: ../../userguide/manage_organization.rst:66
+#: ../../userguide/manage-organization.rst:66
 msgid ""
 "Click ``Copy join request link (PKI/SSO)`` and share the link with the "
 "users. Note that this link is not specific to a single user, you can share "
@@ -183,7 +183,7 @@ msgstr ""
 "vous pouvez le partager avec toute personne souhaitant rejoindre votre "
 "organisation."
 
-#: ../../userguide/manage_organization.rst:70
+#: ../../userguide/manage-organization.rst:70
 msgid ""
 "Ask the user to open the link and follow the steps to :ref:`request to join "
 "the organization <doc_userguide_join_organization_request>`."
@@ -192,7 +192,7 @@ msgstr ""
 "`demander à rejoindre l'organisation "
 "<doc_userguide_join_organization_request>`."
 
-#: ../../userguide/manage_organization.rst:73
+#: ../../userguide/manage-organization.rst:73
 msgid ""
 "A pending join request will appear in the list. Click ``Accept`` to accept "
 "the request to join your organization or ``Reject`` to discard it."
@@ -201,7 +201,7 @@ msgstr ""
 "pour accepter la demande d'adhésion à votre organisation ou sur ``Refuser`` "
 "pour la rejeter."
 
-#: ../../userguide/manage_organization.rst:76
+#: ../../userguide/manage-organization.rst:76
 msgid ""
 "If you accepted the request, confirm the user details and set the :ref:`user "
 "profile <doc_userguide_manage_organization_profiles>`."
@@ -210,11 +210,11 @@ msgstr ""
 "définissez le :ref:`profil utilisateur "
 "<doc_userguide_manage_organization_profiles>`."
 
-#: ../../userguide/manage_organization.rst:82
+#: ../../userguide/manage-organization.rst:82
 msgid "Revoke a user"
 msgstr "Révoquer un utilisateur"
 
-#: ../../userguide/manage_organization.rst:84
+#: ../../userguide/manage-organization.rst:84
 msgid ""
 "Revoking a user will remove its access rights to the organization. This is "
 "specially required when:"
@@ -222,25 +222,25 @@ msgstr ""
 "La révocation d'un utilisateur supprime ses droits d'accès à l'organisation. "
 "Cette opération est particulièrement nécessaire dans les cas suivants:"
 
-#: ../../userguide/manage_organization.rst:87
+#: ../../userguide/manage-organization.rst:87
 msgid "the user device has been compromised or lost"
 msgstr "l'appareil de l'utilisateur a été compromis ou perdu"
 
-#: ../../userguide/manage_organization.rst:88
+#: ../../userguide/manage-organization.rst:88
 msgid "the user is no longer part of the organization"
 msgstr "l'utilisateur ne fait plus partie de l'organisation"
 
-#: ../../userguide/manage_organization.rst:91
+#: ../../userguide/manage-organization.rst:91
 msgid "Select ``Revoke this user``."
 msgstr "Sélectionnez ``Révoquer cet utilisateur``."
 
-#: ../../userguide/manage_organization.rst:92
+#: ../../userguide/manage-organization.rst:92
 msgid "Click ``Revoke`` to confirm (**this action cannot be undone**)"
 msgstr ""
 "Cliquez sur ``Révoquer`` pour confirmer (**cette action ne peut pas être "
 "annulée**)"
 
-#: ../../userguide/manage_organization.rst:96
+#: ../../userguide/manage-organization.rst:96
 msgid ""
 "Revocation is irreversible. If the revoked user needs to re-join the "
 "organization, it will need to go through the standard procedure to :ref:"
@@ -250,7 +250,7 @@ msgstr ""
 "réintégrer l'organisation, il devra suivre la procédure standard pour :ref:"
 "`rejoindre une organisation <doc_userguide_join_organization>`"
 
-#: ../../userguide/manage_organization.rst:101
+#: ../../userguide/manage-organization.rst:101
 msgid ""
 "It is not possible to revoke a single user device. If one of the user's "
 "devices has been compromised, the user and all its devices need to be "
@@ -263,11 +263,11 @@ msgstr ""
 "connaissance de certains secrets cryptographiques partagés entre tous les "
 "dispositifs de l'utilisateur."
 
-#: ../../userguide/manage_organization.rst:110
+#: ../../userguide/manage-organization.rst:110
 msgid "User profiles"
 msgstr "Profils utilisateur"
 
-#: ../../userguide/manage_organization.rst:112
+#: ../../userguide/manage-organization.rst:112
 msgid ""
 "The **user profiles** defines what the user is allowed to do within the "
 "organization."
@@ -275,21 +275,21 @@ msgstr ""
 "Les **profils utilisateur** définissent ce que l'utilisateur est autorisé à "
 "faire au sein de l'organisation."
 
-#: ../../userguide/manage_organization.rst:116
+#: ../../userguide/manage-organization.rst:116
 msgid "External profile"
 msgstr "Profil Externe"
 
-#: ../../userguide/manage_organization.rst:118
-#: ../../userguide/manage_organization.rst:130
-#: ../../userguide/manage_organization.rst:139
+#: ../../userguide/manage-organization.rst:118
+#: ../../userguide/manage-organization.rst:130
+#: ../../userguide/manage-organization.rst:139
 msgid "This profile allows a user to:"
 msgstr "Ce profil permet à l'utilisateur de:"
 
-#: ../../userguide/manage_organization.rst:120
+#: ../../userguide/manage-organization.rst:120
 msgid "**Collaborate in workspaces**"
 msgstr "Collaborer dans les espaces de travail"
 
-#: ../../userguide/manage_organization.rst:124
+#: ../../userguide/manage-organization.rst:124
 msgid ""
 "Users with the External profile are not allowed to see the name and email of "
 "other users within the organization."
@@ -297,55 +297,55 @@ msgstr ""
 "Les utilisateurs ayant un profil externe ne sont pas autorisés à voir le nom "
 "et l'adresse électronique d'autres utilisateurs au sein de l'organisation."
 
-#: ../../userguide/manage_organization.rst:128
+#: ../../userguide/manage-organization.rst:128
 msgid "Member profile"
 msgstr "Profil Membre"
 
-#: ../../userguide/manage_organization.rst:132
-#: ../../userguide/manage_organization.rst:141
+#: ../../userguide/manage-organization.rst:132
+#: ../../userguide/manage-organization.rst:141
 msgid "Collaborate in workspaces."
 msgstr "Collaborer dans les espaces de travail."
 
-#: ../../userguide/manage_organization.rst:133
+#: ../../userguide/manage-organization.rst:133
 msgid "**Create and share workspaces.**"
 msgstr "**Créer et partager des espaces de travail.**"
 
-#: ../../userguide/manage_organization.rst:134
+#: ../../userguide/manage-organization.rst:134
 msgid "**See the name and email of other users within the organization.**"
 msgstr ""
 "**Voir le nom et l'adresse électronique d'autres utilisateurs au sein de "
 "l'organisation.**"
 
-#: ../../userguide/manage_organization.rst:137
+#: ../../userguide/manage-organization.rst:137
 msgid "Administrator profile"
 msgstr "Profil Administrateur"
 
-#: ../../userguide/manage_organization.rst:142
+#: ../../userguide/manage-organization.rst:142
 msgid "Create and share workspaces."
 msgstr "Créer et partager des espaces de travail."
 
-#: ../../userguide/manage_organization.rst:143
+#: ../../userguide/manage-organization.rst:143
 msgid "See the name and email of other users within the organization."
 msgstr ""
 "Voir le nom et l'adresse électronique d'autres utilisateurs au sein de "
 "l'organisation."
 
-#: ../../userguide/manage_organization.rst:144
+#: ../../userguide/manage-organization.rst:144
 msgid "**Invite new users to join the organization, and set their profile.**"
 msgstr ""
 "**Inviter de nouveaux utilisateurs à rejoindre l'organisation et définir "
 "leur profil.**"
 
-#: ../../userguide/manage_organization.rst:145
+#: ../../userguide/manage-organization.rst:145
 msgid "**Remove users from the organization, regardless of their profile.**"
 msgstr ""
 "**Supprimer les utilisateurs de l'organisation, quel que soit leur profil.**"
 
-#: ../../userguide/manage_organization.rst:148
+#: ../../userguide/manage-organization.rst:148
 msgid "Change the profile"
 msgstr "Modifier le profil"
 
-#: ../../userguide/manage_organization.rst:150
+#: ../../userguide/manage-organization.rst:150
 msgid ""
 "If you need to change the profile of a user, go to ``Users`` (in the "
 "sidebar) in the upper-left corner. Either select the user or right-click on "
@@ -355,20 +355,20 @@ msgstr ""
 "dans le coin supérieur gauche. Vous pouvez soit sélectionner l'utilisateur, "
 "ou faire un clic droit dessus et sélectionner ``Modifier le profil``."
 
-#: ../../userguide/manage_organization.rst:152
+#: ../../userguide/manage-organization.rst:152
 msgid "change profile screenshot"
 msgstr "capture d'écran du changement de profil"
 
-#: ../../userguide/manage_organization.rst:157
+#: ../../userguide/manage-organization.rst:157
 msgid "Select the user's new profile and click on ``Change``."
 msgstr ""
 "Choisissez le nouveau profil de l'utilisateur et cliquez sur ``Modifier``."
 
-#: ../../userguide/manage_organization.rst:159
+#: ../../userguide/manage-organization.rst:159
 msgid "change profile dialog screenshot"
 msgstr "capture d'écran de la dialogue de changement de profil"
 
-#: ../../userguide/manage_organization.rst:164
+#: ../../userguide/manage-organization.rst:164
 msgid ""
 "You can change the profiles of multiple users at once by selecting them and "
 "clicking on ``Change profiles``."
@@ -376,11 +376,11 @@ msgstr ""
 "Vous pouvez changer les profils de plusieurs utilisateurs simultanément en "
 "les sélectionnant et en cliquant sur ``Modifier les profils``."
 
-#: ../../userguide/manage_organization.rst:166
+#: ../../userguide/manage-organization.rst:166
 msgid "change multiple profiles screenshot"
 msgstr "capture d'écran du changement de plusieurs profils"
 
-#: ../../userguide/manage_organization.rst:171
+#: ../../userguide/manage-organization.rst:171
 msgid ""
 "You cannot change the profile from and to `External`. If there are users "
 "with `External` profile among the selected users, the dialog will warn you "
@@ -391,6 +391,6 @@ msgstr ""
 "sélectionnés, la fenêtre vous avertira que leur profils ne seront pas "
 "changés."
 
-#: ../../userguide/manage_organization.rst:173
+#: ../../userguide/manage-organization.rst:173
 msgid "change profile external warning screenshot"
 msgstr "capture d'écran de l'avertissement"

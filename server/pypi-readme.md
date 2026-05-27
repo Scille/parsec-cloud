@@ -1,4 +1,4 @@
-[Parsec](https://docs.parsec.cloud/en/latest/userguide/first_steps.html) is a cloud-based application for simple and cryptographically secure file sharing.
+[Parsec](https://docs.parsec.cloud/en/latest/userguide/first-steps.html) is a cloud-based application for simple and cryptographically secure file sharing.
 
 - 🔐 Client-side E2EE to ensure your data is only accessed by you and the people you share it with.
 - ✒️ Cryptographic signature to identify the author of each change.

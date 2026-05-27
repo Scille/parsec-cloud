@@ -12,9 +12,9 @@ This section covers how to manage Parsec Server and perform common administrativ
     :maxdepth: 1
     :name: section-hosting-administration-guide
 
-    create_organization
-    stats_server
-    stats_organization
-    freeze_users
-    shared_recovery
-    mfa_reset
+    create-organization
+    stats-server
+    stats-organization
+    freeze-users
+    shared-recovery
+    mfa-reset

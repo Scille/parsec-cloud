@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../hosting/administration/stats_organization.rst:7
+#: ../../hosting/administration/stats-organization.rst:7
 msgid "Organization usage statistics"
 msgstr "Statistiques d'utilisation d'une organisation"
 
-#: ../../hosting/administration/stats_organization.rst:9
+#: ../../hosting/administration/stats-organization.rst:9
 msgid ""
 "In order to extract organization usage statistics, the administrator needs "
 "to provide:"
@@ -29,19 +29,19 @@ msgstr ""
 "Afin d'extraire les statistiques d'utilisation d'une organisation, "
 "l'administrateur doit fournir :"
 
-#: ../../hosting/administration/stats_organization.rst:11
+#: ../../hosting/administration/stats-organization.rst:11
 msgid "The Parsec Server address as a Parsec URL ``parsec3://hostname:port``"
 msgstr ""
 "L'adresse du serveur Parsec, par une url Parsec ``parsec3://hostname:port``"
 
-#: ../../hosting/administration/stats_organization.rst:12
+#: ../../hosting/administration/stats-organization.rst:12
 msgid "The ``administration_token`` configured in the Parsec Server"
 msgstr "Le ``administration_token`` configuré dans le serveur Parsec"
 
-#: ../../hosting/administration/stats_organization.rst:13
+#: ../../hosting/administration/stats-organization.rst:13
 msgid "The organization name"
 msgstr "Le nom d'organisation"
 
-#: ../../hosting/administration/stats_organization.rst:19
+#: ../../hosting/administration/stats-organization.rst:19
 msgid "Example of output:"
 msgstr "Exemple de sortie :"

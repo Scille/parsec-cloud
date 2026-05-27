@@ -9,8 +9,8 @@ Troubleshooting
     :maxdepth: 1
     :name: section-userguide-troubleshooting
 
-    cannot_login_organization
-    cannot_login_customer_area
-    macos_finder_errors
-    ms_filename_too_long
-    where_to_find_log_files
+    cannot-login-organization
+    cannot-login-customer-area
+    macos-finder-errors
+    ms-filename-too-long
+    where-to-find-log-files
