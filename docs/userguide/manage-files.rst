@@ -145,7 +145,11 @@ When you double-click on a file, it will be opened with the default application 
 Using Parsec preview
 ^^^^^^^^^^^^^^^^^^^^
 
-Some file types can be displayed directly in Parsec without using an external application.
+Some files can be displayed directly in Parsec without using an external application. The preview is available to all users of a workspace, by selecting ``Preview`` in a file menu.
+
+.. image:: screens/files/context_preview.png
+    :align: center
+    :alt: Context menu preview
 
 If the file type is supported (see below), Parsec will display a preview of it. While this preview does not allow you to make any change, and may lack some of the functionality provided by external applications, it is the more secure way of viewing your files as they will not leave Parsec.
 
@@ -156,17 +160,48 @@ If the file type is supported (see below), Parsec will display a preview of it. 
 Parsec preview is limited to files with size inferior to 15MB. The following file formats are supported:
 
 * PDF
-* DOCX (Microsoft Word). XLSX (Microsoft Excel) support is coming soon.
+* DOCX (Microsoft Word), ODT (OpenOffice)
+* XLSX (Microsoft Excel), ODS (OpenOffice)
 * Audio
 * Images
-* Plain Text
+* PPTX (Microsoft Powerpoint), ODP (OpenOffice) support is coming soon.
+* Plain Text and Code file formats: TXT, MD, CSV, RST, JSON...
 
-Parsec preview can be disabled in the desktop application settings.
+On the desktop app, Parsec preview can be disabled in the application settings.
 
 .. image:: screens/files/disable_viewers.png
     :align: center
     :alt: Disable viewers screenshot
     :width: 800
+
+
+Using Parsec edition
+^^^^^^^^^^^^^^^^^^^^
+
+Some files can be edited directly in Parsec without using an external application. The editor is available to **Owners**, **Managers** and **Contributors** of a workspace, by clicking on ``Edit`` in the file menu, clicking the file name or double-clicking the file in Parsec.
+
+.. image:: screens/files/context_edit.png
+    :align: center
+    :alt: Context menu edit
+
+If the file type is supported (see below), Parsec will open it in a embedded editor.
+
+.. image:: screens/files/docx_editor.png
+    :align: center
+    :alt: DOCX editor screenshot
+
+Parsec edition is limited to files with size inferior to 15MB. The following file formats are supported:
+
+* Documents: DOCX (Microsoft Word), ODT (OpenOffice)
+* Spreadsheet: XLSX (Microsoft Excel), XLS, ODS (OpenOffice)
+* Presentation: PPTX (Microsoft Powerpoint), ODP (OpenOffice) support is coming soon.
+* Plain Text and Code file formats: TXT, MD, CSV, RST, JSON...
+
+.. note::
+
+    Collaborative edition is currently in development. Until the official release of this feature, only the latest change will be saved and overwrite the file if two users edit a file simultaneously, regardless of conflicts.
+
+On the desktop app, Parsec edition can be disabled in the application settings using the same option shown for preview.
 
 Recent documents
 ^^^^^^^^^^^^^^^^
