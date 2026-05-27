@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../hosting/administration/stats_server.rst:7
+#: ../../hosting/administration/stats-server.rst:7
 msgid "Server usage statistics"
 msgstr "Statistiques d'utilisation du serveur"
 
-#: ../../hosting/administration/stats_server.rst:9
+#: ../../hosting/administration/stats-server.rst:9
 msgid ""
 "In order to extract server usage statistics, the administrator needs to "
 "provide:"
@@ -29,27 +29,27 @@ msgstr ""
 "Afin d'extraire les statistiques d'utilisation du serveur, l'administrateur "
 "doit fournir :"
 
-#: ../../hosting/administration/stats_server.rst:11
+#: ../../hosting/administration/stats-server.rst:11
 msgid "The Parsec Server address as a Parsec URL ``parsec3://hostname:port``"
 msgstr ""
 "L'adresse du serveur Parsec, par une url Parsec ``parsec3://hostname:port``"
 
-#: ../../hosting/administration/stats_server.rst:12
+#: ../../hosting/administration/stats-server.rst:12
 msgid "The ``administration_token`` configured in the Parsec Server"
 msgstr "Le ``administration_token`` configuré dans le serveur Parsec"
 
-#: ../../hosting/administration/stats_server.rst:13
+#: ../../hosting/administration/stats-server.rst:13
 msgid "The extraction date (ignores everything after the date provided)"
 msgstr "La date d'extraction (ignore toutes les informations après cette date)"
 
-#: ../../hosting/administration/stats_server.rst:14
+#: ../../hosting/administration/stats-server.rst:14
 msgid "The output filename"
 msgstr "Le nom du fichier de sortie"
 
-#: ../../hosting/administration/stats_server.rst:15
+#: ../../hosting/administration/stats-server.rst:15
 msgid "The output file format which can be CSV or JSON"
 msgstr "Le format du fichier de sortie, peut être en CSV ou JSON"
 
-#: ../../hosting/administration/stats_server.rst:21
+#: ../../hosting/administration/stats-server.rst:21
 msgid "Example of output:"
 msgstr "Exemple de sortie :"

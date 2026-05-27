@@ -18,13 +18,13 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 "X-Generator: Poedit 3.9\n"
 
-#: ../../userguide/troubleshooting/ms_filename_too_long.rst:6
+#: ../../userguide/troubleshooting/ms-filename-too-long.rst:6
 msgid "Microsoft Word or similar software says the file name is too long"
 msgstr ""
 "\"Microsoft Word ou un logiciel similaire indique que le nom du fichier est "
 "trop long"
 
-#: ../../userguide/troubleshooting/ms_filename_too_long.rst:8
+#: ../../userguide/troubleshooting/ms-filename-too-long.rst:8
 msgid ""
 "This error is due to Microsoft's `Maximum File Path Limitation <https://"
 "learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-"
@@ -34,7 +34,7 @@ msgstr ""
 "learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-"
 "limitation>`_ de Microsoft."
 
-#: ../../userguide/troubleshooting/ms_filename_too_long.rst:10
+#: ../../userguide/troubleshooting/ms-filename-too-long.rst:10
 msgid ""
 "When you save or open a file, its full path cannot exceed 260 characters. "
 "This limitation includes 3 characters for the drive (i.e. `D:`), the "
@@ -47,7 +47,7 @@ msgstr ""
 "tous les noms de dossiers intermédiaires, la barre oblique inversée entre "
 "les dossiers et les caractères du nom du fichier."
 
-#: ../../userguide/troubleshooting/ms_filename_too_long.rst:14
+#: ../../userguide/troubleshooting/ms-filename-too-long.rst:14
 msgid ""
 "The only solution is to rename the file or the folders containing it in "
 "order to have a shorter path."
@@ -55,7 +55,7 @@ msgstr ""
 "La seule solution consiste à renommer le fichier ou les dossiers qui le "
 "contiennent afin d'obtenir un chemin d'accès plus court."
 
-#: ../../userguide/troubleshooting/ms_filename_too_long.rst:16
+#: ../../userguide/troubleshooting/ms-filename-too-long.rst:16
 msgid ""
 "Microsoft's article also mentions a more cumbersome approach by modifying a "
 "registry entry. This might work, but it has not been tested in Parsec."

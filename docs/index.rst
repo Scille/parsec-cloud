@@ -24,13 +24,13 @@ You can also use the search function in the top left corner.
 
     userguide/introduction
     userguide/installation
-    userguide/new_organization
-    userguide/first_steps
-    userguide/manage_organization
-    userguide/join_organization
-    userguide/parsec_workspaces
-    userguide/manage_files
-    userguide/manage_devices
+    userguide/new-organization
+    userguide/first-steps
+    userguide/manage-organization
+    userguide/join-organization
+    userguide/parsec-workspaces
+    userguide/manage-files
+    userguide/manage-devices
     userguide/mfa
     userguide/security
     userguide/troubleshooting/index
@@ -43,12 +43,12 @@ You can also use the search function in the top left corner.
     hosting/introduction
     hosting/architecture
     hosting/deployment/index
-    hosting/client_deploy
+    hosting/client-deploy
     hosting/maintenance/index
     hosting/administration/index
     hosting/sequester/index
     hosting/openbao/index
-    hosting/custom_branding
+    hosting/custom-branding
 
 .. toctree::
     :maxdepth: 1
@@ -56,13 +56,13 @@ You can also use the search function in the top left corner.
     :name: section-cli
 
     cli/introduction
-    cli/install_cli
-    cli/first_steps
+    cli/install-cli
+    cli/first-steps
     cli/invite
     cli/device
     cli/user
     cli/workspace
-    cli/cheat_sheet
+    cli/cheat-sheet
 
 .. only:: html
 

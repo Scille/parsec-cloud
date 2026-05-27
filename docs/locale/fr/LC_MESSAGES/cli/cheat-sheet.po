@@ -19,44 +19,44 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../cli/cheat_sheet.rst:7
+#: ../../cli/cheat-sheet.rst:7
 msgid "Cheat sheet"
 msgstr "Récapitulatif"
 
-#: ../../cli/cheat_sheet.rst:9
+#: ../../cli/cheat-sheet.rst:9
 msgid "This page aims to provide a quick overview of the most used commands."
 msgstr ""
 "L'objectif de cette page est de fournir un aperçu rapide des commandes les "
 "plus utilisées."
 
-#: ../../cli/cheat_sheet.rst:13
+#: ../../cli/cheat-sheet.rst:13
 msgid "Device"
 msgstr "Appareil"
 
-#: ../../cli/cheat_sheet.rst:15
+#: ../../cli/cheat-sheet.rst:15
 msgid "For more, see :ref:`device <doc_cli_device>`"
 msgstr "Pour plus de détails, voir :ref:`device <doc_cli_device>`"
 
-#: ../../cli/cheat_sheet.rst:28
+#: ../../cli/cheat-sheet.rst:28
 msgid "Invite"
 msgstr "Invitation"
 
-#: ../../cli/cheat_sheet.rst:30
+#: ../../cli/cheat-sheet.rst:30
 msgid "For more, see :ref:`invite <doc_cli_invite>`"
 msgstr "Pour plus de détails, voir :ref:`invite <doc_cli_invite>`"
 
-#: ../../cli/cheat_sheet.rst:43
+#: ../../cli/cheat-sheet.rst:43
 msgid "User"
 msgstr "Utilisateur"
 
-#: ../../cli/cheat_sheet.rst:45
+#: ../../cli/cheat-sheet.rst:45
 msgid "For more, see :ref:`user <doc_cli_user>`"
 msgstr "Pour plus de détails, voir :ref:`user <doc_cli_user>`"
 
-#: ../../cli/cheat_sheet.rst:55
+#: ../../cli/cheat-sheet.rst:55
 msgid "Workspace"
 msgstr "Espace de travail"
 
-#: ../../cli/cheat_sheet.rst:57
+#: ../../cli/cheat-sheet.rst:57
 msgid "For more, see :ref:`workspace <doc_cli_workspace>`"
 msgstr "Pour plus de détails, voir :ref:`workspace <doc_cli_workspace>`"

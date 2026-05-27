@@ -17,12 +17,12 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 "X-Generator: Poedit 3.9\n"
 
-#: ../../hosting/administration/create_organization.rst:7
-#: ../../hosting/administration/create_organization.rst:69
+#: ../../hosting/administration/create-organization.rst:7
+#: ../../hosting/administration/create-organization.rst:69
 msgid "Create an Organization"
 msgstr "Créer une organisation"
 
-#: ../../hosting/administration/create_organization.rst:9
+#: ../../hosting/administration/create-organization.rst:9
 msgid ""
 "This section describes how to create an Organization on your :ref:`self-"
 "hosted instance of Parsec Server <doc_hosting_deployment>`."
@@ -30,11 +30,11 @@ msgstr ""
 "Cette section explique comment créer une organisation sur votre :ref:"
 "`instance auto-hébergée de Parsec Server <doc_hosting_deployment>`."
 
-#: ../../hosting/administration/create_organization.rst:14
+#: ../../hosting/administration/create-organization.rst:14
 msgid "Before starting"
 msgstr "Avant de commencer"
 
-#: ../../hosting/administration/create_organization.rst:16
+#: ../../hosting/administration/create-organization.rst:16
 msgid ""
 "The process of creating an Organization in Parsec involves the following "
 "steps:"
@@ -42,11 +42,11 @@ msgstr ""
 "La création d'une organisation dans Parsec se déroule selon les étapes "
 "suivantes :"
 
-#: ../../hosting/administration/create_organization.rst:18
+#: ../../hosting/administration/create-organization.rst:18
 msgid "Create an organization"
 msgstr "Create an Organization"
 
-#: ../../hosting/administration/create_organization.rst:19
+#: ../../hosting/administration/create-organization.rst:19
 msgid ""
 "Create an organization with a valid name (as described in this section) and "
 "obtain a *bootstrap link* to create the first user."
@@ -54,12 +54,12 @@ msgstr ""
 "Créez une organisation avec un nom valide (comme décrit dans cette section) "
 "et obtenez un *lien de démarrage* pour créer le premier utilisateur."
 
-#: ../../hosting/administration/create_organization.rst:22
+#: ../../hosting/administration/create-organization.rst:22
 msgid "Set up :ref:`Sequester service<doc_hosting_sequester>` (optional)"
 msgstr ""
 "Configurer le :ref:`Service du Sequester<doc_hosting_sequester>` (facultatif)"
 
-#: ../../hosting/administration/create_organization.rst:23
+#: ../../hosting/administration/create-organization.rst:23
 msgid ""
 "The sequester service allows to securely recover all data from an "
 "Organization. It can only be activated during the Organization bootstrap and "
@@ -69,11 +69,11 @@ msgstr ""
 "données d'une organisation. Il ne peut être activé que lors de la "
 "configuration initiale de l'organisation et *en aucun cas par la suite*."
 
-#: ../../hosting/administration/create_organization.rst:26
+#: ../../hosting/administration/create-organization.rst:26
 msgid "Bootstrap the organization"
 msgstr "Bootstrap l'organisation"
 
-#: ../../hosting/administration/create_organization.rst:27
+#: ../../hosting/administration/create-organization.rst:27
 msgid ""
 "Bootstrapping is the process of creating the first user for the "
 "Organization. This can be done by anyone having the *bootstrap link*."
@@ -82,7 +82,7 @@ msgstr ""
 "pour l'organisation. Cette opération peut être effectuée par toute personne "
 "disposant du *lien de bootstrapping*."
 
-#: ../../hosting/administration/create_organization.rst:31
+#: ../../hosting/administration/create-organization.rst:31
 msgid ""
 "The first user is trusted by default (no code exchange is required) and is "
 "responsible for :ref:`inviting subsequent users "
@@ -95,11 +95,11 @@ msgstr ""
 "la confiance en suivant les étapes pour :ref:`rejoindre une organisation "
 "<doc_userguide_join_organization>`."
 
-#: ../../hosting/administration/create_organization.rst:35
+#: ../../hosting/administration/create-organization.rst:35
 msgid "The following diagram summarizes the process:"
 msgstr "Le schéma suivant résume le processus :"
 
-#: ../../hosting/administration/create_organization.rst:57
+#: ../../hosting/administration/create-organization.rst:57
 msgid ""
 "If you enabled *spontaneous bootstrap* on your Parsec Server **anyone can "
 "create an Organization**. This is done directly from the Parsec client "
@@ -112,14 +112,14 @@ msgstr ""
 "votre serveur, puis de suivre les étapes indiquées dans Parsec pour créer le "
 "premier utilisateur."
 
-#: ../../hosting/administration/create_organization.rst:61
+#: ../../hosting/administration/create-organization.rst:61
 msgid ""
 "The sequester service cannot be set up for Organizations created in this way."
 msgstr ""
 "Le service du séquestre ne peut pas être configuré pour les organisations "
 "créées de cette manière."
 
-#: ../../hosting/administration/create_organization.rst:63
+#: ../../hosting/administration/create-organization.rst:63
 msgid ""
 "Refer to :ref:`Create an organization on my own Parsec server "
 "<doc_userguide_new_organization_custom>`."
@@ -127,11 +127,11 @@ msgstr ""
 "Consultez :ref:`Créer une organisation sur mon propre serveur Parsec "
 "<doc_userguide_new_organization_custom>`."
 
-#: ../../hosting/administration/create_organization.rst:71
+#: ../../hosting/administration/create-organization.rst:71
 msgid "Custom TLS certificates"
 msgstr "Certificats TLS personnalisés"
 
-#: ../../hosting/administration/create_organization.rst:73
+#: ../../hosting/administration/create-organization.rst:73
 msgid ""
 "If you've used :ref:`custom TLS certificates "
 "<doc_hosting_deployment_tls_certificates>` to deploy Parsec Server "
@@ -146,11 +146,11 @@ msgstr ""
 "l'application Parsec). Pour ce faire, exportez ``SSL_CAFILE`` avant de "
 "continuer :"
 
-#: ../../hosting/administration/create_organization.rst:81
+#: ../../hosting/administration/create-organization.rst:81
 msgid "Define required information"
 msgstr "Définir les informations obligatoires"
 
-#: ../../hosting/administration/create_organization.rst:83
+#: ../../hosting/administration/create-organization.rst:83
 msgid ""
 "Define ``SERVER_ADDR`` to your server address and ``ORGANIZATION_NAME`` to "
 "the desired name for the organization (see :ref:`About Organization Names "
@@ -160,17 +160,17 @@ msgstr ""
 "``ORGANIZATION_NAME`` avec le nom souhaité pour l'organisation (voir :ref:`À "
 "propos des noms d'organisation <doc_userguide_new_organization_naming>`)."
 
-#: ../../hosting/administration/create_organization.rst:91
+#: ../../hosting/administration/create-organization.rst:91
 msgid "You can also specify this information manually in each command."
 msgstr ""
 "Vous pouvez également saisir ces informations manuellement dans chaque "
 "commande."
 
-#: ../../hosting/administration/create_organization.rst:93
+#: ../../hosting/administration/create-organization.rst:93
 msgid "Define Administration token for the CLI"
 msgstr "Définir le token d'administration pour Parsec CLI"
 
-#: ../../hosting/administration/create_organization.rst:95
+#: ../../hosting/administration/create-organization.rst:95
 msgid ""
 "If you followed the instructions in :ref:`Server Deployment "
 "<doc_hosting_deployment>` you can load the corresponding file before calling "
@@ -180,7 +180,7 @@ msgstr ""
 "<doc_hosting_deployment>`, vous pouvez charger le fichier correspondant "
 "avant d'appeler la CLI :"
 
-#: ../../hosting/administration/create_organization.rst:102
+#: ../../hosting/administration/create-organization.rst:102
 msgid ""
 "Otherwise you can define an ``PARSEC_ADMINISTRATION_TOKEN`` variable and use "
 "it below."
@@ -188,32 +188,32 @@ msgstr ""
 "Sinon, vous pouvez définir une variable ``PARSEC_ADMINISTRATION_TOKEN`` et "
 "l'utiliser ci-dessous."
 
-#: ../../hosting/administration/create_organization.rst:104
+#: ../../hosting/administration/create-organization.rst:104
 msgid "Create the organization"
 msgstr "Créer l'organisation"
 
-#: ../../hosting/administration/create_organization.rst:106
+#: ../../hosting/administration/create-organization.rst:106
 msgid ""
 "This can be done either with Parsec CLI or via the REST Administration API."
 msgstr ""
 "Cela peut se faire soit via l'interface CLI de Parsec, soit via l'API "
 "d'administration REST."
 
-#: ../../hosting/administration/create_organization.rst:108
+#: ../../hosting/administration/create-organization.rst:108
 msgid "Using Parsec CLI"
 msgstr "Avec Parsec CLI"
 
-#: ../../hosting/administration/create_organization.rst:110
+#: ../../hosting/administration/create-organization.rst:110
 msgid ""
 "To create an organization with Parsec CLI you will use the following command:"
 msgstr ""
 "Pour créer une organisation avec Parsec CLI, utilisez la commande suivante :"
 
-#: ../../hosting/administration/create_organization.rst:116
+#: ../../hosting/administration/create-organization.rst:116
 msgid "Using the REST Administration API"
 msgstr "Avec l'API d'administration REST"
 
-#: ../../hosting/administration/create_organization.rst:118
+#: ../../hosting/administration/create-organization.rst:118
 msgid ""
 "To create an organization with the REST Administration API you need to make "
 "a ``POST`` request to the ``administration/organizations`` endpoint."
@@ -221,7 +221,7 @@ msgstr ""
 "Pour créer une organisation à l'aide de l'API d'administration REST, vous "
 "devez envoyer une requête ``POST`` vers ``administration/organizations``."
 
-#: ../../hosting/administration/create_organization.rst:121
+#: ../../hosting/administration/create-organization.rst:121
 msgid ""
 "Here is an example of how to run the query using :command:`curl` and :"
 "command:`jq`:"
@@ -229,7 +229,7 @@ msgstr ""
 "Voici un exemple illustrant comment exécuter la requête à l'aide de :command:"
 "`curl` et :command:`jq` :"
 
-#: ../../hosting/administration/create_organization.rst:130
+#: ../../hosting/administration/create-organization.rst:130
 msgid ""
 "Save the **Bootstrap link** or **bootstrap url** displayed in either case "
 "before proceeding to bootstrap."
@@ -237,23 +237,23 @@ msgstr ""
 "Enregistrez le **lien Bootstrap** ou l'**URL Bootstrap** qui s'affiche dans "
 "l'un ou l'autre des cas avant de continuer."
 
-#: ../../hosting/administration/create_organization.rst:133
+#: ../../hosting/administration/create-organization.rst:133
 msgid "Bootstrap the Organization"
 msgstr "Bootstrap l'organization"
 
-#: ../../hosting/administration/create_organization.rst:135
+#: ../../hosting/administration/create-organization.rst:135
 msgid "Start Parsec client application (web or desktop)"
 msgstr "Lancez l'application client Parsec (Web ou bureau)"
 
-#: ../../hosting/administration/create_organization.rst:136
+#: ../../hosting/administration/create-organization.rst:136
 msgid "Select :menuselection:`Create or join --> Join``"
 msgstr "Sélectionnez :menuselection:`Créer ou rejoindre --> Rejoindre``"
 
-#: ../../hosting/administration/create_organization.rst:137
+#: ../../hosting/administration/create-organization.rst:137
 msgid "Paste the **bootstrap link** from previous step"
 msgstr "Collez le **lien de bootstrap** de l'étape précédente"
 
-#: ../../hosting/administration/create_organization.rst:138
+#: ../../hosting/administration/create-organization.rst:138
 msgid "Follow the instructions to create the first user of the Organization."
 msgstr ""
 "Suivez les instructions pour créer le premier utilisateur de l'organisation."

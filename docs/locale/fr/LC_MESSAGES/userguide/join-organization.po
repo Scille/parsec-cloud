@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../userguide/join_organization.rst:6
+#: ../../userguide/join-organization.rst:6
 msgid "Join an organization"
 msgstr "Rejoindre une organisation"
 
-#: ../../userguide/join_organization.rst:8
+#: ../../userguide/join-organization.rst:8
 msgid ""
 "To join an organization, you need to prove your identity. Parsec provides "
 "two ways to do so."
@@ -29,12 +29,12 @@ msgstr ""
 "Pour rejoindre une organisation, vous devez vérifier votre identité. Il y a "
 "deux manières d'y procéder dans Parsec."
 
-#: ../../userguide/join_organization.rst:11
+#: ../../userguide/join-organization.rst:11
 msgid "Join an organization with an invitation link"
 msgstr "Rejoignez une organisation avec un lien d'invitation"
 
-#: ../../userguide/join_organization.rst:13
-#: ../../userguide/join_organization.rst:87
+#: ../../userguide/join-organization.rst:13
+#: ../../userguide/join-organization.rst:87
 msgid ""
 "You have been invited to join an organization on Parsec! Before you get "
 "started, please make sure you have :ref:`installed the Parsec app "
@@ -44,7 +44,7 @@ msgstr ""
 "commencer, assurez-vous d'avoir :ref:`installé l'application Parsec "
 "<doc_userguide_install_parsec>`."
 
-#: ../../userguide/join_organization.rst:16
+#: ../../userguide/join-organization.rst:16
 msgid ""
 "Both you and the host have to be available at the same time and go through "
 "the process together."
@@ -52,11 +52,11 @@ msgstr ""
 "Vous et l'hôte devez être disponibles en même temps et suivre le processus "
 "ensemble."
 
-#: ../../userguide/join_organization.rst:21
+#: ../../userguide/join-organization.rst:21
 msgid "Start the invitation process"
 msgstr "Lancer le processus d'invitation"
 
-#: ../../userguide/join_organization.rst:23
+#: ../../userguide/join-organization.rst:23
 msgid ""
 "If you received an **invitation link** either by email or by any other "
 "means, make sure to :ref:`verify it <userguide-verify-parsec-link>` before "
@@ -66,14 +66,14 @@ msgstr ""
 "moyen, veillez à :ref:`le vérifier <userguide-verify-parsec-link>` avant de "
 "cliquer sur le lien."
 
-#: ../../userguide/join_organization.rst:28
-#: ../../userguide/join_organization.rst:112
+#: ../../userguide/join-organization.rst:28
+#: ../../userguide/join-organization.rst:112
 msgid "If you do not trust the link, do not proceed with the invitation."
 msgstr ""
 "Si vous n'avez pas confiance en le lien, ne poursuivez pas avec l'invitation."
 
-#: ../../userguide/join_organization.rst:30
-#: ../../userguide/join_organization.rst:114
+#: ../../userguide/join-organization.rst:30
+#: ../../userguide/join-organization.rst:114
 msgid ""
 "After making sure that the link is safe, simply click on the link. Parsec "
 "will start and guide you through the invitation process."
@@ -81,8 +81,8 @@ msgstr ""
 "Après vous être assuré que le lien est sûr, cliquez simplement dessus. "
 "Parsec démarrera et vous guidera tout au long du processus d'invitation."
 
-#: ../../userguide/join_organization.rst:33
-#: ../../userguide/join_organization.rst:117
+#: ../../userguide/join-organization.rst:33
+#: ../../userguide/join-organization.rst:117
 msgid ""
 "You can also start Parsec and paste the link on the welcome screen (Click "
 "``Create or join`` then ``Join``)."
@@ -90,11 +90,11 @@ msgstr ""
 "Vous pouvez également démarrer Parsec et coller le lien sur l'écran "
 "d'accueil (cliquez sur ``Créer ou rejoindre``, puis sur ``Rejoindre``)."
 
-#: ../../userguide/join_organization.rst:39
+#: ../../userguide/join-organization.rst:39
 msgid "Verify your identity with a code exchange"
 msgstr "Vérifiez votre identité avec échange de code"
 
-#: ../../userguide/join_organization.rst:41
+#: ../../userguide/join-organization.rst:41
 msgid ""
 "In order to create a secure channel between you and the host, you will need "
 "to carry out a **code exchange** via an **authentic channel** (such as a "
@@ -104,7 +104,7 @@ msgstr ""
 "procéder à un **échange de codes** via un **canal authentique** (tel qu'un "
 "appel téléphonique ordinaire)."
 
-#: ../../userguide/join_organization.rst:47
+#: ../../userguide/join-organization.rst:47
 msgid ""
 "Authentic channels are not confidential, but they guarantee that the "
 "information is not tampered: what your contact says is what you hear. You "
@@ -114,7 +114,7 @@ msgstr ""
 "l'information n'est pas altérée : ce que votre contact dit est ce que vous "
 "entendez. Les SMS sont à éviter."
 
-#: ../../userguide/join_organization.rst:51
+#: ../../userguide/join-organization.rst:51
 msgid ""
 "When you are ready, click ``I understand!`` and wait for the host to start "
 "the process on its side."
@@ -122,24 +122,24 @@ msgstr ""
 "Lorsque vous êtes prêt, cliquez sur ``J'ai compris !`` et attendez que "
 "l'hôte lance le processus de son côté."
 
-#: ../../userguide/join_organization.rst:54
+#: ../../userguide/join-organization.rst:54
 msgid "Select the code provided by your host from the list."
 msgstr "Sélectionnez dans la liste le code fourni par votre hôte."
 
-#: ../../userguide/join_organization.rst:56
+#: ../../userguide/join-organization.rst:56
 msgid "List of codes to select the host code"
 msgstr "Liste des codes pour sélectionner le code de l'hôte"
 
-#: ../../userguide/join_organization.rst:61
+#: ../../userguide/join-organization.rst:61
 msgid "Then, share your code to the host and wait until it is selected."
 msgstr ""
 "Ensuite, communiquez votre code à l'hôte et attendez qu'il soit sélectionné."
 
-#: ../../userguide/join_organization.rst:63
+#: ../../userguide/join-organization.rst:63
 msgid "Your guest coded to be provided to the host"
 msgstr "Code de l'invité à fournir à l'hôte"
 
-#: ../../userguide/join_organization.rst:70
+#: ../../userguide/join-organization.rst:70
 msgid ""
 "If one of the codes to share is not present in the other's list, it means "
 "there is a very high probability you are victim of a `Man-in-the-middle "
@@ -150,11 +150,11 @@ msgstr ""
 "d'une attaque de type `Man-in-the-middle <https://fr.wikipedia.org/wiki/"
 "Attaque_de_l%27homme_du_milieu>`_."
 
-#: ../../userguide/join_organization.rst:76
+#: ../../userguide/join-organization.rst:76
 msgid "Set up your account"
 msgstr "Configurez votre compte"
 
-#: ../../userguide/join_organization.rst:78
+#: ../../userguide/join-organization.rst:78
 msgid ""
 "Finally, enter your **contact details** and choose the preferred "
 "**authentication method** (this can be changed later from your profile)."
@@ -163,8 +163,8 @@ msgstr ""
 "d'authentification** préférée (vous pourrez le modifier ultérieurement à "
 "partir de votre profil)."
 
-#: ../../userguide/join_organization.rst:81
-#: ../../userguide/join_organization.rst:138
+#: ../../userguide/join-organization.rst:81
+#: ../../userguide/join-organization.rst:138
 msgid ""
 "You are ready for your :ref:`first steps with Parsec! "
 "<doc_userguide_first_steps>`"
@@ -172,11 +172,11 @@ msgstr ""
 "Vous êtes prêt pour vos :ref:`premiers pas avec Parsec ! "
 "<doc_userguide_first_steps>`"
 
-#: ../../userguide/join_organization.rst:85
+#: ../../userguide/join-organization.rst:85
 msgid "Join an organization with a join request"
 msgstr "Rejoignez une organisation en envoyant une demande."
 
-#: ../../userguide/join_organization.rst:90
+#: ../../userguide/join-organization.rst:90
 msgid ""
 "Your identity will be verified with an identity provider. You and the "
 "administrator do not have to go through this process together. You first "
@@ -188,7 +188,7 @@ msgstr ""
 "devez d'abord envoyer une demande d'adhésion à une organisation, puis "
 "l'administrateur l'accepte ultérieurement."
 
-#: ../../userguide/join_organization.rst:96
+#: ../../userguide/join-organization.rst:96
 msgid ""
 "An identity provider is required to use this option. Those currently "
 "supported are:"
@@ -196,11 +196,11 @@ msgstr ""
 "Un fournisseur d'identité est requis pour cette fonctionnalité. Parsec "
 "supporte actuellement :"
 
-#: ../../userguide/join_organization.rst:98
+#: ../../userguide/join-organization.rst:98
 msgid "a **Public Key Infrastructure** (PKI). Supported only on Windows."
 msgstr "une **Infrastructure à clés publiques** (PKI), seulement sur Windows."
 
-#: ../../userguide/join_organization.rst:99
+#: ../../userguide/join-organization.rst:99
 msgid ""
 "a **Single-Sign On** (SSO) provider. Only **ProConnect** is supported at the "
 "moment."
@@ -208,11 +208,11 @@ msgstr ""
 "une **Authentification Unique** (SSO). Seulement **ProConnect** est supporté "
 "pour le moment."
 
-#: ../../userguide/join_organization.rst:105
+#: ../../userguide/join-organization.rst:105
 msgid "Request to join the organization"
 msgstr "Demandez à rejoindre une organisation"
 
-#: ../../userguide/join_organization.rst:107
+#: ../../userguide/join-organization.rst:107
 msgid ""
 "If you received an link to join the organization either by email or by any "
 "other means, make sure to :ref:`verify it <userguide-verify-parsec-link>` "
@@ -222,7 +222,7 @@ msgstr ""
 "tout autre moyen, assurez-vous de :ref:`le vérifier <userguide-verify-parsec-"
 "link>` avant de cliquer sur le lien."
 
-#: ../../userguide/join_organization.rst:120
+#: ../../userguide/join-organization.rst:120
 msgid ""
 "Depending on your system, you may have to select the identity provider you "
 "would like to use (PKI or SSO)."
@@ -230,39 +230,39 @@ msgstr ""
 "En fonction de votre système, vous aurez peut-être à sélectionner le "
 "fournisseur d'identité que vous souhaitez utiliser (PKI ou SSO)"
 
-#: ../../userguide/join_organization.rst:122
+#: ../../userguide/join-organization.rst:122
 msgid "Using an SSO (ProConnect)"
 msgstr "Utilisation d'un SSO (ProConnect)"
 
-#: ../../userguide/join_organization.rst:124
+#: ../../userguide/join-organization.rst:124
 msgid "Select your SSO provider"
 msgstr "Sélectionnez votre fournisseur SSO"
 
-#: ../../userguide/join_organization.rst:125
+#: ../../userguide/join-organization.rst:125
 msgid "Authenticate with your SSO provider as usual"
 msgstr "Authentifiez-vous auprès de votre fournisseur SSO comme d'habitude"
 
-#: ../../userguide/join_organization.rst:126
+#: ../../userguide/join-organization.rst:126
 msgid ""
 "Enter your **name**, select your **email address** and click ``Continue``"
 msgstr ""
 "Entrez votre **nom**, sélectionnez votre **adresse e-mail** et cliquez sur "
 "``Continuer``"
 
-#: ../../userguide/join_organization.rst:127
-#: ../../userguide/join_organization.rst:132
+#: ../../userguide/join-organization.rst:127
+#: ../../userguide/join-organization.rst:132
 msgid "Click ``Continue``"
 msgstr "Cliquez sur ``Continuer``"
 
-#: ../../userguide/join_organization.rst:129
+#: ../../userguide/join-organization.rst:129
 msgid "Using a PKI"
 msgstr "Utilisation d'une infrastructure à clé publique (PKI)"
 
-#: ../../userguide/join_organization.rst:131
+#: ../../userguide/join-organization.rst:131
 msgid "Select the certificate matching your infrastructure"
 msgstr "Sélectionnez le certificat correspondant à votre infrastructure"
 
-#: ../../userguide/join_organization.rst:134
+#: ../../userguide/join-organization.rst:134
 msgid ""
 "Your join request has been sent and you should now see it with the "
 "**Pending** status."
@@ -270,7 +270,7 @@ msgstr ""
 "Votre demande d'adhésion a été envoyée et devrait désormais apparaître avec "
 "le statut **En attente**."
 
-#: ../../userguide/join_organization.rst:135
+#: ../../userguide/join-organization.rst:135
 msgid ""
 "Once accepted, a button ``Add to my organizations`` will appear on your "
 "request. Click on it to log into the organization. You may need to re-"

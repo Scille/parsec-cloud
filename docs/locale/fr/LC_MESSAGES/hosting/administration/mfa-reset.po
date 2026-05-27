@@ -16,11 +16,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../hosting/administration/mfa_reset.rst:6
+#: ../../hosting/administration/mfa-reset.rst:6
 msgid "MFA setup reset"
 msgstr "Réinitialisation de la configuration MFA"
 
-#: ../../hosting/administration/mfa_reset.rst:8
+#: ../../hosting/administration/mfa-reset.rst:8
 msgid ""
 "When a user loses access to their authenticator app (e.g. lost or replaced "
 "phone), their MFA setup must be reset by a **server administrator** before "
@@ -32,37 +32,37 @@ msgstr ""
 "serveur** avant que l'utilisateur puisse la reconfigurer (voir :ref:"
 "`doc_userguide_mfa`)."
 
-#: ../../hosting/administration/mfa_reset.rst:12
+#: ../../hosting/administration/mfa-reset.rst:12
 msgid "To reset a user's MFA setup, the server administrator needs to provide:"
 msgstr ""
 "Pour réinitialiser la configuration MFA d'un utilisateur, l'administrateur "
 "du serveur doit fournir :"
 
-#: ../../hosting/administration/mfa_reset.rst:14
+#: ../../hosting/administration/mfa-reset.rst:14
 msgid "The Parsec server address, as a Parsec URL ``parsec3://hostname:port``"
 msgstr ""
 "L'adresse du serveur Parsec, en tant qu'URL Parsec ``parsec3://hostname:"
 "port``"
 
-#: ../../hosting/administration/mfa_reset.rst:15
+#: ../../hosting/administration/mfa-reset.rst:15
 msgid "The ``administration_token`` configured on the Parsec server"
 msgstr "Le ``administration_token`` configuré sur le serveur Parsec"
 
-#: ../../hosting/administration/mfa_reset.rst:16
+#: ../../hosting/administration/mfa-reset.rst:16
 msgid "The organization ID"
 msgstr "L'ID de l'organisation"
 
-#: ../../hosting/administration/mfa_reset.rst:17
+#: ../../hosting/administration/mfa-reset.rst:17
 msgid ""
 "The user to reset, identified by their email address or their Parsec user ID"
 msgstr ""
 "L'utilisateur à réinitialiser, identifié par son adresse e-mail ou son ID "
 "d'utilisateur Parsec"
 
-#: ../../hosting/administration/mfa_reset.rst:19
+#: ../../hosting/administration/mfa-reset.rst:19
 msgid "Typically to reset by email address:"
 msgstr "Typiquement, pour réinitialiser par adresse e-mail :"
 
-#: ../../hosting/administration/mfa_reset.rst:25
+#: ../../hosting/administration/mfa-reset.rst:25
 msgid "Example of output:"
 msgstr "Exemple de résultat :"

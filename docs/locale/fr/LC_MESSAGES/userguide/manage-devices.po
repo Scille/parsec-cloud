@@ -18,11 +18,11 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 "X-Generator: Poedit 3.9\n"
 
-#: ../../userguide/manage_devices.rst:6
+#: ../../userguide/manage-devices.rst:6
 msgid "Manage your devices"
 msgstr "Gérer vos appareils"
 
-#: ../../userguide/manage_devices.rst:8
+#: ../../userguide/manage-devices.rst:8
 msgid ""
 "When you :ref:`join an organization <doc_userguide_join_organization>`, your "
 "computer is automatically added as a new **device** so you can securely "
@@ -33,7 +33,7 @@ msgstr ""
 "ajouté en tant que nouveau **appareil** afin que vous puissiez accéder à "
 "Parsec en toute sécurité."
 
-#: ../../userguide/manage_devices.rst:12
+#: ../../userguide/manage-devices.rst:12
 msgid ""
 "For enhanced security, the devices you use to access Parsec are uniquely "
 "authenticated. It is  highly recommended to add another device in case you "
@@ -44,7 +44,7 @@ msgstr ""
 "d'ajouter un autre appareil au cas où vous perdriez l'accès à votre "
 "ordinateur ou ne pourriez pas vous connecter pour une raison quelconque."
 
-#: ../../userguide/manage_devices.rst:18
+#: ../../userguide/manage-devices.rst:18
 msgid ""
 "Device keys are safely stored on your computer and are not sent to the "
 "Parsec server."
@@ -52,7 +52,7 @@ msgstr ""
 "Les clés de l'appareil sont stockées en toute sécurité sur votre ordinateur "
 "et ne sont pas envoyées au serveur de Parsec."
 
-#: ../../userguide/manage_devices.rst:21
+#: ../../userguide/manage-devices.rst:21
 msgid ""
 "Without having added another device, your account cannot be recovered in the "
 "event you lose access to your computer. You will need to be re-invited to :"
@@ -62,7 +62,7 @@ msgstr ""
 "récupéré si vous perdez l'accès à votre ordinateur. Vous devrez être "
 "réinvité à :ref:`rejoindre l'organisation <doc_userguide_join_organization>`."
 
-#: ../../userguide/manage_devices.rst:25
+#: ../../userguide/manage-devices.rst:25
 msgid ""
 "We strongly encourage you to create a :ref:`recovery file "
 "<doc_userguide_recovery_files>`."
@@ -70,31 +70,31 @@ msgstr ""
 "Nous vous recommandons de créer un :ref:`fichier de récupération "
 "<doc_userguide_recovery_files>`."
 
-#: ../../userguide/manage_devices.rst:30
+#: ../../userguide/manage-devices.rst:30
 msgid "Add a new device"
 msgstr "Ajouter un nouvel appareil"
 
-#: ../../userguide/manage_devices.rst:32
+#: ../../userguide/manage-devices.rst:32
 msgid "You can add a new device from your profile page."
 msgstr ""
 "Vous pouvez ajouter un nouvel appareil à partir de votre page de profil."
 
-#: ../../userguide/manage_devices.rst:34
+#: ../../userguide/manage-devices.rst:34
 msgid ""
 "Click on your name on the main menu (top-right) and select ``My devices``."
 msgstr ""
 "Cliquez sur votre nom dans le menu principal (en haut à droite) et "
 "sélectionnez ``Mes appareils``."
 
-#: ../../userguide/manage_devices.rst:35
+#: ../../userguide/manage-devices.rst:35
 msgid "In ``My devices`` tab, click ``+ Add a new device``."
 msgstr "Dans ``Mes appareils``, cliquez sur ``+ Ajouter un nouvel appareil``."
 
-#: ../../userguide/manage_devices.rst:37
+#: ../../userguide/manage-devices.rst:37
 msgid "Device invitation link"
 msgstr "Lien d'invitation à l'appareil"
 
-#: ../../userguide/manage_devices.rst:41
+#: ../../userguide/manage-devices.rst:41
 msgid ""
 "Send the link to your new device, either by email or by any other means. "
 "Always :ref:`verify the link <userguide-verify-parsec-link>`."
@@ -103,11 +103,11 @@ msgstr ""
 "moyens de communication. Toujours :ref:`vérifiez le lien <userguide-verify-"
 "parsec-link>`."
 
-#: ../../userguide/manage_devices.rst:46
+#: ../../userguide/manage-devices.rst:46
 msgid "If you do not trust the link, do not proceed."
 msgstr "Si vous n'avez pas confiance en le lien, ne continuez pas."
 
-#: ../../userguide/manage_devices.rst:48
+#: ../../userguide/manage-devices.rst:48
 msgid ""
 "Once the verification done, on the new device, you can simply click on the "
 "link to start Parsec. Otherwise, you can copy the link, start Parsec and "
@@ -123,7 +123,7 @@ msgstr ""
 "papiers, mais vous pouvez le coller manuellement). Ensuite, suivez les "
 "instructions pour effectuer l'échange de code entre vos appareils."
 
-#: ../../userguide/manage_devices.rst:55
+#: ../../userguide/manage-devices.rst:55
 msgid ""
 "Always keep an eye on both devices during the process and not let anyone "
 "interfere. This includes notably the step of copying the link to the new "
@@ -133,15 +133,15 @@ msgstr ""
 "laissez personne interférer. Cela inclut notamment l'étape de copie du lien "
 "vers le nouvel appareil."
 
-#: ../../userguide/manage_devices.rst:58
+#: ../../userguide/manage-devices.rst:58
 msgid "Adding a device"
 msgstr "Ajout d'un appareil"
 
-#: ../../userguide/manage_devices.rst:62
+#: ../../userguide/manage-devices.rst:62
 msgid "Your new device is ready to access Parsec!"
 msgstr "Votre nouvel appareil est prêt à accéder à Parsec !"
 
-#: ../../userguide/manage_devices.rst:66
+#: ../../userguide/manage-devices.rst:66
 msgid ""
 "If one of the codes to share is not present in the other's list, it means "
 "there is a very high probability you are victim of a `Man-in-the-middle "
@@ -152,11 +152,11 @@ msgstr ""
 "d'une attaque de type `Man-in-the-middle <https://fr.wikipedia.org/wiki/"
 "Attaque_de_l%27homme_du_milieu>`_."
 
-#: ../../userguide/manage_devices.rst:74
+#: ../../userguide/manage-devices.rst:74
 msgid "Recovery files"
 msgstr "Fichiers de récupération"
 
-#: ../../userguide/manage_devices.rst:76
+#: ../../userguide/manage-devices.rst:76
 msgid ""
 "A recovery file allows you to get back access to your data in case your "
 "forgot your password or lose your computer."
@@ -164,15 +164,15 @@ msgstr ""
 "Un fichier de récupération vous permet de récupérer l'accès à vos données si "
 "vous oubliez votre mot de passe ou perdez votre ordinateur."
 
-#: ../../userguide/manage_devices.rst:79
+#: ../../userguide/manage-devices.rst:79
 msgid "You will need:"
 msgstr "Vous aurez besoin :"
 
-#: ../../userguide/manage_devices.rst:81
+#: ../../userguide/manage-devices.rst:81
 msgid "the Recovery File, ending with `.psrk`"
 msgstr "un fichier de récupération qui se termine par `.psrk`"
 
-#: ../../userguide/manage_devices.rst:82
+#: ../../userguide/manage-devices.rst:82
 msgid ""
 "the Secret Key, a passphrase composed of letters and numbers separated by "
 "dashes."
@@ -180,7 +180,7 @@ msgstr ""
 "une clé secrète, une combinaison de lettres et de chiffres séparés par des "
 "tirets."
 
-#: ../../userguide/manage_devices.rst:84
+#: ../../userguide/manage-devices.rst:84
 msgid ""
 "The Secret Key is used to unlock the Recovery File and get access to your "
 "data."
@@ -188,7 +188,7 @@ msgstr ""
 "La clé secrète est utilisée pour déverrouiller le fichier et accéder à vos "
 "données."
 
-#: ../../userguide/manage_devices.rst:88
+#: ../../userguide/manage-devices.rst:88
 msgid ""
 "A recovery file is linked to a specific organization. If you have multiple "
 "organizations, you need to create multiple recovery files."
@@ -197,7 +197,7 @@ msgstr ""
 "plusieurs organisations, vous devrez créer plusieurs fichiers de "
 "récupération."
 
-#: ../../userguide/manage_devices.rst:93
+#: ../../userguide/manage-devices.rst:93
 msgid ""
 "If someone gets access to both the recovery file and the secret key, they "
 "can get full access to your data as if they were you. We **strongly** "
@@ -209,11 +209,11 @@ msgstr ""
 "recommandons **fortement** de les stocker séparément dans un endroit sûr. "
 "Ils sont aussi précieux and secrets que votre mot de passe."
 
-#: ../../userguide/manage_devices.rst:99
+#: ../../userguide/manage-devices.rst:99
 msgid "Create a recovery files"
 msgstr "Créer un fichier de récupération"
 
-#: ../../userguide/manage_devices.rst:101
+#: ../../userguide/manage-devices.rst:101
 msgid ""
 "When you access your profile, in the ``Recovery file`` page, click on "
 "``Create a recovery file``."
@@ -221,21 +221,21 @@ msgstr ""
 "Quand vous accédez à votre profil, sur la page ``Fichier de récupération``, "
 "cliquez sur ``Créer un fichier de récupération``."
 
-#: ../../userguide/manage_devices.rst:103
+#: ../../userguide/manage-devices.rst:103
 msgid "Access your profile"
 msgstr "Accédez à votre profil"
 
-#: ../../userguide/manage_devices.rst:108
+#: ../../userguide/manage-devices.rst:108
 msgid "Create a recovery file"
 msgstr "Créer un fichier de récupération"
 
-#: ../../userguide/manage_devices.rst:113
+#: ../../userguide/manage-devices.rst:113
 msgid ""
 "You'll be able to download both the Recovery File and the Secret Key. Make "
 "sure to get them both."
 msgstr "Téléchargez le fichier et la clé secrète. Les deux sont essentiels."
 
-#: ../../userguide/manage_devices.rst:117
+#: ../../userguide/manage-devices.rst:117
 msgid ""
 "As mentioned before, these two files combined will allow someone to access "
 "your data. Store them separately and don't let someone access them."
@@ -244,15 +244,15 @@ msgstr ""
 "quelqu'un d'accéder à vos données. Stockez les séparément et ne laissez "
 "personne y avoir accès."
 
-#: ../../userguide/manage_devices.rst:120
+#: ../../userguide/manage-devices.rst:120
 msgid "Download the recovery file and passphrase"
 msgstr "Téléchargez le fichier de récupération et la clé secrète"
 
-#: ../../userguide/manage_devices.rst:129
+#: ../../userguide/manage-devices.rst:129
 msgid "Use a recovery file to get back access"
 msgstr "Utiliser un fichier de récupération pour rétablir l'accès"
 
-#: ../../userguide/manage_devices.rst:131
+#: ../../userguide/manage-devices.rst:131
 msgid ""
 "If you forget your password and you have both the Recovery File and the "
 "Secret Key, you can use them and gain access back."
@@ -261,27 +261,27 @@ msgstr ""
 "fichier de récupération et la clé secrète, vous pouvez les importer pour "
 "récupérer l'accès à vos données."
 
-#: ../../userguide/manage_devices.rst:134
+#: ../../userguide/manage-devices.rst:134
 msgid "When trying to log in, click on ``Forgot your password?``."
 msgstr "Au moment de la connexion, cliquez sur ``Mot de passe oublié ?``."
 
-#: ../../userguide/manage_devices.rst:136
-#: ../../userguide/manage_devices.rst:148
-#: ../../userguide/manage_devices.rst:153
+#: ../../userguide/manage-devices.rst:136
+#: ../../userguide/manage-devices.rst:148
+#: ../../userguide/manage-devices.rst:153
 msgid "Click on password forgotten"
 msgstr "Cliquez sur mot de passe oublié"
 
-#: ../../userguide/manage_devices.rst:141
+#: ../../userguide/manage-devices.rst:141
 msgid ""
 "You will be able to import the Recovery File and type in the Secret Key."
 msgstr ""
 "Vous pouvez importer le fichier de récupération et entrer la clé secrète."
 
-#: ../../userguide/manage_devices.rst:143
+#: ../../userguide/manage-devices.rst:143
 msgid "Choose recovery device method"
 msgstr ""
 
-#: ../../userguide/manage_devices.rst:159
+#: ../../userguide/manage-devices.rst:159
 msgid ""
 "Once imported, Parsec will create a new device and you will be able to log "
 "into your organization by clicking ``Next``."

@@ -13,6 +13,6 @@ and how to backup and restore the PostgreSQL database and the Object Storage.
     :maxdepth: 1
     :name: section-hosting-maintenance-guide
 
-    backup_restore
+    backup-restore
     upgrade
     downgrade

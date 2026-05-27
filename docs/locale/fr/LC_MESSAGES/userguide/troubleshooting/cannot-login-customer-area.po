@@ -18,11 +18,11 @@ msgstr ""
 "Generated-By: Babel 2.17.0\n"
 "X-Generator: Poedit 3.9\n"
 
-#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:6
+#: ../../userguide/troubleshooting/cannot-login-customer-area.rst:6
 msgid "Cannot login to my Customer Area (Parsec SaaS)"
 msgstr "Je n'arrive pas à me connecter à mon espace client (Parsec SaaS)"
 
-#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:8
+#: ../../userguide/troubleshooting/cannot-login-customer-area.rst:8
 msgid ""
 "The Customer Area is the home of your Parsec SaaS subscription, where you "
 "can find information about your organization statistics, invoices, payment "
@@ -32,7 +32,7 @@ msgstr ""
 "vous trouverez des informations sur les statistiques de votre organisation, "
 "vos factures, vos modes de paiement et votre adresse de facturation."
 
-#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:11
+#: ../../userguide/troubleshooting/cannot-login-customer-area.rst:11
 msgid ""
 "If you forgot your password, you can reset it from the Customer Area login "
 "page:"
@@ -40,21 +40,21 @@ msgstr ""
 "Si vous avez oublié votre mot de passe, vous pouvez le réinitialiser depuis "
 "la page de connexion de l'Espace client :"
 
-#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:13
+#: ../../userguide/troubleshooting/cannot-login-customer-area.rst:13
 msgid "Go to the **Customer area** (1)"
 msgstr "Accédez à l'**Espace client** (1)"
 
-#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:14
+#: ../../userguide/troubleshooting/cannot-login-customer-area.rst:14
 msgid "Click **Forgot your password?** (2)"
 msgstr "Cliquez sur **Mot de passe oublié ?** (2)"
 
-#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:15
+#: ../../userguide/troubleshooting/cannot-login-customer-area.rst:15
 msgid "Enter the e-mail address used for your Parsec SaaS subscription"
 msgstr ""
 "Saisissez l'adresse e-mail utilisée pour votre abonnement au service SaaS "
 "Parsec"
 
-#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:20
+#: ../../userguide/troubleshooting/cannot-login-customer-area.rst:20
 msgid ""
 "You will receive an e-mail with instructions to reset your password. Check "
 "your spam folder in case your e-mail service is filtering it."
@@ -63,7 +63,7 @@ msgstr ""
 "mot de passe. Vérifiez votre dossier de courrier indésirable au cas où votre "
 "fournisseur de messagerie l'aurait filtré."
 
-#: ../../userguide/troubleshooting/cannot_login_customer_area.rst:23
+#: ../../userguide/troubleshooting/cannot-login-customer-area.rst:23
 msgid ""
 "If you don't receive the e-mail, or have other problems to login, please "
 "contact us at `support@parsec.cloud <mailto:support@parsec.cloud?"

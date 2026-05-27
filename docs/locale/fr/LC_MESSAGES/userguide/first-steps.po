@@ -17,23 +17,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../userguide/first_steps.rst:6
+#: ../../userguide/first-steps.rst:6
 msgid "First steps with Parsec"
 msgstr "Premiers pas avec Parsec"
 
-#: ../../userguide/first_steps.rst:8
+#: ../../userguide/first-steps.rst:8
 msgid "Welcome to Parsec! Here's a brief overview of the user interface."
 msgstr "Bienvenue à Parsec ! Voici un bref aperçu de l'interface utilisateur."
 
-#: ../../userguide/first_steps.rst:10
+#: ../../userguide/first-steps.rst:10
 msgid "Parsec graphical user interface overview"
 msgstr "Aperçu de l'interface utilisateur de Parsec"
 
-#: ../../userguide/first_steps.rst:14
+#: ../../userguide/first-steps.rst:14
 msgid "**Organization section**: select your organization."
 msgstr "**Section organisation** : sélectionnez votre organisation"
 
-#: ../../userguide/first_steps.rst:16
+#: ../../userguide/first-steps.rst:16
 msgid ""
 "**Organization details**: access your organization details (if allowed by "
 "your profile)."
@@ -41,7 +41,7 @@ msgstr ""
 "**Détail de l'organisation** : accédez à votre organisation (si votre profil "
 "le permet)."
 
-#: ../../userguide/first_steps.rst:18
+#: ../../userguide/first-steps.rst:18
 msgid ""
 "**Workspace selection**: list of workspaces you added to favorite and those "
 "you have accessed recently."
@@ -49,19 +49,19 @@ msgstr ""
 "**Sélection de l'espace de travail** : liste de vos espaces de travail "
 "auxquels vous avez accédés récemment et ceux ajoutés aux favoris."
 
-#: ../../userguide/first_steps.rst:20
+#: ../../userguide/first-steps.rst:20
 msgid "**Recent documents**: list of documents you have accessed recently."
 msgstr ""
 "**Documents récents** : une liste des documents auxquels vous avez accédés "
 "récemment."
 
-#: ../../userguide/first_steps.rst:22
+#: ../../userguide/first-steps.rst:22
 msgid "**Main menu**: access application settings and your user profile."
 msgstr ""
 "**Menu principal** : accès aux paramètres de l'application et à votre profil "
 "d'utilisateur."
 
-#: ../../userguide/first_steps.rst:24
+#: ../../userguide/first-steps.rst:24
 msgid ""
 "**Workspace and document section**: access a workspace and its documents."
 msgstr ""
