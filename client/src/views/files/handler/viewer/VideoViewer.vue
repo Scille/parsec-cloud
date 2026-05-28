@@ -8,6 +8,7 @@
           v-if="src.length"
           ref="videoElement"
           class="video"
+          @click="togglePlayback"
           @play="updateMediaData"
           @playing="updateMediaData"
           @canplay="updateMediaData"

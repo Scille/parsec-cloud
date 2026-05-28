@@ -18,6 +18,7 @@
         @error="onError"
       />
       <file-viewer-background
+        @click="togglePlayback"
         :icon="musicalNotes"
         v-show="!error && !loading"
       />
