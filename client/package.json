@@ -64,7 +64,7 @@
     },
     "//": "⚠️ Updating ViteJS requires to also update `build.target` config in `client/vite.config.ts`",
     "devDependencies": {
-        "@capacitor/cli": "^7.4.4",
+        "@capacitor/cli": "^7.6.5",
         "@playwright/test": "^1.60.0",
         "@sentry/vite-plugin": "^5.2.1",
         "@types/adm-zip": "^0.5.8",
