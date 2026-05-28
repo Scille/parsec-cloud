@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.2.5-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-27 10:18+0000\n"
+"POT-Creation-Date: 2026-05-28 09:35+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Parsec dev <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -389,33 +389,39 @@ msgstr ""
 msgid "PDF"
 msgstr "PDF"
 
-#: ../../userguide/manage-files.rst:163
-msgid "DOCX (Microsoft Word), ODT (OpenOffice)"
-msgstr "DOCX (Microsoft Word), ODT (OpenOffice)"
+#: ../../userguide/manage-files.rst:163 ../../userguide/manage-files.rst:200
+msgid "Documents: DOCX (Microsoft Word), ODT (OpenOffice)"
+msgstr "Documents : DOCX (Microsoft Word), ODT (OpenOffice)"
 
-#: ../../userguide/manage-files.rst:164
-msgid "XLSX (Microsoft Excel), ODS (OpenOffice)"
-msgstr "XLSX (Microsoft Excel), XLS, ODS (OpenOffice)"
+#: ../../userguide/manage-files.rst:164 ../../userguide/manage-files.rst:201
+msgid "Spreadsheet: XLSX (Microsoft Excel), XLS, ODS (OpenOffice)"
+msgstr "Feuille de calcul: XLSX (Microsoft Excel), XLS, ODS (OpenOffice)"
 
-#: ../../userguide/manage-files.rst:165
-msgid "Audio"
-msgstr "Audio"
-
-#: ../../userguide/manage-files.rst:166
-msgid "Images"
-msgstr "Images"
-
-#: ../../userguide/manage-files.rst:167
-msgid "PPTX (Microsoft Powerpoint), ODP (OpenOffice) support is coming soon."
+#: ../../userguide/manage-files.rst:165 ../../userguide/manage-files.rst:202
+msgid ""
+"Presentation: PPTX (Microsoft Powerpoint). ODP (OpenOffice) support is "
+"coming soon."
 msgstr ""
-"PPTX (Microsoft Powerpoint), le support ODP (OpenOffice) arrivera "
-"prochainement."
+"Présentation : PPTX (Microsoft Powerpoint), le support ODP (OpenOffice) "
+"arrivera prochainement."
 
-#: ../../userguide/manage-files.rst:168 ../../userguide/manage-files.rst:198
+#: ../../userguide/manage-files.rst:166 ../../userguide/manage-files.rst:203
 msgid "Plain Text and Code file formats: TXT, MD, CSV, RST, JSON..."
 msgstr "Fichiers Texte et Code : TXT, MD, CSV, RST, JSON..."
 
-#: ../../userguide/manage-files.rst:170
+#: ../../userguide/manage-files.rst:167
+msgid "Audio: MP3, OGG, WAV"
+msgstr "Audio : MP3, OGG, WAV"
+
+#: ../../userguide/manage-files.rst:168
+msgid "Video: MP4, WEBM"
+msgstr "Vidéo : MP4, WEBM"
+
+#: ../../userguide/manage-files.rst:169
+msgid "Images: PNG, JPG, JPEG, WEBP, GIF"
+msgstr "Images : PNG, JPG, JPEG, WEBP, GIF"
+
+#: ../../userguide/manage-files.rst:171
 msgid ""
 "On the desktop app, Parsec preview can be disabled in the application "
 "settings."
@@ -423,91 +429,85 @@ msgstr ""
 "La visualisation peut être désactivée dans les paramètres de l'application "
 "de bureau."
 
-#: ../../userguide/manage-files.rst:172
+#: ../../userguide/manage-files.rst:173
 msgid "Disable viewers screenshot"
 msgstr "Désactiver la visualisation de fichiers"
 
-#: ../../userguide/manage-files.rst:179
-msgid "Using Parsec edition"
-msgstr "En utilisant l'édition de fichiers de Parsec"
+#: ../../userguide/manage-files.rst:180
+msgid "File editing in Parsec"
+msgstr "Éditer un fichier dans Parsec"
 
-#: ../../userguide/manage-files.rst:181
+#: ../../userguide/manage-files.rst:182
 msgid ""
 "Some files can be edited directly in Parsec without using an external "
-"application. The editor is available to **Owners**, **Managers** and "
-"**Contributors** of a workspace, by clicking on ``Edit`` in the file menu, "
-"clicking the file name or double-clicking the file in Parsec."
+"application."
 msgstr ""
 "Certains fichiers peuvent être édités directement dans Parsec sans passer "
-"par une application externe. L'éditeur est accessible aux **Propriétaires**, "
-"aux **Gérants** et aux **Contributeurs** d'un espace de travail, en cliquant "
-"sur ``Éditer`` dans le menu d'un fichier, en cliquant sur son nom, ou en "
-"double-cliquant sur le fichier."
+"par une application externe."
 
-#: ../../userguide/manage-files.rst:183
+#: ../../userguide/manage-files.rst:184
+msgid ""
+"The editor is available to **Owners**, **Managers** and **Contributors** of "
+"a workspace, by clicking on ``Edit`` in the file menu, clicking the file "
+"name or double-clicking the file in Parsec."
+msgstr ""
+"L'éditeur est accessible aux **Propriétaires**, aux **Gérants** et aux "
+"**Contributeurs** d'un espace de travail, en cliquant sur ``Éditer`` dans le "
+"menu d'un fichier, en cliquant sur son nom, ou en double-cliquant sur le "
+"fichier."
+
+#: ../../userguide/manage-files.rst:186
 msgid "Context menu edit"
 msgstr "Menu contextuel éditer"
 
-#: ../../userguide/manage-files.rst:187
+#: ../../userguide/manage-files.rst:190
 msgid ""
-"If the file type is supported (see below), Parsec will open it in a embedded "
-"editor."
+"If the file type is supported (see below), Parsec will open it in the editor."
 msgstr ""
 "Si le type du fichier est compatible (voir ci-dessous), Parsec l'ouvrira "
-"dans son éditeur intégré."
+"dans l'éditeur."
 
-#: ../../userguide/manage-files.rst:189
+#: ../../userguide/manage-files.rst:192
 msgid "DOCX editor screenshot"
 msgstr "Capture d'écran de l'éditeur DOCX"
 
-#: ../../userguide/manage-files.rst:193
-msgid ""
-"Parsec edition is limited to files with size inferior to 15MB. The following "
-"file formats are supported:"
-msgstr ""
-"L'édition est limitée aux fichiers d'une taille inférieure à 15Mo. Les "
-"formats suivants sont supportés :"
-
-#: ../../userguide/manage-files.rst:195
-msgid "Documents: DOCX (Microsoft Word), ODT (OpenOffice)"
-msgstr "Documents : DOCX (Microsoft Word), ODT (OpenOffice)"
-
 #: ../../userguide/manage-files.rst:196
-msgid "Spreadsheet: XLSX (Microsoft Excel), XLS, ODS (OpenOffice)"
-msgstr "Feuille de calcul: XLSX (Microsoft Excel), XLS, ODS (OpenOffice)"
+msgid "File editing in Parsec is limited to files with size inferior to 15MB."
+msgstr "L'édition est limitée aux fichiers d'une taille inférieure à 15Mo."
 
-#: ../../userguide/manage-files.rst:197
+#: ../../userguide/manage-files.rst:198
+msgid "The following file formats are supported:"
+msgstr "Les types de fichiers suivants sont supportés :"
+
+#: ../../userguide/manage-files.rst:207
 msgid ""
-"Presentation: PPTX (Microsoft Powerpoint), ODP (OpenOffice) support is "
-"coming soon."
+"File editing is currently in active development. For the moment, if two "
+"users edit a file simultaneously, you might see conflict files appear on one "
+"or both clients and the changes applied to the file might not reflect your "
+"changes."
 msgstr ""
-"Présentation : PPTX (Microsoft Powerpoint), le support ODP (OpenOffice) "
-"arrivera prochainement."
+"L'édition de fichiers est en développement actif. Pour le moment, si deux "
+"utilisateurs éditent un fichier simultanément, des fichiers de conflits "
+"peuvent apparaître sur un client ou les deux, et les changements appliqués "
+"au fichier peuvent ne pas correspondre aux vôtres."
 
-#: ../../userguide/manage-files.rst:202
+#: ../../userguide/manage-files.rst:209
 msgid ""
-"Collaborative edition is currently in development. Until the official "
-"release of this feature, only the latest change will be saved and overwrite "
-"the file if two users edit a file simultaneously, regardless of conflicts."
-msgstr ""
-"L'édition collaborative est actuellement en développement. En attendant la "
-"sortie officielle de cette fonctionnalité, seul le dernier changement opéré "
-"sur un fichier sera sauvegardé et écrasera le contenu d'un fichier si deux "
-"utilisateurs l'éditent simultanément, indépendamment de conflits."
-
-#: ../../userguide/manage-files.rst:204
-msgid ""
-"On the desktop app, Parsec edition can be disabled in the application "
-"settings using the same option shown for preview."
+"On the desktop app, file editing in Parsec can be disabled from the "
+"application settings using the same option shown for preview."
 msgstr ""
 "Sur l'application de bureau, l'éditeur de Parsec peut être désactivé dans "
 "les paramètres avec la même option que pour le visualiseur."
 
-#: ../../userguide/manage-files.rst:207
+#: ../../userguide/manage-files.rst:211
+msgid "Disable file editing in Parsec screenshot"
+msgstr "Désactiver l'édition de fichiers"
+
+#: ../../userguide/manage-files.rst:217
 msgid "Recent documents"
 msgstr "Documents récents"
 
-#: ../../userguide/manage-files.rst:209
+#: ../../userguide/manage-files.rst:219
 msgid ""
 "Files you have recently opened are shown in the quick access menu in the "
 "sidebar for convenience."
@@ -515,6 +515,6 @@ msgstr ""
 "Les fichiers que vous avez ouverts récemment sont affichés dans le menu "
 "d'accès rapide dans la barre latérale."
 
-#: ../../userguide/manage-files.rst:211
+#: ../../userguide/manage-files.rst:221
 msgid "Quick access screenshot"
 msgstr "Capture d'écran de l'accès rapide"
