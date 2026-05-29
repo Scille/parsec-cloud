@@ -156,7 +156,7 @@ the password algorithm configuration returned for non-existing accounts.
 Database env file
 ^^^^^^^^^^^^^^^^^
 
-Create the file ``parsec-db.env`` and specify the  the following content to configure the access to the PostgreSQL database:
+Create the file ``parsec-db.env`` and specify the following content to configure the access to the PostgreSQL database:
 
 .. admonition:: parsec-db.env
    :collapsible: open
@@ -221,7 +221,7 @@ To see the full list, run the following command and look for sections such as
 Deploy with Docker
 ==================
 
-This section describes how to install Parsec Server directly on Linux.
+This section describes how to install Parsec Server with Docker on Linux.
 
 This method is an alternative to the :ref:`Direct installation on Linux server <doc_hosting_deployment_with_linux>`.
 
