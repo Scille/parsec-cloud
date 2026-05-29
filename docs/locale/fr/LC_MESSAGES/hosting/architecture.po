@@ -5,17 +5,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.8.2-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 18:38+0200\n"
+"POT-Creation-Date: 2026-06-01 13:51+0000\n"
 "PO-Revision-Date: 2026-05-05 19:11+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.17.0\n"
-"X-Generator: Poedit 3.9\n"
 
 #: ../../hosting/architecture.rst:7
 msgid "Application Architecture"
@@ -96,23 +95,23 @@ msgstr "⛁ Stockage d'objets (tel qu'OpenStack Swift ou Amazon S3)"
 msgid "Responsible for storing the encrypted data blocks."
 msgstr "Chargé de stocker des blocs de données chiffrés."
 
-#: ../../hosting/architecture.rst:44
+#: ../../hosting/architecture.rst:45
 msgid "Key Parsec concepts"
 msgstr "Principaux concepts de Parsec"
 
-#: ../../hosting/architecture.rst:46
+#: ../../hosting/architecture.rst:47
 msgid "👤 User"
 msgstr "👤 Utilisateur"
 
-#: ../../hosting/architecture.rst:47
+#: ../../hosting/architecture.rst:48
 msgid "The person accessing an Organization."
 msgstr "La personne qui accède à une organisation."
 
-#: ../../hosting/architecture.rst:49
+#: ../../hosting/architecture.rst:50
 msgid "💻 Workstation"
 msgstr "💻 Poste de travail"
 
-#: ../../hosting/architecture.rst:50
+#: ../../hosting/architecture.rst:51
 msgid ""
 "The physical support to access the Organization (such as desktop computer, "
 "laptop or mobile phone)"
@@ -120,15 +119,15 @@ msgstr ""
 "Le support physique permettant d'accéder à l'organisation (tel qu'un "
 "ordinateur de bureau, un ordinateur portable ou un téléphone mobile)"
 
-#: ../../hosting/architecture.rst:52
+#: ../../hosting/architecture.rst:53
 msgid "🔐 Device"
 msgstr "🔐 Appareil"
 
-#: ../../hosting/architecture.rst:53
+#: ../../hosting/architecture.rst:54
 msgid "The logical support to access the Organization."
 msgstr "Le support logique permettant d'accéder à l'organisation."
 
-#: ../../hosting/architecture.rst:55
+#: ../../hosting/architecture.rst:56
 msgid ""
 "A Device is an encrypted file stored locally (in the File System or in the "
 "Web Browser storage) containing the keys allowing the User to access the "
@@ -139,7 +138,7 @@ msgstr ""
 "permettent à l'utilisateur d'accéder à l'organisation et de signer ses "
 "modifications."
 
-#: ../../hosting/architecture.rst:58
+#: ../../hosting/architecture.rst:59
 msgid ""
 "The User has a Device for each workstation, but may also have have multiple "
 "Devices for a single workstation (this is the case if the user access the "
@@ -150,15 +149,15 @@ msgstr ""
 "cas si l'utilisateur accède à l'organisation à la fois depuis l'application "
 "de bureau et depuis l'application Web)."
 
-#: ../../hosting/architecture.rst:61
+#: ../../hosting/architecture.rst:62
 msgid "📁 Workspace"
 msgstr "📁 Espace de travail"
 
-#: ../../hosting/architecture.rst:62
+#: ../../hosting/architecture.rst:63
 msgid "The trust perimeter for sharing data."
 msgstr "Le périmètre de confiance pour le partage des données."
 
-#: ../../hosting/architecture.rst:64
+#: ../../hosting/architecture.rst:65
 msgid ""
 "Data added to a Workspace is only shared and accessible to Users of the "
 "Workspace."
@@ -166,7 +165,7 @@ msgstr ""
 "Les données ajoutées à un espace de travail ne sont partagées et accessibles "
 "qu'aux utilisateurs de cet espace."
 
-#: ../../hosting/architecture.rst:66
+#: ../../hosting/architecture.rst:67
 msgid ""
 "User access rights to a Workspace is managed by the Workspace owner or "
 "designated managers."
@@ -174,20 +173,20 @@ msgstr ""
 "Les droits d'accès des utilisateurs à un espace de travail sont gérés par le "
 "propriétaire de l'espace de travail ou par les responsables désignés."
 
-#: ../../hosting/architecture.rst:68
+#: ../../hosting/architecture.rst:69
 msgid "See :ref:`Parsec Workspaces <doc_userguide_parsec_workspaces>`."
 msgstr ""
 "Voir :ref:`Espaces de travail Parsec <doc_userguide_parsec_workspaces>`."
 
-#: ../../hosting/architecture.rst:70
+#: ../../hosting/architecture.rst:71
 msgid "👥 Organization"
 msgstr "👥 Organization"
 
-#: ../../hosting/architecture.rst:71
+#: ../../hosting/architecture.rst:72
 msgid "The trust perimeter for User management."
 msgstr "Le périmètre de confiance pour la gestion des utilisateurs."
 
-#: ../../hosting/architecture.rst:73
+#: ../../hosting/architecture.rst:74
 msgid ""
 "It can be seen as a User Directory of trusted Users who have been invited "
 "and granted access to the Organization."
@@ -195,7 +194,7 @@ msgstr ""
 "On peut le considérer comme un répertoire des utilisateurs de confiance qui "
 "ont été invités et auxquels l'accès à l'organisation a été accordé."
 
-#: ../../hosting/architecture.rst:75
+#: ../../hosting/architecture.rst:76
 msgid ""
 "Depending on their profile, Users can see the list of all Users from the "
 "Organization."
@@ -203,7 +202,7 @@ msgstr ""
 "En fonction de leur profil, les utilisateurs peuvent consulter la liste de "
 "tous les utilisateurs de l'organisation."
 
-#: ../../hosting/architecture.rst:77
+#: ../../hosting/architecture.rst:78
 msgid ""
 "In contrast, only Users having access to a Workspace know about its "
 "existence (not even Administrators can know of its existence if the "
@@ -213,17 +212,111 @@ msgstr ""
 "connaissance de son existence (même les administrateurs ne peuvent pas "
 "savoir qu'il existe si l'espace de travail ne leur a pas été partagé)"
 
-#: ../../hosting/architecture.rst:80
+#: ../../hosting/architecture.rst:81
 msgid "Users and Workspace always belong to a single Organization."
 msgstr ""
 "Les utilisateurs et les espaces de travail appartiennent toujours à une "
 "seule organisation."
 
-#: ../../hosting/architecture.rst:83
+#: ../../hosting/architecture.rst:84
+msgid "Client Graphical Interface Architecture"
+msgstr "Architecture de l'application graphique cliente"
+
+#: ../../hosting/architecture.rst:87
+msgid "Introduction"
+msgstr "Introduction"
+
+#: ../../hosting/architecture.rst:89
+msgid ""
+"The client :abbr:`GUI (Graphical User Interface)` is available either as a "
+"web application (accessed through a browser) or as a desktop application. "
+"Both versions are very similar in terms of architecture and features, with a "
+"few differences to accommodate the specific characteristics and capabilities "
+"of each platform."
+msgstr ""
+"La :abbr:`GUI (Graphical User Interface)` cliente est disponible soit sous "
+"la forme d'une application web (accessible depuis un navigateur), soit sous "
+"la forme d'une application de bureau. Les deux versions sont très similaires "
+"en termes d'architecture et de fonctionnalités, avec quelques différences "
+"destinées à prendre en compte les caractéristiques et les capacités propres "
+"à chaque plateforme."
+
+#: ../../hosting/architecture.rst:91
+msgid "The two main components are:"
+msgstr "Les deux principaux composants sont les suivants :"
+
+#: ../../hosting/architecture.rst:93
+msgid ""
+"**libparsec**: the Parsec client library responsible for the business logic "
+"(encryption, signing, data exchange, etc.). While the core logic remains the "
+"same across platforms, some platform-specific code is required (for example, "
+"to access the file system), and the library is compiled differently "
+"depending on the target platform."
+msgstr ""
+"**libparsec** : la bibliothèque cliente de Parsec, responsable de la logique "
+"métier (chiffrement, signature, échange de données, etc.). Bien que la "
+"logique principale soit identique sur toutes les plateformes, certaines "
+"parties du code sont spécifiques à la plateforme (par exemple pour accéder "
+"au système de fichiers) et la bibliothèque est compilée différemment selon "
+"la plateforme cible."
+
+#: ../../hosting/architecture.rst:94
+msgid ""
+"**the interface**: the component responsible for displaying information and "
+"handling user interactions. It remains largely the same across platforms and "
+"always runs in a browser environment, whether it is the user's browser or "
+"Electron's embedded browser, with only a few platform-specific adaptations."
+msgstr ""
+"**l'interface** : le composant chargé d'afficher les informations et de "
+"gérer les interactions avec l'utilisateur. Elle reste largement identique "
+"sur toutes les plateformes et s'exécute toujours dans un environnement "
+"navigateur, qu'il s'agisse du navigateur de l'utilisateur ou de celui "
+"intégré à Electron, avec seulement quelques adaptations spécifiques à chaque "
+"plateforme."
+
+#: ../../hosting/architecture.rst:98
+msgid "Desktop Application"
+msgstr "Application de bureau"
+
+#: ../../hosting/architecture.rst:100
+msgid "Architecture of the desktop client GUI"
+msgstr "Architecture de l'interface graphique du client de bureau"
+
+#: ../../hosting/architecture.rst:104
+msgid ""
+"On desktop platforms, libparsec is compiled as a Node.js module. Workspaces "
+"can be exposed to the operating system through mountpoints. Devices and the "
+"application cache can be stored directly on the file system."
+msgstr ""
+"Sur les plateformes de bureau, libparsec est compilée sous la forme d'un "
+"module Node.js. Les espaces de travail peuvent être exposés au système "
+"d'exploitation au moyen de points de montage. Les appareils et le cache de "
+"l'application peuvent être stockés directement dans le système de fichiers."
+
+#: ../../hosting/architecture.rst:107
+msgid "Web Application"
+msgstr "Application web"
+
+#: ../../hosting/architecture.rst:109
+msgid "Architecture of the web client GUI"
+msgstr "Architecture de l'interface graphique du client web"
+
+#: ../../hosting/architecture.rst:113
+msgid ""
+"For the web application, libparsec is compiled to WebAssembly. Since "
+"mountpoints are not available, files can only be accessed through the GUI. "
+"Devices and the application cache are stored in the browser's local storage."
+msgstr ""
+"Pour l'application web, libparsec est compilée en WebAssembly. Les points de "
+"montage n'étant pas disponibles, les fichiers ne peuvent être accessibles "
+"qu'à travers l'interface graphique. Les appareils et le cache de "
+"l'application sont stockés dans l'espace de stockage du navigateur."
+
+#: ../../hosting/architecture.rst:116
 msgid "Security Model"
 msgstr "Modèle de sécurité"
 
-#: ../../hosting/architecture.rst:85
+#: ../../hosting/architecture.rst:118
 msgid ""
 "Parsec is designed to protect data security at all costs, regardless of who "
 "controls the Parsec Server, the PostgreSQL database or the Object Storage."
@@ -232,7 +325,7 @@ msgstr ""
 "soit l'administrateur du serveur Parsec, de la base de données PostgreSQL ou "
 "du stockage d'objets."
 
-#: ../../hosting/architecture.rst:88
+#: ../../hosting/architecture.rst:121
 msgid ""
 "In this sense, no trust is placed in the Parsec Server in order to reach "
 "Zero-Trust level of confidentiality. Only users have the keys to decipher "
@@ -245,19 +338,19 @@ msgstr ""
 "stockées dans Parsec. Pour plus de détails, consultez :ref:`Modèle « zéro "
 "trust » de Parsec <doc_userguide_introduction_zero_trust>`."
 
-#: ../../hosting/architecture.rst:93
+#: ../../hosting/architecture.rst:126
 msgid "Data security perimeter"
 msgstr "Périmètre de sécurité des données"
 
-#: ../../hosting/architecture.rst:95
+#: ../../hosting/architecture.rst:128
 msgid "From a data security perspective, there are three zones:"
 msgstr "Du point de vue de la sécurité des données, on distingue trois zones :"
 
-#: ../../hosting/architecture.rst:97
+#: ../../hosting/architecture.rst:130
 msgid "🔐 Trusted zone: User Workstation"
 msgstr "🔐 Zone de confiance : Poste de travail de l'utilisateur"
 
-#: ../../hosting/architecture.rst:98
+#: ../../hosting/architecture.rst:131
 msgid ""
 "The trusted zone is limited to the user's workstation on which the Parsec "
 "client application is installed."
@@ -265,7 +358,7 @@ msgstr ""
 "La zone de confiance se limite au poste de travail de l'utilisateur sur "
 "lequel l'application client Parsec est installée."
 
-#: ../../hosting/architecture.rst:100
+#: ../../hosting/architecture.rst:133
 msgid ""
 "Within an organization, the workstations should comply with required "
 "regulations, including being up to date with operating system security "
@@ -276,11 +369,11 @@ msgstr ""
 "correctifs de sécurité du système d'exploitation et de conformité à la "
 "politique de sécurité de l'organisation (par exemple, PSSI)."
 
-#: ../../hosting/architecture.rst:103
+#: ../../hosting/architecture.rst:136
 msgid "✋ Non-trusted zone: Parsec Server"
 msgstr "✋ Zone de moindre sécurité : Parsec Server"
 
-#: ../../hosting/architecture.rst:104
+#: ../../hosting/architecture.rst:137
 msgid ""
 "The Parsec Server is hosted either in the cloud or on-premise and therefore "
 "is considered a less secure environment."
@@ -288,14 +381,14 @@ msgstr ""
 "Parsec Server est hébergé soit dans le cloud, soit sur site, et est donc "
 "considéré comme un environnement moins sécurisé."
 
-#: ../../hosting/architecture.rst:107
+#: ../../hosting/architecture.rst:140
 msgid ""
 "As such, it can be queried from any workstation connected to the Internet."
 msgstr ""
 "Il est donc accessible depuis n'importe quel poste de travail connecté à "
 "Internet."
 
-#: ../../hosting/architecture.rst:109
+#: ../../hosting/architecture.rst:142
 msgid ""
 "Parsec Server has no knowledge of the data being exchanged but does know "
 "which user is accessing it and thus can restrict write access to users with "
@@ -305,11 +398,11 @@ msgstr ""
 "utilisateur y accède et peut donc limiter l'accès en écriture aux "
 "utilisateurs disposant des autorisations nécessaires."
 
-#: ../../hosting/architecture.rst:112
+#: ../../hosting/architecture.rst:145
 msgid "✋ Non-trusted zone: Object Storage"
 msgstr "✋ Zone de moindre sécurité : Stockage d'objets"
 
-#: ../../hosting/architecture.rst:113
+#: ../../hosting/architecture.rst:146
 msgid ""
 "The encrypted blocks containing the user data to be protected are stored in "
 "the cloud and thus also in a less secure zone."
@@ -317,7 +410,7 @@ msgstr ""
 "Les blocs chiffrés contenant les données utilisateur à protéger sont stockés "
 "dans le cloud, et donc également dans une zone moins sécurisée."
 
-#: ../../hosting/architecture.rst:116
+#: ../../hosting/architecture.rst:149
 msgid ""
 "Client applications access data via the Parsec Server, which applies a layer "
 "of access control."
@@ -325,11 +418,11 @@ msgstr ""
 "Les applications clientes accèdent aux données via Parsec Server, qui "
 "applique une couche de contrôle d'accès."
 
-#: ../../hosting/architecture.rst:120
+#: ../../hosting/architecture.rst:153
 msgid "Client-side encryption"
 msgstr "Chiffrement côté client"
 
-#: ../../hosting/architecture.rst:122
+#: ../../hosting/architecture.rst:155
 msgid ""
 "Parsec secures your data before it is stored in the cloud (or on-premise) "
 "Object Storage."
@@ -337,22 +430,22 @@ msgstr ""
 "Parsec sécurise vos données avant leur stockage dans le cloud (ou sur site) "
 "via le stockage objet."
 
-#: ../../hosting/architecture.rst:124
+#: ../../hosting/architecture.rst:157
 msgid "This is done in 3 steps:"
 msgstr "Cela se fait en trois étapes :"
 
-#: ../../hosting/architecture.rst:126
+#: ../../hosting/architecture.rst:159
 msgid "Split each file into blocks before encryption;"
 msgstr "Diviser chaque fichier en blocs avant de le chiffrer ;"
 
-#: ../../hosting/architecture.rst:127
+#: ../../hosting/architecture.rst:160
 msgid ""
 "Encrypt each block using the key shared by users having access to this data;"
 msgstr ""
 "Chiffrer chaque bloc à l'aide de la clé partagée par les utilisateurs ayant "
 "accès à la donnée ;"
 
-#: ../../hosting/architecture.rst:128
+#: ../../hosting/architecture.rst:161
 msgid ""
 "Encrypt metadata (such as directory structure and sharing information) using "
 "the key shared by users having access to this data;"

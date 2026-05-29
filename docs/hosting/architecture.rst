@@ -80,6 +80,38 @@ Key Parsec concepts
 
   Users and Workspace always belong to a single Organization.
 
+Client Graphical Interface Architecture
+=======================================
+
+Introduction
+------------
+
+The client :abbr:`GUI (Graphical User Interface)` is available either as a web application (accessed through a browser) or as a desktop application. Both versions are very similar in terms of architecture and features, with a few differences to accommodate the specific characteristics and capabilities of each platform.
+
+The two main components are:
+
+- **libparsec**: the Parsec client library responsible for the business logic (encryption, signing, data exchange, etc.). While the core logic remains the same across platforms, some platform-specific code is required (for example, to access the file system), and the library is compiled differently depending on the target platform.
+- **the interface**: the component responsible for displaying information and handling user interactions. It remains largely the same across platforms and always runs in a browser environment, whether it is the user's browser or Electron's embedded browser, with only a few platform-specific adaptations.
+
+
+Desktop Application
+-------------------
+
+.. figure:: figures/client_architecture_desktop_en.png
+    :align: center
+    :alt: Architecture of the desktop client GUI
+
+On desktop platforms, libparsec is compiled as a Node.js module. Workspaces can be exposed to the operating system through mountpoints. Devices and the application cache can be stored directly on the file system.
+
+Web Application
+---------------
+
+.. figure:: figures/client_architecture_web_en.png
+    :align: center
+    :alt: Architecture of the web client GUI
+
+For the web application, libparsec is compiled to WebAssembly. Since mountpoints are not available, files can only be accessed through the GUI. Devices and the application cache are stored in the browser's local storage.
+
 Security Model
 ==============
 
