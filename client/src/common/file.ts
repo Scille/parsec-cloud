@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Path } from '@/parsec';
+import { EntryName, entryStat, FsPath, Path, WorkspaceHandle } from '@/parsec';
 import { File, Translatable } from 'megashark-lib';
 
 // Shorten a file name by adding ellipsis in the middle if it is above a certain length.
@@ -84,6 +84,44 @@ export function formatFileSize(bytesize: number | bigint): Translatable {
     [Math.pow(1024, 4), 'common.filesize.terabytes'],
   ];
   return size(Number(bytesize), SYSTEM);
+}
+
+export async function findAvailableFileName({
+  handle,
+  fileName,
+  path,
+  maxIterations,
+}: {
+  handle: WorkspaceHandle;
+  fileName: EntryName;
+  path: FsPath;
+  maxIterations?: number;
+}): Promise<EntryName | undefined> {
+  const name = Path.filenameWithoutExtension(fileName);
+  const ext = Path.getFileExtension(fileName);
+  let numberedFileName = name;
+
+  let iteration = 1;
+  const loopLimit = maxIterations ?? 10;
+
+  while (iteration < loopLimit) {
+    const tmpName = ext.length > 0 ? `${numberedFileName}.${ext}` : numberedFileName;
+    const distPath = await Path.join(path, tmpName);
+    const stat = await entryStat(handle, distPath);
+    if (!stat.ok) {
+      break;
+    }
+    iteration += 1;
+    if (iteration === loopLimit) {
+      return undefined;
+    }
+    numberedFileName = `${name} (${iteration})`;
+  }
+
+  if (ext.length > 0) {
+    return `${numberedFileName}.${ext}`;
+  }
+  return numberedFileName;
 }
 
 /* File icons */

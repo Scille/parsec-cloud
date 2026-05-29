@@ -272,6 +272,7 @@ import {
 
 import DocumentNew from '@/assets/images/add-document.svg?raw';
 import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
+import { findAvailableFileName } from '@/common/file';
 import { FileContentType, OPENABLE_FILES } from '@/common/fileTypes';
 import {
   EntryCollection,
@@ -1265,6 +1266,13 @@ async function getNewFileName(fileType: FileContentType): Promise<string | null>
     return null;
   }
 
+  const finalDefaultName =
+    (await findAvailableFileName({
+      handle: workspaceInfo.value.handle,
+      fileName: `${defaultNewName}.${ext}`,
+      path: currentPath.value,
+    })) ?? `${defaultNewName}.${ext}`;
+
   const newName = await getTextFromUser(
     {
       title: 'FoldersPage.createFile.fileName',
@@ -1277,8 +1285,8 @@ async function getNewFileName(fileType: FileContentType): Promise<string | null>
       inputLabel: 'FoldersPage.createFile.label',
       placeholder: 'FoldersPage.createFile.placeholder',
       okButtonText: 'FoldersPage.createFile.create',
-      defaultValue: `${defaultNewName}.${ext}`,
-      selectionRange: [0, defaultNewName.length],
+      defaultValue: finalDefaultName,
+      selectionRange: [0, Path.filenameWithoutExtension(finalDefaultName).length],
     },
     isLargeDisplay.value,
   );
