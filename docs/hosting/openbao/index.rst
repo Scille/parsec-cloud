@@ -1,5 +1,7 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+.. cSpell:words raPGTZdARXdY0KvHcWSpp5wWZIHNT
+
 .. _doc_hosting_openbao:
 
 ===========================
@@ -91,17 +93,40 @@ Requirements
 - An OIDC-compatible identity provider
 - The :command:`bao` CLI tool to configure OpenBao.
 
+OIDC Identity provider configuration
+====================================
+
+OIDC authentication works by passing a token to the client
+`through an HTTP redirection initiated by the identity provider <https://openid.net/developers/how-connect-works/>`_.
+
+For this, the OIDC identity provider must be configured two redirection URL to use in web and native:
+
+- For web, the URL is ``https://<your-parsec-server>/oidc/callback``
+- For the native client, the URL is always ``https://callback.parsec.cloud.invalid/oidc/callback``.
+
+.. note::
+
+   The native client doesn't actually request the redirection URL (and this is not
+   even possible given `it is a .invalid TLD <https://en.wikipedia.org/wiki/.invalid>`_).
+   Instead this special domain name is detected by the client to prevent the redirection
+   and directly extract the authentication token from the URL.
+
 OpenBao configuration
 =====================
 
 The following steps are required to configure OpenBao to enable SSO in Parsec.
 
-Before starting, make sure to define the ``OPENBAO_SERVER_URL`` variable with your
-OpenBao instance URL:
+Before starting, make sure to define the following environment variables:
+
+- ``BAO_ADDR``: The URL of your OpenBao instance
+- ``BAO_TOKEN``: The root token to authenticate to the OpenBao instance
+
+For instance:
 
 .. code-block:: bash
 
-  export OPENBAO_SERVER_URL=...
+  export BAO_ADDR=https://openbao.example.com
+  export BAO_TOKEN=s.raPGTZdARXdY0KvHcWSpp5wWZIHNT
 
 Enable the required secrets engines
 -----------------------------------
@@ -109,10 +134,10 @@ Enable the required secrets engines
 .. code-block:: bash
 
    # Transit engine — used to sign/verify enrollment payloads
-   bao secrets enable -address $OPENBAO_SERVER_URL -path=transit transit
+   bao secrets enable -path=transit transit
 
    # KV v2 engine — used to store encrypted device key files
-   bao secrets enable -address $OPENBAO_SERVER_URL -path=secret kv-v2
+   bao secrets enable -path=secret kv-v2
 
 Enable and configure the OIDC auth method
 -----------------------------------------
@@ -127,10 +152,10 @@ to show up in the shell history.
 .. code-block:: bash
 
    # Enable the OIDC auth method at path "parsec_oidc"
-   bao auth enable -address $OPENBAO_SERVER_URL -path=parsec_oidc oidc
+   bao auth enable -path=parsec_oidc oidc
 
    # Point it at your identity provider and set the client credentials
-   bao write -address $OPENBAO_SERVER_URL auth/parsec_oidc/config \
+   bao write auth/parsec_oidc/config \
        oidc_discovery_url="https://parsec_oidc.example.com/login" \
        oidc_client_id="<your-client-id>" \
        oidc_client_secret=@client-secret.txt \
@@ -145,7 +170,7 @@ matches the authenticated user's email.
 
 .. code-block:: bash
 
-   bao write -address $OPENBAO_SERVER_URL auth/parsec_oidc/role/default \
+   bao write auth/parsec_oidc/role/default \
        user_claim="email" \
        allowed_redirect_uris="https://<your-parsec-server>/client/oidc/callback" \
        token_policies="parsec-default"
@@ -176,7 +201,7 @@ Apply the policy:
 
 .. code-block:: bash
 
-   bao policy write -address $OPENBAO_SERVER_URL parsec-default parsec-default.hcl
+   bao policy write parsec-default parsec-default.hcl
 
 Verify the setup
 ----------------
@@ -184,10 +209,10 @@ Verify the setup
 .. code-block:: bash
 
    # Log in as a test user
-   bao login -address $OPENBAO_SERVER_URL -method=oidc -path=parsec_oidc
+   bao login -method=oidc -path=parsec_oidc
 
    # Confirm the token has the expected capabilities:
-   bao token capabilities -address $OPENBAO_SERVER_URL \
+   bao token capabilities \
    transit/sign/entity-$(bao token lookup -format=json | jq -r '.data.entity_id')
 
 
