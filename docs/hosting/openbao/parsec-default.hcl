@@ -41,10 +41,10 @@ path "identity/oidc/provider/+/authorize" {
 # -------------------------------------------------------------------------
 
 # Allow an entity to store its own device keys
-path "parsec-keys/data/{{identity.entity.id}}/*" {
+path "secret/data/{{identity.entity.id}}/*" {
     capabilities = ["create", "update", "patch", "read", "delete"]
 }
-path "parsec-keys/metadata/{{identity.entity.id}}/*" {
+path "secret/metadata/{{identity.entity.id}}/*" {
     capabilities = ["read", "list", "delete"]
 }
 
