@@ -64,4 +64,43 @@ msTest.describe(() => {
     await expect(modal.locator('.form-error')).toHaveText('A file with this name already exists.');
     await expect(modal.locator('#next-button')).toBeTrulyDisabled();
   });
+
+  msTest('Create duplicate file with default name', async ({ documents }) => {
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await expect(entries).toHaveCount(0);
+    const popover = documents.locator('.new-file-popover');
+    await expect(popover).toBeHidden();
+    const actionBar = documents.locator('.action-bar');
+    await actionBar.locator('.ms-action-bar-button:visible').nth(1).click();
+    await expect(popover).toBeVisible();
+    await expect(popover.locator('ion-item')).toHaveText(['Document', 'Spreadsheet', 'Presentation', 'Text']);
+    await popover.locator('ion-item').nth(0).click();
+    const modal = documents.locator('.text-input-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('.ms-modal-header__title')).toHaveText('File name');
+    await expect(modal.locator('.input-container').locator('.form-label')).toHaveText('Choose the new file name');
+    await expect(modal.locator('ion-input').locator('input')).toHaveValue('New document.docx');
+    await expect(modal.locator('#next-button')).toHaveText('Create the new file');
+    await modal.locator('#next-button').click();
+    await expect(entries).toHaveCount(1);
+    await expect(entries.nth(0).locator('.file-name')).toHaveText('New document.docx');
+
+    await actionBar.locator('.ms-action-bar-button:visible').nth(1).click();
+    await expect(popover).toBeVisible();
+    await popover.locator('ion-item').nth(0).click();
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('ion-input').locator('input')).toHaveValue('New document (2).docx');
+    await modal.locator('#next-button').click();
+    await expect(entries).toHaveCount(2);
+    await expect(entries.nth(0).locator('.file-name')).toHaveText('New document (2).docx');
+
+    await actionBar.locator('.ms-action-bar-button:visible').nth(1).click();
+    await expect(popover).toBeVisible();
+    await popover.locator('ion-item').nth(0).click();
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('ion-input').locator('input')).toHaveValue('New document (3).docx');
+    await modal.locator('#next-button').click();
+    await expect(entries).toHaveCount(3);
+    await expect(entries.nth(1).locator('.file-name')).toHaveText('New document (3).docx');
+  });
 });
