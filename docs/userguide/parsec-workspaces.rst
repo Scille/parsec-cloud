@@ -261,6 +261,8 @@ Archived workspace **Owners** can restore them from the workspace contextual men
     :alt: Workspace archived context
 
 
+.. _userguide_delete_workspace:
+
 Delete a workspace
 -------------------
 

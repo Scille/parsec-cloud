@@ -1,5 +1,7 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+.. cspell:words neworg
+
 .. _doc_hosting_administration_create_organization:
 
 ======================
@@ -99,7 +101,8 @@ Create an Organization
 
      set -a && source parsec-admin-token.env && set +a
 
-   Otherwise you can define an ``PARSEC_ADMINISTRATION_TOKEN`` variable and use it below.
+   Otherwise, create this file now with the ``PARSEC_ADMINISTRATION_TOKEN`` variable
+   and load it so you can use it below.
 
 #. Create the organization
 
@@ -136,3 +139,54 @@ Create an Organization
    #. Select :menuselection:`Create or join --> Join``
    #. Paste the **bootstrap link** from previous step
    #. Follow the instructions to create the first user of the Organization.
+
+
+Configure an Organization
+=========================
+
+Possible configuration options are:
+
+``user_profile_outsider_allowed`` (default: ``true``)
+  To allow or disallow users with **External** profile.
+  See :ref:`User Profiles <doc_userguide_manage_organization_profiles>`.
+
+``active_users_limit`` (default: none)
+  The maximum number of active (i.e. non-revoked) users.
+  By default, the number of active users is unlimited.
+  The limit does not apply to users with External profiles (which are always unlimited).
+
+``realm_minimum_archiving_period_before_deletion`` (default: ``2592000``, 30 days)
+  When a user :ref:`deletes a workspace <userguide_delete_workspace>`, this is the minimum amount of
+  time (in seconds) that must pass before the workspace is effectively deleted.
+
+``tos`` (default: none)
+  This option allows you to specify a custom set of :abbr:`ToS (Terms of Service)` that users will need to accept in order to connect to the organization.
+  This is specified as a JSON object, with a language code as key, and a link to the term of services in that language as value. For example:
+
+  .. code-block:: json
+
+    {
+      "fr": "link-to-tos-in-french.pdf",
+      "en": "link-to-tos-in-english.pdf"
+    }
+
+
+
+They can be set using the REST Administration API, either during organization creation (step 3 above) or later with a ``PATCH`` request.
+
+
+Here is an example using :command:`curl` and :command:`jq`:
+
+.. code-block:: console
+
+  $ DATA=$(jq -n \
+    --arg organization_id $ORGANIZATION_NAME \
+    --argjson user_profile_outsider_allowed false \
+    --argjson active_users_limit 5 \
+    --argjson tos "{\"fr\":\"$SERVER_ADDR/tos-FR\"}" \
+    --argjson realm_minimum_archiving_period_before_deletion 864000 \
+    '$ARGS.named' -c )
+
+  $ curl ${SERVER_ADDR}/administration/organizations/$ORGANIZATION_NAME \
+    -H "Authorization: Bearer $PARSEC_ADMINISTRATION_TOKEN" \
+    --request PATCH --json $DATA | jq
