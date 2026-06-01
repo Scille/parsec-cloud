@@ -48,9 +48,9 @@
           </ion-text>
           <div
             class="info-list-item__value cell-title"
-            :class="orgInfo.hasUserLimit ? 'warning' : 'success'"
+            :class="orgInfo.userLimit !== undefined ? 'warning' : 'success'"
           >
-            {{ orgInfo.hasUserLimit ? orgInfo.userLimit : $msTranslate('OrganizationPage.configuration.unlimited') }}
+            {{ orgInfo.userLimit !== undefined ? orgInfo.userLimit : $msTranslate('OrganizationPage.configuration.unlimited') }}
           </div>
         </div>
         <!-- Server addr -->
