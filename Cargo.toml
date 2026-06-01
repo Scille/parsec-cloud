@@ -203,13 +203,13 @@ sentry-log = { version = "0.47.0", default-features = false }
 serde = { version = "1.0.228", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_bytes = { version = "0.11.19", default-features = false }
-serde_json = { version = "1.0.149", default-features = false }
+serde_json = { version = "1.0.150", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
 serde_with = { version = "3.19.0", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
 smallvec = { version = "1.15.1", default-features = false }
 spinners = { version = "4.2.0", default-features = false }
-sqlx = { version = "0.8.6", default-features = false }
+sqlx = { version = "0.9.0", default-features = false }
 syn = { version = "2.0.117", default-features = false }
 thiserror = { version = "2.0.18", default-features = false }
 tokio = { version = "1.50.0", default-features = false }
