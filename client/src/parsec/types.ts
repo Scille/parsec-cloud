@@ -468,7 +468,6 @@ interface OrganizationInfo {
   };
   outsidersAllowed: boolean;
   userLimit?: number;
-  hasUserLimit: boolean;
   organizationAddr: ParsecOrganizationAddr;
   organizationId: OrganizationID;
   creationDate?: DateTime;
