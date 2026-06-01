@@ -96,7 +96,8 @@ def app_factory(
         CORSMiddleware,
         allow_origins=cors_allow_origins,
         allow_methods=["OPTIONS", "GET", "POST", "PATCH"],
-        allow_headers=["api-version", "authorization", "user-agent"],
+        # last-event-id is used for SEE synchronization when an interruption occurs.
+        allow_headers=["api-version", "authorization", "user-agent", "last-event-id"],
     )
     logger.debug(f"Allowed origins: {cors_allow_origins}")
     app.state.backend = backend
