@@ -89,6 +89,8 @@ impl Mountpoint {
                 fuser::MountOption::FSName("parsec".into()),
                 #[cfg(target_os = "macos")]
                 fuser::MountOption::CUSTOM(format!("volname={workspace_name}")),
+                #[cfg(target_os = "macos")]
+                fuser::MountOption::AllowOther,
                 fuser::MountOption::DefaultPermissions,
                 fuser::MountOption::NoSuid,
                 fuser::MountOption::Async,
