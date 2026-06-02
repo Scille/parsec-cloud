@@ -101,7 +101,7 @@ OIDC authentication works by passing a token to the client
 
 For this, the OIDC identity provider must be configured two redirection URL to use in web and native:
 
-- For web, the URL is ``https://<your-parsec-server>/oidc/callback``
+- For web, the URL is ``https://<your-parsec-server>/client/oidc/callback``.
 - For the native client, the URL is always ``https://callback.parsec.cloud.invalid/oidc/callback``.
 
 .. note::

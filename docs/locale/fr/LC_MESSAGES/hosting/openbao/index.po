@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-29 22:58+0200\n"
+"POT-Creation-Date: 2026-06-02 15:37+0200\n"
 "PO-Revision-Date: 2026-05-26 16:35+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -229,9 +229,10 @@ msgstr ""
 "de redirection :"
 
 #: ../../hosting/openbao/index.rst:104
-msgid "For web, the URL is ``https://<your-parsec-server>/oidc/callback``"
+msgid ""
+"For web, the URL is ``https://<your-parsec-server>/client/oidc/callback``."
 msgstr ""
-"Pour le web, l'URL est ``https://<votre-serveur-parsec>/oidc/callback``"
+"Pour le web, l'URL est ``https://<your-parsec-server>/client/oidc/callback``."
 
 #: ../../hosting/openbao/index.rst:105
 msgid ""
