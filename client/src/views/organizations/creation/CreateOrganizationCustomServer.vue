@@ -14,6 +14,8 @@
       @go-back-requested="$emit('backRequested')"
       @close-requested="$emit('closeRequested')"
       :hide-previous="bootstrapLink !== undefined"
+      :querying="querying"
+      :error="currentError"
     />
     <organization-user-information-page
       v-show="step === Steps.PersonalInformation"
@@ -21,6 +23,7 @@
       @user-information-filled="onUserInformationFilled"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
+      ref="userInformation"
     />
     <organization-authentication-page
       v-show="step === Steps.Authentication"
@@ -108,7 +111,7 @@ import OrganizationSummaryPage from '@/views/organizations/creation/Organization
 import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
 import { IonPage } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
-import { onMounted, ref, toRaw } from 'vue';
+import { onMounted, ref, toRaw, useTemplateRef } from 'vue';
 
 enum Steps {
   OrganizationNameAndServer,
@@ -141,6 +144,8 @@ const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const initialized = ref(false);
 const sequesterKey = ref<string | undefined>(undefined);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
+const querying = ref(false);
+const userInformationRef = useTemplateRef<InstanceType<typeof OrganizationUserInformationPage>>('userInformation');
 
 onMounted(async () => {
   if (bootstrapLink.value) {
@@ -158,34 +163,49 @@ async function onOrganizationNameAndServerChosen(
   chosenServerAddr: string,
   seqKey: string | undefined,
 ): Promise<void> {
-  if (!props.bootstrapLink) {
-    organizationName.value = chosenOrganizationName;
-    serverAddr.value = chosenServerAddr;
-  }
-  const serverConfigResult = await getServerConfig(serverAddr.value as string);
-  if (serverConfigResult.ok) {
-    serverConfig.value = serverConfigResult.value;
-  }
-  sequesterKey.value = seqKey;
-  if (ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(serverAddr.value as string)) {
-    const infoResult = await ParsecAccount.getInfo();
-    if (infoResult.ok) {
-      email.value = infoResult.value.humanHandle.email;
-      name.value = infoResult.value.humanHandle.label;
-      if (isWeb()) {
-        // Create a new vault save strategy
-        const handle = ParsecAccount.getHandle() as AccountHandle;
-        const saveStrategy = constructSaveStrategy(PrimaryProtectionStrategy.useAccountVault(handle));
-        // Skip the auth page
-        await onAuthenticationChosen(saveStrategy);
+  try {
+    querying.value = true;
+    currentError.value = undefined;
+    if (!props.bootstrapLink) {
+      organizationName.value = chosenOrganizationName;
+      serverAddr.value = chosenServerAddr;
+    }
+    const serverConfigResult = await getServerConfig(serverAddr.value as string);
+    if (serverConfigResult.ok) {
+      serverConfig.value = serverConfigResult.value;
+    } else {
+      currentError.value = 'CreateOrganization.errors.customOffline';
+      return;
+    }
+    sequesterKey.value = seqKey;
+    if (ParsecAccount.isLoggedIn() && ParsecAccount.addressMatchesAccountServer(serverAddr.value as string)) {
+      const infoResult = await ParsecAccount.getInfo();
+      if (infoResult.ok) {
+        email.value = infoResult.value.humanHandle.email;
+        name.value = infoResult.value.humanHandle.label;
+        if (isWeb()) {
+          // Create a new vault save strategy
+          const handle = ParsecAccount.getHandle() as AccountHandle;
+          const saveStrategy = constructSaveStrategy(PrimaryProtectionStrategy.useAccountVault(handle));
+          // Skip the auth page
+          await onAuthenticationChosen(saveStrategy);
+        } else {
+          step.value = Steps.Authentication;
+        }
       } else {
-        step.value = Steps.Authentication;
+        step.value = Steps.PersonalInformation;
+        if (userInformationRef.value) {
+          await userInformationRef.value.setFocus();
+        }
       }
     } else {
       step.value = Steps.PersonalInformation;
+      if (userInformationRef.value) {
+        await userInformationRef.value.setFocus();
+      }
     }
-  } else {
-    step.value = Steps.PersonalInformation;
+  } finally {
+    querying.value = false;
   }
 }
 

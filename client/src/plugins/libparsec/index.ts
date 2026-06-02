@@ -44,6 +44,10 @@ const FUNCTIONS_TO_SKIP: Array<SkipData> = [
     tag: 'WorkspaceStatEntryErrorEntryNotFound',
     function: 'workspaceStatEntry',
   },
+  {
+    tag: 'ParseParsecAddrErrorInvalidUrl',
+    function: 'parseParsecAddr',
+  },
 ];
 
 const FUNCTIONS_TO_SLOW_DOWN: Array<string> = [

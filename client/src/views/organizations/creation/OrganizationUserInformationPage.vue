@@ -108,13 +108,26 @@ const emits = defineEmits<{
   (e: 'goBackRequested'): void;
 }>();
 
+defineExpose({
+  setFocus,
+});
+
 const userInformationRef = useTemplateRef<InstanceType<typeof UserInformation>>('userInformation');
 const valid = ref(false);
 const tosAccepted = ref(false);
 
 onMounted(async () => {
+  if (userInformationRef.value) {
+    await userInformationRef.value.setFocus();
+  }
   await onFieldUpdated();
 });
+
+async function setFocus(): Promise<void> {
+  if (userInformationRef.value) {
+    await userInformationRef.value.setFocus();
+  }
+}
 
 async function onButtonClicked(): Promise<void> {
   if (!userInformationRef.value) {

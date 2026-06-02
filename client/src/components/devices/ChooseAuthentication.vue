@@ -178,7 +178,7 @@ import {
 import { OpenBaoClient, OpenBaoErrorType, isSSOProviderHandled, openBaoConnect } from '@/services/openBao';
 import { IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { MsChoosePasswordInput, MsSpinner } from 'megashark-lib';
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue';
 
 const authentication = ref<DevicePrimaryProtectionStrategyTag | undefined>(undefined);
 const keyringAvailable = ref(false);
@@ -257,6 +257,12 @@ function authMethodIsDisabled(auth: DevicePrimaryProtectionStrategyTag): boolean
 async function onMethodSelected(method: DevicePrimaryProtectionStrategyTag): Promise<void> {
   authentication.value = method;
   error.value = '';
+  if (method === DevicePrimaryProtectionStrategyTag.Password) {
+    await nextTick();
+    if (choosePasswordRef.value) {
+      choosePasswordRef.value.setFocus();
+    }
+  }
 }
 
 async function changeAuthenticationMethod(): Promise<void> {

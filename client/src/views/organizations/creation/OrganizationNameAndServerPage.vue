@@ -80,7 +80,7 @@
           size="default"
           class="button-medium"
           @click="$emit('organizationNameAndServerChosen', organizationName, serverAddr, sequesterKeyInputRef?.getKey())"
-          :disabled="!valid"
+          :disabled="!valid || querying"
         >
           <span>
             {{ $msTranslate('CreateOrganization.button.next') }}
@@ -89,6 +89,11 @@
             slot="start"
             :icon="chevronForward"
             size="small"
+          />
+          <ms-spinner
+            class="confirm-button-spinner"
+            v-show="querying"
+            :size="14"
           />
         </ion-button>
       </div>
@@ -103,7 +108,7 @@ import SequesterKeyInput from '@/components/organizations/SequesterKeyInput.vue'
 import { OrganizationID } from '@/parsec';
 import { IonButton, IonFooter, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { add, chevronBack, chevronForward, remove, warning } from 'ionicons/icons';
-import { MsInput, Translatable, Validity } from 'megashark-lib';
+import { MsInput, MsSpinner, Translatable, Validity } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 const props = defineProps<{
@@ -113,6 +118,7 @@ const props = defineProps<{
   disableOrganizationNameField?: boolean;
   error?: Translatable;
   hidePrevious?: boolean;
+  querying?: boolean;
 }>();
 
 defineEmits<{
@@ -127,6 +133,7 @@ const sequesterKeyInputRef = useTemplateRef<InstanceType<typeof SequesterKeyInpu
 const organizationName = ref<OrganizationID>(props.organizationName ?? '');
 const serverAddr = ref<string>(props.serverAddr ?? '');
 const advancedSettings = ref<boolean>(false);
+
 const valid = computed(() => {
   return (
     organizationNameInputRef.value &&
@@ -138,8 +145,11 @@ const valid = computed(() => {
 });
 
 onMounted(async () => {
-  if (organizationNameInputRef.value && organizationName.value) {
-    await organizationNameInputRef.value.validate(organizationName.value);
+  if (organizationNameInputRef.value) {
+    if (organizationName.value) {
+      await organizationNameInputRef.value.validate(organizationName.value);
+    }
+    organizationNameInputRef.value.setFocus();
   }
   if (serverAddrInputRef.value && serverAddr.value) {
     await serverAddrInputRef.value.validate(serverAddr.value);
@@ -176,6 +186,10 @@ onMounted(async () => {
 
 .org-name-criteria {
   color: var(--parsec-color-light-secondary-hard-grey);
+}
+
+.confirm-button-spinner {
+  margin-left: 0.5rem;
 }
 
 .advanced-settings {
