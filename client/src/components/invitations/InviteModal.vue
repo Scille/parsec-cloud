@@ -23,6 +23,7 @@
       <ms-input
         @change="onInputChange"
         v-model="textModel"
+        ref="emailInput"
         placeholder="UsersPage.CreateUserInvitationModal.placeholder"
         label="UsersPage.CreateUserInvitationModal.label"
         id="email-input"
@@ -52,10 +53,17 @@
 import { emailValidator } from '@/common/validators';
 import { IonText, modalController } from '@ionic/vue';
 import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, Validity } from 'megashark-lib';
-import { ref } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
 
 const textModel = ref('');
 const emails = ref<Array<string>>([]);
+const emailInputRef = useTemplateRef<InstanceType<typeof MsInput>>('emailInput');
+
+onMounted(async () => {
+  if (emailInputRef.value) {
+    emailInputRef.value.setFocus();
+  }
+});
 
 async function onInputChange(): Promise<void> {
   const tmp: Array<string> = [];
