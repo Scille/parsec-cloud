@@ -47,7 +47,12 @@
             :class="syncStatus.class"
             :icon="syncStatus.icon"
           />
-          <span v-if="entry.syncStatus === EntrySyncStatus.Uploading && entry.syncProgress">{{ entry.syncProgress }}%</span>
+          <span
+            v-if="entry.syncStatus === EntrySyncStatus.Uploading && entry.syncProgress"
+            class="upload-progress button-small"
+          >
+            {{ entry.syncProgress }}%
+          </span>
         </div>
 
         <ion-text
@@ -179,17 +184,18 @@ async function onOptionsClick(event: Event): Promise<void> {
       position: absolute;
       font-size: 1.25rem;
       left: 58%;
-      bottom: -6px;
-      padding: 2px;
+      bottom: -9px;
+      padding: 4px;
       background: var(--parsec-color-light-secondary-background);
-      border-radius: 50%;
+      border-radius: var(--parsec-radius-circle);
+      box-shadow: var(--parsec-shadow-light);
 
       &-ok {
         color: var(--parsec-color-light-primary-500);
       }
 
       &-ko {
-        color: var(--parsec-color-light-secondary-text);
+        color: var(--parsec-color-light-secondary-hard-grey);
       }
     }
   }
