@@ -478,6 +478,38 @@
       padding: 0;
     }
   }
+
+  // Show upload progress only on hover
+  .upload-progress {
+    color: var(--parsec-color-light-secondary-text);
+    visibility: hidden;
+  }
+
+  .file-list-item .upload-progress {
+    position: relative;
+    right: 0.375rem;
+  }
+
+  .file-card-item .upload-progress {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--parsec-radius-circle);
+    left: 58%;
+    bottom: -8px;
+    width: 1.75rem;
+    height: 1.75rem;
+    background: var(--parsec-color-light-secondary-white);
+    text-wrap: nowrap;
+  }
+
+  .file-list-item:hover,
+  .file-card-item:hover {
+    .upload-progress {
+      visibility: visible;
+    }
+  }
 }
 
 // ------- Users only -------
