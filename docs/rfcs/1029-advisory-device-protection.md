@@ -146,12 +146,12 @@ struct AdvisoryDeviceFileProtection {
 New CLI flags for `parsec run` to configure the advisory device protection:
 
 ```bash
---device-protection-strategy <STRATEGY>...
+---advisory-device-file-protection <STRATEGY>...
 ```
 
 Where `<STRATEGY>` is one of the canonical identifiers defined above.
 
-When no `--device-protection-strategy` is specified, the default is an empty
+When no `--advisory-device-file-protection` is specified, the default is an empty
 recommendation list (all strategies are accepted).
 
 [RFC 1025]: ./1025-totp-protected-local-device.md
