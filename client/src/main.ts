@@ -130,7 +130,12 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
         distributor.dispatchEvent(Events.EntrySyncStarted, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
         break;
       case ClientEventTag.WorkspaceOpsOutboundSyncProgress:
-        distributor.dispatchEvent(Events.EntrySyncProgress, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
+        distributor.dispatchEvent(Events.EntrySyncProgress, {
+          workspaceId: event.realmId,
+          entryId: event.entryId,
+          progress: Math.round((Number(event.blockIndex) / Number(event.blocks)) * 100),
+          way: 'outbound',
+        });
         break;
       case ClientEventTag.ClientStarted:
         injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStarted, { handle: handle });

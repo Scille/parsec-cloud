@@ -706,10 +706,12 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
       if (entry && workspaceInfo.value) {
         if (event === Events.EntrySynced) {
           entry.needSync = false;
+          entry.syncProgress = undefined;
           entry.syncStatus = EntrySyncStatus.Synced;
         } else if (event === Events.EntrySyncProgress || event === Events.EntrySyncStarted) {
           entry.needSync = true;
           entry.syncStatus = EntrySyncStatus.Uploading;
+          entry.syncProgress = syncedData.progress;
         }
       }
     }

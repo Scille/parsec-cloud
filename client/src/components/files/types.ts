@@ -90,11 +90,13 @@ export enum EntrySyncStatus {
 export interface FileModel extends EntryStatFile {
   isSelected: boolean;
   syncStatus?: EntrySyncStatus;
+  syncProgress?: number;
 }
 
 export interface FolderModel extends EntryStatFolder {
   isSelected: boolean;
   syncStatus?: EntrySyncStatus;
+  syncProgress?: number;
 }
 
 export type EntryModel = FileModel | FolderModel;
