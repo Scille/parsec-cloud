@@ -134,3 +134,4 @@ Those variables are used when testing the app in Playwright. They will mostly be
 | `TESTING_MOCK_BROWSER`           | `Chrome\|Firefox\|Safari\|Edge\|\Brave\|Chromium` | Simulates navigating with a specific browser                                                                   |
 | `TESTING_SAAS_SERVERS`           | `server1;server2;server3;...`                     | Servers recognized as Saas                                                                                     |
 | `TESTING_TRIAL_SERVERS`          | `server1;server2;server3;...`                     | Servers recognized as trial                                                                                    |
+| `TESTING_ADD_USERS`              | `userName1:profile;userName2:profile;...`         | Profile as the enum value defined in parsec (`UserProfileAdmin` for an admin)                                  |

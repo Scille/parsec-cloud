@@ -102,6 +102,9 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.trialServers) {
         (window as any).TESTING_TRIAL_SERVERS = options.trialServers;
       }
+      if (options.additionalUsers) {
+        (window as any).TESTING_ADD_USERS = options.additionalUsers.map((user) => `${user.label}:${user.profile}`).join(';');
+      }
       (window as any).showSaveFilePicker = (opts?: { suggestedName?: string }): Promise<FileSystemFileHandle> => {
         return new Promise((resolve) => {
           resolve({

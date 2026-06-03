@@ -41,6 +41,18 @@ onMounted(async () => {
     return;
   }
 
+  if (window.isTesting()) {
+    if ((window as any).TESTING_ADD_USERS) {
+      const users = ((window as any).TESTING_ADD_USERS as string).split(';').map((userWithProfile) => {
+        const [user, profile] = userWithProfile.split(':');
+        return { label: user, email: `${user.replace(' ', '_')}@invalid.com`, profile: profile as parsec.UserProfile, revoked: false };
+      });
+      if (users) {
+        await populateUsers(handle, users);
+      }
+    }
+  }
+
   if (
     !import.meta.env.PARSEC_APP_TESTBED_SERVER ||
     window.isTesting() ||
@@ -129,8 +141,15 @@ async function populate(handle: parsec.ConnectionHandle): Promise<void> {
   }
 }
 
-async function populateUsers(handle: parsec.ConnectionHandle): Promise<void> {
-  const USERS = [
+interface UserData {
+  label: string;
+  email: string;
+  profile: parsec.UserProfile;
+  revoked: boolean;
+}
+
+async function populateUsers(handle: parsec.ConnectionHandle, users: Array<UserData> | undefined = undefined): Promise<void> {
+  const DEFAULT_USERS: Array<UserData> = [
     {
       // cspell:disable-next-line
       label: 'Gordon Freeman',
@@ -165,7 +184,7 @@ async function populateUsers(handle: parsec.ConnectionHandle): Promise<void> {
     },
   ];
 
-  for (const user of USERS) {
+  for (const user of users || DEFAULT_USERS) {
     await addUser(handle, user.label, user.email, user.profile, user.revoked);
   }
 }
