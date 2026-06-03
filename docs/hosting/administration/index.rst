@@ -17,4 +17,4 @@ This section covers how to manage Parsec Server and perform common administrativ
     stats-organization
     freeze-users
     shared-recovery
-    mfa-reset
+    user-authentication

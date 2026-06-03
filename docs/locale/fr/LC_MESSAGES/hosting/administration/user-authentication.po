@@ -1,0 +1,184 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec
+# Documentation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.9.1-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-08 10:21+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../hosting/administration/user-authentication.rst:7
+msgid "User Authentication"
+msgstr "Authentification utilisateur"
+
+#: ../../hosting/administration/user-authentication.rst:9
+msgid ""
+"This section describes how to configure and manage user authentication in "
+"Parsec."
+msgstr ""
+"Cette section décrit comment configurer et gérer l'authentification "
+"utilisateur dans Parsec."
+
+#: ../../hosting/administration/user-authentication.rst:11
+msgid ""
+"As described in the :ref:`Authentication "
+"<doc_hosting_client_deploy_authentication>` section, user authentication is "
+"(mostly) a client-side operation in Parsec: it determines the way the user's "
+"local device file will be protected. Please refer to that section for more "
+"details."
+msgstr ""
+"Comme décrit dans la section :ref:`Authentication "
+"<doc_hosting_client_deploy_authentication>`, l'authentification utilisateur "
+"dans Parsec est une opération qui a lieu (principalement) côté client : elle "
+"détermine la façon dont un fichier d'appareil local sera protégé. Cette "
+"section peut être consultée pour plus de détails."
+
+#: ../../hosting/administration/user-authentication.rst:16
+msgid ""
+"Parsec also supports :abbr:`MFA (Multi-Factor Authentication)` via :abbr:"
+"`TOTP (Time-based One-Time Password)` codes. This is in addition to the "
+"primary protection (password, keyring, etc.)."
+msgstr ""
+"Parsec propose aussi du :abbr:`MFA (Authentification Multi Facteurs)` via "
+"un :abbr:`TOTP (mot de passe à usage unique basé sur le temps)`, en plus "
+"d'une protection primaire (mot de passe, keyring, etc.)."
+
+#: ../../hosting/administration/user-authentication.rst:23
+msgid "Authentication advisories"
+msgstr "Authentification recommandée"
+
+#: ../../hosting/administration/user-authentication.rst:27
+msgid ""
+"When starting the server, the recommended authentication methods can be "
+"specified as shown in the example below."
+msgstr ""
+"Lorsqu'un serveur est démarré, des méthodes d'authentification peuvent être "
+"configurées, comme dans l'exemple ci dessous."
+
+#: ../../hosting/administration/user-authentication.rst:36
+msgid "Possible values are :"
+msgstr "Les valeurs possibles sont :"
+
+#: ../../hosting/administration/user-authentication.rst:38
+msgid "`PASSWORD`"
+msgstr "`PASSWORD`"
+
+#: ../../hosting/administration/user-authentication.rst:39
+msgid "`PASSWORD+TOTP`"
+msgstr "`PASSWORD+TOTP`"
+
+#: ../../hosting/administration/user-authentication.rst:40
+msgid "`KEYRING`"
+msgstr "`KEYRING`"
+
+#: ../../hosting/administration/user-authentication.rst:41
+msgid "`KEYRING+TOTP`"
+msgstr "`KEYRING+TOTP`"
+
+#: ../../hosting/administration/user-authentication.rst:42
+msgid "`PKI`"
+msgstr "`PKI`"
+
+#: ../../hosting/administration/user-authentication.rst:43
+msgid "`PKI+TOTP`"
+msgstr "`PKI+TOTP`"
+
+#: ../../hosting/administration/user-authentication.rst:44
+msgid "`OPENBAO`"
+msgstr "`OPENBAO`"
+
+#: ../../hosting/administration/user-authentication.rst:45
+msgid "`OPENBAO+TOTP`"
+msgstr "`OPENBAO+TOTP`"
+
+#: ../../hosting/administration/user-authentication.rst:49
+msgid ""
+"Only the specified methods will be available for users in Parsec client "
+"application."
+msgstr ""
+"Seules les méthodes spécifiées vont être disponibles pour les utilisateurs "
+"de l'application client Parsec"
+
+#: ../../hosting/administration/user-authentication.rst:51
+msgid ""
+"However, since the encrypted device file is only available locally, the "
+"Parsec Server cannot *enforce* the specified methods (hence the *advisory* "
+"name)."
+msgstr ""
+" Cependant, comme le fichier d'appareil chiffré est uniquement local, le "
+"serveurParsec ne peut pas *imposer* les méthodes spécifiées (d'où le nom de "
+"méthodes *recommandées*)."
+
+#: ../../hosting/administration/user-authentication.rst:54
+msgid ""
+"MFA is a special case because it involves communication with the Parsec "
+"Server. If you want to force users to enable MFA use *only* the variant "
+"including ``+TOTP`` (e.g. ``PASSWORD+TOTP``, but not ``PASSWORD``)"
+msgstr ""
+"Le MFA est est un cas particulier parce qu'il implique une communication "
+"avec le serveur Parsec. Si vous souhaitez forcer les utilisateurs à activer "
+"le MFA, vous devez utiliser *uniquement* les variants qui contiennent "
+"``+TOTP`` (par exemple : ``PASSWORD+TOTP``, mais pas ``PASSWORD``)"
+
+#: ../../hosting/administration/user-authentication.rst:61
+msgid "MFA setup reset"
+msgstr "Réinitialisation de la configuration MFA"
+
+#: ../../hosting/administration/user-authentication.rst:63
+msgid ""
+"When a user loses access to their authenticator app (e.g. lost or replaced "
+"phone), their MFA setup must be reset by a **server administrator** before "
+"the user can reconfigure it (see :ref:`doc_userguide_mfa`)."
+msgstr ""
+"Lorsqu'un utilisateur perd l'accès à son application d'authentification (par "
+"exemple, en cas de perte ou de remplacement de son téléphone), sa "
+"configuration MFA doit être réinitialisée par un **administrateur de "
+"serveur** avant que l'utilisateur puisse la reconfigurer (voir :ref:"
+"`doc_userguide_mfa`)."
+
+#: ../../hosting/administration/user-authentication.rst:67
+msgid "To reset a user's MFA setup, the server administrator needs to provide:"
+msgstr ""
+"Pour réinitialiser la configuration MFA d'un utilisateur, l'administrateur "
+"du serveur doit fournir :"
+
+#: ../../hosting/administration/user-authentication.rst:69
+msgid "The Parsec server address, as a Parsec URL ``parsec3://hostname:port``"
+msgstr ""
+"L'adresse du serveur Parsec, en tant qu'URL Parsec ``parsec3://hostname:"
+"port``"
+
+#: ../../hosting/administration/user-authentication.rst:70
+msgid "The ``administration_token`` configured on the Parsec server"
+msgstr "Le ``administration_token`` configuré sur le serveur Parsec"
+
+#: ../../hosting/administration/user-authentication.rst:71
+msgid "The organization ID"
+msgstr "L'ID de l'organisation"
+
+#: ../../hosting/administration/user-authentication.rst:72
+msgid ""
+"The user to reset, identified by their email address or their Parsec user ID"
+msgstr ""
+"L'utilisateur à réinitialiser, identifié par son adresse e-mail ou son ID "
+"d'utilisateur Parsec"
+
+#: ../../hosting/administration/user-authentication.rst:74
+msgid "Typically to reset by email address:"
+msgstr "Typiquement, pour réinitialiser par adresse e-mail :"
+
+#: ../../hosting/administration/user-authentication.rst:80
+msgid "Example of output:"
+msgstr "Exemple de résultat :"
