@@ -29,6 +29,11 @@ export const AllowAllProtectionMethods = [
   { primary: AllowedAuthenticationMethod.PKI, withTotp: false },
 ];
 
+export interface AdditionalUserData {
+  label: string;
+  profile: 'UserProfileAdmin' | 'UserProfileOutsider' | 'UserProfileStandard';
+}
+
 export interface SetupOptions {
   testbedPath?: string;
   skipTestbed?: boolean;
@@ -50,6 +55,7 @@ export interface SetupOptions {
   enableUpdateEvent?: boolean;
   mockPki?: boolean;
   allowedProtectionMethods?: Array<ProtectionMethod>;
+  additionalUsers?: Array<AdditionalUserData>;
 }
 
 export interface MsPage extends Page {

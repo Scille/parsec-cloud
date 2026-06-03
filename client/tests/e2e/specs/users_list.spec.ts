@@ -9,8 +9,10 @@ import {
   fillIonInput,
   getClipboardText,
   inviteUsers,
+  MsPage,
   msTest,
   resizePage,
+  setupNewPage,
   setWriteClipboardPermission,
   sortBy,
 } from '@tests/e2e/helpers';
@@ -855,4 +857,60 @@ msTest('Copy email address to clipboard', async ({ usersPage }) => {
   await copyButton.click();
   await expect(usersPage).toShowToast('The email address has been copied to the clipboard.', 'Info');
   expect(await getClipboardText(usersPage)).toContain('bob@example.com');
+});
+
+msTest('Test many users', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  await setupNewPage(page, {
+    additionalUsers: [
+      {
+        // cspell:disable-next-line
+        label: 'Quelaag',
+        profile: 'UserProfileAdmin',
+      },
+      {
+        label: 'Gwyn',
+        profile: 'UserProfileAdmin',
+      },
+      {
+        // cspell:disable-next-line
+        label: 'Smough',
+        profile: 'UserProfileStandard',
+      },
+      {
+        label: 'Sif',
+        profile: 'UserProfileStandard',
+      },
+      {
+        label: 'Priscilla',
+        profile: 'UserProfileOutsider',
+      },
+      {
+        // cspell:disable-next-line
+        label: 'Artorias',
+        profile: 'UserProfileAdmin',
+      },
+      {
+        label: 'Manus',
+        profile: 'UserProfileStandard',
+      },
+    ],
+  });
+
+  await page.locator('.organization-card').first().click();
+  await expect(page.locator('#password-input')).toBeVisible();
+
+  await expect(page.locator('.login-button')).toHaveDisabledAttribute();
+
+  await page.locator('#password-input').locator('input').fill('P@ssw0rd.');
+  await expect(page.locator('.login-button')).toBeEnabled();
+  await page.locator('.login-button').click();
+  await expect(page.locator('#connected-header')).toContainText('My workspaces');
+  await expect(page.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await expect(page).toBeWorkspacePage();
+  await page.locator('.sidebar').locator('#sidebar-users').click();
+  await expect(page).toHavePageTitle('Users');
+  await expect(page).toBeUserPage();
+  await expect(page.locator('#users-page-user-list').getByRole('listitem')).toHaveCount(10);
+  await page.release();
 });
