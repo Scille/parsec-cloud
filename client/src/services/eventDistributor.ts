@@ -88,6 +88,7 @@ interface EntrySyncData {
   workspaceId: WorkspaceID;
   entryId: EntryID;
   way: 'inbound' | 'outbound';
+  progress?: number;
 }
 
 interface IncompatibleServerData {

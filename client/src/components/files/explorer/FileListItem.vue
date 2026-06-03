@@ -76,6 +76,7 @@
             :class="syncStatus.class"
             :icon="syncStatus.icon"
           />
+          <span v-if="entry.syncStatus === EntrySyncStatus.Uploading && entry.syncProgress">{{ entry.syncProgress }}%</span>
         </div>
 
         <!-- updated by -->
