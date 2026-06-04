@@ -5,7 +5,7 @@ use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::realm_keys_bundle::{self, EncrytionUsage},
+    certif::realm_keys_bundle::{self, EncryptionUsage},
     CertifDecryptForRealmError,
 };
 
@@ -125,7 +125,7 @@ pub(super) async fn validate_block(
             realm_keys_bundle::decrypt_for_realm(
                 ops,
                 store,
-                EncrytionUsage::Block(access.id),
+                EncryptionUsage::Block(access.id),
                 realm_id,
                 key_index,
                 encrypted,

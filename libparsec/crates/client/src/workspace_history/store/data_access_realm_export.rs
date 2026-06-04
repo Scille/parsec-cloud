@@ -13,7 +13,7 @@ use libparsec_types::prelude::*;
 use super::{
     DataAccessFetchBlockError, DataAccessFetchManifestError, WorkspaceHistoryRealmExportDecryptor,
 };
-use crate::{certif::EncrytionUsage, InvalidBlockAccessError, InvalidManifestError};
+use crate::{certif::EncryptionUsage, InvalidBlockAccessError, InvalidManifestError};
 
 pub(super) struct RealmExportDataAccess {
     db: AsyncMutex<RealmExportDB>,
@@ -489,7 +489,7 @@ impl RealmExportDataAccess {
                 )));
             }
             Some(key) => {
-                let usage = EncrytionUsage::Vlob(entry_id);
+                let usage = EncryptionUsage::Vlob(entry_id);
                 key.derive_secret_key_from_uuid(usage.key_derivation_uuid())
             }
         };
@@ -587,7 +587,7 @@ impl RealmExportDataAccess {
                 )));
             }
             Some(key) => {
-                let usage = EncrytionUsage::Block(access.id);
+                let usage = EncryptionUsage::Block(access.id);
                 key.derive_secret_key_from_uuid(usage.key_derivation_uuid())
             }
         };

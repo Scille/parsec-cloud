@@ -11,7 +11,7 @@ use super::{
     UpTo,
 };
 use crate::{
-    certif::CertifPollServerError, greater_timestamp, EncrytionUsage,
+    certif::CertifPollServerError, greater_timestamp, EncryptionUsage,
     EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
 };
 
@@ -74,7 +74,7 @@ async fn rename_realm_internal(
 
         let (encrypted_name, key_index) = ops
             .encrypt_for_realm(
-                EncrytionUsage::RealmRename,
+                EncryptionUsage::RealmRename,
                 realm_id,
                 new_name.as_ref().as_bytes(),
             )

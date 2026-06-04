@@ -13,7 +13,7 @@ use super::{
 };
 
 #[derive(Debug, Clone, Copy)]
-pub enum EncrytionUsage {
+pub enum EncryptionUsage {
     /// Canary is the encrypted payload within the key rotation certificate used to
     /// validate the key from the keys bundle is correct.
     Canary,
@@ -27,14 +27,14 @@ pub enum EncrytionUsage {
     Block(BlockID),
 }
 
-impl EncrytionUsage {
+impl EncryptionUsage {
     pub fn key_derivation_uuid(&self) -> uuid::Uuid {
         match self {
-            EncrytionUsage::Canary => CANARY_KEY_DERIVATION_UUID,
-            EncrytionUsage::RealmRename => REALM_RENAME_KEY_DERIVATION_UUID,
-            EncrytionUsage::PathUrl => PATH_URL_KEY_DERIVATION_UUID,
-            EncrytionUsage::Vlob(id) => **id,
-            EncrytionUsage::Block(id) => **id,
+            EncryptionUsage::Canary => CANARY_KEY_DERIVATION_UUID,
+            EncryptionUsage::RealmRename => REALM_RENAME_KEY_DERIVATION_UUID,
+            EncryptionUsage::PathUrl => PATH_URL_KEY_DERIVATION_UUID,
+            EncryptionUsage::Vlob(id) => **id,
+            EncryptionUsage::Block(id) => **id,
         }
     }
 }
@@ -861,7 +861,7 @@ pub enum CertifEncryptForRealmError {
 pub(super) async fn encrypt_for_realm(
     ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
-    usage: EncrytionUsage,
+    usage: EncryptionUsage,
     realm_id: VlobID,
     data: &[u8],
 ) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
@@ -923,7 +923,7 @@ pub enum CertifDecryptForRealmError {
 pub(super) async fn decrypt_for_realm(
     ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
-    usage: EncrytionUsage,
+    usage: EncryptionUsage,
     realm_id: VlobID,
     key_index: IndexInt,
     encrypted: &[u8],

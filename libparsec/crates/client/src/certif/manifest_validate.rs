@@ -4,7 +4,7 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
-use crate::{certif::realm_keys_bundle, CertifDecryptForRealmError, EncrytionUsage};
+use crate::{certif::realm_keys_bundle, CertifDecryptForRealmError, EncryptionUsage};
 
 use super::{
     store::{CertifForReadWithRequirementsError, CertificatesStoreReadGuard, GetCertificateError},
@@ -203,7 +203,7 @@ pub(super) async fn validate_workspace_manifest(
             let cleartext = realm_keys_bundle::decrypt_for_realm(
                 ops,
                 store,
-                EncrytionUsage::Vlob(realm_id),
+                EncryptionUsage::Vlob(realm_id),
                 realm_id,
                 key_index,
                 encrypted,
@@ -323,7 +323,7 @@ pub(super) async fn validate_child_manifest(
             let cleartext = realm_keys_bundle::decrypt_for_realm(
                 ops,
                 store,
-                EncrytionUsage::Vlob(vlob_id),
+                EncryptionUsage::Vlob(vlob_id),
                 realm_id,
                 key_index,
                 encrypted,
