@@ -20,9 +20,17 @@ that are necessary to communicate with a smart card from the web browser.
 Why Idopte?
 ===========
 
-We use Idopte to provide the integration of smartcard features on the web application because at the moment of writing the `Web Smart Card API <https://wicg.github.io/web-smart-card/>`_ is in draft.
+There is no standard way to access the smart card hardware from the web browser.
+A couple of alternatives were considered, among which we can mention the 
+`Web Smart Card API <https://wicg.github.io/web-smart-card/>`_ but, at the time of writing, the API is in draft.
 
-And the client that asked for the support of smartcard in web was already using that solution with other web applications.
+We chose Idopte, a French software company specialized in Smart Card Middleware,
+mainly because:
+
+- It provides a simple and functional JavaScript API allowing communication
+  with the smart card from the browser (through their middleware)
+- The Parsec customer needing web smart card support is already using Idopte
+  middleware with other web applications.
 
 .. note::
    :collapsible: open
