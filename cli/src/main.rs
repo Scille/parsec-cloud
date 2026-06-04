@@ -41,7 +41,7 @@ enum Command {
     /// This command creates three users, `Alice`, `Bob` and `Toto`,
     /// To run testenv, see the script run_testenv in the current directory.
     RunTestenv(run_testenv::RunTestenv),
-    /// List files in a workspace
+    /// List workspace contents
     Ls(ls::Args),
     /// Remove a file from a workspace
     Rm(rm::Args),

@@ -29,13 +29,17 @@ async fn ls_files(tmp_path: TmpPath) {
             .create_folder("/foo".parse().unwrap())
             .await
             .unwrap();
+        workspace
+            .create_file("/foo/bar.txt".parse().unwrap())
+            .await
+            .unwrap();
 
         client.stop().await;
 
         wid
     };
 
-    // List the files
+    // List files at "/" directory (workspace root)
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
         "ls",
@@ -45,4 +49,16 @@ async fn ls_files(tmp_path: TmpPath) {
         &wid.hex()
     )
     .stdout(predicates::str::contains("test.txt\n").and(predicates::str::contains("foo\n")));
+
+    // List files at "/foo" directory
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "ls",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace",
+        &wid.hex(),
+        "/foo"
+    )
+    .stdout(predicates::str::contains("bar.txt\n"));
 }
