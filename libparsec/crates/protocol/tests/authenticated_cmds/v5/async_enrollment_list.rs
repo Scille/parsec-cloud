@@ -114,7 +114,8 @@ pub fn rep_ok() {
         "69747465725f6f70656e62616f5f656e746974795f6964d92465376430376532612d62"
         "3035642d656335392d646366322d343430336566646266316237ac7375626d69747465"
         "645f6f6ed70100035f86aa90ba80"
-    ).as_ref();
+    )
+    .as_ref();
 
     let expected = authenticated_cmds::async_enrollment_list::Rep::Ok {
         enrollments: vec![
