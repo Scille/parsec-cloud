@@ -57,11 +57,11 @@ or as an option available for any command,
     Usage: parsec-cli ls [OPTIONS] --workspace <WORKSPACE> [PATH]
 
     Arguments:
-    [PATH]  Path to list [default: /]
+    [PATH]  The absolute workspace path to list contents (e.g. "/foo/bar") [default: /]
 
     Options:
     -w, --workspace <WORKSPACE>    Workspace ID [env: PARSEC_WORKSPACE_ID=]
-        --password-stdin           Read the password from stdin instead of TTY Note: this flag need to be explicitly set, that why it does not have a env var
+        --password-stdin           Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var).
     -d, --device <DEVICE>          Device ID [env: PARSEC_DEVICE_ID=]
     -c, --config-dir <CONFIG_DIR>  Parsec config directory [env: PARSEC_CONFIG_DIR=] [default: /home/aurelia/.config/parsec3/libparsec]
     -h, --help                     Print help

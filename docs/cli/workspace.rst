@@ -110,9 +110,16 @@ List workspace content
 
 .. code-block:: shell
 
+    # List contents of "/" directory (workspace root)
     parsec-cli ls -d b1e1 -w 0fe76194ad8649f6a8dc075020efaa4c
     Enter password for the device:
     README.md
+    foo
+
+    # List contents of "/foo" directory (note that it must be an absolute path, i.e. it must start with "/").
+    parsec-cli ls -d b1e1 -w 0fe76194ad8649f6a8dc075020efaa4c /foo
+    Enter password for the device:
+    bar.txt
 
 
 Remove file from workspace

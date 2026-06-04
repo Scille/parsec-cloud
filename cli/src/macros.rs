@@ -207,8 +207,8 @@ macro_rules! clap_parser_with_shared_opts_builder {
             #[with = $($modifier),*]
             $(#[$struct_attr])*
             $visibility struct $name {
-                #[doc = "Read the password from stdin instead of TTY"]
-                #[doc = "Note: this flag need to be explicitly set, that why it does not have a env var"]
+                #[doc = "Read the password from stdin instead of TTY."]
+                #[doc = "This flag needs to be explicitly set (it does not have a env var)."]
                 #[arg(long, default_value_t)]
                 pub(crate) password_stdin: bool,
                 $(
