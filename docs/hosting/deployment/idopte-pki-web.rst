@@ -9,15 +9,16 @@
 .. _Idopte: https://www.idopte.com/
 
 =====================================
-Enable PKI Web with Idopte middleware
+Enable PKI and SmartCard support
 =====================================
 
-Configure the :ref:`web application <doc_hosting_deployment_webapp>` to enable PKI integration using |idopte|'s middleware.
+This section describes how to enable PKI and SmartCard support for the :ref:`web application <doc_hosting_deployment_webapp>` using |idopte|'s *Smart Card Middleware*.
 
-|idopte| provide a middleware installed on the user's device that provide the Smart Card Web Services (SCWS).
+|idopte| *Smart Card Middleware*, installed on the user's computer, provides the *Smart Card Web Services* (SCWS)
+that are necessary to communicate with a smart card from the web browser.
 
-Why using Idopte service?
-=========================
+Why Idopte?
+===========
 
 We use Idopte to provide the integration of smartcard features on the web application because at the moment of writing the `Web Smart Card API <https://wicg.github.io/web-smart-card/>`_ is in draft.
 
@@ -26,19 +27,20 @@ And the client that asked for the support of smartcard in web was already using 
 .. note::
    :collapsible: open
 
-   We're open to additional integration.
+   We are open to consider other options for smart card web support.
 
-   But the proposed integration has to provide the following features:
+   Please feel free to contact us if you know of any other alternatives 
+   supporting following features:
 
    - List available certificate (at least their DER contents)
-   - Provide a way to verify the trust in a certificate (either providing the CRL list or doing the check itself)
+   - Check certificate trust (either providing :abbr:`CRL (Certificate revocation list)` or doing the check itself)
    - Allow to sign/verify data
    - Allow to encrypt/decrypt data
 
-Prerequisite
-============
+Prerequisites
+=============
 
-Before starting to configure the PKI Web feature, ensure that you fill the following prerequisite:
+Before you begin, make sure you meet the following prerequisites:
 
 .. _scws_mutual_auth: https://www.idopte.com/doc_scws.php
 
@@ -53,7 +55,7 @@ Before starting to configure the PKI Web feature, ensure that you fill the follo
 
         openssl genrsa -out idopte-service.key 4096
 
-- |idopte| provided you with a web certificate that include the public key of the private key above.
+- |idopte| provided you a web certificate including the public key of the RSA private key above.
 
   .. tip::
      :collapsible: open
@@ -64,53 +66,55 @@ Before starting to configure the PKI Web feature, ensure that you fill the follo
 
         openssl rsa -in idopte-service.key -out idopte-service.pub
 
-- On top of the web certificate, you have obtained from Idopte their public keys that are used during the `mutual authentication process <scws_mutual_auth_>`_
+- You have Idopte's public keys, used during the `mutual authentication process <scws_mutual_auth_>`_
 
 
-- You have a copy of the patched SCWS javascript file
+- You have a copy of the patched ``scwsapi.js`` file
 
   .. important::
 
-     You cannot use a non-patched SCWS javascript file else it will fail to be loaded by the application.
+     You cannot use a non-patched ``scwsapi.js`` file else the web application will not be able to load it.
 
   .. note::
 
-     We cannot distribute that file patched because of license reason
+     For legal reasons, we are currently unable to distribute the patched ``scwsapi.js`` file.
 
 Configure the webapp
 ====================
 
-The web application need some configuration to have the feature enabled:
+Follow these steps to configure the web application:
 
-#. You need to copy the SCWS javascript file into the assets folder:
+#. Copy the ``scwsapi.js`` file into the assets folder:
 
    .. tip::
 
-      For better caching purpose, we recommend to rename the SCWS script file to have it's checksum in the name:
+      To improve caching, we recommend renaming the ``scwsapi.js`` file to have it's checksum in the name:
 
       .. code-block:: bash
 
          mv scwsapi.js scwsapi-$(sha256sum scwsapi.js | cut -c -6).js
 
-#. And edit some `meta tags <https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta>`_ in the ``index.html`` file:
+#. Edit the following `meta tags <https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta>`_ in the ``index.html`` file:
 
    - Put the web certificate provided by |idopte| in the content of the meta tag named ``scws-web_application_certificate``
    - Edit the content of the meta tag with the name ``scws-scwsapi_js-location`` to path from where the SCWS javascript file is served
 
-Configure the server
-====================
+Configure Parsec Server
+=======================
 
-The server need additional configuration to be able to `perform the mutual authentication with the client middleware <scws_mutual_auth_>`_:
+The server needs additional configuration to be able to `perform the mutual authentication with the client middleware <scws_mutual_auth_>`_:
 
 - Make |idopte|'s public keys accessible to the server.
-  Put the keys into a file and either set the option ``--scws-idopte-public-keys-file`` or the env variable ``PARSEC_SCWS_IDOPTE_PUBLIC_KEYS_FILE`` to the location where that file reside.
+  Put the keys into a file and either set the option ``--scws-idopte-public-keys-file`` or the env variable ``PARSEC_SCWS_IDOPTE_PUBLIC_KEYS_FILE`` 
+  to the file location.
 - Provide the private key to use:
 
   .. important::
 
-     The private key is expected to be provide in it's PEM format
+     The private key is expected to be provide in its PEM format
 
-  For that you can either provide the key in a file via the option ``--scws-web-application-private-key-file`` or the env variable ``PARSEC_SCWS_WEB_APPLICATION_PRIVATE_KEY_FILE``.
+  For that you can either specify the key file via the ``--scws-web-application-private-key-file`` option 
+  or the env variable ``PARSEC_SCWS_WEB_APPLICATION_PRIVATE_KEY_FILE``.
 
   Or via it's content in base64 with the env variable ``PARSEC_SCWS_WEB_APPLICATION_PRIVATE_KEY_CONTENT``
 
@@ -120,4 +124,5 @@ The server need additional configuration to be able to `perform the mutual authe
 
   .. warning::
 
-     The server also provide the option ``--scws-web-application-private-key-content`` but it's not recommended to use it as the private key value will then be present in the shell history.
+     The server also provides the ``--scws-web-application-private-key-content`` option but it's not recommended 
+     because the private key will then be present in the shell history.
