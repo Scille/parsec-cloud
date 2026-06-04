@@ -16,7 +16,7 @@ use crate::workspace::store::{
     RetrievePathFromIDEntry, WorkspaceStoreOperationError,
 };
 use crate::{
-    greater_timestamp, EncrytionUsage, EventWorkspaceOpsOutboundSyncAborted,
+    greater_timestamp, EncryptionUsage, EventWorkspaceOpsOutboundSyncAborted,
     EventWorkspaceOpsOutboundSyncDone, EventWorkspaceOpsOutboundSyncProgress,
     EventWorkspaceOpsOutboundSyncStarted, GreaterTimestampOffset,
 };
@@ -462,7 +462,7 @@ async fn upload_manifest<M: RemoteManifest>(
         let signed = to_upload.dump_and_sign(&ops.device.signing_key);
         let (encrypted, key_index) = ops
             .certificates_ops
-            .encrypt_for_realm(EncrytionUsage::Vlob(vlob_id), ops.realm_id(), &signed)
+            .encrypt_for_realm(EncryptionUsage::Vlob(vlob_id), ops.realm_id(), &signed)
             .await
             .map_err(|e| match e {
                 CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
@@ -824,7 +824,7 @@ async fn upload_blocks(
         loop {
             let (encrypted, key_index) = ops
                 .certificates_ops
-                .encrypt_for_realm(EncrytionUsage::Block(block_id), ops.realm_id(), &data)
+                .encrypt_for_realm(EncryptionUsage::Block(block_id), ops.realm_id(), &data)
                 .await
                 .map_err(|e| match e {
                     CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,

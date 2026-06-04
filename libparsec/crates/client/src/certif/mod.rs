@@ -51,7 +51,7 @@ pub use realm_create::CertifEnsureRealmCreatedError;
 pub use realm_decrypt_name::{CertifDecryptCurrentRealmNameError, InvalidEncryptedRealmNameError};
 pub use realm_key_rotation::CertifRotateRealmKeyError;
 pub use realm_keys_bundle::{
-    CertifDecryptForRealmError, CertifEncryptForRealmError, EncrytionUsage, InvalidKeysBundleError,
+    CertifDecryptForRealmError, CertifEncryptForRealmError, EncryptionUsage, InvalidKeysBundleError,
 };
 pub use realm_rename::CertifRenameRealmError;
 pub use realm_self_promote_to_owner::{
@@ -432,7 +432,7 @@ impl CertificateOps {
     /// Be aware this function potentially do server accesses (to fetch the keys bundle).
     pub async fn encrypt_for_realm(
         &self,
-        usage: EncrytionUsage,
+        usage: EncryptionUsage,
         realm_id: VlobID,
         data: &[u8],
     ) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
@@ -456,7 +456,7 @@ impl CertificateOps {
     /// Be aware this function potentially do server accesses (to fetch the keys bundle).
     pub async fn decrypt_opaque_data_for_realm(
         &self,
-        usage: EncrytionUsage,
+        usage: EncryptionUsage,
         realm_id: VlobID,
         key_index: IndexInt,
         encrypted: &[u8],

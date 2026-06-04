@@ -8,7 +8,7 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{certif::CertifEncryptForRealmError, EncrytionUsage};
+use crate::{certif::CertifEncryptForRealmError, EncryptionUsage};
 
 use super::utils::certificates_ops_factory;
 
@@ -34,7 +34,7 @@ async fn ok(env: &TestbedEnv) {
     );
 
     let res = ops
-        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
         .await
         .unwrap();
 
@@ -90,7 +90,7 @@ async fn invalid_keys_bundle(
     });
 
     let err = ops
-        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
         .await
         .unwrap_err();
 
@@ -144,7 +144,7 @@ async fn server_error(
     );
 
     let err = ops
-        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
         .await
         .unwrap_err();
 
@@ -157,7 +157,7 @@ async fn unknown_realm(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
-        .encrypt_for_realm(EncrytionUsage::Canary, VlobID::default(), b"data")
+        .encrypt_for_realm(EncryptionUsage::Canary, VlobID::default(), b"data")
         .await
         .unwrap_err();
 
@@ -189,7 +189,7 @@ async fn invalid_response(env: &TestbedEnv) {
     });
 
     let err = ops
-        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
         .await
         .unwrap_err();
 
@@ -220,7 +220,7 @@ async fn stopped(env: &TestbedEnv) {
     ops.stop().await.unwrap();
 
     let err = ops
-        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
         .await
         .unwrap_err();
 

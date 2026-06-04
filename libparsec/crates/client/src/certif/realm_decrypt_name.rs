@@ -3,7 +3,7 @@
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
-use crate::{CertifDecryptForRealmError, EncrytionUsage};
+use crate::{CertifDecryptForRealmError, EncryptionUsage};
 
 use super::{
     realm_keys_bundle, store::CertifStoreError, CertificateOps, InvalidKeysBundleError, UpTo,
@@ -88,7 +88,7 @@ pub(super) async fn decrypt_current_realm_name(
             let decrypted = realm_keys_bundle::decrypt_for_realm(
                 ops,
                 store,
-                EncrytionUsage::RealmRename,
+                EncryptionUsage::RealmRename,
                 realm_id,
                 key_index,
                 encrypted,
