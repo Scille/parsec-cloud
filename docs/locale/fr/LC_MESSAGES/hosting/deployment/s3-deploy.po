@@ -1,0 +1,168 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2026.
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.9.1-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-08 10:51+0200\n"
+"PO-Revision-Date: 2026-06-08 12:00+0200\n"
+"Last-Translator: Parsec Translation Team <translation@scille.fr>\n"
+"Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../hosting/deployment/s3-deploy.rst:7
+msgid "S3 Object Storage Setup"
+msgstr "Configuration du stockage objet S3"
+
+#: ../../hosting/deployment/s3-deploy.rst:9
+msgid ""
+"Parsec is compatible with different object storage solutions, including:"
+msgstr ""
+"Parsec est compatible avec différentes solutions de stockage objet, "
+"notamment :"
+
+#: ../../hosting/deployment/s3-deploy.rst:11
+msgid "`OpenStack Swift <https://docs.openstack.org/swift/latest/>`_"
+msgstr "`OpenStack Swift <https://docs.openstack.org/swift/latest/>`_"
+
+#: ../../hosting/deployment/s3-deploy.rst:12
+msgid ""
+"`Amazon S3 <https://aws.amazon.com/s3/>`_ or any S3-compatible storage such "
+"as `Outscale's OOS <https://docs.outscale.com/en/userguide/OUTSCALE-Object-"
+"Storage-OOS.html>`_ (most storage providers offer S3-compatible APIs)"
+msgstr ""
+"`Amazon S3 <https://aws.amazon.com/s3/>`_ ou tout stockage compatible S3 "
+"comme `Outscale OOS <https://docs.outscale.com/en/userguide/OUTSCALE-Object-"
+"Storage-OOS.html>`_ (la plupart des fournisseurs de stockage proposent des "
+"API compatibles S3)"
+
+#: ../../hosting/deployment/s3-deploy.rst:13
+msgid "A RAID configuration combining multiple storages"
+msgstr "Une configuration RAID combinant plusieurs stockages"
+
+#: ../../hosting/deployment/s3-deploy.rst:15
+msgid "However, the most common deployment uses S3-compatible storage."
+msgstr ""
+"Cependant, le déploiement le plus courant utilise un stockage compatible S3."
+
+#: ../../hosting/deployment/s3-deploy.rst:17
+msgid ""
+"This guide provides instructions for setting up an S3-compatible bucket for "
+"use with Parsec."
+msgstr ""
+"Ce guide fournit des instructions pour configurer un bucket compatible S3 "
+"pour une utilisation avec Parsec."
+
+#: ../../hosting/deployment/s3-deploy.rst:21
+msgid ""
+"Parsec has a very basic use of the object storage: it only reads existing "
+"objects and creates new objects. There is no deletion or listing of objects. "
+"Therefore, enabling versioning for the bucket is not strictly required, but "
+"it is **highly recommended** to prevent data loss from overwriting an "
+"existing object (since S3 uses eventual consistency, the ``s3:PutObject`` "
+"policy always allows overwriting an existing object)."
+msgstr ""
+"Parsec utilise le stockage objet de manière très basique : il ne fait que "
+"lire des objets existants et en créer de nouveaux. Il n'y a ni suppression "
+"ni listage des objets existants. Par conséquent, l'activation du versionnage "
+"pour le bucket n'est pas strictement obligatoire, mais elle est **fortement "
+"recommandée** pour éviter la perte de données en cas d'écrasement d'un objet "
+"existant (puisque S3 utilise une cohérence éventuelle, la politique ``s3:"
+"PutObject`` permet toujours d'écraser un objet existant)."
+
+#: ../../hosting/deployment/s3-deploy.rst:27
+msgid "Prerequisites"
+msgstr "Prérequis"
+
+#: ../../hosting/deployment/s3-deploy.rst:29
+msgid "An S3-compatible storage provider account"
+msgstr "Un compte auprès d'un fournisseur de stockage compatible S3"
+
+#: ../../hosting/deployment/s3-deploy.rst:30
+msgid ""
+"The `AWS CLI <https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-"
+"getting-started.html>`_"
+msgstr ""
+"La `CLI AWS <https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-"
+"getting-started.html>`_"
+
+#: ../../hosting/deployment/s3-deploy.rst:31
+msgid "Appropriate permissions to create buckets and manage policies"
+msgstr ""
+"Les permissions appropriées pour créer des buckets et gérer les politiques"
+
+#: ../../hosting/deployment/s3-deploy.rst:36
+msgid "Create the Bucket"
+msgstr "Créer le bucket"
+
+#: ../../hosting/deployment/s3-deploy.rst:38
+msgid "Create a new bucket for Parsec data storage:"
+msgstr "Créer un nouveau bucket pour le stockage des données Parsec :"
+
+#: ../../hosting/deployment/s3-deploy.rst:45
+msgid "Replace ``<BUCKET_NAME>`` with your desired bucket name."
+msgstr "Remplacez ``<BUCKET_NAME>`` par le nom de bucket souhaité."
+
+#: ../../hosting/deployment/s3-deploy.rst:49
+msgid ""
+"The exact command may vary depending on your storage provider. Consult your "
+"provider's documentation for the appropriate command syntax."
+msgstr ""
+"La commande exacte peut varier selon votre fournisseur de stockage. "
+"Consultez la documentation de votre fournisseur pour la syntaxe appropriée "
+"de la commande."
+
+#: ../../hosting/deployment/s3-deploy.rst:52
+msgid "For example, with Outscale:"
+msgstr "Par exemple, avec Outscale :"
+
+#: ../../hosting/deployment/s3-deploy.rst:64
+msgid "Enable Versioning"
+msgstr "Activer le versionnage"
+
+#: ../../hosting/deployment/s3-deploy.rst:66
+msgid ""
+"Enable versioning on the bucket to protect against accidental overwrites:"
+msgstr ""
+"Activez le versionnage sur le bucket pour protéger contre les écrasements "
+"accidentels :"
+
+#: ../../hosting/deployment/s3-deploy.rst:77
+msgid "Limit Access with a Dedicated User"
+msgstr "Limiter l'accès avec un utilisateur dédié"
+
+#: ../../hosting/deployment/s3-deploy.rst:79
+msgid ""
+"For security, create a dedicated IAM user with restricted permissions to "
+"only the necessary operations."
+msgstr ""
+"Pour des raisons de sécurité, créez un utilisateur IAM dédié avec des "
+"permissions restreintes aux seules opérations nécessaires."
+
+#: ../../hosting/deployment/s3-deploy.rst:81
+msgid ""
+"The following bucket policy grants only the required permissions for Parsec "
+"to function:"
+msgstr ""
+"La politique de bucket suivante accorde uniquement les permissions "
+"nécessaires pour que Parsec fonctionne :"
+
+#: ../../hosting/deployment/s3-deploy.rst:114
+msgid "Replace the following placeholders:"
+msgstr "Remplacez les espaces réservés suivants :"
+
+#: ../../hosting/deployment/s3-deploy.rst:116
+msgid "``<BUCKET_NAME>``: Your bucket name"
+msgstr "``<BUCKET_NAME>`` : le nom de votre bucket"
+
+#: ../../hosting/deployment/s3-deploy.rst:117
+msgid "``<ACCOUNT_ID>``: The AWS account ID or IAM user that needs access"
+msgstr ""
+"``<ACCOUNT_ID>`` : l'ID de compte AWS ou l'utilisateur IAM nécessitant "
+"l'accès"
