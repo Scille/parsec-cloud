@@ -51,7 +51,40 @@ const MAX_SIMULTANEOUS_OPERATIONS = 3;
 export const FileOperationManagerKey = 'fileOperationManager';
 
 async function getTemporaryPath(parent: FsPath): Promise<FsPath> {
-  return await Path.join(parent, `._${crypto.randomUUID()}`);
+  return Path.quickJoin(parent, `._${crypto.randomUUID()}`);
+}
+
+export class PreparedImport {
+  manager: FileOperationManager;
+  data: FileOperationImportData;
+
+  constructor(manager: FileOperationManager, data: FileOperationImportData) {
+    this.manager = manager;
+    this.data = data;
+  }
+
+  addFiles(files: Array<File>, overwriteDupPolicy?: DuplicatePolicy): void {
+    this.data.files.push(...files);
+    if (overwriteDupPolicy) {
+      this.data.dupPolicy = overwriteDupPolicy;
+    }
+    this.manager._distribute(FileOperationEvents.Updated, this.data);
+  }
+
+  removeFiles(toRemove: Array<File>): void {
+    this.data.files = this.data.files.filter(
+      (file1) => toRemove.find((file2) => (file1 as any).relativePath === (file2 as any).relativePath) === undefined,
+    );
+    this.manager._distribute(FileOperationEvents.Updated, this.data);
+  }
+
+  finalize() {
+    this.manager._appendToPendingOperations(this.data);
+  }
+
+  cancel() {
+    this.manager._distribute(FileOperationEvents.Removed, this.data);
+  }
 }
 
 export class FileOperationManager {
@@ -76,7 +109,43 @@ export class FileOperationManager {
     return this.operations.size + this.pendingOperations.length > 0;
   }
 
-  async import(workspaceHandle: WorkspaceHandle, files: Array<File>, destination: FsPath, dupPolicy: DuplicatePolicy): Promise<boolean> {
+  _distribute(event: FileOperationEvents, operationData?: FileOperationData) {
+    this.eventDistributor.distribute(event, operationData);
+  }
+
+  _appendToPendingOperations(operationData: FileOperationData): void {
+    this.pendingOperations.unshift(operationData);
+    if (!this.isRunning) {
+      this.start();
+    }
+  }
+
+  async prepareImport(
+    workspaceHandle: WorkspaceHandle,
+    files: Array<File>,
+    destination: FsPath,
+    dupPolicy?: DuplicatePolicy,
+  ): Promise<PreparedImport | undefined> {
+    const workspaceResult = await getWorkspaceInfo(workspaceHandle);
+    if (!workspaceResult.ok) {
+      return undefined;
+    }
+
+    const data: FileOperationImportData = {
+      type: FileOperationDataType.Import,
+      id: uuid4(),
+      workspaceHandle: workspaceHandle,
+      workspaceId: workspaceResult.value.id,
+      workspaceName: workspaceResult.value.name,
+      files: files,
+      destination: destination,
+      dupPolicy: dupPolicy,
+    };
+    this.eventDistributor.distribute(FileOperationEvents.Added, data);
+    return new PreparedImport(this, data);
+  }
+
+  async import(workspaceHandle: WorkspaceHandle, files: Array<File>, destination: FsPath, dupPolicy?: DuplicatePolicy): Promise<boolean> {
     const workspaceResult = await getWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
       return false;
@@ -104,7 +173,7 @@ export class FileOperationManager {
     workspaceHandle: WorkspaceHandle,
     sources: Array<EntryStat>,
     destination: FsPath,
-    dupPolicy: DuplicatePolicy,
+    dupPolicy?: DuplicatePolicy,
   ): Promise<boolean> {
     const workspaceResult = await getWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
@@ -133,7 +202,7 @@ export class FileOperationManager {
     workspaceHandle: WorkspaceHandle,
     sources: Array<EntryStat>,
     destination: FsPath,
-    dupPolicy: DuplicatePolicy,
+    dupPolicy?: DuplicatePolicy,
   ): Promise<boolean> {
     const workspaceResult = await getWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
@@ -162,7 +231,7 @@ export class FileOperationManager {
     workspaceHandle: WorkspaceHandle,
     entries: Array<WorkspaceHistoryEntryStat>,
     dateTime: DateTime,
-    dupPolicy: DuplicatePolicy,
+    dupPolicy?: DuplicatePolicy,
   ): Promise<boolean> {
     const workspaceResult = await getWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
@@ -256,6 +325,8 @@ export class FileOperationManager {
       if (index !== -1) {
         await this.eventDistributor.distribute(FileOperationEvents.Cancelled, this.pendingOperations[index]);
         this.pendingOperations.splice(index, 1);
+      } else {
+        window.electronAPI.log('warn', 'Could not find the operation to cancel');
       }
     }
   }
@@ -362,10 +433,10 @@ export class FileOperationManager {
             },
           );
         }
-        transaction.addFile(tmpPath, await Path.join(data.destination, stat.name));
+        transaction.addFile(tmpPath, Path.quickJoin(data.destination, stat.name));
       }
       this.eventDistributor.distribute(FileOperationEvents.Finalizing, data);
-      transaction.commit(data.dupPolicy);
+      transaction.commit(data.dupPolicy ?? DuplicatePolicy.AddCounter);
     } catch (err: unknown) {
       transaction.clear();
       throw err;
@@ -380,7 +451,7 @@ export class FileOperationManager {
           throw new FileOperationCancelled();
         }
 
-        let newPath = await Path.join(data.destination, entry.name);
+        let newPath = Path.quickJoin(data.destination, entry.name);
         if (data.dupPolicy === DuplicatePolicy.AddCounter) {
           const result = await moveWithCounter(data.workspaceHandle, entry.path, newPath);
           if (!result) {
@@ -513,7 +584,7 @@ export class FileOperationManager {
           }
         }
         this.eventDistributor.distribute(FileOperationEvents.Finalizing, data);
-        await transaction.commit(data.dupPolicy);
+        await transaction.commit(data.dupPolicy ?? DuplicatePolicy.AddCounter);
       } catch (err: unknown) {
         await transaction.clear();
         throw err;
@@ -639,13 +710,16 @@ export class FileOperationManager {
     const transaction = new OperationTransaction(data.workspaceHandle);
     const globalTotalSize = data.files.reduce((sum, file) => sum + file.size, 0);
 
+    window.electronAPI.log('info', `Starting the import of ${data.files.length} files`);
+
     try {
       let globalCurrentSize = 0;
       for (const [i, file] of data.files.entries()) {
         if (signal.aborted) {
+          window.electronAPI.log('info', 'Cancelling import...');
           throw new FileOperationCancelled();
         }
-        const destinationDir = await Path.parent(await Path.joinPaths(data.destination, (file as any).relativePath));
+        const destinationDir = await Path.parent(Path.quickJoin(data.destination, (file as any).relativePath));
         const mkdirResult = await createFolder(data.workspaceHandle, destinationDir);
         if (!mkdirResult.ok && mkdirResult.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
           throw new FileOperationException(OperationFailedErrors.LibParsecCallFailed, stringifyError(mkdirResult.error));
@@ -669,10 +743,10 @@ export class FileOperationManager {
           });
         });
         globalCurrentSize += file.size;
-        transaction.addFile(tmpPath, await Path.join(destinationDir, file.name));
+        transaction.addFile(tmpPath, Path.quickJoin(destinationDir, file.name));
       }
       this.eventDistributor.distribute(FileOperationEvents.Finalizing, data);
-      await transaction.commit(data.dupPolicy);
+      await transaction.commit(data.dupPolicy ?? DuplicatePolicy.AddCounter);
     } catch (err: unknown) {
       await transaction.clear();
       throw err;
@@ -708,6 +782,7 @@ export class FileOperationManager {
         await wait(500);
         continue;
       }
+      window.electronAPI.log('info', `Starting next file operation ${elem.type}`);
       let job: Promise<void>;
       const aborter = new AbortController();
       switch (elem.type) {

@@ -96,7 +96,7 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'openItem', event: Event, entry: EntryModel): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
-  (e: 'filesAdded', files: Array<File>, destinationFolder?: EntryName): void;
+  (e: 'filesAdded', gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
   (e: 'update:modelValue', value: boolean): void;
 }>();

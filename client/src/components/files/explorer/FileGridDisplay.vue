@@ -75,7 +75,7 @@ const emits = defineEmits<{
   (e: 'openItem', entry: EntryModel, event: Event): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
-  (e: 'filesAdded', files: Array<File>, destinationFolder?: EntryName): void;
+  (e: 'filesAdded', gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void;
   (e: 'dropAsReader'): void;
 }>();
 
@@ -92,9 +92,9 @@ defineExpose({
   scrollToSelected,
 });
 
-function onFilesAdded(files: Array<File>, destinationFolder?: EntryName): void {
+function onFilesAdded(gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): void {
   fileDropZoneRef.value?.reset();
-  emits('filesAdded', files, destinationFolder);
+  emits('filesAdded', gen, destinationFolder);
 }
 
 function hasSelected(): boolean {

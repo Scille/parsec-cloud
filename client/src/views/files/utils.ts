@@ -305,10 +305,7 @@ export async function downloadArchive(options: DownloadEntriesOptions): Promise<
   }
 }
 
-export async function getDuplicatePolicy(files: Set<EntryStat | File>): Promise<DuplicatePolicy | undefined> {
-  if (files.size === 0) {
-    return DuplicatePolicy.AddCounter;
-  }
+export async function getDuplicatePolicy(files: Array<EntryStat | File>): Promise<DuplicatePolicy | undefined> {
   const modal = await modalController.create({
     component: FileOperationConflictsModal,
     cssClass: 'file-operation-conflicts-modal',

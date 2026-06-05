@@ -23,28 +23,26 @@ async function filename(path: FsPath): Promise<EntryName | null> {
   return await libparsec.pathFilename(path);
 }
 
-function getFileExtension(filename: EntryName): string {
-  while (filename.startsWith('.')) {
-    filename = filename.slice(1);
-  }
-  const pathComponents = filename.split('.');
-  if (pathComponents.length === 1 || pathComponents.length === 0) {
-    return '';
-  }
-  return pathComponents[pathComponents.length - 1].toLowerCase();
-}
-
 function areSame(pathA: FsPath, pathB: FsPath): boolean {
   return pathA === pathB;
 }
 
-function filenameWithoutExtension(filename: EntryName): EntryName {
-  const ext = getFileExtension(filename);
+function getFileExtension(filename: EntryName): string {
+  return splitName(filename).extension;
+}
 
-  if (ext.length) {
-    return filename.substring(0, filename.length - ext.length - 1);
+function filenameWithoutExtension(filename: EntryName): EntryName {
+  return splitName(filename).nameWithoutExtension;
+}
+
+function splitName(filename: EntryName): { nameWithoutExtension: EntryName; extension: string } {
+  const index = filename.lastIndexOf('.');
+
+  if (index === -1 || index === 0) {
+    return { nameWithoutExtension: filename, extension: '' };
   }
-  return filename;
+
+  return { nameWithoutExtension: filename.slice(0, index), extension: filename.slice(index + 1).toLocaleLowerCase() };
 }
 
 async function joinMultiple(path: FsPath, entries: EntryName[]): Promise<FsPath> {
@@ -60,6 +58,13 @@ async function joinPaths(path1: FsPath, path2: FsPath): Promise<FsPath> {
   return await Path.joinMultiple(path1, parts);
 }
 
+function quickJoin(path1: FsPath, path2: FsPath): FsPath {
+  if (path2.startsWith('/')) {
+    path2 = path2.slice(1);
+  }
+  return path1.endsWith('/') ? `${path1}${path2}` : `${path1}/${path2}`;
+}
+
 export const Path = {
   parse,
   join,
@@ -71,4 +76,6 @@ export const Path = {
   areSame,
   filenameWithoutExtension,
   joinPaths,
+  quickJoin,
+  splitName,
 };

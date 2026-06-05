@@ -48,6 +48,10 @@ const FUNCTIONS_TO_SKIP: Array<SkipData> = [
     tag: 'ParseParsecAddrErrorInvalidUrl',
     function: 'parseParsecAddr',
   },
+  {
+    tag: 'WorkspaceCreateFolderErrorEntryExists',
+    function: 'workspaceCreateFolderAll',
+  },
 ];
 
 const FUNCTIONS_TO_SLOW_DOWN: Array<string> = [

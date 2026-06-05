@@ -12,7 +12,7 @@
       <div class="modal-content inner-content">
         <div class="files-concerned">
           <ion-text class="files-concerned__title button-small">
-            {{ $msTranslate({ key: 'FoldersPage.ConflictsFile.fileConcerned', data: { count: files.size }, count: files.size }) }}
+            {{ $msTranslate({ key: 'FoldersPage.ConflictsFile.fileConcerned', data: { count: files.length }, count: files.length }) }}
           </ion-text>
           <div class="files-concerned-content">
             <div
@@ -29,7 +29,7 @@
               </div>
             </div>
             <div
-              v-if="filesList.length < files.size"
+              v-if="filesList.length < files.length"
               class="conflict-item more-files"
             >
               <div class="element-type">
@@ -41,8 +41,8 @@
                   {{
                     $msTranslate({
                       key: 'FoldersPage.ConflictsFile.moreFiles',
-                      data: { count: files.size - filesList.length },
-                      count: files.size - filesList.length,
+                      data: { count: files.length - filesList.length },
+                      count: files.length - filesList.length,
                     })
                   }}
                 </ion-text>
@@ -89,7 +89,7 @@ import { MsImage, MsModal, MsModalResult } from 'megashark-lib';
 import { computed } from 'vue';
 
 const props = defineProps<{
-  files: Set<EntryModel> | Set<File>;
+  files: Array<EntryModel> | Array<File>;
 }>();
 
 const MAX_DISPLAYED_FILES = 10;

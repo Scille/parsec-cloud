@@ -46,7 +46,11 @@
           >
             <ion-text class="element-details-title__name form-input">
               <i18n-t
-                keypath="FoldersPage.ImportFile.importMultiplesFiles"
+                :keypath="
+                  props.status === FileOperationEvents.Added
+                    ? 'FoldersPage.ImportFile.gatherMultipleFiles'
+                    : 'FoldersPage.ImportFile.importMultipleFiles'
+                "
                 scope="global"
               >
                 <template #count>
@@ -102,14 +106,6 @@
           <ion-text class="waiting-text form-input">
             {{ $msTranslate('FoldersPage.FileOperations.waiting') }}
           </ion-text>
-          <ion-button
-            fill="clear"
-            size="small"
-            class="cancel-button"
-            @click="$emit('cancel', operationData)"
-          >
-            {{ $msTranslate('FoldersPage.FileOperations.cancel') }}
-          </ion-button>
         </div>
 
         <!-- finalizing -->

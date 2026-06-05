@@ -207,21 +207,21 @@ const info = computed(() => {
         entries: (props.operationData as FileOperationCopyData).sources,
         icon: CopyFile,
         translation: 'FoldersPage.CopyFile.copy',
-        translationMultiple: 'FoldersPage.CopyFile.copyMultiplesFiles',
+        translationMultiple: 'FoldersPage.CopyFile.copyMultipleFiles',
       };
     case FileOperationDataType.Move:
       return {
         entries: (props.operationData as FileOperationMoveData).sources,
         icon: MoveFile,
         translation: 'FoldersPage.MoveFile.move',
-        translationMultiple: 'FoldersPage.MoveFile.moveMultiplesFiles',
+        translationMultiple: 'FoldersPage.MoveFile.moveMultipleFiles',
       };
     case FileOperationDataType.Restore:
       return {
         entries: (props.operationData as FileOperationRestoreData).entries,
         icon: RestoreFile,
         translation: 'FoldersPage.RestoreFile.restore',
-        translationMultiple: 'FoldersPage.RestoreFile.restoreMultiplesFiles',
+        translationMultiple: 'FoldersPage.RestoreFile.restoreMultipleFiles',
       };
     case FileOperationDataType.Download:
       return {

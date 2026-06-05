@@ -10,10 +10,12 @@ export enum FileOperationEvents {
   Progress = 'progress',
   Finished = 'finished',
   Added = 'added',
+  Updated = 'updated',
   Started = 'started',
   Failed = 'failed',
   Finalizing = 'finalizing',
   Cancelled = 'cancelled',
+  Removed = 'removed',
 }
 
 export interface OperationProgressEventData {
