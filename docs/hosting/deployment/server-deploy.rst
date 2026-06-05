@@ -38,6 +38,7 @@ The Parsec Server depends on the following components:
 
 - A `PostgreSQL`_ database to store Parsec metadata.
 - An S3-like object storage (e.g. `OpenStack Swift`_ or `Amazon S3`_) to store encrypted data.
+  See :ref:`S3 Object Storage Setup <doc_hosting_deployment_s3>` for configuration instructions.
 - An `SMTP server`_ to allow sending emails from the Parsec Server.
 - A `TSL/SSL server certificate`_ for ``HTTPS`` communication with Parsec client applications.
 
