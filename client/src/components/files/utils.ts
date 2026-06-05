@@ -76,33 +76,58 @@ export async function copyPathLinkToClipboard(
   }
 }
 
-export async function getFilesFromDrop(event: DragEvent): Promise<Array<File>> {
-  if (!event.dataTransfer) {
-    return [];
-  }
+export function getFilesFromDrop(event: DragEvent, batchSize = 200): AsyncGenerator<File[]> {
   const entries: FileSystemEntry[] = [];
-  const files: File[] = [];
+  const fallbackFiles: File[] = [];
+
+  // dataTransfer is cleared by the browser at the first async suspension, so we've got
+  // to collect the files before.
 
   /*
     In some cases (Playwright, old browsers, ...), `webkitGetAsEntry`
     will fail. In those cases, we use the file list. It's a lower API and
     doesn't allow us to travel the tree, but it's good enough as a backup.
   */
-  for (let i = 0; i < event.dataTransfer.items.length; i++) {
-    const entry = event.dataTransfer.items[i].webkitGetAsEntry();
-    if (entry) {
-      entries.push(entry);
-    } else if (event.dataTransfer.files[i]) {
-      const file = event.dataTransfer.files[i];
-      (file as any).relativePath = `/${file.name}`;
-      files.push(file);
+  if (event.dataTransfer) {
+    for (let i = 0; i < event.dataTransfer.items.length; i++) {
+      const entry = event.dataTransfer.items[i].webkitGetAsEntry();
+      if (entry) {
+        entries.push(entry);
+      } else if (event.dataTransfer.files[i]) {
+        const file = event.dataTransfer.files[i];
+        (file as any).relativePath = `/${file.name}`;
+        fallbackFiles.push(file);
+      }
     }
   }
-  for (const entry of entries) {
-    const result = await unwindEntry('/', entry);
-    files.push(...result);
+
+  return traverseEntries(entries, fallbackFiles, batchSize);
+}
+
+async function* traverseEntries(entries: FileSystemEntry[], fallbackFiles: File[], batchSize: number): AsyncGenerator<File[]> {
+  let batch: File[] = [];
+
+  for (const file of fallbackFiles) {
+    batch.push(file);
+    if (batch.length >= batchSize) {
+      yield batch;
+      batch = [];
+    }
   }
-  return files;
+
+  for (const entry of entries) {
+    for await (const file of unwindEntry('/', entry)) {
+      batch.push(file);
+      if (batch.length >= batchSize) {
+        yield batch;
+        batch = [];
+      }
+    }
+  }
+
+  if (batch.length > 0) {
+    yield batch;
+  }
 }
 
 export async function selectFolder(options: FolderSelectionOptions): Promise<FsPath | null> {
@@ -125,35 +150,30 @@ export function getProgressPercent(completedBytes: number, totalBytes: number): 
   return Math.min(100, Math.round((completedBytes / totalBytes) * 100));
 }
 
-async function unwindEntry(currentPath: string, fsEntry: FileSystemEntry): Promise<Array<File>> {
-  const parsecPath = await Path.join(currentPath, fsEntry.name);
-  const imports: Array<File> = [];
+async function* unwindEntry(currentPath: string, fsEntry: FileSystemEntry): AsyncGenerator<File> {
+  const parsecPath = Path.quickJoin(currentPath, fsEntry.name);
 
   if (fsEntry.isDirectory) {
-    const entries = await getEntries(fsEntry as FileSystemDirectoryEntry);
-    for (const entry of entries) {
-      const result = await unwindEntry(parsecPath, entry);
-      imports.push(...result);
+    for await (const entry of getEntries(fsEntry as FileSystemDirectoryEntry)) {
+      yield* unwindEntry(parsecPath, entry);
     }
   } else {
-    const result = await convertEntryToFile(fsEntry, parsecPath);
-    imports.push(result);
+    yield await convertEntryToFile(fsEntry, parsecPath);
   }
-  return imports;
 }
 
-async function getEntries(fsEntry: FileSystemDirectoryEntry): Promise<FileSystemEntry[]> {
-  return new Promise((resolve, reject) => {
-    const reader = fsEntry.createReader();
-    reader.readEntries(
-      (entries) => {
-        resolve(entries);
-      },
-      () => {
-        reject();
-      },
-    );
-  });
+async function* getEntries(fsEntry: FileSystemDirectoryEntry): AsyncGenerator<FileSystemEntry> {
+  const reader = fsEntry.createReader();
+  while (true) {
+    const entries = await new Promise<FileSystemEntry[]>((resolve, reject) => {
+      // readEntries() returns at most 100 entries per call on Chrome-based browsers
+      reader.readEntries(resolve, reject);
+    });
+    if (entries.length === 0) break;
+    for (const entry of entries) {
+      yield entry;
+    }
+  }
 }
 
 async function convertEntryToFile(fsEntry: FileSystemEntry, relativePath: FsPath): Promise<File> {

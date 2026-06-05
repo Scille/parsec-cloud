@@ -43,7 +43,6 @@ export async function importFile(
 ): Promise<void> {
   let fdW: FileDescriptor | null = null;
   try {
-    window.electronAPI.log('debug', `Importing file ${(input as any).relativePath} into ${destination.path} (${input.size} bytes)`);
     const fdWResult = await openFile(destination.workspace, destination.path, { write: true, createNew: true });
 
     if (!fdWResult.ok) {
@@ -61,6 +60,7 @@ export async function importFile(
     let offset = 0;
     while (true) {
       if (signal.aborted) {
+        window.electronAPI.log('info', 'Cancelling import...');
         throw new FileOperationCancelled();
       }
 
@@ -188,13 +188,16 @@ export class OperationTransaction {
   }
 
   async clear(): Promise<void> {
+    window.electronAPI.log('debug', 'Clearing the transaction...');
     for (const [path, _file] of this.files) {
       await deleteFile(this.workspace, path);
     }
     this.files = [];
+    window.electronAPI.log('debug', 'Transaction cleared.');
   }
 
   async commit(policy: DuplicatePolicy): Promise<void> {
+    window.electronAPI.log('debug', 'Committing the transaction...');
     for (const [source, destination] of this.files) {
       if (policy === DuplicatePolicy.AddCounter) {
         const result = await moveWithCounter(this.workspace, source, destination);
@@ -202,7 +205,6 @@ export class OperationTransaction {
           throw new FileOperationException(OperationFailedErrors.OneFailed, 'Failed to rename file');
         }
       } else {
-        window.electronAPI.log('debug', `Moving file '${source}' to '${destination}'`);
         const moveResult = await moveEntry(this.workspace, source, destination, policy === DuplicatePolicy.Replace);
         if (!moveResult.ok) {
           if (policy === DuplicatePolicy.Replace) {
@@ -218,6 +220,7 @@ export class OperationTransaction {
         }
       }
     }
+    window.electronAPI.log('debug', 'Transaction committed.');
     this.files = [];
   }
 }
@@ -232,19 +235,18 @@ export async function moveWithCounter(workspace: WorkspaceHandle, source: FsPath
     return undefined;
   }
 
-  while (true) {
+  while (counter <= MAX_COUNTER) {
     let newName = baseName;
 
     if (counter > 1) {
-      const ext = Path.getFileExtension(baseName);
-      if (ext.length) {
-        newName = `${Path.filenameWithoutExtension(baseName)} (${counter}).${ext}`;
+      const split = Path.splitName(baseName);
+      if (split.extension.length) {
+        newName = `${split.nameWithoutExtension} (${counter}).${split.extension}`;
       } else {
-        newName = `${Path.filenameWithoutExtension(baseName)} (${counter})`;
+        newName = `${split.nameWithoutExtension} (${counter})`;
       }
     }
-    const newDestination = await Path.join(parentDir, newName);
-    window.electronAPI.log('debug', `Trying to move file '${source}' to '${newDestination}'`);
+    const newDestination = Path.quickJoin(parentDir, newName);
     const moveResult = await moveEntry(workspace, source, newDestination, false);
     if (moveResult.ok) {
       return newDestination;
@@ -346,7 +348,7 @@ export async function copyFolder(
     if (!mkdirResult.ok && mkdirResult.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
       throw new FileOperationException(OperationFailedErrors.LibParsecCallFailed, stringifyError(mkdirResult.error));
     }
-    const dstPath = await Path.join(dstFolder, entry.name);
+    const dstPath = Path.quickJoin(dstFolder, entry.name);
 
     await copyFile(signal, workspace, entry, dstPath, (size: number, totalSize: number) => {
       if (progressFunction) {

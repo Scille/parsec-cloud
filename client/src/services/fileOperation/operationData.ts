@@ -27,25 +27,25 @@ interface _FileOperationData {
 export interface FileOperationImportData extends _FileOperationData {
   files: Array<File>;
   destination: FsPath;
-  dupPolicy: DuplicatePolicy;
+  dupPolicy?: DuplicatePolicy;
 }
 
 export interface FileOperationCopyData extends _FileOperationData {
   sources: Array<EntryStat>;
   destination: FsPath;
-  dupPolicy: DuplicatePolicy;
+  dupPolicy?: DuplicatePolicy;
 }
 
 export interface FileOperationMoveData extends _FileOperationData {
   sources: Array<EntryStat>;
   destination: FsPath;
-  dupPolicy: DuplicatePolicy;
+  dupPolicy?: DuplicatePolicy;
 }
 
 export interface FileOperationRestoreData extends _FileOperationData {
   entries: Array<WorkspaceHistoryEntryStat>;
   dateTime: DateTime;
-  dupPolicy: DuplicatePolicy;
+  dupPolicy?: DuplicatePolicy;
 }
 
 export interface FileOperationDownloadData extends _FileOperationData {

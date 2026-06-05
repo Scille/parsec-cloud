@@ -63,7 +63,7 @@
       <component
         v-for="item in currentItems"
         :is="getOperationComponent(item)"
-        :key="item.operationData.id"
+        :key="item.operationData.id + item.refreshKey"
         :operation-data="item.operationData"
         :status="item.status"
         :event-data="item.eventData"
@@ -108,6 +108,7 @@ interface OperationItem {
   operationData: FileOperationData;
   status: FileOperationEvents;
   eventData?: FileOperationEventData;
+  refreshKey: number;
 }
 
 enum OperationFilter {
@@ -204,13 +205,29 @@ async function onFileOperationEvent(
     return;
   }
   switch (event) {
-    case FileOperationEvents.Added:
-      items.value.unshift({ operationData: operationData, status: event, eventData: eventData });
+    case FileOperationEvents.Added: {
+      items.value.unshift({ operationData: operationData, status: event, eventData: eventData, refreshKey: 0 });
       menu.show();
       menu.expand();
       scrollToTop();
       filter.value = undefined;
       break;
+    }
+    case FileOperationEvents.Updated: {
+      const index = items.value.findIndex((op) => op.operationData.id === operationData.id);
+      if (index !== -1) {
+        items.value[index].operationData = operationData;
+        items.value[index].refreshKey += 1;
+      }
+      break;
+    }
+    case FileOperationEvents.Removed: {
+      const index = items.value.findIndex((op) => op.operationData.id === operationData.id);
+      if (index !== -1) {
+        items.value.splice(index, 1);
+      }
+      break;
+    }
     case FileOperationEvents.Cancelled:
     case FileOperationEvents.Failed:
     case FileOperationEvents.Finished:

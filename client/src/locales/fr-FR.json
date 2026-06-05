@@ -1091,7 +1091,8 @@
             "files": "fichiers"
         },
         "ImportFile": {
-            "importMultiplesFiles": "Import de {count}",
+            "importMultipleFiles": "Import de {count}",
+            "gatherMultipleFiles": "Collecte de {count}",
             "importFilesAction": "Importer des fichiers",
             "importFolderAction": "Importer un dossier",
             "title": "Tâches de fond",
@@ -1111,16 +1112,16 @@
             "noDropForReader": "Vous êtes Lecteur sur cet espace de travail et ne pouvez pas importer des fichiers."
         },
         "CopyFile": {
-            "copyMultiplesFiles": "Copie de {count}",
+            "copyMultipleFiles": "Copie de {count}",
             "copy": "Copie de {name}"
         },
         "MoveFile": {
-            "moveMultiplesFiles": "Déplacement de {count}",
+            "moveMultipleFiles": "Déplacement de {count}",
             "move": "Déplacement de {name}",
             "failedDetails": "Veuillez vous assurer que vous êtes en ligne."
         },
         "RestoreFile": {
-            "restoreMultiplesFiles": "Restauration de {count}",
+            "restoreMultipleFiles": "Restauration de {count}",
             "restore": "Restauration de {name}",
             "failedDetails": "Impossible de restaurer ce fichier ou dossier."
         },

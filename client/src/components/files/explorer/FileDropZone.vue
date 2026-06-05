@@ -47,7 +47,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'filesAdded', files: Array<File>): void;
+  (e: 'filesAdded', gen: AsyncGenerator<File[]>): void;
   (e: 'dropAsReader'): void;
   (e: 'globalMenuClick', event: Event): void;
 }>();
@@ -94,10 +94,7 @@ async function onDrop(event: DragEvent): Promise<void> {
   }
   event.stopPropagation();
   dragEnterCount.value = 0;
-  const files = await getFilesFromDrop(event);
-  if (files.length) {
-    emits('filesAdded', files);
-  }
+  emits('filesAdded', getFilesFromDrop(event));
 }
 
 function preventDefaults(event: Event): void {

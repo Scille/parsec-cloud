@@ -928,37 +928,61 @@ async function onFileOperationEvent(
   }
 }
 
-async function startImportFiles(files: Array<File>, destinationFolder?: EntryName): Promise<void> {
-  const existing = new Set<File>();
-
+async function startImportFiles(gen: AsyncGenerator<File[]>, destinationFolder?: EntryName): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
 
+  const preparedImport = await fileOperationManager.value.prepareImport(
+    workspaceInfo.value.handle,
+    [],
+    destinationFolder ? await Path.join(currentPath.value, destinationFolder) : currentPath.value,
+  );
+
+  if (!preparedImport) {
+    return;
+  }
+
+  const existing: Array<File> = [];
   let destination = currentPath.value;
   if (destinationFolder && destinationFolder !== '/') {
     destination = await Path.join(destination, destinationFolder);
   }
 
-  // Reverse iteration to be able to remove entries from the list
-  for (let i = files.length - 1; i >= 0; i--) {
-    const file = files[i];
-    if (!(file as any).relativePath) {
-      (file as any).relativePath = `/${file.name}`;
+  for await (const files of gen) {
+    // Reverse iteration to be able to remove entries from the list
+    for (let i = files.length - 1; i >= 0; i--) {
+      const file = files[i];
+      if (!(file as any).relativePath) {
+        (file as any).relativePath = `/${file.name}`;
+      }
+      const confined = await parsec.isPathConfined((file as any).relativePath);
+      if (confined) {
+        files.splice(i, 1);
+        continue;
+      }
+      const importPath = Path.quickJoin(destination, (file as any).relativePath);
+      const result = await entryStat(workspaceInfo.value.handle, importPath);
+      if (result.ok) {
+        existing.push(file);
+      }
     }
-    const confined = await parsec.isPathConfined((file as any).relativePath);
-    if (confined) {
-      files.splice(i, 1);
+
+    if (files.length === 0) {
       continue;
     }
-    const importPath = await Path.joinPaths(destination, (file as any).relativePath);
-    const result = await entryStat(workspaceInfo.value.handle, importPath);
-    if (result.ok && result.value.isFile()) {
-      existing.add(file);
-    }
+    preparedImport.addFiles(files);
   }
 
-  if (files.length === 0) {
+  if (existing.length > 0) {
+    preparedImport.data.dupPolicy = await getDuplicatePolicy(existing);
+  }
+
+  if (preparedImport.data.dupPolicy === DuplicatePolicy.Ignore) {
+    preparedImport.removeFiles(existing);
+  }
+
+  if (preparedImport.data.files.length === 0) {
     informationManager.value.present(
       new Information({
         message: 'FoldersPage.noFilesToImport',
@@ -966,35 +990,11 @@ async function startImportFiles(files: Array<File>, destinationFolder?: EntryNam
       }),
       PresentationMode.Toast,
     );
+    preparedImport.cancel();
     return;
   }
 
-  const dupPolicy = await getDuplicatePolicy(existing);
-
-  if (!dupPolicy) {
-    return;
-  }
-
-  if (dupPolicy === DuplicatePolicy.Ignore) {
-    files = files.filter((file) => !existing.has(file));
-    if (files.length === 0) {
-      informationManager.value.present(
-        new Information({
-          message: 'FoldersPage.noFilesToImport',
-          level: InformationLevel.Info,
-        }),
-        PresentationMode.Toast,
-      );
-      return;
-    }
-  }
-
-  await fileOperationManager.value.import(
-    workspaceInfo.value.handle,
-    files,
-    destinationFolder ? await Path.join(currentPath.value, destinationFolder) : currentPath.value,
-    dupPolicy,
-  );
+  preparedImport.finalize();
 }
 
 async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boolean }): Promise<void> {
@@ -1507,32 +1507,36 @@ async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
     return;
   }
 
-  const existing = new Set<EntryModel>();
+  const existing: Array<EntryModel> = [];
 
   for (const entry of entries) {
     const destPath = await Path.join(folder, entry.name);
     const result = await entryStat(workspaceInfo.value.handle, destPath);
     if (result.ok) {
-      existing.add(entry);
+      existing.push(entry);
     }
   }
-  const dupPolicy = await getDuplicatePolicy(existing);
-  if (!dupPolicy) {
-    return;
-  }
-
-  if (dupPolicy === DuplicatePolicy.Ignore) {
-    entries = entries.filter((entry) => !existing.has(entry));
-    if (entries.length === 0) {
-      informationManager.value.present(
-        new Information({
-          message: 'FoldersPage.noFilesToMove',
-          level: InformationLevel.Info,
-        }),
-        PresentationMode.Toast,
-      );
+  let dupPolicy: DuplicatePolicy | undefined = undefined;
+  if (existing.length > 0) {
+    dupPolicy = await getDuplicatePolicy(existing);
+    if (!dupPolicy) {
       return;
     }
+
+    if (dupPolicy === DuplicatePolicy.Ignore) {
+      entries = entries.filter((entry1) => existing.find((entry2) => entry1.path === entry2.path) === undefined);
+    }
+  }
+
+  if (entries.length === 0) {
+    informationManager.value.present(
+      new Information({
+        message: 'FoldersPage.noFilesToMove',
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
   }
 
   await fileOperationManager.value.move(workspaceInfo.value.handle, entries, folder, dupPolicy);
@@ -1580,32 +1584,35 @@ async function copyEntries(entries: EntryModel[]): Promise<void> {
     return;
   }
 
-  const existing = new Set<EntryModel>();
+  const existing: Array<EntryModel> = [];
 
   for (const entry of entries) {
     const destPath = await Path.join(folder, entry.name);
     const result = await entryStat(workspaceInfo.value.handle, destPath);
     if (result.ok) {
-      existing.add(entry);
+      existing.push(entry);
     }
   }
-  const dupPolicy = await getDuplicatePolicy(existing);
-  if (!dupPolicy) {
-    return;
-  }
-
-  if (dupPolicy === DuplicatePolicy.Ignore) {
-    entries = entries.filter((entry) => !existing.has(entry));
-    if (entries.length === 0) {
-      informationManager.value.present(
-        new Information({
-          message: 'FoldersPage.noFilesToCopy',
-          level: InformationLevel.Info,
-        }),
-        PresentationMode.Toast,
-      );
+  let dupPolicy: DuplicatePolicy | undefined = undefined;
+  if (existing.length > 0) {
+    dupPolicy = await getDuplicatePolicy(existing);
+    if (!dupPolicy) {
       return;
     }
+
+    if (dupPolicy === DuplicatePolicy.Ignore) {
+      entries = entries.filter((entry1) => existing.find((entry2) => entry1.path === entry2.path) === undefined);
+    }
+  }
+  if (entries.length === 0) {
+    informationManager.value.present(
+      new Information({
+        message: 'FoldersPage.noFilesToCopy',
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
   }
 
   await fileOperationManager.value.copy(workspaceInfo.value.handle, entries, folder, dupPolicy);

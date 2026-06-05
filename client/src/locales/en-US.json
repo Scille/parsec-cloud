@@ -1090,7 +1090,8 @@
             "files": "files"
         },
         "ImportFile": {
-            "importMultiplesFiles": "Importing {count}",
+            "importMultipleFiles": "Importing {count}",
+            "gatherMultipleFiles": "Gathering {count}",
             "importFilesAction": "Import files",
             "importFolderAction": "Import a folder",
             "title": "Background tasks",
@@ -1110,16 +1111,16 @@
             "noDropForReader": "You are a Reader on this workspace and cannot import files."
         },
         "CopyFile": {
-            "copyMultiplesFiles": "Copying {count}",
+            "copyMultipleFiles": "Copying {count}",
             "copy": "Copying {name}"
         },
         "MoveFile": {
-            "moveMultiplesFiles": "Moving {count}",
+            "moveMultipleFiles": "Moving {count}",
             "move": "Moving {name}",
             "failedDetails": "Please make sure you are online."
         },
         "RestoreFile": {
-            "restoreMultiplesFiles": "Restoring {count}",
+            "restoreMultipleFiles": "Restoring {count}",
             "restore": "Restoration of {name}",
             "failedDetails": "Could not restore this file or folder."
         },

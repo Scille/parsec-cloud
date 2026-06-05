@@ -8,18 +8,6 @@ import { I18n } from 'megashark-lib';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('File', () => {
-  it('test get extension', () => {
-    expect(Path.getFileExtension('video.mp4')).to.equal('mp4');
-    expect(Path.getFileExtension('video.MP4')).to.equal('mp4');
-    expect(Path.getFileExtension('.config')).to.equal('');
-    expect(Path.getFileExtension('')).to.equal('');
-    expect(Path.getFileExtension('file')).to.equal('');
-    expect(Path.getFileExtension('archive.tar.gz')).to.equal('gz');
-    expect(Path.getFileExtension('.config.cfg')).to.equal('cfg');
-    expect(Path.getFileExtension('...config.cfg')).to.equal('cfg');
-    expect(Path.getFileExtension('a.long.file.name.txt')).to.equal('txt');
-  });
-
   beforeEach(() => {
     I18n.init({
       defaultLocale: 'en-US',
@@ -98,6 +86,18 @@ describe('File', () => {
     expect(() => I18n.translate(formatFileSize(-1234))).to.throw('Bytes must be >= 0');
   });
 
+  it('test get extension', () => {
+    expect(Path.getFileExtension('video.mp4')).to.equal('mp4');
+    expect(Path.getFileExtension('video.MP4')).to.equal('mp4');
+    expect(Path.getFileExtension('.config')).to.equal('');
+    expect(Path.getFileExtension('')).to.equal('');
+    expect(Path.getFileExtension('file')).to.equal('');
+    expect(Path.getFileExtension('archive.tar.gz')).to.equal('gz');
+    expect(Path.getFileExtension('.config.cfg')).to.equal('cfg');
+    expect(Path.getFileExtension('...config.cfg')).to.equal('cfg');
+    expect(Path.getFileExtension('a.long.file.name.txt')).to.equal('txt');
+  });
+
   it('Test shorten name', async () => {
     expect(shortenFileName('a_very_large_file_name_created_on_20240122_by_max.doc')).to.equal('a_very...ax.doc');
     expect(shortenFileName('short.txt')).to.equal('short.txt');
@@ -143,14 +143,16 @@ describe('File', () => {
   });
 
   it.each([
-    ['test.mp3', 'test'],
-    ['file.tar.gz', 'file.tar'],
-    ['test.MP4', 'test'],
-    ['.config', '.config'],
-    ['', ''],
-    ['.config.cfg', '.config'],
-    ['a.long.file.name.txt', 'a.long.file.name'],
-  ])('Test filename without extension', async (filename, expected) => {
-    expect(Path.filenameWithoutExtension(filename)).to.equal(expected);
+    ['test.mp3', 'test', 'mp3'],
+    ['file.tar.gz', 'file.tar', 'gz'],
+    ['test.MP4', 'test', 'mp4'],
+    ['.config', '.config', ''],
+    ['', '', ''],
+    ['.config.cfg', '.config', 'cfg'],
+    ['a.long.file.name.txt', 'a.long.file.name', 'txt'],
+  ])('Test filename without extension', async (filename, withoutExt, ext) => {
+    expect(Path.filenameWithoutExtension(filename)).toBe(withoutExt);
+    expect(Path.getFileExtension(filename)).toBe(ext);
+    expect(Path.splitName(filename)).toEqual({ nameWithoutExtension: withoutExt, extension: ext });
   });
 });
