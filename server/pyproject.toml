@@ -22,7 +22,6 @@ dependencies = [
     "click>=8.0, <9",
     "cryptography>=46.0.6",
     "httpx>=0.28.1, <0.29",
-    "pbr>=6.1.1, <7",
     "pydantic>=2.12.4, <3",
     "pydantic-core>=2.41.5, <3",
     "sentry-sdk>=2.30.0, <3",
