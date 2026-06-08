@@ -165,7 +165,7 @@ lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.180", default-features = false }
 libsodium-rs = { version = "0.2.4", default-features = false }
 libsqlite3-sys = { version = "0.30.1", default-features = false }
-log = { version = "0.4.29", default-features = false }
+log = { version = "0.4.30", default-features = false }
 miniserde = { version = "0.1.45", default-features = false }
 neon = { version = "1.1.1", default-features = false }
 once_cell = { version = "1.21.4", default-features = false }
@@ -184,10 +184,10 @@ quote = { version = "1.0.45", default-features = false }
 rand = { version = "0.8.5", default-features = false }
 regex = { version = "1.12.3", default-features = false }
 regex-syntax = { version = "0.8.10", default-features = false }
-reqwest = { version = "0.13.2", default-features = false }
+reqwest = { version = "0.13.4", default-features = false }
 rexpect = "0.7.1"
 rmp-serde = { version = "1.3.1", default-features = false }
-rpassword = { version = "7.5.2", default-features = false }
+rpassword = { version = "7.5.3", default-features = false }
 rsa = { version = "0.8.2", default-features = false }
 rstest = { version = "0.26.1", default-features = false }
 rstest_reuse = { version = "0.7.0", default-features = false }
@@ -203,13 +203,13 @@ sentry-log = { version = "0.47.0", default-features = false }
 serde = { version = "1.0.228", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_bytes = { version = "0.11.19", default-features = false }
-serde_json = { version = "1.0.149", default-features = false }
+serde_json = { version = "1.0.150", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
 serde_with = { version = "3.19.0", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
 smallvec = { version = "1.15.1", default-features = false }
 spinners = { version = "4.2.0", default-features = false }
-sqlx = { version = "0.8.6", default-features = false }
+sqlx = { version = "0.9.0", default-features = false }
 syn = { version = "2.0.117", default-features = false }
 thiserror = { version = "2.0.18", default-features = false }
 tokio = { version = "1.50.0", default-features = false }
