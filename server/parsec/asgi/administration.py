@@ -168,7 +168,10 @@ def log_request[**P, T: BaseModel | Response](
     return wrapped
 
 
-@administration_router.post("/administration/organizations")
+@administration_router.post(
+    "/administration/organizations",
+    summary="Create an Organization",
+)
 @log_request
 async def administration_create_organizations(
     request: Request,
@@ -224,7 +227,10 @@ class GetOrganizationOut(BaseModel):
     tos: GetOrganizationOutTos | None
 
 
-@administration_router.get("/administration/organizations/{raw_organization_id}")
+@administration_router.get(
+    "/administration/organizations/{raw_organization_id}",
+    summary="Get an Organization",
+)
 @log_request
 async def administration_get_organization(
     raw_organization_id: str,
@@ -274,7 +280,10 @@ class PatchOrganizationIn(BaseModel):
     tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
 
 
-@administration_router.patch("/administration/organizations/{raw_organization_id}")
+@administration_router.patch(
+    "/administration/organizations/{raw_organization_id}",
+    summary="Update an Organization",
+)
 @log_request
 async def administration_patch_organization(
     raw_organization_id: str,
@@ -304,7 +313,10 @@ async def administration_patch_organization(
     return PatchOrganizationOut()
 
 
-@administration_router.get("/administration/organizations/{raw_organization_id}/stats")
+@administration_router.get(
+    "/administration/organizations/{raw_organization_id}/stats",
+    summary="Get organization Statistics",
+)
 @log_request
 async def administration_organization_stat(
     raw_organization_id: str,
@@ -387,7 +399,10 @@ class StatsFormat(StrEnum):
     JSON = "json"
 
 
-@administration_router.get("/administration/stats")
+@administration_router.get(
+    "/administration/stats",
+    summary="Get server Statistics",
+)
 @log_request
 async def administration_server_stats(
     request: Request,
@@ -443,7 +458,10 @@ async def administration_server_stats(
             )
 
 
-@administration_router.get("/administration/organizations/{raw_organization_id}/users")
+@administration_router.get(
+    "/administration/organizations/{raw_organization_id}/users",
+    summary="Get organization Users",
+)
 @log_request
 async def administration_organization_users(
     raw_organization_id: str,
@@ -484,7 +502,10 @@ class UserFreezeIn(BaseModel):
     user_id: UserIDField | None = None
 
 
-@administration_router.post("/administration/organizations/{raw_organization_id}/users/freeze")
+@administration_router.post(
+    "/administration/organizations/{raw_organization_id}/users/freeze",
+    summary="Freeze a User",
+)
 @log_request
 async def administration_organization_users_freeze(
     raw_organization_id: str,
@@ -535,7 +556,10 @@ class UserResetTOTPIn(BaseModel):
     send_email: bool = False
 
 
-@administration_router.post("/administration/organizations/{raw_organization_id}/users/reset_totp")
+@administration_router.post(
+    "/administration/organizations/{raw_organization_id}/users/reset_totp",
+    summary="Reset a User TOTP (MFA) setup",
+)
 @log_request
 async def administration_organization_users_reset_totp(
     raw_organization_id: str,
@@ -588,7 +612,10 @@ async def administration_organization_users_reset_totp(
     )
 
 
-@administration_router.get("/administration/organizations/{raw_organization_id}/sequester/services")
+@administration_router.get(
+    "/administration/organizations/{raw_organization_id}/sequester/services",
+    summary="Get Sequester Services",
+)
 @log_request
 async def administration_organization_sequester_services(
     raw_organization_id: str,
@@ -662,7 +689,8 @@ class SequesterServiceCreateIn(BaseModel):
 
 
 @administration_router.post(
-    "/administration/organizations/{raw_organization_id}/sequester/services"
+    "/administration/organizations/{raw_organization_id}/sequester/services",
+    summary="Create a Sequester Service",
 )
 @log_request
 async def administration_organization_sequester_service_create(
@@ -713,7 +741,8 @@ class SequesterServiceRevokeIn(BaseModel):
 
 
 @administration_router.post(
-    "/administration/organizations/{raw_organization_id}/sequester/services/revoke"
+    "/administration/organizations/{raw_organization_id}/sequester/services/revoke",
+    summary="Revoke a Sequester Service",
 )
 @log_request
 async def administration_organization_sequester_service_revoke(
@@ -766,7 +795,8 @@ class SequesterServiceUpdateConfigIn(BaseModel):
 
 
 @administration_router.put(
-    "/administration/organizations/{raw_organization_id}/sequester/services/config"
+    "/administration/organizations/{raw_organization_id}/sequester/services/config",
+    summary="Update a Sequester Service",
 )
 @log_request
 async def administration_organization_sequester_service_update_config(
