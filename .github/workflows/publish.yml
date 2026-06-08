@@ -32,7 +32,7 @@ on:
     types:
       # triggered when a draft release is published
       # and also if the release is edited later on
-      - edited
+      - published
   pull_request:
     paths:
       - .github/workflows/publish.yml
