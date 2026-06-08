@@ -118,7 +118,7 @@ function buildArtifactName() {
 }
 
 const ARTIFACT_NAME = buildArtifactName();
-console.log(`Using artifact name: ${ARTIFACT_NAME}`);
+console.warn(`Using artifact name: ${ARTIFACT_NAME}`);
 
 /**
  * @type {import('electron-builder').Configuration}
