@@ -1,0 +1,172 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec
+# Documentation package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec Documentation 3.9.1-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-10 15:42+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../hosting/administration/delete-workspace.rst:9
+msgid "Workspace deletion"
+msgstr "Suppression d'espace de travail"
+
+#: ../../hosting/administration/delete-workspace.rst:11
+msgid ""
+"Workspace deletion is a complex operation that requires access to the to-be-"
+"deleted workspace in Parsec, to the Parsec server and to the object storage. "
+"First the workspace's deletion is planned, then, when the delay has elapsed, "
+"the removal from the Parsec server can be triggered, and finally the blocks "
+"can be deleted from the object storage."
+msgstr ""
+"La suppression d'espace de travail est une opération complexe qui nécessite "
+"l'accès dans Parsec à l'espace de travail à supprimer, l'accès au serveur "
+"Parsec et l'accès au stockage objet. D'abord, la suppression de l'espace de "
+"travail doit être planifiée, puis une fois que le délai a expiré, la "
+"suppression de l'espace de travail du serveur Parsec peut être déclenché, "
+"enfin les blocs peuvent être supprimés du stockage objet."
+
+#: ../../hosting/administration/delete-workspace.rst:16
+msgid "Mark the workspace for deletion:"
+msgstr "Marquer l'espace de travail pour suppression"
+
+#: ../../hosting/administration/delete-workspace.rst:18
+msgid ""
+"This step must be done by someone who has ownership of the to-be-deleted "
+"workspace."
+msgstr ""
+"Cette étape doit être réalisée par quelqu'un qui est propriétaire de "
+"l'espace de travail à supprimer."
+
+#: ../../hosting/administration/delete-workspace.rst:20
+msgid "Using the CLI:"
+msgstr "Via la CLI"
+
+#: ../../hosting/administration/delete-workspace.rst:27
+msgid "Or the GUI"
+msgstr "Ou la GUI"
+
+#: ../../hosting/administration/delete-workspace.rst:29
+msgid "Workspace contextual menu"
+msgstr "Menu contextuel de l'espace de travail"
+
+#: ../../hosting/administration/delete-workspace.rst:34
+msgid "click on the delete workspace button."
+msgstr "Cliquer sur le bouton 'supprimer l'espace de travail'.'"
+
+#: ../../hosting/administration/delete-workspace.rst:35
+msgid ""
+"follow the instructions. You will be asked to type the workspace's name to "
+"confirm."
+msgstr ""
+"suivre les instructions. Vous allez devoir réécrire le nom de l'espace de "
+"travail pour confirmer la suppression."
+
+#: ../../hosting/administration/delete-workspace.rst:39
+msgid ""
+"You can customize the delay only using the CLI, but it can not be less than "
+"the organization configured delay (see the "
+"``realm_minimum_archiving_period_before_deletion`` option in :ref:`Create "
+"Organization <doc_hosting_administration_create_organization_create>`)."
+msgstr ""
+"Le délai peut être personnalisé en utilisant la CLI mais il ne peut pas être "
+"inférieur au délai minimum configuré par organisation (voir l'option "
+"``realm_minimum_archiving_period_before_deletion`` dans la section :ref:"
+"`Créer une Organisation "
+"<doc_hosting_administration_create_organization_create>`)."
+
+#: ../../hosting/administration/delete-workspace.rst:41
+msgid ""
+"This operation makes the workspace read only, and when the delay will "
+"elapse, it will be inaccessible from the GUI. But the files will still exist "
+"in storage."
+msgstr ""
+"Cette opération rend l'espace de travail disponible en lecture seule. Quand "
+"le délai aura expiré, il sera inaccessible depuis la GUI. Mais les fichiers "
+"existeront toujours dans la base de données."
+
+#: ../../hosting/administration/delete-workspace.rst:45
+msgid ""
+"Wait for the delay to pass. The next steps will need to be executed by a "
+"server admin."
+msgstr ""
+"Attendre que le délai expire. Les étapes suivantes devront être exécutées "
+"par un administrateur serveur."
+
+#: ../../hosting/administration/delete-workspace.rst:47
+msgid "Find the technical id for the to-be-deleted workspace."
+msgstr "Trouver l'identifiant technique pour l'espace de travail à supprimer."
+
+#: ../../hosting/administration/delete-workspace.rst:57
+msgid "If the delay has not elapsed, the workspace will not appear here."
+msgstr ""
+"Si le délai n'a pas encore expiré, l'espace de travail ne sera pas visible "
+"ici."
+
+#: ../../hosting/administration/delete-workspace.rst:61
+msgid ""
+"The workspace name does not appear here, as the server admin is not a Parsec "
+"user."
+msgstr ""
+"Le nom de l'espace de travail n'apparait pas ici, comme l'administrateur "
+"serveur n'est pas un utilisateur Parsec."
+
+#: ../../hosting/administration/delete-workspace.rst:65
+msgid ""
+"A workspace is *orphaned* when no one has access to it.  This can happen "
+"when all the users with access to it have been revoked. Unless the "
+"organization has a :ref:`Sequester <doc_hosting_sequester>`, no one will be "
+"able to recover the data, so it can be deleted."
+msgstr ""
+"Un espace de travail est *orphelin* quand personne n'y a accès. Cela peut "
+"arriver quand tous les utilisateurs qui ont accès à cet espace de travail "
+"ont été révoqués. Sauf si l'organisation dispose d'un :ref:`Séquestre "
+"<doc_hosting_sequester>`, personne ne pourra récupérer les données, l'espace "
+"de travail peut donc être supprimé."
+
+#: ../../hosting/administration/delete-workspace.rst:67
+msgid "Delete the to-be-deleted workspace."
+msgstr "Supprimer l'espace de travail à supprimer"
+
+#: ../../hosting/administration/delete-workspace.rst:78
+msgid "This command does two things:"
+msgstr "Cette commande fait deux choses :"
+
+#: ../../hosting/administration/delete-workspace.rst:80
+msgid ""
+"export the paths to the blocks as they are referenced in the object storage"
+msgstr ""
+"exporter les chemins vers les blocs tels qu'ils sont référencés dans le "
+"stockage objet"
+
+#: ../../hosting/administration/delete-workspace.rst:81
+msgid "delete the workspace from the postgresql database"
+msgstr "supprimer l'espace de travail de la base de donnée postgresql"
+
+#: ../../hosting/administration/delete-workspace.rst:83
+msgid "This command does *not* remove the blocks from your object storage."
+msgstr "Cette commande ne supprimer *pas* les blocs de votre stockage objet."
+
+#: ../../hosting/administration/delete-workspace.rst:85
+msgid ""
+"Purge the object storage from useless objects listed in the output file."
+msgstr ""
+"Supprimer les objets, listés dans le fichier, devenus inutiles du stockage "
+"object"
+
+#: ../../hosting/administration/delete-workspace.rst:87
+msgid "This step depends on your configuration and you backup policy."
+msgstr ""
+"Cette étape dépend de vote configuration et de votre politique de sauvegarde."

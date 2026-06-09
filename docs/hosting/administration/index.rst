@@ -18,3 +18,4 @@ This section covers how to manage Parsec Server and perform common administrativ
     freeze-users
     shared-recovery
     user-authentication
+    delete-workspace
