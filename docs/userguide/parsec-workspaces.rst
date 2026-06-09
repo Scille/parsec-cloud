@@ -298,3 +298,7 @@ Until the deletion date:
           :alt: Workspace deleted card
      - .. image:: screens/workspace_deleted_context.png
           :alt: Workspace deleted context
+
+.. note::
+
+    To clean the database see :ref:`here <doc_hosting_administration_workspace_deletion>`.

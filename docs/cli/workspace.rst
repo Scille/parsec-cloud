@@ -77,6 +77,8 @@ are updated.
     Enter password for the device:
 
 
+.. _cli_delete_workspace:
+
 Archive or delete
 =================
 
@@ -104,6 +106,9 @@ To change the accessibility status of the workspace:
     Enter password for the device:
     Workspace archiving status has been updated
 
+.. note::
+
+    When a workspace is set to be deleted, for the data to be purged, a server administrator must follow the steps described :ref::`here doc_hosting_administration_workspace_deletion`.
 
 List workspace content
 ======================
