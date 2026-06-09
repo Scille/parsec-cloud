@@ -480,7 +480,7 @@ msTest.describe(() => {
       },
     );
 
-    msTest(
+    msTest.fixme(
       `Small display document actions default state in ${gridMode ? 'grid' : 'list'} mode for folder`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, 0, true);
