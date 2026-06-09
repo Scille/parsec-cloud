@@ -173,6 +173,7 @@ matches the authenticated user's email.
    bao write auth/parsec_oidc/role/default \
        user_claim="email" \
        allowed_redirect_uris="https://<your-parsec-server>/client/oidc/callback" \
+       allowed_redirect_uris="https://callback.parsec.cloud.invalid/oidc/callback" \
        token_policies="parsec-default"
 
 .. note::
