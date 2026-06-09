@@ -142,7 +142,7 @@ Enable the required secrets engines
 Enable and configure the OIDC auth method
 -----------------------------------------
 
-The path ``parsec_oidc`` is used below for the OIDC auth method. If you want you can
+The path ``<parsec_oidc>`` is used below for the OIDC auth method. If you want you can
 specify a different mount path.
 
 Use your client credentials to replace ``<your-client-id>`` and load the secret from a
@@ -151,12 +151,12 @@ to show up in the shell history.
 
 .. code-block:: bash
 
-   # Enable the OIDC auth method at path "parsec_oidc"
-   bao auth enable -path=parsec_oidc oidc
+   # Enable the OIDC auth method at path "<parsec_oidc>"
+   bao auth enable -path=<parsec_oidc> oidc
 
    # Point it at your identity provider and set the client credentials
-   bao write auth/parsec_oidc/config \
-       oidc_discovery_url="https://parsec_oidc.example.com/login" \
+   bao write auth/<parsec_oidc>/config \
+       oidc_discovery_url="https://<parsec_oidc>.example.com/login" \
        oidc_client_id="<your-client-id>" \
        oidc_client_secret=@client-secret.txt \
        default_role="default"
@@ -170,7 +170,7 @@ matches the authenticated user's email.
 
 .. code-block:: bash
 
-   bao write auth/parsec_oidc/role/default \
+   bao write auth/<parsec_oidc>/role/default \
        user_claim="email" \
        allowed_redirect_uris="https://<your-parsec-server>/client/oidc/callback" \
        allowed_redirect_uris="https://callback.parsec.cloud.invalid/oidc/callback" \
@@ -210,12 +210,28 @@ Verify the setup
 .. code-block:: bash
 
    # Log in as a test user
-   bao login -method=oidc -path=parsec_oidc
+   bao login -method=oidc -path=<parsec_oidc>
 
    # Confirm the token has the expected capabilities:
    bao token capabilities \
    transit/sign/entity-$(bao token lookup -format=json | jq -r '.data.entity_id')
 
+Configure CORS
+--------------
+
+.. code-block:: bash
+
+   bao write sys/config/cors allowed_origins='https://<your-parsec-server>' allowed_origins='parsec-desktop://-'
+
+.. note:: The `parsec-desktop://-` domain is used by the native Parsec client.
+
+You can check that CORS is correctly configured for your domain with the following command:
+
+.. code-block:: bash
+
+   curl -v -X OPTIONS https://<your-openbao-server>/v1/auth/<parsec_oidc>/oidc/auth_url \
+         -H "Origin: https://<your-parsec-server>" \
+         -H "Access-Control-Request-Method: GET"
 
 Parsec Server configuration
 ===========================
