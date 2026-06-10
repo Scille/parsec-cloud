@@ -10,6 +10,7 @@ import {
   ServerConfig,
 } from '@/parsec/types';
 import { GetServerConfigErrorTag, libparsec, ParsecAddr, ParsedParsecAddr } from '@/plugins/libparsec';
+import { ensureHttpsProtocol } from '@/services/environment';
 
 export async function getServerConfig(serverAddr: string): Promise<Result<ServerConfig, GetServerConfigError>> {
   const STRATEGY_CONVERSION = new Map<DevicePrimaryProtectionStrategyTag, AdvisoryDeviceFilePrimaryProtection>([
@@ -42,6 +43,13 @@ export async function getServerConfig(serverAddr: string): Promise<Result<Server
         ) !== undefined
       );
     };
+
+    if (result.value.cryptpad?.serverUrl) {
+      result.value.cryptpad.serverUrl = ensureHttpsProtocol(result.value.cryptpad.serverUrl);
+    }
+    if (result.value.openbao?.serverUrl) {
+      result.value.openbao.serverUrl = ensureHttpsProtocol(result.value.openbao.serverUrl);
+    }
   }
   return result as Result<ServerConfig, GetServerConfigError>;
 }
