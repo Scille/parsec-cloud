@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import base64
 from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
@@ -60,7 +59,7 @@ def scws_server_options[**P, R](
 
         match (scws_web_application_private_key_file, scws_web_application_private_key_content):
             case (None, str() as content):
-                webapp_pkey_pem = base64.b64decode(content)
+                webapp_pkey_pem = content.encode("utf8")
             case (Path() as file, None):
                 webapp_pkey_pem = file.read_bytes()
             case (Path() as file, str() as content):
