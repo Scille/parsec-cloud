@@ -8,6 +8,25 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.9.2 (2026-06-25)
+--------------------------
+
+No significant changes.
+
+Parsec v3.9.1 (2026-06-11)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixed CLI server run's `--scws-web-application-private-key-content` parameter
+  incorrectly expecting a PEM content encoded in base64
+  (`#12920 <https://github.com/Scille/parsec-cloud/issues/12920>`__)
+
+* Fixed a bug preventing some file operations using the Finder in MacOS
+  (`#10086 <https://github.com/Scille/parsec-cloud/issues/10086>`__)
+
+
 Parsec v3.9.0 (2026-05-21)
 --------------------------
 
