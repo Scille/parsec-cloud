@@ -8,6 +8,16 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.9.1-rc.0 (2026-06-10)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug preventing some file operations using the Finder in MacOS
+  (`#10086 <https://github.com/Scille/parsec-cloud/issues/10086>`__)
+
+
 Parsec v3.9.0 (2026-05-21)
 --------------------------
 
