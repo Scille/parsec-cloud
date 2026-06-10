@@ -178,6 +178,14 @@ async def administration_create_organizations(
     body: CreateOrganizationIn,
     auth: Annotated[None, Depends(check_administration_auth)],
 ) -> CreateOrganizationOut:
+    """
+    Create an Organization with the specified configuration.
+
+    The `organization_id` must be a valid organization name
+    (see [About Organization names](https://docs.parsec.cloud/en/latest/userguide/new-organization.html#about-organization-names)).
+
+    If the organization was created successfully The *bootstrap link* is returned.
+    """
     backend: Backend = request.app.state.backend
 
     outcome = await backend.organization.create(
@@ -237,6 +245,9 @@ async def administration_get_organization(
     request: Request,
     auth: Annotated[None, Depends(check_administration_auth)],
 ) -> GetOrganizationOut:
+    """
+    Get the Organization status and configuration.
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
@@ -291,6 +302,9 @@ async def administration_patch_organization(
     request: Request,
     auth: Annotated[None, Depends(check_administration_auth)],
 ) -> PatchOrganizationOut:
+    """
+    Update the Organization status and configuration.
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
@@ -323,6 +337,9 @@ async def administration_organization_stat(
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
 ) -> Response:
+    """
+    Get current usage statistics for the organization.
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
@@ -411,6 +428,11 @@ async def administration_server_stats(
     format: StatsFormat = StatsFormat.JSON,
     at: str | None = None,
 ) -> Response:
+    """
+    Get current usage statistics for all the organizations.
+
+    The result includes usage statistics with one JSON object (or CSV entry) per organization.
+    """
     backend: Backend = request.app.state.backend
 
     try:
@@ -468,6 +490,9 @@ async def administration_organization_users(
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
 ) -> Response:
+    """
+    Get the list of all Users for the organization
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
@@ -513,6 +538,15 @@ async def administration_organization_users_freeze(
     body: UserFreezeIn,
     request: Request,
 ) -> Response:
+    """
+    Update the User frozen status.
+
+    Set `frozen` to `True` to freeze the user.
+    A frozen user will be blocked from connecting to Parsec server.
+    Unlike revocation, this operation can be reverted by setting `frozen` to `False`.
+
+    See [Freeze Users](https://docs.parsec.cloud/en/latest/hosting/administration/freeze-users.html).
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
@@ -558,7 +592,7 @@ class UserResetTOTPIn(BaseModel):
 
 @administration_router.post(
     "/administration/organizations/{raw_organization_id}/users/reset_totp",
-    summary="Reset a User TOTP (MFA) setup",
+    summary="Reset a User TOTP setup",
 )
 @log_request
 async def administration_organization_users_reset_totp(
@@ -567,6 +601,17 @@ async def administration_organization_users_reset_totp(
     body: UserResetTOTPIn,
     request: Request,
 ) -> Response:
+    """
+    Reset the user TOTP setup for MFA.
+
+    This allows the user to define a new TOTP setup, in case it has lost access to the
+    authenticator application.
+
+    If `send_email` is set to True, an email will be sent to the user with the link to
+    configure a new TOTP setup for MFA.
+
+    See [MFA Setup reset](https://docs.parsec.cloud/en/latest/hosting/administration/user-authentication.html#mfa-setup-reset).
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
@@ -622,6 +667,9 @@ async def administration_organization_sequester_services(
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
 ) -> Response:
+    """
+    Get the list of all sequester services configured in the server.
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
@@ -699,6 +747,9 @@ async def administration_organization_sequester_service_create(
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
 ) -> Response:
+    """
+    Create a sequester service with the specified configuration.
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
@@ -751,6 +802,9 @@ async def administration_organization_sequester_service_revoke(
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
 ) -> Response:
+    """
+    Revoke an existing sequester service.
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
@@ -805,6 +859,9 @@ async def administration_organization_sequester_service_update_config(
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
 ) -> Response:
+    """
+    Update the sequester service with the specified configuration.
+    """
     backend: Backend = request.app.state.backend
 
     organization_id = parse_organization_id_or_die(raw_organization_id)
