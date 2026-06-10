@@ -307,12 +307,16 @@ async function getCryptpadServer(): Promise<string | null> {
     CryptpadServerCache.set(connHandle, null);
     return null;
   }
-  let serverUrl = result.value.cryptpad.serverUrl;
-  if (!result.value.cryptpad.serverUrl.startsWith('https://') && !result.value.cryptpad.serverUrl.startsWith('http://')) {
-    serverUrl = `https://${result.value.cryptpad.serverUrl}`;
+  CryptpadServerCache.set(connHandle, result.value.cryptpad.serverUrl);
+  return result.value.cryptpad.serverUrl;
+}
+
+export function ensureHttpsProtocol(server: string): string {
+  if (!server.startsWith('http://') && !server.startsWith('https://') && !server.startsWith('parsec3://')) {
+    window.electronAPI.log('warn', `URL ${server} doesn't start with http/https/parsec3, forcing https.`);
+    return `https://${server}`;
   }
-  CryptpadServerCache.set(connHandle, serverUrl);
-  return serverUrl;
+  return server;
 }
 
 export const Env = {
@@ -330,6 +334,7 @@ export const Env = {
   getCryptpadServer,
   isAccountAutoLoginEnabled,
   isCustomBrandingEnabled,
+  ensureHttpsProtocol,
   Links: {
     openDocumentationLink,
     openDocumentationUserGuideLink,
