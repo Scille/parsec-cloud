@@ -16,18 +16,22 @@
         class="breadcrumb-element breadcrumb-normal"
         :key="path.id"
         ref="breadcrumb"
-        @click="$emit('change', path)"
       >
-        <ion-icon
-          class="main-icon"
-          v-if="path.icon"
-          :icon="path.icon"
-        />
         <div
-          class="breadcrumb-text"
-          v-if="path.display || path.title"
+          @click="$emit('change', path)"
+          class="breadcrumb-item-content"
         >
-          {{ path.display ? path.display : $msTranslate(path.title) }}
+          <ion-icon
+            class="main-icon"
+            v-if="path.icon"
+            :icon="path.icon"
+          />
+          <div
+            class="breadcrumb-text"
+            v-if="path.display || path.title"
+          >
+            {{ path.display ? path.display : $msTranslate(path.title) }}
+          </div>
         </div>
       </ion-breadcrumb>
     </ion-breadcrumbs>
@@ -203,6 +207,14 @@ async function openPopover(event: Event): Promise<void> {
   color: var(--parsec-color-light-secondary-grey);
   display: flex;
   flex-wrap: nowrap;
+  user-select: none;
+
+  &-item-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+  }
 
   &-element {
     .main-icon {
