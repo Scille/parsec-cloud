@@ -237,17 +237,7 @@ async fn request_server_challenge_from_scws(
     let svc_rep = scws
         .find_service(cert, challenge.as_bytes())
         .await
-        .map_err(|e| match e {
-            scwsapi::FindServiceError::FindError(js_value) => PkiSystemInitError::Internal(
-                anyhow::anyhow!("error while looking for SCWS service ({js_value:?})"),
-            ),
-            scwsapi::FindServiceError::InvalidChallenge(e) => PkiSystemInitError::Internal(
-                anyhow::anyhow!("SCWS return an invalid challenge ({e})"),
-            ),
-            scwsapi::FindServiceError::InvalidCryptogram(_) => PkiSystemInitError::Internal(
-                anyhow::anyhow!("SCWS return an invalid signature ({e})"),
-            ),
-        })?;
+        .map_err(|e| PkiSystemInitError::Internal(e.into()))?;
 
     Ok((svc_rep, challenge))
 }
