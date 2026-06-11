@@ -4275,8 +4275,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scwsapi"
-version = "0.8.0"
-source = "git+https://github.com/Scille/scwsapi-rs.git?rev=aba3bb209f437edb5ed5eedf2561b4e5bc7d1a97#aba3bb209f437edb5ed5eedf2561b4e5bc7d1a97"
+version = "0.8.1"
+source = "git+https://github.com/Scille/scwsapi-rs.git?rev=b8c729c3743ebf07182c16c53c000584d9cf9518#b8c729c3743ebf07182c16c53c000584d9cf9518"
 dependencies = [
  "futures",
  "hex",
@@ -4292,8 +4292,8 @@ dependencies = [
 
 [[package]]
 name = "scwsapi-sys"
-version = "0.4.0"
-source = "git+https://github.com/Scille/scwsapi-rs.git?rev=aba3bb209f437edb5ed5eedf2561b4e5bc7d1a97#aba3bb209f437edb5ed5eedf2561b4e5bc7d1a97"
+version = "0.4.1"
+source = "git+https://github.com/Scille/scwsapi-rs.git?rev=b8c729c3743ebf07182c16c53c000584d9cf9518#b8c729c3743ebf07182c16c53c000584d9cf9518"
 dependencies = [
  "js-sys",
  "serde",
