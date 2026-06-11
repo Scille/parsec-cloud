@@ -103,7 +103,6 @@ SELECT
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm', '_id'), 12000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_user_role', '_id'), 13000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_archiving', '_id'), 14000),
-    SETVAL(PG_GET_SERIAL_SEQUENCE('realm_user_change', '_id'), 15000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_keys_bundle', '_id'), 16000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_keys_bundle_access', '_id'), 17000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_sequester_keys_bundle_access', '_id'), 18000),
