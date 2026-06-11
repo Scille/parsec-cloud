@@ -2171,7 +2171,14 @@
     },
     "LogDisplayModal": {
         "title": "Logs",
-        "noLog": "No logs available."
+        "noLog": "No logs available.",
+        "download": "Download",
+        "copy": "Copy",
+        "close": "Close",
+        "copySuccess": "Copied!",
+        "copyFailed": "Failed",
+        "downloadSuccess": "Downloaded!",
+        "downloadFailed": "Failed"
     },
     "ClaimDeviceModal": {
         "stepper": {

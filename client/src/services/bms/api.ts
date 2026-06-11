@@ -738,7 +738,7 @@ export interface FileData {
 }
 
 interface BugReportOptions {
-  logs?: Array<string>;
+  logs?: string;
   includeScreenshot?: boolean;
   files?: Array<FileData>;
 }
@@ -760,7 +760,7 @@ async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Pr
     formData.append('description', query.description);
     formData.append('version', APP_VERSION);
     if (opts?.logs) {
-      formData.append('logs', new Blob([JSON.stringify(opts?.logs)], { type: 'application/json' }), 'logs');
+      formData.append('logs', new Blob([opts.logs], { type: 'text/plain' }), 'logs.txt');
     }
     // For later
     // if (opts.includeScreenshot) {

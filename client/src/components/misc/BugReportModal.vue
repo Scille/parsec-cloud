@@ -41,6 +41,7 @@
       <ion-toggle
         v-model="includeLogs"
         @ion-change="logToggled"
+        :disabled="aggregatingLogs"
         class="report-logs__toggle"
       />
       <div class="report-logs-text">
@@ -49,7 +50,7 @@
           <ion-text class="report-logs-text-subtitles__description body">{{ $msTranslate('ReportBugModal.log.description') }}</ion-text>
           <ion-button
             fill="clear"
-            @click.stop="openLogDisplayModal"
+            @click.stop="openLogDisplayModal()"
             id="see-logs-button"
           >
             {{ $msTranslate('ReportBugModal.log.seeLogs') }}
@@ -72,10 +73,9 @@
 import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 import { emailValidator } from '@/common/validators';
 import { FileInputList } from '@/components/files';
-import { openLogDisplayModal } from '@/components/misc';
-import { isWeb, ParsecAccount } from '@/parsec';
+import { getLogs, openLogDisplayModal } from '@/components/misc';
+import { ParsecAccount } from '@/parsec';
 import { BmsApi, FileData } from '@/services/bms';
-import { formatLogEntry, LogEntry, WebLogger } from '@/services/webLogger';
 import { IonButton, IonText, IonToggle, modalController } from '@ionic/vue';
 import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, MsTextarea, Validity } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
@@ -87,7 +87,8 @@ const includeLogs = ref(false);
 const listInputRef = useTemplateRef<InstanceType<typeof FileInputList>>('listInput');
 const sendingReport = ref(false);
 const sendError = ref('');
-const logs = ref<Array<LogEntry>>([]);
+const logs = ref<string>('');
+const aggregatingLogs = ref(false);
 
 const canSend = computed(() => {
   return emailInputRef.value && emailInputRef.value.validity === Validity.Valid && description.value.length > 0 && email.value.length > 0;
@@ -104,17 +105,11 @@ onMounted(async () => {
 
 async function logToggled(): Promise<void> {
   if (includeLogs.value) {
-    if (isWeb()) {
-      logs.value = await WebLogger.getEntries();
-    } else {
-      window.electronAPI.getLogs();
-    }
+    aggregatingLogs.value = true;
+    logs.value = await getLogs();
+    aggregatingLogs.value = false;
   }
 }
-
-window.electronAPI.receive('parsec-log-records', async (logRecords: Array<LogEntry>) => {
-  logs.value = logRecords;
-});
 
 async function readFile(file: File): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
@@ -150,7 +145,7 @@ async function sendBugReport(): Promise<boolean> {
       description: description.value,
     },
     {
-      logs: includeLogs.value ? logs.value.map((entry) => formatLogEntry(entry)) : undefined,
+      logs: includeLogs.value ? logs.value : undefined,
       files: files,
     },
   );

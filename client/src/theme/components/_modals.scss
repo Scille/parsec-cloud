@@ -1170,6 +1170,8 @@ ion-modal {
 }
 
 .log-modal {
+  --width: var(--parsec-modal-width-lg);
+
   &::part(content) {
     --height: 600px;
     height: 600px;
@@ -1181,6 +1183,7 @@ ion-modal {
   }
 
   .ms-modal-content {
+    height: 100%;
     overflow: hidden;
   }
 }

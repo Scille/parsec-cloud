@@ -50,7 +50,7 @@
         "file-type": "^21.3.2",
         "ionicons": "^8.0.9",
         "luxon": "^3.5.0",
-        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#c7c5ab0be1ebe514a6cb163da597ef2bd8056e1a",
+        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#5f5c321774df947090d6f194794f6fd092db71fb",
         "native-file-system-adapter": "^3.0.1",
         "pdfjs-dist": "^5.4.624",
         "qrcode-vue3": "^1.7.1",
