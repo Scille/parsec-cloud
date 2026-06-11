@@ -6,17 +6,12 @@
       class="logs"
       v-if="!loading"
     >
-      <ms-report-text
-        v-for="(record, index) of logs"
-        :key="index"
-        :theme="LevelThemeMapping[record.level]"
-        class="log-entry"
-      >
-        <div class="log-entry-text">
-          <ion-text class="log-entry-text__message body">{{ record.message }}</ion-text>
-          <ion-text class="log-entry-text__timestamp body-sm">{{ record.timestamp }}</ion-text>
-        </div>
-      </ms-report-text>
+      <textarea
+        v-show="logs.length > 0"
+        class="log-area"
+        readonly
+        :value="logs"
+      />
       <ms-report-text
         v-show="logs.length === 0"
         :theme="MsReportTheme.Info"
@@ -45,35 +40,17 @@
 </template>
 
 <script setup lang="ts">
-import { isWeb } from '@/parsec';
-import { LogEntry, WebLogger } from '@/services/webLogger';
-import { IonSkeletonText, IonText } from '@ionic/vue';
+import { getLogs } from '@/components/misc/utils';
+import { IonSkeletonText } from '@ionic/vue';
 import { MsReportText, MsReportTheme } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 
-const LevelThemeMapping = {
-  ['debug']: MsReportTheme.Info,
-  ['info']: MsReportTheme.Info,
-  ['warn']: MsReportTheme.Warning,
-  ['error']: MsReportTheme.Error,
-  ['critical']: MsReportTheme.Error,
-};
-
-const logs = ref<Array<LogEntry>>([]);
+const logs = ref<string>('');
 const loading = ref(true);
 
 onMounted(async () => {
   loading.value = true;
-  if (isWeb()) {
-    logs.value = (await WebLogger.getEntries()).reverse();
-    loading.value = false;
-  } else {
-    window.electronAPI.getLogs();
-  }
-});
-
-window.electronAPI.receive('parsec-log-records', async (logRecords: Array<LogEntry>) => {
-  logs.value = logRecords.reverse();
+  logs.value = await getLogs();
   loading.value = false;
 });
 </script>

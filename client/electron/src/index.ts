@@ -280,18 +280,8 @@ ipcMain.on(PageToWindowChannel.CriticalError, async (_event, message: string, er
 });
 
 ipcMain.on(PageToWindowChannel.GetLogs, async () => {
-  const RE = /^\[(.+)\] \[(debug|info|warn|error|critical)\] (.+)$/;
-  const logs = log.transports.file.readAllLogs().flatMap((v) => {
-    return v.lines
-      .map((line) => {
-        const match = line.match(RE);
-        if (match && match.length === 4) {
-          return { message: match[3], level: match[2], timestamp: match[1] };
-        }
-      })
-      .filter((record) => record !== undefined);
-  });
-  parsecApp.sendEvent(WindowToPageChannel.LogRecords, logs);
+  const content = fs.readFileSync(log.transports.file.getFile().path, { encoding: 'utf-8', flag: 'r' });
+  parsecApp.sendEvent(WindowToPageChannel.LogRecords, content);
 });
 
 ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
