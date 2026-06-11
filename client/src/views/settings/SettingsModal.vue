@@ -2,7 +2,7 @@
 
 <template>
   <ms-modal
-    :title="'SettingsModal.pageTitle'"
+    title="SettingsModal.pageTitle"
     :close-button="{ visible: true }"
   >
     <settings-list />

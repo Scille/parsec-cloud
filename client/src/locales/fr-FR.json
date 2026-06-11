@@ -2172,7 +2172,14 @@
     },
     "LogDisplayModal": {
         "title": "Logs",
-        "noLog": "Aucun log disponible."
+        "noLog": "Aucun log disponible.",
+        "download": "Télécharger",
+        "copy": "Copier",
+        "close": "Fermer",
+        "copySuccess": "Copié!",
+        "copyFailed": "Échec",
+        "downloadSuccess": "Téléchargé!",
+        "downloadFailed": "Échec"
     },
     "ClaimDeviceModal": {
         "stepper": {
