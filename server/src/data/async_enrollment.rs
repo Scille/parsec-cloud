@@ -4,7 +4,7 @@ use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
     types::{PyBytes, PyType},
-    Bound, PyObject, PyResult, Python,
+    Bound, Py, PyAny, PyResult, Python,
 };
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
     ids::{DeviceID, DeviceLabel, HumanHandle, UserID},
 };
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub(crate) struct AsyncEnrollmentSubmitPayload(pub libparsec_types::AsyncEnrollmentSubmitPayload);
 
@@ -71,7 +71,7 @@ impl AsyncEnrollmentSubmitPayload {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub(crate) struct AsyncEnrollmentAcceptPayload(pub libparsec_types::AsyncEnrollmentAcceptPayload);
 
@@ -122,7 +122,7 @@ impl AsyncEnrollmentAcceptPayload {
     }
 
     #[getter]
-    fn profile(&self) -> &'static PyObject {
+    fn profile(&self) -> &'static Py<PyAny> {
         UserProfile::convert(self.0.profile)
     }
 

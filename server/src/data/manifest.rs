@@ -4,7 +4,7 @@ use pyo3::{
     exceptions::PyValueError,
     pyclass, pyfunction, pymethods,
     types::{PyBytes, PyDict, PyDictMethods, PyTuple, PyType},
-    Bound, IntoPyObjectExt, PyObject, PyResult, Python,
+    Bound, IntoPyObjectExt, Py, PyAny, PyResult, Python,
 };
 use std::{collections::HashMap, num::NonZeroU64};
 
@@ -588,7 +588,7 @@ pub(crate) fn child_manifest_decrypt_verify_and_load(
     expected_timestamp: DateTime,
     expected_id: Option<VlobID>,
     expected_version: Option<u32>,
-) -> PyResult<PyObject> {
+) -> PyResult<Py<PyAny>> {
     ChildManifest::decrypt_verify_and_load(
         encrypted,
         &key.0,
@@ -612,7 +612,7 @@ pub(crate) fn child_manifest_verify_and_load(
     expected_timestamp: DateTime,
     expected_id: Option<VlobID>,
     expected_version: Option<u32>,
-) -> PyResult<PyObject> {
+) -> PyResult<Py<PyAny>> {
     ChildManifest::verify_and_load(
         signed,
         &author_verify_key.0,
@@ -625,7 +625,7 @@ pub(crate) fn child_manifest_verify_and_load(
     .and_then(|blob| unwrap_child_manifest(py, blob))
 }
 
-fn unwrap_child_manifest(py: Python, manifest: ChildManifest) -> PyResult<PyObject> {
+fn unwrap_child_manifest(py: Python, manifest: ChildManifest) -> PyResult<Py<PyAny>> {
     match manifest {
         ChildManifest::File(file) => FileManifest(file).into_py_any(py),
         ChildManifest::Folder(folder) => FolderManifest(folder).into_py_any(py),
