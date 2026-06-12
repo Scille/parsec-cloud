@@ -12,7 +12,7 @@ Parsec :abbr:`CLI (Command-Line Interface)` for Linux. These operations can be p
 Parsec :abbr:`CLI (Command-Line Interface)` is a standalone binary that can be downloaded from
 GitHub releases page.
 
-.. _Parsec CLI: https://github.com/Scille/parsec-cloud/releases/download/v3.9.2-a.0+dev/parsec-cli_3.9.2-a.0+dev_linux-x86_64-musl
+.. _Parsec CLI: https://github.com/Scille/parsec-cloud/releases/download/v3.9.2-rc.0/parsec-cli_3.9.2-rc.0_linux-x86_64-musl
 
 #. Download `Parsec CLI`_.
 
@@ -23,16 +23,16 @@ GitHub releases page.
 
    .. code-block:: shell
 
-     chmod +x parsec-cli_3.9.2-a.0+dev_linux-x86_64-musl
+     chmod +x parsec-cli_3.9.2-rc.0_linux-x86_64-musl
 
 #. Verify the installation by running the following command:
 
    .. code-block:: shell
 
-     ./parsec-cli_3.9.2-a.0+dev_linux-x86_64-musl --version
+     ./parsec-cli_3.9.2-rc.0_linux-x86_64-musl --version
 
    Which should display the installed version:
 
    .. code-block:: text
 
-     parsec-cli 3.9.2-a.0+dev
+     parsec-cli 3.9.2-rc.0
