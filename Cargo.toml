@@ -179,7 +179,7 @@ pretty_assertions = { version = "1.4.1", default-features = false }
 proc-macro2 = { version = "1.0.106", default-features = false }
 proptest = { version = "1.11.0", default-features = false }
 proptest-state-machine = { version = "0.8.0", default-features = false }
-pyo3 = { version = "0.25.1", default-features = false }
+pyo3 = { version = "0.29.0", default-features = false }
 quote = { version = "1.0.45", default-features = false }
 rand = { version = "0.8.5", default-features = false }
 regex = { version = "1.12.3", default-features = false }

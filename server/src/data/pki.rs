@@ -20,7 +20,7 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     ],
 );
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub(crate) struct X509Certificate {
     #[pyo3(get)]
@@ -75,7 +75,7 @@ impl X509Certificate {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub(crate) struct X509CertificateInformation(
     pub libparsec_platform_pki::x509::X509CertificateInformation,
@@ -110,7 +110,7 @@ impl X509CertificateInformation {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub(crate) struct X509TrustAnchor(pub rustls_pki_types::TrustAnchor<'static>);
 

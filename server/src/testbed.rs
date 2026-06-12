@@ -25,7 +25,7 @@ use crate::{
     SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
 };
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone)]
 pub(crate) struct TestbedTemplateContent {
     template: Arc<libparsec_testbed::TestbedTemplate>,
@@ -154,7 +154,7 @@ event_wrapper!(
         first_device_id: DeviceID,
         first_device_label: DeviceLabel,
         first_device_signing_key: SigningKey,
-        initial_profile: &'static PyObject,
+        initial_profile: &'static Py<PyAny>,
         user_realm_id: VlobID,
         user_realm_key: SecretKey,
         local_symkey: SecretKey,
@@ -207,7 +207,7 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         user: UserID,
-        profile: &'static PyObject,
+        profile: &'static Py<PyAny>,
         certificate: UserUpdateCertificate,
         raw_certificate: Py<PyBytes>,
     ],
@@ -310,7 +310,7 @@ event_wrapper!(
         author: DeviceID,
         realm: VlobID,
         user: UserID,
-        role: Option<&'static PyObject>,
+        role: Option<&'static Py<PyAny>>,
         key_index: Option<libparsec_types::IndexInt>,
         recipient_keys_bundle_access: Option<Py<PyBytes>>,
         certificate: RealmRoleCertificate,
@@ -530,11 +530,11 @@ event_wrapper!(
     TestbedEventUpdateOrganization,
     [
         timestamp: DateTime,
-        is_expired: PyObject,
-        active_users_limit: PyObject,
-        user_profile_outsider_allowed: PyObject,
-        realm_minimum_archiving_period_before_deletion: PyObject,
-        tos: PyObject,
+        is_expired: Py<PyAny>,
+        active_users_limit: Py<PyAny>,
+        user_profile_outsider_allowed: Py<PyAny>,
+        realm_minimum_archiving_period_before_deletion: Py<PyAny>,
+        tos: Py<PyAny>,
     ],
     |py, x: &TestbedEventUpdateOrganization| -> PyResult<String> {
         Ok(format!(
@@ -622,7 +622,7 @@ fn event_to_pyobject(
     py: Python,
     template: &libparsec_testbed::TestbedTemplate,
     event: &libparsec_testbed::TestbedEvent,
-) -> PyResult<Option<PyObject>> {
+) -> PyResult<Option<Py<PyAny>>> {
     macro_rules! single_certificate {
         ($py: expr, $event: expr, $template: expr, $name: ident) => {{
             let certif = $event
