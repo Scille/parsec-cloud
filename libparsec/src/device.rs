@@ -10,7 +10,7 @@ pub use libparsec_platform_device_loader::{
 pub use libparsec_platform_storage::RemoveDeviceDataError;
 use libparsec_types::prelude::*;
 
-mod strategy {
+pub(crate) mod strategy {
     use std::{path::PathBuf, sync::Arc};
 
     use libparsec_account::{
@@ -32,10 +32,10 @@ mod strategy {
      */
 
     #[derive(Debug)]
-    struct PkiOperations {
-        pki_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
-        pki_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
-        certificate_ref: X509CertificateReference,
+    pub(crate) struct PkiOperations {
+        pub(crate) pki_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
+        pub(crate) pki_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
+        pub(crate) certificate_ref: X509CertificateReference,
     }
 
     impl libparsec_platform_device_loader::PkiDeviceOperations for PkiOperations {
