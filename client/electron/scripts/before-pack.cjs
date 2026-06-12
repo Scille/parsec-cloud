@@ -9,10 +9,15 @@ const WINFSP_URL = `https://github.com/winfsp/winfsp/releases/download/${WINFSP_
 const WINFSP_SHA256SUM = 'Bzpw4A93Qj40vtmLhuYA3vkzk7pYIiBPrFeikyTbn3o=';
 const WINFSP_DEST_FILE = `build/winfsp-${WINFSP_VERSION}.msi`;
 
+// Stable permalink to the latest VC++ 2015-2022 redistributable (covers vc14–vc17).
+// No version pinning is possible with this URL, so no sha256 verification.
+const VC_REDIST_URL = 'https://aka.ms/vc14/vc_redist.x64.exe';
+const VC_REDIST_DEST_FILE = 'build/vc_redist.x64.exe';
+
 /**
  *
  * @param {string} url
- * @param {string} sha256sum The expected sha256sum in base64
+ * @param {string | null} sha256sum The expected sha256sum in base64, or null to skip verification
  * @param {path} dest
  */
 async function downloadFile(url, sha256sum, dest) {
@@ -41,9 +46,11 @@ async function downloadFile(url, sha256sum, dest) {
   });
   await pipeline(httpStream, hashStream, destStream);
 
-  const fileDigest = hash.digest('base64');
-  if (fileDigest !== sha256sum) {
-    throw new Error(`Failed to download ${url}: sha256sum mismatch: got ${fileDigest} expected ${sha256sum}`);
+  if (sha256sum !== null) {
+    const fileDigest = hash.digest('base64');
+    if (fileDigest !== sha256sum) {
+      throw new Error(`Failed to download ${url}: sha256sum mismatch: got ${fileDigest} expected ${sha256sum}`);
+    }
   }
 }
 
@@ -56,6 +63,10 @@ exports.default = async function beforePack(context) {
       console.log('Downloading WinFSP');
       await downloadFile(WINFSP_URL, WINFSP_SHA256SUM, WINFSP_DEST_FILE).then(() =>
         console.log(`WinFSP downloaded to ${WINFSP_DEST_FILE}`),
+      );
+      console.log('Downloading VC++ Redistributable');
+      await downloadFile(VC_REDIST_URL, null, VC_REDIST_DEST_FILE).then(() =>
+        console.log(`VC++ Redistributable downloaded to ${VC_REDIST_DEST_FILE}`),
       );
       break;
     default:
