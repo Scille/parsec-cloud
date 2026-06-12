@@ -555,22 +555,6 @@ CREATE TABLE realm_archiving (
 );
 
 
--- TODO: Investigate which of those timestamp is really needed
-CREATE TABLE realm_user_change (
-    _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id) NOT NULL,
-    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-    -- The last time this user changed the role of another user
-    last_role_change TIMESTAMPTZ,
-    -- The last time this user updated a vlob
-    last_vlob_update TIMESTAMPTZ,
-    -- The last time this user changed the archiving configuration
-    last_archiving_change TIMESTAMPTZ,
-
-    UNIQUE (realm, user_)
-);
-
-
 CREATE TABLE realm_keys_bundle (
     _id SERIAL PRIMARY KEY,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
