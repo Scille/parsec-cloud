@@ -504,7 +504,7 @@ pub(crate) fn generate_sas_code_nonce(py: Python<'_>) -> Bound<'_, PyBytes> {
     PyBytes::new(py, &libparsec_crypto::generate_sas_code_nonce())
 }
 
-#[pyclass(subclass)]
+#[pyclass(subclass, from_py_object)]
 #[derive(Clone)]
 pub struct UntrustedPasswordAlgorithm(pub libparsec_types::UntrustedPasswordAlgorithm);
 
@@ -545,7 +545,7 @@ impl UntrustedPasswordAlgorithm {
     }
 }
 
-#[pyclass(extends=UntrustedPasswordAlgorithm, subclass)]
+#[pyclass(extends=UntrustedPasswordAlgorithm, subclass, from_py_object)]
 #[derive(Clone)]
 pub struct UntrustedPasswordAlgorithmArgon2id {}
 
@@ -557,15 +557,15 @@ impl UntrustedPasswordAlgorithmArgon2id {
         opslimit: u32,
         memlimit_kb: u32,
         parallelism: u32,
-    ) -> (Self, UntrustedPasswordAlgorithm) {
-        (
-            Self {},
-            UntrustedPasswordAlgorithm(libparsec_types::UntrustedPasswordAlgorithm::Argon2id {
+    ) -> PyResult<PyClassInitializer<Self>> {
+        Ok(PyClassInitializer::from(UntrustedPasswordAlgorithm(
+            libparsec_types::UntrustedPasswordAlgorithm::Argon2id {
                 opslimit,
                 memlimit_kb,
                 parallelism,
-            }),
-        )
+            },
+        ))
+        .add_subclass(Self {}))
     }
 
     #[getter]

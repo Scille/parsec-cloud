@@ -145,7 +145,7 @@ fn patch_panic_exception_to_inherit_exception(py: Python) {
     // initialized (which is done lazily the first time pyo3 accesses `PanicException`)
     let mro_any = unsafe { Bound::from_borrowed_ptr(py, (*panic_exception_cls).tp_mro) };
     let mro = mro_any
-        .downcast::<PyTuple>()
+        .cast::<PyTuple>()
         .expect("PanicException.tp_mro is a tuple");
     let new_mro = PyTuple::new(
         py,

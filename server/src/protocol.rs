@@ -5,7 +5,7 @@ use pyo3::{
     prelude::{PyAnyMethods, PyModuleMethods},
     pyclass, pymethods,
     types::{PyInt, PyModule, PyType},
-    Bound, IntoPyObjectExt, PyObject, PyResult, Python,
+    Bound, IntoPyObjectExt, Py, PyAny, PyResult, Python,
 };
 
 use libparsec_serialization_format::python_bindings_parsec_protocol_cmds_family;
@@ -39,10 +39,10 @@ impl ActiveUsersLimit {
 
     #[classattr]
     #[pyo3(name = "NO_LIMIT")]
-    fn no_limit() -> &'static PyObject {
+    fn no_limit() -> &'static Py<PyAny> {
         lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
+            static ref VALUE: Py<PyAny> = {
+                Python::attach(|py| {
                     ActiveUsersLimit(libparsec_types::ActiveUsersLimit::NoLimit)
                         .into_py_any(py).expect("Failed to generate static value for ActiveUsersLimit::no_limit")
                 })
@@ -58,7 +58,7 @@ impl ActiveUsersLimit {
         cls: Bound<'py, PyType>,
         py: Python<'py>,
         count: Option<Bound<'py, PyInt>>,
-    ) -> PyResult<PyObject> {
+    ) -> PyResult<Py<PyAny>> {
         match count {
             Some(x) => Self::limited_to(cls, x).and_then(|x| x.into_py_any(py)),
             None => Self::no_limit().into_py_any(py),
