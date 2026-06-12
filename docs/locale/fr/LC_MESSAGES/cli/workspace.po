@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-22 15:11+0200\n"
+"POT-Creation-Date: 2026-06-12 15:10+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -87,26 +87,26 @@ msgstr ""
 "est spécifiée, les répertoires parents doivent exister. L'option ``--"
 "update`` permet de choisir comment les fichiers existants sont mis à jour."
 
-#: ../../cli/workspace.rst:81
+#: ../../cli/workspace.rst:83
 msgid "Archive or delete"
 msgstr "Archiver ou supprimer"
 
-#: ../../cli/workspace.rst:83
+#: ../../cli/workspace.rst:85
 msgid "To change the accessibility status of the workspace:"
 msgstr "Pour changer le statut d'accessibilité de l'espace de travail:"
 
-#: ../../cli/workspace.rst:85
+#: ../../cli/workspace.rst:87
 msgid "available: the workspace can be edited and shared normally"
 msgstr "available (disponible) : l'espace de travail peut être édité"
 
-#: ../../cli/workspace.rst:86
+#: ../../cli/workspace.rst:88
 msgid ""
 "archived: the workspace is still accessible to its members but in read-only"
 msgstr ""
 "archived (archivé) : l'espace de travail est toujours accessible à ses "
 "membres, mais est en lecture seule"
 
-#: ../../cli/workspace.rst:87
+#: ../../cli/workspace.rst:89
 msgid ""
 "deletion-planned-in-seconds: the workspace will be deleted in the specified "
 "amount of seconds. There is a minimum delay that depends on server "
@@ -116,10 +116,20 @@ msgstr ""
 "l'espace de travail va ête supprimé dans le temps imparti. Le délai dépend "
 "de la configuration du serveur"
 
-#: ../../cli/workspace.rst:109
+#: ../../cli/workspace.rst:111
+msgid ""
+"When a workspace is set to be deleted, for the data to be purged, a server "
+"administrator must follow the steps described :ref::`here "
+"doc_hosting_administration_workspace_deletion`."
+msgstr ""
+"Quand la suppression d'un espace de travail a été planifiée, un "
+"administrateur serveur doit suivre les étapes décrite :ref::`ici "
+"doc_hosting_administration_workspace_deletion`."
+
+#: ../../cli/workspace.rst:114
 msgid "List workspace content"
 msgstr "Lister le contenu de l'espace de travail"
 
-#: ../../cli/workspace.rst:119
+#: ../../cli/workspace.rst:131
 msgid "Remove file from workspace"
 msgstr "Supprimer un fichier de l'espace de travail"
