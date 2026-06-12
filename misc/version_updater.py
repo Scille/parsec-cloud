@@ -534,7 +534,7 @@ def update_tool_version(
     matched = {regex[0].pattern: False for regex in regexes}
     updated: set[Path] = set()
 
-    with FileInput(filename, inplace=True) as f:
+    with FileInput(filename, inplace=True, encoding="utf-8") as f:
         for old_line in f:
             line = old_line
             for regex, replaced_line in regexes:
