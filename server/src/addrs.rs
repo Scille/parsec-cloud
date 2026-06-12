@@ -2,9 +2,9 @@
 
 use pyo3::{
     exceptions::PyValueError,
-    prelude::{pyclass, pymethods, IntoPyObject, PyObject, PyResult, Python},
+    prelude::{pyclass, pymethods, IntoPyObject, PyResult, Python},
     types::{PyAnyMethods, PyBytes, PyDict, PyDictMethods, PyType},
-    Bound, BoundObject, PyAny,
+    Bound, BoundObject, Py, PyAny,
 };
 use std::str::FromStr;
 
@@ -666,7 +666,7 @@ impl ParsecInvitationAddr {
     }
 
     #[getter]
-    fn invitation_type(&self) -> &'static PyObject {
+    fn invitation_type(&self) -> &'static Py<PyAny> {
         InvitationType::convert(self.0.invitation_type())
     }
 

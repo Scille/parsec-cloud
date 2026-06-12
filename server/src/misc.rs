@@ -4,7 +4,7 @@ use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
     types::{PyBytes, PyType},
-    Bound, PyResult, Python,
+    Bound, Py, PyAny, PyResult, Python,
 };
 
 crate::binding_utils::gen_py_wrapper_class!(
@@ -190,7 +190,7 @@ impl AdvisoryDeviceFileProtection {
     }
 
     #[getter]
-    fn primary(&self) -> &'static pyo3::PyObject {
+    fn primary(&self) -> &'static Py<PyAny> {
         AdvisoryDeviceFilePrimaryProtection::convert(self.0.primary.clone())
     }
 

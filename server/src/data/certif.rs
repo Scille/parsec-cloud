@@ -180,12 +180,12 @@ impl UserCertificate {
     }
 
     #[getter]
-    fn algorithm(&self) -> &'static PyObject {
+    fn algorithm(&self) -> &'static Py<PyAny> {
         PrivateKeyAlgorithm::convert(self.0.algorithm)
     }
 
     #[getter]
-    fn profile(&self) -> &'static PyObject {
+    fn profile(&self) -> &'static Py<PyAny> {
         UserProfile::convert(self.0.profile)
     }
 }
@@ -362,7 +362,7 @@ impl DeviceCertificate {
     }
 
     #[getter]
-    fn algorithm(&self) -> &'static PyObject {
+    fn algorithm(&self) -> &'static Py<PyAny> {
         SigningKeyAlgorithm::convert(self.0.algorithm)
     }
 }
@@ -517,7 +517,7 @@ impl UserUpdateCertificate {
     }
 
     #[getter]
-    fn new_profile(&self) -> &'static PyObject {
+    fn new_profile(&self) -> &'static Py<PyAny> {
         UserProfile::convert(self.0.new_profile)
     }
 }
@@ -609,7 +609,7 @@ impl RealmRoleCertificate {
     }
 
     #[getter]
-    fn role(&self) -> Option<&'static PyObject> {
+    fn role(&self) -> Option<&'static Py<PyAny>> {
         self.0.role.map(RealmRole::convert)
     }
 }
@@ -811,12 +811,12 @@ impl RealmKeyRotationCertificate {
     }
 
     #[getter]
-    fn encryption_algorithm(&self) -> &'static PyObject {
+    fn encryption_algorithm(&self) -> &'static Py<PyAny> {
         SecretKeyAlgorithm::convert(self.0.encryption_algorithm)
     }
 
     #[getter]
-    fn hash_algorithm(&self) -> &'static PyObject {
+    fn hash_algorithm(&self) -> &'static Py<PyAny> {
         HashAlgorithm::convert(self.0.hash_algorithm)
     }
 
@@ -848,10 +848,10 @@ impl RealmArchivingConfiguration {
 
     #[classattr]
     #[pyo3(name = "AVAILABLE")]
-    pub(crate) fn available() -> &'static PyObject {
+    pub(crate) fn available() -> &'static Py<PyAny> {
         lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
+            static ref VALUE: Py<PyAny> = {
+                Python::attach(|py| {
                     RealmArchivingConfiguration(libparsec_types::RealmArchivingConfiguration::Available)
                         .into_py_any(py)
                         .expect("Cannot create static value for RealmArchivingConfiguration::available")
@@ -864,10 +864,10 @@ impl RealmArchivingConfiguration {
 
     #[classattr]
     #[pyo3(name = "ARCHIVED")]
-    pub(crate) fn archived() -> &'static PyObject {
+    pub(crate) fn archived() -> &'static Py<PyAny> {
         lazy_static::lazy_static! {
-            static ref VALUE: PyObject = {
-                Python::with_gil(|py| {
+            static ref VALUE: Py<PyAny> = {
+                Python::attach(|py| {
                     RealmArchivingConfiguration(libparsec_types::RealmArchivingConfiguration::Archived)
                         .into_py_any(py)
                         .expect("Cannot create static value for RealmArchivingConfiguration::archived")
@@ -1001,7 +1001,7 @@ impl ShamirRecoveryBriefCertificate {
                 per_recipient_shares: {
                     let mut hash_map = HashMap::with_capacity(per_recipient_shares.len());
                     for (py_key_any, py_value_any) in &per_recipient_shares {
-                        let py_key = py_key_any.downcast::<UserID>()?;
+                        let py_key = py_key_any.cast::<UserID>()?;
                         let py_value: NonZeroU8 = py_value_any.extract()?;
                         hash_map.insert(py_key.borrow().0, py_value);
                     }
@@ -1198,7 +1198,7 @@ impl ShamirRecoveryDeletionCertificate {
                 share_recipients: {
                     let mut hash_set = HashSet::with_capacity(share_recipients.len());
                     for py_item_any in &share_recipients {
-                        let py_item = py_item_any.downcast::<UserID>()?;
+                        let py_item = py_item_any.cast::<UserID>()?;
                         hash_set.insert(py_item.borrow().0);
                     }
                     hash_set
