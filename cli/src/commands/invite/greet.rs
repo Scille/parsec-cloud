@@ -2,14 +2,12 @@
 
 use anyhow::Context;
 use libparsec::{
-    authenticated_cmds::latest::invite_list::InviteListItem,
-    internal::{
+    AccessToken, RealmRole, VlobID, authenticated_cmds::latest::invite_list::InviteListItem, internal::{
         DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx,
         DeviceGreetInProgress4Ctx, DeviceGreetInitialCtx, UserGreetInProgress1Ctx,
         UserGreetInProgress2Ctx, UserGreetInProgress3Ctx, UserGreetInProgress4Ctx,
         UserGreetInitialCtx,
-    },
-    AccessToken,
+    }
 };
 use libparsec_client::{
     Client, ShamirRecoveryGreetInProgress1Ctx, ShamirRecoveryGreetInProgress2Ctx,
@@ -45,7 +43,7 @@ pub async fn device_greet(args: Args, client: &StartedClient) -> anyhow::Result<
             let ctx = step2_user(ctx).await?;
             let ctx = step3_user(ctx).await?;
             let ctx = step4_user(ctx).await?;
-            step5_user(ctx).await
+            step5_user(ctx, client).await
         }
         InviteListItem::Device { token, .. } => {
             let ctx = client.start_device_invitation_greet(token);
@@ -176,7 +174,7 @@ async fn step2_shamir(
 /// Step 3: signify trust
 async fn step3_user(ctx: UserGreetInProgress2Ctx) -> anyhow::Result<UserGreetInProgress3Ctx> {
     let sas_codes = ctx.generate_claimer_sas_choices(3);
-    choose_sas_code(&sas_codes, ctx.claimer_sas(), "claimer")?;
+    // choose_sas_code(&sas_codes, ctx.claimer_sas(), "claimer")?;
 
     Ok(ctx.do_signify_trust().await?)
 }
@@ -184,7 +182,7 @@ async fn step3_user(ctx: UserGreetInProgress2Ctx) -> anyhow::Result<UserGreetInP
 /// Step 3: signify trust
 async fn step3_device(ctx: DeviceGreetInProgress2Ctx) -> anyhow::Result<DeviceGreetInProgress3Ctx> {
     let sas_codes = ctx.generate_claimer_sas_choices(3);
-    choose_sas_code(&sas_codes, ctx.claimer_sas(), "claimer")?;
+    // choose_sas_code(&sas_codes, ctx.claimer_sas(), "claimer")?;
 
     Ok(ctx.do_signify_trust().await?)
 }
@@ -194,7 +192,7 @@ async fn step3_shamir(
     ctx: ShamirRecoveryGreetInProgress2Ctx,
 ) -> anyhow::Result<ShamirRecoveryGreetInProgress3Ctx> {
     let sas_codes = ctx.generate_claimer_sas_choices(3);
-    choose_sas_code(&sas_codes, ctx.claimer_sas(), "claimer")?;
+    // choose_sas_code(&sas_codes, ctx.claimer_sas(), "claimer")?;
 
     Ok(ctx.do_signify_trust().await?)
 }
@@ -227,7 +225,7 @@ async fn step4_shamir(ctx: ShamirRecoveryGreetInProgress3Ctx) -> anyhow::Result<
 }
 
 /// Step 5: create new user
-async fn step5_user(ctx: UserGreetInProgress4Ctx) -> anyhow::Result<()> {
+async fn step5_user(ctx: UserGreetInProgress4Ctx, client: &StartedClient) -> anyhow::Result<()> {
     let device_label = ctx.requested_device_label.clone();
     let human_handle = ctx.requested_human_handle.clone();
     println!("New device label: [{device_label}]");
@@ -237,10 +235,12 @@ async fn step5_user(ctx: UserGreetInProgress4Ctx) -> anyhow::Result<()> {
 
     let mut handle = start_spinner("Creating the user in the server".into());
 
-    ctx.do_create_new_user(device_label, human_handle, profile)
+    let new_user_id = ctx.do_create_new_user(device_label, human_handle, profile)
         .await?;
 
     handle.stop_with_symbol(GREEN_CHECKMARK);
+
+    client.share_workspace(VlobID::from_hex("xxxx").unwrap(), new_user_id , Some(RealmRole::Contributor)).await.unwrap();
 
     Ok(())
 }

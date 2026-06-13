@@ -1344,7 +1344,7 @@ impl UserGreetInProgress4Ctx {
         device_label: DeviceLabel,
         human_handle: HumanHandle,
         profile: UserProfile,
-    ) -> Result<(), GreetInProgressError> {
+    ) -> Result<UserID, GreetInProgressError> {
         let mut timestamp = self.device.time_provider.now();
         let invite_user_confirmation = loop {
             let (
@@ -1480,7 +1480,7 @@ impl UserGreetInProgress4Ctx {
             }?
         };
 
-        Ok(())
+        Ok(invite_user_confirmation.user_id)
     }
 }
 
