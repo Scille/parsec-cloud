@@ -8,6 +8,29 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.9.1-a.0.dev.20617+4736382 (2026-06-13)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* [CLI] Merge options ``--recipients`` and ``--weights`` of the command
+  ``shared-recovery create`` into ``--recipients``.
+  (`#9131 <https://github.com/Scille/parsec-cloud/issues/9131>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed CLI server run's `--scws-web-application-private-key-content` parameter
+  incorrectly expecting a PEM content encoded in base64
+  (`#12920 <https://github.com/Scille/parsec-cloud/issues/12920>`__)
+
+* Fixed a bug preventing some file operations using the Finder in MacOS
+  (`#10086 <https://github.com/Scille/parsec-cloud/issues/10086>`__)
+
+
+
 Parsec v3.9.0 (2026-05-21)
 --------------------------
 
