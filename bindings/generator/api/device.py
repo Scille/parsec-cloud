@@ -155,6 +155,9 @@ class UpdateDeviceError(ErrorVariant):
     class RemoteOpaqueKeyOperationFailed:
         pass
 
+    class KeyringError:
+        pass
+
 
 async def update_device_change_authentication(
     config_dir: Ref[Path],

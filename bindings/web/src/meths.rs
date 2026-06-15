@@ -6648,6 +6648,10 @@ fn variant_account_create_registration_device_error_rs_to_js(
             Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorInternal".into())?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::AccountCreateRegistrationDeviceError::KeyringError{   .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorKeyringError".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AccountCreateRegistrationDeviceError::LoadDeviceBadAccessStrategy{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy".into())?;
         }
@@ -12163,6 +12167,14 @@ fn variant_client_start_error_rs_to_js(
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientStartErrorInternal".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientStartError::KeyringError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorKeyringError".into(),
+            )?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::ClientStartError::LoadDeviceBadAccessStrategy { .. } => {
@@ -20357,6 +20369,14 @@ fn variant_update_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"UpdateDeviceErrorInvalidPath".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::UpdateDeviceError::KeyringError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorKeyringError".into(),
             )?;
         }
         #[allow(clippy::unneeded_struct_pattern)]

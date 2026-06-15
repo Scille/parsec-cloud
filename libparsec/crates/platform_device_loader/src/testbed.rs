@@ -549,6 +549,7 @@ pub(crate) fn maybe_update_device(
                     LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error } => {
                         UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
                     }
+                    LoadDeviceError::KeyringError(error) => UpdateDeviceError::KeyringError(error),
                 }));
             }
         };

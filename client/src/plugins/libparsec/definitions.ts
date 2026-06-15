@@ -719,6 +719,7 @@ export type AccountCreateError =
 export enum AccountCreateRegistrationDeviceErrorTag {
     BadVaultKeyAccess = 'AccountCreateRegistrationDeviceErrorBadVaultKeyAccess',
     Internal = 'AccountCreateRegistrationDeviceErrorInternal',
+    KeyringError = 'AccountCreateRegistrationDeviceErrorKeyringError',
     LoadDeviceBadAccessStrategy = 'AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy',
     LoadDeviceCiphertextKeyGenerationFailed = 'AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed',
     LoadDeviceDecryptionFailed = 'AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed',
@@ -737,6 +738,10 @@ export interface AccountCreateRegistrationDeviceErrorBadVaultKeyAccess {
 }
 export interface AccountCreateRegistrationDeviceErrorInternal {
     tag: AccountCreateRegistrationDeviceErrorTag.Internal
+    error: string
+}
+export interface AccountCreateRegistrationDeviceErrorKeyringError {
+    tag: AccountCreateRegistrationDeviceErrorTag.KeyringError
     error: string
 }
 export interface AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy {
@@ -782,6 +787,7 @@ export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
 export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorBadVaultKeyAccess
   | AccountCreateRegistrationDeviceErrorInternal
+  | AccountCreateRegistrationDeviceErrorKeyringError
   | AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy
   | AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
@@ -3089,6 +3095,7 @@ export type ClientShareWorkspaceError =
 export enum ClientStartErrorTag {
     DeviceUsedByAnotherProcess = 'ClientStartErrorDeviceUsedByAnotherProcess',
     Internal = 'ClientStartErrorInternal',
+    KeyringError = 'ClientStartErrorKeyringError',
     LoadDeviceBadAccessStrategy = 'ClientStartErrorLoadDeviceBadAccessStrategy',
     LoadDeviceCiphertextKeyGenerationFailed = 'ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed',
     LoadDeviceDecryptionFailed = 'ClientStartErrorLoadDeviceDecryptionFailed',
@@ -3105,6 +3112,10 @@ export interface ClientStartErrorDeviceUsedByAnotherProcess {
 }
 export interface ClientStartErrorInternal {
     tag: ClientStartErrorTag.Internal
+    error: string
+}
+export interface ClientStartErrorKeyringError {
+    tag: ClientStartErrorTag.KeyringError
     error: string
 }
 export interface ClientStartErrorLoadDeviceBadAccessStrategy {
@@ -3142,6 +3153,7 @@ export interface ClientStartErrorLoadDeviceTOTPDecryptionFailed {
 export type ClientStartError =
   | ClientStartErrorDeviceUsedByAnotherProcess
   | ClientStartErrorInternal
+  | ClientStartErrorKeyringError
   | ClientStartErrorLoadDeviceBadAccessStrategy
   | ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed
   | ClientStartErrorLoadDeviceDecryptionFailed
@@ -4932,6 +4944,7 @@ export enum UpdateDeviceErrorTag {
     Internal = 'UpdateDeviceErrorInternal',
     InvalidData = 'UpdateDeviceErrorInvalidData',
     InvalidPath = 'UpdateDeviceErrorInvalidPath',
+    KeyringError = 'UpdateDeviceErrorKeyringError',
     NoSpaceAvailable = 'UpdateDeviceErrorNoSpaceAvailable',
     RemoteOpaqueKeyOperationFailed = 'UpdateDeviceErrorRemoteOpaqueKeyOperationFailed',
     RemoteOpaqueKeyOperationOffline = 'UpdateDeviceErrorRemoteOpaqueKeyOperationOffline',
@@ -4962,6 +4975,10 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: UpdateDeviceErrorTag.InvalidPath
     error: string
 }
+export interface UpdateDeviceErrorKeyringError {
+    tag: UpdateDeviceErrorTag.KeyringError
+    error: string
+}
 export interface UpdateDeviceErrorNoSpaceAvailable {
     tag: UpdateDeviceErrorTag.NoSpaceAvailable
     error: string
@@ -4985,6 +5002,7 @@ export type UpdateDeviceError =
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
+  | UpdateDeviceErrorKeyringError
   | UpdateDeviceErrorNoSpaceAvailable
   | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
   | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline

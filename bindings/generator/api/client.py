@@ -80,6 +80,9 @@ class ClientStartError(ErrorVariant):
     class Internal:
         pass
 
+    class KeyringError:
+        pass
+
 
 async def client_start(
     config: ClientConfig,

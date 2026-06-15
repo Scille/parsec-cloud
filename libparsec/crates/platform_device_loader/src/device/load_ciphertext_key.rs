@@ -33,6 +33,9 @@ pub(crate) enum LoadCiphertextKeyError {
         server: RemoteOperationServer,
         error: anyhow::Error,
     },
+    #[cfg_attr(target_arch = "wasm32", expect(unused))]
+    #[error("error while attempting to use the keyring: {0}")]
+    KeyringError(anyhow::Error),
     #[error(transparent)]
     Internal(anyhow::Error),
 }

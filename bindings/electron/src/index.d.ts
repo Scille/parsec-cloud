@@ -678,6 +678,10 @@ export interface AccountCreateRegistrationDeviceErrorInternal {
     tag: "AccountCreateRegistrationDeviceErrorInternal"
     error: string
 }
+export interface AccountCreateRegistrationDeviceErrorKeyringError {
+    tag: "AccountCreateRegistrationDeviceErrorKeyringError"
+    error: string
+}
 export interface AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy {
     tag: "AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy"
     error: string
@@ -721,6 +725,7 @@ export interface AccountCreateRegistrationDeviceErrorTimestampOutOfBallpark {
 export type AccountCreateRegistrationDeviceError =
   | AccountCreateRegistrationDeviceErrorBadVaultKeyAccess
   | AccountCreateRegistrationDeviceErrorInternal
+  | AccountCreateRegistrationDeviceErrorKeyringError
   | AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy
   | AccountCreateRegistrationDeviceErrorLoadDeviceCiphertextKeyGenerationFailed
   | AccountCreateRegistrationDeviceErrorLoadDeviceDecryptionFailed
@@ -2599,6 +2604,10 @@ export interface ClientStartErrorInternal {
     tag: "ClientStartErrorInternal"
     error: string
 }
+export interface ClientStartErrorKeyringError {
+    tag: "ClientStartErrorKeyringError"
+    error: string
+}
 export interface ClientStartErrorLoadDeviceBadAccessStrategy {
     tag: "ClientStartErrorLoadDeviceBadAccessStrategy"
     error: string
@@ -2634,6 +2643,7 @@ export interface ClientStartErrorLoadDeviceTOTPDecryptionFailed {
 export type ClientStartError =
   | ClientStartErrorDeviceUsedByAnotherProcess
   | ClientStartErrorInternal
+  | ClientStartErrorKeyringError
   | ClientStartErrorLoadDeviceBadAccessStrategy
   | ClientStartErrorLoadDeviceCiphertextKeyGenerationFailed
   | ClientStartErrorLoadDeviceDecryptionFailed
@@ -4112,6 +4122,10 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: "UpdateDeviceErrorInvalidPath"
     error: string
 }
+export interface UpdateDeviceErrorKeyringError {
+    tag: "UpdateDeviceErrorKeyringError"
+    error: string
+}
 export interface UpdateDeviceErrorNoSpaceAvailable {
     tag: "UpdateDeviceErrorNoSpaceAvailable"
     error: string
@@ -4135,6 +4149,7 @@ export type UpdateDeviceError =
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
+  | UpdateDeviceErrorKeyringError
   | UpdateDeviceErrorNoSpaceAvailable
   | UpdateDeviceErrorRemoteOpaqueKeyOperationFailed
   | UpdateDeviceErrorRemoteOpaqueKeyOperationOffline

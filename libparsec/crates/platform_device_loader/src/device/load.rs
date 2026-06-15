@@ -104,6 +104,8 @@ pub enum LoadDeviceError {
         server: RemoteOperationServer,
         error: anyhow::Error,
     },
+    #[error("error while attempting to use the keyring: {0}")]
+    KeyringError(anyhow::Error),
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -153,6 +155,7 @@ pub async fn load_device(
                 LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
                     LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error }
                 }
+                LoadCiphertextKeyError::KeyringError(error) => LoadDeviceError::KeyringError(error),
             })?;
     let totp_opaque_key = access.totp_protection.as_ref().map(|(_, key)| key);
     let device = decrypt_device_file(&device_file, &ciphertext_key, totp_opaque_key).map_err(
