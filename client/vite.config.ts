@@ -176,6 +176,7 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
     //
     // Also see https://oxc.rs/docs/guide/usage/transformer/lowering#target for allowed target values.
     target: platform === 'native' ? 'chrome146' : ['chrome107', 'edge107', 'firefox104', 'safari16'],
+    minify: 'esbuild',
     cssCodeSplit: false,
     rollupOptions: {
       output: {
