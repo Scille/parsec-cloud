@@ -133,17 +133,15 @@ pub(super) async fn load_ciphertext_key_keyring(
             service = device.keyring_service,
             user = device.keyring_user
         );
-        let entry =
-            KeyringEntry::new(&device.keyring_service, &device.keyring_user).map_err(|e| {
-                LoadCiphertextKeyError::Internal(anyhow::anyhow!("OS Keyring error: {e}"))
-            })?;
+        let entry = KeyringEntry::new(&device.keyring_service, &device.keyring_user)
+            .map_err(|e| LoadCiphertextKeyError::KeyringError(e.into()))?;
 
         log::trace!("Retrieving passphrase from keyring entry");
         let passphrase = entry
             .get_password()
             .map_err(|e| {
-                LoadCiphertextKeyError::Internal(anyhow::anyhow!(
-                    "Cannot retrieve password from OS Keyring: {e}"
+                LoadCiphertextKeyError::KeyringError(anyhow::anyhow!(
+                    "Cannot retrieve password: {e}"
                 ))
             })?
             .into();

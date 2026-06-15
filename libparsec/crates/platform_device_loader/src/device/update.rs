@@ -47,6 +47,8 @@ pub enum UpdateDeviceError {
         server: RemoteOperationServer,
         error: anyhow::Error,
     },
+    #[error("error while attempting to use the keyring: {0}")]
+    KeyringError(anyhow::Error),
     #[error(transparent)]
     Internal(anyhow::Error),
 }
@@ -136,6 +138,7 @@ pub async fn update_device_change_authentication(
             LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
                 UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
             }
+            LoadCiphertextKeyError::KeyringError(error) => UpdateDeviceError::KeyringError(error),
         })?;
     let totp_opaque_key = current_access.totp_protection.as_ref().map(|(_, key)| key);
     let device = decrypt_device_file(&device_file, &ciphertext_key, totp_opaque_key).map_err(
@@ -206,6 +209,9 @@ pub async fn update_device_overwrite_server_addr(
                 }
                 LoadCiphertextKeyError::RemoteOpaqueKeyFetchFailed { server, error } => {
                     UpdateDeviceError::RemoteOpaqueKeyOperationFailed { server, error }
+                }
+                LoadCiphertextKeyError::KeyringError(error) => {
+                    UpdateDeviceError::KeyringError(error)
                 }
             })?;
     let totp_opaque_key = strategy.totp_protection.as_ref().map(|(_, key)| key);

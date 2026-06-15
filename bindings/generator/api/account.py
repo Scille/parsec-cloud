@@ -338,6 +338,9 @@ class AccountCreateRegistrationDeviceError(ErrorVariant):
     class RemoteOpaqueKeyFetchFailed:
         pass
 
+    class KeyringError:
+        pass
+
 
 async def account_create_registration_device(
     account: Handle,

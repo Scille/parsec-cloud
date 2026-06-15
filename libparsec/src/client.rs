@@ -128,6 +128,8 @@ pub enum ClientStartError {
         server: RemoteOperationServer,
         error: anyhow::Error,
     },
+    #[error("error while attempting to use the keyring: {0}")]
+    KeyringError(anyhow::Error),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -154,6 +156,7 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
             LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error } => {
                 Self::LoadDeviceRemoteOpaqueKeyFetchFailed { server, error }
             }
+            LoadDeviceError::KeyringError(error) => Self::KeyringError(error),
         }
     }
 }

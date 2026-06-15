@@ -383,6 +383,8 @@ pub enum AccountCreateRegistrationDeviceError {
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
+    #[error("error while attempting to use the keyring: {0}")]
+    KeyringError(anyhow::Error),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
@@ -432,6 +434,7 @@ impl From<LoadDeviceError> for AccountCreateRegistrationDeviceError {
             LoadDeviceError::RemoteOpaqueKeyFetchFailed { server, error } => {
                 Self::RemoteOpaqueKeyFetchFailed { server, error }
             }
+            LoadDeviceError::KeyringError(error) => Self::KeyringError(error),
         }
     }
 }

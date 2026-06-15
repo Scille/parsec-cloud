@@ -6041,6 +6041,10 @@ fn variant_account_create_registration_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::AccountCreateRegistrationDeviceError::KeyringError{  .. } => {
+            let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorKeyringError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::AccountCreateRegistrationDeviceError::LoadDeviceBadAccessStrategy{  .. } => {
             let js_tag = JsString::try_new(cx, "AccountCreateRegistrationDeviceErrorLoadDeviceBadAccessStrategy").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -10486,6 +10490,10 @@ fn variant_client_start_error_rs_to_js<'a>(
         }
         libparsec::ClientStartError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "ClientStartErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartError::KeyringError { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientStartErrorKeyringError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientStartError::LoadDeviceBadAccessStrategy { .. } => {
@@ -17290,6 +17298,10 @@ fn variant_update_device_error_rs_to_js<'a>(
         }
         libparsec::UpdateDeviceError::InvalidPath { .. } => {
             let js_tag = JsString::try_new(cx, "UpdateDeviceErrorInvalidPath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UpdateDeviceError::KeyringError { .. } => {
+            let js_tag = JsString::try_new(cx, "UpdateDeviceErrorKeyringError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::UpdateDeviceError::NoSpaceAvailable { .. } => {
