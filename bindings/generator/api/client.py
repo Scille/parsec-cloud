@@ -375,6 +375,32 @@ async def client_list_workspaces(
     raise NotImplementedError
 
 
+class ClientGetOutboundSyncBacklogError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+
+class ClientGetOutboundSyncBacklogItem(Structure):
+    realm_id: VlobID
+    pending_entries: U64
+    pending_bytes: U64
+
+
+class ClientGetOutboundSyncBacklog(Structure):
+    total_pending_entries_for_started_workspaces: U64
+    total_pending_bytes_for_started_workspaces: U64
+    per_workspace: list[ClientGetOutboundSyncBacklogItem]
+
+
+async def client_get_outbound_sync_backlog(
+    client: Handle,
+) -> Result[ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError]:
+    raise NotImplementedError
+
+
 class ClientCreateWorkspaceError(ErrorVariant):
     class Stopped:
         pass

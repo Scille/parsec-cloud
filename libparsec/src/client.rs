@@ -6,6 +6,7 @@ pub use libparsec_client::{
     ClientAcceptTosError, ClientArchiveWorkspaceError, ClientCreateWorkspaceError,
     ClientDeleteShamirRecoveryError, ClientForgetAllCertificatesError,
     ClientGetCurrentSelfProfileError, ClientGetOrganizationBootstrapDateError,
+    ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogItem,
     ClientGetSelfShamirRecoveryError, ClientGetTosError, ClientGetUserDeviceError,
     ClientGetUserInfoError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
@@ -599,6 +600,20 @@ pub async fn client_list_workspaces(
     let workspaces = client.list_workspaces().await;
 
     Ok(workspaces)
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClientGetOutboundSyncBacklogError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn client_get_outbound_sync_backlog(
+    client: Handle,
+) -> Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError> {
+    let client = borrow_client(client)?;
+
+    Ok(client.get_outbound_sync_backlog().await)
 }
 
 /*
