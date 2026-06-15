@@ -7,9 +7,11 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 import vue from '@vitejs/plugin-vue';
 import fs from 'fs';
 import path from 'path';
+import { promisify } from 'util';
 import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import topLevelAwait from 'vite-plugin-top-level-await';
+import { brotliCompress } from 'zlib';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
 
@@ -104,7 +106,35 @@ plugins.push(
   }),
 );
 
-// 4) Finally configure Vite
+// 4) Pre-compress built assets with Brotli
+
+const brotliCompressAsync = promisify(brotliCompress);
+const BROTLI_COMPRESSIBLE = /\.(js|css|html|svg|wasm)$/;
+
+plugins.push({
+  name: 'brotli-compress',
+  apply: 'build',
+  async closeBundle() {
+    async function compressDir(dir: string): Promise<void> {
+      const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+      await Promise.all(
+        entries.map(async (entry) => {
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            await compressDir(fullPath);
+          } else if (BROTLI_COMPRESSIBLE.test(entry.name)) {
+            const content = await fs.promises.readFile(fullPath);
+            const compressed = await brotliCompressAsync(content);
+            await fs.promises.writeFile(`${fullPath}.br`, compressed);
+          }
+        }),
+      );
+    }
+    await compressDir(path.resolve(__dirname, 'dist'));
+  },
+});
+
+// 5) Finally configure Vite
 
 // scss additionalData is used to inject the theme variables in SCSS files imported in main.ts & .vue files
 // for SCSS files imported with sass @use / @forward methods, you need to add manually the theme import

@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+import mimetypes
 import os
 from pathlib import Path
 from typing import cast
@@ -9,9 +10,10 @@ import anyio
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.datastructures import Headers
 from starlette.staticfiles import PathLike
 from starlette.types import Receive, Scope, Send
 from structlog import get_logger
@@ -49,6 +51,21 @@ WEB_APP_CUSTOM_ASSETS_URL = "/client/custom/"
 STATIC_ASSETS_CACHE_CONTROL = "max-age=31536000, public, immutable"
 
 
+def _try_brotli_response(full_path: PathLike, scope: Scope, status_code: int) -> Response | None:
+    accept_encoding = Headers(scope=scope).get("accept-encoding", "")
+    encodings = {e.split(";")[0].strip() for e in accept_encoding.split(",")}
+    if "br" not in encodings:
+        return None
+    br_path = Path(str(full_path) + ".br")
+    if not br_path.is_file():
+        return None
+    content_type, _ = mimetypes.guess_type(str(full_path))
+    response = FileResponse(br_path, status_code=status_code, media_type=content_type)
+    response.headers["Content-Encoding"] = "br"
+    response.headers["Vary"] = "Accept-Encoding"
+    return response
+
+
 class StaticFilesWithCacheControl(StaticFiles):
     def file_response(
         self,
@@ -57,12 +74,10 @@ class StaticFilesWithCacheControl(StaticFiles):
         scope: Scope,
         status_code: int = 200,
     ) -> Response:
-        response = super().file_response(
-            full_path,
-            stat_result,
-            scope,
-            status_code,
-        )
+        if response := _try_brotli_response(full_path, scope, status_code):
+            response.headers["Cache-Control"] = STATIC_ASSETS_CACHE_CONTROL
+            return response
+        response = super().file_response(full_path, stat_result, scope, status_code)
         response.headers["Cache-Control"] = STATIC_ASSETS_CACHE_CONTROL
         return response
 
