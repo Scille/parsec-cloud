@@ -9,6 +9,7 @@ import {
   fillIonInput,
   getClipboardText,
   inviteUsers,
+  login,
   MsPage,
   msTest,
   resizePage,
@@ -897,17 +898,7 @@ msTest('Test many users', async ({ context }) => {
     ],
   });
 
-  await page.locator('.organization-card').first().click();
-  await expect(page.locator('#password-input')).toBeVisible();
-
-  await expect(page.locator('.login-button')).toHaveDisabledAttribute();
-
-  await page.locator('#password-input').locator('input').fill('P@ssw0rd.');
-  await expect(page.locator('.login-button')).toBeEnabled();
-  await page.locator('.login-button').click();
-  await expect(page.locator('#connected-header')).toContainText('My workspaces');
-  await expect(page.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
-  await expect(page).toBeWorkspacePage();
+  await login(page, 'Alicey McAliceFace');
   await page.locator('.sidebar').locator('#sidebar-users').click();
   await expect(page).toHavePageTitle('Users');
   await expect(page).toBeUserPage();
