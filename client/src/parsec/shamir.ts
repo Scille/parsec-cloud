@@ -56,7 +56,9 @@ export async function getSelfShamirRecovery(): Promise<Result<SelfShamirRecovery
             throw new Error(userResult.error.tag);
           }),
         );
-        (result.value as SelfShamirRecoveryInfoSetupAllValid).recipients = users;
+        (result.value as SelfShamirRecoveryInfoSetupAllValid).recipients = users.sort((u1, u2) =>
+          u1.humanHandle.label.localeCompare(u2.humanHandle.label),
+        );
       } catch (_err: any) {
         return { ok: false, error: { tag: ClientGetSelfShamirRecoveryErrorTag.Internal, error: 'Failed to get user info' } };
       }

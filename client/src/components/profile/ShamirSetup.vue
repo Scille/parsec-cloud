@@ -199,6 +199,7 @@
 
       <ion-button
         @click="setupShamir"
+        id="setup-shamir-button"
         :disabled="selectedUsers.length < shamirThreshold || !confirmSetupCheckbox"
       >
         {{ $msTranslate('OrganizationRecovery.shamir.modalSelf.trustedPeople.confirmSetup') }}
@@ -289,6 +290,7 @@ onMounted(async () => {
         error.value = { key: 'OrganizationRecovery.shamir.errors.notEnoughPeople', data: { needed: shamirThreshold.value } };
       }
     }
+    allUsers.value.sort((u1, u2) => u1.humanHandle.label.localeCompare(u2.humanHandle.label));
   }
 });
 
