@@ -1754,6 +1754,154 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
     Ok(js_obj)
 }
 
+// ClientGetOutboundSyncBacklog
+
+#[allow(dead_code)]
+fn struct_client_get_outbound_sync_backlog_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ClientGetOutboundSyncBacklog, JsValue> {
+    let total_pending_entries_for_started_workspaces = {
+        let js_val = Reflect::get(&obj, &"totalPendingEntriesForStartedWorkspaces".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
+            v
+        }
+    };
+    let total_pending_bytes_for_started_workspaces = {
+        let js_val = Reflect::get(&obj, &"totalPendingBytesForStartedWorkspaces".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
+            v
+        }
+    };
+    let per_workspace = {
+        let js_val = Reflect::get(&obj, &"perWorkspace".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = struct_client_get_outbound_sync_backlog_item_js_to_rs(x)?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::ClientGetOutboundSyncBacklog {
+        total_pending_entries_for_started_workspaces,
+        total_pending_bytes_for_started_workspaces,
+        per_workspace,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_client_get_outbound_sync_backlog_rs_to_js(
+    rs_obj: libparsec::ClientGetOutboundSyncBacklog,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_total_pending_entries_for_started_workspaces =
+        JsValue::from(rs_obj.total_pending_entries_for_started_workspaces);
+    Reflect::set(
+        &js_obj,
+        &"totalPendingEntriesForStartedWorkspaces".into(),
+        &js_total_pending_entries_for_started_workspaces,
+    )?;
+    let js_total_pending_bytes_for_started_workspaces =
+        JsValue::from(rs_obj.total_pending_bytes_for_started_workspaces);
+    Reflect::set(
+        &js_obj,
+        &"totalPendingBytesForStartedWorkspaces".into(),
+        &js_total_pending_bytes_for_started_workspaces,
+    )?;
+    let js_per_workspace = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.per_workspace.len() as u32);
+        for (i, elem) in rs_obj.per_workspace.into_iter().enumerate() {
+            let js_elem = struct_client_get_outbound_sync_backlog_item_rs_to_js(elem)?;
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"perWorkspace".into(), &js_per_workspace)?;
+    Ok(js_obj)
+}
+
+// ClientGetOutboundSyncBacklogItem
+
+#[allow(dead_code)]
+fn struct_client_get_outbound_sync_backlog_item_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ClientGetOutboundSyncBacklogItem, JsValue> {
+    let realm_id = {
+        let js_val = Reflect::get(&obj, &"realmId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                    libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| {
+                    #[allow(clippy::useless_asref)]
+                    TypeError::new(e.as_ref())
+                })
+            })?
+    };
+    let pending_entries = {
+        let js_val = Reflect::get(&obj, &"pendingEntries".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
+            v
+        }
+    };
+    let pending_bytes = {
+        let js_val = Reflect::get(&obj, &"pendingBytes".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
+            v
+        }
+    };
+    Ok(libparsec::ClientGetOutboundSyncBacklogItem {
+        realm_id,
+        pending_entries,
+        pending_bytes,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_client_get_outbound_sync_backlog_item_rs_to_js(
+    rs_obj: libparsec::ClientGetOutboundSyncBacklogItem,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_realm_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.realm_id) {
+            Ok(ok) => ok,
+            #[allow(clippy::unnecessary_to_owned)]
+            Err(err) => return Err(JsValue::from(TypeError::new(&err.to_string()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+    let js_pending_entries = JsValue::from(rs_obj.pending_entries);
+    Reflect::set(&js_obj, &"pendingEntries".into(), &js_pending_entries)?;
+    let js_pending_bytes = JsValue::from(rs_obj.pending_bytes);
+    Reflect::set(&js_obj, &"pendingBytes".into(), &js_pending_bytes)?;
+    Ok(js_obj)
+}
+
 // ClientInfo
 
 #[allow(dead_code)]
@@ -10896,6 +11044,36 @@ fn variant_client_get_organization_bootstrap_date_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientGetOrganizationBootstrapDateErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientGetOutboundSyncBacklogError
+
+#[allow(dead_code)]
+fn variant_client_get_outbound_sync_backlog_error_rs_to_js(
+    rs_obj: libparsec::ClientGetOutboundSyncBacklogError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientGetOutboundSyncBacklogError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetOutboundSyncBacklogErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::ClientGetOutboundSyncBacklogError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetOutboundSyncBacklogErrorStopped".into(),
             )?;
         }
     }
@@ -25499,6 +25677,31 @@ pub fn clientGetOrganizationBootstrapDate(client_handle: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_get_organization_bootstrap_date_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_get_outbound_sync_backlog
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientGetOutboundSyncBacklog(client: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_get_outbound_sync_backlog(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_client_get_outbound_sync_backlog_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_get_outbound_sync_backlog_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
