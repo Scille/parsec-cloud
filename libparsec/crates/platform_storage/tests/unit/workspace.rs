@@ -12,7 +12,7 @@ use libparsec_types::prelude::*;
 use crate::{
     workspace::{
         DebugBlock, DebugChunk, DebugDump, DebugVlob, MarkPreventSyncPatternFullyAppliedError,
-        UpdateManifestData,
+        UpdateManifestData, WorkspaceOutboundSyncBacklog,
     },
     PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
 };
@@ -1425,6 +1425,140 @@ async fn get_inbound_outbound_need_sync(env: &TestbedEnv) {
 
     assert_outbound_need_sync!(vec![vlob1_id, vlob2_id]).await;
     assert_inbound_need_sync!(vec![vlob3_id, vlob4_id]).await;
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn get_outbound_sync_backlog(env: &TestbedEnv) {
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000b1").unwrap();
+    let alice = env.local_device("alice@dev1");
+
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
+
+    // 1) Empty
+
+    p_assert_eq!(
+        workspace_storage.get_outbound_sync_backlog().await.unwrap(),
+        WorkspaceOutboundSyncBacklog {
+            pending_entries: 0,
+            pending_bytes: 0,
+        }
+    );
+
+    // 2) Add content
+
+    let folder_need_sync_id = VlobID::from_hex("aa0000000000000000000000000000e1").unwrap();
+    let folder_eventually_synced_id = VlobID::from_hex("aa0000000000000000000000000000e2").unwrap();
+    let file_need_sync_id = VlobID::from_hex("aa0000000000000000000000000000f1").unwrap();
+    let file_eventually_synced_id = VlobID::from_hex("aa0000000000000000000000000000f2").unwrap();
+    let chunk1 = ChunkID::from_hex("aa0000000000000000000000000000c1").unwrap();
+    let chunk2 = ChunkID::from_hex("aa0000000000000000000000000000c2").unwrap();
+    let chunk3 = ChunkID::from_hex("aa0000000000000000000000000000c3").unwrap();
+    let chunk4 = ChunkID::from_hex("aa0000000000000000000000000000c4").unwrap();
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: folder_need_sync_id,
+            encrypted: b"<dummy>".to_vec(),
+            need_sync: true,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: folder_eventually_synced_id,
+            encrypted: b"<dummy>".to_vec(),
+            need_sync: true,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest_and_chunks(
+            &UpdateManifestData {
+                entry_id: file_need_sync_id,
+                encrypted: b"<dummy>".to_vec(),
+                need_sync: true,
+                base_version: 1,
+            },
+            [
+                (chunk1, b"<chunk1>".to_vec()),
+                (chunk2, b"<chunk-two>".to_vec()),
+            ]
+            .into_iter(),
+            [].into_iter(),
+        )
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest_and_chunks(
+            &UpdateManifestData {
+                entry_id: file_eventually_synced_id,
+                encrypted: b"<dummy>".to_vec(),
+                need_sync: true,
+                base_version: 1,
+            },
+            [
+                (chunk3, b"<chunk3>".to_vec()),
+                (chunk4, b"<chunk-four>".to_vec()),
+            ]
+            .into_iter(),
+            [].into_iter(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_eq!(
+        workspace_storage.get_outbound_sync_backlog().await.unwrap(),
+        WorkspaceOutboundSyncBacklog {
+            pending_entries: 4,
+            pending_bytes: (b"<chunk1>".len()
+                + b"<chunk-two>".len()
+                + b"<chunk3>".len()
+                + b"<chunk-four>".len()) as u64
+        }
+    );
+
+    // 3) Mark some data as synchronized
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: folder_eventually_synced_id,
+            encrypted: b"<dummy>".to_vec(),
+            need_sync: false,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest_and_chunks(
+            &UpdateManifestData {
+                entry_id: file_eventually_synced_id,
+                encrypted: b"<dummy>".to_vec(),
+                need_sync: false,
+                base_version: 2,
+            },
+            // Chunk 3 & 4 gets removed since they are synchronized
+            [].into_iter(),
+            [chunk3, chunk4].into_iter(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_eq!(
+        workspace_storage.get_outbound_sync_backlog().await.unwrap(),
+        WorkspaceOutboundSyncBacklog {
+            pending_entries: 2,
+            pending_bytes: (b"<chunk1>".len() + b"<chunk-two>".len()) as u64,
+        }
+    );
 }
 
 #[parsec_test]
