@@ -15,7 +15,7 @@ use super::utils::{
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::workspace::{
     MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedBlock,
-    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData,
+    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData, WorkspaceOutboundSyncBacklog,
 };
 use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
 
@@ -353,6 +353,46 @@ impl PlatformWorkspaceStorage {
                 }
 
                 Ok(vlobs)
+            },
+        )
+        .await?
+    }
+
+    pub async fn get_outbound_sync_backlog(
+        &mut self,
+    ) -> anyhow::Result<WorkspaceOutboundSyncBacklog> {
+        with_transaction!(
+            &self.conn,
+            &[VLOBS_STORE, CHUNKS_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let vlobs = transaction.object_store(VLOBS_STORE)?;
+                let mut pending_entries = 0_u64;
+                let mut cursor = vlobs
+                    .index(VLOBS_INDEX_OUTBOUND_NEED_SYNC)?
+                    .cursor()
+                    .range(JsValue::from(1)..=JsValue::from(1))?
+                    .open_key()
+                    .await?;
+                while cursor.primary_key().is_some() {
+                    pending_entries += 1;
+                    cursor.advance(1).await?;
+                }
+
+                let chunks = transaction.object_store(CHUNKS_STORE)?;
+                let mut pending_bytes = 0_u64;
+                let mut cursor = chunks.cursor().open().await?;
+                while let Some(obj) = cursor.value() {
+                    let size_js = js_sys::Reflect::get(&obj, &CHUNKS_SIZE_FIELD.into())
+                        .map_err(|e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"))?;
+                    pending_bytes += js_to_rs_u64(size_js)?;
+                    cursor.advance(1).await?;
+                }
+
+                Ok(WorkspaceOutboundSyncBacklog {
+                    pending_entries,
+                    pending_bytes,
+                })
             },
         )
         .await?

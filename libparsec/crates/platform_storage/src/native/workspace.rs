@@ -17,7 +17,7 @@ use libparsec_types::prelude::*;
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::workspace::{
     MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedBlock,
-    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData,
+    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData, WorkspaceOutboundSyncBacklog,
 };
 
 use super::model::{
@@ -240,6 +240,12 @@ impl PlatformWorkspaceStorage {
 
     pub async fn get_outbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
         db_get_outbound_need_sync(&mut self.conn, limit).await
+    }
+
+    pub async fn get_outbound_sync_backlog(
+        &mut self,
+    ) -> anyhow::Result<WorkspaceOutboundSyncBacklog> {
+        db_get_outbound_sync_backlog(&mut self.conn).await
     }
 
     pub async fn get_manifest(
@@ -955,6 +961,28 @@ async fn db_get_outbound_need_sync(
     rows.into_iter()
         .map(|row| VlobID::try_from(row.try_get::<&[u8], _>(0)?).map_err(|e| anyhow::anyhow!(e)))
         .collect()
+}
+
+async fn db_get_outbound_sync_backlog(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+) -> anyhow::Result<WorkspaceOutboundSyncBacklog> {
+    let row = sqlx::query(
+        " \
+        SELECT \
+            (SELECT COUNT(*) FROM vlobs WHERE need_sync = TRUE), \
+            (SELECT COALESCE(SUM(size), 0) FROM chunks) \
+        ",
+    )
+    .fetch_one(executor)
+    .await?;
+
+    let pending_entries = row.try_get::<i64, _>(0)? as u64;
+    let pending_bytes = row.try_get::<i64, _>(1)? as u64;
+
+    Ok(WorkspaceOutboundSyncBacklog {
+        pending_entries,
+        pending_bytes,
+    })
 }
 
 async fn db_get_inbound_need_sync(

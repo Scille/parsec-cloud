@@ -36,6 +36,12 @@ pub struct UpdateManifestData {
     pub base_version: VersionInt,
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct WorkspaceOutboundSyncBacklog {
+    pub pending_entries: u64,
+    pub pending_bytes: u64,
+}
+
 pub type RawEncryptedManifest = Vec<u8>;
 pub type RawEncryptedChunk = Vec<u8>;
 pub type RawEncryptedBlock = Vec<u8>;
@@ -143,6 +149,12 @@ impl WorkspaceStorage {
 
     pub async fn get_outbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
         self.platform.get_outbound_need_sync(limit).await
+    }
+
+    pub async fn get_outbound_sync_backlog(
+        &mut self,
+    ) -> anyhow::Result<WorkspaceOutboundSyncBacklog> {
+        self.platform.get_outbound_sync_backlog().await
     }
 
     pub async fn get_manifest(
