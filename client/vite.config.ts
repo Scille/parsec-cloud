@@ -111,28 +111,30 @@ plugins.push(
 const brotliCompressAsync = promisify(brotliCompress);
 const BROTLI_COMPRESSIBLE = /\.(js|css|html|svg|wasm)$/;
 
-plugins.push({
-  name: 'brotli-compress',
-  apply: 'build',
-  async closeBundle() {
-    async function compressDir(dir: string): Promise<void> {
-      const entries = await fs.promises.readdir(dir, { withFileTypes: true });
-      await Promise.all(
-        entries.map(async (entry) => {
-          const fullPath = path.join(dir, entry.name);
-          if (entry.isDirectory()) {
-            await compressDir(fullPath);
-          } else if (BROTLI_COMPRESSIBLE.test(entry.name)) {
-            const content = await fs.promises.readFile(fullPath);
-            const compressed = await brotliCompressAsync(content);
-            await fs.promises.writeFile(`${fullPath}.br`, compressed);
-          }
-        }),
-      );
-    }
-    await compressDir(path.resolve(__dirname, 'dist'));
-  },
-});
+if (platform === 'web') {
+  plugins.push({
+    name: 'brotli-compress',
+    apply: 'build',
+    async closeBundle() {
+      async function compressDir(dir: string): Promise<void> {
+        const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+        await Promise.all(
+          entries.map(async (entry) => {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+              await compressDir(fullPath);
+            } else if (BROTLI_COMPRESSIBLE.test(entry.name)) {
+              const content = await fs.promises.readFile(fullPath);
+              const compressed = await brotliCompressAsync(content);
+              await fs.promises.writeFile(`${fullPath}.br`, compressed);
+            }
+          }),
+        );
+      }
+      await compressDir(path.resolve(__dirname, 'dist'));
+    },
+  });
+}
 
 // 5) Finally configure Vite
 
