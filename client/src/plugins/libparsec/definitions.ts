@@ -267,6 +267,18 @@ export interface ClientConfig {
     logLevel: LogLevel | null
 }
 
+export interface ClientGetOutboundSyncBacklog {
+    totalPendingEntriesForStartedWorkspaces: U64
+    totalPendingBytesForStartedWorkspaces: U64
+    perWorkspace: Array<ClientGetOutboundSyncBacklogItem>
+}
+
+export interface ClientGetOutboundSyncBacklogItem {
+    realmId: VlobID
+    pendingEntries: U64
+    pendingBytes: U64
+}
+
 export interface ClientInfo {
     organizationAddr: ParsecOrganizationAddr
     organizationId: OrganizationID
@@ -2342,6 +2354,24 @@ export type ClientGetOrganizationBootstrapDateError =
   | ClientGetOrganizationBootstrapDateErrorInvalidCertificate
   | ClientGetOrganizationBootstrapDateErrorOffline
   | ClientGetOrganizationBootstrapDateErrorStopped
+
+// ClientGetOutboundSyncBacklogError
+export enum ClientGetOutboundSyncBacklogErrorTag {
+    Internal = 'ClientGetOutboundSyncBacklogErrorInternal',
+    Stopped = 'ClientGetOutboundSyncBacklogErrorStopped',
+}
+
+export interface ClientGetOutboundSyncBacklogErrorInternal {
+    tag: ClientGetOutboundSyncBacklogErrorTag.Internal
+    error: string
+}
+export interface ClientGetOutboundSyncBacklogErrorStopped {
+    tag: ClientGetOutboundSyncBacklogErrorTag.Stopped
+    error: string
+}
+export type ClientGetOutboundSyncBacklogError =
+  | ClientGetOutboundSyncBacklogErrorInternal
+  | ClientGetOutboundSyncBacklogErrorStopped
 
 // ClientGetSelfShamirRecoveryError
 export enum ClientGetSelfShamirRecoveryErrorTag {
@@ -6862,6 +6892,9 @@ export interface LibParsecPlugin {
     clientGetOrganizationBootstrapDate(
         client_handle: Handle
     ): Promise<Result<DateTime, ClientGetOrganizationBootstrapDateError>>
+    clientGetOutboundSyncBacklog(
+        client: Handle
+    ): Promise<Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError>>
     clientGetSelfShamirRecovery(
         client_handle: Handle
     ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>
