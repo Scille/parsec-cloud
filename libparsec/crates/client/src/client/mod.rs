@@ -18,6 +18,7 @@ mod workspace_bootstrap;
 mod workspace_create;
 mod workspace_list;
 mod workspace_needs;
+mod workspace_outbound_sync_backlog;
 mod workspace_refresh_list;
 mod workspace_rename;
 mod workspace_self_promote;
@@ -40,6 +41,9 @@ pub use self::{
     workspace_create::ClientCreateWorkspaceError,
     workspace_list::WorkspaceInfo,
     workspace_needs::ClientProcessWorkspacesNeedsError,
+    workspace_outbound_sync_backlog::{
+        ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogItem,
+    },
     workspace_refresh_list::ClientRefreshWorkspacesListError,
     workspace_rename::ClientRenameWorkspaceError,
     workspace_self_promote::ClientSelfPromoteToWorkspaceOwnerError,
@@ -413,6 +417,10 @@ impl Client {
     /// A new workspace starts its life locally (hence this function can be called while
     /// offline), and is later bootstrapped to be accessible to other users/devices (this
     /// is typically done by a monitor reacting to an event from this function).
+    pub async fn get_outbound_sync_backlog(&self) -> ClientGetOutboundSyncBacklog {
+        workspace_outbound_sync_backlog::get_outbound_sync_backlog(self).await
+    }
+
     pub async fn create_workspace(
         &self,
         name: EntryName,
