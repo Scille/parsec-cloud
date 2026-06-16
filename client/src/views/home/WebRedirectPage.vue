@@ -18,14 +18,11 @@
       </div>
 
       <div class="redirect-buttons">
-        <ion-button class="redirect-buttons__item button-large button-primary">
-          <a
-            :href="redirectLink"
-            target="_blank"
-            class="link"
-          >
-            {{ $msTranslate('WebRedirectPage.desktop') }}
-          </a>
+        <ion-button
+          class="redirect-buttons__item button-large button-primary"
+          @click="Env.Links.openUrl(redirectLink)"
+        >
+          {{ $msTranslate('WebRedirectPage.desktop') }}
         </ion-button>
         <ion-button
           @click="openLinkInWeb()"
@@ -54,6 +51,7 @@
 <script setup lang="ts">
 import { ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
 import { getCurrentRouteQuery, navigateTo, Routes } from '@/router';
+import { Env } from '@/services/environment';
 import { InformationManager } from '@/services/informationManager';
 import { handleFileLink } from '@/services/linkHandler';
 import { IonButton, IonPage, IonText } from '@ionic/vue';
