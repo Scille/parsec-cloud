@@ -4285,7 +4285,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scwsapi"
 version = "0.8.1"
-source = "git+https://github.com/Scille/scwsapi-rs.git?rev=b8c729c3743ebf07182c16c53c000584d9cf9518#b8c729c3743ebf07182c16c53c000584d9cf9518"
+source = "git+https://github.com/Scille/scwsapi-rs.git?rev=beb3aa2e79f622a65025a7b07af6ef298e622c38#beb3aa2e79f622a65025a7b07af6ef298e622c38"
 dependencies = [
  "futures",
  "hex",
@@ -4297,12 +4297,13 @@ dependencies = [
  "sha2",
  "thiserror 2.0.18",
  "wasm-bindgen",
+ "wasm-bindgen-futures",
 ]
 
 [[package]]
 name = "scwsapi-sys"
 version = "0.4.1"
-source = "git+https://github.com/Scille/scwsapi-rs.git?rev=b8c729c3743ebf07182c16c53c000584d9cf9518#b8c729c3743ebf07182c16c53c000584d9cf9518"
+source = "git+https://github.com/Scille/scwsapi-rs.git?rev=beb3aa2e79f622a65025a7b07af6ef298e622c38#beb3aa2e79f622a65025a7b07af6ef298e622c38"
 dependencies = [
  "js-sys",
  "serde",
