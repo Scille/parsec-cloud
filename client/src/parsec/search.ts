@@ -32,7 +32,7 @@ function match(pattern: string, value: FsPath | EntryName): Array<MatchResult> {
       returnMatchData: true,
       ignoreCase: true,
       ignoreSymbols: false,
-      threshold: pattern.length < 5 ? 0.75 : 0.5,
+      threshold: pattern.length < 5 ? 0.9 : 0.75,
     });
     if (result && result.length > 0) {
       matches.push({ index: result[0].match.index + index, length: result[0].match.length });
