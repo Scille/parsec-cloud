@@ -285,6 +285,10 @@ async function changeAuthentication(): Promise<void> {
         errorMessage.value = 'MyProfilePage.errors.wrongPassword';
         break;
       }
+      case UpdateDeviceErrorTag.KeyringError: {
+        errorMessage.value = 'MyProfilePage.errors.keyringFailed';
+        break;
+      }
       default:
         props.informationManager.present(
           new Information({

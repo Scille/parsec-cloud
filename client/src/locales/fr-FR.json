@@ -2255,6 +2255,7 @@
         "errors": {
             "wrongAuthentication": "Authentification invalide.",
             "cannotChangeAuthentication": "Impossible de changer l'authentification",
+            "keyringFailed": "Impossible d'accéder à l'authentification système.",
             "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
             "invalidTotpCode": "Le code d'authentification multi-facteurs est invalide.",
             "totpOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion Internet.",
