@@ -29,14 +29,26 @@ use crate::{
 // Embedded test certificates (PEM format, converted to DER at init time)
 const ALICE_PEM: &[u8] = include_bytes!("../test-pki/Cert/alice.crt");
 const BOB_PEM: &[u8] = include_bytes!("../test-pki/Cert/bob.crt");
-const MALLORY_SIGN_PEM: &[u8] = include_bytes!("../test-pki/Cert/mallory-sign.crt");
+const GORDON_PEM: &[u8] = include_bytes!("../test-pki/Cert/gordon.crt");
+const MALLORY_BOTH_PEM: &[u8] = include_bytes!("../test-pki/Cert/mallory-both.crt");
 const MALLORY_ENCRYPT_PEM: &[u8] = include_bytes!("../test-pki/Cert/mallory-encrypt.crt");
+const MALLORY_ENCRYPT_DATA_ENCIPHERMENT_PEM: &[u8] =
+    include_bytes!("../test-pki/Cert/mallory-encrypt-dataEncipherment.crt");
+const MALLORY_SIGN_PEM: &[u8] = include_bytes!("../test-pki/Cert/mallory-sign.crt");
+const OLD_BOBY_PEM: &[u8] = include_bytes!("../test-pki/Cert/old-boby.crt");
+const REVOKED_BREEN_PEM: &[u8] = include_bytes!("../test-pki/Cert/revoked_breen.crt");
 
 // Embedded private keys (PKCS#8 PEM format)
 const ALICE_KEY_PEM: &[u8] = include_bytes!("../test-pki/Cert/alice.key");
 const BOB_KEY_PEM: &[u8] = include_bytes!("../test-pki/Cert/bob.key");
-const MALLORY_SIGN_KEY_PEM: &[u8] = include_bytes!("../test-pki/Cert/mallory-sign.key");
+const GORDON_KEY_PEM: &[u8] = include_bytes!("../test-pki/Cert/gordon.key");
+const MALLORY_BOTH_KEY_PEM: &[u8] = include_bytes!("../test-pki/Cert/mallory-both.key");
 const MALLORY_ENCRYPT_KEY_PEM: &[u8] = include_bytes!("../test-pki/Cert/mallory-encrypt.key");
+const MALLORY_ENCRYPT_DATA_ENCIPHERMENT_KEY_PEM: &[u8] =
+    include_bytes!("../test-pki/Cert/mallory-encrypt-dataEncipherment.key");
+const MALLORY_SIGN_KEY_PEM: &[u8] = include_bytes!("../test-pki/Cert/mallory-sign.key");
+const OLD_BOBY_KEY_PEM: &[u8] = include_bytes!("../test-pki/Cert/old-boby.key");
+const REVOKED_BREEN_KEY_PEM: &[u8] = include_bytes!("../test-pki/Cert/revoked_breen.key");
 
 // Trust anchors (root CAs)
 const BLACK_MESA_PEM: &[u8] = include_bytes!("../test-pki/Root/black_mesa.crt");
@@ -44,6 +56,8 @@ const APERTURE_SCIENCE_PEM: &[u8] = include_bytes!("../test-pki/Root/aperture_sc
 
 // Intermediate CAs
 const GLADOS_DEV_TEAM_PEM: &[u8] = include_bytes!("../test-pki/Intermediate/glados_dev_team.crt");
+const REVOKED_ANOMALOUS_MATERIALS_LABORATORIES_PEM: &[u8] =
+    include_bytes!("../test-pki/Intermediate/revoked_anomalous_materials_laboratories.crt");
 
 // Certificate revocation list (CRL)
 const BLACK_MESA_CERTIFICATE_REVOCATION_LIST_PEM: &[u8] =
@@ -111,14 +125,27 @@ pub(crate) struct TestbedPkiSystem {
 impl TestbedPkiSystem {
     fn new() -> Self {
         let user_cert_data = vec![
-            ("alice", ALICE_PEM, ALICE_KEY_PEM),
-            ("bob", BOB_PEM, BOB_KEY_PEM),
-            ("mallory sign", MALLORY_SIGN_PEM, MALLORY_SIGN_KEY_PEM),
+            ("Alice", ALICE_PEM, ALICE_KEY_PEM),
+            ("Bob", BOB_PEM, BOB_KEY_PEM),
+            ("Mallory sign", MALLORY_SIGN_PEM, MALLORY_SIGN_KEY_PEM),
             (
-                "mallory encrypt",
+                "Mallory encrypt",
                 MALLORY_ENCRYPT_PEM,
                 MALLORY_ENCRYPT_KEY_PEM,
             ),
+            ("Gordon", GORDON_PEM, GORDON_KEY_PEM),
+            (
+                "Mallory encrypt&sign",
+                MALLORY_BOTH_PEM,
+                MALLORY_BOTH_KEY_PEM,
+            ),
+            (
+                "Mallory dataEncipherment",
+                MALLORY_ENCRYPT_DATA_ENCIPHERMENT_PEM,
+                MALLORY_ENCRYPT_DATA_ENCIPHERMENT_KEY_PEM,
+            ),
+            ("Old Bob", OLD_BOBY_PEM, OLD_BOBY_KEY_PEM),
+            ("Revoked Breen", REVOKED_BREEN_PEM, REVOKED_BREEN_KEY_PEM),
         ];
 
         let user_certs = user_cert_data
@@ -148,7 +175,10 @@ impl TestbedPkiSystem {
                 .to_owned(),
         ];
 
-        let intermediate_certs = vec![load_cert_der_from_pem(GLADOS_DEV_TEAM_PEM)];
+        let intermediate_certs = vec![
+            load_cert_der_from_pem(GLADOS_DEV_TEAM_PEM),
+            load_cert_der_from_pem(REVOKED_ANOMALOUS_MATERIALS_LABORATORIES_PEM),
+        ];
 
         let certificate_revocation_lists = vec![load_crl_from_pem(
             BLACK_MESA_CERTIFICATE_REVOCATION_LIST_PEM,

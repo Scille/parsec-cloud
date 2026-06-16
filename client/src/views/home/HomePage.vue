@@ -664,7 +664,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
       );
       return;
     }
-    identityStrategy = makeAcceptPkiIdentityStrategy(certResult.value);
+    identityStrategy = makeAcceptPkiIdentityStrategy(certResult.value, certResult.value);
     primaryProtection = PrimaryProtectionStrategy.useSmartcard(certResult.value);
   } else if (request.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.OpenBao) {
     const serverConfigResult = await getServerConfig(serverAddr);
@@ -1018,7 +1018,7 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
 
   const result = await parsecLogin(device, access);
   if (access.primaryProtection.tag === DevicePrimaryProtectionStrategyTag.PKI) {
-    await closeCertificate(access.primaryProtection.pkiPrivateKeyHandle);
+    await closeCertificate(access.primaryProtection.pkiEncryptPrivateKeyHandle);
   }
   if (result.ok) {
     window.electronAPI.log('debug', 'getOrganizationCreationDate');

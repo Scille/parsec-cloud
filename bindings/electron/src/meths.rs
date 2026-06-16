@@ -5759,8 +5759,19 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs<'a>(
             )
         }
         "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
-            let pki_private_key_handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "pkiPrivateKeyHandle")?;
+            let pki_sign_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiSignPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let pki_encrypt_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiEncryptPrivateKeyHandle")?;
                 {
                     let v = js_val.value(cx);
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
@@ -5772,7 +5783,8 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs<'a>(
             };
             Ok(
                 libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-                    pki_private_key_handle,
+                    pki_sign_private_key_handle,
+                    pki_encrypt_private_key_handle,
                 },
             )
         }
@@ -5813,14 +5825,27 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoAuthToken", js_openbao_auth_token)?;
         }
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-            pki_private_key_handle,
+            pki_sign_private_key_handle,
+            pki_encrypt_private_key_handle,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_pki_private_key_handle = JsNumber::new(cx, pki_private_key_handle as f64);
-            js_obj.set(cx, "pkiPrivateKeyHandle", js_pki_private_key_handle)?;
+            let js_pki_sign_private_key_handle =
+                JsNumber::new(cx, pki_sign_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiSignPrivateKeyHandle",
+                js_pki_sign_private_key_handle,
+            )?;
+            let js_pki_encrypt_private_key_handle =
+                JsNumber::new(cx, pki_encrypt_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiEncryptPrivateKeyHandle",
+                js_pki_encrypt_private_key_handle,
+            )?;
         }
     }
     Ok(js_obj)
@@ -10868,8 +10893,8 @@ fn variant_device_primary_protection_strategy_js_to_rs<'a>(
             })
         }
         "DevicePrimaryProtectionStrategyPKI" => {
-            let pki_private_key_handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "pkiPrivateKeyHandle")?;
+            let pki_encrypt_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiEncryptPrivateKeyHandle")?;
                 {
                     let v = js_val.value(cx);
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
@@ -10880,7 +10905,7 @@ fn variant_device_primary_protection_strategy_js_to_rs<'a>(
                 }
             };
             Ok(libparsec::DevicePrimaryProtectionStrategy::PKI {
-                pki_private_key_handle,
+                pki_encrypt_private_key_handle,
             })
         }
         "DevicePrimaryProtectionStrategyPassword" => {
@@ -10948,14 +10973,19 @@ fn variant_device_primary_protection_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
         libparsec::DevicePrimaryProtectionStrategy::PKI {
-            pki_private_key_handle,
+            pki_encrypt_private_key_handle,
             ..
         } => {
             let js_tag =
                 JsString::try_new(cx, "DevicePrimaryProtectionStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_pki_private_key_handle = JsNumber::new(cx, pki_private_key_handle as f64);
-            js_obj.set(cx, "pkiPrivateKeyHandle", js_pki_private_key_handle)?;
+            let js_pki_encrypt_private_key_handle =
+                JsNumber::new(cx, pki_encrypt_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiEncryptPrivateKeyHandle",
+                js_pki_encrypt_private_key_handle,
+            )?;
         }
         libparsec::DevicePrimaryProtectionStrategy::Password { password, .. } => {
             let js_tag =
@@ -16781,8 +16811,19 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs<'a>(
             })
         }
         "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
-            let pki_private_key_handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "pkiPrivateKeyHandle")?;
+            let pki_sign_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiSignPrivateKeyHandle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let pki_encrypt_private_key_handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "pkiEncryptPrivateKeyHandle")?;
                 {
                     let v = js_val.value(cx);
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
@@ -16793,7 +16834,8 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs<'a>(
                 }
             };
             Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-                pki_private_key_handle,
+                pki_sign_private_key_handle,
+                pki_encrypt_private_key_handle,
             })
         }
         _ => cx.throw_type_error("Object is not a SubmitAsyncEnrollmentIdentityStrategy"),
@@ -16840,14 +16882,27 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js<'a>(
             js_obj.set(cx, "openbaoPreferredAuthId", js_openbao_preferred_auth_id)?;
         }
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-            pki_private_key_handle,
+            pki_sign_private_key_handle,
+            pki_encrypt_private_key_handle,
             ..
         } => {
             let js_tag =
                 JsString::try_new(cx, "SubmitAsyncEnrollmentIdentityStrategyPKI").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_pki_private_key_handle = JsNumber::new(cx, pki_private_key_handle as f64);
-            js_obj.set(cx, "pkiPrivateKeyHandle", js_pki_private_key_handle)?;
+            let js_pki_sign_private_key_handle =
+                JsNumber::new(cx, pki_sign_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiSignPrivateKeyHandle",
+                js_pki_sign_private_key_handle,
+            )?;
+            let js_pki_encrypt_private_key_handle =
+                JsNumber::new(cx, pki_encrypt_private_key_handle as f64);
+            js_obj.set(
+                cx,
+                "pkiEncryptPrivateKeyHandle",
+                js_pki_encrypt_private_key_handle,
+            )?;
         }
     }
     Ok(js_obj)

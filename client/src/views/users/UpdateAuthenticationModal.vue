@@ -264,10 +264,10 @@ async function changeAuthentication(): Promise<void> {
   );
 
   if (currentAuth.value && currentAuth.value.tag === DevicePrimaryProtectionStrategyTag.PKI) {
-    await closeCertificate(currentAuth.value.pkiPrivateKeyHandle);
+    await closeCertificate(currentAuth.value.pkiEncryptPrivateKeyHandle);
   }
   if (saveStrategy.primaryProtection.tag === DevicePrimaryProtectionStrategyTag.PKI) {
-    await closeCertificate(saveStrategy.primaryProtection.pkiPrivateKeyHandle);
+    await closeCertificate(saveStrategy.primaryProtection.pkiEncryptPrivateKeyHandle);
   }
 
   if (result.ok) {
@@ -299,7 +299,7 @@ async function changeAuthentication(): Promise<void> {
 
 async function cancel(): Promise<boolean> {
   if (currentAuth.value && currentAuth.value.tag === DevicePrimaryProtectionStrategyTag.PKI) {
-    await closeCertificate(currentAuth.value.pkiPrivateKeyHandle);
+    await closeCertificate(currentAuth.value.pkiEncryptPrivateKeyHandle);
   }
   return modalController.dismiss(null, MsModalResult.Cancel);
 }

@@ -8,7 +8,7 @@ import tempfile
 from argparse import ArgumentParser
 from base64 import b64encode
 from binascii import unhexlify
-from collections.abc import Generator, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import Enum, auto
@@ -41,11 +41,13 @@ class RSAKeyAlgorithm(KeyAlgorithm):
     id = "RSA"
 
     def run_openssl_cmd(self, path: Path):
-        return check_run(["openssl", "genrsa", "-out", path, str(self.length)])
+        return display_and_run_check_call(
+            ["openssl", "genrsa", "-out", str(path), str(self.length)]
+        )
 
 
-def check_run(args: Sequence[str | Path]) -> int:
-    print(f"+ {shlex.join(map(str, args))}")
+def display_and_run_check_call(args: Sequence[str]) -> int:
+    print(f"+ {shlex.join(args)}")
     return subprocess.check_call(args)
 
 
@@ -76,7 +78,7 @@ class CertificateConfig:
     not_after: datetime
     """Certificate is not valid after that date"""
     type: CertificateType = CertificateType.Leaf
-    extensions: dict[str, str] = field(default_factory=dict)
+    extensions: dict[str, str | list[str]] = field(default_factory=dict)
     revoked: bool = False
     signing: list[CertificateConfig] = field(default_factory=list)
     """Certificates that will by signed by this certificate"""
@@ -201,7 +203,25 @@ TRUSTCHAINS = [
                         key_algorithm=RSAKeyAlgorithm(length=2048),
                         not_before=not_before,
                         not_after=not_after,
+                        extensions={KEY_USAGE: "keyEncipherment"},
+                    ),
+                    CertificateConfig(
+                        name="mallory-encrypt-dataEncipherment",
+                        subject={COMMON_NAME: "Mallory", EMAIL_ADDRESS: "mallory@black-mesa.corp"},
+                        key_algorithm=RSAKeyAlgorithm(length=2048),
+                        not_before=not_before,
+                        not_after=not_after,
                         extensions={KEY_USAGE: "dataEncipherment"},
+                    ),
+                    CertificateConfig(
+                        name="mallory-both",
+                        subject={COMMON_NAME: "Mallory", EMAIL_ADDRESS: "mallory@black-mesa.corp"},
+                        key_algorithm=RSAKeyAlgorithm(length=2048),
+                        not_before=not_before,
+                        # Make this certificate expires before the others, hence it should be the other
+                        # ones that are picked for use.
+                        not_after=not_after - timedelta(days=1),
+                        extensions={KEY_USAGE: ["keyEncipherment", "digitalSignature"]},
                     ),
                 ],
             )
@@ -306,15 +326,15 @@ def create_trustchain(
 
 
 def generate_self_signed_cert(chain: CertificateConfig, key_file: Path, cert_file: Path):
-    check_run(
+    display_and_run_check_call(
         [
             "openssl",
             "req",
             "-x509",  # Output a certificate instead of a CSR
             "-key",
-            key_file,
+            str(key_file),
             "-out",
-            cert_file,
+            str(cert_file),
             "-not_before",
             format_date_for_openssl(chain.not_before),
             "-not_after",
@@ -337,8 +357,15 @@ def gen_subject_option_arg(subject: dict[str, str]) -> str:
     return "".join(f"/{k}={v}" for k, v in subject.items())
 
 
-def gen_extensions_args(extensions: dict[str, str]) -> Generator[str, None, None]:
-    return (f"--addext={k}={v}" for k, v in extensions.items())
+def gen_extensions_args(extensions: dict[str, str | list[str]]) -> list[str]:
+    args = []
+    for k, v in extensions.items():
+        match v:
+            case str():
+                args.append(f"-addext={k}={v}")
+            case list():
+                args.append(f"-addext={k}={','.join(v)}")
+    return args
 
 
 def generate_signed_cert(
@@ -349,15 +376,15 @@ def generate_signed_cert(
     output_dir: Path,
 ) -> None:
     csr_file = cert_file.with_suffix(".csr")
-    check_run(
+    display_and_run_check_call(
         [
             "openssl",
             "req",
             "-new",
             "-key",
-            key_file,
+            str(key_file),
             "-out",
-            csr_file,
+            str(csr_file),
             "-not_before",
             format_date_for_openssl(chain.not_before),
             "-not_after",
@@ -373,19 +400,19 @@ def generate_signed_cert(
     ca_cert = ca_workdir / (signer.name + ".crt")
     ca_key = ca_workdir / (signer.name + ".key")
     ca_serial_file = ca_workdir / (signer.name + ".srl")
-    check_run(
+    display_and_run_check_call(
         [
             "openssl",
             "x509",
             "-req",
             "-in",
-            csr_file,
+            str(csr_file),
             "-out",
-            cert_file,
+            str(cert_file),
             "-CA",
-            ca_cert,
+            str(ca_cert),
             "-CAkey",
-            ca_key,
+            str(ca_key),
             # Not using "-preserve_dates" because during testing, it does not seems to be taken into account
             "-not_before",
             format_date_for_openssl(chain.not_before),
@@ -394,7 +421,7 @@ def generate_signed_cert(
             "-copy_extensions",
             "copyall",
         ]
-        + (["-CAserial", ca_serial_file] if ca_serial_file.exists() else ["-CAcreateserial"])
+        + (["-CAserial", str(ca_serial_file)] if ca_serial_file.exists() else ["-CAcreateserial"])
     )
 
 
@@ -404,7 +431,7 @@ def get_sha256_fingerprint(cert_file: Path) -> Sha256Fingerprint:
             "openssl",
             "x509",
             "-in",
-            cert_file,
+            str(cert_file),
             "-inform",
             "pem",
             "-noout",
@@ -420,17 +447,17 @@ def get_sha256_fingerprint(cert_file: Path) -> Sha256Fingerprint:
 def generate_pkcs12_file(
     chain: CertificateConfig, cert_file: Path, key_file: Path, out_file: Path
 ) -> None:
-    check_run(
+    display_and_run_check_call(
         [
             "openssl",
             "pkcs12",
             "-export",
             "-in",
-            cert_file,
+            str(cert_file),
             "-inkey",
-            key_file,
+            str(key_file),
             "-out",
-            out_file,
+            str(out_file),
             "-passout",
             "pass:",  # Do not use a password
             "-name",
@@ -486,36 +513,36 @@ default_crl_days = 36500
         for cert in revoked_certs:
             cert_workdir = output_dir / cert.type.get_path()
             cert_file = cert_workdir / (cert.name + ".crt")
-            check_run(
+            display_and_run_check_call(
                 [
                     "openssl",
                     "ca",
                     "-config",
-                    openssl_conf,
+                    str(openssl_conf),
                     "-cert",
-                    ca_cert,
+                    str(ca_cert),
                     "-keyfile",
-                    ca_key,
+                    str(ca_key),
                     "-revoke",
-                    cert_file,
+                    str(cert_file),
                 ]
             )
 
         # Build the CRL
-        check_run(
+        display_and_run_check_call(
             [
                 "openssl",
                 "ca",
                 "-config",
-                openssl_conf,
+                str(openssl_conf),
                 "-cert",
-                ca_cert,
+                str(ca_cert),
                 "-keyfile",
-                ca_key,
+                str(ca_key),
                 # cspell: disable-next-line
                 "-gencrl",
                 "-out",
-                crl_file,
+                str(crl_file),
             ]
         )
 

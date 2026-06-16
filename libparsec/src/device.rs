@@ -240,7 +240,7 @@ mod strategy {
             password: Password,
         },
         PKI {
-            pki_private_key_handle: Handle,
+            pki_encrypt_private_key_handle: Handle,
         },
         AccountVault {
             account_handle: Handle,
@@ -282,11 +282,11 @@ mod strategy {
                     }
                 }
                 DevicePrimaryProtectionStrategy::PKI {
-                    pki_private_key_handle,
+                    pki_encrypt_private_key_handle,
                 } => {
                     // Note `borrow_from_handle` does a side-effect here !
                     let (pki_certificate, pki_private_key) =
-                        borrow_from_handle(pki_private_key_handle, |x| match x {
+                        borrow_from_handle(pki_encrypt_private_key_handle, |x| match x {
                             HandleItem::PkiPrivateKey {
                                 certificate,
                                 private_key,
@@ -382,10 +382,10 @@ mod strategy {
                     }
                 }
                 DevicePrimaryProtectionStrategy::PKI {
-                    pki_private_key_handle,
+                    pki_encrypt_private_key_handle,
                 } => {
                     let (pki_certificate, pki_private_key) =
-                        borrow_from_handle(pki_private_key_handle, |x| match x {
+                        borrow_from_handle(pki_encrypt_private_key_handle, |x| match x {
                             HandleItem::PkiPrivateKey {
                                 certificate,
                                 private_key,

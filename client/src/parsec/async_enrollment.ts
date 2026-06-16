@@ -4,31 +4,23 @@ import { getDefaultDeviceName } from '@/common/device';
 import { toHex } from '@/common/utils';
 import { isWeb } from '@/parsec/environment';
 import { getClientConfig } from '@/parsec/internals';
-import { parseParsecAddr } from '@/parsec/organization';
 import {
   AcceptFinalizeAsyncEnrollmentIdentityStrategy,
   AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao,
   AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI,
   AcceptFinalizeAsyncEnrollmentIdentityStrategyTag,
-  AsyncEnrollmentIdentitySystem,
-  AsyncEnrollmentIdentitySystemTag,
   AsyncEnrollmentRequest,
   AsyncEnrollmentUntrusted,
   AvailableDevice,
-  AvailableDeviceTypeTag,
-  AvailablePendingAsyncEnrollmentIdentitySystem,
-  AvailablePendingAsyncEnrollmentIdentitySystemTag,
+  CertificatePart,
   CertificatePurpose,
   CertificateWithDetailsValid,
   ClientAcceptAsyncEnrollmentError,
-  ClientAcceptAsyncEnrollmentErrorTag,
   ClientGetAsyncEnrollmentAddrError,
   ClientListAsyncEnrollmentsError,
   ClientRejectAsyncEnrollmentError,
-  ClientRejectAsyncEnrollmentErrorTag,
   DeviceSaveStrategy,
   EmailSentStatus,
-  EmailSentStatusTag,
   HumanHandle,
   OpenBaoListSelfEmailsError,
   ParsecAsyncEnrollmentAddr,
@@ -42,33 +34,116 @@ import {
   Result,
   ShowCertificateSelectionDialogError,
   SubmitAsyncEnrollmentError,
-  SubmitAsyncEnrollmentErrorTag,
   SubmitAsyncEnrollmentIdentityStrategy,
   SubmitAsyncEnrollmentIdentityStrategyOpenBao,
   SubmitAsyncEnrollmentIdentityStrategyPKI,
   SubmitAsyncEnrollmentIdentityStrategyTag,
   SubmitterCancelAsyncEnrollmentError,
-  SubmitterCancelAsyncEnrollmentErrorTag,
   SubmitterFinalizeAsyncEnrollmentError,
-  SubmitterFinalizeAsyncEnrollmentErrorTag,
   SubmitterListLocalAsyncEnrollmentsError,
   UserProfile,
   X509CertificateReference,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import {
-  AvailablePkiCertificate,
   AvailablePkiCertificateTag,
   AvailablePkiCertificateValid,
   libparsec,
   PkiOpenUserCertificatePrivateKeyError,
   PkiPrivateKeyCloseError,
-  UserX509CertificateLoadErrorTag,
 } from '@/plugins/libparsec';
 import { getConnectionHandle } from '@/router';
 import { OpenBaoClient } from '@/services/openBao';
 import { DateTime } from 'luxon';
 import { toRaw } from 'vue';
+
+function certSubjectKey(cert: AvailablePkiCertificateValid): string {
+  return JSON.stringify(cert.details.subject.map((dn) => `${dn.tag}:${dn.x1}`).sort());
+}
+
+function toCertPart(cert: AvailablePkiCertificateValid): CertificatePart {
+  return {
+    reference: cert.reference,
+    friendlyName: cert.friendlyName,
+    details: cert.details,
+  };
+}
+
+function pickBestByExpiry(existing: CertificatePart | undefined, candidate: AvailablePkiCertificateValid): CertificatePart {
+  if (!existing || candidate.details.notAfter > existing.details.notAfter) {
+    return toCertPart(candidate);
+  }
+  return existing;
+}
+
+function makeCertificateWithDetails(signCert?: CertificatePart, encryptCert?: CertificatePart): CertificateWithDetailsValid {
+  const primary = signCert ?? encryptCert;
+  return {
+    signCert,
+    encryptCert,
+    isExpired: () => {
+      const signExpired = signCert ? signCert.details.notAfter < DateTime.utc() : false;
+      const encryptExpired = encryptCert ? encryptCert.details.notAfter < DateTime.utc() : false;
+      return signExpired || encryptExpired;
+    },
+    getName: () => primary?.friendlyName ?? primary?.details.commonName ?? '',
+    getSerial: () => {
+      const parts: string[] = [];
+      if (signCert) {
+        parts.push(toHex(signCert.details.serial));
+      }
+      if (encryptCert && encryptCert !== signCert) {
+        parts.push(toHex(encryptCert.details.serial));
+      }
+      return parts.join('-');
+    },
+  };
+}
+
+function bundleCertificates(certs: Array<AvailablePkiCertificateValid>, purpose: CertificatePurpose): Array<CertificateWithDetailsValid> {
+  const groups = new Map<string, { signCert?: CertificatePart; encryptCert?: CertificatePart }>();
+
+  for (const cert of certs) {
+    const key = certSubjectKey(cert);
+    const group = groups.get(key) ?? {};
+
+    switch (purpose) {
+      case CertificatePurpose.Both:
+        if (cert.details.canSign) {
+          group.signCert = pickBestByExpiry(group.signCert, cert);
+        }
+        if (cert.details.canEncrypt) {
+          group.encryptCert = pickBestByExpiry(group.encryptCert, cert);
+        }
+        break;
+      case CertificatePurpose.Sign:
+        if (cert.details.canSign) {
+          group.signCert = pickBestByExpiry(group.signCert, cert);
+        }
+        break;
+      case CertificatePurpose.Encrypt:
+        if (cert.details.canEncrypt) {
+          group.encryptCert = pickBestByExpiry(group.encryptCert, cert);
+        }
+        break;
+    }
+
+    if (group.signCert || group.encryptCert) {
+      groups.set(key, group);
+    }
+  }
+
+  const result: Array<CertificateWithDetailsValid> = [];
+  for (const group of groups.values()) {
+    if (purpose === CertificatePurpose.Both && (!group.signCert || !group.encryptCert)) {
+      continue;
+    }
+    result.push(makeCertificateWithDetails(group.signCert, group.encryptCert));
+  }
+  return result;
+}
+
+let pkiInitialized = false;
 
 const _ASYNC_ENROLLMENT_PARSEC_API = {
   async initPki(): Promise<Result<null, PkiSystemInitError>> {
@@ -82,6 +157,21 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
       // - libparsec runs in the context of the worker but cannot import javascript libraries dynamically
       // So we do some loading part here, we forward the elements to a proxy inside the worker that wraps "pkiInitForScws"
       // to import the module and set a global state, and finally the real `libparsec.pkiInitForScws` is called.
+
+      if ((window as any).TESTING_MOCKED_SCWS) {
+        window.electronAPI.log('info', 'PKI is mocked');
+        // To test the PKI we pretend SCWS is enabled, but
+        // we are going to rely on the testbed.
+        const result = await (libparsec.pkiInitForScws as any)(
+          window.getConfigDir(),
+          import.meta.env.PARSEC_APP_TESTBED_SERVER || window.TESTBED_SERVER_URL,
+          '',
+          '',
+          true, // skipScwsApiImport since `scwsapi.js` won't be used (and is not available anyway)
+        );
+        pkiInitialized = result.ok;
+        return result;
+      }
 
       const parsedRes = await libparsec.tryConvertHttpToParsecAddr(window.origin);
       if (!parsedRes.ok) {
@@ -98,27 +188,31 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
       const SCWS_LOCATION_NAME = 'scws-scwsapi_js-location';
       const SCWS_APP_CERTIFICATE = 'scws-web_application_certificate';
 
-      const scwsapiLocationTag = document.querySelector(`meta[name="${SCWS_LOCATION_NAME}"`) as HTMLMetaElement | null;
-      if (!scwsapiLocationTag?.content) {
+      const scwsapiLocation = (document.querySelector(`meta[name="${SCWS_LOCATION_NAME}"`) as HTMLMetaElement | null)?.content;
+      if (!scwsapiLocation) {
         console.log(`PKI: No meta tag '${SCWS_LOCATION_NAME}' present`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${SCWS_LOCATION_NAME}' present` } };
       }
-      const scwsapiAppCertificateTag = document.querySelector(`meta[name="${SCWS_APP_CERTIFICATE}"`) as HTMLMetaElement | null;
-      if (!scwsapiAppCertificateTag?.content) {
+      const scwsapiAppCertificate = (document.querySelector(`meta[name="${SCWS_APP_CERTIFICATE}"`) as HTMLMetaElement | null)?.content;
+      if (!scwsapiAppCertificate) {
         console.log(`PKI: No meta tag '${SCWS_APP_CERTIFICATE}' present`);
         return { ok: false, error: { tag: PkiSystemInitErrorTag.NotAvailable, error: `No meta tag '${SCWS_APP_CERTIFICATE}' present` } };
       }
 
       // Signature differs between what the proxy expects and what libparsec has defined,
       // so we just cast. Trust me bro.
-      return await (libparsec.pkiInitForScws as any)(
+      const result = await (libparsec.pkiInitForScws as any)(
         window.getConfigDir(),
         parsedRes.value,
-        scwsapiLocationTag.content,
-        scwsapiAppCertificateTag.content,
+        scwsapiLocation,
+        scwsapiAppCertificate,
       );
+      pkiInitialized = result.ok;
+      return result;
     } else {
-      return await libparsec.pkiInitForNative(window.getConfigDir());
+      const result = await libparsec.pkiInitForNative(window.getConfigDir());
+      pkiInitialized = result.ok;
+      return result;
     }
   },
 
@@ -242,30 +336,20 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
     const result = await libparsec.pkiListUserCertificates();
 
     if (result.ok) {
-      const filtered: Array<AvailablePkiCertificateValid> = result.value.filter((cert) => {
+      const validCerts: Array<AvailablePkiCertificateValid> = result.value.filter((cert) => {
         if (cert.tag !== AvailablePkiCertificateTag.Valid) {
           window.electronAPI.log('warn', `Invalid certificate: ${cert.invalidReason.tag}`);
           return false;
         }
-        switch (purpose) {
-          case CertificatePurpose.Both:
-            return cert.details.canEncrypt && cert.details.canSign;
-          case CertificatePurpose.Encrypt:
-            return cert.details.canEncrypt;
-          case CertificatePurpose.Sign:
-            return cert.details.canSign;
-        }
+        return true;
       }) as Array<AvailablePkiCertificateValid>;
 
-      result.value = filtered.map((cert) => {
+      for (const cert of validCerts) {
         cert.details.notAfter = DateTime.fromSeconds(cert.details.notAfter as any as number);
         cert.details.notBefore = DateTime.fromSeconds(cert.details.notBefore as any as number);
-        (cert as CertificateWithDetailsValid).isExpired = () => cert.details.notAfter < DateTime.utc();
-        (cert as CertificateWithDetailsValid).getName = () => cert.friendlyName ?? cert.details.commonName ?? '';
-        (cert as CertificateWithDetailsValid).getSerial = () => toHex(cert.details.serial);
-        return cert;
-      });
-      return result as { ok: true; value: Array<CertificateWithDetailsValid> };
+      }
+
+      return { ok: true, value: bundleCertificates(validCerts, purpose) };
     }
     return result;
   },
@@ -276,426 +360,6 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
 
   async closeCertificate(handle: PkiHandle): Promise<Result<null, PkiPrivateKeyCloseError>> {
     return libparsec.pkiPrivateKeyClose(handle);
-  },
-};
-
-const REQUESTS = new Array<AsyncEnrollmentRequest>();
-
-function generateFakeCertificateReference(): X509CertificateReference {
-  return {
-    uri: {
-      id: null,
-      label: null,
-      derIssuer: new Uint8Array(),
-      derSubject: new Uint8Array(),
-      serial: new Uint8Array(),
-    },
-    hash: crypto.randomUUID(),
-  };
-}
-
-const FAKE_CERTS: Array<AvailablePkiCertificate> = [
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    friendlyName: 'Gordon Freeman',
-    details: {
-      commonName: 'Gordon Freeman',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2056-12-31T10:30:00'),
-      serial: new Uint8Array([45, 23, 42, 12, 34, 23, 42, 5, 97, 98]),
-      emails: ['gordon.freeman@blackmesa.nm', 'gordon.freeman@wanadoo.fr'],
-      canSign: true,
-      canEncrypt: true,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    friendlyName: 'Eli Vance',
-    details: {
-      commonName: 'Eli Vance',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2007-10-10T10:30:00'),
-      serial: new Uint8Array([86, 45, 42, 7, 65, 64, 23, 23, 5, 97, 98]),
-      emails: ['eli.vance@blackmesa.nm'],
-      canSign: true,
-      canEncrypt: true,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    friendlyName: 'Eli Vance',
-    details: {
-      commonName: 'Eli Vance',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2007-10-10T10:30:00'),
-      serial: new Uint8Array([86, 45, 42, 78, 65, 64, 23, 23, 5, 97, 98]),
-      emails: ['eli.vance@blackmesa.nm'],
-      canSign: true,
-      canEncrypt: true,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    friendlyName: 'Eli Vance',
-    details: {
-      commonName: 'Eli Vance',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2027-10-10T10:30:00'),
-      serial: new Uint8Array([86, 45, 78, 7, 65, 64, 23, 23, 5, 97, 98]),
-      emails: ['eli.vance@blackmesa.nm'],
-      canSign: true,
-      canEncrypt: true,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    friendlyName: 'Eli Vance',
-    details: {
-      commonName: 'Eli Vance',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2027-10-10T10:30:00'),
-      serial: new Uint8Array([86, 23, 42, 7, 65, 64, 23, 23, 5, 97, 98]),
-      emails: ['eli.vance@blackmesa.nm'],
-      canSign: true,
-      canEncrypt: true,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    friendlyName: 'Eli Vance',
-    details: {
-      commonName: 'Eli Vance',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2007-10-10T10:30:00'),
-      serial: new Uint8Array([86, 45, 42, 7, 65, 64, 23, 23, 57, 97, 98]),
-      emails: ['eli.vance@blackmesa.nm'],
-      canSign: true,
-      canEncrypt: true,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    friendlyName: 'Eli Vance',
-    details: {
-      commonName: 'Eli Vance',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2027-10-10T10:30:00'),
-      serial: new Uint8Array([86, 45, 42, 7, 65, 64, 23, 23, 5, 73, 98]),
-      emails: ['eli.vance@blackmesa.nm'],
-      canSign: true,
-      canEncrypt: true,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    friendlyName: 'Eli Vance',
-    details: {
-      commonName: 'Eli Vance',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2007-10-10T10:30:00'),
-      serial: new Uint8Array([86, 45, 42, 7, 65, 64, 79, 23, 5, 97, 98]),
-      emails: ['eli.vance@blackmesa.nm'],
-      canSign: true,
-      canEncrypt: true,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    friendlyName: 'Eli Vance',
-    details: {
-      commonName: 'Eli Vance',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2027-10-10T10:30:00'),
-      serial: new Uint8Array([86, 45, 42, 21, 65, 64, 23, 23, 5, 97, 98]),
-      emails: ['eli.vance@blackmesa.nm'],
-      canSign: true,
-      canEncrypt: true,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Valid,
-    reference: generateFakeCertificateReference(),
-    // cspell:disable-next-line
-    friendlyName: 'Isaac Kleiner',
-    details: {
-      // cspell:disable-next-line
-      commonName: 'Isaac Kleiner',
-      subject: [],
-      issuer: [],
-      notBefore: DateTime.fromISO('1998-11-19T08:00:00'),
-      notAfter: DateTime.fromISO('2032-08-08T11:45:00'),
-      serial: new Uint8Array([76, 34, 21, 4, 65, 23, 68, 8, 34, 98]),
-      // cspell:disable-next-line
-      emails: ['isaac.kleiner@blackmesa.nm'],
-      canSign: true,
-      canEncrypt: false,
-    },
-  },
-  {
-    tag: AvailablePkiCertificateTag.Invalid,
-    reference: generateFakeCertificateReference(),
-    invalidReason: { tag: UserX509CertificateLoadErrorTag.InvalidEmail },
-  },
-];
-
-const _ASYNC_ENROLLMENT_MOCKED_API = {
-  async initPki(): Promise<Result<null, PkiSystemInitError>> {
-    return { ok: true, value: null };
-  },
-
-  async requestJoinOrganization(
-    link: ParsecAsyncEnrollmentAddr,
-    identityStrategy: SubmitAsyncEnrollmentIdentityStrategy,
-  ): Promise<Result<null, SubmitAsyncEnrollmentError>> {
-    let identitySystem: AvailablePendingAsyncEnrollmentIdentitySystem;
-    let humanHandle: HumanHandle;
-
-    if (identityStrategy.tag === SubmitAsyncEnrollmentIdentityStrategyTag.OpenBao) {
-      identitySystem = {
-        tag: AvailablePendingAsyncEnrollmentIdentitySystemTag.OpenBao,
-        openbaoEntityId: identityStrategy.openbaoEntityId,
-        openbaoPreferredAuthId: identityStrategy.openbaoPreferredAuthId,
-      };
-      humanHandle = identityStrategy.requestedHumanHandle;
-    } else {
-      identitySystem = {
-        tag: AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI,
-        certificateRef: (FAKE_CERTS[identityStrategy.pkiPrivateKeyHandle] as AvailablePkiCertificateValid).reference,
-      };
-      humanHandle = {
-        label: 'Gordon Freeman',
-        email: 'gordon.freeman@blackmesa.nm',
-      };
-    }
-    const id = crypto.randomUUID();
-    const addrResult = await parseParsecAddr(link);
-
-    if (!addrResult.ok || addrResult.value.tag !== ParsedParsecAddrTag.AsyncEnrollment) {
-      return { ok: false, error: { tag: SubmitAsyncEnrollmentErrorTag.Internal, error: 'invalid link' } };
-    }
-
-    REQUESTS.push({
-      info: {
-        tag: PendingAsyncEnrollmentInfoTag.Submitted,
-        submittedOn: DateTime.utc(),
-      },
-      enrollment: {
-        filePath: `/${id}`,
-        submittedOn: DateTime.utc(),
-        addr: link,
-        enrollmentId: id,
-        requestedDeviceLabel: 'DeviceLabel',
-        requestedHumanHandle: humanHandle,
-        identitySystem: identitySystem,
-      },
-      organizationId: addrResult.value.organizationId,
-    });
-    return { ok: true, value: null };
-  },
-
-  async listJoinRequests(): Promise<Result<Array<AsyncEnrollmentRequest>, SubmitterListLocalAsyncEnrollmentsError>> {
-    return { ok: true, value: [...REQUESTS] };
-  },
-
-  async confirmJoinRequest(
-    request: AsyncEnrollmentRequest,
-    _saveStrategy: DeviceSaveStrategy,
-    _identityStrategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
-  ): Promise<Result<AvailableDevice, SubmitterFinalizeAsyncEnrollmentError>> {
-    const reqIndex = REQUESTS.findIndex((req) => req.enrollment.enrollmentId === request.enrollment.enrollmentId);
-
-    if (reqIndex === -1) {
-      return { ok: false, error: { tag: SubmitterFinalizeAsyncEnrollmentErrorTag.EnrollmentNotFoundOnServer, error: 'not found' } };
-    }
-    REQUESTS.splice(reqIndex, 1);
-    return {
-      ok: true,
-      value: {
-        keyFilePath: '/keyFile_Path',
-        createdOn: DateTime.utc(),
-        protectedOn: DateTime.utc(),
-        serverAddr: 'parsec3://localhost:6770?no_ssl=true',
-        organizationId: request.organizationId,
-        userId: 'userId',
-        deviceId: 'deviceId',
-        humanHandle: {
-          label: request.enrollment.requestedHumanHandle.label,
-          email: request.enrollment.requestedHumanHandle.email,
-        },
-        totpOpaqueKeyId: null,
-        deviceLabel: request.enrollment.requestedDeviceLabel,
-        ty: {
-          tag: AvailableDeviceTypeTag.Keyring,
-        },
-      },
-    };
-  },
-
-  async deleteJoinRequest(request: AsyncEnrollmentRequest): Promise<Result<null, SubmitterCancelAsyncEnrollmentError>> {
-    const reqIndex = REQUESTS.findIndex((req) => req.enrollment.enrollmentId === request.enrollment.enrollmentId);
-
-    if (reqIndex === -1) {
-      return { ok: false, error: { tag: SubmitterCancelAsyncEnrollmentErrorTag.NotFound, error: 'not found' } };
-    }
-    REQUESTS.splice(reqIndex, 1);
-    return { ok: true, value: null };
-  },
-
-  async listAsyncEnrollments(): Promise<Result<Array<AsyncEnrollmentUntrusted>, ClientListAsyncEnrollmentsError>> {
-    const handle = getConnectionHandle();
-
-    if (!handle) {
-      return generateNoHandleError<ClientListAsyncEnrollmentsError>();
-    }
-
-    const ENROLLMENTS: Array<AsyncEnrollmentUntrusted> = REQUESTS.filter(
-      (req) => req.info.tag === PendingAsyncEnrollmentInfoTag.Submitted,
-    ).map((req) => {
-      let identitySystem: AsyncEnrollmentIdentitySystem;
-
-      if (req.enrollment.identitySystem.tag === AvailablePendingAsyncEnrollmentIdentitySystemTag.PKI) {
-        identitySystem = {
-          tag: AsyncEnrollmentIdentitySystemTag.PKI,
-          x509RootCertificateCommonName: 'Common Name',
-          x509RootCertificateSubject: new Uint8Array([1, 2, 3, 4]),
-        };
-      } else {
-        identitySystem = {
-          tag: AsyncEnrollmentIdentitySystemTag.OpenBao,
-        };
-      }
-      return {
-        enrollmentId: req.enrollment.enrollmentId,
-        submittedOn: req.enrollment.submittedOn,
-        untrustedRequestedDeviceLabel: req.enrollment.requestedDeviceLabel,
-        untrustedRequestedHumanHandle: req.enrollment.requestedHumanHandle,
-        identitySystem: identitySystem,
-      };
-    });
-
-    return { ok: true, value: ENROLLMENTS };
-  },
-
-  async acceptAsyncEnrollment(
-    request: AsyncEnrollmentUntrusted,
-    _profile: UserProfile,
-    _identityStrategy: AcceptFinalizeAsyncEnrollmentIdentityStrategy,
-  ): Promise<Result<EmailSentStatus, ClientAcceptAsyncEnrollmentError>> {
-    const handle = getConnectionHandle();
-
-    if (!handle) {
-      return generateNoHandleError<ClientAcceptAsyncEnrollmentError>();
-    }
-    const found = REQUESTS.find((req) => req.enrollment.enrollmentId === request.enrollmentId);
-    if (!found) {
-      return { ok: false, error: { tag: ClientAcceptAsyncEnrollmentErrorTag.EnrollmentNotFound, error: 'not found' } };
-    }
-    found.info = {
-      tag: PendingAsyncEnrollmentInfoTag.Accepted,
-      submittedOn: found.info.submittedOn,
-      acceptedOn: DateTime.utc(),
-    };
-
-    return { ok: true, value: { tag: EmailSentStatusTag.Success } };
-  },
-
-  async rejectAsyncEnrollment(request: AsyncEnrollmentUntrusted): Promise<Result<null, ClientRejectAsyncEnrollmentError>> {
-    const handle = getConnectionHandle();
-
-    if (!handle) {
-      return generateNoHandleError<ClientRejectAsyncEnrollmentError>();
-    }
-    const found = REQUESTS.find((req) => req.enrollment.enrollmentId === request.enrollmentId);
-    if (!found) {
-      return { ok: false, error: { tag: ClientRejectAsyncEnrollmentErrorTag.EnrollmentNotFound, error: 'not found' } };
-    }
-    found.info = {
-      tag: PendingAsyncEnrollmentInfoTag.Rejected,
-      submittedOn: found.info.submittedOn,
-      rejectedOn: DateTime.utc(),
-    };
-
-    return { ok: true, value: null };
-  },
-
-  async selectCertificate(): Promise<Result<X509CertificateReference | undefined, ShowCertificateSelectionDialogError>> {
-    return {
-      ok: true,
-      value: {
-        uri: {
-          id: null,
-          label: null,
-          derIssuer: new Uint8Array(),
-          derSubject: new Uint8Array(),
-          serial: new Uint8Array(),
-        },
-        // cspell:disable-next-line
-        hash: 'ijkl',
-      },
-    };
-  },
-
-  async listCertificates(
-    purpose: CertificatePurpose,
-  ): Promise<Result<Array<CertificateWithDetailsValid>, PkiSystemListUserCertificateError>> {
-    const filtered: Array<CertificateWithDetailsValid> = FAKE_CERTS.filter((cert) => {
-      if (cert.tag !== AvailablePkiCertificateTag.Valid) {
-        return false;
-      }
-      switch (purpose) {
-        case CertificatePurpose.Both:
-          return cert.details.canEncrypt && cert.details.canSign;
-        case CertificatePurpose.Encrypt:
-          return cert.details.canEncrypt;
-        case CertificatePurpose.Sign:
-          return cert.details.canSign;
-      }
-    }) as Array<CertificateWithDetailsValid>;
-
-    return {
-      ok: true,
-      value: filtered.map((cert) => {
-        (cert as CertificateWithDetailsValid).isExpired = () => cert.details.notAfter < DateTime.utc();
-        (cert as CertificateWithDetailsValid).getName = () => cert.friendlyName ?? cert.details.commonName ?? '';
-        (cert as CertificateWithDetailsValid).getSerial = () => toHex(cert.details.serial);
-        return cert;
-      }),
-    };
-  },
-
-  async openCertificate(certRef: X509CertificateReference): Promise<Result<PkiHandle, PkiOpenUserCertificatePrivateKeyError>> {
-    return { ok: true, value: FAKE_CERTS.findIndex((cert) => certRef.hash === cert.reference.hash) };
-  },
-
-  async closeCertificate(_handle: PkiHandle): Promise<Result<null, PkiPrivateKeyCloseError>> {
-    return { ok: true, value: null };
   },
 };
 
@@ -725,17 +389,19 @@ async function getOpenBaoEmails(client: OpenBaoClient): Promise<Result<Array<str
   return result;
 }
 
-function makeRequestPkiIdentityStrategy(handle: PkiHandle): SubmitAsyncEnrollmentIdentityStrategyPKI {
+function makeRequestPkiIdentityStrategy(signHandle: PkiHandle, encryptHandle: PkiHandle): SubmitAsyncEnrollmentIdentityStrategyPKI {
   return {
     tag: SubmitAsyncEnrollmentIdentityStrategyTag.PKI,
-    pkiPrivateKeyHandle: handle,
+    pkiSignPrivateKeyHandle: signHandle,
+    pkiEncryptPrivateKeyHandle: encryptHandle,
   };
 }
 
-function makeAcceptPkiIdentityStrategy(handle: PkiHandle): AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
+function makeAcceptPkiIdentityStrategy(signHandle: PkiHandle, encryptHandle: PkiHandle): AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
   return {
     tag: AcceptFinalizeAsyncEnrollmentIdentityStrategyTag.PKI,
-    pkiPrivateKeyHandle: handle,
+    pkiSignPrivateKeyHandle: signHandle,
+    pkiEncryptPrivateKeyHandle: encryptHandle,
   };
 }
 
@@ -768,40 +434,21 @@ function makeAcceptOpenBaoIdentityStrategy(client: OpenBaoClient): AcceptFinaliz
 }
 
 async function isSmartcardAvailable(): Promise<boolean> {
-  const result = await initPki();
-  return result.ok;
+  return pkiInitialized;
 }
 
-// Some glue to switch between mocked and libparsec implementation
-// depending on a variable (useful for test/dev when not on Windows).
-type PkiImpl = typeof _ASYNC_ENROLLMENT_PARSEC_API;
-
-function pkiCurrentImpl(): PkiImpl {
-  if ((window as any).TESTING_PKI) {
-    return _ASYNC_ENROLLMENT_MOCKED_API;
-  }
-  return _ASYNC_ENROLLMENT_PARSEC_API;
-}
-
-function bind<K extends keyof PkiImpl>(key: K) {
-  return (...args: Parameters<PkiImpl[K]>): ReturnType<PkiImpl[K]> => {
-    const impl = pkiCurrentImpl()[key];
-    return (impl as any)(...args) as ReturnType<PkiImpl[K]>;
-  };
-}
-
-const requestJoinOrganization = bind('requestJoinOrganization');
-const listJoinRequests = bind('listJoinRequests');
-const confirmJoinRequest = bind('confirmJoinRequest');
-const deleteJoinRequest = bind('deleteJoinRequest');
-const listAsyncEnrollments = bind('listAsyncEnrollments');
-const acceptAsyncEnrollment = bind('acceptAsyncEnrollment');
-const rejectAsyncEnrollment = bind('rejectAsyncEnrollment');
-const selectCertificate = bind('selectCertificate');
-const initPki = bind('initPki');
-const listCertificates = bind('listCertificates');
-const openCertificate = bind('openCertificate');
-const closeCertificate = bind('closeCertificate');
+const requestJoinOrganization = _ASYNC_ENROLLMENT_PARSEC_API.requestJoinOrganization;
+const listJoinRequests = _ASYNC_ENROLLMENT_PARSEC_API.listJoinRequests;
+const confirmJoinRequest = _ASYNC_ENROLLMENT_PARSEC_API.confirmJoinRequest;
+const deleteJoinRequest = _ASYNC_ENROLLMENT_PARSEC_API.deleteJoinRequest;
+const listAsyncEnrollments = _ASYNC_ENROLLMENT_PARSEC_API.listAsyncEnrollments;
+const acceptAsyncEnrollment = _ASYNC_ENROLLMENT_PARSEC_API.acceptAsyncEnrollment;
+const rejectAsyncEnrollment = _ASYNC_ENROLLMENT_PARSEC_API.rejectAsyncEnrollment;
+const selectCertificate = _ASYNC_ENROLLMENT_PARSEC_API.selectCertificate;
+const initPki = _ASYNC_ENROLLMENT_PARSEC_API.initPki;
+const listCertificates = _ASYNC_ENROLLMENT_PARSEC_API.listCertificates;
+const openCertificate = _ASYNC_ENROLLMENT_PARSEC_API.openCertificate;
+const closeCertificate = _ASYNC_ENROLLMENT_PARSEC_API.closeCertificate;
 
 export {
   acceptAsyncEnrollment,

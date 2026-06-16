@@ -6308,8 +6308,21 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(
             )
         }
         "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI" => {
-            let pki_private_key_handle = {
-                let js_val = Reflect::get(&obj, &"pkiPrivateKeyHandle".into())?;
+            let pki_sign_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiSignPrivateKeyHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    v as u32
+                }
+            };
+            let pki_encrypt_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiEncryptPrivateKeyHandle".into())?;
                 {
                     let v = js_val
                         .dyn_into::<Number>()
@@ -6323,7 +6336,8 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_js_to_rs(
             };
             Ok(
                 libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-                    pki_private_key_handle,
+                    pki_sign_private_key_handle,
+                    pki_encrypt_private_key_handle,
                 },
             )
         }
@@ -6389,7 +6403,8 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
         }
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::AcceptFinalizeAsyncEnrollmentIdentityStrategy::PKI {
-            pki_private_key_handle,
+            pki_sign_private_key_handle,
+            pki_encrypt_private_key_handle,
             ..
         } => {
             Reflect::set(
@@ -6397,11 +6412,17 @@ fn variant_accept_finalize_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI".into(),
             )?;
-            let js_pki_private_key_handle = JsValue::from(pki_private_key_handle);
+            let js_pki_sign_private_key_handle = JsValue::from(pki_sign_private_key_handle);
             Reflect::set(
                 &js_obj,
-                &"pkiPrivateKeyHandle".into(),
-                &js_pki_private_key_handle,
+                &"pkiSignPrivateKeyHandle".into(),
+                &js_pki_sign_private_key_handle,
+            )?;
+            let js_pki_encrypt_private_key_handle = JsValue::from(pki_encrypt_private_key_handle);
+            Reflect::set(
+                &js_obj,
+                &"pkiEncryptPrivateKeyHandle".into(),
+                &js_pki_encrypt_private_key_handle,
             )?;
         }
     }
@@ -12654,8 +12675,8 @@ fn variant_device_primary_protection_strategy_js_to_rs(
             })
         }
         "DevicePrimaryProtectionStrategyPKI" => {
-            let pki_private_key_handle = {
-                let js_val = Reflect::get(&obj, &"pkiPrivateKeyHandle".into())?;
+            let pki_encrypt_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiEncryptPrivateKeyHandle".into())?;
                 {
                     let v = js_val
                         .dyn_into::<Number>()
@@ -12668,7 +12689,7 @@ fn variant_device_primary_protection_strategy_js_to_rs(
                 }
             };
             Ok(libparsec::DevicePrimaryProtectionStrategy::PKI {
-                pki_private_key_handle,
+                pki_encrypt_private_key_handle,
             })
         }
         "DevicePrimaryProtectionStrategyPassword" => {
@@ -12779,7 +12800,7 @@ fn variant_device_primary_protection_strategy_rs_to_js(
         }
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::DevicePrimaryProtectionStrategy::PKI {
-            pki_private_key_handle,
+            pki_encrypt_private_key_handle,
             ..
         } => {
             Reflect::set(
@@ -12787,11 +12808,11 @@ fn variant_device_primary_protection_strategy_rs_to_js(
                 &"tag".into(),
                 &"DevicePrimaryProtectionStrategyPKI".into(),
             )?;
-            let js_pki_private_key_handle = JsValue::from(pki_private_key_handle);
+            let js_pki_encrypt_private_key_handle = JsValue::from(pki_encrypt_private_key_handle);
             Reflect::set(
                 &js_obj,
-                &"pkiPrivateKeyHandle".into(),
-                &js_pki_private_key_handle,
+                &"pkiEncryptPrivateKeyHandle".into(),
+                &js_pki_encrypt_private_key_handle,
             )?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -19747,8 +19768,21 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs(
             })
         }
         "SubmitAsyncEnrollmentIdentityStrategyPKI" => {
-            let pki_private_key_handle = {
-                let js_val = Reflect::get(&obj, &"pkiPrivateKeyHandle".into())?;
+            let pki_sign_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiSignPrivateKeyHandle".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    v as u32
+                }
+            };
+            let pki_encrypt_private_key_handle = {
+                let js_val = Reflect::get(&obj, &"pkiEncryptPrivateKeyHandle".into())?;
                 {
                     let v = js_val
                         .dyn_into::<Number>()
@@ -19761,7 +19795,8 @@ fn variant_submit_async_enrollment_identity_strategy_js_to_rs(
                 }
             };
             Ok(libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-                pki_private_key_handle,
+                pki_sign_private_key_handle,
+                pki_encrypt_private_key_handle,
             })
         }
         _ => Err(JsValue::from(TypeError::new(
@@ -19843,7 +19878,8 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
         }
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitAsyncEnrollmentIdentityStrategy::PKI {
-            pki_private_key_handle,
+            pki_sign_private_key_handle,
+            pki_encrypt_private_key_handle,
             ..
         } => {
             Reflect::set(
@@ -19851,11 +19887,17 @@ fn variant_submit_async_enrollment_identity_strategy_rs_to_js(
                 &"tag".into(),
                 &"SubmitAsyncEnrollmentIdentityStrategyPKI".into(),
             )?;
-            let js_pki_private_key_handle = JsValue::from(pki_private_key_handle);
+            let js_pki_sign_private_key_handle = JsValue::from(pki_sign_private_key_handle);
             Reflect::set(
                 &js_obj,
-                &"pkiPrivateKeyHandle".into(),
-                &js_pki_private_key_handle,
+                &"pkiSignPrivateKeyHandle".into(),
+                &js_pki_sign_private_key_handle,
+            )?;
+            let js_pki_encrypt_private_key_handle = JsValue::from(pki_encrypt_private_key_handle);
+            Reflect::set(
+                &js_obj,
+                &"pkiEncryptPrivateKeyHandle".into(),
+                &js_pki_encrypt_private_key_handle,
             )?;
         }
     }

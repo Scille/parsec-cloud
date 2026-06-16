@@ -63,7 +63,8 @@ mod strategy {
             openbao_preferred_auth_id: String,
         },
         PKI {
-            pki_private_key_handle: crate::handle::Handle,
+            pki_sign_private_key_handle: crate::handle::Handle,
+            pki_encrypt_private_key_handle: crate::handle::Handle,
         },
     }
 
@@ -105,12 +106,13 @@ mod strategy {
                         >)
                 }
                 SubmitAsyncEnrollmentIdentityStrategy::PKI {
-                    pki_private_key_handle,
+                    pki_sign_private_key_handle,
+                    pki_encrypt_private_key_handle,
                 } => {
                     use crate::handle::{borrow_from_handle, HandleItem};
 
-                    let (pki_certificate, pki_private_key) =
-                        borrow_from_handle(pki_private_key_handle, |x| match x {
+                    let (pki_sign_certificate, pki_sign_private_key) =
+                        borrow_from_handle(pki_sign_private_key_handle, |x| match x {
                             HandleItem::PkiPrivateKey {
                                 certificate,
                                 private_key,
@@ -118,32 +120,46 @@ mod strategy {
                             _ => None,
                         })?;
 
-                    // Get certificate DER
-                    let cert_der = pki_certificate
-                        .get_der()
-                        .await
-                        .map_err(|e| anyhow::anyhow!("Cannot get certificate: {}", e))?;
+                    let (pki_encrypt_certificate, _) =
+                        borrow_from_handle(pki_encrypt_private_key_handle, |x| match x {
+                            HandleItem::PkiPrivateKey {
+                                certificate,
+                                private_key,
+                            } => Some((certificate.clone(), private_key.clone())),
+                            _ => None,
+                        })?;
 
-                    // Parse certificate and extract human handle
-                    let cert_info =
-                        libparsec_platform_pki::x509::X509CertificateInformation::load_der(
-                            &cert_der,
-                        )
-                        .map_err(|e| anyhow::anyhow!("Cannot load certificate info: {}", e))?;
+                    // Obtain the human handle from parsing the submitter certificate DER.
+                    // If sign and encrypt certificate handles correspond to different certificates, it is expected
+                    // they have both the same human handle nevertheless (as they correspond to the person).
+                    // However just to be sure we extract the info from the sign certificate since it is this
+                    // certificate that is send when during the submit (the encrypt certificate is only used locally)
+                    // since during the accept phase the submitter's requested email will be checked against its
+                    // provided X509 certificate.
+                    let human_handle = {
+                        let cert_der = pki_sign_certificate
+                            .get_der()
+                            .await
+                            .map_err(|e| anyhow::anyhow!("Cannot get certificate: {}", e))?;
 
-                    let human_handle = cert_info.human_handle().map_err(|e| {
-                        anyhow::anyhow!("Cannot extract human handle from certificate: {}", e)
-                    })?;
+                        // Parse certificate and extract human handle
+                        let cert_info =
+                            libparsec_platform_pki::x509::X509CertificateInformation::load_der(
+                                &cert_der,
+                            )
+                            .map_err(|e| anyhow::anyhow!("Cannot load certificate info: {}", e))?;
 
-                    let certificate_reference = pki_certificate
-                        .to_reference()
-                        .await
-                        .map_err(|e| anyhow::anyhow!("Cannot get certificate reference: {}", e))?;
+                        let human_handle = cert_info.human_handle().map_err(|e| {
+                            anyhow::anyhow!("Cannot extract human handle from certificate: {}", e)
+                        })?;
+
+                        human_handle
+                    };
 
                     Ok(Box::new(SubmitAsyncEnrollmentPKIIdentityStrategy {
-                        pki_certificate,
-                        pki_private_key,
-                        certificate_reference,
+                        pki_sign_certificate,
+                        pki_sign_private_key,
+                        pki_encrypt_certificate,
                         human_handle,
                     })
                         as Box<
@@ -235,9 +251,9 @@ mod strategy {
 
     #[derive(Debug)]
     struct SubmitAsyncEnrollmentPKIIdentityStrategy {
-        pki_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
-        pki_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
-        certificate_reference: X509CertificateReference,
+        pki_sign_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
+        pki_sign_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
+        pki_encrypt_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
         human_handle: HumanHandle,
     }
 
@@ -251,18 +267,18 @@ mod strategy {
             protocol::anonymous_cmds::latest::async_enrollment_submit::SubmitPayloadSignature,
             SubmitAsyncEnrollmentError,
         > {
-            let pki_private_key = self.pki_private_key.clone();
-            let pki_certificate = self.pki_certificate.clone();
+            let pki_sign_private_key = self.pki_sign_private_key.clone();
+            let pki_sign_certificate = self.pki_sign_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 // 1. Sign the payload
                 let (algorithm, signature) =
-                    pki_private_key.sign(&payload).await.map_err(|err| {
+                    pki_sign_private_key.sign(&payload).await.map_err(|err| {
                         SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
                     })?;
 
                 // 2. Get leaf & intermediate certificates
                 let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
-                    pki_certificate
+                    pki_sign_certificate
                         .get_validation_path()
                         .await
                         .map_err(|err| match err {
@@ -297,16 +313,14 @@ mod strategy {
             (SecretKey, AsyncEnrollmentLocalPendingIdentitySystem),
             SubmitAsyncEnrollmentError,
         > {
-            let cert_ref = self.certificate_reference.clone();
-            let pki_certificate = self.pki_certificate.clone();
+            let pki_encrypt_certificate = self.pki_encrypt_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
-                // 1. Generate a random secret key
                 let key = SecretKey::generate();
 
-                let der = pki_certificate.get_der().await.map_err(|e| {
+                let der = pki_encrypt_certificate.get_der().await.map_err(|e| {
                     SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(e.into())
                 })?;
-                // 2. Encrypt it with the PKI certificate's public key
+
                 let (algorithm, encrypted_key) =
                     libparsec_platform_pki::encrypt_message(der, key.as_ref())
                         .await
@@ -316,10 +330,14 @@ mod strategy {
                             )
                         })?;
 
-                // 3. Create the identity system metadata
+                let pki_encrypt_certificate_reference =
+                    pki_encrypt_certificate.to_reference().await.map_err(|e| {
+                        SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(e.into())
+                    })?;
+
                 let identity_system = AsyncEnrollmentLocalPendingIdentitySystem::PKI {
                     encrypted_key,
-                    certificate_ref: cert_ref,
+                    certificate_ref: pki_encrypt_certificate_reference,
                     algorithm,
                 };
 
@@ -342,7 +360,8 @@ mod strategy {
             openbao_auth_token: String,
         },
         PKI {
-            pki_private_key_handle: crate::handle::Handle,
+            pki_sign_private_key_handle: crate::handle::Handle,
+            pki_encrypt_private_key_handle: crate::handle::Handle,
         },
     }
 
@@ -383,12 +402,22 @@ mod strategy {
                 }
 
                 Self::PKI {
-                    pki_private_key_handle,
+                    pki_sign_private_key_handle,
+                    pki_encrypt_private_key_handle,
                 } => {
                     use crate::handle::{borrow_from_handle, HandleItem};
 
-                    let (pki_certificate, pki_private_key) =
-                        borrow_from_handle(pki_private_key_handle, |x| match x {
+                    let (pki_sign_certificate, pki_sign_private_key) =
+                        borrow_from_handle(pki_sign_private_key_handle, |x| match x {
+                            HandleItem::PkiPrivateKey {
+                                certificate,
+                                private_key,
+                            } => Some((certificate.clone(), private_key.clone())),
+                            _ => None,
+                        })?;
+
+                    let (_, pki_encrypt_private_key) =
+                        borrow_from_handle(pki_encrypt_private_key_handle, |x| match x {
                             HandleItem::PkiPrivateKey {
                                 certificate,
                                 private_key,
@@ -397,14 +426,13 @@ mod strategy {
                         })?;
 
                     Ok(Box::new(AcceptFinalizeAsyncEnrollmentPKIIdentityStrategy {
-                        pki_certificate,
-                        pki_private_key,
+                        pki_sign_certificate,
+                        pki_sign_private_key,
+                        pki_encrypt_private_key,
                     }))
                 }
             }
         }
-
-        pub fn convert_for_finalize(self) {}
     }
 
     /*
@@ -588,8 +616,9 @@ mod strategy {
 
     #[derive(Debug)]
     struct AcceptFinalizeAsyncEnrollmentPKIIdentityStrategy {
-        pki_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
-        pki_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
+        pki_sign_certificate: Arc<libparsec_platform_pki::PkiCertificate>,
+        pki_sign_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
+        pki_encrypt_private_key: Arc<libparsec_platform_pki::PkiPrivateKey>,
     }
 
     impl AcceptFinalizeAsyncEnrollmentIdentityStrategyTrait
@@ -606,7 +635,7 @@ mod strategy {
             payload_signature: protocol::authenticated_cmds::latest::async_enrollment_list::SubmitPayloadSignature,
             expected_author: EmailAddress,
         ) -> PinBoxFutureResult<(), AcceptAsyncEnrollmentError> {
-            let pki_certificate = self.pki_certificate.clone();
+            let pki_sign_certificate = self.pki_sign_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 let (signature, algorithm, submitter_cert, intermediate_certs) = match payload_signature {
                     protocol::authenticated_cmds::v5::async_enrollment_list::SubmitPayloadSignature::PKI {
@@ -627,9 +656,14 @@ mod strategy {
                 // as the submitter X509 certificate must also depend on it.
 
                 let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
-                    pki_certificate.get_validation_path().await.map_err(|err| {
-                        AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
-                    })?;
+                    pki_sign_certificate
+                        .get_validation_path()
+                        .await
+                        .map_err(|err| {
+                            AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                err.into(),
+                            )
+                        })?;
                 let pki_system = crate::pki::get_pki_system()
                     .await
                     .map_err(AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference)?;
@@ -704,20 +738,25 @@ mod strategy {
             protocol::authenticated_cmds::latest::async_enrollment_accept::AcceptPayloadSignature,
             AcceptAsyncEnrollmentError,
         > {
-            let pki_private_key = self.pki_private_key.clone();
-            let pki_certificate = self.pki_certificate.clone();
+            let pki_sign_private_key = self.pki_sign_private_key.clone();
+            let pki_sign_certificate = self.pki_sign_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 // 1. Sign the payload
                 let (algorithm, signature) =
-                    pki_private_key.sign(&payload).await.map_err(|err| {
+                    pki_sign_private_key.sign(&payload).await.map_err(|err| {
                         AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
                     })?;
 
                 // 2. Get leaf & intermediate certificates
                 let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
-                    pki_certificate.get_validation_path().await.map_err(|err| {
-                        AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
-                    })?;
+                    pki_sign_certificate
+                        .get_validation_path()
+                        .await
+                        .map_err(|err| {
+                            AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                                err.into(),
+                            )
+                        })?;
 
                 Ok(protocol::authenticated_cmds::latest::async_enrollment_accept::AcceptPayloadSignature::PKI {
                     signature,
@@ -737,7 +776,7 @@ mod strategy {
             payload: Bytes,
             payload_signature: protocol::anonymous_cmds::latest::async_enrollment_info::AcceptPayloadSignature,
         ) -> PinBoxFutureResult<(), SubmitterFinalizeAsyncEnrollmentError> {
-            let pki_certificate = self.pki_certificate.clone();
+            let pki_sign_certificate = self.pki_sign_certificate.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 let (signature, algorithm, accepter_cert, intermediate_certs) = match payload_signature {
                     protocol::anonymous_cmds::latest::async_enrollment_info::AcceptPayloadSignature::PKI {
@@ -758,7 +797,7 @@ mod strategy {
                 // as the accepter X509 certificate must also depend on it.
 
                 let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
-                    pki_certificate.get_validation_path().await.map_err(|err| {
+                    pki_sign_certificate.get_validation_path().await.map_err(|err| {
                         SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
                             err.into(),
                         )
@@ -804,7 +843,7 @@ mod strategy {
             &self,
             identity_system: AsyncEnrollmentLocalPendingIdentitySystem,
         ) -> PinBoxFutureResult<SecretKey, SubmitterFinalizeAsyncEnrollmentError> {
-            let pki_private_key = self.pki_private_key.clone();
+            let pki_encrypt_private_key = self.pki_encrypt_private_key.clone();
             Box::pin(pretend_future_is_send_on_web(async move {
                 let (encrypted_key, _certificate_ref, algorithm) = match identity_system {
                     AsyncEnrollmentLocalPendingIdentitySystem::PKI {
@@ -819,7 +858,7 @@ mod strategy {
                     }
                 };
 
-                let decrypted = pki_private_key
+                let decrypted = pki_encrypt_private_key
                     .decrypt(algorithm, &encrypted_key)
                     .await
                     .map_err(|err| {
