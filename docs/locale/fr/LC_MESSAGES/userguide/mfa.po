@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.7.2-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-03 08:44+0100\n"
+"POT-Creation-Date: 2026-06-16 17:42+0200\n"
 "PO-Revision-Date: 2026-03-02 15:12+0100\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -16,17 +16,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: ../../userguide/mfa.rst:6
+#: ../../userguide/mfa.rst:7
 msgid "Multi-factor authentication"
 msgstr "Authentification multifacteur"
 
-#: ../../userguide/mfa.rst:8
+#: ../../userguide/mfa.rst:9
 msgid ""
-"Parsec supports **Multi-factor authentication (MFA)** as an optional extra "
-"layer of protection for your login."
+"Parsec supports **Multi-factor authentication (MFA)** as an extra protection "
+"layer for your login."
 msgstr ""
 "Parsec supporte l'**authentification multifacteur (MFA)** comme couche de "
-"protection supplémentaire facultative pour votre connexion."
+"protection supplémentaire pour votre connexion."
 
 #: ../../userguide/mfa.rst:11
 msgid ""
@@ -241,11 +241,11 @@ msgstr ""
 msgid "You are now logged-in."
 msgstr "Vous êtes maintenant connecté."
 
-#: ../../userguide/mfa.rst:95
+#: ../../userguide/mfa.rst:97
 msgid "Recovering access when the authenticator app is lost"
 msgstr "Récupérer l'accès en cas de perte de l'application d'authentification"
 
-#: ../../userguide/mfa.rst:97
+#: ../../userguide/mfa.rst:99
 msgid ""
 "If you lose access to your authenticator app (e.g. lost or replaced phone), "
 "you will not be able to log in to any device protected with MFA. In this "
@@ -258,13 +258,13 @@ msgstr ""
 "demander une **réinitialisation de la configuration MFA** à "
 "l'**administrateur du serveur**."
 
-#: ../../userguide/mfa.rst:101
+#: ../../userguide/mfa.rst:103
 msgid "Please contact an administrator in your organization for assistance."
 msgstr ""
 "Veuillez contacter un administrateur de votre organisation pour obtenir de "
 "l'aide."
 
-#: ../../userguide/mfa.rst:103
+#: ../../userguide/mfa.rst:105
 msgid ""
 "See :ref:`doc_hosting_mfa_reset` for details on how to the MFA step is reset "
 "by the server administrator."
@@ -272,15 +272,15 @@ msgstr ""
 "Voir :ref:`doc_hosting_mfa_reset` pour plus de détails sur la manière dont "
 "l'étape du MFA est réinitialisée par l'administrateur du serveur."
 
-#: ../../userguide/mfa.rst:107
+#: ../../userguide/mfa.rst:109
 msgid "Reset your MFA"
 msgstr "Réinitialisez votre MFA"
 
-#: ../../userguide/mfa.rst:109
+#: ../../userguide/mfa.rst:111
 msgid "Once the server administrator has initiated the reset:"
 msgstr "Une fois que l'administrateur du serveur a lancé la réinitialisation :"
 
-#: ../../userguide/mfa.rst:111
+#: ../../userguide/mfa.rst:113
 msgid ""
 "You will receive an email from Parsec with the subject *\"Your MFA has been "
 "reset for <organization>\"*."
@@ -288,7 +288,7 @@ msgstr ""
 "Vous recevrez un e-mail de Parsec avec l'objet *« Votre MFA a été "
 "réinitialisé pour <organisation> »*."
 
-#: ../../userguide/mfa.rst:113
+#: ../../userguide/mfa.rst:115
 msgid ""
 "Click the link in the email (or open the link provided by your "
 "administrator) to open Parsec and start the MFA reset process."
@@ -297,7 +297,7 @@ msgstr ""
 "administrateur) pour ouvrir Parsec et démarrer le processus de "
 "réinitialisation du MFA."
 
-#: ../../userguide/mfa.rst:115
+#: ../../userguide/mfa.rst:117
 msgid ""
 "You will need to scan a new QR code with your authenticator app (on your new "
 "phone or a freshly installed app) to re-register the account."
@@ -306,19 +306,19 @@ msgstr ""
 "d'authentification (sur votre nouveau téléphone ou une application "
 "fraîchement installée) pour réenregistrer le compte."
 
-#: ../../userguide/mfa.rst:117
+#: ../../userguide/mfa.rst:119
 msgid "Confirm the setup by entering the 6-digit code shown in the app."
 msgstr ""
 "Confirmez la configuration en saisissant le code à 6 chiffres affiché dans "
 "l'application."
 
-#: ../../userguide/mfa.rst:119
+#: ../../userguide/mfa.rst:121
 msgid "MFA is now reset and you can log in again normally."
 msgstr ""
 "Le MFA est désormais réinitialisé et vous pouvez vous connecter à nouveau "
 "normalement."
 
-#: ../../userguide/mfa.rst:123
+#: ../../userguide/mfa.rst:125
 msgid ""
 "The reset only changes the secret shared between your authenticator app and "
 "the server. Your existing devices and all your data remain intact, nothing "
