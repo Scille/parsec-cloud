@@ -2254,6 +2254,7 @@
         "errors": {
             "wrongAuthentication": "Invalid authentication.",
             "cannotChangeAuthentication": "Failed to update authentication",
+            "keyringFailed": "Failed to access system authentication.",
             "failedToRetrieveInformation": "Failed to retrieve information. Please make sure you are online.",
             "invalidTotpCode": "The multi-factor authentication code is invalid.",
             "totpOffline": "Failed to reach the server. Make sure you are online.",

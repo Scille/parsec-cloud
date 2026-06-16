@@ -905,7 +905,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
     }
   } else if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
     window.electronAPI.log('debug', 'Handling Keyring login error');
-    if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed) {
+    if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed || error.tag === ClientStartErrorTag.KeyringError) {
       const answer = await askQuestion('HomePage.loginErrors.keyringFailedTitle', 'HomePage.loginErrors.keyringFailedQuestion', {
         yesText: 'HomePage.loginErrors.keyringFailedUsedRecovery',
         noText: 'HomePage.loginErrors.keyringFailedAbort',
