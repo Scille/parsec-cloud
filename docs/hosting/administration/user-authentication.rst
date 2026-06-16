@@ -18,11 +18,8 @@ via :abbr:`TOTP (Time-based One-Time Password)` codes.
 This is in addition to the primary protection (password, keyring, etc.).
 
 
-
 Authentication advisories
 =========================
-
-
 
 When starting the server, the recommended authentication methods can be specified as shown in the example below.
 
