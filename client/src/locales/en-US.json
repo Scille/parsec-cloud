@@ -270,7 +270,8 @@
             "login": "Log in to an organization",
             "loginButton": "Log in",
             "loading": "Loading...",
-            "deviceAlreadyUsed": "This device is already used by another app."
+            "deviceAlreadyUsed": "This device is already used by another app.",
+            "deviceInvalidData": "The device file contains invalid data. Please check that you have selected the correct device and try again."
         },
         "expiredDevice": {
             "questionTitle": "Expired organization",
