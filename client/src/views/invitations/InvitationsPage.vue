@@ -617,14 +617,19 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
     await pkiModal.present();
     const { role, data } = await pkiModal.onWillDismiss();
     await pkiModal.dismiss();
-    if (role !== MsModalResult.Confirm || !data.certificate || !serverAddr.value) {
+    if (role !== MsModalResult.Confirm || !data.signCertificate || !data.encryptCertificate || !serverAddr.value) {
       return;
     }
-    const certResult = await openCertificate(data.certificate);
-    if (!certResult.ok) {
+    const signCertResult = await openCertificate(data.signCertificate);
+    if (!signCertResult.ok) {
       return;
     }
-    strategy = makeAcceptPkiIdentityStrategy(certResult.value);
+    const encryptCertResult = await openCertificate(data.encryptCertificate);
+    if (!encryptCertResult.ok) {
+      await closeCertificate(signCertResult.value);
+      return;
+    }
+    strategy = makeAcceptPkiIdentityStrategy(signCertResult.value, encryptCertResult.value);
   } else if (request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao && !openBaoClient.value) {
     if (!serverConfig.value?.openbao || serverConfig.value.openbao.auths.length === 0) {
       return;
@@ -666,6 +671,10 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
   }
 
   const result = await acceptAsyncEnrollment(request, data.profile, strategy);
+  if (strategy.tag === AcceptFinalizeAsyncEnrollmentIdentityStrategyTag.PKI) {
+    await closeCertificate(strategy.pkiSignPrivateKeyHandle);
+    await closeCertificate(strategy.pkiEncryptPrivateKeyHandle);
+  }
   if (result.ok) {
     informationManager.value.present(
       new Information({
@@ -705,9 +714,6 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
       }),
       PresentationMode.Toast,
     );
-  }
-  if (strategy.tag === AcceptFinalizeAsyncEnrollmentIdentityStrategyTag.PKI) {
-    await closeCertificate(strategy.pkiPrivateKeyHandle);
   }
 }
 

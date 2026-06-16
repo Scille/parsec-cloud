@@ -260,7 +260,7 @@ export const PrimaryProtectionStrategy = {
   useSmartcard(pkiHandle: PkiHandle): DevicePrimaryProtectionStrategyPKI {
     return {
       tag: DevicePrimaryProtectionStrategyTag.PKI,
-      pkiPrivateKeyHandle: pkiHandle,
+      pkiEncryptPrivateKeyHandle: pkiHandle,
     };
   },
   useOpenBao(connInfo: OpenBaoConnectionInfo): DevicePrimaryProtectionStrategyOpenBao {

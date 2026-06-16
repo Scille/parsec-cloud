@@ -317,7 +317,6 @@ import type {
   HumanHandle,
   OrganizationID,
   AuthMethodInfo as ParsecAuthMethodInfo,
-  AvailablePkiCertificateValid as ParsecAvailablePkiCertificateValid,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
   ParsecInvitationAddrAndRedirectionURL,
@@ -331,7 +330,9 @@ import type {
   PendingAsyncEnrollmentInfo,
   UserID,
   UserProfile,
+  UserX509CertificateDetails,
   VlobID,
+  X509CertificateReference as X509CertificateReferenceType,
 } from '@/plugins/libparsec';
 
 import { DevicePrimaryProtectionStrategyTag, InvitationType, RealmRole as WorkspaceRole } from '@/plugins/libparsec';
@@ -495,7 +496,15 @@ interface AsyncEnrollmentRequest {
   organizationId: OrganizationID;
 }
 
-interface CertificateWithDetailsValid extends ParsecAvailablePkiCertificateValid {
+interface CertificatePart {
+  reference: X509CertificateReferenceType;
+  friendlyName: string;
+  details: UserX509CertificateDetails;
+}
+
+interface CertificateWithDetailsValid {
+  signCert?: CertificatePart;
+  encryptCert?: CertificatePart;
   getName: () => string;
   isExpired: () => boolean;
   getSerial: () => string;
@@ -518,6 +527,7 @@ export {
   AccountInvitation,
   AsyncEnrollmentRequest,
   AuthMethodInfo,
+  CertificatePart,
   CertificatePurpose,
   CertificateWithDetailsValid,
   ConnectionHandle,

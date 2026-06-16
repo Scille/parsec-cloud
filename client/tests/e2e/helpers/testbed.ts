@@ -33,6 +33,7 @@ export async function initTestBed(page: Page, reuseConfigPath?: string, template
       }
       window.TESTING_CONFIG_PATH = configPath as string;
       window.TESTBED_SERVER_URL = testbedServerUrl as string;
+
       await nextStage(configPath as string, 'en-US');
       return configPath as string;
     },

@@ -35,8 +35,8 @@ async fn testbed_open_certificate(env: &TestbedEnv) {
 async fn testbed_list_user_certificates(env: &TestbedEnv) {
     let pki = init_pki(env).await;
     let certs = pki.list_user_certificates().await.unwrap();
-    // We have alice, bob, mallory-sign, mallory-encrypt
-    p_assert_eq!(certs.len(), 4);
+    // We have alice, bob, mallory-sign, mallory-encrypt, mallory-both, mallory-data-encipherment, gordon, old-bob, revoked-breen
+    p_assert_eq!(certs.len(), 9);
 }
 
 #[parsec_test(testbed = "minimal")]
