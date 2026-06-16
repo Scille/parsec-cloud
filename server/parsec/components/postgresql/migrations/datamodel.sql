@@ -254,17 +254,33 @@ CREATE TABLE device (
     UNIQUE (organization, device_id)
 );
 
+-- TL;DR PG01 check is disabled below because "excessive lock" during
+-- ADD CONSTRAINT / ADD FOREIGN KEY is acceptable on this script which
+-- is executed only during initial database migration.
+--
+-- PG01 suggests adding "NOT VALID" to allow for concurrent insertions:
+-- it marks existing rows at "not valid" for the constraint/FK that just
+-- has been added and commits the transaction right away.
+-- New rows can be added concurrently (the constraint is checked for them)
+-- while a new operation VALIDATE CONSTRAINT can be run later to mark previous
+-- rows as "valid" (which does not require an exclusive lock).
+-- More info:
+-- https://docs.sqlfluff.com/en/stable/reference/rules.html#rule-PG01
+-- https://www.postgresql.org/docs/17/sql-altertable.html#SQL-ALTERTABLE-DESC-ADD-TABLE-CONSTRAINT
 
-ALTER TABLE user_
-ADD CONSTRAINT fk_user_device_user_certifier FOREIGN KEY (
-    user_certifier
-) REFERENCES device (_id);
-ALTER TABLE user_
-ADD CONSTRAINT fk_user_device_revoked_user_certifier FOREIGN KEY (
-    revoked_user_certifier
-) REFERENCES device (_id);
+ALTER TABLE user_  -- noqa: PG01
+ADD CONSTRAINT fk_user_device_user_certifier
+FOREIGN KEY (user_certifier)
+REFERENCES device (_id);
 
-ALTER TABLE profile ADD FOREIGN KEY (certified_by) REFERENCES device (_id);
+ALTER TABLE user_  -- noqa: PG01
+ADD CONSTRAINT fk_user_device_revoked_user_certifier
+FOREIGN KEY (revoked_user_certifier)
+REFERENCES device (_id);
+
+ALTER TABLE profile  -- noqa: PG01
+ADD FOREIGN KEY (certified_by)
+REFERENCES device (_id);
 
 -------------------------------------------------------
 --  Shamir recovery
@@ -311,9 +327,9 @@ CREATE TABLE shamir_recovery_share (
 
 
 -- Alter user table to introduce a cross-reference between user id and shamir id
-ALTER TABLE user_ ADD FOREIGN KEY (
-    shamir_recovery
-) REFERENCES shamir_recovery_setup (_id);
+ALTER TABLE user_  -- noqa: PG01
+ADD FOREIGN KEY (shamir_recovery)
+REFERENCES shamir_recovery_setup (_id);
 
 
 -------------------------------------------------------
