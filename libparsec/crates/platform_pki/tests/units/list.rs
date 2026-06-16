@@ -22,9 +22,46 @@ async fn list_user_certificates(certificates: &InstalledCertificates) {
         "Expected at least one user certificate in the store"
     );
 
-    // Should at least found Alice's certificate
-    let alice_reference = certificates.alice_cert_ref();
-    assert!(certs.iter().any(|c| matches!(c, AvailablePkiCertificate::Valid { reference, .. } if reference.hash == alice_reference.hash)));
+    // Helper function to find a certificate by reference and check its can_sign/can_encrypt flags
+    fn assert_certificate(
+        certs: &[AvailablePkiCertificate],
+        reference: &crate::X509CertificateReference,
+        expected_can_sign: bool,
+        expected_can_encrypt: bool,
+    ) {
+        let cert = certs.iter().find(|c| matches!(c, AvailablePkiCertificate::Valid { reference: ref r, .. } if r.hash == reference.hash));
+        if let AvailablePkiCertificate::Valid { details, .. } = cert.expect("certificate not found")
+        {
+            p_assert_eq!(details.can_sign, expected_can_sign);
+            p_assert_eq!(details.can_encrypt, expected_can_encrypt);
+        }
+    }
+
+    // Check that Alice certificate has both can_sign==true and can_encrypt==true
+    // (since Alice certificate contains no key usage information)
+    assert_certificate(&certs, &certificates.alice_cert_ref(), true, true);
+
+    // Check Mallory certificate with only `digitalSignature` key usage
+    assert_certificate(&certs, &certificates.mallory_sign_cert_ref(), true, false);
+
+    // Check Mallory certificate with only `keyEncipherment` key usage
+    assert_certificate(
+        &certs,
+        &certificates.mallory_encrypt_cert_ref(),
+        false,
+        true,
+    );
+
+    // Check Mallory certificate with both `digitalSignature` & `keyEncipherment` key usages
+    assert_certificate(&certs, &certificates.mallory_both_cert_ref(), true, true);
+
+    // Check Mallory with wrong `dataEncipherment` key usage
+    assert_certificate(
+        &certs,
+        &certificates.mallory_encrypt_data_encipherment_cert_ref(),
+        false,
+        true,
+    );
 }
 
 #[parsec_test]

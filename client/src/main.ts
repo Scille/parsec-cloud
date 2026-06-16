@@ -208,7 +208,6 @@ async function setupApp(): Promise<void> {
   if (!isElectron()) {
     setupWebElectronAPI(injectionProvider);
   }
-  await initPki();
   await ResourcesManager.instance().loadAll();
 
   await storageManagerInstance.init();
@@ -303,6 +302,7 @@ async function setupApp(): Promise<void> {
       window.usesTestbed = (): boolean => false;
     }
 
+    await initPki();
     await ParsecAccount.init();
 
     await router.isReady();

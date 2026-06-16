@@ -588,7 +588,8 @@ export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI {
     tag: "AcceptFinalizeAsyncEnrollmentIdentityStrategyPKI"
-    pki_private_key_handle: number
+    pki_sign_private_key_handle: number
+    pki_encrypt_private_key_handle: number
 }
 export type AcceptFinalizeAsyncEnrollmentIdentityStrategy =
   | AcceptFinalizeAsyncEnrollmentIdentityStrategyOpenBao
@@ -2844,7 +2845,7 @@ export interface DevicePrimaryProtectionStrategyOpenBao {
 }
 export interface DevicePrimaryProtectionStrategyPKI {
     tag: "DevicePrimaryProtectionStrategyPKI"
-    pki_private_key_handle: number
+    pki_encrypt_private_key_handle: number
 }
 export interface DevicePrimaryProtectionStrategyPassword {
     tag: "DevicePrimaryProtectionStrategyPassword"
@@ -3833,7 +3834,8 @@ export interface SubmitAsyncEnrollmentIdentityStrategyOpenBao {
 }
 export interface SubmitAsyncEnrollmentIdentityStrategyPKI {
     tag: "SubmitAsyncEnrollmentIdentityStrategyPKI"
-    pki_private_key_handle: number
+    pki_sign_private_key_handle: number
+    pki_encrypt_private_key_handle: number
 }
 export type SubmitAsyncEnrollmentIdentityStrategy =
   | SubmitAsyncEnrollmentIdentityStrategyOpenBao

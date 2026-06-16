@@ -121,7 +121,6 @@ Those variables are used when testing the app in Playwright. They will mostly be
 | Name                             | Type                                              | Description                                                                                                    |
 | -------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `TESTING`                        | `boolean`                                         | Place the app in testing mode (reduce the logs, disable Sentry, does not setup the testbed automatically, ...) |
-| `TESTING_PKI`                    | `boolean`                                         | Use mocks for PKI                                                                                              |
 | `TESTING_DISABLE_STRIPE`         | `boolean`                                         | Disable Stripe                                                                                                 |
 | `TESTING_OPEN_BAO_SERVER`        | `url`                                             | Sets the OpenBao server to use                                                                                 |
 | `TESTING_ACCOUNT_AUTO_LOGIN`     | `boolean`                                         | Automatically logs into Parsec Account                                                                         |
@@ -135,3 +134,4 @@ Those variables are used when testing the app in Playwright. They will mostly be
 | `TESTING_SAAS_SERVERS`           | `server1;server2;server3;...`                     | Servers recognized as Saas                                                                                     |
 | `TESTING_TRIAL_SERVERS`          | `server1;server2;server3;...`                     | Servers recognized as trial                                                                                    |
 | `TESTING_ADD_USERS`              | `userName1:profile;userName2:profile;...`         | Profile as the enum value defined in parsec (`UserProfileAdmin` for an admin)                                  |
+| `TESTING_MOCKED_SCWS`            | `boolean`                                         | Enable PKI support on the testbed                                                                              |

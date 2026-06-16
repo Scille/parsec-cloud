@@ -81,19 +81,28 @@ async function maybeInit(): Promise<LibParsecPlugin> {
         // We're loading it in TypeScript inside the shared worker and attaching
         // it to the global context.
         if (prop === 'pkiInitForScws') {
-          return async (configDir: string, parsecAddr: string, scwsLocation: string, certificate: string) => {
+          return async (
+            configDir: string,
+            parsecAddr: string,
+            scwsLocation: string,
+            certificate: string,
+            skipScwsApiImport: boolean | undefined,
+          ) => {
             try {
-              console.log(`Loading SCWS from ${scwsLocation} in shared worker...`);
-              const scwsapi = await import(/* @vite-ignore */ scwsLocation);
-              console.log('Imported SCWS', scwsapi);
-              (globalThis as any).SCWS = scwsapi.SCWS;
-              (globalThis as any).SCWS_WEBAPP_CERT = certificate;
+              if (skipScwsApiImport) {
+                console.log('Skipping loading scwsapi.js');
+              } else {
+                console.log(`Loading SCWS from ${scwsLocation} in shared worker...`);
+                const scwsapi = await import(/* @vite-ignore */ scwsLocation);
+                console.log('Imported SCWS', scwsapi);
+                (globalThis as any).SCWS = scwsapi.SCWS;
+                (globalThis as any).SCWS_WEBAPP_CERT = certificate;
+              }
+              return await module.pkiInitForScws(configDir, parsecAddr);
             } catch (err: any) {
               console.error(`Failed to import scwsapi: ${err.toString()}`);
               return { ok: false, error: { tag: 'PkiSystemInitErrorNotAvailable', error: `Failed to import scwsapi (${err.toString()})` } };
             }
-
-            return await module.pkiInitForScws(configDir, parsecAddr);
           };
         }
         return (module as any)[prop];

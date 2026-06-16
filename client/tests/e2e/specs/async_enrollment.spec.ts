@@ -23,6 +23,7 @@ function getAsyncEnrollmentJoinLink(orgName: string): string {
 }
 
 async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Promise<void> {
+  const expectedPersonName = identitySystem === 'pki' ? 'Bob' : 'Gordon Freeman';
   const requests = page.locator('.organization-request');
   await expect(requests).toBeHidden();
   const orgName = await page.locator('.organization-card').first().locator('.organization-name').textContent();
@@ -42,25 +43,27 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
   await expect(nextButton).toHaveText('Continue');
   await expect(previousButton).toHaveText('Cancel');
 
+  await expect(requestModal.locator('.choose-method')).toBeVisible();
+  const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
+  await expect(options.locator('.title-h4')).toHaveText(['Continue with PKI', 'Continue with Single Sign-On']);
   if (identitySystem === 'pki') {
-    await expect(requestModal.locator('.choose-method')).toBeVisible();
-    const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
-    await expect(options.locator('.title-h4')).toHaveText(['Continue with PKI', 'Continue with Single Sign-On']);
     await options.nth(0).click();
-    await expect(nextButton).toBeTrulyEnabled();
-    await nextButton.click();
+  } else {
+    await options.nth(1).click();
   }
+  await expect(nextButton).toBeTrulyEnabled();
+  await nextButton.click();
   await expect(requestModal.locator('.modal-info')).toBeVisible();
 
   if (identitySystem === 'pki') {
     await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Certificate Authentication (PKI)');
-    await requestModal.locator('.certificate-card').nth(0).click();
+    await requestModal.locator('.certificate-card').nth(1).click();
   } else {
     await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Single Sign-On (SSO)');
     await requestModal.locator('.proconnect-button').click();
     await expect(requestModal.locator('.modal-info')).toBeHidden();
     await expect(requestModal.locator('.user-information')).toBeVisible();
-    await fillIonInput(requestModal.locator('.user-information').locator('ion-input'), 'Gordon Freeman');
+    await fillIonInput(requestModal.locator('.user-information').locator('ion-input'), expectedPersonName);
     await expect(requestModal.locator('.user-information').locator('.dropdown-button-content')).toHaveText(/^[a-f0-9-]+@example\.invalid$/);
   }
   await expect(nextButton).toBeTrulyEnabled();
@@ -69,16 +72,18 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
   await expect(requestModal).toBeHidden();
   await expect(requests).toHaveCount(1);
   await expect(requests.locator('.organization-request-organization')).toHaveText(orgName as string);
-  await expect(requests.locator('.organization-request-username')).toHaveText('Gordon Freeman');
+  await expect(requests.locator('.organization-request-username')).toHaveText(expectedPersonName);
   await expect(requests.locator('.organization-request-status')).toHaveText('Pending');
 }
 
 for (const identitySystem of ['pki', 'openbao']) {
   msTest(`Async enrollment using ${identitySystem}`, async ({ context }) => {
+    const expectedPersonName = identitySystem === 'pki' ? 'Bob' : 'Gordon Freeman';
+
     const page = (await context.newPage()) as MsPage;
     const sidebar = page.locator('.sidebar');
 
-    await setupNewPage(page, { mockPki: identitySystem === 'pki' });
+    await setupNewPage(page, { mockPki: true });
 
     await expect(sidebar.locator('#sidebar-invitations').locator('.request-notification')).toBeHidden();
 
@@ -105,9 +110,9 @@ for (const identitySystem of ['pki', 'openbao']) {
     const linkRequests = page.locator('.invitations-container').locator('.request-list-item');
     await expect(linkRequests).toHaveCount(1);
     await expect(linkRequests.nth(0).locator('.request-type__label')).toHaveText(identitySystem === 'pki' ? 'PKI' : 'SSO');
-    await expect(linkRequests.nth(0).locator('.person-name')).toHaveText('Gordon Freeman');
+    await expect(linkRequests.nth(0).locator('.person-name')).toHaveText(expectedPersonName);
     await expect(linkRequests.nth(0).locator('.request-email__label')).toHaveText(
-      identitySystem === 'pki' ? 'gordon.freeman@blackmesa.nm' : /^ [a-f0-9-]+@example\.invalid$/,
+      identitySystem === 'pki' ? 'bob@black-mesa.corp' : /^ [a-f0-9-]+@example\.invalid$/,
     );
 
     const acceptButton = linkRequests.nth(0).locator('.request-actions').locator('ion-button').nth(0);
@@ -140,9 +145,9 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(acceptModal).toBeHidden();
     const selectProfileModal = page.locator('.select-profile-modal');
     await expect(selectProfileModal).toBeVisible();
-    await expect(selectProfileModal.locator('.user-details').locator('ion-input').nth(0).locator('input')).toHaveValue('Gordon Freeman');
+    await expect(selectProfileModal.locator('.user-details').locator('ion-input').nth(0).locator('input')).toHaveValue(expectedPersonName);
     await expect(selectProfileModal.locator('.user-details').locator('ion-input').nth(1).locator('input')).toHaveValue(
-      identitySystem === 'pki' ? 'gordon.freeman@blackmesa.nm' : /^[a-f0-9-]+@example\.invalid$/,
+      identitySystem === 'pki' ? 'bob@black-mesa.corp' : /^[a-f0-9-]+@example\.invalid$/,
     );
     await expect(selectProfileModal.locator('#dropdown-popover-button')).toHaveText('Select a profile');
     await expect(selectProfileModal.locator('#next-button')).toHaveText('Validate request');
@@ -192,7 +197,7 @@ for (const identitySystem of ['pki', 'openbao']) {
 
   msTest(`Cancel request using ${identitySystem}`, async ({ context }) => {
     const page = (await context.newPage()) as MsPage;
-    await setupNewPage(page, { mockPki: identitySystem === 'pki' });
+    await setupNewPage(page, { mockPki: true });
 
     await addRequest(page, identitySystem as 'pki' | 'openbao');
 
@@ -232,8 +237,10 @@ for (const identitySystem of ['pki', 'openbao']) {
   });
 
   msTest(`Reject async enrollment using ${identitySystem}`, async ({ context }) => {
+    const expectedPersonName = identitySystem === 'pki' ? 'Bob' : 'Gordon Freeman';
+
     const page = (await context.newPage()) as MsPage;
-    await setupNewPage(page, { mockPki: identitySystem === 'pki' });
+    await setupNewPage(page, { mockPki: true });
 
     await addRequest(page, identitySystem as 'pki' | 'openbao');
 
@@ -253,9 +260,9 @@ for (const identitySystem of ['pki', 'openbao']) {
     const linkRequests = page.locator('.invitations-container').locator('.request-list-item');
     await expect(linkRequests).toHaveCount(1);
     await expect(linkRequests.nth(0).locator('.request-type__label')).toHaveText(identitySystem === 'pki' ? 'PKI' : 'SSO');
-    await expect(linkRequests.nth(0).locator('.person-name')).toHaveText('Gordon Freeman');
+    await expect(linkRequests.nth(0).locator('.person-name')).toHaveText(expectedPersonName);
     await expect(linkRequests.nth(0).locator('.request-email__label')).toHaveText(
-      identitySystem === 'pki' ? 'gordon.freeman@blackmesa.nm' : /^ [a-f0-9-]+@example\.invalid$/,
+      identitySystem === 'pki' ? 'bob@black-mesa.corp' : /^ [a-f0-9-]+@example\.invalid$/,
     );
 
     const rejectButton = linkRequests.nth(0).locator('.request-actions').locator('ion-button').nth(1);

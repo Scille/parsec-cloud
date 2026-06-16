@@ -27,14 +27,14 @@
             class="card-expire__icon"
           />
           <ion-text class="subtitles-sm card-expire__text">
-            {{ $msTranslate(I18n.formatDate(certificate.details.notBefore, 'short')) }}
+            {{ $msTranslate(I18n.formatDate(primaryDetails.notBefore, 'short')) }}
           </ion-text>
           <ion-icon
             :icon="arrowForward"
             class="card-expire__arrow"
           />
           <ion-text class="subtitles-sm card-expire__text">
-            {{ $msTranslate(I18n.formatDate(certificate.details.notAfter, 'short')) }}
+            {{ $msTranslate(I18n.formatDate(primaryDetails.notAfter, 'short')) }}
           </ion-text>
           <ion-text
             v-if="certificate.isExpired()"
@@ -50,23 +50,23 @@
             class="card-email__icon"
           />
           <ion-text
-            v-if="certificate.details.emails.length === 0"
+            v-if="primaryDetails.emails.length === 0"
             class="subtitles-sm"
           >
             {{ $msTranslate('No email') }}
           </ion-text>
           <ion-text
-            v-if="certificate.details.emails.length > 0"
+            v-if="primaryDetails.emails.length > 0"
             class="subtitles-sm card-email__text"
           >
-            {{ certificate.details.emails[0] }}
+            {{ primaryDetails.emails[0] }}
           </ion-text>
           <ion-text
-            v-if="certificate.details.emails.length > 1"
+            v-if="primaryDetails.emails.length > 1"
             class="subtitles-sm card-email__text additional-emails"
             @click.stop="openAdditionalEmailPopover"
           >
-            + {{ certificate.details.emails.length - 1 }}
+            + {{ primaryDetails.emails.length - 1 }}
           </ion-text>
         </div>
 
@@ -99,6 +99,7 @@ import { CertificateWithDetailsValid } from '@/parsec';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { arrowForward, calendar, checkmarkCircle, mail } from 'ionicons/icons';
 import { I18n, MsImage } from 'megashark-lib';
+import { computed } from 'vue';
 
 const props = defineProps<{
   certificate: CertificateWithDetailsValid;
@@ -108,6 +109,10 @@ const props = defineProps<{
 defineEmits<{
   (e: 'clicked', certificate: CertificateWithDetailsValid): void;
 }>();
+
+const primaryDetails = computed(() => {
+  return (props.certificate.signCert ?? props.certificate.encryptCert)!.details;
+});
 
 async function openAdditionalEmailPopover(event: Event): Promise<void> {
   event.stopPropagation();
@@ -119,7 +124,7 @@ async function openAdditionalEmailPopover(event: Event): Promise<void> {
     showBackdrop: false,
     backdropDismiss: true,
     componentProps: {
-      emails: props.certificate.details.emails,
+      emails: primaryDetails.value.emails,
     },
   });
   await popover.present();

@@ -46,7 +46,7 @@ class DevicePrimaryProtectionStrategy(Variant):
         password: Password
 
     class PKI:
-        pki_private_key_handle: Handle
+        pki_encrypt_private_key_handle: Handle
 
     class AccountVault:
         account_handle: Handle
