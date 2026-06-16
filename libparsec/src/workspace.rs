@@ -8,7 +8,8 @@ pub use libparsec_client::workspace::{
     WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
     WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError,
     WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
-    WorkspaceStatEntryError, WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
+    WorkspaceStatEntryError, WorkspaceStatFolderChildrenError, WorkspaceUploadProgressError,
+    WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -757,4 +758,20 @@ pub async fn workspace_decrypt_path_addr(
     let workspace = borrow_workspace(workspace)?;
 
     workspace.decrypt_path_addr(link).await
+}
+
+pub struct WorkspaceUploadProgress {
+    pub number_of_to_be_uploaded_files: u64,
+    pub size_of_to_be_uploaded_data: u64,
+}
+
+pub async fn workspace_get_upload_progress(
+    workspace: Handle,
+) -> Result<WorkspaceUploadProgress, WorkspaceUploadProgressError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    Ok(WorkspaceUploadProgress {
+        number_of_to_be_uploaded_files: workspace.number_of_to_be_uploaded_files().await?,
+        size_of_to_be_uploaded_data: workspace.size_of_to_be_uploaded_data().await?,
+    })
 }

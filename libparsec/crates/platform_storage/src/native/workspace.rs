@@ -242,6 +242,14 @@ impl PlatformWorkspaceStorage {
         db_get_outbound_need_sync(&mut self.conn, limit).await
     }
 
+    pub async fn number_of_to_be_uploaded_files(&mut self) -> anyhow::Result<u64> {
+        db_number_of_to_be_uploaded_files(&mut self.conn).await
+    }
+
+    pub async fn size_of_to_be_uploaded_data(&mut self) -> anyhow::Result<u64> {
+        db_size_of_to_be_uploaded_data(&mut self.conn).await
+    }
+
     pub async fn get_manifest(
         &mut self,
         entry_id: VlobID,
@@ -977,4 +985,43 @@ async fn db_get_inbound_need_sync(
     rows.into_iter()
         .map(|row| VlobID::try_from(row.try_get::<&[u8], _>(0)?).map_err(|e| anyhow::anyhow!(e)))
         .collect()
+}
+
+async fn db_number_of_to_be_uploaded_files(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+) -> anyhow::Result<u64> {
+    let row = sqlx::query(
+        " \
+        SELECT \
+            SUM(*) \
+        FROM vlobs \
+        WHERE need_sync == TRUE \
+        ",
+    )
+    .fetch_one(executor)
+    .await?;
+
+    // SQLite's INTEGER type is at most an 8 bytes signed, so we must use `i64` here
+    let nb_files = row.try_get::<i64, _>(0)?;
+
+    Ok(nb_files as u64)
+}
+
+async fn db_size_of_to_be_uploaded_data(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+) -> anyhow::Result<u64> {
+    let row = sqlx::query(
+        " \
+        SELECT \
+            SUM(size) \
+        FROM chunks \
+        ",
+    )
+    .fetch_one(executor)
+    .await?;
+
+    // SQLite's INTEGER type is at most an 8 bytes signed, so we must use `i64` here
+    let nb_files = row.try_get::<i64, _>(0)?;
+
+    Ok(nb_files as u64)
 }

@@ -358,6 +358,14 @@ impl PlatformWorkspaceStorage {
         .await?
     }
 
+    pub async fn number_of_to_be_uploaded_files(&mut self) -> anyhow::Result<u64> {
+        todo!()
+    }
+
+    pub async fn size_of_to_be_uploaded_data(&mut self) -> anyhow::Result<u64> {
+        todo!()
+    }
+
     pub async fn get_manifest(
         &mut self,
         entry_id: VlobID,

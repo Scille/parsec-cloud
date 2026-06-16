@@ -5973,6 +5973,56 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
     Ok(js_obj)
 }
 
+// WorkspaceUploadProgress
+
+#[allow(dead_code)]
+fn struct_workspace_upload_progress_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceUploadProgress, JsValue> {
+    let number_of_to_be_uploaded_files = {
+        let js_val = Reflect::get(&obj, &"numberOfToBeUploadedFiles".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
+            v
+        }
+    };
+    let size_of_to_be_uploaded_data = {
+        let js_val = Reflect::get(&obj, &"sizeOfToBeUploadedData".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            #[allow(clippy::let_and_return)]
+            v
+        }
+    };
+    Ok(libparsec::WorkspaceUploadProgress {
+        number_of_to_be_uploaded_files,
+        size_of_to_be_uploaded_data,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_upload_progress_rs_to_js(
+    rs_obj: libparsec::WorkspaceUploadProgress,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_number_of_to_be_uploaded_files = JsValue::from(rs_obj.number_of_to_be_uploaded_files);
+    Reflect::set(
+        &js_obj,
+        &"numberOfToBeUploadedFiles".into(),
+        &js_number_of_to_be_uploaded_files,
+    )?;
+    let js_size_of_to_be_uploaded_data = JsValue::from(rs_obj.size_of_to_be_uploaded_data);
+    Reflect::set(
+        &js_obj,
+        &"sizeOfToBeUploadedData".into(),
+        &js_size_of_to_be_uploaded_data,
+    )?;
+    Ok(js_obj)
+}
+
 // WorkspaceUserAccessInfo
 
 #[allow(dead_code)]
@@ -23123,6 +23173,36 @@ fn variant_workspace_storage_cache_size_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceUploadProgressError
+
+#[allow(dead_code)]
+fn variant_workspace_upload_progress_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceUploadProgressError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceUploadProgressError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceUploadProgressErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceUploadProgressError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceUploadProgressErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceWatchEntryOneShotError
 
 #[allow(dead_code)]
@@ -29594,6 +29674,31 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_generate_path_addr_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_get_upload_progress
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceGetUploadProgress(workspace: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::workspace_get_upload_progress(workspace).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_workspace_upload_progress_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_upload_progress_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

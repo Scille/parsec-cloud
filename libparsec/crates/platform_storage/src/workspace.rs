@@ -145,6 +145,14 @@ impl WorkspaceStorage {
         self.platform.get_outbound_need_sync(limit).await
     }
 
+    pub async fn number_of_to_be_uploaded_files(&mut self) -> anyhow::Result<u64> {
+        self.platform.number_of_to_be_uploaded_files().await
+    }
+
+    pub async fn size_of_to_be_uploaded_data(&mut self) -> anyhow::Result<u64> {
+        self.platform.size_of_to_be_uploaded_data().await
+    }
+
     pub async fn get_manifest(
         &mut self,
         entry_id: VlobID,

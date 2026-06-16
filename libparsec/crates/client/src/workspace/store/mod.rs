@@ -56,6 +56,7 @@ pub(super) type UpdateFolderManifestError = WorkspaceStoreOperationError;
 pub(super) type UpdateFileManifestAndContinueError = WorkspaceStoreOperationError;
 pub(super) type PromoteLocalOnlyChunkToUploadedBlockError = WorkspaceStoreOperationError;
 pub(super) type GetNotUploadedChunkError = WorkspaceStoreOperationError;
+pub(super) type GetUploadProgressError = WorkspaceStoreOperationError;
 
 #[derive(Debug, thiserror::Error)]
 pub(super) enum ReadChunkOrBlockLocalOnlyError {
@@ -862,6 +863,36 @@ impl WorkspaceStore {
                     .get_outbound_need_sync(limit)
                     .await
                     .map_err(GetNeedSyncEntriesError::Internal)
+            })
+            .await
+    }
+
+    pub async fn number_of_to_be_uploaded_files(&self) -> Result<u64, GetUploadProgressError> {
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| GetUploadProgressError::Stopped)?;
+
+                storage
+                    .number_of_to_be_uploaded_files()
+                    .await
+                    .map_err(GetUploadProgressError::Internal)
+            })
+            .await
+    }
+
+    pub async fn size_of_to_be_uploaded_data(&self) -> Result<u64, GetUploadProgressError> {
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| GetUploadProgressError::Stopped)?;
+
+                storage
+                    .size_of_to_be_uploaded_data()
+                    .await
+                    .map_err(GetUploadProgressError::Internal)
             })
             .await
     }

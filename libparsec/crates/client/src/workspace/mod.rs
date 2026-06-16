@@ -27,7 +27,8 @@ pub use transactions::{
     WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,
     WorkspaceIsFileContentLocalError, WorkspaceMoveEntryError, WorkspaceOpenFileError,
     WorkspaceOpenFolderReaderError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
-    WorkspaceStatFolderChildrenError, WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
+    WorkspaceStatFolderChildrenError, WorkspaceSyncError, WorkspaceUploadProgressError,
+    WorkspaceWatchEntryOneShotError,
 };
 
 use self::{store::FileUpdater, transactions::FdWriteStrategy};
@@ -290,6 +291,16 @@ impl WorkspaceOps {
         limit: u32,
     ) -> Result<Vec<VlobID>, WorkspaceGetNeedOutboundSyncEntriesError> {
         transactions::get_need_outbound_sync(self, limit).await
+    }
+
+    pub async fn number_of_to_be_uploaded_files(
+        &self,
+    ) -> Result<u64, WorkspaceUploadProgressError> {
+        transactions::number_of_to_be_uploaded_files(self).await
+    }
+
+    pub async fn size_of_to_be_uploaded_data(&self) -> Result<u64, WorkspaceUploadProgressError> {
+        transactions::size_of_to_be_uploaded_data(self).await
     }
 
     /*

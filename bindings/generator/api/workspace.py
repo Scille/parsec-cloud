@@ -815,3 +815,22 @@ async def workspace_decrypt_path_addr(
     link: Ref[ParsecWorkspacePathAddr],
 ) -> Result[FsPath, WorkspaceDecryptPathAddrError]:
     raise NotImplementedError
+
+
+class WorkspaceUploadProgressError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Internal:
+        pass
+
+
+class WorkspaceUploadProgress(Structure):
+    number_of_to_be_uploaded_files: U64
+    size_of_to_be_uploaded_data: U64
+
+
+async def workspace_get_upload_progress(
+    workspace: Handle,
+) -> Result[WorkspaceUploadProgress, WorkspaceUploadProgressError]:
+    raise NotImplementedError

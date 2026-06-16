@@ -579,6 +579,11 @@ export interface WorkspaceInfo {
     canSelfPromoteToOwner: boolean
 }
 
+export interface WorkspaceUploadProgress {
+    numberOfToBeUploadedFiles: U64
+    sizeOfToBeUploadedData: U64
+}
+
 export interface WorkspaceUserAccessInfo {
     userId: UserID
     humanHandle: HumanHandle
@@ -6537,6 +6542,24 @@ export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeCustom
   | WorkspaceStorageCacheSizeDefault
 
+// WorkspaceUploadProgressError
+export enum WorkspaceUploadProgressErrorTag {
+    Internal = 'WorkspaceUploadProgressErrorInternal',
+    Stopped = 'WorkspaceUploadProgressErrorStopped',
+}
+
+export interface WorkspaceUploadProgressErrorInternal {
+    tag: WorkspaceUploadProgressErrorTag.Internal
+    error: string
+}
+export interface WorkspaceUploadProgressErrorStopped {
+    tag: WorkspaceUploadProgressErrorTag.Stopped
+    error: string
+}
+export type WorkspaceUploadProgressError =
+  | WorkspaceUploadProgressErrorInternal
+  | WorkspaceUploadProgressErrorStopped
+
 // WorkspaceWatchEntryOneShotError
 export enum WorkspaceWatchEntryOneShotErrorTag {
     EntryNotFound = 'WorkspaceWatchEntryOneShotErrorEntryNotFound',
@@ -7301,6 +7324,9 @@ export interface LibParsecPlugin {
         workspace: Handle,
         path: FsPath
     ): Promise<Result<ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError>>
+    workspaceGetUploadProgress(
+        workspace: Handle
+    ): Promise<Result<WorkspaceUploadProgress, WorkspaceUploadProgressError>>
     workspaceHistoryFdClose(
         workspace_history: Handle,
         fd: FileDescriptor

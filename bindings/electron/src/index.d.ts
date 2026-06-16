@@ -554,6 +554,12 @@ export interface WorkspaceInfo {
 }
 
 
+export interface WorkspaceUploadProgress {
+    numberOfToBeUploadedFiles: number
+    sizeOfToBeUploadedData: number
+}
+
+
 export interface WorkspaceUserAccessInfo {
     userId: string
     humanHandle: HumanHandle
@@ -5397,6 +5403,20 @@ export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeDefault
 
 
+// WorkspaceUploadProgressError
+export interface WorkspaceUploadProgressErrorInternal {
+    tag: "WorkspaceUploadProgressErrorInternal"
+    error: string
+}
+export interface WorkspaceUploadProgressErrorStopped {
+    tag: "WorkspaceUploadProgressErrorStopped"
+    error: string
+}
+export type WorkspaceUploadProgressError =
+  | WorkspaceUploadProgressErrorInternal
+  | WorkspaceUploadProgressErrorStopped
+
+
 // WorkspaceWatchEntryOneShotError
 export interface WorkspaceWatchEntryOneShotErrorEntryNotFound {
     tag: "WorkspaceWatchEntryOneShotErrorEntryNotFound"
@@ -6149,6 +6169,9 @@ export function workspaceGeneratePathAddr(
     workspace: number,
     path: string
 ): Promise<Result<[string, string], WorkspaceGeneratePathAddrError>>
+export function workspaceGetUploadProgress(
+    workspace: number
+): Promise<Result<WorkspaceUploadProgress, WorkspaceUploadProgressError>>
 export function workspaceHistoryFdClose(
     workspace_history: number,
     fd: number

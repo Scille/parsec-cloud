@@ -5417,6 +5417,55 @@ fn struct_workspace_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceUploadProgress
+
+#[allow(dead_code)]
+fn struct_workspace_upload_progress_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceUploadProgress> {
+    let number_of_to_be_uploaded_files = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "numberOfToBeUploadedFiles")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let size_of_to_be_uploaded_data = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "sizeOfToBeUploadedData")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    Ok(libparsec::WorkspaceUploadProgress {
+        number_of_to_be_uploaded_files,
+        size_of_to_be_uploaded_data,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_upload_progress_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceUploadProgress,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_number_of_to_be_uploaded_files =
+        JsBigInt::from_u64(cx, rs_obj.number_of_to_be_uploaded_files);
+    js_obj.set(
+        cx,
+        "numberOfToBeUploadedFiles",
+        js_number_of_to_be_uploaded_files,
+    )?;
+    let js_size_of_to_be_uploaded_data = JsBigInt::from_u64(cx, rs_obj.size_of_to_be_uploaded_data);
+    js_obj.set(cx, "sizeOfToBeUploadedData", js_size_of_to_be_uploaded_data)?;
+    Ok(js_obj)
+}
+
 // WorkspaceUserAccessInfo
 
 #[allow(dead_code)]
@@ -19340,6 +19389,31 @@ fn variant_workspace_storage_cache_size_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceUploadProgressError
+
+#[allow(dead_code)]
+fn variant_workspace_upload_progress_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceUploadProgressError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceUploadProgressError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceUploadProgressErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceUploadProgressError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceUploadProgressErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceWatchEntryOneShotError
 
 #[allow(dead_code)]
@@ -30019,6 +30093,57 @@ fn workspace_generate_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> 
     Ok(promise)
 }
 
+// workspace_get_upload_progress
+fn workspace_get_upload_progress(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_get_upload_progress(workspace).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_workspace_upload_progress_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_workspace_upload_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_history_fd_close
 fn workspace_history_fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -32843,6 +32968,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("workspaceFdWriteStartEof", workspace_fd_write_start_eof)?;
     cx.export_function("workspaceGeneratePathAddr", workspace_generate_path_addr)?;
+    cx.export_function("workspaceGetUploadProgress", workspace_get_upload_progress)?;
     cx.export_function("workspaceHistoryFdClose", workspace_history_fd_close)?;
     cx.export_function("workspaceHistoryFdRead", workspace_history_fd_read)?;
     cx.export_function("workspaceHistoryFdStat", workspace_history_fd_stat)?;
