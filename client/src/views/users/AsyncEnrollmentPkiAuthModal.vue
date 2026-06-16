@@ -23,7 +23,7 @@
           </div>
         </div>
         <certificate-selection
-          :purpose="CertificatePurpose.Sign"
+          :purpose="CertificatePurpose.Both"
           @certificate-selected="onCertificateSelected"
         />
       </div>
@@ -39,18 +39,23 @@ import { IonPage, IonText, modalController } from '@ionic/vue';
 import { MsImage, MsModal, MsModalResult } from 'megashark-lib';
 import { ref } from 'vue';
 
-const certificate = ref<X509CertificateReference | undefined>(undefined);
+const signCertificate = ref<X509CertificateReference | undefined>(undefined);
+const encryptCertificate = ref<X509CertificateReference | undefined>(undefined);
 
 async function onCertificateSelected(cert: CertificateWithDetailsValid): Promise<void> {
-  certificate.value = cert.reference;
+  signCertificate.value = cert.signCert?.reference;
+  encryptCertificate.value = cert.encryptCert?.reference;
   await onOkClicked();
 }
 
 async function onOkClicked(): Promise<boolean> {
-  if (!certificate.value) {
+  if (!signCertificate.value || !encryptCertificate.value) {
     return false;
   }
-  return modalController.dismiss({ certificate: certificate.value }, MsModalResult.Confirm);
+  return modalController.dismiss(
+    { signCertificate: signCertificate.value, encryptCertificate: encryptCertificate.value },
+    MsModalResult.Confirm,
+  );
 }
 </script>
 

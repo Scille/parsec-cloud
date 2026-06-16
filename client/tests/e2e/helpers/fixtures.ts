@@ -69,7 +69,12 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
         (window as any).TESTING_ENABLE_UPDATE_EVENT = options.enableUpdateEvent;
       }
       if (options.mockPki) {
-        (window as any).TESTING_PKI = true;
+        // When the testbed is used, `pkiInitForScws()` relies on a mock and never
+        // actually tries to access the SCWS middleware.
+        // So we configure dummies values here given `pkiInitForScws()` will
+        // be entirely skipped if they are missing.
+        // libparsec.pkiInitForScws = libparsec.pkiInitForNative;
+        (window as any).TESTING_MOCKED_SCWS = true;
       }
       if (options.openBaoServer) {
         (window as any).TESTING_OPEN_BAO_SERVER = options.openBaoServer;

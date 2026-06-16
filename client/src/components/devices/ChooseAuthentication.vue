@@ -275,8 +275,8 @@ async function getSaveStrategy(): Promise<DeviceSaveStrategy | undefined> {
     }
     return constructSaveStrategy(PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()));
   } else if (authentication.value === DevicePrimaryProtectionStrategyTag.PKI) {
-    if (certif.value) {
-      const certResult = await openCertificate(certif.value.reference);
+    if (certif.value?.encryptCert) {
+      const certResult = await openCertificate(certif.value.encryptCert.reference);
       if (certResult.ok) {
         return constructSaveStrategy(PrimaryProtectionStrategy.useSmartcard(certResult.value));
       }

@@ -74,7 +74,7 @@
           </div>
           <certificate-selection
             :purpose="CertificatePurpose.Both"
-            @certificate-selected="certificate = $event.reference"
+            @certificate-selected="selectedCert = $event"
           />
         </div>
         <div v-if="state === JoinRequestState.MethodSSO && serverConfig?.openbao">
@@ -157,6 +157,7 @@ import ConnectSso from '@/components/devices/ConnectSso.vue';
 import CertificateSelection from '@/components/misc/CertificateSelection.vue';
 import {
   CertificatePurpose,
+  CertificateWithDetailsValid,
   closeCertificate,
   getOpenBaoEmails,
   makeRequestOpenBaoIdentityStrategy,
@@ -168,7 +169,6 @@ import {
   ServerConfig,
   SubmitAsyncEnrollmentErrorTag,
   SubmitAsyncEnrollmentIdentityStrategyTag,
-  X509CertificateReference,
 } from '@/parsec';
 import { OpenBaoClient } from '@/services/openBao';
 import { IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
@@ -200,7 +200,7 @@ const props = defineProps<{
   pkiAvailable?: boolean;
 }>();
 
-const certificate = ref<X509CertificateReference | undefined>(undefined);
+const selectedCert = ref<CertificateWithDetailsValid | undefined>(undefined);
 const sendingRequest = ref(false);
 const error = ref('');
 const state = ref<JoinRequestState>(JoinRequestState.ChooseMethod);
@@ -214,7 +214,7 @@ const nextButtonEnabled = computed(() => {
   if (state.value === JoinRequestState.ChooseMethod && method.value !== undefined) {
     return true;
   }
-  if (state.value === JoinRequestState.MethodPKI && certificate.value) {
+  if (state.value === JoinRequestState.MethodPKI && selectedCert.value) {
     return true;
   }
   if (state.value === JoinRequestState.MethodSSO && openBaoClient.value && fullName.value && email.value) {
@@ -275,16 +275,24 @@ async function onNextButtonClicked(): Promise<boolean> {
       state.value = JoinRequestState.MethodSSO;
     }
   } else if (state.value === JoinRequestState.MethodPKI) {
-    if (!certificate.value) {
+    if (!selectedCert.value?.signCert || !selectedCert.value?.encryptCert) {
       window.electronAPI.log('error', 'Invalid state for async enrollment with PKI');
       return false;
     }
-    const certResult = await openCertificate(certificate.value);
-    if (!certResult.ok) {
+    const signCertResult = await openCertificate(selectedCert.value.signCert.reference);
+    if (!signCertResult.ok) {
       error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.problemWithRequestCertificate';
       return false;
     }
-    const result = await requestJoinOrganization(props.link, makeRequestPkiIdentityStrategy(certResult.value));
+    const encryptCertResult = await openCertificate(selectedCert.value.encryptCert.reference);
+    if (!encryptCertResult.ok) {
+      await closeCertificate(signCertResult.value);
+      error.value = 'HomePage.organizationRequest.asyncEnrollmentModal.errors.problemWithRequestCertificate';
+      return false;
+    }
+    const result = await requestJoinOrganization(props.link, makeRequestPkiIdentityStrategy(signCertResult.value, encryptCertResult.value));
+    await closeCertificate(signCertResult.value);
+    await closeCertificate(encryptCertResult.value);
     if (!result.ok) {
       switch (result.error.tag) {
         case SubmitAsyncEnrollmentErrorTag.EmailAlreadyEnrolled: {
@@ -308,7 +316,6 @@ async function onNextButtonClicked(): Promise<boolean> {
       }
       return false;
     }
-    await closeCertificate(certResult.value);
     return modalController.dismiss(null, MsModalResult.Confirm);
   } else if (state.value === JoinRequestState.MethodSSO) {
     if (!fullName.value || !email.value || !openBaoClient.value) {
@@ -356,6 +363,7 @@ async function onPreviousClicked(): Promise<boolean> {
   } else {
     state.value = JoinRequestState.ChooseMethod;
     openBaoClient.value = undefined;
+    selectedCert.value = undefined;
     return false;
   }
 }

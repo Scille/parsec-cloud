@@ -32,7 +32,10 @@ impl Default for Extensions {
 impl Extensions {
     /// if key usage is not specified, returns true
     pub fn can_encrypt(&self) -> bool {
-        self.key_usage.0.is_empty() || self.key_usage.data_encipherment()
+        // see https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3
+        self.key_usage.0.is_empty()
+            || self.key_usage.key_encipherment()
+            || self.key_usage.data_encipherment()
     }
 
     /// if key usage is not specified, returns true

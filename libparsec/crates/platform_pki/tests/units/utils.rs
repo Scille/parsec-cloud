@@ -14,10 +14,28 @@ pub(super) const ALICE_SHA256_CERT_HASH: &str =
 pub(super) const BOB_SHA256_CERT_HASH: &str = "sha256-639SRoRFC0jog3h76fY63ccZmlSORK2mR+IcBf2apqg=";
 pub(super) const BLACK_MESA_SHA256_CERT_HASH: &str =
     "sha256-DrumDH+peXOqrXywKiTQTwfBE6gBiq4jawDfJlBlVRg=";
+/// Certificate with only `digitalSignature` key usage
 pub(super) const MALLORY_SIGN_SHA256_CERT_HASH: &str =
     "sha256-00e71WWTQGUjt0GQWPqhYzL8a8NPY3qNS/WhVfeXj9Q=";
+/// Certificate with only `keyEncipherment` key usage
 pub(super) const MALLORY_ENCRYPT_SHA256_CERT_HASH: &str =
-    "sha256-lPHjEH4TmPMO377j8OoL18hnUBEqNy0CfhNoP60+seY=";
+    "sha256-tZMIM5RI/wCP+yjsUwFwTFf5utZW0xi23ox1ZrcVLrE=";
+/// Certificate with both `digitalSignature` & `keyEncipherment`
+/// key usages.
+/// Since this certificate expires sooner that the ones with only
+/// a single key usage, the GUI should should ignore it in favor of
+/// them.
+pub(super) const MALLORY_BOTH_SHA256_CERT_HASH: &str =
+    "sha256-+3MqdwiKgjoQyT2ig+wwR8H8LZ9Hr+0AA4OBYUVfRz8=";
+/// This certificate's usage is `dataEncipherment` which only allows to encrypt
+/// non-key data. Hence we ignore this certificate when looking for one with
+/// encryption capabilities since we want a `keyEncipherment` usage (i.e. the
+/// certificate is used to encrypt a symmetric key that is used for the actual
+/// encryption).
+///
+/// See https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3
+pub(super) const MALLORY_ENCRYPT_DATA_ENCIPHERMENT_SHA256_CERT_HASH: &str =
+    "sha256-LDgP6TiZbemnwSLtjeAadJYvrSG8q6wNFA939MpQdd0=";
 pub(super) const REVOKED_BREEN_SHA256_CERT_HASH: &str =
     "sha256-aEeYHBTCXkj5dCR231HQXH+mzaGV+0MdcBY+c6I+46c=";
 pub(super) const GORDON_SHA256_CERT_HASH: &str =
@@ -75,14 +93,34 @@ impl InstalledCertificates {
         Self::make_cert_ref(BLACK_MESA_SHA256_CERT_HASH)
     }
 
-    #[expect(dead_code)]
+    #[cfg_attr(not(target_os = "windows"), expect(dead_code))]
     pub fn mallory_sign_cert_ref(&self) -> X509CertificateReference {
         Self::make_cert_ref(MALLORY_SIGN_SHA256_CERT_HASH)
     }
 
-    #[expect(dead_code)]
+    #[cfg_attr(not(target_os = "windows"), expect(dead_code))]
     pub fn mallory_encrypt_cert_ref(&self) -> X509CertificateReference {
         Self::make_cert_ref(MALLORY_ENCRYPT_SHA256_CERT_HASH)
+    }
+
+    #[cfg_attr(not(target_os = "windows"), expect(dead_code))]
+    /// This certificate can be used for both encryption and signing, however
+    /// it expires sooner than the specialized ones (and hence should be
+    /// ignored in favor of them).
+    pub fn mallory_both_cert_ref(&self) -> X509CertificateReference {
+        Self::make_cert_ref(MALLORY_BOTH_SHA256_CERT_HASH)
+    }
+
+    #[cfg_attr(not(target_os = "windows"), expect(dead_code))]
+    /// This certificate's usage is `dataEncipherment` which only allows to encrypt
+    /// non-key data. Hence we ignore this certificate when looking for one with
+    /// encryption capabilities since we want a `keyEncipherment` usage (i.e. the
+    /// certificate is used to encrypt a symmetric key that is used for the actual
+    /// encryption).
+    ///
+    /// See https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3
+    pub fn mallory_encrypt_data_encipherment_cert_ref(&self) -> X509CertificateReference {
+        Self::make_cert_ref(MALLORY_ENCRYPT_DATA_ENCIPHERMENT_SHA256_CERT_HASH)
     }
 
     #[expect(dead_code)]
