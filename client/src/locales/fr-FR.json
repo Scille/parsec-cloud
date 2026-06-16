@@ -269,7 +269,8 @@
             "login": "Se connecter à une organisation",
             "loginButton": "Se connecter",
             "loading": "Chargement...",
-            "deviceAlreadyUsed": "Cet appareil est déjà utilisé par une autre application."
+            "deviceAlreadyUsed": "Cet appareil est déjà utilisé par une autre application.",
+            "deviceInvalidData": "Le fichier de l'appareil contient des données invalides. Veuillez vérifier que vous avez sélectionné le bon appareil et réessayer."
         },
         "expiredDevice": {
             "questionTitle": "Organisation expirée",
