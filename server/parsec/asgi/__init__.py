@@ -30,9 +30,22 @@ type AsgiApp = FastAPI
 # OpenAPI tags metadata for auto-generated documentation
 openapi_tags = [
     {
-        "name": "administration",
-        "description": "Parsec Administration REST API. For more details, see the "
+        "name": "Organization",
+        "description": "Administration API for **Organizations**. For more details, see "
         "[Server Administration Guide](https://docs.parsec.cloud/en/latest/hosting/administration/index.html).",
+    },
+    {
+        "name": "Users",
+        "description": "Administration API for **Users**.",
+    },
+    {
+        "name": "Sequester",
+        "description": "Administration API for **Sequester service**. For more details, see "
+        "[Sequester service](https://docs.parsec.cloud/en/latest/hosting/sequester/index.html).",
+    },
+    {
+        "name": "Stats",
+        "description": "Administration API for **Statistics**.",
     },
 ]
 
@@ -151,7 +164,7 @@ def app_factory(
         def root(request: Request) -> Response:
             return templates.TemplateResponse(request=request, name="index.html")
 
-    app.get("/")(root)
+    app.get("/", include_in_schema=False)(root)
 
     app.mount("/static", StaticFilesWithCacheControl(packages=[("parsec", "static")]))
 

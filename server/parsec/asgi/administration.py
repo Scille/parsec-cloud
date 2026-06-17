@@ -14,7 +14,6 @@ from typing import (
 )
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
 
@@ -68,7 +67,7 @@ if TYPE_CHECKING:
 logger = get_logger()
 
 
-administration_router = APIRouter(tags=["administration"])
+administration_router = APIRouter()
 
 
 # TODO: Use 401 Unauthorized instead of 403 Forbidden on failed authentication
@@ -105,23 +104,6 @@ def parse_organization_id_or_die(raw_organization_id: str) -> OrganizationID:
             status_code=404,
             detail="Invalid organization ID",
         )
-
-
-class CreateOrganizationIn(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    organization_id: OrganizationIDField
-    # /!\ Missing field and field set to `None` does not mean the same thing:
-    # - missing field: ask the server to use its default value for this field
-    # - field set to `None`: `None` is a valid value to use for this field
-    user_profile_outsider_allowed: bool | UnsetType = Unset
-    active_users_limit: ActiveUsersLimitField | UnsetType = Unset
-    realm_minimum_archiving_period_before_deletion: NonNegativeInt | UnsetType = Unset
-    tos: dict[TosLocale, TosUrl] | UnsetType = Unset
-
-
-class CreateOrganizationOut(BaseModel):
-    bootstrap_url: str
-    bootstrap_url_as_http_redirection: str
 
 
 def log_request[**P, T: BaseModel | Response](
@@ -168,9 +150,45 @@ def log_request[**P, T: BaseModel | Response](
     return wrapped
 
 
+tos_example = {
+    "fr_FR": "https://example.com/tos_fr.html",
+    "en_US": "https://example.com/tos_en.html",
+}
+
+
+class CreateOrganizationIn(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    organization_id: OrganizationIDField
+    # /!\ Missing field and field set to `None` does not mean the same thing:
+    # - missing field: ask the server to use its default value for this field
+    # - field set to `None`: `None` is a valid value to use for this field
+    user_profile_outsider_allowed: bool | UnsetType = Field(Unset, examples=[True])
+    active_users_limit: ActiveUsersLimitField | UnsetType = Field(Unset, examples=[50])
+    realm_minimum_archiving_period_before_deletion: NonNegativeInt | UnsetType = Field(
+        Unset, examples=[2592000]
+    )
+    tos: dict[TosLocale, TosUrl] | UnsetType = Field(Unset, examples=[tos_example])
+
+
+class CreateOrganizationOut(BaseModel):
+    bootstrap_url: str = Field(
+        examples=[
+            # cspell: disable-next-line
+            "parsec3://parsec.invalid/MyOrganization?a=bootstrap_organization&p=xBDz8e8SAIBia36yYIolxIM_"
+        ]
+    )
+    bootstrap_url_as_http_redirection: str = Field(
+        examples=[
+            # cspell: disable-next-line
+            "https://parsec.invalid/redirect/MyOrganization?a=bootstrap_organization&p=xBDz8e8SAIBia36yYIolxIM_"
+        ]
+    )
+
+
 @administration_router.post(
     "/administration/organizations",
-    summary="Create an Organization",
+    summary="Create an Organization with the specified configuration",
+    tags=["Organization"],
 )
 @log_request
 async def administration_create_organizations(
@@ -179,12 +197,16 @@ async def administration_create_organizations(
     auth: Annotated[None, Depends(check_administration_auth)],
 ) -> CreateOrganizationOut:
     """
-    Create an Organization with the specified configuration.
+    The `organization_id` is the name of the organization (see [About Organization names](https://docs.parsec.cloud/en/latest/userguide/new-organization.html#about-organization-names)).
 
-    The `organization_id` must be a valid organization name
-    (see [About Organization names](https://docs.parsec.cloud/en/latest/userguide/new-organization.html#about-organization-names)).
+    Configuration options:
 
-    If the organization was created successfully The *bootstrap link* is returned.
+    - `user_profile_outsider_allowed`: Whether to allow (True) or disallow (False) users with External profile.
+    - `active_users_limit`: The maximum number of allowed active users (e.g. non-revoked).
+    - `realm_minimum_archiving_period_before_deletion`: The amount of time (in seconds) that must elapse before a workspace scheduled for deletion is actually deleted.
+    - `tos`: Links to custom Term of Services for this organization
+
+    If the organization was created successfully, the *Bootstrap URL* is returned both as a Parsec URL and as an HTTP URL.
     """
     backend: Backend = request.app.state.backend
 
@@ -221,7 +243,7 @@ async def administration_create_organizations(
 
 class GetOrganizationOutTos(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    per_locale_urls: dict[TosLocale, TosUrl]
+    per_locale_urls: dict[TosLocale, TosUrl] = Field(examples=[tos_example])
     updated_on: DateTimeField
 
 
@@ -237,7 +259,8 @@ class GetOrganizationOut(BaseModel):
 
 @administration_router.get(
     "/administration/organizations/{raw_organization_id}",
-    summary="Get an Organization",
+    summary="Get an Organization status and configuration",
+    tags=["Organization"],
 )
 @log_request
 async def administration_get_organization(
@@ -246,7 +269,12 @@ async def administration_get_organization(
     auth: Annotated[None, Depends(check_administration_auth)],
 ) -> GetOrganizationOut:
     """
-    Get the Organization status and configuration.
+    The organization status is described by:
+
+    - `is_bootstrapped` whether the organization has been bootstrapped or not
+    - `is_expired` whether the organization has been expired or not. Users are not allowed to connect to an expired organization.
+
+    The organization configuration is described by the same options used during organization creation.
     """
     backend: Backend = request.app.state.backend
 
@@ -281,19 +309,22 @@ class PatchOrganizationOut(BaseModel):
 
 class PatchOrganizationIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    is_expired: bool | UnsetType = Unset
+    is_expired: bool | UnsetType = Field(Unset, examples=[False])
     # /!\ Missing field and field set to `None` does not mean the same thing:
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
-    user_profile_outsider_allowed: bool | UnsetType = Unset
-    active_users_limit: ActiveUsersLimitField | UnsetType = Unset
-    realm_minimum_archiving_period_before_deletion: NonNegativeInt | UnsetType = Unset
-    tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
+    user_profile_outsider_allowed: bool | UnsetType = Field(Unset, examples=[True])
+    active_users_limit: ActiveUsersLimitField | UnsetType = Field(Unset, examples=[50])
+    realm_minimum_archiving_period_before_deletion: NonNegativeInt | UnsetType = Field(
+        Unset, examples=[2592000]
+    )
+    tos: dict[TosLocale, TosUrl] | UnsetType | None = Field(Unset, examples=[tos_example])
 
 
 @administration_router.patch(
     "/administration/organizations/{raw_organization_id}",
-    summary="Update an Organization",
+    summary="Update Organization status and configuration",
+    tags=["Organization"],
 )
 @log_request
 async def administration_patch_organization(
@@ -303,7 +334,13 @@ async def administration_patch_organization(
     auth: Annotated[None, Depends(check_administration_auth)],
 ) -> PatchOrganizationOut:
     """
-    Update the Organization status and configuration.
+    The organization status can be updated with:
+
+    - `is_expired` whether the organization has been expired or not. Users are not allowed to connect to an expired organization.
+
+    The organization configuration is described by the same options used during organization creation.
+
+    Fields that you do not want to be updated should be omitted from the request.
     """
     backend: Backend = request.app.state.backend
 
@@ -327,18 +364,64 @@ async def administration_patch_organization(
     return PatchOrganizationOut()
 
 
+org_stats_example = {
+    "realms": 10,
+    "data_size": 18333,
+    "metadata_size": 1158,
+    "users": 9,
+    "active_users": 6,
+    "users_per_profile_detail": {
+        "ADMIN": {"active": 2, "revoked": 1},
+        "STANDARD": {"active": 2, "revoked": 1},
+        "OUTSIDER": {"active": 2, "revoked": 1},
+    },
+}
+
+
+class UsersPerProfile(BaseModel):
+    active: NonNegativeInt
+    revoked: NonNegativeInt
+
+
+class GetOrganizationStatsOut(BaseModel):
+    model_config = ConfigDict(strict=True)
+    realms: NonNegativeInt
+    data_size: NonNegativeInt
+    metadata_size: NonNegativeInt
+    users: NonNegativeInt
+    active_users: NonNegativeInt
+    users_per_profile_detail: dict[str, UsersPerProfile]
+
+
 @administration_router.get(
     "/administration/organizations/{raw_organization_id}/stats",
-    summary="Get organization Statistics",
+    summary="Get Organization usage statistics",
+    tags=["Stats"],
+    responses={
+        200: {
+            "content": {
+                "application/json": {"example": org_stats_example},
+            },
+        },
+    },
 )
 @log_request
 async def administration_organization_stat(
     raw_organization_id: str,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
-) -> Response:
+) -> GetOrganizationStatsOut:
     """
-    Get current usage statistics for the organization.
+    The organization usage statistics includes:
+
+    - `data_size`: size of stored data blocks (S3)
+    - `metadata_size`: size of stored metadata (PostgreSQL database)
+    - `realms`: number of realms created (workspaces)
+    - `active_users`: number of active users (e.g. non-revoked)
+    - `users_per_profile_detail`: number of active/revoked per profile:
+       - `ADMIN`: number of active/revoked users with **ADMINISTRATOR** profile
+       - `STANDARD`: number of active/revoked users with **MEMBER** profile
+       - `OUTSIDER`: number of active/revoked users with **EXTERNAL** profile
     """
     backend: Backend = request.app.state.backend
 
@@ -351,21 +434,18 @@ async def administration_organization_stat(
         case OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "realms": stats.realms,
-            "data_size": stats.data_size,
-            "metadata_size": stats.metadata_size,
-            "users": stats.users,
-            "active_users": stats.active_users,
-            "users_per_profile_detail": {
-                detail.profile.str: {
-                    "active": detail.active,
-                    "revoked": detail.revoked,
-                }
-                for detail in stats.users_per_profile_detail
-            },
+    return GetOrganizationStatsOut(
+        realms=stats.realms,
+        data_size=stats.data_size,
+        metadata_size=stats.metadata_size,
+        users=stats.users,
+        active_users=stats.active_users,
+        users_per_profile_detail={
+            detail.profile.str: UsersPerProfile(
+                active=detail.active,
+                revoked=detail.revoked,
+            )
+            for detail in stats.users_per_profile_detail
         },
     )
 
@@ -416,9 +496,44 @@ class StatsFormat(StrEnum):
     JSON = "json"
 
 
+class GetServerStatsOrganizationDetail(BaseModel):
+    model_config = ConfigDict(strict=True)
+    organization_id: str
+    realms: NonNegativeInt
+    data_size: NonNegativeInt
+    metadata_size: NonNegativeInt
+    users: NonNegativeInt
+    active_users: NonNegativeInt
+    users_per_profile_detail: dict[str, UsersPerProfile]
+
+
+class GetServerStatsOut(BaseModel):
+    model_config = ConfigDict(strict=True)
+    stats: list[GetServerStatsOrganizationDetail]
+
+
+server_stats_example_json = {
+    "stats": [dict({"organization_id": "MyOrganization"}, **org_stats_example)]
+}
+server_stats_example_csv = """
+organization_id,realms,data_size,metadata_size,users,active_users,admin_users_active,admin_users_revoked,standard_users_active,standard_users_revoked,outsider_users_active,outsider_users_revoked
+"MyOrganization, 10,18333, 1158, 9, 6,  2, 1, 2, 1, 2, 1
+"""
+
+
 @administration_router.get(
     "/administration/stats",
-    summary="Get server Statistics",
+    summary="Get Server usage statistics",
+    tags=["Stats"],
+    response_model=None,
+    responses={
+        200: {
+            "content": {
+                "application/json": {"example": server_stats_example_json},
+                "text/csv": {"example": server_stats_example_csv},
+            },
+        },
+    },
 )
 @log_request
 async def administration_server_stats(
@@ -427,11 +542,24 @@ async def administration_server_stats(
     auth: Annotated[None, Depends(check_administration_auth)],
     format: StatsFormat = StatsFormat.JSON,
     at: str | None = None,
-) -> Response:
+) -> GetServerStatsOut | Response:
     """
-    Get current usage statistics for all the organizations.
+    The following parameters control the export:
 
-    The result includes usage statistics with one JSON object (or CSV entry) per organization.
+    - `format`: whether the information is exported in **JSON** or **CSV** (with headers)
+    - `at`: The extraction date in RFC 3339 format. Everything after the date provided will be ignored.
+
+    The server usage statistics *for each organization* includes:
+
+    - `organization_id`: the organization name
+    - `realms`: number of realms created (workspaces)
+    - `data_size`: size of stored data blocks (S3)
+    - `metadata_size`: size of stored metadata (PostgreSQL database)
+    - `active_users`: number of active users (e.g. non-revoked)
+    - `users_per_profile_detail`: number of active/revoked per profile
+       - `ADMIN`: number of active/revoked users with **ADMINISTRATOR** profile
+       - `STANDARD`: number of active/revoked users with **MEMBER** profile
+       - `OUTSIDER`: number of active/revoked users with **EXTERNAL** profile
     """
     backend: Backend = request.app.state.backend
 
@@ -440,7 +568,7 @@ async def administration_server_stats(
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail="Invalid `at` query argument (expected RFC3339 datetime)",
+            detail="Invalid `at` query argument (expected RFC 3339 datetime)",
         )
 
     server_stats = await backend.organization.server_stats(at=typed_at)
@@ -455,43 +583,52 @@ async def administration_server_stats(
             )
 
         case StatsFormat.JSON:
-            return JSONResponse(
-                status_code=200,
-                content={
-                    "stats": [
-                        {
-                            "organization_id": organization_id.str,
-                            "data_size": org_stats.data_size,
-                            "metadata_size": org_stats.metadata_size,
-                            "realms": org_stats.realms,
-                            "users": org_stats.users,
-                            "active_users": org_stats.active_users,
-                            "users_per_profile_detail": {
-                                detail.profile.str: {
-                                    "active": detail.active,
-                                    "revoked": detail.revoked,
-                                }
-                                for detail in org_stats.users_per_profile_detail
-                            },
-                        }
-                        for organization_id, org_stats in server_stats.items()
-                    ]
-                },
+            return GetServerStatsOut(
+                stats=[
+                    GetServerStatsOrganizationDetail(
+                        organization_id=organization_id.str,
+                        realms=org_stats.realms,
+                        data_size=org_stats.data_size,
+                        metadata_size=org_stats.metadata_size,
+                        users=org_stats.users,
+                        active_users=org_stats.active_users,
+                        users_per_profile_detail={
+                            detail.profile.str: UsersPerProfile(
+                                active=detail.active,
+                                revoked=detail.revoked,
+                            )
+                            for detail in org_stats.users_per_profile_detail
+                        },
+                    )
+                    for organization_id, org_stats in server_stats.items()
+                ]
             )
+
+
+class OrganizationUserDetail(BaseModel):
+    user_id: str
+    user_email: str
+    user_name: str
+    frozen: bool
+
+
+class GetOrganizationUsersOut(BaseModel):
+    users: list[OrganizationUserDetail]
 
 
 @administration_router.get(
     "/administration/organizations/{raw_organization_id}/users",
     summary="Get organization Users",
+    tags=["Users"],
 )
 @log_request
 async def administration_organization_users(
     raw_organization_id: str,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
-) -> Response:
+) -> GetOrganizationUsersOut:
     """
-    Get the list of all Users for the organization
+    Get the list of all Users in the organization
     """
     backend: Backend = request.app.state.backend
 
@@ -504,19 +641,16 @@ async def administration_organization_users(
         case UserListActiveUsersBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "users": [
-                {
-                    "user_id": user.user_id.hex,
-                    "user_email": str(user.human_handle.email),
-                    "user_name": user.human_handle.label,
-                    "frozen": user.frozen,
-                }
-                for user in users
-            ]
-        },
+    return GetOrganizationUsersOut(
+        users=[
+            OrganizationUserDetail(
+                user_id=user.user_id.hex,
+                user_email=str(user.human_handle.email),
+                user_name=user.human_handle.label,
+                frozen=user.frozen,
+            )
+            for user in users
+        ]
     )
 
 
@@ -527,9 +661,17 @@ class UserFreezeIn(BaseModel):
     user_id: UserIDField | None = None
 
 
+class UserFreezeOut(BaseModel):
+    user_id: str
+    user_email: str
+    user_name: str
+    frozen: bool
+
+
 @administration_router.post(
     "/administration/organizations/{raw_organization_id}/users/freeze",
-    summary="Freeze a User",
+    summary="Update User frozen status",
+    tags=["Users"],
 )
 @log_request
 async def administration_organization_users_freeze(
@@ -537,11 +679,10 @@ async def administration_organization_users_freeze(
     auth: Annotated[None, Depends(check_administration_auth)],
     body: UserFreezeIn,
     request: Request,
-) -> Response:
+) -> UserFreezeOut:
     """
-    Update the User frozen status.
-
     Set `frozen` to `True` to freeze the user.
+
     A frozen user will be blocked from connecting to Parsec server.
     Unlike revocation, this operation can be reverted by setting `frozen` to `False`.
 
@@ -572,14 +713,11 @@ async def administration_organization_users_freeze(
                 status_code=400, detail="Missing either `user_id` or `user_email` field"
             )
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "user_id": user.user_id.hex,
-            "user_email": str(user.human_handle.email),
-            "user_name": user.human_handle.label,
-            "frozen": user.frozen,
-        },
+    return UserFreezeOut(
+        user_id=user.user_id.hex,
+        user_email=str(user.human_handle.email),
+        user_name=user.human_handle.label,
+        frozen=user.frozen,
     )
 
 
@@ -590,9 +728,18 @@ class UserResetTOTPIn(BaseModel):
     send_email: bool = False
 
 
+class UserResetTOTPOut(BaseModel):
+    user_id: str
+    user_email: str
+    totp_reset_url: str
+    totp_reset_url_as_http_redirection: str
+    email_sent_status: str
+
+
 @administration_router.post(
     "/administration/organizations/{raw_organization_id}/users/reset_totp",
-    summary="Reset a User TOTP setup",
+    summary="Reset User TOTP setup for MFA",
+    tags=["Users"],
 )
 @log_request
 async def administration_organization_users_reset_totp(
@@ -600,12 +747,9 @@ async def administration_organization_users_reset_totp(
     auth: Annotated[None, Depends(check_administration_auth)],
     body: UserResetTOTPIn,
     request: Request,
-) -> Response:
+) -> UserResetTOTPOut:
     """
-    Reset the user TOTP setup for MFA.
-
-    This allows the user to define a new TOTP setup, in case it has lost access to the
-    authenticator application.
+    Reset TOTP setup allows the user to define a new TOTP setup.
 
     If `send_email` is set to True, an email will be sent to the user with the link to
     configure a new TOTP setup for MFA.
@@ -645,28 +789,47 @@ async def administration_organization_users_reset_totp(
                 status_code=400, detail="Missing either `user_id` or `user_email` field"
             )
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "user_id": user_id.hex,
-            "user_email": user_email.str,
-            "totp_reset_url": totp_reset_url.to_url(),
-            "totp_reset_url_as_http_redirection": totp_reset_url.to_http_redirection_url(),
-            "email_sent_status": email_sent_status,
-        },
+    return UserResetTOTPOut(
+        user_id=user_id.hex,
+        user_email=user_email.str,
+        totp_reset_url=totp_reset_url.to_url(),
+        totp_reset_url_as_http_redirection=totp_reset_url.to_http_redirection_url(),
+        email_sent_status=email_sent_status,
     )
+
+
+class StorageSequesterServiceDetail(BaseModel):
+    service_id: str
+    service_label: str
+    created_on: str
+    revoked_on: str | None
+    type: str
+
+
+class WebhookSequesterServiceDetail(BaseModel):
+    service_id: str
+    service_label: str
+    created_on: str
+    revoked_on: str | None
+    type: str
+    webhook_url: str
+
+
+class GetSequesterServiceOut(BaseModel):
+    services: list[StorageSequesterServiceDetail | WebhookSequesterServiceDetail]
 
 
 @administration_router.get(
     "/administration/organizations/{raw_organization_id}/sequester/services",
     summary="Get Sequester Services",
+    tags=["Sequester"],
 )
 @log_request
 async def administration_organization_sequester_services(
     raw_organization_id: str,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
-) -> Response:
+) -> GetSequesterServiceOut:
     """
     Get the list of all sequester services configured in the server.
     """
@@ -677,30 +840,32 @@ async def administration_organization_sequester_services(
     outcome = await backend.sequester.get_organization_services(organization_id)
     match outcome:
         case list() as services:
-            cooked_services = []
-            for service in services:
-                cooked_service = {
-                    "service_id": service.service_id.hex,
-                    "service_label": service.service_label,
-                    "created_on": service.created_on.to_rfc3339(),
-                    "revoked_on": service.revoked_on.to_rfc3339() if service.revoked_on else None,
-                    "type": service.service_type.value,
-                }
-                if isinstance(service, WebhookSequesterService):
-                    cooked_service["webhook_url"] = service.webhook_url
-                cooked_services.append(cooked_service)
+            cooked_services = [
+                WebhookSequesterServiceDetail(
+                    service_id=service.service_id.hex,
+                    service_label=service.service_label,
+                    created_on=service.created_on.to_rfc3339(),
+                    revoked_on=service.revoked_on.to_rfc3339() if service.revoked_on else None,
+                    type=service.service_type.value,
+                    webhook_url=service.webhook_url,
+                )
+                if isinstance(service, WebhookSequesterService)
+                else StorageSequesterServiceDetail(
+                    service_id=service.service_id.hex,
+                    service_label=service.service_label,
+                    created_on=service.created_on.to_rfc3339(),
+                    revoked_on=service.revoked_on.to_rfc3339() if service.revoked_on else None,
+                    type=service.service_type.value,
+                )
+                for service in services
+            ]
 
         case SequesterGetOrganizationServicesBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
         case SequesterGetOrganizationServicesBadOutcome.SEQUESTER_DISABLED:
             raise HTTPException(status_code=400, detail="Sequester disabled")
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "services": cooked_services,
-        },
-    )
+    return GetSequesterServiceOut(services=cooked_services)
 
 
 class SequesterServiceConfigInStorage(BaseModel):
@@ -730,23 +895,28 @@ SequesterServiceConfigField = Annotated[
 ]
 
 
-class SequesterServiceCreateIn(BaseModel):
+class CreateSequesterServiceIn(BaseModel):
     model_config = ConfigDict(strict=True)
     service_certificate: Base64BytesField
     config: SequesterServiceConfigField
 
 
+class CreateSequesterServiceOut(BaseModel):
+    pass
+
+
 @administration_router.post(
     "/administration/organizations/{raw_organization_id}/sequester/services",
     summary="Create a Sequester Service",
+    tags=["Sequester"],
 )
 @log_request
 async def administration_organization_sequester_service_create(
     raw_organization_id: str,
-    body: SequesterServiceCreateIn,
+    body: CreateSequesterServiceIn,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
-) -> Response:
+) -> CreateSequesterServiceOut:
     """
     Create a sequester service with the specified configuration.
     """
@@ -780,28 +950,30 @@ async def administration_organization_sequester_service_create(
                 },
             )
 
-    return JSONResponse(
-        status_code=200,
-        content={},
-    )
+    return CreateSequesterServiceOut()
 
 
-class SequesterServiceRevokeIn(BaseModel):
+class RevokeSequesterServiceIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     revoked_service_certificate: Base64BytesField
+
+
+class RevokeSequesterServiceOut(BaseModel):
+    pass
 
 
 @administration_router.post(
     "/administration/organizations/{raw_organization_id}/sequester/services/revoke",
     summary="Revoke a Sequester Service",
+    tags=["Sequester"],
 )
 @log_request
 async def administration_organization_sequester_service_revoke(
     raw_organization_id: str,
-    body: SequesterServiceRevokeIn,
+    body: RevokeSequesterServiceIn,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
-) -> Response:
+) -> RevokeSequesterServiceOut:
     """
     Revoke an existing sequester service.
     """
@@ -836,29 +1008,31 @@ async def administration_organization_sequester_service_revoke(
                 },
             )
 
-    return JSONResponse(
-        status_code=200,
-        content={},
-    )
+    return RevokeSequesterServiceOut()
 
 
-class SequesterServiceUpdateConfigIn(BaseModel):
+class PutSequesterServiceIn(BaseModel):
     model_config = ConfigDict(strict=True)
     service_id: SequesterServiceIDField
     config: SequesterServiceConfigField
 
 
+class PutSequesterServiceOut(BaseModel):
+    pass
+
+
 @administration_router.put(
     "/administration/organizations/{raw_organization_id}/sequester/services/config",
     summary="Update a Sequester Service",
+    tags=["Sequester"],
 )
 @log_request
 async def administration_organization_sequester_service_update_config(
     raw_organization_id: str,
-    body: SequesterServiceUpdateConfigIn,
+    body: PutSequesterServiceIn,
     auth: Annotated[None, Depends(check_administration_auth)],
     request: Request,
-) -> Response:
+) -> PutSequesterServiceOut:
     """
     Update the sequester service with the specified configuration.
     """
@@ -881,7 +1055,4 @@ async def administration_organization_sequester_service_update_config(
         case SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Sequester service not found")
 
-    return JSONResponse(
-        status_code=200,
-        content={},
-    )
+    return PutSequesterServiceOut()
