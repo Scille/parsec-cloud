@@ -27,18 +27,12 @@ logger = get_logger()
 
 type AsgiApp = FastAPI
 
-tags_metadata = [
+# OpenAPI tags metadata for auto-generated documentation
+openapi_tags = [
     {
         "name": "administration",
-        "description": "REST API for administration operations.",
-    },
-    {
-        "name": "rpc",
-        "description": "RPC Parsec API for business-logic operations.",
-    },
-    {
-        "name": "testbed",
-        "description": "API for testbed customization operations.",
+        "description": "Parsec Administration REST API. For more details, see the "
+        "[Server Administration Guide](https://docs.parsec.cloud/en/latest/hosting/administration/index.html).",
     },
 ]
 
@@ -105,7 +99,7 @@ def app_factory(
     app = FastAPI(
         title="Parsec Server",
         version=parsec_version,
-        openapi_tags=tags_metadata,
+        openapi_tags=openapi_tags,
     )
     app.add_middleware(
         CORSMiddleware,

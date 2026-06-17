@@ -185,7 +185,7 @@ class TestbedBackend:
         del self.template_per_org[id]
 
 
-testbed_router = APIRouter(tags=["testbed"])
+testbed_router = APIRouter(include_in_schema=False)
 
 
 def testbed_app_factory(testbed: TestbedBackend) -> AsgiApp:
