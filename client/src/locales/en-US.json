@@ -347,7 +347,7 @@
             "requestCancelError": "Could not cancel the request.",
             "requestDeleted": "Your request to join the organization has been deleted.",
             "joinButton": "Add to my organizations",
-            "confirmMissingCertificate": "Cannot access the certificate used to make this request.",
+            "confirmMissingCertificate": "Failed to access the certificate used to make this request.",
             "pending": {
                 "title": "Organization request pending",
                 "message": "Your request to join the organization is still pending. Are you sure you want to cancel it?",
