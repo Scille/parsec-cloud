@@ -6,7 +6,7 @@ from collections.abc import Buffer
 from enum import Enum, auto
 from typing import Annotated, Final
 
-from pydantic import GetPydanticSchema, PlainSerializer, PlainValidator
+from pydantic import Field, GetPydanticSchema, PlainSerializer, PlainValidator
 from pydantic_core.core_schema import (
     chain_schema,
     int_schema,
@@ -181,6 +181,7 @@ Base64BytesField = Annotated[
 
 OrganizationIDField = Annotated[
     OrganizationID,
+    Field(description="The organization name", examples=["MyOrganization"]),
     PlainValidator(lambda x: x if isinstance(x, OrganizationID) else OrganizationID(x)),
     PlainSerializer(lambda x: x.str, return_type=str),
 ]
@@ -245,6 +246,7 @@ VlobIDField = Annotated[
 ]
 DateTimeField = Annotated[
     DateTime,
+    Field(description="A datetime in RFC 3339 format", examples=["2024-08-31T10:15:18Z"]),
     PlainValidator(lambda v: v if isinstance(v, DateTime) else DateTime.from_rfc3339(str(v))),
     PlainSerializer(lambda v: v.to_rfc3339() if isinstance(v, DateTime) else v, return_type=str),
 ]
