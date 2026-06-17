@@ -163,6 +163,7 @@
             ref="authChoice"
             :server-config="serverConfig"
             :server-addr="serverAddr"
+            @auth-reset="fieldsUpdated = true"
           />
         </div>
 

@@ -109,6 +109,7 @@
             ref="authChoice"
             :server-config="serverConfig"
             :server-addr="serverAddr"
+            @auth-reset="fieldsUpdated = true"
           />
         </div>
 
@@ -223,6 +224,7 @@ const authChoiceRef = useTemplateRef<InstanceType<typeof ChooseAuthentication>>(
 const cancelled = ref(false);
 const serverConfig = ref<ServerConfig | undefined>(undefined);
 const serverAddr = ref<ParsecAddr>('');
+const fieldsUpdated = ref(false);
 
 const props = defineProps<{
   invitationLink: ParsecInvitationAddr | ParsecInvitationRedirectionURL;
@@ -308,6 +310,9 @@ const nextButtonIsVisible = computed(() => {
 });
 
 const canGoForward = asyncComputed(async () => {
+  if (fieldsUpdated.value) {
+    fieldsUpdated.value = false;
+  }
   if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
     return await authChoiceRef.value?.areFieldsCorrect();
   }
