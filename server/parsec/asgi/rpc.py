@@ -137,7 +137,7 @@ TOS_CMDS_LOAD_FN = {
 }
 
 
-rpc_router = APIRouter(tags=["rpc"])
+rpc_router = APIRouter(include_in_schema=False)
 
 
 async def _rpc_get_body_with_limit_check(request: Request) -> bytes:
