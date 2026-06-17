@@ -655,6 +655,13 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
     const identitySystem = request.enrollment.identitySystem as AvailablePendingAsyncEnrollmentIdentitySystemPKI;
     const certResult = await openCertificate(identitySystem.certificateRef);
     if (!certResult.ok) {
+      informationManager.present(
+        new Information({
+          message: 'HomePage.organizationRequest.confirmMissingCertificate',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
       return;
     }
     identityStrategy = makeAcceptPkiIdentityStrategy(certResult.value);

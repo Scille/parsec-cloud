@@ -346,6 +346,7 @@
             "requestCancelError": "Impossible d'annuler la requête.",
             "requestDeleted": "Votre demande pour rejoindre l'organisation a bien été supprimée.",
             "joinButton": "Ajouter à mes organisations",
+            "confirmMissingCertificate": "Impossible d'accéder au certificat utilisé pour faire cette demande.",
             "pending": {
                 "title": "Demande d'organisation en attente",
                 "message": "Votre demande pour rejoindre l'organisation est toujours en attente. Êtes-vous sûr de vouloir l'annuler ?",
