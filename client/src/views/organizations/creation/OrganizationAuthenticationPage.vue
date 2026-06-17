@@ -14,7 +14,6 @@
       class="authentication-content"
       :server-config="serverConfig"
       :server-addr="serverAddr"
-      @field-update="onFieldUpdated"
     />
 
     <ion-footer class="authentication-page-footer">
@@ -89,14 +88,6 @@ async function authenticationChosen(): Promise<void> {
   if (strategy) {
     emits('authenticationChosen', strategy);
   }
-}
-
-// TODO: Since valid is supposed to be read-only, we should check if this is really necessary
-async function onFieldUpdated(): Promise<void> {
-  if (!chooseAuthenticationRef.value) {
-    return;
-  }
-  valid.value = await chooseAuthenticationRef.value.areFieldsCorrect();
 }
 </script>
 

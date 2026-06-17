@@ -207,7 +207,8 @@ defineExpose({
   getSaveStrategy,
 });
 
-defineEmits<{
+const emits = defineEmits<{
+  (e: 'authReset'): void;
   (e: 'enterPressed'): void;
 }>();
 
@@ -269,6 +270,7 @@ async function changeAuthenticationMethod(): Promise<void> {
   authentication.value = undefined;
   certif.value = undefined;
   error.value = '';
+  emits('authReset');
 }
 
 async function getSaveStrategy(): Promise<DeviceSaveStrategy | undefined> {

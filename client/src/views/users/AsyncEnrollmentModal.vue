@@ -356,6 +356,7 @@ async function onPreviousClicked(): Promise<boolean> {
   } else {
     state.value = JoinRequestState.ChooseMethod;
     openBaoClient.value = undefined;
+    certificate.value = undefined;
     return false;
   }
 }
