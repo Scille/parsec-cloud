@@ -48,6 +48,7 @@ const config = {
     'src/services/smallDisplayWarning.ts',
     'src/views/about/ChangesModal.vue',
     'src/views/home/SummaryStep.vue',
+    'src/services/performanceMonitor.ts',
   ],
   // Exclude dependencies reported as unused
   ignoreDependencies: [
