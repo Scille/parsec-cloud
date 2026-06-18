@@ -830,6 +830,7 @@ async function refreshAll(): Promise<void> {
       &::part(native) {
         display: flex;
         width: fit-content;
+        padding: 0.5rem 0.75rem;
       }
 
       &__icon {

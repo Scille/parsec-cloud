@@ -2417,6 +2417,7 @@
         },
         "userInfo": {
             "name": "Name contains invalid characters.",
+            "nameTooLong": "Name is too long, limit is {limit} characters.",
             "email": "Wrong email address format."
         }
     },

@@ -12,9 +12,9 @@
       class="avatar small"
       :class="{ online: isOnline, offline: !isOnline }"
     >
-      <ion-icon
-        :icon="personCircle"
-        class="avatar-icon"
+      <ms-image
+        :image="PersonCircle"
+        class="profile-info-card__avatar"
       />
     </div>
     <div class="text-content">
@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import PersonCircle from '@/assets/images/person-circle.svg?raw';
 import { openBugReportModal } from '@/components/misc';
 import { getClientInfo, UserProfile } from '@/parsec';
 import { navigateTo, ProfilePages, Routes } from '@/router';
@@ -49,8 +50,8 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import ProfileHeaderOrganizationPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderOrganizationPopover.vue';
 import { IonIcon, IonItem, IonText, modalController, popoverController } from '@ionic/vue';
-import { chevronDown, personCircle } from 'ionicons/icons';
-import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
+import { chevronDown } from 'ionicons/icons';
+import { Answer, askQuestion, MsImage, MsModalResult } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 const isOnline = ref(false);
@@ -223,8 +224,8 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   &::after {
     content: '';
     position: absolute;
-    bottom: 0px;
-    right: 0px;
+    bottom: 2px;
+    right: 1px;
     height: 0.5rem;
     width: 0.5rem;
     border-radius: 50%;

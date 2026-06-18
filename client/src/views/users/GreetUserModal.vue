@@ -130,11 +130,7 @@
           v-if="guestInfoPageRef"
           class="final-step"
         >
-          <user-avatar-name
-            class="avatar"
-            :user-name="guestInfoPageRef.fullName"
-            :user-avatar="guestInfoPageRef.fullName"
-          />
+          <ion-text class="user-name title-h4">{{ guestInfoPageRef.fullName }}</ion-text>
           <div class="user-info">
             <div class="user-info__email">
               <ion-text class="info-label body">{{ $msTranslate('UsersPage.success.email') }}</ion-text>
@@ -181,7 +177,6 @@ import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader
 import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import UserProfileTag from '@/components/users/UserProfileTag.vue';
 import { CancelledGreetingAttemptReason, GreetInProgressErrorTag, UserGreet, UserInvitation, UserProfile } from '@/parsec';
@@ -534,37 +529,44 @@ onMounted(async () => {
   flex-direction: column;
   justify-content: space-between;
   color: var(--parsec-color-light-secondary-text);
-  gap: 1rem;
+  background-color: var(--parsec-color-light-secondary-inversed-contrast);
+  box-shadow: var(--parsec-shadow-card);
+  border-radius: var(--parsec-radius-8);
+  overflow: hidden;
 
-  @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
-  }
+  // @include ms.responsive-breakpoint('sm') {
+  //   margin-inline: 1.5rem;
+  // }
 
-  .avatar {
-    padding-left: 0.725rem;
-    border-left: 2px solid var(--parsec-color-light-secondary-disabled);
+  .user-name {
+    padding: 1rem;
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+    background-color: var(--parsec-color-light-secondary-premiere);
   }
 
   .user-info {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    background: var(--parsec-color-light-secondary-background);
-    padding: 1rem;
     border-radius: var(--parsec-radius-6);
 
     & > [class^='user-info'] {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.75rem;
+      padding: 0.75rem;
+
+      &:not(:last-child) {
+        border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+      }
     }
 
     .info-label {
-      color: var(--parsec-color-light-secondary-grey);
+      color: var(--parsec-color-light-secondary-hard-grey);
       flex-shrink: 0;
     }
 
     .info-cell {
+      font-weight: 600;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;

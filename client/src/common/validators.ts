@@ -18,6 +18,7 @@ import {
 import { IValidator, Validity } from 'megashark-lib';
 
 const ENTRY_NAME_LIMIT = 128;
+const USER_NAME_LIMIT = 128;
 
 export const emailValidator: IValidator = async function (value: string) {
   value = value.trim();
@@ -39,6 +40,8 @@ export const userNameValidator: IValidator = async function (value: string) {
   value = value.trim();
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
+  } else if (value.length > USER_NAME_LIMIT) {
+    return { validity: Validity.Invalid, reason: { key: 'validators.userInfo.nameTooLong', data: { limit: USER_NAME_LIMIT } } };
   }
   return (await isValidUserName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid, reason: 'validators.userInfo.name' };
 };
