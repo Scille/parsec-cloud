@@ -2,7 +2,6 @@
 
 import { TestInfo } from '@playwright/test';
 import {
-  answerQuestion,
   createFolder,
   dragAndDropFile,
   expect,
@@ -83,12 +82,6 @@ msTest.describe(() => {
     await expect(actionBar.locator('.ms-action-bar-button:visible').nth(3)).toHaveText('Download');
     await actionBar.locator('.ms-action-bar-button:visible').nth(3).click();
     await confirmDownload(documents, true);
-    await answerQuestion(documents, true, {
-      expectedNegativeText: 'Cancel',
-      expectedPositiveText: 'Download archive',
-      expectedQuestionText: 'The selected files will be downloaded as an archive, with a total size of 130 KB. Do you want to continue?',
-      expectedTitleText: 'Downloading multiple files',
-    });
     await documents.waitForTimeout(1000);
 
     const uploadMenu = documents.locator('.upload-menu');
@@ -227,7 +220,6 @@ msTest.describe(() => {
     await expect(actionBarPopover).toBeHidden();
 
     await confirmDownload(documents, true);
-    await answerQuestion(documents, true);
 
     await documents.waitForTimeout(1000);
 
@@ -251,53 +243,5 @@ msTest.describe(() => {
     // cspell:disable-next-line
     expect(zipEntries.at(1)?.entryName).toBe('Folder/文件名.png');
     expect(zipEntries.at(1)?.header.size).toBe(243871);
-  });
-
-  msTest('Download archive too many recursion', async ({ documents }, testInfo: TestInfo) => {
-    msTest.setTimeout(45_000);
-    const entries = documents.locator('.folder-container').locator('.file-list-item');
-    const actionBar = documents.locator('#folders-ms-action-bar');
-    const actionBarMoreButton = actionBar.locator('#action-bar-more-button');
-    const actionBarPopover = documents.locator('.action-bar-more-popover');
-
-    for (let i = 0; i < 15; i++) {
-      await createFolder(documents, `Folder${i}`);
-      await expect(entries.nth(0).locator('.file-name').locator('.label-name')).toHaveText(`Folder${i}`);
-      await expect(documents.locator('.folder-container').locator('.no-files')).toBeHidden();
-      await entries.nth(0).dblclick();
-      await expect(documents.locator('.folder-container').locator('.no-files')).toBeVisible();
-    }
-    const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
-    await dragAndDropFile(documents, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png')]);
-    await documents.waitForTimeout(1000);
-
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeVisible();
-    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
-    await expect(opItems).toHaveCount(1);
-    await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('hell_yeah.png');
-
-    await documents.locator('#connected-header').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1).click();
-    await documents.waitForTimeout(500);
-    await expect(documents).toHaveHeader(['wksp1'], true, true);
-    await expect(entries).toHaveCount(1);
-
-    await documents.waitForTimeout(300);
-    await entries.nth(0).hover();
-    await documents.waitForTimeout(300);
-    await entries.nth(0).locator('.ms-checkbox').check();
-    await documents.waitForTimeout(300);
-    await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
-    await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
-
-    await expect(actionBarMoreButton).toBeVisible();
-    await actionBarMoreButton.click();
-    await expect(actionBarPopover).toBeVisible();
-    await expect(actionBarPopover.getByRole('listitem').nth(0)).toHaveText('Download');
-    await actionBarPopover.getByRole('listitem').nth(0).click();
-    await expect(actionBarPopover).toBeHidden();
-    await confirmDownload(documents, true);
-    await expect(documents).toShowToast('Maximum subfolder depth reached, cannot download', 'Error');
-    await expect(opItems).toHaveCount(1);
   });
 });

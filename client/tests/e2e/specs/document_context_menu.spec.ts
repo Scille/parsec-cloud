@@ -114,6 +114,7 @@ msTest.describe(() => {
         'Move to',
         'Make a copy',
         'History',
+        'Download',
         'Details',
         'Delete',
         'Collaboration',
@@ -172,6 +173,7 @@ msTest.describe(() => {
           'Move to',
           'Make a copy',
           'History',
+          'Download',
           'Details',
           'Delete',
           'Collaboration',
@@ -417,7 +419,7 @@ msTest.describe(() => {
       await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
       const popover = documentsReadOnly.locator('.file-context-menu');
       await expect(popover.getByRole('group')).toHaveCount(2);
-      await expect(popover.getByRole('listitem')).toHaveText(['Folder management', 'Details', 'Collaboration', 'Copy link']);
+      await expect(popover.getByRole('listitem')).toHaveText(['Folder management', 'Download', 'Details', 'Collaboration', 'Copy link']);
     });
 
     msTest(`File actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`, async ({ documentsReadOnly }) => {
@@ -833,7 +835,7 @@ msTest.describe(() => {
         await expect(documentsReadOnly.locator('.file-context-sheet-modal')).toBeVisible();
         const modal = documentsReadOnly.locator('.file-context-sheet-modal');
         await expect(modal.getByRole('group')).toHaveCount(1);
-        await expect(modal.getByRole('listitem')).toHaveText(['Copy link', 'Details']);
+        await expect(modal.getByRole('listitem')).toHaveText(['Download', 'Copy link', 'Details']);
       },
     );
 
