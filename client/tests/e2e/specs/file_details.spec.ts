@@ -27,8 +27,8 @@ msTest.describe(() => {
         expect(documents.locator('.file-context-menu').getByRole('listitem')).toHaveCount(11);
         await documents.locator('.file-context-menu').getByRole('listitem').nth(7).click();
       } else {
-        expect(documents.locator('.file-context-menu').getByRole('listitem')).toHaveCount(9);
-        await documents.locator('.file-context-menu').getByRole('listitem').nth(5).click();
+        expect(documents.locator('.file-context-menu').getByRole('listitem')).toHaveCount(10);
+        await documents.locator('.file-context-menu').getByRole('listitem').nth(6).click();
       }
       await expect(documents.locator('.file-details-modal')).toBeVisible();
       const modal = documents.locator('.file-details-modal');

@@ -14,6 +14,7 @@ import {
   listTreeAt,
   moveEntry,
   Path,
+  statFolderChildren,
   WorkspaceCreateFolderErrorTag,
   WorkspaceHandle,
   WorkspaceHistory,
@@ -287,7 +288,7 @@ export class FileOperationManager {
 
   async downloadArchive(
     workspaceHandle: WorkspaceHandle,
-    trees: Array<EntryTree>,
+    entries: Array<EntryStat>,
     saveHandle: FileSystemFileHandle,
     root: FsPath,
   ): Promise<boolean> {
@@ -302,11 +303,11 @@ export class FileOperationManager {
       workspaceHandle: workspaceHandle,
       workspaceId: workspaceResult.value.id,
       workspaceName: workspaceResult.value.name,
-      trees: trees,
+      entries: entries,
       saveHandle: saveHandle,
       rootPath: root,
-      totalFiles: trees.reduce((acc, el) => acc + el.entries.length, 0),
-      totalSize: trees.reduce((acc, el) => acc + el.totalSize, 0),
+      totalFiles: 0,
+      totalSize: 0,
     };
     await this.eventDistributor.distribute(FileOperationEvents.Added, data);
     this.pendingOperations.unshift(data);
@@ -643,6 +644,67 @@ export class FileOperationManager {
   }
 
   private async _doDownloadArchive(signal: AbortSignal, data: FileOperationDownloadArchiveData): Promise<void> {
+    async function _writeEntry(
+      entry: EntryStatFile,
+      writer: zipjs.ZipWriter<any>,
+      eventDistributor: FileOperationEventDistributor,
+      signal: AbortSignal,
+      totalSize: number,
+      currentFileIndex: number,
+    ): Promise<number> {
+      try {
+        let fileSize = 0;
+        const rStream = await createReadStream(data.workspaceHandle, entry.path, async (sizeRead: number) => {
+          if (signal.aborted) {
+            window.electronAPI.log('info', 'Cancelling import...');
+            throw new FileOperationCancelled();
+          }
+          fileSize += sizeRead;
+          eventDistributor.distribute(FileOperationEvents.Progress, data, {
+            currentFile: {
+              name: entry.name,
+              currentSize: fileSize,
+              totalSize: entry.size,
+              progress: Math.min(100, Math.round((fileSize / entry.size) * 100.0)),
+            },
+            global: {
+              currentSize: totalSize + fileSize,
+              fileIndex: currentFileIndex,
+              progress: 0,
+              totalSize: totalSize + fileSize,
+              fileCount: currentFileIndex,
+            },
+          });
+        });
+        const relPath = entry.path.startsWith(data.rootPath) ? entry.path.slice(data.rootPath.length) : entry.path;
+        await writer.add(relPath, rStream);
+        return fileSize;
+      } catch (e: any) {
+        window.electronAPI.log('error', 'Failed to add file to archive');
+        throw e;
+      }
+    }
+
+    async function* _iterDir(entry: EntryStatFolder, signal: AbortSignal): AsyncGenerator<EntryStatFile> {
+      const result = await statFolderChildren(data.workspaceHandle, entry.path);
+      if (result.ok) {
+        for (const child of result.value) {
+          if (signal.aborted) {
+            window.electronAPI.log('info', 'Cancelling import...');
+            throw new FileOperationCancelled();
+          }
+
+          if (child.isFile()) {
+            yield child as EntryStatFile;
+          } else {
+            yield* _iterDir(child as EntryStatFolder, signal);
+          }
+        }
+      } else {
+        throw new Error(`${result.error.tag} (${result.error.error})`);
+      }
+    }
+
     let zipWriter: zipjs.ZipWriter<any> | undefined;
     let wStream: FileSystemWritableFileStream | undefined;
 
@@ -657,39 +719,20 @@ export class FileOperationManager {
       });
 
       let totalSizeRead = 0;
-      let fileIndex = 0;
-      for (const tree of data.trees) {
-        for (const entry of tree.entries) {
-          // Check if the download has been cancelled
-          if (signal.aborted) {
-            throw new FileOperationCancelled();
-          }
+      let fileIndex = 1;
+      for (const entry of data.entries) {
+        // Check if the download has been cancelled
+        if (signal.aborted) {
+          throw new FileOperationCancelled();
+        }
 
-          try {
-            const rStream = await createReadStream(data.workspaceHandle, entry.path, async (sizeRead: number) => {
-              totalSizeRead += sizeRead;
-              this.eventDistributor.distribute(FileOperationEvents.Progress, data, {
-                currentFile: {
-                  name: entry.name,
-                  currentSize: 0,
-                  totalSize: entry.size,
-                  progress: 0.0,
-                },
-                global: {
-                  totalSize: data.totalSize,
-                  currentSize: totalSizeRead,
-                  fileCount: data.totalFiles,
-                  fileIndex: fileIndex,
-                  progress: Math.min(100, Math.round((totalSizeRead / data.totalSize) * 100.0)),
-                },
-              });
-            });
-            const relPath = entry.path.startsWith(data.rootPath) ? entry.path.slice(data.rootPath.length) : entry.path;
-            await zipWriter.add(relPath, rStream);
+        if (entry.isFile()) {
+          totalSizeRead += await _writeEntry(entry as EntryStatFile, zipWriter, this.eventDistributor, signal, totalSizeRead, fileIndex);
+          fileIndex += 1;
+        } else {
+          for await (const fileEntry of _iterDir(entry as EntryStatFolder, signal)) {
+            totalSizeRead += await _writeEntry(fileEntry, zipWriter, this.eventDistributor, signal, totalSizeRead, fileIndex);
             fileIndex += 1;
-          } catch (e: any) {
-            window.electronAPI.log('error', 'Failed to add file to archive');
-            throw e;
           }
         }
       }

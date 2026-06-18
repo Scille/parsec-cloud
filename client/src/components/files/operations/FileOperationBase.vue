@@ -61,7 +61,7 @@
               :icon="chevronDown"
             />
           </div>
-          <div class="element-details-info body-sm">
+          <div class="element-details-info button-small">
             <ion-text v-if="props.status === FileOperationEvents.Cancelled">
               {{ $msTranslate('FoldersPage.FileOperations.cancelled') }}
             </ion-text>

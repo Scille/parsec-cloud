@@ -139,7 +139,7 @@
 
           <ion-item
             button
-            v-if="!isDesktop() && isFile"
+            v-if="!isDesktop()"
             @click="onClick(FileAction.Download)"
             class="ion-no-padding list-group-item"
           >

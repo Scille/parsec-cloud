@@ -25,7 +25,7 @@
               {{ $msTranslate('FoldersPage.DownloadFile.archiveDownload') }}
             </ion-text>
           </div>
-          <div class="element-details-info body-sm">
+          <div class="element-details-info button-small">
             <ion-text v-if="props.status === FileOperationEvents.Cancelled">
               {{ $msTranslate('FoldersPage.FileOperations.cancelled') }}
             </ion-text>
@@ -35,6 +35,13 @@
             >
               <span v-if="props.status === FileOperationEvents.Failed || props.status === FileOperationEvents.Cancelled"> &bull; </span>
               {{ operationData.workspaceName }}
+            </ion-text>
+            <ion-text
+              v-if="props.status === FileOperationEvents.Progress && props.eventData"
+              class="progress-data default-state"
+            >
+              <span> &bull; </span>
+              {{ $msTranslate(formatFileSize((props.eventData as OperationProgressEventData).global.currentSize)) }}
             </ion-text>
             <ion-text
               class="hover-state"
@@ -69,9 +76,6 @@
           class="progress-info"
           v-if="props.status === FileOperationEvents.Progress && props.eventData"
         >
-          <ion-text class="progress-percentage button-small default-state">
-            {{ (props.eventData as OperationProgressEventData).global.progress }}%
-          </ion-text>
           <ms-spinner class="progress-spinner default-state" />
           <ion-button
             fill="clear"
@@ -110,6 +114,7 @@
 
 <script setup lang="ts">
 import DownloadArchive from '@/assets/images/download-archive.svg?raw';
+import { formatFileSize } from '@/common/file';
 import {
   FileOperationData,
   FileOperationDownloadArchiveData,
@@ -161,6 +166,12 @@ function onCancelClicked(): void {
   display: flex;
   align-items: center;
   gap: 0.375rem;
+
+  .progress-data {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
 
   .information-icon {
     font-size: 1.375rem;

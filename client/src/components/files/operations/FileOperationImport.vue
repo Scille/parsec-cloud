@@ -63,7 +63,7 @@
               :icon="chevronDown"
             />
           </div>
-          <div class="element-details-info body-sm">
+          <div class="element-details-info button-small">
             <ion-text
               v-if="singleEntry"
               v-show="props.status === FileOperationEvents.Progress || (props.status === FileOperationEvents.Finished && !isHovered)"

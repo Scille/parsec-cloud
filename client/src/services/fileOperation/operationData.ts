@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { EntryName, EntryStat, EntryStatFile, EntryTree, FsPath, WorkspaceHandle, WorkspaceHistoryEntryStat, WorkspaceID } from '@/parsec';
+import { EntryName, EntryStat, EntryStatFile, FsPath, WorkspaceHandle, WorkspaceHistoryEntryStat, WorkspaceID } from '@/parsec';
 import { DuplicatePolicy } from '@/services/fileOperation/types';
 import { DateTime } from 'luxon';
 import { FileSystemFileHandle } from 'native-file-system-adapter';
@@ -55,7 +55,7 @@ export interface FileOperationDownloadData extends _FileOperationData {
 }
 
 export interface FileOperationDownloadArchiveData extends _FileOperationData {
-  trees: Array<EntryTree>;
+  entries: Array<EntryStat>;
   saveHandle: FileSystemFileHandle;
   rootPath: FsPath;
   totalFiles: number;

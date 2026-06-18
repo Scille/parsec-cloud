@@ -1,9 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { formatFileSize } from '@/common/file';
 import { EntryModel } from '@/components/files';
 import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
-import { EntryName, EntryStat, EntryStatFile, EntryTree, listTree, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { EntryName, EntryStat, EntryStatFile, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { isFileEditable } from '@/services/cryptpad';
 import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager } from '@/services/fileOperation/manager';
@@ -12,7 +11,7 @@ import { StorageManager } from '@/services/storageManager';
 import { FileAction, FileContextMenu, FileOperationConflictsModal, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
 import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { Answer, askQuestion, I18n, MsModalResult, useWindowSize } from 'megashark-lib';
+import { MsModalResult, useWindowSize } from 'megashark-lib';
 import { showSaveFilePicker } from 'native-file-system-adapter';
 
 export function useFileContextMenu() {
@@ -211,71 +210,12 @@ export async function downloadArchive(options: DownloadEntriesOptions): Promise<
     return;
   }
 
-  const trees: Array<EntryTree> = [];
-  let totalSize = 0;
-  let totalFiles = 0;
-  let maxRecursionReached = false;
-  let maxFilesReached = false;
-  for (const entry of options.entries) {
-    if (entry.isFile()) {
-      trees.push({
-        totalSize: (entry as EntryStatFile).size,
-        entries: [entry as EntryStatFile],
-        maxRecursionReached: false,
-        maxFilesReached: false,
-      });
-      totalSize += (entry as EntryStatFile).size;
-      totalFiles += 1;
-    } else {
-      const tree = await listTree(options.workspaceHandle, entry.path);
-      totalSize += tree.totalSize;
-      totalFiles += tree.entries.length;
-      maxRecursionReached ||= tree.maxRecursionReached;
-      maxFilesReached ||= tree.maxFilesReached;
-      trees.push(tree);
-    }
-  }
-
-  if (maxRecursionReached) {
-    window.electronAPI.log('error', 'Maximum recursion reached when downloading archive');
-    options.informationManager.present(
-      new Information({
-        message: 'FoldersPage.DownloadFile.maximumRecursionReached',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  } else if (maxFilesReached) {
-    window.electronAPI.log('error', 'Maximum file reached when downloading archive');
-    options.informationManager.present(
-      new Information({
-        message: 'FoldersPage.DownloadFile.maximumFilesReached',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    return;
-  }
-
-  const answer = await askQuestion(
-    'FoldersPage.DownloadFile.archiveTitle',
-    { key: 'FoldersPage.DownloadFile.archiveQuestion', data: { size: I18n.translate(formatFileSize(totalSize)), files: totalFiles } },
-    {
-      noText: 'FoldersPage.DownloadFile.archiveNo',
-      yesText: 'FoldersPage.DownloadFile.archiveYes',
-    },
-  );
-  if (answer === Answer.No) {
-    return;
-  }
-
   try {
     const saveHandle = await showSaveFilePicker({
       _preferPolyfill: false,
       suggestedName: options.archiveName,
     });
-    await options.fileOperationManager.downloadArchive(options.workspaceHandle, trees, saveHandle, options.relativePath);
+    await options.fileOperationManager.downloadArchive(options.workspaceHandle, options.entries, saveHandle, options.relativePath);
   } catch (e: any) {
     if (e.name === 'NotAllowedError') {
       window.electronAPI.log('error', 'No permission for showSaveFilePicker');
