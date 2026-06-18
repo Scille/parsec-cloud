@@ -537,7 +537,7 @@ async function openDocumentation(): Promise<void> {
   overflow: hidden;
   height: 100%;
   border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
-  padding: 2rem 2rem 0 2rem;
+  padding: 2rem 2rem 1rem 2rem;
   width: 100%;
   max-width: 40rem;
   background: var(--parsec-color-light-secondary-white);

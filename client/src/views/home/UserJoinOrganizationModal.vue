@@ -617,6 +617,10 @@ onMounted(async () => {
   }
 }
 
+.modal-header__title {
+  text-wrap: break-word;
+}
+
 .modal-footer-buttons {
   padding-top: 2rem;
 

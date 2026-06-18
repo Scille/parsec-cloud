@@ -85,7 +85,7 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   await expect(greetData.title).toHaveText('User has been added successfully!');
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await expect(greetData.nextButton).toBeVisible();
-  await expect(greetData.content.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
+  await expect(greetData.content.locator('.final-step').locator('.user-name')).toHaveText('Gordon Freeman');
   await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
     'gordon.freeman@blackmesa.nm',
   );
@@ -205,7 +205,7 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   await expect(greetData.title).toHaveText('User has been added successfully!');
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await expect(greetData.nextButton).toBeVisible();
-  await expect(greetData.content.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
+  await expect(greetData.content.locator('.final-step').locator('.user-name')).toHaveText('Gordon Freeman');
   await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
     'gordon.freeman@blackmesa.nm',
   );
@@ -628,7 +628,7 @@ msTest.skip('Greet user whole process with smartcard auth', async ({ usersPage }
   await expect(greetData.title).toHaveText('User has been added successfully!');
   await expect(greetData.nextButton).not.toHaveDisabledAttribute();
   await expect(greetData.nextButton).toBeVisible();
-  await expect(greetData.content.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
+  await expect(greetData.content.locator('.final-step').locator('.user-name')).toHaveText('Gordon Freeman');
   await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
     'gordon.freeman@blackmesa.nm',
   );

@@ -2351,6 +2351,7 @@
         },
         "userInfo": {
             "name": "Le nom contient des caractères invalides.",
+            "nameTooLong": "Le nom est trop long, la limite est de {limit} caractères.",
             "email": "Le format de l'adresse email est invalide."
         }
     },

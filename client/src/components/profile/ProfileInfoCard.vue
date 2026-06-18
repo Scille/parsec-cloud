@@ -40,12 +40,12 @@ defineProps<{
 <style lang="scss" scoped>
 .profile-info-card {
   display: flex;
-  align-items: center;
   gap: 1rem;
 
   &__avatar {
     height: 3rem;
     color: var(--parsec-color-light-secondary-text);
+    flex-shrink: 0;
   }
 
   &-content {
@@ -55,7 +55,6 @@ defineProps<{
 
   &-item {
     display: flex;
-    align-items: center;
     gap: 0.75rem;
     justify-content: space-between;
     color: var(--parsec-color-light-secondary-text);

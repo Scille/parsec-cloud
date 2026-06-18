@@ -140,18 +140,6 @@
             </ion-button>
 
             <ion-button
-              v-show="false"
-              v-if="!isMobile()"
-              slot="icon-only"
-              id="trigger-search-button"
-              class="topbar-right-buttons__item"
-            >
-              <ion-icon
-                slot="icon-only"
-                :icon="search"
-              />
-            </ion-button>
-            <ion-button
               slot="icon-only"
               id="trigger-notifications-button"
               class="topbar-right-buttons__item"
@@ -283,17 +271,7 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-import {
-  archive,
-  checkmarkCircle,
-  chevronDown,
-  ellipseOutline,
-  ellipsisHorizontal,
-  home,
-  notifications,
-  search,
-  trash,
-} from 'ionicons/icons';
+import { archive, checkmarkCircle, chevronDown, ellipseOutline, ellipsisHorizontal, home, notifications, trash } from 'ionicons/icons';
 import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 

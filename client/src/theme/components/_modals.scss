@@ -111,7 +111,6 @@ ion-modal {
         display: flex;
         align-items: center;
         gap: 1rem;
-        max-width: var(--parsec-modal-width-sm);
       }
 
       &__text {
@@ -315,6 +314,12 @@ ion-modal {
       position: relative;
       padding: 2rem 2rem 0 2rem;
       height: auto;
+    }
+  }
+
+  .Finish {
+    .title-toolbar {
+      white-space: normal;
     }
   }
 }
@@ -607,6 +612,14 @@ ion-modal {
     --height: 100%;
     height: 100%;
     overflow: auto;
+  }
+
+  .Summary {
+    .modal-content {
+      @include ms.responsive-breakpoint('sm') {
+        padding-inline: 1.5rem;
+      }
+    }
   }
 
   // manage the two columns on Contact details step
