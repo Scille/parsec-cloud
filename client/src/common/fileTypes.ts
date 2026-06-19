@@ -27,8 +27,7 @@ const OPENABLE_FILES = {
   PDF_DOCUMENTS: ['pdf'],
   AUDIOS: ['wav', 'mp3', 'ogg'],
   VIDEOS: ['mp4', 'mpeg', 'webm'],
-  // TODO: enable ODP when supported: https://github.com/Scille/parsec-cloud/issues/12110
-  PRESENTATIONS: ['pptx'], // , 'odp']
+  PRESENTATIONS: ['pptx', 'odp'],
   // For generic text/plain
   TEXTS: [
     'xml',
@@ -78,7 +77,7 @@ const DETECTABLE_FILES = {
   PDF_DOCUMENTS: [...OPENABLE_FILES.PDF_DOCUMENTS],
   AUDIOS: [...OPENABLE_FILES.AUDIOS, 'flac', 'aac', 'm4a', 'opus', 'oga', 'alac', 'aiff', 'wma', 'amr', 'mid', 'midi'],
   VIDEOS: ['mp4', 'mpeg', 'webm', ...OPENABLE_FILES.VIDEOS, 'mkv', 'mov', 'avi', 'ts', 'm2ts', 'mts', 'flv', 'wmv', '3gp', 'mpg', 'mpeg'],
-  PRESENTATIONS: [...OPENABLE_FILES.PRESENTATIONS, 'odp', 'ppt'],
+  PRESENTATIONS: [...OPENABLE_FILES.PRESENTATIONS, 'ppt'],
   TEXTS: [...OPENABLE_FILES.TEXTS],
 };
 

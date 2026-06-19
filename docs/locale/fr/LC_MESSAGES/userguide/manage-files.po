@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.2.5-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-22 12:01+0000\n"
+"POT-Creation-Date: 2026-06-22 13:19+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Parsec dev <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -398,12 +398,8 @@ msgid "Spreadsheet: XLSX (Microsoft Excel), XLS, ODS (OpenOffice)"
 msgstr "Feuille de calcul: XLSX (Microsoft Excel), XLS, ODS (OpenOffice)"
 
 #: ../../userguide/manage-files.rst:165 ../../userguide/manage-files.rst:202
-msgid ""
-"Presentation: PPTX (Microsoft Powerpoint). ODP (OpenOffice) support is "
-"coming soon."
-msgstr ""
-"Présentation : PPTX (Microsoft Powerpoint), le support ODP (OpenOffice) "
-"arrivera prochainement."
+msgid "Presentation: PPTX (Microsoft Powerpoint), ODP (OpenOffice)"
+msgstr "Présentation : PPTX (Microsoft Powerpoint), ODP (OpenOffice)"
 
 #: ../../userguide/manage-files.rst:166 ../../userguide/manage-files.rst:203
 msgid "Plain Text and Code file formats: TXT, MD, CSV, RST, JSON..."
