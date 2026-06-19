@@ -381,13 +381,21 @@ async function handleQuery(): Promise<void> {
   queryInProgress.value = true;
   const query = getCurrentRouteQuery();
   if (query.claimLink) {
-    openJoinByLinkModal(query.claimLink);
+    const link = query.claimLink;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    openJoinByLinkModal(link);
   } else if (query.bootstrapLink) {
-    openCreateOrganizationModal(query.bootstrapLink);
+    const link = query.bootstrapLink;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    openCreateOrganizationModal(link);
   } else if (query.asyncEnrollmentLink) {
-    handleAsyncEnrollment(query.asyncEnrollmentLink);
+    const link = query.asyncEnrollmentLink;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    handleAsyncEnrollment(link);
   } else if (query.totpResetLink) {
-    handleTotpReset(query.totpResetLink);
+    const link = query.totpResetLink;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    handleTotpReset(link);
   } else if (query.deviceId) {
     const availableDevices = await listAvailableDevices();
     const device = availableDevices.find((d) => d.deviceId === query.deviceId);
@@ -395,6 +403,7 @@ async function handleQuery(): Promise<void> {
       await onOrganizationSelected(device);
     } else {
       console.error('Could not find the corresponding device');
+      await navigateTo(Routes.Home, { skipHandle: true });
     }
   } else if (query.bmsOrganizationId) {
     const availableDevices = await listAvailableDevices();
@@ -422,9 +431,12 @@ async function handleQuery(): Promise<void> {
         }),
         PresentationMode.Toast,
       );
+      await navigateTo(Routes.Home, { skipHandle: true });
     }
   } else if (query.createOrg) {
-    openCreateOrganizationModal(undefined, query.createOrg);
+    const serverType = query.createOrg;
+    await navigateTo(Routes.Home, { skipHandle: true });
+    openCreateOrganizationModal(undefined, serverType);
   } else if (query.bmsLogin) {
     state.value = HomePageState.CustomerArea;
     // Should just reset the query in the URL without reloading the page
