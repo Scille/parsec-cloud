@@ -35,6 +35,7 @@ for (const [action, link] of [
       await expect(page).toBeHomePage();
       await expect(page.locator('.create-organization-modal')).toBeVisible();
     }
+    await expect(page).toHaveURL(/\/home$/);
   });
 }
 

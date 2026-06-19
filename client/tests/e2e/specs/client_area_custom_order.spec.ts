@@ -40,5 +40,5 @@ msTest('Test sidebar goto org', async ({ clientAreaCustomOrder }) => {
   await expect(gotoButton).toBeVisible();
   await gotoButton.click();
   await expect(clientAreaCustomOrder).toBeHomePage();
-  await expect(clientAreaCustomOrder).toHaveURL('/home?bmsOrganizationId=BlackMesa');
+  await expect(clientAreaCustomOrder).toShowToast('Could not find the organization BlackMesa on this device.', 'Error');
 });
