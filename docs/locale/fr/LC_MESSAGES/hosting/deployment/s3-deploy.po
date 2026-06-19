@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec Documentation 3.9.1-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-08 10:51+0200\n"
+"POT-Creation-Date: 2026-06-19 15:39+0200\n"
 "PO-Revision-Date: 2026-06-08 12:00+0200\n"
 "Last-Translator: Parsec Translation Team <translation@scille.fr>\n"
 "Language: fr\n"
@@ -47,9 +47,8 @@ msgid "A RAID configuration combining multiple storages"
 msgstr "Une configuration RAID combinant plusieurs stockages"
 
 #: ../../hosting/deployment/s3-deploy.rst:15
-msgid "However, the most common deployment uses S3-compatible storage."
-msgstr ""
-"Cependant, le déploiement le plus courant utilise un stockage compatible S3."
+msgid "The most common deployment approach is to use an S3-compatible storage."
+msgstr "Le déploiement le plus courant utilise un stockage compatible S3."
 
 #: ../../hosting/deployment/s3-deploy.rst:17
 msgid ""
@@ -139,8 +138,8 @@ msgstr "Limiter l'accès avec un utilisateur dédié"
 
 #: ../../hosting/deployment/s3-deploy.rst:79
 msgid ""
-"For security, create a dedicated IAM user with restricted permissions to "
-"only the necessary operations."
+"For security reasons, create a dedicated IAM user with restricted "
+"permissions to only the necessary operations."
 msgstr ""
 "Pour des raisons de sécurité, créez un utilisateur IAM dédié avec des "
 "permissions restreintes aux seules opérations nécessaires."
