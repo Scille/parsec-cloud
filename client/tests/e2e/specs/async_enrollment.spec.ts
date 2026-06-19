@@ -5,12 +5,14 @@ import {
   expect,
   fillInputModal,
   fillIonInput,
+  getClipboardText,
   getOrganizationAddr,
   login,
   logout,
   MsPage,
   msTest,
   setupNewPage,
+  setWriteClipboardPermission,
 } from '@tests/e2e/helpers';
 
 function getAsyncEnrollmentJoinLink(orgName: string): string {
@@ -293,3 +295,75 @@ for (const identitySystem of ['pki', 'openbao']) {
     await page.release();
   });
 }
+
+msTest('Cannot accept PKI request', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  await setupNewPage(page, { mockPki: false });
+
+  await login(page, 'Alicey McAliceFace');
+
+  const sidebar = page.locator('.sidebar');
+  await page.locator('.sidebar').locator('#sidebar-invitations').click();
+  await expect(page).toHavePageTitle('Invitations & Join Requests');
+  await sidebar.locator('#sidebar-invitations').click();
+
+  await expect(page).toHavePageTitle('Invitations & Join Requests');
+  await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('0');
+  await page.locator('.toggle-view-container').locator('.pki-button').click();
+
+  const linkRequests = page.locator('.invitations-container').locator('.request-list-item');
+  await expect(linkRequests).toHaveCount(0);
+
+  await setWriteClipboardPermission(context, true);
+  await page.locator('#copy-link-pki-request-button').click();
+
+  // Make a request with the second tab
+  const secondTab = await page.openNewTab({ mockPki: true });
+
+  const requests = secondTab.locator('.organization-request');
+  await expect(requests).toBeHidden();
+  await secondTab.locator('#create-organization-button').click();
+  await expect(secondTab.locator('.homepage-popover')).toBeVisible();
+  await secondTab.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+
+  await fillInputModal(secondTab, await getClipboardText(page));
+  const requestModal = secondTab.locator('.async-enrollment-modal');
+  await expect(requestModal).toBeVisible();
+  const nextButton = requestModal.locator('#next-button');
+
+  await expect(requestModal.locator('.choose-method')).toBeVisible();
+  const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
+  await expect(options.locator('.title-h4')).toHaveText(['Continue with PKI', 'Continue with Single Sign-On']);
+  await options.nth(0).click();
+  await nextButton.click();
+  await expect(requestModal.locator('.modal-info')).toBeVisible();
+
+  await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Certificate Authentication (PKI)');
+  await requestModal.locator('.certificate-card').nth(1).click();
+  await expect(nextButton).toBeTrulyEnabled();
+  await nextButton.click();
+  await expect(secondTab).toShowToast('Your request to join the organization has been sent.', 'Success');
+  await expect(requestModal).toBeHidden();
+  await expect(requests).toHaveCount(1);
+  secondTab.close();
+
+  await expect(page.locator('.toggle-view-container').locator('.pki-button').locator('.toggle-view-button__count')).toHaveText('1');
+  await expect(linkRequests).toHaveCount(1);
+
+  await expect(linkRequests.nth(0).locator('.request-type__label')).toHaveText('PKI');
+  await expect(linkRequests.nth(0).locator('.person-name')).toHaveText('Bob');
+  await expect(linkRequests.nth(0).locator('.request-email__label')).toHaveText('bob@black-mesa.corp');
+
+  const acceptButton = linkRequests.nth(0).locator('.request-actions').locator('ion-button').nth(0);
+  await expect(acceptButton).toBeHidden();
+  const cannotAccept = linkRequests.nth(0).locator('.request-actions').locator('.request-actions-secondary__text');
+  await expect(cannotAccept).toBeVisible();
+  await expect(cannotAccept).toHaveText('Cannot be accepted');
+  const reason = linkRequests.nth(0).locator('.request-error-content');
+  await expect(reason).toBeHidden();
+  await cannotAccept.click();
+  await expect(reason).toBeVisible();
+  await expect(reason).toHaveText('Error details:PKI is not available on this organization.');
+
+  await page.release();
+});

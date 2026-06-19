@@ -9,148 +9,180 @@
       'request-list-item--corrupted': request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted,
     }"
   >
-    <!-- request - mobile version -->
-    <div
-      class="request-mobile"
-      v-if="isSmallDisplay"
-    >
-      <div class="request-mobile-header">
-        <ion-text class="request-mobile-header__name subtitles-normal">
-          <span v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted">
-            {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.errors.unknownName') }}
-          </span>
-          <span v-else>{{ humanHandle.label }}</span>
+    <div class="request-list-item__content">
+      <!-- request - mobile version -->
+      <div
+        class="request-mobile"
+        v-if="isSmallDisplay"
+      >
+        <div class="request-mobile-header">
+          <ion-text class="request-mobile-header__name subtitles-normal">
+            <span v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted">
+              {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.errors.unknownName') }}
+            </span>
+            <span v-else>{{ humanHandle.label }}</span>
+          </ion-text>
+          <ion-text class="request-mobile-header__email button-medium">
+            {{ humanHandle.email }}
+          </ion-text>
+        </div>
+        <div class="request-mobile-content">
+          <ion-text class="request-mobile-content__createdOn body-sm">
+            {{ $msTranslate(formatTimeSince(request.submittedOn, '--', 'short')) }}
+          </ion-text>
+          <div class="button-small request-type">
+            <ion-text
+              class="request-type__label"
+              v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao"
+            >
+              {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.sso') }}
+            </ion-text>
+            <ion-text
+              class="request-type__label"
+              v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKI"
+            >
+              {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.pki') }}
+            </ion-text>
+            <ion-text
+              class="request-type__label"
+              v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
+            >
+              {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.pkiCorrupted') }}
+            </ion-text>
+          </div>
+        </div>
+      </div>
+
+      <!-- request avatar -->
+      <div
+        class="request-name"
+        v-if="isLargeDisplay"
+      >
+        <ion-text class="request-name__label cell">
+          <user-avatar-name
+            :user-avatar="humanHandle.label"
+            :user-name="humanHandle.label"
+          />
         </ion-text>
-        <ion-text class="request-mobile-header__email button-medium">
+      </div>
+
+      <!-- request mail -->
+      <div
+        class="request-email"
+        v-if="isLargeDisplay"
+      >
+        <ion-text class="request-email__label cell">
+          <ion-icon
+            :icon="warning"
+            class="error-icon"
+            v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
+          />
+
           {{ humanHandle.email }}
         </ion-text>
       </div>
-      <div class="request-mobile-content">
-        <ion-text class="request-mobile-content__createdOn body-sm">
+
+      <!-- request created on -->
+      <div
+        class="request-createdOn"
+        v-if="isLargeDisplay"
+      >
+        <ion-text class="request-createdOn__label cell">
           {{ $msTranslate(formatTimeSince(request.submittedOn, '--', 'short')) }}
         </ion-text>
-        <div class="button-small request-type">
-          <ion-text
-            class="request-type__label"
-            v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao"
+      </div>
+
+      <!-- request type -->
+      <div
+        class="request-type button-medium"
+        v-if="isLargeDisplay"
+      >
+        <ion-text
+          class="request-type__label"
+          v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao"
+        >
+          {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.sso') }}
+        </ion-text>
+        <ion-text
+          class="request-type__label"
+          v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKI"
+        >
+          {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.pki') }}
+        </ion-text>
+        <ion-text
+          class="request-type__label"
+          v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
+          ref="rejectType"
+        >
+          {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.pkiCorrupted') }}
+        </ion-text>
+      </div>
+
+      <!-- actions -->
+      <div class="request-actions">
+        <ion-button
+          v-show="canAccept"
+          @click="$emit('acceptClick', request)"
+          class="primary-button button-medium button-default"
+          size="default"
+        >
+          {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.accept') }}
+        </ion-button>
+        <ion-text
+          class="request-actions-secondary__text button-medium"
+          :class="{ 'request-actions-secondary__text--active': showErrorDetails }"
+          v-if="!canAccept"
+          @click="toggleErrorDetails"
+        >
+          <ion-icon
+            :icon="warning"
+            class="error-icon"
+          />
+          {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.errors.canNotAccept') }}
+          <ion-icon
+            :icon="chevronDown"
+            class="error-icon"
+            :style="{ transform: showErrorDetails ? 'rotate(180deg)' : 'rotate(0deg)' }"
+          />
+        </ion-text>
+        <ion-button
+          v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
+          @click="$emit('rejectClick', request)"
+          class="primary-button button-medium button-default"
+          size="default"
+        >
+          {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.reject') }}
+        </ion-button>
+        <div
+          class="request-actions-secondary"
+          v-if="request.identitySystem.tag !== AsyncEnrollmentIdentitySystemTag.PKICorrupted"
+        >
+          <ion-button
+            @click="$emit('rejectClick', request)"
+            class="request-actions-secondary__button"
+            fill="clear"
+            ref="rejectButton"
           >
-            {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.sso') }}
-          </ion-text>
-          <ion-text
-            class="request-type__label"
-            v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKI"
-          >
-            {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.pki') }}
-          </ion-text>
-          <ion-text
-            class="request-type__label"
-            v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
-          >
-            {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.pkiCorrupted') }}
-          </ion-text>
+            <ion-icon
+              :icon="trash"
+              class="button-icon"
+            />
+          </ion-button>
         </div>
       </div>
     </div>
 
-    <!-- request avatar -->
     <div
-      class="request-name"
-      v-if="isLargeDisplay"
+      class="request-error-content"
+      :class="{ 'request-error-content--visible': showErrorDetails }"
+      v-if="!canAccept"
     >
-      <ion-text class="request-name__label cell">
-        <user-avatar-name
-          :user-avatar="humanHandle.label"
-          :user-name="humanHandle.label"
-        />
+      <ion-text class="request-error__title">
+        {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.errors.errorDetail') }}
       </ion-text>
-    </div>
-
-    <!-- request mail -->
-    <div
-      class="request-email"
-      v-if="isLargeDisplay"
-    >
-      <ion-text class="request-email__label cell">
-        <ion-icon
-          :icon="warning"
-          class="error-icon"
-          v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
-        />
-
-        {{ humanHandle.email }}
+      <ion-text class="request-error__details">
+        {{ $msTranslate(reason) }}
       </ion-text>
-    </div>
-
-    <!-- request created on -->
-    <div
-      class="request-createdOn"
-      v-if="isLargeDisplay"
-    >
-      <ion-text class="request-createdOn__label cell">
-        {{ $msTranslate(formatTimeSince(request.submittedOn, '--', 'short')) }}
-      </ion-text>
-    </div>
-
-    <!-- request type -->
-    <div
-      class="request-type button-medium"
-      v-if="isLargeDisplay"
-    >
-      <ion-text
-        class="request-type__label"
-        v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao"
-      >
-        {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.sso') }}
-      </ion-text>
-      <ion-text
-        class="request-type__label"
-        v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKI"
-      >
-        {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.pki') }}
-      </ion-text>
-      <ion-text
-        class="request-type__label"
-        v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
-        ref="rejectType"
-      >
-        {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.type.pkiCorrupted') }}
-      </ion-text>
-    </div>
-
-    <!-- actions -->
-    <div class="request-actions">
-      <ion-button
-        v-show="canAccept"
-        @click="$emit('acceptClick', request)"
-        class="primary-button button-medium button-default"
-        size="default"
-      >
-        {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.accept') }}
-      </ion-button>
-      <ion-button
-        v-if="request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted"
-        @click="$emit('rejectClick', request)"
-        class="primary-button button-medium button-default"
-        size="default"
-      >
-        {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.reject') }}
-      </ion-button>
-      <div
-        class="request-actions-secondary"
-        v-if="request.identitySystem.tag !== AsyncEnrollmentIdentitySystemTag.PKICorrupted"
-      >
-        <ion-button
-          @click="$emit('rejectClick', request)"
-          class="request-actions-secondary__button"
-          fill="clear"
-          ref="rejectButton"
-        >
-          <ion-icon
-            :icon="trash"
-            class="button-icon"
-          />
-        </ion-button>
-      </div>
     </div>
   </ion-item>
 </template>
@@ -159,9 +191,9 @@
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { AsyncEnrollmentIdentitySystemTag, AsyncEnrollmentUntrusted, HumanHandle, ServerConfig } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
-import { trash, warning } from 'ionicons/icons';
-import { attachMouseOverTooltip, formatTimeSince, I18n, Translatable, useWindowSize } from 'megashark-lib';
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { chevronDown, trash, warning } from 'ionicons/icons';
+import { formatTimeSince, I18n, Translatable, useWindowSize } from 'megashark-lib';
+import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   request: AsyncEnrollmentUntrusted;
@@ -169,9 +201,10 @@ const props = defineProps<{
   serverConfig?: ServerConfig;
 }>();
 
+const reason = ref<Translatable | undefined>(undefined);
 const { isSmallDisplay, isLargeDisplay } = useWindowSize();
-const rejectTagRef = useTemplateRef<InstanceType<typeof IonButton>>('rejectButton');
 const canAccept = ref(true);
+const showErrorDetails = ref(false);
 
 defineEmits<{
   (e: 'acceptClick', invitation: AsyncEnrollmentUntrusted): void;
@@ -188,34 +221,52 @@ const humanHandle = computed((): HumanHandle => {
   return props.request.untrustedRequestedHumanHandle;
 });
 
+function toggleErrorDetails(): void {
+  showErrorDetails.value = !showErrorDetails.value;
+}
+
 onMounted(async () => {
   canAccept.value = true;
-  let reason: Translatable | undefined = undefined;
   if (props.request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.OpenBao) {
     if (!props.serverConfig?.openbao || props.serverConfig.openbao.auths.length === 0) {
       canAccept.value = false;
-      reason = 'InvitationsPage.asyncEnrollmentRequest.errors.noSsoConfigured';
+      reason.value = 'InvitationsPage.asyncEnrollmentRequest.errors.noSsoConfigured';
     }
   } else if (props.request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKI) {
     if (!props.pkiAvailable) {
       canAccept.value = false;
-      reason = 'InvitationsPage.asyncEnrollmentRequest.errors.pkiNotAvailable';
+      reason.value = 'InvitationsPage.asyncEnrollmentRequest.errors.pkiNotAvailable';
     }
   } else if (props.request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted) {
     canAccept.value = false;
-    reason = 'InvitationsPage.asyncEnrollmentRequest.errors.problemWithRequestCertificate';
+    reason.value = 'InvitationsPage.asyncEnrollmentRequest.errors.problemWithRequestCertificate';
   } else {
     canAccept.value = false;
-    reason = 'InvitationsPage.asyncEnrollmentRequest.errors.unknownIdentitySystem';
-  }
-
-  if (!canAccept.value && reason) {
-    attachMouseOverTooltip(rejectTagRef.value?.$el, reason);
+    reason.value = 'InvitationsPage.asyncEnrollmentRequest.errors.unknownIdentitySystem';
   }
 });
 </script>
 
 <style lang="scss" scoped>
+.request-list-item {
+  &::part(container) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__content {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+
+    @include ms.responsive-breakpoint('sm') {
+      flex-direction: column;
+      align-items: start;
+    }
+  }
+}
+
 .request-name {
   color: var(--parsec-color-light-secondary-text);
 }
@@ -259,9 +310,23 @@ onMounted(async () => {
     padding: 0.5rem 0.75rem;
   }
 
-  &-error {
+  &-secondary__text {
+    display: flex;
+    cursor: pointer;
+    gap: 0.25rem;
     color: var(--parsec-color-light-danger-500);
     align-self: center;
+    padding: 0.5rem 0.5rem;
+    border-radius: var(--parsec-radius-8);
+
+    &:hover {
+      background: var(--parsec-color-light-danger-50);
+    }
+
+    &--active {
+      background: var(--parsec-color-light-danger-50);
+      border: 1px solid var(--parsec-color-light-danger-100);
+    }
   }
 }
 
@@ -310,6 +375,7 @@ onMounted(async () => {
   align-self: center;
   margin-right: 0.25rem;
   font-size: 1rem;
+  transition: transform 0.2s ease-in-out;
 }
 
 .request-list-item--corrupted {
@@ -334,6 +400,48 @@ onMounted(async () => {
       background: var(--parsec-color-light-danger-500);
       --background-hover: var(--parsec-color-light-danger-700);
     }
+  }
+}
+
+.request-error-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  margin: 0 0.25rem;
+  border-radius: var(--parsec-radius-12);
+  background: var(--parsec-color-light-danger-50);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height 0.2s ease-in-out,
+    opacity 0.2s ease-in-out,
+    padding 0.2s ease-in-out,
+    margin 0.2s ease-in-out;
+
+  &--visible {
+    max-height: 10rem;
+    opacity: 1;
+    padding: 0.5rem 0.75rem;
+    margin: 1rem 0.25rem 0.25rem;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    flex-direction: column;
+    align-items: start;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .request-error__title {
+    color: var(--parsec-color-light-secondary-text);
+    padding-top: 0.25rem;
+  }
+
+  .request-error__details {
+    color: var(--parsec-color-light-secondary-text);
   }
 }
 </style>

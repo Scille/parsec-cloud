@@ -2122,7 +2122,10 @@
                 "unknownName": "Unknown name",
                 "unknownEmail": "Unknown email",
                 "offline": "You are offline. Please make sure you are connected to the Internet and try again.",
-                "couldNotContactServer": "Could not contact the server. Please make sure you are connected to the Internet and try again."
+                "couldNotContactServer": "Could not contact the server. Please make sure you are connected to the Internet and try again.",
+                "canNotAccept": "Cannot be accepted",
+                "errorDetail": "Error details:",
+                "reduceButton": "Reduce"
             }
         },
         "confirm": "Confirm"
