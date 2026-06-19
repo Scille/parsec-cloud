@@ -40,11 +40,16 @@ class MemoryEditicsComponent(BaseEditicsComponent):
 
         try:
             current_session = sessions[file_id]
-            assert current_session.workspace_id == workspace_id
         except KeyError:
+            # There is no session for this file, create one
             current_session = MemoryEditicsSession(
                 workspace_id, file_id, encrypted_session_key, key_index
             )
-            sessions[file_id] = current_session
+        else:
+            # sanity checks
+            assert current_session.workspace_id == workspace_id
+            assert current_session.encrypted_session_key == encrypted_session_key
+
+        sessions[file_id] = current_session
 
         return (current_session.encrypted_session_key, current_session.key_index)
