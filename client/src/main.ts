@@ -10,6 +10,7 @@ import { IonicVue, isPlatform, modalController, popoverController } from '@ionic
 /* Theme variables */
 import '@/theme/global.scss';
 
+import { sanitizeCustomTranslations } from '@/common/utils';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
 import {
@@ -233,10 +234,10 @@ async function setupApp(): Promise<void> {
   const customEnUs = ResourcesManager.instance().get(Resources.TranslationEnUs);
 
   if (customFrFr) {
-    Obj.mergeDeep(appFrFR, customFrFr);
+    Obj.mergeDeep(appFrFR, sanitizeCustomTranslations(customFrFr));
   }
   if (customEnUs) {
-    Obj.mergeDeep(appEnUS, customEnUs);
+    Obj.mergeDeep(appEnUS, sanitizeCustomTranslations(customEnUs));
   }
 
   const megasharkPlugin = new MegaSharkPlugin({
