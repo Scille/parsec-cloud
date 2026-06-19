@@ -48,7 +48,7 @@ describe('Openable file types detection', async () => {
     ['pdf', FileContentType.PdfDocument],
     ['mp3', FileContentType.Audio],
     ['mp4', FileContentType.Video],
-    ['odp', FileContentType.Unknown],
+    ['odp', FileContentType.Presentation],
   ])('Detect file content type %s', async (extension, expectedFileType) => {
     const entryName = `example.${extension}`;
     const detected = detectOpenableFile(entryName);

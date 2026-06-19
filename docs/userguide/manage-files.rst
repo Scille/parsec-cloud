@@ -162,7 +162,7 @@ Parsec preview is limited to files with size inferior to 15MB. The following fil
 * PDF
 * Documents: DOCX (Microsoft Word), ODT (OpenOffice)
 * Spreadsheet: XLSX (Microsoft Excel), XLS, ODS (OpenOffice)
-* Presentation: PPTX (Microsoft Powerpoint). ODP (OpenOffice) support is coming soon.
+* Presentation: PPTX (Microsoft Powerpoint), ODP (OpenOffice)
 * Plain Text and Code file formats: TXT, MD, CSV, RST, JSON...
 * Audio: MP3, OGG, WAV
 * Video: MP4, WEBM
@@ -199,7 +199,7 @@ The following file formats are supported:
 
 * Documents: DOCX (Microsoft Word), ODT (OpenOffice)
 * Spreadsheet: XLSX (Microsoft Excel), XLS, ODS (OpenOffice)
-* Presentation: PPTX (Microsoft Powerpoint). ODP (OpenOffice) support is coming soon.
+* Presentation: PPTX (Microsoft Powerpoint), ODP (OpenOffice)
 * Plain Text and Code file formats: TXT, MD, CSV, RST, JSON...
 
 .. note::
