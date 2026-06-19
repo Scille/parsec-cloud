@@ -47,6 +47,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             async_enrollment = MemoryAsyncEnrollmentComponent(data, event_bus, config)
             auth = MemoryAuthComponent(data, event_bus, config)
             block = MemoryBlockComponent(data, blockstore)
+            editics = MemoryEditicsComponent(data, config, event_bus)
             events = MemoryEventsComponent(data, config, event_bus)
             invite = MemoryInviteComponent(data, event_bus, config)
             organization = MemoryOrganizationComponent(data, event_bus, webhooks, config)
@@ -58,7 +59,6 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             totp = MemoryTOTPComponent(data, config)
             user = MemoryUserComponent(data, event_bus)
             vlob = MemoryVlobComponent(data, event_bus, webhooks)
-            editics = MemoryEditicsComponent(data, config, event_bus)
 
             components = {
                 "account": account,
@@ -66,6 +66,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "auth": auth,
                 "block": block,
                 "blockstore": blockstore,
+                "editics": editics,
                 "event_bus": event_bus,
                 "events": events,
                 "invite": invite,
@@ -80,7 +81,6 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "user": user,
                 "vlob": vlob,
                 "webhooks": webhooks,
-                "editics": editics,
             }
 
             yield components
