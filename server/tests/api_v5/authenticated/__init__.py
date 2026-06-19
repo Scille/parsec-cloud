@@ -8,6 +8,7 @@ from .test_block_create import *
 from .test_block_read import *
 from .test_certificate_get import *
 from .test_device_create import *
+from .test_editics_join_session import *
 from .test_events_listen import *
 from .test_invite_cancel import *
 from .test_invite_complete import *
