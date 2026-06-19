@@ -12,7 +12,7 @@ Parsec is compatible with different object storage solutions, including:
 - `Amazon S3 <https://aws.amazon.com/s3/>`_ or any S3-compatible storage such as `Outscale's OOS <https://docs.outscale.com/en/userguide/OUTSCALE-Object-Storage-OOS.html>`_ (most storage providers offer S3-compatible APIs)
 - A RAID configuration combining multiple storages
 
-However, the most common deployment uses S3-compatible storage.
+The most common deployment approach is to use an S3-compatible storage.
 
 This guide provides instructions for setting up an S3-compatible bucket for use with Parsec.
 
@@ -37,7 +37,7 @@ Create the Bucket
 
 Create a new bucket for Parsec data storage:
 
-.. code-block:: bash
+.. code-block:: console
 
   aws s3api create-bucket \
       --bucket <BUCKET_NAME>
@@ -51,7 +51,7 @@ Replace ``<BUCKET_NAME>`` with your desired bucket name.
 
   For example, with Outscale:
 
-  .. code-block:: bash
+  .. code-block:: console
 
     aws s3api create-bucket \
         --profile <PROFILE_NAME> \
@@ -65,7 +65,7 @@ Enable Versioning
 
 Enable versioning on the bucket to protect against accidental overwrites:
 
-.. code-block:: bash
+.. code-block:: console
 
   aws s3api put-bucket-versioning \
       --bucket <BUCKET_NAME> \
@@ -76,11 +76,11 @@ Enable versioning on the bucket to protect against accidental overwrites:
 Limit Access with a Dedicated User
 ----------------------------------
 
-For security, create a dedicated IAM user with restricted permissions to only the necessary operations.
+For security reasons, create a dedicated IAM user with restricted permissions to only the necessary operations.
 
 The following bucket policy grants only the required permissions for Parsec to function:
 
-.. code-block:: bash
+.. code-block:: console
 
   aws s3api put-bucket-policy \
       --bucket <BUCKET_NAME> \
