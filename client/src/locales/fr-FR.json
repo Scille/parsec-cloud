@@ -2122,7 +2122,10 @@
                 "unknownName": "Nom inconnu",
                 "unknownEmail": "Email inconnu",
                 "offline": "Vous êtes hors ligne. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
-                "couldNotContactServer": "Impossible de contacter le serveur. Veuillez vous assurer que vous êtes connecté à Internet et réessayer."
+                "couldNotContactServer": "Impossible de contacter le serveur. Veuillez vous assurer que vous êtes connecté à Internet et réessayer.",
+                "canNotAccept": "Impossible à accepter",
+                "errorDetail": "Détails de l'erreur :",
+                "reduceButton": "Réduire"
             }
         },
         "confirm": "Confirmer"
