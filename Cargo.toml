@@ -209,7 +209,7 @@ serde_with = { version = "3.19.0", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
 smallvec = { version = "1.15.1", default-features = false }
 spinners = { version = "4.2.0", default-features = false }
-sqlx = { version = "0.8.6", default-features = false }
+sqlx = { version = "0.9.0", default-features = false }
 syn = { version = "2.0.117", default-features = false }
 thiserror = { version = "2.0.18", default-features = false }
 tokio = { version = "1.50.0", default-features = false }
