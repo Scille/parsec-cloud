@@ -3,7 +3,7 @@
 use libparsec_tests_lite::prelude::*;
 use std::time::Duration;
 
-use crate::{select2_biased, sleep, watch};
+use crate::{sleep, watch};
 
 #[parsec_test]
 pub async fn watch() {

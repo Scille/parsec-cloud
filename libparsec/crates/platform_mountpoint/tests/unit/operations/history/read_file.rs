@@ -7,9 +7,7 @@ use std::{
 };
 
 use libparsec_client::{workspace_history::WorkspaceHistoryOps, Client};
-use libparsec_client_connection::{
-    test_register_sequence_of_send_hooks, test_send_hook_block_read, test_send_hook_vlob_read_batch,
-};
+use libparsec_client_connection::test_send_hook_block_read;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 

@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use crate::{future::pending, lock::Mutex, select2_biased, sleep, Duration};
+use crate::{future::pending, lock::Mutex, sleep, Duration};
 use libparsec_tests_lite::prelude::*;
 
 #[parsec_test]
