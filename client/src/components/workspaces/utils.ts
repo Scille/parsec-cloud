@@ -36,17 +36,7 @@ import WorkspaceHiddenModal from '@/views/workspaces/WorkspaceHiddenModal.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import {
-  Answer,
-  Clipboard,
-  I18n,
-  MsModalResult,
-  MsReportTheme,
-  Translatable,
-  askQuestion,
-  getTextFromUser,
-  useWindowSize,
-} from 'megashark-lib';
+import { Answer, Clipboard, I18n, MsModalResult, Translatable, askQuestion, getTextFromUser, useWindowSize } from 'megashark-lib';
 import { Ref, inject } from 'vue';
 
 export function canChangeRole(
@@ -424,7 +414,7 @@ async function trashWorkspace(workspace: WorkspaceInfo, informationManager: Info
       placeholder: I18n.valueAsTranslatable(workspace.name),
       okButtonText:
         minimumArchivingPeriodInSeconds > 0 ? 'WorkspacesPage.trashWorkspace.yesBin' : 'WorkspacesPage.trashWorkspace.yesDelete',
-      theme: MsReportTheme.Error,
+      yesIsDangerous: true,
     },
     isLargeDisplay,
   );
