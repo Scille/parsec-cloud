@@ -87,6 +87,31 @@ class HTTPBearer403(HTTPBearer):
 security = HTTPBearer403()
 
 
+class BadRequest(HTTPException):
+    def __init__(self, detail):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
+
+class NotFound(HTTPException):
+    def __init__(self, detail):
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+
+
+class OrganizationNotFound(NotFound):
+    def __init__(self, detail="Organization not found"):
+        super().__init__(detail=detail)
+
+
+class UserNotFound(NotFound):
+    def __init__(self, detail="User not found"):
+        super().__init__(detail=detail)
+
+
+class SequesterServiceNotFound(NotFound):
+    def __init__(self, detail="Sequester service not found"):
+        super().__init__(detail=detail)
+
+
 def check_administration_auth(
     request: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
 ) -> None:
@@ -222,10 +247,7 @@ async def administration_create_organizations(
         case AccessToken() as bootstrap_token:
             pass
         case OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS:
-            raise HTTPException(
-                status_code=400,
-                detail="Organization already exists",
-            )
+            raise BadRequest("Organization already exists")
 
     assert request.url.hostname is not None
     bootstrap_url = ParsecOrganizationBootstrapAddr(
@@ -286,7 +308,7 @@ async def administration_get_organization(
         case Organization() as organization:
             pass
         case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
 
     return GetOrganizationOut(
         is_bootstrapped=organization.is_bootstrapped,
@@ -359,7 +381,7 @@ async def administration_patch_organization(
         case None:
             pass
         case OrganizationUpdateBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
 
     return PatchOrganizationOut()
 
@@ -432,7 +454,7 @@ async def administration_organization_stat(
         case OrganizationStats() as stats:
             pass
         case OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
 
     return GetOrganizationStatsOut(
         realms=stats.realms,
@@ -538,7 +560,6 @@ organization_id,realms,data_size,metadata_size,users,active_users,admin_users_ac
 @log_request
 async def administration_server_stats(
     request: Request,
-    response: Response,
     auth: Annotated[None, Depends(check_administration_auth)],
     format: StatsFormat = StatsFormat.JSON,
     at: str | None = None,
@@ -566,10 +587,7 @@ async def administration_server_stats(
     try:
         typed_at = DateTime.from_rfc3339(at) if at else None
     except ValueError:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid `at` query argument (expected RFC 3339 datetime)",
-        )
+        raise BadRequest("Invalid `at` query argument (expected RFC3339 datetime)")
 
     server_stats = await backend.organization.server_stats(at=typed_at)
 
@@ -577,7 +595,7 @@ async def administration_server_stats(
         case StatsFormat.CSV:
             csv_data = _convert_server_stats_results_as_csv(server_stats)
             return Response(
-                status_code=200,
+                status_code=status.HTTP_200_OK,
                 media_type="text/csv",
                 content=csv_data,
             )
@@ -639,7 +657,7 @@ async def administration_organization_users(
         case list() as users:
             pass
         case UserListActiveUsersBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
 
     return GetOrganizationUsersOut(
         users=[
@@ -699,19 +717,15 @@ async def administration_organization_users_freeze(
         case UserInfo() as user:
             pass
         case UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
         case UserFreezeUserBadOutcome.USER_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise UserNotFound()
         case UserFreezeUserBadOutcome.USER_REVOKED:
-            raise HTTPException(status_code=404, detail="User has been revoked")
+            raise UserNotFound("User has been revoked")
         case UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL:
-            raise HTTPException(
-                status_code=400, detail="Both `user_id` and `user_email` fields are provided"
-            )
+            raise BadRequest("Both `user_id` and `user_email` fields are provided")
         case UserFreezeUserBadOutcome.NO_USER_ID_NOR_EMAIL:
-            raise HTTPException(
-                status_code=400, detail="Missing either `user_id` or `user_email` field"
-            )
+            raise BadRequest("Missing either `user_id` or `user_email` field")
 
     return UserFreezeOut(
         user_id=user.user_id.hex,
@@ -775,19 +789,15 @@ async def administration_organization_users_reset_totp(
         case (user_id, user_email, totp_reset_url, email_sent_status):
             email_sent_status = email_sent_status.name
         case TOTPResetBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
         case TOTPResetBadOutcome.USER_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise UserNotFound()
         case TOTPResetBadOutcome.USER_REVOKED:
-            raise HTTPException(status_code=404, detail="User has been revoked")
+            raise UserNotFound("User has been revoked")
         case TOTPResetBadOutcome.BOTH_USER_ID_AND_EMAIL:
-            raise HTTPException(
-                status_code=400, detail="Both `user_id` and `user_email` fields are provided"
-            )
+            raise BadRequest("Both `user_id` and `user_email` fields are provided")
         case TOTPResetBadOutcome.NO_USER_ID_NOR_EMAIL:
-            raise HTTPException(
-                status_code=400, detail="Missing either `user_id` or `user_email` field"
-            )
+            raise BadRequest(detail="Missing either `user_id` or `user_email` field")
 
     return UserResetTOTPOut(
         user_id=user_id.hex,
@@ -861,9 +871,9 @@ async def administration_organization_sequester_services(
             ]
 
         case SequesterGetOrganizationServicesBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
         case SequesterGetOrganizationServicesBadOutcome.SEQUESTER_DISABLED:
-            raise HTTPException(status_code=400, detail="Sequester disabled")
+            raise BadRequest("Sequester disabled")
 
     return GetSequesterServiceOut(services=cooked_services)
 
@@ -934,20 +944,19 @@ async def administration_organization_sequester_service_create(
         case SequesterServiceCertificate():
             pass
         case SequesterCreateServiceValidateBadOutcome.INVALID_CERTIFICATE:
-            raise HTTPException(status_code=400, detail="Invalid certificate")
+            raise BadRequest("Invalid certificate")
         case SequesterCreateServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
         case SequesterCreateServiceStoreBadOutcome.SEQUESTER_DISABLED:
-            raise HTTPException(status_code=400, detail="Sequester disabled")
+            raise BadRequest("Sequester disabled")
         case SequesterCreateServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_EXISTS:
-            raise HTTPException(status_code=400, detail="Sequester service already exists")
+            raise BadRequest("Sequester service already exists")
         case RequireGreaterTimestamp() as error:
-            raise HTTPException(
-                status_code=400,
-                detail={
+            raise BadRequest(
+                {
                     "msg": "Require greater timestamp",
                     "strictly_greater_than": error.strictly_greater_than.to_rfc3339(),
-                },
+                }
             )
 
     return CreateSequesterServiceOut()
@@ -990,22 +999,21 @@ async def administration_organization_sequester_service_revoke(
         case SequesterRevokedServiceCertificate():
             pass
         case SequesterRevokeServiceValidateBadOutcome.INVALID_CERTIFICATE:
-            raise HTTPException(status_code=400, detail="Invalid certificate")
+            raise BadRequest("Invalid certificate")
         case SequesterRevokeServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
         case SequesterRevokeServiceStoreBadOutcome.SEQUESTER_DISABLED:
-            raise HTTPException(status_code=400, detail="Sequester disabled")
+            raise BadRequest("Sequester disabled")
         case SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_REVOKED:
-            raise HTTPException(status_code=400, detail="Sequester service already revoked")
+            raise BadRequest("Sequester service already revoked")
         case SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Sequester service not found")
+            raise SequesterServiceNotFound()
         case RequireGreaterTimestamp() as error:
-            raise HTTPException(
-                status_code=400,
-                detail={
+            raise BadRequest(
+                {
                     "msg": "Require greater timestamp",
                     "strictly_greater_than": error.strictly_greater_than.to_rfc3339(),
-                },
+                }
             )
 
     return RevokeSequesterServiceOut()
@@ -1049,10 +1057,10 @@ async def administration_organization_sequester_service_update_config(
         case None:
             pass
         case SequesterUpdateConfigForServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Organization not found")
+            raise OrganizationNotFound()
         case SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_DISABLED:
-            raise HTTPException(status_code=400, detail="Sequester disabled")
+            raise BadRequest("Sequester disabled")
         case SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND:
-            raise HTTPException(status_code=404, detail="Sequester service not found")
+            raise SequesterServiceNotFound()
 
     return PutSequesterServiceOut()
