@@ -1147,6 +1147,7 @@ async function createNewFile(name: EntryName, fileType: FileContentType): Promis
   } finally {
     await modal.dismiss();
   }
+  await listFolder({ sameFolder: true });
 }
 
 async function onEntryClick(entry: EntryModel): Promise<void> {
