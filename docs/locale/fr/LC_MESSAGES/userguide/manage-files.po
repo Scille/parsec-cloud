@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.2.5-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-28 09:35+0000\n"
+"POT-Creation-Date: 2026-06-22 12:01+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Parsec dev <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -518,3 +518,113 @@ msgstr ""
 #: ../../userguide/manage-files.rst:221
 msgid "Quick access screenshot"
 msgstr "Capture d'écran de l'accès rapide"
+
+#: ../../userguide/manage-files.rst:228
+msgid "Operational limits and tested volumes"
+msgstr "Limites opérationnelles et volumes testés"
+
+#: ../../userguide/manage-files.rst:231
+msgid "Tested capacity"
+msgstr "Capacité testée"
+
+#: ../../userguide/manage-files.rst:233
+msgid ""
+"The application does not impose any hardcoded limits of the number of files, "
+"folders, or total volume of data that can be transferred (either uploaded or "
+"downloaded). Actual limits depend of available system resources, mainly "
+"storage and network bandwidth. There may also be differences depending on "
+"methods used: importing files by copying into a mountpoint VS drag&drop in "
+"the :abbr:`GUI (Graphical User Interface)`."
+msgstr ""
+"L'application n'impose aucune limite en dur concernant le nombre de "
+"fichiers, le nombre de dossiers ou le volume total de données pouvant être "
+"transférées (en téléversement comme en téléchargement). Les limites réelles "
+"dépendent des ressources système disponibles, principalement l'espace de "
+"stockage et la bande passante réseau. Des différences peuvent également être "
+"observées selon la méthode utilisée : import par copie dans un point de "
+"montage ou par glisser-déposer dans la :abbr:`GUI (Interface Graphique "
+"Utilisateur)`."
+
+#: ../../userguide/manage-files.rst:235
+msgid "The largest workloads validated during testing are:"
+msgstr ""
+
+#: ../../userguide/manage-files.rst:237
+msgid ""
+"Import of 100,000 files averaging 160 KB each, distributed across ~4,000 "
+"folders, for a total volume of approximately 15 GB, using drag&drop in the "
+"web GUI."
+msgstr ""
+"Import de 100 000 fichiers d'une taille moyenne de 160 Ko, répartis dans "
+"environ 4 000 dossiers, pour un volume total d'environ 15 Go, via glisser-"
+"déposer dans l'interface web."
+
+#: ../../userguide/manage-files.rst:238
+msgid "Import of a single ~4 GB file, using drag&drop in the web GUI."
+msgstr ""
+"Import d'un fichier unique d'environ 4 Go, via glisser-déposer dans "
+"l'interface web."
+
+#: ../../userguide/manage-files.rst:239
+msgid ""
+"Download of an archive containing 3885 files, distributed across ~150 "
+"folders, for a total volume of approximately 600 MB."
+msgstr ""
+"Téléchargement d'une archive contenant 3 885 fichiers répartis dans environ "
+"150 dossiers, pour un volume total d'environ 600 Mo."
+
+#: ../../userguide/manage-files.rst:243
+msgid "Larger volumes are expected to work but have not yet been tested."
+msgstr ""
+"Des volumes plus larges devraient également fonctionner, mais n'ont pas "
+"encore été évalués dans nos tests."
+
+#: ../../userguide/manage-files.rst:246
+msgid "Resource usage"
+msgstr "Utilisation des ressources"
+
+#: ../../userguide/manage-files.rst:248
+msgid ""
+"Testing has not shown any significant increase in CPU or memory consumption "
+"as the number of files or total data volume increases. Resource usage "
+"remains generally stable across the validated workloads."
+msgstr ""
+"Les tests n'ont pas mis en évidence d'augmentation significative de "
+"l'utilisation du processeur ou de la mémoire en fonction du nombre de "
+"fichiers ou du volume total de données. La consommation de ressources reste "
+"globalement stable sur les charges validées."
+
+#: ../../userguide/manage-files.rst:250
+msgid ""
+"The application does however require temporary storage space while "
+"processing imported data. As a rule of thumb, sufficient free disk space "
+"should be available to accommodate the size of the imported dataset. For "
+"example, importing 15 GB of data required approximately 15 GB of additional "
+"temporary storage during processing."
+msgstr ""
+"L'application nécessite toutefois un espace de stockage temporaire lors du "
+"traitement des données importées. À titre indicatif, il est recommandé de "
+"disposer d'un espace libre au moins équivalent à la taille des données "
+"importées. Par exemple, l'import de 15 Go de données a nécessité environ 15 "
+"Go d'espace de stockage supplémentaire temporaire pendant le traitement."
+
+#: ../../userguide/manage-files.rst:253
+msgid "Processing time"
+msgstr "Temps de traitement"
+
+#: ../../userguide/manage-files.rst:255
+msgid ""
+"Observed throughput during testing was approximately 2 MB/s for import and "
+"encryption and 0.5 MB/s for upload (regardless of internet bandwidth)."
+msgstr ""
+"Le débit observé lors des tests était d'environ 2 Mo/s pour l'import, le "
+"partitionnement et le chiffrement des données, et d'environ 0,5 Mo/s pour le "
+"téléversement (indépendamment de la bande passante Internet disponible)."
+
+#: ../../userguide/manage-files.rst:258
+msgid ""
+"The current implementation prioritizes data integrity and reliability over "
+"raw performance."
+msgstr ""
+"L'implémentation actuelle privilégie l'intégrité des données et la fiabilité "
+"du traitement plutôt que les performances brutes."

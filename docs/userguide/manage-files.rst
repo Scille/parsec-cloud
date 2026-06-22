@@ -222,3 +222,37 @@ Files you have recently opened are shown in the quick access menu in the sidebar
     :align: center
     :alt: Quick access screenshot
     :width: 400
+
+
+Operational limits and tested volumes
+-------------------------------------
+
+Tested capacity
+^^^^^^^^^^^^^^^
+
+The application does not impose any hardcoded limits of the number of files, folders, or total volume of data that can be transferred (either uploaded or downloaded). Actual limits depend of available system resources, mainly storage and network bandwidth. There may also be differences depending on methods used: importing files by copying into a mountpoint VS drag&drop in the :abbr:`GUI (Graphical User Interface)`.
+
+The largest workloads validated during testing are:
+
+* Import of 100,000 files averaging 160 KB each, distributed across ~4,000 folders, for a total volume of approximately 15 GB, using drag&drop in the web GUI.
+* Import of a single ~4 GB file, using drag&drop in the web GUI.
+* Download of an archive containing 3885 files, distributed across ~150 folders, for a total volume of approximately 600 MB.
+
+.. note::
+
+    Larger volumes are expected to work but have not yet been tested.
+
+Resource usage
+^^^^^^^^^^^^^^
+
+Testing has not shown any significant increase in CPU or memory consumption as the number of files or total data volume increases. Resource usage remains generally stable across the validated workloads.
+
+The application does however require temporary storage space while processing imported data. As a rule of thumb, sufficient free disk space should be available to accommodate the size of the imported dataset. For example, importing 15 GB of data required approximately 15 GB of additional temporary storage during processing.
+
+Processing time
+^^^^^^^^^^^^^^^
+
+Observed throughput during testing was approximately 2 MB/s for import and encryption and 0.5 MB/s for upload (regardless of internet bandwidth).
+
+.. note::
+    The current implementation prioritizes data integrity and reliability over raw performance.
