@@ -60,7 +60,7 @@ include = [
 #       dependabot. See https://github.com/dependabot/dependabot-core/issues/10847
 [tool.poetry.group.dev.dependencies]
 # build
-cibuildwheel = "^3.0.0"
+cibuildwheel = "^4.0.0"
 maturin = "^1.9.5"
 patchelf = { version = "^0.17.2.4", markers = "platform_system=='Linux'" }
 setuptools = "^82.0.0"
