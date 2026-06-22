@@ -35,16 +35,11 @@ pub struct ApiVersion {
 
 // Copy/paste of Maybe field... cannot go around that :(
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Maybe<T> {
     Present(T),
+    #[default]
     Absent,
-}
-
-impl<T> Default for Maybe<T> {
-    fn default() -> Self {
-        Self::Absent
-    }
 }
 
 impl<T> Maybe<T> {
