@@ -170,6 +170,7 @@ export type {
   ClientExportRecoveryDeviceError,
   ClientGetAsyncEnrollmentAddrError,
   ClientGetOrganizationBootstrapDateError,
+  ClientGetOutboundSyncBacklogError,
   ClientGetSelfShamirRecoveryError,
   ClientGetTosError,
   ClientGetUserDeviceError,
@@ -590,6 +591,11 @@ type OtherShamirRecoveryInfo =
   | OtherShamirRecoveryInfoSetupButUnusable
   | OtherShamirRecoveryInfoSetupWithRevokedRecipients;
 
+interface UploadProgress {
+  totalBytes: number;
+  totalFiles: number;
+}
+
 export {
   AccessToken,
   AccountHandle,
@@ -634,6 +640,7 @@ export {
   SelfShamirRecoveryInfoSetupWithRevokedRecipients,
   ServerConfig,
   SystemPath,
+  UploadProgress,
   UserID,
   UserInfo,
   UserTuple,

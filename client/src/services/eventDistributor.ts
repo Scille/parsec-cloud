@@ -53,6 +53,7 @@ enum Events {
   AsyncEnrollmentUpdated = 'async-enrollment-updated',
   ClockDesync = 'clock-desync',
   WebClientNotAllowed = 'web-client-not-allowed',
+  UploadProgress = 'upload-progress',
 }
 
 interface WorkspaceCreatedData {
@@ -139,6 +140,11 @@ interface OpenContextualMenuData {
   event: Event;
 }
 
+interface UploadProgressData {
+  filesLeft: number;
+  bytesLeft: number;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -155,7 +161,8 @@ type EventData =
   | EntryRenamedData
   | EntryDeletedData
   | WorkspaceMountpointInfo
-  | OpenContextualMenuData;
+  | OpenContextualMenuData
+  | UploadProgressData;
 
 interface Callback {
   id: string;
@@ -247,6 +254,7 @@ export {
   MenuActionData,
   OpenContextualMenuData,
   UpdateAvailabilityData,
+  UploadProgressData,
   WorkspaceCreatedData,
   WorkspaceMountpointInfo,
   WorkspaceRoleUpdateData,

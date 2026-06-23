@@ -6,6 +6,7 @@ import {
   dragAndDropFile,
   expect,
   expectSameContent,
+  FileOperationMenu,
   importDefaultFiles,
   ImportDocuments,
   MsPage,
@@ -203,11 +204,12 @@ msTest.describe(() => {
       path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
     ]);
     await documents.waitForTimeout(1000);
+    const uploadMenu = new FileOperationMenu(documents);
+    await uploadMenu.expectVisible();
+    expect(uploadMenu.getLocator().locator('.upload-menu-list').locator('.file-operation-item')).toHaveCount(2);
+    await uploadMenu.hideUpload();
+    await uploadMenu.close();
 
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeVisible();
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
-    await expect(documents.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     // cspell:disable-next-line
     await renameDocument(documents, entries.nth(1), '文件名.png');
     // cspell:disable-next-line
@@ -290,9 +292,12 @@ msTest.describe(() => {
     await expect(documents).toBeDocumentPage();
     const dropZone = documents.locator('.folder-container').locator('.drop-zone').nth(0);
     await dragAndDropFile(documents, dropZone, [filePath]);
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu.locator('.file-operation-item').locator('.folder-icon')).toBeVisible({ timeout: 60_000 });
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+
+    const uploadMenu = new FileOperationMenu(documents);
+    await uploadMenu.expectVisible();
+    expect(uploadMenu.getLocator().locator('.upload-menu-list').locator('.file-operation-item')).toHaveCount(1);
+    await uploadMenu.hideUpload();
+    await uploadMenu.close();
 
     const entry = documents.locator('.folder-container').locator('.file-list-item').first();
     const download = await downloadFromContextMenu(documents, entry);
