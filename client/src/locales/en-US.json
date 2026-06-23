@@ -1019,6 +1019,12 @@
                 "failed": "Failed",
                 "clear": "Clear list"
             },
+            "synced": "All files synchronized and secured",
+            "syncing": {
+                "title": "Synchronizing your files",
+                "filesLeft": "{count} file | {count} files",
+                "timeLeft": "Time left: {time}"
+            },
             "noTasks": "No tasks",
             "noCurrentTasks": "No tasks in this category",
             "dropInstructions": "Drag & drop your files to import them",

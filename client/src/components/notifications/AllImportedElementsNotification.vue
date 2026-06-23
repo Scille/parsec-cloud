@@ -52,7 +52,6 @@ async function openImportedMenu(): Promise<void> {
   if (!currentRouteIsFileRoute()) {
     await navigateTo(Routes.Workspaces);
   }
-  menu.show();
   menu.expand();
 }
 </script>
