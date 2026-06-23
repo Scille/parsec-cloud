@@ -6,46 +6,84 @@
       title="WorkspaceSharing.title"
       :close-button="{ visible: true }"
     >
-      <ion-text class="sharing-modal__title body">{{ workspaceName }}</ion-text>
-      <div class="modal-head-content">
+      <div class="modal-toolbar">
+        <div class="modal-toolbar__actions">
+          <div class="profile-filter">
+            <ion-button
+              class="profile-filter__item button-medium"
+              @click="toggleAllProfiles"
+              :class="{
+                selected: profileFilters.All,
+              }"
+              fill="outline"
+            >
+              {{ $msTranslate('WorkspaceSharing.filter.all') }}
+            </ion-button>
+            <div class="profile-filter__divider" />
+            <ion-button
+              class="profile-filter__item button-medium"
+              @click="toggleProfile(UserProfile.Admin)"
+              :class="{
+                selected: profileFilters[UserProfile.Admin],
+              }"
+              fill="outline"
+            >
+              {{ $msTranslate('WorkspaceSharing.filter.admins') }}
+              <ion-icon
+                v-show="profileFilters[UserProfile.Admin]"
+                :icon="checkmark"
+                class="checkbox-icon"
+                slot="end"
+              />
+            </ion-button>
+            <ion-button
+              class="profile-filter__item button-medium"
+              @click="toggleProfile(UserProfile.Standard)"
+              :class="{
+                selected: profileFilters[UserProfile.Standard],
+              }"
+              fill="outline"
+            >
+              {{ $msTranslate('WorkspaceSharing.filter.standards') }}
+              <ion-icon
+                v-show="profileFilters[UserProfile.Standard]"
+                :icon="checkmark"
+                class="checkbox-icon"
+                slot="end"
+              />
+            </ion-button>
+            <ion-button
+              class="profile-filter__item button-medium"
+              @click="toggleProfile(UserProfile.Outsider)"
+              :class="{
+                selected: profileFilters[UserProfile.Outsider],
+              }"
+              fill="outline"
+            >
+              {{ $msTranslate('WorkspaceSharing.filter.externals') }}
+              <ion-icon
+                v-show="profileFilters[UserProfile.Outsider]"
+                :icon="checkmark"
+                class="checkbox-icon"
+                slot="end"
+              />
+            </ion-button>
+          </div>
+
+          <div class="sharing-modal__workspace">
+            <ion-icon
+              class="sharing-modal__workspace__icon"
+              :icon="business"
+            />
+            <ion-text class="sharing-modal__workspace__title button-large">{{ workspaceName }}</ion-text>
+          </div>
+        </div>
+
         <ms-search-input
-          class="modal-head-content__search"
+          class="modal-toolbar__search"
           v-model="search"
           placeholder="WorkspaceSharing.searchPlaceholder"
         />
-        <div class="modal-head-content-right">
-          <ion-text
-            class="selected-counter body"
-            v-show="showCheckboxes && selectedUsers.length > 0"
-          >
-            {{ $msTranslate({ key: 'WorkspaceSharing.batchSharing.counter', data: { count: selectedUsers.length } }) }}
-          </ion-text>
-          <ion-text
-            id="batch-activate-button"
-            @click="onBatchSharingActivate()"
-            v-show="batchSharingEnabled"
-            fill="clear"
-            class="button-small"
-            :class="{ 'done-button': showCheckboxes }"
-          >
-            <ion-icon
-              v-if="!showCheckboxes"
-              class="checkbox-icon"
-              :icon="checkmarkCircle"
-            />
-            {{ $msTranslate(showCheckboxes ? 'WorkspaceSharing.batchSharing.buttonFinish' : 'WorkspaceSharing.batchSharing.buttonSelect') }}
-          </ion-text>
-          <ms-dropdown
-            v-show="showCheckboxes"
-            ref="dropdown"
-            class="dropdown"
-            :options="options"
-            :disabled="selectedUsers.length === 0"
-            :label="'WorkspaceSharing.batchSharing.chooseRole'"
-            :appearance="MsAppearance.Outline"
-            @change="onBatchRoleChange($event.option)"
-          />
-        </div>
       </div>
 
       <div
@@ -192,6 +230,35 @@
           </div>
         </ion-list>
       </div>
+
+      <div class="modal-footer">
+        <ion-text
+          class="modal-footer__counter button-medium"
+          v-show="showCheckboxes && selectedUsers.length > 0"
+        >
+          {{ $msTranslate({ key: 'WorkspaceSharing.batchSharing.counter', data: { count: selectedUsers.length } }) }}
+        </ion-text>
+        <ms-dropdown
+          v-show="showCheckboxes"
+          ref="dropdown"
+          class="dropdown"
+          :options="options"
+          :disabled="selectedUsers.length === 0"
+          :label="'WorkspaceSharing.batchSharing.chooseRole'"
+          :appearance="MsAppearance.Outline"
+          @change="onBatchRoleChange($event.option)"
+        />
+        <ion-text
+          id="batch-activate-button"
+          @click="onBatchSharingActivate()"
+          v-show="batchSharingEnabled"
+          :fill="showCheckboxes ? 'fill' : 'clear'"
+          class="button-medium"
+          :class="{ 'done-button': showCheckboxes }"
+        >
+          {{ $msTranslate(showCheckboxes ? 'WorkspaceSharing.batchSharing.buttonFinish' : 'WorkspaceSharing.batchSharing.buttonSelect') }}
+        </ion-text>
+      </div>
     </ms-modal>
   </ion-page>
 </template>
@@ -215,8 +282,8 @@ import {
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
-import { IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
-import { checkmarkCircle } from 'ionicons/icons';
+import { IonButton, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
+import { business, checkmark } from 'ionicons/icons';
 import {
   I18n,
   MsAppearance,
@@ -256,13 +323,20 @@ const showCheckboxes = ref<boolean>(false);
 const dropdownRef = useTemplateRef<InstanceType<typeof MsDropdown>>('dropdown');
 
 const userRoles: Ref<Array<UserRole>> = ref([]);
+const profileFilters = ref<Record<UserProfile | 'All', boolean>>({
+  All: true,
+  [UserProfile.Admin]: false,
+  [UserProfile.Standard]: false,
+  [UserProfile.Outsider]: false,
+});
 
 const filteredUserRoles = computed(() => {
   const searchString = search.value.toLocaleLowerCase();
   return userRoles.value.filter((userRole: UserRole) => {
     return (
-      userRole.user.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
-      userRole.user.humanHandle.label.toLocaleLowerCase().includes(searchString)
+      (userRole.user.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
+        userRole.user.humanHandle.label.toLocaleLowerCase().includes(searchString)) &&
+      (profileFilters.value.All || profileFilters.value[userRole.user.profile])
     );
   });
 });
@@ -297,10 +371,7 @@ const someMembersSelected = computed(() => selectableFilteredMembers.value.some(
 const allMembersSelected = computed(() => selectableFilteredMembers.value.every((user) => user.isSelected === true));
 const orgHasExternalUsers = computed(() => userRoles.value.some((user) => user.user.profile === UserProfile.Outsider));
 const batchSharingEnabled = computed(() => {
-  return (
-    (props.ownRole === WorkspaceRole.Owner || props.ownRole === WorkspaceRole.Manager) &&
-    filteredNotSharedUserRoles.value.length + selectableFilteredMembers.value.length > 1
-  );
+  return props.ownRole === WorkspaceRole.Owner || props.ownRole === WorkspaceRole.Manager;
 });
 
 function currentUserMatchSearch(): boolean {
@@ -338,6 +409,24 @@ async function onBatchSharingActivate(): Promise<void> {
     }
   }
   showCheckboxes.value = !showCheckboxes.value;
+}
+
+function toggleProfile(profile: UserProfile): void {
+  profileFilters.value.All = false;
+  profileFilters.value[profile] = !profileFilters.value[profile];
+  if (
+    (profileFilters.value[UserProfile.Admin] && profileFilters.value[UserProfile.Outsider] && profileFilters.value[UserProfile.Standard]) ||
+    (!profileFilters.value[UserProfile.Admin] && !profileFilters.value[UserProfile.Outsider] && !profileFilters.value[UserProfile.Standard])
+  ) {
+    toggleAllProfiles();
+  }
+}
+
+function toggleAllProfiles(): void {
+  profileFilters.value.All = true;
+  profileFilters.value[UserProfile.Admin] = false;
+  profileFilters.value[UserProfile.Standard] = false;
+  profileFilters.value[UserProfile.Outsider] = false;
 }
 
 function getLowestSelectedProfile(): UserProfile {
@@ -596,14 +685,6 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.sharing-modal__title {
-  position: relative;
-  margin-inline: 2rem;
-  z-index: 10;
-  display: block;
-  color: var(--parsec-color-light-secondary-hard-grey);
-}
-
 .report-text-content {
   display: flex;
   flex-direction: column;
@@ -617,15 +698,17 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
   }
 }
 
-.modal-head-content {
+.modal-toolbar {
   display: flex;
+  flex-direction: column;
   align-items: stretch;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin-top: 1rem;
   overflow: hidden !important;
   flex-shrink: 0;
-  padding: 0.25rem 2rem;
+  padding: 0 2rem 1.5rem;
+  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
 
   @include ms.responsive-breakpoint('sm') {
     padding-inline: 1.5rem;
@@ -634,90 +717,101 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
 
   &__search {
     max-height: 2.5rem;
-    max-width: 20rem;
     margin: 0;
+    background: var(--parsec-color-light-secondary-background);
 
     @include ms.responsive-breakpoint('sm') {
       max-width: 100%;
     }
   }
 
-  &-right {
+  &__actions {
     display: flex;
-    align-items: stretch;
+    align-items: center;
+    justify-content: space-between;
     flex-shrink: 0;
     gap: 1rem;
+  }
+
+  .profile-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+    position: relative;
 
     @include ms.responsive-breakpoint('sm') {
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 100%;
-      padding: 1rem 1.5rem 2rem;
-      justify-content: space-between;
-      background: var(--parsec-color-light-secondary-white);
-      border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
-      box-shadow: var(--parsec-shadow-strong);
-      z-index: 2;
+      padding-inline: 0;
     }
 
-    .dropdown {
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-8);
-      flex-shrink: 0;
+    &__divider {
+      width: 1px;
+      height: 1rem;
+      background: var(--parsec-color-light-secondary-light);
+      margin-inline: 0.25rem;
     }
 
-    #batch-activate-button {
-      font-size: 0.875rem;
-      padding: 0.625rem 1rem;
-      color: var(--parsec-color-light-secondary-text);
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-      border-radius: var(--parsec-radius-8);
-      cursor: pointer;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      margin-left: auto;
-      gap: 0.375rem;
+    &__item {
+      --padding-top: 0.5rem;
+      --padding-bottom: 0.5rem;
+      --padding-start: 0.8rem;
+      --padding-end: 0.8rem;
+      position: relative;
 
-      @include ms.responsive-breakpoint('sm') {
-        order: 3;
+      &::part(native) {
+        border-radius: var(--parsec-radius-24);
+        border: 1px solid var(--parsec-color-light-secondary-medium);
+        color: var(--parsec-color-light-secondary-grey);
+        background: var(--parsec-color-light-secondary-white);
+      }
+
+      &:hover::part(native) {
+        border: 1px solid var(--parsec-color-light-secondary-medium);
+        color: var(--parsec-color-light-secondary-text);
+        background: var(--parsec-color-light-secondary-background);
+      }
+
+      &.selected::part(native) {
+        border: 1px solid var(--parsec-color-light-secondary-light);
+        color: var(--parsec-color-light-secondary-text);
+        background: var(--parsec-color-light-secondary-medium);
+      }
+
+      &.selected:first-child::part(native) {
+        background: var(--parsec-color-light-secondary-text);
+        color: var(--parsec-color-light-secondary-white);
+        border: 1px solid var(--parsec-color-light-secondary-text);
       }
 
       .checkbox-icon {
         color: var(--parsec-color-light-secondary-text);
-        font-size: 1rem;
-      }
-
-      &:hover {
-        background: var(--parsec-color-light-secondary-medium);
-      }
-
-      &:active {
-        box-shadow: none;
-      }
-
-      &.done-button {
-        background: var(--parsec-color-light-secondary-text);
-        color: var(--parsec-color-light-secondary-white);
-        border: none;
-
-        &:hover {
-          background: var(--parsec-color-light-secondary-contrast);
-        }
+        font-size: 0.875rem;
+        margin-left: 0.25rem;
       }
     }
   }
 
-  .selected-counter {
-    color: var(--parsec-color-light-secondary-grey);
-    margin-right: auto;
-    text-align: center;
-    align-self: center;
+  .sharing-modal__workspace {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--parsec-color-light-primary-500);
+    background: var(--parsec-color-light-primary-50);
+    padding: 0.5rem;
+    border-radius: var(--parsec-radius-8);
 
     @include ms.responsive-breakpoint('sm') {
-      margin: auto;
-      order: 2;
+      margin-top: 0.5rem;
+    }
+
+    &__title {
+      font-weight: 600;
+    }
+
+    &__icon {
+      color: var(--parsec-color-light-primary-500);
+      font-size: 1rem;
     }
   }
 }
@@ -727,81 +821,170 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-inline: 2rem;
+  padding-inline: 1.5rem;
   position: relative;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
+    padding-inline: 1rem;
 
     &::after {
       content: '';
       position: relative;
       width: 100%;
-      height: 8rem;
+      height: 0.5rem;
+    }
+  }
+
+  .user-list {
+    padding: 0;
+    margin-top: 1rem;
+    overflow-y: auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    &-title {
+      height: 1.875rem;
+      color: var(--parsec-color-light-secondary-grey);
+      background: var(--parsec-color-light-secondary-white);
+      text-transform: uppercase;
+      font-weight: 700;
+      font-size: 0.825rem;
+      padding: 0.625rem 0.5rem;
+      display: flex;
+      position: sticky;
+      align-items: center;
+      gap: 0.5rem;
+      top: 0;
+      z-index: 3;
+    }
+
+    &-members,
+    &-suggestions {
+      display: flex;
+      flex-direction: column;
+
+      .member-checkbox,
+      .suggested-checkbox {
+        padding-left: 0.75rem;
+
+        @include ms.responsive-breakpoint('sm') {
+          padding-left: 0.625rem;
+          justify-content: center;
+        }
+      }
+
+      &-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        &:last-child .workspace-user-role::after {
+          border-bottom: none;
+        }
+      }
+
+      .workspace-user-role,
+      .user-list__item--current {
+        flex: 1;
+      }
+    }
+
+    .checkbox-space {
+      padding-left: 3rem;
+
+      &.current-user {
+        @include ms.responsive-breakpoint('sm') {
+          padding-left: 2.8125rem;
+        }
+      }
+
+      @include ms.responsive-breakpoint('sm') {
+        padding-left: 0.5rem;
+      }
     }
   }
 }
 
-.user-list {
-  padding: 0;
-  margin-top: 1rem;
-  overflow-y: auto;
-  height: 100%;
+.modal-footer {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   gap: 1rem;
+  padding: 0.75rem 2rem 1rem;
+  border-top: 1px solid var(--parsec-color-light-secondary-medium);
+  box-shadow: var(--parsec-shadow-strong);
+  background: var(--parsec-color-light-secondary-background);
 
-  &-title {
-    color: var(--parsec-color-light-secondary-grey);
-    background: var(--parsec-color-light-secondary-premiere);
-    border-radius: var(--parsec-radius-6);
-    padding: 0.375rem 0.75rem;
+  #batch-activate-button {
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+    color: var(--parsec-color-light-primary-500);
+    border-radius: var(--parsec-radius-8);
+    background: var(--parsec-color-light-secondary-white);
+    cursor: pointer;
+    transition: background 0.2s;
     display: flex;
-    position: sticky;
     align-items: center;
-    gap: 0.5rem;
-    top: 0;
-    z-index: 3;
-  }
-
-  &-members,
-  &-suggestions {
-    display: flex;
-    flex-direction: column;
-
-    .member-checkbox,
-    .suggested-checkbox {
-      padding-left: 0.75rem;
-
-      @include ms.responsive-breakpoint('sm') {
-        padding-left: 0.625rem;
-        position: absolute;
-        justify-content: center;
-      }
-    }
-
-    &-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-
-      &:last-child .workspace-user-role::after {
-        border-bottom: none;
-      }
-    }
-
-    .workspace-user-role,
-    .current-user {
-      flex: 1;
-    }
-  }
-
-  .checkbox-space {
-    padding-left: 3rem;
+    gap: 0.375rem;
+    font-weight: 600;
+    box-shadow: var(--parsec-shadow-card);
 
     @include ms.responsive-breakpoint('sm') {
-      padding-left: 0.5rem;
+      order: 3;
     }
+
+    .checkbox-icon {
+      color: var(--parsec-color-light-secondary-text);
+      font-size: 1rem;
+    }
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-medium);
+    }
+
+    &:active {
+      box-shadow: none;
+    }
+
+    &.done-button {
+      border: 1px solid var(--parsec-color-light-secondary-text);
+      background: var(--parsec-color-light-secondary-text);
+      color: var(--parsec-color-light-secondary-white);
+      border: none;
+      margin-left: 0;
+
+      &:hover {
+        background: var(--parsec-color-light-secondary-contrast);
+      }
+    }
+  }
+
+  .dropdown {
+    margin-left: auto;
+  }
+
+  &__counter {
+    color: var(--parsec-color-light-secondary-grey);
+    margin-right: auto;
+    text-align: center;
+    align-self: center;
+
+    @include ms.responsive-breakpoint('sm') {
+      order: 2;
+      margin: auto;
+    }
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-inline: 1.5rem;
+    position: sticky;
+    bottom: 0;
+    background: var(--parsec-color-light-secondary-white);
+    border-radius: 0 0 var(--parsec-radius-8) var(--parsec-radius-8);
+    box-shadow: var(--parsec-shadow-strong);
+    z-index: 2;
   }
 }
 </style>

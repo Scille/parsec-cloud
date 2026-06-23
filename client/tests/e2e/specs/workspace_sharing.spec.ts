@@ -9,7 +9,7 @@ for (const displaySize of ['small', 'large']) {
     }
 
     await expect(workspaceSharingModal.locator('.ms-modal-header__title')).toHaveText('Share the workspace');
-    await expect(workspaceSharingModal.locator('.sharing-modal__title')).toHaveText('wksp1');
+    await expect(workspaceSharingModal.locator('.sharing-modal__workspace__title')).toHaveText('wksp1');
     const content = workspaceSharingModal.locator('.ms-modal-content');
     await expect(content.locator('#only-owner-warning')).toBeVisible();
     const users = content.locator('.user-member-item');
@@ -22,8 +22,8 @@ for (const displaySize of ['small', 'large']) {
     await expect(suggestions).toHaveCount(1);
     await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
     await expect(suggestions.locator('.dropdown-container')).toHaveText(['Not shared']);
-    await expect(suggestions.nth(0).locator('.label-profile')).toHaveText('External');
-    await expect(suggestions.nth(0).locator('.label-profile')).toBeVisible();
+    await expect(suggestions.nth(0).locator('.person-description')).toHaveText('External');
+    await expect(suggestions.nth(0).locator('.person-description')).toBeVisible();
   });
 }
 
@@ -149,6 +149,47 @@ msTest('Filter users', async ({ workspaceSharingModal }) => {
   await expect(suggestions).toBeHidden();
 });
 
+msTest('Filter users by profile', async ({ workspaceSharingModal }) => {
+  const content = workspaceSharingModal.locator('.ms-modal-content');
+  const users = content.locator('.user-member-item');
+  const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
+  const filterButtons = workspaceSharingModal.locator('.profile-filter__item');
+
+  async function checkSelected(selected: Array<boolean>): Promise<void> {
+    for (const [index, state] of selected.entries()) {
+      if (state) {
+        await expect(filterButtons.nth(index)).toHaveTheClass('selected');
+      } else {
+        await expect(filterButtons.nth(index)).not.toHaveTheClass('selected');
+      }
+    }
+  }
+
+  await checkSelected([true, false, false, false]);
+  await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
+  await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
+
+  await filterButtons.nth(1).click();
+  await checkSelected([false, true, false, false]);
+  await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace']);
+  await expect(suggestions).toBeHidden();
+
+  await filterButtons.nth(2).click();
+  await checkSelected([false, true, true, false]);
+  await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
+  await expect(suggestions).toBeHidden();
+
+  await filterButtons.nth(3).click();
+  await checkSelected([true, false, false, false]);
+  await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
+  await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
+
+  await filterButtons.nth(3).click();
+  await checkSelected([false, false, false, true]);
+  await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace']);
+  await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
+});
+
 msTest('Filter users no match', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const searchInput = content.locator('.ms-search-input');
@@ -166,13 +207,13 @@ msTest('Filter users no match', async ({ workspaceSharingModal }) => {
 
 msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
-  const batchDropdown = content.locator('.modal-head-content').locator('.dropdown-container').locator('#dropdown-popover-button');
+  const batchDropdown = content.locator('.modal-footer').locator('.dropdown-container').locator('#dropdown-popover-button');
   const activateBatchButton = content.locator('#batch-activate-button');
   const membersCheckbox = content.locator('#all-members-checkbox');
 
   await expect(content.locator('#profile-assign-info')).toBeVisible();
   await expect(batchDropdown).toBeHidden();
-  await expect(activateBatchButton).toContainText('Multiple selection');
+  await expect(activateBatchButton).toContainText('Select');
   await expect(membersCheckbox).toBeHidden();
 
   // Share with non-external users
@@ -196,7 +237,7 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
 
   await expect(content.locator('#profile-assign-info')).toBeVisible();
   await expect(batchDropdown).toBeHidden();
-  await expect(activateBatchButton).toContainText('Multiple selection');
+  await expect(activateBatchButton).toContainText('Select');
   await expect(membersCheckbox).toBeHidden();
 
   // Check external user restriction
@@ -217,7 +258,7 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   await roles.nth(2).click();
   await expect(workspaceSharingModal.page()).toShowToast("Selected members' roles have been updated to Contributor.", 'Success');
   await expect(batchDropdown).toBeHidden();
-  await expect(activateBatchButton).toContainText('Multiple selection');
+  await expect(activateBatchButton).toContainText('Select');
   await expect(membersCheckbox).toBeHidden();
 });
 

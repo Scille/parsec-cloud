@@ -5,24 +5,37 @@
     class="avatar-container"
     :class="{ clickable: clickable }"
   >
-    <ion-avatar class="avatar person-avatar body-sm">
+    <ion-avatar class="avatar person-avatar button-small">
       {{ userAvatar.substring(0, 2) }}
     </ion-avatar>
-    <ion-text
-      class="person-name cell"
-      v-if="userName"
-      :title="userName"
-    >
-      {{ userName }}
-    </ion-text>
+
+    <div class="person-name-container">
+      <ion-text
+        class="person-name button-medium"
+        v-if="userName"
+        :title="userName"
+      >
+        {{ userName }}
+      </ion-text>
+
+      <ion-text
+        class="person-description button-medium"
+        :title="userAvatar"
+        v-if="userDescription"
+      >
+        {{ $msTranslate(userDescription) }}
+      </ion-text>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { IonAvatar, IonText } from '@ionic/vue';
+import { Translatable } from 'megashark-lib';
 defineProps<{
   userAvatar: string;
   userName?: string;
+  userDescription?: Translatable;
   clickable?: boolean;
 }>();
 </script>
@@ -32,7 +45,7 @@ defineProps<{
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   overflow: hidden;
 
   --width: 2rem;
@@ -46,7 +59,7 @@ defineProps<{
     height: var(--height);
     min-width: var(--width);
     max-width: var(--width);
-    border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
 
     &:first-of-type {
       margin-left: 0;
@@ -57,11 +70,6 @@ defineProps<{
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  &.medium {
-    --width: 2.5rem;
-    --height: 2.5rem;
   }
 
   &.medium {
@@ -101,6 +109,19 @@ defineProps<{
       }
     }
   }
+
+  .person-name-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+
+    .person-description {
+      color: var(--parsec-color-light-secondary-grey);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+  }
 }
 
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
@@ -110,6 +131,6 @@ defineProps<{
 
 .person-avatar {
   color: var(--parsec-color-light-primary-500);
-  background-color: var(--parsec-color-light-primary-100);
+  background-color: var(--parsec-color-light-primary-50);
 }
 </style>

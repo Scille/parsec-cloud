@@ -6,6 +6,7 @@
       <user-avatar-name
         :user-avatar="user.humanHandle.label"
         :user-name="user.humanHandle.label"
+        :user-description="getProfileTranslationKey(user.profile)"
       />
       <span
         v-if="isCurrentUser"
@@ -13,11 +14,6 @@
       >
         {{ $msTranslate('UsersPage.currentUser') }}
       </span>
-
-      <user-profile-tag
-        v-if="user.profile === UserProfile.Outsider"
-        :profile="UserProfile.Outsider"
-      />
     </div>
 
     <ms-dropdown
@@ -33,10 +29,10 @@
 </template>
 
 <script setup lang="ts">
-import { UserAvatarName, UserProfileTag } from '@/components/users';
+import { UserAvatarName } from '@/components/users';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
-import { getWorkspaceRoleTranslationKey } from '@/services/translation';
+import { getProfileTranslationKey, getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { MsAppearance, MsDropdown, MsOption, MsOptions } from 'megashark-lib';
 import { computed, useTemplateRef } from 'vue';
 
@@ -83,7 +79,7 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
 
 <style scoped lang="scss">
 .workspace-user-role {
-  padding: 0.5rem;
+  padding: 0.625rem 0.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -110,8 +106,7 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
   white-space: nowrap;
   overflow: hidden;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
 
   &__you {
     color: var(--parsec-color-light-secondary-grey);
