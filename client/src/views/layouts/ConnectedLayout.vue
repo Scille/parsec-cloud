@@ -162,6 +162,9 @@ onMounted(async () => {
   if (clientInfoResult.value.mustAcceptTos) {
     modalsSequencer.set(Modals.TOS, true);
   }
+  const menuCtrls = useUploadMenu();
+  menuCtrls.show();
+
   refreshWarning.warnOnRefresh();
   watchModals();
   await checkAuthentication();
