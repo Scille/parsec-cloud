@@ -35,7 +35,7 @@ function logError(level: 'warn' | 'error', message: string): void {
 }
 
 interface SkipData {
-  tag: string;
+  tag?: string;
   function: string;
 }
 
@@ -55,6 +55,9 @@ const FUNCTIONS_TO_SKIP: Array<SkipData> = [
   {
     tag: 'ClientListFrozenUsersErrorAuthorNotAllowed',
     function: 'clientListFrozenUsers',
+  },
+  {
+    function: 'clientGetOutboundSyncBacklog',
   },
 ];
 
@@ -97,7 +100,9 @@ class ParsecProxy {
         if (
           result &&
           (result as any).ok === false &&
-          !FUNCTIONS_TO_SKIP.find((sd) => sd.function === name && (result as any).error && (result as any).error.tag === sd.tag)
+          !FUNCTIONS_TO_SKIP.find(
+            (sd) => sd.function === name && (result as any).error && (!sd.tag || (result as any).error.tag === sd.tag),
+          )
         ) {
           const resultError = result as { ok: boolean; error: { tag: string; error: string } };
           logError('warn', `Error when calling ${name}: ${JSON.stringify(resultError.error)}`);
