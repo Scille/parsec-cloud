@@ -3121,7 +3121,8 @@
                 "reset": "Reset zoom"
             },
             "pagination": {
-                "page": "Page"
+                "page": "Page",
+                "suffix": "/ {totalPages}"
             }
         },
         "spreadsheet": {
