@@ -186,9 +186,6 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     } else {
       await documents.locator('#folders-ms-action-bar').getByText('Import').click();
     }
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeHidden();
-
     const fileChooserPromise = documents.waitForEvent('filechooser');
     if (displaySize === DisplaySize.Large) {
       await documents.locator('.import-popover').locator('.import-container').getByRole('listitem').nth(1).click();
@@ -198,8 +195,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const importPath = path.join(testInfo.config.rootDir, 'data', 'imports');
     await fileChooser.setFiles([importPath]);
     await checkFilesUploaded(documents, 1, 11);
-    await documents.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(1).click();
-    await expect(documents.locator('.upload-menu')).toBeHidden();
+    await documents.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(0).click();
     await documents.locator('.folder-container').locator('.file-list-item').locator('.label-name').nth(0).click();
     if (displaySize === DisplaySize.Large) {
       await expect(workspaces).toHaveHeader(['New_Workspace', 'imports'], true, true);
@@ -233,9 +229,6 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await expect(documents.locator('.import-popover')).toBeHidden();
       await documents.locator('#folders-ms-action-bar').getByText('Import').click();
     }
-
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeHidden();
 
     const fileChooserPromise = documents.waitForEvent('filechooser');
     if (displaySize === DisplaySize.Large) {

@@ -2,7 +2,8 @@
 
 import { InvitationStatus, UserProfile, WorkspaceRole } from '@/parsec';
 import { InvoiceStatus } from '@/services/bms';
-import { Locale, Translatable } from 'megashark-lib';
+import { Duration } from 'luxon';
+import { I18n, Locale, Translatable } from 'megashark-lib';
 
 export function getProfileTranslationKey(profile: UserProfile): Translatable {
   if (profile === UserProfile.Admin) {
@@ -82,4 +83,14 @@ export function getInvitationStatusTranslationKey(status: InvitationStatus): Tra
 
 export function longLocaleCodeToShort(longCode: Locale): string {
   return longCode.split('-')[0];
+}
+
+export function formatETA(seconds: number): Translatable {
+  if (seconds === Infinity || seconds < 0) {
+    return '';
+  }
+  const entries = Object.entries(Duration.fromObject({ seconds }).rescale().toObject())
+    .filter(([k, v]) => v > 0 && k !== 'milliseconds')
+    .slice(0, 2);
+  return I18n.valueAsTranslatable(Duration.fromObject(Object.fromEntries(entries)).reconfigure({ locale: I18n.getLocale() }).toHuman());
 }

@@ -100,7 +100,7 @@
           v-show="querying"
           class="body-lg"
         >
-          <div class="no-files-content">
+          <div class="loading-files-content">
             <ms-spinner class="ms-spinner" />
             <ion-text>
               {{ $msTranslate('FoldersPage.loading') }}

@@ -76,6 +76,10 @@
           class="progress-info"
           v-if="props.status === FileOperationEvents.Progress && props.eventData"
         >
+          <ion-text class="progress-percentage button-small default-state">
+            {{ (props.eventData as OperationProgressEventData).global.progress }}%
+          </ion-text>
+
           <ms-spinner class="progress-spinner default-state" />
           <ion-button
             fill="clear"

@@ -187,7 +187,7 @@ msTest.describe(() => {
     await expect(uploadMenu).toBeVisible();
     const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
     await expect(opItems).toHaveCount(1);
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(0).click();
     await expect(documents.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     // cspell:disable-next-line
     await renameDocument(documents, entries.nth(1), '文件名.png');
