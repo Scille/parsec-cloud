@@ -264,7 +264,8 @@ onMounted(async () => {
     display: flex;
     width: 100%;
     align-items: center;
-    justify-content: space-between;
+    // prevent the ion-item inner wrappers from growing to the columns' min-content width
+    contain: inline-size;
 
     @include ms.responsive-breakpoint('sm') {
       flex-direction: column;

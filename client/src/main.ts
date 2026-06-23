@@ -164,6 +164,13 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
       // Ignore this for now;
       case ClientEventTag.ServerConfigChanged:
         break;
+      case ClientEventTag.WorkspaceOutboundSyncBacklog:
+        distributor.dispatchEvent(Events.UploadProgress, {
+          workspaceId: event.realmId,
+          filesLeft: Number(event.numberOfFilesToSync),
+          bytesLeft: Number(event.sizeToSync),
+        });
+        break;
       default:
         window.nativeAPI.log('info', `Unhandled event ${event.tag}`);
         break;

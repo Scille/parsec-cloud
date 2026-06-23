@@ -65,6 +65,7 @@
         >
           <ion-button
             role="tab"
+            fill="clear"
             id="invitation-tab-email"
             class="toggle-view-button email-button"
             :class="{ active: view === InvitationView.EmailInvitation }"
@@ -91,6 +92,7 @@
           </ion-button>
           <ion-button
             role="tab"
+            fill="clear"
             id="invitation-tab-pki"
             class="toggle-view-button pki-button"
             :class="{ active: view === InvitationView.AsyncEnrollmentRequest }"
