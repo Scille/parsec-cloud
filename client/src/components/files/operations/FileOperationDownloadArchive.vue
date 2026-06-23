@@ -72,6 +72,9 @@
           <ion-text class="progress-percentage button-small default-state">
             {{ (props.eventData as OperationProgressEventData).global.progress }}%
           </ion-text>
+
+          {{ rate }} bytes/seconds
+
           <ms-spinner class="progress-spinner default-state" />
           <ion-button
             fill="clear"
@@ -110,6 +113,7 @@
 
 <script setup lang="ts">
 import DownloadArchive from '@/assets/images/download-archive.svg?raw';
+import { TransferRateCalculator } from '@/common/transferRate';
 import {
   FileOperationData,
   FileOperationDownloadArchiveData,
@@ -120,7 +124,7 @@ import {
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { alert, checkmarkCircle, warning } from 'ionicons/icons';
 import { MsImage, MsSpinner } from 'megashark-lib';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps<{
   operationData: FileOperationDownloadArchiveData;
@@ -130,6 +134,15 @@ const props = defineProps<{
 
 const isHovered = ref(false);
 const cancelling = ref(false);
+const rateCalculator = new TransferRateCalculator();
+const rate = ref<number>(0);
+
+watch(() => props.eventData, (newValue) => {
+  if (props.status === FileOperationEvents.Progress && newValue) {
+    rateCalculator.update((newValue as OperationProgressEventData).global.currentSize);
+    rate.value = rateCalculator.getRate();
+  }
+});
 
 const emits = defineEmits<{
   (event: 'cancel', operationData: FileOperationData): void;
