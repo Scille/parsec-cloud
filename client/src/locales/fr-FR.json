@@ -67,7 +67,7 @@
             "description": "Peut gérer l'accès des utilisateurs et rechiffrer l'espace de travail. Peut promouvoir d'autres utilisateurs au rôle de Propriétaire."
         },
         "none": "Non partagé",
-        "members": "Membre ({count}) | Membres ({count})",
+        "members": "Ayant accès ({count})",
         "suggestion": "Recommandés"
     },
     "link": {
@@ -623,7 +623,7 @@
             "external": "Externe",
             "contributor": "Contributeur",
             "reader": "Lecteur",
-            "buttonSelect": "Sélection multiple",
+            "buttonSelect": "Sélectionner",
             "buttonFinish": "Terminer",
             "counter": "{count} utilisateur sélectionné | {count} utilisateurs sélectionnés",
             "chooseRole": "Choisir un rôle",
@@ -636,7 +636,14 @@
         "onlyOwnerWarning": "Nous vous recommandons de promouvoir quelqu'un d'autre au poste de {owner}. Vous éviterez ainsi de perdre des données si vous quittez l'organisation.",
         "owner": "Propriétaire",
         "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'.",
-        "information": "Informations sur le partage"
+        "information": "Informations sur le partage",
+        "buttonClose": "Fermer",
+        "filter": {
+            "all": "Tous",
+            "admins": "Administrateurs",
+            "standards": "Membres",
+            "externals": "Externes"
+        }
     },
     "SettingsModal": {
         "pageTitle": "Paramètres",

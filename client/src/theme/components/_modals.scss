@@ -752,7 +752,7 @@ ion-modal {
 }
 
 .workspace-sharing-modal {
-  --max-height: 700px;
+  --max-height: 750px;
 
   &::part(content) {
     min-width: var(--parsec-modal-width-lg);
@@ -780,9 +780,35 @@ ion-modal {
 
     &-content {
       overflow: hidden;
+      height: 100%;
 
       @include ms.responsive-breakpoint('sm') {
         padding: 0;
+      }
+
+      .person-name-container {
+        gap: 0.25rem !important;
+      }
+
+      .person-name {
+        font-size: 0.925rem;
+        font-weight: 600;
+      }
+
+      .user-list-suggestions-item {
+        .avatar {
+          filter: grayscale(100%);
+        }
+      }
+    }
+
+    .modal-footer {
+      .dropdown-button::part(native) {
+        border: 1px solid var(--parsec-color-light-secondary-light);
+
+        &:hover {
+          border: 1px solid var(--parsec-color-light-primary-400);
+        }
       }
     }
   }
