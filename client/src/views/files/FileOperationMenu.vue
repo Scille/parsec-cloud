@@ -2,27 +2,40 @@
 
 <template>
   <div
-    v-if="menu.isVisible() || isFileOperationManagerActive"
     class="upload-menu"
-    :class="menu.isMinimized() ? 'minimize' : ''"
+    :class="{
+      minimize: menu.isMinimized(),
+      'minimized-with-status': menu.isMinimized() && showUploadStatus,
+    }"
   >
-    <div class="upload-menu-header">
-      <ion-text class="upload-menu-header__title">{{ $msTranslate('FoldersPage.ImportFile.title') }}</ion-text>
-      <div class="menu-header-icons">
-        <ion-icon
-          class="menu-header-icons__item"
-          :icon="chevronDown"
-          @click="toggleMenu()"
-        />
-        <ion-icon
-          v-if="!isFileOperationManagerActive"
-          class="menu-header-icons__item"
-          :icon="close"
-          @click="menu.hide()"
-        />
-      </div>
+    <div
+      class="upload-menu-header"
+      @click="toggleMenu()"
+    >
+      <ion-text
+        v-if="!menu.isMinimized() || (menu.isMinimized() && showUploadStatus)"
+        class="upload-menu-header__title"
+      >
+        {{ $msTranslate('FoldersPage.ImportFile.title') }}
+      </ion-text>
+      <ion-icon
+        class="menu-header-icons"
+        :icon="menu.isMinimized() && !showUploadStatus ? sync : chevronDown"
+      />
     </div>
-    <ion-list class="upload-menu-tabs">
+
+    <upload-status
+      v-if="showUploadStatus"
+      class="upload-menu-status"
+      :status="uploadProgressStatus"
+      :rate-calculator="rateCalculator as TransferRateCalculator"
+      @close="showUploadStatus = false"
+    />
+
+    <ion-list
+      v-if="!menu.isMinimized()"
+      class="upload-menu-tabs"
+    >
       <ion-item
         class="upload-menu-tabs__item"
         @click="onFilterSelected(OperationFilter.InProgress)"
@@ -75,7 +88,7 @@
         class="upload-menu-list__empty"
         v-if="currentItems.length === 0"
       >
-        <ms-image :image="NoImportInProgress" />
+        <ms-image :image="theme === Theme.Dark ? NoImportInProgressDark : NoImportInProgress" />
         <ion-text class="upload-menu-list__empty-text">
           {{ $msTranslate(items.length === 0 ? 'FoldersPage.ImportFile.noTasks' : 'FoldersPage.ImportFile.noCurrentTasks') }}
         </ion-text>
@@ -85,9 +98,12 @@
 </template>
 
 <script setup lang="ts">
+import { TransferRateCalculator } from '@/common/transferRate';
 import { FileOperationBase, FileOperationImport } from '@/components/files';
-import { Path } from '@/parsec';
+import UploadStatus from '@/components/files/operations/UploadStatus.vue';
+import { Path, UploadProgress, WorkspaceID } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
+import { EventData, EventDistributor, EventDistributorKey, Events, UploadProgressData } from '@/services/eventDistributor';
 import {
   FileOperationCopyData,
   FileOperationData,
@@ -100,8 +116,8 @@ import { FileEventRegistrationCanceller, FileOperationEventData, FileOperationEv
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
-import { chevronDown, close } from 'ionicons/icons';
-import { MsImage, NoImportInProgress } from 'megashark-lib';
+import { chevronDown, sync } from 'ionicons/icons';
+import { MsImage, NoImportInProgress, NoImportInProgressDark, Theme, useTheme } from 'megashark-lib';
 import type { Component } from 'vue';
 import { computed, inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
@@ -119,6 +135,7 @@ enum OperationFilter {
 }
 
 const menu = useUploadMenu();
+const { theme } = useTheme();
 
 const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
 
@@ -151,6 +168,12 @@ const currentItems = computed(() => {
 let canceller!: FileEventRegistrationCanceller;
 const isFileOperationManagerActive = ref(false);
 const uploadMenuList = ref();
+const uploadProgressStatus = ref<UploadProgress>({ totalBytes: 0, totalFiles: 0 });
+const workspacesBacklog = new Map<WorkspaceID, UploadProgress>();
+const rateCalculator = ref<TransferRateCalculator>(new TransferRateCalculator());
+const showUploadStatus = ref(false);
+const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
+let eventRegisterKey: string | undefined = undefined;
 
 function toggleMenu(): void {
   if (menu.isMinimized()) {
@@ -182,11 +205,37 @@ function getOperationComponent(item: OperationItem): Component {
 
 onMounted(async () => {
   canceller = await fileOperationManager.value.registerCallback(onFileOperationEvent);
+  eventRegisterKey = await eventDistributor.value.registerCallback([Events.UploadProgress], onEvent);
 });
 
 onUnmounted(async () => {
   canceller.cancel();
+  if (eventRegisterKey) {
+    eventDistributor.value.removeCallback(eventRegisterKey);
+  }
 });
+
+async function onEvent(event: Events, evData?: EventData): Promise<void> {
+  if (event !== Events.UploadProgress || !evData) {
+    return;
+  }
+  const data = evData as UploadProgressData;
+  if (data.filesLeft === 0 && data.bytesLeft === 0) {
+    workspacesBacklog.delete(data.workspaceId);
+  } else {
+    workspacesBacklog.set(data.workspaceId, { totalFiles: data.filesLeft, totalBytes: data.bytesLeft });
+  }
+  const total: UploadProgress = { totalBytes: 0, totalFiles: 0 };
+  for (const backlog of workspacesBacklog.values()) {
+    total.totalBytes += backlog.totalBytes;
+    total.totalFiles += backlog.totalFiles;
+  }
+  uploadProgressStatus.value = total;
+  rateCalculator.value.update(total.totalBytes, total.totalFiles);
+  if (total.totalFiles > 0) {
+    showUploadStatus.value = true;
+  }
+}
 
 async function onFileOperationEvent(
   event: FileOperationEvents,
@@ -205,7 +254,6 @@ async function onFileOperationEvent(
   switch (event) {
     case FileOperationEvents.Added: {
       items.value.unshift({ operationData: operationData, status: event, eventData: eventData, refreshKey: 0 });
-      menu.show();
       menu.expand();
       scrollToTop();
       filter.value = undefined;
@@ -317,24 +365,27 @@ function scrollToTop(): void {
 <style scoped lang="scss">
 .upload-menu {
   display: flex;
-  min-width: 28rem;
-  max-width: 25rem;
+  flex-direction: column;
+  width: 28rem;
+  max-height: 28rem;
   position: absolute;
-  border-radius: ms.radius('lg') ms.radius('lg') 0 0;
+  border-radius: ms.radius('2xl');
   box-shadow: ms.shadow('elevation-2xl');
   background: ms.color('surface-base-default');
   border: ms.border('thin') solid ms.color('border-base-default');
-  bottom: 0;
+  bottom: 1.5rem;
   right: 2rem;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
   z-index: 20;
+  overflow: hidden;
+  transition:
+    width 250ms ease-in-out,
+    max-height 250ms ease-in-out;
 
   @include ms.responsive-breakpoint('sm') {
     right: 0;
-    min-width: 100%;
+    bottom: 0;
     width: 100%;
+    border-radius: ms.radius('2xl') ms.radius('2xl') ms.radius('none') ms.radius('none');
   }
 
   &-header {
@@ -343,54 +394,52 @@ function scrollToTop(): void {
     height: fit-content;
     justify-content: space-between;
     width: 100%;
-    padding: ms.spacing('padding-sm') ms.spacing('padding-sm') ms.spacing('padding-sm') ms.spacing('padding-3xl');
+    padding: ms.spacing('padding-sm');
     background: ms.color('popover-header-background');
     color: ms.color('text-on-color-heading');
+    cursor: pointer;
+
+    &:hover {
+      .upload-menu-header__title {
+        text-decoration: underline;
+      }
+    }
 
     &__title {
       @include ms.font('heading-h5');
-    }
-
-    .menu-header-icons {
+      margin-left: 1rem;
+      height: stretch;
       display: flex;
-      gap: ms.spacing('gap-lg');
-
-      &__item {
-        color: ms.color('icon-on-color-heading');
-        font-size: 1.25rem;
-        cursor: pointer;
-        border-radius: ms.radius('lg');
-        padding: ms.spacing('padding-lg');
-
-        &:nth-child(1) {
-          transition: transform 250ms ease-in-out;
-        }
-
-        &:hover {
-          background-color: ms.color('surface-neutral-on-color');
-        }
-      }
+      width: 100%;
+      align-items: center;
     }
+  }
+
+  &-status {
+    min-width: 22rem;
+    height: fit-content;
+    flex-shrink: 0;
   }
 
   &-tabs {
     display: flex;
-    padding: ms.spacing('padding-xl') ms.spacing('padding-lg');
+    padding: ms.spacing('padding-xl') ms.spacing('padding-lg') ms.spacing('padding-xs');
+    flex-shrink: 0;
+    width: 100%;
     gap: ms.spacing('gap-lg');
-    overflow: hidden;
     background: ms.color('surface-base-default');
     position: relative;
-    --current-tab: 0;
     align-items: center;
+    box-shadow: ms.shadow('elevation-md');
 
     @include ms.responsive-breakpoint('sm') {
-      padding: ms.spacing('padding-sm');
-      margin: 1rem 0.5rem 0;
+      padding: ms.spacing('padding-xl');
     }
 
     &__item {
       color: ms.color('text-neutral-default');
       border: ms.border('thin') solid ms.color('border-base-default');
+      background: ms.color('surface-base-default');
       border-radius: ms.radius('2xl');
       cursor: pointer;
       display: flex;
@@ -405,14 +454,6 @@ function scrollToTop(): void {
       &::part(native) {
         background: transparent;
         padding: ms.spacing('padding-lg') ms.spacing('padding-xl');
-
-        @include ms.responsive-breakpoint('sm') {
-          padding: ms.spacing('padding-lg') ms.spacing('padding-sm');
-        }
-      }
-
-      @include ms.responsive-breakpoint('sm') {
-        width: 100%;
       }
 
       .item-container {
@@ -440,8 +481,9 @@ function scrollToTop(): void {
     &__clear {
       margin-left: auto;
 
-      @include ms.responsive-breakpoint('sm') {
-        margin-left: 0;
+      &:hover {
+        background: ms.color('surface-neutral-default-subtle-hover');
+        color: ms.color('text-brand-default-hover');
       }
     }
   }
@@ -452,9 +494,8 @@ function scrollToTop(): void {
     padding: ms.spacing('padding-none');
     overflow-y: auto;
     height: 60vh;
-    padding-bottom: ms.spacing('padding-5xl');
-    max-height: 28rem;
     transition: all 250ms ease-in-out;
+    padding-bottom: ms.spacing('padding-lg');
     background: ms.color('surface-base-default');
 
     @media screen and (max-height: 1000px) {
@@ -467,6 +508,7 @@ function scrollToTop(): void {
       flex-direction: column;
       align-items: center;
       gap: ms.spacing('gap-lg');
+      padding: ms.spacing('padding-3xl');
       margin: auto;
       color: ms.color('text-base-description');
 
@@ -477,16 +519,55 @@ function scrollToTop(): void {
   }
 }
 
+.menu-header-icons {
+  display: flex;
+  gap: ms.spacing('gap-lg');
+  color: ms.color('icon-on-color-heading');
+  font-size: 1.25rem;
+  cursor: pointer;
+  border-radius: ms.radius('lg');
+  padding: ms.spacing('padding-lg');
+  transition: transform 250ms ease-in-out;
+
+  &:hover {
+    background-color: ms.color('surface-neutral-on-color');
+  }
+}
+
 .minimize {
-  .upload-menu-list,
-  .upload-menu-tabs {
-    height: 0;
-    padding: ms.spacing('padding-none');
-    margin: 0;
+  width: 2.75rem;
+  max-height: 2.75rem;
+  cursor: default;
+
+  @include ms.responsive-breakpoint('sm') {
+    right: 1.5rem;
+    bottom: 1.5rem;
+    border-radius: ms.radius('2xl');
   }
 
-  .menu-header-icons__item {
+  .upload-menu-list {
+    padding: ms.spacing('padding-none');
+    margin: 0;
+    overflow: hidden;
+    height: 0;
+  }
+
+  .menu-header-icons {
     transform: rotate(180deg);
+    margin-left: auto;
+  }
+}
+
+.minimized-with-status {
+  width: 28rem;
+  max-height: 6rem;
+
+  .upload-menu-header {
+    padding: ms.spacing('padding-sm');
+  }
+
+  .menu-header-icons {
+    padding: ms.spacing('padding-lg');
   }
 }
 </style>
