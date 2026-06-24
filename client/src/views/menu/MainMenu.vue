@@ -210,59 +210,6 @@
               </span>
             </ion-text>
 
-            <div class="sidebar-content-organization-filters">
-              <!-- Recent -->
-              <ion-text
-                @click="onCategoryMenuChange(WorkspaceMenu.Recent)"
-                :class="{ active: workspaceMenuState === WorkspaceMenu.Recent && currentRouteIs(Routes.Workspaces) }"
-                class="sidebar-content-organization-filters-button button-medium"
-                id="sidebar-recent-workspaces"
-                button
-              >
-                <ion-icon
-                  class="sidebar-content-organization-filters-button__icon"
-                  :icon="time"
-                />
-                <span class="sidebar-content-organization-filters-button__text">
-                  {{ $msTranslate('SideMenu.recent') }}
-                </span>
-              </ion-text>
-
-              <!-- Favorites -->
-              <ion-text
-                @click="onCategoryMenuChange(WorkspaceMenu.Favorites)"
-                :class="{ active: workspaceMenuState === WorkspaceMenu.Favorites && currentRouteIs(Routes.Workspaces) }"
-                class="sidebar-content-organization-filters-button button-medium"
-                id="sidebar-favorite-workspaces"
-                button
-              >
-                <ion-icon
-                  class="sidebar-content-organization-filters-button__icon"
-                  :icon="star"
-                />
-                <span class="sidebar-content-organization-filters-button__text">
-                  {{ $msTranslate('SideMenu.favorites') }}
-                </span>
-              </ion-text>
-
-              <!-- Hidden -->
-              <ion-text
-                @click="onCategoryMenuChange(WorkspaceMenu.Hidden)"
-                :class="{ active: workspaceMenuState === WorkspaceMenu.Hidden && currentRouteIs(Routes.Workspaces) }"
-                class="sidebar-content-organization-filters-button button-medium"
-                id="sidebar-hidden-workspaces"
-                button
-              >
-                <ion-icon
-                  class="sidebar-content-organization-filters-button__icon"
-                  :icon="eyeOff"
-                />
-                <span class="sidebar-content-organization-filters-button__text">
-                  {{ $msTranslate('SideMenu.hidden') }}
-                </span>
-              </ion-text>
-            </div>
-
             <!-- Archived -->
             <ion-text
               @click="navigateTo(Routes.Archived)"
@@ -402,7 +349,6 @@ import {
 import {
   currentRouteIs,
   getConnectionHandle,
-  getCurrentRouteQuery,
   getWorkspaceHandle,
   navigateTo,
   navigateToWorkspace,
@@ -460,7 +406,6 @@ import {
   chevronForward,
   cloudUpload,
   document as documentIcon,
-  eyeOff,
   folderOpen,
   home,
   informationCircle,
@@ -470,8 +415,6 @@ import {
   people,
   personAdd,
   snow,
-  star,
-  time,
   trash,
   warning,
 } from 'ionicons/icons';
@@ -507,7 +450,6 @@ const expirationDuration = ref<Duration | undefined>(undefined);
 const isTrialOrg = ref(false);
 const pathOpener = usePathOpener();
 const pendingRequestsCount = ref(0);
-const workspaceMenuState = ref<WorkspaceMenu>(WorkspaceMenu.All);
 const workspaceDeletionDelay = ref(0);
 const hasTrashedWorkspaces = computed(() => workspaces.value.find((wk) => wk.isTrashed) !== undefined);
 
@@ -676,10 +618,7 @@ const watchWindowWidthCancel = watch(windowWidth, async () => {
   emits('windowWidthChanged');
 });
 
-const watchRouteCancel = watchRoute(async (newRoute) => {
-  if (newRoute.query.workspaceMenu && Object.values(WorkspaceMenu).includes(newRoute.query.workspaceMenu as WorkspaceMenu)) {
-    workspaceMenuState.value = newRoute.query.workspaceMenu as WorkspaceMenu;
-  }
+const watchRouteCancel = watchRoute(async () => {
   await loadAll();
 });
 
@@ -790,11 +729,6 @@ onMounted(async () => {
   }
 
   securityWarnings.value = await getSecurityWarnings();
-
-  const query = getCurrentRouteQuery();
-  if (query.workspaceMenu && Object.values(WorkspaceMenu).includes(query.workspaceMenu as WorkspaceMenu)) {
-    workspaceMenuState.value = query.workspaceMenu as WorkspaceMenu;
-  }
 
   updateDividerPosition();
 });
@@ -1102,86 +1036,6 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   user-select: none;
   gap: 0.5rem;
   padding-inline: 0.25rem;
-
-  &-filters {
-    display: flex;
-    flex-direction: column;
-    margin-left: 1rem;
-    position: relative;
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: -0.75rem;
-      top: 0;
-      width: 0.25rem;
-      height: 100%;
-      background: var(--parsec-color-light-primary-30-opacity15);
-      border-radius: var(--parsec-radius-4);
-    }
-
-    &-button {
-      display: flex;
-      color: var(--parsec-color-light-secondary-white);
-      align-items: center;
-      border-radius: var(--parsec-radius-6);
-      padding: 0.625rem 0.5rem;
-      gap: 0.375rem;
-      opacity: 0.6;
-      cursor: pointer;
-      position: relative;
-
-      &::before,
-      &::after {
-        content: '';
-        position: absolute;
-        left: -0.75rem;
-        width: 0.42rem;
-        height: 100%;
-        opacity: 0;
-      }
-
-      &::before {
-        z-index: 1;
-        background: var(--parsec-color-light-primary-800);
-        top: 0;
-      }
-
-      &::after {
-        z-index: 2;
-        background: var(--parsec-color-light-primary-400);
-        border-radius: 0 var(--parsec-radius-8) var(--parsec-radius-8) 0;
-      }
-
-      &__icon {
-        font-size: 1rem;
-      }
-
-      &:hover:not(.active) {
-        opacity: 1;
-
-        &::before,
-        &::after {
-          opacity: 1;
-        }
-
-        &::after {
-          border-radius: 0 var(--parsec-radius-6) var(--parsec-radius-6) 0;
-          background: var(--parsec-color-light-primary-30-opacity15);
-        }
-      }
-
-      &.active {
-        cursor: default;
-        opacity: 1;
-
-        &::before,
-        &::after {
-          opacity: 1;
-        }
-      }
-    }
-  }
 
   &-button {
     display: flex;

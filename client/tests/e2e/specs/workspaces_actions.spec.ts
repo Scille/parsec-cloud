@@ -202,8 +202,6 @@ for (const mode of ['grid', 'list', 'sidebar']) {
   });
 
   msTest(`Toggle workspace favorite ${mode}`, async ({ workspaces }) => {
-    const favorites = workspaces.locator('.sidebar').locator('#sidebar-favorite-workspaces');
-    await expect(favorites).toBeVisible();
     await openContextMenu(workspaces, mode as Mode, OpenMenuMethod.Button);
     const popover = workspaces.locator('.workspace-context-menu');
     await popover.getByRole('listitem').nth(10).click();
@@ -221,8 +219,6 @@ for (const mode of ['grid', 'list', 'sidebar']) {
       await expect(wk.locator('.workspace-name')).toHaveText('wksp1');
     }
     await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__on');
-    await expect(favorites).toBeVisible();
-    await expect(favorites.locator('.sidebar-content-organization-filters-button__text')).toHaveText('Starred');
   });
 
   msTest(`Open workspace sharing ${mode}`, async ({ workspaces }) => {
