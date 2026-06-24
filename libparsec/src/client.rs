@@ -4,17 +4,18 @@ use std::{collections::HashMap, num::NonZeroU8, path::Path, sync::Arc};
 
 pub use libparsec_client::{
     ClientAcceptTosError, ClientArchiveWorkspaceError, ClientCreateWorkspaceError,
-    ClientDeleteShamirRecoveryError, ClientForgetAllCertificatesError,
-    ClientGetCurrentSelfProfileError, ClientGetOrganizationBootstrapDateError,
-    ClientGetSelfShamirRecoveryError, ClientGetTosError, ClientGetUserDeviceError,
-    ClientGetUserInfoError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
-    ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
-    ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
-    ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
+    ClientDeleteShamirRecoveryError, ClientEditicsGetSessionKeyError,
+    ClientForgetAllCertificatesError, ClientGetCurrentSelfProfileError,
+    ClientGetOrganizationBootstrapDateError, ClientGetSelfShamirRecoveryError, ClientGetTosError,
+    ClientGetUserDeviceError, ClientGetUserInfoError, ClientListFrozenUsersError,
+    ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
+    ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
+    ClientRevokeUserError, ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
     ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo,
     OtherShamirRecoveryInfo, RequestedRealmArchivingConfiguration, SelfShamirRecoveryInfo,
     ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
+
 pub use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::RemoteOperationServer;
@@ -772,4 +773,13 @@ pub fn is_path_confined(client: Handle, path: &str) -> bool {
         std::path::Component::Normal(name) => name.to_str().is_some_and(|s| pattern.is_match(s)),
         _ => false,
     })
+}
+
+pub async fn client_editics_get_session_key(
+    client: Handle,
+    workspace_id: VlobID,
+    file_id: VlobID,
+) -> Result<Bytes, ClientEditicsGetSessionKeyError> {
+    let client = borrow_client(client)?;
+    client.editics_get_session_key(workspace_id, file_id).await
 }

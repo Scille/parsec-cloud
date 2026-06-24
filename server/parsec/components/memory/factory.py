@@ -14,6 +14,7 @@ from parsec.components.memory.async_enrollment import MemoryAsyncEnrollmentCompo
 from parsec.components.memory.auth import MemoryAuthComponent
 from parsec.components.memory.block import MemoryBlockComponent
 from parsec.components.memory.datamodel import MemoryDatamodel
+from parsec.components.memory.editics import MemoryEditicsComponent
 from parsec.components.memory.events import MemoryEventsComponent, event_bus_factory
 from parsec.components.memory.invite import MemoryInviteComponent
 from parsec.components.memory.organization import MemoryOrganizationComponent
@@ -46,6 +47,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             async_enrollment = MemoryAsyncEnrollmentComponent(data, event_bus, config)
             auth = MemoryAuthComponent(data, event_bus, config)
             block = MemoryBlockComponent(data, blockstore)
+            editics = MemoryEditicsComponent(data, config, event_bus)
             events = MemoryEventsComponent(data, config, event_bus)
             invite = MemoryInviteComponent(data, event_bus, config)
             organization = MemoryOrganizationComponent(data, event_bus, webhooks, config)
@@ -64,6 +66,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "auth": auth,
                 "block": block,
                 "blockstore": blockstore,
+                "editics": editics,
                 "event_bus": event_bus,
                 "events": events,
                 "invite": invite,

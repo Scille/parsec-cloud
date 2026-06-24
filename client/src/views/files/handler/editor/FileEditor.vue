@@ -66,8 +66,9 @@
 
 <script setup lang="ts">
 import { DetectedFileType } from '@/common/fileTypes';
-import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
-import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
+import { ClientInfo, closeFile, FileDescriptor, getWorkspaceInfo, openFile, writeFile } from '@/parsec';
+import { libparsec } from '@/plugins/libparsec';
+import { currentRouteIs, getConnectionHandle, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   CryptpadEditors,
   CryptpadError,
@@ -170,6 +171,18 @@ async function loadEditor(): Promise<void> {
     session = undefined;
   }
 
+  const connHandle = getConnectionHandle();
+  const wkResult = await getWorkspaceInfo(workspaceHandle);
+  if (!wkResult.ok || connHandle === null) {
+    window.electronAPI.log('error', 'Could not get workspace info');
+    return;
+  }
+  const keyResult = await libparsec.clientEditicsGetSessionKey(connHandle, wkResult.value.id, contentInfo.fileId);
+  if (!keyResult.ok) {
+    window.electronAPI.log('error', 'Could not get editics session key');
+    return;
+  }
+
   let isSaving = false;
   session = await openDocument(
     {
@@ -177,7 +190,10 @@ async function loadEditor(): Promise<void> {
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
       cryptpadEditor: documentType.value as CryptpadEditors,
-      key: crypto.randomUUID(),
+      // TODO: replace UUID with collaborative session key
+      // key: contentInfo.fileId,
+      // key: crypto.randomUUID(),
+      key: String.fromCharCode(...keyResult.value),
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UNKNOWN_USER'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
       autosaveInterval: 10,

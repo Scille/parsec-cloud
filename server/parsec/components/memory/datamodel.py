@@ -172,6 +172,9 @@ class MemoryOrganization:
     per_topic_last_timestamp: dict[TopicAndDiscriminant, DateTime] = field(default_factory=dict)
     async_enrollments: dict[AsyncEnrollmentID, MemoryAsyncEnrollment] = field(default_factory=dict)
 
+    # The file id is the key
+    editics_sessions: dict[VlobID, MemoryEditicsSession] = field(default_factory=dict)
+
     # Stores topic name and discriminant (or `None`)
     _topic_write_locked: set[TopicAndDiscriminant] = field(default_factory=set)
     # Stores topic name and discriminant (or `None`) as key, and the number
@@ -1031,3 +1034,11 @@ class MemoryAsyncEnrollment:
 
     # Additional fields when switching to cancelled state
     cancelled_on: DateTime | None = None
+
+
+@dataclass(slots=True)
+class MemoryEditicsSession:
+    workspace_id: VlobID
+    file_id: VlobID
+    encrypted_session_key: bytes
+    key_index: int
