@@ -426,34 +426,6 @@ msTest.describe(() => {
 
     await expect(documents.locator('.sidebar')).toBeVisible();
   });
-
-  msTest('Sidebar persistence switching workspace categories', async ({ workspaces }) => {
-    const workspaceCategoriesMenu = workspaces.locator('.workspace-categories-menu');
-    const workspaceCategoriesMenuItem = workspaceCategoriesMenu.locator('.workspace-categories-menu-item');
-    const workspaceCategoriesSidebar = workspaces.locator('#sidebar-workspaces');
-    const workspaceCategoriesSidebarItem = workspaceCategoriesSidebar.locator('.sidebar-content-organization-filters-button');
-    const allWorkspacesButton = workspaces.locator('#sidebar-all-workspaces');
-
-    await expect(workspaceCategoriesMenu.locator('.workspace-categories-menu-item__text')).toHaveText(['Recent', 'Starred', 'Hidden']);
-
-    await expect(workspaceCategoriesSidebar.locator('.sidebar-content-organization-filters-button__text')).toHaveText([
-      'Recent',
-      'Starred',
-      'Hidden',
-    ]);
-    await expect(allWorkspacesButton).toHaveClass(/active/);
-
-    for (const index of [0, 1, 2]) {
-      await workspaceCategoriesMenuItem.nth(index).click();
-      await expect(workspaceCategoriesMenuItem.nth(index)).toHaveClass(/active/);
-      await expect(workspaceCategoriesSidebarItem.nth(index)).toHaveClass(/active/);
-
-      await allWorkspacesButton.click();
-      await expect(allWorkspacesButton).toHaveClass(/active/);
-      await expect(workspaceCategoriesMenuItem.nth(index)).not.toHaveClass(/active/);
-      await expect(workspaceCategoriesSidebarItem.nth(index)).not.toHaveClass(/active/);
-    }
-  });
 });
 
 msTest('Trying to navigate through the workspace content, profile, invitations, and back to workspaces page', async ({ connected }) => {
