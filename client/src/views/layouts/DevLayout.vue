@@ -116,6 +116,13 @@ as the default handle when not connecting properly`,
 });
 
 async function populate(handle: parsec.ConnectionHandle): Promise<void> {
+  if (import.meta.env.PARSEC_APP_DEV_POPULATE_WORKSPACES && !isNaN(Number(import.meta.env.PARSEC_APP_DEV_POPULATE_WORKSPACES))) {
+    for (let i = 2; i < Number(import.meta.env.PARSEC_APP_DEV_POPULATE_WORKSPACES) + 2; i++) {
+      window.electronAPI.log('info', `Creating workspace 'wksp${i}'`);
+      await parsec.createWorkspace(`wksp${i}`);
+    }
+  }
+
   const workspaces = await parsec.listWorkspaces(getConnectionHandle());
   if (!workspaces.ok) {
     window.electronAPI.log('error', 'Failed to list workspaces');
@@ -123,13 +130,11 @@ async function populate(handle: parsec.ConnectionHandle): Promise<void> {
   }
 
   for (const workspace of workspaces.value) {
-    if (workspace.name === 'wksp1') {
-      if (import.meta.env.PARSEC_APP_DEV_POPULATE_REAL_FILES === 'true') {
-        await populateRealFiles(workspace);
-      }
-      if (import.meta.env.PARSEC_APP_DEV_POPULATE_MANY_FILES) {
-        await populateManyFiles(workspace, import.meta.env.PARSEC_APP_DEV_POPULATE_MANY_FILES.split(';'));
-      }
+    if (import.meta.env.PARSEC_APP_DEV_POPULATE_REAL_FILES === 'true') {
+      await populateRealFiles(workspace);
+    }
+    if (import.meta.env.PARSEC_APP_DEV_POPULATE_MANY_FILES) {
+      await populateManyFiles(workspace, import.meta.env.PARSEC_APP_DEV_POPULATE_MANY_FILES.split(';'));
     }
   }
   if (import.meta.env.PARSEC_APP_DEV_ADD_READONLY_WORKSPACE === 'true') {
@@ -311,7 +316,7 @@ async function populateManyFiles(workspace: parsec.WorkspaceInfo, treeDefinition
   let filesCreated = 0;
   const AVAILABLE_EXTENSIONS = ['png', 'docx', 'xlsx', 'mp4', 'mp3', 'pdf', 'txt', 'pptx'];
 
-  window.electronAPI.log('debug', 'Creating mock arborescence');
+  window.electronAPI.log('debug', `Creating mock arborescence in workspace ${workspace.name}`);
   for (let i = 0; i < treeDefinition[0]; i++) {
     const folder1Name = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
     await parsec.createFolder(workspace.handle, `/${folder1Name}`);
@@ -338,7 +343,7 @@ async function populateRealFiles(workspace: parsec.WorkspaceInfo): Promise<void>
   // Avoid importing files if unnecessary
   const mockFiles = await import('@/parsec/mock_files');
 
-  window.electronAPI.log('debug', 'Creating mock files');
+  window.electronAPI.log('debug', `Creating mock files in workspace ${workspace.name}`);
   await parsec.createFolder(workspace.handle, '/Folder_éèñÑ');
 
   for (const fileType in mockFiles.MockFileType) {
@@ -387,7 +392,7 @@ async function addReadOnlyWorkspace(): Promise<void> {
     return;
   }
   try {
-    const wkResult = await libparsec.clientCreateWorkspace(loginResult.value, 'wksp2');
+    const wkResult = await libparsec.clientCreateWorkspace(loginResult.value, 'wksp-ro');
     if (!wkResult.ok) {
       window.electronAPI.log('error', `Failed to create a workspace as Bob: ${wkResult.error.error}`);
       return;
