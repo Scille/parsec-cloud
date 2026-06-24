@@ -2082,7 +2082,9 @@ async function startSearch(pattern: string): Promise<void> {
     aborter: new AbortController(),
     active: true,
   };
-  await parsec.fileSearch(workspaceInfo.value.handle, '/', pattern, search.value.results, search.value.aborter.signal);
+  for await (const result of parsec.fileSearch(workspaceInfo.value.handle, '/', pattern, search.value.aborter.signal)) {
+    search.value.results.push(result);
+  }
   if (search.value) {
     search.value.active = false;
   }

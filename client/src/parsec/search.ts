@@ -58,13 +58,12 @@ function highlight(value: FsPath | EntryName, matches: Array<MatchResult>): stri
   return result;
 }
 
-export async function fileSearch(
+export async function* fileSearch(
   workspaceHandle: WorkspaceHandle,
   root: FsPath,
   pattern: string,
-  results: Array<SearchResult>,
   signal: AbortSignal,
-): Promise<void> {
+): AsyncGenerator<SearchResult> {
   const rootSanitized = sanitize(root);
   const rootResult = match(pattern, rootSanitized);
   const stack: Array<{ path: FsPath; highlightedParent?: string }> = [
@@ -74,7 +73,6 @@ export async function fileSearch(
     },
   ];
 
-  // Going through the stack of folders
   while (stack.length) {
     if (signal.aborted) {
       return;
@@ -89,21 +87,21 @@ export async function fileSearch(
       const result = match(pattern, sanitized);
 
       if (result.length) {
-        results.push({
+        yield {
           stats: entry,
           parent: path,
           titleMatch: true,
           highlightedName: highlight(sanitized, result),
           highlightedPath: highlightedParent,
-        });
+        };
       } else if (highlightedParent) {
-        results.push({
+        yield {
           stats: entry,
           parent: path,
           titleMatch: false,
           highlightedName: undefined,
           highlightedPath: highlightedParent,
-        });
+        };
       }
       if (!entry.isFile()) {
         const pathSanitized = sanitize(entry.path);
