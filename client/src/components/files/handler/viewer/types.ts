@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { SearchResult } from '@/parsec';
 import { Translatable } from 'megashark-lib';
 
 export interface FileControlsDropdownItemContent {
@@ -11,4 +12,10 @@ export interface FileControlsDropdownItemContent {
   isActive?: boolean;
   dismissPopover?: boolean;
   dismissToParent?: boolean;
+}
+
+export interface FileSearch {
+  results: Array<SearchResult>;
+  pattern: string;
+  active: boolean;
 }

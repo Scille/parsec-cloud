@@ -42,9 +42,9 @@
           <div class="path-content">
             <ion-text
               class="workspace-path body-sm"
-              :title="workspaceName"
+              :title="searchItem.workspaceName"
             >
-              {{ workspaceName }}
+              {{ searchItem.workspaceName }}
             </ion-text>
             <ion-text
               class="label-path can-highlight body-sm"
@@ -101,7 +101,10 @@
       </div>
 
       <!-- options -->
-      <div class="list-item-end file-options ion-item-child-clickable">
+      <div
+        class="list-item-end file-options ion-item-child-clickable"
+        v-if="!disableContextMenu"
+      >
         <ion-button
           fill="clear"
           v-show="isHovered || menuOpened || isSmallDisplay"
@@ -122,7 +125,7 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { EntryName, EntryStatFile, SearchResult } from '@/parsec';
+import { EntryStatFile, SearchResult } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { Folder, formatTimeSince, MsImage, useWindowSize } from 'megashark-lib';
@@ -134,7 +137,7 @@ const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const props = defineProps<{
   searchItem: SearchResult;
-  workspaceName: EntryName;
+  disableContextMenu: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -153,6 +156,10 @@ const syncStatus = computed(() => {
 async function onOptionsClick(event: PointerEvent): Promise<void> {
   event.preventDefault();
   event.stopPropagation();
+
+  if (props.disableContextMenu) {
+    return;
+  }
 
   menuOpened.value = true;
   emits('menuClick', event, props.searchItem, () => (menuOpened.value = false));
