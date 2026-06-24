@@ -65,13 +65,13 @@ fn generate_shared_secret_key_ok() {
 #[platform::test]
 fn generate_shared_secret_key_non_contributory() {
     // Shared secret key generation is based on libsodium's `crypto_scalarmult`,
-    // which itself uses `x25519` Diffie-Hellman, in which an all-zero key cause
+    // which itself uses X25519 Diffie-Hellman, in which an all-zero key cause
     // issue with "contributory" behavior (aka that each party contributed a public
     // value which increased the security of the resulting shared secret).
     //
     // See https://vnhacker.blogspot.com/2015/09/why-not-validating-curve25519-public.html
     //
-    // Last but not least, there is multiple ways to end up with a all-zero, and we test
+    // Last but not least, there is multiple ways to end up with an all-zero, and we test
     // all of them using the `EIGHT_TORSION` list.
     for small_order_ed_point in curve25519_dalek::constants::EIGHT_TORSION {
         let montgomery_point = small_order_ed_point.to_montgomery();
