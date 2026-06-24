@@ -14,6 +14,11 @@ if (!fs.existsSync(SRC)) {
   process.exit(1);
 }
 
+if (fs.existsSync(DEST)) {
+  console.log(`>>> rm -rf ${path.relative(WORKDIR, DEST)}`);
+  fs.rmSync(DEST, { recursive: true });
+}
+
 console.log(`>>> cp -r ${path.relative(WORKDIR, SRC)} ${path.relative(WORKDIR, DEST)}`);
 fs.cpSync(SRC, DEST, { recursive: true });
 console.log('Done!');
