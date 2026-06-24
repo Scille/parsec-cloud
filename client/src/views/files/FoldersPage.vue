@@ -222,7 +222,7 @@
             :pattern="search.pattern"
             :search-results="search.results"
             :active="search.active"
-            :workspace-name="workspaceName"
+            :multiple-workspaces="false"
             @item-click="onSearchResultClick"
             @menu-item-click="onSearchResultContextMenu"
             @update-pattern="search.pattern = $event"
@@ -290,6 +290,7 @@ import {
   copyPathLinkToClipboard,
   selectFolder,
 } from '@/components/files';
+import { FileSearch } from '@/components/files/handler/viewer/types';
 import { EntrySyncStatus, FileOperationCurrentFolder } from '@/components/files/types';
 import SmallDisplaySelectionHeader from '@/components/header/SmallDisplaySelectionHeader.vue';
 import { WorkspaceRoleTag } from '@/components/workspaces';
@@ -374,13 +375,6 @@ const msSorterLabels = {
   desc: 'FoldersPage.sort.desc',
 };
 
-interface Search {
-  results: Array<parsec.SearchResult>;
-  pattern: string;
-  aborter: AbortController;
-  active: boolean;
-}
-
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Documents)) {
     return;
@@ -431,7 +425,8 @@ const currentFolder: Ref<EntryName> = ref('/');
 const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
-const search = ref<Search | undefined>(undefined);
+const search = ref<FileSearch | undefined>(undefined);
+let searchAborter: AbortController | undefined = undefined;
 const searchPattern = ref('');
 const searchInputValue = ref('');
 const workspaceInfo: Ref<parsec.WorkspaceInfo | null> = ref(null);
@@ -457,10 +452,6 @@ let fileOpCanceller!: FileEventRegistrationCanceller;
 
 const ownRole = computed(() => {
   return workspaceInfo.value ? workspaceInfo.value.selfRole : parsec.WorkspaceRole.Reader;
-});
-
-const workspaceName = computed(() => {
-  return workspaceInfo.value?.name ?? '';
 });
 
 const isReadOnly = asyncComputed(async (): Promise<boolean> => {
@@ -2064,10 +2055,10 @@ function onSearchValueChange(pattern: string): void {
 }
 
 async function cancelSearch(): Promise<void> {
-  if (search.value) {
-    search.value.aborter.abort();
-    search.value = undefined;
+  if (searchAborter) {
+    searchAborter.abort();
   }
+  search.value = undefined;
 }
 
 async function startSearch(pattern: string): Promise<void> {
@@ -2079,15 +2070,16 @@ async function startSearch(pattern: string): Promise<void> {
   search.value = {
     results: [],
     pattern: pattern,
-    aborter: new AbortController(),
     active: true,
   };
-  for await (const result of parsec.fileSearch(workspaceInfo.value.handle, '/', pattern, search.value.aborter.signal)) {
+  searchAborter = new AbortController();
+  for await (const result of parsec.fileSearch(workspaceInfo.value.handle, '/', pattern, searchAborter.signal)) {
     search.value.results.push(result);
   }
   if (search.value) {
     search.value.active = false;
   }
+  searchAborter = undefined;
 }
 </script>
 

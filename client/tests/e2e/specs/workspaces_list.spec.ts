@@ -1,7 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Page } from '@playwright/test';
-import { answerQuestion, createWorkspace, DisplaySize, expect, fillInputModal, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { Page, TestInfo } from '@playwright/test';
+import {
+  answerQuestion,
+  createWorkspace,
+  DisplaySize,
+  expect,
+  fillInputModal,
+  fillIonInput,
+  importDefaultFiles,
+  ImportDocuments,
+  msTest,
+} from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -369,7 +379,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 }
 
 for (const gridMode of [false, true]) {
-  msTest(`Workspace search filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }) => {
+  msTest(`Workspace search filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }, testingInfo: TestInfo) => {
     if (!gridMode) {
       await toggleViewMode(workspaces);
     }
@@ -381,26 +391,30 @@ for (const gridMode of [false, true]) {
 
     const searchInput = workspaces.locator('#workspaces-ms-action-bar').locator('#search-input-workspace').locator('ion-input');
     const container = workspaces.locator('.workspaces-container');
-    const titles = gridMode ? container.locator('.workspace-card-content__title') : container.locator('.workspace-name__label');
+    const workspaceItems = gridMode ? container.locator('.workspace-card-item') : container.locator('.workspace-list-item');
 
-    await expect(titles).toHaveCount(4);
-    await expect(workspaces.locator('.no-workspaces')).toBeHidden();
-
-    // await expect(titles).toHaveText(WORKSPACES);
-    await fillIonInput(searchInput, 'ee');
-    await expect(titles).toHaveText(WORKSPACES.filter((name) => name.includes('ee')));
-    await fillIonInput(searchInput, 'eep');
-    await expect(titles).toHaveText(WORKSPACES.filter((name) => name.includes('eep')));
-    await fillIonInput(searchInput, '');
-    await expect(workspaces.locator('.no-workspaces')).toBeHidden();
-    await expect(titles).toHaveText(WORKSPACES);
-    await fillIonInput(searchInput, 'No match');
-    await expect(titles).not.toBeVisible();
-    await expect(workspaces.locator('.no-workspaces')).toBeVisible();
-    await expect(workspaces.locator('.no-workspaces').locator('ion-text')).toHaveText('No workspace match this search filter.');
-    await fillIonInput(searchInput, '');
-    await expect(workspaces.locator('.no-workspaces')).toBeHidden();
-    await expect(titles).toHaveText(WORKSPACES);
+    await expect(workspaceItems).toHaveCount(4);
+    for (let i = 0; i < 4; i++) {
+      await workspaceItems.nth(i).click();
+      await expect(workspaces).toBeDocumentPage();
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Pdf | ImportDocuments.Txt, false);
+      await workspaces.locator('#connected-header').locator('.back-button').click();
+      await expect(workspaces).toBeWorkspacePage();
+    }
+    const searchResult = workspaces.locator('.file-search-results');
+    await expect(searchResult).toBeHidden();
+    await fillIonInput(searchInput, 'pdf');
+    await expect(searchResult).toBeVisible();
+    const searchItems = searchResult.locator('.result-list-item');
+    await expect(searchItems).toHaveCount(4);
+    await expect(searchItems.locator('.label-name')).toHaveText([
+      'pdfDocument.pdf',
+      'pdfDocument.pdf',
+      'pdfDocument.pdf',
+      'pdfDocument.pdf',
+    ]);
+    await expect(searchItems.locator('.workspace-path')).toHaveText([...WORKSPACES].sort((a, b) => a.localeCompare(b)));
+    await expect(searchItems.locator('.label-path')).toHaveText(['/', '/', '/', '/']);
   });
 
   msTest(`Workspace list filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspacesStandard }) => {

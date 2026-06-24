@@ -9,10 +9,13 @@
       <ms-action-bar
         id="workspaces-ms-action-bar"
         v-if="isLargeDisplay"
-        :buttons="actionBarOptionsWorkspacesPage"
+        :buttons="search ? [] : actionBarOptionsWorkspacesPage"
       >
         <div class="right-side">
-          <div class="counter">
+          <div
+            class="counter"
+            v-show="!search"
+          >
             <ion-text class="body">
               {{
                 $msTranslate({
@@ -24,16 +27,20 @@
             </ion-text>
           </div>
           <ms-search-input
-            v-model="searchFilterContent"
             placeholder="WorkspacesPage.filterPlaceholder"
             id="search-input-workspace"
+            :debounce="300"
+            @change="onSearchValueChange"
+            v-model="searchPattern"
           />
           <workspace-filter
+            v-show="!search"
             :filters="workspaceFilters"
             @change="onFilterUpdate"
             class="mobile-filters__filter"
           />
           <ms-sorter
+            v-show="!search"
             id="workspace-filter-select"
             :options="msSorterOptions"
             default-option="name"
@@ -41,6 +48,7 @@
             @change="onMsSorterChange($event)"
           />
           <ms-grid-list-toggle
+            v-show="!search"
             v-model="displayView"
             @update:model-value="onDisplayStateChange"
           />
@@ -49,7 +57,7 @@
 
       <div
         class="workspace-filters-menu"
-        v-if="isLargeDisplay"
+        v-if="isLargeDisplay && !search"
       >
         <workspace-categories-menu
           :active-menu="workspaceMenuState"
@@ -65,12 +73,14 @@
         >
           <div class="mobile-filters-buttons">
             <workspace-filter
+              v-show="!search"
               :filters="workspaceFilters"
               @change="onFilterUpdate"
               class="mobile-filters-buttons__filter"
             />
             <ms-sorter
               id="workspace-filter-select"
+              v-show="!search"
               :options="msSorterOptions"
               default-option="name"
               :sorter-labels="msSorterLabels"
@@ -79,14 +89,17 @@
             />
           </div>
           <workspace-categories-menu
+            v-show="!search"
             :active-menu="workspaceMenuState"
             @update-menu="onMenuUpdate"
           />
           <ms-search-input
-            v-model="searchFilterContent"
             placeholder="WorkspacesPage.filterPlaceholder"
             id="search-input-workspace"
             class="mobile-filters__search"
+            :debounce="300"
+            @change="onSearchValueChange"
+            v-model="searchPattern"
           />
         </div>
         <div
@@ -176,13 +189,32 @@
             </ion-text>
           </div>
         </div>
-
-        <div v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.List">
-          <ion-list
-            class="list-container workspaces-container-list"
-            id="workspaces-page-workspace-list"
+        <template v-if="filteredWorkspaces.length > 0 && !search">
+          <div v-if="displayView === DisplayState.List">
+            <ion-list
+              class="list-container workspaces-container-list"
+              id="workspaces-page-workspace-list"
+            >
+              <workspace-list-item
+                v-for="workspace in filteredWorkspaces"
+                :key="workspace.id"
+                :workspace="workspace"
+                :client-profile="clientProfile"
+                :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
+                :is-hidden="workspaceAttributes.isHidden(workspace.id)"
+                @click="onWorkspaceClick"
+                @favorite-click="onWorkspaceFavoriteClick"
+                @menu-click="onOpenWorkspaceContextMenu"
+                @share-click="onWorkspaceShareClick"
+                @self-promote-click="onSelfPromoteClick"
+              />
+            </ion-list>
+          </div>
+          <div
+            v-if="displayView === DisplayState.Grid"
+            class="workspaces-container-grid"
           >
-            <workspace-list-item
+            <workspace-card
               v-for="workspace in filteredWorkspaces"
               :key="workspace.id"
               :workspace="workspace"
@@ -195,26 +227,18 @@
               @share-click="onWorkspaceShareClick"
               @self-promote-click="onSelfPromoteClick"
             />
-          </ion-list>
-        </div>
-        <div
-          v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.Grid"
-          class="workspaces-container-grid"
-        >
-          <workspace-card
-            v-for="workspace in filteredWorkspaces"
-            :key="workspace.id"
-            :workspace="workspace"
-            :client-profile="clientProfile"
-            :is-favorite="workspaceAttributes.isFavorite(workspace.id)"
-            :is-hidden="workspaceAttributes.isHidden(workspace.id)"
-            @click="onWorkspaceClick"
-            @favorite-click="onWorkspaceFavoriteClick"
-            @menu-click="onOpenWorkspaceContextMenu"
-            @share-click="onWorkspaceShareClick"
-            @self-promote-click="onSelfPromoteClick"
+          </div>
+        </template>
+        <template v-if="search">
+          <file-search-results
+            :pattern="search.pattern"
+            :search-results="search.results"
+            :active="search.active"
+            :multiple-workspaces="true"
+            @item-click="onSearchResultClick"
+            @update-pattern="search.pattern = $event"
           />
-        </div>
+        </template>
       </div>
     </ion-content>
   </ion-page>
@@ -225,6 +249,8 @@ import NoFavoriteWorkspaces from '@/assets/images/no-favorite-workspaces.svg?raw
 import NoHiddenWorkspaces from '@/assets/images/no-hidden-workspaces.svg?raw';
 import NoRecentWorkspaces from '@/assets/images/no-recent-workspaces.svg?raw';
 import { workspaceNameValidator } from '@/common/validators';
+import { FileSearchResults } from '@/components/files';
+import { FileSearch } from '@/components/files/handler/viewer/types';
 import {
   WORKSPACES_PAGE_DATA_KEY,
   WorkspaceDefaultData,
@@ -244,12 +270,14 @@ import {
   EntryName,
   ParsecWorkspacePathAddr,
   Path,
+  SearchResult,
   UserProfile,
   WorkspaceInfo,
   WorkspaceName,
   WorkspaceRole,
   decryptFileLink,
   entryStat,
+  fileSearch,
   getClientProfile,
   isDesktop,
   parseFileLink,
@@ -303,7 +331,6 @@ const sortBy = ref(SortWorkspaceBy.Name);
 const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
-const searchFilterContent = ref('');
 const workspaceFilters = ref<WorkspacesPageFilters>({ owner: true, manager: true, contributor: true, reader: true });
 const querying = ref(true);
 
@@ -311,6 +338,10 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
+const search = ref<FileSearch | undefined>(undefined);
+let searchAborter: AbortController | undefined = undefined;
+const searchPattern = ref('');
+const searchInputValue = ref('');
 
 let eventCbId: string | null = null;
 
@@ -563,10 +594,9 @@ const showHiddenWorkspacesButton = computed(() => {
 });
 
 const filteredWorkspaces = computed(() => {
-  const filter = searchFilterContent.value.toLocaleLowerCase();
   return Array.from(workspaceList.value)
     .filter((workspace) => {
-      if (!workspace.name.toLocaleLowerCase().includes(filter) || isWorkspaceFiltered(workspace.selfRole)) {
+      if (isWorkspaceFiltered(workspace.selfRole)) {
         return false;
       }
 
@@ -771,6 +801,48 @@ async function onMenuUpdate(menu: WorkspaceMenu): Promise<void> {
     menu = WorkspaceMenu.All;
   }
   await navigateTo(Routes.Workspaces, { query: { workspaceMenu: menu } });
+}
+
+function onSearchValueChange(pattern: string): void {
+  searchInputValue.value = pattern;
+  startSearch(pattern);
+}
+
+async function cancelSearch(): Promise<void> {
+  if (searchAborter) {
+    searchAborter.abort();
+  }
+  search.value = undefined;
+}
+
+async function startSearch(pattern: string): Promise<void> {
+  await cancelSearch();
+  if (pattern.length < 3) {
+    return;
+  }
+  search.value = {
+    results: [],
+    pattern: pattern,
+    active: true,
+  };
+  searchAborter = new AbortController();
+  for (const wkInfo of filteredWorkspaces.value) {
+    for await (const result of fileSearch(wkInfo.handle, '/', pattern, searchAborter.signal)) {
+      search.value.results.push(result);
+    }
+  }
+  if (search.value) {
+    search.value.active = false;
+  }
+  searchAborter = undefined;
+}
+
+async function onSearchResultClick(entry: SearchResult): Promise<void> {
+  searchPattern.value = '';
+  await cancelSearch();
+  navigateTo(Routes.Documents, {
+    query: { documentPath: entry.parent, selectFile: entry.stats.name, workspaceHandle: entry.workspaceHandle },
+  });
 }
 </script>
 

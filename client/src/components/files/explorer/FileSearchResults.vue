@@ -16,7 +16,7 @@
         </span>
       </ion-text>
       <ms-report-text
-        v-if="isLargeDisplay"
+        v-if="isLargeDisplay && !multipleWorkspaces"
         :theme="MsReportTheme.Info"
         class="results-header__info"
       >
@@ -72,7 +72,7 @@
         v-for="result in filteredResults"
         :key="result.stats.id"
         :search-item="result"
-        :workspace-name="workspaceName"
+        :disable-context-menu="multipleWorkspaces"
         @click="$emit('itemClick', $event)"
         @menu-click="(event, entry, onFinished) => $emit('menuItemClick', event, entry, onFinished)"
       />
@@ -101,7 +101,7 @@ import { detectFileContentType, FileContentType } from '@/common/fileTypes';
 import DocumentFilter from '@/components/files/explorer/DocumentFilter.vue';
 import FileSearchResultItem from '@/components/files/explorer/FileSearchResultItem.vue';
 import { DocumentFilters, DocumentFiltersIncludeAll, DocumentFiltersIncludeNone } from '@/components/files/types';
-import { EntryName, SearchResult } from '@/parsec';
+import { SearchResult } from '@/parsec';
 import { IonButton, IonIcon, IonList, IonListHeader, IonText } from '@ionic/vue';
 import { checkmark, text } from 'ionicons/icons';
 import { MsImage, MsReportText, MsReportTheme, MsSpinner, useWindowSize } from 'megashark-lib';
@@ -111,7 +111,7 @@ const props = defineProps<{
   pattern: string;
   searchResults: Array<SearchResult>;
   active: boolean;
-  workspaceName: EntryName;
+  multipleWorkspaces: boolean;
 }>();
 
 defineEmits<{

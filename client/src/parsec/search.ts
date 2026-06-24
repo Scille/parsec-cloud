@@ -2,10 +2,13 @@
 
 import { statFolderChildren } from '@/parsec/file';
 import { EntryName, EntryStat, FsPath, WorkspaceHandle } from '@/parsec/types';
+import { getWorkspaceName } from '@/parsec/workspace';
 import DOMPurify from 'dompurify';
 import * as FastFuzzy from 'fast-fuzzy';
 
 export interface SearchResult {
+  workspaceHandle: WorkspaceHandle;
+  workspaceName: EntryName;
   stats: EntryStat;
   parent: FsPath;
   titleMatch: boolean;
@@ -73,6 +76,8 @@ export async function* fileSearch(
     },
   ];
 
+  const wkName = await getWorkspaceName(workspaceHandle);
+
   while (stack.length) {
     if (signal.aborted) {
       return;
@@ -88,6 +93,8 @@ export async function* fileSearch(
 
       if (result.length) {
         yield {
+          workspaceHandle: workspaceHandle,
+          workspaceName: wkName,
           stats: entry,
           parent: path,
           titleMatch: true,
@@ -96,6 +103,8 @@ export async function* fileSearch(
         };
       } else if (highlightedParent) {
         yield {
+          workspaceHandle: workspaceHandle,
+          workspaceName: wkName,
           stats: entry,
           parent: path,
           titleMatch: false,
