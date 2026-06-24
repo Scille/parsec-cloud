@@ -71,7 +71,7 @@
         "@types/w3c-image-capture": "^1.0.11",
         "@typescript-eslint/parser": "^8.46.2",
         "@vitejs/plugin-basic-ssl": "^2.3.0",
-        "@vitejs/plugin-vue": "^6.0.4",
+        "@vitejs/plugin-vue": "^6.0.7",
         "@vue/test-utils": "^2.4.11",
         "adm-zip": "^0.5.17",
         "dotenv": "^17.4.2",
@@ -92,8 +92,8 @@
         "typescript-eslint": "^8.61.0",
         "unique-names-generator": "^4.7.1",
         "vite": "^8.1.0",
-        "vite-plugin-static-copy": "^4.1.0",
-        "vitest": "4.1.0",
+        "vite-plugin-static-copy": "^4.1.1",
+        "vitest": "4.1.8",
         "vue-eslint-parser": "^10.4.1",
         "vue-tsc": "^3.3.5"
     }
