@@ -146,7 +146,12 @@ export class FileOperationManager {
     return new PreparedImport(this, data);
   }
 
-  async import(workspaceHandle: WorkspaceHandle, files: Array<File>, destination: FsPath, dupPolicy?: DuplicatePolicy): Promise<boolean> {
+  async importFiles(
+    workspaceHandle: WorkspaceHandle,
+    files: Array<File>,
+    destination: FsPath,
+    dupPolicy?: DuplicatePolicy,
+  ): Promise<boolean> {
     const workspaceResult = await getWorkspaceInfo(workspaceHandle);
     if (!workspaceResult.ok) {
       return false;
