@@ -35,6 +35,82 @@ fn round_trip() {
 }
 
 #[platform::test]
+fn decrypt_for_self_key_non_contributory() {
+    // `PrivateKey::encrypt_for_self` is based on libsodium's `sealed_box`, which itself generates the symmetric
+    // encryption key through a X25519 Diffie-Hellman between the recipient's key and an ephemeral key.
+    //
+    // Format of the sealed box is:
+    //
+    //     ephemeral_pk ‖ box(message, recipient_pk, ephemeral_sk, nonce=blake2b(ephemeral_pk ‖ recipient_pk))
+    //
+    // Now if the ephemeral public key is a small-order point, then the Diffie-Hellman shared secret
+    // ends up being all-zeros regardless of the recipient's private key.
+    //
+    // In practice this means an attacker could encrypt a message that appears secure to the recipient
+    // but instead can de decrypted by anyone.
+    //
+    // So to avoid this, libsodium always ensures during decryption that each key has a "contributory"
+    // behavior (aka that each party contributed a public value which increased the security of the
+    // resulting shared secret).
+
+    const PLAINTEXT: &[u8] = b"all your base are belong to us";
+
+    fn sealed_box_crafter(
+        recipient_sk: &crypto_box::SecretKey,
+        recipient_pk: &[u8],
+        ephemeral_pk: &crypto_box::PublicKey,
+    ) -> Vec<u8> {
+        let mut out = Vec::with_capacity(48 + PLAINTEXT.len());
+        out.extend_from_slice(ephemeral_pk.as_bytes());
+
+        use blake2::digest::{Update, VariableOutput};
+        let mut hasher = blake2::Blake2bVar::new(24).unwrap();
+        hasher.update(ephemeral_pk.as_bytes());
+        hasher.update(recipient_pk);
+        let nonce_bytes = hasher.finalize_boxed();
+        let nonce = crypto_box::aead::generic_array::GenericArray::from_slice(&nonce_bytes);
+
+        use crypto_box::aead::Aead;
+        let salsabox = crypto_box::SalsaBox::new(ephemeral_pk, recipient_sk);
+        let encrypted = salsabox.encrypt(nonce, PLAINTEXT.as_ref()).unwrap();
+        out.extend_from_slice(&encrypted);
+
+        out
+    }
+
+    let alice_sk = PrivateKey::generate();
+
+    // Sanity check to ensure `sealed_box_crafter` correctly implements sealed box
+    {
+        let strong_ephemeral_sk = crypto_box::SecretKey::generate(&mut rand::rngs::OsRng);
+        let strong_ciphered = sealed_box_crafter(
+            &crypto_box::SecretKey::from_bytes(*alice_sk.to_bytes()),
+            alice_sk.public_key().as_ref(),
+            &strong_ephemeral_sk.public_key(),
+        );
+        assert_matches!(
+            alice_sk.decrypt_from_self(&strong_ciphered),
+            Ok(msg)
+            if msg == PLAINTEXT
+        );
+    }
+
+    // Actual test: ensure each weak-point cannot be used as ephemeral key
+    for small_order_ed_point in curve25519_dalek::constants::EIGHT_TORSION {
+        let weak_pk = crypto_box::PublicKey::from(small_order_ed_point.to_montgomery());
+
+        let attacker_sk = crypto_box::SecretKey::generate(&mut rand::rngs::OsRng);
+        let weak_ciphered =
+            sealed_box_crafter(&attacker_sk, alice_sk.public_key().as_ref(), &weak_pk);
+
+        assert_matches!(
+            alice_sk.decrypt_from_self(&weak_ciphered),
+            Err(CryptoError::Decryption),
+        );
+    }
+}
+
+#[platform::test]
 fn generate_shared_secret_key_ok() {
     let privkey1 = PrivateKey::from(hex!(
         "7d406ac1e4df6c16d656290350499345432e8f75260c2809302ba8c4500548c2"
