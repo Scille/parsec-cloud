@@ -44,9 +44,9 @@
               </ion-text>
               <ion-text
                 class="subtitles-sm"
-                v-if="atDateTime"
+                v-if="contentInfo.timestamp"
               >
-                {{ $msTranslate(I18n.formatDate(atDateTime)) }}
+                {{ $msTranslate(I18n.formatDate(contentInfo.timestamp)) }}
               </ion-text>
             </div>
             <div
@@ -140,7 +140,7 @@
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
                 :disabled="pathOpener.currentlyOpening.value"
-                v-if="!atDateTime && readOnly && isCryptpadEnabledForDocumentType(contentInfo.contentType) && !isReader"
+                v-if="!contentInfo.timestamp && readOnly && isCryptpadEnabledForDocumentType(contentInfo.contentType) && !isReader"
               >
                 <ion-icon
                   :icon="create"
@@ -164,7 +164,7 @@
                 class="file-handler-topbar-buttons__item"
                 id="file-handler-open-with-system"
                 @click="openWithSystem(contentInfo.path)"
-                v-show="isDesktop() && !atDateTime"
+                v-show="isDesktop() && !contentInfo.timestamp"
                 :disabled="pathOpener.currentlyOpening.value"
               >
                 <ion-icon
@@ -196,10 +196,9 @@
           <!-- file-handler sub-component -->
           <component
             ref="handlerRef"
-            v-if="detectedFileType"
+            v-if="contentInfo"
             :is="handlerComponent"
             :content-info="contentInfo"
-            :file-info="detectedFileType"
             @file-loaded="pathOpener.pathOpened()"
             @file-error="pathOpener.pathOpened()"
             v-on="isComponentEditor() ? { onSaveStateChange: onSaveStateChange } : {}"
@@ -212,15 +211,12 @@
 </template>
 
 <script setup lang="ts">
-import { getFileIcon } from '@/common/file';
+import { getFileIcon, getFileStats } from '@/common/file';
 import { DetectedFileType } from '@/common/fileTypes';
 import { copyPathLinkToClipboard } from '@/components/files';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import {
   ClientInfo,
-  closeFile,
-  DEFAULT_READ_SIZE,
-  EntryName,
   entryStat,
   EntryStatFile,
   FsPath,
@@ -230,12 +226,7 @@ import {
   isDesktop,
   isMobile,
   isWeb,
-  openFile,
   Path,
-  readFile,
-  WorkspaceHandle,
-  WorkspaceHistory,
-  WorkspaceHistoryEntryStatFile,
   WorkspaceRole,
 } from '@/parsec';
 import {
@@ -300,9 +291,7 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 const fileOperationManager: Ref<FileOperationManager> = inject(FileOperationManagerKey)!;
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const contentInfo: Ref<FileContentInfo | undefined> = ref(undefined);
-const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
-const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 const { isHeaderVisible, toggleHeader: toggleMainHeader, showHeader, hideHeader } = useHeaderControl();
 const { isVisible: isSidebarMenuVisible, hide: hideSidebarMenu, show: showSidebarMenu } = useSidebarMenu();
 const handlerComponent: Ref<typeof FileEditor | typeof FileViewer | null> = shallowRef(null);
@@ -326,7 +315,6 @@ const cancelRouteWatch = watchRoute(async () => {
   }
 
   const query = getCurrentRouteQuery();
-
   const timestamp = Number.isNaN(Number(query.timestamp)) ? undefined : Number(query.timestamp);
   const fileHandlerMode = getFileHandlerMode();
 
@@ -334,7 +322,8 @@ const cancelRouteWatch = watchRoute(async () => {
   if (
     contentInfo.value &&
     contentInfo.value.path === getDocumentPath() &&
-    atDateTime.value?.toMillis() === timestamp &&
+    contentInfo.value.workspaceHandle === getWorkspaceHandle() &&
+    contentInfo.value.timestamp?.toMillis() === timestamp &&
     fileHandlerMode === handlerMode.value &&
     Boolean(query.readOnly) === readOnly.value
   ) {
@@ -367,121 +356,12 @@ function isComponentEditor(): boolean {
   return handlerComponent.value === FileEditor;
 }
 
-async function _getFileInfoAt(
-  workspaceHandle: WorkspaceHandle,
-  path: FsPath,
-  at: DateTime,
-  fileInfo: DetectedFileType,
-  fileName: EntryName,
-): Promise<FileContentInfo | undefined> {
-  const infoResult = await getWorkspaceInfo(workspaceHandle);
-  if (!infoResult.ok) {
-    return;
-  }
-  const history = new WorkspaceHistory(infoResult.value.id);
-  try {
-    await history.start(at);
-    const statsResult = await history.entryStat(path);
-
-    if (!statsResult.ok || !statsResult.value.isFile()) {
-      return;
-    }
-    const openResult = await history.openFile(path);
-    if (!openResult.ok) {
-      return;
-    }
-    const info: FileContentInfo = {
-      data: new Uint8Array(Number((statsResult.value as WorkspaceHistoryEntryStatFile).size)),
-      extension: fileInfo.extension,
-      contentType: fileInfo.type,
-      fileName: fileName,
-      path: path,
-      fileId: statsResult.value.id,
-    };
-    const fd = openResult.value;
-    try {
-      let loop = true;
-      let offset = 0;
-      while (loop) {
-        const readResult = await history.readFile(openResult.value, offset, DEFAULT_READ_SIZE);
-        if (!readResult.ok) {
-          throw Error(JSON.stringify(readResult.error));
-        }
-        const buffer = new Uint8Array(readResult.value);
-        info.data.set(buffer, offset);
-        if (readResult.value.byteLength < DEFAULT_READ_SIZE) {
-          loop = false;
-        }
-        offset += readResult.value.byteLength;
-      }
-      return info;
-    } catch (e: any) {
-      window.electronAPI.log('error', `Can't get file content: ${e.toString()}`);
-    } finally {
-      await history.closeFile(fd);
-    }
-  } catch (e: any) {
-    window.electronAPI.log('error', `Can't get file content: ${e.toString()}`);
-  } finally {
-    await history.stop();
-  }
-}
-
-async function _getFileInfo(
-  workspaceHandle: WorkspaceHandle,
-  path: FsPath,
-  fileInfo: DetectedFileType,
-  fileName: EntryName,
-): Promise<FileContentInfo | undefined> {
-  const statsResult = await entryStat(workspaceHandle, path);
-  if (!statsResult.ok || !statsResult.value.isFile()) {
-    return;
-  }
-
-  const openResult = await openFile(workspaceHandle, path, { read: true });
-  if (!openResult.ok) {
-    return;
-  }
-  const info: FileContentInfo = {
-    data: new Uint8Array(Number((statsResult.value as EntryStatFile).size)),
-    extension: fileInfo.extension,
-    contentType: fileInfo.type,
-    fileName: fileName,
-    path: path,
-    fileId: statsResult.value.id,
-  };
-
-  const fd = openResult.value;
-  try {
-    let loop = true;
-    let offset = 0;
-    while (loop) {
-      const readResult = await readFile(workspaceHandle, openResult.value, offset, DEFAULT_READ_SIZE);
-      if (!readResult.ok) {
-        throw Error(JSON.stringify(readResult.error));
-      }
-      const buffer = new Uint8Array(readResult.value);
-      info.data.set(buffer, offset);
-      if (readResult.value.byteLength < DEFAULT_READ_SIZE) {
-        loop = false;
-      }
-      offset += readResult.value.byteLength;
-    }
-    return info;
-  } catch (e: any) {
-    window.electronAPI.log('error', `Can't get file content: ${e.toString()}`);
-  } finally {
-    await closeFile(workspaceHandle, fd);
-  }
-}
-
 async function loadFile(): Promise<boolean> {
   loaded.value = false;
   contentInfo.value = undefined;
-  detectedFileType.value = null;
-  atDateTime.value = undefined;
   handlerComponent.value = null;
   const workspaceHandle = getWorkspaceHandle();
+  let atTime: DateTime | undefined = undefined;
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
     return false;
@@ -498,7 +378,13 @@ async function loadFile(): Promise<boolean> {
 
   const timestamp = Number(getCurrentRouteQuery().timestamp);
   if (!Number.isNaN(timestamp)) {
-    atDateTime.value = DateTime.fromMillis(timestamp);
+    atTime = DateTime.fromMillis(timestamp);
+  }
+
+  const stats = await getFileStats(workspaceHandle, path, atTime);
+  if (!stats) {
+    window.electronAPI.log('error', 'Failed to get file stats');
+    return false;
   }
 
   const fileInfoSerialized = getCurrentRouteQuery().fileTypeInfo;
@@ -507,24 +393,21 @@ async function loadFile(): Promise<boolean> {
     return false;
   }
   const fileInfo: DetectedFileType = Base64.toObject(fileInfoSerialized) as DetectedFileType;
-  detectedFileType.value = fileInfo;
 
-  const info = timestamp
-    ? await _getFileInfoAt(workspaceHandle, path, DateTime.fromMillis(timestamp), fileInfo, fileName)
-    : await _getFileInfo(workspaceHandle, path, fileInfo, fileName);
-
-  if (!info) {
-    contentInfo.value = undefined;
-    handlerComponent.value = null;
-    detectedFileType.value = null;
-
+  if (!fileInfo) {
+    window.electronAPI.log('error', 'Failed to deserialize file type info');
     return false;
   }
 
-  contentInfo.value = info;
-  if (timestamp) {
-    atDateTime.value = DateTime.fromMillis(timestamp);
-  }
+  contentInfo.value = {
+    extension: fileInfo.extension,
+    contentType: fileInfo.type,
+    fileName: fileName,
+    path: path,
+    workspaceHandle: workspaceHandle,
+    timestamp: atTime,
+    size: stats.size,
+  };
 
   // Load the appropriate component after file content is ready
   loadComponent();
@@ -546,7 +429,7 @@ function loadComponent(): void {
       handlerComponent.value = null;
   }
   if (!handlerComponent.value) {
-    throw new Error(`No component for file with extension '${detectedFileType.value!.extension}'`);
+    throw new Error(`No component for file with extension '${contentInfo.value?.extension}'`);
   }
 }
 
@@ -821,8 +704,12 @@ async function openSmallDisplayActionMenu(): Promise<void> {
     expandToScroll: false,
     initialBreakpoint: 0.5,
     componentProps: {
-      canOpenWithSystem: !atDateTime.value && isDesktop(),
-      canEdit: !atDateTime.value && readOnly.value && isCryptpadEnabledForDocumentType(contentInfo.value.contentType) && !isReader.value,
+      canOpenWithSystem: !contentInfo.value.timestamp && isDesktop(),
+      canEdit:
+        !contentInfo.value.timestamp &&
+        readOnly.value &&
+        isCryptpadEnabledForDocumentType(contentInfo.value.contentType) &&
+        !isReader.value,
     },
   });
   await modal.present();

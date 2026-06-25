@@ -49,6 +49,7 @@ const config = {
     'src/views/about/ChangesModal.vue',
     'src/views/home/SummaryStep.vue',
     'src/services/performanceMonitor.ts',
+    'public/streaming-worker.js',
   ],
   // Exclude dependencies reported as unused
   ignoreDependencies: [
@@ -60,6 +61,8 @@ const config = {
     'electron-publish',
     // imported dynamically and only on Windows
     'regedit',
+    // commented most of the time, but can be useful in dev
+    '@vitejs/plugin-basic-ssl',
   ],
   ignoreBinaries: [
     // TODO: Investigate why is reported as unlisted binary in the CI

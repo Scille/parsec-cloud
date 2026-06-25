@@ -3156,6 +3156,9 @@
         "document": {
             "loadDocumentError": "Could not load this document."
         },
+        "image": {
+            "loadImageError": "Could not display the image."
+        },
         "text": {
             "loadDocumentError": "Could not load this document.",
             "loadingDocument": "Loading document..."

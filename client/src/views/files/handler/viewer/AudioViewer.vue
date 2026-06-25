@@ -3,25 +3,33 @@
 <template>
   <file-viewer-wrapper :error="error">
     <template #viewer>
-      <audio
-        v-if="src.length"
-        ref="audioElement"
-        :src="src"
-        @play="updateMediaData"
-        @playing="updateMediaData"
-        @canplay="updateMediaData"
-        @pause="updateMediaData"
-        @volumechange="updateMediaData"
-        @muted="updateMediaData"
-        @ended="updateMediaData"
-        @timeupdate="onTimeUpdate"
-        @error="onError"
-      />
-      <file-viewer-background
-        @click="togglePlayback"
-        :icon="musicalNotes"
-        v-show="!error && !loading"
-      />
+      <div class="audio-viewer">
+        <audio
+          v-if="src.length"
+          ref="audioElement"
+          :src="src"
+          @play="updateMediaData"
+          @playing="updateMediaData"
+          @canplay="updateMediaData"
+          @pause="updateMediaData"
+          @volumechange="updateMediaData"
+          @muted="updateMediaData"
+          @ended="updateMediaData"
+          @timeupdate="onTimeUpdate"
+          @error="onError"
+          @loadstart="loading = true"
+          @waiting="loading = true"
+        />
+        <ms-spinner
+          v-show="loading && !error"
+          class="audio-spinner"
+        />
+        <file-viewer-background
+          @click="togglePlayback"
+          :icon="musicalNotes"
+          v-show="!error && !loading"
+        />
+      </div>
     </template>
     <template #controls>
       <file-controls v-show="!loading">
@@ -49,7 +57,6 @@
 </template>
 
 <script setup lang="ts">
-import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 import {
   FileControls,
   FileControlsDropdown,
@@ -59,10 +66,12 @@ import {
   FileControlsVolume,
   FileViewerBackground,
 } from '@/components/files/handler/viewer';
+import { startHistoryAt, stopHistory } from '@/parsec/history';
+import { getStreamUrl } from '@/services/viewers';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/files/handler/viewer/utils';
 import { cog, infinite, musicalNotes, timer } from 'ionicons/icons';
-import { SliderState } from 'megashark-lib';
+import { MsSpinner, SliderState } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -127,15 +136,21 @@ const dropdownItems = ref<FileControlsDropdownItemContent[]>([
   },
 ]);
 
+let historyHandle: number | undefined;
+
 onMounted(async () => {
-  loading.value = true;
-  const mimeType = await getMimeTypeFromBuffer(props.contentInfo.data);
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data.buffer as ArrayBuffer], { type: mimeType }));
+  if (props.contentInfo.timestamp) {
+    historyHandle = await startHistoryAt(props.contentInfo.workspaceHandle, props.contentInfo.timestamp);
+  }
+  src.value = getStreamUrl(props.contentInfo.workspaceHandle, props.contentInfo.path, props.contentInfo.size, historyHandle);
 });
 
-onUnmounted(() => {
+onUnmounted(async () => {
   cancelFluxProgressWatch();
   cancelVolumeWatch();
+  if (historyHandle !== undefined) {
+    await stopHistory(historyHandle);
+  }
 });
 
 async function onError(): Promise<void> {
@@ -183,4 +198,21 @@ function updateMediaData(event: Event): void {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.audio-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.audio-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+</style>

@@ -3,24 +3,22 @@
 <template>
   <component
     :is="viewerComponent"
-    :content-info="contentInfoRef"
+    :content-info="contentInfo"
   />
 </template>
 
 <script setup lang="ts">
-import { DetectedFileType, FileContentType } from '@/common/fileTypes';
+import { FileContentType } from '@/common/fileTypes';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { AudioViewer, ImageViewer, PdfViewer, VideoViewer } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
-import { inject, onMounted, onUnmounted, ref, Ref, shallowRef, type Component } from 'vue';
+import { inject, onMounted, onUnmounted, Ref, shallowRef, type Component } from 'vue';
 
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const viewerComponent: Ref<Component | null> = shallowRef(null);
-const contentInfoRef: Ref<FileContentInfo | undefined> = ref(undefined);
 
-const { contentInfo, fileInfo } = defineProps<{
+const { contentInfo } = defineProps<{
   contentInfo: FileContentInfo;
-  fileInfo: DetectedFileType;
 }>();
 
 const emits = defineEmits<{
@@ -29,29 +27,25 @@ const emits = defineEmits<{
 }>();
 
 onMounted(async () => {
-  await onFileLoaded(contentInfo, fileInfo);
+  await loadFile();
 });
 
 onUnmounted(() => {
-  contentInfoRef.value = undefined;
   viewerComponent.value = null;
 });
 
-async function onFileLoaded(contentInfo: FileContentInfo, fileInfo: DetectedFileType): Promise<void> {
-  contentInfoRef.value = contentInfo;
-
-  const component = await getComponent(fileInfo);
+async function loadFile(): Promise<void> {
+  const component = await getComponent();
   if (!component) {
-    emitError(`No component for file with extension '${fileInfo.extension}'`);
+    emitError(`No component for file with extension '${contentInfo.extension}'`);
     return;
   }
-
   viewerComponent.value = component;
   emits('fileLoaded');
 }
 
-async function getComponent(fileInfo: DetectedFileType): Promise<Component | undefined> {
-  switch (fileInfo.type) {
+async function getComponent(): Promise<Component | undefined> {
+  switch (contentInfo.contentType) {
     case FileContentType.Image:
       return ImageViewer;
     case FileContentType.Video:

@@ -1,15 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { FileContentType } from '@/common/fileTypes';
-import { EntryName, FsPath } from '@/parsec';
+import { EntryName, FsPath, WorkspaceHandle } from '@/parsec';
+import { DateTime } from 'luxon';
 
 export interface FileContentInfo {
-  data: Uint8Array;
   extension: string;
   contentType: FileContentType;
   fileName: EntryName;
   path: FsPath;
-  fileId: string;
+  workspaceHandle: WorkspaceHandle;
+  timestamp?: DateTime;
+  size: number;
 }
 
 export const PlaybackSpeeds = [0.25, 0.5, 1, 1.5, 2];

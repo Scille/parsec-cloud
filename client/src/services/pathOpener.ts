@@ -37,8 +37,6 @@ interface OpenPathOptions {
 
 const ENABLED_FILE_VIEWERS = [FileContentType.Audio, FileContentType.Image, FileContentType.PdfDocument, FileContentType.Video];
 
-const OPEN_FILE_SIZE_LIMIT = 15_000_000;
-
 interface PathOpener {
   openPath: (workspaceHandle: WorkspaceHandle, path: FsPath, options: OpenPathOptions) => Promise<void>;
   showInExplorer: (workspaceHandle: WorkspaceHandle, path: FsPath) => Promise<void>;
@@ -259,23 +257,6 @@ export default function useFileOpener(): PathOpener {
             title: isWeb() ? 'FoldersPage.open.noVisibleOnWebTitle' : undefined,
             message: isWeb() ? 'FoldersPage.open.noVisibleOnWeb' : 'FoldersPage.open.unhandledFileType',
             level: isWeb() ? InformationLevel.Info : InformationLevel.Error,
-          }),
-          PresentationMode.Modal,
-        );
-      }
-      pathOpened();
-      return;
-    }
-    if ((entry as any).size > OPEN_FILE_SIZE_LIMIT) {
-      // Too big to open, display try with the system if allowed/available, otherwise display a message
-      if (isDesktop() && !options.disallowSystem) {
-        await _openWithSystem(workspaceHandle, entry);
-      } else {
-        await informationManager.value.present(
-          new Information({
-            title: 'fileViewers.errors.titles.fileTooBig',
-            message: 'fileViewers.errors.informationPreviewDownload',
-            level: InformationLevel.Warning,
           }),
           PresentationMode.Modal,
         );

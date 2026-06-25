@@ -145,8 +145,8 @@ msTest.describe(() => {
     ]);
 
     await folderList.locator('.file-list-item').nth(1).dblclick();
-    await expect(documents).toShowToast('Failed to open the file', 'Error');
-    await expect(documents).toBeWorkspaceHistoryPage();
+    await expect(documents).toBeViewerPage();
+    await expect(documents.locator('.image-viewer-container').locator('.image-error')).toHaveText('Could not display the image.');
   });
 
   msTest('Test editor in history', async ({ parsecEditics }, testInfo: TestInfo) => {

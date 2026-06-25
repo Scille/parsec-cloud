@@ -351,6 +351,7 @@ msTest.describe(() => {
     const volumeSlider = bottomBar.locator('.slider').nth(1);
 
     await expect(buttons).toHaveCount(5);
+    await documents.waitForTimeout(1000);
 
     const readyState = await video.evaluate((videoEl) => {
       return (videoEl as HTMLMediaElement).readyState;
