@@ -109,6 +109,7 @@ pub struct ServerConfig {
     pub openbao: Option<OpenBaoConfig>,
     pub cryptpad: Option<CryptPadConfig>,
     pub advisory_device_file_protection: Vec<AdvisoryDeviceFileProtection>,
+    pub server_version: String,
 }
 
 pub async fn get_server_config(
@@ -121,7 +122,9 @@ pub async fn get_server_config(
         Rep, Req,
     };
 
-    match cmds.send(Req).await? {
+    let (rep, server_version) = cmds.send_verbose(Req).await?;
+
+    match  rep{
         Rep::Ok {
             account,
             organization_bootstrap,
@@ -175,6 +178,8 @@ pub async fn get_server_config(
                     }
                 ),
             },
+            server_version
+
         }),
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())

@@ -80,16 +80,43 @@ impl AnonymousServerCmds {
         // Split non-generic code out of `send` to limit the amount of code generated
         // by monomorphization
         let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
-        let response_body = self.internal_send(api_version, request_body).await?;
+        let (response_body, _) = self.internal_send(api_version, request_body).await?;
 
         Ok(T::api_load_response(&response_body)?)
     }
 
+    /// Returns response, server version
+    pub async fn send_verbose<T>(&self, request: T) -> ConnectionResult<(<T>::Response, String)>
+    where
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
+    {
+        #[cfg(feature = "test-with-testbed")]
+        let request = {
+            match self.send_hook.high_level_send(request).await {
+                crate::testbed::HighLevelSendResult::Resolved(rep) => {
+                    return Ok((rep?, "testbed".to_string()))
+                }
+                crate::testbed::HighLevelSendResult::PassToLowLevel(req) => req,
+            }
+        };
+
+        let request_body = request.api_dump().expect("Unexpected serialization error");
+
+        // Split non-generic code out of `send` to limit the amount of code generated
+        // by monomorphization
+        let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
+        let (response_body, version) = self.internal_send(api_version, request_body).await?;
+
+        let rep = T::api_load_response(&response_body)?;
+        Ok((rep, version))
+    }
+
+    /// Returns (content, Version)
     async fn internal_send(
         &self,
         api_version: &ApiVersion,
         request_body: Vec<u8>,
-    ) -> Result<Bytes, ConnectionError> {
+    ) -> Result<(Bytes, String), ConnectionError> {
         let api_version_header_value = HeaderValue::from_str(&api_version.to_string())
             .expect("api version must contains valid char");
         let request_builder = self.client.post(self.url.clone());
@@ -101,10 +128,16 @@ impl AnonymousServerCmds {
         #[cfg(not(feature = "test-with-testbed"))]
         let resp = req.send().await?;
 
+        let server_version = resp
+            .headers()
+            .get("Server")
+            .map_or("unknown", |v| v.to_str().unwrap_or("invalid"))
+            .to_string();
+
         match resp.status().as_u16() {
             200 => {
                 let response_body = resp.bytes().await?;
-                Ok(response_body)
+                Ok((response_body, server_version))
             }
 
             // HTTP codes used by Parsec
