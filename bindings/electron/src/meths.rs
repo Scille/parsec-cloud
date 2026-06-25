@@ -3257,12 +3257,17 @@ fn struct_server_config_js_to_rs<'a>(
             v
         }
     };
+    let server_version = {
+        let js_val: Handle<JsString> = obj.get(cx, "serverVersion")?;
+        js_val.value(cx)
+    };
     Ok(libparsec::ServerConfig {
         account,
         cryptpad,
         organization_bootstrap,
         openbao,
         advisory_device_file_protection,
+        server_version,
     })
 }
 
@@ -3305,6 +3310,8 @@ fn struct_server_config_rs_to_js<'a>(
         "advisoryDeviceFileProtection",
         js_advisory_device_file_protection,
     )?;
+    let js_server_version = JsString::try_new(cx, rs_obj.server_version).or_throw(cx)?;
+    js_obj.set(cx, "serverVersion", js_server_version)?;
     Ok(js_obj)
 }
 
