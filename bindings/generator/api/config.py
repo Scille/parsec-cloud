@@ -122,6 +122,7 @@ class ServerConfig(Structure):
     organization_bootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | None
     advisory_device_file_protection: list[AdvisoryDeviceFileProtection]
+    server_version: str
 
 
 class GetServerConfigError(ErrorVariant):
