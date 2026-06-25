@@ -482,10 +482,12 @@ pub async fn update_device_change_authentication(
     let current_auth = current_auth
         .convert_with_side_effects()
         .await
+        .inspect_err(|e| log::error!("Cannot convert current auth: {e}"))
         .map_err(UpdateDeviceError::Internal)?;
     let new_auth = new_auth
         .convert_with_side_effects()
         .await
+        .inspect_err(|e| log::error!("Cannot convert new auth: {e}"))
         .map_err(UpdateDeviceError::Internal)?;
 
     let key_file = &current_auth.key_file;
@@ -497,6 +499,7 @@ pub async fn update_device_change_authentication(
         key_file,
     )
     .await
+    .inspect_err(|e| log::error!("Failed to update authentication: {e}"))
 }
 
 pub async fn update_device_overwrite_server_addr(
