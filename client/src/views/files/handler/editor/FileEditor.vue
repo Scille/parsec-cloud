@@ -1,6 +1,12 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
+  <!--
+  Cryptpad editor is going to to be loaded in this Iframe.
+  After that we will communicate back and forth with it through
+  messages to pass it the document to open, then to receive the
+  updated document every time Cryptpad decides we should save it.
+  -->
   <iframe
     class="file-editor"
     ref="editorFrame"
@@ -69,10 +75,10 @@ import { DetectedFileType } from '@/common/fileTypes';
 import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
-  CryptpadEditors,
+  CryptpadEditor,
   CryptpadError,
-  CryptpadErrorCodes,
-  CryptpadOpenModes,
+  CryptpadErrorCode,
+  CryptpadOpenMode,
   CryptpadSession,
   getCryptpadEditor,
   openDocument,
@@ -80,7 +86,7 @@ import {
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { longLocaleCodeToShort } from '@/services/translation';
-import { EditorButtonAction, EditorErrorMessage, EditorErrorTitle, EditorIssueStatus, SaveState } from '@/views/files/handler/editor';
+import { EditorButtonAction, EditorErrorTitle, EditorIssueStatus, SaveState } from '@/views/files/handler/editor';
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
 import { FileHandlerMode } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
@@ -90,7 +96,7 @@ import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megas
 import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef } from 'vue';
 
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
-const documentType = ref<CryptpadEditors>(CryptpadEditors.Unsupported);
+const documentType = ref<CryptpadEditor>(CryptpadEditor.Unsupported);
 const error = ref('');
 const showErrorTips = ref(false);
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
@@ -122,7 +128,7 @@ const emits = defineEmits<{
 onMounted(async () => {
   documentType.value = getCryptpadEditor(fileInfo.type);
 
-  if (documentType.value === CryptpadEditors.Unsupported) {
+  if (documentType.value === CryptpadEditor.Unsupported) {
     error.value = EditorErrorTitle.UnsupportedFileType;
     await openIssueModal(EditorIssueStatus.UnsupportedFileType);
     return;
@@ -176,12 +182,12 @@ async function loadEditor(): Promise<void> {
       documentContent: contentInfo.data,
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
-      cryptpadEditor: documentType.value as CryptpadEditors,
+      cryptpadEditor: documentType.value as CryptpadEditor,
       key: crypto.randomUUID(),
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UNKNOWN_USER'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
       autosaveInterval: 10,
-      mode: readOnly ? CryptpadOpenModes.View : CryptpadOpenModes.Edit,
+      mode: readOnly ? CryptpadOpenMode.View : CryptpadOpenMode.Edit,
       locale: longLocaleCodeToShort(I18n.getLocale()),
     },
     {
@@ -263,18 +269,15 @@ async function loadEditor(): Promise<void> {
         if (err instanceof CryptpadError) {
           window.electronAPI.log('info', `Failed to load Cryptpad: ${err}`);
           switch (err.code) {
-            case CryptpadErrorCodes.InitFailed:
-              error.value = EditorErrorMessage.EditableOnlyOnSystem;
-              break;
-            case CryptpadErrorCodes.OpenFailed:
-            case CryptpadErrorCodes.OpenInvalidConfig:
+            case CryptpadErrorCode.OpenDocumentFailed:
+            case CryptpadErrorCode.OpenDocumentInvalidConfig:
               error.value = 'fileEditors.errors.titles.openFailed';
               break;
-            case CryptpadErrorCodes.FrameLoadFailed:
-            case CryptpadErrorCodes.FrameNotLoaded:
+            case CryptpadErrorCode.FrameLoadFailed:
+            case CryptpadErrorCode.FrameNotLoaded:
               error.value = 'fileEditors.errors.titles.frameLoadFailed';
               break;
-            case CryptpadErrorCodes.EventError:
+            case CryptpadErrorCode.EventError:
               if (err.details && err.details.toString() === 'ready-timeout') {
                 error.value = '';
                 await openTimeoutModal();
@@ -284,7 +287,7 @@ async function loadEditor(): Promise<void> {
                 window.electronAPI.log('error', `Unhandled event error: ${err.details}`);
               }
               break;
-            case CryptpadErrorCodes.NotAvailable:
+            case CryptpadErrorCode.NotAvailable:
               showErrorTips.value = false;
               error.value = 'fileEditors.errors.titles.cryptpadNotAvailable';
               break;
