@@ -37,11 +37,18 @@ pub async fn fetch_opaque_key(
         .header("x-vault-token", cmds.openbao_auth_token.clone())
         .send()
         .await
+        .inspect_err(|e| log::error!("Cannot access openbao server to fetch key: {e}"))
         .map_err(OpenBaoFetchOpaqueKeyError::NoServerResponse)?;
 
-    if !matches!(rep.status(), StatusCode::OK) {
+    let status_code = rep.status();
+    if status_code != StatusCode::OK {
+        log::error!("Received invalid status code: {status_code}");
+        if log::log_enabled!(log::Level::Debug) {
+            let body = rep.json::<serde_json::Value>().await;
+            log::debug!("Received invalid status code {status_code} with body: {body:?}")
+        }
         return Err(OpenBaoFetchOpaqueKeyError::BadServerResponse(
-            anyhow::anyhow!("Bad status code: {}", rep.status()),
+            anyhow::anyhow!("Bad status code: {status_code}"),
         ));
     }
 
@@ -110,11 +117,18 @@ pub async fn upload_opaque_key(
         }))
         .send()
         .await
+        .inspect_err(|e| log::error!("Cannot access openbao server to upload key: {e}"))
         .map_err(OpenBaoUploadOpaqueKeyError::NoServerResponse)?;
 
-    if !matches!(rep.status(), StatusCode::OK) {
+    let status_code = rep.status();
+    if status_code != StatusCode::OK {
+        log::error!("Received invalid status code: {status_code}");
+        if log::log_enabled!(log::Level::Debug) {
+            let body = rep.json::<serde_json::Value>().await;
+            log::debug!("Received invalid status code {status_code} with body: {body:?}")
+        }
         return Err(OpenBaoUploadOpaqueKeyError::BadServerResponse(
-            anyhow::anyhow!("Bad status code: {}", rep.status()),
+            anyhow::anyhow!("Bad status code: {status_code}"),
         ));
     }
 
