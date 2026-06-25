@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getServerConfig, isElectron, OpenBaoAuthConfigTag } from '@/parsec';
+import { getServerConfig, isElectron, OpenBaoAuthConfigTag, Result } from '@/parsec';
 import { getRouter } from '@/router';
 import axios, { AxiosInstance } from 'axios';
 
@@ -153,31 +153,43 @@ async function openBaoConnect(
   let resultPromise!: Promise<{ code: string; state: string }>;
   if (isElectron()) {
     resultPromise = new Promise<{ code: string; state: string }>((resolve, reject) => {
-      window.electronAPI.receive('parsec-sso-complete', async (code?: string, state?: string) => {
-        if (code && state) {
-          resolve({ code, state });
-        } else {
-          reject();
-        }
-      });
+      // Set a 5min timeout
+      const t = setTimeout(
+        () => {
+          reject({ error: 'timeout' });
+        },
+        5 * 60 * 1000,
+      );
+
+      window.electronAPI.receive(
+        'parsec-sso-complete',
+        async (result: Result<{ code: string; state: string }, { error: string; description?: string }>) => {
+          if (result.ok) {
+            resolve(result.value);
+          } else {
+            reject(result.error);
+          }
+          clearTimeout(t);
+        },
+      );
     });
   } else {
     const bc = new BroadcastChannel('openbao-oidc');
     resultPromise = new Promise<{ code: string; state: string }>((resolve, reject) => {
-      bc.onmessage = (event): void => {
-        // Set a 5min timeout
-        const t = setTimeout(
-          () => {
-            bc.close();
-            reject(new Error('timeout'));
-          },
-          5 * 60 * 1000,
-        );
+      // Set a 5min timeout
+      const t = setTimeout(
+        () => {
+          bc.close();
+          reject({ error: 'timeout' });
+        },
+        5 * 60 * 1000,
+      );
 
-        if (!event.data.code || !event.data.state) {
-          reject();
+      bc.onmessage = (event: MessageEvent<Result<{ code: string; state: string }, { error: string; description?: string }>>): void => {
+        if (!event.data.ok) {
+          reject({ error: event.data.error.error ?? 'unknown', description: event.data.error.description });
         } else {
-          resolve({ code: event.data.code, state: event.data.state });
+          resolve({ code: event.data.value.code, state: event.data.value.state });
         }
         clearTimeout(t);
         bc.close();
@@ -207,7 +219,8 @@ async function openBaoConnect(
     );
     return { ok: true, value: client };
   } catch (err: any) {
-    return { ok: false, error: { type: OpenBaoErrorType.InitError, detail: err.toString() } };
+    window.electronAPI.log('error', `Error when connecting to SSO: ${err.error} (${err.description})`);
+    return { ok: false, error: { type: OpenBaoErrorType.InitError, detail: err.error ?? err.toString() } };
   }
 }
 
