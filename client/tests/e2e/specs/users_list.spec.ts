@@ -77,7 +77,7 @@ for (const displaySize of ['small', 'large']) {
       if (displaySize === 'small') {
         await expect(item.locator('.user-mobile-text').locator('.user-mobile-text__name')).toHaveText(user.name);
         await expect(item.locator('.user-mobile-text').locator('.user-mobile-text__email')).toHaveText(user.email);
-        await expect(item.locator('.user-mobile-text').locator('.user-mobile-text__profile')).toHaveText(user.profile);
+        await expect(item.locator('.user-mobile-text').locator('.user-mobile-text-info__profile')).toHaveText(user.profile);
         await expect(item.locator('.user-profile')).toBeHidden();
         await expect(item.locator('.user-email')).toBeHidden();
         await expect(item.locator('.user-status')).toBeHidden();
@@ -98,7 +98,7 @@ for (const displaySize of ['small', 'large']) {
 
 msTest('Check user grid items', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
-  const usersGrid = usersPage.locator('.users-container-grid');
+  const usersGrid = usersPage.locator('.users-grid-container');
 
   for (const [index, user] of USERS.entries()) {
     const card = usersGrid.locator('.user-card-item').nth(index);
@@ -189,7 +189,7 @@ msTest('Revoke two users with selection', async ({ usersPage }) => {
 
 msTest('Selection in grid mode', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
-  const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(1);
+  const item = usersPage.locator('.users-grid-container').locator('.user-card-item').nth(1);
   await item.hover();
   await expect(item.locator('.ms-checkbox')).not.toBeChecked();
   // Selecting one user
@@ -286,7 +286,7 @@ msTest('Maintain selection between modes', async ({ usersPage }) => {
   for (const [index, user] of USERS.entries()) {
     // Revoked users do not have a checkbox
     if (user.active && !user.currentUser) {
-      const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(index);
+      const item = usersPage.locator('.users-grid-container').locator('.user-card-item').nth(index);
       await item.hover();
       if (index === 1 || index === 2) {
         await expect(item.locator('.ms-checkbox')).toBeChecked();
@@ -296,11 +296,11 @@ msTest('Maintain selection between modes', async ({ usersPage }) => {
     }
   }
   // Uncheck one
-  await usersPage.locator('.users-container-grid').locator('.user-card-item').nth(2).locator('.ms-checkbox').uncheck();
+  await usersPage.locator('.users-grid-container').locator('.user-card-item').nth(2).locator('.ms-checkbox').uncheck();
   await expect(actionBar.locator('.counter')).toHaveText('1 user selected', { useInnerText: true });
   for (const [index, user] of USERS.entries()) {
     if (user.active && !user.currentUser) {
-      const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(index);
+      const item = usersPage.locator('.users-grid-container').locator('.user-card-item').nth(index);
       await item.hover();
       if (index === 1) {
         await expect(item.locator('.ms-checkbox')).toBeChecked();
@@ -423,7 +423,7 @@ msTest('User sort popover default state', async ({ usersPage }) => {
 msTest('Sort users list with popover', async ({ usersPage }) => {
   const usersList = usersPage.locator('#users-page-user-list');
   const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
-  const headers = usersPage.locator('.user-list-header').locator('.user-list-header__label');
+  const headers = usersPage.locator('.user-list-header').locator('.list-header-label');
 
   await sortBy(sortButton, 'Name');
   await expect(sortButton).toHaveText('Name');
@@ -457,7 +457,7 @@ msTest('Sort users list with popover', async ({ usersPage }) => {
 msTest('Sort users list with header', async ({ usersPage }) => {
   const usersList = usersPage.locator('#users-page-user-list');
   const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
-  const headers = usersPage.locator('.user-list-header').locator('.user-list-header__label');
+  const headers = usersPage.locator('.user-list-header').locator('.list-header-label');
 
   await expect(headers).toHaveText(['', 'Name ', 'Profile ', 'Email ', 'Joined On ', 'Status', '']);
 
@@ -495,7 +495,7 @@ msTest('Search user list', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
   const usersList = usersPage.locator('#users-page-user-list');
   const items = usersList.getByRole('listitem');
-  const gridItems = usersPage.locator('.users-container-grid').locator('.user-card-item');
+  const gridItems = usersPage.locator('.users-grid-container').locator('.user-card-item');
 
   await expect(actionBar.locator('.counter')).toHaveText('3 users', { useInnerText: true });
   await expect(items).toHaveCount(3);
@@ -557,7 +557,7 @@ msTest('Search user list', async ({ usersPage }) => {
 msTest('Search user grid', async ({ usersPage }) => {
   const searchInput = usersPage.locator('#search-input-users').locator('ion-input');
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
-  const usersList = usersPage.locator('.users-container-grid');
+  const usersList = usersPage.locator('.users-grid-container');
   const items = usersList.locator('.user-card-item');
 
   await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
@@ -853,7 +853,7 @@ msTest('Copy email address to clipboard', async ({ usersPage }) => {
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item.hover();
   await setWriteClipboardPermission(usersPage.context(), true);
-  const copyButton = item.locator('.user-email__label');
+  const copyButton = item.locator('.label-email');
   await expect(copyButton).toBeVisible();
   await copyButton.click();
   await expect(usersPage).toShowToast('The email address has been copied to the clipboard.', 'Info');

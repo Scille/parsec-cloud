@@ -7,17 +7,17 @@
     :detail="false"
     :class="{
       selected: entry.isSelected,
-      'file-hovered': !entry.isSelected && isHovered,
+      'file-list-item--hovered': !entry.isSelected && isHovered,
       'is-folder': !entry.isFile(),
     }"
-    class="file-list-item history-file-list-item"
+    class="list-item file-list-item history-file-list-item"
     @click.stop="onSelectEntry(entry, !entry.isSelected)"
     @dblclick="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
     <div class="list-item-container">
-      <div class="file-selected">
+      <div class="list-item-column file-selected">
         <!-- eslint-disable vue/no-mutating-props -->
         <ms-checkbox
           v-model="entry.isSelected"
@@ -30,13 +30,13 @@
       </div>
 
       <!-- file name -->
-      <div class="file-name">
+      <div class="list-item-column file-name">
         <ms-image
           :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
           class="file-icon"
         />
         <ion-label
-          class="label-name cell"
+          class="list-item-label label-name cell"
           :class="{ selection: showCheckbox }"
           @click.stop="showCheckbox ? onSelectEntry(entry, !entry.isSelected) : $emit('click', $event, entry)"
         >
@@ -45,17 +45,17 @@
       </div>
 
       <!-- last update -->
-      <div class="file-last-update">
-        <ion-label class="label-last-update cell">
+      <div class="list-item-column file-last-update">
+        <ion-label class="list-item-label label-last-update cell">
           {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
         </ion-label>
       </div>
 
       <!-- file size -->
-      <div class="file-size">
+      <div class="list-item-column file-size">
         <ion-label
           v-if="entry.isFile()"
-          class="label-size cell"
+          class="list-item-label label-size cell"
         >
           {{ $msTranslate(formatFileSize((entry as WorkspaceHistoryFileModel).size)) }}
         </ion-label>
@@ -112,8 +112,13 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
+.history-file-list-item {
+  .list-item-container:has(.label-name:not(.selection):hover) .ms-checkbox {
+    outline: none !important;
+  }
+}
+
 .file-selected {
-  flex-shrink: 0;
   overflow: visible;
   width: 2.5rem;
 
@@ -123,10 +128,6 @@ onMounted(async () => {
 }
 
 .file-name {
-  position: relative;
-  display: flex;
-  gap: 1rem;
-
   .file-icon {
     width: 2rem;
     height: 2rem;

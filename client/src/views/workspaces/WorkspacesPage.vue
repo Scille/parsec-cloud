@@ -58,7 +58,7 @@
       </div>
 
       <!-- workspaces -->
-      <div class="workspaces-container scroll">
+      <div class="main-container workspaces-container scroll">
         <div
           class="mobile-filters"
           v-if="isSmallDisplay"
@@ -178,7 +178,10 @@
         </div>
 
         <div v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.List">
-          <ion-list class="workspaces-container-list list">
+          <ion-list
+            class="list-container workspaces-container-list"
+            id="workspaces-page-workspace-list"
+          >
             <workspace-list-item
               v-for="workspace in filteredWorkspaces"
               :key="workspace.id"
@@ -196,7 +199,7 @@
         </div>
         <div
           v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.Grid"
-          class="workspaces-container-grid list"
+          class="workspaces-container-grid"
         >
           <workspace-card
             v-for="workspace in filteredWorkspaces"

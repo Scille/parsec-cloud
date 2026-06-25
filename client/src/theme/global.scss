@@ -59,17 +59,6 @@ svg {
     padding: 0;
     margin-bottom: 0;
   }
-
-  .list,
-  .users-container-grid,
-  .folders-container-grid,
-  .invitation-container-grid {
-    padding-top: 2rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding-top: 0;
-    }
-  }
 }
 
 /* ----- item counter ------ */
@@ -104,7 +93,7 @@ svg {
 
 // add specific style for drop-zone on folders
 .drop-zone .list,
-.drop-zone .folders-container-grid {
+.drop-zone .files-grid-container {
   background: transparent;
   position: relative;
   z-index: 3;
@@ -121,7 +110,7 @@ svg {
   }
 }
 
-.drop-zone .folders-container-grid .drop-active {
+.drop-zone .files-grid-container .drop-active {
   border-radius: var(--parsec-radius-12) !important;
   width: 100%;
 }
@@ -270,7 +259,7 @@ svg {
     background: var(--parsec-color-light-secondary-white);
   }
 
-  .folders-container-grid {
+  .files-grid-container {
     padding: 1.5rem;
   }
 }

@@ -131,7 +131,7 @@ msTest.describe(() => {
     const sorterPopoverButton = actionBar.locator('#select-popover-button');
     await expect(entries).toHaveCount(4);
 
-    const headerNameLabel = documents.locator('.folder-list-header__label').nth(1);
+    const headerNameLabel = documents.locator('.list-header-label').nth(1);
     await expect(headerNameLabel).toBeVisible();
     await expect(headerNameLabel).toHaveText('Name');
     await expect(sorterPopoverButton).toHaveText('Name');
@@ -147,7 +147,7 @@ msTest.describe(() => {
     await expect(entries.locator('.label-name')).toHaveText(['Dir_Folder', 'pdfDocument.pdf', 'image.png', 'audio.mp3']);
     await expect(entries.locator('.file-size')).toHaveText(['', '76.9 KB', '6.18 KB', '40.9 KB']);
 
-    const headerSizeLabel = documents.locator('.folder-list-header__label').nth(5);
+    const headerSizeLabel = documents.locator('.list-header-label').nth(5);
     await expect(headerSizeLabel).toBeVisible();
     await expect(headerSizeLabel).toHaveText('Size');
     await headerSizeLabel.click();
@@ -671,7 +671,7 @@ msTest('Documents page default state in a read only workspace', async ({ documen
   await expect(entries.locator('.file-creation-date')).toHaveText(TIME_MATCHER_ARRAY);
   await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
   // Useless click just to move the mouse
-  await documentsReadOnly.locator('.folder-list-header__label').nth(1).click();
+  await documentsReadOnly.locator('.list-header-label').nth(1).click();
   for (const checkbox of await entries.locator('.checkbox').all()) {
     await expect(checkbox).toBeHidden();
   }

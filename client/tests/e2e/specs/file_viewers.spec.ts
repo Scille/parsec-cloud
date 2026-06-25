@@ -505,7 +505,7 @@ msTest.describe(() => {
     await expect(header).toBeVisible();
 
     // Open first file and ensure it's loaded
-    await entries.nth(0).locator('.file-name .file-mobile-text .label-name').click();
+    await entries.nth(0).locator('.file-name .label-name').click();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('audio.mp3');
 
@@ -540,7 +540,7 @@ msTest.describe(() => {
     await expect(sidebar).toBeHidden();
 
     // Open second file
-    await entries.nth(1).locator('.file-name .file-mobile-text .label-name').click();
+    await entries.nth(1).locator('.file-name .label-name').click();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('image.png');
     await expect(documents).toBeViewerPage();
 
@@ -578,7 +578,7 @@ msTest.describe(() => {
     await expect(documents.locator('#connected-header .topbar')).toBeVisible();
 
     // Open file viewer
-    await entries.nth(0).locator('.file-name .file-mobile-text .label-name').click();
+    await entries.nth(0).locator('.file-name .label-name').click();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('audio.mp3');
 
@@ -603,7 +603,7 @@ msTest.describe(() => {
     await expect(documents.locator('.sidebar')).toBeHidden();
 
     // Open file viewer again
-    await entries.nth(1).locator('.file-name .file-mobile-text .label-name').click();
+    await entries.nth(1).locator('.file-name .label-name').click();
     await expect(documents).toBeViewerPage();
     await expect(documents.locator('.file-handler-topbar .file-handler-topbar__title')).toHaveText('image.png');
 

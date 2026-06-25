@@ -1,19 +1,19 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="list invitations-container-list">
+  <ion-list class="list list-container invitations-list-container">
     <ion-list-header
-      class="invitations-list-header"
+      class="invitations-list-header list-header"
       lines="full"
       v-if="isLargeDisplay"
     >
-      <ion-text class="invitations-list-header__label cell-title label-email">
+      <ion-text class="list-header-label cell-title label-email">
         {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.email') }}
       </ion-text>
-      <ion-text class="invitations-list-header__label cell-title label-sentOn">
+      <ion-text class="list-header-label cell-title label-sentOn">
         {{ $msTranslate('InvitationsPage.emailInvitation.listDisplayTitles.sentOn') }}
       </ion-text>
-      <ion-text class="invitations-list-header__label cell-title label-space" />
+      <ion-text class="list-header-label list-item-end cell-title label-space" />
     </ion-list-header>
     <invitation-item
       v-for="invitation in invitations"

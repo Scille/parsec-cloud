@@ -10,7 +10,7 @@
       />
       <span
         v-if="isCurrentUser"
-        class="body content-user__you"
+        class="body content-user--self"
       >
         {{ $msTranslate('UsersPage.currentUser') }}
       </span>
@@ -108,7 +108,7 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
   display: flex;
   gap: 0.25rem;
 
-  &__you {
+  &--self {
     color: var(--parsec-color-light-secondary-grey);
   }
 }

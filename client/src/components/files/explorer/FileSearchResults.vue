@@ -47,25 +47,26 @@
       <ms-spinner v-show="active" />
     </div>
 
-    <div
-      class="results-list"
+    <ion-list
+      class="list-container files-list-container results-list-container"
       v-show="hasResults"
+      id="search-page-file-list"
     >
       <ion-list-header
-        class="folder-list-header"
+        class="list-header files-list-header"
         lines="full"
         v-if="isLargeDisplay"
       >
-        <ion-text class="folder-list-header__label cell-title ion-text-nowrap header-label-name header-label-name-results">
-          <span class="header-label-name__text">{{ $msTranslate('FoldersPage.listDisplayTitles.name') }}</span>
+        <ion-text class="list-header-label cell-title ion-text-nowrap header-label-name">
+          <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.name') }}</span>
         </ion-text>
-        <ion-text class="folder-list-header__label cell-title ion-text-nowrap header-label-last-update">
-          <span class="header-label-last-update__text">{{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}</span>
+        <ion-text class="list-header-label cell-title ion-text-nowrap header-label-last-update">
+          <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}</span>
         </ion-text>
-        <ion-text class="folder-list-header__label cell-title ion-text-nowrap header-label-size">
-          <span class="header-label-size__text">{{ $msTranslate('FoldersPage.listDisplayTitles.size') }}</span>
+        <ion-text class="list-header-label cell-title ion-text-nowrap header-label-size">
+          <span class="label-text">{{ $msTranslate('FoldersPage.listDisplayTitles.size') }}</span>
         </ion-text>
-        <ion-text class="folder-list-header__label cell-title ion-text-nowrap header-label-space" />
+        <ion-text class="list-header-label list-item-end cell-title ion-text-nowrap header-label-space" />
       </ion-list-header>
       <file-search-result-item
         v-for="result in filteredResults"
@@ -75,7 +76,7 @@
         @click="$emit('itemClick', $event)"
         @menu-click="(event, entry, onFinished) => $emit('menuItemClick', event, entry, onFinished)"
       />
-    </div>
+    </ion-list>
     <div
       v-show="!hasResults"
       class="results-empty"
@@ -101,7 +102,7 @@ import DocumentFilter from '@/components/files/explorer/DocumentFilter.vue';
 import FileSearchResultItem from '@/components/files/explorer/FileSearchResultItem.vue';
 import { DocumentFilters, DocumentFiltersIncludeAll, DocumentFiltersIncludeNone } from '@/components/files/types';
 import { EntryName, SearchResult } from '@/parsec';
-import { IonButton, IonIcon, IonListHeader, IonText } from '@ionic/vue';
+import { IonButton, IonIcon, IonList, IonListHeader, IonText } from '@ionic/vue';
 import { checkmark, text } from 'ionicons/icons';
 import { MsImage, MsReportText, MsReportTheme, MsSpinner, useWindowSize } from 'megashark-lib';
 import { computed, ref } from 'vue';
@@ -202,6 +203,10 @@ const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
   }
 }
 
+#search-page-file-list {
+  padding: 0;
+}
+
 .results-header {
   display: flex;
   gap: 0.5rem;
@@ -290,11 +295,11 @@ const documentFilters = ref<DocumentFilters>(DocumentFiltersIncludeNone());
   }
 }
 
-.results-list {
+.results-list-container {
   flex-grow: 1;
   overflow: auto;
 
-  .folder-list-header {
+  .files-list-header {
     background: var(--parsec-color-light-secondary-white);
     backdrop-filter: none;
   }

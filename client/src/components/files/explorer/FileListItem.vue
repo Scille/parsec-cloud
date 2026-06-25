@@ -12,10 +12,10 @@
       button
       :lines="isLargeDisplay ? 'full' : 'none'"
       :detail="false"
-      class="file-list-item"
+      class="list-item file-list-item"
       :class="{
         selected: entry.isSelected,
-        'file-hovered': !entry.isSelected && (menuOpened || isHovered),
+        'file-list-item--hovered': !entry.isSelected && (menuOpened || isHovered),
         'file-list-item-mobile': isSmallDisplay,
       }"
       @dblclick="$emit('openItem', $event, entry)"
@@ -26,7 +26,7 @@
     >
       <div class="list-item-container file-list-item-container">
         <div
-          class="file-selected"
+          class="list-item-column file-selected"
           v-if="isLargeDisplay || entry.isSelected || showCheckbox"
         >
           <ms-checkbox
@@ -40,16 +40,39 @@
 
         <!-- file name -->
         <div
-          class="file-name"
+          class="list-item-column file-name"
           :class="{ 'file-mobile-content': isSmallDisplay }"
         >
           <ms-image
             :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
             class="file-icon"
           />
-          <div class="file-mobile-text">
+
+          <!-- large display view -->
+          <ion-text
+            v-if="isLargeDisplay"
+            class="list-item-label label-name cell"
+            :class="{ selection: showCheckbox }"
+            :title="entry.name"
+            @click="showCheckbox ? null : !($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
+            @dblclick.stop
+          >
+            {{ entry.name }}
+          </ion-text>
+
+          <ion-icon
+            class="cloud-overlay"
+            :class="syncStatus.class"
+            :icon="syncStatus.icon"
+          />
+
+          <!-- small display view -->
+          <div
+            v-if="isSmallDisplay"
+            class="file-mobile-text"
+          >
             <ion-text
-              class="label-name cell"
+              class="list-item-label label-name cell"
               :class="{ selection: showCheckbox }"
               :title="entry.name"
               @click="showCheckbox ? null : !($event.metaKey || $event.ctrlKey) && $emit('openItem', $event, entry)"
@@ -57,10 +80,7 @@
             >
               {{ entry.name }}
             </ion-text>
-            <ion-text
-              v-if="isSmallDisplay"
-              class="file-mobile-text__data body-sm"
-            >
+            <ion-text class="list-item-label label-data body-sm">
               <span class="data-date">{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
               <span v-if="entry.isFile()"> &bull; </span>
               <span
@@ -71,11 +91,7 @@
               </span>
             </ion-text>
           </div>
-          <ion-icon
-            class="cloud-overlay"
-            :class="syncStatus.class"
-            :icon="syncStatus.icon"
-          />
+
           <span
             v-if="entry.syncStatus === EntrySyncStatus.Uploading && entry.syncProgress"
             class="upload-progress button-small"
@@ -86,7 +102,7 @@
 
         <!-- updated by -->
         <div
-          class="file-updated-by"
+          class="list-item-column file-updated-by"
           v-if="entry.lastUpdater && isLargeDisplay && ownProfile !== UserProfile.Outsider"
         >
           <user-avatar-name
@@ -96,31 +112,31 @@
         </div>
 
         <!-- last update -->
-        <div class="file-last-update">
-          <ion-text class="label-last-update cell">
+        <div class="list-item-column file-last-update">
+          <ion-text class="list-item-label label-last-update cell">
             {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
           </ion-text>
         </div>
 
         <!-- creation date -->
-        <div class="file-creation-date">
-          <ion-text class="label-creation-date cell">
+        <div class="list-item-column file-creation-date">
+          <ion-text class="list-item-label label-creation-date cell">
             {{ $msTranslate(formatTimeSince(entry.created, '--', 'short')) }}
           </ion-text>
         </div>
 
         <!-- file size -->
-        <div class="file-size">
+        <div class="list-item-column file-size">
           <ion-text
             v-if="entry.isFile()"
-            class="label-size cell"
+            class="list-item-label label-size cell"
           >
             {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
           </ion-text>
         </div>
 
         <!-- options -->
-        <div class="file-options ion-item-child-clickable">
+        <div class="list-item-end file-options ion-item-child-clickable">
           <ion-button
             fill="clear"
             v-show="isHovered || menuOpened || isSmallDisplay"
@@ -198,4 +214,8 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.drop-zone-item {
+  height: fit-content;
+}
+</style>

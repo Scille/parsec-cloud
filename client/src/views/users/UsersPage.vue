@@ -62,7 +62,7 @@
         :options-disabled="users.selectableUsersCount() === 0"
       />
       <!-- users -->
-      <div class="users-container scroll">
+      <div class="main-container users-container scroll">
         <div
           v-show="users.totalUsersCount() === 0"
           class="no-active body-lg"
@@ -114,10 +114,7 @@
               @sort-update="onSortChange"
             />
           </div>
-          <div
-            v-else
-            class="users-container-grid"
-          >
+          <div v-else>
             <user-grid-display
               :users="users"
               @menu-click="openUserContextMenu"
@@ -797,12 +794,5 @@ const headerWatchCancel = watch([isSmallDisplay, selectionEnabled], () => {
 
 .users-container > div {
   height: 100%;
-}
-
-.users-container-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5em;
-  overflow-y: auto;
 }
 </style>
