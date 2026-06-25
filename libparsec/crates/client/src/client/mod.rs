@@ -60,6 +60,7 @@ use crate::{
         start_workspaces_refresh_list_monitor, Monitor,
     },
     user::UserOps,
+    workspace::WorkspaceGetOutboundSyncBacklogError,
     workspace_history::{WorkspaceHistoryOps, WorkspaceHistoryOpsStartError},
 };
 use libparsec_client_connection::AuthenticatedCmds;
@@ -109,6 +110,7 @@ pub use shamir_recovery_list::{
 };
 
 pub type ClientStartWorkspaceHistoryError = WorkspaceHistoryOpsStartError;
+pub type ClientGetOutboundSyncBacklogError = WorkspaceGetOutboundSyncBacklogError;
 
 // Should not be `Clone` given it manages underlying resources !
 pub struct Client {
@@ -412,15 +414,18 @@ impl Client {
         workspace_list::list_workspaces(self).await
     }
 
+    /// Get how much bytes and how many files are awaiting synchronization for started workspaces only
+    pub async fn get_outbound_sync_backlog(
+        &self,
+    ) -> Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError> {
+        workspace_outbound_sync_backlog::get_outbound_sync_backlog(self).await
+    }
+
     /// Create a new workspace.
     ///
     /// A new workspace starts its life locally (hence this function can be called while
     /// offline), and is later bootstrapped to be accessible to other users/devices (this
     /// is typically done by a monitor reacting to an event from this function).
-    pub async fn get_outbound_sync_backlog(&self) -> ClientGetOutboundSyncBacklog {
-        workspace_outbound_sync_backlog::get_outbound_sync_backlog(self).await
-    }
-
     pub async fn create_workspace(
         &self,
         name: EntryName,

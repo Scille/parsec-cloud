@@ -9,6 +9,7 @@ mod list_users;
 mod list_workspace_users;
 mod list_workspaces;
 mod organization_info;
+mod outbound_sync_backlog;
 mod process_workspaces_needs;
 mod recovery;
 mod rename_workspace;

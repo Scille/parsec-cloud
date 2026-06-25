@@ -18,7 +18,9 @@ use std::{
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
-use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage};
+use libparsec_platform_storage::workspace::{
+    UpdateManifestData, WorkspaceOutboundSyncBacklog, WorkspaceStorage,
+};
 use libparsec_types::prelude::*;
 
 use crate::{
@@ -109,6 +111,14 @@ pub(super) enum EnsureManifestExistsWithParentError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceGetOutboundSyncBacklogError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+    #[error("Component has stopped")]
+    Stopped,
 }
 
 /*
@@ -426,6 +436,23 @@ impl WorkspaceStore {
     pub fn get_root_manifest(&self) -> Arc<LocalFolderManifest> {
         self.data
             .with_current_view_cache(|cache| cache.manifests.root_manifest().clone())
+    }
+
+    pub async fn get_outbound_sync_backlog(
+        &self,
+    ) -> Result<WorkspaceOutboundSyncBacklog, WorkspaceGetOutboundSyncBacklogError> {
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| WorkspaceGetOutboundSyncBacklogError::Stopped)?;
+
+                storage
+                    .get_outbound_sync_backlog()
+                    .await
+                    .map_err(WorkspaceGetOutboundSyncBacklogError::Internal)
+            })
+            .await
     }
 
     pub async fn get_manifest(
