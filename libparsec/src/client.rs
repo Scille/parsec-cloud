@@ -6,12 +6,12 @@ pub use libparsec_client::{
     ClientAcceptTosError, ClientArchiveWorkspaceError, ClientCreateWorkspaceError,
     ClientDeleteShamirRecoveryError, ClientForgetAllCertificatesError,
     ClientGetCurrentSelfProfileError, ClientGetOrganizationBootstrapDateError,
-    ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogItem,
-    ClientGetSelfShamirRecoveryError, ClientGetTosError, ClientGetUserDeviceError,
-    ClientGetUserInfoError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
-    ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
-    ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
-    ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
+    ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError,
+    ClientGetOutboundSyncBacklogItem, ClientGetSelfShamirRecoveryError, ClientGetTosError,
+    ClientGetUserDeviceError, ClientGetUserInfoError, ClientListFrozenUsersError,
+    ClientListShamirRecoveriesForOthersError, ClientListUserDevicesError, ClientListUsersError,
+    ClientListWorkspaceUsersError, ClientOrganizationInfoError, ClientRenameWorkspaceError,
+    ClientRevokeUserError, ClientSelfPromoteToWorkspaceOwnerError, ClientSetupShamirRecoveryError,
     ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OrganizationInfo,
     OtherShamirRecoveryInfo, RequestedRealmArchivingConfiguration, SelfShamirRecoveryInfo,
     ServerOrganizationConfig, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
@@ -602,18 +602,12 @@ pub async fn client_list_workspaces(
     Ok(workspaces)
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum ClientGetOutboundSyncBacklogError {
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
 pub async fn client_get_outbound_sync_backlog(
     client: Handle,
 ) -> Result<ClientGetOutboundSyncBacklog, ClientGetOutboundSyncBacklogError> {
     let client = borrow_client(client)?;
 
-    Ok(client.get_outbound_sync_backlog().await)
+    client.get_outbound_sync_backlog().await
 }
 
 /*

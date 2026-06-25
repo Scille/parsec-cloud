@@ -7,10 +7,109 @@ use libparsec_client_connection::{
     test_send_hook_vlob_read_batch,
 };
 use libparsec_platform_async::prelude::*;
+use libparsec_platform_storage::workspace::WorkspaceOutboundSyncBacklog;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::workspace_ops_factory;
+use crate::workspace::{OpenOptions, WorkspaceOps};
+
+use super::utils::{restart_workspace_ops, workspace_ops_factory};
+
+async fn mutate_file_locally(ops: &WorkspaceOps, entry_id: VlobID) {
+    let fd = ops
+        .open_file_by_id(entry_id, OpenOptions::read_write())
+        .await
+        .unwrap();
+    ops.fd_write(fd, 0, b"backlog-test").await.unwrap();
+    ops.fd_flush(fd).await.unwrap();
+    ops.fd_close(fd).await.unwrap();
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn outbound_sync_backlog_cache_survives_restart_after_local_write(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+
+    p_assert_eq!(
+        wksp1_ops.get_outbound_sync_backlog().await.unwrap(),
+        WorkspaceOutboundSyncBacklog {
+            pending_entries: 0,
+            pending_bytes: 0,
+        }
+    );
+
+    mutate_file_locally(&wksp1_ops, wksp1_bar_txt_id).await;
+
+    let backlog_before_restart = wksp1_ops.get_outbound_sync_backlog().await.unwrap();
+    p_assert_eq!(backlog_before_restart.pending_entries, 1);
+    assert!(backlog_before_restart.pending_bytes > 0);
+
+    let wksp1_ops = restart_workspace_ops(wksp1_ops).await;
+
+    p_assert_eq!(
+        wksp1_ops.get_outbound_sync_backlog().await.unwrap(),
+        backlog_before_restart
+    );
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn outbound_sync_backlog_cache_decreases_after_simulated_sync(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+    mutate_file_locally(&wksp1_ops, wksp1_bar_txt_id).await;
+
+    let (updater, manifest) = wksp1_ops
+        .store
+        .for_update_sync_local_only(wksp1_bar_txt_id)
+        .await
+        .unwrap();
+    let manifest = match manifest.unwrap() {
+        ArcLocalChildManifest::File(manifest) => manifest,
+        ArcLocalChildManifest::Folder(_) => panic!("expected a file manifest"),
+    };
+    let chunk_views: Vec<_> = manifest
+        .blocks
+        .iter()
+        .flat_map(|block| block.iter().map(|chunk| (chunk.id, chunk.raw_size.get())))
+        .collect();
+    let mut synced_manifest = (*manifest).clone();
+    synced_manifest.need_sync = false;
+
+    updater
+        .update_file_manifest_and_chunks(Arc::new(synced_manifest), [].into_iter(), [].into_iter())
+        .await
+        .unwrap();
+    for (chunk_id, _) in chunk_views {
+        wksp1_ops
+            .store
+            .promote_local_only_chunk_to_uploaded_block(chunk_id)
+            .await
+            .unwrap();
+    }
+
+    p_assert_eq!(
+        wksp1_ops.get_outbound_sync_backlog().await.unwrap(),
+        WorkspaceOutboundSyncBacklog {
+            pending_entries: 0,
+            pending_bytes: 0,
+        }
+    );
+
+    let wksp1_ops = restart_workspace_ops(wksp1_ops).await;
+    p_assert_eq!(
+        wksp1_ops.get_outbound_sync_backlog().await.unwrap(),
+        WorkspaceOutboundSyncBacklog {
+            pending_entries: 0,
+            pending_bytes: 0,
+        }
+    );
+}
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn populate_with_concurrency(

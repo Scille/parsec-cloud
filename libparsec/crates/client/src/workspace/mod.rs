@@ -13,8 +13,10 @@ use std::{
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_storage::workspace::WorkspaceOutboundSyncBacklog;
 use libparsec_types::prelude::*;
 
+pub use crate::workspace::store::WorkspaceGetOutboundSyncBacklogError;
 use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
 pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
@@ -302,6 +304,12 @@ impl WorkspaceOps {
 
     pub fn realm_id(&self) -> VlobID {
         self.realm_id
+    }
+
+    pub(crate) async fn get_outbound_sync_backlog(
+        &self,
+    ) -> Result<WorkspaceOutboundSyncBacklog, WorkspaceGetOutboundSyncBacklogError> {
+        self.store.get_outbound_sync_backlog().await
     }
 
     /// TL;DR: Use this function to access current workspace name, and our role.
