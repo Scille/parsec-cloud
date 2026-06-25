@@ -316,13 +316,20 @@ ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
     return { action: 'deny' };
   });
   popup.webContents.on('will-redirect', (event, url) => {
-    // When the redirect URL is called, check that it contains code & state, and if so,
+    // When the redirect URL is called, check that it is the URL callback, and if so,
     // close the popup and send the infos
     const parsed = new URL(url);
     const params = parsed.searchParams;
     // If the hostname changes, don't forget to also change it in the client
-    if (parsed.hostname === 'callback.parsec.cloud.invalid' && params.get('code') && params.get('state')) {
-      parsecApp.sendEvent(WindowToPageChannel.SSOComplete, params.get('code'), params.get('state'));
+    if (parsed.hostname === 'callback.parsec.cloud.invalid') {
+      if (params.get('code') && params.get('state')) {
+        parsecApp.sendEvent(WindowToPageChannel.SSOComplete, { ok: true, value: { code: params.get('code'), state: params.get('state') } });
+      } else {
+        parsecApp.sendEvent(WindowToPageChannel.SSOComplete, {
+          ok: false,
+          error: { error: params.get('error') ?? 'unknown', description: params.get('error_description') },
+        });
+      }
       event.preventDefault();
       popup.hide();
       popup.destroy();
