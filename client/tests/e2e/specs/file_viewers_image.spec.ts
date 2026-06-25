@@ -42,8 +42,8 @@ msTest.describe(() => {
     ]);
 
     await documents.locator('.folder-container').locator('.file-list-item').nth(0).locator('.label-name').click();
-    await expect(documents).toShowToast('Failed to open the file', 'Error');
-    await expect(documents).toBeDocumentPage();
+    await expect(documents).toBeViewerPage();
+    await expect(documents.locator('.image-viewer-container').locator('.image-error')).toHaveText('Could not display the image.');
   });
 
   msTest('Image viewer zoom', async ({ documents }, testInfo: TestInfo) => {

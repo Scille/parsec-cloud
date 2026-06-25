@@ -30,7 +30,7 @@ import {
   WorkspaceStatFolderChildrenError,
 } from '@/parsec/types';
 import { getUserInfoFromDeviceID } from '@/parsec/user';
-import { MoveEntryModeTag, libparsec } from '@/plugins/libparsec';
+import { MoveEntryModeTag, WorkspaceFdReadErrorTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 export const DEFAULT_READ_SIZE = 1_024_000;
@@ -279,6 +279,46 @@ export async function readFile(
   size: number,
 ): Promise<Result<Uint8Array, WorkspaceFdReadError>> {
   return await libparsec.workspaceFdRead(workspaceHandle, fd, BigInt(offset), BigInt(size));
+}
+
+export async function readAll(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<Uint8Array, WorkspaceFdReadError>> {
+  function convertNegativeResult(err: any): Result<Uint8Array, WorkspaceFdReadError> {
+    return { ok: false, error: { tag: WorkspaceFdReadErrorTag.Internal, error: `${err.tag} (${err.error})` } };
+  }
+
+  const statsResult = await entryStat(workspaceHandle, path);
+  if (!statsResult.ok) {
+    return convertNegativeResult(statsResult.error);
+  }
+  if (!statsResult.value.isFile()) {
+    return { ok: false, error: { tag: WorkspaceFdReadErrorTag.Internal, error: 'not a file' } };
+  }
+  let content: Uint8Array;
+  try {
+    content = new Uint8Array((statsResult.value as EntryStatFile).size);
+  } catch (_err: unknown) {
+    return { ok: false, error: { tag: WorkspaceFdReadErrorTag.Internal, error: 'failed to allocate buffer' } };
+  }
+
+  const fdResult = await openFile(workspaceHandle, path, { read: true });
+  if (!fdResult.ok) {
+    return convertNegativeResult(fdResult.error);
+  }
+
+  try {
+    let offset = 0;
+    while (offset < (statsResult.value as EntryStatFile).size) {
+      const readResult = await readFile(workspaceHandle, fdResult.value, offset, DEFAULT_READ_SIZE);
+      if (!readResult.ok) {
+        return readResult;
+      }
+      content.set(readResult.value, offset);
+      offset += readResult.value.byteLength;
+    }
+    return { ok: true, value: content };
+  } finally {
+    closeFile(workspaceHandle, fdResult.value);
+  }
 }
 
 export interface EntryTree {

@@ -1,6 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { EntryName, entryStat, FsPath, Path, WorkspaceHandle } from '@/parsec';
+import {
+  EntryName,
+  entryStat,
+  EntryStatFile,
+  FsPath,
+  getWorkspaceInfo,
+  Path,
+  readAll,
+  WorkspaceHandle,
+  WorkspaceHistory,
+  WorkspaceHistoryEntryStatFile,
+} from '@/parsec';
+import { DateTime } from 'luxon';
 import { File, Translatable } from 'megashark-lib';
 
 // Shorten a file name by adding ellipsis in the middle if it is above a certain length.
@@ -311,5 +323,58 @@ export function getFileIcon(file: string): string {
       return File.Video;
     default:
       return File.Default;
+  }
+}
+
+export async function getFileContent(workspaceHandle: WorkspaceHandle, path: FsPath, at?: DateTime): Promise<Uint8Array | undefined> {
+  let content: Uint8Array | undefined = undefined;
+  if (at) {
+    const wkInfo = await getWorkspaceInfo(workspaceHandle);
+    if (!wkInfo.ok) {
+      return content;
+    }
+    const history = new WorkspaceHistory(wkInfo.value.id);
+    await history.start(at);
+    const result = await history.readAll(path);
+    if (!result.ok) {
+      return content;
+    }
+    content = result.value;
+    await history.stop();
+  } else {
+    const result = await readAll(workspaceHandle, path);
+    if (!result.ok) {
+      return content;
+    }
+    content = result.value;
+  }
+  return content;
+}
+
+export async function getFileStats(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  at?: DateTime,
+): Promise<EntryStatFile | WorkspaceHistoryEntryStatFile | undefined> {
+  if (at) {
+    const wkInfo = await getWorkspaceInfo(workspaceHandle);
+    if (!wkInfo.ok) {
+      return;
+    }
+    const history = new WorkspaceHistory(wkInfo.value.id);
+    await history.start(at);
+    const result = await history.entryStat(path);
+    if (!result.ok || !result.value.isFile()) {
+      return;
+    }
+    const stats = result.value;
+    await history.stop();
+    return stats as WorkspaceHistoryEntryStatFile;
+  } else {
+    const result = await entryStat(workspaceHandle, path);
+    if (!result.ok || !result.value.isFile()) {
+      return;
+    }
+    return result.value as EntryStatFile;
   }
 }

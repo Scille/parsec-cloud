@@ -3143,6 +3143,9 @@
         "document": {
             "loadDocumentError": "Impossible de charger ce document."
         },
+        "image": {
+            "loadImageError": "Impossible d'afficher l'image."
+        },
         "text": {
             "loadDocumentError": "Impossible de charger ce document.",
             "loadingDocument": "Chargement du document..."

@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { DEFAULT_READ_SIZE } from '@/parsec/file';
 import { Path } from '@/parsec/path';
 import {
   FileDescriptor,
@@ -198,6 +199,60 @@ export class WorkspaceHistory {
     }
     return await libparsec.workspaceHistoryFdRead(this.handle, fd, BigInt(offset), BigInt(size));
   }
+
+  async readAll(path: FsPath): Promise<Result<Uint8Array, WorkspaceHistoryFdReadError>> {
+    function convertNegativeResult(err: any): Result<Uint8Array, WorkspaceHistoryFdReadError> {
+      return { ok: false, error: { tag: WorkspaceHistoryFdReadErrorTag.Internal, error: `${err.tag} (${err.error})` } };
+    }
+
+    const statsResult = await this.entryStat(path);
+    if (!statsResult.ok) {
+      return convertNegativeResult(statsResult.error);
+    }
+    if (!statsResult.value.isFile()) {
+      return { ok: false, error: { tag: WorkspaceHistoryFdReadErrorTag.Internal, error: 'not a file' } };
+    }
+    let content: Uint8Array;
+    try {
+      content = new Uint8Array((statsResult.value as WorkspaceHistoryEntryStatFile).size);
+    } catch (_err: unknown) {
+      return { ok: false, error: { tag: WorkspaceHistoryFdReadErrorTag.Internal, error: 'failed to allocate buffer' } };
+    }
+
+    const fdResult = await this.openFile(path);
+    if (!fdResult.ok) {
+      return convertNegativeResult(fdResult.error);
+    }
+
+    try {
+      let offset = 0;
+      while (offset < (statsResult.value as WorkspaceHistoryEntryStatFile).size) {
+        const readResult = await this.readFile(fdResult.value, offset, DEFAULT_READ_SIZE);
+        if (!readResult.ok) {
+          return readResult;
+        }
+        content.set(readResult.value, offset);
+        offset += readResult.value.byteLength;
+      }
+      return { ok: true, value: content };
+    } finally {
+      this.closeFile(fdResult.value);
+    }
+  }
+}
+
+export async function startHistoryAt(workspaceHandle: number, timestamp: DateTime): Promise<WorkspaceHistoryHandle | undefined> {
+  const infoResult = await libparsec.workspaceInfo(workspaceHandle);
+  if (!infoResult.ok) return undefined;
+  const histResult = await libparsec.clientStartWorkspaceHistory(infoResult.value.client, infoResult.value.id);
+  if (!histResult.ok) return undefined;
+  const handle = histResult.value;
+  await libparsec.workspaceHistorySetTimestampOfInterest(handle, timestamp.toSeconds() as any as DateTime);
+  return handle;
+}
+
+export async function stopHistory(historyHandle: WorkspaceHistoryHandle): Promise<void> {
+  await libparsec.workspaceHistoryStop(historyHandle);
 }
 
 export interface HistoryEntryTree {

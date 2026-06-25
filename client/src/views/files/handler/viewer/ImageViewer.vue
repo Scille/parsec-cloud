@@ -9,7 +9,7 @@
       >
         <div class="image-viewer">
           <ms-draggable
-            v-if="src.length"
+            v-if="src.length && !hasError"
             :disabled="!isZoomedMoreThanViewport"
             :restrict-direction="restrictDirection"
             @dragging="updateDraggingRestrictions"
@@ -19,8 +19,16 @@
               ref="imgElement"
               :src="src"
               @load="updateDraggingRestrictions()"
+              @error="hasError = true"
             />
           </ms-draggable>
+          <ms-report-text
+            class="image-error"
+            v-else
+            :theme="MsReportTheme.Error"
+          >
+            {{ $msTranslate('fileViewers.image.loadImageError') }}
+          </ms-report-text>
         </div>
       </div>
     </template>
@@ -40,12 +48,13 @@
 </template>
 
 <script setup lang="ts">
-import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 import { FileControls, FileControlsButton, FileControlsZoom } from '@/components/files/handler/viewer';
+import { startHistoryAt, stopHistory } from '@/parsec/history';
+import { getStreamUrl } from '@/services/viewers';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { scan } from 'ionicons/icons';
-import { MsDraggable } from 'megashark-lib';
+import { MsDraggable, MsReportText, MsReportTheme } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -65,6 +74,7 @@ const restrictDirection = ref({
   right: true,
 });
 const draggableElementRef = useTemplateRef<InstanceType<typeof MsDraggable>>('draggableElement');
+const hasError = ref(false);
 
 function updateDraggingRestrictions(resetPosition = false): void {
   if (resetPosition) {
@@ -102,15 +112,22 @@ function updateDraggingRestrictions(resetPosition = false): void {
   }
 }
 
+let historyHandle: number | undefined;
+
 onMounted(async () => {
-  const mimeType = await getMimeTypeFromBuffer(props.contentInfo.data);
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data.buffer as ArrayBuffer], { type: mimeType }));
+  if (props.contentInfo.timestamp) {
+    historyHandle = await startHistoryAt(props.contentInfo.workspaceHandle, props.contentInfo.timestamp);
+  }
+  src.value = getStreamUrl(props.contentInfo.workspaceHandle, props.contentInfo.path, props.contentInfo.size, historyHandle);
   zoomLevel.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
   window.addEventListener('resize', () => updateDraggingRestrictions(true));
 });
 
-onUnmounted(() => {
+onUnmounted(async () => {
   window.removeEventListener('resize', () => updateDraggingRestrictions(true));
+  if (historyHandle !== undefined) {
+    await stopHistory(historyHandle);
+  }
 });
 
 watch(zoomLevel, () => {

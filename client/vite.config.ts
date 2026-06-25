@@ -3,7 +3,6 @@
 /// <reference types="vitest" />
 
 import { sentryVitePlugin } from '@sentry/vite-plugin';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 import vue from '@vitejs/plugin-vue';
 import fs from 'fs';
 import path from 'path';
@@ -88,7 +87,8 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
 
 // 3) Add dev specific plugins
 if (process.env.NODE_ENV === 'development' && !process.env.CI) {
-  plugins.push(basicSsl());
+  // const { default: basicSsl } = await import('@vitejs/plugin-basic-ssl');
+  // plugins.push(basicSsl());
 }
 
 plugins.push(
@@ -196,9 +196,9 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
     target: platform === 'native' ? 'chrome146' : ['chrome107', 'edge107', 'firefox104', 'safari16'],
     minify: 'esbuild',
     cssCodeSplit: false,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        inlineDynamicImports: true,
+        codeSplitting: false,
       },
     },
   },

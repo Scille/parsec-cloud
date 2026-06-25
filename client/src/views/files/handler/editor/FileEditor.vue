@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { DetectedFileType } from '@/common/fileTypes';
+import { getFileContent } from '@/common/file';
 import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
@@ -103,12 +103,10 @@ let pendingSaveResolve: ((success: boolean) => void) | null = null;
 
 const {
   contentInfo,
-  fileInfo,
   readOnly,
   userInfo = undefined,
 } = defineProps<{
   contentInfo: FileContentInfo;
-  fileInfo: DetectedFileType;
   readOnly?: boolean;
   userInfo?: ClientInfo;
 }>();
@@ -120,7 +118,7 @@ const emits = defineEmits<{
 }>();
 
 onMounted(async () => {
-  documentType.value = getCryptpadEditor(fileInfo.type);
+  documentType.value = getCryptpadEditor(contentInfo.contentType);
 
   if (documentType.value === CryptpadEditors.Unsupported) {
     error.value = EditorErrorTitle.UnsupportedFileType;
@@ -158,10 +156,12 @@ async function loadEditor(): Promise<void> {
 
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Cannot retrieve workspace handle');
+    emits('fileError');
     return;
   }
   if (!editorFrame.value) {
     window.electronAPI.log('error', 'Cannot get the iframe element');
+    emits('fileError');
     return;
   }
   frameReady.value = false;
@@ -171,17 +171,22 @@ async function loadEditor(): Promise<void> {
   }
 
   let isSaving = false;
+  const content = await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp);
+  if (!content) {
+    emits('fileError');
+    return;
+  }
   session = await openDocument(
     {
-      documentContent: contentInfo.data,
+      documentContent: content,
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
       cryptpadEditor: documentType.value as CryptpadEditors,
       key: crypto.randomUUID(),
-      userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UNKNOWN_USER'),
+      userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
       autosaveInterval: 10,
-      mode: readOnly ? CryptpadOpenModes.View : CryptpadOpenModes.Edit,
+      mode: readOnly || contentInfo.timestamp ? CryptpadOpenModes.View : CryptpadOpenModes.Edit,
       locale: longLocaleCodeToShort(I18n.getLocale()),
     },
     {

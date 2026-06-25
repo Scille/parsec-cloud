@@ -4,6 +4,12 @@
   <file-viewer-wrapper :error="error">
     <template #viewer>
       <div class="video-container">
+        <div
+          v-show="loading && !error"
+          class="video-spinner"
+        >
+          <ms-spinner />
+        </div>
         <video
           v-if="src.length"
           ref="videoElement"
@@ -11,7 +17,10 @@
           @click="togglePlayback"
           @play="updateMediaData"
           @playing="updateMediaData"
-          @canplay="updateMediaData"
+          @canplay="
+            loading = false;
+            updateMediaData($event);
+          "
           @pause="updateMediaData"
           @volumechange="updateMediaData"
           @muted="updateMediaData"
@@ -20,11 +29,10 @@
           @error="onError"
           @enterpictureinpicture="onTogglePictureInPicture(true)"
           @leavepictureinpicture="onTogglePictureInPicture(false)"
+          @loadstart="loading = true"
+          @waiting="loading = true"
         >
-          <source
-            :src="src"
-            :type="mimeType"
-          />
+          <source :src="src" />
         </video>
       </div>
     </template>
@@ -62,7 +70,6 @@
 </template>
 
 <script setup lang="ts">
-import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 import {
   FileControls,
   FileControlsButton,
@@ -73,10 +80,12 @@ import {
   FileControlsPlayback,
   FileControlsVolume,
 } from '@/components/files/handler/viewer';
+import { startHistoryAt, stopHistory } from '@/parsec/history';
+import { getStreamUrl } from '@/services/viewers';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
 import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/files/handler/viewer/utils';
 import { cog, infinite, scan, timer } from 'ionicons/icons';
-import { PipIcon, SliderState } from 'megashark-lib';
+import { MsSpinner, PipIcon, SliderState } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const props = defineProps<{
@@ -91,7 +100,7 @@ const muted = ref(false);
 const fluxProgress = ref<SliderState>({ progress: 0, paused: true });
 const volume = ref<number>(1);
 const error = ref('');
-const mimeType = ref<undefined | string>(undefined);
+const loading = ref(true);
 
 const cancelFluxProgressWatch = watch(
   () => fluxProgress.value,
@@ -146,14 +155,22 @@ const dropdownItems = ref<FileControlsDropdownItemContent[]>([
   },
 ]);
 
+let historyHandle: number | undefined;
+
 onMounted(async () => {
-  mimeType.value = await getMimeTypeFromBuffer(props.contentInfo.data);
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data.buffer as ArrayBuffer], { type: mimeType.value }));
+  loading.value = true;
+  if (props.contentInfo.timestamp) {
+    historyHandle = await startHistoryAt(props.contentInfo.workspaceHandle, props.contentInfo.timestamp);
+  }
+  src.value = getStreamUrl(props.contentInfo.workspaceHandle, props.contentInfo.path, props.contentInfo.size, historyHandle);
 });
 
-onUnmounted(() => {
+onUnmounted(async () => {
   cancelFluxProgressWatch();
   cancelVolumeWatch();
+  if (historyHandle !== undefined) {
+    await stopHistory(historyHandle);
+  }
 });
 
 async function onError(): Promise<void> {
@@ -231,12 +248,21 @@ function updateMediaData(event: Event): void {
 
 <style scoped lang="scss">
 .video-container {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 1rem;
+}
+
+.video-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .video {

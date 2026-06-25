@@ -50,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+import { getFileContent } from '@/common/file';
 import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/files/handler/viewer';
 import { isWeb } from '@/parsec';
 import { FileViewerWrapper } from '@/views/files/handler/viewer';
@@ -80,11 +81,17 @@ const CanvasStateAttribute = 'data-canvas-state';
 
 onMounted(async () => {
   loading.value = true;
-  scale.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
 
   try {
+    const content = await getFileContent(props.contentInfo.workspaceHandle, props.contentInfo.path, props.contentInfo.timestamp);
+    if (!content) {
+      throw new Error('failed to load content');
+    }
+
+    scale.value = (zoomControlRef.value?.getZoom() ?? 100) / 100;
+
     pdf.value = await pdfjs.getDocument({
-      data: props.contentInfo.data,
+      data: content,
       wasmUrl: import.meta.env.BASE_URL !== '/' ? `${import.meta.env.BASE_URL}/pdfjs/` : 'pdfjs/',
     }).promise;
     await loadPages();
