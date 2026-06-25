@@ -91,7 +91,7 @@
         @cancel-selection="onSelectionCancel"
         :some-selected="selectedFilesCount > 0"
       />
-      <div class="folder-container scroll">
+      <div class="main-container folder-container scroll">
         <file-inputs
           ref="fileInputs"
           @files-added="startImportFiles"
@@ -181,10 +181,7 @@
             </div>
           </file-drop-zone>
         </div>
-        <div
-          v-else-if="!querying && !showErrorListPage && !search"
-          class="list-container"
-        >
+        <div v-else-if="!querying && !showErrorListPage && !search">
           <div v-if="displayView === DisplayState.List && userInfo">
             <file-list-display
               ref="fileListDisplay"
@@ -2093,14 +2090,6 @@ async function startSearch(pattern: string): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.list-container {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
 .content-scroll {
   &::part(scroll) {
     -ms-overflow-style: -ms-autohiding-scrollbar;

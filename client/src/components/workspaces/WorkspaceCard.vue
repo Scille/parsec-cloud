@@ -4,7 +4,7 @@
   <div
     class="workspace-card-item ion-no-padding"
     :class="{
-      'workspace-hovered': isHovered || menuOpened,
+      'workspace-card-item--hovered': isHovered || menuOpened,
       'workspace-card-item--hidden': isHidden,
       'workspace-card-item--archived': workspace.isArchived,
       'workspace-card-item--trashed': workspace.isTrashed,

@@ -6,7 +6,7 @@
     class="workspace-list-item no-padding-end"
     :detail="false"
     :class="{
-      'workspace-hovered': isHovered || menuOpened,
+      'workspace-list-item--hovered': isHovered || menuOpened,
       'workspace-list-item--hidden': isHidden || workspace.isArchived,
     }"
     @click="$emit('click', workspace, $event)"
@@ -17,7 +17,7 @@
     <div class="workspace-list-item-content">
       <div
         v-show="!workspace.isArchived"
-        class="workspace-favorite-icon"
+        class="list-item-column workspace-favorite-icon"
         :class="{
           'workspace-favorite-icon__on': isFavorite,
           'workspace-favorite-icon__off': !isFavorite,
@@ -34,7 +34,7 @@
       />
       <!-- workspace name -->
       <div
-        class="workspace-name"
+        class="list-item-column workspace-name"
         :title="workspace.name"
       >
         <ion-text class="workspace-name__label title-h4">
@@ -43,11 +43,11 @@
       </div>
       <ion-icon
         v-if="workspace.isArchived"
-        class="workspace-archive"
+        class="list-item-column workspace-archive"
         :icon="archive"
       />
       <div
-        class="workspace-hidden"
+        class="list-item-column workspace-hidden"
         v-if="isHidden && !workspace.isArchived"
       >
         <ion-icon
@@ -58,7 +58,7 @@
       </div>
 
       <!-- role user -->
-      <div class="workspace-role">
+      <div class="list-item-column workspace-role">
         <workspace-role-tag
           v-if="!workspace.isArchived && windowWidth > WindowSizeBreakpoints.XS"
           :role="workspace.selfRole"
@@ -82,7 +82,7 @@
 
       <!-- user avatars -->
       <div
-        class="workspace-users"
+        class="list-item-column workspace-users"
         v-show="clientProfile !== UserProfile.Outsider"
         v-if="isLargeDisplay && windowWidth >= WindowSizeBreakpoints.MD && !workspace.isArchived"
       >
@@ -104,17 +104,17 @@
 
       <!-- last update -->
       <div
-        class="workspace-last-update"
+        class="list-item-column workspace-last-update"
         v-show="workspace.isArchived"
       >
-        <ion-label class="label-last-update cell">
+        <ion-label class="list-item-label label-last-update cell">
           {{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}
         </ion-label>
       </div>
 
       <!-- workspace size -->
       <div
-        class="workspace-size"
+        class="list-item-column workspace-size"
         v-show="false"
       >
         <ion-label class="label-size cell">
@@ -123,7 +123,7 @@
       </div>
 
       <!-- options -->
-      <div class="workspace-options">
+      <div class="list-item-end workspace-options">
         <ion-button
           fill="clear"
           class="options-button"
@@ -204,6 +204,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   transition: all 0.15s ease-in-out;
 
   &::part(native) {
+    cursor: pointer !important;
     width: -webkit-fill-available;
     padding-left: 0;
     margin: 0.25rem;
@@ -217,6 +218,10 @@ async function onOptionsClick(event: Event): Promise<void> {
     align-items: center;
     width: 100%;
     height: 3rem;
+  }
+
+  .list-item-column {
+    cursor: pointer !important;
   }
 
   &:hover {

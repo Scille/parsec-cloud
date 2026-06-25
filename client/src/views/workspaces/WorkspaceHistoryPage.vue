@@ -176,7 +176,7 @@
               v-show="!querying && entries.entriesCount() > 0"
               class="folder-list"
             >
-              <ion-list class="folder-list-main ion-no-padding">
+              <ion-list class="list-container folder-list-main ion-no-padding">
                 <history-file-list-item
                   v-for="entry in entries.getEntries()"
                   :key="entry.id"

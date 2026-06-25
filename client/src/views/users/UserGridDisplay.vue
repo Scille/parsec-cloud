@@ -1,21 +1,23 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <user-card
-    v-for="user in users.getUsers()"
-    :key="user.id"
-    :user="user"
-    :disabled="user.isCurrent"
-    :show-checkbox="someSelected || selectionEnabled === true"
-    @menu-click="onMenuClick"
-    @select="onUserSelected"
-  />
-  <ion-text
-    class="no-match-result body"
-    v-show="users.getUsers().length === 0"
-  >
-    {{ $msTranslate('UsersPage.noMatch') }}
-  </ion-text>
+  <div class="grid-container users-grid-container">
+    <user-card
+      v-for="user in users.getUsers()"
+      :key="user.id"
+      :user="user"
+      :disabled="user.isCurrent"
+      :show-checkbox="someSelected || selectionEnabled === true"
+      @menu-click="onMenuClick"
+      @select="onUserSelected"
+    />
+    <ion-text
+      class="no-match-result body"
+      v-show="users.getUsers().length === 0"
+    >
+      {{ $msTranslate('UsersPage.noMatch') }}
+    </ion-text>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -49,4 +51,20 @@ function onUserSelected(user: UserModel, selected: boolean): void {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.users-grid-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  overflow-y: auto;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1.5rem 1rem 0;
+    gap: 1.5rem;
+  }
+
+  @include ms.responsive-breakpoint('xs') {
+    gap: 1rem;
+  }
+}
+</style>

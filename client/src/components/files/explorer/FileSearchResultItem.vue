@@ -5,10 +5,10 @@
     button
     :lines="isLargeDisplay ? 'full' : 'none'"
     :detail="false"
-    class="file-list-item result-list-item"
+    class="list-item file-list-item result-list-item"
     :class="{
       'file-list-item-mobile': isSmallDisplay,
-      'file-hovered': menuOpened || isHovered,
+      'file-list-item--hovered': menuOpened || isHovered,
     }"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -17,7 +17,7 @@
     <div class="list-item-container file-list-item-container">
       <!-- file name -->
       <div
-        class="file-name file-name-results"
+        class="list-item-column file-name file-name-results"
         :class="{ 'file-mobile-content': isSmallDisplay }"
       >
         <ms-image
@@ -26,7 +26,7 @@
         />
         <div class="file-name-content">
           <ion-text
-            class="label-name button-medium"
+            class="list-item-label label-name button-medium"
             :title="searchItem.stats.name"
             @click="onClick"
           >
@@ -84,24 +84,24 @@
       </div>
 
       <!-- last update -->
-      <div class="file-last-update">
-        <ion-text class="label-last-update cell">
+      <div class="list-item-column file-last-update">
+        <ion-text class="list-item-label label-last-update cell">
           {{ $msTranslate(formatTimeSince(searchItem.stats.updated, '--', 'short')) }}
         </ion-text>
       </div>
 
       <!-- file size -->
-      <div class="file-size">
+      <div class="list-item-column file-size">
         <ion-text
           v-if="searchItem.stats.isFile()"
-          class="label-size cell"
+          class="list-item-label label-size cell"
         >
           {{ $msTranslate(formatFileSize((searchItem.stats as EntryStatFile).size)) }}
         </ion-text>
       </div>
 
       <!-- options -->
-      <div class="file-options ion-item-child-clickable">
+      <div class="list-item-end file-options ion-item-child-clickable">
         <ion-button
           fill="clear"
           v-show="isHovered || menuOpened || isSmallDisplay"

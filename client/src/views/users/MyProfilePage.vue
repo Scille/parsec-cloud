@@ -31,7 +31,7 @@
           </ion-text>
         </div>
       </ion-header>
-      <div class="profile-page-container">
+      <div class="main-container profile-page-container">
         <ion-radio-group
           v-if="isLargeDisplay || (isSmallDisplay && myProfileTab === undefined)"
           v-model="myProfileTab"

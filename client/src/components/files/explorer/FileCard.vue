@@ -5,7 +5,7 @@
     class="file-card-item ion-no-padding"
     :class="{
       selected: entry.isSelected,
-      'file-hovered': !entry.isSelected && (menuOpened || isHovered),
+      'file-card-item--hovered': !entry.isSelected && (menuOpened || isHovered),
     }"
     @dblclick="$emit('openItem', $event, entry)"
     @mouseenter="isHovered = true"
@@ -229,11 +229,5 @@ async function onOptionsClick(event: Event): Promise<void> {
   justify-content: center;
   align-items: center;
   flex-direction: column;
-}
-
-/* No idea how to change the color of the ion-item */
-.file-card__title::part(native),
-.file-card-last-update::part(native) {
-  background-color: var(--parsec-color-light-secondary-background);
 }
 </style>

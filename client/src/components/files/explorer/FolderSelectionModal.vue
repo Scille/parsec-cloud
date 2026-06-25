@@ -139,7 +139,7 @@
             class="file-last-update"
             v-if="isLargeDisplay"
           >
-            <ion-label class="label-last-update cell">
+            <ion-label class="list-item-label label-last-update cell">
               {{ $msTranslate(formatTimeSince(entry[0].updated, '--', 'short')) }}
             </ion-label>
           </div>

@@ -22,33 +22,35 @@
 
     <!-- invitation mail -->
     <div
-      class="invitation-email"
+      class="list-item-column invitation-email"
       v-if="isLargeDisplay"
     >
-      <ion-text class="invitation-email__label cell">
+      <ion-text class="list-item-label label-email cell">
         {{ invitation.claimerEmail }}
       </ion-text>
     </div>
 
     <!-- invitation created on -->
     <div
-      class="invitation-sentOn"
+      class="list-item-column invitation-sentOn"
       v-if="isLargeDisplay"
     >
-      <ion-text class="invitation-sentOn__label cell">
+      <ion-text class="list-item-label label-sent-on cell">
         {{ $msTranslate(formatTimeSince(invitation.createdOn, '--', 'short')) }}
       </ion-text>
     </div>
 
     <!-- actions -->
-    <div class="invitation-actions">
-      <ion-button
-        @click="$emit('greetClick', invitation)"
-        class="primary-button button-medium button-default"
-        size="default"
-      >
-        {{ $msTranslate('InvitationsPage.emailInvitation.greet') }}
-      </ion-button>
+    <div class="list-item-end invitation-actions">
+      <div class="invitation-actions-primary">
+        <ion-button
+          @click="$emit('greetClick', invitation)"
+          class="primary-button button-medium button-default"
+          size="default"
+        >
+          {{ $msTranslate('InvitationsPage.emailInvitation.greet') }}
+        </ion-button>
+      </div>
       <div class="invitation-actions-secondary">
         <ion-button
           @click="$emit('copyLinkClick', invitation)"
@@ -172,6 +174,24 @@ defineEmits<{
 
     &__createdOn {
       color: var(--parsec-color-light-secondary-grey);
+    }
+  }
+}
+
+.invitation-actions-secondary__button {
+  &:last-of-type {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    &::before {
+      content: '';
+      position: relative;
+      display: block;
+      width: 2px;
+      height: calc(100% - 0.825rem);
+      background: var(--parsec-color-light-secondary-medium);
+      margin-right: 0.75rem;
     }
   }
 }

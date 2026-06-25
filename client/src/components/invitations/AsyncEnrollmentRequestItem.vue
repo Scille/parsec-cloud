@@ -3,7 +3,7 @@
 <template>
   <ion-item
     button
-    class="request-list-item"
+    class="list-item request-list-item"
     lines="full"
     :class="{
       'request-list-item--corrupted': request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKICorrupted,
@@ -55,10 +55,10 @@
 
       <!-- request avatar -->
       <div
-        class="request-name"
+        class="list-item-column request-name"
         v-if="isLargeDisplay"
       >
-        <ion-text class="request-name__label cell">
+        <ion-text class="list-item-label label-name cell">
           <user-avatar-name
             :user-avatar="humanHandle.label"
             :user-name="humanHandle.label"
@@ -68,10 +68,10 @@
 
       <!-- request mail -->
       <div
-        class="request-email"
+        class="list-item-column request-email"
         v-if="isLargeDisplay"
       >
-        <ion-text class="request-email__label cell">
+        <ion-text class="list-item-label label-email cell">
           <ion-icon
             :icon="warning"
             class="error-icon"
@@ -84,17 +84,17 @@
 
       <!-- request created on -->
       <div
-        class="request-createdOn"
+        class="list-item-column request-createdOn"
         v-if="isLargeDisplay"
       >
-        <ion-text class="request-createdOn__label cell">
+        <ion-text class="list-item-label label-created-on cell">
           {{ $msTranslate(formatTimeSince(request.submittedOn, '--', 'short')) }}
         </ion-text>
       </div>
 
       <!-- request type -->
       <div
-        class="request-type button-medium"
+        class="list-item-column request-type button-medium"
         v-if="isLargeDisplay"
       >
         <ion-text
@@ -119,15 +119,18 @@
       </div>
 
       <!-- actions -->
-      <div class="request-actions">
-        <ion-button
-          v-show="canAccept"
-          @click="$emit('acceptClick', request)"
-          class="primary-button button-medium button-default"
-          size="default"
-        >
-          {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.accept') }}
-        </ion-button>
+      <div class="list-item-end request-actions">
+        <div class="request-actions-primary">
+          <ion-button
+            v-show="canAccept"
+            @click="$emit('acceptClick', request)"
+            class="primary-button button-medium button-default"
+            size="default"
+          >
+            {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.accept') }}
+          </ion-button>
+        </div>
+
         <ion-text
           class="request-actions-secondary__text button-medium"
           :class="{ 'request-actions-secondary__text--active': showErrorDetails }"
@@ -153,6 +156,7 @@
         >
           {{ $msTranslate('InvitationsPage.asyncEnrollmentRequest.reject') }}
         </ion-button>
+
         <div
           class="request-actions-secondary"
           v-if="request.identitySystem.tag !== AsyncEnrollmentIdentitySystemTag.PKICorrupted"
@@ -382,9 +386,8 @@ onMounted(async () => {
   --background: var(--parsec-color-light-danger-50);
   --background-hover: var(--parsec-color-light-danger-50);
 
-  .request-email__label {
+  .label-email {
     display: flex;
-    align-items: center;
   }
 
   .request-type__label {

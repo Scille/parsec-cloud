@@ -3,7 +3,7 @@
 <template>
   <ion-item
     button
-    class="user-list-item"
+    class="list-item user-list-item"
     lines="full"
     :detail="false"
     :class="{
@@ -11,14 +11,14 @@
       revoked: user.isRevoked(),
       'current-user': user.isCurrent,
       'no-padding-end': !user.isSelected,
-      'user-hovered': !user.isSelected && (menuOpened || isHovered),
+      'user-list-item--hovered': !user.isSelected && (menuOpened || isHovered),
     }"
     @click="$emit('select', user, !user.isSelected)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
   >
-    <div class="user-selected">
+    <div class="list-item-column user-selected">
       <ms-checkbox
         :class="{ 'checkbox-mobile': isSmallDisplay }"
         :checked="user.isSelected"
@@ -36,24 +36,24 @@
 
     <!-- user name -->
     <div
-      class="user-name"
+      class="list-item-column user-name"
       v-if="isLargeDisplay"
     >
-      <ion-text class="user-name__label cell">
+      <ion-text class="list-item-label label-name cell">
         <user-avatar-name
           :user-avatar="user.humanHandle.label"
           :user-name="user.humanHandle.label"
         />
         <span
           v-if="user.isCurrent"
-          class="body user-name__you"
+          class="body user-name--self"
         >
           {{ $msTranslate('UsersPage.currentUser') }}
         </span>
       </ion-text>
     </div>
     <div
-      class="user-mobile"
+      class="list-item-column user-mobile"
       v-if="isSmallDisplay"
     >
       <user-avatar-name
@@ -69,43 +69,43 @@
           <span class="user-mobile-text__name">{{ user.humanHandle.label }}</span>
           <span
             v-if="user.isCurrent"
-            class="body-sm user-mobile-text__you"
+            class="body-sm user-mobile-text__name--self"
           >
             {{ $msTranslate('UsersPage.currentUser') }}
           </span>
         </ion-text>
-        <ion-text class="cell user-mobile-text__email">
+        <ion-text class="button-medium user-mobile-text__email">
           {{ user.humanHandle.email }}
         </ion-text>
-        <div class="user-mobile-text__profile-status">
+        <div class="user-mobile-text-info">
           <user-profile-tag
             :profile="user.currentProfile"
-            class="user-mobile-text__profile"
+            class="user-mobile-text-info__profile"
           />
           <user-status-tag
             :revoked="user.isRevoked()"
             :frozen="user.isFrozen()"
             :show-tooltip="true"
             v-if="!user.isActive()"
-            class="user-mobile-text__status"
+            class="user-mobile-text-info__status"
           />
         </div>
       </div>
     </div>
 
     <!-- user profile -->
-    <div class="user-profile">
+    <div class="list-item-column user-profile">
       <user-profile-tag :profile="user.currentProfile" />
     </div>
 
     <!-- user mail -->
-    <div class="user-email">
+    <div class="list-item-column user-email">
       <ion-text
-        class="user-email__label cell"
+        class="list-item-label label-email cell"
         :title="user.humanHandle.email"
         @click.stop="onCopyEmailClicked(user.humanHandle.email)"
       >
-        {{ user.humanHandle.email }}
+        <span class="label-email__text">{{ user.humanHandle.email }}</span>
         <ion-icon
           v-if="!user.isCurrent"
           :icon="emailCopied ? checkmark : copy"
@@ -116,15 +116,15 @@
     </div>
 
     <!-- user joined on -->
-    <div class="user-join">
-      <ion-text class="user-join-label cell">
+    <div class="list-item-column user-join">
+      <ion-text class="list-item-label label-join-date cell">
         {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
       </ion-text>
     </div>
 
     <!-- user status -->
     <div
-      class="user-status"
+      class="list-item-column user-status"
       :class="user.isRevoked() ? 'user-revoked' : ''"
     >
       <user-status-tag
@@ -135,7 +135,7 @@
     </div>
 
     <!-- options -->
-    <div class="user-options ion-item-child-clickable">
+    <div class="list-item-end user-options ion-item-child-clickable">
       <ion-button
         v-show="(isHovered || menuOpened || isSmallDisplay) && !user.isCurrent"
         fill="clear"
@@ -206,17 +206,22 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.user-selected .checkbox {
+  @include ms.responsive-breakpoint('sm') {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
 .user-name {
-  &__label {
+  .label-name {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    overflow: hidden;
   }
 
-  &__you {
-    color: var(--parsec-color-light-secondary-text);
-    font-weight: 700;
+  &--self {
+    color: var(--parsec-color-light-secondary-grey);
   }
 }
 
@@ -227,7 +232,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   gap: 0.75rem;
   padding: 0.75rem 0.5rem;
 
-  .user-mobile-avatar {
+  &-avatar {
     pointer-events: none;
     padding: 0.5rem;
 
@@ -245,62 +250,67 @@ async function onOptionsClick(event: Event): Promise<void> {
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     &__name {
       color: var(--parsec-color-light-secondary-text);
-    }
-
-    &__you {
-      color: var(--parsec-color-light-primary-600);
-      margin-left: 0.25rem;
     }
 
     &__email {
       color: var(--parsec-color-light-secondary-grey);
     }
 
-    &__profile-status {
+    &-info {
+      margin-top: 0.25rem;
       display: flex;
       gap: 0.5rem;
     }
   }
 }
 
-.user-status,
-.user-join,
-.user-email {
-  color: var(--parsec-color-light-secondary-grey);
-}
-
+// manage copy email icon visibility on hover
 .user-list-item {
-  .user-email__label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    gap: 0.125rem;
-  }
+  .user-email {
+    .label-email {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      width: 100%;
+      gap: 0.125rem;
 
-  .email-copy-icon {
-    display: none;
-    color: var(--parsec-color-light-secondary-soft-grey);
-    padding: 0.375rem;
-    border-radius: var(--parsec-radius-6);
-    font-size: 1rem;
-    cursor: pointer;
-    color: var(--parsec-color-light-secondary-grey);
-    flex-shrink: 0;
+      &__text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
 
-    &--copied {
-      color: var(--parsec-color-light-success-700) !important;
-      display: flex !important;
+    .email-copy-icon {
+      display: none;
+      color: var(--parsec-color-light-secondary-soft-grey);
+      padding: 0.375rem;
+      border-radius: var(--parsec-radius-6);
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--parsec-color-light-secondary-grey);
+      flex-shrink: 0;
+
+      &--copied {
+        color: var(--parsec-color-light-success-700) !important;
+        display: flex !important;
+      }
     }
   }
 
-  &.user-hovered {
+  &.user-list-item--hovered {
     .email-copy-icon {
       display: flex;
     }
-    .user-email__label:hover {
+
+    .label-email:hover {
       color: var(--parsec-color-light-primary-600);
 
       .email-copy-icon {
@@ -308,14 +318,19 @@ async function onOptionsClick(event: Event): Promise<void> {
       }
     }
   }
+}
 
-  &.current-user {
-    --background: var(--parsec-color-light-secondary-background);
+.current-user {
+  --background: var(--parsec-color-light-secondary-background);
 
-    .lock-icon {
-      width: 1.25rem;
-      --fill-color: var(--parsec-color-light-secondary-grey);
-    }
+  .user-mobile-avatar {
+    visibility: hidden;
+  }
+
+  .lock-icon {
+    z-index: 2;
+    width: 1.25rem;
+    --fill-color: var(--parsec-color-light-secondary-grey);
   }
 }
 </style>

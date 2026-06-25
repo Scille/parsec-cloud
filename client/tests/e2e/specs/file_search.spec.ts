@@ -42,7 +42,7 @@ msTest.describe(() => {
   });
 
   msTest('Search files state', async ({ documents }, testInfo: TestInfo) => {
-    const entries = documents.locator('.files-container-list').locator('.file-list-item');
+    const entries = documents.locator('.files-list-container').locator('.file-list-item');
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Docx | ImportDocuments.Txt, false);
     await expect(entries).toHaveCount(3);
 
@@ -65,7 +65,7 @@ msTest.describe(() => {
     await fillIonInput(searchInput, 'image');
 
     await expect(searchContainer).toBeVisible();
-    await expect(documents.locator('.files-container-list')).toBeHidden();
+    await expect(documents.locator('.files-list-container:not(.results-list-container)')).toBeHidden();
     await expect(results).toHaveCount(1);
     await expect(actionBarButtons).toHaveCount(0);
     await expect(labelRole).toBeVisible();
@@ -76,7 +76,7 @@ msTest.describe(() => {
     await searchInput.locator('.input-clear-icon').click();
 
     await expect(searchContainer).toBeHidden();
-    await expect(documents.locator('.files-container-list')).toBeVisible();
+    await expect(documents.locator('.files-list-container:not(.results-list-container)')).toBeVisible();
     await expect(actionBarButtons).toHaveCount(3);
     await expect(labelRole).toBeVisible();
     await expect(counter).toBeVisible();

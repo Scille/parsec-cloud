@@ -113,7 +113,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(linkRequests).toHaveCount(1);
     await expect(linkRequests.nth(0).locator('.request-type__label')).toHaveText(identitySystem === 'pki' ? 'PKI' : 'SSO');
     await expect(linkRequests.nth(0).locator('.person-name')).toHaveText(expectedPersonName);
-    await expect(linkRequests.nth(0).locator('.request-email__label')).toHaveText(
+    await expect(linkRequests.nth(0).locator('.label-email')).toHaveText(
       identitySystem === 'pki' ? 'bob@black-mesa.corp' : /^ [a-f0-9-]+@example\.invalid$/,
     );
 
@@ -263,7 +263,7 @@ for (const identitySystem of ['pki', 'openbao']) {
     await expect(linkRequests).toHaveCount(1);
     await expect(linkRequests.nth(0).locator('.request-type__label')).toHaveText(identitySystem === 'pki' ? 'PKI' : 'SSO');
     await expect(linkRequests.nth(0).locator('.person-name')).toHaveText(expectedPersonName);
-    await expect(linkRequests.nth(0).locator('.request-email__label')).toHaveText(
+    await expect(linkRequests.nth(0).locator('.label-email')).toHaveText(
       identitySystem === 'pki' ? 'bob@black-mesa.corp' : /^ [a-f0-9-]+@example\.invalid$/,
     );
 
@@ -352,7 +352,7 @@ msTest('Cannot accept PKI request', async ({ context }) => {
 
   await expect(linkRequests.nth(0).locator('.request-type__label')).toHaveText('PKI');
   await expect(linkRequests.nth(0).locator('.person-name')).toHaveText('Bob');
-  await expect(linkRequests.nth(0).locator('.request-email__label')).toHaveText('bob@black-mesa.corp');
+  await expect(linkRequests.nth(0).locator('.label-email')).toHaveText('bob@black-mesa.corp');
 
   const acceptButton = linkRequests.nth(0).locator('.request-actions').locator('ion-button').nth(0);
   await expect(acceptButton).toBeHidden();

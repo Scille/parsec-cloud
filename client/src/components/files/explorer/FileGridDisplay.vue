@@ -12,7 +12,7 @@
       ref="containerScroll"
       @contextmenu="onContextMenu"
     >
-      <div class="folders-container-grid">
+      <div class="grid-container files-grid-container">
         <file-card
           class="folder-grid-item"
           ref="folderItems"
@@ -130,7 +130,7 @@ async function scrollToSelected(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.folders-container-grid {
+.files-grid-container {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;

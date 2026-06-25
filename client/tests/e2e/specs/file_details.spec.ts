@@ -85,7 +85,7 @@ msTest.describe(() => {
 
     await expect(documents.locator('.topbar-left__breadcrumb')).toContainText('wksp1');
     await documents.locator('#folders-ms-action-bar').locator('#grid-view').click();
-    const files = documents.locator('.folders-container-grid').locator('.file-card-item');
+    const files = documents.locator('.files-grid-container').locator('.file-card-item');
     await expect(files).toHaveCount(1);
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     await expect(documents.locator('.file-details-modal')).toBeHidden();

@@ -2,16 +2,16 @@
 
 <template>
   <ion-list
-    class="list users-container-list"
+    class="list-container users-list-container"
     id="users-page-user-list"
     :class="{ 'user-list-mobile': isSmallDisplay }"
   >
     <ion-list-header
-      class="user-list-header"
+      class="user-list-header list-header"
       lines="full"
       v-if="isLargeDisplay"
     >
-      <ion-label class="user-list-header__label header-label-selected">
+      <ion-label class="list-header-label header-label-selected">
         <ms-checkbox
           @change="users.selectAll($event)"
           :checked="allSelected"
@@ -19,57 +19,57 @@
         />
       </ion-label>
       <ion-label
-        class="user-list-header__label cell-title header-label-name"
+        class="list-header-label cell-title header-label-name"
         @click="headerSortChange(SortProperty.Name)"
-        :class="{ 'header-label-name-sorted': sortBy === SortProperty.Name }"
+        :class="{ 'list-header-label--sorted': sortBy === SortProperty.Name }"
       >
         {{ $msTranslate('UsersPage.listDisplayTitles.name') }}
         <ion-icon
           v-show="sortBy === SortProperty.Name"
           :icon="sortAscending ? arrowUp : arrowDown"
-          class="header-label-name__sort-icon"
+          class="sort-icon"
         />
       </ion-label>
       <ion-label
-        class="user-list-header__label cell-title header-label-profile"
+        class="list-header-label cell-title header-label-profile"
         @click="headerSortChange(SortProperty.Profile)"
-        :class="{ 'header-label-profile-sorted': sortBy === SortProperty.Profile }"
+        :class="{ 'list-header-label--sorted': sortBy === SortProperty.Profile }"
       >
         {{ $msTranslate('UsersPage.listDisplayTitles.profile') }}
         <ion-icon
           v-show="sortBy === SortProperty.Profile"
           :icon="sortAscending ? arrowUp : arrowDown"
-          class="header-label-name__sort-icon"
+          class="sort-icon"
         />
       </ion-label>
       <ion-label
-        class="user-list-header__label cell-title header-label-email"
+        class="list-header-label cell-title header-label-email"
         @click="headerSortChange(SortProperty.Email)"
-        :class="{ 'header-label-email-sorted': sortBy === SortProperty.Email }"
+        :class="{ 'list-header-label--sorted': sortBy === SortProperty.Email }"
       >
         {{ $msTranslate('UsersPage.listDisplayTitles.email') }}
         <ion-icon
           v-show="sortBy === SortProperty.Email"
           :icon="sortAscending ? arrowUp : arrowDown"
-          class="header-label-name__sort-icon"
+          class="sort-icon"
         />
       </ion-label>
       <ion-label
-        class="user-list-header__label cell-title header-label-join-date"
+        class="list-header-label cell-title header-label-join-date"
         @click="headerSortChange(SortProperty.JoinedDate)"
-        :class="{ 'header-label-join-date-sorted': sortBy === SortProperty.JoinedDate }"
+        :class="{ 'list-header-label--sorted': sortBy === SortProperty.JoinedDate }"
       >
         {{ $msTranslate('UsersPage.listDisplayTitles.joinedOn') }}
         <ion-icon
           v-show="sortBy === SortProperty.JoinedDate"
           :icon="sortAscending ? arrowUp : arrowDown"
-          class="header-label-name__sort-icon"
+          class="sort-icon"
         />
       </ion-label>
-      <ion-label class="user-list-header__label cell-title header-label-status">
+      <ion-label class="list-header-label cell-title header-label-status">
         {{ $msTranslate('UsersPage.listDisplayTitles.status') }}
       </ion-label>
-      <ion-label class="user-list-header__label cell-title header-label-space" />
+      <ion-label class="list-header-label list-item-end cell-title header-label-space" />
     </ion-list-header>
     <ion-text
       class="no-match-result body"

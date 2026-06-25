@@ -10,7 +10,7 @@
       suspended: user.isFrozen(),
       'current-user': user.isCurrent,
       'no-padding-end': !user.isSelected,
-      'user-hovered': !user.isSelected && (menuOpened || isHovered),
+      'user-card-item--hovered': !user.isSelected && (menuOpened || isHovered),
     }"
     @click="$emit('select', user, !user.isSelected)"
     @mouseenter="isHovered = true"
@@ -53,24 +53,24 @@
           <span>{{ user.humanHandle.label }}</span>
           <span
             v-if="user.isCurrent"
-            class="body name-you"
+            class="body user-name--self"
           >
             {{ $msTranslate('UsersPage.currentUser') }}
           </span>
         </ion-text>
-        <div
-          class="user-card-info__email"
+        <ion-text
+          class="user-card-info__email label-email body-sm"
           :title="user.humanHandle.email"
           @click.stop="onCopyEmailClicked(user.humanHandle.email)"
         >
-          <ion-text class="email-label body-sm">{{ user.humanHandle.email }}</ion-text>
+          <span class="label-email__text">{{ user.humanHandle.email }}</span>
           <ion-icon
             v-if="!user.isCurrent"
             :icon="emailCopied ? checkmark : copy"
             class="email-copy-icon"
             :class="{ 'email-copy-icon--copied': emailCopied }"
           />
-        </div>
+        </ion-text>
       </div>
       <div class="user-card-profile">
         <user-profile-tag :profile="user.currentProfile" />
@@ -178,6 +178,90 @@ async function onCopyEmailClicked(email: string): Promise<void> {
       --fill-color: var(--parsec-color-light-secondary-grey);
     }
   }
+
+  .user-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem 0.5rem 1rem 1rem;
+    width: 100%;
+    margin: auto;
+    color: var(--parsec-color-light-secondary-text);
+
+    &-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      &__name {
+        color: var(--parsec-color-light-secondary-text);
+        display: flex;
+        gap: 0.5rem;
+
+        span {
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+
+        .user-name--self {
+          color: var(--parsec-color-light-secondary-grey);
+        }
+      }
+
+      &__email {
+        color: var(--parsec-color-light-secondary-grey);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        gap: 0.125rem;
+
+        .label-email {
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+
+        .email-copy-icon {
+          display: none;
+          color: var(--parsec-color-light-secondary-soft-grey);
+          padding: 0 0.375rem;
+          border-radius: var(--parsec-radius-6);
+          font-size: 1rem;
+          cursor: pointer;
+          color: var(--parsec-color-light-secondary-grey);
+          flex-shrink: 0;
+
+          &--copied {
+            color: var(--parsec-color-light-success-700) !important;
+            display: flex !important;
+          }
+        }
+      }
+    }
+
+    &-profile {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+  }
+
+  &.user-card-item--hovered {
+    .email-copy-icon {
+      display: flex;
+    }
+    .label-email:hover {
+      color: var(--parsec-color-light-primary-600);
+
+      .email-copy-icon {
+        color: var(--parsec-color-light-primary-600);
+      }
+    }
+  }
 }
 
 .card-checkbox {
@@ -189,95 +273,5 @@ async function onCopyEmailClicked(email: string): Promise<void> {
   padding: 1rem;
   right: 0;
   bottom: 0;
-}
-
-.user-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem 0.5rem 1rem 1rem;
-  width: 100%;
-  margin: auto;
-  color: var(--parsec-color-light-secondary-text);
-
-  &-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-
-    &__name {
-      color: var(--parsec-color-light-secondary-text);
-      display: flex;
-      gap: 0.5rem;
-
-      span {
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-      }
-
-      .name-you {
-        color: var(--parsec-color-light-secondary-text);
-        font-weight: 700;
-      }
-    }
-
-    &__email {
-      color: var(--parsec-color-light-secondary-grey);
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-    }
-  }
-
-  &-profile {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-}
-
-.user-card-item {
-  .user-card-info__email {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    gap: 0.125rem;
-  }
-
-  .email-label {
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .email-copy-icon {
-    display: none;
-    color: var(--parsec-color-light-secondary-soft-grey);
-    padding: 0 0.375rem;
-    border-radius: var(--parsec-radius-6);
-    font-size: 1rem;
-    cursor: pointer;
-    color: var(--parsec-color-light-secondary-grey);
-    flex-shrink: 0;
-
-    &--copied {
-      color: var(--parsec-color-light-success-700) !important;
-      display: flex !important;
-    }
-  }
-
-  &.user-hovered {
-    .email-copy-icon {
-      display: flex;
-    }
-    .user-card-info__email:hover {
-      color: var(--parsec-color-light-primary-600);
-
-      .email-copy-icon {
-        color: var(--parsec-color-light-primary-600);
-      }
-    }
-  }
 }
 </style>

@@ -3,12 +3,8 @@
 import { answerQuestion, expect, fillIonInput, getClipboardText, msTest, setWriteClipboardPermission } from '@tests/e2e/helpers';
 
 msTest('Email invitations default state', async ({ invitationsPage }) => {
-  await expect(invitationsPage.locator('.invitations-container-list').locator('.invitations-list-header__label')).toHaveText([
-    'Email',
-    'Sent on',
-    '',
-  ]);
-  const invites = invitationsPage.locator('.invitations-container-list').locator('.invitation-list-item');
+  await expect(invitationsPage.locator('.invitations-list-container').locator('.list-header-label')).toHaveText(['Email', 'Sent on', '']);
+  const invites = invitationsPage.locator('.invitations-list-container').locator('.invitation-list-item');
   await expect(invites).toHaveCount(1);
   await expect(invites.nth(0).locator('.invitation-email')).toHaveText('zack@example.invalid');
   await expect(invites.nth(0).locator('.invitation-sentOn')).toHaveText('Jan 7, 2000');
@@ -35,7 +31,7 @@ msTest('Email invitations default state', async ({ invitationsPage }) => {
 });
 
 msTest('Email invitations start greet', async ({ invitationsPage }) => {
-  const invites = invitationsPage.locator('.invitations-container-list').locator('.invitation-list-item');
+  const invites = invitationsPage.locator('.invitations-list-container').locator('.invitation-list-item');
   await expect(invites).toHaveCount(1);
   const actions = invites.nth(0).locator('.invitation-actions').locator('ion-button');
   await expect(invitationsPage.locator('.greet-organization-modal')).toBeHidden();
@@ -45,7 +41,7 @@ msTest('Email invitations start greet', async ({ invitationsPage }) => {
 
 for (const hasPerms in [true, false]) {
   msTest(`Email invitations copy link ${['without', 'with'][Number(hasPerms)]} permissions`, async ({ invitationsPage }) => {
-    const invites = invitationsPage.locator('.invitations-container-list').locator('.invitation-list-item');
+    const invites = invitationsPage.locator('.invitations-list-container').locator('.invitation-list-item');
     await expect(invites).toHaveCount(1);
     const actions = invites.nth(0).locator('.invitation-actions').locator('ion-button');
     if (hasPerms) {
@@ -65,7 +61,7 @@ for (const hasPerms in [true, false]) {
 }
 
 msTest('Email invitations resend email', async ({ invitationsPage }) => {
-  const invites = invitationsPage.locator('.invitations-container-list').locator('.invitation-list-item');
+  const invites = invitationsPage.locator('.invitations-list-container').locator('.invitation-list-item');
   await expect(invites).toHaveCount(1);
   const actions = invites.nth(0).locator('.invitation-actions').locator('ion-button');
   await actions.nth(2).click();
@@ -80,7 +76,7 @@ msTest('Email invitations resend email', async ({ invitationsPage }) => {
 
 for (const answer of [true, false]) {
   msTest(`Email invitations delete invitation answer ${answer}`, async ({ invitationsPage }) => {
-    const invites = invitationsPage.locator('.invitations-container-list').locator('.invitation-list-item');
+    const invites = invitationsPage.locator('.invitations-list-container').locator('.invitation-list-item');
     await expect(invites).toHaveCount(1);
     const actions = invites.nth(0).locator('.invitation-actions').locator('ion-button');
     await actions.nth(3).click();
@@ -161,7 +157,7 @@ const INVITATION_PARAMS: Array<InvitationParam> = [
 for (const params of INVITATION_PARAMS) {
   msTest(`Invite new email: ${params.description}`, async ({ invitationsPage }) => {
     const viewToggle = invitationsPage.locator('.toggle-view-container');
-    const invites = invitationsPage.locator('.invitations-container-list').locator('.invitation-list-item');
+    const invites = invitationsPage.locator('.invitations-list-container').locator('.invitation-list-item');
     await expect(invites).toHaveCount(1);
     await viewToggle.locator('#invite-user-button').click();
     const modal = invitationsPage.locator('.invite-modal');
