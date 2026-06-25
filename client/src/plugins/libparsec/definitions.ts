@@ -408,6 +408,7 @@ export interface ServerConfig {
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
     advisoryDeviceFileProtection: Array<AdvisoryDeviceFileProtection>
+    serverVersion: string
 }
 
 export interface ServerOrganizationConfig {
