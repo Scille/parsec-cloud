@@ -67,22 +67,7 @@ impl AnonymousServerCmds {
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
-        #[cfg(feature = "test-with-testbed")]
-        let request = {
-            match self.send_hook.high_level_send(request).await {
-                crate::testbed::HighLevelSendResult::Resolved(rep) => return rep,
-                crate::testbed::HighLevelSendResult::PassToLowLevel(req) => req,
-            }
-        };
-
-        let request_body = request.api_dump().expect("Unexpected serialization error");
-
-        // Split non-generic code out of `send` to limit the amount of code generated
-        // by monomorphization
-        let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
-        let (response_body, _) = self.internal_send(api_version, request_body).await?;
-
-        Ok(T::api_load_response(&response_body)?)
+        self.send_verbose(request).await.map(|(rep, _)| rep)
     }
 
     /// Returns response, server version
@@ -131,7 +116,7 @@ impl AnonymousServerCmds {
         let server_version = resp
             .headers()
             .get("Server")
-            .map_or("unknown", |v| v.to_str().unwrap_or("invalid"))
+            .map_or("<unknown>", |v| v.to_str().unwrap_or("<invalid>"))
             .to_string();
 
         match resp.status().as_u16() {

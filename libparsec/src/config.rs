@@ -179,7 +179,6 @@ pub async fn get_server_config(
                 ),
             },
             server_version
-
         }),
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
