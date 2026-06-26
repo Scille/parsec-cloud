@@ -55,6 +55,7 @@
       v-if="state === AuthenticationCardState.Update"
       :disabled="disabled"
       @click="$emit('update-clicked')"
+      fill="outline"
     >
       {{ $msTranslate('Authentication.update') }}
     </ion-button>
@@ -275,11 +276,11 @@ function keyringUnavailableMessage(): Translatable {
 
     .authentication-card__update-button {
       margin-left: auto;
-      color: var(--parsec-color-light-secondary-white);
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
+      color: var(--parsec-color-light-secondary-text);
+      --background-hover: var(--parsec-color-light-secondary-premiere);
 
       &::part(native) {
+        border-color: var(--parsec-color-light-secondary-light);
         padding: 0.75rem 1.125rem;
       }
     }

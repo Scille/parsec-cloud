@@ -167,7 +167,7 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
   await authRadio.nth(3).click();
 
-  await expect(changePasswordModal.locator('#next-button')).toHaveText('Update');
+  await expect(changePasswordModal.locator('#next-button')).toHaveText('Confirm change');
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
   await changePasswordModal.locator('.proconnect-button').click();
   await expect(changePasswordModal.locator('#next-button')).toNotHaveDisabledAttribute();

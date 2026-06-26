@@ -179,7 +179,7 @@ msTest('Login with forbidden auth method and update', async ({ home }) => {
   await expect(authModal.locator('.proconnect-button')).toBeHidden();
   await expect(authModal.locator('.proconnect-group--connected')).toBeVisible();
   await expect(authModal.locator('.proconnect-group--connected')).toHaveText('Connected');
-  await expect(authModal.locator('#next-button')).toHaveText('Update');
+  await expect(authModal.locator('#next-button')).toHaveText('Confirm change');
   await expect(authModal.locator('#next-button')).toBeTrulyEnabled();
   await authModal.locator('#next-button').click();
   await expect(authModal).toBeHidden();
@@ -279,7 +279,7 @@ msTest('Login update auth method and setup totp', async ({ home }) => {
   await expect(authModal.locator('.proconnect-button')).toBeHidden();
   await expect(authModal.locator('.proconnect-group--connected')).toBeVisible();
   await expect(authModal.locator('.proconnect-group--connected')).toHaveText('Connected');
-  await expect(authModal.locator('#next-button')).toHaveText('Update');
+  await expect(authModal.locator('#next-button')).toHaveText('Confirm change');
   await expect(authModal.locator('#next-button')).toBeTrulyEnabled();
   await authModal.locator('#next-button').click();
   await expect(authModal).toBeHidden();
