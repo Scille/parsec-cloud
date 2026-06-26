@@ -633,8 +633,8 @@
             "updateRoleSuccess": "Le rôle des membres sélectionnées est désormais {role}.",
             "unshareSuccess": "L'espace de travail n'est plus partagé avec les membres sélectionnés."
         },
-        "onlyOwnerWarning": "Nous vous recommandons de promouvoir quelqu'un d'autre au poste de {owner}. Vous éviterez ainsi de perdre des données si vous quittez l'organisation.",
-        "owner": "Propriétaire",
+        "onlyUserWarning": "Afin d'éviter toute perte de données, partagez cet espace de travail avec d'autres utilisateurs ({link}).",
+        "seeMore": "en savoir plus",
         "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'.",
         "information": "Informations sur le partage",
         "buttonClose": "Fermer",

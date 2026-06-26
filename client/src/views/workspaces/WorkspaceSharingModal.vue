@@ -85,46 +85,28 @@
           placeholder="WorkspaceSharing.searchPlaceholder"
         />
       </div>
-
-      <div
-        class="report-text-content"
-        v-if="isOnlyOwner() || orgHasExternalUsers"
+      <!-- We need at least the owner and someone else (2) -->
+      <ms-report-text
+        :theme="MsReportTheme.Info"
+        id="only-user-warning"
+        v-if="countTotalSharedUsers < 2"
       >
-        <ms-report-text
-          :theme="MsReportTheme.Info"
-          id="only-owner-warning"
-          v-if="isOnlyOwner()"
+        <i18n-t
+          keypath="WorkspaceSharing.onlyUserWarning"
+          scope="global"
         >
-          <i18n-t
-            keypath="WorkspaceSharing.onlyOwnerWarning"
-            scope="global"
-          >
-            <template #owner>
-              <strong> {{ $msTranslate('WorkspaceSharing.owner') }} </strong>
-            </template>
-          </i18n-t>
-        </ms-report-text>
-        <ms-report-text
-          :theme="MsReportTheme.Info"
-          id="profile-assign-info"
-          v-if="orgHasExternalUsers"
-        >
-          <i18n-t
-            keypath="WorkspaceSharing.batchSharing.outsiderRoleWarning"
-            scope="global"
-          >
-            <template #external>
-              <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.external') }} </strong>
-            </template>
-            <template #contributor>
-              <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.contributor') }} </strong>
-            </template>
-            <template #reader>
-              <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.reader') }} </strong>
-            </template>
-          </i18n-t>
-        </ms-report-text>
-      </div>
+          <template #link>
+            <ion-text
+              button
+              class="see-more-button button-medium"
+              fill="clear"
+              @click="openDocumentation"
+            >
+              {{ $msTranslate('WorkspaceSharing.seeMore') }}
+            </ion-text>
+          </template>
+        </i18n-t>
+      </ms-report-text>
 
       <!-- content -->
       <div class="modal-container">
@@ -279,6 +261,7 @@ import {
   getWorkspaceSharing,
   shareWorkspace,
 } from '@/parsec';
+import { Env } from '@/services/environment';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
@@ -364,12 +347,14 @@ const filteredNotSharedUserRoles = computed(() => {
 
 const selectedUsers = computed(() => userRoles.value.filter((user) => user.isSelected === true));
 const countSharedUsers = computed(() => filteredSharedUserRoles.value.length + (clientInfo.value ? 1 : 0));
+const countTotalSharedUsers = computed(
+  () => userRoles.value.filter((userRole) => userRole.role !== null).length + (clientInfo.value ? 1 : 0),
+);
 const selectableFilteredMembers = computed(() => {
   return filteredSharedUserRoles.value.filter((user) => user.role && canSelectUser(user.user.profile, user.role));
 });
 const someMembersSelected = computed(() => selectableFilteredMembers.value.some((user) => user.isSelected === true));
 const allMembersSelected = computed(() => selectableFilteredMembers.value.every((user) => user.isSelected === true));
-const orgHasExternalUsers = computed(() => userRoles.value.some((user) => user.user.profile === UserProfile.Outsider));
 const batchSharingEnabled = computed(() => {
   return props.ownRole === WorkspaceRole.Owner || props.ownRole === WorkspaceRole.Manager;
 });
@@ -513,18 +498,6 @@ onMounted(async () => {
   ownProfile = await getClientProfile();
   await refreshSharingInfo();
 });
-
-function isOnlyOwner(): boolean {
-  if (props.ownRole !== WorkspaceRole.Owner) {
-    return false;
-  }
-  for (const user of userRoles.value) {
-    if (user.role === WorkspaceRole.Owner) {
-      return false;
-    }
-  }
-  return true;
-}
 
 async function updateUserRole(
   user: UserTuple,
@@ -682,19 +655,31 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
   showCheckboxes.value = false;
   await refreshSharingInfo();
 }
+
+async function openDocumentation(): Promise<void> {
+  await Env.Links.openDocumentationUserGuideLink('parsec_workspaces', 'share-a-workspace');
+}
 </script>
 
 <style scoped lang="scss">
-.report-text-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  position: relative;
-  padding-inline: 2rem;
+#only-user-warning {
   margin-top: 1rem;
+  margin-inline: 2rem;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-inline: 1.5rem;
+    margin-inline: 1.5rem;
+  }
+
+  .see-more-button {
+    font-size: 0.875rem;
+    text-decoration: underline;
+    color: var(--parsec-color-light-primary-500);
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      color: var(--parsec-color-light-primary-600);
+    }
   }
 }
 

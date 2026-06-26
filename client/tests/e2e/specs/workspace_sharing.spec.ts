@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DisplaySize, expect, fillIonInput, login, MsPage, msTest } from '@tests/e2e/helpers';
+import { DisplaySize, expect, fillIonInput, login, MsPage, msTest, openExternalLink } from '@tests/e2e/helpers';
 
 for (const displaySize of ['small', 'large']) {
   msTest(`Workspace sharing modal default state on ${displaySize} display`, { tag: '@important' }, async ({ workspaceSharingModal }) => {
@@ -11,9 +11,9 @@ for (const displaySize of ['small', 'large']) {
     await expect(workspaceSharingModal.locator('.ms-modal-header__title')).toHaveText('Share the workspace');
     await expect(workspaceSharingModal.locator('.sharing-modal__workspace__title')).toHaveText('wksp1');
     const content = workspaceSharingModal.locator('.ms-modal-content');
-    await expect(content.locator('#only-owner-warning')).toBeVisible();
     const users = content.locator('.user-member-item');
     await expect(users).toHaveCount(2);
+    await expect(content.locator('#only-user-warning')).toBeHidden();
     await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
     await expect(users.locator('.dropdown-button')).toHaveText(['Owner', 'Reader']);
     await expect(users.nth(0).locator('.dropdown-button')).toHaveDisabledAttribute();
@@ -98,7 +98,7 @@ msTest('Share with external', async ({ workspaceSharingModal }) => {
 
 msTest('Unshare workspace', async ({ workspaceSharingModal }) => {
   msTest.setTimeout(45_000);
-  const page = workspaceSharingModal.page();
+  const page = workspaceSharingModal.page() as MsPage;
   const secondTab = await (workspaceSharingModal.page() as MsPage).openNewTab();
   // Login on the second tab with Bob, should have one workspace shared by default
   await login(secondTab, 'Boby McBobFace');
@@ -121,6 +121,13 @@ msTest('Unshare workspace', async ({ workspaceSharingModal }) => {
   await expect(page).toShowToast('The workspace is no longer shared with Boby McBobFace.', 'Success');
   await expect(content.locator('.user-list-members').locator('.workspace-user-role')).toHaveCount(1);
   await expect(content.locator('.user-list-suggestions').locator('.workspace-user-role')).toHaveCount(2);
+  await expect(content.locator('#only-user-warning')).toBeVisible();
+  await expect(content.locator('#only-user-warning')).toContainText('To prevent data loss, share this workspace with other users');
+  await openExternalLink(
+    page,
+    workspaceSharingModal.locator('#only-user-warning').locator('.see-more-button'),
+    new RegExp('^https://docs\\.parsec\\.cloud/(en|fr)/[a-z0-9-+.]+/userguide/parsec_workspaces\\.html(#share-a-workspace)?$'),
+  );
 
   // Check that Bob doesn't have any workspaces anymore
   await expect(workspaces).toHaveCount(0);
@@ -211,15 +218,12 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   const activateBatchButton = content.locator('#batch-activate-button');
   const membersCheckbox = content.locator('#all-members-checkbox');
 
-  await expect(content.locator('#profile-assign-info')).toBeVisible();
   await expect(batchDropdown).toBeHidden();
   await expect(activateBatchButton).toContainText('Select');
   await expect(membersCheckbox).toBeHidden();
 
   // Share with non-external users
   await activateBatchButton.click();
-  await expect(content.locator('#profile-assign-info')).toBeVisible();
-  await expect(content.locator('#profile-assign-info')).toContainText('External profiles can only have Contributor or Reader roles.');
   await expect(batchDropdown).toBeVisible();
   await expect(batchDropdown).toBeTrulyDisabled();
   await expect(activateBatchButton).toContainText('Finish');
@@ -235,7 +239,6 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   await roles.nth(4).click();
   await expect(workspaceSharingModal.page()).toShowToast('The workspace is no longer shared with selected members.', 'Success');
 
-  await expect(content.locator('#profile-assign-info')).toBeVisible();
   await expect(batchDropdown).toBeHidden();
   await expect(activateBatchButton).toContainText('Select');
   await expect(membersCheckbox).toBeHidden();

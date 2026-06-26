@@ -634,8 +634,8 @@
             "updateRoleSuccess": "Selected members' roles have been updated to {role}.",
             "unshareSuccess": "The workspace is no longer shared with selected members."
         },
-        "onlyOwnerWarning": "To prevent data loss if you ever leave the organization, we recommend promoting someone else to {owner} on this workspace.",
-        "owner": "Owner",
+        "onlyUserWarning": "To prevent data loss, share this workspace with other users ({link}).",
+        "seeMore": "see more",
         "noMatch": "No user found that matches '{query}'.",
         "information": "Sharing information",
         "buttonClose": "Close",
