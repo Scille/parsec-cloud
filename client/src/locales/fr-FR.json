@@ -2235,7 +2235,7 @@
         "cancelButton": "Annuler",
         "nextButton": "Continuer",
         "passwordPlaceholder": "••••••••••",
-        "changeAuthenticationButton": "Modifier",
+        "changeAuthenticationButton": "Confirmer le changement",
         "authenticationUpdated": "L'authentification a été mise à jour.",
         "tabs": {
             "account": {

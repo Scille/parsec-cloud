@@ -260,7 +260,7 @@ msTest('Change auth with TOTP active', async ({ myProfilePage }) => {
   await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
   await authRadio.nth(3).click();
 
-  await expect(nextButton).toHaveText('Update');
+  await expect(nextButton).toHaveText('Confirm change');
   await expect(nextButton).toHaveDisabledAttribute();
   await changePasswordModal.locator('.proconnect-button').click();
   await expect(nextButton).toNotHaveDisabledAttribute();
