@@ -150,6 +150,7 @@ Use your client credentials (``client_id`` and ``client_secret``) to replace ``$
 to show up in the shell history.
 
 .. code-block:: bash
+
    OIDC_PATH=parsec
 
    # Enable the OIDC auth method at path "$OIDC_PATH"
