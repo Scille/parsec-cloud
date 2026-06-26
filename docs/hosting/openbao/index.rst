@@ -142,22 +142,24 @@ Enable the required secrets engines
 Enable and configure the OIDC auth method
 -----------------------------------------
 
-The path ``<parsec_oidc>`` is used below for the OIDC auth method. If you want you can
+The path ``$OIDC_PATH`` is used below for the OIDC auth method. If you want you can
 specify a different mount path.
 
-Use your client credentials to replace ``<your-client-id>`` and load the secret from a
+Use your client credentials (``client_id`` and ``client_secret``) to replace ``$OIDC_CLIENT_ID`` and load the secret from a
 ``client-secret.txt`` file so it is not displayed in the command line and to prevent it
 to show up in the shell history.
 
 .. code-block:: bash
 
-   # Enable the OIDC auth method at path "<parsec_oidc>"
-   bao auth enable -path=<parsec_oidc> oidc
+   OIDC_PATH=parsec
+
+   # Enable the OIDC auth method at path "$OIDC_PATH"
+   bao auth enable -path="$OIDC_PATH" oidc
 
    # Point it at your identity provider and set the client credentials
-   bao write auth/<parsec_oidc>/config \
-       oidc_discovery_url="https://<parsec_oidc>.example.com/login" \
-       oidc_client_id="<your-client-id>" \
+   bao write auth/$OIDC_PATH/config \
+       oidc_discovery_url="https://myoidc.example.com/login" \
+       oidc_client_id="$OIDC_CLIENT_ID" \
        oidc_client_secret=@client-secret.txt \
        default_role="default"
 
@@ -170,10 +172,10 @@ matches the authenticated user's email.
 
 .. code-block:: bash
 
-   bao write auth/<parsec_oidc>/role/default \
+   bao write auth/$OIDC_PATH/role/default \
        user_claim="email" \
-       allowed_redirect_uris="https://<your-parsec-server>/client/oidc/callback" \
-       allowed_redirect_uris="https://callback.parsec.cloud.invalid/oidc/callback" \
+       allowed_redirect_uris="https://parsec.example.com/client/oidc/callback","https://callback.parsec.cloud.invalid/oidc/callback" \
+       token_ttl=1m \
        token_policies="parsec-default"
 
 .. note::
@@ -210,18 +212,20 @@ Verify the setup
 .. code-block:: bash
 
    # Log in as a test user
-   bao login -method=oidc -path=<parsec_oidc>
+   bao login -method=oidc -path=$OIDC_PATH
 
    # Confirm the token has the expected capabilities:
    bao token capabilities \
-   transit/sign/entity-$(bao token lookup -format=json | jq -r '.data.entity_id')
+     transit/sign/entity-$(bao token lookup -format=json | jq -r '.data.entity_id')
 
 Configure CORS
 --------------
 
 .. code-block:: bash
 
-   bao write sys/config/cors allowed_origins='https://<your-parsec-server>' allowed_origins='parsec-desktop://-'
+   bao write sys/config/cors \
+    allowed_origins='https://parsec.example.com','parsec-desktop://-' \
+    allowed_headers=User-Agent
 
 .. note:: The `parsec-desktop://-` domain is used by the native Parsec client.
 
@@ -229,8 +233,8 @@ You can check that CORS is correctly configured for your domain with the followi
 
 .. code-block:: bash
 
-   curl -v -X OPTIONS https://<your-openbao-server>/v1/auth/<parsec_oidc>/oidc/auth_url \
-         -H "Origin: https://<your-parsec-server>" \
+   curl -v -X OPTIONS https://openbao.example.com/v1/auth/$OIDC_PATH/oidc/auth_url \
+         -H "Origin: https://parsec.example.com" \
          -H "Access-Control-Request-Method: GET"
 
 Parsec Server configuration

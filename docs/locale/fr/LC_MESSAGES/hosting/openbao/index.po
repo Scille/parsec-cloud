@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-09 16:31+0200\n"
+"POT-Creation-Date: 2026-06-26 14:50+0000\n"
 "PO-Revision-Date: 2026-05-26 16:35+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -299,29 +299,31 @@ msgstr "Activer et configurer la méthode d'authentification OIDC"
 
 #: ../../hosting/openbao/index.rst:145
 msgid ""
-"The path ``<parsec_oidc>`` is used below for the OIDC auth method. If you "
-"want you can specify a different mount path."
+"The path ``$OIDC_PATH`` is used below for the OIDC auth method. If you want "
+"you can specify a different mount path."
 msgstr ""
-"Le chemin ``<parsec_oidc>`` est utilisé ci-dessous pour la méthode "
+"Le chemin ``$OIDC_PATH`` est utilisé ci-dessous pour la méthode "
 "d'authentification OIDC. Si vous le souhaitez, vous pouvez indiquer un autre "
 "chemin de montage."
 
 #: ../../hosting/openbao/index.rst:148
 msgid ""
-"Use your client credentials to replace ``<your-client-id>`` and load the "
-"secret from a ``client-secret.txt`` file so it is not displayed in the "
-"command line and to prevent it to show up in the shell history."
+"Use your client credentials (``client_id`` and ``client_secret``) to replace "
+"``$OIDC_CLIENT_ID`` and load the secret from a ``client-secret.txt`` file so "
+"it is not displayed in the command line and to prevent it to show up in the "
+"shell history."
 msgstr ""
-"Utilisez les identifiants de votre client pour remplacer ``<your-client-"
-"id>`` et chargez le secret à partir d'un fichier ``client-secret.txt`` afin "
-"qu'il n'apparaisse pas dans la ligne de commande et qu'il ne soit pas "
-"enregistré dans l'historique du shell."
+"Utilisez les identifiants de votre client (``client_id`` et "
+"``client_secret``) pour remplacer ``$OIDC_CLIENT_ID`` et chargez le secret à "
+"partir d'un fichier ``client-secret.txt`` afin qu'il n'apparaisse pas dans "
+"la ligne de commande et qu'il ne soit pas enregistré dans l'historique du "
+"shell."
 
-#: ../../hosting/openbao/index.rst:165
+#: ../../hosting/openbao/index.rst:166
 msgid "Configure the OIDC role"
 msgstr "Configurer le rôle OIDC"
 
-#: ../../hosting/openbao/index.rst:167
+#: ../../hosting/openbao/index.rst:168
 msgid ""
 "The role maps a field from the OIDC token to the OpenBao entity. Parsec uses "
 "the ``email`` claim to identify users, so that the enrollment workflow can "
@@ -334,7 +336,7 @@ msgstr ""
 "l'adresse e-mail figurant dans la charge utile d'enrôlement correspond bien "
 "à celle de l'utilisateur authentifié."
 
-#: ../../hosting/openbao/index.rst:181
+#: ../../hosting/openbao/index.rst:182
 msgid ""
 "``allowed_redirect_uris`` must include all redirect URIs that the Parsec "
 "client will use. Consult your OpenBao deployment documentation for the exact "
@@ -344,11 +346,11 @@ msgstr ""
 "redirection que le client Parsec utilisera. Consultez la documentation de "
 "déploiement d'OpenBao pour connaître les valeurs exactes."
 
-#: ../../hosting/openbao/index.rst:185
+#: ../../hosting/openbao/index.rst:186
 msgid "ACL policy"
 msgstr "Politique relative à l'ACL"
 
-#: ../../hosting/openbao/index.rst:187
+#: ../../hosting/openbao/index.rst:188
 msgid ""
 "To define the :abbr:`ACL (Access Control List)` policy, create a file "
 "``parsec-default.hcl`` with the following content:"
@@ -356,28 +358,28 @@ msgstr ""
 "Afin de définir la politique :abbr:`ACL (Access Control List)`, créez un "
 "fichier ``parsec-default.hcl`` avec le contenu suivant :"
 
-#: ../../hosting/openbao/index.rst:193
+#: ../../hosting/openbao/index.rst:194
 msgid "parsec-default.hcl"
 msgstr "parsec-default.hcl"
 
-#: ../../hosting/openbao/index.rst:201
+#: ../../hosting/openbao/index.rst:202
 msgid "Apply the policy:"
 msgstr "Appliquez-la :"
 
-#: ../../hosting/openbao/index.rst:208
+#: ../../hosting/openbao/index.rst:209
 msgid "Verify the setup"
 msgstr "Vérifiez la configuration"
 
-#: ../../hosting/openbao/index.rst:220
+#: ../../hosting/openbao/index.rst:221
 msgid "Configure CORS"
 msgstr "Configurer CORS"
 
-#: ../../hosting/openbao/index.rst:226
+#: ../../hosting/openbao/index.rst:229
 msgid "The `parsec-desktop://-` domain is used by the native Parsec client."
 msgstr ""
 "Le domaine `parsec-desktop://-` est utilisé par le client natif Parsec."
 
-#: ../../hosting/openbao/index.rst:228
+#: ../../hosting/openbao/index.rst:231
 msgid ""
 "You can check that CORS is correctly configured for your domain with the "
 "following command:"
@@ -385,18 +387,18 @@ msgstr ""
 "Vous pouvez vérifier que CORS est correctement configuré pour votre domaine "
 "avec la commande suivante :"
 
-#: ../../hosting/openbao/index.rst:237
+#: ../../hosting/openbao/index.rst:240
 msgid "Parsec Server configuration"
 msgstr "Configuration du serveur Parsec"
 
-#: ../../hosting/openbao/index.rst:239
+#: ../../hosting/openbao/index.rst:242
 msgid ""
 "Once OpenBao server is set up, you will need to configure your Parsec Server."
 msgstr ""
 "Une fois le serveur OpenBao installé, vous devrez configurer votre serveur "
 "Parsec."
 
-#: ../../hosting/openbao/index.rst:241
+#: ../../hosting/openbao/index.rst:244
 msgid ""
 "Following the same approach used during deployment, create a file to store "
 "the required environment variables (enter the ``OPENBAO_SERVER_URL`` from "
@@ -406,15 +408,15 @@ msgstr ""
 "enregistrer les variables d'environnement requises (saisissez la valeur "
 "``OPENBAO_SERVER_URL`` indiquée précédemment) :"
 
-#: ../../hosting/openbao/index.rst:244
+#: ../../hosting/openbao/index.rst:247
 msgid "parsec-openbao.env"
 msgstr "parsec-openbao.env"
 
-#: ../../hosting/openbao/index.rst:252
+#: ../../hosting/openbao/index.rst:255
 msgid "Parsec Server with Docker"
 msgstr "Parsec Server avec Docker"
 
-#: ../../hosting/openbao/index.rst:254
+#: ../../hosting/openbao/index.rst:257
 msgid ""
 "If you deployed Parsec Server with Docker, edit the Docker Compose file to "
 "add ``parsec-openbao.env``:"
@@ -422,19 +424,19 @@ msgstr ""
 "Si vous avez déployé Parsec Server avec Docker, modifiez le fichier Docker "
 "Compose pour y ajouter ``parsec-openbao.env`` :"
 
-#: ../../hosting/openbao/index.rst:257
+#: ../../hosting/openbao/index.rst:260
 msgid "parsec-server.docker.yaml"
 msgstr "parsec-server.docker.yaml"
 
-#: ../../hosting/openbao/index.rst:271 ../../hosting/openbao/index.rst:301
+#: ../../hosting/openbao/index.rst:274 ../../hosting/openbao/index.rst:304
 msgid "And then restart the server."
 msgstr "Puis redémarrez le serveur."
 
-#: ../../hosting/openbao/index.rst:274
+#: ../../hosting/openbao/index.rst:277
 msgid "Parsec Server on Linux"
 msgstr "Parsec Server sous Linux"
 
-#: ../../hosting/openbao/index.rst:276
+#: ../../hosting/openbao/index.rst:279
 msgid ""
 "If you deployed Parsec Server directly on Linux, edit your run script to add "
 "``parsec-openbao.env``:"
@@ -442,6 +444,6 @@ msgstr ""
 "Si vous avez déployé Parsec Server directement sous Linux, modifiez votre "
 "script d'exécution pour y ajouter « parsec-openbao.env » :"
 
-#: ../../hosting/openbao/index.rst:279
+#: ../../hosting/openbao/index.rst:282
 msgid "run-parsec-server"
 msgstr "run-parsec-server"
