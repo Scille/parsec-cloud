@@ -12,6 +12,7 @@ use libparsec_protocol::{
     anonymous_server_cmds::latest as anonymous_server_cmds, API_LATEST_VERSION,
 };
 use libparsec_tests_fixtures::prelude::*;
+use libparsec_tests_lite::p_assert_eq;
 use libparsec_types::ParsecAddr;
 
 #[parsec_test(testbed = "minimal")]
@@ -72,6 +73,26 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
             pong: "foo".to_owned()
         }
     );
+}
+
+#[parsec_test(testbed = "minimal", with_server)]
+async fn ok_send_verbose(env: &TestbedEnv) {
+    let addr = env.server_addr.clone();
+    let cmds =
+        AnonymousServerCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+    let (rep, version) = cmds
+        .send_verbose(anonymous_server_cmds::ping::Req {
+            ping: "foo".to_owned(),
+        })
+        .await
+        .unwrap();
+    p_assert_eq!(
+        rep,
+        anonymous_server_cmds::ping::Rep::Ok {
+            pong: "foo".to_owned()
+        }
+    );
+    assert!(version.starts_with("parsec/3"))
 }
 
 // Must use a macro to generate the parametrized tests here given `test_register_low_level_send_hook`
