@@ -13,20 +13,19 @@ import { Env } from '@/services/environment';
 namespace ParsecCryptpadCommAPI {
   export const version = 1;
 
-  export enum Events {
-    SaveStatus = 'save-status',
-    Save = 'save',
-    Error = 'error',
-    Ready = 'ready',
-  }
-
   export enum MessageTag {
     CryptpadInitialized = 'cryptpad-initialized',
     ParsecOpenDocument = 'parsec-open-document',
     CryptpadOpenDocumentResult = 'cryptpad-open-document-result',
     ParsecRequestSaveDocument = 'parsec-request-save-document',
     CryptpadRequestSaveDocumentResult = 'cryptpad-request-save-document-result',
-    Event = 'event',
+    CryptpadOnSave = 'cryptpad-on-save',
+    ParsecOnSaveResult = 'parsec-on-save-result',
+    CryptpadOnHasUnsavedChanges = 'cryptpad-on-has-unsaved-changes',
+    CryptpadOnError = 'cryptpad-on-error',
+    CryptpadOnNewKey = 'cryptpad-on-new-key',
+    CryptpadOnInsertImage = 'cryptpad-on-insert-image',
+    ParsecOnInsertImageResult = 'parsec-on-insert-image-result',
   }
 
   export enum Editor {
@@ -82,10 +81,57 @@ namespace ParsecCryptpadCommAPI {
     error: undefined | string;
   }
 
+  export interface MessageCryptpadOnSave {
+    tag: MessageTag.CryptpadOnSave;
+    messageId: number;
+    documentContent: Blob;
+  }
+
+  export interface MessageParsecOnSaveResult {
+    tag: MessageTag.ParsecOnSaveResult;
+    messageId: number;
+  }
+
+  export interface MessageCryptpadOnHasUnsavedChanges {
+    tag: MessageTag.CryptpadOnHasUnsavedChanges;
+    unsaved: boolean;
+  }
+
+  export interface MessageCryptpadOnError {
+    tag: MessageTag.CryptpadOnError;
+    error: string;
+  }
+
+  export interface MessageCryptpadOnNewKey {
+    tag: MessageTag.CryptpadOnNewKey;
+  }
+
+  export interface MessageCryptpadOnInsertImage {
+    tag: MessageTag.CryptpadOnInsertImage;
+    messageId: number;
+  }
+
+  export interface MessageParsecOnInsertImageResult {
+    tag: MessageTag.ParsecOnInsertImageResult;
+    messageId: number;
+  }
+
   // Messages send by the Parsec client and received by the Cryptpad Iframe
-  export type ParsecMessage = MessageParsecOpenDocument | MessageParsecRequestSaveDocument;
+  export type ParsecMessage =
+    | MessageParsecOpenDocument
+    | MessageParsecRequestSaveDocument
+    | MessageParsecOnSaveResult
+    | MessageParsecOnInsertImageResult;
   // Messages send by the Cryptpad Iframe and received by the Parsec client
-  export type CryptpadMessage = MessageCryptpadInitialized | MessageCryptpadOpenDocumentResult | MessageCryptpadRequestSaveDocumentResult;
+  export type CryptpadMessage =
+    | MessageCryptpadInitialized
+    | MessageCryptpadOpenDocumentResult
+    | MessageCryptpadRequestSaveDocumentResult
+    | MessageCryptpadOnSave
+    | MessageCryptpadOnHasUnsavedChanges
+    | MessageCryptpadOnError
+    | MessageCryptpadOnNewKey
+    | MessageCryptpadOnInsertImage;
 }
 
 export import CryptpadEditor = ParsecCryptpadCommAPI.Editor;
@@ -266,6 +312,13 @@ export async function openDocument(
           }
           break;
         }
+        // TODO !!!!
+        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnError:
+        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnHasUnsavedChanges:
+        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnInsertImage:
+        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnNewKey:
+        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnSave:
+        // case ParsecCryptpadCommAPI.MessageTag.CryptpadRequestSaveDocumentResult:
         default: {
           cryptpadLog('warn', `Unknown command: ${JSON.stringify(event.data)}`);
           break;
