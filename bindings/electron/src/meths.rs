@@ -6890,8 +6890,8 @@ fn variant_active_users_limit_js_to_rs<'a>(
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "ActiveUsersLimitLimitedTo" => {
-            let x0 = {
-                let js_val: Handle<JsBigInt> = obj.get(cx, "x0")?;
+            let x1 = {
+                let js_val: Handle<JsBigInt> = obj.get(cx, "x1")?;
                 {
                     let v = js_val
                         .to_u64(cx)
@@ -6899,7 +6899,7 @@ fn variant_active_users_limit_js_to_rs<'a>(
                     v
                 }
             };
-            Ok(libparsec::ActiveUsersLimit::LimitedTo(x0))
+            Ok(libparsec::ActiveUsersLimit::LimitedTo(x1))
         }
         "ActiveUsersLimitNoLimit" => Ok(libparsec::ActiveUsersLimit::NoLimit {}),
         _ => cx.throw_type_error("Object is not a ActiveUsersLimit"),
@@ -6913,11 +6913,11 @@ fn variant_active_users_limit_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::ActiveUsersLimit::LimitedTo(x0, ..) => {
+        libparsec::ActiveUsersLimit::LimitedTo(x1, ..) => {
             let js_tag = JsString::try_new(cx, "ActiveUsersLimitLimitedTo").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = JsBigInt::from_u64(cx, x0);
-            js_obj.set(cx, "x0", js_x0)?;
+            let js_x1 = JsBigInt::from_u64(cx, x1);
+            js_obj.set(cx, "x1", js_x1)?;
         }
         libparsec::ActiveUsersLimit::NoLimit { .. } => {
             let js_tag = JsString::try_new(cx, "ActiveUsersLimitNoLimit").or_throw(cx)?;
@@ -6938,11 +6938,11 @@ fn variant_addr_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::AddrError::DuplicateParam(x0, ..) => {
+        libparsec::AddrError::DuplicateParam(x1, ..) => {
             let js_tag = JsString::try_new(cx, "AddrErrorDuplicateParam").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = JsString::try_new(cx, x0).or_throw(cx)?;
-            js_obj.set(cx, "x0", js_x0)?;
+            let js_x1 = JsString::try_new(cx, x1).or_throw(cx)?;
+            js_obj.set(cx, "x1", js_x1)?;
         }
         libparsec::AddrError::InvalidOrganizationID { .. } => {
             let js_tag = JsString::try_new(cx, "AddrErrorInvalidOrganizationID").or_throw(cx)?;
@@ -6966,11 +6966,11 @@ fn variant_addr_error_rs_to_js<'a>(
             let js_expected = JsString::try_new(cx, expected).or_throw(cx)?;
             js_obj.set(cx, "expected", js_expected)?;
         }
-        libparsec::AddrError::MissingParam(x0, ..) => {
+        libparsec::AddrError::MissingParam(x1, ..) => {
             let js_tag = JsString::try_new(cx, "AddrErrorMissingParam").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = JsString::try_new(cx, x0).or_throw(cx)?;
-            js_obj.set(cx, "x0", js_x0)?;
+            let js_x1 = JsString::try_new(cx, x1).or_throw(cx)?;
+            js_obj.set(cx, "x1", js_x1)?;
         }
         libparsec::AddrError::NotARedirection { .. } => {
             let js_tag = JsString::try_new(cx, "AddrErrorNotARedirection").or_throw(cx)?;
@@ -11194,18 +11194,18 @@ fn variant_distinguished_name_value_js_to_rs<'a>(
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "DistinguishedNameValueCommonName" => {
-            let x0 = {
-                let js_val: Handle<JsString> = obj.get(cx, "x0")?;
+            let x1 = {
+                let js_val: Handle<JsString> = obj.get(cx, "x1")?;
                 js_val.value(cx)
             };
-            Ok(libparsec::DistinguishedNameValue::CommonName(x0))
+            Ok(libparsec::DistinguishedNameValue::CommonName(x1))
         }
         "DistinguishedNameValueEmailAddress" => {
-            let x0 = {
-                let js_val: Handle<JsString> = obj.get(cx, "x0")?;
+            let x1 = {
+                let js_val: Handle<JsString> = obj.get(cx, "x1")?;
                 js_val.value(cx)
             };
-            Ok(libparsec::DistinguishedNameValue::EmailAddress(x0))
+            Ok(libparsec::DistinguishedNameValue::EmailAddress(x1))
         }
         _ => cx.throw_type_error("Object is not a DistinguishedNameValue"),
     }
@@ -11218,18 +11218,18 @@ fn variant_distinguished_name_value_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::DistinguishedNameValue::CommonName(x0, ..) => {
+        libparsec::DistinguishedNameValue::CommonName(x1, ..) => {
             let js_tag = JsString::try_new(cx, "DistinguishedNameValueCommonName").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = JsString::try_new(cx, x0).or_throw(cx)?;
-            js_obj.set(cx, "x0", js_x0)?;
+            let js_x1 = JsString::try_new(cx, x1).or_throw(cx)?;
+            js_obj.set(cx, "x1", js_x1)?;
         }
-        libparsec::DistinguishedNameValue::EmailAddress(x0, ..) => {
+        libparsec::DistinguishedNameValue::EmailAddress(x1, ..) => {
             let js_tag =
                 JsString::try_new(cx, "DistinguishedNameValueEmailAddress").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = JsString::try_new(cx, x0).or_throw(cx)?;
-            js_obj.set(cx, "x0", js_x0)?;
+            let js_x1 = JsString::try_new(cx, x1).or_throw(cx)?;
+            js_obj.set(cx, "x1", js_x1)?;
         }
     }
     Ok(js_obj)
