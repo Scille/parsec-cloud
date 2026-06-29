@@ -16,16 +16,16 @@ namespace ParsecCryptpadCommAPI {
   export enum MessageTag {
     CryptpadInitialized = 'cryptpad-initialized',
     ParsecOpenDocument = 'parsec-open-document',
-    CryptpadOpenDocumentResult = 'cryptpad-open-document-result',
+    CryptpadOpenDocumentReply = 'cryptpad-open-document-reply',
     ParsecRequestSaveDocument = 'parsec-request-save-document',
-    CryptpadRequestSaveDocumentResult = 'cryptpad-request-save-document-result',
+    CryptpadRequestSaveDocumentReply = 'cryptpad-request-save-document-reply',
     CryptpadOnSave = 'cryptpad-on-save',
-    ParsecOnSaveResult = 'parsec-on-save-result',
+    ParsecOnSaveReply = 'parsec-on-save-reply',
     CryptpadOnHasUnsavedChanges = 'cryptpad-on-has-unsaved-changes',
     CryptpadOnError = 'cryptpad-on-error',
     CryptpadOnNewKey = 'cryptpad-on-new-key',
     CryptpadOnInsertImage = 'cryptpad-on-insert-image',
-    ParsecOnInsertImageResult = 'parsec-on-insert-image-result',
+    ParsecOnInsertImageReply = 'parsec-on-insert-image-reply',
   }
 
   export enum Editor {
@@ -62,34 +62,49 @@ namespace ParsecCryptpadCommAPI {
     error: undefined | string;
   }
 
+  // Sent by us, once Cryptpad initialization is done, to open the file to edit/view
   export interface MessageParsecOpenDocument {
     tag: MessageTag.ParsecOpenDocument;
+    messageId: number;
     config: OpenDocumentConfig;
   }
 
-  export interface MessageCryptpadOpenDocumentResult {
-    tag: MessageTag.CryptpadOpenDocumentResult;
+  // Sent by Cryptpad once the file is opened
+  export interface MessageCryptpadOpenDocumentReply {
+    tag: MessageTag.CryptpadOpenDocumentReply;
+    messageId: number;
     error: undefined | string;
   }
 
+  // Sent by us to trigger a save. Basically Cryptpad will behave just
+  // like `autosaveInterval` has been reached: convert the document then
+  // send the Reply through a `MessageCryptpadOnSave` to let us do the
+  // actual save.
   export interface MessageParsecRequestSaveDocument {
     tag: MessageTag.ParsecRequestSaveDocument;
+    messageId: number;
   }
 
-  export interface MessageCryptpadRequestSaveDocumentResult {
-    tag: MessageTag.CryptpadRequestSaveDocumentResult;
+  // Sent by Cryptpad once the save is done (or has failed if `error` field is not `undefined`)
+  export interface MessageCryptpadRequestSaveDocumentReply {
+    tag: MessageTag.CryptpadRequestSaveDocumentReply;
+    messageId: number;
     error: undefined | string;
   }
 
+  // Sent by Cryptpad to actually save the document.
   export interface MessageCryptpadOnSave {
     tag: MessageTag.CryptpadOnSave;
     messageId: number;
     documentContent: Blob;
   }
 
-  export interface MessageParsecOnSaveResult {
-    tag: MessageTag.ParsecOnSaveResult;
+  // Sent by us once the document has been actually saved.
+  // TODO: cannot return an error ?
+  export interface MessageParsecOnSaveReply {
+    tag: MessageTag.ParsecOnSaveReply;
     messageId: number;
+    error: undefined | string;
   }
 
   export interface MessageCryptpadOnHasUnsavedChanges {
@@ -111,22 +126,23 @@ namespace ParsecCryptpadCommAPI {
     messageId: number;
   }
 
-  export interface MessageParsecOnInsertImageResult {
-    tag: MessageTag.ParsecOnInsertImageResult;
+  export interface MessageParsecOnInsertImageReply {
+    tag: MessageTag.ParsecOnInsertImageReply;
     messageId: number;
+    error: undefined | string;
   }
 
   // Messages send by the Parsec client and received by the Cryptpad Iframe
   export type ParsecMessage =
     | MessageParsecOpenDocument
     | MessageParsecRequestSaveDocument
-    | MessageParsecOnSaveResult
-    | MessageParsecOnInsertImageResult;
+    | MessageParsecOnSaveReply
+    | MessageParsecOnInsertImageReply;
   // Messages send by the Cryptpad Iframe and received by the Parsec client
   export type CryptpadMessage =
     | MessageCryptpadInitialized
-    | MessageCryptpadOpenDocumentResult
-    | MessageCryptpadRequestSaveDocumentResult
+    | MessageCryptpadOpenDocumentReply
+    | MessageCryptpadRequestSaveDocumentReply
     | MessageCryptpadOnSave
     | MessageCryptpadOnHasUnsavedChanges
     | MessageCryptpadOnError
@@ -136,16 +152,16 @@ namespace ParsecCryptpadCommAPI {
 
 export import CryptpadEditor = ParsecCryptpadCommAPI.Editor;
 export import CryptpadOpenMode = ParsecCryptpadCommAPI.OpenMode;
-
 export type CryptpadOpenDocumentConfig = ParsecCryptpadCommAPI.OpenDocumentConfig;
 
-interface CryptpadEventHandlers {
+export interface CryptpadEventHandlers {
   onSave: (file: Blob) => void;
   onError: (error: any) => void;
   onReady: () => void;
   onHasUnsavedChanges: (unsaved: boolean) => void;
 }
 
+// TODO: rethink this ?
 export enum CryptpadErrorCode {
   NotAvailable = 'cryptpad-not-available',
   FrameNotLoaded = 'frame-not-loaded',
@@ -155,6 +171,7 @@ export enum CryptpadErrorCode {
   EventError = 'event-error',
 }
 
+// TODO: rethink this ?
 export class CryptpadError extends Error {
   public code: CryptpadErrorCode;
   public details?: string;
@@ -201,6 +218,33 @@ export function isFileEditable(name: string): boolean {
 
 function cryptpadLog(level: 'debug' | 'warn' | 'error' | 'info', message: string): void {
   window.electronAPI.log(level, `[Cryptpad] ${message}`);
+}
+
+// Track the messages we have sent and that produce a response.
+namespace InFlightParsecMessage {
+  let lastMessageId = 0;
+  const inFlightParsecMessages: Array<{ messageId: number; promiseWithResolvers: PromiseWithResolvers<any> }> = [];
+
+  export function registerParsecMessageForReply<T>(): [number, Promise<T>] {
+    // Generate message ID
+    lastMessageId += 1;
+    const messageId = lastMessageId;
+
+    const promiseWithResolvers: PromiseWithResolvers<T> = Promise.withResolvers();
+    inFlightParsecMessages.push({ messageId, promiseWithResolvers });
+
+    return [messageId, promiseWithResolvers.promise];
+  }
+
+  export function retrieveParsecMessageReplyPromise<T>(messageId: number): PromiseWithResolvers<T> | undefined {
+    const index = inFlightParsecMessages.findIndex((x) => {
+      return x.messageId === messageId;
+    });
+    if (index === -1) {
+      return undefined;
+    }
+    return inFlightParsecMessages.splice(index, 1)[0].promiseWithResolvers;
+  }
 }
 
 export interface CryptpadSession {
@@ -251,7 +295,6 @@ export async function openDocument(
       window.addEventListener(
         'message',
         (event) => {
-          console.log('1111 Parsec client receving message', event);
           if (event.origin !== CRYPTPAD_SERVER) {
             return;
           }
@@ -269,13 +312,12 @@ export async function openDocument(
             }
             if (message.error !== undefined) {
               const msg = `Cryptpad Iframe has failed to initialize: ${message.error}`;
-              cryptpadLog('warn', msg);
+              cryptpadLog('error', msg);
               reject(msg);
             }
-            console.log('1111 Cryptpad initialized!');
             resolve();
           } else {
-            cryptpadLog('warn', `Unknown command: ${JSON.stringify(event.data)}`);
+            cryptpadLog('error', `Unknown command: ${JSON.stringify(event.data)}`);
           }
         },
         { signal: abortEventListening.signal },
@@ -298,29 +340,47 @@ export async function openDocument(
   window.addEventListener(
     'message',
     (event) => {
-      console.log('2222 Parsec client receving message', event);
       if (event.origin !== CRYPTPAD_SERVER) {
         return;
       }
+      console.log('2222 Parsec client receving message', event);
 
       switch (event.data.tag) {
-        case ParsecCryptpadCommAPI.MessageTag.CryptpadOpenDocumentResult: {
-          console.log('2222 Cryptpad file opened!');
-          const data = event.data as ParsecCryptpadCommAPI.MessageCryptpadOpenDocumentResult;
-          if (data.error !== undefined) {
-            handlers.onError(new CryptpadError(CryptpadErrorCode.OpenDocumentFailed, event.data.error));
-          }
-          break;
-        }
         // TODO !!!!
         // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnError:
         // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnHasUnsavedChanges:
         // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnInsertImage:
         // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnNewKey:
-        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnSave:
-        // case ParsecCryptpadCommAPI.MessageTag.CryptpadRequestSaveDocumentResult:
+        case ParsecCryptpadCommAPI.MessageTag.CryptpadOnSave: {
+          const data = event.data as ParsecCryptpadCommAPI.MessageCryptpadOnSave;
+
+          // TODO: actual save !
+          // TODO: error handling ?
+
+          sendMessageToFrame({
+            tag: ParsecCryptpadCommAPI.MessageTag.ParsecOnSaveReply,
+            messageId: data.messageId,
+            error: undefined,
+          } as ParsecCryptpadCommAPI.MessageParsecOnSaveReply);
+          break;
+        }
+
+        case ParsecCryptpadCommAPI.MessageTag.CryptpadOpenDocumentReply:
+        case ParsecCryptpadCommAPI.MessageTag.CryptpadRequestSaveDocumentReply: {
+          const data = event.data as
+            | ParsecCryptpadCommAPI.MessageCryptpadOpenDocumentReply
+            | ParsecCryptpadCommAPI.MessageCryptpadRequestSaveDocumentReply;
+          const promiseWithResolvers = InFlightParsecMessage.retrieveParsecMessageReplyPromise(data.messageId);
+          if (promiseWithResolvers !== undefined) {
+            promiseWithResolvers.resolve(data.error);
+          } else {
+            cryptpadLog('error', `Message response with unknown messageId: ${JSON.stringify(event.data)}`);
+          }
+          break;
+        }
+
         default: {
-          cryptpadLog('warn', `Unknown command: ${JSON.stringify(event.data)}`);
+          cryptpadLog('error', `Unknown command: ${JSON.stringify(event.data)}`);
           break;
         }
       }
@@ -333,7 +393,7 @@ export async function openDocument(
       //       return;
       //     }
       //     switch (event.data.command) {
-      //       case ParsecCryptpadCommAPI.Commands.InitResult: {
+      //       case ParsecCryptpadCommAPI.Commands.InitReply: {
       //         if (event.data.success) {
       //           cryptpadLog('debug', 'Init success, opening the file...');
       //           sendMessageToFrame(ParsecCryptpadCommAPI.Commands.Open, options);
@@ -342,7 +402,7 @@ export async function openDocument(
       //         }
       //         break;
       //       }
-      //       case ParsecCryptpadCommAPI.Commands.OpenResult: {
+      //       case ParsecCryptpadCommAPI.Commands.OpenReply: {
       //         if (event.data.success) {
       //           cryptpadLog('debug', 'Successfully opened the document');
       //         } else {
@@ -393,18 +453,33 @@ export async function openDocument(
 
   // 3) Finally open the document
 
+  const [messageId, replyPromise] =
+    InFlightParsecMessage.registerParsecMessageForReply<ParsecCryptpadCommAPI.MessageCryptpadOpenDocumentReply>();
   sendMessageToFrame({
     tag: ParsecCryptpadCommAPI.MessageTag.ParsecOpenDocument,
+    messageId,
     config,
   } as ParsecCryptpadCommAPI.MessageParsecOpenDocument);
+  const reply = await replyPromise;
+
+  if (reply !== undefined) {
+    handlers.onError(reply.error);
+    return undefined;
+  }
 
   return {
     controller,
-    save: () => {
+    save: async (): Promise<undefined | string> => {
       cryptpadLog('debug', 'Triggering manual save');
+      const [messageId, replyPromise] =
+        InFlightParsecMessage.registerParsecMessageForReply<ParsecCryptpadCommAPI.MessageCryptpadRequestSaveDocumentReply>();
       sendMessageToFrame({
         tag: ParsecCryptpadCommAPI.MessageTag.ParsecRequestSaveDocument,
+        messageId,
       });
+      const reply = await replyPromise;
+      // TODO: Throw exception ? Return a better typed thing ? Use `handlers.onError` ?
+      return reply.error;
     },
   };
 }

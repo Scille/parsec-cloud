@@ -186,7 +186,7 @@ async function loadEditor(): Promise<void> {
       key: crypto.randomUUID(),
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UNKNOWN_USER'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
-      autosaveInterval: 10,
+      autosaveInterval: 10, // TODO 60s should be enough
       mode: readOnly ? CryptpadOpenMode.View : CryptpadOpenMode.Edit,
       locale: longLocaleCodeToShort(I18n.getLocale()),
     },
