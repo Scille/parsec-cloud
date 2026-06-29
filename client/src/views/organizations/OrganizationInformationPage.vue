@@ -52,7 +52,10 @@
             :user-info="userInfo"
           />
           <!-- ------------- Information ------------- -->
-          <organization-configuration-information :org-info="orgInfo" />
+          <organization-configuration-information
+            :org-info="orgInfo"
+            :server-config="serverConfig"
+          />
 
           <!-- ------------- Storage list ------------- -->
           <organization-storage-information :org-info="orgInfo" />
@@ -107,8 +110,10 @@ import OrganizationUserInformation from '@/components/organizations/Organization
 import {
   ClientInfo,
   OrganizationInfo,
+  ServerConfig,
   getCurrentAvailableDevice,
   getOrganizationInfo,
+  getServerConfig,
   getClientInfo as parsecGetClientInfo,
 } from '@/parsec';
 import { Routes, currentRouteIs, switchOrganization, watchRoute } from '@/router';
@@ -121,6 +126,7 @@ import { Ref, onMounted, onUnmounted, ref } from 'vue';
 const { isSmallDisplay } = useWindowSize();
 
 const orgInfo: Ref<OrganizationInfo | null> = ref(null);
+const serverConfig: Ref<ServerConfig | null> = ref(null);
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const isTrialOrg = ref(false);
 const error = ref('');
@@ -153,6 +159,10 @@ async function updateInformation(): Promise<void> {
   getCurrentAvailableDevice().then(async (result) => {
     if (result.ok) {
       isTrialOrg.value = await isTrialOrganizationDevice(result.value);
+      const serverInfo = await getServerConfig(result.value.serverAddr);
+      if (serverInfo.ok) {
+        serverConfig.value = serverInfo.value;
+      }
     } else {
       window.electronAPI.log('error', `Failed to retrieve current device: ${result.error.tag}`);
     }

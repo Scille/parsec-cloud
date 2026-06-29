@@ -1270,9 +1270,11 @@
             "forbidden": "Désactivé",
             "title": "Configuration",
             "serverAddr": "Adresse du serveur",
+            "workspaceDeletionDelay": "Délai de suppression d'espace de travail",
+            "serverAddress": "Adresse du serveur",
+            "serverVersion": "Version du serveur",
             "copyPath": "Copié",
-            "copyFailed": "Impossible de copier l'adresse de l'organisation. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
-            "workspaceDeletionDelay": "Délai de suppression d'espace de travail"
+            "copyFailed": "Impossible de copier l'adresse de l'organisation. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller."
         }
     },
     "common": {

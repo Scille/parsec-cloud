@@ -1267,10 +1267,11 @@
             "allowed": "Enabled",
             "forbidden": "Disabled",
             "title": "Configuration",
-            "serverAddr": "Server address",
+            "workspaceDeletionDelay": "Workspace deletion delay",
+            "serverAddress": "Server address",
+            "serverVersion": "Server version",
             "copyPath": "Copied",
-            "copyFailed": "Failed to copy the organization address. Your browser or device does not seem to support copy/paste.",
-            "workspaceDeletionDelay": "Workspace deletion delay"
+            "copyFailed": "Failed to copy the organization address. Your browser or device does not seem to support copy/paste."
         }
     },
     "common": {
