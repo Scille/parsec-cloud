@@ -72,11 +72,11 @@ where
 
     devices
         // Generate combinations of the ids
-        .tuple_combinations::<(_, _)>()
+        .array_combinations::<2>()
         // Find the first different bit between the two ids:
         // We use the fact that we will display the id in hex format to compare both ids using the bitwise XOR and count the leading zeros.
         // Since it takes 4 bits to represent a hex digit, we divide the leading zeros by 4 to get the position of the first different hex digit.
-        .map(|(a, b)| {
+        .map(|[a, b]| {
             let cmp = a.as_u128() ^ b.as_u128();
             let position = cmp.leading_zeros() / 4;
             position as usize + 1

@@ -118,7 +118,7 @@ const SQL_IN_FRAGMENT_SHAMIR_RECOVERY_TYPES: &str =
 fn build_get_certificate_query<'a: 'b, 'b>(
     query: &'a GetCertificateQuery<'b>,
     up_to: UpTo,
-) -> sqlx::QueryBuilder<'a, sqlx::Sqlite> {
+) -> sqlx::QueryBuilder<sqlx::Sqlite> {
     let mut builder = sqlx::QueryBuilder::new(
         "\
         SELECT \
