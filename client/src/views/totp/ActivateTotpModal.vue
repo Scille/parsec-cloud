@@ -68,34 +68,12 @@
               </div>
               <div class="input-action">
                 <ion-text class="input-action-text form-input">{{ code }}</ion-text>
-                <ion-button
-                  @click="copyCode"
-                  :disabled="codeCopied !== undefined"
-                  class="input-action-button"
-                >
-                  <ion-icon
-                    class="button-icon"
-                    :icon="codeCopied ? checkmarkCircle : copy"
-                  />
-                  <span
-                    v-show="codeCopied === undefined"
-                    v-if="isLargeDisplay"
-                  >
-                    {{ $msTranslate('Authentication.mfa.step2.buttonCopy') }}
-                  </span>
-                  <span
-                    v-show="codeCopied === true"
-                    v-if="isLargeDisplay"
-                  >
-                    {{ $msTranslate('Authentication.mfa.step2.buttonCopied') }}
-                  </span>
-                </ion-button>
-                <ion-text
-                  v-if="codeCopied === false"
-                  class="input-action-error body-sm"
-                >
-                  {{ $msTranslate('Authentication.mfa.step2.copyError') }}
-                </ion-text>
+                <ms-feedback-button
+                  :callback="copyCode"
+                  :normal-state="{ text: 'Authentication.mfa.step2.buttonCopy', icon: copy }"
+                  :success-state="isLargeDisplay ? { text: 'Authentication.mfa.step2.buttonCopied' } : undefined"
+                  :failure-state="isLargeDisplay ? { text: 'Authentication.mfa.step2.copyError' } : undefined"
+                />
               </div>
             </div>
           </div>
@@ -161,9 +139,19 @@ import {
 } from '@/parsec';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import PromptCurrentAuthentication from '@/views/users/PromptCurrentAuthentication.vue';
-import { IonButton, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
-import { checkmarkCircle, copy } from 'ionicons/icons';
-import { Clipboard, MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, MsSpinner, useWindowSize } from 'megashark-lib';
+import { IonPage, IonText, modalController } from '@ionic/vue';
+import { copy } from 'ionicons/icons';
+import {
+  Clipboard,
+  MsFeedbackButton,
+  MsInput,
+  MsModal,
+  MsModalResult,
+  MsReportText,
+  MsReportTheme,
+  MsSpinner,
+  useWindowSize,
+} from 'megashark-lib';
 import QRCodeVue3 from 'qrcode-vue3';
 import { computed, onMounted, ref, toRaw } from 'vue';
 
@@ -185,7 +173,6 @@ const { isLargeDisplay } = useWindowSize();
 const url = ref('');
 const code = ref('');
 const verifyCode = ref('');
-const codeCopied = ref<boolean | undefined>(undefined);
 const currentStep = ref<Steps>(
   props.params.mode === 'setup' || props.params.mode === 'activate' ? Steps.PromptAuthentication : Steps.Information,
 );
@@ -283,11 +270,8 @@ onMounted(async () => {
   }
 });
 
-async function copyCode(): Promise<void> {
-  codeCopied.value = await Clipboard.writeText(code.value);
-  setTimeout(() => {
-    codeCopied.value = undefined;
-  }, 2000);
+async function copyCode(): Promise<boolean | undefined> {
+  return await Clipboard.writeText(code.value);
 }
 
 async function setupTotp(): Promise<void> {

@@ -98,32 +98,15 @@
                 {{ showFullPath ? entry.path : shortenFileName(entry.path, { maxLength: 60, prefixLength: 20, suffixLength: 30 }) }}
               </span>
             </ion-text>
-            <template v-if="isDesktop()">
-              <ion-button
-                fill="clear"
-                size="small"
-                id="copy-link-btn"
-                @click="copyPath"
-                v-show="copyStatus === CopyStatus.NotCopied"
-              >
-                <ion-icon
-                  class="icon-copy"
-                  :icon="copy"
-                />
-              </ion-button>
-              <ion-text
-                v-show="copyStatus === CopyStatus.Copied"
-                class="file-info-path-value__copied body copied"
-              >
-                {{ $msTranslate('FileDetails.stats.linkCopied') }}
-              </ion-text>
-              <ion-text
-                v-show="copyStatus === CopyStatus.FailedToCopy"
-                class="file-info-path-value__not-copied body"
-              >
-                {{ $msTranslate('FileDetails.stats.failedToCopy') }}
-              </ion-text>
-            </template>
+            <ms-feedback-button
+              v-if="isDesktop()"
+              :callback="copyPath"
+              fill="clear"
+              size="small"
+              :normal-state="{ icon: copy }"
+              :failure-state="{ text: 'FileDetails.stats.failedToCopy' }"
+              :success-state="{ text: 'FailedDetails.stats.linkCopied' }"
+            />
           </div>
           <ion-text
             class="file-info-path__full button-small"
@@ -142,16 +125,10 @@
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { TechnicalId } from '@/components/misc';
 import { EntryStat, EntryStatFile, getSystemPath, isDesktop, UserProfile, WorkspaceHandle } from '@/parsec';
-import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
+import { IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
-import { Clipboard, Folder, I18n, MsImage, MsModal, openTooltip } from 'megashark-lib';
+import { Clipboard, Folder, I18n, MsFeedbackButton, MsImage, MsModal, openTooltip } from 'megashark-lib';
 import { ref } from 'vue';
-
-enum CopyStatus {
-  NotCopied,
-  Copied,
-  FailedToCopy,
-}
 
 const props = defineProps<{
   entry: EntryStat;
@@ -160,7 +137,6 @@ const props = defineProps<{
 }>();
 
 const showFullPath = ref(false);
-const copyStatus = ref(CopyStatus.NotCopied);
 
 function getSyncString(): string {
   if (props.entry.isFile()) {
@@ -170,25 +146,18 @@ function getSyncString(): string {
   }
 }
 
-async function copyPath(): Promise<void> {
+async function copyPath(): Promise<boolean | undefined> {
   const fullPathResult = await getSystemPath(props.workspaceHandle, props.entry.path);
 
   if (fullPathResult.ok) {
     if (await Clipboard.writeText(fullPathResult.value)) {
-      copyStatus.value = CopyStatus.Copied;
-      setTimeout(() => {
-        copyStatus.value = CopyStatus.NotCopied;
-      }, 4000);
-      return;
+      return true;
     } else {
-      copyStatus.value = CopyStatus.FailedToCopy;
+      return false;
     }
   } else {
-    copyStatus.value = CopyStatus.FailedToCopy;
+    return false;
   }
-  setTimeout(() => {
-    copyStatus.value = CopyStatus.NotCopied;
-  }, 4000);
 }
 </script>
 

@@ -37,25 +37,12 @@
         <div class="input-action">
           <ion-text class="input-action-text form-input">{{ code }}</ion-text>
           <div class="input-action-buttons">
-            <ion-button
-              @click="copyCode"
-              :disabled="codeCopied !== undefined"
-              class="input-action-button"
-            >
-              <ion-icon
-                class="button-icon"
-                :icon="codeCopied ? checkmarkCircle : copy"
-              />
-              <span v-show="codeCopied === undefined">
-                {{ $msTranslate('Authentication.mfa.step2.buttonCopy') }}
-              </span>
-              <span
-                v-show="codeCopied === true"
-                v-if="isLargeDisplay"
-              >
-                {{ $msTranslate('Authentication.mfa.step2.buttonCopied') }}
-              </span>
-            </ion-button>
+            <ms-feedback-button
+              :callback="copyCode"
+              :normal-state="{ text: 'Authentication.mfa.step2.buttonCopy', icon: copy }"
+              :success-state="{ text: 'Authentication.mfa.step2.buttonCopied' }"
+              :failure-state="{ text: 'Authentication.mfa.step2.copyError' }"
+            />
             <ion-button
               @click="downloadRecoveryKey()"
               class="input-action-button"
@@ -71,12 +58,6 @@
               }}
             </ion-button>
           </div>
-          <ion-text
-            v-if="codeCopied === false"
-            class="input-action-error body-sm"
-          >
-            {{ $msTranslate('Authentication.mfa.step2.copyError') }}
-          </ion-text>
         </div>
       </div>
 
@@ -132,17 +113,17 @@
 import { exportRecoveryDevice, OrganizationID } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
-import { checkmarkCircle, copy, documentText } from 'ionicons/icons';
+import { copy, documentText } from 'ionicons/icons';
 import {
   Clipboard,
   DownloadIcon,
   I18n,
   MsCheckbox,
+  MsFeedbackButton,
   MsImage,
   MsReportText,
   MsReportTheme,
   Translatable,
-  useWindowSize,
 } from 'megashark-lib';
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
@@ -159,9 +140,7 @@ const emits = defineEmits<{
 const code = ref('');
 const content = ref<Uint8Array>(new Uint8Array());
 
-const { isLargeDisplay } = useWindowSize();
 const downloadLinkRef = useTemplateRef('downloadLink');
-const codeCopied = ref<boolean | undefined>(undefined);
 const clipboardNotAvailable = ref(false);
 const fileDownloading = ref(false);
 const fileDownloaded = ref(false);
@@ -187,19 +166,9 @@ onMounted(async () => {
   content.value = exportResult.value[1];
 });
 
-async function copyCode(): Promise<void> {
+async function copyCode(): Promise<boolean | undefined> {
   const copyResult = await Clipboard.writeText(code.value);
-  codeCopied.value = copyResult;
-
-  if (!codeCopied.value) {
-    clipboardNotAvailable.value = true;
-
-    codeCopied.value = undefined;
-  } else {
-    clipboardNotAvailable.value = false;
-    setTimeout(() => {
-      codeCopied.value = undefined;
-    }, 2000);
+  if (copyResult) {
     props.informationManager.present(
       new Information({
         message: 'DevicesPage.greet.linkCopiedToClipboard',
@@ -208,6 +177,7 @@ async function copyCode(): Promise<void> {
       PresentationMode.Toast,
     );
   }
+  return copyResult;
 }
 
 async function downloadRecoveryFile(): Promise<void> {

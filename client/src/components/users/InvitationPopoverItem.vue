@@ -25,32 +25,18 @@
       <div class="invitation-footer">
         <div class="invitation-footer-manage">
           <ion-text class="manage-text button-medium">{{ $msTranslate('UsersPage.invitation.manageInvitation') }}</ion-text>
-          <ion-button
+          <ms-feedback-button
             fill="clear"
-            class="manage-button copy-link"
-            :class="copyLinkActive ? 'active' : ''"
-            @click.stop="copyLink(invitation)"
+            :callback="copyLink"
+            :normal-state="{ icon: link }"
             ref="copyLinkButton"
-          >
-            <ion-icon
-              :icon="copyLinkActive ? checkmarkCircle : link"
-              class="button-icon"
-            />
-          </ion-button>
-
-          <ion-button
+          />
+          <ms-feedback-button
             fill="clear"
-            class="manage-button send-email"
-            :disabled="sendEmailDisabled"
-            @click.stop="sendEmail(invitation)"
-            :class="sendEmailDisabled ? 'active' : ''"
+            :callback="sendEmail"
+            :normal-state="{ icon: mail }"
             ref="sendEmailButton"
-          >
-            <ion-icon
-              :icon="mail"
-              class="button-icon"
-            />
-          </ion-button>
+          />
 
           <ion-button
             size="default"
@@ -74,23 +60,20 @@
 import { ClientNewUserInvitationErrorTag, InvitationEmailSentStatus, UserInvitation, inviteUser } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { checkmarkCircle, link, mail, trash } from 'ionicons/icons';
-import { Answer, Clipboard, Translatable, askQuestion, attachMouseOverTooltip, formatTimeSince } from 'megashark-lib';
-import { onMounted, ref, useTemplateRef } from 'vue';
+import { link, mail, trash } from 'ionicons/icons';
+import { Answer, Clipboard, MsFeedbackButton, Translatable, askQuestion, attachMouseOverTooltip, formatTimeSince } from 'megashark-lib';
+import { onMounted, useTemplateRef } from 'vue';
 
 const props = defineProps<{
   invitation: UserInvitation;
   informationManager: InformationManager;
 }>();
 
-const copyLinkActive = ref(false);
-
 defineEmits<{
   (e: 'cancel', invitation: UserInvitation): void;
   (e: 'greetUser', invitation: UserInvitation): void;
 }>();
 
-const sendEmailDisabled = ref(false);
 const sendEmailButtonRef = useTemplateRef<InstanceType<typeof IonButton>>('sendEmailButton');
 const copyLinkButtonRef = useTemplateRef<InstanceType<typeof IonButton>>('copyLinkButton');
 
@@ -99,13 +82,9 @@ onMounted(async () => {
   attachMouseOverTooltip(copyLinkButtonRef.value?.$el, 'UsersPage.invitation.copyLink');
 });
 
-async function copyLink(invitation: UserInvitation): Promise<void> {
-  const [_, invitationAddrAsHttpRedirection] = invitation.addr;
+async function copyLink(): Promise<boolean> {
+  const [_, invitationAddrAsHttpRedirection] = props.invitation.addr;
   const result = await Clipboard.writeText(invitationAddrAsHttpRedirection);
-  copyLinkActive.value = true;
-  setTimeout(() => {
-    copyLinkActive.value = false;
-  }, 5000);
   if (result) {
     props.informationManager.present(
       new Information({
@@ -123,35 +102,31 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
       PresentationMode.Toast,
     );
   }
+  return result;
 }
 
-async function sendEmail(invitation: UserInvitation): Promise<void> {
-  sendEmailDisabled.value = true;
+async function sendEmail(): Promise<boolean | undefined> {
   const answer = await askQuestion('UsersPage.invitation.sendEmailTitle', 'UsersPage.invitation.sendEmailMessage', {
     yesText: 'UsersPage.invitation.sendEmail',
   });
 
   if (answer === Answer.No) {
-    sendEmailDisabled.value = false;
     return;
   }
-  const result = await inviteUser(invitation.claimerEmail);
+  const result = await inviteUser(props.invitation.claimerEmail);
   if (result.ok && result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
     props.informationManager.present(
       new Information({
         message: {
           key: 'UsersPage.invitation.inviteSuccessMailSent',
           data: {
-            email: invitation.claimerEmail,
+            email: props.invitation.claimerEmail,
           },
         },
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
     );
-    setTimeout(() => {
-      sendEmailDisabled.value = false;
-    }, 5000);
   } else {
     let message: Translatable = '';
     if (result.ok) {
@@ -181,10 +156,8 @@ async function sendEmail(invitation: UserInvitation): Promise<void> {
       }),
       PresentationMode.Toast,
     );
-    setTimeout(() => {
-      sendEmailDisabled.value = false;
-    }, 2000);
   }
+  return result.ok;
 }
 </script>
 

@@ -62,24 +62,13 @@
             <ion-text class="server-address-value__text body">
               {{ orgInfo.organizationAddr }}
             </ion-text>
-            <ion-button
+            <ms-feedback-button
               fill="clear"
               size="small"
               id="copy-link-btn"
-              @click="copyAddress(orgInfo.organizationAddr)"
-              v-if="!addressCopiedToClipboard"
-            >
-              <ion-icon
-                class="icon-copy"
-                :icon="copy"
-              />
-            </ion-button>
-            <ion-text
-              v-if="addressCopiedToClipboard"
-              class="server-address-value__copied body copied"
-            >
-              {{ $msTranslate('OrganizationPage.configuration.copyPath') }}
-            </ion-text>
+              :callback="copyAddress"
+              :normal-state="{ icon: copy }"
+            />
           </div>
         </div>
       </div>
@@ -90,35 +79,16 @@
 <script setup lang="ts">
 import { formatWorkspaceDeletionDelay } from '@/components/workspaces/utils';
 import { OrganizationInfo } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { IonButton, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
+import { IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { copy } from 'ionicons/icons';
-import { Clipboard } from 'megashark-lib';
-import { inject, ref, Ref } from 'vue';
+import { Clipboard, MsFeedbackButton } from 'megashark-lib';
 
-const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
-const addressCopiedToClipboard = ref(false);
-
-defineProps<{
+const props = defineProps<{
   orgInfo: OrganizationInfo;
 }>();
 
-async function copyAddress(address: string): Promise<void> {
-  const result = await Clipboard.writeText(address);
-  if (result) {
-    addressCopiedToClipboard.value = true;
-    setTimeout(() => {
-      addressCopiedToClipboard.value = false;
-    }, 5000);
-  } else {
-    informationManager.value.present(
-      new Information({
-        message: 'OrganizationPage.configuration.copyFailed',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
+async function copyAddress(): Promise<boolean | undefined> {
+  return await Clipboard.writeText(props.orgInfo.organizationAddr);
 }
 </script>
 
@@ -217,20 +187,6 @@ async function copyAddress(address: string): Promise<void> {
 
       &__copied {
         color: var(--parsec-color-light-success-700);
-      }
-    }
-
-    #copy-link-btn {
-      color: var(--parsec-color-light-secondary-text);
-      margin: 0;
-
-      &::part(native) {
-        padding: 0.5rem;
-        border-radius: var(--parsec-radius-6);
-      }
-
-      &:hover {
-        color: var(--parsec-color-light-primary-600);
       }
     }
   }
