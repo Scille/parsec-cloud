@@ -350,10 +350,13 @@ export async function openDocument(
 
       switch (event.data.tag) {
         // TODO !!!!
-        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnError:
-        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnHasUnsavedChanges:
-        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnInsertImage:
-        // case ParsecCryptpadCommAPI.MessageTag.CryptpadOnNewKey:
+        case ParsecCryptpadCommAPI.MessageTag.CryptpadOnError:
+        case ParsecCryptpadCommAPI.MessageTag.CryptpadOnHasUnsavedChanges:
+        case ParsecCryptpadCommAPI.MessageTag.CryptpadOnInsertImage:
+        case ParsecCryptpadCommAPI.MessageTag.CryptpadOnNewKey: {
+          console.log('wip: unsupported message', event.data);
+          break;
+        }
         case ParsecCryptpadCommAPI.MessageTag.CryptpadOnSave: {
           const data = event.data as ParsecCryptpadCommAPI.MessageCryptpadOnSave;
 

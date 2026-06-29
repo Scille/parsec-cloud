@@ -183,10 +183,15 @@ async function loadEditor(): Promise<void> {
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
       cryptpadEditor: documentType.value as CryptpadEditor,
-      key: crypto.randomUUID(),
+      // TODO: Key should be obtained from the Parsec server and contain
+      // actual cryptography!
+      key: contentInfo.fileId,
+      // TODO: `userInfo` should be some kind of promise so that we always provide
+      // the correct value (note `userInfo` can always be obtained since it doesn't
+      // require sending the server a request)
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UNKNOWN_USER'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
-      autosaveInterval: 10, // TODO 60s should be enough
+      autosaveInterval: 10, // TODO: 60s should be enough
       mode: readOnly ? CryptpadOpenMode.View : CryptpadOpenMode.Edit,
       locale: longLocaleCodeToShort(I18n.getLocale()),
     },
