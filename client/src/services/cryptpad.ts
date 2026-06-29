@@ -252,6 +252,9 @@ export interface CryptpadSession {
   save: () => void;
 }
 
+// Error handling is peculiar here: if something goes wrong this function
+// returns `undefined` and `handlers.onError` is called with the actual
+// error.
 export async function openDocument(
   config: CryptpadOpenDocumentConfig,
   handlers: CryptpadEventHandlers,
