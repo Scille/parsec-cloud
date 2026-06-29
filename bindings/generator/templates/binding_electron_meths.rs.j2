@@ -704,14 +704,14 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
             })
 {% elif value.is_tuple %}
 {% for attr_type in value.tuple %}
-            let x{{ loop.index0 }} = {
-                let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "x{{ loop.index0 }}")?;
+            let x{{ loop.index }} = {
+                let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "x{{ loop.index }}")?;
                 {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") }}
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} (
 {% for _ in value.tuple %}
-                x{{ loop.index0 }},
+                x{{ loop.index }},
 {% endfor %}
             ))
 {% else %}
@@ -748,12 +748,12 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
 {% endfor %}
         }
 {% elif value.is_tuple %}
-        libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index0 }},{% endfor %} .. ) => {
+        libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index }},{% endfor %} .. ) => {
             let js_tag = JsString::try_new(cx, "{{ variant_tag_name(variant, value) }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
 {% for attr_type in value.tuple %}
-            let js_x{{ loop.index0 }} = {{ render_rs_to_js("x%s" % loop.index0, attr_type, mut_cx_ref="cx") }};
-            js_obj.set(cx, "x{{ loop.index0 }}", js_x{{ loop.index0 }})?;
+            let js_x{{ loop.index }} = {{ render_rs_to_js("x%s" % loop.index, attr_type, mut_cx_ref="cx") }};
+            js_obj.set(cx, "x{{ loop.index }}", js_x{{ loop.index }})?;
 {% endfor %}
         }
 {% else %}
