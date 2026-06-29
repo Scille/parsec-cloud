@@ -93,7 +93,7 @@
         "unique-names-generator": "^4.7.1",
         "vite": "^8.1.0",
         "vite-plugin-static-copy": "^4.1.1",
-        "vitest": "4.1.8",
+        "vitest": "4.1.9",
         "vue-eslint-parser": "^10.4.1",
         "vue-tsc": "^3.3.5"
     }
