@@ -158,7 +158,7 @@ gloo-timers = { version = "0.4.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "1.1.0", default-features = false }
 indexed-db = { version = "0.5.0-alpha.1", default-features = false }
-itertools = { version = "0.14.0", default-features = false }
+itertools = { version = "0.15.0", default-features = false }
 js-sys = { version = "0.3.95", default-features = false }
 keyring = { version = "3.6.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
@@ -209,7 +209,7 @@ serde_with = { version = "3.19.0", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
 smallvec = { version = "1.15.1", default-features = false }
 spinners = { version = "4.2.0", default-features = false }
-sqlx = { version = "0.8.6", default-features = false }
+sqlx = { version = "0.9.0", default-features = false }
 syn = { version = "2.0.117", default-features = false }
 thiserror = { version = "2.0.18", default-features = false }
 tokio = { version = "1.50.0", default-features = false }
