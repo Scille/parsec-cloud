@@ -1268,6 +1268,7 @@
             "forbidden": "Disabled",
             "title": "Configuration",
             "serverAddr": "Server address",
+            "serverVersion": "Server version",
             "copyPath": "Copied",
             "copyFailed": "Failed to copy the organization address. Your browser or device does not seem to support copy/paste.",
             "workspaceDeletionDelay": "Workspace deletion delay"
