@@ -34,11 +34,13 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       'External profile',
       'User limit (excluding users with External profile)',
       'Server address',
+      'Server version',
     ]);
     await expect(configContainer.locator('.info-list-item').nth(0).locator('.info-list-item__value')).toHaveText(['30 days']);
     await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Enabled']);
     await expect(configContainer.locator('.info-list-item').nth(2).locator('.info-list-item__value')).toHaveText(['Unlimited']);
     await expect(configContainer.locator('.info-list-item').nth(3).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
+    await expect(configContainer.locator('.info-list-item').nth(4).locator('.info-list-item__value')).toHaveText(/^parsec\/[a-z0-9-.+]+$/);
 
     const userCategories = usersContainer.locator('.users-list-item');
     await expect(userCategories.nth(0).locator('.users-list-item__title')).toHaveText('3');
@@ -81,11 +83,13 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       'External profile',
       'User limit (excluding users with External profile)',
       'Server address',
+      'Server version',
     ]);
     await expect(configContainer.locator('.info-list-item').nth(0).locator('.info-list-item__value')).toHaveText(['30 days']);
     await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Enabled']);
     await expect(configContainer.locator('.info-list-item').nth(2).locator('.info-list-item__value')).toHaveText(['Unlimited']);
     await expect(configContainer.locator('.info-list-item').nth(3).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
+    await expect(configContainer.locator('.info-list-item').nth(4).locator('.info-list-item__value')).toHaveText(/^parsec\/[a-z0-9-.+]+$/);
 
     const userCategories = usersContainer.locator('.users-list-item');
     await expect(userCategories.nth(0).locator('.users-list-item__title')).toHaveText('3');
@@ -261,11 +265,13 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       'External profile',
       'User limit (excluding users with External profile)',
       'Server address',
+      'Server version',
     ]);
     await expect(configContainer.locator('.info-list-item').nth(0).locator('.info-list-item__value')).toHaveText(['20 minutes']);
     await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Disabled']);
     await expect(configContainer.locator('.info-list-item').nth(2).locator('.info-list-item__value')).toHaveText(['5']);
     await expect(configContainer.locator('.info-list-item').nth(3).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
+    await expect(configContainer.locator('.info-list-item').nth(4).locator('#unavailable-server-version')).toBeVisible();
 
     const userCategories = usersContainer.locator('.users-list-item');
     await expect(userCategories.nth(0).locator('.users-list-item__title')).toHaveText('3');

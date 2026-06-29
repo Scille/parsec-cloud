@@ -56,7 +56,7 @@
         <!-- Server addr -->
         <div class="info-list-item server-address">
           <ion-text class="info-list-item__title server-address__title body">
-            {{ $msTranslate('OrganizationPage.configuration.serverAddr') }}
+            {{ $msTranslate('OrganizationPage.configuration.serverAddress') }}
           </ion-text>
           <div class="server-address-value">
             <ion-text class="server-address-value__text body">
@@ -82,6 +82,25 @@
             </ion-text>
           </div>
         </div>
+        <div class="info-list-item">
+          <ion-label class="info-list-item__title body">
+            {{ $msTranslate('OrganizationPage.configuration.serverVersion') }}
+          </ion-label>
+          <ion-text
+            class="info-list-item__value title-h5"
+            id="server-version"
+            v-if="serverConfig && serverConfig.serverVersion"
+          >
+            {{ serverConfig.serverVersion }}
+          </ion-text>
+          <div
+            v-else
+            id="unavailable-server-version"
+            class="info-list-item__value cell-title warning"
+          >
+            {{ $msTranslate('OrganizationPage.size.unavailable') }}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -89,18 +108,19 @@
 
 <script setup lang="ts">
 import { formatWorkspaceDeletionDelay } from '@/components/workspaces/utils';
-import { OrganizationInfo } from '@/parsec';
+import { OrganizationInfo, ServerConfig } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { copy } from 'ionicons/icons';
 import { Clipboard } from 'megashark-lib';
-import { inject, ref, Ref } from 'vue';
+import { inject, Ref, ref } from 'vue';
 
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const addressCopiedToClipboard = ref(false);
 
 defineProps<{
   orgInfo: OrganizationInfo;
+  serverConfig: ServerConfig | null;
 }>();
 
 async function copyAddress(address: string): Promise<void> {
@@ -174,6 +194,10 @@ async function copyAddress(address: string): Promise<void> {
         border-radius: var(--parsec-radius-32);
       }
 
+      #server-version {
+        color: var(--parsec-color-light-secondary-text);
+      }
+
       .success {
         color: var(--parsec-color-light-success-700);
         background: var(--parsec-color-light-success-50);
@@ -190,48 +214,57 @@ async function copyAddress(address: string): Promise<void> {
       }
     }
   }
+}
 
-  .server-address {
+.server-address {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem !important;
+  align-items: start;
+
+  &__title {
+    width: 100%;
+  }
+
+  &-value {
+    color: var(--parsec-color-light-secondary-soft-text);
+    background-color: var(--parsec-color-light-secondary-background);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-8);
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.5rem;
-    align-items: start;
+    overflow: hidden;
+    width: 100%;
 
-    &-value {
-      color: var(--parsec-color-light-secondary-text);
-      background-color: var(--parsec-color-light-secondary-background);
-      border-radius: var(--parsec-radius-6);
-      padding: 0.5rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      overflow: hidden;
-      width: 100%;
-
-      &__text {
-        white-space: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
-      }
-
-      &__copied {
-        color: var(--parsec-color-light-success-700);
-      }
+    &__text {
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-gutter: auto;
+      scrollbar-width: none;
     }
 
-    #copy-link-btn {
-      color: var(--parsec-color-light-secondary-text);
-      margin: 0;
+    &__copied {
+      color: var(--parsec-color-light-success-700);
+    }
+  }
 
-      &::part(native) {
-        padding: 0.5rem;
-        border-radius: var(--parsec-radius-6);
-      }
+  #copy-link-btn {
+    color: var(--parsec-color-light-secondary-text);
+    margin: 0;
+    height: 2rem;
+    width: 2rem;
 
-      &:hover {
-        color: var(--parsec-color-light-primary-600);
-      }
+    &::part(native) {
+      padding: 0.375rem;
+      border-radius: var(--parsec-radius-6);
+    }
+
+    &:hover {
+      color: var(--parsec-color-light-primary-600);
     }
   }
 }
