@@ -311,9 +311,7 @@ onMounted(async (): Promise<void> => {
 
   watch(copyJoinRequestLinkRef, (button) => {
     if (button?.$el) {
-      setTimeout(() => {
-        attachMouseOverTooltip(button.$el, 'InvitationsPage.asyncEnrollmentRequest.tooltips.copyLinkInfo');
-      }, 500);
+      attachMouseOverTooltip(button.$el, 'InvitationsPage.asyncEnrollmentRequest.tooltips.copyLinkInfo');
     }
   });
 });
