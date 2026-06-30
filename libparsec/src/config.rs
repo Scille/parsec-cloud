@@ -109,7 +109,7 @@ pub struct ServerConfig {
     pub openbao: Option<OpenBaoConfig>,
     pub cryptpad: Option<CryptPadConfig>,
     pub advisory_device_file_protection: Vec<AdvisoryDeviceFileProtection>,
-    pub server_version: String,
+    pub server_version: Option<String>,
 }
 
 pub async fn get_server_config(

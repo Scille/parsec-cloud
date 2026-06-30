@@ -92,7 +92,8 @@ async fn ok_send_verbose(env: &TestbedEnv) {
             pong: "foo".to_owned()
         }
     );
-    assert!(version.starts_with("parsec/3"))
+
+    assert!(version.unwrap().starts_with("parsec/3"))
 }
 
 // Must use a macro to generate the parametrized tests here given `test_register_low_level_send_hook`

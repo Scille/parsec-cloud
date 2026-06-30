@@ -71,7 +71,10 @@ impl AnonymousServerCmds {
     }
 
     /// Returns response, server version
-    pub async fn send_verbose<T>(&self, request: T) -> ConnectionResult<(<T>::Response, String)>
+    pub async fn send_verbose<T>(
+        &self,
+        request: T,
+    ) -> ConnectionResult<(<T>::Response, Option<String>)>
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
@@ -79,7 +82,7 @@ impl AnonymousServerCmds {
         let request = {
             match self.send_hook.high_level_send(request).await {
                 crate::testbed::HighLevelSendResult::Resolved(rep) => {
-                    return Ok((rep?, "testbed".to_string()))
+                    return Ok((rep?, Some("testbed".to_string())))
                 }
                 crate::testbed::HighLevelSendResult::PassToLowLevel(req) => req,
             }
@@ -96,12 +99,12 @@ impl AnonymousServerCmds {
         Ok((rep, version))
     }
 
-    /// Returns (content, Version)
+    /// Returns (content, server version)
     async fn internal_send(
         &self,
         api_version: &ApiVersion,
         request_body: Vec<u8>,
-    ) -> Result<(Bytes, String), ConnectionError> {
+    ) -> Result<(Bytes, Option<String>), ConnectionError> {
         let api_version_header_value = HeaderValue::from_str(&api_version.to_string())
             .expect("api version must contains valid char");
         let request_builder = self.client.post(self.url.clone());
@@ -116,8 +119,7 @@ impl AnonymousServerCmds {
         let server_version = resp
             .headers()
             .get("Server")
-            .map_or("<unknown>", |v| v.to_str().unwrap_or("<invalid>"))
-            .to_string();
+            .and_then(|v| Some(v.to_str().ok()?.to_string()));
 
         match resp.status().as_u16() {
             200 => {

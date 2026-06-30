@@ -3258,8 +3258,15 @@ fn struct_server_config_js_to_rs<'a>(
         }
     };
     let server_version = {
-        let js_val: Handle<JsString> = obj.get(cx, "serverVersion")?;
-        js_val.value(cx)
+        let js_val: Handle<JsValue> = obj.get(cx, "serverVersion")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
     };
     Ok(libparsec::ServerConfig {
         account,
@@ -3310,7 +3317,10 @@ fn struct_server_config_rs_to_js<'a>(
         "advisoryDeviceFileProtection",
         js_advisory_device_file_protection,
     )?;
-    let js_server_version = JsString::try_new(cx, rs_obj.server_version).or_throw(cx)?;
+    let js_server_version = match rs_obj.server_version {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
     js_obj.set(cx, "serverVersion", js_server_version)?;
     Ok(js_obj)
 }
