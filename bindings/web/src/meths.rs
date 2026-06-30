@@ -3588,11 +3588,17 @@ fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig
     };
     let server_version = {
         let js_val = Reflect::get(&obj, &"serverVersion".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?,
+            )
+        }
     };
     Ok(libparsec::ServerConfig {
         account,
@@ -3644,9 +3650,13 @@ fn struct_server_config_rs_to_js(rs_obj: libparsec::ServerConfig) -> Result<JsVa
         &"advisoryDeviceFileProtection".into(),
         &js_advisory_device_file_protection,
     )?;
-    let js_server_version = {
-        #[allow(clippy::useless_asref)]
-        JsValue::from_str(rs_obj.server_version.as_ref())
+    let js_server_version = match rs_obj.server_version {
+        Some(val) =>
+        {
+            #[allow(clippy::useless_asref)]
+            JsValue::from_str(val.as_ref())
+        }
+        None => JsValue::NULL,
     };
     Reflect::set(&js_obj, &"serverVersion".into(), &js_server_version)?;
     Ok(js_obj)

@@ -356,7 +356,7 @@ export interface ServerConfig {
     organizationBootstrap: OrganizationBootstrapConfig
     openbao: OpenBaoConfig | null
     advisoryDeviceFileProtection: Array<AdvisoryDeviceFileProtection>
-    serverVersion: string
+    serverVersion: string | null
 }
 
 
