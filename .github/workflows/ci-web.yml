@@ -236,7 +236,7 @@ jobs:
         timeout-minutes: 1
 
       - name: E2E tests
-        uses: docker://mcr.microsoft.com/playwright:v1.60.0
+        uses: docker://mcr.microsoft.com/playwright:v1.61.0
         with:
           # To use `playwright-chrome` docker image, we need 2 things, settings the entrypoint to `sh` and configure the user inside the container because it use a different uid:gid than CI.
           #
