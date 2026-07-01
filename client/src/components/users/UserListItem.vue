@@ -13,7 +13,7 @@
       'no-padding-end': !user.isSelected,
       'user-list-item--hovered': !user.isSelected && (menuOpened || isHovered),
     }"
-    @click="$emit('select', user, !user.isSelected)"
+    @click="allowSelection && $emit('select', user, !user.isSelected)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
@@ -22,9 +22,9 @@
       <ms-checkbox
         :class="{ 'checkbox-mobile': isSmallDisplay }"
         :checked="user.isSelected"
-        v-show="user.isSelected || isHovered || showCheckbox"
+        v-show="allowSelection && (user.isSelected || isHovered || activeCheckbox)"
         v-if="!user.isRevoked() && !user.isCurrent"
-        @change="$emit('select', user, $event)"
+        @change="allowSelection && $emit('select', user, $event)"
         @click.stop
       />
       <ms-image
@@ -60,7 +60,7 @@
         :user-avatar="user.humanHandle.label"
         class="user-mobile-avatar"
         :class="{
-          'hide-avatar': showCheckbox || isHovered,
+          'hide-avatar': activeCheckbox || (isHovered && allowSelection),
           'disable-avatar': user.isRevoked() || user.isCurrent,
         }"
       />
@@ -172,7 +172,8 @@ const informationManager: Ref<InformationManager> = inject(InformationManagerKey
 
 const props = defineProps<{
   user: UserModel;
-  showCheckbox: boolean;
+  activeCheckbox: boolean;
+  allowSelection: boolean;
 }>();
 
 const emits = defineEmits<{

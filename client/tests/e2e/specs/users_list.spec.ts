@@ -798,22 +798,21 @@ msTest('Small display multiple users context menu', async ({ usersPage }) => {
   await expect(usersPage.locator('.update-profile-modal').locator('.ms-modal-content').locator('.warn-outsiders')).toBeVisible();
 });
 
-msTest('No context menu with standard users and multiple selected', async ({ workspacesStandard }) => {
+msTest('Impossible to select users as standard', async ({ workspacesStandard }) => {
   await workspacesStandard.locator('.sidebar').locator('.sidebar-content-organization-button').nth(0).click();
   await expect(workspacesStandard).toHavePageTitle('Users');
   await expect(workspacesStandard).toBeUserPage();
-  const usersPage = workspacesStandard;
+  const headerSelectionText = workspacesStandard.locator('#activate-users-ms-action-bar').locator('.counter');
 
+  await expect(headerSelectionText).toContainText('3 users', { useInnerText: true });
   let item!: Locator;
   for (let i = 1; i < 3; i++) {
-    item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(i);
+    item = workspacesStandard.locator('#users-page-user-list').getByRole('listitem').nth(i);
     await item.hover();
-    await item.locator('.ms-checkbox').click();
+    await expect(item.locator('.ms-checkbox')).not.toBeVisible();
+    await item.click();
   }
-  const menu = usersPage.locator('#user-context-menu');
-  await expect(menu).toBeHidden();
-  await item.click({ button: 'right' });
-  await expect(menu).toBeHidden();
+  await expect(headerSelectionText).toContainText('3 users', { useInnerText: true });
 });
 
 msTest('Check in UsersPage if action bar updates after resized', async ({ usersPage }) => {

@@ -12,7 +12,7 @@
       'no-padding-end': !user.isSelected,
       'user-card-item--hovered': !user.isSelected && (menuOpened || isHovered),
     }"
-    @click="$emit('select', user, !user.isSelected)"
+    @click="allowSelection && $emit('select', user, !user.isSelected)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
@@ -23,9 +23,9 @@
     >
       <ms-checkbox
         :checked="user.isSelected"
-        v-if="(user.isSelected || isHovered || showCheckbox) && !user.isCurrent"
+        v-if="allowSelection && (user.isSelected || isHovered || activeCheckbox) && !user.isCurrent"
         @click.stop
-        @change="$emit('select', user, $event)"
+        @change="allowSelection && $emit('select', user, $event)"
       />
       <ms-image
         v-if="user.isCurrent"
@@ -119,7 +119,8 @@ const emits = defineEmits<{
 
 const props = defineProps<{
   user: UserModel;
-  showCheckbox: boolean;
+  activeCheckbox: boolean;
+  allowSelection: boolean;
 }>();
 
 defineExpose({

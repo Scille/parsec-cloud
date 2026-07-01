@@ -7,7 +7,8 @@
       :key="user.id"
       :user="user"
       :disabled="user.isCurrent"
-      :show-checkbox="someSelected || selectionEnabled === true"
+      :active-checkbox="someSelected || selectionEnabled === true"
+      :allow-selection="allowSelection"
       @menu-click="onMenuClick"
       @select="onUserSelected"
     />
@@ -28,6 +29,7 @@ import { computed, ref } from 'vue';
 defineProps<{
   users: UserCollection;
   selectionEnabled?: boolean;
+  allowSelection: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -46,6 +48,9 @@ async function onMenuClick(event: Event, user: UserModel, onFinished: () => void
 }
 
 function onUserSelected(user: UserModel, selected: boolean): void {
+  if (user.isRevoked()) {
+    return;
+  }
   user.isSelected = selected;
   emits('checkboxClick');
 }

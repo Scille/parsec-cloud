@@ -108,10 +108,11 @@
               :users="users"
               @menu-click="openUserContextMenu"
               @checkbox-click="selectionEnabled = users.hasSelected()"
-              :selection-enabled="selectionEnabled"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
               :sort-by="currentSortProperty"
               :sort-ascending="currentSortOrder"
               @sort-update="onSortChange"
+              :allow-selection="isAdmin"
             />
           </div>
           <div v-else>
@@ -119,7 +120,8 @@
               :users="users"
               @menu-click="openUserContextMenu"
               @checkbox-click="selectionEnabled = users.hasSelected()"
-              :selection-enabled="selectionEnabled"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
+              :allow-selection="isAdmin"
             />
           </div>
         </div>
@@ -495,6 +497,9 @@ async function toggleSelection(): Promise<void> {
 }
 
 async function selectAllUsers(): Promise<void> {
+  if (!isAdmin.value) {
+    return;
+  }
   selectionEnabled.value = true;
   users.value.selectAll(true);
 }
