@@ -33,5 +33,19 @@ async fn cleanup_device_data(tmp_path: TmpPath, env: &TestbedEnv) {
     assert!(!device_dir.exists(), "device dir still exists");
 }
 
+#[parsec_test(testbed = "minimal")]
+async fn cleanup_device_data_missing_dir(tmp_path: TmpPath, env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+
+    // The device data dir was never created (e.g. device from an old
+    // organization, see #12807): cleanup must succeed anyway.
+    let device_dir = tmp_path.join(alice.device_id.hex());
+    assert!(!device_dir.exists(), "device dir should not exist");
+
+    remove_device_data(&tmp_path, alice.device_id)
+        .await
+        .unwrap();
+}
+
 // TODO: Convert this test be compatible with web
 // see https://github.com/Scille/parsec-cloud/issues/10007
