@@ -1,7 +1,20 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+TODO:
+- onlyoffice status bar always showing "all changes saved"
+- onSave triggered every saveInterval time
+- saveInterval time tout claqué (euristique avec min(interval / 2, 10s))
+- onHasUnsavedChanged triggered n'importe comment (et boolean en paramètre qui veut rien dire), à ignorer ?
+- save status à trigger dans à la fin du onSave (vu que onHasUnsavedChanged est bourré)
+- ecrire dans frame.js du code pour gommer les soucis de onHasUnsavedChanged/onSave ?
+
+
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 import { detectOpenableFile, FileContentType } from '@/common/fileTypes';
 import { Env } from '@/services/environment';
+
+type GenericError = string;
 
 // `ParsecCryptpadCommAPI` is the API shared between the cryptpad editor running in an Iframe
 // and the parent Parsec client (i.e. us !).
@@ -59,7 +72,7 @@ namespace ParsecCryptpadCommAPI {
   export interface MessageCryptpadInitialized {
     tag: MessageTag.CryptpadInitialized;
     version: number;
-    error: undefined | string;
+    error: undefined | GenericError;
   }
 
   // Sent by us, once Cryptpad initialization is done, to open the file to edit/view
@@ -73,7 +86,7 @@ namespace ParsecCryptpadCommAPI {
   export interface MessageCryptpadOpenDocumentReply {
     tag: MessageTag.CryptpadOpenDocumentReply;
     messageId: number;
-    error: undefined | string;
+    error: undefined | GenericError;
   }
 
   // Sent by us to trigger a save. Basically Cryptpad will behave just
@@ -89,7 +102,7 @@ namespace ParsecCryptpadCommAPI {
   export interface MessageCryptpadRequestSaveDocumentReply {
     tag: MessageTag.CryptpadRequestSaveDocumentReply;
     messageId: number;
-    error: undefined | string;
+    error: undefined | GenericError;
   }
 
   // Sent by Cryptpad to actually save the document.
@@ -104,7 +117,7 @@ namespace ParsecCryptpadCommAPI {
   export interface MessageParsecOnSaveReply {
     tag: MessageTag.ParsecOnSaveReply;
     messageId: number;
-    error: undefined | string;
+    error: undefined | GenericError;
   }
 
   export interface MessageCryptpadOnHasUnsavedChanges {
@@ -114,7 +127,7 @@ namespace ParsecCryptpadCommAPI {
 
   export interface MessageCryptpadOnError {
     tag: MessageTag.CryptpadOnError;
-    error: string;
+    error: GenericError;
   }
 
   export interface MessageCryptpadOnNewKey {
@@ -129,7 +142,7 @@ namespace ParsecCryptpadCommAPI {
   export interface MessageParsecOnInsertImageReply {
     tag: MessageTag.ParsecOnInsertImageReply;
     messageId: number;
-    error: undefined | string;
+    error: undefined | GenericError;
   }
 
   // Messages send by the Parsec client and received by the Cryptpad Iframe
@@ -153,9 +166,10 @@ namespace ParsecCryptpadCommAPI {
 export import CryptpadEditor = ParsecCryptpadCommAPI.Editor;
 export import CryptpadOpenMode = ParsecCryptpadCommAPI.OpenMode;
 export type CryptpadOpenDocumentConfig = ParsecCryptpadCommAPI.OpenDocumentConfig;
+export type CryptpadGenericError = GenericError;
 
 export interface CryptpadEventHandlers {
-  onSave: (file: Blob) => void;
+  onSave: (file: Blob) => Promise<undefined | GenericError>;
   onError: (error: any) => void;
   onReady: () => void;
   onHasUnsavedChanges: (unsaved: boolean) => void;
@@ -222,21 +236,26 @@ function cryptpadLog(level: 'debug' | 'warn' | 'error' | 'info', message: string
 
 // Track the messages we have sent and that produce a response.
 namespace InFlightParsecMessage {
-  let lastMessageId = 0;
-  const inFlightParsecMessages: Array<{ messageId: number; promiseWithResolvers: PromiseWithResolvers<any> }> = [];
+  type InFlightParsecMessageReply =
+    | ParsecCryptpadCommAPI.MessageCryptpadOpenDocumentReply
+    | ParsecCryptpadCommAPI.MessageCryptpadRequestSaveDocumentReply
+  ;
 
-  export function registerParsecMessageForReply<T>(): [number, Promise<T>] {
+  let lastMessageId = 0;
+  const inFlightParsecMessages: Array<{ messageId: number; promiseWithResolvers: PromiseWithResolvers<InFlightParsecMessageReply> }> = [];
+
+  export function registerParsecMessageForReply<T extends InFlightParsecMessageReply>(): [number, Promise<T>] {
     // Generate message ID
     lastMessageId += 1;
     const messageId = lastMessageId;
 
-    const promiseWithResolvers: PromiseWithResolvers<T> = Promise.withResolvers();
+    const promiseWithResolvers: PromiseWithResolvers<InFlightParsecMessageReply> = Promise.withResolvers();
     inFlightParsecMessages.push({ messageId, promiseWithResolvers });
 
-    return [messageId, promiseWithResolvers.promise];
+    return [messageId, promiseWithResolvers.promise as Promise<T>];
   }
 
-  export function retrieveParsecMessageReplyPromise<T>(messageId: number): PromiseWithResolvers<T> | undefined {
+  export function retrieveParsecMessageReplyPromise(messageId: number): PromiseWithResolvers<InFlightParsecMessageReply> | undefined {
     const index = inFlightParsecMessages.findIndex((x) => {
       return x.messageId === messageId;
     });
@@ -249,7 +268,7 @@ namespace InFlightParsecMessage {
 
 export interface CryptpadSession {
   controller: AbortController;
-  save: () => void;
+  save: () => Promise<undefined | GenericError>;
 }
 
 // Error handling is peculiar here: if something goes wrong this function
@@ -261,7 +280,6 @@ export async function openDocument(
   frame: HTMLIFrameElement,
 ): Promise<CryptpadSession | undefined> {
   const CRYPTPAD_SERVER = await Env.getCryptpadServer();
-
   if (!CRYPTPAD_SERVER) {
     handlers.onError(new CryptpadError(CryptpadErrorCode.NotAvailable));
     return undefined;
@@ -269,7 +287,10 @@ export async function openDocument(
 
   window.electronAPI.log('debug', `Trying to open document on server '${CRYPTPAD_SERVER}'`);
 
-  function sendMessageToFrame(message: ParsecCryptpadCommAPI.ParsecMessage): void {
+  function postMessageToIFrame(message: ParsecCryptpadCommAPI.ParsecMessage): void {
+    console.log("========================!!! postMessageToIFrame", frame.id, frame.contentWindow, message);
+    // `frame.contentWindow` is null until the `frame.src` has been set and the page
+    // has finished to load.
     if (!frame.contentWindow) {
       throw new CryptpadError(CryptpadErrorCode.FrameNotLoaded);
     }
@@ -346,28 +367,34 @@ export async function openDocument(
       if (event.origin !== CRYPTPAD_SERVER) {
         return;
       }
-      console.log('2222 Parsec client receving message', event);
 
       switch (event.data.tag) {
         // TODO !!!!
         case ParsecCryptpadCommAPI.MessageTag.CryptpadOnError:
-        case ParsecCryptpadCommAPI.MessageTag.CryptpadOnHasUnsavedChanges:
         case ParsecCryptpadCommAPI.MessageTag.CryptpadOnInsertImage:
         case ParsecCryptpadCommAPI.MessageTag.CryptpadOnNewKey: {
-          console.log('wip: unsupported message', event.data);
+          console.log('WWWWWWIIIIIPPPPP: unsupported message', event.data);
+          break;
+        }
+        case ParsecCryptpadCommAPI.MessageTag.CryptpadOnHasUnsavedChanges: {
+          const data = event.data as ParsecCryptpadCommAPI.MessageCryptpadOnHasUnsavedChanges;
+          console.log("************************** onHasUnsavedChanges", data.unsaved);
+          handlers.onHasUnsavedChanges(data.unsaved)
           break;
         }
         case ParsecCryptpadCommAPI.MessageTag.CryptpadOnSave: {
           const data = event.data as ParsecCryptpadCommAPI.MessageCryptpadOnSave;
+          (async () => {
+            console.log("************************** onSave()");
+            const maybeError = await handlers.onSave(data.documentContent);
+            console.log("************************** onSave() ->", maybeError);
 
-          // TODO: actual save !
-          // TODO: error handling ?
-
-          sendMessageToFrame({
-            tag: ParsecCryptpadCommAPI.MessageTag.ParsecOnSaveReply,
-            messageId: data.messageId,
-            error: undefined,
-          } as ParsecCryptpadCommAPI.MessageParsecOnSaveReply);
+            postMessageToIFrame({
+              tag: ParsecCryptpadCommAPI.MessageTag.ParsecOnSaveReply,
+              messageId: data.messageId,
+              error: maybeError,
+            } as ParsecCryptpadCommAPI.MessageParsecOnSaveReply);
+          })();
           break;
         }
 
@@ -378,7 +405,7 @@ export async function openDocument(
             | ParsecCryptpadCommAPI.MessageCryptpadRequestSaveDocumentReply;
           const promiseWithResolvers = InFlightParsecMessage.retrieveParsecMessageReplyPromise(data.messageId);
           if (promiseWithResolvers !== undefined) {
-            promiseWithResolvers.resolve(data.error);
+            promiseWithResolvers.resolve(data);
           } else {
             cryptpadLog('error', `Message response with unknown messageId: ${JSON.stringify(event.data)}`);
           }
@@ -402,7 +429,7 @@ export async function openDocument(
       //       case ParsecCryptpadCommAPI.Commands.InitReply: {
       //         if (event.data.success) {
       //           cryptpadLog('debug', 'Init success, opening the file...');
-      //           sendMessageToFrame(ParsecCryptpadCommAPI.Commands.Open, options);
+      //           postMessageToIFrame(ParsecCryptpadCommAPI.Commands.Open, options);
       //         } else {
       //           handlers.onError(new CryptpadError(CryptpadErrorCode.InitFailed, event.data.details));
       //         }
@@ -459,9 +486,8 @@ export async function openDocument(
 
   // 3) Finally open the document
 
-  const [messageId, replyPromise] =
-    InFlightParsecMessage.registerParsecMessageForReply<ParsecCryptpadCommAPI.MessageCryptpadOpenDocumentReply>();
-  sendMessageToFrame({
+  const [messageId, replyPromise] = InFlightParsecMessage.registerParsecMessageForReply<ParsecCryptpadCommAPI.MessageCryptpadOpenDocumentReply>();
+  postMessageToIFrame({
     tag: ParsecCryptpadCommAPI.MessageTag.ParsecOpenDocument,
     messageId,
     config,
@@ -475,11 +501,11 @@ export async function openDocument(
 
   return {
     controller,
-    save: async (): Promise<undefined | string> => {
+    save: async (): Promise<undefined | GenericError> => {
       cryptpadLog('debug', 'Triggering manual save');
       const [messageId, replyPromise] =
         InFlightParsecMessage.registerParsecMessageForReply<ParsecCryptpadCommAPI.MessageCryptpadRequestSaveDocumentReply>();
-      sendMessageToFrame({
+      postMessageToIFrame({
         tag: ParsecCryptpadCommAPI.MessageTag.ParsecRequestSaveDocument,
         messageId,
       });
