@@ -13,6 +13,7 @@
     >
       <ion-label class="list-header-label header-label-selected">
         <ms-checkbox
+          v-show="allowSelection"
           @change="users.selectAll($event)"
           :checked="allSelected"
           :indeterminate="someSelected && !allSelected"
@@ -82,7 +83,8 @@
       :key="user.id"
       :user="user"
       :disabled="user.isCurrent"
-      :show-checkbox="!user.isCurrent && !user.isRevoked() && (someSelected || selectionEnabled === true)"
+      :active-checkbox="!user.isCurrent && !user.isRevoked() && (someSelected || selectionEnabled === true)"
+      :allow-selection="allowSelection"
       @menu-click="onMenuClick"
       @select="onUserSelected"
     />
@@ -103,6 +105,7 @@ const props = defineProps<{
   selectionEnabled?: boolean;
   sortBy: SortProperty;
   sortAscending: boolean;
+  allowSelection: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -132,6 +135,9 @@ async function onMenuClick(event: Event, user: UserModel, onFinished: () => void
 }
 
 function onUserSelected(user: UserModel, selected: boolean): void {
+  if (user.isRevoked()) {
+    return;
+  }
   user.isSelected = selected;
   emits('checkboxClick');
 }

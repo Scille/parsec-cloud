@@ -29,7 +29,8 @@ describe('User Card', () => {
     const wrapper = mount(UserCard, {
       props: {
         user: USER,
-        showCheckbox: true,
+        activeCheckbox: true,
+        allowSelection: true,
       },
       global: {
         provide: getDefaultProvideConfig(),

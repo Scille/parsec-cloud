@@ -38,7 +38,8 @@ describe('User List Item', () => {
     const wrapper = mount(UserListItem, {
       props: {
         user: USER,
-        showCheckbox: true,
+        activeCheckbox: true,
+        allowSelection: true,
       },
       global: {
         provide: getDefaultProvideConfig(),
