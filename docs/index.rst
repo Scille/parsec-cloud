@@ -51,6 +51,7 @@ You can also use the search function in the top left corner.
     hosting/sequester/index
     hosting/openbao/index
     hosting/custom-branding
+    hosting/install-cli
 
 .. toctree::
     :maxdepth: 1
@@ -68,12 +69,12 @@ You can also use the search function in the top left corner.
 
 .. only:: html
 
-   .. toctree::
-       :maxdepth: 1
-       :caption: Development
-       :name: section-development
+    .. toctree::
+        :maxdepth: 1
+        :caption: Development
+        :name: section-development
 
-       history
+        history
 
 .. Indices and tables
 .. ------------------
