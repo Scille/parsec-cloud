@@ -120,6 +120,8 @@ def app_factory(
         allow_methods=["OPTIONS", "GET", "POST", "PATCH"],
         # last-event-id is used for SEE synchronization when an interruption occurs.
         allow_headers=["api-version", "authorization", "user-agent", "last-event-id"],
+        # Needed to be able to retrieve and show server version in the web version
+        expose_headers=["server"],
     )
     logger.debug(f"Allowed origins: {cors_allow_origins}")
     app.state.backend = backend
