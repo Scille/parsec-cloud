@@ -20,6 +20,7 @@ url = { workspace = true }
 serde_json = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
 data-encoding = { workspace = true, features = ["std"] }
+log = { workspace = true }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }

@@ -4,7 +4,7 @@ index 2623f44d3d..81def1cc39 100644
 +++ b/docs/hosting/deployment/parsec-server.docker.yaml
 @@ -58,6 +58,7 @@ services:
        - parsec-postgres
-     image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.1-a.0+dev
+     image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.3-a.0+dev
      restart: on-failure
 +    command: run --with-client-web-app=/web
      container_name: parsec-server
