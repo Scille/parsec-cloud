@@ -82,6 +82,23 @@
             </ion-text>
           </div>
         </div>
+        <div class="info-list-item">
+          <ion-label class="info-list-item__title body">
+            {{ $msTranslate('OrganizationPage.configuration.serverVersion') }}
+          </ion-label>
+          <ion-text
+            class="info-list-item__value title-h5"
+            v-if="serverVersion"
+          >
+            {{ serverVersion }}
+          </ion-text>
+          <div
+            v-else
+            class="warning body-sm"
+          >
+            {{ $msTranslate('OrganizationPage.size.unavailable') }}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -101,6 +118,7 @@ const addressCopiedToClipboard = ref(false);
 
 defineProps<{
   orgInfo: OrganizationInfo;
+  serverVersion: string | null;
 }>();
 
 async function copyAddress(address: string): Promise<void> {
