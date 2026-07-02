@@ -37,7 +37,7 @@ Create the Bucket
 
 Create a new bucket for Parsec data storage:
 
-.. code-block:: console
+.. code-block:: bash
 
   aws s3api create-bucket \
       --bucket <BUCKET_NAME>
@@ -51,7 +51,7 @@ Replace ``<BUCKET_NAME>`` with your desired bucket name.
 
   For example, with Outscale:
 
-  .. code-block:: console
+  .. code-block:: bash
 
     aws s3api create-bucket \
         --profile <PROFILE_NAME> \
@@ -65,7 +65,7 @@ Enable Versioning
 
 Enable versioning on the bucket to protect against accidental overwrites:
 
-.. code-block:: console
+.. code-block:: bash
 
   aws s3api put-bucket-versioning \
       --bucket <BUCKET_NAME> \
@@ -80,7 +80,7 @@ For security reasons, create a dedicated IAM user with restricted permissions to
 
 The following bucket policy grants only the required permissions for Parsec to function:
 
-.. code-block:: console
+.. code-block:: bash
 
   aws s3api put-bucket-policy \
       --bucket <BUCKET_NAME> \
