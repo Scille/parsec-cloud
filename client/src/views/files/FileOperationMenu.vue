@@ -2,27 +2,40 @@
 
 <template>
   <div
-    v-if="menu.isVisible() || isFileOperationManagerActive"
     class="upload-menu"
-    :class="menu.isMinimized() ? 'minimize' : ''"
+    :class="{
+      minimize: menu.isMinimized(),
+      'minimized-with-status': menu.isMinimized() && showUploadStatus,
+    }"
   >
-    <div class="upload-menu-header">
-      <ion-text class="title-h4">{{ $msTranslate('FoldersPage.ImportFile.title') }}</ion-text>
-      <div class="menu-header-icons">
-        <ion-icon
-          class="menu-header-icons__item"
-          :icon="chevronDown"
-          @click="toggleMenu()"
-        />
-        <ion-icon
-          v-if="!isFileOperationManagerActive"
-          class="menu-header-icons__item"
-          :icon="close"
-          @click="menu.hide()"
-        />
-      </div>
+    <div
+      class="upload-menu-header"
+      @click="toggleMenu()"
+    >
+      <ion-text
+        v-if="!menu.isMinimized() || (menu.isMinimized() && showUploadStatus)"
+        class="title-h4 upload-menu-header__title"
+      >
+        {{ $msTranslate('FoldersPage.ImportFile.title') }}
+      </ion-text>
+      <ion-icon
+        class="menu-header-icons"
+        :icon="menu.isMinimized() && !showUploadStatus ? sync : chevronDown"
+      />
     </div>
-    <ion-list class="upload-menu-tabs">
+
+    <upload-status
+      v-if="showUploadStatus"
+      class="upload-menu-status"
+      :status="uploadProgressStatus"
+      :rate-calculator="rateCalculator as TransferRateCalculator"
+      @close="showUploadStatus = false"
+    />
+
+    <ion-list
+      v-if="!menu.isMinimized()"
+      class="upload-menu-tabs"
+    >
       <ion-item
         class="upload-menu-tabs__item button-medium"
         @click="onFilterSelected(OperationFilter.InProgress)"
@@ -84,8 +97,10 @@
 </template>
 
 <script setup lang="ts">
+import { TransferRateCalculator } from '@/common/transferRate';
 import { FileOperationBase, FileOperationDownloadArchive, FileOperationImport } from '@/components/files';
-import { Path } from '@/parsec';
+import UploadStatus from '@/components/files/operations/UploadStatus.vue';
+import { getGlobalUploadProgress, Path, UploadProgress } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
 import {
   FileOperationCopyData,
@@ -99,7 +114,7 @@ import { FileEventRegistrationCanceller, FileOperationEventData, FileOperationEv
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { IonButton, IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
-import { chevronDown, close } from 'ionicons/icons';
+import { chevronDown, sync } from 'ionicons/icons';
 import { MsImage, NoImportInProgress } from 'megashark-lib';
 import type { Component } from 'vue';
 import { computed, inject, onMounted, onUnmounted, ref, Ref } from 'vue';
@@ -148,8 +163,12 @@ const currentItems = computed(() => {
 });
 
 let canceller!: FileEventRegistrationCanceller;
+let uploadProgressTimeoutId: any = null;
 const isFileOperationManagerActive = ref(false);
 const uploadMenuList = ref();
+const uploadProgressStatus = ref<UploadProgress>({ totalBytes: 0, totalFiles: 0 });
+const rateCalculator = ref<TransferRateCalculator>(new TransferRateCalculator());
+const showUploadStatus = ref(false);
 
 function toggleMenu(): void {
   if (menu.isMinimized()) {
@@ -182,12 +201,34 @@ function getOperationComponent(item: OperationItem): Component {
   }
 }
 
+async function updateProgress(): Promise<void> {
+  const result = await getGlobalUploadProgress();
+  if (result.ok) {
+    uploadProgressStatus.value = result.value;
+    if (result.value.totalBytes > 0) {
+      rateCalculator.value.update(result.value.totalBytes);
+      showUploadStatus.value = true;
+    }
+  } else {
+    uploadProgressStatus.value = { totalBytes: 0, totalFiles: 0 };
+    rateCalculator.value.clear();
+  }
+  if (uploadProgressStatus.value.totalBytes > 0) {
+    // If we're still uploading, we poll faster for a smooth display
+    uploadProgressTimeoutId = setTimeout(updateProgress, 500);
+  } else {
+    // Otherwise we can stop the timeout, it will get reactivated on a new file operation
+    uploadProgressTimeoutId = null;
+  }
+}
+
 onMounted(async () => {
   canceller = await fileOperationManager.value.registerCallback(onFileOperationEvent);
 });
 
 onUnmounted(async () => {
   canceller.cancel();
+  clearTimeout(uploadProgressTimeoutId);
 });
 
 async function onFileOperationEvent(
@@ -196,6 +237,9 @@ async function onFileOperationEvent(
   eventData?: FileOperationEventData,
 ): Promise<void> {
   isFileOperationManagerActive.value = true;
+  if (!uploadProgressTimeoutId) {
+    uploadProgressTimeoutId = setTimeout(updateProgress, 1000);
+  }
   if (!operationData) {
     if (event !== FileOperationEvents.AllFinished) {
       window.electronAPI.log('warn', `Got event ${event} without operation data`);
@@ -207,7 +251,6 @@ async function onFileOperationEvent(
   switch (event) {
     case FileOperationEvents.Added: {
       items.value.unshift({ operationData: operationData, status: event, eventData: eventData, refreshKey: 0 });
-      menu.show();
       menu.expand();
       scrollToTop();
       filter.value = undefined;
@@ -319,23 +362,26 @@ function scrollToTop(): void {
 <style scoped lang="scss">
 .upload-menu {
   display: flex;
-  min-width: 28rem;
-  max-width: 25rem;
+  flex-direction: column;
+  width: 28rem;
+  max-height: 28rem;
   position: absolute;
-  border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
+  border-radius: var(--parsec-radius-12);
   box-shadow: var(--parsec-shadow-strong);
   background: var(--parsec-color-light-secondary-white);
-  bottom: 0;
+  bottom: 1.5rem;
   right: 2rem;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
   z-index: 20;
+  overflow: hidden;
+  transition:
+    width 250ms ease-in-out,
+    max-height 250ms ease-in-out;
 
   @include ms.responsive-breakpoint('sm') {
     right: 0;
-    min-width: 100%;
+    bottom: 0;
     width: 100%;
+    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
   }
 
   &-header {
@@ -344,29 +390,51 @@ function scrollToTop(): void {
     height: fit-content;
     justify-content: space-between;
     width: 100%;
-    padding: 0.25rem 0.25rem 0.25rem 1rem;
+    padding: 0.25rem;
     background: var(--parsec-color-light-primary-800);
     color: var(--parsec-color-light-secondary-inversed-contrast);
+    cursor: pointer;
+
+    &:hover {
+      .upload-menu-header__title {
+        text-decoration: underline;
+      }
+    }
+
+    &__title {
+      margin-left: 1rem;
+      height: stretch;
+      display: flex;
+      width: 100%;
+      align-items: center;
+    }
+  }
+
+  &-status {
+    min-width: 22rem;
+    height: fit-content;
+    flex-shrink: 0;
   }
 
   &-tabs {
     display: flex;
-    padding: 0.625rem 0.5rem;
+    padding: 0.625rem 0.5rem 0.125rem;
+    flex-shrink: 0;
+    width: 100%;
     gap: 0.5rem;
-    overflow: hidden;
     background: var(--parsec-color-light-secondary-white);
     position: relative;
-    --current-tab: 0;
     align-items: center;
+    box-shadow: var(--parsec-shadow-strong);
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.25rem;
-      margin: 1rem 0.5rem 0;
+      padding: 0.625rem;
     }
 
     &__item {
       color: var(--parsec-color-light-secondary-grey);
       border: 1px solid var(--parsec-color-light-secondary-medium);
+      background: var(--parsec-color-light-secondary-white);
       border-radius: var(--parsec-radius-12);
       cursor: pointer;
       display: flex;
@@ -379,14 +447,6 @@ function scrollToTop(): void {
       &::part(native) {
         background: transparent;
         padding: 0.5rem 0.625rem;
-
-        @include ms.responsive-breakpoint('sm') {
-          padding: 0.5rem 0.25rem;
-        }
-      }
-
-      @include ms.responsive-breakpoint('sm') {
-        width: 100%;
       }
 
       .item-container {
@@ -429,10 +489,6 @@ function scrollToTop(): void {
         padding: 0.5rem 0.75rem;
       }
 
-      @include ms.responsive-breakpoint('sm') {
-        margin-left: 0;
-      }
-
       &:hover {
         background: var(--parsec-color-light-secondary-premiere);
         color: var(--parsec-color-light-primary-700);
@@ -446,9 +502,8 @@ function scrollToTop(): void {
     padding: 0;
     overflow-y: auto;
     height: 60vh;
-    padding-bottom: 2rem;
-    max-height: 28rem;
     transition: all 250ms ease-in-out;
+    padding-bottom: 0.5rem;
     background: var(--parsec-color-light-secondary-white);
 
     @media screen and (max-height: 1000px) {
@@ -461,6 +516,7 @@ function scrollToTop(): void {
       flex-direction: column;
       align-items: center;
       gap: 0.5rem;
+      padding: 1rem;
       margin: auto;
       color: var(--parsec-color-light-secondary-grey);
     }
@@ -470,34 +526,52 @@ function scrollToTop(): void {
 .menu-header-icons {
   display: flex;
   gap: 0.5rem;
+  color: var(--parsec-color-light-secondary-inversed-contrast);
+  font-size: 1.25rem;
+  cursor: pointer;
+  border-radius: var(--parsec-radius-8);
+  padding: 0.5rem;
+  transition: transform 250ms ease-in-out;
 
-  &__item {
-    color: var(--parsec-color-light-secondary-inversed-contrast);
-    font-size: 1.25rem;
-    cursor: pointer;
-    border-radius: var(--parsec-radius-8);
-    padding: 0.5rem;
-
-    &:nth-child(1) {
-      transition: transform 250ms ease-in-out;
-    }
-
-    &:hover {
-      background-color: var(--parsec-color-light-primary-30-opacity15);
-    }
+  &:hover {
+    background-color: var(--parsec-color-light-primary-30-opacity15);
   }
 }
 
 .minimize {
-  .upload-menu-list,
-  .upload-menu-tabs {
-    height: 0;
-    padding: 0;
-    margin: 0;
+  width: 2.75rem;
+  max-height: 2.75rem;
+  cursor: default;
+
+  @include ms.responsive-breakpoint('sm') {
+    right: 1.5rem;
+    bottom: 1.5rem;
+    border-radius: var(--parsec-radius-12);
   }
 
-  .menu-header-icons__item {
+  .upload-menu-list {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    height: 0;
+  }
+
+  .menu-header-icons {
     transform: rotate(180deg);
+    margin-left: auto;
+  }
+}
+
+.minimized-with-status {
+  width: 28rem;
+  max-height: 6rem;
+
+  .upload-menu-header {
+    padding: 0.25rem;
+  }
+
+  .menu-header-icons {
+    padding: 0.5rem;
   }
 }
 </style>

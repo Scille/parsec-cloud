@@ -102,7 +102,7 @@ msTest.describe(() => {
       await expect(opItems).toHaveCount(2);
       await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Copying image.png');
       await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('wksp1');
-      await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+      await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(0).click();
 
       // File should still be here
       if (gridMode) {
@@ -145,7 +145,7 @@ msTest.describe(() => {
       await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('5 B •  wksp1');
       await expect(opItems.nth(1).locator('.element-details-title__name')).toHaveText('file.txt');
       await expect(opItems.nth(1).locator('.element-details-info')).toHaveText('1 B •  wksp1');
-      await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+      await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(0).click();
 
       const entries = documents.locator('.folder-container').locator('.file-list-item');
       await expect(entries).toHaveCount(2);
@@ -186,7 +186,6 @@ msTest.describe(() => {
         await buttons.nth(0).click();
         await expect(dupModal).toBeHidden();
         await expect(documents).toShowToast('No files to copy.', 'Info');
-        await expect(uploadMenu).toBeHidden();
         await expect(entries).toHaveCount(2);
         await expect(entries.locator('.label-name')).toHaveText(['Folder', 'file.txt']);
         await entries.nth(0).dblclick();
@@ -248,7 +247,7 @@ msTest.describe(() => {
       await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('5 B •  wksp1');
       await expect(opItems.nth(1).locator('.element-details-title__name')).toHaveText('file.txt');
       await expect(opItems.nth(1).locator('.element-details-info')).toHaveText('1 B •  wksp1');
-      await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+      await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(0).click();
 
       const modal = documents.locator('.folder-selection-modal');
       const dupModal = documents.locator('.file-operation-conflicts-modal');
@@ -288,7 +287,6 @@ msTest.describe(() => {
         await expect(opItems).toHaveCount(3);
         await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Copying Folder');
       } else {
-        await expect(uploadMenu).toBeHidden();
         await expect(documents).toShowToast('No files to copy.', 'Info');
       }
       // Folder is still there

@@ -488,12 +488,12 @@ export async function importDefaultFiles(
     await dragAndDropFile(documentsPage, dropZone, paths);
     imported = paths.length;
   }
-  // Hide the import menu
+  // Minimize the import menu
   if (imported > 0) {
     const uploadMenu = documentsPage.locator('.upload-menu');
     await expect(uploadMenu).toBeVisible();
     expect(await uploadMenu.locator('.upload-menu-list').locator('.file-operation-item').count()).toBeGreaterThan(0);
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(0).click();
   }
   await expect(documentsPage.locator('.folder-container').locator('.no-files-content')).toBeHidden();
 }
