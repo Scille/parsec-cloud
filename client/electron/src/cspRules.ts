@@ -20,11 +20,33 @@ export function setupContentSecurityPolicy(customScheme: string): void {
 
   const CspRules: Array<[CspDirective, Array<string>]> = [
     [CspDirective.DefaultSrc, [customProtocol, 'devtools:']],
-    [CspDirective.ScriptSrc, [customProtocol, "'unsafe-inline'", 'https://*.stripe.com']],
+    [
+      CspDirective.ScriptSrc,
+      [
+        customProtocol,
+        "'unsafe-inline'",
+        'https://*.stripe.com',
+        // For custom cryptpad server:
+        'https:',
+        // For custom cryptpad server to allow it loading wasm
+        "'unsafe-eval'",
+      ],
+    ],
     [CspDirective.ImgSrc, [customProtocol, 'blob:', 'data:', 'https:', 'http:']],
     [CspDirective.StyleSrc, [customProtocol, "'unsafe-inline'", 'data:', 'https:', 'http:']],
     [CspDirective.FontSrc, [customProtocol, 'data:', 'https:*', 'http:*']],
-    [CspDirective.ConnectSrc, [customProtocol, 'https:', 'http:', 'wss:', 'ws:']],
+    [
+      CspDirective.ConnectSrc,
+      [
+        customProtocol,
+        'https:',
+        'http:',
+        'wss:',
+        'ws:',
+        // Required to send blob file to cryptpad server
+        'blob:',
+      ],
+    ],
     [CspDirective.WorkerSrc, [customProtocol, 'blob:', 'https:', 'http:']],
     [CspDirective.FrameSrc, [customProtocol, 'https:', 'http:']],
     [CspDirective.MediaSrc, [customProtocol, 'blob:', 'data:', 'https:', 'http:']],
@@ -35,6 +57,7 @@ export function setupContentSecurityPolicy(customScheme: string): void {
     rules.push(`${directive} ${hosts.join(' ')}`);
   }
   const CSP_RULE = rules.join('; ');
+  console.debug(`Generated Content-Security-Policy rule: ${CSP_RULE}`);
 
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     if (details.resourceType !== 'mainFrame') {
