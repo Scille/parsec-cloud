@@ -247,7 +247,7 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import usePathOpener from '@/services/pathOpener';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { downloadEntry, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
+import { downloadFiles, FileDetailsModal, FileHandlerAction, openDownloadConfirmationModal } from '@/views/files';
 import { FileHandlerMode } from '@/views/files/handler';
 import { FileEditor, SaveState } from '@/views/files/handler/editor';
 import SmallDisplayViewerActionMenu from '@/views/files/handler/SmallDisplayViewerActionMenu.vue';
@@ -670,8 +670,8 @@ async function downloadFile(): Promise<void> {
     return;
   }
 
-  await downloadEntry({
-    entry: entryResult.value as EntryStatFile,
+  await downloadFiles({
+    entries: [entryResult.value as EntryStatFile],
     workspaceHandle: workspaceHandle,
     workspaceId: workspaceInfoResult.value.id,
     informationManager: informationManager.value,

@@ -179,6 +179,7 @@ import {
   FileOperationData,
   FileOperationDataType,
   FileOperationDownloadData,
+  FileOperationDownloadFilesData,
   FileOperationEventData,
   FileOperationEvents,
   FileOperationMoveData,
@@ -191,7 +192,12 @@ import { MsImage, MsSpinner } from 'megashark-lib';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{
-  operationData: FileOperationCopyData | FileOperationMoveData | FileOperationRestoreData | FileOperationDownloadData;
+  operationData:
+    | FileOperationCopyData
+    | FileOperationMoveData
+    | FileOperationRestoreData
+    | FileOperationDownloadData
+    | FileOperationDownloadFilesData;
   status: FileOperationEvents;
   eventData?: FileOperationEventData;
 }>();
@@ -227,7 +233,7 @@ const info = computed(() => {
       return {
         entries: [(props.operationData as FileOperationDownloadData).entry],
         icon: DownloadFile,
-        translation: 'FoldersPage.DownloadFile.download',
+        translation: 'FoldersPage.DownloadFile.downloadSingle',
         translationMultiple: '',
       };
     default:

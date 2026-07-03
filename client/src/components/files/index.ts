@@ -5,6 +5,7 @@ export * from '@/components/files/handler/viewer';
 export * from '@/components/files/utils';
 import FileOperationBase from '@/components/files/operations/FileOperationBase.vue';
 import FileOperationDownloadArchive from '@/components/files/operations/FileOperationDownloadArchive.vue';
+import FileOperationDownloadFiles from '@/components/files/operations/FileOperationDownloadFiles.vue';
 import FileOperationImport from '@/components/files/operations/FileOperationImport.vue';
 
 export { EntryCollection, ImportType, OpenFallbackChoice, SortProperty, WorkspaceHistoryEntryCollection } from '@/components/files/types';
@@ -17,4 +18,4 @@ export type {
   WorkspaceHistoryFileModel,
   WorkspaceHistoryFolderModel,
 } from '@/components/files/types';
-export { FileOperationBase, FileOperationDownloadArchive, FileOperationImport };
+export { FileOperationBase, FileOperationDownloadArchive, FileOperationDownloadFiles, FileOperationImport };
