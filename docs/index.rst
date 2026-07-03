@@ -43,8 +43,9 @@ You can also use the search function in the top left corner.
     hosting/introduction
     hosting/architecture
     hosting/client-deploy
-    hosting/deployment/server-deploy
     hosting/deployment/s3-deploy
+    hosting/deployment/server-deploy
+    hosting/deployment/editics/index
     hosting/deployment/webapp/index
     hosting/maintenance/index
     hosting/administration/index
