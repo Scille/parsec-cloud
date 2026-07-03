@@ -12,6 +12,7 @@ import path from 'path';
 import capacitorConfig from '../capacitor.config.js';
 import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels.js';
 import { setupContentSecurityPolicy } from './cspRules.js';
+import { setupCustomCaFile } from './customCa.js';
 import { FEATURE_FLAGS } from './features.js';
 import { ParsecApp, setupReloadWatcher } from './setup.js';
 
@@ -118,6 +119,7 @@ if (!lock) {
     await app.whenReady();
     // Security - Set Content-Security-Policy based on whether or not we are in dev mode.
     setupContentSecurityPolicy(parsecApp.getCustomURLScheme());
+    await setupCustomCaFile(process.env.SSL_CAFILE);
     // Initialize our app, build windows, and load content.
     await parsecApp.init();
     parsecApp.sendEvent(WindowToPageChannel.CustomBrandingFolder, path.join(app.getPath('userData'), 'custom'));
