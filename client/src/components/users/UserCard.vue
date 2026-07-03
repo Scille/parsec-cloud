@@ -224,6 +224,12 @@ async function onCopyEmailClicked(email: string): Promise<void> {
           text-overflow: ellipsis;
           white-space: nowrap;
           overflow: hidden;
+
+          &__text {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+          }
         }
 
         .email-copy-icon {
