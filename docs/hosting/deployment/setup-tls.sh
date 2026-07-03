@@ -5,7 +5,7 @@ function generate_cert_conf() {
 
     echo "Generating $name.crt.conf"
 
-    cat << EOF > "$name".crt.conf
+    cat <<EOF >"tls/${name}.crt.conf"
 [req]
 distinguished_name = req_dist_name
 req_extensions = req_ext
@@ -19,13 +19,18 @@ subjectAltName = $san
 EOF
 }
 
+function generate_key() {
+    echo "Generate key at $1"
+    openssl genrsa -out "$1" 4096
+}
+
 function generate_certificate_request() {
     local name=$1
     echo "Generate certificate request $name.csr"
     openssl req -batch \
-        -new -sha512 -noenc -newkey rsa:4096 \
-        -config "$name".crt.conf \
-        -keyout "$name".key -out "$name".csr
+        -new -sha512 -noenc \
+        -config "tls/${name}.crt.conf" \
+        -key "tls/${name}-key.pem" -out "tls/${name}.csr"
 }
 
 function sign_crt_with_ca() {
@@ -33,46 +38,47 @@ function sign_crt_with_ca() {
     local ca_key=$2
     local name=$3
 
-    echo "Sign certificate request $name.crt"
+    echo "Sign certificate request $name.pem"
 
-    openssl x509 -req -in "$name".csr \
+    openssl x509 -req -in "tls/$name.csr" \
         -CA "$ca_crt" -CAkey "$ca_key" \
-        -extfile "$name".crt.conf \
+        -extfile "tls/$name.crt.conf" \
         -extensions req_ext \
-        -CAcreateserial -out "$name".crt \
+        -CAcreateserial -out "tls/$name.pem" \
         -days 10 -sha512
 }
 
-if [ ! -f custom-ca.key ]; then
-    echo "Generate a mini Certificate Authority"
-    openssl req -batch \
-        -x509 -sha512 -nodes -days 10 -newkey rsa:4096 \
-        -subj "/CN=Mini Certificate Authority" \
-        -keyout custom-ca.key -out custom-ca.crt
+mkdir -p tls
+
+if [ ! -f tls/ca-key.pem ]; then
+    generate_key tls/ca-key.pem
 fi
 
-for service in parsec-{s3,server,proxy}; do
-    if [ ! -f "$service".crt.conf ]; then
-        generate_cert_conf "$service" DNS:"$service",DNS:localhost,IP:127.0.0.1
+if [ ! -f custom-ca.crt ] || [ custom-ca.key -nt custom-ca.crt ]; then
+    echo "Generate a mini Certificate Authority"
+    openssl req -batch \
+        -x509 -sha512 -nodes -days 10 \
+        -subj "/CN=Mini Certificate Authority" \
+        -key tls/ca-key.pem -out tls/ca.pem
+fi
+
+for service in {s3,parsec,proxy}; do
+    if [ ! -f "tls/$service.crt.conf" ]; then
+        generate_cert_conf "$service" "DNS:parsec-$service,DNS:*.parsec.localhost,DNS:localhost,IP:127.0.0.1"
     fi
 
-    # Generate key + csr if missing or if the key is older than the conf
-    if [ ! -f "$service".key ] || [ "$service".key -ot "$service".crt.conf ]; then
+    # Generate key if missing
+    if [ ! -f "tls/$service-key.pem" ]; then
+        generate_key "tls/$service-key.pem"
+    fi
+
+    # Generate a CSR if missing or if key is newer
+    if [ ! -f "tls/$service.csr" ] || [ "tls/$service-key.pem" -nt "tls/$service.csr" ] || [ "tls/$service.csr" -ot "tls/$service.crt.conf" ]; then
         generate_certificate_request "$service"
     fi
 
     # Generate crt if missing or if it's older than the csr or the custom CA
-    if [ ! -f "$service".crt ] || [ "$service".crt -ot "$service".csr ] || [ "$service".crt -ot custom-ca.key ]; then
-        sign_crt_with_ca custom-ca.{crt,key} "$service"
+    if [ ! -f "tls/$service.pem" ] || [ "tls/$service.pem" -ot "tls/$service.csr" ] || [ "tls/$service.pem" -ot tls/ca.pem ]; then
+        sign_crt_with_ca tls/ca{,-key}.pem "$service"
     fi
 done
-
-if [ "$(stat -c %g parsec-server.key)" -ne 1234 ]; then
-    echo "Changing group id of parsec-server.key to 1234"
-    sudo chown "$USER":1234 parsec-server.key
-fi
-
-if [ "$(stat -c %a parsec-server.key)" -ne 640 ]; then
-    echo "Changing permission of parsec-server.key to 640"
-    chmod 640 parsec-server.key
-fi

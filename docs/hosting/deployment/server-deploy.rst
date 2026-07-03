@@ -102,17 +102,11 @@ created for this purpose.
 
 The ``setup-tls.sh`` script below will allow you to generate everything you need:
 
-1. Generate the CA key & self-signed certificate (``custom-ca.{key,crt}``).
+1. Generate the CA key & self-signed certificate (``tls/ca{-key}.pem``).
 2. For ``parsec-s3`` and ``parsec-server`` services:
 
-   a. Generate the service key & Certificate Signing Request (CSR) ``parsec-{service}.{key,csr}``.
+   a. Generate the service key & Certificate Signing Request (CSR) ``tls/$service{-key,}.pem``.
    b. Generate the certificate using the CSR and the CA.
-
-3. For ``parsec-server`` service:
-
-   a. Change the key file group ID to ``1234`` (the GID used by the ``parsec-server`` container).
-   b. Change the file mode to give read permission to the group ``1234``. This is required because
-      Docker Compose does not allow to mount the file with the correct permissions in the container.
 
 .. admonition:: setup-tls.sh
    :collapsible: closed
@@ -466,7 +460,7 @@ An example of a reverse proxy configuration for ``nginx`` can be found in :ref:`
      :start-at: parsec-proxy
      :end-before: parsec-postgres
 
-Use the following Nginx configuration file to serve the domain ``example.com`` by listening on port 80 and 443,
+Use the following Nginx configuration file to serve the domain ``app.parsec.localhost`` by listening on port 80 and 443,
 and proxy the requests to the Parsec Server.
 
 .. admonition:: parsec-nginx.conf
@@ -474,7 +468,7 @@ and proxy the requests to the Parsec Server.
 
    .. literalinclude:: parsec-nginx.conf
      :language: nginx
-     :emphasize-lines: 10,31-34,37,40,48-51,54,57
+     :emphasize-lines: 10,31-34,37,40,47-50,53,56
      :linenos:
 
 The important takeaways are:
@@ -488,7 +482,7 @@ The important takeaways are:
 
   - The ``Forwarded`` header (`RFC-7239 <https://datatracker.ietf.org/doc/html/rfc7239>`_) is not used by Parsec, but it may be in the future.
 
-- Set the header ``host`` to the accessible address. Here we force the value to be ``example.com``, but you can set it to ``$host`` like for ``X-Forwarded-Host``.
+- Set the header ``host`` to the accessible address. Here we force the value to be ``app.parsec.localhost``, but you can set it to ``$host`` like for ``X-Forwarded-Host``.
 
 
 TLS Recommendation
@@ -528,5 +522,5 @@ We provide 3 options to configure the TLS connection:
 .. _doc_hosting_deployment_anssi_reco_tls: https://cyber.gouv.fr/sites/default/files/2017/07/anssi-guide-recommandations_de_securite_relatives_a_tls-v1.2.pdf
 
 If you followed the installation described in `Deploy with Docker`_, you should only have to replace the file s
-``parsec-server.crt`` and ``parsec-server.key`` that where generated on section `TLS certificates`_.
+``tls/parsec.pem`` and ``tls/parsec-key.pem`` that where generated on section `TLS certificates`_.
 The env variables ``PARSEC_SSL_KEYFILE`` and ``PARSEC_SSL_CERTFILE`` are already configured in ``parsec.env`` (see `Parsec env file`_).

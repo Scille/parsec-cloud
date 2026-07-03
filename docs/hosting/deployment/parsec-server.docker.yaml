@@ -7,10 +7,11 @@ services:
     ports:
       - 443:443
       - 80:80
+    secrets:
+      - proxy-pem-crt
+      - proxy-pem-key
     volumes:
       - ./parsec-nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./parsec-proxy.crt:/certs/proxy.crt:ro
-      - ./parsec-proxy.key:/certs/proxy.key:ro
 
   parsec-postgres:
     image: postgres:16.10-alpine
@@ -37,11 +38,15 @@ services:
       - 127.0.0.1:9090:9090
       # Expose S3 API to localhost
       - 127.0.0.1:9000:9000
+    secrets:
+      - source: ca-crt
+        target: /opts/certs/CAs/ca.test.crt
+      - source: s3-pem-crt
+        target: /opts/certs/public.crt
+      - source: s3-pem-key
+        target: /opts/certs/private.key
     volumes:
       - parsec-object-data:/data
-      - ./parsec-s3.key:/opts/certs/private.key:ro
-      - ./parsec-s3.crt:/opts/certs/public.crt:ro
-      - ./custom-ca.crt:/opts/certs/CAs/ca.test.crt:ro
 
   parsec-smtp:
     image: mailhog/mailhog:v1.0.1
@@ -66,9 +71,10 @@ services:
       - parsec-smtp.env
       - parsec-admin-token.env
     environment:
-      AWS_CA_BUNDLE: /run/secrets/mini-ca-crt
+      AWS_CA_BUNDLE: /run/secrets/ca-crt
+    user: "1000"
     secrets:
-      - mini-ca-crt
+      - ca-crt
       - parsec-pem-crt
       - parsec-pem-key
     ports:
@@ -80,8 +86,16 @@ volumes:
 
 secrets:
   parsec-pem-crt:
-    file: ./parsec-server.crt
+    file: ./tls/parsec.pem
   parsec-pem-key:
-    file: ./parsec-server.key
-  mini-ca-crt:
-    file: ./custom-ca.crt
+    file: ./tls/parsec-key.pem
+  ca-crt:
+    file: ./tls/ca.pem
+  s3-pem-crt:
+    file: ./tls/s3.pem
+  s3-pem-key:
+    file: ./tls/s3-key.pem
+  proxy-pem-crt:
+    file: ./tls/proxy.pem
+  proxy-pem-key:
+    file: ./tls/proxy-key.pem
