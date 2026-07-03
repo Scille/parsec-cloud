@@ -13,7 +13,7 @@ The steps can easily be adapted or ignored if you used the direct install method
 Obtaining the web application
 =============================
 
-.. _webapp: https://github.com/Scille/parsec-cloud/releases/download/v3.9.1-a.0+dev/parsec-web-3.9.1-a.0+dev.zip
+.. _webapp: https://github.com/Scille/parsec-cloud/releases/download/v3.9.2-a.0+dev/parsec-web-3.9.2-a.0+dev.zip
 
 For a given release, you can obtain the corresponding web application by looking for the asset named ``parsec-web-{version}.zip`` in the release's asset files.
 
@@ -22,7 +22,7 @@ For a given release, you can obtain the corresponding web application by looking
    .. code-block:: shell
 
       curl --fail -L -o parsec-web.zip \
-        https://github.com/Scille/parsec-cloud/releases/download/v3.9.1-a.0+dev/parsec-web-3.9.1-a.0+dev.zip
+        https://github.com/Scille/parsec-cloud/releases/download/v3.9.2-a.0+dev/parsec-web-3.9.2-a.0+dev.zip
 
 
 #. Once the archive downloaded, extract it under ``parsec-web``:
