@@ -119,7 +119,7 @@
     }
   }
 
-  &:is(.multiple_elements) {
+  &:is(.multiple_elements.done) {
     .element-details-title {
       cursor: pointer;
 

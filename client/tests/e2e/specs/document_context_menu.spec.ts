@@ -85,6 +85,7 @@ msTest.describe(() => {
         'Make a copy',
         'History',
         'Download',
+        'Download as a ZIP file',
         'Details',
         'Delete',
         'Collaboration',
@@ -115,6 +116,7 @@ msTest.describe(() => {
         'Make a copy',
         'History',
         'Download',
+        'Download as a ZIP file',
         'Details',
         'Delete',
         'Collaboration',
@@ -144,6 +146,7 @@ msTest.describe(() => {
         'Make a copy',
         'History',
         'Download',
+        'Download as a ZIP file',
         'Details',
         'Delete',
         'Collaboration',
@@ -174,6 +177,7 @@ msTest.describe(() => {
           'Make a copy',
           'History',
           'Download',
+          'Download as a ZIP file',
           'Details',
           'Delete',
           'Collaboration',
@@ -207,6 +211,7 @@ msTest.describe(() => {
           'Make a copy',
           'History',
           'Download',
+          'Download as a ZIP file',
           'Details',
           'Delete',
           'Collaboration',
@@ -239,6 +244,7 @@ msTest.describe(() => {
           'Make a copy',
           'History',
           'Download',
+          'Download as a ZIP file',
           'Details',
           'Delete',
           'Collaboration',
@@ -419,7 +425,14 @@ msTest.describe(() => {
       await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
       const popover = documentsReadOnly.locator('.file-context-menu');
       await expect(popover.getByRole('group')).toHaveCount(2);
-      await expect(popover.getByRole('listitem')).toHaveText(['Folder management', 'Download', 'Details', 'Collaboration', 'Copy link']);
+      await expect(popover.getByRole('listitem')).toHaveText([
+        'Folder management',
+        'Download',
+        'Download as a ZIP file',
+        'Details',
+        'Collaboration',
+        'Copy link',
+      ]);
     });
 
     msTest(`File actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`, async ({ documentsReadOnly }) => {
@@ -441,6 +454,7 @@ msTest.describe(() => {
         'File management',
         'Preview',
         'Download',
+        'Download as a ZIP file',
         'Details',
         'Collaboration',
         'Copy link',
@@ -475,6 +489,7 @@ msTest.describe(() => {
           'Make a copy',
           'History',
           'Download',
+          'Download as a ZIP file',
           'Copy link',
           'Details',
           'Delete',
@@ -537,6 +552,7 @@ msTest.describe(() => {
           'Make a copy',
           'History',
           'Download',
+          'Download as a ZIP file',
           'Copy link',
           'Details',
           'Delete',
@@ -598,6 +614,7 @@ msTest.describe(() => {
           'Make a copy',
           'History',
           'Download',
+          'Download as a ZIP file',
           'Copy link',
           'Details',
           'Delete',
@@ -629,6 +646,7 @@ msTest.describe(() => {
           'Make a copy',
           'History',
           'Download',
+          'Download as a ZIP file',
           'Copy link',
           'Details',
           'Delete',
@@ -835,7 +853,7 @@ msTest.describe(() => {
         await expect(documentsReadOnly.locator('.file-context-sheet-modal')).toBeVisible();
         const modal = documentsReadOnly.locator('.file-context-sheet-modal');
         await expect(modal.getByRole('group')).toHaveCount(1);
-        await expect(modal.getByRole('listitem')).toHaveText(['Download', 'Copy link', 'Details']);
+        await expect(modal.getByRole('listitem')).toHaveText(['Download', 'Download as a ZIP file', 'Copy link', 'Details']);
       },
     );
 
@@ -857,7 +875,7 @@ msTest.describe(() => {
         await expect(documentsReadOnly.locator('.file-context-sheet-modal')).toBeVisible();
         const modal = documentsReadOnly.locator('.file-context-sheet-modal');
         await expect(modal.getByRole('group')).toHaveCount(1);
-        await expect(modal.getByRole('listitem')).toHaveText(['Preview', 'Download', 'Copy link', 'Details']);
+        await expect(modal.getByRole('listitem')).toHaveText(['Preview', 'Download', 'Download as a ZIP file', 'Copy link', 'Details']);
       },
     );
   }

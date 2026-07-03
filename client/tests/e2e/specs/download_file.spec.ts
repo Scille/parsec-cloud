@@ -42,7 +42,10 @@ msTest.describe(() => {
     await entry.hover();
     await entry.locator('.options-button').click();
     const popover = documents.locator('.file-context-menu');
-    await popover.getByRole('listitem').filter({ hasText: 'Download' }).click();
+    await popover
+      .getByRole('listitem')
+      .filter({ hasText: /^Download$/ })
+      .click();
     await confirmDownload(documents, true);
     await documents.waitForTimeout(1000);
 
@@ -60,7 +63,7 @@ msTest.describe(() => {
     }
   });
 
-  msTest('Download multiple files and folder', async ({ documents }, testInfo: TestInfo) => {
+  msTest('Download multiple files and folder as a zip', async ({ documents }, testInfo: TestInfo) => {
     msTest.setTimeout(45_000);
 
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Pdf | ImportDocuments.Xlsx, true);
@@ -79,8 +82,16 @@ msTest.describe(() => {
     await documents.locator('.folder-container').locator('.header-label-selected').click();
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('.counter')).toHaveText('4 selected items');
-    await expect(actionBar.locator('.ms-action-bar-button:visible').nth(3)).toHaveText('Download');
-    await actionBar.locator('.ms-action-bar-button:visible').nth(3).click();
+
+    const actionBarMoreButton = actionBar.locator('#action-bar-more-button');
+    const actionBarPopover = documents.locator('.action-bar-more-popover');
+    await expect(actionBarMoreButton).toBeVisible();
+    await actionBarMoreButton.click();
+    await expect(actionBarPopover).toBeVisible();
+    await expect(actionBarPopover.getByRole('listitem').nth(1)).toHaveText('Download as a ZIP file');
+    await actionBarPopover.getByRole('listitem').nth(1).click();
+    await expect(actionBarPopover).toBeHidden();
+
     await confirmDownload(documents, true);
     await documents.waitForTimeout(1000);
 
@@ -116,7 +127,11 @@ msTest.describe(() => {
     const audioEntry = documents.locator('.folder-container').locator('.file-list-item').first();
     await audioEntry.hover();
     await audioEntry.locator('.options-button').click();
-    await documents.locator('.file-context-menu').getByRole('listitem').filter({ hasText: 'Download' }).click();
+    await documents
+      .locator('.file-context-menu')
+      .getByRole('listitem')
+      .filter({ hasText: /^Download$/ })
+      .click();
 
     // Download warning modal is visible
     const warningModal = documents.locator('.download-warning-modal');
@@ -149,7 +164,11 @@ msTest.describe(() => {
     const pyEntry = documents.locator('.folder-container').locator('.file-list-item').last();
     await pyEntry.hover();
     await pyEntry.locator('.options-button').click();
-    await documents.locator('.file-context-menu').getByRole('listitem').filter({ hasText: 'Download' }).click();
+    await documents
+      .locator('.file-context-menu')
+      .getByRole('listitem')
+      .filter({ hasText: /^Download$/ })
+      .click();
     // This time the warning doesn't show up
     await documents.waitForTimeout(1000);
     await expect(opItems).toHaveCount(3);
@@ -210,13 +229,13 @@ msTest.describe(() => {
     await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
     await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
 
-    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(7);
+    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(8);
 
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
     await expect(actionBarPopover).toBeVisible();
-    await expect(actionBarPopover.getByRole('listitem').nth(0)).toHaveText('Download');
-    await actionBarPopover.getByRole('listitem').nth(0).click();
+    await expect(actionBarPopover.getByRole('listitem').nth(2)).toHaveText('Download as a ZIP file');
+    await actionBarPopover.getByRole('listitem').nth(2).click();
     await expect(actionBarPopover).toBeHidden();
 
     await confirmDownload(documents, true);

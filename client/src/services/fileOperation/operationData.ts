@@ -3,7 +3,7 @@
 import { EntryName, EntryStat, EntryStatFile, FsPath, WorkspaceHandle, WorkspaceHistoryEntryStat, WorkspaceID } from '@/parsec';
 import { DuplicatePolicy } from '@/services/fileOperation/types';
 import { DateTime } from 'luxon';
-import { FileSystemFileHandle } from 'native-file-system-adapter';
+import { FileSystemDirectoryHandle, FileSystemFileHandle } from 'native-file-system-adapter';
 
 export enum FileOperationDataType {
   Import = 'import',
@@ -12,6 +12,7 @@ export enum FileOperationDataType {
   Restore = 'restore',
   Download = 'download',
   DownloadArchive = 'download-archive',
+  DownloadFiles = 'download-files',
 }
 
 export type FileOperationID = string;
@@ -62,10 +63,17 @@ export interface FileOperationDownloadArchiveData extends _FileOperationData {
   totalSize: number;
 }
 
+export interface FileOperationDownloadFilesData extends _FileOperationData {
+  entries: Array<EntryStat>;
+  saveHandle: FileSystemDirectoryHandle;
+  dateTime?: DateTime;
+}
+
 export type FileOperationData =
   | FileOperationImportData
   | FileOperationCopyData
   | FileOperationMoveData
   | FileOperationRestoreData
   | FileOperationDownloadData
-  | FileOperationDownloadArchiveData;
+  | FileOperationDownloadArchiveData
+  | FileOperationDownloadFilesData;

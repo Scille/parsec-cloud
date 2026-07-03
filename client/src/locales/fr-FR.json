@@ -996,6 +996,7 @@
             "actionOpen": "Ouvrir avec l'app par défaut",
             "actionHistory": "Historique de versions",
             "actionDownload": "Télécharger",
+            "actionDownloadAsArchive": "Télécharger comme fichier ZIP",
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien",
             "actionDelete": "Supprimer",
@@ -1135,9 +1136,12 @@
             "failedDetails": "Impossible de restaurer ce fichier ou dossier."
         },
         "DownloadFile": {
-            "download": "Téléchargement de {name}",
-            "downloadWarningTitle": "Êtes-vous sûr de vouloir télécharger ce fichier ?",
-            "downloadWarningText": "Si vous téléchargez ce fichier en dehors de Parsec, nous ne pourrons plus garantir sa sécurité.",
+            "downloadSingle": "Téléchargement de {name}",
+            "downloadMultiple": "Téléchargement de un élément|Téléchargement de {count} éléments...",
+            "downloadMultipleDone": "Un élément téléchargé|{count} éléments téléchargés",
+            "preparing": "Préparation du téléchargement sécurisé",
+            "downloadWarningTitle": "Êtes-vous sûr de vouloir télécharger ce fichier ?|Êtes-vous sûr de vouloir télécharger ces fichiers ?",
+            "downloadWarningText": "Si vous téléchargez ce fichier en dehors de Parsec, nous ne pourrons plus garantir sa sécurité.|SI vous téléchargez ces fichiers en dehors de Parsec, nous ne pourrons plus garantir leur sécurité.",
             "downloadWarningDocMessage": "Pour plus d'informations, vous pouvez consulter notre {0}.",
             "downloadWarningDoc": "documentation",
             "cannotDownloadFolders": "Impossible de télécharger des dossiers.",
@@ -1148,7 +1152,7 @@
             "noPermissions": "Ce site n'a pas les autorisations requises pour sauvegarder un fichier sur votre disque. Veuillez donner les permissions d'édition de fichier à ce site si vous souhaitez télécharger un fichier.",
             "openFailed": "Impossible d'ouvrir le fichier. Vous pouvez essayer en utilisant la liste des téléchargement de votre navigateur.",
             "cancel": "Annuler",
-            "downloadButton": "Télécharger le fichier",
+            "downloadButton": "Télécharger le fichier|Télécharger les fichiers",
             "notRemindMe": "Ne plus me le rappeler",
             "maximumRecursionReached": "Profondeur maximale de sous-dossiers atteinte, impossible de télécharger",
             "maximumFilesReached": "Trop de fichiers sélectionnés, impossible de télécharger",
@@ -1157,7 +1161,8 @@
             "archiveYes": "Télécharger l'archive",
             "archiveNo": "Annuler",
             "archiveDownload": "Téléchargement des fichiers (archive)",
-            "archive": "Création de l'archive"
+            "archive": "Création de l'archive",
+            "downloadedCount": "{count} téléchargés"
         },
         "ConflictsFile": {
             "title": "Conflits: noms de fichiers déjà existants",
@@ -1183,6 +1188,7 @@
             "delete": "Supprimer",
             "share": "Partager",
             "download": "Télécharger",
+            "downloadAsArchive": "Télécharger comme fichier ZIP",
             "copyLink": "Copier le lien",
             "history": "Historique",
             "preview": "Aperçu",

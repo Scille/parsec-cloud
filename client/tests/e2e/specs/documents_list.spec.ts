@@ -495,17 +495,23 @@ msTest.describe(() => {
       'Make a copy',
       'Delete',
       'Download',
-      'Details',
-      'Copy link',
+      'Download as a ZIP file',
     ]);
-    await expect(actionBarMoreButton).toBeHidden();
+    await expect(actionBarMoreButton).toBeVisible();
 
     // Resize to 1500px
     await resizePage(documents, 1500);
-    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy']);
+    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to']);
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
-    await expect(documents.locator('.popover-viewport').getByRole('listitem')).toHaveText(['Delete', 'Download', 'Details', 'Copy link']);
+    await expect(documents.locator('.popover-viewport').getByRole('listitem')).toHaveText([
+      'Make a copy',
+      'Delete',
+      'Download',
+      'Download as a ZIP file',
+      'Details',
+      'Copy link',
+    ]);
     await documents.keyboard.press('Escape');
 
     // Resize to 1200px (to be sure the "more" button works)
@@ -519,6 +525,7 @@ msTest.describe(() => {
       'Make a copy',
       'Delete',
       'Download',
+      'Download as a ZIP file',
       'Details',
       'Copy link',
     ]);
@@ -528,10 +535,17 @@ msTest.describe(() => {
     const topbarButton = documents.locator('#connected-header').locator('#trigger-toggle-menu-button');
     await expect(topbarButton).toBeVisible();
     await topbarButton.click();
-    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy']);
+    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to']);
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
-    await expect(popover.getByRole('listitem')).toHaveText(['Delete', 'Download', 'Details', 'Copy link']);
+    await expect(popover.getByRole('listitem')).toHaveText([
+      'Make a copy',
+      'Delete',
+      'Download',
+      'Download as a ZIP file',
+      'Details',
+      'Copy link',
+    ]);
   });
 
   for (const gridMode of [false, true]) {

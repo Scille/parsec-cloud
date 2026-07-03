@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileOperationBase, FileOperationDownloadArchive, FileOperationImport } from '@/components/files';
+import { FileOperationBase, FileOperationDownloadArchive, FileOperationDownloadFiles, FileOperationImport } from '@/components/files';
 import { Path } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
 import {
@@ -173,6 +173,8 @@ function getOperationComponent(item: OperationItem): Component {
       return FileOperationImport;
     case FileOperationDataType.DownloadArchive:
       return FileOperationDownloadArchive;
+    case FileOperationDataType.DownloadFiles:
+      return FileOperationDownloadFiles;
     case FileOperationDataType.Copy:
     case FileOperationDataType.Move:
     case FileOperationDataType.Restore:

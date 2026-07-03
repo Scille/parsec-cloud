@@ -35,6 +35,7 @@ msTest.describe(() => {
       'Make a copy',
       'History',
       'Download',
+      'Download as a ZIP file',
       'Details',
       'Delete',
       'Collaboration',

@@ -2,14 +2,14 @@
 
 <template>
   <ms-modal
-    title="FoldersPage.DownloadFile.downloadWarningTitle"
+    :title="{ key: 'FoldersPage.DownloadFile.downloadWarningTitle', count: multipleFiles ? 2 : 1 }"
     :close-button="{ visible: true }"
     :cancel-button="{
       disabled: false,
       label: 'FoldersPage.DownloadFile.cancel',
     }"
     :confirm-button="{
-      label: 'FoldersPage.DownloadFile.downloadButton',
+      label: { key: 'FoldersPage.DownloadFile.downloadButton', count: multipleFiles ? 2 : 1 },
       disabled: false,
       theme: MsReportTheme.Success,
       onClick: onConfirmClicked,
@@ -17,7 +17,7 @@
   >
     <div class="download-warning">
       <ms-report-text :theme="MsReportTheme.Warning">
-        {{ $msTranslate('FoldersPage.DownloadFile.downloadWarningText') }}
+        {{ $msTranslate({ key: 'FoldersPage.DownloadFile.downloadWarningText', count: multipleFiles ? 2 : 1 }) }}
       </ms-report-text>
       <ms-image
         :image="DownloadWarningImage"
@@ -57,6 +57,10 @@ import { MsCheckbox, MsImage, MsModal, MsModalResult, MsReportText, MsReportThem
 import { onMounted, ref } from 'vue';
 
 const noReminder = ref(false);
+
+defineProps<{
+  multipleFiles?: boolean;
+}>();
 
 onMounted(async () => {});
 

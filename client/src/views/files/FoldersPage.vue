@@ -269,6 +269,7 @@ import {
 
 import DocumentNew from '@/assets/images/add-document.svg?raw';
 import ListFolderError from '@/assets/images/list-folder-error.svg?raw';
+import ZipFolderIcon from '@/assets/images/zip-folder.svg?raw';
 import { findAvailableFileName } from '@/common/file';
 import { FileContentType, OPENABLE_FILES } from '@/common/fileTypes';
 import {
@@ -345,8 +346,7 @@ import {
   FileAction,
   FileDetailsModal,
   FolderGlobalAction,
-  downloadArchive,
-  downloadEntry,
+  downloadFiles,
   getDuplicatePolicy,
   isFolderGlobalAction,
   openDownloadConfirmationModal,
@@ -354,7 +354,20 @@ import {
 } from '@/views/files';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 import { IonContent, IonIcon, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import { arrowRedo, create, download, duplicate, eye, folderOpen, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
+import {
+  archive,
+  arrowRedo,
+  create,
+  download,
+  duplicate,
+  eye,
+  folderOpen,
+  informationCircle,
+  link,
+  open,
+  time,
+  trashBin,
+} from 'ionicons/icons';
 import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const customTabBar = useCustomTabBar();
@@ -506,6 +519,11 @@ const tabBarActions = computed(() => {
   }
   if (selectedEntries.length > folders.value.getSelectedEntries().length && isWeb()) {
     actions.push({ label: 'FoldersPage.tabbar.download', action: async () => await downloadEntries(getSelectedEntries()), icon: download });
+    actions.push({
+      label: 'FoldersPage.tabbar.downloadAsArchive',
+      action: async () => await downloadEntries(getSelectedEntries(), true),
+      image: ZipFolderIcon,
+    });
   }
   if (selectedEntries.length === 1) {
     if (isDesktop()) {
@@ -1608,7 +1626,7 @@ async function copyEntries(entries: EntryModel[]): Promise<void> {
   selectionEnabled.value = false;
 }
 
-async function downloadEntries(entries: EntryModel[]): Promise<void> {
+async function downloadEntries(entries: EntryModel[], asArchive?: boolean): Promise<void> {
   if (!workspaceInfo.value) {
     window.electronAPI.log('error', 'No workspace info when trying to download a file');
     return;
@@ -1617,30 +1635,40 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
     return;
   }
 
-  const result = await openDownloadConfirmationModal(storageManager);
+  const result = await openDownloadConfirmationModal(storageManager, entries.length === 1 && entries.at(0)?.isFile() ? false : true);
   if (result === MsModalResult.Cancel) {
     return;
   }
 
-  if (entries.length === 1 && entries[0].isFile()) {
-    await downloadEntry({
-      entry: entries[0] as EntryStatFile,
-      workspaceHandle: workspaceInfo.value.handle,
-      workspaceId: workspaceInfo.value.id,
-      informationManager: informationManager.value,
-      fileOperationManager: fileOperationManager.value,
-    });
-  } else {
-    await downloadArchive({
-      entries: entries,
-      archiveName: `${workspaceInfo.value.name}_${currentFolder.value === '/' ? 'ROOT' : currentFolder.value}.zip`,
-      workspaceHandle: workspaceInfo.value.handle,
-      workspaceId: workspaceInfo.value.id,
-      informationManager: informationManager.value,
-      fileOperationManager: fileOperationManager.value,
-      relativePath: currentPath.value ?? '/',
-    });
+  function _getArchiveName(): EntryName {
+    if (!workspaceInfo.value) {
+      return 'archive.zip';
+    }
+    if (entries.length === 1) {
+      return `${entries[0].name}.zip`;
+    }
+    if (currentFolder.value === '/') {
+      return `${workspaceInfo.value.name}.zip`;
+    }
+    return `${workspaceInfo.value.name}_${currentFolder.value}.zip`;
   }
+
+  let archiveOpts: any = undefined;
+  if (asArchive) {
+    archiveOpts = {
+      archiveName: _getArchiveName(),
+      relativePath: currentPath.value ?? '/',
+    };
+  }
+
+  await downloadFiles({
+    entries: entries,
+    workspaceHandle: workspaceInfo.value.handle,
+    workspaceId: workspaceInfo.value.id,
+    informationManager: informationManager.value,
+    fileOperationManager: fileOperationManager.value,
+    asArchive: archiveOpts,
+  });
   await onSelectionCancel();
 }
 
@@ -1777,6 +1805,7 @@ async function dispatchContextMenuAction(action: FileAction, entry: EntryModel, 
     [FileAction.Open, async (entries: EntryModel[]): Promise<void> => await openEntry(entries[0], { skipViewers: true })],
     [FileAction.ShowHistory, showHistory],
     [FileAction.Download, downloadEntries],
+    [FileAction.DownloadAsArchive, (entries) => downloadEntries(entries, true)],
     [FileAction.ShowDetails, showDetails],
     [FileAction.CopyLink, copyLink],
     [FileAction.Delete, deleteEntries],
@@ -1991,6 +2020,13 @@ const actionBarOptionsFoldersPage = computed(() => {
           await downloadEntries(getSelectedEntries());
         },
       });
+      actionArray.push({
+        label: 'FoldersPage.fileContextMenu.actionDownloadAsArchive',
+        icon: archive,
+        onClick: async () => {
+          await downloadEntries(getSelectedEntries(), true);
+        },
+      });
     }
     actionArray.push(
       {
@@ -2041,6 +2077,13 @@ const actionBarOptionsFoldersPage = computed(() => {
         icon: download,
         onClick: async () => {
           await downloadEntries(getSelectedEntries());
+        },
+      });
+      actionArray.push({
+        label: 'FoldersPage.fileContextMenu.actionDownloadAsArchive',
+        image: ZipFolderIcon,
+        onClick: async () => {
+          await downloadEntries(getSelectedEntries(), true);
         },
       });
     }

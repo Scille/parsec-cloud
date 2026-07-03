@@ -8,7 +8,7 @@
       :key="file.name"
     >
       <ms-image
-        :image="getFileIcon(file.name)"
+        :image="(file as EntryStat).isFile() ? getFileIcon(file.name) : Folder"
         class="file-icon"
       />
       <ion-text class="multiples-file-item__label body-sm">
@@ -65,7 +65,7 @@ import { EntryStat, WorkspaceHistoryEntryStat } from '@/parsec';
 import { FileOperationEvents } from '@/services/fileOperation';
 import { IonIcon, IonText } from '@ionic/vue';
 import { alert, checkmark } from 'ionicons/icons';
-import { MsImage } from 'megashark-lib';
+import { Folder, MsImage } from 'megashark-lib';
 import { computed } from 'vue';
 
 const props = defineProps<{
