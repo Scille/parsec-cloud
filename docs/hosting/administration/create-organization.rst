@@ -87,7 +87,7 @@ Create an Organization
 
    .. code-block:: bash
 
-     SERVER_ADDR=parsec3://127.0.0.1:6777
+     PARSEC_SERVER_ADDR=parsec3://app.parsec.localhost
      ORGANIZATION_NAME=MyOrganization
 
    You can also specify this information manually in each command.
@@ -110,25 +110,25 @@ Create an Organization
 
    .. admonition:: Using Parsec CLI
 
-    To create an organization with Parsec CLI you will use the following command:
+      To create an organization with Parsec CLI you will use the following command:
 
-    .. code-block:: bash
+      .. code-block:: bash
 
-      parsec-cli organization create --addr $SERVER_ADDR $ORGANIZATION_NAME
+        parsec-cli organization create --addr $PARSEC_SERVER_ADDR $ORGANIZATION_NAME
 
    .. admonition:: Using the REST Administration API
 
-    To create an organization with the REST Administration API you need to make a ``POST`` request
-    to the ``administration/organizations`` endpoint.
+      To create an organization with the REST Administration API you need to make a ``POST`` request
+      to the ``administration/organizations`` endpoint.
 
-    Here is an example of how to run the query using :command:`curl` and :command:`jq`:
+      Here is an example of how to run the query using :command:`curl` and :command:`jq`:
 
-    .. code-block:: console
+      .. code-block:: console
 
-      $ DATA=$(jq -n --arg organization_id "$ORGANIZATION_NAME" '$ARGS.named')
-      $ curl ${SERVER_ADDR}/administration/organizations \
-      -H "Authorization: Bearer $PARSEC_ADMINISTRATION_TOKEN" \
-      --request POST --data $DATA | jq
+        $ DATA=$(jq -n --arg organization_id "$ORGANIZATION_NAME" '$ARGS.named')
+        $ curl ${PARSEC_SERVER_ADDR}/administration/organizations \
+          --oauth2-bearer "$PARSEC_ADMINISTRATION_TOKEN" \
+          --request POST --data $DATA | jq
 
    Save the **Bootstrap link** or **bootstrap url** displayed in either case
    before proceeding to bootstrap.
@@ -183,10 +183,10 @@ Here is an example using :command:`curl` and :command:`jq`:
     --arg organization_id $ORGANIZATION_NAME \
     --argjson user_profile_outsider_allowed false \
     --argjson active_users_limit 5 \
-    --argjson tos "{\"fr\":\"$SERVER_ADDR/tos-FR\"}" \
+    --argjson tos "{\"fr\":\"$PARSEC_SERVER_ADDR/tos-FR\"}" \
     --argjson realm_minimum_archiving_period_before_deletion 864000 \
     '$ARGS.named' -c )
 
-  $ curl ${SERVER_ADDR}/administration/organizations/$ORGANIZATION_NAME \
-    -H "Authorization: Bearer $PARSEC_ADMINISTRATION_TOKEN" \
+  $ curl ${PARSEC_SERVER_ADDR}/administration/organizations/$ORGANIZATION_NAME \
+    --oauth2-bearer "$PARSEC_ADMINISTRATION_TOKEN" \
     --request PATCH --json $DATA | jq
