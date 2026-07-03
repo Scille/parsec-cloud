@@ -1,0 +1,45 @@
+diff --git a/docs/hosting/deployment/parsec-nginx.conf b/docs/hosting/deployment/parsec-nginx.conf
+index 81db66cbe9..96aa42f4fa 100644
+--- a/docs/hosting/deployment/parsec-nginx.conf
++++ b/docs/hosting/deployment/parsec-nginx.conf
+@@ -56,4 +56,40 @@ http {
+             proxy_set_header Host app.parsec.localhost;
+         }
+     }
++
++    server {
++        listen 443 ssl;
++        http2 on;
++
++        server_name cryptpad.parsec.localhost safe-cryptpad.parsec.localhost;
++
++        server_tokens off;
++
++        ssl_protocols       TLSv1.3;
++        ssl_certificate     /run/secrets/proxy-pem-crt;
++        ssl_certificate_key /run/secrets/proxy-pem-key;
++
++        location / {
++            proxy_pass http://parsec-cryptpad:3000;
++            proxy_set_header      X-Real-IP $remote_addr;
++            proxy_set_header      Host $host;
++            proxy_set_header      X-Forwarded-For $proxy_add_x_forwarded_for;
++            client_max_body_size  150m;
++
++            proxy_http_version    1.1;
++            proxy_set_header      Upgrade $http_upgrade;
++            proxy_set_header      Connection upgrade;
++        }
++
++        location ^~ /cryptpad_websocket {
++            proxy_pass            http://parsec-cryptpad:3003;
++            proxy_set_header      X-Real-IP $remote_addr;
++            proxy_set_header      Host $host;
++            proxy_set_header      X-Forwarded-For $proxy_add_x_forwarded_for;
++
++            proxy_http_version    1.1;
++            proxy_set_header      Upgrade $http_upgrade;
++            proxy_set_header      Connection upgrade;
++        }
++    }
+ }
