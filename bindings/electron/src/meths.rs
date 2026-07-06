@@ -1925,6 +1925,47 @@ fn struct_crypt_pad_config_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// CryptpadSessionKeys
+
+#[allow(dead_code)]
+fn struct_cryptpad_session_keys_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::CryptpadSessionKeys> {
+    let view_key = {
+        let js_val: Handle<JsString> = obj.get(cx, "viewKey")?;
+        js_val.value(cx)
+    };
+    let edit_key = {
+        let js_val: Handle<JsValue> = obj.get(cx, "editKey")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
+    };
+    Ok(libparsec::CryptpadSessionKeys { view_key, edit_key })
+}
+
+#[allow(dead_code)]
+fn struct_cryptpad_session_keys_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::CryptpadSessionKeys,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_view_key = JsString::try_new(cx, rs_obj.view_key).or_throw(cx)?;
+    js_obj.set(cx, "viewKey", js_view_key)?;
+    let js_edit_key = match rs_obj.edit_key {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "editKey", js_edit_key)?;
+    Ok(js_obj)
+}
+
 // DeviceAccessStrategy
 
 #[allow(dead_code)]
@@ -19322,6 +19363,90 @@ fn variant_workspace_open_file_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceRegisterCryptpadSessionError
+
+#[allow(dead_code)]
+fn variant_workspace_register_cryptpad_session_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceRegisterCryptpadSessionError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceRegisterCryptpadSessionError::CryptpadUnavailable { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceRegisterCryptpadSessionErrorInvalidCertificate",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::InvalidCryptpadSessionKeys { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::InvalidKeysBundle { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::NoKey { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorNoKey").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::NoRealmAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorNoRealmAccess")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::RealmDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorRealmDeleted")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceRegisterCryptpadSessionErrorStopped")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceRegisterCryptpadSessionError::TimestampOutOfBallpark { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceRemoveEntryError
 
 #[allow(dead_code)]
@@ -31908,6 +32033,84 @@ fn workspace_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// workspace_register_cryptpad_session
+fn workspace_register_cryptpad_session(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let vlob_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let candidate_view_key = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let candidate_edit_key = {
+        let js_val = cx.argument::<JsString>(3)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_register_cryptpad_session(
+                workspace,
+                vlob_id,
+                candidate_view_key,
+                candidate_edit_key,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_cryptpad_session_keys_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_register_cryptpad_session_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_remove_entry
 fn workspace_remove_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -33210,6 +33413,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("workspaceOpenFile", workspace_open_file)?;
     cx.export_function("workspaceOpenFileAndGetId", workspace_open_file_and_get_id)?;
     cx.export_function("workspaceOpenFileById", workspace_open_file_by_id)?;
+    cx.export_function(
+        "workspaceRegisterCryptpadSession",
+        workspace_register_cryptpad_session,
+    )?;
     cx.export_function("workspaceRemoveEntry", workspace_remove_entry)?;
     cx.export_function("workspaceRemoveFile", workspace_remove_file)?;
     cx.export_function("workspaceRemoveFolder", workspace_remove_folder)?;
