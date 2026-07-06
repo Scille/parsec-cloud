@@ -8,7 +8,7 @@ from parsec._parsec import (
     OpenBaoAuthType,
     anonymous_server_cmds,
 )
-from parsec.config import AccountConfig, CryptPadConfig, OpenBaoAuthConfig, OpenBaoConfig
+from parsec.config import AccountConfig, CryptpadConfig, OpenBaoAuthConfig, OpenBaoConfig
 from tests.common import AnonymousServerRpcClient, Backend, HttpCommonErrorsTester
 
 
@@ -31,7 +31,7 @@ async def test_anonymous_server_server_config_ok(
         case "custom":
             backend.config.organization_spontaneous_bootstrap = True
             backend.config.account_config = AccountConfig.ENABLED_WITH_VAULT
-            backend.config.cryptpad_config = CryptPadConfig(
+            backend.config.cryptpad_config = CryptpadConfig(
                 server_url="https://cryptpad.parsec.invalid",
             )
             backend.config.openbao_config = OpenBaoConfig(

@@ -40,7 +40,7 @@ from parsec.config import (
     BackendConfig,
     BaseBlockStoreConfig,
     BaseDatabaseConfig,
-    CryptPadConfig,
+    CryptpadConfig,
     EmailConfig,
     LogLevel,
     MockedEmailConfig,
@@ -666,7 +666,7 @@ async def run_cmd(
         if cryptpad_server_url is None:
             cryptpad_config = None
         else:
-            cryptpad_config = CryptPadConfig(server_url=cryptpad_server_url)
+            cryptpad_config = CryptpadConfig(server_url=cryptpad_server_url)
 
         if openbao_server_url is None:
             openbao_config = None
