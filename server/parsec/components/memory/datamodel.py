@@ -165,6 +165,7 @@ class MemoryOrganization:
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
+    cryptpad_sessions: dict[VlobID, MemoryCryptpadSession] = field(default_factory=dict)
     # The user id is the author of the shamir recovery
     shamir_recoveries: dict[UserID, list[MemoryShamirRecovery]] = field(
         default_factory=lambda: defaultdict(list)
@@ -901,6 +902,16 @@ class MemoryBlock:
     created_on: DateTime
     # None if not deleted
     deleted_on: DateTime | None = None
+
+
+@dataclass(slots=True)
+class MemoryCryptpadSession:
+    document_id: VlobID
+    key_index: int
+    encrypted_edit_key: bytes | None
+    encrypted_view_key: bytes
+    author: DeviceID
+    timestamp: DateTime
 
 
 @dataclass(slots=True)
