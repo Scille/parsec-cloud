@@ -58,6 +58,8 @@ use libparsec_types::prelude::*;
 //   * Add `realm_minimum_archiving_period_before_deletion` field to `OrganizationConfig` event in `events_listen`
 //   * Add `send_email` field to async_enrollment_accept req and `email_sent` status to ok rep
 //   * Add `realm_self_promote_to_owner` to authenticated commands.
+// - v5.6 (Parsec 3.10+)
+//   * Add `cryptpad_register_session` to authenticated commands.
 
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
@@ -77,7 +79,7 @@ pub const API_V4_VERSION: &ApiVersion = &ApiVersion {
 };
 pub const API_V5_VERSION: &ApiVersion = &ApiVersion {
     version: 5,
-    revision: 5,
+    revision: 6,
 };
 pub const API_LATEST_VERSION: &ApiVersion = API_V5_VERSION;
 

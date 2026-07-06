@@ -1,0 +1,180 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "cryptpad_register_session",
+        "introduced_in": "5.6",
+        "req": {
+            // Registers or retrieves a CryptPad editing session for the given document.
+            //
+            // Basically accessing a Cryptpad edition session requires three things that gets derived
+            // from two seed keys:
+            //
+            // edit key ──────┬───────> Decryption symmetric key
+            //                └──> view key ──────┬───────> Session ID
+            //                                    └───────> Signing asymmetric key
+            //
+            // Couple of notes:
+            // - The edit key is a string of `base64_encode(<seed>)` with `seed` being 18 octets randomly generated.
+            // - The view key is a string of `base64_encode(<seed2>)` with `seed2` 32 octets derived from `seed`
+            // - The edit key can derives everything.
+            // - The view key is enough to access the session without being able to modify it.
+            //
+            // see: https://github.com/cryptpad/chainpad-crypto/blob/a9cb410e0a4617cc5c9e2d25555f6b873ae2e89a/crypto.js#L196-L278
+            "fields": [
+                {
+                    "name": "realm_id",
+                    "type": "VlobID"
+                },
+                {
+                    // ID of the document that is expected to be accessed in this session.
+                    // Passing a vlob ID that doesn't exist in the realm is allowed, as
+                    // this allows to start a session for a newly created document that
+                    // hasn't been synchronized yet.
+                    "name": "document_id",
+                    "type": "VlobID"
+                },
+                {
+                    // The key index is used to identify which key in the keys bundle has
+                    // been used to encrypt `encrypted_candidate_(edit|view)_key`.
+                    "name": "key_index",
+                    "type": "Index"
+                },
+                {
+                    // `encrypted_candidate_view_key`/`encrypted_candidate_edit_key` contains
+                    // signed then encrypted data, so the server cannot enforce the signature
+                    // timestamp.
+                    // Hence the timestamp is provided in clear so the server can reject the
+                    // request if it is considered out of ballpark.
+                    // On top of that, each client fetching those data will also receive this
+                    // declared timestamp in order to check it corresponds with the actual
+                    // timestamp within the decrypted data.
+                    "name": "timestamp",
+                    "type": "DateTime"
+                },
+                {
+                    // Signed&encrypted `CryptpadSessionKey` giving read only access
+                    "name": "encrypted_candidate_view_key",
+                    "type": "Bytes"
+                },
+                {
+                    // Signed&encrypted `CryptpadSessionKey` giving read&write access.
+                    // Must be `None` if we don't have write access (i.e. READER) and
+                    // not-`None` otherwise.
+                    //
+                    // Note this means a session created by somebody without write access
+                    // cannot be used to modify the document.
+                    // This is needed since the session creator has always write access
+                    // on it and controls the initial document uploaded in the session.
+                    // So we must ensure no user with actual write access joins this
+                    // session in edit mode, as they could then be tricked into saving
+                    // this altered document back into the parsec workspace.
+                    "name": "encrypted_candidate_edit_key",
+                    "type": "RequiredOption<Bytes>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // Who created `encrypted_view_key`/`encrypted_edit_key`
+                        "name": "author",
+                        "type": "DeviceID"
+                    },
+                    {
+                        // When `encrypted_view_key`/`encrypted_edit_key` has been created
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        // The key index is used to identify which key in the keys bundle has
+                        // been used to encrypt `encrypted_(edit|view)_key`.
+                        "name": "key_index",
+                        "type": "Index"
+                    },
+                    {
+                        // Signed&encrypted `CryptpadSessionKey` giving read only access
+                        "name": "encrypted_view_key",
+                        "type": "Bytes"
+                    },
+                    {
+                        // Signed&encrypted `CryptpadSessionKey` giving read&write access.
+                        // Always `None` if we dont have write access (i.e. READER), never
+                        // `None` otherwise
+                        //
+                        // Note if we have write access to the realm (i.e. OWNER/MANAGER/CONTRIBUTOR)
+                        // and there already exists a session with no edit key, then our provided
+                        // `encrypted_candidate_(edit|view)_key` will simply overwrite the
+                        // existing one.
+                        //
+                        // might still be `None` if the creator of the session itself didn't have
+                        // write access. In such case we are expected to create our own session
+                        // instead of using this one.
+                        "name": "encrypted_edit_key",
+                        "type": "RequiredOption<Bytes>"
+                    },
+                    // The keys require common&realm certificates for validation,
+                    // those fields help the client ensure it isn't missing some.
+                    {
+                        "name": "needed_common_certificate_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "needed_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "cryptpad_unavailable"
+            },
+            {
+                "status": "realm_not_found"
+            },
+            {
+                "status": "realm_deleted"
+            },
+            {
+                // User is not part of the realm, or has a messed up edit key parameter:
+                // - `encrypted_candidate_edit_key` is present but user has no write access
+                // - `encrypted_candidate_edit_key` is missing but user *has* write access
+                "status": "author_not_allowed"
+            },
+            {
+                "status": "bad_key_index",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]
