@@ -141,9 +141,11 @@ msTest('Filter users', async ({ workspaceSharingModal }) => {
   const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
   await expect(members.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
   await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
+  await expect(content.locator('.user-list-title').nth(0)).toHaveText('Has access (2)');
 
   await fillIonInput(searchInput, 'al');
 
+  await expect(content.locator('.user-list-title').nth(0)).toHaveText('Has access (1/2)');
   await expect(members.locator('.person-name')).toHaveText(['Alicey McAliceFace']);
   await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
 
@@ -193,7 +195,7 @@ msTest('Filter users by profile', async ({ workspaceSharingModal }) => {
 
   await filterButtons.nth(3).click();
   await checkSelected([false, false, false, true]);
-  await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace']);
+  await expect(users).toHaveCount(0);
   await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
 });
 
@@ -226,7 +228,7 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   await activateBatchButton.click();
   await expect(batchDropdown).toBeVisible();
   await expect(batchDropdown).toBeTrulyDisabled();
-  await expect(activateBatchButton).toContainText('Finish');
+  await expect(activateBatchButton).toContainText('Cancel');
   await expect(membersCheckbox).toBeVisible();
 
   await membersCheckbox.click();

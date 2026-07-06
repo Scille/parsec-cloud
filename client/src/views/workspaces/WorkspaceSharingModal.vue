@@ -89,7 +89,7 @@
       <ms-report-text
         :theme="MsReportTheme.Info"
         id="only-user-warning"
-        v-if="countTotalSharedUsers < 2"
+        v-if="countAllSharedUsers < 2"
       >
         <i18n-t
           keypath="WorkspaceSharing.onlyUserWarning"
@@ -128,7 +128,7 @@
             class="user-list-members"
             v-show="currentUserMatchSearch() || filteredSharedUserRoles.length > 0"
           >
-            <ion-text class="user-list-title title-h5">
+            <div class="user-list-title title-h5">
               <ms-checkbox
                 class="checkbox"
                 id="all-members-checkbox"
@@ -137,10 +137,28 @@
                 @change="selectAllMembers()"
                 v-show="showCheckboxes && selectableFilteredMembers.length > 0"
               />
-              {{ $msTranslate({ key: 'workspaceRoles.members', data: { count: countSharedUsers }, count: countSharedUsers }) }}
-            </ion-text>
+              <ion-text
+                v-if="countFiltersSharedUsers !== countAllSharedUsers"
+                class="count-filter"
+              >
+                {{
+                  $msTranslate({
+                    key: 'workspaceRoles.haveAccessFiltered',
+                    data: { count: countFiltersSharedUsers, total: countAllSharedUsers },
+                  })
+                }}
+              </ion-text>
+              <ion-text v-else>
+                {{
+                  $msTranslate({
+                    key: 'workspaceRoles.haveAccess',
+                    data: { count: countAllSharedUsers },
+                  })
+                }}
+              </ion-text>
+            </div>
             <workspace-user-role
-              v-if="clientInfo && currentUserMatchSearch()"
+              v-if="clientInfo && currentUserMatchSearch() && (profileFilters.All || profileFilters[clientInfo.currentProfile])"
               :class="{ 'checkbox-space': showCheckboxes }"
               :disabled="true"
               :user="{ id: clientInfo.userId, humanHandle: clientInfo.humanHandle, profile: clientInfo.currentProfile }"
@@ -154,6 +172,11 @@
               v-for="entry in filteredSharedUserRoles"
               :key="`${entry.user.id}-${entry.role}`"
               class="user-list-members-item"
+              :class="{
+                'user-list-members-item--selectable': showCheckboxes,
+                'user-list-members-item--selected': entry.isSelected,
+              }"
+              @click="showCheckboxes ? (entry.isSelected = !entry.isSelected) : null"
             >
               <ms-checkbox
                 class="member-checkbox"
@@ -189,6 +212,11 @@
               v-for="entry in filteredNotSharedUserRoles"
               :key="`${entry.user.id}-${entry.role}`"
               class="user-list-suggestions-item"
+              :class="{
+                'user-list-suggestions-item--selectable': showCheckboxes,
+                'user-list-suggestions-item--selected': entry.isSelected,
+              }"
+              @click="showCheckboxes ? (entry.isSelected = !entry.isSelected) : null"
             >
               <ms-checkbox
                 class="suggested-checkbox"
@@ -198,7 +226,6 @@
               />
               <workspace-user-role
                 class="workspace-user-role"
-                :class="showCheckboxes ? 'current-user' : ''"
                 :disabled="isSelectDisabled(entry.role) || showCheckboxes"
                 :user="entry.user"
                 :role="entry.role"
@@ -215,6 +242,16 @@
 
       <div class="modal-footer">
         <ion-text
+          id="batch-activate-button"
+          @click="onBatchSharingActivate()"
+          v-show="batchSharingEnabled"
+          :fill="showCheckboxes ? 'fill' : 'clear'"
+          class="button-medium"
+          :class="{ 'done-button': showCheckboxes }"
+        >
+          {{ $msTranslate(showCheckboxes ? 'WorkspaceSharing.batchSharing.buttonCancel' : 'WorkspaceSharing.batchSharing.buttonSelect') }}
+        </ion-text>
+        <ion-text
           class="modal-footer__counter button-medium"
           v-show="showCheckboxes && selectedUsers.length > 0"
         >
@@ -230,16 +267,6 @@
           :appearance="MsAppearance.Outline"
           @change="onBatchRoleChange($event.option)"
         />
-        <ion-text
-          id="batch-activate-button"
-          @click="onBatchSharingActivate()"
-          v-show="batchSharingEnabled"
-          :fill="showCheckboxes ? 'fill' : 'clear'"
-          class="button-medium"
-          :class="{ 'done-button': showCheckboxes }"
-        >
-          {{ $msTranslate(showCheckboxes ? 'WorkspaceSharing.batchSharing.buttonFinish' : 'WorkspaceSharing.batchSharing.buttonSelect') }}
-        </ion-text>
       </div>
     </ms-modal>
   </ion-page>
@@ -346,8 +373,12 @@ const filteredNotSharedUserRoles = computed(() => {
 });
 
 const selectedUsers = computed(() => userRoles.value.filter((user) => user.isSelected === true));
-const countSharedUsers = computed(() => filteredSharedUserRoles.value.length + (clientInfo.value ? 1 : 0));
-const countTotalSharedUsers = computed(
+const countFiltersSharedUsers = computed(() => {
+  const currentUserCounted =
+    currentUserMatchSearch() && (profileFilters.value.All || profileFilters.value[clientInfo.value!.currentProfile]) ? 1 : 0;
+  return filteredSharedUserRoles.value.length + currentUserCounted;
+});
+const countAllSharedUsers = computed(
   () => userRoles.value.filter((userRole) => userRole.role !== null).length + (clientInfo.value ? 1 : 0),
 );
 const selectableFilteredMembers = computed(() => {
@@ -843,6 +874,16 @@ async function openDocumentation(): Promise<void> {
       gap: 0.5rem;
       top: 0;
       z-index: 3;
+
+      .checkbox {
+        margin-left: 0.25rem;
+      }
+
+      .count-filter {
+        display: flex;
+        align-items: center;
+        gap: 0.125rem;
+      }
     }
 
     &-members,
@@ -870,8 +911,24 @@ async function openDocumentation(): Promise<void> {
         }
       }
 
-      .workspace-user-role,
-      .user-list__item--current {
+      &-item--selectable {
+        cursor: pointer;
+
+        &:hover {
+          background: var(--parsec-color-light-secondary-background);
+        }
+      }
+
+      &-item--selected {
+        cursor: pointer;
+        background: var(--parsec-color-light-primary-30);
+
+        &:hover {
+          background: var(--parsec-color-light-primary-50);
+        }
+      }
+
+      .workspace-user-role {
         flex: 1;
       }
     }
@@ -895,26 +952,30 @@ async function openDocumentation(): Promise<void> {
 .modal-footer {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 1rem;
-  padding: 0.75rem 2rem 1rem;
+  padding: 0.75rem 1.5rem 1rem;
   border-top: 1px solid var(--parsec-color-light-secondary-medium);
   box-shadow: var(--parsec-shadow-strong);
-  background: var(--parsec-color-light-secondary-background);
+  background: var(--parsec-color-light-secondary-premiere);
 
   #batch-activate-button {
     font-size: 0.875rem;
-    padding: 0.75rem 1rem;
-    color: var(--parsec-color-light-primary-500);
+    padding: 0.625rem 0.75rem;
+    color: var(--parsec-color-light-secondary-text);
     border-radius: var(--parsec-radius-8);
     background: var(--parsec-color-light-secondary-white);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
     cursor: pointer;
     transition: background 0.2s;
     display: flex;
     align-items: center;
+    justify-content: center;
+    user-select: none;
     gap: 0.375rem;
     font-weight: 600;
     box-shadow: var(--parsec-shadow-card);
+    min-width: 5rem;
 
     @include ms.responsive-breakpoint('sm') {
       order: 3;
@@ -946,13 +1007,9 @@ async function openDocumentation(): Promise<void> {
     }
   }
 
-  .dropdown {
-    margin-left: auto;
-  }
-
   &__counter {
     color: var(--parsec-color-light-secondary-grey);
-    margin-right: auto;
+    margin-left: auto;
     text-align: center;
     align-self: center;
 

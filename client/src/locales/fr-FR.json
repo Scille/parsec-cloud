@@ -67,7 +67,8 @@
             "description": "Peut gérer l'accès des utilisateurs et rechiffrer l'espace de travail. Peut promouvoir d'autres utilisateurs au rôle de Propriétaire."
         },
         "none": "Non partagé",
-        "members": "Ayant accès ({count})",
+        "haveAccess": "Ayant accès ({count})",
+        "haveAccessFiltered": "Ayant accès ({count}/{total})",
         "suggestion": "Recommandés"
     },
     "link": {
@@ -624,7 +625,7 @@
             "contributor": "Contributeur",
             "reader": "Lecteur",
             "buttonSelect": "Sélectionner",
-            "buttonFinish": "Terminer",
+            "buttonCancel": "Annuler",
             "counter": "{count} utilisateur sélectionné | {count} utilisateurs sélectionnés",
             "chooseRole": "Choisir un rôle",
             "noChanges": "Les membres sélectionnés étaient déjà {role}.",
