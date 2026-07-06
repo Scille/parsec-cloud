@@ -79,7 +79,7 @@ parts:
       update-alternatives --install /usr/local/bin/python python $(which python3) 100
 
       # Install rust
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.96.0
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.96.1
       source "$HOME/.cargo/env"
 
       # Debug software versions
