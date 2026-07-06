@@ -11,6 +11,7 @@ from . import (
     block_create,
     block_read,
     certificate_get,
+    cryptpad_register_session,
     device_create,
     events_listen,
     invite_cancel,
@@ -59,6 +60,7 @@ class AnyCmdReq:
         | block_create.Req
         | block_read.Req
         | certificate_get.Req
+        | cryptpad_register_session.Req
         | device_create.Req
         | events_listen.Req
         | invite_cancel.Req
@@ -104,6 +106,7 @@ __all__ = [
     "block_create",
     "block_read",
     "certificate_get",
+    "cryptpad_register_session",
     "device_create",
     "events_listen",
     "invite_cancel",

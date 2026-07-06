@@ -276,6 +276,26 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.certificate_get.Rep.load(raw_rep)
 
+    async def cryptpad_register_session(
+        self,
+        realm_id: VlobID,
+        document_id: VlobID,
+        key_index: int,
+        timestamp: DateTime,
+        encrypted_candidate_view_key: bytes,
+        encrypted_candidate_edit_key: bytes | None,
+    ) -> authenticated_cmds.latest.cryptpad_register_session.Rep:
+        req = authenticated_cmds.latest.cryptpad_register_session.Req(
+            realm_id=realm_id,
+            document_id=document_id,
+            key_index=key_index,
+            timestamp=timestamp,
+            encrypted_candidate_view_key=encrypted_candidate_view_key,
+            encrypted_candidate_edit_key=encrypted_candidate_edit_key,
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.cryptpad_register_session.Rep.load(raw_rep)
+
     async def device_create(
         self, device_certificate: bytes, redacted_device_certificate: bytes
     ) -> authenticated_cmds.latest.device_create.Rep:
