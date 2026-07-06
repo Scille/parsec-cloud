@@ -297,6 +297,11 @@ export interface CryptPadConfig {
     serverUrl: string
 }
 
+export interface CryptpadSessionKeys {
+    viewKey: string
+    editKey: string | null
+}
+
 export interface DeviceAccessStrategy {
     keyFile: Path
     totpProtection: [TOTPOpaqueKeyID, SecretKey] | null
@@ -6343,6 +6348,78 @@ export type WorkspaceOpenFileError =
   | WorkspaceOpenFileErrorRealmDeleted
   | WorkspaceOpenFileErrorStopped
 
+// WorkspaceRegisterCryptpadSessionError
+export enum WorkspaceRegisterCryptpadSessionErrorTag {
+    CryptpadUnavailable = 'WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable',
+    Internal = 'WorkspaceRegisterCryptpadSessionErrorInternal',
+    InvalidCertificate = 'WorkspaceRegisterCryptpadSessionErrorInvalidCertificate',
+    InvalidCryptpadSessionKeys = 'WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys',
+    InvalidKeysBundle = 'WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle',
+    NoKey = 'WorkspaceRegisterCryptpadSessionErrorNoKey',
+    NoRealmAccess = 'WorkspaceRegisterCryptpadSessionErrorNoRealmAccess',
+    Offline = 'WorkspaceRegisterCryptpadSessionErrorOffline',
+    RealmDeleted = 'WorkspaceRegisterCryptpadSessionErrorRealmDeleted',
+    Stopped = 'WorkspaceRegisterCryptpadSessionErrorStopped',
+    TimestampOutOfBallpark = 'WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark',
+}
+
+export interface WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.CryptpadUnavailable
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInternal {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.Internal
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInvalidCertificate {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.InvalidCryptpadSessionKeys
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorNoKey {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.NoKey
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorNoRealmAccess {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorOffline {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.Offline
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorRealmDeleted {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.RealmDeleted
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorStopped {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.Stopped
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark {
+    tag: WorkspaceRegisterCryptpadSessionErrorTag.TimestampOutOfBallpark
+    error: string
+}
+export type WorkspaceRegisterCryptpadSessionError =
+  | WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable
+  | WorkspaceRegisterCryptpadSessionErrorInternal
+  | WorkspaceRegisterCryptpadSessionErrorInvalidCertificate
+  | WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys
+  | WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle
+  | WorkspaceRegisterCryptpadSessionErrorNoKey
+  | WorkspaceRegisterCryptpadSessionErrorNoRealmAccess
+  | WorkspaceRegisterCryptpadSessionErrorOffline
+  | WorkspaceRegisterCryptpadSessionErrorRealmDeleted
+  | WorkspaceRegisterCryptpadSessionErrorStopped
+  | WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark
+
 // WorkspaceRemoveEntryError
 export enum WorkspaceRemoveEntryErrorTag {
     CannotRemoveRoot = 'WorkspaceRemoveEntryErrorCannotRemoveRoot',
@@ -7449,6 +7526,12 @@ export interface LibParsecPlugin {
         entry_id: VlobID,
         mode: OpenOptions
     ): Promise<Result<FileDescriptor, WorkspaceOpenFileError>>
+    workspaceRegisterCryptpadSession(
+        workspace: Handle,
+        vlob_id: VlobID,
+        candidate_view_key: string,
+        candidate_edit_key: string
+    ): Promise<Result<CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError>>
     workspaceRemoveEntry(
         workspace: Handle,
         path: FsPath
