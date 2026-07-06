@@ -7,6 +7,7 @@ from .test_async_enrollment_reject import *
 from .test_block_create import *
 from .test_block_read import *
 from .test_certificate_get import *
+from .test_cryptpad_register_session import *
 from .test_device_create import *
 from .test_events_listen import *
 from .test_invite_cancel import *

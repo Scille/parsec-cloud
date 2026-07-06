@@ -31,6 +31,7 @@ from parsec.components.async_enrollment import BaseAsyncEnrollmentComponent
 from parsec.components.auth import BaseAuthComponent
 from parsec.components.block import BaseBlockComponent
 from parsec.components.blockstore import BaseBlockStoreComponent
+from parsec.components.cryptpad import BaseCryptpadComponent
 from parsec.components.events import BaseEventsComponent, EventBus
 from parsec.components.invite import BaseInviteComponent
 from parsec.components.memory import components_factory as mocked_components_factory
@@ -80,6 +81,7 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
             auth=components["auth"],
             block=components["block"],
             blockstore=components["blockstore"],
+            cryptpad=components["cryptpad"],
             event_bus=components["event_bus"],
             events=components["events"],
             invite=components["invite"],
@@ -109,6 +111,7 @@ class Backend:
     auth: BaseAuthComponent
     block: BaseBlockComponent
     blockstore: BaseBlockStoreComponent
+    cryptpad: BaseCryptpadComponent
     events: BaseEventsComponent
     invite: BaseInviteComponent
     organization: BaseOrganizationComponent
@@ -133,6 +136,7 @@ class Backend:
             self.async_enrollment,
             self.block,
             self.blockstore,
+            self.cryptpad,
             self.events,
             self.invite,
             self.organization,
