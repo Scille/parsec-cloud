@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+# cspell:dictionaries fr-fr
+rst_prolog = """
+.. |english-only| replace:: Cette section n'est disponible qu'en anglais.
+"""
+
 # -*- coding: utf-8 -*-
 #
 # Parsec documentation build configuration file, created by
@@ -316,3 +321,23 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+
+def add_language_tag(app, config):
+    """
+    Add the language tag to be available during doc generation.
+
+    Example:
+
+    For the `fr` language, the corresponding `fr` tag would be set.
+
+    Note:
+
+    This cannot be done directly at the root level in `conf.py`, as it would require `language` to be define
+    and would not support passing `-D language=fr` in the sphinx options
+    """
+    app.tags.add(config.language)
+
+
+def setup(app):
+    app.connect("config-inited", add_language_tag)

@@ -2,6 +2,10 @@
 
 .. cspell:words conninfo literalinclude linenos
 
+.. only:: fr
+
+   |english-only|
+
 .. _doc_hosting_deployment:
 
 =================
