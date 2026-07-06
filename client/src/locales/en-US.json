@@ -67,7 +67,8 @@
             "description": "Can manage user access and re-encrypt the workspace. Can promote other users to Owner."
         },
         "none": "Not shared",
-        "members": "Has access ({count})",
+        "haveAccess": "Has access ({count})",
+        "haveAccessFiltered": "Has access ({count}/{total})",
         "suggestion": "Suggested"
     },
     "link": {
@@ -625,7 +626,7 @@
             "contributor": "Contributor",
             "reader": "Reader",
             "buttonSelect": "Select",
-            "buttonFinish": "Finish",
+            "buttonCancel": "Cancel",
             "counter": "{count} user selected | {count} users selected",
             "chooseRole": "Choose a role",
             "noChanges": "Selected members were already {role}.",

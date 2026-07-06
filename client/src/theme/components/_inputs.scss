@@ -14,38 +14,6 @@
   min-height: 0;
 }
 
-.workspace-sharing-modal {
-  .current-user {
-    // remove currentUser icon in dropdown
-    .ms-dropdown-icon {
-      display: none;
-    }
-
-    // set opacity to 1 for multiple selection
-    &.workspace-user-role .button-disabled {
-      opacity: 1;
-    }
-  }
-
-  .current-user .dropdown-button-content .input-text {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
-  .dropdown-button {
-    --background: none;
-    --background-hover: var(--parsec-color-light-secondary-premiere);
-    color: var(--parsec-color-light-secondary-text);
-
-    &::part(native) {
-      border-color: var(--parsec-color-light-secondary-white);
-    }
-
-    .ms-dropdown-icon {
-      font-size: 1rem;
-    }
-  }
-}
-
 .organization-filter .ms-search-input {
   border-color: var(--parsec-color-light-secondary-medium);
   background: var(--parsec-color-light-secondary-background);

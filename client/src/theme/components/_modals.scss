@@ -769,6 +769,20 @@ ion-modal {
     overflow: hidden;
     padding: 0;
 
+    .current-user {
+      .dropdown-button::part(native) {
+        border-color: transparent;
+      }
+      // remove currentUser icon in dropdown
+      .ms-dropdown-icon {
+        display: none;
+      }
+
+      &.dropdown-button-content .input-text {
+        color: var(--parsec-color-light-secondary-grey);
+      }
+    }
+
     &-header {
       padding: 2rem 2rem 0;
       margin-bottom: 0.5rem;
@@ -795,6 +809,30 @@ ion-modal {
         font-weight: 600;
       }
 
+      .dropdown-button {
+        &::part(native) {
+          border-color: transparent;
+        }
+
+        &:hover {
+          &::part(native) {
+            box-shadow: var(--parsec-shadow-light);
+            border-color: var(--parsec-color-light-secondary-medium);
+          }
+        }
+      }
+
+      [class$='-item--selected'],
+      [class$='-item--selectable'] {
+        .dropdown-button::part(native) {
+          border-color: transparent;
+        }
+
+        .ms-dropdown-icon {
+          display: none;
+        }
+      }
+
       .user-list-suggestions-item {
         .avatar {
           filter: grayscale(100%);
@@ -803,11 +841,17 @@ ion-modal {
     }
 
     .modal-footer {
-      .dropdown-button::part(native) {
-        border: 1px solid var(--parsec-color-light-secondary-light);
+      .dropdown-button {
+        --background: var(--parsec-color-light-secondary-white);
+        --background-hover: var(--parsec-color-light-secondary-premiere);
+        color: var(--parsec-color-light-secondary-text);
 
-        &:hover {
-          border: 1px solid var(--parsec-color-light-primary-400);
+        &::part(native) {
+          border: 1px solid var(--parsec-color-light-secondary-disabled);
+        }
+
+        .ms-dropdown-icon {
+          font-size: 1rem;
         }
       }
     }
