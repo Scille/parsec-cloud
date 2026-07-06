@@ -2,6 +2,10 @@
 
 .. cspell:words pkiweb
 
+.. only:: fr
+
+   |english-only|
+
 .. _doc_hosting_deployment_idopte_pkiweb:
 
 .. |idopte| replace:: `Idopte`_

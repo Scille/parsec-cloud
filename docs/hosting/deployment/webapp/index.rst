@@ -1,5 +1,9 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+.. only:: fr
+
+   |english-only|
+
 .. _doc_hosting_deployment_webapp:
 
 ==========================
