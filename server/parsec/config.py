@@ -290,7 +290,7 @@ class ScwsConfig:
 
 
 @dataclass(slots=True)
-class CryptPadConfig:
+class CryptpadConfig:
     server_url: str
 
 
@@ -339,7 +339,7 @@ class BackendConfig:
 
     account_config: AccountConfig = AccountConfig.DISABLED
 
-    cryptpad_config: CryptPadConfig | None = None
+    cryptpad_config: CryptpadConfig | None = None
 
     openbao_config: OpenBaoConfig | None = None
 

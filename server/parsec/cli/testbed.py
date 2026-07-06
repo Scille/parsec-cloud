@@ -58,7 +58,7 @@ from parsec.cli.utils import cli_exception_handler
 from parsec.components.memory.user import MemoryDatamodel, MemoryUserComponent
 from parsec.config import (
     BackendConfig,
-    CryptPadConfig,
+    CryptpadConfig,
     LogLevel,
     MockedBlockStoreConfig,
     MockedDatabaseConfig,
@@ -999,7 +999,7 @@ async def testbed_backend_factory(
                 ),
             ],
         ),
-        cryptpad_config=CryptPadConfig(server_url="https://cryptpad-dev.parsec.cloud"),
+        cryptpad_config=CryptpadConfig(server_url="https://cryptpad-dev.parsec.cloud"),
         # Disable the rate limit
         email_rate_limit_cooldown_delay=0,
         email_rate_limit_max_per_hour=0,
