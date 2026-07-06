@@ -2138,6 +2138,59 @@ fn struct_crypt_pad_config_rs_to_js(rs_obj: libparsec::CryptPadConfig) -> Result
     Ok(js_obj)
 }
 
+// CryptpadSessionKeys
+
+#[allow(dead_code)]
+fn struct_cryptpad_session_keys_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::CryptpadSessionKeys, JsValue> {
+    let view_key = {
+        let js_val = Reflect::get(&obj, &"viewKey".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
+    let edit_key = {
+        let js_val = Reflect::get(&obj, &"editKey".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?,
+            )
+        }
+    };
+    Ok(libparsec::CryptpadSessionKeys { view_key, edit_key })
+}
+
+#[allow(dead_code)]
+fn struct_cryptpad_session_keys_rs_to_js(
+    rs_obj: libparsec::CryptpadSessionKeys,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_view_key = {
+        #[allow(clippy::useless_asref)]
+        JsValue::from_str(rs_obj.view_key.as_ref())
+    };
+    Reflect::set(&js_obj, &"viewKey".into(), &js_view_key)?;
+    let js_edit_key = match rs_obj.edit_key {
+        Some(val) =>
+        {
+            #[allow(clippy::useless_asref)]
+            JsValue::from_str(val.as_ref())
+        }
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"editKey".into(), &js_edit_key)?;
+    Ok(js_obj)
+}
+
 // DeviceAccessStrategy
 
 #[allow(dead_code)]
@@ -23001,6 +23054,108 @@ fn variant_workspace_open_file_error_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceRegisterCryptpadSessionError
+
+#[allow(dead_code)]
+fn variant_workspace_register_cryptpad_session_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceRegisterCryptpadSessionError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::CryptpadUnavailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorInvalidCertificate".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::InvalidCryptpadSessionKeys { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::NoKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorNoKey".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorNoRealmAccess".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorOffline".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorRealmDeleted".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorStopped".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceRegisterCryptpadSessionError::TimestampOutOfBallpark { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceRemoveEntryError
 
 #[allow(dead_code)]
@@ -30834,6 +30989,52 @@ pub fn workspaceOpenFileById(workspace: u32, entry_id: String, mode: Object) -> 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_open_file_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_register_cryptpad_session
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceRegisterCryptpadSession(
+    workspace: u32,
+    vlob_id: String,
+    candidate_view_key: String,
+    candidate_edit_key: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let vlob_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(vlob_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+
+        let ret = libparsec::workspace_register_cryptpad_session(
+            workspace,
+            vlob_id,
+            candidate_view_key,
+            candidate_edit_key,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_cryptpad_session_keys_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_register_cryptpad_session_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

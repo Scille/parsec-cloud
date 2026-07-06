@@ -227,6 +227,12 @@ export interface CryptPadConfig {
 }
 
 
+export interface CryptpadSessionKeys {
+    viewKey: string
+    editKey: string | null
+}
+
+
 export interface DeviceAccessStrategy {
     keyFile: string
     totpProtection: [string, Uint8Array] | null
@@ -5244,6 +5250,65 @@ export type WorkspaceOpenFileError =
   | WorkspaceOpenFileErrorStopped
 
 
+// WorkspaceRegisterCryptpadSessionError
+export interface WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable {
+    tag: "WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInternal {
+    tag: "WorkspaceRegisterCryptpadSessionErrorInternal"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInvalidCertificate {
+    tag: "WorkspaceRegisterCryptpadSessionErrorInvalidCertificate"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys {
+    tag: "WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle {
+    tag: "WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorNoKey {
+    tag: "WorkspaceRegisterCryptpadSessionErrorNoKey"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorNoRealmAccess {
+    tag: "WorkspaceRegisterCryptpadSessionErrorNoRealmAccess"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorOffline {
+    tag: "WorkspaceRegisterCryptpadSessionErrorOffline"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorRealmDeleted {
+    tag: "WorkspaceRegisterCryptpadSessionErrorRealmDeleted"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorStopped {
+    tag: "WorkspaceRegisterCryptpadSessionErrorStopped"
+    error: string
+}
+export interface WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark {
+    tag: "WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark"
+    error: string
+}
+export type WorkspaceRegisterCryptpadSessionError =
+  | WorkspaceRegisterCryptpadSessionErrorCryptpadUnavailable
+  | WorkspaceRegisterCryptpadSessionErrorInternal
+  | WorkspaceRegisterCryptpadSessionErrorInvalidCertificate
+  | WorkspaceRegisterCryptpadSessionErrorInvalidCryptpadSessionKeys
+  | WorkspaceRegisterCryptpadSessionErrorInvalidKeysBundle
+  | WorkspaceRegisterCryptpadSessionErrorNoKey
+  | WorkspaceRegisterCryptpadSessionErrorNoRealmAccess
+  | WorkspaceRegisterCryptpadSessionErrorOffline
+  | WorkspaceRegisterCryptpadSessionErrorRealmDeleted
+  | WorkspaceRegisterCryptpadSessionErrorStopped
+  | WorkspaceRegisterCryptpadSessionErrorTimestampOutOfBallpark
+
+
 // WorkspaceRemoveEntryError
 export interface WorkspaceRemoveEntryErrorCannotRemoveRoot {
     tag: "WorkspaceRemoveEntryErrorCannotRemoveRoot"
@@ -6292,6 +6357,12 @@ export function workspaceOpenFileById(
     entry_id: string,
     mode: OpenOptions
 ): Promise<Result<number, WorkspaceOpenFileError>>
+export function workspaceRegisterCryptpadSession(
+    workspace: number,
+    vlob_id: string,
+    candidate_view_key: string,
+    candidate_edit_key: string
+): Promise<Result<CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError>>
 export function workspaceRemoveEntry(
     workspace: number,
     path: string
