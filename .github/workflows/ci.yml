@@ -155,7 +155,7 @@ jobs:
               - newsfragments/**
 
       - name: Install python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # pin v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # pin v6.3.0
         id: setup-python
         with:
           python-version: 3.12
@@ -194,7 +194,7 @@ jobs:
           diff --unified .pre-commit-config.yaml $TEMP_FILE || true
           echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
-      - uses: taiki-e/install-action@b8cecb83565409bcc297b2df6e77f030b2a468d5 # pin v2.82.0
+      - uses: taiki-e/install-action@bffeee26d4db9be238a4ea78d8826604ebcb594d # pin v2.82.5
         with:
           tool: taplo-cli@0.9.3
 
