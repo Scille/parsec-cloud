@@ -16,6 +16,7 @@ else:
     AsyncpgPool = asyncpg.Pool
 
 # from parsec.components.postgresql.block import PGBlockComponent, PGBlockStoreComponent
+from parsec.components.postgresql.cryptpad import PGCryptpadComponent
 from parsec.components.postgresql.factory import components_factory
 from parsec.components.postgresql.handler import (
     MigrationItem,
@@ -33,6 +34,7 @@ from parsec.components.postgresql.vlob import PGVlobComponent
 __all__ = [
     "MigrationItem",
     "MigrationResult",
+    "PGCryptpadComponent",
     "PGOrganizationComponent",
     "PGPingComponent",
     "PGRealmComponent",
