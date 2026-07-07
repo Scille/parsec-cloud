@@ -839,7 +839,7 @@ async fn validate_keys_bundle(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum CertifEncryptForRealmError {
+pub enum CertifGetLatestRealmKeyForEncryptionError {
     /// Stopped is not used by `encrypt_for_realm`, but is convenient anyways given
     /// it is needed by the wrapper `CertificateOps::encrypt_for_realm`.
     #[error("Component has stopped")]
@@ -858,22 +858,27 @@ pub enum CertifEncryptForRealmError {
     Internal(#[from] anyhow::Error),
 }
 
-pub(super) async fn encrypt_for_realm(
+pub(super) async fn get_latest_realm_key_for_encryption(
     ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
     usage: EncryptionUsage,
     realm_id: VlobID,
-    data: &[u8],
-) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
+) -> Result<(SecretKey, IndexInt), CertifGetLatestRealmKeyForEncryptionError> {
     let realm_keys = load_last_realm_keys_bundle(ops, store, realm_id)
         .await
         .map_err(|e| match e {
-            LoadLastKeysBundleError::Offline(e) => CertifEncryptForRealmError::Offline(e),
-            LoadLastKeysBundleError::NotAllowed => CertifEncryptForRealmError::NotAllowed,
-            LoadLastKeysBundleError::RealmDeleted => CertifEncryptForRealmError::RealmDeleted,
-            LoadLastKeysBundleError::NoKey => CertifEncryptForRealmError::NoKey,
+            LoadLastKeysBundleError::Offline(e) => {
+                CertifGetLatestRealmKeyForEncryptionError::Offline(e)
+            }
+            LoadLastKeysBundleError::NotAllowed => {
+                CertifGetLatestRealmKeyForEncryptionError::NotAllowed
+            }
+            LoadLastKeysBundleError::RealmDeleted => {
+                CertifGetLatestRealmKeyForEncryptionError::RealmDeleted
+            }
+            LoadLastKeysBundleError::NoKey => CertifGetLatestRealmKeyForEncryptionError::NoKey,
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
-                CertifEncryptForRealmError::InvalidKeysBundle(err)
+                CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err)
             }
             LoadLastKeysBundleError::Internal(err) => {
                 err.context("Cannot retrieve realm encryption info").into()
@@ -882,13 +887,11 @@ pub(super) async fn encrypt_for_realm(
 
     let (key_derivation, key_index) = realm_keys
         .last_valid_key()
-        .ok_or(CertifEncryptForRealmError::NoKey)?;
+        .ok_or(CertifGetLatestRealmKeyForEncryptionError::NoKey)?;
 
     let key = key_derivation.derive_secret_key_from_uuid(usage.key_derivation_uuid());
 
-    let encrypted = key.encrypt(data);
-
-    Ok((encrypted, key_index))
+    Ok((key, key_index))
 }
 
 #[derive(Debug, thiserror::Error)]

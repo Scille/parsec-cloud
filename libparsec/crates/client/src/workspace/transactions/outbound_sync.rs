@@ -9,7 +9,7 @@ use libparsec_types::prelude::*;
 use super::super::WorkspaceOps;
 use super::WorkspaceSyncError;
 use crate::certif::{
-    CertifBootstrapWorkspaceError, CertifEncryptForRealmError, CertifPollServerError,
+    CertifBootstrapWorkspaceError, CertifGetLatestRealmKeyForEncryptionError, CertifPollServerError,
 };
 use crate::workspace::store::{
     ForUpdateSyncError, ForUpdateSyncLocalOnlyError, PathConfinementPoint, ReadChunkOrBlockError,
@@ -460,24 +460,31 @@ async fn upload_manifest<M: RemoteManifest>(
         // Build vlob
 
         let signed = to_upload.dump_and_sign(&ops.device.signing_key);
-        let (encrypted, key_index) = ops
+        let (key, key_index) = ops
             .certificates_ops
-            .encrypt_for_realm(EncryptionUsage::Vlob(vlob_id), ops.realm_id(), &signed)
+            .get_latest_realm_key_for_encryption(EncryptionUsage::Vlob(vlob_id), ops.realm_id())
             .await
             .map_err(|e| match e {
-                CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
-                CertifEncryptForRealmError::Offline(e) => WorkspaceSyncError::Offline(e),
-                CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
-                CertifEncryptForRealmError::RealmDeleted => WorkspaceSyncError::RealmDeleted,
-                CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
-                CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+                CertifGetLatestRealmKeyForEncryptionError::Stopped => WorkspaceSyncError::Stopped,
+                CertifGetLatestRealmKeyForEncryptionError::Offline(e) => {
+                    WorkspaceSyncError::Offline(e)
+                }
+                CertifGetLatestRealmKeyForEncryptionError::NotAllowed => {
+                    WorkspaceSyncError::NotAllowed
+                }
+                CertifGetLatestRealmKeyForEncryptionError::RealmDeleted => {
+                    WorkspaceSyncError::RealmDeleted
+                }
+                CertifGetLatestRealmKeyForEncryptionError::NoKey => WorkspaceSyncError::NoKey,
+                CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err) => {
                     WorkspaceSyncError::InvalidKeysBundle(err)
                 }
-                CertifEncryptForRealmError::Internal(err) => {
+                CertifGetLatestRealmKeyForEncryptionError::Internal(err) => {
                     err.context("Cannot encrypt manifest for realm").into()
                 }
             })?;
-        let encrypted = encrypted.into();
+
+        let encrypted = key.encrypt(&signed).into();
 
         // Sync the vlob with server
 
@@ -822,23 +829,36 @@ async fn upload_blocks(
         ops.event_bus.send(&event);
 
         loop {
-            let (encrypted, key_index) = ops
+            let (key, key_index) = ops
                 .certificates_ops
-                .encrypt_for_realm(EncryptionUsage::Block(block_id), ops.realm_id(), &data)
+                .get_latest_realm_key_for_encryption(
+                    EncryptionUsage::Block(block_id),
+                    ops.realm_id(),
+                )
                 .await
                 .map_err(|e| match e {
-                    CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
-                    CertifEncryptForRealmError::Offline(e) => WorkspaceSyncError::Offline(e),
-                    CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
-                    CertifEncryptForRealmError::RealmDeleted => WorkspaceSyncError::RealmDeleted,
-                    CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
-                    CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+                    CertifGetLatestRealmKeyForEncryptionError::Stopped => {
+                        WorkspaceSyncError::Stopped
+                    }
+                    CertifGetLatestRealmKeyForEncryptionError::Offline(e) => {
+                        WorkspaceSyncError::Offline(e)
+                    }
+                    CertifGetLatestRealmKeyForEncryptionError::NotAllowed => {
+                        WorkspaceSyncError::NotAllowed
+                    }
+                    CertifGetLatestRealmKeyForEncryptionError::RealmDeleted => {
+                        WorkspaceSyncError::RealmDeleted
+                    }
+                    CertifGetLatestRealmKeyForEncryptionError::NoKey => WorkspaceSyncError::NoKey,
+                    CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err) => {
                         WorkspaceSyncError::InvalidKeysBundle(err)
                     }
-                    CertifEncryptForRealmError::Internal(err) => {
+                    CertifGetLatestRealmKeyForEncryptionError::Internal(err) => {
                         err.context("Cannot encrypt manifest for realm").into()
                     }
                 })?;
+
+            let encrypted = key.encrypt(&data);
 
             use authenticated_cmds::latest::block_create::{Rep, Req};
             let req = Req {
