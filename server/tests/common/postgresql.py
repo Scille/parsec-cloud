@@ -81,6 +81,7 @@ TRUNCATE TABLE account_recover_validation_code;
 TRUNCATE TABLE organization RESTART IDENTITY CASCADE;
 
 TRUNCATE TABLE block_data;
+TRUNCATE TABLE cryptpad_session;
 
 -- Normally, all sequence starts at 0.
 -- However this means in the test we basically have all primary key with very low value
@@ -117,7 +118,8 @@ SELECT
     SETVAL(PG_GET_SERIAL_SEQUENCE('account', '_id'), 28000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('vault', '_id'), 29000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('vault_item', '_id'), 30000),
-    SETVAL(PG_GET_SERIAL_SEQUENCE('vault_authentication_method', '_id'), 31000)
+    SETVAL(PG_GET_SERIAL_SEQUENCE('vault_authentication_method', '_id'), 31000),
+    SETVAL(PG_GET_SERIAL_SEQUENCE('cryptpad_session', '_id'), 32000)
 ;
 """
 
