@@ -97,6 +97,20 @@ registry is no longer maintained but in a ok state.
 We depend on it from `winfsp-wrs-sys` crate an issue as been opened on their side: https://github.com/Scille/winfsp_wrs/issues/36
 """
 
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0194"
+reason = """
+quick-xml needs to be updated to >=0.41.0 but can't because email-address-parser v2.0.0 requires quick-xml=0.18.1.
+email-address-parser v3.0.0 is not yet released http://crates.io/crates/email-address-parser
+"""
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0195"
+reason = """
+quick-xml needs to be updated to >=0.41.0 but can't because email-address-parser v2.0.0 requires quick-xml=0.18.1.
+email-address-parser v3.0.0 is not yet released http://crates.io/crates/email-address-parser
+"""
+
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
 # Setting this to true can be helpful if you have special authentication requirements that cargo-deny does not support.
