@@ -4,7 +4,7 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    CertifDecryptForRealmError, CertifEncryptForRealmError, EncryptionUsage,
+    CertifDecryptForRealmError, CertifGetLatestRealmKeyForEncryptionError, EncryptionUsage,
     InvalidCertificateError, InvalidKeysBundleError, WorkspaceOps,
 };
 
@@ -36,25 +36,35 @@ pub async fn generate_path_addr(
     let path_as_str = path.to_string();
     let cleartext = path_as_str.as_bytes();
 
-    let (encrypted, key_index) = ops
+    let (key, key_index) = ops
         .certificates_ops
-        .encrypt_for_realm(EncryptionUsage::PathUrl, ops.realm_id, cleartext)
+        .get_latest_realm_key_for_encryption(EncryptionUsage::PathUrl, ops.realm_id)
         .await
         .map_err(|err| match err {
-            CertifEncryptForRealmError::Stopped => WorkspaceGeneratePathAddrError::Stopped,
-            CertifEncryptForRealmError::Offline(e) => WorkspaceGeneratePathAddrError::Offline(e),
-            CertifEncryptForRealmError::NotAllowed => WorkspaceGeneratePathAddrError::NotAllowed,
-            CertifEncryptForRealmError::RealmDeleted => {
+            CertifGetLatestRealmKeyForEncryptionError::Stopped => {
+                WorkspaceGeneratePathAddrError::Stopped
+            }
+            CertifGetLatestRealmKeyForEncryptionError::Offline(e) => {
+                WorkspaceGeneratePathAddrError::Offline(e)
+            }
+            CertifGetLatestRealmKeyForEncryptionError::NotAllowed => {
+                WorkspaceGeneratePathAddrError::NotAllowed
+            }
+            CertifGetLatestRealmKeyForEncryptionError::RealmDeleted => {
                 WorkspaceGeneratePathAddrError::RealmDeleted
             }
-            CertifEncryptForRealmError::NoKey => WorkspaceGeneratePathAddrError::NoKey,
-            CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+            CertifGetLatestRealmKeyForEncryptionError::NoKey => {
+                WorkspaceGeneratePathAddrError::NoKey
+            }
+            CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err) => {
                 WorkspaceGeneratePathAddrError::InvalidKeysBundle(err)
             }
-            CertifEncryptForRealmError::Internal(err) => {
+            CertifGetLatestRealmKeyForEncryptionError::Internal(err) => {
                 err.context("cannot encrypt path for realm").into()
             }
         })?;
+
+    let encrypted = key.encrypt(cleartext);
 
     Ok(ParsecWorkspacePathAddr::new(
         ops.device.organization_addr.clone(),

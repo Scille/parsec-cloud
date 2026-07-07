@@ -51,7 +51,8 @@ pub use realm_create::CertifEnsureRealmCreatedError;
 pub use realm_decrypt_name::{CertifDecryptCurrentRealmNameError, InvalidEncryptedRealmNameError};
 pub use realm_key_rotation::CertifRotateRealmKeyError;
 pub use realm_keys_bundle::{
-    CertifDecryptForRealmError, CertifEncryptForRealmError, EncryptionUsage, InvalidKeysBundleError,
+    CertifDecryptForRealmError, CertifGetLatestRealmKeyForEncryptionError, EncryptionUsage,
+    InvalidKeysBundleError,
 };
 pub use realm_rename::CertifRenameRealmError;
 pub use realm_self_promote_to_owner::{
@@ -427,22 +428,22 @@ impl CertificateOps {
         .await
     }
 
-    /// Encrypt the data with the last known key from the most recent realm keys bundle.
+    /// Get the last known key from the most recent realm keys bundle.
     ///
     /// Be aware this function potentially do server accesses (to fetch the keys bundle).
-    pub async fn encrypt_for_realm(
+    pub async fn get_latest_realm_key_for_encryption(
         &self,
         usage: EncryptionUsage,
         realm_id: VlobID,
-        data: &[u8],
-    ) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
+    ) -> Result<(SecretKey, IndexInt), CertifGetLatestRealmKeyForEncryptionError> {
         self.store
             .for_read(async |store| {
-                realm_keys_bundle::encrypt_for_realm(self, store, usage, realm_id, data).await
+                realm_keys_bundle::get_latest_realm_key_for_encryption(self, store, usage, realm_id)
+                    .await
             })
             .await
             .map_err(|e| match e {
-                CertifStoreError::Stopped => CertifEncryptForRealmError::Stopped,
+                CertifStoreError::Stopped => CertifGetLatestRealmKeyForEncryptionError::Stopped,
                 CertifStoreError::Internal(err) => err.context("cannot access storage").into(),
             })?
     }

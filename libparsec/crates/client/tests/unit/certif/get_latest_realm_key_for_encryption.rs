@@ -8,7 +8,7 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{certif::CertifEncryptForRealmError, EncryptionUsage};
+use crate::{certif::CertifGetLatestRealmKeyForEncryptionError, EncryptionUsage};
 
 use super::utils::certificates_ops_factory;
 
@@ -33,12 +33,13 @@ async fn ok(env: &TestbedEnv) {
         test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
     );
 
-    let res = ops
-        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
-        .await
-        .unwrap();
-
-    p_assert_eq!(res.1, 1);
+    p_assert_matches!(
+        ops
+            .get_latest_realm_key_for_encryption(EncryptionUsage::Canary, realm_id)
+            .await,
+        Ok((_, key_index))
+        if key_index == 1
+    )
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -47,14 +48,14 @@ async fn ok(env: &TestbedEnv) {
         keys_bundle: Bytes::from_static(b""),
         keys_bundle_access: env.get_last_realm_keys_bundle_access_for(realm_id, user_id),
     },
-    |err| p_assert_matches!(err, CertifEncryptForRealmError::InvalidKeysBundle(_))
+    |err| p_assert_matches!(err, CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(_))
 )]
 #[case::invalid_keys_bundle_access(
     |env: &TestbedEnv, realm_id, _: UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
         keys_bundle: env.get_last_realm_keys_bundle(realm_id),
         keys_bundle_access: Bytes::from_static(b""),
     },
-    |err| p_assert_matches!(err, CertifEncryptForRealmError::InvalidKeysBundle(_))
+    |err| p_assert_matches!(err, CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(_))
 )]
 async fn invalid_keys_bundle(
     #[case] rep: impl FnOnce(
@@ -62,7 +63,7 @@ async fn invalid_keys_bundle(
         VlobID,
         UserID,
     ) -> authenticated_cmds::latest::realm_get_keys_bundle::Rep,
-    #[case] assert: impl FnOnce(CertifEncryptForRealmError),
+    #[case] assert: impl FnOnce(CertifGetLatestRealmKeyForEncryptionError),
     env: &TestbedEnv,
 ) {
     let realm_id = env
@@ -90,7 +91,7 @@ async fn invalid_keys_bundle(
     });
 
     let err = ops
-        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
+        .get_latest_realm_key_for_encryption(EncryptionUsage::Canary, realm_id)
         .await
         .unwrap_err();
 
@@ -100,23 +101,23 @@ async fn invalid_keys_bundle(
 #[parsec_test(testbed = "minimal")]
 #[case::access_not_available_for_author(
     authenticated_cmds::latest::realm_get_keys_bundle::Rep::AccessNotAvailableForAuthor,
-    |err| p_assert_matches!(err, CertifEncryptForRealmError::NotAllowed),
+    |err| p_assert_matches!(err, CertifGetLatestRealmKeyForEncryptionError::NotAllowed),
 )]
 #[case::author_not_allowed(
     authenticated_cmds::latest::realm_get_keys_bundle::Rep::AuthorNotAllowed,
-    |err| p_assert_matches!(err, CertifEncryptForRealmError::NotAllowed),
+    |err| p_assert_matches!(err, CertifGetLatestRealmKeyForEncryptionError::NotAllowed),
 )]
 #[case::bad_key_index(
     authenticated_cmds::latest::realm_get_keys_bundle::Rep::BadKeyIndex,
-    |err| p_assert_matches!(err, CertifEncryptForRealmError::Internal(_)),
+    |err| p_assert_matches!(err, CertifGetLatestRealmKeyForEncryptionError::Internal(_)),
 )]
 #[case::unknown_status(
     authenticated_cmds::latest::realm_get_keys_bundle::Rep::UnknownStatus { unknown_status: "".into(), reason: None },
-    |err| p_assert_matches!(err, CertifEncryptForRealmError::Internal(_)),
+    |err| p_assert_matches!(err, CertifGetLatestRealmKeyForEncryptionError::Internal(_)),
 )]
 async fn server_error(
     #[case] rep: authenticated_cmds::latest::realm_get_keys_bundle::Rep,
-    #[case] assert: impl FnOnce(CertifEncryptForRealmError),
+    #[case] assert: impl FnOnce(CertifGetLatestRealmKeyForEncryptionError),
     env: &TestbedEnv,
 ) {
     let realm_id = env
@@ -144,7 +145,7 @@ async fn server_error(
     );
 
     let err = ops
-        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
+        .get_latest_realm_key_for_encryption(EncryptionUsage::Canary, realm_id)
         .await
         .unwrap_err();
 
@@ -157,11 +158,11 @@ async fn unknown_realm(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
-        .encrypt_for_realm(EncryptionUsage::Canary, VlobID::default(), b"data")
+        .get_latest_realm_key_for_encryption(EncryptionUsage::Canary, VlobID::default())
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifEncryptForRealmError::NoKey);
+    p_assert_matches!(err, CertifGetLatestRealmKeyForEncryptionError::NoKey);
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -189,13 +190,13 @@ async fn invalid_response(env: &TestbedEnv) {
     });
 
     let err = ops
-        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
+        .get_latest_realm_key_for_encryption(EncryptionUsage::Canary, realm_id)
         .await
         .unwrap_err();
 
     p_assert_matches!(
         err,
-        CertifEncryptForRealmError::Offline(ConnectionError::InvalidResponseStatus(
+        CertifGetLatestRealmKeyForEncryptionError::Offline(ConnectionError::InvalidResponseStatus(
             StatusCode::IM_A_TEAPOT
         ))
     );
@@ -220,9 +221,9 @@ async fn stopped(env: &TestbedEnv) {
     ops.stop().await.unwrap();
 
     let err = ops
-        .encrypt_for_realm(EncryptionUsage::Canary, realm_id, b"data")
+        .get_latest_realm_key_for_encryption(EncryptionUsage::Canary, realm_id)
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifEncryptForRealmError::Stopped);
+    p_assert_matches!(err, CertifGetLatestRealmKeyForEncryptionError::Stopped);
 }

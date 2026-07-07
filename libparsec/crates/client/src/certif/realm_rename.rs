@@ -6,7 +6,7 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    realm_keys_bundle::CertifEncryptForRealmError, store::CertifStoreError,
+    realm_keys_bundle::CertifGetLatestRealmKeyForEncryptionError, store::CertifStoreError,
     CertificateBasedActionOutcome, CertificateOps, InvalidCertificateError, InvalidKeysBundleError,
     UpTo,
 };
@@ -72,26 +72,32 @@ async fn rename_realm_internal(
     loop {
         // 1) Encrypt the new name
 
-        let (encrypted_name, key_index) = ops
-            .encrypt_for_realm(
-                EncryptionUsage::RealmRename,
-                realm_id,
-                new_name.as_ref().as_bytes(),
-            )
+        let (key, key_index) = ops
+            .get_latest_realm_key_for_encryption(EncryptionUsage::RealmRename, realm_id)
             .await
             .map_err(|e| match e {
-                CertifEncryptForRealmError::Stopped => CertifRenameRealmError::Stopped,
-                CertifEncryptForRealmError::Offline(e) => CertifRenameRealmError::Offline(e),
-                CertifEncryptForRealmError::NotAllowed => CertifRenameRealmError::AuthorNotAllowed,
-                CertifEncryptForRealmError::RealmDeleted => CertifRenameRealmError::RealmDeleted,
-                CertifEncryptForRealmError::NoKey => CertifRenameRealmError::NoKey,
-                CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+                CertifGetLatestRealmKeyForEncryptionError::Stopped => {
+                    CertifRenameRealmError::Stopped
+                }
+                CertifGetLatestRealmKeyForEncryptionError::Offline(e) => {
+                    CertifRenameRealmError::Offline(e)
+                }
+                CertifGetLatestRealmKeyForEncryptionError::NotAllowed => {
+                    CertifRenameRealmError::AuthorNotAllowed
+                }
+                CertifGetLatestRealmKeyForEncryptionError::RealmDeleted => {
+                    CertifRenameRealmError::RealmDeleted
+                }
+                CertifGetLatestRealmKeyForEncryptionError::NoKey => CertifRenameRealmError::NoKey,
+                CertifGetLatestRealmKeyForEncryptionError::InvalidKeysBundle(err) => {
                     CertifRenameRealmError::InvalidKeysBundle(err)
                 }
-                CertifEncryptForRealmError::Internal(err) => {
+                CertifGetLatestRealmKeyForEncryptionError::Internal(err) => {
                     err.context("Cannot encrypt name for realm").into()
                 }
             })?;
+
+        let encrypted_name = key.encrypt(new_name.as_ref().as_bytes());
 
         // 2) Generate the realm name certificate
 
