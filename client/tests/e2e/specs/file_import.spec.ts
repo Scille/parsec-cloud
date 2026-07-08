@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page, TestInfo } from '@playwright/test';
-import { createFolder, createWorkspace, DisplaySize, dragAndDropFile, expect, msTest } from '@tests/e2e/helpers';
+import { createFolder, createWorkspace, DisplaySize, dragAndDropFile, expect, FileOperationMenu, msTest } from '@tests/e2e/helpers';
 import * as fs from 'fs';
 import path from 'path';
 
@@ -18,8 +18,9 @@ async function toggleViewMode(page: Page): Promise<void> {
 }
 
 async function checkFilesUploaded(page: Page, expectedCount: number, lastOneFilesCount = 1): Promise<void> {
-  const uploadMenu = page.locator('.upload-menu');
-  await expect(uploadMenu).toBeVisible();
+  const menu = new FileOperationMenu(page);
+  await menu.expectVisible();
+  const uploadMenu = menu.getLocator();
   const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
   await expect(opItems).toHaveCount(expectedCount);
 
@@ -147,9 +148,9 @@ for (const mode of ['list', 'grid']) {
     await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button').click();
     await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
 
-    const uploadMenu = workspaces.locator('.upload-menu');
-    await expect(uploadMenu).toBeVisible();
-    const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
+    const uploadMenu = new FileOperationMenu(workspaces);
+    await uploadMenu.expectVisible();
+    const opItems = uploadMenu.getLocator().locator('.upload-menu-list').locator('.file-operation-item');
     await expect(opItems).toHaveCount(1);
     await expect(opItems.nth(0).locator('.folder-icon ')).toBeVisible();
     await opItems.nth(0).locator('.folder-icon').hover();
@@ -186,9 +187,6 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     } else {
       await documents.locator('#folders-ms-action-bar').getByText('Import').click();
     }
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeHidden();
-
     const fileChooserPromise = documents.waitForEvent('filechooser');
     if (displaySize === DisplaySize.Large) {
       await documents.locator('.import-popover').locator('.import-container').getByRole('listitem').nth(1).click();
@@ -198,8 +196,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const importPath = path.join(testInfo.config.rootDir, 'data', 'imports');
     await fileChooser.setFiles([importPath]);
     await checkFilesUploaded(documents, 1, 11);
-    await documents.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(1).click();
-    await expect(documents.locator('.upload-menu')).toBeHidden();
+    await new FileOperationMenu(documents).close();
     await documents.locator('.folder-container').locator('.file-list-item').locator('.label-name').nth(0).click();
     if (displaySize === DisplaySize.Large) {
       await expect(workspaces).toHaveHeader(['New_Workspace', 'imports'], true, true);
@@ -233,9 +230,6 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await expect(documents.locator('.import-popover')).toBeHidden();
       await documents.locator('#folders-ms-action-bar').getByText('Import').click();
     }
-
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeHidden();
 
     const fileChooserPromise = documents.waitForEvent('filechooser');
     if (displaySize === DisplaySize.Large) {

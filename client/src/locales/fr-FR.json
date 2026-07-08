@@ -1114,6 +1114,12 @@
                 "failed": "Échouées",
                 "clear": "Effacer la liste"
             },
+            "synced": "Fichiers synchronisés et sécurisés",
+            "syncing": {
+                "title": "Synchronisation de vos fichiers",
+                "filesLeft": "{count} fichier | {count} fichiers",
+                "timeLeft": "Temps restant : {time}"
+            },
             "noTasks": "Aucune tâche",
             "noCurrentTasks": "Aucun tâche dans cette catégorie",
             "noImportDone": "Pas d'import terminé",

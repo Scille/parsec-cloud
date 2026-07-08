@@ -441,6 +441,38 @@ export async function logout(page: MsPage): Promise<void> {
   await expect(page.locator('.homepage-header').locator('.topbar-left-text__subtitle')).toHaveText('Access your organizations');
 }
 
+export class FileOperationMenu {
+  menu: Locator;
+
+  constructor(page: Page) {
+    this.menu = page.locator('.upload-menu');
+  }
+
+  async close(): Promise<void> {
+    await this.menu.locator('.menu-header-icons').click();
+  }
+
+  async hideUpload(): Promise<void> {
+    await this.menu.locator('.upload-menu-status').locator('.close-icon').click();
+  }
+
+  async expectVisible(): Promise<void> {
+    await expect(this.menu).toBeVisible();
+  }
+
+  async expectHidden(): Promise<void> {
+    await expect(this.menu).toBeHidden();
+  }
+
+  async expectOperationsCount(count: number): Promise<void> {
+    await expect(this.menu.locator('.upload-menu-list').locator('.file-operation-item')).toHaveCount(count);
+  }
+
+  getLocator(): Locator {
+    return this.menu;
+  }
+}
+
 export async function importDefaultFiles(
   documentsPage: MsPage,
   testInfo: TestInfo,
@@ -488,12 +520,13 @@ export async function importDefaultFiles(
     await dragAndDropFile(documentsPage, dropZone, paths);
     imported = paths.length;
   }
-  // Hide the import menu
+  // Minimize the import menu
   if (imported > 0) {
-    const uploadMenu = documentsPage.locator('.upload-menu');
-    await expect(uploadMenu).toBeVisible();
-    expect(await uploadMenu.locator('.upload-menu-list').locator('.file-operation-item').count()).toBeGreaterThan(0);
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    const uploadMenu = new FileOperationMenu(documentsPage);
+    await uploadMenu.expectVisible();
+    expect(await uploadMenu.getLocator().locator('.upload-menu-list').locator('.file-operation-item').count()).toBeGreaterThan(0);
+    await uploadMenu.hideUpload();
+    await uploadMenu.close();
   }
   await expect(documentsPage.locator('.folder-container').locator('.no-files-content')).toBeHidden();
 }

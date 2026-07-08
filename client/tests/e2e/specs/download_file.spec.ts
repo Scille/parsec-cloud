@@ -5,6 +5,7 @@ import {
   createFolder,
   dragAndDropFile,
   expect,
+  FileOperationMenu,
   getDownloadedFile,
   importDefaultFiles,
   ImportDocuments,
@@ -137,14 +138,14 @@ msTest.describe(() => {
     await documents.waitForTimeout(1000);
 
     // File was downloaded
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeVisible();
+    const menu = new FileOperationMenu(documents);
+    const uploadMenu = menu.getLocator();
+    await menu.expectVisible();
     const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
     await expect(opItems).toHaveCount(2);
     await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading audio.mp3');
     await expect(opItems.nth(0).locator('.element-details-info')).toHaveText(' wksp1');
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(0).click();
-    await expect(documents.locator('.upload-menu')).toHaveTheClass('minimize');
+    await menu.close();
 
     const pyEntry = documents.locator('.folder-container').locator('.file-list-item').last();
     await pyEntry.hover();
@@ -183,11 +184,12 @@ msTest.describe(() => {
     ]);
     await documents.waitForTimeout(1000);
 
-    const uploadMenu = documents.locator('.upload-menu');
-    await expect(uploadMenu).toBeVisible();
+    const menu = new FileOperationMenu(documents);
+    const uploadMenu = menu.getLocator();
+    await menu.expectVisible();
     const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
-    await expect(opItems).toHaveCount(1);
-    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    await menu.expectOperationsCount(1);
+    await menu.close();
     await expect(documents.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     // cspell:disable-next-line
     await renameDocument(documents, entries.nth(1), '文件名.png');
@@ -223,8 +225,8 @@ msTest.describe(() => {
 
     await documents.waitForTimeout(1000);
 
-    await expect(uploadMenu).toBeVisible();
-    await expect(opItems).toHaveCount(2);
+    await menu.expectVisible();
+    await menu.expectOperationsCount(2);
     await expect(opItems.nth(0).locator('.element-details-title__name')).toHaveText('Downloading files (archive)');
     await expect(opItems.nth(0).locator('.element-details-info')).toHaveText('wksp1');
 
