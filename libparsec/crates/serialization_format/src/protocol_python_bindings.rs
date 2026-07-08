@@ -955,6 +955,9 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::RealmArchivingConfiguration => {
             quote_rs_to_py_class!(crate::data::RealmArchivingConfiguration)
         }
+        FieldType::FileManifestOrigin => {
+            quote_rs_to_py_class!(crate::data::FileManifestOrigin)
+        }
     }
 }
 
@@ -1063,6 +1066,9 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::ValidationCode => quote! { crate::misc::ValidationCode },
         FieldType::RealmArchivingConfiguration => {
             quote! { crate::data::RealmArchivingConfiguration }
+        }
+        FieldType::FileManifestOrigin => {
+            quote! { crate::data::FileManifestOrigin }
         }
     }
 }

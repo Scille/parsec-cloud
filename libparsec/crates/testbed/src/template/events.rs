@@ -2975,6 +2975,7 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
                 size,
                 blocksize,
                 blocks,
+                origin: FileManifestOrigin::Default,
             }),
             cache: Arc::default(),
         }

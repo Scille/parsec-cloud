@@ -468,6 +468,7 @@ impl CrcHash for FileManifest {
             size,
             blocksize,
             blocks,
+            origin,
         } = self;
 
         author.crc_hash(hasher);
@@ -480,6 +481,24 @@ impl CrcHash for FileManifest {
         size.crc_hash(hasher);
         blocksize.crc_hash(hasher);
         blocks.crc_hash(hasher);
+        origin.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for FileManifestOrigin {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"FileManifestOrigin");
+        match self {
+            FileManifestOrigin::Default => hasher.update(b"Default"),
+            FileManifestOrigin::Cryptpad {
+                channel_id,
+                timestamp,
+            } => {
+                hasher.update(b"Cryptpad");
+                channel_id.crc_hash(hasher);
+                timestamp.crc_hash(hasher);
+            }
+        }
     }
 }
 
@@ -534,6 +553,7 @@ impl CrcHash for LocalFileManifest {
             size,
             blocksize,
             blocks,
+            origin,
         } = self;
 
         base.crc_hash(hasher);
@@ -543,6 +563,7 @@ impl CrcHash for LocalFileManifest {
         size.crc_hash(hasher);
         blocksize.crc_hash(hasher);
         blocks.crc_hash(hasher);
+        origin.crc_hash(hasher);
     }
 }
 
