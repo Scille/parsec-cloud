@@ -1,8 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Page, TestInfo } from '@playwright/test';
+import { Locator, Page, TestInfo } from '@playwright/test';
 import {
   answerQuestion,
+  createFolder,
   createWorkspace,
   DisplaySize,
   expect,
@@ -379,9 +380,18 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 }
 
 for (const gridMode of [false, true]) {
-  msTest(`Workspace search filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }, testingInfo: TestInfo) => {
+  msTest(`Workspace search in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }, testingInfo: TestInfo) => {
+    const container = workspaces.locator('.workspaces-container');
+
+    let wkContainer!: Locator;
+    let workspaceItems!: Locator;
     if (!gridMode) {
       await toggleViewMode(workspaces);
+      wkContainer = workspaces.locator('.workspaces-container-list');
+      workspaceItems = container.locator('.workspace-list-item');
+    } else {
+      wkContainer = workspaces.locator('.workspaces-container-grid');
+      workspaceItems = container.locator('.workspace-card-item');
     }
     for (const wk of WORKSPACES) {
       if (wk !== 'wksp1') {
@@ -390,8 +400,6 @@ for (const gridMode of [false, true]) {
     }
 
     const searchInput = workspaces.locator('#workspaces-ms-action-bar').locator('#search-input-workspace').locator('ion-input');
-    const container = workspaces.locator('.workspaces-container');
-    const workspaceItems = gridMode ? container.locator('.workspace-card-item') : container.locator('.workspace-list-item');
 
     await expect(workspaceItems).toHaveCount(4);
     for (let i = 0; i < 4; i++) {
@@ -401,10 +409,31 @@ for (const gridMode of [false, true]) {
       await workspaces.locator('#connected-header').locator('.back-button').click();
       await expect(workspaces).toBeWorkspacePage();
     }
+
+    const actionButtons = workspaces.locator('.action-bar').locator('.ms-action-bar-button');
+    const filterButton = workspaces.locator('.action-bar').locator('.filter-button');
+    const sortButton = workspaces.locator('.action-bar').locator('.sorter-button');
+    const gridListButton = workspaces.locator('.action-bar').locator('.ms-grid-list-toggle');
+
     const searchResult = workspaces.locator('.file-search-results');
     await expect(searchResult).toBeHidden();
+    await expect(actionButtons).toHaveCount(1);
+    await expect(filterButton).toBeVisible();
+    await expect(sortButton).toBeVisible();
+    await expect(gridListButton).toBeVisible();
+    await expect(wkContainer).toBeVisible();
+
     await fillIonInput(searchInput, 'pdf');
+
     await expect(searchResult).toBeVisible();
+    await expect(actionButtons).toBeHidden();
+    await expect(filterButton).toBeHidden();
+    await expect(sortButton).toBeHidden();
+    await expect(gridListButton).toBeHidden();
+    await expect(wkContainer).toBeHidden();
+
+    await expect(searchResult.locator('.results-header')).toHaveText('Search results (4 results)');
+
     const searchItems = searchResult.locator('.result-list-item');
     await expect(searchItems).toHaveCount(4);
     await expect(searchItems.locator('.label-name')).toHaveText([
@@ -415,6 +444,16 @@ for (const gridMode of [false, true]) {
     ]);
     await expect(searchItems.locator('.workspace-path')).toHaveText([...WORKSPACES].sort((a, b) => a.localeCompare(b)));
     await expect(searchItems.locator('.label-path')).toHaveText(['/', '/', '/', '/']);
+
+    // Clear the search
+    await searchInput.locator('.input-clear-icon').click();
+
+    await expect(searchResult).toBeHidden();
+    await expect(actionButtons).toHaveCount(1);
+    await expect(filterButton).toBeVisible();
+    await expect(sortButton).toBeVisible();
+    await expect(gridListButton).toBeVisible();
+    await expect(wkContainer).toBeVisible();
   });
 
   msTest(`Workspace list filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspacesStandard }) => {
@@ -454,6 +493,85 @@ for (const gridMode of [false, true]) {
     await expect(roles).toHaveText(['Owner', 'Owner', 'Owner']);
   });
 }
+
+msTest('Workspace interact with search results', async ({ workspaces }, testingInfo: TestInfo) => {
+  const container = workspaces.locator('.workspaces-container');
+  const workspaceItems = container.locator('.workspace-card-item');
+  const searchInput = workspaces.locator('#workspaces-ms-action-bar').locator('#search-input-workspace').locator('ion-input');
+
+  for (const wk of WORKSPACES) {
+    if (wk !== 'wksp1') {
+      await createWorkspace(workspaces, wk);
+    }
+  }
+
+  await expect(workspaceItems).toHaveCount(4);
+  for (let i = 0; i < 2; i++) {
+    await workspaceItems.nth(i).click();
+    await expect(workspaces).toBeDocumentPage();
+    if (i % 2 === 0) {
+      await createFolder(workspaces, 'documentFolder');
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Pdf, false);
+      await workspaces.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Txt, false);
+    } else {
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Docx, false);
+    }
+    await workspaces.locator('#connected-header').locator('ion-breadcrumb').nth(0).click();
+    await expect(workspaces).toBeWorkspacePage();
+  }
+
+  await workspaces.waitForTimeout(1000);
+  const searchResult = workspaces.locator('.file-search-results');
+  await expect(searchResult).toBeHidden();
+  await fillIonInput(searchInput, 'document');
+  await expect(searchResult).toBeVisible();
+
+  const searchItems = searchResult.locator('.result-list-item');
+
+  await expect(searchResult.locator('.results-header')).toHaveText('Search results (4 results)');
+  await expect(searchItems).toHaveCount(4);
+  expect((await searchItems.locator('.label-name').allInnerTexts()).sort()).toEqual([
+    'document.docx',
+    'documentFolder',
+    'pdfDocument.pdf',
+    'text.txt',
+  ]);
+  expect((await searchItems.locator('.label-path').allInnerTexts()).sort()).toEqual(['/', '/', '/', '/documentFolder']);
+  await searchResult.locator('.only-titles-toggle').click();
+
+  await expect(searchResult.locator('.results-header')).toHaveText('Search results (3 results)');
+  await expect(searchItems).toHaveCount(3);
+  await expect((await searchItems.locator('.label-name').allInnerTexts()).sort()).toEqual([
+    'document.docx',
+    'documentFolder',
+    'pdfDocument.pdf',
+  ]);
+  expect((await searchItems.locator('.label-path').allInnerTexts()).sort()).toEqual(['/', '/', '/']);
+  const filterPopover = workspaces.locator('.document-filter-popover');
+  await expect(filterPopover).toBeHidden();
+  await expect(searchResult.locator('#select-filter-popover-button')).toHaveText('Document types');
+  await searchResult.locator('#select-filter-popover-button').click();
+  await expect(filterPopover).toBeVisible();
+  await expect(filterPopover.locator('ion-item')).toHaveText([
+    'Folder',
+    'Document',
+    'Spreadsheet',
+    'Presentation',
+    'PDF',
+    'Audio',
+    'Video',
+    'Image',
+    'Text',
+  ]);
+  await filterPopover.locator('ion-item').nth(0).click();
+  await filterPopover.locator('ion-item').nth(4).click();
+  await filterPopover.locator('.filter-apply-button').click();
+  await expect(filterPopover).toBeHidden();
+  await expect(searchResult.locator('#select-filter-popover-button')).toHaveText('Folder, PDF');
+  await expect(searchItems).toHaveCount(2);
+  expect((await searchItems.locator('.label-name').allInnerTexts()).sort()).toEqual(['documentFolder', 'pdfDocument.pdf']);
+});
 
 msTest('Back from files with back button', async ({ workspaces }) => {
   await workspaces.locator('.workspace-card-item').nth(0).click();
