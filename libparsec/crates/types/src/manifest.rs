@@ -334,6 +334,11 @@ pub struct FileManifest {
     ///   implemented at the moment), all blocks must be reshaped to match the new blocksize.
     pub blocksize: Blocksize,
     pub blocks: Vec<BlockAccess>,
+    /// `true` if the content of this manifest version was produced by a
+    /// Cryptpad collaborative editing session, in which case content conflicts
+    /// on inbound sync are resolved by keeping the most recently saved version
+    /// instead of creating a conflict copy.
+    pub cryptpad_edit: bool,
 }
 
 impl_manifest_dump!(FileManifest);
@@ -354,6 +359,7 @@ impl FileManifest {
         size: SizeInt,
         blocksize: Blocksize,
         blocks: Vec<BlockAccess>,
+        cryptpad_edit: bool,
     ) -> Self {
         let manifest = Self {
             author,
@@ -366,6 +372,7 @@ impl FileManifest {
             size,
             blocksize,
             blocks,
+            cryptpad_edit,
         };
         manifest.check_data_integrity().expect("Invalid manifest");
         manifest
@@ -453,6 +460,7 @@ impl TryFrom<FileManifestData> for FileManifest {
             size: data.size,
             blocksize: data.blocksize.try_into()?,
             blocks: data.blocks,
+            cryptpad_edit: data.cryptpad_edit.into(),
         })
     }
 }
@@ -471,6 +479,7 @@ impl From<FileManifest> for FileManifestData {
             size: obj.size,
             blocksize: obj.blocksize.into(),
             blocks: obj.blocks,
+            cryptpad_edit: obj.cryptpad_edit.into(),
         }
     }
 }

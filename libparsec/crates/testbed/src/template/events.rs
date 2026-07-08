@@ -2975,6 +2975,7 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
                 size,
                 blocksize,
                 blocks,
+                cryptpad_edit: false,
             }),
             cache: Arc::default(),
         }

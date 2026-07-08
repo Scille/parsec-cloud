@@ -468,6 +468,7 @@ impl CrcHash for FileManifest {
             size,
             blocksize,
             blocks,
+            cryptpad_edit,
         } = self;
 
         author.crc_hash(hasher);
@@ -480,6 +481,7 @@ impl CrcHash for FileManifest {
         size.crc_hash(hasher);
         blocksize.crc_hash(hasher);
         blocks.crc_hash(hasher);
+        cryptpad_edit.crc_hash(hasher);
     }
 }
 
@@ -534,6 +536,7 @@ impl CrcHash for LocalFileManifest {
             size,
             blocksize,
             blocks,
+            cryptpad_edit,
         } = self;
 
         base.crc_hash(hasher);
@@ -543,6 +546,7 @@ impl CrcHash for LocalFileManifest {
         size.crc_hash(hasher);
         blocksize.crc_hash(hasher);
         blocks.crc_hash(hasher);
+        cryptpad_edit.crc_hash(hasher);
     }
 }
 

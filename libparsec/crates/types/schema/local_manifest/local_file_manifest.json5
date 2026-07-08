@@ -30,6 +30,15 @@
         {
             "name": "blocks",
             "type": "List<List<ChunkView>>"
+        },
+        {
+            // `true` if the currently unsynced local changes were produced by a
+            // Cryptpad collaborative editing session (see `FileManifest`'s field
+            // of the same name).
+            "name": "cryptpad_edit",
+            "type": "Boolean",
+            // Introduced in Parsec 3.10.0
+            "introduced_in_revision": 3100
         }
     ]
 }

@@ -12,158 +12,229 @@ use libparsec_tests_lite::prelude::*;
 
 #[rstest]
 fn serde_local_file_manifest_ok(alice: &Device) {
-    // Generated from Parsec 3.0.0-b.12+dev
-    // Content:
-    //   type: 'local_file_manifest'
-    //   base: {
-    //     type: 'file_manifest',
-    //     author: ext(2, 0xde10a11cec0010000000000000000000),
-    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
-    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
-    //     parent: ext(2, 0x07748fbf67a646428427865fd730bf3e),
-    //     version: 42,
-    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
-    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
-    //     size: 700,
-    //     blocksize: 512,
-    //     blocks: [
-    //       {
-    //         id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
-    //         offset: 0,
-    //         size: 512,
-    //         digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560,
-    //       },
-    //       {
-    //         id: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b),
-    //         offset: 512,
-    //         size: 188,
-    //         digest: 0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6,
-    //       },
-    //     ],
-    //   }
-    //   parent: ext(2, 0x40c8fe8cd69742479f418f1a6d54ea7a)
-    //   need_sync: True
-    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
-    //   size: 500
-    //   blocksize: 512
-    //   blocks: [
-    //     [
-    //       {
-    //         id: ext(2, 0xad67b6b5b9ad4653bf8e2b405bb6115f),
-    //         start: 0,
-    //         stop: 250,
-    //         raw_offset: 0,
-    //         raw_size: 512,
-    //         access: { id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
-    //           offset: 0,
-    //           size: 512,
-    //           digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560,
-    //         },
-    //       },
-    //       {
-    //         id: ext(2, 0x2f99258022a94555b3109e81d34bdf97),
-    //         start: 250,
-    //         stop: 500,
-    //         raw_offset: 250,
-    //         raw_size: 250,
-    //         access: None,
-    //       },
-    //     ],
-    //   ]
-    let data = &hex!(
-    "9c71be661347b29f96b31b32976c4bce3997dbc1f6033999dc2ffd14c73c5c2e81db1f"
-    "59735067b4c7e1afc74bfa35b5395b2371e30c3b3945265ea2df504ecc82e0cfb2395e"
-    "c93cf04e92516e3c543b612dd8e42a2466fdb98505f78baeba6d5dad78ee97f25e5513"
-    "bff5bf471822e5210adb9caa4e01acdbd8b7e959d678d1815a437e33c57c431c433375"
-    "ea491c086d095beca33d74d8ba5b9ee70cd1e91259e431b486eb6b9fe8644e5d323542"
-    "f157ca168ba2809e368a1299a6f24b0e58d5704e9d5838312c0b41d012c79d7da356cb"
-    "e1ffc4b0eab584dcf48600fd0a40ef622c96fab9983040db9b17e4e14cf1a8709d1990"
-    "91624259e21e78e813f34b999a15fbc5defc68caac902a4497eec7a6acee6b1904cba2"
-    "4b845aab519deabdaa57f8b353e43ada8c32dcc1f86c2c31e64f8db4f1ed79cf0e752a"
-    "605833a2069f28e37d1a9a32ac97bbfae1b4740ee93097d4a5fb2cec89b1e84eca3380"
-    "2e04bc5a53af9b44a3ac921166aa474d6baf9b81dc9538833f25e77263553cbbc0cd24"
-    "86e0a19e70fb7effb13640e4e9e0f09c3cf568ef74f74f7ead10c8a61e566f841d9362"
-    "1ae29b363411bac33da28aa120d942ab96a12d92399e6a593e39a37056271e8355eba2"
-    "8e384f90787165215c4e5ebef6492f4af1aa7a6bdb78cc40e061a1f78e6f3e96db4cad"
-    "48f5291e3c23fd929876f1a5d064"
-    )[..];
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
-    let expected = LocalFileManifest {
-        parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
-        updated: now,
-        base: FileManifest {
-            author: alice.device_id,
-            timestamp: now,
-            id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-            version: 42,
-            created: now,
-            updated: now,
-            blocks: vec![
-                BlockAccess {
-                    id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                    digest: HashDigest::from(hex!(
-                        "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560"
-                    )),
-                    offset: 0,
-                    size: NonZeroU64::try_from(512).unwrap(),
+
+    for (data, expected) in [
+        (
+            // Generated from Parsec 3.9.3-a.0+dev
+            // Content:
+            //   type: 'local_file_manifest'
+            //   base: {
+            //     type: 'file_manifest',
+            //     author: ext(2, 0xde10a11cec0010000000000000000000),
+            //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+            //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+            //     parent: ext(2, 0x07748fbf67a646428427865fd730bf3e),
+            //     version: 42,
+            //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+            //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+            //     size: 0,
+            //     blocksize: 512,
+            //     blocks: [ ],
+            //     cryptpad_edit: True,
+            //   }
+            //   parent: ext(2, 0x40c8fe8cd69742479f418f1a6d54ea7a)
+            //   need_sync: True
+            //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   size: 0
+            //   blocksize: 512
+            //   blocks: [ ]
+            //   cryptpad_edit: True
+            &hex!(
+                "ab0165c9a5b526bd556d7126de77bfb995a8aa14dbeae7e9709cab85f04716dab0feb2"
+                "d7432fbe660e2492d86e7a8de1f6444245037e60b60b4a218eca2171d19ac105b2a57a"
+                "f0b5c062df4fc82daca3b0620ad211e4f85b33e70b18c9ebcf35c5484deb3a9600418c"
+                "ed5a427ea2e60db621e3d01bb7f162c7e0843e7c3da9925465c2c56f9ec929547fcea9"
+                "398a9d2442eddc181b2577eb7aa3c92ac50b1ec9bf2a255cee93dd6c9e2b8b65d1e2cc"
+                "c0bb32553103145c363a71e34dede3fd352652f7dd8257a57b1bbec1cabc3d3e4f67d5"
+                "c7c032cf213334e6096585aef2636cb925a00b8d7e1c21eac63b0a40dc6c5398735738"
+                "bed1c2e70eff334a571e07a37519715964d8535b5dfc4b0587ace425121424"
+            )[..],
+            LocalFileManifest {
+                parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
+                updated: now,
+                base: FileManifest {
+                    author: alice.device_id,
+                    timestamp: now,
+                    id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                    version: 42,
+                    created: now,
+                    updated: now,
+                    blocks: vec![],
+                    blocksize: Blocksize::try_from(512).unwrap(),
+                    parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+                    size: 0,
+                    cryptpad_edit: true,
                 },
-                BlockAccess {
-                    id: BlockID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
-                    digest: HashDigest::from(hex!(
-                        "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
-                    )),
-                    offset: 512,
-                    size: NonZeroU64::try_from(188).unwrap(),
+                blocks: vec![],
+                blocksize: Blocksize::try_from(512).unwrap(),
+                need_sync: true,
+                size: 0,
+                cryptpad_edit: true,
+            },
+        ),
+        (
+            // Legacy format from Parsec < 3.10, `cryptpad_edit` field is missing
+            // Generated from Parsec 3.0.0-b.12+dev
+            // Content:
+            //   type: 'local_file_manifest'
+            //   base: {
+            //     type: 'file_manifest',
+            //     author: ext(2, 0xde10a11cec0010000000000000000000),
+            //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+            //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+            //     parent: ext(2, 0x07748fbf67a646428427865fd730bf3e),
+            //     version: 42,
+            //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+            //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+            //     size: 700,
+            //     blocksize: 512,
+            //     blocks: [
+            //       {
+            //         id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+            //         offset: 0,
+            //         size: 512,
+            //         digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560,
+            //       },
+            //       {
+            //         id: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b),
+            //         offset: 512,
+            //         size: 188,
+            //         digest: 0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6,
+            //       },
+            //     ],
+            //   }
+            //   parent: ext(2, 0x40c8fe8cd69742479f418f1a6d54ea7a)
+            //   need_sync: True
+            //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   size: 500
+            //   blocksize: 512
+            //   blocks: [
+            //     [
+            //       {
+            //         id: ext(2, 0xad67b6b5b9ad4653bf8e2b405bb6115f),
+            //         start: 0,
+            //         stop: 250,
+            //         raw_offset: 0,
+            //         raw_size: 512,
+            //         access: { id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+            //           offset: 0,
+            //           size: 512,
+            //           digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560,
+            //         },
+            //       },
+            //       {
+            //         id: ext(2, 0x2f99258022a94555b3109e81d34bdf97),
+            //         start: 250,
+            //         stop: 500,
+            //         raw_offset: 250,
+            //         raw_size: 250,
+            //         access: None,
+            //       },
+            //     ],
+            //   ]
+            &hex!(
+                "9c71be661347b29f96b31b32976c4bce3997dbc1f6033999dc2ffd14c73c5c2e81db1f"
+                "59735067b4c7e1afc74bfa35b5395b2371e30c3b3945265ea2df504ecc82e0cfb2395e"
+                "c93cf04e92516e3c543b612dd8e42a2466fdb98505f78baeba6d5dad78ee97f25e5513"
+                "bff5bf471822e5210adb9caa4e01acdbd8b7e959d678d1815a437e33c57c431c433375"
+                "ea491c086d095beca33d74d8ba5b9ee70cd1e91259e431b486eb6b9fe8644e5d323542"
+                "f157ca168ba2809e368a1299a6f24b0e58d5704e9d5838312c0b41d012c79d7da356cb"
+                "e1ffc4b0eab584dcf48600fd0a40ef622c96fab9983040db9b17e4e14cf1a8709d1990"
+                "91624259e21e78e813f34b999a15fbc5defc68caac902a4497eec7a6acee6b1904cba2"
+                "4b845aab519deabdaa57f8b353e43ada8c32dcc1f86c2c31e64f8db4f1ed79cf0e752a"
+                "605833a2069f28e37d1a9a32ac97bbfae1b4740ee93097d4a5fb2cec89b1e84eca3380"
+                "2e04bc5a53af9b44a3ac921166aa474d6baf9b81dc9538833f25e77263553cbbc0cd24"
+                "86e0a19e70fb7effb13640e4e9e0f09c3cf568ef74f74f7ead10c8a61e566f841d9362"
+                "1ae29b363411bac33da28aa120d942ab96a12d92399e6a593e39a37056271e8355eba2"
+                "8e384f90787165215c4e5ebef6492f4af1aa7a6bdb78cc40e061a1f78e6f3e96db4cad"
+                "48f5291e3c23fd929876f1a5d064"
+            )[..],
+            LocalFileManifest {
+                parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
+                updated: now,
+                base: FileManifest {
+                    author: alice.device_id,
+                    timestamp: now,
+                    id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                    version: 42,
+                    created: now,
+                    updated: now,
+                    blocks: vec![
+                        BlockAccess {
+                            id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                            digest: HashDigest::from(hex!(
+                                "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560"
+                            )),
+                            offset: 0,
+                            size: NonZeroU64::try_from(512).unwrap(),
+                        },
+                        BlockAccess {
+                            id: BlockID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
+                            digest: HashDigest::from(hex!(
+                                "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
+                            )),
+                            offset: 512,
+                            size: NonZeroU64::try_from(188).unwrap(),
+                        },
+                    ],
+                    blocksize: Blocksize::try_from(512).unwrap(),
+                    parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+                    size: 700,
+                    // Not present in the data (legacy format from Parsec < 3.10), so defaults to `false`
+                    cryptpad_edit: false,
                 },
-            ],
-            blocksize: Blocksize::try_from(512).unwrap(),
-            parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
-            size: 700,
-        },
-        blocks: vec![vec![
-            ChunkView {
-                id: ChunkID::from_hex("ad67b6b5b9ad4653bf8e2b405bb6115f").unwrap(),
-                access: Some(BlockAccess {
-                    id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                    digest: HashDigest::from(hex!(
-                        "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f3"
-                        "6560"
-                    )),
-                    offset: 0,
-                    size: NonZeroU64::try_from(512).unwrap(),
-                }),
-                raw_offset: 0,
-                raw_size: NonZeroU64::new(512).unwrap(),
-                start: 0,
-                stop: NonZeroU64::new(250).unwrap(),
+                blocks: vec![vec![
+                    ChunkView {
+                        id: ChunkID::from_hex("ad67b6b5b9ad4653bf8e2b405bb6115f").unwrap(),
+                        access: Some(BlockAccess {
+                            id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
+                            digest: HashDigest::from(hex!(
+                                "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f3"
+                                "6560"
+                            )),
+                            offset: 0,
+                            size: NonZeroU64::try_from(512).unwrap(),
+                        }),
+                        raw_offset: 0,
+                        raw_size: NonZeroU64::new(512).unwrap(),
+                        start: 0,
+                        stop: NonZeroU64::new(250).unwrap(),
+                    },
+                    ChunkView {
+                        id: ChunkID::from_hex("2f99258022a94555b3109e81d34bdf97").unwrap(),
+                        access: None,
+                        raw_offset: 250,
+                        raw_size: NonZeroU64::new(250).unwrap(),
+                        start: 250,
+                        stop: NonZeroU64::new(500).unwrap(),
+                    },
+                ]],
+                blocksize: Blocksize::try_from(512).unwrap(),
+                need_sync: true,
+                size: 500,
+                // Not present in the data (introduced later), so defaults to `false`
+                cryptpad_edit: false,
             },
-            ChunkView {
-                id: ChunkID::from_hex("2f99258022a94555b3109e81d34bdf97").unwrap(),
-                access: None,
-                raw_offset: 250,
-                raw_size: NonZeroU64::new(250).unwrap(),
-                start: 250,
-                stop: NonZeroU64::new(500).unwrap(),
-            },
-        ]],
-        blocksize: Blocksize::try_from(512).unwrap(),
-        need_sync: true,
-        size: 500,
-    };
-    let manifest = LocalChildManifest::decrypt_and_load(data, &key).unwrap();
+        ),
+    ] {
+        println!("***expected: {:?}", expected.dump_and_encrypt(&key));
 
-    p_assert_eq!(manifest, LocalChildManifest::File(expected.clone()));
+        let manifest = LocalChildManifest::decrypt_and_load(data, &key).unwrap();
 
-    // Also test serialization round trip
-    let file_manifest: LocalFileManifest = manifest.try_into().unwrap();
-    let data2 = file_manifest.dump_and_encrypt(&key);
-    // Note we cannot just compare with `data` due to encryption and keys order
-    let manifest2 = LocalChildManifest::decrypt_and_load(&data2, &key).unwrap();
+        p_assert_eq!(manifest, LocalChildManifest::File(expected.clone()));
 
-    p_assert_eq!(manifest2, LocalChildManifest::File(expected));
+        // Also test serialization round trip
+        let file_manifest: LocalFileManifest = manifest.try_into().unwrap();
+        let data2 = file_manifest.dump_and_encrypt(&key);
+        // Note we cannot just compare with `data` due to encryption and keys order
+        let manifest2 = LocalChildManifest::decrypt_and_load(&data2, &key).unwrap();
+
+        p_assert_eq!(manifest2, LocalChildManifest::File(expected));
+    }
 }
 
 #[rstest]
@@ -224,11 +295,13 @@ fn serde_local_file_manifest_invalid_blocksize() {
     //             blocksize: Blocksize::try_from(512).unwrap(),
     //             parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
     //             size: 0,
+    //             cryptpad_edit: false,
     //         },
     //         blocks: vec![],
     //         blocksize: Blocksize::try_from(2).unwrap(),
     //         need_sync: true,
     //         size: 500,
+    //         cryptpad_edit: false,
     //     };
     //
     // 3) Uses `misc/test_expected_payload_cooker.py`
@@ -386,11 +459,13 @@ fn local_file_manifest_new(timestamp: DateTime) {
     p_assert_eq!(lfm.base.blocksize, Blocksize::try_from(512 * 1024).unwrap());
     p_assert_eq!(lfm.base.size, 0);
     p_assert_eq!(lfm.base.blocks.len(), 0);
+    assert!(!lfm.base.cryptpad_edit);
     assert!(lfm.need_sync);
     p_assert_eq!(lfm.updated, timestamp);
     p_assert_eq!(lfm.blocksize, Blocksize::try_from(512 * 1024).unwrap());
     p_assert_eq!(lfm.size, 0);
     p_assert_eq!(lfm.blocks.len(), 0);
+    assert!(!lfm.cryptpad_edit);
 }
 
 #[rstest]
@@ -457,6 +532,7 @@ fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
         size,
         blocksize: Blocksize::try_from(512).unwrap(),
         blocks: blocks.clone(),
+        cryptpad_edit: true,
     };
 
     let lfm = LocalFileManifest::from_remote(fm.clone());
@@ -466,6 +542,7 @@ fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
     p_assert_eq!(lfm.updated, timestamp);
     p_assert_eq!(lfm.size, size);
     p_assert_eq!(lfm.blocksize, Blocksize::try_from(512).unwrap());
+    p_assert_eq!(lfm.cryptpad_edit, true);
     p_assert_eq!(
         lfm.blocks,
         blocks
@@ -501,6 +578,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
     lfm.blocks.push(vec![block]);
     lfm.size = 1;
     lfm.updated = t2;
+    lfm.cryptpad_edit = true;
 
     let author = DeviceID::default();
     let fm = lfm.to_remote(author, t3).unwrap();
@@ -515,6 +593,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
     p_assert_eq!(fm.size, lfm.size);
     p_assert_eq!(fm.blocksize, lfm.blocksize);
     p_assert_eq!(fm.blocks, vec![block_access]);
+    p_assert_eq!(fm.cryptpad_edit, lfm.cryptpad_edit);
 }
 
 // TODO: Add integrity tests for:

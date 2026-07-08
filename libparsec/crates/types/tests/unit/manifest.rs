@@ -30,7 +30,93 @@ fn invalid_deserialize_data(#[case] data: &[u8], #[case] error: DataError) {
 }
 
 #[rstest]
+fn serde_file_manifest_cryptpad_edit(alice: &Device) {
+    // Generated from Parsec 3.9.3-a.0+dev
+    // Content:
+    //   type: 'file_manifest'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b)
+    //   parent: ext(2, 0x07748fbf67a646428427865fd730bf3e)
+    //   version: 42
+    //   created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   size: 0
+    //   blocksize: 512
+    //   blocks: [ ]
+    //   cryptpad_edit: True
+    let data: &[u8] = hex!(
+        "c9357050ef30d2fa38ef70fcfe9a4c983357e673103b1fec1dc05caf2954e51269db1d"
+        "e3e1c3df0922b61ce18dbefde609cb8f94e1ecffa8d93ff58c311bfeb41f21ecfd3dd9"
+        "4363cca29e5f089659512d57beeedba35ec53c191bc12ecc8029a319a2ba71f6c96d60"
+        "171f75d24e585f62247c2c333ce60f8424406fd34f515777d8c4dc0f635bd2aa540bcf"
+        "26a333bef81f24731aa56672f598768cd20eee545a39c3dddf3d70e949e1ec2d0c27b0"
+        "37d0e111bd59228a75b6a80874d950d33d1a91ec497c4c3011be78497f0cc69d46c3f3"
+        "94d5476adf8af32edfd95151013b22fec12f0fba5a59df0de7628da92a7456fe0eed1e"
+        "0e69a3422ed84fda60a19562ee794a84d716213d33e11ad3d042b44f38f35576505802"
+        "167001788be16c5dfd"
+    )
+    .as_ref();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
+    let key = SecretKey::from(hex!(
+        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
+    ));
+
+    let expected = FileManifest {
+        author: alice.device_id,
+        timestamp: now,
+        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+        parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+        version: 42,
+        created: now,
+        updated: now,
+        size: 0,
+        blocksize: Blocksize::try_from(512).unwrap(),
+        blocks: vec![],
+        cryptpad_edit: true,
+    };
+
+    println!(
+        "***expected: {:?}",
+        expected.dump_sign_and_encrypt(&alice.signing_key, &key)
+    );
+
+    let manifest = ChildManifest::decrypt_verify_and_load(
+        data,
+        &key,
+        &alice.verify_key(),
+        alice.device_id,
+        now,
+        None,
+        None,
+    )
+    .unwrap()
+    .into_file_manifest()
+    .unwrap();
+
+    p_assert_eq!(manifest, expected);
+
+    // Also test serialization round trip
+    let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let manifest2 = ChildManifest::decrypt_verify_and_load(
+        &data2,
+        &key,
+        &alice.verify_key(),
+        alice.device_id,
+        now,
+        None,
+        None,
+    )
+    .unwrap()
+    .into_file_manifest()
+    .unwrap();
+    p_assert_eq!(manifest2, expected);
+}
+
+#[rstest]
 fn serde_file_manifest_ok_and_invalid_checks(alice: &Device) {
+    // Legacy format from Parsec < 3.10, `cryptpad_edit` field is missing
     // Generated from Parsec 3.0.0-b.12+dev
     // Content:
     //   type: 'file_manifest'
@@ -104,6 +190,8 @@ fn serde_file_manifest_ok_and_invalid_checks(alice: &Device) {
                 )),
             },
         ],
+        // Not present in the data (legacy format from Parsec < 3.10), so defaults to `false`
+        cryptpad_edit: false,
     };
 
     let manifest = ChildManifest::decrypt_verify_and_load(
@@ -735,6 +823,7 @@ fn generate_file_manifest_blocks_not_sorted(
                 )),
             },
         ],
+        cryptpad_edit: false,
     };
 
     let data = hex!(
@@ -817,6 +906,7 @@ fn generate_file_manifest_blocks_overlapping(
                 )),
             },
         ],
+        cryptpad_edit: false,
     };
 
     let data = hex!(
@@ -899,6 +989,7 @@ fn generate_file_manifest_exceed_file_size(
                 )),
             },
         ],
+        cryptpad_edit: false,
     };
 
     let data = hex!(
@@ -976,6 +1067,7 @@ fn generate_file_manifest_same_block_span(
                 )),
             },
         ],
+        cryptpad_edit: false,
     };
 
     let data = hex!(
@@ -1042,6 +1134,7 @@ fn generate_file_manifest_in_between_block_span(
                 "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560"
             )),
         }],
+        cryptpad_edit: false,
     };
 
     let data = hex!(

@@ -55,6 +55,7 @@ def test_serialization_uses_v0_format(minimalorg: MinimalorgRpcClients):
         blocksize=512,
         size=0,
         blocks=(),
+        cryptpad_edit=False,
     )
     signed = data.dump_and_sign(minimalorg.alice.signing_key)
     # In this test we don't care about the signature, so remove it...

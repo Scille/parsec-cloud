@@ -45,6 +45,11 @@ pub struct LocalFileManifest {
     /// created from a `FileManifest` should only contains block slots made of
     /// a single chunk).
     pub blocks: Vec<Vec<ChunkView>>,
+    /// `true` if the currently unsynced local changes were produced by a
+    /// Cryptpad collaborative editing session, in which case content conflicts
+    /// on inbound sync are resolved by keeping the most recently saved version
+    /// instead of creating a conflict copy.
+    pub cryptpad_edit: bool,
 }
 
 parsec_data!("schema/local_manifest/local_file_manifest.json5");
@@ -60,6 +65,7 @@ impl TryFrom<LocalFileManifestData> for LocalFileManifest {
             size: data.size,
             blocksize: data.blocksize.try_into()?,
             blocks: data.blocks,
+            cryptpad_edit: data.cryptpad_edit.into(),
         })
     }
 }
@@ -75,6 +81,7 @@ impl From<LocalFileManifest> for LocalFileManifestData {
             size: obj.size,
             blocksize: obj.blocksize.into(),
             blocks: obj.blocks,
+            cryptpad_edit: obj.cryptpad_edit.into(),
         }
     }
 }
@@ -95,6 +102,7 @@ impl LocalFileManifest {
                 blocksize: DEFAULT_BLOCK_SIZE,
                 size: 0,
                 blocks: vec![],
+                cryptpad_edit: false,
             },
             parent,
             need_sync: true,
@@ -102,6 +110,7 @@ impl LocalFileManifest {
             blocksize: DEFAULT_BLOCK_SIZE,
             size: 0,
             blocks: vec![],
+            cryptpad_edit: false,
         }
     }
 
@@ -218,6 +227,7 @@ impl LocalFileManifest {
             size: remote.size,
             blocksize: remote.blocksize,
             blocks,
+            cryptpad_edit: remote.cryptpad_edit,
             base: remote,
         };
 
@@ -270,6 +280,7 @@ impl LocalFileManifest {
             self.size,
             self.blocksize,
             blocks,
+            self.cryptpad_edit,
         );
 
         Ok(manifest)

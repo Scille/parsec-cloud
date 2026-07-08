@@ -41,6 +41,20 @@
         {
             "name": "blocks",
             "type": "List<BlockAccess>"
+        },
+        {
+            // `true` if the content of this manifest version was produced by a
+            // Cryptpad collaborative editing session.
+            //
+            // Multiple participants of the same session may save the document
+            // concurrently, in which case there is no point in preserving each
+            // save as a conflicting copy: the collaborative session is itself
+            // the source of truth, so on conflict we simply keep the most
+            // recently saved version instead.
+            "name": "cryptpad_edit",
+            "type": "Boolean",
+            // Introduced in Parsec 3.10.0
+            "introduced_in_revision": 3100
         }
     ]
 }

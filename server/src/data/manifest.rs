@@ -127,7 +127,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl FileManifest {
     #[allow(clippy::too_many_arguments)]
     #[new]
-    #[pyo3(signature = (author, timestamp, id, parent, version, created, updated, size, blocksize, blocks))]
+    #[pyo3(signature = (author, timestamp, id, parent, version, created, updated, size, blocksize, blocks, cryptpad_edit))]
     fn new(
         author: DeviceID,
         timestamp: DateTime,
@@ -139,6 +139,7 @@ impl FileManifest {
         size: u64,
         blocksize: u64,
         blocks: Vec<BlockAccess>,
+        cryptpad_edit: bool,
     ) -> PyResult<Self> {
         Ok(Self(libparsec_types::FileManifest {
             author: author.0,
@@ -152,6 +153,7 @@ impl FileManifest {
             blocksize: libparsec_types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?,
             blocks: blocks.into_iter().map(|b| b.0).collect(),
+            cryptpad_edit,
         }))
     }
 
@@ -189,6 +191,7 @@ impl FileManifest {
             [size: u64, "size"],
             [blocksize: u64, "blocksize"],
             [blocks: Vec<BlockAccess>, "blocks"],
+            [cryptpad_edit: bool, "cryptpad_edit"],
         );
 
         let mut r = self.0.clone();
@@ -223,6 +226,9 @@ impl FileManifest {
         }
         if let Some(v) = blocks {
             r.blocks = v.into_iter().map(|b| b.0).collect();
+        }
+        if let Some(v) = cryptpad_edit {
+            r.cryptpad_edit = v;
         }
 
         Ok(Self(r))
@@ -277,6 +283,11 @@ impl FileManifest {
     fn blocks<'p>(&self, py: Python<'p>) -> PyResult<Bound<'p, PyTuple>> {
         let elements: Vec<BlockAccess> = self.0.blocks.iter().cloned().map(BlockAccess).collect();
         PyTuple::new(py, elements)
+    }
+
+    #[getter]
+    fn cryptpad_edit(&self) -> PyResult<bool> {
+        Ok(self.0.cryptpad_edit)
     }
 }
 
