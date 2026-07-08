@@ -65,7 +65,7 @@ pub enum InvalidManifestError {
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author couldn't write in the realm given it role was `{author_role:?}`")]
+    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): at that time author couldn't write in the realm given its role was `{author_role:?}`")]
     AuthorRealmRoleCannotWrite {
         realm: VlobID,
         vlob: VlobID,
