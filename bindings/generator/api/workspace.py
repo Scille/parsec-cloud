@@ -815,3 +815,52 @@ async def workspace_decrypt_path_addr(
     link: Ref[ParsecWorkspacePathAddr],
 ) -> Result[FsPath, WorkspaceDecryptPathAddrError]:
     raise NotImplementedError
+
+
+class CryptpadSessionKeys(Structure):
+    view_key: str
+    edit_key: str | None
+
+
+class WorkspaceRegisterCryptpadSessionError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class CryptpadUnavailable:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class NoKey:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidCryptpadSessionKeys:
+        pass
+
+    class TimestampOutOfBallpark:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_register_cryptpad_session(
+    workspace: Handle,
+    vlob_id: VlobID,
+    candidate_view_key: str,
+    candidate_edit_key: str,
+) -> Result[CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError]:
+    raise NotImplementedError
