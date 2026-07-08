@@ -10,6 +10,7 @@ pub use libparsec_platform_storage::certificates::UpTo;
 
 mod add;
 mod block_validate;
+mod cryptpad_validate;
 mod encrypt;
 mod forget_all_certificates;
 mod list;
@@ -34,6 +35,9 @@ mod workspace_bootstrap;
 
 pub use add::{CertifAddCertificatesBatchError, InvalidCertificateError, MaybeRedactedSwitch};
 pub use block_validate::{CertifValidateBlockError, InvalidBlockAccessError};
+pub use cryptpad_validate::{
+    CertifValidateCryptpadSessionKeysError, CryptpadSessionKeys, InvalidCryptpadSessionKeysError,
+};
 pub use encrypt::CertifEncryptForSequesterServicesError;
 pub use forget_all_certificates::CertifForgetAllCertificatesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
@@ -424,6 +428,34 @@ impl CertificateOps {
             manifest,
             access,
             encrypted,
+        )
+        .await
+    }
+
+    #[expect(clippy::too_many_arguments)]
+    pub async fn validate_cryptpad_session_keys(
+        &self,
+        needed_realm_certificate_timestamp: DateTime,
+        needed_common_certificate_timestamp: DateTime,
+        realm_id: VlobID,
+        key_index: IndexInt,
+        document_id: VlobID,
+        author: DeviceID,
+        timestamp: DateTime,
+        encrypted_view_key: &[u8],
+        encrypted_edit_key: Option<&[u8]>,
+    ) -> Result<CryptpadSessionKeys, CertifValidateCryptpadSessionKeysError> {
+        cryptpad_validate::validate_cryptpad_session_keys(
+            self,
+            needed_realm_certificate_timestamp,
+            needed_common_certificate_timestamp,
+            realm_id,
+            key_index,
+            document_id,
+            author,
+            timestamp,
+            encrypted_view_key,
+            encrypted_edit_key,
         )
         .await
     }
