@@ -115,6 +115,67 @@ impl BlockAccess {
 }
 
 crate::binding_utils::gen_py_wrapper_class!(
+    FileManifestOrigin,
+    libparsec_types::FileManifestOrigin,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
+
+#[pymethods]
+impl FileManifestOrigin {
+    #[classmethod]
+    #[pyo3(signature = (channel_id, timestamp))]
+    pub(crate) fn cryptpad(
+        _cls: &Bound<'_, PyType>,
+        channel_id: String,
+        timestamp: DateTime,
+    ) -> Self {
+        Self(libparsec_types::FileManifestOrigin::Cryptpad {
+            channel_id,
+            timestamp: timestamp.0,
+        })
+    }
+
+    #[classattr]
+    #[pyo3(name = "DEFAULT")]
+    pub(crate) fn default() -> &'static Py<PyAny> {
+        lazy_static::lazy_static! {
+            static ref VALUE: Py<PyAny> = {
+                Python::attach(|py| {
+                    FileManifestOrigin(libparsec_types::FileManifestOrigin::Default)
+                        .into_py_any(py)
+                        .expect("Cannot create static value for FileManifestOrigin::default")
+                })
+            };
+        };
+
+        &VALUE
+    }
+
+    #[getter]
+    fn channel_id(&self) -> Option<String> {
+        match &self.0 {
+            libparsec_types::FileManifestOrigin::Cryptpad { channel_id, .. } => {
+                Some(channel_id.clone())
+            }
+            _ => None,
+        }
+    }
+
+    #[getter]
+    fn timestamp(&self) -> Option<DateTime> {
+        match self.0 {
+            libparsec_types::FileManifestOrigin::Cryptpad { timestamp, .. } => {
+                Some(timestamp.into())
+            }
+            _ => None,
+        }
+    }
+}
+
+crate::binding_utils::gen_py_wrapper_class!(
     FileManifest,
     libparsec_types::FileManifest,
     __repr__,
@@ -127,7 +188,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl FileManifest {
     #[allow(clippy::too_many_arguments)]
     #[new]
-    #[pyo3(signature = (author, timestamp, id, parent, version, created, updated, size, blocksize, blocks))]
+    #[pyo3(signature = (author, timestamp, id, parent, version, created, updated, size, blocksize, blocks, origin))]
     fn new(
         author: DeviceID,
         timestamp: DateTime,
@@ -139,6 +200,7 @@ impl FileManifest {
         size: u64,
         blocksize: u64,
         blocks: Vec<BlockAccess>,
+        origin: FileManifestOrigin,
     ) -> PyResult<Self> {
         Ok(Self(libparsec_types::FileManifest {
             author: author.0,
@@ -152,6 +214,7 @@ impl FileManifest {
             blocksize: libparsec_types::Blocksize::try_from(blocksize)
                 .map_err(|_| PyValueError::new_err("Invalid `blocksize` field"))?,
             blocks: blocks.into_iter().map(|b| b.0).collect(),
+            origin: origin.0,
         }))
     }
 
@@ -189,6 +252,7 @@ impl FileManifest {
             [size: u64, "size"],
             [blocksize: u64, "blocksize"],
             [blocks: Vec<BlockAccess>, "blocks"],
+            [origin: FileManifestOrigin, "origin"],
         );
 
         let mut r = self.0.clone();
@@ -223,6 +287,9 @@ impl FileManifest {
         }
         if let Some(v) = blocks {
             r.blocks = v.into_iter().map(|b| b.0).collect();
+        }
+        if let Some(v) = origin {
+            r.origin = v.0;
         }
 
         Ok(Self(r))
@@ -277,6 +344,11 @@ impl FileManifest {
     fn blocks<'p>(&self, py: Python<'p>) -> PyResult<Bound<'p, PyTuple>> {
         let elements: Vec<BlockAccess> = self.0.blocks.iter().cloned().map(BlockAccess).collect();
         PyTuple::new(py, elements)
+    }
+
+    #[getter]
+    fn origin(&self) -> PyResult<FileManifestOrigin> {
+        Ok(FileManifestOrigin(self.0.origin.clone()))
     }
 }
 
