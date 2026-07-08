@@ -42,5 +42,6 @@ mod store;
 mod utils;
 mod validate_block;
 mod validate_child_manifest;
+mod validate_cryptpad_session_keys;
 mod validate_user_manifest;
 mod validate_workspace_manifest;
