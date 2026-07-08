@@ -1,0 +1,12 @@
+{
+    "signing": {
+        "profiles": {
+            "server": {
+                "usages": [
+                    "server auth"
+                ],
+                "expiry": "360h"
+            }
+        }
+    }
+}
