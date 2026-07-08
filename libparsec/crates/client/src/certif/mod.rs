@@ -432,7 +432,6 @@ impl CertificateOps {
         .await
     }
 
-    #[cfg_attr(not(test), expect(dead_code))]
     #[expect(clippy::too_many_arguments)]
     pub async fn validate_cryptpad_session_keys(
         &self,
