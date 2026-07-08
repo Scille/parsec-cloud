@@ -249,6 +249,7 @@ generate_field_type_enum!(
     BlockAccess => libparsec_types::BlockAccess,
     EntryName => libparsec_types::EntryName,
     FileManifest => libparsec_types::FileManifest,
+    FileManifestOrigin => libparsec_types::FileManifestOrigin,
     FolderManifest => libparsec_types::FolderManifest,
     WorkspaceManifest => libparsec_types::WorkspaceManifest,
     UserManifest => libparsec_types::UserManifest,

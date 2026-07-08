@@ -8,7 +8,7 @@ use libparsec_tests_lite::prelude::*;
 use crate::{
     fixtures::{alice, Device},
     BlockAccess, BlockID, Blocksize, ChildManifest, DataError, DateTime, DeviceID, FileManifest,
-    FolderManifest, HashDigest, UserManifest, VlobID,
+    FileManifestOrigin, FolderManifest, HashDigest, UserManifest, VlobID,
 };
 
 #[rstest]
@@ -30,7 +30,100 @@ fn invalid_deserialize_data(#[case] data: &[u8], #[case] error: DataError) {
 }
 
 #[rstest]
+fn serde_file_manifest_origin_cryptpad(alice: &Device) {
+    // Generated from Parsec 3.9.3-a.0+dev
+    // Content:
+    //   type: 'file_manifest'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b)
+    //   parent: ext(2, 0x07748fbf67a646428427865fd730bf3e)
+    //   version: 42
+    //   created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   size: 0
+    //   blocksize: 512
+    //   blocks: [ ]
+    //   origin: {
+    //     type: 'CRYPTPAD',
+    //     channel_id: 'channel1',
+    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //   }
+    let data: &[u8] = hex!(
+        "a6575ea2b2bbd6ddb2c5a453beff0c0fd33fa898b10bfb25f295c13c23cf072f77fe9e"
+        "4154b7d4289403ba17eb08448eb50404f5708ecbf46ddebd52434cd9da1b8ca1e6dab3"
+        "108344c2ae47228f0ec18b646c1314d3ee9972672df8581783dbcbce0233352a9007b9"
+        "c5f028cb77641de24bf514cc79b4338f51ef8631321062a16940916e5393dd76828ce0"
+        "20bbbd241ba1972c55e01e3d840c76d2980efbd03092e8afa69f33aebb6ecf8f7b8879"
+        "7523482edb87574a8cdb61202f8f2a2c18d92292c3969a1716b758edd6c32700bba607"
+        "49662a2631cd59a4e83ebf05e833621df085e534a7090a61d6b621238086fe24d0ced5"
+        "4c2cdb50016250b013c6316ae9cf140c83c76547dcedd0ef7b8c1e1e7013e13c925487"
+        "7a702dd8adeb3eba9756e6539e772a332f6ee86f89d3db46a0ac754d11766e83"
+    )
+    .as_ref();
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
+    let key = SecretKey::from(hex!(
+        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
+    ));
+
+    let expected = FileManifest {
+        author: alice.device_id,
+        timestamp: now,
+        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+        parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+        version: 42,
+        created: now,
+        updated: now,
+        size: 0,
+        blocksize: Blocksize::try_from(512).unwrap(),
+        blocks: vec![],
+        origin: FileManifestOrigin::Cryptpad {
+            channel_id: "channel1".into(),
+            timestamp: now,
+        },
+    };
+
+    println!(
+        "***expected: {:?}",
+        expected.dump_sign_and_encrypt(&alice.signing_key, &key)
+    );
+
+    let manifest = ChildManifest::decrypt_verify_and_load(
+        data,
+        &key,
+        &alice.verify_key(),
+        alice.device_id,
+        now,
+        None,
+        None,
+    )
+    .unwrap()
+    .into_file_manifest()
+    .unwrap();
+
+    p_assert_eq!(manifest, expected);
+
+    // Also test serialization round trip
+    let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let manifest2 = ChildManifest::decrypt_verify_and_load(
+        &data2,
+        &key,
+        &alice.verify_key(),
+        alice.device_id,
+        now,
+        None,
+        None,
+    )
+    .unwrap()
+    .into_file_manifest()
+    .unwrap();
+    p_assert_eq!(manifest2, expected);
+}
+
+#[rstest]
 fn serde_file_manifest_ok_and_invalid_checks(alice: &Device) {
+    // Legacy format from Parsec < 3.10, `origin` field is missing
     // Generated from Parsec 3.0.0-b.12+dev
     // Content:
     //   type: 'file_manifest'
@@ -104,6 +197,8 @@ fn serde_file_manifest_ok_and_invalid_checks(alice: &Device) {
                 )),
             },
         ],
+        // Not present in the data (legacy format from Parsec < 3.10), so defaults to `Default`
+        origin: FileManifestOrigin::Default,
     };
 
     let manifest = ChildManifest::decrypt_verify_and_load(
@@ -735,6 +830,7 @@ fn generate_file_manifest_blocks_not_sorted(
                 )),
             },
         ],
+        origin: FileManifestOrigin::Default,
     };
 
     let data = hex!(
@@ -817,6 +913,7 @@ fn generate_file_manifest_blocks_overlapping(
                 )),
             },
         ],
+        origin: FileManifestOrigin::Default,
     };
 
     let data = hex!(
@@ -899,6 +996,7 @@ fn generate_file_manifest_exceed_file_size(
                 )),
             },
         ],
+        origin: FileManifestOrigin::Default,
     };
 
     let data = hex!(
@@ -976,6 +1074,7 @@ fn generate_file_manifest_same_block_span(
                 )),
             },
         ],
+        origin: FileManifestOrigin::Default,
     };
 
     let data = hex!(
@@ -1042,6 +1141,7 @@ fn generate_file_manifest_in_between_block_span(
                 "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560"
             )),
         }],
+        origin: FileManifestOrigin::Default,
     };
 
     let data = hex!(

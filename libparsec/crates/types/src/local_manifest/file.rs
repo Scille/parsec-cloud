@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     self as libparsec_types, BlockAccess, BlockID, Blocksize, ChunkID, DataError, DataResult,
-    DateTime, DeviceID, FileManifest, InvalidBlockSize, VlobID, DEFAULT_BLOCK_SIZE,
+    DateTime, DeviceID, FileManifest, FileManifestOrigin, InvalidBlockSize, Maybe, VlobID,
+    DEFAULT_BLOCK_SIZE,
 };
 
 use super::impl_local_manifest_dump;
@@ -45,6 +46,7 @@ pub struct LocalFileManifest {
     /// created from a `FileManifest` should only contains block slots made of
     /// a single chunk).
     pub blocks: Vec<Vec<ChunkView>>,
+    pub origin: FileManifestOrigin,
 }
 
 parsec_data!("schema/local_manifest/local_file_manifest.json5");
@@ -60,6 +62,7 @@ impl TryFrom<LocalFileManifestData> for LocalFileManifest {
             size: data.size,
             blocksize: data.blocksize.try_into()?,
             blocks: data.blocks,
+            origin: data.origin.unwrap_or(FileManifestOrigin::Default),
         })
     }
 }
@@ -75,6 +78,10 @@ impl From<LocalFileManifest> for LocalFileManifestData {
             size: obj.size,
             blocksize: obj.blocksize.into(),
             blocks: obj.blocks,
+            origin: match obj.origin {
+                FileManifestOrigin::Default => Maybe::Absent,
+                origin @ FileManifestOrigin::Cryptpad { .. } => origin.into(),
+            },
         }
     }
 }
@@ -95,6 +102,7 @@ impl LocalFileManifest {
                 blocksize: DEFAULT_BLOCK_SIZE,
                 size: 0,
                 blocks: vec![],
+                origin: FileManifestOrigin::Default,
             },
             parent,
             need_sync: true,
@@ -102,6 +110,7 @@ impl LocalFileManifest {
             blocksize: DEFAULT_BLOCK_SIZE,
             size: 0,
             blocks: vec![],
+            origin: FileManifestOrigin::Default,
         }
     }
 
@@ -218,6 +227,7 @@ impl LocalFileManifest {
             size: remote.size,
             blocksize: remote.blocksize,
             blocks,
+            origin: remote.origin.clone(),
             base: remote,
         };
 
@@ -270,6 +280,7 @@ impl LocalFileManifest {
             self.size,
             self.blocksize,
             blocks,
+            self.origin.clone(),
         );
 
         Ok(manifest)

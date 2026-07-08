@@ -4,7 +4,14 @@ from pathlib import Path
 
 import httpx
 
-from parsec._parsec import DateTime, DeviceID, FileManifest, OrganizationID, VlobID
+from parsec._parsec import (
+    DateTime,
+    DeviceID,
+    FileManifest,
+    FileManifestOrigin,
+    OrganizationID,
+    VlobID,
+)
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 
 from .common import MinimalorgRpcClients
@@ -55,6 +62,7 @@ def test_serialization_uses_v0_format(minimalorg: MinimalorgRpcClients):
         blocksize=512,
         size=0,
         blocks=(),
+        origin=FileManifestOrigin.DEFAULT,
     )
     signed = data.dump_and_sign(minimalorg.alice.signing_key)
     # In this test we don't care about the signature, so remove it...

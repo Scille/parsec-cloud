@@ -90,6 +90,7 @@ from parsec._parsec_pyi.manifest import (
     ChildManifest,
     EntryName,
     FileManifest,
+    FileManifestOrigin,
     FolderManifest,
     UserManifest,
     child_manifest_decrypt_verify_and_load,
@@ -218,6 +219,7 @@ __all__ = [
     "ChildManifest",
     "EntryName",
     "FileManifest",
+    "FileManifestOrigin",
     "FolderManifest",
     "UserManifest",
     # Time
