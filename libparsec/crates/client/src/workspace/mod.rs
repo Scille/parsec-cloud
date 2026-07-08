@@ -22,13 +22,14 @@ pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, FolderReaderStatNextOutcome,
-    InboundSyncOutcome, MoveEntryMode, OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError,
-    WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError,
-    WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
-    WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,
-    WorkspaceIsFileContentLocalError, WorkspaceMoveEntryError, WorkspaceOpenFileError,
-    WorkspaceOpenFolderReaderError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
+    CryptpadSessionKeys, EntryStat, FileStat, FolderReader, FolderReaderStatEntryError,
+    FolderReaderStatNextOutcome, InboundSyncOutcome, MoveEntryMode, OpenOptions,
+    OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
+    WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
+    WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceIsFileContentLocalError,
+    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
+    WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
     WorkspaceStatFolderChildrenError, WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
 };
 
@@ -585,6 +586,33 @@ impl WorkspaceOps {
         link: &ParsecWorkspacePathAddr,
     ) -> Result<FsPath, WorkspaceDecryptPathAddrError> {
         addr::decrypt_path_addr(self, link).await
+    }
+
+    /// Registering a session means two things:
+    /// - if no session exists for the document: create a new session.
+    /// - if a session exists: get the session.
+    ///
+    /// Hence why this function takes keys as parameter and also return keys:
+    /// - The `candidate_*_key` provided in parameter will only be used to create a new session.
+    /// - The returned keys are the actual one being used (and differ from the `candidate_*_key`
+    ///   if creating a new session wasn't needed).
+    ///
+    /// Also note `document_id` doesn't have to be a valid vlob (i.e. the server never checks for
+    /// its existence), as this allow to start a cryptpad session on a file that haven't been
+    /// synchronized yet.
+    pub async fn register_cryptpad_session(
+        &self,
+        document_id: VlobID,
+        candidate_edit_key: String,
+        candidate_view_key: String,
+    ) -> Result<CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError> {
+        transactions::register_cryptpad_session(
+            self,
+            document_id,
+            candidate_edit_key,
+            candidate_view_key,
+        )
+        .await
     }
 }
 
