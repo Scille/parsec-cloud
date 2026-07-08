@@ -3,12 +3,13 @@
 use std::sync::Arc;
 
 pub use libparsec_client::workspace::{
-    EntryStat, FileStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError,
+    CryptpadSessionKeys, EntryStat, FileStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError,
     WorkspaceCreateFolderError, WorkspaceDecryptPathAddrError, WorkspaceFdCloseError,
     WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
     WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError,
-    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
-    WorkspaceStatEntryError, WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
+    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRegisterCryptpadSessionError,
+    WorkspaceRemoveEntryError, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
+    WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -757,4 +758,17 @@ pub async fn workspace_decrypt_path_addr(
     let workspace = borrow_workspace(workspace)?;
 
     workspace.decrypt_path_addr(link).await
+}
+
+pub async fn workspace_register_cryptpad_session(
+    workspace: Handle,
+    document_id: VlobID,
+    candidate_edit_key: String,
+    candidate_view_key: String,
+) -> Result<CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace
+        .register_cryptpad_session(document_id, candidate_edit_key, candidate_view_key)
+        .await
 }
