@@ -2,6 +2,7 @@
 
 mod create_file;
 mod create_folder;
+mod cryptpad;
 mod fd_close;
 mod fd_flush;
 mod fd_read;
@@ -20,6 +21,7 @@ mod watch_entry;
 
 pub use create_file::*;
 pub use create_folder::*;
+pub use cryptpad::*;
 pub use fd_close::*;
 pub use fd_flush::*;
 pub use fd_read::*;

@@ -22,13 +22,14 @@ pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, FolderReaderStatNextOutcome,
-    InboundSyncOutcome, MoveEntryMode, OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError,
-    WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError,
-    WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
-    WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,
-    WorkspaceIsFileContentLocalError, WorkspaceMoveEntryError, WorkspaceOpenFileError,
-    WorkspaceOpenFolderReaderError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
+    CryptpadSessionKeys, EntryStat, FileStat, FolderReader, FolderReaderStatEntryError,
+    FolderReaderStatNextOutcome, InboundSyncOutcome, MoveEntryMode, OpenOptions,
+    OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
+    WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
+    WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceIsFileContentLocalError,
+    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
+    WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
     WorkspaceStatFolderChildrenError, WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
 };
 
@@ -585,6 +586,21 @@ impl WorkspaceOps {
         link: &ParsecWorkspacePathAddr,
     ) -> Result<FsPath, WorkspaceDecryptPathAddrError> {
         addr::decrypt_path_addr(self, link).await
+    }
+
+    pub async fn register_cryptpad_session(
+        &self,
+        vlob_id: VlobID,
+        candidate_edit_key: String,
+        candidate_view_key: String,
+    ) -> Result<CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError> {
+        transactions::register_cryptpad_session(
+            self,
+            vlob_id,
+            candidate_edit_key,
+            candidate_view_key,
+        )
+        .await
     }
 }
 
