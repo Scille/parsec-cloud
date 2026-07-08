@@ -102,6 +102,8 @@ pub trait AsyncStateMachineTest {
     }
 }
 
+mod cryptpad;
+
 #[cfg(all(
     // So far only UNIX-specific tests use async stateful
 	unix,
