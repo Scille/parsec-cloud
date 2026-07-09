@@ -1,0 +1,16 @@
+name: CI Web Coverage
+
+# Manual entry point for `ci-web.yml`'s e2e coverage report, meant to be checked occasionally
+# (not on every push/PR) rather than run automatically.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  web-coverage:
+    uses: ./.github/workflows/ci-web.yml
+    with:
+      enable-coverage: true

@@ -13,7 +13,12 @@ import { brotliCompress } from 'zlib';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
 
-const plugins: PluginOption[] = [vue()];
+// Vue hoists static template parts into module-level constants, created once at import time
+// regardless of whether the component ever mounts. That's invisible in normal use, but it means
+// V8 coverage would count a component's template as "covered" just by being imported. Disable it
+// for coverage runs so template code only counts as covered once the component actually renders.
+const vueOptions = process.env.COLLECT_COVERAGE === 'true' ? { template: { compilerOptions: { hoistStatic: false } } } : {};
+const plugins: PluginOption[] = [vue(vueOptions)];
 // Web workers are packaged separately and rely on their own set of plugins.
 //
 // This is because each worker makes additional calls to callbacks that would otherwise
