@@ -10,9 +10,17 @@ import { mockLibParsec } from '@tests/e2e/helpers/libparsec';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { DisplaySize, MsContext, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
+import { CoverageReport } from 'monocart-coverage-reports';
+// `mcr.config.cjs` has no declaration file, shared as-is with `scripts/generate-coverage-report.cjs`
+// @ts-expect-error
+// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
+import coverageOptions from '../../../mcr.config.cjs';
 
 const DEV_TOOLS_OFFSET = 400;
 const DEFAULT_INIT_TIMEOUT = 5000;
+
+const COLLECT_COVERAGE = process.env.COLLECT_COVERAGE === 'true';
+const coverageReport = COLLECT_COVERAGE ? new CoverageReport(coverageOptions) : undefined;
 
 export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promise<void> {
   const TESTBED_SERVER = process.env.TESTBED_SERVER;
@@ -292,7 +300,40 @@ export const msTest = debugTest.extend<{
     const context = (await browser.newContext()) as MsContext;
     await context.grantPermissions(['clipboard-read']);
     await mockExternalWebsites(context);
+
+    if (COLLECT_COVERAGE) {
+      // One listener for the whole context: fires once per page/tab, however it was created, so
+      // there's no risk of double-starting coverage on a page that gets set up more than once.
+      context.on('page', (page) => {
+        page.coverage.startJSCoverage({ resetOnNavigation: false }).catch((error) => {
+          console.log('Failed to start coverage for page', page.url(), error);
+        });
+        // Collect coverage before the page actually closes: by the time a `close` event fires,
+        // the CDP session backing `page.coverage` may already be gone. Pages get closed all over
+        // the place (mid-test via `page.release()`, or implicitly), so patching `close()` here is
+        // the one place that reliably intercepts all of them without touching those call sites.
+        const originalClose = page.close.bind(page);
+        page.close = (async (options) => {
+          try {
+            const jsCoverage = await page.coverage.stopJSCoverage();
+            await coverageReport?.add(jsCoverage);
+          } catch (error) {
+            console.log('Failed to collect coverage for page', page.url(), error);
+          }
+          return originalClose(options);
+        }) as typeof page.close;
+      });
+    }
+
     await use(context);
+
+    if (COLLECT_COVERAGE) {
+      // `context.close()` doesn't seem to go through the patched `close()`.
+      for (const page of context.pages()) {
+        await page.close();
+      }
+    }
+
     await context.close();
   },
 
@@ -685,5 +726,6 @@ export const msTest = debugTest.extend<{
       await expect(page.locator('.folder-container').locator('.no-files')).toBeHidden();
     }
     await use(page);
+    await page.release();
   },
 });
