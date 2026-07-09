@@ -160,6 +160,7 @@ htmlcov
 humantime
 ilbm
 imgconverter
+imgs
 inkey
 insertmacro
 intlify
@@ -304,8 +305,8 @@ pseudoxml
 psqlrc
 psrk
 PSSI
-publickeybytes
 pubkeys
+publickeybytes
 pubout
 pulseaudio
 PWDEBUG

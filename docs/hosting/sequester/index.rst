@@ -54,17 +54,44 @@ You can create the authority key with the following commands:
 Bootstrap organization with sequester authority
 ===============================================
 
+.. important::
+
+  That step can only be done during the organization bootstrap and cannot be configured after the organization was bootstrapped.
+
+Once you received a bootstrap link from the parsec server's administrator, typically done with the following command:
+
 .. code-block:: bash
 
-  ./parsec-cli organization create --token=s3cr3t \
-               --addr=parsec3://<server-url> organization-sequester-test
+  ./parsec-cli organization create organization-sequester-test
+
+.. note::
+
+  That command needs ``PARSEC_SERVER_ADDR`` and ``PARSEC_ADMINISTRATION_TOKEN`` to be defined in the env variables.
+
+  If you prefer, you can use the option ``--addr`` and ``--token`` respectively to pass those values (but we do not recommend that for ``--token`` as it is a sensible value that will be in the shell history).
+
+You then need to bootstrap the organization while specifying the ``authority_key.pub`` file.
+
+You can do that either via ``parsec-cli``:
+
+.. code-block:: bash
 
   ./parsec-cli organization bootstrap \
-               --addr="parsec3://<server-url>/organization-sequester-test?a=bootstrap_organization&p=<bootstrap-token>" \
+               --addr="$BOOTSTRAP_LINK" \
                --device-label "my device" \
                --label "John Doe" \
-               --email <user-email> \
+               --email john.doe@example.com \
                --sequester-key ./authority_key.pub
+
+Or using the GUI application:
+
+#. Copy the provided bootstrap link
+#. Similar to :ref:`start the invitation process <doc_userguide_join_organization_start_invitation>`, paste the provided link in the text field
+#. The application will show a modal with a summary of the to be bootstrapped organization
+#. In the same modal, extend ``Advanced Settings`` and enable ``Data Sequester`` feature and provide it with the ``authority_key.pub`` file:
+
+   .. image:: imgs/create-org-with-sequester-main-key.png
+#. Continue the process until the organization is bootstrapped
 
 
 Sequester service key and certificate
@@ -72,32 +99,54 @@ Sequester service key and certificate
 
 You can create the service key and certificate with the following commands:
 
-.. code-block:: bash
+#. Create the sequester keypair:
 
-  # Private key must not have passphrase
-  openssl genrsa -aes256 -out sequester_key.private 4096
+   .. code-block:: bash
 
-  # If it has a passphrase
-  openssl rsa -in sequester_key.private -out sequester_key_private_decrypted.pem
-  openssl rsa -in sequester_key.private -out sequester_key.pub -pubout -outform PEM
+      openssl genrsa -aes256 -out sequester_key.private 4096
+      openssl rsa -in sequester_key.private -out sequester_key.pub -pubout -outform PEM
 
-  # With Parsec server CLI
-  # Certificate must be generated AFTER organization bootstrapped
-  python -m parsec sequester generate_service_certificate \
-            --service-label="Sequester service" \
-            --service-public-key=./sequester_key.pub \
-            --authority-private-key=./authority_key.private
+#. Create the service certificate
+
+   .. caution::
+
+      That step must be done after the organization as been bootstrapped,
+      otherwise the service certificate will not be accepted by the server.
+
+   .. danger::
+
+      You must ensure that the computer clock is on time with the server (you can use ``date --utc`` to compare the clocks)
+
+   .. code-block:: bash
+
+     python -m parsec sequester generate_service_certificate \
+               --service-label="Sequester service" \
+               --service-public-key=./sequester_key.pub \
+               --authority-private-key=./authority_key.private
+
+   .. tip::
+
+      This step while using the parsec server CLI does not require to be executed on the same machine as the service.
 
 Enable sequester service
 ========================
 
-.. code-block:: bash
+#. Next, provide to the parsec server's administrator the recently generated service certificate.
+#. The admin now needs to create the service on the server:
 
-  # On Parsec server
-  python -m parsec sequester create_service \
-            --db=$POSTGRESQL_URL \
-            --organization=organization-sequester-test \
-            --service-certificate=./sequester_service_certificate-ef9adae7ee9f44cc9f974fdcaaff8839-2025-02-23T21:19:35.484948Z.pem
+   .. code-block:: bash
+
+     python -m parsec sequester create_service \
+               --organization=organization-sequester-test \
+               --service-certificate=./sequester_service_certificate-ef9adae7ee9f44cc9f974fdcaaff8839-2025-02-23T21:19:35.484948Z.pem
+
+   .. note::
+
+      You need to have access to the database credentials for that operation.
+
+.. important::
+
+  The sequester service can only be enabled on bootstrapped organization.
 
 Exporting data with sequester service
 =====================================
