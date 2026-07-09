@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.3.0-rc.12+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-18 15:47+0200\n"
+"POT-Creation-Date: 2026-07-20 08:15+0000\n"
 "PO-Revision-Date: 2025-02-26 23:56-0300\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -15,7 +15,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
 #: ../../hosting/sequester/index.rst:7
 msgid "Sequester service"
@@ -116,26 +116,172 @@ msgstr "Vous pouvez créer la clé d'autorité à l'aide des commandes suivantes
 msgid "Bootstrap organization with sequester authority"
 msgstr "Initialisation d'une organisation avec l'autorité de séquestre"
 
+#: ../../hosting/sequester/index.rst:59
+msgid ""
+"That step can only be done during the organization bootstrap and cannot be "
+"configured after the organization was bootstrapped."
+msgstr ""
+"Cette étape ne peut être effectuée que pendant l'initialisation de "
+"l'organisation et ne peut pas être configurée après cette étape."
+
+#: ../../hosting/sequester/index.rst:61
+msgid ""
+"Once you received a bootstrap link from the parsec server's administrator, "
+"typically done with the following command:"
+msgstr ""
+"Une fois que vous avez reçu un lien d'initialisation de la part de "
+"l'administrateur du serveur Parsec, généralement obtenu avec la commande "
+"suivante :"
+
+#: ../../hosting/sequester/index.rst:69
+msgid ""
+"That command needs ``PARSEC_SERVER_ADDR`` and "
+"``PARSEC_ADMINISTRATION_TOKEN`` to be defined in the env variables."
+msgstr ""
+"Cette commande nécessite que ``PARSEC_SERVER_ADDR`` et "
+"``PARSEC_ADMINISTRATION_TOKEN`` soient définis dans les variables "
+"d'environnement."
+
 #: ../../hosting/sequester/index.rst:71
+msgid ""
+"If you prefer, you can use the option ``--addr`` and ``--token`` "
+"respectively to pass those values (but we do not recommend that for ``--"
+"token`` as it is a sensible value that will be in the shell history)."
+msgstr ""
+"Si vous préférez, vous pouvez utiliser les options ``--addr`` et ``--token`` "
+"pour transmettre ces valeurs (mais nous ne recommandons pas cela pour ``--"
+"token``, car il s'agit d'une valeur sensible qui sera enregistrée dans "
+"l'historique du terminal)."
+
+#: ../../hosting/sequester/index.rst:73
+msgid ""
+"You then need to bootstrap the organization while specifying the "
+"``authority_key.pub`` file."
+msgstr ""
+"Vous devez ensuite initialiser l'organisation en spécifiant le fichier "
+"``authority_key.pub``."
+
+#: ../../hosting/sequester/index.rst:75
+msgid "You can do that either via ``parsec-cli``:"
+msgstr "Vous pouvez le faire soit via ``parsec-cli`` :"
+
+#: ../../hosting/sequester/index.rst:86
+msgid "Or using the GUI application:"
+msgstr "Ou en utilisant l'application graphique :"
+
+#: ../../hosting/sequester/index.rst:88
+msgid "Copy the provided bootstrap link"
+msgstr "Copiez le lien d'initialisation fourni"
+
+#: ../../hosting/sequester/index.rst:89
+msgid ""
+"Similar to :ref:`start the invitation process "
+"<doc_userguide_join_organization_start_invitation>`, paste the provided link "
+"in the text field"
+msgstr ""
+"De manière similaire à :ref:`démarrer le processus d'invitation "
+"<doc_userguide_join_organization_start_invitation>`, collez le lien fourni "
+"dans le champ de texte"
+
+#: ../../hosting/sequester/index.rst:90
+msgid ""
+"The application will show a modal with a summary of the to be bootstrapped "
+"organization"
+msgstr ""
+"L'application affichera une fenêtre modale avec un résumé de l'organisation "
+"à initialiser"
+
+#: ../../hosting/sequester/index.rst:91
+msgid ""
+"In the same modal, extend ``Advanced Settings`` and enable ``Data "
+"Sequester`` feature and provide it with the ``authority_key.pub`` file:"
+msgstr ""
+"Dans cette même fenêtre, développez ``Paramètres avancés``, activez la "
+"fonctionnalité ``Séquestre de données`` et fournissez le fichier "
+"``authority_key.pub`` :"
+
+#: ../../hosting/sequester/index.rst:94
+msgid "Continue the process until the organization is bootstrapped"
+msgstr "Poursuivez le processus jusqu'à ce que l'organisation soit initialisée"
+
+#: ../../hosting/sequester/index.rst:98
 msgid "Sequester service key and certificate"
 msgstr "Séquestrer la clé de service et le certificat"
 
-#: ../../hosting/sequester/index.rst:73
+#: ../../hosting/sequester/index.rst:100
 msgid ""
 "You can create the service key and certificate with the following commands:"
 msgstr ""
 "Vous pouvez créer la clé de service et le certificat à l'aide des commandes "
 "suivantes :"
 
-#: ../../hosting/sequester/index.rst:92
+#: ../../hosting/sequester/index.rst:102
+msgid "Create the sequester keypair:"
+msgstr "Activer le service de séquestre"
+
+#: ../../hosting/sequester/index.rst:109
+msgid "Create the service certificate"
+msgstr "Séquestrer la clé de service et le certificat"
+
+#: ../../hosting/sequester/index.rst:113
+msgid ""
+"That step must be done after the organization as been bootstrapped, "
+"otherwise the service certificate will not be accepted by the server."
+msgstr ""
+"Cette étape doit être effectuée après l'initialisation de l'organisation, "
+"sinon le certificat du service ne sera pas accepté par le serveur."
+
+#: ../../hosting/sequester/index.rst:118
+msgid ""
+"You must ensure that the computer clock is on time with the server (you can "
+"use ``date --utc`` to compare the clocks)"
+msgstr ""
+"Vous devez vous assurer que l'horloge de l'ordinateur est synchronisée avec "
+"celle du serveur (vous pouvez utiliser ``date --utc`` pour comparer les "
+"horloges)"
+
+#: ../../hosting/sequester/index.rst:129
+msgid ""
+"This step while using the parsec server CLI does not require to be executed "
+"on the same machine as the service."
+msgstr ""
+"Cette étape, lors de l'utilisation de l'interface en ligne de commande du "
+"serveur Parsec, n'a pas besoin d'être exécutée sur la même machine que le "
+"service."
+
+#: ../../hosting/sequester/index.rst:132
 msgid "Enable sequester service"
 msgstr "Activer le service de séquestre"
 
-#: ../../hosting/sequester/index.rst:103
+#: ../../hosting/sequester/index.rst:134
+msgid ""
+"Next, provide to the parsec server's administrator the recently generated "
+"service certificate."
+msgstr ""
+"Ensuite, fournissez à l'administrateur du serveur Parsec le certificat de "
+"service récemment généré."
+
+#: ../../hosting/sequester/index.rst:135
+msgid "The admin now needs to create the service on the server:"
+msgstr "L'administrateur doit maintenant créer le service sur le serveur :"
+
+#: ../../hosting/sequester/index.rst:145
+msgid "You need to have access to the database credentials for that operation."
+msgstr ""
+"Vous devez avoir accès aux identifiants de la base de données pour cette "
+"opération."
+
+#: ../../hosting/sequester/index.rst:149
+msgid "The sequester service can only be enabled on bootstrapped organization."
+msgstr ""
+"Le service de séquestre ne peut être activé que sur une organisation "
+"initialisée."
+
+#: ../../hosting/sequester/index.rst:152
 msgid "Exporting data with sequester service"
 msgstr "Exportation de données avec le service séquestre"
 
-#: ../../hosting/sequester/index.rst:105
+#: ../../hosting/sequester/index.rst:154
 msgid ""
 "Realm vs Workspace: In Parsec vocabulary, workspace and realm are two sides "
 "of the same coin. In a nutshell, the realm is a server-side concept that "
@@ -148,7 +294,7 @@ msgstr ""
 "cryptées, tandis que l'espace de travail est le concept côté client qui fait "
 "référence à ces données une fois décryptées."
 
-#: ../../hosting/sequester/index.rst:110
+#: ../../hosting/sequester/index.rst:159
 msgid ""
 "Hence the \"realm export\" is the operation of exporting from the server all "
 "the encrypted data that, when used with the right decryption keys, will "
@@ -161,15 +307,15 @@ msgstr ""
 "accès en lecture complet à un espace de travail à tout moment jusqu'à la "
 "date d'exportation."
 
-#: ../../hosting/sequester/index.rst:114
+#: ../../hosting/sequester/index.rst:163
 msgid "Overview:"
 msgstr "Vue d'ensemble :"
 
-#: ../../hosting/sequester/index.rst:116
+#: ../../hosting/sequester/index.rst:165
 msgid "An organization exists with a workspace"
 msgstr "Une organisation existe avec un espace de travail"
 
-#: ../../hosting/sequester/index.rst:117
+#: ../../hosting/sequester/index.rst:166
 msgid ""
 "From the server CLI, a realm is exported. This generates a large ``.sqlite`` "
 "file containing all encrypted data belonging to this realm."
@@ -178,7 +324,7 @@ msgstr ""
 "grand fichier ``.sqlite`` contenant toutes les données cryptées appartenant "
 "à ce realm."
 
-#: ../../hosting/sequester/index.rst:119
+#: ../../hosting/sequester/index.rst:168
 msgid ""
 "The realm export file is transferred to a machine containing the decryption "
 "keys:"
@@ -186,11 +332,11 @@ msgstr ""
 "Le fichier d'exportation du realm est transféré vers une machine contenant "
 "les clés de décryptage :"
 
-#: ../../hosting/sequester/index.rst:121
+#: ../../hosting/sequester/index.rst:170
 msgid "Sequestered service key in case of a sequestered organization."
 msgstr "Clé de service du séquestre dans le cas d'une organisation séquestrée."
 
-#: ../../hosting/sequester/index.rst:122
+#: ../../hosting/sequester/index.rst:171
 msgid ""
 "Device key otherwise (i.e. decrypt the realm export from a machine normally "
 "used to run the Parsec client)."
@@ -198,6 +344,6 @@ msgstr ""
 "Clé de l'appareil, sinon (c'est-à-dire décrypter l'exportation du realm à "
 "partir d'une machine normalement utilisée pour exécuter le client Parsec)."
 
-#: ../../hosting/sequester/index.rst:138
+#: ../../hosting/sequester/index.rst:187
 msgid "Using exported data"
 msgstr "Utilisation des données exportées"
