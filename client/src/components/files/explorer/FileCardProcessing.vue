@@ -3,7 +3,10 @@
 <template>
   <ion-item class="file-card-item ion-no-padding">
     <div class="card-content">
-      <ms-spinner class="card-content__spinner" />
+      <ms-spinner
+        class="card-content__spinner"
+        :size="20"
+      />
       <ion-avatar class="card-content-icons">
         <ion-icon
           class="icon-item"
@@ -11,7 +14,7 @@
         />
       </ion-avatar>
 
-      <ion-title class="card-content__title body">
+      <ion-title class="card-content__title cell">
         {{ operation.entryName }}
       </ion-title>
 
@@ -81,7 +84,6 @@ const operationLabel: Translatable = (() => {
   justify-content: center;
   padding: 1.5rem 0.5rem;
   width: 100%;
-  margin: auto;
 
   &__spinner {
     position: absolute;

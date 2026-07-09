@@ -189,7 +189,7 @@
 
 .list-container {
   // File list
-  &:has(.files-list-container),
+  &:is(.files-list-container),
   &:has(.file-list-item) {
     .header-label-selected,
     .file-selected,
@@ -318,7 +318,7 @@
   }
 
   // User list
-  &:has(.users-list-container),
+  &:is(.users-list-container),
   &:has(.user-list-item) {
     .header-label-selected,
     .user-selected {
@@ -393,7 +393,7 @@
   }
 
   // PKI Requests
-  &:has(.requests-list-container),
+  &:is(.requests-list-container),
   &:has(.request-list-item) {
     .label-name,
     .request-name {
@@ -447,7 +447,7 @@
   }
 
   // Invitations
-  &:has(.invitations-list-container),
+  &:is(.invitations-list-container),
   &:has(.invitation-list-item) {
     .label-email,
     .invitation-email {
