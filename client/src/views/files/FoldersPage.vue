@@ -572,7 +572,8 @@ const fileOperationsCurrentDir = asyncComputed(async () => {
         continue;
       }
       for (const file of importOp.files) {
-        const filePath = await Path.parent(await Path.joinPaths(importOp.destination, (file as any).relativePath));
+        const dest = Path.quickJoin(importOp.destination, (file as any).relativePath);
+        const filePath = await Path.parent(dest);
         if (Path.areSame(filePath, currentPath.value)) {
           entryNames.push({ type: op.type, entryName: file.name });
         }
@@ -909,6 +910,14 @@ async function onFileOperationEvent(
     case FileOperationEvents.Added:
       fileOperations.value.push(operationData);
       break;
+    case FileOperationEvents.Updated: {
+      const idx = fileOperations.value.findIndex((op) => op.id === operationData.id);
+      if (idx !== -1) {
+        fileOperations.value.splice(idx, 1);
+      }
+      fileOperations.value.push(operationData);
+      break;
+    }
     case FileOperationEvents.Progress:
       if (fileOperations.value.find((op) => op.id === operationData.id) === undefined) {
         fileOperations.value.push(operationData);
