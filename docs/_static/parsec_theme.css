@@ -344,6 +344,11 @@ h6 {
   color: hsl(40, 100%, 45%);
 }
 
+.rst-content .danger .admonition-title {
+  background-color: transparent;
+  color: hsl(5, 78%, 45%);
+}
+
 .rst-content .admonition .admonition-title::before,
 .rst-content .admonition.note .admonition-title::before,
 .rst-content .admonition.seealso .admonition-title::before {
