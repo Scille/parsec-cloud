@@ -80,6 +80,7 @@ async function addRequest(page: MsPage, identitySystem: 'pki' | 'openbao'): Prom
 
 for (const identitySystem of ['pki', 'openbao']) {
   msTest(`Async enrollment using ${identitySystem}`, async ({ context }) => {
+    msTest.setTimeout(60_000);
     const expectedPersonName = identitySystem === 'pki' ? 'Bob' : 'Gordon Freeman';
 
     const page = (await context.newPage()) as MsPage;

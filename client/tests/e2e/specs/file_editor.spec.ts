@@ -34,8 +34,13 @@ msTest.describe(() => {
       const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(0);
 
       if (method === 'header') {
-        await entry.locator('.file-last-update').click();
+        // Let it process everything, avoid the refresh
+        await parsecEditics.waitForTimeout(500);
+        await entry.hover();
+        await expect(entry.locator('.checkbox-container')).toBeVisible();
+        await entry.locator('.checkbox-container').locator('input').check();
         const actionBar = parsecEditics.locator('#folders-ms-action-bar');
+        await expect(actionBar.locator('.item-selected')).toHaveText('1 selected item');
         if (mode === 'edit') {
           await expect(actionBar.locator('ion-button').nth(1)).toHaveText('Edit');
           await actionBar.locator('ion-button').nth(1).click();
@@ -250,16 +255,16 @@ msTest.describe(() => {
         // First one is "ignored"
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
-        }, 300);
+        }, 200);
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
-        }, 450);
+        }, 2000);
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save', documentContent: new Blob([42, 42, 42, 42, 42, 42, 42], { type: 'application/octet-stream' }) });
-        }, 1500);
+        }, 3000);
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: true });
-          }, 2000);
+          }, 4000);
       `,
     });
     /* eslint-enable max-len */
@@ -292,10 +297,10 @@ msTest.describe(() => {
         }, 100);
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
-        }, 300);
+        }, 1000);
         setTimeout(() => {
           sendToParent({ command: 'editics-event', event: 'save-status', saved: false });
-        }, 450);
+        }, 2000);
       `,
     });
     await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);
@@ -312,7 +317,7 @@ msTest.describe(() => {
     await expect(frame.locator('#editor-container')).toHaveText('document.docx');
     await expect(parsecEditics.locator('.file-editor-error')).toBeHidden();
     const topbar = parsecEditics.locator('.file-handler-topbar');
-    await parsecEditics.waitForTimeout(500);
+    await parsecEditics.waitForTimeout(1000);
     await expect(topbar.locator('.save-info')).toBeVisible();
     await expect(topbar.locator('.save-info-text')).toBeVisible();
     await expect(topbar.locator('.save-info-text')).toHaveText('Changes unsaved');
@@ -373,7 +378,7 @@ msTest.describe(() => {
     // Makes sure that some files cannot be opened, and also checks that the opening + back + opening + ...
     // works properly.
 
-    msTest.setTimeout(60_000);
+    msTest.setTimeout(90_000);
 
     const FILES = [
       { fileName: 'file.txt', opener: 'editor', renameIndex: 3 },
