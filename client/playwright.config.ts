@@ -41,7 +41,7 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: IN_CI ? 'on-first-retry' : 'retain-on-failure',
   },
   /* Leaving the empty array to make it easier to ignore tests */
   testIgnore: [],
