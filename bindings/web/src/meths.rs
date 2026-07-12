@@ -23282,6 +23282,156 @@ fn variant_workspace_remove_entry_error_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceSaveAndSyncFileWithCryptpad
+
+#[allow(dead_code)]
+fn variant_workspace_save_and_sync_file_with_cryptpad_rs_to_js(
+    rs_obj: libparsec::WorkspaceSaveAndSyncFileWithCryptpad,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::EntryNotAFile { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadEntryNotAFile".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadEntryNotFound".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadInternal".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::InvalidBlockAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadInvalidBlockAccess".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadInvalidCertificate".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadInvalidKeysBundle".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadInvalidManifest".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::NoKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadNoKey".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::NoRealm { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadNoRealm".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadNoRealmAccess".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadOffline".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::ReadOnlyRealm { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadReadOnlyRealm".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::RealmArchived { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadRealmArchived".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::RealmDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadRealmDeleted".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::ServerBlockstoreUnavailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadServerBlockstoreUnavailable".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadStopped".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpad::TimestampOutOfBallpark { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceSaveAndSyncFileWithCryptpadTimestampOutOfBallpark".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceStatEntryError
 
 #[allow(dead_code)]
@@ -31259,6 +31409,68 @@ pub fn workspaceRenameEntryById(
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_move_entry_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// workspace_save_and_sync_file_with_cryptpad
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceSaveAndSyncFileWithCryptpad(
+    workspace: u32,
+    entry_id: String,
+    cryptpad_session_channel_id: String,
+    cryptpad_session_timestamp: f64,
+    content: Uint8Array,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let entry_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(entry_id).map_err(|e| {
+                #[allow(clippy::useless_asref)]
+                TypeError::new(e.as_ref())
+            })
+        }?;
+
+        let cryptpad_session_timestamp = {
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            custom_from_rs_f64(cryptpad_session_timestamp).map_err(TypeError::new)
+        }?;
+
+        let content = content.to_vec();
+
+        let ret = libparsec::workspace_save_and_sync_file_with_cryptpad(
+            workspace,
+            entry_id,
+            cryptpad_session_channel_id,
+            cryptpad_session_timestamp,
+            &content.to_vec(),
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    #[allow(clippy::let_unit_value)]
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_save_and_sync_file_with_cryptpad_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
