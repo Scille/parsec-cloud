@@ -407,6 +407,7 @@ async function loadFile(): Promise<boolean> {
     workspaceHandle: workspaceHandle,
     timestamp: atTime,
     size: stats.size,
+    fileId: stats.id,
   };
 
   // Load the appropriate component after file content is ready
@@ -438,8 +439,7 @@ async function checkSaved(): Promise<boolean> {
   if (!isComponentEditor() || saveState.value === SaveState.None) {
     return true;
   }
-  // Always try to save when leaving the editor, since CryptPad
-  // may have unsaved changes not yet reported via onHasUnsavedChanges
+  // Always try to save since this is noop if the document has not unsaved modifications
   if (handlerRef.value?.save) {
     const saved = await handlerRef.value.save();
     if (saved) {

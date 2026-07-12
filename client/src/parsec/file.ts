@@ -18,6 +18,7 @@ import {
   Result,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
+  WorkspaceCryptpadSessionSaveAndSyncFileError,
   WorkspaceFdCloseError,
   WorkspaceFdReadError,
   WorkspaceFdResizeError,
@@ -249,6 +250,16 @@ export async function openFile(
 
 export async function closeFile(workspaceHandle: WorkspaceHandle, fd: FileDescriptor): Promise<Result<null, WorkspaceFdCloseError>> {
   return await libparsec.workspaceFdClose(workspaceHandle, fd);
+}
+
+export async function cryptpadSessionSaveAndSyncFile(
+  workspaceHandle: WorkspaceHandle,
+  fileId: FileID,
+  channelId: string,
+  channelTimestamp: DateTime,
+  content: Uint8Array,
+): Promise<Result<null, WorkspaceCryptpadSessionSaveAndSyncFileError>> {
+  return await libparsec.workspaceCryptpadSessionSaveAndSyncFile(workspaceHandle, fileId, channelId, channelTimestamp, content);
 }
 
 export async function resizeFile(

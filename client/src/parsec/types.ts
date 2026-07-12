@@ -289,6 +289,7 @@ export type {
   UserX509CertificateDetails,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
+  WorkspaceCryptpadSessionSaveAndSyncFileError,
   WorkspaceDecryptPathAddrError,
   WorkspaceFdCloseError,
   WorkspaceFdReadError,

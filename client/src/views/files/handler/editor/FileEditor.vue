@@ -1,6 +1,12 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
+  <!--
+  Cryptpad editor is going to to be loaded in this Iframe.
+  After that we will communicate back and forth with it through
+  messages to pass it the document to open, then to receive the
+  updated document every time Cryptpad decides we should save it.
+  -->
   <iframe
     class="file-editor"
     ref="editorFrame"
@@ -66,31 +72,34 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
+import { ClientInfo, cryptpadSessionSaveAndSyncFile } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
-  CryptpadEditors,
+  CryptpadEditor,
   CryptpadError,
-  CryptpadErrorCodes,
-  CryptpadOpenModes,
+  CryptpadErrorCode,
+  CryptpadOpenMode,
   CryptpadSession,
+  derivePocSessionKey,
+  derivePocViewOnlyKey,
   getCryptpadEditor,
   openDocument,
 } from '@/services/cryptpad';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { longLocaleCodeToShort } from '@/services/translation';
-import { EditorButtonAction, EditorErrorMessage, EditorErrorTitle, EditorIssueStatus, SaveState } from '@/views/files/handler/editor';
+import { EditorButtonAction, EditorErrorTitle, EditorIssueStatus, SaveState } from '@/views/files/handler/editor';
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
 import { FileHandlerMode } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
+import { DateTime } from 'luxon';
 import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef } from 'vue';
 
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
-const documentType = ref<CryptpadEditors>(CryptpadEditors.Unsupported);
+const documentType = ref<CryptpadEditor>(CryptpadEditor.Unsupported);
 const error = ref('');
 const showErrorTips = ref(false);
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
@@ -98,8 +107,20 @@ let eventCbId: null | string = null;
 const loadFinished = ref(false);
 let session: CryptpadSession | undefined = undefined;
 const frameReady = ref(false);
-let initialSaveDone = false;
 let pendingSaveResolve: ((success: boolean) => void) | null = null;
+// How long to wait, after the document is reported modified, before actually requesting a save.
+// No save is requested at all while the document isn't modified (see `onHasUnsavedChanges` below):
+// CryptPad's own autosave is always disabled, saving is entirely driven from here.
+const SAVE_DEBOUNCE_MS = ((window as any).TESTING_EDITICS_SAVE_TIMEOUT as number | undefined) ?? 10_000;
+// Zero jitter in test mode so tests are deterministic; up to 3 s in production so that
+// collaborators' debounce timers fire at slightly different times, giving the
+// ISAVE leader-election enough separation to elect a single writer without stalling.
+const SAVE_DEBOUNCE_JITTER_MAX_MS = (window as any).TESTING_EDITICS_SAVE_TIMEOUT !== undefined ? 0 : 3_000;
+let saveDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+// Mirrors CryptPad's own `onHasUnsavedChanges` signal so `save()` (called unconditionally by
+// `FileHandler.vue` when leaving the editor) can skip the round-trip when there is nothing to
+// persist, instead of always re-saving identical content.
+let hasUnsavedChanges = false;
 
 const {
   contentInfo,
@@ -120,7 +141,7 @@ const emits = defineEmits<{
 onMounted(async () => {
   documentType.value = getCryptpadEditor(contentInfo.contentType);
 
-  if (documentType.value === CryptpadEditors.Unsupported) {
+  if (documentType.value === CryptpadEditor.Unsupported) {
     error.value = EditorErrorTitle.UnsupportedFileType;
     await openIssueModal(EditorIssueStatus.UnsupportedFileType);
     return;
@@ -141,6 +162,8 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  clearSaveDebounceTimer();
+
   if (session) {
     session.controller.abort();
     session = undefined;
@@ -150,6 +173,13 @@ onUnmounted(() => {
     eventDistributor.value.removeCallback(eventCbId);
   }
 });
+
+function clearSaveDebounceTimer(): void {
+  if (saveDebounceTimer !== undefined) {
+    clearTimeout(saveDebounceTimer);
+    saveDebounceTimer = undefined;
+  }
+}
 
 async function loadEditor(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
@@ -169,6 +199,8 @@ async function loadEditor(): Promise<void> {
     session.controller.abort();
     session = undefined;
   }
+  hasUnsavedChanges = false;
+  clearSaveDebounceTimer();
 
   let isSaving = false;
   const content = await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp);
@@ -176,17 +208,25 @@ async function loadEditor(): Promise<void> {
     emits('fileError');
     return;
   }
+  // TODO: Key should be obtained from the Parsec server and contain actual cryptography
+  // (real per-session read-only/read-write keys)! For now, derive a valid-shaped key from the
+  // file id so collaborators opening the same file land on the same CryptPad channel. Readers
+  // must use the corresponding *view* key, not the edit key itself (see `derivePocViewOnlyKey`).
+  const editKey = await derivePocSessionKey(contentInfo.fileId);
+  const key = readOnly ? await derivePocViewOnlyKey(editKey) : editKey;
   session = await openDocument(
     {
       documentContent: content,
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
-      cryptpadEditor: documentType.value as CryptpadEditors,
-      key: crypto.randomUUID(),
+      cryptpadEditor: documentType.value as CryptpadEditor,
+      key,
+      // TODO: `userInfo` should be some kind of promise so that we always provide
+      // the correct value (note `userInfo` can always be obtained since it doesn't
+      // require sending the server a request)
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
-      autosaveInterval: 10,
-      mode: readOnly || contentInfo.timestamp ? CryptpadOpenModes.View : CryptpadOpenModes.Edit,
+      mode: readOnly || contentInfo.timestamp ? CryptpadOpenMode.View : CryptpadOpenMode.Edit,
       locale: longLocaleCodeToShort(I18n.getLocale()),
     },
     {
@@ -197,7 +237,6 @@ async function loadEditor(): Promise<void> {
       },
       onSave: async (file: Blob): Promise<void> => {
         let hasError = false;
-        let fd: FileDescriptor | undefined = undefined;
         const start = Date.now();
         try {
           if (readOnly) {
@@ -206,27 +245,26 @@ async function loadEditor(): Promise<void> {
           isSaving = true;
           emits('onSaveStateChange', SaveState.Saving);
           // Handle save logic here
-          const openResult = await openFile(workspaceHandle, contentInfo.path, { write: true, truncate: true });
-
-          if (!openResult.ok) {
-            window.electronAPI.log('error', `Failed to open file: ${openResult.error.tag} (${openResult.error.error})`);
-            hasError = true;
-            return;
-          }
-          fd = openResult.value;
           const arrayBuffer = await file.arrayBuffer();
-          const writeResult = await writeFile(workspaceHandle, fd, 0, new Uint8Array(arrayBuffer));
-          if (!writeResult.ok) {
+          // TODO: `channelId` should be the actual Cryptpad channel identifier once the
+          // server exposes real per-session channel management (see the `derivePocSessionKey`
+          // TODO above). For now, derive it from the file id so every collaborator saving
+          // the same file agrees on the same channel.
+          const saveResult = await cryptpadSessionSaveAndSyncFile(
+            workspaceHandle,
+            contentInfo.fileId,
+            contentInfo.fileId,
+            DateTime.now(),
+            new Uint8Array(arrayBuffer),
+          );
+          if (!saveResult.ok) {
             hasError = true;
-            window.electronAPI.log('error', `Failed to write file: ${writeResult.error.tag} (${writeResult.error.error})`);
+            window.electronAPI.log('error', `Failed to save file: ${saveResult.error.tag} (${saveResult.error.error})`);
           }
         } catch (e: any) {
           window.electronAPI.log('error', `Failed to save file: ${e.toString()}`);
           hasError = true;
         } finally {
-          if (fd) {
-            await closeFile(workspaceHandle, fd);
-          }
           const end = Date.now();
           setTimeout(
             () => {
@@ -249,16 +287,25 @@ async function loadEditor(): Promise<void> {
         }
       },
       onHasUnsavedChanges: (unsaved: boolean): void => {
+        hasUnsavedChanges = unsaved;
         if (unsaved) {
-          isSaving = false;
-          // Auto-save on initial unsaved changes (e.g. OO conversion artifacts)
-          if (!initialSaveDone) {
-            initialSaveDone = true;
-            window.electronAPI.log('info', 'Auto-saving initial unsaved changes');
-            save();
-            return;
-          }
+          // The indicator must appear as soon as the document is modified, regardless of
+          // when the actual save is going to happen.
           emits('onSaveStateChange', SaveState.Unsaved);
+          if (!readOnly && saveDebounceTimer === undefined) {
+            saveDebounceTimer = setTimeout(
+              () => {
+                saveDebounceTimer = undefined;
+                save();
+              },
+              SAVE_DEBOUNCE_MS + Math.random() * SAVE_DEBOUNCE_JITTER_MAX_MS,
+            );
+          }
+        } else {
+          // Nothing left to save (e.g. right after loading/joining a session, or once a
+          // save has caught up with the latest edits): don't let a stale timer trigger a
+          // needless save.
+          clearSaveDebounceTimer();
         }
       },
       onError: async (err: unknown): Promise<void> => {
@@ -268,18 +315,15 @@ async function loadEditor(): Promise<void> {
         if (err instanceof CryptpadError) {
           window.electronAPI.log('info', `Failed to load Cryptpad: ${err}`);
           switch (err.code) {
-            case CryptpadErrorCodes.InitFailed:
-              error.value = EditorErrorMessage.EditableOnlyOnSystem;
-              break;
-            case CryptpadErrorCodes.OpenFailed:
-            case CryptpadErrorCodes.OpenInvalidConfig:
+            case CryptpadErrorCode.OpenDocumentFailed:
+            case CryptpadErrorCode.OpenDocumentInvalidConfig:
               error.value = 'fileEditors.errors.titles.openFailed';
               break;
-            case CryptpadErrorCodes.FrameLoadFailed:
-            case CryptpadErrorCodes.FrameNotLoaded:
+            case CryptpadErrorCode.FrameLoadFailed:
+            case CryptpadErrorCode.FrameNotLoaded:
               error.value = 'fileEditors.errors.titles.frameLoadFailed';
               break;
-            case CryptpadErrorCodes.EventError:
+            case CryptpadErrorCode.EventError:
               if (err.details && err.details.toString() === 'ready-timeout') {
                 error.value = '';
                 await openTimeoutModal();
@@ -289,7 +333,7 @@ async function loadEditor(): Promise<void> {
                 window.electronAPI.log('error', `Unhandled event error: ${err.details}`);
               }
               break;
-            case CryptpadErrorCodes.NotAvailable:
+            case CryptpadErrorCode.NotAvailable:
               showErrorTips.value = false;
               error.value = 'fileEditors.errors.titles.cryptpadNotAvailable';
               break;
@@ -367,8 +411,12 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
 }
 
 async function save(): Promise<boolean> {
+  clearSaveDebounceTimer();
   if (!session) {
     return false;
+  }
+  if (!hasUnsavedChanges) {
+    return true;
   }
   // If a save is already pending, resolve it as failed before starting a new one
   if (pendingSaveResolve) {
