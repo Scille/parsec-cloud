@@ -29,8 +29,9 @@ pub use transactions::{
     WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
     WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceIsFileContentLocalError,
     WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
-    WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
-    WorkspaceStatFolderChildrenError, WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
+    WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError,
+    WorkspaceSaveAndSyncFileWithOrigin, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
+    WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
 };
 
 use self::{store::FileUpdater, transactions::FdWriteStrategy};
@@ -611,6 +612,15 @@ impl WorkspaceOps {
             candidate_view_key,
         )
         .await
+    }
+
+    pub async fn save_and_sync_file_with_origin(
+        &self,
+        entry_id: VlobID,
+        origin: FileManifestOrigin,
+        content: &[u8],
+    ) -> Result<(), WorkspaceSaveAndSyncFileWithOrigin> {
+        transactions::save_and_sync_file_with_origin(self, entry_id, origin, content).await
     }
 }
 
