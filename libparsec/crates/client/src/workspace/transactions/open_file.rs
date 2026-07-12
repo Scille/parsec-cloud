@@ -262,14 +262,16 @@ pub async fn open_file(
         }
     };
 
-    open_file_by_id(ops, entry_id, options).await
+    open_file_by_id(ops, entry_id, options)
+        .await
+        .map(|fd| (fd, entry_id))
 }
 
 pub async fn open_file_by_id(
     ops: &WorkspaceOps,
     entry_id: VlobID,
     options: OpenOptions,
-) -> Result<(FileDescriptor, VlobID), WorkspaceOpenFileError> {
+) -> Result<FileDescriptor, WorkspaceOpenFileError> {
     // Handling of truncate-on-open, will be done in the next step
 
     let maybe_truncate_on_open =
@@ -445,7 +447,7 @@ pub async fn open_file_by_id(
     };
 
     match cursor_insertion_outcome {
-        CursorInsertionOutcome::OpenedFile { file_descriptor } => Ok((file_descriptor, entry_id)),
+        CursorInsertionOutcome::OpenedFile { file_descriptor } => Ok(file_descriptor),
         CursorInsertionOutcome::FileAlreadyOpened {
             opened_file,
             new_cursor,
@@ -466,7 +468,7 @@ pub async fn open_file_by_id(
                 opened_file_guard.flush_needed = true;
                 opened_file_guard.removed_chunks.extend(removed_chunks);
             }
-            Ok((file_descriptor, entry_id))
+            Ok(file_descriptor)
         }
     }
 }

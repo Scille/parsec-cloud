@@ -493,9 +493,7 @@ impl WorkspaceOps {
         entry_id: VlobID,
         options: OpenOptions,
     ) -> Result<FileDescriptor, WorkspaceOpenFileError> {
-        transactions::open_file_by_id(self, entry_id, options)
-            .await
-            .map(|(fd, _)| fd)
+        transactions::open_file_by_id(self, entry_id, options).await
     }
 
     pub async fn open_file_and_get_id(
