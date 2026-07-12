@@ -16,6 +16,11 @@
 /// The idea behind sync conflict is to integrate the remote change, while trying as much
 /// as possible to retain the local change that created the conflict in the first place.
 ///
+/// The exception to this is a file involved in a Cryptpad collaborative editing session:
+/// such a file may be saved independently and concurrently by multiple session participants,
+/// in which case there is no local-only data worth preserving as a conflict copy (the
+/// collaborative session itself is the source of truth and we just keep the latest version).
+///
 /// On top of that, the sync conflict involves the parent which should also be locked
 /// for update (as sync conflict often involve creating a new file containing the local
 /// conflicting changes).
@@ -549,6 +554,7 @@ async fn handle_conflict_and_update_store(
                 size,
                 blocksize,
                 blocks,
+                origin,
             } = child_manifest.as_ref();
 
             let mut conflicting =
@@ -558,6 +564,7 @@ async fn handle_conflict_and_update_store(
             conflicting.size = *size;
             conflicting.blocksize = *blocksize;
             blocks.clone_into(&mut conflicting.blocks);
+            conflicting.origin = origin.clone();
 
             (child_manifest.base.id, Arc::new(conflicting))
         }
