@@ -5383,6 +5383,95 @@ export type WorkspaceRemoveEntryError =
   | WorkspaceRemoveEntryErrorStopped
 
 
+// WorkspaceSaveAndSyncFileWithCryptpadError
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInternal {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorInternal"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorOffline {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorOffline"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorStopped {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorStopped"
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark {
+    tag: "WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark"
+    error: string
+}
+export type WorkspaceSaveAndSyncFileWithCryptpadError =
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInternal
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorOffline
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorStopped
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark
+
+
 // WorkspaceStatEntryError
 export interface WorkspaceStatEntryErrorEntryNotFound {
     tag: "WorkspaceStatEntryErrorEntryNotFound"
@@ -6386,6 +6475,13 @@ export function workspaceRenameEntryById(
     dst_name: string,
     mode: MoveEntryMode
 ): Promise<Result<null, WorkspaceMoveEntryError>>
+export function workspaceSaveAndSyncFileWithCryptpad(
+    workspace: number,
+    entry_id: string,
+    cryptpad_session_channel_id: string,
+    cryptpad_session_timestamp: number,
+    content: Uint8Array
+): Promise<Result<null, WorkspaceSaveAndSyncFileWithCryptpadError>>
 export function workspaceStatEntry(
     workspace: number,
     path: string

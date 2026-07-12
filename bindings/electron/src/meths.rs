@@ -19529,6 +19529,132 @@ fn variant_workspace_remove_entry_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceSaveAndSyncFileWithCryptpadError
+
+#[allow(dead_code)]
+fn variant_workspace_save_and_sync_file_with_cryptpad_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceSaveAndSyncFileWithCryptpadError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::EntryNotAFile { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::EntryNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::InvalidBlockAccess { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::InvalidManifest { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::NoKey { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::NoRealm { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::NoRealmAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::ReadOnlyRealm { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::RealmArchived { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::RealmDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::ServerBlockstoreUnavailable {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceSaveAndSyncFileWithCryptpadErrorStopped")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceSaveAndSyncFileWithCryptpadError::TimestampOutOfBallpark { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceStatEntryError
 
 #[allow(dead_code)]
@@ -32476,6 +32602,104 @@ fn workspace_rename_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> 
     Ok(promise)
 }
 
+// workspace_save_and_sync_file_with_cryptpad
+fn workspace_save_and_sync_file_with_cryptpad(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let entry_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let cryptpad_session_channel_id = {
+        let js_val = cx.argument::<JsString>(2)?;
+        js_val.value(&mut cx)
+    };
+    let cryptpad_session_timestamp = {
+        let js_val = cx.argument::<JsNumber>(3)?;
+        {
+            let v = js_val.value(&mut cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let content = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(4)?;
+        js_val.as_slice(&mut cx).to_vec()
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_save_and_sync_file_with_cryptpad(
+                workspace,
+                entry_id,
+                cryptpad_session_channel_id,
+                cryptpad_session_timestamp,
+                &content,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_workspace_save_and_sync_file_with_cryptpad_error_rs_to_js(
+                                &mut cx, err,
+                            )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_stat_entry
 fn workspace_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -33422,6 +33646,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("workspaceRemoveFolder", workspace_remove_folder)?;
     cx.export_function("workspaceRemoveFolderAll", workspace_remove_folder_all)?;
     cx.export_function("workspaceRenameEntryById", workspace_rename_entry_by_id)?;
+    cx.export_function(
+        "workspaceSaveAndSyncFileWithCryptpad",
+        workspace_save_and_sync_file_with_cryptpad,
+    )?;
     cx.export_function("workspaceStatEntry", workspace_stat_entry)?;
     cx.export_function("workspaceStatEntryById", workspace_stat_entry_by_id)?;
     cx.export_function(

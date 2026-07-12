@@ -6510,6 +6510,114 @@ export type WorkspaceRemoveEntryError =
   | WorkspaceRemoveEntryErrorRealmDeleted
   | WorkspaceRemoveEntryErrorStopped
 
+// WorkspaceSaveAndSyncFileWithCryptpadError
+export enum WorkspaceSaveAndSyncFileWithCryptpadErrorTag {
+    EntryNotAFile = 'WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile',
+    EntryNotFound = 'WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound',
+    Internal = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInternal',
+    InvalidBlockAccess = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess',
+    InvalidCertificate = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest',
+    NoKey = 'WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey',
+    NoRealm = 'WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm',
+    NoRealmAccess = 'WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess',
+    Offline = 'WorkspaceSaveAndSyncFileWithCryptpadErrorOffline',
+    ReadOnlyRealm = 'WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm',
+    RealmArchived = 'WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived',
+    RealmDeleted = 'WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted',
+    ServerBlockstoreUnavailable = 'WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable',
+    Stopped = 'WorkspaceSaveAndSyncFileWithCryptpadErrorStopped',
+    TimestampOutOfBallpark = 'WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark',
+}
+
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.EntryNotAFile
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.EntryNotFound
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInternal {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.Internal
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.InvalidBlockAccess
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.InvalidManifest
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.NoKey
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.NoRealm
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorOffline {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.Offline
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.ReadOnlyRealm
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.RealmArchived
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.RealmDeleted
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.ServerBlockstoreUnavailable
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorStopped {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.Stopped
+    error: string
+}
+export interface WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark {
+    tag: WorkspaceSaveAndSyncFileWithCryptpadErrorTag.TimestampOutOfBallpark
+    error: string
+}
+export type WorkspaceSaveAndSyncFileWithCryptpadError =
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotAFile
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorEntryNotFound
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInternal
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidBlockAccess
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidCertificate
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidKeysBundle
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorInvalidManifest
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorNoKey
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealm
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorNoRealmAccess
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorOffline
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorReadOnlyRealm
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorRealmArchived
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorRealmDeleted
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorServerBlockstoreUnavailable
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorStopped
+  | WorkspaceSaveAndSyncFileWithCryptpadErrorTimestampOutOfBallpark
+
 // WorkspaceStatEntryError
 export enum WorkspaceStatEntryErrorTag {
     EntryNotFound = 'WorkspaceStatEntryErrorEntryNotFound',
@@ -7555,6 +7663,13 @@ export interface LibParsecPlugin {
         dst_name: EntryName,
         mode: MoveEntryMode
     ): Promise<Result<null, WorkspaceMoveEntryError>>
+    workspaceSaveAndSyncFileWithCryptpad(
+        workspace: Handle,
+        entry_id: VlobID,
+        cryptpad_session_channel_id: string,
+        cryptpad_session_timestamp: DateTime,
+        content: Uint8Array
+    ): Promise<Result<null, WorkspaceSaveAndSyncFileWithCryptpadError>>
     workspaceStatEntry(
         workspace: Handle,
         path: FsPath
