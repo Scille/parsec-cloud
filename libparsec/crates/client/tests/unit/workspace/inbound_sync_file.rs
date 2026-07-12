@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 
 use libparsec_client_connection::{
@@ -357,6 +358,7 @@ async fn non_placeholder(
             size,
             blocksize,
             blocks,
+            origin: _,
         } = conflicted_manifest.as_ref();
         p_assert_eq!(*parent, before_sync_bar_txt_manifest.parent);
         p_assert_eq!(*need_sync, before_sync_bar_txt_manifest.need_sync);
@@ -376,6 +378,7 @@ async fn non_placeholder(
             size,
             blocksize: _,
             blocks,
+            origin: _,
         } = base;
         p_assert_eq!(*author, "alice@dev1".parse().unwrap());
         p_assert_eq!(*id, conflicted_id);
@@ -414,6 +417,7 @@ async fn non_placeholder(
             size,
             blocksize,
             blocks,
+            origin: _,
         } = conflicted_manifest.as_ref();
         p_assert_eq!(*parent, before_sync_bar_txt_manifest.parent);
         p_assert_eq!(*need_sync, before_sync_bar_txt_manifest.need_sync);
@@ -433,6 +437,7 @@ async fn non_placeholder(
             size,
             blocksize: _,
             blocks,
+            origin: _,
         } = base;
         p_assert_eq!(*author, "alice@dev1".parse().unwrap());
         p_assert_eq!(*id, conflicted_id);
@@ -440,6 +445,227 @@ async fn non_placeholder(
         p_assert_eq!(*version, 0);
         p_assert_eq!(*size, 0);
         p_assert_eq!(*blocks, []);
+    }
+
+    wksp1_ops.stop().await.unwrap();
+}
+
+/// A file taking part in a Cryptpad collaborative editing session may be saved
+/// independently and concurrently by multiple session participants. In such a
+/// case, `local` and `remote` are in conflict but there is no local-only data
+/// worth preserving as a conflict copy (the collaborative session itself is
+/// the source of truth), so the merge should simply keep whichever version
+/// was saved most recently and drop the other one, without creating any
+/// conflict copy.
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn cryptpad_session_conflict(
+    #[values(
+        "local_is_more_recent",
+        "remote_is_more_recent",
+        "different_channel_id"
+    )]
+    kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+
+    let older: DateTime = "2021-01-01T00:00:00Z".parse().unwrap();
+    let newer: DateTime = "2021-01-10T00:00:00Z".parse().unwrap();
+    let remote_block_data = b"remote content";
+    let local_chunk_data = b"local content";
+
+    let (
+        local_origin,
+        remote_origin,
+        expected_need_sync,
+        expected_origin,
+        expected_size,
+        expected_conflict,
+    ) = match kind {
+        // Local (more recent) changes are kept and still need to be synced.
+        "local_is_more_recent" => (
+            FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: newer,
+            },
+            FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: older,
+            },
+            true,
+            FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: newer,
+            },
+            local_chunk_data.len() as SizeInt,
+            false,
+        ),
+        // Remote (more recent) changes win, local changes are discarded.
+        "remote_is_more_recent" => (
+            FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: older,
+            },
+            FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: newer,
+            },
+            false,
+            FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: newer,
+            },
+            remote_block_data.len() as SizeInt,
+            false,
+        ),
+        // Local changes has been applied from a different session, conflict cannot be resolved
+        "different_channel_id" => (
+            FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: newer,
+            },
+            FileManifestOrigin::Cryptpad {
+                channel_id: "channel2".to_string(),
+                timestamp: older,
+            },
+            false,
+            FileManifestOrigin::Cryptpad {
+                channel_id: "channel2".to_string(),
+                timestamp: older,
+            },
+            remote_block_data.len() as SizeInt,
+            true,
+        ),
+        unknown => panic!("Unknown kind: {unknown}"),
+    };
+
+    // 1) Customize testbed: both remote and local hold conflicting content
+    // that has been produced through a Cryptpad collaborative editing session.
+
+    env.customize(|builder| {
+        builder.new_device("alice"); // alice@dev2
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
+        let remote_block_id = builder
+            .create_block("alice@dev2", wksp1_id, remote_block_data.as_ref())
+            .map(|e| e.block_id);
+        builder
+            .create_or_update_file_manifest_vlob("alice@dev2", wksp1_id, wksp1_bar_txt_id, None)
+            .customize(|e| {
+                let manifest = Arc::make_mut(&mut e.manifest);
+                manifest.size = remote_block_data.len() as SizeInt;
+                manifest.blocks = vec![BlockAccess {
+                    id: remote_block_id,
+                    offset: 0,
+                    size: manifest.size.try_into().unwrap(),
+                    digest: HashDigest::from_data(remote_block_data),
+                }];
+                manifest.origin = remote_origin.clone();
+            });
+
+        let local_chunk_id = builder
+            .workspace_data_storage_chunk_create("alice@dev1", wksp1_id, local_chunk_data.as_ref())
+            .map(|e| e.chunk_id);
+        builder
+            .workspace_data_storage_local_file_manifest_create_or_update(
+                "alice@dev1",
+                wksp1_id,
+                wksp1_bar_txt_id,
+                wksp1_id,
+            )
+            .customize(|e| {
+                let manifest = Arc::make_mut(&mut e.local_manifest);
+                manifest.need_sync = true;
+                let mut chunk =
+                    ChunkView::new(0, (local_chunk_data.len() as SizeInt).try_into().unwrap());
+                chunk.id = local_chunk_id;
+                manifest.size = local_chunk_data.len() as SizeInt;
+                manifest.blocks = vec![vec![chunk]];
+                manifest.origin = local_origin.clone();
+            });
+    })
+    .await;
+
+    // 2) Start workspace ops
+
+    let alice = env.local_device("alice@dev1");
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+
+    // 3) Actual sync operation
+
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        test_send_hook_vlob_read_batch!(env, wksp1_id, wksp1_bar_txt_id),
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
+    );
+
+    let mut spy = wksp1_ops.event_bus.spy.start_expecting();
+    wksp1_ops.inbound_sync(wksp1_bar_txt_id).await.unwrap();
+    spy.assert_next(|e| {
+        p_assert_matches!(e, EventWorkspaceOpsInboundSyncDone { realm_id, entry_id, parent_id }
+            if *realm_id == wksp1_id
+            && *entry_id == wksp1_bar_txt_id
+            && *parent_id == wksp1_id
+        )
+    });
+
+    // 4) Check the outcome
+
+    let bar_txt_manifest = match wksp1_ops
+        .store
+        .get_manifest(wksp1_bar_txt_id)
+        .await
+        .unwrap()
+    {
+        ArcLocalChildManifest::File(m) => m,
+        m => panic!("Invalid manifest type for `/bar.txt`, expecting file and got: {m:?}"),
+    };
+
+    // The base is always acknowledged given remote is the most recent version known
+    p_assert_eq!(
+        bar_txt_manifest.base.size,
+        remote_block_data.len() as SizeInt
+    );
+    p_assert_eq!(bar_txt_manifest.base.origin, remote_origin,);
+    p_assert_eq!(bar_txt_manifest.need_sync, expected_need_sync);
+    p_assert_eq!(bar_txt_manifest.size, expected_size);
+    p_assert_eq!(bar_txt_manifest.origin, expected_origin,);
+
+    let parent_manifest = wksp1_ops.store.get_root_manifest();
+    let foo_name = "foo".parse().unwrap();
+    let bar_txt_name = "bar.txt".parse().unwrap();
+    let bar_txt_conflict_name = "bar (Parsec sync conflict 2).txt".parse().unwrap();
+    if !expected_conflict {
+        p_assert_eq!(
+            parent_manifest.children.keys().collect::<HashSet<_>>(),
+            HashSet::from_iter([&foo_name, &bar_txt_name])
+        );
+    } else {
+        p_assert_eq!(
+            parent_manifest.children.keys().collect::<HashSet<_>>(),
+            HashSet::from_iter([&foo_name, &bar_txt_name, &bar_txt_conflict_name])
+        );
+
+        let bar_txt_conflict_id = *parent_manifest
+            .children
+            .get(&bar_txt_conflict_name)
+            .unwrap();
+        let bar_txt_conflict_manifest = match wksp1_ops
+            .store
+            .get_manifest(bar_txt_conflict_id)
+            .await
+            .unwrap()
+        {
+            ArcLocalChildManifest::File(m) => m,
+            m => panic!("Invalid manifest type for `/bar.txt`, expecting file and got: {m:?}"),
+        };
+
+        p_assert_eq!(bar_txt_conflict_manifest.need_sync, true);
+        p_assert_eq!(
+            bar_txt_conflict_manifest.size,
+            local_chunk_data.len() as SizeInt
+        );
     }
 
     wksp1_ops.stop().await.unwrap();

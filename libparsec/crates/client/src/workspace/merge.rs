@@ -143,7 +143,38 @@ pub(super) fn merge_local_file_manifest(
         return MergeLocalFileManifestOutcome::Merged(new_local);
     }
 
-    // 4) Merge data and ensure the sync is still needed
+    // 4) Special case if both local and remote have been edited from the same
+    // Cryptpad collaborative session.
+    // In this case we know there has been a single source of truth (the Cryptpad session
+    // itself), so we can just keep the latest of the two (note we don't use for this the
+    // `updated` field, as it made be updated independently of the Cryptpad session in
+    // case the file is moved due to its `parent` field being updated).
+
+    if let (
+        FileManifestOrigin::Cryptpad {
+            channel_id: local_channel_id,
+            timestamp: local_origin_timestamp,
+        },
+        FileManifestOrigin::Cryptpad {
+            channel_id: remote_channel_id,
+            timestamp: remote_origin_timestamp,
+        },
+    ) = (&local.origin, &remote.origin)
+    {
+        if local_channel_id == remote_channel_id {
+            if local_origin_timestamp >= remote_origin_timestamp {
+                let mut new_local = local.to_owned();
+                new_local.base = remote;
+                return MergeLocalFileManifestOutcome::Merged(new_local);
+            } else {
+                return MergeLocalFileManifestOutcome::Merged(LocalFileManifest::from_remote(
+                    remote,
+                ));
+            }
+        }
+    }
+
+    // 5) Merge data and ensure the sync is still needed
 
     // Destruct local and remote manifests to ensure this code with fail to compile
     // whenever a new field is introduced.
@@ -169,6 +200,8 @@ pub(super) fn merge_local_file_manifest(
                 size: local_base_size,
                 blocksize: local_base_blocksize,
                 blocks: local_base_blocks,
+                // Ignored `origin`: base is not needed when comparing local & remote
+                origin: _,
             },
         // `need_sync` has already been checked
         need_sync: _,
@@ -178,11 +211,12 @@ pub(super) fn merge_local_file_manifest(
         size: local_size,
         blocksize: local_blocksize,
         blocks: local_blocks,
+        origin: local_origin,
     } = local;
 
     let mut local_need_sync = false;
 
-    // 4.1) First focus on the file content (i.e. the actual data of the file) given
+    // 5.1) First focus on the file content (i.e. the actual data of the file) given
     // we cannot merge them in case of conflict.
 
     let local_content_changed = has_file_content_changed_in_local(
@@ -209,6 +243,7 @@ pub(super) fn merge_local_file_manifest(
         let mut merge_in_progress = LocalFileManifest::from_remote(remote);
         merge_in_progress.size = *local_size;
         merge_in_progress.blocksize = *local_blocksize;
+        merge_in_progress.origin = local_origin.clone();
         local_blocks.clone_into(&mut merge_in_progress.blocks);
 
         merge_in_progress
@@ -218,7 +253,7 @@ pub(super) fn merge_local_file_manifest(
     };
     let remote = &merge_in_progress.base;
 
-    // 4.2) Now we can deal with the extra fields (i.e. not the file actual content) that
+    // 5.2) Now we can deal with the extra fields (i.e. not the file actual content) that
     // can be merged without conflict (currently this is only the `parent` field).
 
     merge_in_progress.parent = merge_parent(*local_base_parent, *local_parent, remote.parent);
@@ -226,7 +261,7 @@ pub(super) fn merge_local_file_manifest(
         local_need_sync = true;
     }
 
-    // 4.3) Finally restore the need sync flag if needed
+    // 5.3) Finally restore the need sync flag if needed
 
     if local_need_sync {
         merge_in_progress.updated = timestamp;
