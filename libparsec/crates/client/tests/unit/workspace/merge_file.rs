@@ -35,6 +35,7 @@ async fn no_remote_change(
                 "7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5"
             )),
         }],
+        origin: FileManifestOrigin::Default,
     };
     let mut local = LocalFileManifest {
         base: remote.clone(),
@@ -51,6 +52,7 @@ async fn no_remote_change(
             raw_size: NonZeroU64::new(10).unwrap(),
             access: Some(remote.blocks[0].clone()),
         }]],
+        origin: FileManifestOrigin::Default,
     };
     match kind {
         "same_version" => (),
@@ -68,6 +70,10 @@ async fn no_remote_change(
                     "3d66ba5747c74614850dab7c14cbe7b303ddb1823998491f87a261dcadd978d9"
                 )),
             });
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2021-01-01T00:00:00Z".parse().unwrap(),
+            };
         }
         "same_version_with_local_change" => {
             local.need_sync = true;
@@ -83,6 +89,10 @@ async fn no_remote_change(
                 raw_size: NonZeroU64::new(15).unwrap(),
                 access: None,
             });
+            local.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2021-01-01T00:00:00Z".parse().unwrap(),
+            };
         }
         unknown => panic!("Unknown kind: {unknown}"),
     }
@@ -98,7 +108,9 @@ async fn remote_only_change(
         "parent_field_modified",
         "blocksize_changed",
         "new_block_added",
-        "block_replaced"
+        "block_replaced",
+        "new_cryptpad_session_with_no_change",
+        "new_cryptpad_session_with_blocksize_changed"
     )]
     kind: &str,
     env: &TestbedEnv,
@@ -123,6 +135,7 @@ async fn remote_only_change(
         size: 0,
         blocksize: Blocksize::try_from(512 * 1024).unwrap(),
         blocks: vec![],
+        origin: FileManifestOrigin::Default,
     };
     let mut local = LocalFileManifest {
         base: remote.clone(),
@@ -132,6 +145,7 @@ async fn remote_only_change(
         size: remote.size,
         blocksize: remote.blocksize,
         blocks: vec![],
+        origin: FileManifestOrigin::Default,
     };
 
     remote.version = 2;
@@ -150,6 +164,7 @@ async fn remote_only_change(
             size: 0,
             blocksize: Blocksize::try_from(512 * 1024).unwrap(),
             blocks: vec![],
+            origin: FileManifestOrigin::Default,
         },
         parent: parent_id,
         need_sync: false,
@@ -157,6 +172,7 @@ async fn remote_only_change(
         size: 0,
         blocksize: Blocksize::try_from(512 * 1024).unwrap(),
         blocks: vec![],
+        origin: FileManifestOrigin::Default,
     };
 
     match kind {
@@ -241,6 +257,25 @@ async fn remote_only_change(
                 access: Some(remote.blocks[0].clone()),
             }]);
         }
+        "new_cryptpad_session_with_no_change" => {
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2021-01-01T00:00:00Z".parse().unwrap(),
+            };
+            expected.origin = remote.origin.clone();
+            expected.base.origin = remote.origin.clone();
+        }
+        "new_cryptpad_session_with_blocksize_changed" => {
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2021-01-01T00:00:00Z".parse().unwrap(),
+            };
+            remote.blocksize = Blocksize::try_from(1024 * 1024).unwrap();
+            expected.origin = remote.origin.clone();
+            expected.blocksize = remote.blocksize;
+            expected.base.blocksize = remote.blocksize;
+            expected.base.origin = remote.origin.clone();
+        }
         unknown => panic!("Unknown kind: {unknown}"),
     }
 
@@ -265,7 +300,15 @@ async fn local_and_remote_changes(
         "size_and_blocks_modified_in_both_with_remote_from_ourself",
         "blocksize_modified_in_both",
         "blocks_modified_in_both",
-        "size_and_blocks_modified_in_both"
+        "size_and_blocks_modified_in_both",
+        "existing_cryptpad_session_local_most_recent_remote_newer_than_base",
+        "existing_cryptpad_session_remote_older_than_base",
+        "existing_cryptpad_session_remote_most_recent",
+        "new_cryptpad_session_in_both_no_local_changes",
+        "new_cryptpad_session_in_both_with_local_changes",
+        "new_cryptpad_session_in_remote_and_local_changes_without_cryptpad_session",
+        "new_cryptpad_session_in_local_and_remote_changes_without_cryptpad_session",
+        "new_cryptpad_session_and_changes_in_both"
     )]
     kind: &str,
     env: &TestbedEnv,
@@ -298,6 +341,7 @@ async fn local_and_remote_changes(
                 "26d623b082f145d88927a4de50c162b59b2aaa1202ae4415b18e26a67c7a43a7"
             )),
         }],
+        origin: FileManifestOrigin::Default,
     };
     let mut local = LocalFileManifest {
         base: remote.clone(),
@@ -314,6 +358,7 @@ async fn local_and_remote_changes(
             raw_size: NonZeroU64::new(10).unwrap(),
             access: Some(remote.blocks[0].clone()),
         }]],
+        origin: FileManifestOrigin::Default,
     };
 
     remote.version = 2;
@@ -335,6 +380,7 @@ async fn local_and_remote_changes(
             raw_size: NonZeroU64::new(10).unwrap(),
             access: Some(remote.blocks[0].clone()),
         }]],
+        origin: FileManifestOrigin::Default,
     };
 
     let expected = match kind {
@@ -533,6 +579,169 @@ async fn local_and_remote_changes(
             remote.blocks[0].size = NonZeroU64::new(5).unwrap();
             local.size = 2;
             local.blocks[0][0].stop = NonZeroU64::new(2).unwrap();
+
+            MergeLocalFileManifestOutcome::Conflict(remote.clone())
+        }
+        "existing_cryptpad_session_local_most_recent_remote_newer_than_base" => {
+            remote.blocksize = Blocksize::try_from(1024 * 1024).unwrap();
+            local.blocksize = Blocksize::try_from(2048 * 1024).unwrap();
+
+            local.base.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),
+            };
+            local.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+            };
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2010-01-01T00:00:00Z".parse().unwrap(),
+            };
+
+            merged.blocksize = local.blocksize;
+            merged.origin = local.origin.clone();
+            merged.base.origin = remote.origin.clone();
+            merged.base.blocksize = remote.blocksize;
+
+            MergeLocalFileManifestOutcome::Merged(merged)
+        }
+        "existing_cryptpad_session_remote_older_than_base" => {
+            remote.blocksize = Blocksize::try_from(1024 * 1024).unwrap();
+            local.blocksize = Blocksize::try_from(2048 * 1024).unwrap();
+
+            local.base.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2010-01-01T00:00:00Z".parse().unwrap(),
+            };
+            local.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+            };
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),
+            };
+
+            merged.blocksize = local.blocksize;
+            merged.origin = local.origin.clone();
+            // Even outdated according to the cryptpad session, the remote is still the latest version
+            // and hence is used to update `merged.base`
+            merged.base.origin = remote.origin.clone();
+            merged.base.blocksize = remote.blocksize;
+
+            MergeLocalFileManifestOutcome::Merged(merged)
+        }
+        "existing_cryptpad_session_remote_most_recent" => {
+            remote.blocksize = Blocksize::try_from(1024 * 1024).unwrap();
+            local.blocksize = Blocksize::try_from(2048 * 1024).unwrap();
+
+            local.base.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),
+            };
+            local.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2010-01-01T00:00:00Z".parse().unwrap(),
+            };
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+            };
+
+            // Just ignore local changes as they are outdated
+            merged.need_sync = false;
+            merged.blocksize = remote.blocksize;
+            merged.updated = remote.updated;
+            merged.origin = remote.origin.clone();
+            merged.base.origin = remote.origin.clone();
+            merged.base.blocksize = remote.blocksize;
+
+            MergeLocalFileManifestOutcome::Merged(merged)
+        }
+        "new_cryptpad_session_in_both_no_local_changes" => {
+            local.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+            };
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel2".to_string(),
+                timestamp: "2010-01-01T00:00:00Z".parse().unwrap(),
+            };
+
+            // Local has no real changes, so discard its origin and keep the remote
+            merged.need_sync = false;
+            merged.origin = remote.origin.clone();
+            merged.updated = remote.updated;
+            merged.base.origin = remote.origin.clone();
+
+            MergeLocalFileManifestOutcome::Merged(merged)
+        }
+        "new_cryptpad_session_in_both_with_local_changes" => {
+            local.blocksize = Blocksize::try_from(2048 * 1024).unwrap();
+
+            local.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+            };
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel2".to_string(),
+                timestamp: "2010-01-01T00:00:00Z".parse().unwrap(),
+            };
+
+            merged.blocksize = local.blocksize;
+            merged.origin = local.origin.clone();
+            // Even outdated according to the cryptpad session, the remote is still the latest version
+            // and hence is used to update `merged.base`
+            merged.base.origin = remote.origin.clone();
+
+            MergeLocalFileManifestOutcome::Merged(merged)
+        }
+        "new_cryptpad_session_in_remote_and_local_changes_without_cryptpad_session" => {
+            local.blocksize = Blocksize::try_from(2048 * 1024).unwrap();
+
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel2".to_string(),
+                timestamp: "2010-01-01T00:00:00Z".parse().unwrap(),
+            };
+
+            merged.blocksize = local.blocksize;
+            // Even outdated according to the cryptpad session, the remote is still the latest version
+            // and hence is used to update `merged.base`
+            merged.base.origin = remote.origin.clone();
+
+            MergeLocalFileManifestOutcome::Merged(merged)
+        }
+        "new_cryptpad_session_in_local_and_remote_changes_without_cryptpad_session" => {
+            remote.blocksize = Blocksize::try_from(2048 * 1024).unwrap();
+
+            local.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel2".to_string(),
+                timestamp: "2010-01-01T00:00:00Z".parse().unwrap(),
+            };
+
+            // Local has no real changes, so discard its origin and keep the remote
+            merged.need_sync = false;
+            merged.origin = remote.origin.clone();
+            merged.updated = remote.updated;
+            merged.blocksize = remote.blocksize;
+            merged.base.origin = remote.origin.clone();
+            merged.base.blocksize = remote.blocksize;
+
+            MergeLocalFileManifestOutcome::Merged(merged)
+        }
+        "new_cryptpad_session_and_changes_in_both" => {
+            remote.blocksize = Blocksize::try_from(1024 * 1024).unwrap();
+            local.blocksize = Blocksize::try_from(2048 * 1024).unwrap();
+
+            local.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel1".to_string(),
+                timestamp: "2010-01-01T00:00:00Z".parse().unwrap(),
+            };
+            remote.origin = FileManifestOrigin::Cryptpad {
+                channel_id: "channel2".to_string(),
+                timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+            };
 
             MergeLocalFileManifestOutcome::Conflict(remote.clone())
         }
