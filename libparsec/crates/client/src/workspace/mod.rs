@@ -29,7 +29,8 @@ pub use transactions::{
     WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
     WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceIsFileContentLocalError,
     WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
-    WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
+    WorkspaceRegisterCryptpadSessionError, WorkspaceRemoveEntryError,
+    WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
     WorkspaceStatFolderChildrenError, WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
 };
 
@@ -611,6 +612,15 @@ impl WorkspaceOps {
             candidate_view_key,
         )
         .await
+    }
+
+    pub async fn save_and_sync_file_with_origin(
+        &self,
+        entry_id: VlobID,
+        origin: FileManifestOrigin,
+        content: &[u8],
+    ) -> Result<(), WorkspaceSaveAndSyncFileWithOriginError> {
+        transactions::save_and_sync_file_with_origin(self, entry_id, origin, content).await
     }
 }
 
