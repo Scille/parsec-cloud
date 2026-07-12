@@ -864,3 +864,66 @@ async def workspace_register_cryptpad_session(
     candidate_edit_key: str,
 ) -> Result[CryptpadSessionKeys, WorkspaceRegisterCryptpadSessionError]:
     raise NotImplementedError
+
+
+class WorkspaceSaveAndSyncFileWithCryptpadError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class ReadOnlyRealm:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class NoRealm:
+        pass
+
+    class RealmArchived:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class NoKey:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class EntryNotAFile:
+        pass
+
+    class ServerBlockstoreUnavailable:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class InvalidBlockAccess:
+        pass
+
+    class TimestampOutOfBallpark:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_save_and_sync_file_with_cryptpad(
+    workspace: Handle,
+    entry_id: VlobID,
+    cryptpad_session_channel_id: str,
+    cryptpad_session_timestamp: DateTime,
+    content: Ref[bytes],
+) -> Result[None, WorkspaceSaveAndSyncFileWithCryptpadError]:
+    raise NotImplementedError

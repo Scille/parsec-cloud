@@ -116,9 +116,7 @@ pub async fn save_and_sync_file_with_origin(
         }
         WorkspaceOpenFileError::InvalidManifest(err) => {
             WorkspaceSaveAndSyncFileWithOriginError::InvalidManifest(err)
-                super::inbound_sync(ops, entry_id)
-                    .await
-                    .map_err(map_sync_error)?;
+        }
         WorkspaceOpenFileError::Internal(err) => err.context("cannot open file").into(),
     })?;
 
@@ -157,18 +155,20 @@ pub async fn save_and_sync_file_with_origin(
 
     // 2) Sync the entry right away: the whole point of this method is to make the
     // Cryptpad session's save immediately visible to the other participants.
+
+    loop {
         let outcome = super::outbound_sync(ops, entry_id)
             .await
             .map_err(map_sync_error)?;
-    loop {
-        let outcome = super::outbound_sync(ops, entry_id).await?;
         match outcome {
             OutboundSyncOutcome::Done => break,
             // The entry is momentarily locked by a concurrent operation, retry until
             // it settles.
             OutboundSyncOutcome::EntryIsBusy => continue,
             OutboundSyncOutcome::InboundSyncNeeded => {
-                super::inbound_sync(ops, entry_id).await?;
+                super::inbound_sync(ops, entry_id)
+                    .await
+                    .map_err(map_sync_error)?;
                 continue;
             }
             OutboundSyncOutcome::EntryIsUnreachable => {

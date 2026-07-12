@@ -8,8 +8,8 @@ pub use libparsec_client::workspace::{
     WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
     WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceIsFileContentLocalError,
     WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceRegisterCryptpadSessionError,
-    WorkspaceRemoveEntryError, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
-    WorkspaceWatchEntryOneShotError,
+    WorkspaceRemoveEntryError, WorkspaceSaveAndSyncFileWithOriginError, WorkspaceStatEntryError,
+    WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -770,5 +770,28 @@ pub async fn workspace_register_cryptpad_session(
 
     workspace
         .register_cryptpad_session(document_id, candidate_edit_key, candidate_view_key)
+        .await
+}
+
+pub type WorkspaceSaveAndSyncFileWithCryptpadError = WorkspaceSaveAndSyncFileWithOriginError;
+
+pub async fn workspace_save_and_sync_file_with_cryptpad(
+    workspace: Handle,
+    entry_id: VlobID,
+    cryptpad_session_channel_id: String,
+    cryptpad_session_timestamp: DateTime,
+    content: &[u8],
+) -> Result<(), WorkspaceSaveAndSyncFileWithCryptpadError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace
+        .save_and_sync_file_with_origin(
+            entry_id,
+            FileManifestOrigin::Cryptpad {
+                channel_id: cryptpad_session_channel_id,
+                timestamp: cryptpad_session_timestamp,
+            },
+            content,
+        )
         .await
 }
