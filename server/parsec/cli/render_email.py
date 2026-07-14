@@ -96,12 +96,12 @@ def mail_templates_shared_options[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
     return fn
 
 
-@click.group(short_help="Export server email to a file for debugging purpose")
-def export_email():
+@click.group(short_help="Generate server email in a file for debugging purpose")
+def render_email():
     pass
 
 
-@export_email.command(short_help="Export invitation email")
+@render_email.command(short_help="Generate invitation email")
 @mail_templates_shared_options
 @click.option(
     "--invitation-type",
@@ -149,7 +149,7 @@ def invite(
     write_mail_file_to_filesystem(message, output_dir, "invitation_mail")
 
 
-@export_email.command(short_help="Export account create validation email")
+@render_email.command(short_help="Generate account create validation email")
 @mail_templates_shared_options
 @click.option(
     "--validation-code",
@@ -177,7 +177,7 @@ def account_create(
     write_mail_file_to_filesystem(message, output_dir, "account_create_validation_email")
 
 
-@export_email.command(short_help="Export account delete validation email")
+@render_email.command(short_help="Generate account delete validation email")
 @mail_templates_shared_options
 @click.option(
     "--validation-code",
@@ -205,7 +205,7 @@ def account_delete(
     write_mail_file_to_filesystem(message, output_dir, "account_delete_validation_email")
 
 
-@export_email.command(short_help="Export TOTP reset email")
+@render_email.command(short_help="Generate TOTP reset email")
 @mail_templates_shared_options
 @click.option(
     "--organization-id", type=OrganizationID, default=DEFAULT_ORGANIZATION_ID, show_default=True

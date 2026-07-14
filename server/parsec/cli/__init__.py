@@ -9,11 +9,11 @@ from typing import Any
 import click
 
 from parsec.cli.export import export_realm
-from parsec.cli.export_email import export_email
 from parsec.cli.inspect import human_accesses
 from parsec.cli.migration import migrate
 from parsec.cli.options import version_option
 from parsec.cli.realm_delete import delete_realm, list_deletable_realms
+from parsec.cli.render_email import render_email
 from parsec.cli.run import run_cmd
 from parsec.cli.sequester_create import create_service, generate_service_certificate
 from parsec.cli.sequester_list import list_services
@@ -55,10 +55,10 @@ cli.add_command(delete_realm, "delete_realm")
 cli.add_command(server_sequester_cmd, "sequester")
 if TESTBED_AVAILABLE:
     cli.add_command(testbed_cmd, "testbed")
-    # Since `export_email` is only for debugging purpose, we don't expose it
+    # Since `render_email` is only for debugging purpose, we don't expose it
     # in release (and a close enough way to detect this is to check if
     # `TESTBED_AVAILABLE` is defined)
-    cli.add_command(export_email, "export_email")
+    cli.add_command(render_email, "render_email")
 
 
 # Add support for PARSEC_CMD_ARGS env var
