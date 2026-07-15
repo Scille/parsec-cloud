@@ -399,7 +399,7 @@ export function useFileActions() {
     await pathOpener.openPath(workspaceHandle, entry.path, options);
   }
 
-  async function seeInExplorer(entry: EntryModel, workspaceInfo: WorkspaceInfo): Promise<void> {
+  async function seeInExplorer(path: string, workspaceInfo: WorkspaceInfo): Promise<void> {
     if (!isDesktop()) {
       return;
     }
@@ -424,7 +424,7 @@ export function useFileActions() {
       }
     }
 
-    await pathOpener.showInExplorer(workspaceInfo.handle, entry.path);
+    await pathOpener.showInExplorer(workspaceInfo.handle, path);
   }
 
   async function showEnclosingFolder(entry: EntryModel, workspaceInfo: WorkspaceInfo): Promise<void> {
