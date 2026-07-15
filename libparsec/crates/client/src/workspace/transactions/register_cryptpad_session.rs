@@ -78,6 +78,18 @@ pub(crate) async fn register_cryptpad_session(
                         WorkspaceRegisterCryptpadSessionError::Offline(err)
                     }
                     CertifGetLatestRealmKeyForEncryptionError::NotAllowed => {
+                        // `NotAllowed` occurs when:
+                        // 1. User is not part of the realm
+                        // 2. `encrypted_candidate_edit_key` is present but user has no write access
+                        // 3. `encrypted_candidate_edit_key` is missing but user *has* write access
+                        //
+                        // All three can be either due to a bug in the client (but it would be
+                        // a very obvious incorrect usage, so this is not a big concern); or the
+                        // user had its role concurrently changed.
+                        // In theory we could handle case 2&3 in specific ways so that the client
+                        // could retry to send the command with a corrected configuration, however
+                        // it is not worth it since there is a very low chance for this to occurs
+                        // (you have to start a session right when you get your role changed...).
                         WorkspaceRegisterCryptpadSessionError::NoRealmAccess
                     }
                     CertifGetLatestRealmKeyForEncryptionError::RealmDeleted => {
