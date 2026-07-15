@@ -334,7 +334,7 @@ import {
 import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import usePathOpener, { OpenPathOptions } from '@/services/pathOpener';
+import { OpenPathOptions } from '@/services/pathOpener';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileAction, FolderGlobalAction, getDuplicatePolicy, isFolderGlobalAction, useFileContextMenu } from '@/views/files';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
@@ -442,7 +442,6 @@ const selectedFilesCount = computed(() => {
 const selectionEnabled = ref<boolean>(false);
 const manualSelection = ref<boolean>(false);
 
-const pathOpener = usePathOpener();
 const fileActions = useFileActions();
 
 let hotkeys: HotkeyGroup | null = null;
@@ -1412,7 +1411,7 @@ async function performFolderAction(action: FolderGlobalAction): Promise<void> {
     case FolderGlobalAction.ImportFolder:
       return await fileInputsRef.value?.importFolder();
     case FolderGlobalAction.OpenInExplorer:
-      return await pathOpener.openPath(workspaceInfo.value.handle, currentPath.value, { skipViewers: true });
+      return await fileActions.seeInExplorer(currentPath.value, workspaceInfo.value);
     case FolderGlobalAction.ToggleSelect:
       return await toggleSelection();
     case FolderGlobalAction.SelectAll:
@@ -1562,7 +1561,7 @@ async function seeInExplorer(entries: EntryModel[]): Promise<void> {
   if (!workspaceInfo.value || entries.length !== 1) {
     return;
   }
-  await fileActions.seeInExplorer(entries[0], workspaceInfo.value);
+  await fileActions.seeInExplorer(entries[0].path, workspaceInfo.value);
 }
 
 async function onDropAsReader(): Promise<void> {
