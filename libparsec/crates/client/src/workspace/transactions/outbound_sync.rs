@@ -35,7 +35,6 @@ pub async fn outbound_sync(
     entry_id: VlobID,
 ) -> Result<OutboundSyncOutcome, WorkspaceSyncError> {
     outbound_sync_child(ops, entry_id).await
-    // TODO: send outbound sync event ?
 }
 
 /// Helper to check if the manifest has been updated concurrently in the storage.
@@ -45,9 +44,9 @@ pub async fn outbound_sync(
 /// falling back to value comparison (as our most likely case is the manifest
 /// hasn't changed and the arc object is kept in the storage cache).
 ///
-/// However `Arc`'s equality uses this optimisation only if the wrapped structure
+/// However `Arc`'s equality uses this optimization only if the wrapped structure
 /// implements `Eq`, so removing this from `LocalFileManifest` would silently
-/// break this optimisation.
+/// break this optimization.
 ///
 /// see https://github.com/rust-lang/rust/blob/c3b05c6e5b5b59613350b8c2875b0add67ed74df/library/alloc/src/sync.rs#L3074-L3092
 fn file_has_changed(original: &Arc<LocalFileManifest>, new: &Arc<LocalFileManifest>) -> bool {
