@@ -57,53 +57,6 @@ pub enum WorkspaceSaveAndSyncFileWithOriginError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<WorkspaceSyncError> for WorkspaceSaveAndSyncFileWithOriginError {
-    fn from(err: WorkspaceSyncError) -> Self {
-        match err {
-            WorkspaceSyncError::Offline(e) => WorkspaceSaveAndSyncFileWithOriginError::Offline(e),
-            WorkspaceSyncError::ServerBlockstoreUnavailable => {
-                WorkspaceSaveAndSyncFileWithOriginError::ServerBlockstoreUnavailable
-            }
-            WorkspaceSyncError::Stopped => WorkspaceSaveAndSyncFileWithOriginError::Stopped,
-            WorkspaceSyncError::NotAllowed => {
-                WorkspaceSaveAndSyncFileWithOriginError::NoRealmAccess
-            }
-            WorkspaceSyncError::NoKey => WorkspaceSaveAndSyncFileWithOriginError::NoKey,
-            WorkspaceSyncError::NoRealm => WorkspaceSaveAndSyncFileWithOriginError::NoRealm,
-            WorkspaceSyncError::RealmArchived => {
-                WorkspaceSaveAndSyncFileWithOriginError::RealmArchived
-            }
-            WorkspaceSyncError::RealmDeleted => {
-                WorkspaceSaveAndSyncFileWithOriginError::RealmDeleted
-            }
-            WorkspaceSyncError::InvalidManifest(err) => {
-                WorkspaceSaveAndSyncFileWithOriginError::InvalidManifest(err)
-            }
-            WorkspaceSyncError::InvalidBlockAccess(err) => {
-                WorkspaceSaveAndSyncFileWithOriginError::InvalidBlockAccess(err)
-            }
-            WorkspaceSyncError::InvalidKeysBundle(err) => {
-                WorkspaceSaveAndSyncFileWithOriginError::InvalidKeysBundle(err)
-            }
-            WorkspaceSyncError::InvalidCertificate(err) => {
-                WorkspaceSaveAndSyncFileWithOriginError::InvalidCertificate(err)
-            }
-            WorkspaceSyncError::TimestampOutOfBallpark {
-                server_timestamp,
-                client_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-            } => WorkspaceSaveAndSyncFileWithOriginError::TimestampOutOfBallpark {
-                server_timestamp,
-                client_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-            },
-            WorkspaceSyncError::Internal(err) => err.context("cannot sync entry").into(),
-        }
-    }
-}
-
 /// Create a new version of the file manifest identified by `entry_id`, containing
 /// `content` and marked with a `FileManifestOrigin::Cryptpad` origin, then sync it
 /// with the server right away.
