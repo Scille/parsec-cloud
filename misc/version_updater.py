@@ -261,7 +261,6 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / ".github/workflows/package-server.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
-        Tool.Node: [NODE_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/package-cli.yml": {
         Tool.Cross: [ReplaceRegex(r"cross-version: .*", "cross-version: {version}")],

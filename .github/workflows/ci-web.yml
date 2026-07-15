@@ -25,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  node-version: 22.22.2
+  node-version: 24.18.0
   wasm-pack-version: 0.12.1
   libparsec-cache-version: 1
 
@@ -84,6 +84,14 @@ jobs:
           npm prune
         working-directory: client
         timeout-minutes: 5
+
+      - name: Build megashark-lib
+        # `megashark-lib` is a git dependency that needs its `prepare` script (a `vite build`) to run,
+        # which `npm install --ignore-scripts` above intentionally skips. See `//megasharkLibSource`
+        # in `client/package.json`.
+        run: npm run megashark:install
+        working-directory: client
+        timeout-minutes: 10
 
       - name: Check lint with eslint
         run: npx eslint . --max-warnings=0

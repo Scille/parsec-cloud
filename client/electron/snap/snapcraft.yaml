@@ -108,7 +108,7 @@ parts:
     override-build: |
       set -x
 
-      MEGASHARK_COMMIT_ID=$(jq -r '.packages."node_modules/megashark-lib".resolved' package-lock.json | cut -d '#' -f 2)
+      MEGASHARK_COMMIT_ID=$(jq -r '.megasharkLibSource' package.json | cut -d '#' -f 2)
       wget https://github.com/Scille/megashark-lib/archive/${MEGASHARK_COMMIT_ID}.tar.gz -O megashark-lib-src.tar.gz
       mkdir -pv megashark-lib && cd megashark-lib
       tar --extract --file ../megashark-lib-src.tar.gz --strip-components=1
@@ -126,6 +126,8 @@ parts:
     source: client
     build-snaps:
       - node/22/stable
+    build-packages:
+      - jq
     build-attributes:
       - enable-patchelf
     build-environment:
@@ -140,12 +142,20 @@ parts:
       node --version
       npm --version
 
-      # Patch client package.json to use local pre-packaged megashark-lib
-      sed -i "s;megashark-lib\": \".*\";megashark-lib\": \"file:${CRAFT_STAGE}/megashark-lib.tar.gz\";" package.json
+      # `megashark-lib` isn't a regular `dependencies` entry (see `//megasharkLibSource` in
+      # package.json), so add it back pointing to the local pre-packaged tarball.
+      jq --arg tarball "file:${CRAFT_STAGE}/megashark-lib.tar.gz" '.dependencies["megashark-lib"] = $tarball' package.json > package.json.tmp
+      mv package.json.tmp package.json
 
       # Use `--ignore-scripts` to prevent the postinstall script trying to be smarter than us and
       # install electron dependencies (as it would use `npm install` instead of `npm clean-install`).
       npm install --ignore-scripts
+
+      # The tarball above is already built from source, so mark it as such to prevent
+      # `megashark:install` (run by `native:build` below) from trying to rebuild it live from
+      # git, which isn't possible in this sandboxed environment (see `megashark-lib` part above).
+      jq -r '.megasharkLibSource' package.json > node_modules/megashark-lib/.built-from-source
+
       npm run native:build -- --mode $VITE_MODE
       npm run electron:copy:webapp
 
