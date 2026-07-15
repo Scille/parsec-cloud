@@ -36,12 +36,15 @@ USER parsec:parsec
 
 WORKDIR /data/docs
 
-COPY poetry.lock pyproject.toml conf.py /data/docs/
+COPY uv.lock pyproject.toml conf.py /data/docs/
 
-RUN python -m venv /home/parsec/poetry-venv && \
-    source /home/parsec/poetry-venv/bin/activate && \
-    pip install poetry && \
-    poetry install && \
-    echo 'source /home/parsec/poetry-venv/bin/activate' >> /home/parsec/.bashrc
+ENV VIRTUAL_ENV="/home/parsec/venv"
+RUN python -m venv $VIRTUAL_ENV && \
+    source $VIRTUAL_ENV/bin/activate && \
+    pip install uv && \
+    uv sync --active && \
+    echo "source ${VIRTUAL_ENV}/bin/activate" >> /home/parsec/.bashrc
+
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
 CMD [ "/bin/bash" ]

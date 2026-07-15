@@ -220,9 +220,6 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         ]
     },
     ROOT_DIR / ".github/workflows/_releaser_nightly_build.yml": {Tool.Python: [PYTHON_GA_VERSION]},
-    ROOT_DIR / ".github/workflows/ci-docs.yml": {
-        Tool.Poetry: [POETRY_GA_VERSION],
-    },
     ROOT_DIR / ".github/workflows/ci-python.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
         Tool.PostgreSQL: [
