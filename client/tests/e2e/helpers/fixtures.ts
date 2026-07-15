@@ -7,14 +7,13 @@ import { CRYPTPAD_SERVER } from '@tests/e2e/helpers/cryptpad';
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
 import { mockExternalWebsites } from '@tests/e2e/helpers/externalWebsites';
 import { mockLibParsec } from '@tests/e2e/helpers/libparsec';
+import { mockStripe } from '@tests/e2e/helpers/mock';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { DisplaySize, MsContext, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
 import { CoverageReport } from 'monocart-coverage-reports';
-// `mcr.config.cjs` has no declaration file, shared as-is with `scripts/generate-coverage-report.cjs`
 // @ts-expect-error
-// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
-import coverageOptions from '../../../mcr.config.cjs';
+import coverageOptions from '@/../mcr.config.cjs';
 
 const DEV_TOOLS_OFFSET = 400;
 const DEFAULT_INIT_TIMEOUT = 5000;
@@ -215,6 +214,11 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
   page.isDebugEnabled = (): boolean => {
     return process.env.PWDEBUG === 'true';
   };
+
+  if (!opts.enableStripe) {
+    await mockStripe(page.context());
+  }
+
   page.defaultLargeSize = [1600, 900];
   page.defaultSmallSize = [700, 700];
   page.setDisplaySize = async (displaySize: DisplaySize): Promise<void> => {
