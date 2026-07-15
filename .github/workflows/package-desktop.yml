@@ -61,7 +61,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  node-version: 22.22.2
+  node-version: 24.18.0
   WINFSP_VERSION: 2.1.25156
 
 permissions:
@@ -309,6 +309,14 @@ jobs:
         # Use `--ignore-scripts` to prevent the postinstall script trying to be smarter than us and
         # install electron dependencies (as it would use `npm install` instead of `npm clean-install`).
         run: npm clean-install --ignore-scripts --verbose
+        working-directory: client
+        timeout-minutes: 30
+
+      - name: Build megashark-lib
+        # `megashark-lib` is a git dependency that needs its `prepare` script (a `vite build`) to run,
+        # which `npm install --ignore-scripts` above intentionally skips. See `//megasharkLibSource`
+        # in `client/package.json`.
+        run: npm run megashark:install
         working-directory: client
         timeout-minutes: 30
 

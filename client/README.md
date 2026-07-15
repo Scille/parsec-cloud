@@ -14,6 +14,12 @@ npm install
 
 Among other things, it installs `Vue` / `Capacitor` CLI locally, you can use them with npx like this: `npx cap --help`
 
+`megashark-lib` is installed separately, as it's a git dependency that needs its `prepare` script (a
+`vite build`) to run, which `npm install` doesn't do since scripts are disabled (see `.npmrc`). It gets
+installed automatically by the `megashark:install` script, itself run as part of `dev`, `web:open`,
+`web:release`, `native:build` and `native:build:dev` (see `//megasharkLibSource` in `package.json`). You
+can also run it explicitly with `npm run megashark:install`.
+
 If you plan on running Electron, you may also want to launch `npm install` inside the electron directory, or it will be run automatically when you start Electron for the first time.
 
 ### Libparsec bindings

@@ -2,7 +2,7 @@ exclude: ^misc/bench.py$
 
 default_language_version:
   rust: 1.96.0
-  node: 22.22.2
+  node: 24.18.0
 
 repos:
   ##############
