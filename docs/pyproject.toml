@@ -17,9 +17,5 @@ dependencies = [
     "powrap>=1.0.2, <2",
 ]
 
-[tool.poetry]
-packages = [{ include = "conf.py" }]
-
-[build-system]
-requires = ["poetry-core>=2.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv]
+package = false # This is not a package but only a way to manage docs dependencies

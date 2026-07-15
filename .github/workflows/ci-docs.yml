@@ -10,11 +10,10 @@ on:
 #
 # For that we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
 concurrency:
-  group: ci-docs-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:
-  poetry-version: 2.2.1
   # Convert sphinx warning into errors.
   SPHINXOPTS: --fail-on-warning --verbose
 
@@ -42,12 +41,9 @@ jobs:
         with:
           tool: ripgrep
 
-      - uses: ./.github/actions/setup-python-poetry
-        id: setup-python
-        with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./docs
-        timeout-minutes: 10
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        timeout-minutes: 5
 
       - name: Install gettext (required by powrap)
         run: |
@@ -57,17 +53,15 @@ jobs:
 
       - name: Install docs deps
         run: |
-          poetry env info
-          poetry install
-          poetry show
+          uv sync
         timeout-minutes: 5
 
       - name: Update translation
-        run: poetry run make --environment-overrides intl-fr
+        run: uv run make --environment-overrides intl-fr
         timeout-minutes: 2
 
       - name: Wrap `*.po` files
-        run: poetry run make --environment-overrides wrap
+        run: uv run make --environment-overrides wrap
         timeout-minutes: 1
 
       - name: No fuzzy translation
@@ -87,8 +81,8 @@ jobs:
           fi
 
       - name: Lint docs with sphinx-lint
-        run: poetry run make --environment-overrides lint
+        run: uv run make --environment-overrides lint
 
       - name: Build html documentation
-        run: poetry run make --environment-overrides html
+        run: uv run make --environment-overrides html
         timeout-minutes: 2
