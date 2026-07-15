@@ -832,6 +832,20 @@ mod spy {
             self.acknowledged_offset += 1;
         }
 
+        /// returns the event if can be converted from next event
+        /// the considered event is acknowledged anyways
+        pub fn filter_next<E: Broadcastable + Clone>(&mut self) -> Option<E> {
+            let guard = self.internal.lock().expect("Mutex is poisoned");
+            let not_acknowledged = &guard.events[self.acknowledged_offset..];
+            let res = if let Some(any_event) = not_acknowledged.first() {
+                E::try_from_any_spied_event(any_event).cloned()
+            } else {
+                panic!("No new events !")
+            };
+            self.acknowledged_offset += 1;
+            res
+        }
+
         /// Check and mark acknowledged the next event available, block if no
         /// event are currently available.
         pub async fn wait_and_assert_next<E: Broadcastable>(&mut self, check: impl FnOnce(&E)) {
@@ -859,6 +873,32 @@ mod spy {
 
             // 2) Assert the new event is what we expect
             self.assert_next(check);
+        }
+
+        pub async fn wait_filter_next<E: Broadcastable + Clone>(&mut self) -> Option<E> {
+            // 1) Ensure a new event is available, or else wait for one !
+            let maybe_wait_for_event = {
+                let mut guard = self.internal.lock().expect("Mutex is poisoned");
+                if guard.events[self.acknowledged_offset..].is_empty() {
+                    let listener = match &guard.on_new_event {
+                        Some(on_new_event) => on_new_event.listen(),
+                        None => {
+                            let on_new_event = Event::new();
+                            let listener = on_new_event.listen();
+                            guard.on_new_event = Some(on_new_event);
+                            listener
+                        }
+                    };
+                    Some(listener)
+                } else {
+                    None
+                }
+            };
+            if let Some(listener) = maybe_wait_for_event {
+                listener.await;
+            }
+
+            self.filter_next()
         }
 
         pub fn assert_no_events(&self) {
