@@ -60,7 +60,7 @@ msTest('Cancel invitation - no', async ({ connected }) => {
     expectedTitleText: 'Cancel invitation',
     expectedQuestionText:
       'The invitation sent to zack@example.invalid and the invitation link \
-    will no longer be valid. Are you sure you want to continue?',
+    will no longer be valid.Are you sure you want to continue?',
     expectedPositiveText: 'Delete invitation',
     expectedNegativeText: 'Keep invitation',
   });

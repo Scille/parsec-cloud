@@ -861,7 +861,7 @@
         },
         "archiveWorkspace": {
             "title": "Archiver cet espace de travail",
-            "subtitle": "Vous êtes sur le point d'archiver l'espace de travail {workspace}. Il sera toujours accessible en lecture seule pour tous les utilisateurs y ayant accès. Êtes-vous sûr de vouloir continuer ?",
+            "subtitle": "Vous êtes sur le point d'archiver l'espace de travail <b>{workspace}</b>. Il sera toujours accessible en <u>lecture seule</u> pour tous les utilisateurs y ayant accès.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
             "yes": "Archiver",
             "no": "Cancel",
             "info": "Vos espaces de travail archivés restent consultables en lecture seule pour tous les utilisateurs.",
@@ -881,8 +881,8 @@
         },
         "restoreWorkspace": {
             "title": "Restaurer cet espace de travail",
-            "subtitleArchived": "Vous êtes sur le point de restaurer l'espace de travail {workspace}. Les précédents accès en lecture et écriture seront restaurés. Êtes-vous sûr de vouloir continuer ?",
-            "subtitleTrashed": "Vous êtes sur le point de restaurer l'espace de travail {workspace}. Sa suppression programmée sera annulée. Êtes-vous sûr de vouloir continuer ?",
+            "subtitleArchived": "Vous êtes sur le point de restaurer l'espace de travail <b>{workspace}</b>. Les précédents accès en lecture et écriture seront restaurés.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
+            "subtitleTrashed": "Vous êtes sur le point de restaurer l'espace de travail <b>{workspace}</b>. Sa suppression programmée sera annulée.<br/><br/>Êtes-vous sûr de vouloir continuer ?",
             "yes": "Restaurer",
             "no": "Annuler",
             "restore": {
@@ -892,8 +892,8 @@
         },
         "trashWorkspace": {
             "title": "Supprimer cet espace de travail",
-            "subtitleBin": "Vous êtes sur le point de programmer la suppression de l'espace de travail {workspace}. Il restera accessible en lecture seule jusqu'à sa suppression le {deletionDate}. Êtes-vous sûr de vouloir continuer ?",
-            "subtitleDelete": "Vous êtes sur le point de supprimer l'espace de travail {workspace}. Ses données et historique seront définitivement supprimés et vous ne pourrez pas le restaurer. Êtes-vous sûr de vouloir continuer ?",
+            "subtitleBin": "Vous êtes sur le point de programmer la suppression de l'espace de travail <b>{workspace}</b>. Il restera accessible en lecture seule jusqu'à sa suppression le <b>{deletionDate}</b>.",
+            "subtitleDelete": "Vous êtes sur le point de supprimer l'espace de travail <b>{workspace}</b>. Ses données et historique seront <u>définitivement supprimés</u> et vous ne pourrez pas le restaurer.",
             "label": "Saisissez '{workspace}' pour confirmer",
             "yesBin": "Déplacer dans la corbeille",
             "yesDelete": "Supprimer définitivement",
@@ -903,8 +903,8 @@
             "count": "1 espace de travail | {count} espaces de travail",
             "question": {
                 "title": "Informations importantes",
-                "subtitleBin": "Si vous supprimez l'espace de travail {workspace}, ses données, ses métadonnées et son historique seront supprimés de l'organisation. Il deviendra inaccessible pour tous les utilisateurs. Il sera déplacé à la corbeille puis supprimé définitivement après {deletionDelay}.",
-                "subtitleDelete": "Si vous supprimez l'espace de travail {workspace}, ses données, ses métadonnées et son historique seront supprimés de l'organisation. Il deviendra inaccessible pour tous les utilisateurs.",
+                "subtitleBin": "Si vous supprimez l'espace de travail <b>{workspace}</b>, ses données, ses métadonnées et son historique seront supprimés de l'organisation. Il deviendra inaccessible pour tous les utilisateurs. Il sera déplacé à la corbeille puis <u>supprimé définitivement</u> après <b>{deletionDelay}</b>.",
+                "subtitleDelete": "Si vous supprimez l'espace de travail <b>{workspace}</b>, ses données, ses métadonnées et son historique seront supprimés de l'organisation. Il deviendra inaccessible pour tous les utilisateurs.",
                 "yes": "J'ai compris",
                 "no": "Annuler"
             },
@@ -1061,11 +1061,11 @@
             "roleUpdateNowReader": "Votre rôle sur cet espace de travail a été mis à jour. Vous êtes à présent Lecteur et ne pouvez plus mettre à jour les fichiers ou en importer de nouveaux."
         },
         "deleteOneFileQuestionTitle": "Suppression d'un fichier",
-        "deleteOneFileQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le fichier `{name}` ?",
+        "deleteOneFileQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le fichier <b>{name}</b> ?",
         "deleteOneFolderQuestionTitle": "Suppression d'un dossier",
-        "deleteOneFolderQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le dossier `{name}` ?",
+        "deleteOneFolderQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le dossier <b>{name}</b> ?",
         "deleteMultipleQuestionTitle": "Suppression de plusieurs éléments",
-        "deleteMultipleQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer ces {count} éléments ?",
+        "deleteMultipleQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer ces <b>{count} éléments</b> ?",
         "deleteOneFileYes": "Supprimer le fichier",
         "deleteOneFileNo": "Conserver le fichier",
         "deleteOneFolderYes": "Supprimer le dossier",
@@ -1945,7 +1945,7 @@
             "manageInvitation": "Gérer l'invitation",
             "cancelInvitation": {
                 "title": "Annuler l'invitation",
-                "message": "L'invitation envoyée à {email} et le lien d'invitation ne seront plus valides. Êtes-vous sûr(e) de vouloir continuer ?",
+                "message": "L'invitation envoyée à <b>{email}</b> et le lien d'invitation ne seront plus valides.<br/><br/>Êtes-vous sûr(e) de vouloir continuer ?",
                 "yes": {
                     "short": "Supprimer",
                     "long": "Supprimer l'invitation"
@@ -1963,7 +1963,7 @@
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Inviter un nouvel utilisateur",
-            "subtitle": "Vous pouvez envoyer plusieurs invitations simultanément en séparant les emails par ';'",
+            "subtitle": "Vous pouvez envoyer plusieurs invitations simultanément en séparant les emails par un point-virgule « <b>;</b> »",
             "label": "Email de l'utilisateur",
             "placeholder": "jean.martin{'@'}exemple.com",
             "create": "Envoyer l'invitation | Envoyer l'invitation | Envoyer {count} invitations",
@@ -1987,7 +1987,7 @@
         },
         "revocation": {
             "revokeTitle": "Révoquer cet utilisateur ? | Révoquer ces utilisateurs ?",
-            "revokeQuestion": "{user} sera révoqué(e) et ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
+            "revokeQuestion": "<b>{user}</b> sera révoqué(e) et ne pourra plus accéder à l'organisation.<br/><br/>Êtes-vous sûr(e) de vouloir continuer ? | Ces <b>{count} utilisateurs</b> seront révoqués. Ils ne pourront plus accéder à l'organisation.<br/><br/>Êtes-vous sûr(e) de vouloir continuer ?",
             "revokeYes": "Révoquer",
             "revokeNo": "Annuler",
             "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",

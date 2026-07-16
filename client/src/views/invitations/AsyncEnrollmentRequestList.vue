@@ -55,6 +55,7 @@ async function onRejectClick(request: AsyncEnrollmentUntrusted): Promise<void> {
     {
       yesText: 'InvitationsPage.asyncEnrollmentRequest.rejectModal.actions.confirm',
       noText: 'InvitationsPage.asyncEnrollmentRequest.rejectModal.actions.cancel',
+      yesIsDangerous: true,
     },
   );
   if (answer === Answer.Yes) {

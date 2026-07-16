@@ -18,7 +18,7 @@
   >
     <div class="email-input-container">
       <ms-report-text :theme="MsReportTheme.Info">
-        <ion-text>{{ $msTranslate('UsersPage.CreateUserInvitationModal.subtitle') }}</ion-text>
+        <ms-rich-text text="UsersPage.CreateUserInvitationModal.subtitle" />
       </ms-report-text>
       <ms-input
         @change="onInputChange"
@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { emailValidator } from '@/common/validators';
 import { IonText, modalController } from '@ionic/vue';
-import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, Validity } from 'megashark-lib';
+import { MsInput, MsModal, MsModalResult, MsReportText, MsReportTheme, MsRichText, Validity } from 'megashark-lib';
 import { onMounted, ref, useTemplateRef } from 'vue';
 
 const textModel = ref('');
