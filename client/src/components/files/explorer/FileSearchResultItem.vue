@@ -137,7 +137,7 @@ const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const props = defineProps<{
   searchItem: SearchResult;
-  disableContextMenu: boolean;
+  disableContextMenu?: boolean;
 }>();
 
 const emits = defineEmits<{

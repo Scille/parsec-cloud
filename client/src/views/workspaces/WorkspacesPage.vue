@@ -236,6 +236,7 @@
             :active="search.active"
             :multiple-workspaces="true"
             @item-click="onSearchResultClick"
+            @menu-item-click="onSearchResultContextMenu"
             @update-pattern="search.pattern = $event"
           />
         </template>
@@ -279,6 +280,7 @@ import {
   entryStat,
   fileSearch,
   getClientProfile,
+  getWorkspaceInfo,
   isDesktop,
   parseFileLink,
   createWorkspace as parsecCreateWorkspace,
@@ -288,12 +290,14 @@ import {
   mountWorkspace as parsecMountWorkspace,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
+import { useFileContextMenu } from '@/services/contextMenu';
 import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useWorkspaceAttributes } from '@/services/workspaceAttributes';
+import { FileAction } from '@/views/files';
 import { WorkspaceAction, WorkspaceMenu, isWorkspaceAction } from '@/views/workspaces/types';
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
@@ -322,6 +326,7 @@ enum SortWorkspaceBy {
   LastUpdate = 'lastUpdate',
 }
 
+const fileContextMenu = useFileContextMenu();
 const contextMenu = useWorkspaceContextMenu(false);
 const workspaceAttributes = useWorkspaceAttributes();
 
@@ -843,6 +848,35 @@ async function onSearchResultClick(entry: SearchResult): Promise<void> {
   navigateTo(Routes.Documents, {
     query: { documentPath: entry.parent, selectFile: entry.stats.name, workspaceHandle: entry.workspaceHandle },
   });
+}
+
+async function onSearchResultContextMenu(event: Event, entry: SearchResult, onFinished?: () => void): Promise<void> {
+  if (!userInfo.value) {
+    return;
+  }
+  const wkInfoResult = await getWorkspaceInfo(entry.workspaceHandle);
+  if (!wkInfoResult.ok) {
+    return;
+  }
+
+  const action = await fileContextMenu.openEntryContextMenu(
+    event,
+    [entry.stats],
+    wkInfoResult.value.selfRole === WorkspaceRole.Reader,
+    true,
+  );
+
+  if (action) {
+    await fileContextMenu.dispatchContextMenuAction(action, [entry.stats], wkInfoResult.value, userInfo.value.currentProfile);
+    if ([FileAction.Delete, FileAction.Rename, FileAction.MoveTo, FileAction.MakeACopy].includes(action)) {
+      if (search.value) {
+        await startSearch(searchPattern.value);
+      }
+    }
+  }
+  if (onFinished) {
+    onFinished();
+  }
 }
 </script>
 
