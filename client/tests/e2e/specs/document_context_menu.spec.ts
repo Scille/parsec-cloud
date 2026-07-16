@@ -6,6 +6,7 @@ import {
   DisplaySize,
   expect,
   fillInputModal,
+  fillIonInput,
   importDefaultFiles,
   ImportDocuments,
   MsPage,
@@ -367,6 +368,23 @@ msTest.describe(() => {
       } else {
         await expect(entry.locator('.file-card__title')).toHaveText('New Name');
       }
+    });
+
+    msTest(`Rename document name already exists in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }, testInfo: TestInfo) => {
+      await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Txt, false);
+      if (gridMode) {
+        await toggleViewMode(documents);
+      }
+      await clickAction(await openPopover(documents, 0), 'Rename');
+
+      const modal = documents.locator('.text-input-modal');
+      await expect(modal).toBeVisible();
+      await fillIonInput(modal.locator('ion-input'), '');
+      const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
+      await fillIonInput(modal.locator('ion-input'), 'text.txt');
+      await expect(okButton).toBeTrulyDisabled();
+      await expect(modal.locator('.form-error')).toBeVisible();
+      await expect(modal.locator('.form-error')).toHaveText('A file with this name already exists.');
     });
 
     msTest(`Delete document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }, testInfo: TestInfo) => {

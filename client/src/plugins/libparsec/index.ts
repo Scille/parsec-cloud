@@ -52,6 +52,10 @@ const FUNCTIONS_TO_SKIP: Array<SkipData> = [
     tag: 'WorkspaceCreateFolderErrorEntryExists',
     function: 'workspaceCreateFolderAll',
   },
+  {
+    tag: 'ClientListFrozenUsersErrorAuthorNotAllowed',
+    function: 'clientListFrozenUsers',
+  },
 ];
 
 const FUNCTIONS_TO_SLOW_DOWN: Array<string> = [

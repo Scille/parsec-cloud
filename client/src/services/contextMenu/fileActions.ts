@@ -1,12 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { entryNameValidator } from '@/common/validators';
-import { copyPathLinkToClipboard, EntryModel, selectFolder } from '@/components/files';
+import { copyPathLinkToClipboard, selectFolder } from '@/components/files';
 import { showWorkspace } from '@/components/workspaces/utils';
 import {
   deleteFile,
   deleteFolder,
   EntryName,
+  EntryStat,
   entryStat,
   EntryStatFile,
   FsPath,
@@ -38,7 +39,7 @@ export function useFileActions() {
   const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
   const storageManager: StorageManager = inject(StorageManagerKey)!;
 
-  async function deleteEntries(entries: EntryModel[], workspaceInfo: WorkspaceInfo): Promise<void> {
+  async function deleteEntries(entries: EntryStat[], workspaceInfo: WorkspaceInfo): Promise<void> {
     if (entries.length === 0) {
       return;
     }
@@ -123,8 +124,9 @@ export function useFileActions() {
     }
   }
 
-  async function renameEntry(entry: EntryModel, workspaceInfo: WorkspaceInfo): Promise<void> {
+  async function renameEntry(entry: EntryStat, workspaceInfo: WorkspaceInfo): Promise<void> {
     const ext = Path.getFileExtension(entry.name);
+    const parent = await Path.parent(entry.path);
     const newName = await getTextFromUser(
       {
         title: entry.isFile() ? 'FoldersPage.RenameModal.fileTitle' : 'FoldersPage.RenameModal.folderTitle',
@@ -132,7 +134,7 @@ export function useFileActions() {
         validator: entryNameValidator(entry.isFile(), {
           checkExists: {
             workspaceHandle: workspaceInfo.handle,
-            path: entry.parent,
+            path: parent,
           },
           checkConfined: true,
         }),
@@ -180,11 +182,11 @@ export function useFileActions() {
     }
   }
 
-  async function copyLink(entry: EntryModel, workspaceInfo: WorkspaceInfo): Promise<void> {
+  async function copyLink(entry: EntryStat, workspaceInfo: WorkspaceInfo): Promise<void> {
     copyPathLinkToClipboard(entry.path, workspaceInfo.handle, informationManager.value);
   }
 
-  async function moveEntriesTo(entries: EntryModel[], workspaceInfo: WorkspaceInfo, currentPath: string): Promise<void> {
+  async function moveEntriesTo(entries: EntryStat[], workspaceInfo: WorkspaceInfo): Promise<void> {
     if (entries.length === 0) {
       return;
     }
@@ -194,9 +196,10 @@ export function useFileActions() {
         excludePaths.push(entry.path);
       }
     }
+    const startingPath = await Path.parent(entries[0].path);
     const folder = await selectFolder({
       title: { key: 'FoldersPage.moveSelectFolderTitle', data: { count: entries.length }, count: entries.length },
-      startingPath: currentPath,
+      startingPath: startingPath,
       workspaceHandle: workspaceInfo.handle,
       excludePaths: excludePaths,
     });
@@ -204,7 +207,7 @@ export function useFileActions() {
       return;
     }
 
-    const existing: Array<EntryModel> = [];
+    const existing: Array<EntryStat> = [];
 
     for (const entry of entries) {
       const destPath = await Path.join(folder, entry.name);
@@ -239,7 +242,7 @@ export function useFileActions() {
     await fileOperationManager.value.move(workspaceInfo.handle, entries, folder, dupPolicy);
   }
 
-  async function showDetails(entry: EntryModel, workspaceInfo: WorkspaceInfo, userProfile: UserProfile): Promise<void> {
+  async function showDetails(entry: EntryStat, workspaceInfo: WorkspaceInfo, userProfile: UserProfile): Promise<void> {
     const modal = await modalController.create({
       component: FileDetailsModal,
       cssClass: 'file-details-modal',
@@ -253,7 +256,7 @@ export function useFileActions() {
     await modal.onWillDismiss();
   }
 
-  async function copyEntries(entries: EntryModel[], workspaceInfo: WorkspaceInfo, currentPath: string): Promise<void> {
+  async function copyEntries(entries: EntryStat[], workspaceInfo: WorkspaceInfo): Promise<void> {
     if (entries.length === 0) {
       return;
     }
@@ -264,9 +267,11 @@ export function useFileActions() {
         excludePaths.push(entry.path);
       }
     }
+
+    const startingPath = await Path.parent(entries[0].path);
     const folder = await selectFolder({
       title: { key: 'FoldersPage.copySelectFolderTitle', data: { count: entries.length }, count: entries.length },
-      startingPath: currentPath,
+      startingPath: startingPath,
       workspaceHandle: workspaceInfo.handle,
       excludePaths: excludePaths,
       allowStartingPath: true,
@@ -276,7 +281,7 @@ export function useFileActions() {
       return;
     }
 
-    const existing: Array<EntryModel> = [];
+    const existing: Array<EntryStat> = [];
 
     for (const entry of entries) {
       const destPath = await Path.join(folder, entry.name);
@@ -310,13 +315,7 @@ export function useFileActions() {
     await fileOperationManager.value.copy(workspaceInfo.handle, entries, folder, dupPolicy);
   }
 
-  async function downloadEntries(
-    entries: EntryModel[],
-    workspaceInfo: WorkspaceInfo,
-    currentFolder: string,
-    currentPath: string | undefined,
-    asArchive?: boolean,
-  ): Promise<void> {
+  async function downloadEntries(entries: EntryStat[], workspaceInfo: WorkspaceInfo, asArchive?: boolean): Promise<void> {
     if (entries.length < 1) {
       return;
     }
@@ -326,6 +325,9 @@ export function useFileActions() {
       return;
     }
 
+    const currentPath = await Path.parent(entries[0].path);
+    const currentFolder = await Path.filename(currentPath);
+
     function _getArchiveName(): EntryName {
       if (!workspaceInfo) {
         return 'archive.zip';
@@ -333,7 +335,7 @@ export function useFileActions() {
       if (entries.length === 1) {
         return `${entries[0].name}.zip`;
       }
-      if (currentFolder === '/') {
+      if (!currentFolder || currentFolder === '/') {
         return `${workspaceInfo.name}.zip`;
       }
       return `${workspaceInfo.name}_${currentFolder}.zip`;
@@ -357,7 +359,7 @@ export function useFileActions() {
     });
   }
 
-  async function showHistory(entries: EntryModel[], workspaceInfo: WorkspaceInfo): Promise<void> {
+  async function showHistory(entries: EntryStat[], workspaceInfo: WorkspaceInfo): Promise<void> {
     if (entries.length !== 1) {
       return;
     }
@@ -371,7 +373,7 @@ export function useFileActions() {
     });
   }
 
-  async function openEntry(entryToOpen: EntryModel, options: OpenPathOptions, workspaceInfo: WorkspaceInfo): Promise<void> {
+  async function openEntry(entryToOpen: EntryStat, options: OpenPathOptions, workspaceInfo: WorkspaceInfo): Promise<void> {
     if (!entryToOpen.isFile()) {
       window.electronAPI.log('warn', 'Trying to open an entry that is not a file.');
       return;
@@ -427,7 +429,7 @@ export function useFileActions() {
     await pathOpener.showInExplorer(workspaceInfo.handle, path);
   }
 
-  async function showEnclosingFolder(entry: EntryModel, workspaceInfo: WorkspaceInfo): Promise<void> {
+  async function showEnclosingFolder(entry: EntryStat, workspaceInfo: WorkspaceInfo): Promise<void> {
     const parent = await Path.parent(entry.path);
     await navigateTo(Routes.Documents, {
       query: { documentPath: parent, workspaceHandle: workspaceInfo.handle, selectFile: entry.name },
