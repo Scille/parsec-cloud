@@ -139,7 +139,7 @@ msTest('Revoke one user with context menu and check context menu', async ({ user
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
     expectedQuestionText:
-      'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
+      'This will revoke Boby McBobFace, preventing them from accessing this organization.Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
@@ -160,7 +160,7 @@ msTest('Revoke one user with selection', async ({ usersPage }) => {
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
     expectedQuestionText:
-      'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
+      'This will revoke Boby McBobFace, preventing them from accessing this organization.Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
@@ -180,7 +180,7 @@ msTest('Revoke two users with selection', async ({ usersPage }) => {
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke these users?',
     expectedQuestionText:
-      'This will revoke these 2 users, preventing them from accessing this organization. Are you sure you want to proceed?',
+      'This will revoke these 2 users, preventing them from accessing this organization.Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });

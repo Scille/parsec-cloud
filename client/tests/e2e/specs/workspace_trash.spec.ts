@@ -81,7 +81,7 @@ msTest('Trash a workspace with no deletion delay', async ({ workspaces }) => {
   await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(0)).toHaveText('Delete this workspace');
   await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(1)).toHaveText(
     "You are about to delete the workspace wksp1. Its data and history will be permanently deleted and you won't be \
-    able to restore it. Are you sure you want to proceed?",
+    able to restore it.",
   );
   await workspaces.locator('.text-input-modal').locator('#cancel-button').click();
 });

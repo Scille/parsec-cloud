@@ -14,7 +14,7 @@ msTest('Revoked event', async ({ usersPage }) => {
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
     expectedQuestionText:
-      'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
+      'This will revoke Boby McBobFace, preventing them from accessing this organization.Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
@@ -28,7 +28,7 @@ msTest('Revoked event', async ({ usersPage }) => {
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
     expectedQuestionText:
-      'This will revoke Malloryy McMalloryFace, preventing them from accessing this organization. Are you sure you want to proceed?',
+      'This will revoke Malloryy McMalloryFace, preventing them from accessing this organization.Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });

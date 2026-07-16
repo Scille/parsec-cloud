@@ -862,7 +862,7 @@
         },
         "archiveWorkspace": {
             "title": "Archive this workspace",
-            "subtitle": "You are about to archive the workspace {workspace}. It will remain accessible in read-only for all users who have access to it. Are you sure you want to proceed?",
+            "subtitle": "You are about to archive the workspace <b>{workspace}</b>. It will remain accessible in <u>read-only</u> for all users who have access to it.<br/><br/>Are you sure you want to proceed?",
             "yes": "Archive",
             "no": "Cancel",
             "info": "Your archived workspaces will remain accessible in read-only for all users who have access to them.",
@@ -880,8 +880,8 @@
         },
         "restoreWorkspace": {
             "title": "Restore this workspace",
-            "subtitleArchived": "You are about to restore the workspace {workspace}. Previous read and write accesses will be restored. Are you sure you want to proceed?",
-            "subtitleTrashed": "You are about to restore the workspace {workspace}. Its planned deletion will be cancelled. Are you sure you want to proceed?",
+            "subtitleArchived": "You are about to restore the workspace <b>{workspace}</b>. Previous read and write accesses will be restored.<br/><br/>Are you sure you want to proceed?",
+            "subtitleTrashed": "You are about to restore the workspace <b>{workspace}</b>. Its planned deletion will be cancelled.<br/><br/>Are you sure you want to proceed?",
             "yes": "Restore",
             "no": "Cancel",
             "restore": {
@@ -891,8 +891,8 @@
         },
         "trashWorkspace": {
             "title": "Delete this workspace",
-            "subtitleBin": "You are about to schedule for deletion the workspace {workspace}. It will remain accessible in read-only until its deletion on {deletionDate}. Are you sure you want to proceed?",
-            "subtitleDelete": "You are about to delete the workspace {workspace}. Its data and history will be permanently deleted and you won't be able to restore it. Are you sure you want to proceed?",
+            "subtitleBin": "You are about to schedule for deletion the workspace <b>{workspace}</b>. It will remain accessible in read-only until its deletion on <b>{deletionDate}</b>.",
+            "subtitleDelete": "You are about to delete the workspace <b>{workspace}</b>. Its data and history will be <u>permanently deleted</u> and you won't be able to restore it.",
             "label": "Input '{workspace}' to proceed",
             "yesBin": "Move to bin",
             "yesDelete": "Permanently delete",
@@ -902,8 +902,8 @@
             "count": "1 workspace | {count} workspaces",
             "question": {
                 "title": "Important information",
-                "subtitleBin": "If you delete the workspace {workspace}, its data, metadata and history will be deleted from the organization. It will no longer be accessible to any users. The workspace will be moved to the bin and permanently deleted after {deletionDelay}.",
-                "subtitleDelete": "If you delete the workspace {workspace}, its data, metadata and history will be deleted from the organization. It will no longer be accessible to any users.",
+                "subtitleBin": "If you delete the workspace <b>{workspace}</b>, its data, metadata and history will be deleted from the organization. It will no longer be accessible to any users. The workspace will be moved to the bin and <u>permanently deleted</u> after <b>{deletionDelay}</b>.",
+                "subtitleDelete": "If you delete the workspace <b>{workspace}</b>, its data, metadata and history will be deleted from the organization. It will no longer be accessible to any users.",
                 "yes": "I understand",
                 "no": "Cancel"
             },
@@ -1060,11 +1060,11 @@
             "roleUpdateNowReader": "Your role on this workspace has been updated. You are now a Reader and can no longer import or update entries."
         },
         "deleteOneFileQuestionTitle": "Delete one file",
-        "deleteOneFileQuestionSubtitle": "Are you sure you want to delete file `{name}`?",
+        "deleteOneFileQuestionSubtitle": "Are you sure you want to delete file <b>{name}</b>?",
         "deleteOneFolderQuestionTitle": "Delete one folder",
-        "deleteOneFolderQuestionSubtitle": "Are you sure you want to delete folder `{name}`?",
+        "deleteOneFolderQuestionSubtitle": "Are you sure you want to delete folder <b>{name}</b>?",
         "deleteMultipleQuestionTitle": "Delete multiple items",
-        "deleteMultipleQuestionSubtitle": "Are you sure you want to delete these {count} items?",
+        "deleteMultipleQuestionSubtitle": "Are you sure you want to delete these <b>{count} items</b>?",
         "deleteOneFileYes": "Delete file",
         "deleteOneFileNo": "Keep file",
         "deleteOneFolderYes": "Delete folder",
@@ -1942,7 +1942,7 @@
             "manageInvitation": "Manage invitation",
             "cancelInvitation": {
                 "title": "Cancel invitation",
-                "message": "The invitation sent to {email} and the invitation link will no longer be valid. Are you sure you want to continue?",
+                "message": "The invitation sent to <b>{email}</b> and the invitation link will no longer be valid.<br/><br/>Are you sure you want to continue?",
                 "yes": {
                     "short": "Delete",
                     "long": "Delete invitation"
@@ -1960,7 +1960,7 @@
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Invite a new user",
-            "subtitle": "You can send multiple invitations by separating the email addresses with ';'",
+            "subtitle": "You can send multiple invitations by separating the email addresses with a semicolon « <b>;</b> »",
             "label": "User's email",
             "placeholder": "john.smith{'@'}example.com",
             "create": "Send invitation | Send invitation | Send {count} invitations",
@@ -1984,7 +1984,7 @@
         },
         "revocation": {
             "revokeTitle": "Revoke this user? | Revoke these users?",
-            "revokeQuestion": "This will revoke {user}, preventing them from accessing this organization. Are you sure you want to proceed? | This will revoke these {count} users, preventing them from accessing this organization. Are you sure you want to proceed?",
+            "revokeQuestion": "This will revoke <b>{user}</b>, preventing them from accessing this organization.<br/><br/>Are you sure you want to proceed? | This will revoke these <b>{count} users</b>, preventing them from accessing this organization.<br/><br/>Are you sure you want to proceed?",
             "revokeYes": "Revoke",
             "revokeNo": "Cancel",
             "revokeFailed": "Failed to revoke this user | Failed to revoke any user",

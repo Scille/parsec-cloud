@@ -417,7 +417,7 @@ msTest.describe(() => {
 
       await answerQuestion(documents, true, {
         expectedTitleText: 'Delete one file',
-        expectedQuestionText: `Are you sure you want to delete file \`${fileName}\`?`,
+        expectedQuestionText: `Are you sure you want to delete file ${fileName}?`,
         expectedNegativeText: 'Keep file',
         expectedPositiveText: 'Delete file',
       });
@@ -842,7 +842,7 @@ msTest.describe(() => {
 
       await answerQuestion(documents, true, {
         expectedTitleText: 'Delete one file',
-        expectedQuestionText: `Are you sure you want to delete file \`${fileName}\`?`,
+        expectedQuestionText: `Are you sure you want to delete file ${fileName}?`,
         expectedNegativeText: 'Keep file',
         expectedPositiveText: 'Delete file',
       });
