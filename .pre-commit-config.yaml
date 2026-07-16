@@ -86,7 +86,7 @@ repos:
         additional_dependencies:
           - "@cspell/dict-en_us"
           - "@cspell/dict-fr-fr"
-          - "@cspell/dict-fr-reforme"  # cspell:disable-line
+          - "@cspell/dict-fr-reforme" # cspell:disable-line
           - "@cspell/dict-bash"
           - "@cspell/dict-shell"
           - "@cspell/dict-win32"
@@ -107,7 +107,7 @@ repos:
           # Otherwise, shellcheck will only check input files (i.e. .sh files that has been changed)
           --external-sources,
           # Specify paths to search for sourced files (useful for SC1090 & SC1091)
-          --source-path=SCRIPTDIR
+          --source-path=SCRIPTDIR,
         ]
 
   ########
@@ -116,10 +116,10 @@ repos:
   # Long story short we cannot use pre-commit isolated environments for the
   # tools below because they require access to the project dependencies.
   #
-  # So instead, we run these tools with `poetry run`, thus reusing project
+  # So instead, we run these tools with `uv run`, thus reusing project
   # configuration and virtual env:
-  # - `poetry run` will stick to the shell current virtual env
-  # - if the shell is not into a virtual env, poetry will create one and install Parsec&deps
+  # - `uv run` will stick to the shell current virtual env
+  # - if the shell is not into a virtual env, uv will create one and install Parsec&deps
   # - lastly, the tools are executed
   #
   # This approach requires the tools to be listed as dev dependencies but in
@@ -128,7 +128,7 @@ repos:
   #
   # This approach has the following benefits:
   # - It prevents going out of sync in tools version between pre-commit config
-  #   and poetry.lock
+  #   and uv.lock
   # - It saves time on initial run because we don't have to create isolated
   #   virtualenv for those tools
   # - Pre-commit hook are really simple, so it's no big deal to inline them.
@@ -137,53 +137,53 @@ repos:
   - repo: local
     hooks:
       - id: ruff-check
-        name: ruff check (using `poetry`)
-        entry: poetry --project ./server run ruff check --fix
+        name: ruff check
+        entry: uv --project ./server run --only-dev ruff check --fix
         require_serial: true
         pass_filenames: false
         language: system
         types_or: [python, pyi]
 
       - id: ruff-format
-        name: ruff format (using `poetry`)
-        entry: poetry --project ./server run ruff format
+        name: ruff format
+        entry: uv --project ./server run --only-dev ruff format
         require_serial: true
         language: system
         types_or: [python, pyi]
 
       - id: pyright
-        name: pyright (using `poetry`)
-        entry: poetry --project ./server run pyright
+        name: pyright
+        entry: uv --project ./server run --only-dev pyright
         require_serial: true
         language: system
         types_or: [python, pyi]
         args: [--project=server/]
 
       - id: deptry
-        name: deptry (using `poetry`)
-        entry: poetry --project ./server run deptry server --config=server/pyproject.toml
+        name: deptry
+        entry: uv --project ./server run --only-dev deptry server --config=server/pyproject.toml
         files: ^server/
         types_or: [python, pyproj]
-        pass_filenames: false  # deptry expects only the root directory to scan
+        pass_filenames: false # deptry expects only the root directory to scan
         require_serial: true
         language: system
 
       - id: sqlfluff
-        name: SQLFluff (using `poetry`)
-        entry: poetry --project ./server run ./misc/lint_sql.py --fix
+        name: SQLFluff
+        entry: uv --project ./server run --only-dev ./misc/lint_sql.py --fix
         types_or: [sql]
         files: |
-            (?x)^(
-                libparsec/crates/platform_storage/src/native/.*|
-                server/parsec/components/postgresql/migrations/.*|
-                server/tests/migrations/.*
-            )$
+          (?x)^(
+              libparsec/crates/platform_storage/src/native/.*|
+              server/parsec/components/postgresql/migrations/.*|
+              server/tests/migrations/.*
+          )$
         require_serial: true
         language: system
 
       - id: sqlfluff-in-python
-        name: SQLFluff in Python server components (using `poetry`)
-        entry: poetry --project ./server run ./misc/lint_sql.py --non-sql-file-print-fix
+        name: SQLFluff in Python server components
+        entry: uv --project ./server run --only-dev ./misc/lint_sql.py --non-sql-file-print-fix
         types_or: [python]
         files: ^(server/parsec/components/postgresql/)
         require_serial: true
@@ -191,11 +191,11 @@ repos:
 
       # powrap, script to fix indentation of .po files.
       #
-      # - running with poetry in order to reuse environment from ./docs
+      # - running with uv in order to reuse environment from ./docs
       # - powrap is called via "make wrap" (see ./docs/Makefile)
       - id: powrap
-        name: powrap (using `poetry`)
-        entry: poetry --directory ./docs run make wrap
+        name: powrap
+        entry: uv --directory ./docs run make wrap
         pass_filenames: false
         types: [pofile]
         require_serial: true

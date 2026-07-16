@@ -100,6 +100,8 @@ def cli_running(cmd: str, wait_for: str | None = None, env: dict[str, str] = {})
         if wait_for:
             out = ""
             for _ in range(SUBPROCESS_TIMEOUT * 10):  # 10ms sleep steps
+                if p.poll() is not None:
+                    raise RuntimeError("Command exited before we found 'wait_for' in output")
                 out = p.live_stdout.read()[len(out) :]
                 if out:
                     print(out, end="")

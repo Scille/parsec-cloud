@@ -29,7 +29,6 @@ on:
     paths:
       - .github/workflows/package-server.yml
       - server/packaging
-      - server/build.py
       - server/pyproject.toml
 
 # We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
@@ -40,9 +39,6 @@ on:
 concurrency:
   group: package-server-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
-
-env:
-  poetry-version: 2.2.1
 
 permissions:
   contents: read
@@ -80,12 +76,6 @@ jobs:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: ./.github/actions/setup-python-poetry
-        with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./server
-        timeout-minutes: 10
-
       - name: Download version.patch artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # pin v8.0.1
         with:
@@ -113,15 +103,34 @@ jobs:
           echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
+      - name: Get rust flag release
+        shell: bash
+        run: |
+          echo "MATURIN_PEP517_ARGS=$(python make.py --quiet python-release-libparsec-cargo-flags) --locked" >> $GITHUB_ENV
+        env:
+          LIBPARSEC_FORCE_VENDORED_OPENSSL: true
+        timeout-minutes: 1
+
       - name: Build wheel
-        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # pin v4.1.0
+        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # pin v4.1.0
         with:
           package-dir: server
           output-dir: dist
+        env:
+          MATURIN_PEP517_ARGS: ${{ env.MATURIN_PEP517_ARGS }}
         timeout-minutes: 50
 
       - name: Set file for wheel version
         run: cp -v libparsec/version dist/version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          working-directory: server
+          version: 0.11.29 # marker:uv-version
+        timeout-minutes: 5
+
+      - run: git status --porcelain
 
       - name: Generate requirements & constraints infos
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel

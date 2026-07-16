@@ -14,11 +14,11 @@ The `generate.py` script generates bindings code for all platforms based on:
 Simply run the `generate.py` script specifying the platform (or `all` for all platforms):
 
 > [!NOTE]
-> The dependencies needed to run `generate.py` are installed via Poetry together with Parsec server
+> The dependencies needed to run `generate.py` are installed via `uv` together with Parsec server
 > dependencies (see [/server/README.md](../../server/README.md)).
 
 ```shell
-python generate.py electron web
+uv run --project server python generate.py electron web
 ```
 
 ## Updating the bindings
