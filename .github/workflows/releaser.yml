@@ -4,7 +4,6 @@ name: Releaser
 on:
   pull_request:
     paths:
-      - .github/workflows/package-server.yml
       - .github/workflows/releaser.yml
   push:
     tags:

@@ -9,7 +9,7 @@
 2. Activate your virtual environment
 
    ```shell
-   eval $(poetry -P server env activate)
+   uv venv server/.venv
    ```
 
 3. Install dependencies (from the root directory)
@@ -21,7 +21,7 @@
 4. Run parsec server
 
    ```shell
-   poetry run parsec
+   uv --project server run parsec
    ```
 
 Happy Hacking! 🐍
@@ -30,22 +30,31 @@ Happy Hacking! 🐍
 
 Run the tests with `pytest` (from `server` directory):
 
-```shell
-# run all tests
-$ poetry run pytest tests
-...
-# run tests from a specific directory
-$ poetry run pytest tests/api_v5/
-...
-# run tests from a specific test file
-$ poetry run pytest tests/api_v5/authenticated/test_shamir_recovery_setup.py
-...
-# run specific tests functions with `-k EXPR`, a Python expression where all
-# names are substring-matched against test names
-$ poetry run pytest -k 'not_allowed or not_found' tests
-```
+- Run all tests:
 
-The following options are available (run `poetry run pytest --help` for many more!):
+  ```shell
+  uv run pytest tests
+  ```
+
+- Run tests from a specific directory:
+
+  ```shell
+  uv run pytest tests/api_v5/
+  ```
+
+- Run tests from a specific test file:
+
+  ```shell
+  uv run pytest tests/api_v5/authenticated/test_shamir_recovery_setup.py
+  ```
+
+- Run specific tests functions with `-k EXPR`, a Python expression where all names are substring-matched against test names:
+
+  ```shell
+  uv run pytest -k 'not_allowed or not_found' tests
+  ```
+
+The following options are available (run `uv run pytest --help` for many more!):
 
 | Option                | Description                                              |
 | --------------------- | -------------------------------------------------------- |

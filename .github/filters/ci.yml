@@ -88,11 +88,10 @@ python-server: &python-server
   - server/parsec/**
   - server/tests/**
   - make.py
-  - server/build.py
 
 python-dependencies-project: &python-dependencies-project
   - server/pyproject.toml
-  - server/poetry.lock
+  - server/uv.lock
   - server/setup.cfg
 
 python-changes: &python-changes
@@ -101,7 +100,6 @@ python-changes: &python-changes
 
 # The python jobs need to be run when:
 # - The ci workflow has changed
-# - The action `setup-python-poetry` has changed
 # - The rust has changed
 #   - The dependencies
 #   - The pure code has changed
@@ -169,6 +167,6 @@ docs-jobs:
   - docs/locale/**.po
   - docs/conf.py
   - docs/pyproject.toml
-  - docs/poetry.lock
+  - docs/uv.lock
   - docs/Makefile
   - docs/**.rst
