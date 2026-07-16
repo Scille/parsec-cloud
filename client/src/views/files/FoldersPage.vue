@@ -247,6 +247,7 @@ import {
   EyeOpenIcon,
   I18n,
   MsActionBar,
+  MsActionBarAction,
   MsGridListToggle,
   MsImage,
   MsModalResult,
@@ -306,6 +307,7 @@ import {
   listWorkspaces,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
+import { useFileContextMenu } from '@/services/contextMenu';
 import { useFileActions } from '@/services/contextMenu/fileActions';
 import { isFileEditable } from '@/services/cryptpad';
 import {
@@ -336,7 +338,7 @@ import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } fr
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { OpenPathOptions } from '@/services/pathOpener';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { FileAction, FolderGlobalAction, getDuplicatePolicy, isFolderGlobalAction, useFileContextMenu } from '@/views/files';
+import { FileAction, FolderGlobalAction, getDuplicatePolicy, isFolderGlobalAction } from '@/views/files';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 import { IonContent, IonIcon, IonPage, IonText, popoverController } from '@ionic/vue';
 import {
@@ -473,16 +475,24 @@ const tabBarActions = computed(() => {
     if (selectedEntries.length === 1) {
       actions.push({
         label: 'FoldersPage.tabbar.rename',
-        action: async () => await renameEntries(getSelectedEntries()),
+        action: async () => await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries()),
         image: RenameIcon,
       });
     } else {
-      actions.push({ label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate });
+      actions.push({
+        label: 'FoldersPage.tabbar.duplicate',
+        action: async () => await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries()),
+        icon: duplicate,
+      });
     }
-    actions.push({ label: 'FoldersPage.tabbar.move', action: async () => await moveEntriesTo(getSelectedEntries()), icon: arrowRedo });
+    actions.push({
+      label: 'FoldersPage.tabbar.move',
+      action: async () => await dispatchContextMenuAction(FileAction.MoveTo, getSelectedEntries()),
+      icon: arrowRedo,
+    });
     actions.push({
       label: 'FoldersPage.tabbar.delete',
-      action: async () => await deleteEntries(getSelectedEntries()),
+      action: async () => await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries()),
       icon: trashBin,
       danger: true,
     });
@@ -502,10 +512,14 @@ const tabBarActions = computed(() => {
     }
   }
   if (selectedEntries.length > folders.value.getSelectedEntries().length && isWeb()) {
-    actions.push({ label: 'FoldersPage.tabbar.download', action: async () => await downloadEntries(getSelectedEntries()), icon: download });
+    actions.push({
+      label: 'FoldersPage.tabbar.download',
+      action: async () => await dispatchContextMenuAction(FileAction.Download, getSelectedEntries()),
+      icon: download,
+    });
     actions.push({
       label: 'FoldersPage.tabbar.downloadAsArchive',
-      action: async () => await downloadEntries(getSelectedEntries(), true),
+      action: async () => await dispatchContextMenuAction(FileAction.DownloadAsArchive, getSelectedEntries()),
       image: ZipFolderIcon,
     });
   }
@@ -514,7 +528,7 @@ const tabBarActions = computed(() => {
       if (selectedEntries[0].isFile()) {
         actions.push({
           label: 'FoldersPage.tabbar.seeInExplorer',
-          action: async () => await seeInExplorer(getSelectedEntries()),
+          action: async () => await dispatchContextMenuAction(FileAction.SeeInExplorer, getSelectedEntries()),
           image: EyeOpenIcon,
         });
       }
@@ -526,15 +540,39 @@ const tabBarActions = computed(() => {
     }
     if (isReadOnly.value) {
       actions.push(
-        { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
-        { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
+        {
+          label: 'FoldersPage.tabbar.copyLink',
+          action: async () => await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries()),
+          icon: link,
+        },
+        {
+          label: 'FoldersPage.tabbar.details',
+          action: async () => await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries()),
+          icon: informationCircle,
+        },
       );
     } else {
       actions.push(
-        { label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate },
-        { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
-        { label: 'FoldersPage.tabbar.history', action: async () => await showHistory(getSelectedEntries()), icon: time },
-        { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
+        {
+          label: 'FoldersPage.tabbar.duplicate',
+          action: async () => await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries()),
+          icon: duplicate,
+        },
+        {
+          label: 'FoldersPage.tabbar.copyLink',
+          action: async () => await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries()),
+          icon: link,
+        },
+        {
+          label: 'FoldersPage.tabbar.history',
+          action: async () => await dispatchContextMenuAction(FileAction.ShowHistory, getSelectedEntries()),
+          icon: time,
+        },
+        {
+          label: 'FoldersPage.tabbar.details',
+          action: async () => await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries()),
+          icon: informationCircle,
+        },
       );
     }
   }
@@ -626,15 +664,15 @@ async function defineShortcuts(): Promise<void> {
   );
   hotkeys.add(
     { key: 'enter', modifiers: Modifiers.None, platforms: Platforms.MacOS, disableIfModal: true, route: Routes.Documents },
-    async () => await renameEntries(getSelectedEntries()),
+    async () => await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries()),
   );
   hotkeys.add(
     { key: 'f2', modifiers: Modifiers.None, platforms: Platforms.Windows | Platforms.Linux, disableIfModal: true, route: Routes.Documents },
-    async () => await renameEntries(getSelectedEntries()),
+    async () => await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries()),
   );
   hotkeys.add(
     { key: 'i', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
-    async () => await showDetails(getSelectedEntries()),
+    async () => await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries()),
   );
   // FIXME: Reactivate `x` and `c` hotkeys when copy/move bindings are available
   // hotkeys.add(
@@ -647,7 +685,7 @@ async function defineShortcuts(): Promise<void> {
   // );
   hotkeys.add(
     { key: 'l', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop | Platforms.Web, disableIfModal: true, route: Routes.Documents },
-    async () => await copyLink(getSelectedEntries()),
+    async () => await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries()),
   );
   hotkeys.add(
     {
@@ -657,11 +695,11 @@ async function defineShortcuts(): Promise<void> {
       disableIfModal: true,
       route: Routes.Documents,
     },
-    async () => await deleteEntries(getSelectedEntries()),
+    async () => await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries()),
   );
   hotkeys.add(
     { key: 'backspace', modifiers: Modifiers.Ctrl, platforms: Platforms.MacOS, disableIfModal: true, route: Routes.Documents },
-    async () => await deleteEntries(getSelectedEntries()),
+    async () => await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries()),
   );
   hotkeys.add(
     { key: 'g', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
@@ -1056,15 +1094,6 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
   }
 }
 
-async function showEnclosingFolder(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1 || !workspaceInfo.value) {
-    return;
-  }
-  await fileActions.showEnclosingFolder(entries[0], workspaceInfo.value);
-  searchPattern.value = '';
-  await cancelSearch();
-}
-
 async function onSearchResultClick(entry: parsec.SearchResult): Promise<void> {
   await onSelectionCancel();
   if (!entry.stats.isFile()) {
@@ -1319,77 +1348,6 @@ function getSelectedEntries(): EntryModel[] {
   return [...folders.value.getSelectedEntries(), ...files.value.getSelectedEntries()];
 }
 
-async function deleteEntries(entries: EntryModel[]): Promise<void> {
-  if (!workspaceInfo.value) {
-    return;
-  }
-  await fileActions.deleteEntries(entries, workspaceInfo.value);
-  if (search.value) {
-    await startSearch(searchPattern.value);
-  }
-  await onSelectionCancel();
-  await listFolder({ sameFolder: true });
-}
-
-async function renameEntries(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1 || !workspaceInfo.value) {
-    return;
-  }
-  await fileActions.renameEntry(entries[0], workspaceInfo.value);
-  if (search.value) {
-    await startSearch(searchPattern.value);
-  }
-  await onSelectionCancel();
-}
-
-async function copyLink(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1 || !workspaceInfo.value) {
-    return;
-  }
-  await fileActions.copyLink(entries[0], workspaceInfo.value);
-}
-
-async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
-  if (!workspaceInfo.value) {
-    return;
-  }
-  await fileActions.moveEntriesTo(entries, workspaceInfo.value, currentPath.value);
-  selectionEnabled.value = false;
-}
-
-async function showDetails(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1 || !workspaceInfo.value || !userInfo.value) {
-    return;
-  }
-  await fileActions.showDetails(entries[0], workspaceInfo.value, userInfo.value.currentProfile);
-}
-
-async function copyEntries(entries: EntryModel[]): Promise<void> {
-  if (!workspaceInfo.value) {
-    return;
-  }
-  await fileActions.copyEntries(entries, workspaceInfo.value, currentPath.value);
-  selectionEnabled.value = false;
-}
-
-async function downloadEntries(entries: EntryModel[], asArchive?: boolean): Promise<void> {
-  if (!workspaceInfo.value) {
-    window.electronAPI.log('error', 'No workspace info when trying to download a file');
-    return;
-  }
-  await fileActions.downloadEntries(entries, workspaceInfo.value, currentFolder.value, currentPath.value, asArchive);
-  await onSelectionCancel();
-}
-
-async function showHistory(entries: EntryModel[]): Promise<void> {
-  if (!workspaceInfo.value) {
-    window.electronAPI.log('error', 'No workspace info when trying to navigate to history');
-    return;
-  }
-  await fileActions.showHistory(entries, workspaceInfo.value);
-  selectionEnabled.value = false;
-}
-
 async function openEntry(entryToOpen: EntryModel, options: OpenPathOptions): Promise<void> {
   if (!workspaceInfo.value) {
     window.electronAPI.log('warn', 'Trying to open an entry but missing workspace info.');
@@ -1467,44 +1425,35 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
   await performFolderAction(action);
 }
 
-async function dispatchContextMenuAction(action: FileAction, entry: EntryModel, selectedEntries: Array<EntryModel>): Promise<void> {
-  const actions = new Map<FileAction, (file: EntryModel[]) => Promise<void>>([
-    [
-      FileAction.Preview,
-      async (entries: EntryModel[]): Promise<void> =>
-        await openEntry(entries[0], { disallowSystem: true, skipViewers: false, readOnly: true }),
-    ],
-    [FileAction.Rename, renameEntries],
-    [FileAction.Edit, async (entries: EntryModel[]): Promise<void> => await openEntry(entries[0], { readOnly: isReadOnly.value })],
-    [FileAction.MoveTo, moveEntriesTo],
-    [FileAction.MakeACopy, copyEntries],
-    [FileAction.Open, async (entries: EntryModel[]): Promise<void> => await openEntry(entries[0], { skipViewers: true })],
-    [FileAction.ShowHistory, showHistory],
-    [FileAction.Download, downloadEntries],
-    [FileAction.DownloadAsArchive, (entries) => downloadEntries(entries, true)],
-    [FileAction.ShowDetails, showDetails],
-    [FileAction.CopyLink, copyLink],
-    [FileAction.Delete, deleteEntries],
-    [FileAction.SeeInExplorer, seeInExplorer],
-    [FileAction.ShowEnclosingFolder, showEnclosingFolder],
-  ]);
-
-  const fn = actions.get(action);
-  if (fn) {
-    if (!selectedEntries.includes(entry)) {
-      await fn([entry]);
-    } else {
-      await fn(selectedEntries);
+async function dispatchContextMenuAction(action: FileAction, entries: Array<parsec.EntryStat>): Promise<void> {
+  if (!workspaceInfo.value || !userInfo.value || entries.length === 0) {
+    return;
+  }
+  await contextMenu.dispatchContextMenuAction(action, entries, workspaceInfo.value, isReadOnly.value, userInfo.value.currentProfile);
+  if ([FileAction.ShowHistory, FileAction.Open, FileAction.MakeACopy, FileAction.MoveTo].includes(action)) {
+    selectionEnabled.value = false;
+  }
+  if ([FileAction.Rename, FileAction.Download, FileAction.DownloadAsArchive, FileAction.Delete].includes(action)) {
+    await onSelectionCancel();
+  }
+  if ([FileAction.Delete].includes(action)) {
+    if (search.value) {
+      await startSearch(searchPattern.value);
     }
+    await listFolder({ sameFolder: true });
+  }
+  if ([FileAction.SeeInExplorer].includes(action)) {
+    searchPattern.value = '';
+    await cancelSearch();
   }
 }
 
 async function onSearchResultContextMenu(event: Event, entry: parsec.SearchResult, onFinished?: () => void): Promise<void> {
   await onSelectionCancel();
-  const action = await contextMenu.openEntryContextMenu(event, { ...entry.stats, isSelected: false }, [], isReadOnly.value, true);
+  const action = await contextMenu.openEntryContextMenu(event, [entry.stats], isReadOnly.value, true);
 
   if (action) {
-    await dispatchContextMenuAction(action, { ...entry.stats, isSelected: false }, []);
+    await dispatchContextMenuAction(action, [entry.stats]);
   }
   if (onFinished) {
     onFinished();
@@ -1513,10 +1462,20 @@ async function onSearchResultContextMenu(event: Event, entry: parsec.SearchResul
 
 async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
   const selectedEntries = getSelectedEntries();
-  const action = await contextMenu.openEntryContextMenu(event, entry, selectedEntries, isReadOnly.value);
+
+  const entries: EntryModel[] = [];
+
+  if (!selectedEntries.includes(entry)) {
+    await onSelectionCancel();
+    entries.push(entry);
+  } else {
+    entries.push(...selectedEntries);
+  }
+
+  const action = await contextMenu.openEntryContextMenu(event, entries, isReadOnly.value);
 
   if (action) {
-    await dispatchContextMenuAction(action, entry, selectedEntries);
+    await dispatchContextMenuAction(action, entries);
   }
   if (onFinished) {
     onFinished();
@@ -1557,13 +1516,6 @@ async function shareEntries(): Promise<void> {
   copyPathLinkToClipboard(currentPath.value, workspaceInfo.value.handle, informationManager.value);
 }
 
-async function seeInExplorer(entries: EntryModel[]): Promise<void> {
-  if (!workspaceInfo.value || entries.length !== 1) {
-    return;
-  }
-  await fileActions.seeInExplorer(entries[0].path, workspaceInfo.value);
-}
-
 async function onDropAsReader(): Promise<void> {
   await informationManager.value.present(
     new Information({
@@ -1572,15 +1524,6 @@ async function onDropAsReader(): Promise<void> {
     }),
     PresentationMode.Toast,
   );
-}
-
-// Use megashark's typing when available
-interface MsActionBarAction {
-  label: Translatable;
-  icon?: string;
-  image?: string;
-  isDropdown?: boolean;
-  onClick?: (event: MouseEvent) => Promise<void>;
 }
 
 const actionBarOptionsFoldersPage = computed(() => {
@@ -1641,28 +1584,28 @@ const actionBarOptionsFoldersPage = computed(() => {
           label: 'FoldersPage.fileContextMenu.actionRename',
           image: RenameIcon,
           onClick: async () => {
-            await renameEntries(getSelectedEntries());
+            await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries());
           },
         },
         {
           label: 'FoldersPage.fileContextMenu.actionMoveTo',
           icon: arrowRedo,
           onClick: async () => {
-            await moveEntriesTo(getSelectedEntries());
+            await dispatchContextMenuAction(FileAction.MoveTo, getSelectedEntries());
           },
         },
         {
           label: 'FoldersPage.fileContextMenu.actionMakeACopy',
           icon: duplicate,
           onClick: async () => {
-            await copyEntries(getSelectedEntries());
+            await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries());
           },
         },
         {
           label: 'FoldersPage.fileContextMenu.actionDelete',
           icon: trashBin,
           onClick: async () => {
-            await deleteEntries(getSelectedEntries());
+            await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries());
           },
         },
       );
@@ -1672,14 +1615,14 @@ const actionBarOptionsFoldersPage = computed(() => {
         label: 'FoldersPage.fileContextMenu.actionDownload',
         icon: download,
         onClick: async () => {
-          await downloadEntries(getSelectedEntries());
+          await dispatchContextMenuAction(FileAction.Download, getSelectedEntries());
         },
       });
       actionArray.push({
         label: 'FoldersPage.fileContextMenu.actionDownloadAsArchive',
         icon: archive,
         onClick: async () => {
-          await downloadEntries(getSelectedEntries(), true);
+          await dispatchContextMenuAction(FileAction.DownloadAsArchive, getSelectedEntries());
         },
       });
     }
@@ -1688,14 +1631,14 @@ const actionBarOptionsFoldersPage = computed(() => {
         label: 'FoldersPage.fileContextMenu.actionDetails',
         icon: informationCircle,
         onClick: async () => {
-          await showDetails(getSelectedEntries());
+          await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries());
         },
       },
       {
         label: 'FoldersPage.fileContextMenu.actionCopyLink',
         icon: link,
         onClick: async () => {
-          await copyLink(getSelectedEntries());
+          await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries());
         },
       },
     );
@@ -1707,21 +1650,21 @@ const actionBarOptionsFoldersPage = computed(() => {
           label: 'FoldersPage.fileContextMenu.actionMoveTo',
           icon: arrowRedo,
           onClick: async () => {
-            await moveEntriesTo(getSelectedEntries());
+            await dispatchContextMenuAction(FileAction.MoveTo, getSelectedEntries());
           },
         },
         {
           label: 'FoldersPage.fileContextMenu.actionMakeACopy',
           icon: duplicate,
           onClick: async () => {
-            await copyEntries(getSelectedEntries());
+            await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries());
           },
         },
         {
           label: 'FoldersPage.fileContextMenu.actionDelete',
           icon: trashBin,
           onClick: async () => {
-            await deleteEntries(getSelectedEntries());
+            await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries());
           },
         },
       );
@@ -1731,14 +1674,14 @@ const actionBarOptionsFoldersPage = computed(() => {
         label: 'FoldersPage.fileContextMenu.actionDownload',
         icon: download,
         onClick: async () => {
-          await downloadEntries(getSelectedEntries());
+          await dispatchContextMenuAction(FileAction.Download, getSelectedEntries());
         },
       });
       actionArray.push({
         label: 'FoldersPage.fileContextMenu.actionDownloadAsArchive',
         image: ZipFolderIcon,
         onClick: async () => {
-          await downloadEntries(getSelectedEntries(), true);
+          await dispatchContextMenuAction(FileAction.DownloadAsArchive, getSelectedEntries());
         },
       });
     }

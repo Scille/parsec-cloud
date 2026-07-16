@@ -22,8 +22,8 @@ export default defineConfig({
   forbidOnly: IN_CI,
   /* Retry on CI only */
   retries: IN_CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: IN_CI ? '80%' : '50%',
+  /* Opt out of parallel tests on CI. Keep 1 worker when running locally, easier to debug */
+  workers: IN_CI ? '80%' : 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: IN_CI ? 'blob' : 'list',
   webServer: {

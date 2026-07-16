@@ -1,128 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { EntryModel } from '@/components/files';
-import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
 import { EntryName, EntryStat, EntryStatFile, WorkspaceHandle, WorkspaceID } from '@/parsec';
-import { isFileEditable } from '@/services/cryptpad';
 import { DuplicatePolicy } from '@/services/fileOperation';
 import { FileOperationManager } from '@/services/fileOperation/manager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
-import { FileAction, FileContextMenu, FileOperationConflictsModal, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
+import { FileOperationConflictsModal } from '@/views/files';
 import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
-import { modalController, popoverController } from '@ionic/vue';
-import { MsModalResult, useWindowSize } from 'megashark-lib';
+import { modalController } from '@ionic/vue';
+import { MsModalResult } from 'megashark-lib';
 import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
-
-export function useFileContextMenu() {
-  const { isLargeDisplay } = useWindowSize();
-
-  async function openGlobalContextMenu(event: Event, isReadOnly: boolean, isEmpty: boolean): Promise<FolderGlobalAction | undefined> {
-    let action: FolderGlobalAction | undefined;
-
-    if (isLargeDisplay.value) {
-      if (isReadOnly) {
-        return;
-      }
-
-      const popover = await popoverController.create({
-        component: FolderGlobalContextMenu,
-        cssClass: 'folder-global-context-menu',
-        event: event,
-        reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-        translucent: true,
-        showBackdrop: false,
-        dismissOnSelect: true,
-        alignment: 'start',
-        componentProps: {
-          isReadOnly: isReadOnly,
-        },
-      });
-      await popover.present();
-      action = (await popover.onDidDismiss()).data?.action;
-      await popover.dismiss();
-    } else {
-      const modal = await modalController.create({
-        component: SmallDisplayCategoryFileContextMenu,
-        cssClass: 'file-context-sheet-modal',
-        canDismiss: true,
-        breakpoints: [0, 0.5],
-        expandToScroll: true,
-        initialBreakpoint: 0.5,
-        showBackdrop: true,
-        componentProps: {
-          disableSelect: isEmpty,
-        },
-      });
-
-      await modal.present();
-      action = (await modal.onWillDismiss()).data?.action;
-      await modal.dismiss();
-    }
-    return action;
-  }
-
-  async function openEntryContextMenu(
-    event: Event,
-    entry: EntryModel,
-    selectedEntries: EntryModel[],
-    isReadOnly: boolean,
-    navigateFromAnywhere?: boolean,
-  ): Promise<FileAction | undefined> {
-    let action: FileAction | undefined;
-
-    if (isLargeDisplay.value) {
-      const popover = await popoverController.create({
-        component: FileContextMenu,
-        cssClass: 'file-context-menu',
-        event: event,
-        reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-        translucent: true,
-        showBackdrop: false,
-        dismissOnSelect: true,
-        alignment: 'start',
-        componentProps: {
-          isReadOnly: isReadOnly,
-          multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
-          isFile: entry.isFile(),
-          isEditable: isFileEditable(entry.name),
-          navigateFromAnywhere: navigateFromAnywhere,
-        },
-      });
-
-      await popover.present();
-      action = (await popover.onDidDismiss()).data?.action;
-      await popover.dismiss();
-    } else {
-      const modal = await modalController.create({
-        component: SmallDisplayFileContextMenu,
-        cssClass: 'file-context-sheet-modal',
-        breakpoints: [0, 0.5, 1],
-        initialBreakpoint: 0.5,
-        expandToScroll: false,
-        showBackdrop: true,
-        componentProps: {
-          isReadOnly: isReadOnly,
-          multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
-          isFile: entry.isFile(),
-          isEditable: isFileEditable(entry.name),
-          navigateFromAnywhere: navigateFromAnywhere,
-        },
-      });
-
-      await modal.present();
-      action = (await modal.onDidDismiss()).data?.action;
-      await modal.dismiss();
-    }
-
-    return action;
-  }
-
-  return {
-    openGlobalContextMenu,
-    openEntryContextMenu,
-  };
-}
 
 export async function askDownloadConfirmation(multipleFiles?: boolean): Promise<{ result: MsModalResult; noReminder?: boolean }> {
   const modal = await modalController.create({
