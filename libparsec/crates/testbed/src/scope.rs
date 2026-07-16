@@ -180,7 +180,7 @@ fn start_testbed_server() -> (std::process::Child, u16) {
         }
     };
 
-    let mut process = std::process::Command::new("poetry")
+    let mut process = std::process::Command::new("uv")
         .args([
             "--directory",
             server_dir.to_str().expect("Script path contains non-utf8"),

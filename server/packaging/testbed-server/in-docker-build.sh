@@ -7,37 +7,15 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --defaul
 export PATH="/root/.cargo/bin:$PATH"
 cargo --version
 
-# Install Poetry
-curl -sSL https://install.python-poetry.org | python - --version=2.2.1
+# Install uv
+curl -LsSf https://astral.sh/uv/0.11.29/install.sh | sh
 export PATH="/root/.local/bin:$PATH"
-poetry --version
-# Install plugin for poetry export
-poetry self add poetry-plugin-export
+uv --version
 
-# Install parsec in virtual env
-python -m venv venv
-# shellcheck source=/dev/null  # see: https://www.shellcheck.net/wiki/SC1091
-. ./venv/bin/activate
+uv venv --project=server venv
 
-# Installing the Python project is a bit tricky:
-# - `pip install .` ignores dependency pinning :(
-# - `poetry install` install the main project as a symlink in the virtualenv :(
-# So instead we ask poetry to generate a `requirements.txt` that contains the
-# pinned dependencies, then pip install this, and finally do a regular
-# `pip install .` that will only install our project given all dependencies are
-# already installed.
-
-# Only keep dependencies from `main` group (i.e. the base dependencies) and
-# testbed-server, as other groups are for dev
-poetry --project ./server export --output requirements.txt --with=main,testbed-server
-# Install the dependencies...
-pip install -r ./requirements.txt
-# ...and our project
-# Compile in CI mode to reduce size while still retain `test-utils` feature
-# Also don't bundle OpenSSL shared library (it is already in the Docker image !)
-POETRY_LIBPARSEC_BUILD_PROFILE=ci \
-POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false \
-pip install ./server
+VIRTUAL_ENV=$PWD/venv MATURIN_PEP517_ARGS="$(python make.py --quiet python-ci-libparsec-cargo-flags)" \
+    uv pip install --directory=server --group testbed-server . --verbose
 
 # Boto3/Botocore are pretty big dependencies and won't be used (given the testbed
 # server only uses the memory storage)

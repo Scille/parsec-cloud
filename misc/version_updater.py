@@ -55,10 +55,13 @@ def only_major_version(template: str, separator: str = ".") -> Callable[[str], s
     return _only_major_version
 
 
-POETRY_GA_VERSION = ReplaceRegex(r"poetry-version: [0-9.]+", "poetry-version: {version}")
 PYTHON_GA_VERSION = ReplaceRegex(
     r"python-version: [0-9.]+", hide_patch_version("python-version: {version}")
 )
+UV_INSTALL_SCRIPT = ReplaceRegex(
+    r"https://astral.sh/uv/[0-9.]+/install.sh", "https://astral.sh/uv/{version}/install.sh"
+)
+UV_VERSION_MARKER = ReplaceRegex(r"[0-9.]+ # marker:uv-version", "{version} # marker:uv-version")
 NODE_GA_VERSION = ReplaceRegex(r"node-version: [0-9.]+", "node-version: {version}")
 WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-version: {version}")
 PYTHON_DOCKER_VERSION = ReplaceRegex(r"python:\d.\d+", hide_patch_version("python:{version}"))
@@ -90,11 +93,11 @@ class Tool(enum.Enum):
     CargoDeny = "cargo-deny"
     CargoUdeps = "cargo-udeps"
     Cross = "cross"
+    UV = "uv"
     License = "license"
     Nextest = "nextest"
     Node = "node"
     Parsec = "parsec"
-    Poetry = "poetry"
     PostgreSQL = "postgres"
     PreCommit = "pre-commit"
     Python = "python"
@@ -109,6 +112,7 @@ class Tool(enum.Enum):
             case Tool.Parsec:
                 updated |= refresh_cargo_lock(updated_files)
                 updated |= refresh_npm_package_lock(updated_files)
+                updated |= refresh_uv_lock(updated_files)
             case Tool.License:
                 updated |= refresh_npm_package_lock(updated_files)
             case _:
@@ -195,6 +199,34 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
     return updated
 
 
+def refresh_uv_lock(updated_files: set[Path]) -> set[Path]:
+    for file in updated_files:
+        if file.name != "pyproject.toml":
+            continue
+
+        lock_file = file.parent / "uv.lock"
+        print(f"Refreshing uv lock file {lock_file} ...")
+        lines: list[str] = []
+        previous_line = None
+        regex, replace = TOML_VERSION_FIELD.compile(get_tool_version(Tool.Parsec))
+        for line in lock_file.read_text().splitlines():
+            if previous_line == 'name = "parsec-cloud"':
+                match = regex.search(line)
+                assert match, f"Expected to find a version field after a name field in {line!r}"
+                prefix = line[: match.start()]
+                suffix = line[match.end() :]
+                lines.append(f"{prefix}{replace}{suffix}")
+            else:
+                lines.append(line)
+            previous_line = line
+
+        content = ("\n".join(lines) + "\n").encode("utf8")
+        lock_file.write_bytes(content)  # Use write_bytes to keep \n on Windows
+        return {lock_file}
+
+    return set()
+
+
 def get_tools_version() -> dict[Tool, str]:
     global TOOLS_VERSION
     if TOOLS_VERSION is None:
@@ -221,7 +253,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / ".github/workflows/_releaser_nightly_build.yml": {Tool.Python: [PYTHON_GA_VERSION]},
     ROOT_DIR / ".github/workflows/ci-python.yml": {
-        Tool.Poetry: [POETRY_GA_VERSION],
+        Tool.UV: [UV_VERSION_MARKER],
         Tool.PostgreSQL: [
             ReplaceRegex(
                 r"postgresql-version: \d+",
@@ -244,11 +276,14 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / ".github/workflows/ci.yml": {
         Tool.Python: [PYTHON_GA_VERSION],
     },
+    ROOT_DIR / ".github/workflows/ci-docs.yml": {
+        Tool.UV: [UV_VERSION_MARKER],
+    },
     ROOT_DIR / ".github/workflows/_parse_version.yml": {
         Tool.Python: [PYTHON_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/codeql.yml": {
-        Tool.Poetry: [POETRY_GA_VERSION],
+        Tool.UV: [UV_VERSION_MARKER],
     },
     ROOT_DIR / ".github/workflows/docker-server.yml": {
         Tool.Python: [PYTHON_GA_VERSION],
@@ -257,7 +292,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Python: [PYTHON_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/package-server.yml": {
-        Tool.Poetry: [POETRY_GA_VERSION],
+        Tool.UV: [UV_VERSION_MARKER],
     },
     ROOT_DIR / ".github/workflows/package-cli.yml": {
         Tool.Cross: [ReplaceRegex(r"cross-version: .*", "cross-version: {version}")],
@@ -328,18 +363,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ReplaceRegex(r"Rust v[0-9.]+", "Rust v{version}"),
             RUSTUP_INSTALL,
         ],
-        Tool.Python: [
-            ReplaceRegex(r"python v[0-9.]+", hide_patch_version("python v{version}")),
-            ReplaceRegex(r"pyenv install [0-9.]+", "pyenv install {version}"),
-            ReplaceRegex(r"pyenv prefix [0-9.]+", "pyenv prefix {version}"),
-        ],
-        Tool.Poetry: [
-            ReplaceRegex(r"poetry >=[0-9.]+", "poetry >={version}"),
-            ReplaceRegex(
-                r"https://install.python-poetry.org/ \| python - --version=.*",
-                "https://install.python-poetry.org/ | python - --version={version}",
-            ),
-        ],
+        Tool.UV: [ReplaceRegex(r"uv >=[0-9.]+", "uv >={version}"), UV_INSTALL_SCRIPT],
         Tool.Node: [
             ReplaceRegex(r"Node [0-9.]+", "Node {version}"),
             ReplaceRegex(r"nvm install [0-9.]+", "nvm install {version}"),
@@ -419,23 +443,13 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
         Tool.Rust: [RUSTUP_INSTALL],
-        Tool.Poetry: [
-            ReplaceRegex(
-                r"curl -sSL https://install.python-poetry.org \| python - --version=[0-9.]+",
-                "curl -sSL https://install.python-poetry.org | python - --version={version}",
-            )
-        ],
+        Tool.UV: [UV_INSTALL_SCRIPT],
     },
     ROOT_DIR / "server/packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
     ROOT_DIR / "server/packaging/testbed-server/in-docker-build.sh": {
         Tool.Rust: [RUSTUP_INSTALL],
         Tool.Python: [PYTHON_SMALL_VERSION],
-        Tool.Poetry: [
-            ReplaceRegex(
-                r"curl -sSL https://install.python-poetry.org \| python - --version=[0-9.]+",
-                "curl -sSL https://install.python-poetry.org | python - --version={version}",
-            )
-        ],
+        Tool.UV: [UV_INSTALL_SCRIPT],
     },
     ROOT_DIR / "server/packaging/testbed-server/README.md": {
         Tool.Testbed: [TESTBED_VERSION],

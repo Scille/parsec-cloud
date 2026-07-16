@@ -405,7 +405,7 @@ fn start_testbed_server(stop_after_process: u32, port: u16) -> anyhow::Result<st
         std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
     let manifest_dir_path = Path::new(&cargo_manifest_dir);
 
-    let mut child = Command::new("poetry")
+    let mut child = Command::new("uv")
         .args([
             "run",
             "python",

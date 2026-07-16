@@ -35,7 +35,7 @@ Cargo.lock              @Scille/rust-code-owners
 /server/parsec/         @Scille/python-code-owners
 /server/tests/          @Scille/python-code-owners
 pyproject.toml          @Scille/python-code-owners
-poetry.lock             @Scille/python-code-owners
+uv.lock                 @Scille/python-code-owners
 readthedocs.yml         @Scille/python-code-owners
 mypy.ini                @Scille/python-code-owners
 setup.cfg               @Scille/python-code-owners

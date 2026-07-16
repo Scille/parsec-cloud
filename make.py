@@ -88,6 +88,9 @@ CLI_RELEASE_CARGO_FLAGS = f"--profile=release {maybe_force_vendored_dbus_cargo_f
 
 USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV = {"RUSTFLAGS": "--cfg use_pure_rust_but_dirty_zstd"}
 
+UV_EXTRA_ARGS = os.environ.get("UV_EXTRA_ARGS", "")
+MATURIN_EXTRA_ARGS = os.environ.get("MATURIN_EXTRA_ARGS", "")
+
 _web_non_release_build_uses_pure_rust_but_dirty_zstd = None
 
 
@@ -131,6 +134,10 @@ BINDINGS_WEB_DIR = BASE_DIR / "bindings/web"
 
 
 class Op:
+    @property
+    def enabled(self) -> bool:
+        return True
+
     def display(self, extra_cmd_args: Iterable[str]) -> str:
         raise NotImplementedError
 
@@ -170,13 +177,14 @@ class Echo(Op):
 
 
 class Cmd(Op):
-    def __init__(
-        self,
-        cmd: str,
-        extra_env: dict[str, str] = {},
-    ) -> None:
-        self.cmd = cmd
+    def __init__(self, cmd: str, extra_env: dict[str, str] = {}, enabled: bool = True) -> None:
+        self.cmd = cmd.strip()
         self.extra_env = extra_env
+        self._enabled = enabled
+
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
 
     def display(self, extra_cmd_args: Iterable[str]) -> str:
         display_extra_env = " ".join(
@@ -220,37 +228,23 @@ COMMANDS: dict[tuple[str, ...], Op | tuple[Op, ...]] = {
     #
     # Python bindings for the server
     #
-    ("python-dev-install", "i"): (
+    ("python-dev-install", "i", "python-dev-rebuild", "r"): (
         Cwd(SERVER_DIR),
-        # Don't build rust as part of poetry install step.
-        # This is because poetry creates a temporary virtualenv to run the
-        # build in, hence the python interpreter path changes between
-        # `poetry install` and the very next `maturin develop`, causing the
-        # latter to wast time on useless rebuild.
-        # (note only the first `maturin develop` is impacted, as all maturin
-        # develop uses the same default virtualenv)
         Cmd(
-            cmd="poetry install --with=testbed-server",
-            extra_env={"POETRY_LIBPARSEC_BUILD_STRATEGY": "no_build"},
+            f"uv run {UV_EXTRA_ARGS} maturin develop --uv --locked {PYTHON_DEV_CARGO_FLAGS} {MATURIN_EXTRA_ARGS}"
         ),
-        Cmd(f"poetry run maturin develop --locked {PYTHON_DEV_CARGO_FLAGS}"),
-    ),
-    ("python-dev-rebuild", "r"): (
-        Cwd(SERVER_DIR),
-        Cmd(f"poetry run maturin develop --locked {PYTHON_DEV_CARGO_FLAGS}"),
     ),
     ("python-ci-install",): (
         Cwd(SERVER_DIR),
+        Cmd("uv sync --locked"),
         Cmd(
-            cmd="poetry install",
-            extra_env={"POETRY_LIBPARSEC_BUILD_PROFILE": "ci"},
+            cmd=f"uv run {UV_EXTRA_ARGS} maturin develop --uv --locked {PYTHON_CI_CARGO_FLAGS} {MATURIN_EXTRA_ARGS}",
+            # Skip maturin step if `PYTHON_LIBPARSEC_BUILD_STRATEGY` is set to `no_build`
+            enabled=not (os.environ.get("PYTHON_LIBPARSEC_BUILD_STRATEGY") == "no_build"),
         ),
     ),
-    # Flags used in poetry's `server/build.py` when command is `python-ci-build`
     ("python-ci-libparsec-cargo-flags",): Echo(PYTHON_CI_CARGO_FLAGS),
-    # Flags used in poetry's `server/build.py` when generating the release wheel
     ("python-release-libparsec-cargo-flags",): Echo(PYTHON_RELEASE_CARGO_FLAGS),
-    # Flags used in poetry's `server/build.py` when generating the dev wheel
     ("python-dev-libparsec-cargo-flags",): Echo(PYTHON_DEV_CARGO_FLAGS),
     #
     # Parsec CLI
@@ -342,7 +336,7 @@ COMMANDS: dict[tuple[str, ...], Op | tuple[Op, ...]] = {
     ("run-testbed-server", "rts"): (
         Cwd(SERVER_DIR),
         Cmd(
-            cmd="poetry run python -m parsec testbed",
+            cmd="uv run python -m parsec testbed",
         ),
     ),
     # Flags used in `bindings/web/scripts/build.js`
@@ -379,8 +373,8 @@ if __name__ == "__main__":
     # Handle `-- <extra_cmd_args>` in argv
     # (argparse doesn't understand `--`, so we have to implement it by hand)
     has_reached_cmd_extra_args = False
-    extra_cmd_args = []
-    argv = []
+    extra_cmd_args: list[str] = []
+    argv: list[str] = []
     for arg in sys.argv[1:]:
         if has_reached_cmd_extra_args:
             extra_cmd_args.append(arg)
@@ -390,6 +384,7 @@ if __name__ == "__main__":
             argv.append(arg)
 
     args = parser.parse_args(argv)
+
     if not args.command:
         print("Available commands:\n")
         for aliases, cmds in COMMANDS.items():
@@ -409,6 +404,8 @@ if __name__ == "__main__":
 
         cwd = BASE_DIR
         for cmd in cmds:
+            if not cmd.enabled:
+                continue
             if not args.quiet:
                 # Flush is required to prevent mixing with the output of sub-command
                 print(f"{cmd.display(extra_cmd_args)}\n", flush=True)
