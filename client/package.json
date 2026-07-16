@@ -9,7 +9,7 @@
     "scripts": {
         "dev": "npm run megashark:install && vite",
         "preview": "vite preview",
-        "lint:eslint": "eslint . --max-warnings=0",
+        "lint:eslint": "npm run megashark:install && eslint . --max-warnings=0",
         "lint:tsc": "npm run megashark:install && vue-tsc --noEmit",
         "lint": "npm run lint:eslint && npm run lint:tsc",
         "lint:fix": "npm run lint:eslint -- --fix && npm run lint:tsc",

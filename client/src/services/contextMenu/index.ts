@@ -2,3 +2,4 @@
 
 export * from '@/services/contextMenu/fileActions';
 export * from '@/services/contextMenu/fileContextMenu';
+export * from '@/services/contextMenu/types';

@@ -72,7 +72,6 @@
         v-for="result in filteredResults"
         :key="result.stats.id"
         :search-item="result"
-        :disable-context-menu="multipleWorkspaces"
         @click="$emit('itemClick', $event)"
         @menu-click="(event, entry, onFinished) => $emit('menuItemClick', event, entry, onFinished)"
       />

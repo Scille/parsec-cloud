@@ -1429,14 +1429,14 @@ async function dispatchContextMenuAction(action: FileAction, entries: Array<pars
   if (!workspaceInfo.value || !userInfo.value || entries.length === 0) {
     return;
   }
-  await contextMenu.dispatchContextMenuAction(action, entries, workspaceInfo.value, isReadOnly.value, userInfo.value.currentProfile);
+  await contextMenu.dispatchContextMenuAction(action, entries, workspaceInfo.value, userInfo.value.currentProfile);
   if ([FileAction.ShowHistory, FileAction.Open, FileAction.MakeACopy, FileAction.MoveTo].includes(action)) {
     selectionEnabled.value = false;
   }
   if ([FileAction.Rename, FileAction.Download, FileAction.DownloadAsArchive, FileAction.Delete].includes(action)) {
     await onSelectionCancel();
   }
-  if ([FileAction.Delete].includes(action)) {
+  if ([FileAction.Delete, FileAction.Rename, FileAction.MoveTo, FileAction.MakeACopy].includes(action)) {
     if (search.value) {
       await startSearch(searchPattern.value);
     }
