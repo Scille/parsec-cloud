@@ -53,9 +53,6 @@ const config = {
   ],
   // Exclude dependencies reported as unused
   ignoreDependencies: [
-    // installed by the `megashark:install` script instead of being listed under
-    // `dependencies`, see `//megasharkLibSource` in `package.json`
-    'megashark-lib',
     // used during signature of electron artifact for macOS
     '@electron/notarize',
     // an electron-builder utility, only used in partial imports for typing

@@ -98,14 +98,6 @@ jobs:
         working-directory: client
         timeout-minutes: 30
 
-      - name: Build megashark-lib
-        # `megashark-lib` is a git dependency that needs its `prepare` script (a `vite build`) to run,
-        # which `npm install --ignore-scripts` above intentionally skips. See `//megasharkLibSource`
-        # in `client/package.json`.
-        run: npm run megashark:install
-        working-directory: client
-        timeout-minutes: 30
-
       # Install syft
       - uses: taiki-e/install-action@2ca9b94c269419b7b0c711c09d0b21c4e1d51145 # pin v2.83.1
         with:
