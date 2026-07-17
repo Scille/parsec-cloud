@@ -312,14 +312,6 @@ jobs:
         working-directory: client
         timeout-minutes: 30
 
-      - name: Build megashark-lib
-        # `megashark-lib` is a git dependency that needs its `prepare` script (a `vite build`) to run,
-        # which `npm install --ignore-scripts` above intentionally skips. See `//megasharkLibSource`
-        # in `client/package.json`.
-        run: npm run megashark:install
-        working-directory: client
-        timeout-minutes: 30
-
       - name: Install electron dependencies
         run: npm clean-install --verbose
         working-directory: client/electron
