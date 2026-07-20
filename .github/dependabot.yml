@@ -288,25 +288,9 @@ updates:
     rebase-strategy: disabled
 
   - package-ecosystem: npm
-    directory: /bindings/electron
-    pull-request-branch-name:
-      separator: "-"
-    labels:
-      - I-Bindings
-      - I-Dependency
-      - I-Javascript
-    cooldown:
-      default-days: 10
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:20"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
-
-  - package-ecosystem: npm
-    directory: /bindings/web
+    directories:
+      - /bindings/electron
+      - /bindings/web
     pull-request-branch-name:
       separator: "-"
     labels:
@@ -343,3 +327,41 @@ updates:
           - "*"
     open-pull-requests-limit: 1
     rebase-strategy: disabled
+
+  ##########
+  # Docker #
+  ##########
+
+  - package-ecosystem: docker
+    schedule:
+      interval: monthly
+    pull-request-branch-name:
+      separator: "-"
+    cooldown:
+      default-days: 10
+    directories:
+      - server/packaging/server
+      - server/packaging/testbed-server
+    labels:
+      - I-Dependency
+      - I-Docker
+    groups:
+      docker:
+        patterns:
+          - "*"
+
+  - package-ecosystem: docker-compose
+    schedule:
+      interval: monthly
+    pull-request-branch-name:
+      separator: "-"
+    cooldown:
+      default-days: 10
+    directory: docs/hosting/deployment
+    labels:
+      - I-Dependency
+      - I-Docker
+    groups:
+      docker:
+        patterns:
+          - "*"
