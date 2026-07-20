@@ -1,12 +1,12 @@
 diff --git a/docs/hosting/deployment/parsec-server.docker.yaml b/docs/hosting/deployment/parsec-server.docker.yaml
-index 81def1cc39..1b06dc46fb 100644
+index e5e8e18946..839f33b2a1 100644
 --- a/docs/hosting/deployment/parsec-server.docker.yaml
 +++ b/docs/hosting/deployment/parsec-server.docker.yaml
-@@ -11,6 +11,7 @@ services:
+@@ -13,6 +13,7 @@ services:
+       - proxy-pem-key
+     volumes:
        - ./parsec-nginx.conf:/etc/nginx/nginx.conf:ro
-       - ./parsec-proxy.crt:/certs/proxy.crt:ro
-       - ./parsec-proxy.key:/certs/proxy.key:ro
 +      - ./parsec-web:/var/www/parsec-web:ro
  
-   parsec-postgres:
+   postgres:
      image: postgres:16.10-alpine

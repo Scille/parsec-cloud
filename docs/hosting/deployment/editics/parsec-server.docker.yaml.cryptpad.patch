@@ -1,26 +1,36 @@
 diff --git a/docs/hosting/deployment/parsec-server.docker.yaml b/docs/hosting/deployment/parsec-server.docker.yaml
-index 78e3017700..5dcaac43f2 100644
+index e5e8e18946..8ce8901916 100644
 --- a/docs/hosting/deployment/parsec-server.docker.yaml
 +++ b/docs/hosting/deployment/parsec-server.docker.yaml
-@@ -65,6 +65,7 @@ services:
+@@ -3,6 +3,8 @@ services:
+     depends_on:
+       parsec:
+         condition: service_healthy
++      cryptpad:
++        condition: service_healthy
+     image: nginx:1.27-alpine
+     container_name: parsec-proxy
+     ports:
+@@ -133,6 +135,7 @@ services:
        - parsec-db.env
        - parsec-smtp.env
-       - parsec-admin-token.env
+       - secrets/parsec-admin-token.env
 +      - editics/parsec-cryptpad.env
      environment:
-       AWS_CA_BUNDLE: /run/secrets/mini-ca-crt
-     secrets:
-@@ -74,6 +75,13 @@ services:
+       AWS_CA_BUNDLE: /run/secrets/ca-crt
+     user: "1000"
+@@ -143,6 +146,14 @@ services:
      ports:
        - 127.0.0.1:6777:6777
  
-+  parsec-cryptpad:
++  cryptpad:
 +    image: ghcr.io/scille/cryptpad-server/cryptpad:v0.3
++    container_name: parsec-cryptpad
 +    environment:
-+      CRYPTPAD_CUSTOM_PROTOCOL: 'parsec-desktop:'
++      CRYPTPAD_CUSTOM_PROTOCOL: "parsec-desktop:"
 +      CRYPTPAD_HTTP_SAFE_ORIGIN: https://safe-cryptpad.parsec.localhost
 +      CRYPTPAD_HTTP_UNSAFE_ORIGIN: https://cryptpad.parsec.localhost
 +
  volumes:
    parsec-db-data: {}
-   parsec-object-data: {}
+   s3-data: {}

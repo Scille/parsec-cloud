@@ -52,6 +52,7 @@ rechiffrer
 Reynholm
 riri
 rustcrypto
+rustfs
 rustsec
 samuelmeuli
 scalingo

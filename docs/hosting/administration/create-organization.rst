@@ -99,7 +99,7 @@ Create an Organization
 
    .. code-block:: bash
 
-     set -a && source parsec-admin-token.env && set +a
+     set -a && source secrets/parsec-admin-token.env && set +a
 
    Otherwise, create this file now with the ``PARSEC_ADMINISTRATION_TOKEN`` variable
    and load it so you can use it below.
