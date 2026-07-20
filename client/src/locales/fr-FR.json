@@ -110,12 +110,11 @@
         }
     },
     "notification": {
-        "changeRole": "Votre rôle a été modifié en tant que {role} dans l'espace de travail {workspace}",
-        "workspaceAccess": "Vous avez accès à l'espace de travail {workspace}",
-        "userJoinWorkspace": "{name} vient de rejoindre l'espace de travail {workspace}",
-        "multipleUsersJoinWorkspace": "{count} viennent de rejoindre l'espace de travail {workspace}",
-        "users": "utilisateurs",
-        "userSharedDocument": "{name} a partagé un nouveau document",
+        "changeRole": "Votre rôle a été modifié en tant que <b>{role}</b> dans l'espace de travail <b>{workspace}</b>",
+        "workspaceAccess": "Vous avez accès à l'espace de travail <b>{workspace}</b>",
+        "userJoinWorkspace": "<b>{name}</b> vient de rejoindre l'espace de travail <b>{workspace}</b>",
+        "multipleUsersJoinWorkspace": "<b>{count} utilisateurs</b> viennent de rejoindre l'espace de travail <b>{workspace}</b>",
+        "userSharedDocument": "<b>{name}</b> a partagé un nouveau document",
         "allImportedElements": "Tous vos fichiers ont été importés",
         "newDeviceAdded": "Un nouvel appareil a été ajouté",
         "serverOnline": "Vous êtes connecté au serveur Parsec",
@@ -306,15 +305,9 @@
             "step": {
                 "showButton": "Voir les étapes",
                 "hideButton": "Masquer les étapes",
-                "one": "{application} (version ordinateur) et {login} à votre organisation.",
-                "two": "Dans le menu de votre compte (en haut à droite), sélectionnez {myDevices}, puis cliquez sur {addDevice} et {copyInvitation}.",
-                "three": "{pasteInvitation} ci-dessous et suivez les instructions pour configurer votre navigateur web.",
-                "application": "Ouvrez Parsec",
-                "login": "se connecter",
-                "myDevices": "Mes appareils",
-                "addDevice": "Ajouter un nouvel appareil",
-                "copyInvitation": "copier le lien",
-                "pasteInvitation": "Coller le lien"
+                "one": "<b>Ouvrez Parsec</b> (version ordinateur) et <b>connectez-vous</b> à votre organisation.",
+                "two": "Dans le menu de votre compte (en haut à droite), sélectionnez <b>Mes appareils</b>, puis cliquez sur <b>Ajouter un nouvel appareil</b> et <b>copiez le lien</b>.",
+                "three": "<b>Collez le lien</b> ci-dessous et suivez les instructions pour configurer votre navigateur web."
             },
             "pasteLinkLabel": "Coller le lien d'invitation",
             "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
@@ -827,7 +820,7 @@
         },
         "workspaceHiddenModal": {
             "title": "Masquer un espace de travail",
-            "affectedWorkspaces": "Vous êtes sur le point de masquer l'espace de travail {workspace}. Cet espace de travail ne sera plus visible depuis l'explorateur de fichiers.",
+            "affectedWorkspaces": "Vous êtes sur le point de masquer l'espace de travail <b>{workspace}</b>. Cet espace de travail ne sera plus visible depuis l'explorateur de fichiers.",
             "info": "Vous pouvez cocher “Afficher les espaces masqués” pour le voir dans Parsec.",
             "actionConfirm": "Masquer l'espace de travail",
             "actionCancel": "Annuler",
@@ -1098,12 +1091,11 @@
             "cancelled": "Annulé",
             "cancelling": "Annulation...",
             "cancel": "Annuler",
-            "failed": "Échoué",
-            "files": "fichiers"
+            "failed": "Échoué"
         },
         "ImportFile": {
-            "importMultipleFiles": "Import de {count}",
-            "gatherMultipleFiles": "Collecte de {count}",
+            "importMultipleFiles": "Import de <b>{count} fichiers</b>",
+            "gatherMultipleFiles": "Collecte de <b>{count} fichiers</b>",
             "importFilesAction": "Importer des fichiers",
             "importFolderAction": "Importer un dossier",
             "title": "Tâches de fond",
@@ -1123,21 +1115,21 @@
             "noDropForReader": "Vous êtes Lecteur sur cet espace de travail et ne pouvez pas importer des fichiers."
         },
         "CopyFile": {
-            "copyMultipleFiles": "Copie de {count}",
-            "copy": "Copie de {name}"
+            "copyMultipleFiles": "Copie de <b>{count} fichiers</b>",
+            "copy": "Copie de <b>{name}</b>"
         },
         "MoveFile": {
-            "moveMultipleFiles": "Déplacement de {count}",
-            "move": "Déplacement de {name}",
+            "moveMultipleFiles": "Déplacement de <b>{count} fichiers</b>",
+            "move": "Déplacement de <b>{name}</b>",
             "failedDetails": "Veuillez vous assurer que vous êtes en ligne."
         },
         "RestoreFile": {
-            "restoreMultipleFiles": "Restauration de {count}",
-            "restore": "Restauration de {name}",
+            "restoreMultipleFiles": "Restauration de <b>{count} fichiers</b>",
+            "restore": "Restauration de <b>{name}</b>",
             "failedDetails": "Impossible de restaurer ce fichier ou dossier."
         },
         "DownloadFile": {
-            "downloadSingle": "Téléchargement de {name}",
+            "downloadSingle": "Téléchargement de <b>{name}</b>",
             "downloadMultiple": "Téléchargement de un élément|Téléchargement de {count} éléments...",
             "downloadMultipleDone": "Un élément téléchargé|{count} éléments téléchargés",
             "preparing": "Préparation du téléchargement sécurisé",
@@ -1861,7 +1853,7 @@
             "titleAssignRoles": "Copie de rôles",
             "actionAssignRoles": "Copier les rôles des espaces de travail",
             "cannotAssignRolesToSelf": "Impossible de copier les rôles à vous-même.",
-            "subtitleAssignRoles": "Vous pouvez copier les rôles de {sourceUser} vers une autre personne. Les rôles des espaces de travail ne seront pas retirés.",
+            "subtitleAssignRoles": "Vous pouvez copier les rôles de <b>{sourceUser}</b> vers une autre personne. Les rôles des espaces de travail ne seront pas retirés.",
             "titleUpdateProfile": "Profil",
             "actionUpdateProfile": "Modifier le profil | Modifier les profils",
             "actionSelect": "Sélection",

@@ -107,6 +107,7 @@ async function onConfirmClicked(): Promise<boolean> {
     }
   }
 }
+
 .doc-link {
   cursor: pointer;
   text-decoration: underline;

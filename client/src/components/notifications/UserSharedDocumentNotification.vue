@@ -11,16 +11,10 @@
         :user-avatar="userInfo ? userInfo.humanHandle.label : ''"
       />
       <div class="notification-details">
-        <ion-text class="notification-details__message body">
-          <i18n-t
-            keypath="notification.userSharedDocument"
-            scope="global"
-          >
-            <template #name>
-              <strong>{{ userInfo ? userInfo.humanHandle.label : '' }}</strong>
-            </template>
-          </i18n-t>
-        </ion-text>
+        <ms-rich-text
+          class="notification-details__message body"
+          :text="{ key: 'notification.userSharedDocument', data: { name: userInfo ? userInfo.humanHandle.label : '' } }"
+        />
         <ion-text class="notification-details__time body-sm">
           <span>{{ $msTranslate(formatTimeSince(notification.time, '', 'short')) }}</span>
         </ion-text>
@@ -59,7 +53,7 @@ import { EventDistributor } from '@/services/eventDistributor';
 import { UserSharedDocumentData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonText, popoverController } from '@ionic/vue';
-import { Folder, MsImage, formatTimeSince } from 'megashark-lib';
+import { Folder, MsImage, MsRichText, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
 const userInfo: Ref<UserInfo | null> = ref(null);

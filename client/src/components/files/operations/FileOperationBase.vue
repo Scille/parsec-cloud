@@ -29,16 +29,10 @@
             v-if="singleEntry"
             class="element-details-title"
           >
-            <ion-text class="element-details-title__name form-input">
-              <i18n-t
-                :keypath="info.translation"
-                scope="global"
-              >
-                <template #name>
-                  <strong> {{ singleEntry.name }} </strong>
-                </template>
-              </i18n-t>
-            </ion-text>
+            <ms-rich-text
+              class="element-details-title__name form-input"
+              :text="{ key: info.translation, data: { name: singleEntry.name } }"
+            />
           </div>
           <div
             v-else
@@ -46,16 +40,10 @@
             :class="{ open: showFileList }"
             @click="toggleFileList"
           >
-            <ion-text class="element-details-title__name form-input">
-              <i18n-t
-                :keypath="info.translationMultiple"
-                scope="global"
-              >
-                <template #count>
-                  <strong>{{ info.entries.length }} {{ $msTranslate('FoldersPage.FileOperations.files') }}</strong>
-                </template>
-              </i18n-t>
-            </ion-text>
+            <ms-rich-text
+              class="element-details-title__name form-input"
+              :text="{ key: info.translationMultiple, data: { count: info.entries.length } }"
+            />
             <ion-icon
               class="name-icon"
               :icon="chevronDown"
@@ -188,7 +176,7 @@ import {
 } from '@/services/fileOperation';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { alert, checkmarkCircle, chevronDown, folder, warning } from 'ionicons/icons';
-import { MsImage, MsSpinner } from 'megashark-lib';
+import { MsImage, MsRichText, MsSpinner } from 'megashark-lib';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{

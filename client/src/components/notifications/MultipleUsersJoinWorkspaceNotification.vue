@@ -9,19 +9,10 @@
       />
     </div>
     <div class="notification-details">
-      <ion-text class="notification-details__message body">
-        <i18n-t
-          keypath="notification.multipleUsersJoinWorkspace"
-          scope="global"
-        >
-          <template #count>
-            <strong> {{ notificationData.roles.length }} {{ $msTranslate('notification.users') }} </strong>
-          </template>
-          <template #workspace>
-            <strong>{{ workspaceName }}</strong>
-          </template>
-        </i18n-t>
-      </ion-text>
+      <ms-rich-text
+        class="notification-details__message body"
+        :text="{ key: 'notification.multipleUsersJoinWorkspace', data: { count: notificationData.roles.length, workspace: workspaceName } }"
+      />
       <ion-text class="notification-details__time body-sm">
         <span
           class="hover-state"
@@ -44,7 +35,7 @@ import { MultipleUsersJoinWorkspaceData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { people } from 'ionicons/icons';
-import { formatTimeSince } from 'megashark-lib';
+import { MsRichText, formatTimeSince } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 
 const workspaceName = ref('');

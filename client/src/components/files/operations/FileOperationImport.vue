@@ -44,20 +44,16 @@
             :class="{ open: showFileList }"
             @click="toggleFileList"
           >
-            <ion-text class="element-details-title__name form-input">
-              <i18n-t
-                :keypath="
+            <ms-rich-text
+              class="element-details-title__name form-input"
+              :text="{
+                key:
                   props.status === FileOperationEvents.Added
                     ? 'FoldersPage.ImportFile.gatherMultipleFiles'
-                    : 'FoldersPage.ImportFile.importMultipleFiles'
-                "
-                scope="global"
-              >
-                <template #count>
-                  <strong>{{ operationData.files.length }} {{ $msTranslate('FoldersPage.FileOperations.files') }}</strong>
-                </template>
-              </i18n-t>
-            </ion-text>
+                    : 'FoldersPage.ImportFile.importMultipleFiles',
+                data: { count: operationData.files.length },
+              }"
+            />
             <ion-icon
               class="name-icon"
               :icon="chevronDown"
@@ -187,7 +183,7 @@ import {
 } from '@/services/fileOperation';
 import { IonButton, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { alert, chevronDown, folder, warning } from 'ionicons/icons';
-import { MsImage, MsSpinner } from 'megashark-lib';
+import { MsImage, MsRichText, MsSpinner } from 'megashark-lib';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{

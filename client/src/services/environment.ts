@@ -224,10 +224,12 @@ type Pages =
   | 'security'
   | 'mfa';
 
+function getDocumentationUserGuideLink(page: Pages, anchor = ''): string {
+  return I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: CLEAN_APP_VERSION, page: page, anchor: anchor } });
+}
+
 async function openDocumentationUserGuideLink(page: Pages, anchor = ''): Promise<void> {
-  await openUrl(
-    I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: CLEAN_APP_VERSION, page: page, anchor: anchor } }),
-  );
+  await openUrl(getDocumentationUserGuideLink(page, anchor));
 }
 
 async function openDocumentationLink(): Promise<void> {
@@ -322,6 +324,7 @@ export function ensureHttpsProtocol(server: string): string {
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
+  getDocumentationUserGuideLink,
   getSignUrl,
   getSaasServers,
   getTrialServers,
