@@ -80,6 +80,7 @@ updates:
           - blahaj
           - blake2
           - crypto*
+          - curve25519-dalek
           - ed25519-dalek
           - generic-array
           - getrandom
