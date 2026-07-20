@@ -26,7 +26,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  poetry-version: 2.2.1
   pytest-base-args: >-
     --log-level=DEBUG
     --durations=10
@@ -113,38 +112,23 @@ jobs:
             postgresql-${{ env.postgresql-version }}
         timeout-minutes: 5
 
-      - uses: ./.github/actions/setup-python-poetry
-        id: setup-python
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./server
-        timeout-minutes: 10
-
-      # libparsec is slow to compile, so we save it in cache and skip the
-      # compilation entirely if the Rust code hasn't changed !
+          working-directory: server
+          version: 0.11.29 # marker:uv-version
+        timeout-minutes: 5
 
       # Key cache contains a hash of all the files that are used to produce _parsec.so
       # Hence if we have a cache hit we know that there is no need for a rebuild !
-      - name: Setup cache-key
+      - name: Setup rust cache-key
         id: cache-key
-        run: echo "key=libparsec-v${{ env.libparsec-cache-version }}-${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}-${{ hashFiles('make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
+        run: echo "key=libparsec-v${{ env.libparsec-cache-version }}-${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}-${{ hashFiles('make.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Restore libparsec if Rust hasn't been modified
-        id: cache-libparsec
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
-        with:
-          key: ${{ steps.cache-key.outputs.key }}
-          path: |
-            server/parsec/_parsec.*.pyd
-            server/parsec/_parsec.*.so
-            # Note `server/parsec.libs/` is not included since we are going to build
-            # with POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false (see below)
-        timeout-minutes: 2
-
       - name: Setup Rust toolchain
+        if: (!inputs.style-only)
         uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # pin v1.17.0
-        if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # We setup the cache by hand, see below
           cache: false
@@ -152,8 +136,8 @@ jobs:
         timeout-minutes: 5
 
       - name: Retrieve Rust cache
+        if: (!inputs.style-only)
         uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # pin v2.9.1
-        if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -166,20 +150,17 @@ jobs:
       - name: Install python deps
         shell: bash -ex {0}
         run: |
-          poetry --directory ./server env info
-          if ${{ env.SKIP_EXT_BUILD }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
+          if ${{ env.SKIP_EXT_BUILD }}; then export PYTHON_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
 
-          # Make sure POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false worked
+          # Make sure install does not tries to bundle shared libs by default
           if [ -d "./server/parsec.libs" ] && [ -n "$(ls -A ./server/parsec.libs)" ];
           then
             echo "::error title=Directory './server/parsec.libs' is not empty::Extra libs disabled but './server/parsec.libs/' is not empty: " ./server/parsec.libs/*
             exit 1
           fi
         env:
-          SKIP_EXT_BUILD: ${{ steps.cache-libparsec.outputs.cache-hit == 'true' || inputs.style-only }}
-          # No need to bundle given we compile and run on the same machine
-          POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES: false
+          SKIP_EXT_BUILD: ${{ inputs.style-only }}
         timeout-minutes: 20
 
       - name: Install pre-commit
@@ -191,7 +172,7 @@ jobs:
       - name: Check python code style
         shell: bash -eux {0}
         run: |
-          poetry -P server run ruff version
+          uv --project server run --locked ruff version
           for step in ruff-format ruff-check pyright ${{ !inputs.style-only && 'sqlfluff sqlfluff-in-python' || '' }}; do
             python \
               ${{ steps.pre-commit.outputs.install-path }} \
@@ -204,31 +185,15 @@ jobs:
           done
         timeout-minutes: 10
 
-      # We only save the libparsec lib when:
-      # - We are not in a github queue branch (they're a one time use so caching won't help)
-      # - We haven't already cached it.
-      - name: Save cached libparsec to be reused on later call
-        if: >-
-          (!inputs.style-only)
-          && steps.cache-libparsec.outputs.cache-hit != 'true'
-          && !contains(github.ref, 'gh-readonly-queue')
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # pin v6.1.0
-        with:
-          key: ${{ steps.cache-key.outputs.key }}
-          path: |
-            server/parsec/_parsec.*.pyd
-            server/parsec/_parsec.*.so
-        timeout-minutes: 2
-
       - name: Basic tests
         if: (!inputs.style-only)
-        run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto
+        run: uv run --locked pytest ${{ env.pytest-base-args }} tests -n auto
         timeout-minutes: 10
         working-directory: server
 
       - name: PostgreSQL tests
         if: (!inputs.style-only)
-        run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto --postgresql
+        run: uv run --locked pytest ${{ env.pytest-base-args }} tests -n auto --postgresql
         env:
           PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
         working-directory: server

@@ -28,7 +28,7 @@ NPM_LOCK_FILES = (
 )
 CARGO_LOCK_FILE = ROOT_DIR / "Cargo.lock"
 # We do not include the lock file for the documentations as it's not important for the application.
-PYTHON_LOCK_FILE = ROOT_DIR / "server/poetry.lock"
+PYTHON_LOCK_FILE = ROOT_DIR / "server/uv.lock"
 RUST_TOOLCHAIN_FILE = ROOT_DIR / "rust-toolchain.toml"
 VERSION_FILE = ROOT_DIR / "misc/versions.toml"
 
@@ -153,7 +153,7 @@ def list_javascript_deps(versions: dict[str, str]) -> set[Dependency]:
         "typescript",
         "uuid",
         "vue",
-        "vue-i18n",
+        # "vue-i18n",
         "vue-router",
         "@electron/asar",
         "@electron/notarize",
@@ -163,7 +163,6 @@ def list_javascript_deps(versions: dict[str, str]) -> set[Dependency]:
         "electron",
         "electron-builder",
         "electron-builder-squirrel-windows",
-        "electron-is-dev",
         "electron-updater",
         "electron-window-state",
         "regedit",
@@ -356,11 +355,11 @@ def list_python_deps(versions: dict[str, str]) -> set[Dependency]:
     )
     deps = {
         Dependency("python", versions["python"], DependencyType.Python),
-        Dependency("poetry", versions["poetry"], DependencyType.Python),
+        Dependency("uv", versions["uv"], DependencyType.Python),
     }
 
     deps_from_lock = list_dependencies_from_toml_file(
-        PYTHON_LOCK_FILE, PoetryLock, IMPORTANT_PYTHON_DEPS
+        PYTHON_LOCK_FILE, UvLock, IMPORTANT_PYTHON_DEPS
     )
     deps.update(deps_from_lock.dependencies)
 
@@ -371,21 +370,18 @@ def list_python_deps(versions: dict[str, str]) -> set[Dependency]:
     return deps
 
 
-class PoetryLock(Dependencies):
-    metadata: PoetryMetadata
-    package: list[PoetryPackage]
+class UvLock(Dependencies):
+    version: int
+    revision: int
+    requires_python: str = Field(alias="requires-python")
+    package: list[UvPackage]
 
     def dependencies(self) -> Generator[Dependency, None, None]:
         for pkg in self.package:
             yield Dependency(pkg.name, pkg.version, DependencyType.Python)
 
 
-class PoetryMetadata(BaseModel):
-    lock_version: str = Field(alias="lock-version")
-    python_versions: str = Field(alias="python-versions")
-
-
-class PoetryPackage(BaseModel):
+class UvPackage(BaseModel):
     name: str
     version: str
 

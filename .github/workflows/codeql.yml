@@ -31,14 +31,12 @@ jobs:
   python-analyze:
     name: 🐍 Python static code Analysis
     runs-on: ubuntu-24.04
-    env:
-      poetry-version: 2.2.1
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # pin v7.0.0
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706  # pin v4.0.2
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # pin v4.0.2
         id: changes
         with:
           filters: .github/filters/codeql.yml
@@ -70,21 +68,17 @@ jobs:
           # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
           # queries: security-extended,security-and-quality
 
-      - uses: ./.github/actions/setup-python-poetry
-        if: steps.should-run-python-analysis.outputs.run == 'true'
-        id: setup-python
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./server
+          working-directory: server
+          version: 0.11.29 # marker:uv-version
+        timeout-minutes: 5
 
       - name: Install python deps
         if: steps.should-run-python-analysis.outputs.run == 'true'
-        run: |
-          poetry install
-          poetry run sh -c 'echo "CODEQL_PYTHON=$(which python)"' >> $GITHUB_ENV
+        run: uv run --locked sh -c 'echo "CODEQL_PYTHON=$(which python)"' | tee -a $GITHUB_ENV
         working-directory: server
-        env:
-          POETRY_LIBPARSEC_BUILD_STRATEGY: no_build
 
       - name: Perform CodeQL Analysis
         if: steps.should-run-python-analysis.outputs.run == 'true'
@@ -100,7 +94,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # pin v7.0.0
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706  # pin v4.0.2
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # pin v4.0.2
         id: changes
         with:
           filters: .github/filters/codeql.yml

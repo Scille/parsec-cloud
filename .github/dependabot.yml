@@ -9,7 +9,6 @@ updates:
   - package-ecosystem: github-actions
     directories:
       - /
-      - /.github/actions/setup-python-poetry
       - /.github/actions/use-pre-commit
     pull-request-branch-name:
       separator: "-"
@@ -149,7 +148,7 @@ updates:
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directory: /server
     versioning-strategy: increase-if-necessary
     ignore:
