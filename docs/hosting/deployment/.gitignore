@@ -4,4 +4,4 @@
 *.csr
 *.srl
 *.crt.conf
-parsec-admin-token.env
+secrets

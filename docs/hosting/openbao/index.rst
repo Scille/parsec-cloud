@@ -269,7 +269,7 @@ If you deployed Parsec Server with Docker, edit the Docker Compose file to add
             - parsec-s3.env
             - parsec-db.env
             - parsec-smtp.env
-            - parsec-admin-token.env
+            - secrets/parsec-admin-token.env
             - parsec-openbao.env
 
 And then restart the server.
@@ -292,7 +292,7 @@ If you deployed Parsec Server directly on Linux, edit your run script to add
       # Load the env files into the environment table
       set -a
       source parsec-openbao.env
-      source parsec-admin-token.env
+      source secrets/parsec-admin-token.env
       source parsec-db.env
       source parsec-smtp.env
       source parsec-s3.env
