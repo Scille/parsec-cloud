@@ -11,19 +11,16 @@
       />
     </div>
     <div class="notification-details">
-      <ion-text class="notification-details__message body">
-        <i18n-t
-          keypath="notification.changeRole"
-          scope="global"
-        >
-          <template #role>
-            <strong>{{ $msTranslate(getWorkspaceRoleTranslationKey(notificationData.newRole).label) }}</strong>
-          </template>
-          <template #workspace>
-            <strong>{{ workspaceInfo ? workspaceInfo.name : '' }}</strong>
-          </template>
-        </i18n-t>
-      </ion-text>
+      <ms-rich-text
+        class="notification-details__message body"
+        :text="{
+          key: 'notification.changeRole',
+          data: {
+            role: $msTranslate(getWorkspaceRoleTranslationKey(notificationData.newRole).label),
+            workspace: workspaceInfo ? workspaceInfo.name : '',
+          },
+        }"
+      />
       <ion-text class="notification-details__time body-sm">
         <span>{{ $msTranslate(formatTimeSince(notification.time, '', 'short')) }}</span>
       </ion-text>
@@ -40,7 +37,7 @@ import { Notification } from '@/services/notificationManager';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { IonText } from '@ionic/vue';
-import { LogoIconGradient, MsImage, formatTimeSince } from 'megashark-lib';
+import { LogoIconGradient, MsImage, MsRichText, formatTimeSince } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
 
 const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);

@@ -9,16 +9,10 @@
       />
     </div>
     <div class="notification-details">
-      <ion-text class="notification-details__message body">
-        <i18n-t
-          keypath="notification.workspaceAccess"
-          scope="global"
-        >
-          <template #workspace>
-            <strong>{{ workspaceInfo ? workspaceInfo.name : '' }}</strong>
-          </template>
-        </i18n-t>
-      </ion-text>
+      <ms-rich-text
+        class="notification-details__message body"
+        :text="{ key: 'notification.workspaceAccess', data: { workspace: workspaceInfo ? workspaceInfo.name : '' } }"
+      />
       <ion-text class="notification-details__time body-sm">
         <span
           class="hover-state"
@@ -45,7 +39,7 @@ import { NewWorkspaceAccessData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { arrowForward, business } from 'ionicons/icons';
-import { formatTimeSince } from 'megashark-lib';
+import { formatTimeSince, MsRichText } from 'megashark-lib';
 import { onMounted, ref, Ref } from 'vue';
 
 const workspaceInfo: Ref<WorkspaceInfo | null> = ref(null);
