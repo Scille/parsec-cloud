@@ -6,47 +6,41 @@
       v-if="showHeader"
       id="connected-header"
     >
+      <!-- Archived / trashed workspace banner in small display -->
       <ion-text
-        v-if="isSmallDisplay && currentWorkspace?.isArchived"
+        v-if="isSmallDisplay && workspaceIsArchivedOrTrashed"
         class="header-archived button-large"
       >
         <ion-icon
-          :icon="archive"
+          :icon="currentWorkspace?.isArchived ? archive : trash"
           class="header-archived__icon"
         />
-        {{ $msTranslate('WorkspacesPage.archiveWorkspace.isArchived') }}
+        {{ $msTranslate(`WorkspacesPage.archiveWorkspace.${currentWorkspace?.isArchived ? 'isArchived' : 'isTrashed'}`) }}
       </ion-text>
-      <ion-text
-        v-if="isSmallDisplay && currentWorkspace?.isTrashed"
-        class="header-archived button-large"
-      >
-        <ion-icon
-          :icon="trash"
-          class="header-archived__icon"
-        />
-        {{ $msTranslate('WorkspacesPage.archiveWorkspace.isTrashed') }}
-      </ion-text>
+
       <ion-toolbar
         class="topbar"
         :class="currentRouteIs(Routes.History) ? 'topbar-history' : ''"
       >
-        <!-- icon visible when menu is hidden -->
+        <!-- Sidebar toggle icon -->
         <ms-image
-          v-if="!isMobile() && isLargeDisplay"
+          v-if="isLargeDisplay"
           slot="start"
           id="trigger-toggle-menu-button"
           class="topbar-button__item"
           @click="isSidebarMenuVisible ? hideSidebarMenu() : resetSidebarMenu()"
           :image="SidebarToggle"
         />
+
         <div
           class="topbar-left"
           ref="topbarLeft"
         >
+          <!-- Back button -->
           <div
             class="topbar-left-content"
             ref="backBlock"
-            v-if="hasHistory() && !currentRouteIsOneOf([Routes.Workspaces, Routes.Archived, Routes.Trash])"
+            v-if="hasHistory() && !currentRouteIsWorkspaceManagementRoute()"
           >
             <header-back-button
               :short="currentRouteIsFileRoute()"
@@ -54,8 +48,9 @@
             />
           </div>
 
+          <!-- Route title -->
           <div
-            v-if="!currentRouteIsFileRoute() && !(currentRouteIsOneOf([Routes.Archived, Routes.Trash]) && isSmallDisplay)"
+            v-if="showRouteTitle"
             class="topbar-left-text"
           >
             <ion-label
@@ -64,14 +59,9 @@
             >
               {{ $msTranslate(routeTitle) }}
             </ion-label>
-            <ion-text
-              v-if="currentRouteIs(Routes.History) && currentWorkspace?.name && isSmallDisplay"
-              class="topbar-left-text__workspace subtitles-sm"
-            >
-              {{ currentWorkspace.name }}
-            </ion-text>
           </div>
 
+          <!-- Breadcrumbs -->
           <div
             class="topbar-left__breadcrumb"
             v-if="currentRouteIs(Routes.Documents) || (currentRouteIs(Routes.Workspaces) && isLargeDisplay)"
@@ -85,8 +75,9 @@
             />
           </div>
 
+          <!-- Workspace small display switch modal button (all/archived/bin) -->
           <div
-            v-if="currentRouteIsOneOf([Routes.Workspaces, Routes.Archived, Routes.Trash]) && isSmallDisplay && userInfo"
+            v-if="isSmallDisplay && currentRouteIsWorkspaceManagementRoute() && userInfo"
             class="topbar-left-workspaces-mobile"
           >
             <ion-text class="topbar-left-workspaces-mobile__orga body">{{ userInfo.organizationId }}</ion-text>
@@ -110,35 +101,31 @@
           </div>
         </div>
 
-        <!-- top right icon + profile -->
+        <!-- Top-right buttons -->
         <ion-buttons
           slot="primary"
           class="topbar-right"
         >
           <div
             class="topbar-right-buttons"
-            v-if="!currentRouteIs(Routes.History) && !currentRouteIs(Routes.MyProfile) && !currentRouteIs(Routes.Invitations)"
+            v-if="!currentRouteIsOneOf([Routes.History, Routes.MyProfile, Routes.Invitations])"
           >
-            <!-- eslint-disable vue/html-indent -->
-            <invitations-button
-              v-if="
-                (!currentRouteIs(Routes.Invitations) && isLargeDisplay) ||
-                currentRouteIs(Routes.Workspaces) ||
-                currentRouteIs(Routes.Archived) ||
-                currentRouteIs(Routes.Users)
-              "
-            />
+            <!-- Invitations button -->
+            <invitations-button v-if="showInvitationsButton" />
+
+            <!-- Small display options button -->
             <ion-button
+              v-if="isSmallDisplay && !currentRouteIsWorkspaceManagementRoute()"
               slot="icon-only"
               class="topbar-right-buttons__item"
               id="trigger-contextual-menu-button"
               @click="openContextualMenu($event)"
               ref="contextualMenuButton"
-              v-if="!currentRouteIs(Routes.Workspaces) && !currentRouteIs(Routes.Archived) && isSmallDisplay"
             >
               <ion-icon :icon="ellipsisHorizontal" />
             </ion-button>
 
+            <!-- Notifications button -->
             <ion-button
               slot="icon-only"
               id="trigger-notifications-button"
@@ -154,6 +141,7 @@
             </ion-button>
           </div>
 
+          <!-- Profile button -->
           <profile-header-organization
             v-if="isLargeDisplay"
             id="profile-button"
@@ -165,48 +153,13 @@
         </ion-buttons>
       </ion-toolbar>
 
-      <div
-        v-if="showSecurityChecklistSmallDisplay"
-        id="trigger-checklist-button"
-        class="checklist-security-container"
+      <small-display-security-recommendations
+        v-if="showSmallDisplaySecurityRecommendations"
         @click="openSecurityWarningsModal()"
-        ref="checklistSecurityButton"
-      >
-        <div
-          class="checklist-security"
-          v-if="securityWarnings"
-        >
-          <ion-text class="checklist-security__title button-large">
-            {{ $msTranslate('SideMenu.checklist.title') }}
-          </ion-text>
-          <ion-icon
-            v-if="securityWarnings.hasMultipleDevices === true"
-            class="checklist-security__icon"
-            :icon="checkmarkCircle"
-          />
-          <ion-icon
-            v-if="securityWarnings.hasRecoveryDevice === true"
-            class="checklist-security__icon"
-            :icon="checkmarkCircle"
-          />
-          <ion-icon
-            v-if="
-              userInfo &&
-              userInfo.currentProfile !== UserProfile.Outsider &&
-              securityWarnings.soloOwnerWorkspaces.length === 0 &&
-              securityWarnings.needsSecondOwner
-            "
-            class="checklist-security__icon"
-            :icon="checkmarkCircle"
-          />
-          <ion-icon
-            class="checklist-security__icon to-do"
-            v-for="index in securityWarningsCount"
-            :key="index"
-            :icon="ellipseOutline"
-          />
-        </div>
-      </div>
+        :user-profile="userInfo ? userInfo.currentProfile : UserProfile.Outsider"
+        :security-warnings="securityWarnings"
+        :security-warnings-count="securityWarningsCount"
+      />
     </ion-header>
 
     <ion-content>
@@ -220,9 +173,10 @@ import { pxToRem } from '@/common/utils';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
+import SmallDisplaySecurityRecommendations from '@/components/header/SmallDisplaySecurityRecommendations.vue';
 import { RecommendationAction, SecurityWarnings, getSecurityWarnings } from '@/components/misc';
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
-import { ClientInfo, Path, UserProfile, WorkspaceInfo, WorkspaceRole, getClientInfo, getWorkspaceInfo, isMobile } from '@/parsec';
+import { ClientInfo, Path, UserProfile, WorkspaceInfo, WorkspaceRole, getClientInfo, getWorkspaceInfo } from '@/parsec';
 import {
   ProfilePages,
   Routes,
@@ -231,6 +185,7 @@ import {
   currentRouteIsLoggedRoute,
   currentRouteIsOneOf,
   currentRouteIsUserRoute,
+  currentRouteIsWorkspaceManagementRoute,
   getCurrentRouteName,
   getCurrentRouteParams,
   getDocumentPath,
@@ -271,7 +226,7 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-import { archive, checkmarkCircle, chevronDown, ellipseOutline, ellipsisHorizontal, home, notifications, trash } from 'ionicons/icons';
+import { archive, chevronDown, ellipsisHorizontal, home, notifications, trash } from 'ionicons/icons';
 import { MsImage, MsModalResult, SidebarToggle, Translatable, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
@@ -299,6 +254,10 @@ const securityWarningsCount = computed(() => {
   );
 });
 
+const workspaceIsArchivedOrTrashed = computed(
+  () => currentWorkspace.value && (currentWorkspace.value.isArchived || currentWorkspace.value.isTrashed),
+);
+
 const showHeader = computed(() => {
   // Override visibility for specific routes
   if (currentRouteIs(Routes.FileHandler) || currentRouteIsUserRoute() || currentRouteIsFileRoute()) {
@@ -313,7 +272,11 @@ const showHeader = computed(() => {
 const breadcrumbsWidth = ref(0);
 const backBlockRef = useTemplateRef('backBlock');
 const topbarLeftRef = useTemplateRef('topbarLeft');
-const showSecurityChecklistSmallDisplay = computed(() => {
+const showRouteTitle = computed(
+  () => !currentRouteIsFileRoute() && !(isSmallDisplay.value && currentRouteIsOneOf([Routes.Archived, Routes.Trash])),
+);
+const showInvitationsButton = computed(() => currentRouteIsOneOf([Routes.Workspaces, Routes.Archived, Routes.Trash, Routes.Users]));
+const showSmallDisplaySecurityRecommendations = computed(() => {
   return (
     !currentRouteIsOneOf([Routes.Invitations, Routes.History, Routes.Archived, Routes.Trash]) &&
     isSmallDisplay.value &&
@@ -873,45 +836,6 @@ async function openWorkspacesSwitchModal(): Promise<void> {
         &__workspace {
           color: var(--parsec-color-light-secondary-grey);
         }
-      }
-    }
-  }
-}
-
-#trigger-checklist-button {
-  background: var(--parsec-color-light-secondary-background);
-  cursor: pointer;
-
-  .checklist-security {
-    padding: 0.5rem 0.825rem;
-    border-radius: var(--parsec-radius-8);
-    display: flex;
-    gap: 0.25rem;
-    align-items: center;
-    background: var(--parsec-color-light-gradient-background);
-    box-shadow: var(--parsec-shadow-soft);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    &__title {
-      color: var(--parsec-color-light-secondary-white);
-      margin-inline-end: 0.5rem;
-      width: 100%;
-    }
-
-    &__icon {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 0.15rem;
-      font-size: 1.5rem;
-      color: var(--parsec-color-light-secondary-white);
-      opacity: 0.8;
-
-      &.to-do {
-        color: var(--parsec-color-light-secondary-white);
       }
     }
   }
