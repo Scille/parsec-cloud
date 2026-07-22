@@ -251,6 +251,14 @@ async fn ask_server_to_sign_scws_challenge(
         Rep, Req,
     };
 
+    log::debug!(
+        "Middleware signature {sig} for {challenge}",
+        sig = data_encoding::BASE64.encode_display(&svc_rep.cryptogram)
+    );
+    log::debug!(
+        "Server need to sign the following challenge {}",
+        data_encoding::BASE64.encode_display(&svc_rep.challenge)
+    );
     let srv_challenge = Req {
         scws_service_challenge_key_id: svc_rep.key_id as u64,
         scws_service_challenge_payload: Bytes::copy_from_slice(challenge.as_bytes()),
@@ -282,4 +290,10 @@ async fn ask_server_to_sign_scws_challenge(
             Err(PkiSystemInitError::NotAvailable)
         }
     }
+    .inspect(|sig| {
+        log::debug!(
+            "Server signature {sig}",
+            sig = data_encoding::BASE64.encode_display(sig),
+        )
+    })
 }
