@@ -41,6 +41,10 @@ export function currentRouteIsOneOf(routes: Routes[]): boolean {
   return (routes as string[]).includes(currentRouteName as string);
 }
 
+export function currentRouteIsWorkspaceManagementRoute(): boolean {
+  return currentRouteIsOneOf([Routes.Workspaces, Routes.Archived, Routes.Trash]);
+}
+
 export function currentRouteIsWorkspaceRoute(workspaceHandle: WorkspaceHandle): boolean {
   return currentRouteIs(Routes.Documents) && getWorkspaceHandle() === workspaceHandle;
 }
