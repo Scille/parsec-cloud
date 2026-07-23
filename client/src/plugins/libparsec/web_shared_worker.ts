@@ -62,56 +62,62 @@ self.onconnect = async (msg: MessageEvent): Promise<void> => {
   port.start();
 };
 
-let _libparsec: LibParsecPlugin | undefined = undefined;
+let _libparsecPromise: Promise<LibParsecPlugin> | undefined = undefined;
+
 async function maybeInit(): Promise<LibParsecPlugin> {
   // Initialization is done once the shared worker is created.
-  if (_libparsec === undefined) {
-    console.log('Initializing libparsec module');
-    await init_module();
-    module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
+  if (_libparsecPromise === undefined) {
+    _libparsecPromise = (async (): Promise<LibParsecPlugin> => {
+      console.log('Initializing libparsec module');
+      await init_module();
+      module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
 
-    module.libparsecInitSetOnEventCallback((handle: number, event: ClientEvent) => {
-      onEventBroadcast.postMessage({ handle, event });
-    });
+      module.libparsecInitSetOnEventCallback((handle: number, event: ClientEvent) => {
+        onEventBroadcast.postMessage({ handle, event });
+      });
 
-    // Proxy an empty object instead of `module` to avoid invariant problems.
-    const wrappedLibparsec = new Proxy({} as typeof module, {
-      get(_target, prop, _receiver) {
-        // SCWS needs to be dynamically loaded.
-        // We're loading it in TypeScript inside the shared worker and attaching
-        // it to the global context.
-        if (prop === 'pkiInitForScws') {
-          return async (
-            configDir: string,
-            parsecAddr: string,
-            scwsLocation: string,
-            certificate: string,
-            skipScwsApiImport: boolean | undefined,
-          ) => {
-            try {
-              if (skipScwsApiImport) {
-                console.log('Skipping loading scwsapi.js');
-              } else {
-                console.log(`Loading SCWS from ${scwsLocation} in shared worker...`);
-                const scwsapi = await import(/* @vite-ignore */ scwsLocation);
-                console.log('Imported SCWS', scwsapi);
-                (globalThis as any).SCWS = scwsapi.SCWS;
-                (globalThis as any).SCWS_WEBAPP_CERT = certificate;
+      // Proxy an empty object instead of `module` to avoid invariant problems.
+      const wrappedLibparsec = new Proxy({} as typeof module, {
+        get(_target, prop, _receiver) {
+          // SCWS needs to be dynamically loaded.
+          // We're loading it in TypeScript inside the shared worker and attaching
+          // it to the global context.
+          if (prop === 'pkiInitForScws') {
+            return async (
+              configDir: string,
+              parsecAddr: string,
+              scwsLocation: string,
+              certificate: string,
+              skipScwsApiImport: boolean | undefined,
+            ) => {
+              try {
+                if (skipScwsApiImport) {
+                  console.log('Skipping loading scwsapi.js');
+                } else {
+                  console.log(`Loading SCWS from ${scwsLocation} in shared worker...`);
+                  const scwsapi = await import(/* @vite-ignore */ scwsLocation);
+                  console.log('Imported SCWS', scwsapi);
+                  (globalThis as any).SCWS = scwsapi.SCWS;
+                  (globalThis as any).SCWS_WEBAPP_CERT = certificate;
+                }
+                return await module.pkiInitForScws(configDir, parsecAddr);
+              } catch (err: any) {
+                console.error(`Failed to import scwsapi: ${err.toString()}`);
+                return {
+                  ok: false,
+                  error: { tag: 'PkiSystemInitErrorNotAvailable', error: `Failed to import scwsapi (${err.toString()})` },
+                };
               }
-              return await module.pkiInitForScws(configDir, parsecAddr);
-            } catch (err: any) {
-              console.error(`Failed to import scwsapi: ${err.toString()}`);
-              return { ok: false, error: { tag: 'PkiSystemInitErrorNotAvailable', error: `Failed to import scwsapi (${err.toString()})` } };
-            }
-          };
-        }
-        return (module as any)[prop];
-      },
-    });
+            };
+          }
+          return (module as any)[prop];
+        },
+      });
 
-    console.log('Done initializing libparsec module');
+      console.log('Done initializing libparsec module');
 
-    _libparsec = wrappedLibparsec;
+      return wrappedLibparsec;
+    })();
   }
-  return _libparsec as LibParsecPlugin;
+  return _libparsecPromise;
 }
