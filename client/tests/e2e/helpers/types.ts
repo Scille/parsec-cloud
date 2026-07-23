@@ -57,6 +57,7 @@ export interface SetupOptions {
   allowedProtectionMethods?: Array<ProtectionMethod>;
   additionalUsers?: Array<AdditionalUserData>;
   enableShamir?: boolean;
+  customNextStage?: (page: MsPage) => Promise<void>;
 }
 
 export interface MsPage extends Page {
