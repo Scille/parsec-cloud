@@ -368,3 +368,45 @@ msTest('Cannot accept PKI request', async ({ context }) => {
 
   await page.release();
 });
+
+msTest('Check certificate cards', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  await setupNewPage(page, { mockPki: true });
+
+  const link = getAsyncEnrollmentJoinLink('Test');
+  await page.locator('#create-organization-button').click();
+  await expect(page.locator('.homepage-popover')).toBeVisible();
+  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+  await fillInputModal(page, link);
+  const requestModal = page.locator('.async-enrollment-modal');
+  await expect(requestModal).toBeVisible();
+  const nextButton = requestModal.locator('#next-button');
+
+  await expect(requestModal.locator('.ms-modal-header__title')).toHaveText('Join organization Test');
+  await expect(requestModal.locator('.choose-method')).toBeVisible();
+  const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
+  await options.nth(0).click();
+  await nextButton.click();
+  await expect(requestModal.locator('.modal-info')).toBeVisible();
+  await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Certificate Authentication (PKI)');
+  const certs = requestModal.locator('.certificate-card');
+  const gordonCert = certs.nth(3);
+  await gordonCert.scrollIntoViewIfNeeded();
+  await expect(gordonCert.locator('.certificate-card-header__name')).toHaveText('Gordon');
+  await expect(gordonCert.locator('.card-expire__text').nth(0)).toHaveText('Apr 30, 2026');
+  await expect(gordonCert.locator('.card-expire__text').nth(1)).toHaveText('Oct 19, 2123');
+  await expect(gordonCert.locator('.card-email__text').nth(0)).toHaveText('gordon@black-mesa.corp');
+  await expect(gordonCert.locator('.additional-emails')).toBeVisible();
+  await expect(gordonCert.locator('.additional-emails')).toHaveText(' + 1');
+
+  await expect(gordonCert.locator('.card-id')).toHaveText(
+    'Serial number: 540af45a0c85717d70482227bb3856ff61448178-540af45a0c85717d70482227bb3856ff61448178',
+  );
+  await expect(certs.nth(2).locator('.additional-emails')).toBeHidden();
+
+  const emailPopover = page.locator('.additional-emails-popover');
+  await expect(emailPopover).toBeHidden();
+  await gordonCert.locator('.additional-emails').click();
+  await expect(emailPopover).toBeVisible();
+  await expect(emailPopover.locator('.emails-list-item__text')).toHaveText(['gordon@black-mesa.corp', 'gordon@black-mesa.corp']);
+});
