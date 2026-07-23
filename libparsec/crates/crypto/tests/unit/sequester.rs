@@ -10,6 +10,7 @@ use crate::{
 };
 
 /// Generated with `openssl genrsa -out pkey-1024.pem 1024`
+/// In PEM Pkcs8 format
 const PRIVATE_KEY_PEM_1024: &str = r#"-----BEGIN PRIVATE KEY-----
 MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBALLcAKPDtcaJsGnz
 9AxJTSpb4xOxA0+/Hf4O7uDzbPvPYkQAJWzGYNUIR4JzijBF11tYTBlDvATHEj1o
@@ -71,6 +72,7 @@ const PUBLIC_KEY_DER_1024: &[u8] = &hex!(
     "ff66f7ee18303195f3bcc72ab57207ebfd0203010001"
 );
 
+/// Rsa Private key in pkcs8 pem format
 const PRIVATE_KEY_PEM_2048: &str = r#"-----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCnDVsZGa7iu45E
 2d++JupEgmdlo8EGFjfXJzVgXduWT42rmxGEKCARzHt5RK0EjSsfmLg4uQqvVlEc

@@ -7,8 +7,7 @@ from dataclasses import dataclass, field, fields
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from jinja2.environment import Environment
 
 from parsec._parsec import (
@@ -18,6 +17,7 @@ from parsec._parsec import (
     EmailAddress,
     OpenBaoAuthType,
     ParsecAddr,
+    RsaPrivateKey,
     SecretKey,
     X509TrustAnchor,
 )
@@ -260,12 +260,12 @@ class ScwsConfig:
     # Order of the keys in the file is meaningful as it correspond to the key ID.
     # For this reasons, we represent the revoked keys in the list as `None`.
     idopte_public_keys: list[RSAPublicKey | None]
-    web_application_private_key: RSAPrivateKey
+    web_application_private_key: RsaPrivateKey
 
     @staticmethod
     def new(
         idopte_public_keys_pem: bytes,
-        web_application_private_key_pem: bytes,
+        web_application_private_key_pem: str,
     ) -> ScwsConfig:
         from parsec.components.scws import parse_idopte_public_keys
 
@@ -275,14 +275,11 @@ class ScwsConfig:
             raise ValueError(f"Invalid Idopte public keys: {exc}") from exc
 
         try:
-            private_key = load_pem_private_key(
-                web_application_private_key_pem,
-                password=None,
-            )
+            private_key = RsaPrivateKey.load_pkcs8_pem(web_application_private_key_pem)
         except ValueError as exc:
             raise ValueError(f"Invalid web application private key: {exc}") from exc
 
-        assert isinstance(private_key, RSAPrivateKey)
+        assert isinstance(private_key, RsaPrivateKey)
         return ScwsConfig(
             idopte_public_keys=idopte_public_keys,
             web_application_private_key=private_key,

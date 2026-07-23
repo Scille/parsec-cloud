@@ -3,21 +3,18 @@
 use rand::rngs::OsRng;
 use rsa::{
     oaep::Oaep,
-    pkcs8::{
-        der::zeroize::Zeroizing, DecodePrivateKey, DecodePublicKey, EncodePrivateKey,
-        EncodePublicKey,
-    },
+    pkcs8::{der::zeroize::Zeroizing, DecodePublicKey, EncodePrivateKey, EncodePublicKey},
     pss::{Signature, SigningKey, VerifyingKey},
     signature::{RandomizedSigner, Verifier},
-    PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
+    PublicKey, PublicKeyParts, RsaPublicKey,
 };
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 use sha2::Sha256;
 
 use crate::{
-    deserialize_with_armor, serialize_with_armor, CryptoError, CryptoResult, SecretKey,
-    SequesterKeySize,
+    deserialize_with_armor, serialize_with_armor, CryptoError, CryptoResult, RsaPrivateKey,
+    SecretKey, SequesterKeySize,
 };
 
 /*
@@ -33,9 +30,7 @@ impl TryFrom<&[u8]> for SequesterPrivateKeyDer {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        RsaPrivateKey::from_pkcs8_der(bytes)
-            .map(Self)
-            .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))
+        RsaPrivateKey::try_from(bytes).map(Self)
     }
 }
 
@@ -43,31 +38,25 @@ impl SequesterPrivateKeyDer {
     const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
-        let priv_key = RsaPrivateKey::new(&mut OsRng, size_in_bits as usize)
-            .expect("Cannot generate the RSA key");
-        let pub_key = RsaPublicKey::from(&priv_key);
+        let (pkey, pubkey) = RsaPrivateKey::gen_keypair(size_in_bits as usize);
 
-        (Self(priv_key), SequesterPublicKeyDer(pub_key))
+        (Self(pkey), SequesterPublicKeyDer(pubkey.0))
     }
 
     pub fn size_in_bytes(&self) -> usize {
-        self.0.n().bits() / 8
+        self.0.size_in_bytes()
     }
 
     pub fn dump(&self) -> Zeroizing<Vec<u8>> {
-        self.0.to_pkcs8_der().expect("Unreachable").to_bytes()
+        self.0.to_pkcs8_der()
     }
 
     pub fn dump_pem(&self) -> Zeroizing<String> {
-        self.0
-            .to_pkcs8_pem(rsa::pkcs8::LineEnding::default())
-            .expect("Unreachable")
+        self.0.to_pkcs8_pem()
     }
 
     pub fn load_pem(s: &str) -> CryptoResult<Self> {
-        RsaPrivateKey::from_pkcs8_pem(s)
-            .map(Self)
-            .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))
+        RsaPrivateKey::load_pkcs8_pem(s).map(Self)
     }
 
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
@@ -78,6 +67,7 @@ impl SequesterPrivateKeyDer {
         let clearkey = SecretKey::try_from(
             &self
                 .0
+                 .0
                 .decrypt(padding, cipherkey)
                 .map_err(|_| CryptoError::Decryption)?[..],
         )?;
@@ -189,10 +179,10 @@ impl TryFrom<&[u8]> for SequesterSigningKeyDer {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-        RsaPrivateKey::from_pkcs8_der(bytes)
+        RsaPrivateKey::try_from(bytes)
+            .map(rsa::RsaPrivateKey::from)
             .map(SigningKey::from)
             .map(Self)
-            .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))
     }
 }
 
@@ -201,7 +191,7 @@ impl SequesterSigningKeyDer {
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterVerifyKeyDer) {
         let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
-        let signing_key = SigningKey::from(priv_key.0);
+        let signing_key = SigningKey::from(rsa::RsaPrivateKey::from(priv_key.0));
         let verify_key = VerifyingKey::from(pub_key.0);
 
         (Self(signing_key), SequesterVerifyKeyDer(verify_key))
@@ -222,9 +212,10 @@ impl SequesterSigningKeyDer {
     }
 
     pub fn load_pem(s: &str) -> CryptoResult<Self> {
-        RsaPrivateKey::from_pkcs8_pem(s)
-            .map(|x| Self(SigningKey::from(x)))
-            .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))
+        RsaPrivateKey::load_pkcs8_pem(s)
+            .map(rsa::RsaPrivateKey::from)
+            .map(SigningKey::from)
+            .map(Self)
     }
 
     // Signature format:
