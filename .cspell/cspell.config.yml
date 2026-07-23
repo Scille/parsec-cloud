@@ -94,6 +94,7 @@ overrides:
       - "**/client/electron/src/setup.ts"
       - "**/client/index.html"
       - "**/client/src/locales/fr-FR.json"
+      - "**/client/tests/e2e/specs/loading.spec.ts"
       - "**/client/tests/e2e/specs/my_profile_page.spec.ts"
       - "**/client/tests/e2e/specs/settings_modal.spec.ts"
       - "**/docs/development/glossary-FR.md"

@@ -182,11 +182,13 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
   let testbed: string | undefined;
   if (!opts.skipTestbed) {
     testbed = await initTestBed(page, opts.testbedPath);
-  } else {
+  } else if (!opts.customNextStage) {
     await page.evaluate(async () => {
       const [, nextStage] = window.nextStageHook();
       await nextStage(undefined, 'en-US');
     });
+  } else {
+    await opts.customNextStage(page);
   }
 
   page.userData = generateDefaultUserData();
