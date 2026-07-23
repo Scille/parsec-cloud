@@ -5,10 +5,10 @@ import re
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
-from parsec._parsec import anonymous_server_cmds
+from parsec._parsec import CryptoError, RsaPrivateKey, anonymous_server_cmds
 from parsec.api import api
 from parsec.client_context import AnonymousServerClientContext
 from parsec.config import BackendConfig
@@ -41,7 +41,7 @@ def parse_idopte_public_keys(pem: bytes) -> list[RSAPublicKey | None]:
     return keys
 
 
-def _raw_rsa_sign(private_key: RSAPrivateKey, data: bytes) -> bytes:
+def _raw_rsa_sign(private_key: RsaPrivateKey, data: bytes) -> bytes:
     """
     Sign raw data using PKCS#1 v1.5 signature padding *without* DigestInfo.
 
@@ -64,21 +64,7 @@ def _raw_rsa_sign(private_key: RSAPrivateKey, data: bytes) -> bytes:
 
     see: https://idopte.fr/scwsapi/javascript/2_API/envsetup.html#server-side
     """
-    key_size_bytes = (private_key.key_size + 7) // 8
-
-    # PKCS#1 v1.5 signature type padding: `0x00 0x01 || PS || 0x00 || data`
-    # where PS is a string of `0xFF` bytes making the total equal to the key
-    # size in bytes (with at least 8 bytes of `0xFF`).
-    ps_len = key_size_bytes - len(data) - 3
-    if ps_len < 8:
-        raise ValueError("Data too long for the RSA key size")
-    padded = b"\x00\x01" + (b"\xff" * ps_len) + b"\x00" + data
-
-    # Raw RSA: compute m^d mod n
-    padded_int = int.from_bytes(padded, byteorder="big")
-    private_numbers = private_key.private_numbers()
-    signature_int = pow(padded_int, private_numbers.d, private_numbers.public_numbers.n)
-    return signature_int.to_bytes(key_size_bytes, byteorder="big")
+    return private_key.sign_pkcs1v15_unprefixed(data)
 
 
 def _raw_rsa_verify(public_key: RSAPublicKey, data: bytes, signature: bytes) -> bool:
@@ -147,7 +133,7 @@ class ScwsComponent:
                 scws_config.web_application_private_key,
                 req.web_application_challenge_payload,
             )
-        except ValueError:
+        except CryptoError:
             return Rep.RepInvalidWebApplicationChallengePayload()
 
         return Rep.RepOk(
