@@ -4,45 +4,50 @@
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
-from parsec._parsec import anonymous_server_cmds
+from parsec._parsec import RsaPrivateKey, anonymous_server_cmds
 from parsec.components.scws import _raw_rsa_sign
 from parsec.config import ScwsConfig
 from tests.common import AnonymousServerRpcClient, Backend, HttpCommonErrorsTester
+from tests.test_scws import convert_rsa_pkey_from_cryptography_to_rust
 
+# PKCS8 RSA PRIVATE KEY
 IDOPTE_PRIVATE_KEY_PEM = b"""\
------BEGIN RSA PRIVATE KEY-----
-MIICXAIBAAKBgQDjtDYe9EH3iKyUWMiWzZ5uec5xnIGgyLkhtZmz0nL70Pk4lURz
-gnaGXhQhZESLXFFlW1b1ZiFEkRGg+dQL6S8XGb3NcNDk1RcZdnKAYS+mUTLKMoRg
-A2qHgYoMtlDNmWLi9LGhhrmBIShPmH2LK17Utvg/2B4M1ZRir/T6eiE+IQIDAQAB
-AoGAUjjzxg+rdmfq8ZJxtErBZ+EiE9JQ2K9CcpKx0sYucRHPvIfh9NfqVrDIEhqz
-yaLnXXMzHl/nqWu88uTjlf142+7xVf/gn34oJBPcSfmqkqzmlXyHkcH6dpfZnZ6U
-pxO9mF35WJs2IojUsiS5Ax2YsARETs8PRhzd3lyEgqaneNUCQQD/gYJmlz0oVk6u
-7siOkHLZVbwwyQ/1dF7ZwCP1iAd/iH8cxfwsuY0g50c55WEZpBBRLnNprrSKATDx
-VlPwOq2LAkEA5CTwO/KA0fWBCQtBHDVhBCpwqaHNMrp4uXDdKkv8JxCjsaaUZO2v
-UezGMX5uTO0KgeOZDeh1JPeJV4SZi31QgwJAB4s8XWkTvjAmLJYSR9tN+MrGPq6B
-ER85ebZpmWNFzWcrUZ8q3eswlosdmEEEh+xHKw5zC+jDnduBJW8GFW62FwJBAN9i
-s79e4XeztVbPqD8gnQ/hJlNSVIN5Rj/9HPEPWaQ+jKmj++UfPe0vs5g+vW2hJAqu
-eey+UgWSQu5orZeBalUCQB0Yep1rrn4LPcPZjLEZpfsFCNl6xnf4A0KsE/3xZQoj
-llEpHGpOfFAmqAXnbO5hZ/tJb17drCV0+DjQGa5cU/o=
------END RSA PRIVATE KEY-----
+-----BEGIN PRIVATE KEY-----
+MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAOO0Nh70QfeIrJRY
+yJbNnm55znGcgaDIuSG1mbPScvvQ+TiVRHOCdoZeFCFkRItcUWVbVvVmIUSREaD5
+1AvpLxcZvc1w0OTVFxl2coBhL6ZRMsoyhGADaoeBigy2UM2ZYuL0saGGuYEhKE+Y
+fYsrXtS2+D/YHgzVlGKv9Pp6IT4hAgMBAAECgYBSOPPGD6t2Z+rxknG0SsFn4SIT
+0lDYr0JykrHSxi5xEc+8h+H01+pWsMgSGrPJouddczMeX+epa7zy5OOV/Xjb7vFV
+/+CffigkE9xJ+aqSrOaVfIeRwfp2l9mdnpSnE72YXflYmzYiiNSyJLkDHZiwBERO
+zw9GHN3eXISCpqd41QJBAP+BgmaXPShWTq7uyI6QctlVvDDJD/V0XtnAI/WIB3+I
+fxzF/Cy5jSDnRznlYRmkEFEuc2mutIoBMPFWU/A6rYsCQQDkJPA78oDR9YEJC0Ec
+NWEEKnCpoc0yuni5cN0qS/wnEKOxppRk7a9R7MYxfm5M7QqB45kN6HUk94lXhJmL
+fVCDAkAHizxdaRO+MCYslhJH2034ysY+roERHzl5tmmZY0XNZytRnyrd6zCWix2Y
+QQSH7EcrDnML6MOd24ElbwYVbrYXAkEA32Kzv17hd7O1Vs+oPyCdD+EmU1JUg3lG
+P/0c8Q9ZpD6MqaP75R897S+zmD69baEkCq557L5SBZJC7mitl4FqVQJAHRh6nWuu
+fgs9w9mMsRml+wUI2XrGd/gDQqwT/fFlCiOWUSkcak58UCaoBeds7mFn+0lvXt2s
+JXT4ONAZrlxT+g==
+-----END PRIVATE KEY-----
 """
 
+# PKCS8 RSA PRIVATE KEY
 WEB_APP_PRIVATE_KEY_PEM = b"""\
------BEGIN RSA PRIVATE KEY-----
-MIICWwIBAAKBgQDNmVVDL+Yg8zx5rT1lWgHlUzVaN/h6r1dXVJEqTojrOEARfX+0
-6bVsTeBnfipkqJZl4IFct9EgMXWaDsSAlVqzEjjwfD2awdHJgeAsr+Kde7cpo9UM
-g2IoNl16fnChPMoSSlxnMxoArviRIKxl38n3SNFKMa6FfPOk0yHsUJUgEQIDAQAB
-AoGAdqJbiIFDERBJfQxxuOHO5jy1NHHHd0Nl6oZpnTfj2ZaDoZQA9KtGfFAThKRQ
-YfTFk9OP0ahfi2v+p/6NdIS56EEmTyuMowmhBpcrEFri+g3HvBGggecfPitWZlS0
-iasrqIXEkky7BthTRvl1ncon8bO/dLz1sXW5zuapBXlvleECQQDxjpimjZb8ayev
-Ek6qGG/LhALNKb5PC3P+YTYGji6afF2fC1y4/hLWarHP65Ct0H8kIJU859nGu16E
-5eefSWkfAkEA2eRX0nduJaocN4ZiIBZl5elSwCm89Tzxj6J2wlS64aGR5Ang0kt0
-Zz5SCsBZuAdA0vWlOIKNTnyyncqjygLgzwJAHJKJa+oDmgfywbqgo24QizoqOqpd
-YGwyZDyLb2sSCCP9zvpBFYC4KbSlI7rxeh3XbCaOgI3MLL2tCHtJUoYUcQJAIJbA
-c+Ac/1EkC0H0JyxybSKql8cmVd+ZmYwJCyO1F84cjejUUV+rt01g4+7E/HtJPMQ0
-w/DyxYxtAqCuQqaPjQJALRmzX18wfy5+sjYIN+29jMEEuTS3M28Qwh3Lll0gWaYH
-5bIYlQ5TASCx/7oU0rd+R2B1wc/lHGXHEo/t2txb6g==
------END RSA PRIVATE KEY-----
+-----BEGIN PRIVATE KEY-----
+MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAOO0Nh70QfeIrJRY
+yJbNnm55znGcgaDIuSG1mbPScvvQ+TiVRHOCdoZeFCFkRItcUWVbVvVmIUSREaD5
+1AvpLxcZvc1w0OTVFxl2coBhL6ZRMsoyhGADaoeBigy2UM2ZYuL0saGGuYEhKE+Y
+fYsrXtS2+D/YHgzVlGKv9Pp6IT4hAgMBAAECgYBSOPPGD6t2Z+rxknG0SsFn4SIT
+0lDYr0JykrHSxi5xEc+8h+H01+pWsMgSGrPJouddczMeX+epa7zy5OOV/Xjb7vFV
+/+CffigkE9xJ+aqSrOaVfIeRwfp2l9mdnpSnE72YXflYmzYiiNSyJLkDHZiwBERO
+zw9GHN3eXISCpqd41QJBAP+BgmaXPShWTq7uyI6QctlVvDDJD/V0XtnAI/WIB3+I
+fxzF/Cy5jSDnRznlYRmkEFEuc2mutIoBMPFWU/A6rYsCQQDkJPA78oDR9YEJC0Ec
+NWEEKnCpoc0yuni5cN0qS/wnEKOxppRk7a9R7MYxfm5M7QqB45kN6HUk94lXhJmL
+fVCDAkAHizxdaRO+MCYslhJH2034ysY+roERHzl5tmmZY0XNZytRnyrd6zCWix2Y
+QQSH7EcrDnML6MOd24ElbwYVbrYXAkEA32Kzv17hd7O1Vs+oPyCdD+EmU1JUg3lG
+P/0c8Q9ZpD6MqaP75R897S+zmD69baEkCq557L5SBZJC7mitl4FqVQJAHRh6nWuu
+fgs9w9mMsRml+wUI2XrGd/gDQqwT/fFlCiOWUSkcak58UCaoBeds7mFn+0lvXt2s
+JXT4ONAZrlxT+g==
+-----END PRIVATE KEY-----
 """
 
 
@@ -58,7 +63,7 @@ def _setup_scws_config() -> tuple[ScwsConfig, RSAPrivateKey, RSAPublicKey]:
 
     scws_config = ScwsConfig(
         idopte_public_keys=[idopte_private_key.public_key()],
-        web_application_private_key=web_app_private_key,
+        web_application_private_key=convert_rsa_pkey_from_cryptography_to_rust(web_app_private_key),
     )
     return scws_config, idopte_private_key, web_app_private_key.public_key()
 
@@ -66,10 +71,12 @@ def _setup_scws_config() -> tuple[ScwsConfig, RSAPrivateKey, RSAPublicKey]:
 async def test_anonymous_server_scws_service_mutual_challenges_ok(
     backend: Backend, anonymous_server: AnonymousServerRpcClient
 ):
-    backend.config.scws_config, idopte_private_key, _ = _setup_scws_config()
+    backend.config.scws_config, idopte_private_key, web_app_public_key = _setup_scws_config()
 
     challenge_payload = b"some-challenge-data"
-    challenge_signature = _raw_rsa_sign(idopte_private_key, challenge_payload)
+    challenge_signature = _raw_rsa_sign(
+        convert_rsa_pkey_from_cryptography_to_rust(idopte_private_key), challenge_payload
+    )
     web_app_challenge_payload = b"web-app-challenge"
 
     rep = await anonymous_server.scws_service_mutual_challenges(
@@ -83,7 +90,6 @@ async def test_anonymous_server_scws_service_mutual_challenges_ok(
     # Verify the server signed the web application challenge with its private key
     from parsec.components.scws import _raw_rsa_verify
 
-    web_app_public_key = backend.config.scws_config.web_application_private_key.public_key()
     assert _raw_rsa_verify(
         web_app_public_key,
         web_app_challenge_payload,
@@ -152,13 +158,13 @@ async def test_anonymous_server_scws_service_mutual_challenges_unknown_scws_serv
     # Key at index 0 is revoked (None)
     scws_config = ScwsConfig(
         idopte_public_keys=[None],
-        web_application_private_key=_load_private_key(WEB_APP_PRIVATE_KEY_PEM),
+        web_application_private_key=RsaPrivateKey.load_pkcs8_pem(WEB_APP_PRIVATE_KEY_PEM.decode()),
     )
     backend.config.scws_config = scws_config
 
     challenge_payload = b"some-challenge-data"
     challenge_signature = _raw_rsa_sign(
-        _load_private_key(IDOPTE_PRIVATE_KEY_PEM), challenge_payload
+        RsaPrivateKey.load_pkcs8_pem(IDOPTE_PRIVATE_KEY_PEM.decode()), challenge_payload
     )
 
     rep = await anonymous_server.scws_service_mutual_challenges(
@@ -183,7 +189,9 @@ async def test_anonymous_server_scws_service_mutual_challenges_invalid_web_appli
     too_long_payload = b"x" * 128
 
     challenge_payload = b"some-challenge-data"
-    challenge_signature = _raw_rsa_sign(idopte_private_key, challenge_payload)
+    challenge_signature = _raw_rsa_sign(
+        convert_rsa_pkey_from_cryptography_to_rust(idopte_private_key), challenge_payload
+    )
 
     rep = await anonymous_server.scws_service_mutual_challenges(
         scws_service_challenge_payload=challenge_payload,

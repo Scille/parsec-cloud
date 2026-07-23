@@ -59,9 +59,9 @@ def scws_server_options[**P, R](
 
         match (scws_web_application_private_key_file, scws_web_application_private_key_content):
             case (None, str() as content):
-                webapp_pkey_pem = content.encode("utf8")
+                webapp_pkey_pem = content
             case (Path() as file, None):
-                webapp_pkey_pem = file.read_bytes()
+                webapp_pkey_pem = file.read_text()
             case (Path() as file, str() as content):
                 raise click.UsageError("Cannot have both a file & content set for SCWS private key")
             case (None, None):

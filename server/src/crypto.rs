@@ -23,6 +23,7 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SequesterVerifyKeyDer>()?;
     m.add_class::<UntrustedPasswordAlgorithm>()?;
     m.add_class::<UntrustedPasswordAlgorithmArgon2id>()?;
+    m.add_class::<RsaPrivateKey>()?;
     m.add_function(wrap_pyfunction!(generate_sas_code_nonce, m)?)?;
 
     crate::binding_utils::export_exception!(m, py, CryptoError);
@@ -594,5 +595,34 @@ impl UntrustedPasswordAlgorithmArgon2id {
                 *parallelism
             }
         }
+    }
+}
+
+crate::binding_utils::gen_py_wrapper_class!(
+    RsaPrivateKey,
+    libparsec_crypto::RsaPrivateKey,
+    __repr__,
+    __copy__,
+    __deepcopy__
+);
+
+#[pymethods]
+impl RsaPrivateKey {
+    #[classmethod]
+    fn load_pkcs8_pem(_cls: Bound<'_, PyType>, s: &str) -> PyResult<Self> {
+        libparsec_crypto::RsaPrivateKey::load_pkcs8_pem(s)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    fn sign_pkcs1v15_unprefixed<'py>(
+        &self,
+        py: Python<'py>,
+        data: &[u8],
+    ) -> PyResult<Bound<'py, PyBytes>> {
+        self.0
+            .sign_pkcs1v15_unprefixed(data)
+            .map(|v| PyBytes::new(py, &v))
+            .map_err(|e| CryptoError::new_err(e.to_string()))
     }
 }
