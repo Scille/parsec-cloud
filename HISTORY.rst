@@ -8,6 +8,51 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.9.3-a.0.dev.20657+a5aa7a6 (2026-07-23)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* [CLI] Merge options ``--recipients`` and ``--weights`` of the command
+  ``shared-recovery create`` into ``--recipients``.
+  (`#9131 <https://github.com/Scille/parsec-cloud/issues/9131>`__)
+
+* Enable ODP file type in edit mode
+  (`#12110 <https://github.com/Scille/parsec-cloud/issues/12110>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug in the display of active user limit in electron.
+  (`#12873 <https://github.com/Scille/parsec-cloud/issues/12873>`__)
+
+* Fixed a bug preventing some file operations using the Finder in MacOS
+  (`#10086 <https://github.com/Scille/parsec-cloud/issues/10086>`__)
+
+* Fix the CLI ``device forget-local`` command failing with ``No such file or
+  directory`` when the device has no associated data directory (devices created
+  on old organizations).
+  (`#12807 <https://github.com/Scille/parsec-cloud/issues/12807>`__)
+
+* Fix files created in the GUI through the "New file" button not appearing right
+  away
+  (`#13002 <https://github.com/Scille/parsec-cloud/issues/13002>`__)
+
+* Fixed CLI server run's `--scws-web-application-private-key-content` parameter
+  incorrectly expecting a PEM content encoded in base64
+  (`#12920 <https://github.com/Scille/parsec-cloud/issues/12920>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added the server version in the organization information page
+  (`#5557 <https://github.com/Scille/parsec-cloud/issues/5557>`__)
+
+
+
 Parsec v3.9.2 (2026-06-25)
 --------------------------
 
