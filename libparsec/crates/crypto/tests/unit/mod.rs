@@ -5,6 +5,7 @@ mod hash;
 mod key_derivation;
 mod password;
 mod private;
+mod rsa;
 mod sas;
 mod secret;
 mod sequester;
