@@ -523,7 +523,9 @@ export const expect = baseExpect.extend({
           'This organization does not allow this authentication method.',
         );
       } else {
-        await baseExpect(authRadio.nth(1).locator('.authentication-card-text__description')).toHaveText('Unavailable on web');
+        await baseExpect(authRadio.nth(1).locator('.authentication-card-text__description')).toHaveText(
+          /^(Unavailable on web|Unavailable on your system)$/,
+        );
       }
     } else {
       await baseExpect(authRadio.nth(1)).not.toHaveClass(/radio-disabled/);

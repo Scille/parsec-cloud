@@ -68,7 +68,7 @@ import idCardGradient from '@/assets/images/id-card-gradient.svg';
 import KeypadGradient from '@/assets/images/keypad-gradient.svg';
 import personCircleGradient from '@/assets/images/person-circle-gradient.svg';
 import { AuthenticationCardState } from '@/components/profile/types';
-import { DevicePrimaryProtectionStrategyTag, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
+import { DevicePrimaryProtectionStrategyTag, isKeyringAvailable, isWeb } from '@/parsec';
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
@@ -148,13 +148,10 @@ const methodConfig: Record<
 };
 
 function keyringUnavailableMessage(): Translatable {
-  if (isDesktop() && !keyringAvailable.value) {
-    return 'Authentication.keyringUnavailableOnSystem';
-  } else if (isWeb() && !keyringAvailable.value) {
+  if (isWeb() && !keyringAvailable.value) {
     return 'Authentication.keyringUnavailableOnWeb';
-  } else {
-    return '';
   }
+  return 'Authentication.keyringUnavailableOnSystem';
 }
 </script>
 
