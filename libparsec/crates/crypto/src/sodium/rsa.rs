@@ -89,6 +89,16 @@ impl RsaPrivateKey {
             .map(Zeroizing::new)
             .expect("Unreachable")
     }
+
+    pub fn sign_pkcs1v15_unprefixed(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
+        let mut signer = Signer::new_without_digest(&self.0).expect("Unable to build a signer");
+        signer
+            .set_rsa_padding(Padding::PKCS1)
+            .expect("OpenSSL error");
+
+        signer.update(data).expect("Unreachable");
+        signer.sign_to_vec().map_err(|_| CryptoError::Signature)
+    }
 }
 
 pub struct RsaPublicKey(pub(crate) PKey<Public>);

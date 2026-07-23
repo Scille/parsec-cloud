@@ -46,6 +46,7 @@ from parsec._parsec_pyi.crypto import (
     HashDigest,
     PrivateKey,
     PublicKey,
+    RsaPrivateKey,
     SecretKey,
     SequesterPrivateKeyDer,
     SequesterPublicKeyDer,
@@ -172,6 +173,7 @@ __all__ = [
     "VerifyKey",
     "UntrustedPasswordAlgorithm",
     "UntrustedPasswordAlgorithmArgon2id",
+    "RsaPrivateKey",
     # Enumerate
     "CancelledGreetingAttemptReason",
     "DevicePurpose",

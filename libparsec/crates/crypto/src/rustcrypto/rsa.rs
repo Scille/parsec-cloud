@@ -55,6 +55,12 @@ impl RsaPrivateKey {
             .to_pkcs8_pem(rsa::pkcs8::LineEnding::default())
             .expect("Unreachable")
     }
+
+    pub fn sign_pkcs1v15_unprefixed(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
+        self.0
+            .sign(rsa::pkcs1v15::Pkcs1v15Sign::new_raw(), data)
+            .map_err(|_| CryptoError::Signature)
+    }
 }
 
 pub struct RsaPublicKey(pub(crate) rsa::RsaPublicKey);
