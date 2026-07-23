@@ -53,7 +53,7 @@
             v-if="primaryDetails.emails.length === 0"
             class="subtitles-sm"
           >
-            {{ $msTranslate('No email') }}
+            {{ $msTranslate('HomePage.organizationRequest.asyncEnrollmentModal.certificate.noEmail') }}
           </ion-text>
           <ion-text
             v-if="primaryDetails.emails.length > 0"
