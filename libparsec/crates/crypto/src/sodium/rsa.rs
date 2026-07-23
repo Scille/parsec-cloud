@@ -4,7 +4,6 @@ use crate::{CryptoError, CryptoResult};
 use openssl::{
     pkey::{PKey, Private, Public},
     rsa::{Padding, Rsa},
-    sign::Signer,
 };
 use zeroize::Zeroizing;
 
@@ -91,13 +90,13 @@ impl RsaPrivateKey {
     }
 
     pub fn sign_pkcs1v15_unprefixed(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
-        let mut signer = Signer::new_without_digest(&self.0).expect("Unable to build a signer");
-        signer
-            .set_rsa_padding(Padding::PKCS1)
-            .expect("OpenSSL error");
-
-        signer.update(data).expect("Unreachable");
-        signer.sign_to_vec().map_err(|_| CryptoError::Signature)
+        let rsa_pkey = self.0.rsa().expect("Unreachable");
+        let mut sig = vec![0; rsa_pkey.size() as usize];
+        let sig_len = rsa_pkey
+            .private_encrypt(data, &mut sig, Padding::PKCS1)
+            .map_err(|_| CryptoError::Signature)?;
+        sig.truncate(sig_len);
+        Ok(sig)
     }
 }
 
