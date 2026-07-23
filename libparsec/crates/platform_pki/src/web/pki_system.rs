@@ -255,7 +255,7 @@ async fn ask_server_to_sign_scws_challenge(
         "Middleware signature {sig} for {challenge}",
         sig = data_encoding::BASE64.encode_display(&svc_rep.cryptogram)
     );
-    log::debug!(
+    log::info!(
         "Server need to sign the following challenge {}",
         data_encoding::BASE64.encode_display(&svc_rep.challenge)
     );
@@ -291,7 +291,7 @@ async fn ask_server_to_sign_scws_challenge(
         }
     }
     .inspect(|sig| {
-        log::debug!(
+        log::info!(
             "Server signature {sig}",
             sig = data_encoding::BASE64.encode_display(sig),
         )
