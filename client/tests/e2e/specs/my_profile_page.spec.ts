@@ -2,15 +2,19 @@
 
 import { Page } from '@playwright/test';
 import {
+  DEFAULT_USER_INFORMATION,
   DisplaySize,
   expect,
   fillIonInput,
   logout,
+  MsPage,
   msTest,
   openExternalLink,
   selectDropdown,
+  setupNewPage,
   setWriteClipboardPermission,
 } from '@tests/e2e/helpers';
+import { randomUUID } from 'crypto';
 
 msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
@@ -361,3 +365,72 @@ msTest('Open modal to greet user from ProfilePage in small display', async ({ us
   await usersPage.locator('.list-group-item').nth(0).click();
   await expect(usersPage.locator('.modal-sheet')).toBeVisible();
 });
+
+for (const platform of ['PlatformWeb', 'PlatformAndroid', 'PlatformWindows', 'PlatformMacOS', 'PlatformLinux']) {
+  msTest(`Check default device name on ${platform}`, async ({ context }) => {
+    const page = (await context.newPage()) as MsPage;
+    await setupNewPage(page);
+    const PLATFORMS = {
+      PlatformWeb: 'Web',
+      PlatformAndroid: 'Android',
+      PlatformWindows: 'Windows',
+      PlatformMacOS: 'MacOS',
+      PlatformLinux: 'Linux',
+    };
+    await page.evaluate((platform) => {
+      (window as any).getPlatform = () => platform;
+    }, platform);
+    const uniqueOrgName = randomUUID().slice(0, 32);
+    await page.locator('#create-organization-button').click();
+    await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
+    const modal = page.locator('.create-organization-modal');
+    await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
+
+    const orgServerContainer = modal.locator('.organization-name-and-server-page');
+    await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Create organization on my Parsec server');
+    const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
+    await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
+    await fillIonInput(orgServerContainer.locator('ion-input').nth(1), page.orgInfo.serverAddr);
+    await orgNext.click();
+
+    const userInfoContainer = modal.locator('.user-information-page');
+    const userNext = modal.locator('.user-information-page-footer').locator('ion-button').nth(1);
+    await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
+    await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
+    await userNext.click();
+
+    const authContainer = modal.locator('.authentication-page');
+    const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
+    const authRadio = authContainer.locator('.choose-auth-page').locator('.radio-list-item:visible');
+    await expect(authRadio).toHaveCount(4);
+    await expect(authRadio).toHaveAuthentication({ pkiDisabled: true, keyringDisabled: true });
+    await authRadio.nth(0).click();
+
+    await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
+    await expect(authNext).toHaveDisabledAttribute();
+    await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+    await expect(authNext).toNotHaveDisabledAttribute();
+    await authNext.click();
+
+    const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+    await summaryNext.click();
+
+    await expect(modal.locator('.creation-page')).toBeVisible();
+    await expect(modal.locator('.creation-page').locator('.closeBtn')).toBeHidden();
+    await page.waitForTimeout(1000);
+
+    await modal.locator('.created-page-footer').locator('ion-button').click();
+    await expect(modal).toBeHidden();
+    await page.waitForTimeout(1000);
+    await expect(page).toBeWorkspacePage();
+
+    await page.locator('.topbar').locator('.profile-header').click();
+    const myProfileButton = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(1);
+    await expect(myProfileButton).toHaveText('My devices');
+    await myProfileButton.click();
+    await expect(page).toHavePageTitle('My profile');
+    await expect(page).toBeMyProfilePage();
+    await expect(page.locator('.profile-content-item').locator('.item-header__title')).toHaveText('My devices');
+    await expect(page.locator('.device-list-item').locator('.device-name')).toHaveText((PLATFORMS as any)[platform]);
+  });
+}
