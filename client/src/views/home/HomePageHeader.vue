@@ -142,20 +142,19 @@ import HomePageSecondaryMenuCollapse from '@/components/header/HomePageSecondary
 import { openBugReportModal } from '@/components/misc';
 import { AccountInfo, ParsecAccount } from '@/parsec';
 import { navigateTo, Routes, watchRoute } from '@/router';
-import { APP_VERSION, Env } from '@/services/environment';
+import { Env } from '@/services/environment';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { useUpdateManager } from '@/services/updateManager';
-import { openAboutModal } from '@/views/about';
-import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { openAboutModal, openUpdateAppModal } from '@/views/about';
 import { AccountSettingsTabs } from '@/views/account/types';
 import ProfileHeaderHomepage from '@/views/header/ProfileHeaderHomePage.vue';
 import { openSettingsModal } from '@/views/settings';
 import { IonButton, IonIcon, IonMenu, IonMenuButton, IonText, modalController } from '@ionic/vue';
 import { arrowBack, arrowForward, caretDown, menu, personCircle } from 'ionicons/icons';
-import { MsModalResult, Translatable, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
+import { Answer, MsModalResult, Translatable, useWindowSize, WindowSizeBreakpoints } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 const { isSmallDisplay, isLargeDisplay, windowWidth } = useWindowSize();
@@ -239,21 +238,9 @@ async function update(): Promise<void> {
     return;
   }
 
-  const modal = await modalController.create({
-    component: UpdateAppModal,
-    canDismiss: true,
-    cssClass: 'update-app-modal',
-    backdropDismiss: false,
-    componentProps: {
-      currentVersion: APP_VERSION,
-      targetVersion: updateAvailability.value.version,
-    },
-  });
-  await modal.present();
-  const { role } = await modal.onWillDismiss();
-  await modal.dismiss();
+  const answer = await openUpdateAppModal(updateAvailability.value.version);
 
-  if (role === MsModalResult.Confirm) {
+  if (answer === Answer.Yes) {
     window.electronAPI.prepareUpdate();
   }
   suppressUpdatePrompt();

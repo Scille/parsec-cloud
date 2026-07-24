@@ -29,7 +29,6 @@ import {
   TOTPSetupStatusTag,
 } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
-import { APP_VERSION } from '@/services/environment';
 import {
   EntryDeletedData,
   EntryRenamedData,
@@ -47,7 +46,7 @@ import { recentDocumentManager } from '@/services/recentDocuments';
 import useRefreshWarning from '@/services/refreshWarning';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { useUpdateManager } from '@/services/updateManager';
-import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { openUpdateAppModal } from '@/views/about';
 import TOSModal from '@/views/organizations/TOSModal.vue';
 import TotpRequiredModal from '@/views/profile/TotpRequiredModal.vue';
 import ActivateTotpModal from '@/views/totp/ActivateTotpModal.vue';
@@ -552,21 +551,9 @@ async function onAppUpdate(): Promise<void> {
     return;
   }
 
-  const modal = await modalController.create({
-    component: UpdateAppModal,
-    canDismiss: true,
-    cssClass: 'update-app-modal',
-    backdropDismiss: false,
-    componentProps: {
-      currentVersion: APP_VERSION,
-      targetVersion: updateAvailableData.value.version,
-    },
-  });
-  await modal.present();
-  const { role } = await modal.onWillDismiss();
-  await modal.dismiss();
+  const answer = await openUpdateAppModal(updateAvailableData.value.version);
 
-  if (role === MsModalResult.Confirm) {
+  if (answer === Answer.Yes) {
     window.electronAPI.prepareUpdate();
   }
   suppressUpdatePrompt();
