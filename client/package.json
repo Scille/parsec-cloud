@@ -67,7 +67,6 @@
         "@capacitor/cli": "^7.6.5",
         "@playwright/test": "^1.61.0",
         "@sentry/vite-plugin": "^5.3.0",
-        "@types/adm-zip": "^0.5.8",
         "@types/luxon": "^3.7.2",
         "@types/node": "^26.0.0",
         "@types/w3c-image-capture": "^1.0.11",
