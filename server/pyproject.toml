@@ -63,7 +63,7 @@ include = [
 cibuildwheel = "^4.0.0"
 maturin = "^1.9.5"
 patchelf = { version = "^0.17.2.4", markers = "platform_system=='Linux'" }
-setuptools = "^82.0.0"
+setuptools = "^83.0.0"
 # lint
 deptry = "^0.25.1"
 editorconfig-checker = "^3.2.1"
