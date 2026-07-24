@@ -1,7 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { TestInfo } from '@playwright/test';
-import { MockBms, expect, fillIonInput, fillIonTextArea, msTest } from '@tests/e2e/helpers';
+import {
+  MockBms,
+  MsPage,
+  expect,
+  fillIonInput,
+  fillIonTextArea,
+  getClipboardText,
+  msTest,
+  setWriteClipboardPermission,
+  setupNewPage,
+} from '@tests/e2e/helpers';
+import fs from 'fs/promises';
 import path from 'path';
 
 msTest('Submit bug report', async ({ connected }, testInfo: TestInfo) => {
@@ -103,7 +114,32 @@ msTest('Show logs when logged in', async ({ myProfilePage }) => {
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('Logs');
 });
 
-msTest('Show logs on homepage', async ({ home }) => {
+msTest('Show logs on homepage', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { allowLogs: true });
+  const settingsModal = home.locator('.settings-modal');
+  const logModal = home.locator('.log-modal');
+  await expect(settingsModal).toBeHidden();
+  await expect(logModal).toBeHidden();
+  await home.locator('#trigger-settings-button').click();
+  await expect(settingsModal).toBeVisible();
+  await expect(logModal).toBeHidden();
+
+  await settingsModal.locator('.see-logs-button').click();
+  await expect(settingsModal).toBeHidden();
+  await expect(logModal).toBeVisible();
+  await expect(logModal.locator('.log-area')).toHaveValue(
+    /^\[[\d\.:T\-+]+\] \[info\] Custom branding is not enabled, not loading resources$/,
+  );
+  await logModal.locator('.closeBtn').click();
+  await expect(settingsModal).toBeVisible();
+  await expect(logModal).toBeHidden();
+});
+
+msTest('Copy logs', async ({ context }) => {
+  await setWriteClipboardPermission(context, true);
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { allowLogs: true });
   const settingsModal = home.locator('.settings-modal');
   const logModal = home.locator('.log-modal');
   await expect(settingsModal).toBeHidden();
@@ -114,6 +150,36 @@ msTest('Show logs on homepage', async ({ home }) => {
   await settingsModal.locator('.see-logs-button').click();
   await expect(settingsModal).toBeHidden();
   await expect(logModal).toBeVisible();
+  await expect(logModal.locator('#log-copy-button')).toHaveText('Copy');
+  await logModal.locator('#log-copy-button').click();
+  await expect(logModal.locator('#log-copy-button')).toHaveText('Copied!');
+  expect(await getClipboardText(home)).toMatch(/^\[[\d\.:T\-+]+\] \[info\] Custom branding is not enabled, not loading resources$/);
+  await logModal.locator('.closeBtn').click();
+  await expect(settingsModal).toBeVisible();
+  await expect(logModal).toBeHidden();
+});
+
+msTest('Download logs', async ({ context }) => {
+  const home = (await context.newPage()) as MsPage;
+  await setupNewPage(home, { allowLogs: true });
+  const settingsModal = home.locator('.settings-modal');
+  const logModal = home.locator('.log-modal');
+  await expect(settingsModal).toBeHidden();
+  await expect(logModal).toBeHidden();
+  await home.locator('#trigger-settings-button').click();
+  await expect(settingsModal).toBeVisible();
+  await expect(logModal).toBeHidden();
+  await settingsModal.locator('.see-logs-button').click();
+  await expect(settingsModal).toBeHidden();
+  await expect(logModal).toBeVisible();
+  await expect(logModal.locator('#log-download-button')).toHaveText('Download');
+  const downloadPromise = home.waitForEvent('download');
+  await logModal.locator('#log-download-button').click();
+  await expect(logModal.locator('#log-download-button')).toHaveText('Downloaded!');
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/^parsec_[\d\-_]+\.log$/);
+  const content = await fs.readFile(await download.path(), 'utf-8');
+  expect(content).toMatch(/^\[[\d\.:T\-+]+\] \[info\] Custom branding is not enabled, not loading resources$/);
   await logModal.locator('.closeBtn').click();
   await expect(settingsModal).toBeVisible();
   await expect(logModal).toBeHidden();

@@ -43,13 +43,13 @@ import PersonCircle from '@/assets/images/person-circle.svg?raw';
 import { openBugReportModal } from '@/components/misc';
 import { getClientInfo, UserProfile } from '@/parsec';
 import { navigateTo, ProfilePages, Routes } from '@/router';
-import { APP_VERSION, Env } from '@/services/environment';
+import { Env } from '@/services/environment';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { openUpdateAppModal } from '@/views/about';
 import ProfileHeaderOrganizationPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderOrganizationPopover.vue';
-import { IonIcon, IonItem, IonText, modalController, popoverController } from '@ionic/vue';
+import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
 import { Answer, askQuestion, MsImage, MsModalResult } from 'megashark-lib';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
@@ -119,22 +119,10 @@ async function openOrganizationPopover(event: Event): Promise<void> {
   if (data === undefined) {
     return;
   }
-  if (data.option === ProfilePopoverOption.Update) {
-    const modal = await modalController.create({
-      component: UpdateAppModal,
-      canDismiss: true,
-      cssClass: 'update-app-modal',
-      backdropDismiss: false,
-      componentProps: {
-        currentVersion: APP_VERSION,
-        targetVersion: updateAvailability.value.version,
-      },
-    });
-    await modal.present();
-    const { role } = await modal.onWillDismiss();
-    await modal.dismiss();
+  if (data.option === ProfilePopoverOption.Update && updateAvailability.value.version) {
+    const answer = await openUpdateAppModal(updateAvailability.value.version);
 
-    if (role === MsModalResult.Confirm) {
+    if (answer === Answer.Yes) {
       await eventDistributor.value.dispatchEvent(Events.LogoutRequested);
       window.electronAPI.prepareUpdate();
     }
