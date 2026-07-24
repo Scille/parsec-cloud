@@ -34,14 +34,13 @@
 
 <script setup lang="ts">
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { APP_VERSION } from '@/services/environment';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { NewVersionAvailableData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
-import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { openUpdateAppModal } from '@/views/about';
 import { IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowForward, sparkles } from 'ionicons/icons';
-import { formatTimeSince, MsModalResult } from 'megashark-lib';
+import { Answer, formatTimeSince } from 'megashark-lib';
 
 const props = defineProps<{
   notification: Notification;
@@ -57,21 +56,9 @@ async function update(): Promise<void> {
     await modalController.dismiss();
   }
 
-  const modal = await modalController.create({
-    component: UpdateAppModal,
-    canDismiss: true,
-    cssClass: 'update-app-modal',
-    backdropDismiss: false,
-    componentProps: {
-      currentVersion: APP_VERSION,
-      targetVersion: data.newVersion,
-    },
-  });
-  await modal.present();
-  const { role } = await modal.onWillDismiss();
-  await modal.dismiss();
+  const answer = await openUpdateAppModal(data.newVersion);
 
-  if (role === MsModalResult.Confirm) {
+  if (answer === Answer.Yes) {
     await props.eventDistributor.dispatchEvent(Events.LogoutRequested);
     window.electronAPI.prepareUpdate();
   }
