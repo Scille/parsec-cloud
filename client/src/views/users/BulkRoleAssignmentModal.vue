@@ -22,16 +22,10 @@
         <ion-title class="modal-header__title title-h3">
           {{ $msTranslate('UsersPage.assignRoles.title') }}
         </ion-title>
-        <ion-text class="modal-header__text body">
-          <i18n-t
-            keypath="UsersPage.userContextMenu.subtitleAssignRoles"
-            scope="global"
-          >
-            <template #sourceUser>
-              <strong> {{ sourceUser.humanHandle.label }} </strong>
-            </template>
-          </i18n-t>
-        </ion-text>
+        <ms-rich-text
+          class="modal-header__text body"
+          :text="{ key: 'UsersPage.userContextMenu.subtitleAssignRoles', data: { sourceUser: sourceUser.humanHandle.label } }"
+        />
       </ion-header>
       <small-display-modal-header
         v-else
@@ -42,19 +36,11 @@
         class="modal-content"
         v-if="currentPage === Steps.SelectUser"
       >
-        <ion-text
+        <ms-rich-text
           class="modal-header__text body"
           v-if="isSmallDisplay"
-        >
-          <i18n-t
-            keypath="UsersPage.userContextMenu.subtitleAssignRoles"
-            scope="global"
-          >
-            <template #sourceUser>
-              <strong> {{ sourceUser.humanHandle.label }} </strong>
-            </template>
-          </i18n-t>
-        </ion-text>
+          :text="{ key: 'UsersPage.userContextMenu.subtitleAssignRoles', data: { sourceUser: sourceUser.humanHandle.label } }"
+        />
         <user-select
           :exclude-users="[sourceUser]"
           :current-user="currentUser"
@@ -193,7 +179,7 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { IonButton, IonFooter, IonHeader, IonIcon, IonItem, IonList, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { arrowForward, checkmarkCircle, close, closeCircle } from 'ionicons/icons';
-import { MsModalResult, MsReportText, MsReportTheme, MsSpinner, useWindowSize } from 'megashark-lib';
+import { MsModalResult, MsReportText, MsReportTheme, MsRichText, MsSpinner, useWindowSize } from 'megashark-lib';
 import { ref, Ref, watch } from 'vue';
 
 enum Steps {

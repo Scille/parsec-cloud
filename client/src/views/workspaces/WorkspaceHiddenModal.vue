@@ -16,16 +16,10 @@
       }"
     >
       <div class="workspace-hidden">
-        <ion-text class="workspace-hidden__description body-lg">
-          <i18n-t
-            keypath="WorkspacesPage.workspaceHiddenModal.affectedWorkspaces"
-            scope="global"
-          >
-            <template #workspace>
-              <strong>{{ workspaceName }}</strong>
-            </template>
-          </i18n-t>
-        </ion-text>
+        <ms-rich-text
+          class="workspace-hidden__description body-lg"
+          :text="{ key: 'WorkspacesPage.workspaceHiddenModal.affectedWorkspaces', data: { workspace: workspaceName } }"
+        />
       </div>
       <ms-checkbox
         label-placement="end"
@@ -43,7 +37,7 @@
 <script setup lang="ts">
 import { WorkspaceName } from '@/parsec';
 import { IonPage, IonText, modalController } from '@ionic/vue';
-import { MsCheckbox, MsModal, MsModalResult } from 'megashark-lib';
+import { MsCheckbox, MsModal, MsModalResult, MsRichText } from 'megashark-lib';
 import { ref } from 'vue';
 
 defineProps<{

@@ -110,12 +110,11 @@
         }
     },
     "notification": {
-        "changeRole": "Your role has been changed to {role} on the workspace {workspace}",
-        "workspaceAccess": "You have access to the workspace {workspace}",
-        "userJoinWorkspace": "{name} has joined the workspace {workspace}",
-        "multipleUsersJoinWorkspace": "{count} have joined the workspace {workspace}",
-        "users": "users",
-        "userSharedDocument": "{name} shared a new document",
+        "changeRole": "Your role has been changed to <b>{role}</b> on the workspace <b>{workspace}</b>",
+        "workspaceAccess": "You have access to the workspace <b>{workspace}</b>",
+        "userJoinWorkspace": "<b>{name}</b> has joined the workspace <b>{workspace}</b>",
+        "multipleUsersJoinWorkspace": "<b>{count} users</b> have joined the workspace <b>{workspace}</b>",
+        "userSharedDocument": "<b>{name}</b> shared a new document",
         "allImportedElements": "All your elements have been imported",
         "newDeviceAdded": "A new device has been added to the organization",
         "serverOnline": "You are connected to the Parsec server",
@@ -307,15 +306,9 @@
             "step": {
                 "showButton": "Show steps",
                 "hideButton": "Hide steps",
-                "one": "Launch {application} (desktop app) and {login} to your organization.",
-                "two": "From your account menu (top right), select {myDevices}, then click on {addDevice} and {copyInvitation}.",
-                "three": "{pasteInvitation} below and follow the instructions to set up your web browser.",
-                "application": "Parsec",
-                "login": "log in",
-                "myDevices": "My devices",
-                "addDevice": "Add New Device",
-                "copyInvitation": "copy the link",
-                "pasteInvitation": "Paste the link"
+                "one": "Launch <b>Parsec</b> (desktop app) and <b>log in</b> to your organization.",
+                "two": "From your account menu (top right), select <b>My devices</b>, then click on <b>Add New Device</b> and <b>copy the link</b>.",
+                "three": "<b>Paste the link</b> below and follow the instructions to set up your web browser."
             },
             "pasteLinkLabel": "Enter the invitation link",
             "pasteLinkPlaceholder": "parsec3://example.com/Org?...",
@@ -828,7 +821,7 @@
         },
         "workspaceHiddenModal": {
             "title": "Hide a workspace",
-            "affectedWorkspaces": "You are about to hide the workspace {workspace} and it will no longer be visible from the file explorer.",
+            "affectedWorkspaces": "You are about to hide the workspace <b>{workspace}</b> and it will no longer be visible from the file explorer.",
             "info": "You can check “Show hidden workspaces” to see it in Parsec.",
             "actionConfirm": "Hide workspace",
             "actionCancel": "Cancel",
@@ -1097,12 +1090,11 @@
             "cancelled": "Cancelled",
             "cancelling": "Cancelling...",
             "cancel": "Cancel",
-            "failed": "Failed",
-            "files": "files"
+            "failed": "Failed"
         },
         "ImportFile": {
-            "importMultipleFiles": "Importing {count}",
-            "gatherMultipleFiles": "Gathering {count}",
+            "importMultipleFiles": "Importing <b>{count} files</b>",
+            "gatherMultipleFiles": "Gathering <b>{count} files</b>",
             "importFilesAction": "Import files",
             "importFolderAction": "Import a folder",
             "title": "Background tasks",
@@ -1122,21 +1114,21 @@
             "noDropForReader": "You are a Reader on this workspace and cannot import files."
         },
         "CopyFile": {
-            "copyMultipleFiles": "Copying {count}",
-            "copy": "Copying {name}"
+            "copyMultipleFiles": "Copying <b>{count} files</b>",
+            "copy": "Copying <b>{name}</b>"
         },
         "MoveFile": {
-            "moveMultipleFiles": "Moving {count}",
-            "move": "Moving {name}",
+            "moveMultipleFiles": "Moving <b>{count} files</b>",
+            "move": "Moving <b>{name}</b>",
             "failedDetails": "Please make sure you are online."
         },
         "RestoreFile": {
-            "restoreMultipleFiles": "Restoring {count}",
-            "restore": "Restoration of {name}",
+            "restoreMultipleFiles": "Restoring <b>{count} files</b>",
+            "restore": "Restoration of <b>{name}</b>",
             "failedDetails": "Could not restore this file or folder."
         },
         "DownloadFile": {
-            "downloadSingle": "Downloading {name}",
+            "downloadSingle": "Downloading <b>{name}</b>",
             "downloadMultiple": "Downloading one item|Downloading {count} items...",
             "downloadMultipleDone": "One item downloaded|{count} items downloaded",
             "preparing": "Preparing secured download",
@@ -1858,7 +1850,7 @@
             "titleAssignRoles": "Copy roles",
             "actionAssignRoles": "Copy workspace roles",
             "cannotAssignRolesToSelf": "You cannot copy roles to yourself.",
-            "subtitleAssignRoles": "You can copy {sourceUser} roles to another person. Workspace roles will not be removed.",
+            "subtitleAssignRoles": "You can copy <b>{sourceUser}</b> roles to another person. Workspace roles will not be removed.",
             "titleUpdateProfile": "Profile",
             "actionUpdateProfile": "Change profile | Change profiles",
             "actionSelect": "Selection",

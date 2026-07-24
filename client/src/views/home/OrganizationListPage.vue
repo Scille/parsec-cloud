@@ -138,17 +138,7 @@
                   class="webAccess-step-item__icon"
                 />
                 <span class="webAccess-step-item__text">
-                  <i18n-t
-                    keypath="HomePage.webAccess.step.one"
-                    scope="global"
-                  >
-                    <template #application>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.application') }} </strong>
-                    </template>
-                    <template #login>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.login') }} </strong>
-                    </template>
-                  </i18n-t>
+                  <ms-rich-text text="HomePage.webAccess.step.one" />
                 </span>
               </ion-text>
               <ion-text class="body webAccess-step-item">
@@ -157,20 +147,7 @@
                   class="webAccess-step-item__icon"
                 />
                 <span class="webAccess-step-item__text">
-                  <i18n-t
-                    keypath="HomePage.webAccess.step.two"
-                    scope="global"
-                  >
-                    <template #myDevices>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.myDevices') }} </strong>
-                    </template>
-                    <template #addDevice>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.addDevice') }} </strong>
-                    </template>
-                    <template #copyInvitation>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.copyInvitation') }} </strong>
-                    </template>
-                  </i18n-t>
+                  <ms-rich-text text="HomePage.webAccess.step.two" />
                 </span>
               </ion-text>
               <ion-text class="body webAccess-step-item">
@@ -179,14 +156,7 @@
                   class="webAccess-step-item__icon"
                 />
                 <span class="webAccess-step-item__text">
-                  <i18n-t
-                    keypath="HomePage.webAccess.step.three"
-                    scope="global"
-                  >
-                    <template #pasteInvitation>
-                      <strong> {{ $msTranslate('HomePage.webAccess.step.pasteInvitation') }} </strong>
-                    </template>
-                  </i18n-t>
+                  <ms-rich-text text="HomePage.webAccess.step.three" />
                 </span>
               </ion-text>
             </div>
@@ -323,6 +293,7 @@ import {
   MsImage,
   MsInput,
   MsOptions,
+  MsRichText,
   MsSearchInput,
   MsSorter,
   MsSorterChangeEvent,
