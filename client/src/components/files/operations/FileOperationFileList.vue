@@ -8,7 +8,7 @@
       :key="file.name"
     >
       <ms-image
-        :image="(file as EntryStat).isFile() ? getFileIcon(file.name) : Folder"
+        :image="(file as File).webkitRelativePath !== undefined || (file as EntryStat).isFile() ? getFileIcon(file.name) : Folder"
         class="file-icon"
       />
       <ion-text class="multiples-file-item__label body-sm">

@@ -17,7 +17,7 @@ async function toggleViewMode(page: Page): Promise<void> {
   }
 }
 
-async function checkFilesUploaded(page: Page, expectedCount: number, lastOneFilesCount = 1): Promise<void> {
+async function checkFilesUploaded(page: Page, expectedCount: number, lastOneFilesCount = 1, fileNames: Array<string> = []): Promise<void> {
   const uploadMenu = page.locator('.upload-menu');
   await expect(uploadMenu).toBeVisible();
   const opItems = uploadMenu.locator('.upload-menu-list').locator('.file-operation-item');
@@ -44,6 +44,13 @@ async function checkFilesUploaded(page: Page, expectedCount: number, lastOneFile
   if (lastOneFilesCount > 1) {
     await expect(lastElement).toHaveTheClass('multiple_elements');
     await expect(lastElement.locator('.element-details-title__name')).toHaveText(`Importing ${lastOneFilesCount} files`);
+    if (fileNames.length) {
+      const fileList = lastElement.locator('.multiples-file-list');
+      await expect(fileList).toBeHidden();
+      await lastElement.locator('.element-details-title__name').click();
+      await expect(fileList).toBeVisible();
+      await expect(fileList.locator('.multiples-file-item__label')).toHaveText(fileNames);
+    }
   } else {
     await expect(lastElement).not.toHaveTheClass('multiple_elements');
     await expect(lastElement.locator('.element-details-title__name')).toHaveText(/^[A-Za-z0-9-_.]+$/);
@@ -67,7 +74,7 @@ for (const mode of ['list', 'grid']) {
       path.join(testInfo.config.rootDir, 'data', 'imports', 'yo.png'),
       path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
     ]);
-    await checkFilesUploaded(documents, 1, 2);
+    await checkFilesUploaded(documents, 1, 2, ['yo.png', 'hell_yeah.png']);
     const actionBar = documents.locator('#folders-ms-action-bar');
     await expect(actionBar.locator('.counter')).toHaveText('2 items', { useInnerText: true });
     if (mode === 'list') {
