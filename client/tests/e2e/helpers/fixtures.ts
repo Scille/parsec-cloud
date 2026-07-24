@@ -108,6 +108,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
       if (options.mockBrowser) {
         (window as any).TESTING_MOCK_BROWSER = options.mockBrowser;
       }
+      (window as any).TESTING_ALLOW_LOGS = options.allowLogs;
       if (options.allowedProtectionMethods) {
         (window as any).TESTING_MOCK_ALLOWED_PROTECTION_METHODS = options.allowedProtectionMethods;
       }

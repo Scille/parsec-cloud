@@ -58,6 +58,7 @@ export interface SetupOptions {
   additionalUsers?: Array<AdditionalUserData>;
   enableShamir?: boolean;
   customNextStage?: (page: MsPage) => Promise<void>;
+  allowLogs?: boolean;
 }
 
 export interface MsPage extends Page {
