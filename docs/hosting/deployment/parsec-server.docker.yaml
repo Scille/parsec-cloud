@@ -1,7 +1,8 @@
 services:
-  parsec-proxy:
+  proxy:
     depends_on:
-      - parsec-server
+      parsec:
+        condition: service_healthy
     image: nginx:1.27-alpine
     container_name: parsec-proxy
     ports:
@@ -13,9 +14,14 @@ services:
     volumes:
       - ./parsec-nginx.conf:/etc/nginx/nginx.conf:ro
 
-  parsec-postgres:
+  postgres:
     image: postgres:16.10-alpine
     container_name: parsec-postgres
+    healthcheck:
+      # cspell: words pg_isready
+      test: pg_isready -d $${POSTGRES_DB}
+      start_period: 1s
+      start_interval: 3s
     environment:
       POSTGRES_USER: DB_USER
       POSTGRES_PASSWORD: DB_PASS
@@ -26,50 +32,108 @@ services:
     volumes:
       - parsec-db-data:/var/lib/postgresql/data
 
-  parsec-s3:
-    image: quay.io/minio/minio:RELEASE.2024-09-13T20-26-02Z
-    container_name: parsec-s3
-    command: server --console-address ":9090" --certs-dir /opts/certs /data
-    environment:
-      MINIO_ROOT_USER: S3_ROOT_USER
-      MINIO_ROOT_PASSWORD: S3_ROOT_PASS
-    ports:
-      # Admin console exposed to https://127.0.0.1:9090
-      - 127.0.0.1:9090:9090
-      # Expose S3 API to localhost
-      - 127.0.0.1:9000:9000
-    secrets:
-      - source: ca-crt
-        target: /opts/certs/CAs/ca.test.crt
-      - source: s3-pem-crt
-        target: /opts/certs/public.crt
-      - source: s3-pem-key
-        target: /opts/certs/private.key
+  # Fix the volumes permissions so `s3` service have write access has the user 1000:100
+  pre-s3:
+    image: alpine:3.23
+    command: chown 1000:100 /data /logs
     volumes:
-      - parsec-object-data:/data
+      - s3-data:/data
+      - s3-logs:/logs
 
-  parsec-smtp:
+  s3:
+    depends_on:
+      pre-s3:
+        condition: service_completed_successfully
+    image: rustfs/rustfs:1.0.0-beta.10@sha256:60f4f2f41ce95216f8cac676e69f9d90c0bfec458a3bc7fd7fb9b7c2452ac57a
+    container_name: parsec-s3
+    security_opt:
+      - no-new-privileges:true
+    user: 1000:100
+    healthcheck:
+      test: >-
+        curl -f --http1.1
+        --cacert /run/secrets/ca-crt
+        https://$${RUSTFS_ADDRESS}/health
+      start_period: 1s
+      start_interval: 3s
+    env_file:
+      - ./secrets/rustfs.env
+      - ./rustfs.env
+    ports:
+      - 127.0.0.1:9000:9000 # S3 API
+    volumes:
+      - s3-data:/data
+      - s3-logs:/logs
+    secrets:
+      - ca-crt
+      - source: s3-pem-crt
+        target: /tls/rustfs_cert.pem
+      - source: s3-pem-key
+        target: /tls/rustfs_key.pem
+
+  # Configure the object storage service (create bucket for the server)
+  post-s3:
+    depends_on:
+      s3:
+        condition: service_healthy
+    image: amazon/aws-cli:2.36.2@sha256:964336bffb17b82d2e84a2526b0672e70a2c881544e1a281acaca1d9aa41b536
+    entrypoint: sh
+    command: /init-s3.sh
+    env_file:
+      - ./secrets/rustfs.env
+      - ./rustfs.env
+    environment:
+      AWS_CA_BUNDLE: /run/secrets/ca-crt
+    volumes:
+      - ./init-s3.sh:/init-s3.sh:ro
+    secrets:
+      - ca-crt
+
+  smtp:
     image: mailhog/mailhog:v1.0.1
     container_name: parsec-smtp
+    healthcheck:
+      test: wget -O /dev/null http://localhost:8025
+      start_period: 1s
+      start_interval: 3s
     ports:
       - 1025:1025
       # Web interface exposed to http://127.0.0.1:8025
       - 127.0.0.1:8025:8025
 
-  parsec-server:
+  # Apply DB migrations before running the server.
+  # You may want to update that step to also perform database backup before applying the migrations.
+  pre-parsec:
     depends_on:
-      - parsec-smtp
-      - parsec-s3
-      - parsec-postgres
+      postgres:
+        condition: service_healthy
+    image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.3-a.0+dev
+    command: migrate
+    restart: on-failure
+    env_file:
+      - parsec-db.env
+
+  parsec:
+    depends_on:
+      smtp:
+        condition: service_healthy
+      post-s3:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      pre-parsec:
+        condition: service_completed_successfully
     image: ghcr.io/scille/parsec-cloud/parsec-server:3.9.3-a.0+dev
     restart: on-failure
     container_name: parsec-server
     env_file:
-      - parsec.env
+      - rustfs.env
+      - secrets/rustfs.env
       - parsec-s3.env
+      - parsec.env
       - parsec-db.env
       - parsec-smtp.env
-      - parsec-admin-token.env
+      - secrets/parsec-admin-token.env
     environment:
       AWS_CA_BUNDLE: /run/secrets/ca-crt
     user: "1000"
@@ -82,7 +146,8 @@ services:
 
 volumes:
   parsec-db-data: {}
-  parsec-object-data: {}
+  s3-data: {}
+  s3-logs: {}
 
 secrets:
   parsec-pem-crt:

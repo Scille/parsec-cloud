@@ -131,26 +131,25 @@ These variables can be stored in a file and sourced before running the server.
 In this guide, the environment variables are stored into multiple files in order to
 better describe how to configure each component.
 
-The administration token
-^^^^^^^^^^^^^^^^^^^^^^^^
+.. _creating_secrets:
 
-To be able to perform admin tasks (like creating an organization) on the server, an administration token is required.
-Below you will find a simple script to generate a token:
+Creating the secrets
+^^^^^^^^^^^^^^^^^^^^
 
-.. admonition:: gen-admin-token.sh
+The deployment of the services require the use of some secret values:
+
+- An administration token for admin operations on the server.
+- A random seed for *parsec-account* for non-existing accounts.
+- Access credential for the object-storage service ``rustfs`` used in the ``docker-compose`` stack.
+
+For that, we provide a simple scripts that generate such secrets and save them locally:
+
+.. admonition:: gen-secrets.sh
    :collapsible: closed
 
-   .. literalinclude:: gen-admin-token.sh
+   .. literalinclude:: gen-secrets.sh
      :language: bash
      :linenos:
-
-The script will generate a random token (``openssl rand -hex 32``) and create the env file ``parsec-admin-token.env``.
-
-The token doesn't have to be a valid hexadecimal value: any string with enough entropy can be used. For example, it
-could be replaced by a value from a password-generator.
-
-The script above also generates ``FAKE_ACCOUNT_PASSWORD_ALGORITHM_SEED`` which is a secret used to make unpredictable
-the password algorithm configuration returned for non-existing accounts.
 
 Database env file
 ^^^^^^^^^^^^^^^^^
@@ -189,6 +188,20 @@ Create the file ``parsec-s3.env`` with the following content to set the URL for 
    .. literalinclude:: parsec-s3.env
      :language: bash
      :linenos:
+
+.. note::
+
+   The env file re-use environment variables defined in ``rustfs.env`` and ``secrets/rustfs.env`` (cf: :ref:`Creating the secrets <creating_secrets>`).
+   Those variables are used to configured the ``rustfs`` service that provide the S3-like API when using the ``docker-compose`` approach.
+
+   .. admonition:: rustfs.env
+    :collapsible: closed
+
+    .. literalinclude:: rustfs.env
+       :language: bash
+       :linenos:
+
+
 
 Parsec env file
 ^^^^^^^^^^^^^^^
@@ -251,22 +264,22 @@ You can use the following Docker Compose file to deploy Parsec Server for testin
 
 It will setup 4 services:
 
-+---------------------+-----------------------------------------------------------------------------------+
-| Service name        | Description                                                                       |
-+=====================+===================================================================================+
-| ``parsec-postgres`` | The PostgreSQL database                                                           |
-+---------------------+-----------------------------------------------------------------------------------+
-| ``parsec-s3``       | The Object Storage service                                                        |
-+---------------------+-----------------------------------------------------------------------------------+
-| ``parsec-smtp``     | A mock SMTP server                                                                |
-+---------------------+-----------------------------------------------------------------------------------+
-| ``parsec-server``   | The Parsec Server                                                                 |
-+---------------------+-----------------------------------------------------------------------------------+
-| ``parsec-proxy``    | A Nginx proxy server, used as an example to configure a reverse proxy.            |
-|                     |                                                                                   |
-|                     | Learn more about                                                                  |
-|                     | :ref:`using Parsec behind a reverse proxy<doc_hosting_deployment_behind_a_proxy>` |
-+---------------------+-----------------------------------------------------------------------------------+
++--------------+-----------------------------------------------------------------------------------+
+| Service name | Description                                                                       |
++==============+===================================================================================+
+| ``postgres`` | The PostgreSQL database                                                           |
++--------------+-----------------------------------------------------------------------------------+
+| ``s3``       | The Object Storage service                                                        |
++--------------+-----------------------------------------------------------------------------------+
+| ``smtp``     | A mock SMTP server                                                                |
++--------------+-----------------------------------------------------------------------------------+
+| ``parsec``   | The Parsec Server                                                                 |
++--------------+-----------------------------------------------------------------------------------+
+| ``proxy``    | A Nginx proxy server, used as an example to configure a reverse proxy.            |
+|              |                                                                                   |
+|              | Learn more about                                                                  |
+|              | :ref:`using Parsec behind a reverse proxy<doc_hosting_deployment_behind_a_proxy>` |
++--------------+-----------------------------------------------------------------------------------+
 
 Starting the services
 ---------------------
@@ -280,65 +293,20 @@ The docker containers can be started as follows:
 Initial configuration
 ---------------------
 
-On the first start, a one-time configuration is required for the database and s3 services.
+When starting the ``docker-compose`` stack, it will also start some short-lived containers used to configure the different services (those short lived containers use the prefix `pre-`/`post-` in the configuration).
 
-Applying the database migration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Setup S3 service
+^^^^^^^^^^^^^^^^
 
-(Optional) Check that the database is accessible:
+One such service called ``post-s3``, execute the following script that automatically create a bucket for the server using the ``aws s3api`` CLI:
 
-.. code-block:: console
-
-  $ set -a
-  $ source parsec-db.env
-  $ docker exec -t parsec-postgres psql 'postgresql://DB_USER:DB_PASS@0.0.0.0:5432/parsec' \
-              -c "\conninfo"
-  ...
-  You are connected to database "parsec" as user "parsec" on host "0.0.0.0" at port "5432".
-
-To bootstrap the database, apply the migrations:
-
-.. code-block:: bash
-
-  docker compose -f parsec-server.docker.yaml run parsec-server migrate
-
-Create the S3 Bucket
-^^^^^^^^^^^^^^^^^^^^
-
-Access the console at https://127.0.0.1:9090. You will need to use the credential specified in ``parsec-server.docker.yaml``:
-
-.. admonition:: parsec-server.docker.yaml
+.. admonition:: init-s3.sh
    :collapsible: open
 
-   .. literalinclude:: parsec-server.docker.yaml
-     :language: yaml
-     :linenos:
-     :lineno-match:
-     :start-at: MINIO_ROOT_USER
-     :end-at: MINIO_ROOT_PASSWORD
 
-Go to https://127.0.0.1:9090/buckets/add-bucket to create a new bucket named ``parsec`` with the features ``object locking`` toggled on.
-
-After that you will need to restart the ``parsec-server`` (that likely exited because it wasn't able to access the S3 bucket):
-
-.. code-block:: bash
-
-  docker compose -f parsec-server.docker.yaml restart parsec-server
-
-Test the SMTP configuration & server
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-You can test ``mailhog`` with the following script:
-
-.. admonition:: ping-mailhog.sh
-   :collapsible: open
-
-   .. literalinclude:: ping-mailhog.sh
-     :language: bash
-     :linenos:
-
-You can then check if the email is present in the web interface at http://127.0.0.1:8025
-
+   .. literalinclude:: init-s3.sh
+      :language: bash
+      :linenos:
 
 .. _doc_hosting_deployment_with_linux:
 
@@ -415,7 +383,7 @@ Start the server
 
         # Load the env files into the environment table
         set -a
-        source parsec-admin-token.env
+        source secrets/parsec-admin-token.env
         source parsec-db.env
         source parsec-smtp.env
         source parsec-s3.env
@@ -461,8 +429,8 @@ An example of a reverse proxy configuration for ``nginx`` can be found in :ref:`
      :language: yaml
      :linenos:
      :lineno-match:
-     :start-at: parsec-proxy
-     :end-before: parsec-postgres
+     :start-at: proxy
+     :end-before: postgres
 
 Use the following Nginx configuration file to serve the domain ``app.parsec.localhost`` by listening on port 80 and 443,
 and proxy the requests to the Parsec Server.
