@@ -1,0 +1,11 @@
+{
+    "CN": "parsec-s3",
+    "hosts": [
+        "parsec-s3",
+        "localhost"
+    ],
+    "key": {
+        "algo": "ecdsa",
+        "size": 521
+    }
+}

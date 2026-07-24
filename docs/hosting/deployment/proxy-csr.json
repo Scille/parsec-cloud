@@ -1,0 +1,12 @@
+{
+    "CN": "proxy.parsec.localhost",
+    "hosts": [
+        "127.0.0.1",
+        "localhost",
+        "*.parsec.localhost"
+    ],
+    "key": {
+        "algo": "ecdsa",
+        "size": 521
+    }
+}
