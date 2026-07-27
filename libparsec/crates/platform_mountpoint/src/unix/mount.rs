@@ -126,7 +126,7 @@ impl Mountpoint {
             //   fetched from the server).
 
             for _ in 0..100 {
-                println!("polling for the start...");
+                log::debug!("polling for the start...");
                 if let Ok(new_st_dev) =
                     std::fs::metadata(&mountpoint_path).map(|stat| stat.st_dev())
                 {
@@ -136,7 +136,7 @@ impl Mountpoint {
                 }
                 std::thread::sleep(std::time::Duration::from_millis(30));
             }
-            println!("mountpoint is ready !");
+            log::info!("mountpoint is ready !");
 
             Ok(Mountpoint {
                 unmounter,
@@ -336,6 +336,9 @@ fn create_suitable_mountpoint_dir(
         "Workspace name `{workspace_name:?}` cannot form a valid path item"
     );
 
+    std::fs::create_dir_all(base_mountpoint_path)?;
+    let base_st_dev = std::fs::metadata(base_mountpoint_path)?.st_dev();
+
     for attempt in 1.. {
         let mountpoint_path = if attempt == 1 {
             base_mountpoint_path.join(workspace_name.as_ref())
@@ -344,9 +347,8 @@ fn create_suitable_mountpoint_dir(
         };
 
         // On POSIX systems, mounting target must exists
-        ok_or_continue!(std::fs::create_dir_all(&mountpoint_path));
+        ok_or_continue!(std::fs::create_dir(&mountpoint_path));
 
-        let base_st_dev = ok_or_continue!(std::fs::metadata(base_mountpoint_path)).st_dev();
         let initial_st_dev = ok_or_continue!(std::fs::metadata(&mountpoint_path)).st_dev();
 
         if initial_st_dev != base_st_dev {
