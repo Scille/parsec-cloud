@@ -36,7 +36,7 @@ jobs:
       web: ${{ steps.need-check.outputs.web }}
       docs: ${{ steps.need-check.outputs.docs }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # pin v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
       - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706  # pin v4.0.2
@@ -130,7 +130,7 @@ jobs:
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # pin v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
       - name: Ensure the PR head ref is not a perennial branch
@@ -194,7 +194,7 @@ jobs:
           diff --unified .pre-commit-config.yaml $TEMP_FILE || true
           echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
-      - uses: taiki-e/install-action@2ca9b94c269419b7b0c711c09d0b21c4e1d51145 # pin v2.83.1
+      - uses: taiki-e/install-action@07b4745e0c39a41822af610387492e3e53aa222b # pin v2.83.4
         with:
           tool: taplo-cli@0.9.3
 

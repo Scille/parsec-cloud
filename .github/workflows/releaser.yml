@@ -290,7 +290,7 @@ jobs:
 
       - name: Checkout the repository to update the nightly tag
         if: env.NIGHTLY_RELEASE == 'true'
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # pin v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         with:
           ref: ${{ needs.version.outputs.commit_sha }}
           path: parsec-cloud
@@ -305,7 +305,7 @@ jobs:
 
       - name: Create release
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
-        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # pin v3.0.1
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # pin v3.0.2
         with:
           draft: ${{ env.NIGHTLY_RELEASE != 'true' }}
           tag_name: ${{ steps.info.outputs.tag_name }}
