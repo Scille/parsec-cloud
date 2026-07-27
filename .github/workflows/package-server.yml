@@ -75,7 +75,7 @@ jobs:
     name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # pin v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -132,7 +132,7 @@ jobs:
           yq --null-input ".${{ matrix.platform }}.$(uname -m).server = \"$(cd dist; ls *.whl | head -n 1)\"" | tee dist/artifacts.yml
 
       # Install syft
-      - uses: taiki-e/install-action@2ca9b94c269419b7b0c711c09d0b21c4e1d51145 # pin v2.83.1
+      - uses: taiki-e/install-action@07b4745e0c39a41822af610387492e3e53aa222b # pin v2.83.4
         with:
           tool: syft@0.84.0
 
