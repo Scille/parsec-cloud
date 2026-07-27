@@ -101,23 +101,24 @@ impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
     type Error = X509LoadError;
 
     fn try_from(value: x509_cert::Certificate) -> Result<Self, Self::Error> {
-        let subject = extract_dn_list_from_rnd_seq(value.tbs_certificate.subject);
+        let inner_cert = value.tbs_certificate();
+        let subject = extract_dn_list_from_rnd_seq(inner_cert.subject());
         log::trace!("Collected subject: {subject:?}");
 
-        let issuer = extract_dn_list_from_rnd_seq(value.tbs_certificate.issuer);
+        let issuer = extract_dn_list_from_rnd_seq(inner_cert.issuer());
         log::trace!("Collected issuer: {issuer:?}");
 
-        let serial = value.tbs_certificate.serial_number;
+        let serial = inner_cert.serial_number();
         log::trace!("Collected serial: {serial:?}");
 
-        let validity = value.tbs_certificate.validity;
+        let validity = inner_cert.validity();
         log::trace!("Collected validity: {validity:?}");
 
         // Extensions are only available on V3 certificate
-        let extensions: Extensions = if value.tbs_certificate.version == Version::V3 {
-            value
-                .tbs_certificate
-                .extensions
+        let extensions: Extensions = if inner_cert.version() == Version::V3 {
+            inner_cert
+                .extensions()
+                .map(|v| v.as_slice())
                 .unwrap_or_default()
                 .try_into()?
         } else {
@@ -128,7 +129,7 @@ impl TryFrom<x509_cert::Certificate> for X509CertificateInformation {
             subject,
             issuer,
             extensions,
-            validity,
+            validity: *validity,
             serial: serial.as_bytes().into(),
         })
     }
@@ -147,8 +148,8 @@ pub enum GetCertificatePublicKeyError {
 pub(crate) fn get_certificate_public_key(
     raw_cert: &[u8],
 ) -> Result<PublicKey, GetCertificatePublicKeyError> {
-    let spki = x509_cert::Certificate::decode(&mut SliceReader::new(raw_cert)?)
-        .map(|v| v.tbs_certificate.subject_public_key_info)?;
+    let cert = x509_cert::Certificate::decode(&mut SliceReader::new(raw_cert)?)?;
+    let spki = cert.tbs_certificate().subject_public_key_info();
 
     match spki.algorithm.oid {
         x509_cert::der::oid::db::rfc5912::RSA_ENCRYPTION => {

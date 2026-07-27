@@ -6,6 +6,7 @@ mod utils;
 use anyhow::Context;
 use clap::Parser;
 use libparsec_platform_pki::{PkiSystem, X509CertificateDer};
+use x509_cert::der::Length;
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -60,9 +61,9 @@ fn display_x509_raw_name(raw_name: &[u8]) -> String {
 
     let components = x509_cert::name::Name::decode_value(
         &mut SliceReader::new(raw_name).unwrap(),
-        Header::new(Tag::Sequence, raw_name.len()).unwrap(),
+        Header::new(Tag::Sequence, Length::new(raw_name.len() as u32)),
     )
-    .map(libparsec_platform_pki::x509::extract_dn_list_from_rnd_seq)
+    .map(|n| libparsec_platform_pki::x509::extract_dn_list_from_rnd_seq(&n))
     .unwrap_or_default();
 
     format!("{:?}", components)

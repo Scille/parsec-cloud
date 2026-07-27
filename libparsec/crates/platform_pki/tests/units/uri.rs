@@ -38,7 +38,10 @@ async fn ensure_corresponding_serial_number(certificates: &InstalledCertificates
 
     assert_eq!(
         got_uri.serial,
-        alice_parsed_cert.tbs_certificate.serial_number.as_bytes(),
+        alice_parsed_cert
+            .tbs_certificate()
+            .serial_number()
+            .as_bytes(),
         "Serial in URI should be the same in the certificate"
     );
 
