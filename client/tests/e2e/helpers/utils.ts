@@ -572,3 +572,16 @@ export async function resetTotp(server: string, orgName: string, email: string):
   await apiContext.dispose();
   return body.totp_reset_url;
 }
+
+export async function selectFile(entry: Locator): Promise<void> {
+  await entry.hover();
+  await entry.locator('.ms-checkbox').check();
+  await entry.page().waitForTimeout(200);
+  await expect(entry.locator('.ms-checkbox')).toBeChecked();
+}
+
+export async function unselectFile(entry: Locator): Promise<void> {
+  await entry.locator('.ms-checkbox').uncheck();
+  await entry.page().waitForTimeout(200);
+  await expect(entry.locator('.ms-checkbox')).not.toBeChecked();
+}
