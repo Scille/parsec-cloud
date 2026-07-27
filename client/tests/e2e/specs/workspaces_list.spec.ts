@@ -281,6 +281,9 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 
     await expect(workspaceCard.locator('.workspace-card-content__title')).toHaveText(['The Copper Coronet', 'wksp1']);
 
+    const noWorkspaces = workspaces.locator('.no-all-workspaces');
+    await expect(noWorkspaces).toBeHidden();
+
     await workspaceCard.nth(0).click({ button: 'right' });
     let popover;
 
@@ -334,6 +337,11 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     }
     await expect(workspaceCard.nth(0)).toBeHidden();
     await expect(workspaceCard.nth(1)).toBeHidden();
+
+    await expect(noWorkspaces).toBeVisible();
+    await expect(noWorkspaces.locator('ion-text')).toHaveText(
+      'All your workspaces are hidden. Go to the Hidden category or click the button below to show them.',
+    );
 
     await workspaces.locator('.workspace-categories-menu-item').nth(2).click();
     await expect(workspaceCard.nth(0).locator('.workspace-hidden')).toHaveText('Hidden');
@@ -460,15 +468,12 @@ for (const gridMode of [false, true]) {
     if (!gridMode) {
       await toggleViewMode(workspacesStandard);
     }
-    for (const wk of WORKSPACES) {
-      if (wk !== 'wksp1') {
-        await createWorkspace(workspacesStandard, wk);
-      }
-    }
+    await createWorkspace(workspacesStandard, 'wksp2');
     const container = workspacesStandard.locator('.workspaces-container');
     const titles = gridMode ? container.locator('.workspace-card-content__title') : container.locator('.workspace-name__label');
     const roles = gridMode ? container.locator('.workspace-card-bottom').locator('.label-role') : container.locator('.label-role-text');
-    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner', 'Reader']);
+    await expect(titles).toHaveText(['wksp1', 'wksp2']);
+    await expect(roles).toHaveText(['Reader', 'Owner']);
 
     const filterButton = workspacesStandard.locator('.filter-button');
     await filterButton.click();
@@ -479,18 +484,19 @@ for (const gridMode of [false, true]) {
     await expect(popoverItems).toHaveCount(4);
     await expect(popoverItems).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader']);
 
-    await expect(titles).toHaveCount(4);
-    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner', 'Reader']);
+    await expect(titles).toHaveText(['wksp1', 'wksp2']);
+    await expect(roles).toHaveText(['Reader', 'Owner']);
     await popoverItems.nth(2).click();
-    await expect(titles).toHaveCount(4);
-    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner', 'Reader']);
+    await expect(titles).toHaveText(['wksp1', 'wksp2']);
+    await expect(roles).toHaveText(['Reader', 'Owner']);
     await popoverItems.nth(0).click();
     await expect(titles).toHaveCount(1);
+    await expect(titles).toHaveText(['wksp1']);
     await expect(roles).toHaveText(['Reader']);
     await popoverItems.nth(0).click();
     await popoverItems.nth(3).click();
-    await expect(titles).toHaveCount(3);
-    await expect(roles).toHaveText(['Owner', 'Owner', 'Owner']);
+    await expect(titles).toHaveText(['wksp2']);
+    await expect(roles).toHaveText(['Owner']);
   });
 }
 
