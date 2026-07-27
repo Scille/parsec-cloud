@@ -23,3 +23,9 @@ pub use platform::Mountpoint;
 #[path = "../tests/unit/operations/mod.rs"]
 #[allow(clippy::unwrap_used)]
 mod operations;
+
+#[derive(Default)]
+#[non_exhaustive]
+pub struct UnmountOptions {
+    pub remove_dir: bool,
+}

@@ -61,6 +61,7 @@ fn set_env(tmp_dir: &str, url: &ParsecAddr) {
     std::env::remove_var("PARSEC_ADMINISTRATION_TOKEN");
     std::env::remove_var("PARSEC_CONFIG_DIR");
     std::env::remove_var("PARSEC_DATA_DIR");
+    std::env::remove_var(env_logger::DEFAULT_FILTER_ENV);
 }
 
 fn unique_org_id() -> OrganizationID {

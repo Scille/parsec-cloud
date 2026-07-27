@@ -3,6 +3,7 @@ pub mod create;
 pub mod import;
 pub mod list;
 pub mod list_users;
+pub mod mount;
 pub mod share;
 pub mod sync;
 
@@ -22,6 +23,8 @@ pub enum Group {
     Share(share::Args),
     /// Sync workspace data with the server
     Sync(sync::Args),
+    /// Mount a workspace on the filesystem
+    Mount(mount::Args),
 }
 
 pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
@@ -33,5 +36,6 @@ pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
         Group::Import(args) => import::main(args).await,
         Group::Share(args) => share::main(args).await,
         Group::Sync(args) => sync::main(args).await,
+        Group::Mount(args) => mount::main(args).await,
     }
 }
