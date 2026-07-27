@@ -27,12 +27,12 @@
     },
     "dependencies": {
         "@sentry/electron": "^7.11.0",
-        "builder-util-runtime": "9.5.1",
+        "builder-util-runtime": "9.7.0",
         "chokidar": "~5.0.0",
         "electron-log": "^5.4.3",
         "electron-serve": "~3.0.1",
         "electron-unhandled": "~5.0.0",
-        "electron-updater": "6.8.3",
+        "electron-updater": "6.8.9",
         "electron-window-state": "~5.0.3",
         "regedit": "^5.1.4",
         "semver": "^7.8.1",
@@ -42,12 +42,12 @@
     "devDependencies": {
         "@electron/notarize": "^3.1.1",
         "@sentry/cli": "^3.3.5",
-        "@types/node": "^25.6.0",
+        "@types/node": "^26.1.1",
         "@types/semver": "^7.7.1",
-        "commander": "^14.0.3",
+        "commander": "^15.0.0",
         "electron": "^43.0.0",
-        "electron-builder": "~26.8.1",
-        "typescript": "~6.0.3"
+        "electron-builder": "~26.15.3",
+        "typescript": "~7.0.2"
     },
     "keywords": [
         "capacitor",
