@@ -97,7 +97,8 @@ fn decrypt_for_self_key_non_contributory() {
 
     // Actual test: ensure each weak-point cannot be used as ephemeral key
     for small_order_ed_point in curve25519_dalek::constants::EIGHT_TORSION {
-        let weak_pk = crypto_box::PublicKey::from(small_order_ed_point.to_montgomery());
+        let weak_pk =
+            crypto_box::PublicKey::from_bytes(small_order_ed_point.to_montgomery().to_bytes());
 
         let attacker_sk = crypto_box::SecretKey::generate(&mut rand::rngs::OsRng);
         let weak_ciphered =

@@ -10,7 +10,7 @@ use x509_cert::{
         Choice, Decode, DecodeValue, ErrorKind as DERErrorKind, Reader, Result as DERResult,
         SliceReader, Tag,
     },
-    name::RdnSequence,
+    name::Name,
 };
 
 #[derive(Debug, Clone)]
@@ -20,39 +20,36 @@ pub enum DistinguishedNameValue {
     EmailAddress(String),
 }
 
-pub fn extract_dn_list_from_rnd_seq(value: RdnSequence) -> Vec<DistinguishedNameValue> {
+pub fn extract_dn_list_from_rnd_seq(value: &Name) -> Vec<DistinguishedNameValue> {
     value
-        .0
-        .into_iter()
-        .flat_map(|dn| {
-            dn.0
-                // Internally, it just return the wrapped Vec
-                .into_vec()
-                .into_iter()
-                .map(DistinguishedNameValue::try_from)
-        })
+        .iter()
+        .map(DistinguishedNameValue::parse)
         .filter_map(|res| {
             res.inspect_err(|e| log::debug!("Failure while parsing distinguished name: {e}"))
                 .ok()
+                .flatten()
         })
         .collect()
 }
 
-impl TryFrom<AttributeTypeAndValue> for DistinguishedNameValue {
-    type Error = DERError;
-
-    fn try_from(value: AttributeTypeAndValue) -> Result<Self, Self::Error> {
+impl DistinguishedNameValue {
+    /// Parse the provide [`AttributeTypeAndValue`]
+    ///
+    /// If the value is a non-supported type, if will return `Ok(None)`.
+    fn parse(value: &AttributeTypeAndValue) -> Result<Option<Self>, DERError> {
         let AttributeTypeAndValue { oid, value } = value;
-        match oid {
+        match *oid {
             COMMON_NAME => value
                 .decode_as::<CommonNameValue>()
                 .map(|v| v.to_string())
-                .map(Self::CommonName),
+                .map(Self::CommonName)
+                .map(Some),
             EMAIL_ADDRESS => value
                 .decode_as::<asn1::Ia5StringRef>()
                 .map(|v| v.to_string())
-                .map(Self::EmailAddress),
-            _ => Err(DERErrorKind::OidUnknown { oid }.into()),
+                .map(Self::EmailAddress)
+                .map(Some),
+            _ => Ok(None),
         }
     }
 }
@@ -90,8 +87,10 @@ impl<'der> Choice<'der> for CommonNameValue<'der> {
 }
 
 impl<'der> Decode<'der> for CommonNameValue<'der> {
+    type Error = der::Error;
+
     fn decode<R: Reader<'der>>(reader: &mut R) -> DERResult<Self> {
-        match reader.peek_tag()? {
+        match der::Tag::peek(reader)? {
             Tag::TeletexString => Ok(Self::Teletex(asn1::TeletexStringRef::decode(reader)?)),
             Tag::PrintableString => Ok(Self::Printable(asn1::PrintableStringRef::decode(reader)?)),
             Tag::Utf8String => Ok(Self::UTF8(asn1::Utf8StringRef::decode(reader)?)),
@@ -117,11 +116,13 @@ impl<'der> der::Tagged for CommonNameValue<'der> {
 }
 
 impl<'der> DecodeValue<'der> for CommonNameValue<'der> {
+    type Error = der::Error;
+
     fn decode_value<R: der::Reader<'der>>(
         reader: &mut R,
         header: der::Header,
     ) -> der::Result<Self> {
-        match header.tag {
+        match header.tag() {
             Tag::Utf8String => asn1::Utf8StringRef::decode_value(reader, header).map(Self::UTF8),
             Tag::PrintableString => {
                 asn1::PrintableStringRef::decode_value(reader, header).map(Self::Printable)
@@ -154,17 +155,18 @@ pub(crate) fn extract_common_name_from_subject(
     subject: &[u8],
 ) -> Result<Option<String>, x509_cert::der::Error> {
     let reader = &mut SliceReader::new(subject)?;
-    let header = x509_cert::der::Header::new(x509_cert::der::Tag::Sequence, subject.len())?;
+    let header = x509_cert::der::Header::new(
+        x509_cert::der::Tag::Sequence,
+        der::Length::new(subject.len() as u32),
+    );
     let parsed_subject = x509_cert::name::Name::decode_value(reader, header)?;
 
-    for rdn_sequence in parsed_subject.0.iter() {
-        for atv in rdn_sequence.0.iter() {
-            if atv.oid == COMMON_NAME {
-                return atv
-                    .value
-                    .decode_as::<CommonNameValue>()
-                    .map(|v| Some(v.to_string()));
-            }
+    for atv in parsed_subject.iter() {
+        if atv.oid == COMMON_NAME {
+            return atv
+                .value
+                .decode_as::<CommonNameValue>()
+                .map(|v| Some(v.to_string()));
         }
     }
 
