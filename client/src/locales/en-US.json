@@ -721,7 +721,7 @@
         "noWorkspacesExternal": "You do not have access to any workspaces. Workspaces that have been shared with you will be listed here.",
         "loading": "Loading your workspaces...",
         "noMatchingWorkspaces": "No workspace match this search filter.",
-        "allWorkspacesHidden": "All your workspaces are hidden. Go to the \"Hidden\" category or click the button below to show them.",
+        "allWorkspacesHidden": "All your workspaces are hidden. Go to the <b>Hidden</b> category or click the button below to show them.",
         "listError": "Failed to list the workspaces.",
         "newWorkspaceError": "Failed to create a new workspace.",
         "newWorkspaceSuccess": "The workspace '{workspace}' has been created!",

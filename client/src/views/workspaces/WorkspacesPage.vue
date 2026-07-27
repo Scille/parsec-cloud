@@ -122,13 +122,10 @@
               class="no-workspaces__image"
             />
             <ion-text v-if="workspaceList.length > 0">
-              <span
-                v-if="
-                  workspaceAttributes.getHidden().value.length === workspaceList.length && workspaceAttributes.getHidden().value.length > 0
-                "
-              >
-                {{ $msTranslate('WorkspacesPage.allWorkspacesHidden') }}
-              </span>
+              <ms-rich-text
+                v-if="workspaceList.every((wk) => workspaceAttributes.isHidden(wk.id))"
+                text="WorkspacesPage.allWorkspacesHidden"
+              />
               <span v-else-if="filteredWorkspaces.length === 0"> {{ $msTranslate('WorkspacesPage.noMatchingWorkspaces') }}</span>
             </ion-text>
             <span v-else>{{ $msTranslate('WorkspacesPage.noWorkspaces') }}</span>
@@ -308,6 +305,7 @@ import {
   MsGridListToggle,
   MsImage,
   MsOptions,
+  MsRichText,
   MsSearchInput,
   MsSorter,
   MsSorterChangeEvent,
@@ -577,6 +575,9 @@ async function refreshWorkspacesList(): Promise<void> {
       }
     }
     await recentDocumentManager.saveToStorage(storageManager);
+    if (workspaceMenuState.value === WorkspaceMenu.Hidden && workspaceList.value.every((wk) => !workspaceAttributes.isHidden(wk.id))) {
+      workspaceMenuState.value = WorkspaceMenu.All;
+    }
   } else {
     informationManager.value.present(
       new Information({
@@ -591,8 +592,8 @@ async function refreshWorkspacesList(): Promise<void> {
 
 const showHiddenWorkspacesButton = computed(() => {
   return (
-    workspaceAttributes.getHidden().value.length === workspaceList.value.length &&
     workspaceList.value.length > 0 &&
+    workspaceList.value.every((wk) => workspaceAttributes.isHidden(wk.id)) &&
     filteredWorkspaces.value.length === 0 &&
     workspaceMenuState.value !== WorkspaceMenu.Hidden
   );
