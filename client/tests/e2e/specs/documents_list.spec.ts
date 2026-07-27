@@ -14,6 +14,8 @@ import {
   mockLibParsec,
   msTest,
   resizePage,
+  selectFile,
+  unselectFile,
 } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
@@ -165,9 +167,10 @@ msTest.describe(() => {
     await expect(entries.locator('.file-size')).toHaveText(['', '6.18 KB', '40.9 KB', '76.9 KB']);
   });
 
-  msTest.skip('Select all documents', async ({ documents }, testInfo: TestInfo) => {
+  msTest('Select all documents', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Pdf | ImportDocuments.Png, true);
-    const globalCheckbox = documents.locator('.folder-container').locator('.folder-list-header').locator('.ms-checkbox');
+    await documents.waitForTimeout(500);
+    const globalCheckbox = documents.locator('.folder-container').locator('.files-list-header').locator('.ms-checkbox');
     await expect(globalCheckbox).not.toBeChecked();
     await globalCheckbox.check();
     await expect(globalCheckbox).toBeChecked();
@@ -180,12 +183,11 @@ msTest.describe(() => {
     await expect(entries.nth(2).locator('.ms-checkbox')).toBeChecked();
     await expect(entries.nth(3).locator('.ms-checkbox')).toBeChecked();
 
-    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(4);
-    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['Move to', 'Make a copy', 'Delete', 'Download']);
+    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(3);
+    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['Move to', 'Make a copy', 'Delete']);
     await expect(actionBar.locator('.counter')).toHaveText('4 selected items');
 
-    await entries.nth(1).locator('.ms-checkbox').uncheck();
-    await expect(entries.nth(1).locator('.ms-checkbox')).not.toBeChecked();
+    await unselectFile(entries.nth(1));
 
     await expect(globalCheckbox).not.toBeChecked();
     await expect(globalCheckbox).toHaveAttribute('ms-indeterminate', 'true');
@@ -205,9 +207,10 @@ msTest.describe(() => {
     await expect(actionBar.locator('.counter')).toHaveText('4 items');
   });
 
-  msTest.skip('Delete all documents', async ({ documents }, testInfo: TestInfo) => {
+  msTest('Delete all documents', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Pdf | ImportDocuments.Png, true);
-    const globalCheckbox = documents.locator('.folder-container').locator('.folder-list-header').locator('.ms-checkbox');
+    await documents.waitForTimeout(500);
+    const globalCheckbox = documents.locator('.folder-container').locator('.files-list-header').locator('.ms-checkbox');
     await expect(globalCheckbox).not.toBeChecked();
     await globalCheckbox.check();
     await documents.waitForTimeout(100);
@@ -222,7 +225,7 @@ msTest.describe(() => {
     await expect(entries.nth(2).locator('.ms-checkbox')).toBeChecked();
     await expect(entries.nth(3).locator('.ms-checkbox')).toBeChecked();
 
-    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(4);
+    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(3);
 
     const deleteButton = actionBar.locator('.ms-action-bar-button:visible').nth(2);
     await expect(deleteButton).toBeVisible();
@@ -388,13 +391,14 @@ msTest.describe(() => {
     await expect(popover.getByRole('listitem')).toHaveText(['Import files', 'Import a folder']);
   });
 
-  msTest.skip('Selection in grid mode by clicking on the checkbox', async ({ documents }, testInfo: TestInfo) => {
+  msTest('Selection in grid mode by clicking on the checkbox', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, true);
 
+    await documents.waitForTimeout(500);
     const actionBar = documents.locator('#folders-ms-action-bar');
 
     await expect(actionBar.locator('.counter')).toHaveText('3 items');
-    const globalCheckbox = documents.locator('.folder-container').locator('.folder-list-header').locator('.ms-checkbox');
+    const globalCheckbox = documents.locator('.folder-container').locator('.files-list-header').locator('.ms-checkbox');
     await expect(globalCheckbox).not.toBeChecked();
     await globalCheckbox.check();
     await expect(globalCheckbox).toBeChecked();
@@ -416,11 +420,9 @@ msTest.describe(() => {
     await expect(entries.nth(1).locator('.ms-checkbox')).toBeChecked();
     await expect(entries.nth(2).locator('.ms-checkbox')).toBeChecked();
 
-    await entries.nth(1).locator('.ms-checkbox').uncheck();
-    await expect(entries.nth(1).locator('.ms-checkbox')).not.toBeChecked();
+    await unselectFile(entries.nth(1));
     await expect(actionBar.locator('.counter')).toHaveText('2 selected items');
-    await entries.nth(2).locator('.ms-checkbox').uncheck();
-    await expect(entries.nth(2).locator('.ms-checkbox')).not.toBeChecked();
+    await unselectFile(entries.nth(2));
     await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
 
     await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
@@ -428,19 +430,19 @@ msTest.describe(() => {
     await expect(entries.nth(2).locator('.ms-checkbox')).not.toBeChecked();
   });
 
-  msTest.skip('Selection in grid mode by clicking on the file item', async ({ documents }, testInfo: TestInfo) => {
+  msTest('Selection in grid mode by clicking on the file item', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf, true);
 
     const actionBar = documents.locator('#folders-ms-action-bar');
 
     await expect(actionBar.locator('.counter')).toHaveText('3 items');
 
+    await documents.waitForTimeout(500);
+
     const listEntries = documents.locator('.folder-container').locator('.file-list-item');
 
-    await listEntries.nth(0).locator('.file-last-update').click();
-    await expect(listEntries.nth(0).locator('.ms-checkbox')).toBeChecked();
-    await listEntries.nth(1).locator('.file-last-update').click();
-    await expect(listEntries.nth(1).locator('.ms-checkbox')).toBeChecked();
+    await selectFile(listEntries.nth(0));
+    await selectFile(listEntries.nth(1));
 
     await expect(actionBar.locator('.counter')).toHaveText('2 selected items');
 
@@ -451,10 +453,9 @@ msTest.describe(() => {
     await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
     await expect(entries.nth(1).locator('.ms-checkbox')).toBeChecked();
 
-    await entries.nth(0).locator('.ms-checkbox').uncheck();
-    await expect(entries.nth(0).locator('.ms-checkbox')).not.toBeChecked();
-    await entries.nth(1).locator('.ms-checkbox').uncheck();
-    await expect(entries.nth(1).locator('.ms-checkbox')).not.toBeChecked();
+    await unselectFile(entries.nth(0));
+    await unselectFile(entries.nth(1));
+    await expect(actionBar.locator('.counter')).toHaveText('3 items');
     await entries.nth(1).locator('.file-card__title').click();
     await expect(documents).toBeViewerPage();
   });
@@ -549,8 +550,9 @@ msTest.describe(() => {
   });
 
   for (const gridMode of [false, true]) {
-    msTest.skip(`Selection in ${gridMode ? 'grid' : 'list'} mode by clicking on the item`, async ({ documents }, testInfo: TestInfo) => {
+    msTest(`Selection in ${gridMode ? 'grid' : 'list'} mode by clicking on the item`, async ({ documents }, testInfo: TestInfo) => {
       await importDefaultFiles(documents, testInfo, ImportDocuments.Png | ImportDocuments.Pdf | ImportDocuments.Txt, true);
+      await documents.waitForTimeout(500);
 
       if (gridMode) {
         await toggleViewMode(documents);
