@@ -186,7 +186,42 @@ impl Mountpoint {
         })
     }
 
-    pub async fn unmount(mut self) -> anyhow::Result<()> {
+    pub async fn mount_at_path(ops: Arc<WorkspaceOps>, path: PathBuf) -> anyhow::Result<Self> {
+        let (workspace_name, is_read_only, _workspace_index, _total_workspaces) = ops
+            .get_workspace_external_info(|info| {
+                (
+                    info.entry.name.clone(),
+                    info.entry.is_read_only(),
+                    info.workspace_index,
+                    info.total_workspaces,
+                )
+            });
+        let volume_label = generate_volume_label(&workspace_name);
+        log::debug!(
+            "Mount workspace {workspace_name} (read only={is_read_only}, label={})",
+            volume_label.display()
+        );
+
+        let filesystem_interface = super::filesystem::ParsecFileSystemInterface::new(
+            is_read_only,
+            ops.clone(),
+            tokio::runtime::Handle::current(),
+            volume_label,
+        );
+
+        Self::do_mount(filesystem_interface, is_read_only, path).await
+    }
+
+    pub async fn unmount(self) -> anyhow::Result<()> {
+        self.unmount_with_options(crate::UnmountOptions { remove_dir: true })
+            .await
+    }
+
+    pub async fn unmount_with_options(
+        mut self,
+        // TODO: Support option once `winfsp_wrs` does not force mountpoint cleanup on stop
+        _options: crate::UnmountOptions,
+    ) -> anyhow::Result<()> {
         if let Some(filesystem) = self.filesystem.take() {
             filesystem.stop();
         }

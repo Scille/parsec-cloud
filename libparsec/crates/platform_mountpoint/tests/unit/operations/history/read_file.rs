@@ -198,28 +198,17 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
             // to avoid deadlock with tokio single threaded runtime when the
             // close waits for data flush.
             let bar_path = mountpoint_path.join("bar.txt");
-            tokio::task::spawn_blocking(move || {
+            let err = tokio::task::spawn_blocking(move || {
                 let mut fd = std::fs::OpenOptions::new()
                     .read(true)
                     .open(bar_path)
                     .unwrap();
 
                 let mut buff = Vec::new();
-                let err = fd.read_to_end(&mut buff).unwrap_err();
+                fd.read_to_end(&mut buff).unwrap_err()
+            }).await.unwrap();
 
-                // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
-                #[cfg(not(target_os = "windows"))]
-                p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
-                #[cfg(target_os = "windows")]
-                p_assert_eq!(
-                    err.raw_os_error(),
-                    Some(windows_sys::Win32::Foundation::ERROR_HOST_UNREACHABLE as i32),
-                    "{}",
-                    err
-                );
-            })
-            .await
-            .unwrap();
+            p_assert_eq!(err.kind(), std::io::ErrorKind::HostUnreachable, "{err:#?}(kind={})", err.kind());
         }
     );
 }

@@ -431,7 +431,7 @@ impl fuser::Filesystem for Filesystem {
             let mut buf = Vec::with_capacity(size as usize);
             // TODO: investigate if offset can be negative or if this is just poor typing on FUSE's part
             let offset = u64::try_from(offset).expect("Offset is negative");
-            match ops.fd_read(fd, offset, size as u64, &mut buf).await {
+            match ops.fd_read(fd, offset, size as u64, &mut buf).await.inspect_err(|e| log::trace!("Error on fd_read(fd={:?}, offset={}, buf.len={}) -> {e}", fd, offset, buf.len())) {
                 Ok(_) => {
                     reply.manual().data(&buf);
                 }

@@ -6,7 +6,13 @@ use std::os::macos::fs::MetadataExt;
 #[cfg(target_os = "linux")]
 use std::os::linux::fs::MetadataExt;
 
-use std::{io::ErrorKind, path::Path, process::Command, sync::Arc, thread::JoinHandle};
+use std::{
+    io::ErrorKind,
+    path::{Path, PathBuf},
+    process::Command,
+    sync::Arc,
+    thread::JoinHandle,
+};
 
 use libparsec_client::MountpointMountStrategy;
 use libparsec_types::prelude::*;
@@ -79,12 +85,41 @@ impl Mountpoint {
             MountpointMountStrategy::Disabled => return Err(anyhow::anyhow!("Mount disabled !")),
         };
 
+        let mount_path = tokio::task::spawn_blocking(move || {
+            create_suitable_mountpoint_dir(&mountpoint_base_dir, &workspace_name)
+                .map(|(p, _)| p)
+                .context("cannot create mountpoint dir")
+        })
+        .await??;
+
+        Self::do_mount_at_path(mount_path, filesystem, is_read_only).await
+    }
+
+    pub async fn mount_at_path(
+        ops: Arc<libparsec_client::workspace::WorkspaceOps>,
+        path: PathBuf,
+    ) -> anyhow::Result<Self> {
+        let (workspace_name, is_read_only) = ops.get_workspace_external_info(|info| {
+            (info.entry.name.clone(), info.entry.is_read_only())
+        });
+        log::debug!("Mount workspace {workspace_name} (read only={is_read_only})");
+        let filesystem = super::filesystem::Filesystem::new(
+            ops,
+            tokio::runtime::Handle::current(),
+            is_read_only,
+        );
+        Self::do_mount_at_path(path, filesystem, is_read_only).await
+    }
+
+    async fn do_mount_at_path<FS: fuser::Filesystem + Send + 'static>(
+        mount_path: PathBuf,
+        filesystem: FS,
+        is_read_only: bool,
+    ) -> anyhow::Result<Self> {
+        let initial_st_dev = tokio::fs::metadata(&mount_path).await?.st_dev();
+
         // Mount operation consist of blocking code, so run it in a thread
         tokio::task::spawn_blocking(move || {
-            let (mountpoint_path, initial_st_dev) =
-                create_suitable_mountpoint_dir(&mountpoint_base_dir, &workspace_name)
-                    .context("cannot create mountpoint dir")?;
-
             let options = [
                 fuser::MountOption::FSName("parsec".into()),
                 #[cfg(target_os = "macos")]
@@ -108,7 +143,7 @@ impl Mountpoint {
                 fuser::MountOption::NoDev,
             ];
 
-            let mut session = fuser::Session::new(filesystem, &mountpoint_path, &options)
+            let mut session = fuser::Session::new(filesystem, &mount_path, &options)
                 .map_err(|err| anyhow::anyhow!("cannot mount: {}", err))?;
 
             let unmounter = session.unmount_callable();
@@ -127,20 +162,18 @@ impl Mountpoint {
 
             for _ in 0..100 {
                 log::debug!("polling for the start...");
-                if let Ok(new_st_dev) =
-                    std::fs::metadata(&mountpoint_path).map(|stat| stat.st_dev())
-                {
+                if let Ok(new_st_dev) = std::fs::metadata(&mount_path).map(|stat| stat.st_dev()) {
                     if new_st_dev != initial_st_dev {
                         break;
                     }
                 }
                 std::thread::sleep(std::time::Duration::from_millis(30));
             }
-            log::info!("mountpoint is ready !");
+            log::info!("mountpoint is ready at '{}'!", mount_path.display());
 
             Ok(Mountpoint {
                 unmounter,
-                path: mountpoint_path,
+                path: mount_path,
                 session_loop: Some(session_loop),
             })
         })
@@ -148,7 +181,15 @@ impl Mountpoint {
         .context("cannot run mount task")?
     }
 
-    pub async fn unmount(mut self) -> anyhow::Result<()> {
+    pub async fn unmount(self) -> anyhow::Result<()> {
+        self.unmount_with_options(crate::UnmountOptions { remove_dir: true })
+            .await
+    }
+
+    pub async fn unmount_with_options(
+        mut self,
+        options: crate::UnmountOptions,
+    ) -> anyhow::Result<()> {
         // Unmount operation consist of blocking code, so run it in a thread
         tokio::task::spawn_blocking(move || {
             // `SessionUnmounter::unmount` is idempotent
@@ -166,7 +207,9 @@ impl Mountpoint {
 
             // We do the same as WinFSP: remove the directory.
             // (and given this is more of a nice to have feature, we ignore any error)
-            let _ = std::fs::remove_dir(&self.path);
+            if options.remove_dir {
+                let _ = std::fs::remove_dir(&self.path);
+            }
 
             Ok(())
         })
@@ -347,13 +390,20 @@ fn create_suitable_mountpoint_dir(
         };
 
         // On POSIX systems, mounting target must exists
-        ok_or_continue!(std::fs::create_dir(&mountpoint_path));
+        ok_or_continue!(
+            std::fs::create_dir_all(&mountpoint_path).inspect_err(|e| log::warn!(
+                "Failed to create directory for mount path '{}': {e}",
+                mountpoint_path.display()
+            ))
+        );
 
         let initial_st_dev = ok_or_continue!(std::fs::metadata(&mountpoint_path)).st_dev();
 
         if initial_st_dev != base_st_dev {
-            // mountpoint_path seems to already have a mountpoint on it,
-            // hence find another place to setup our own mountpoint
+            log::warn!(
+                "Mount path '{}' seems to be already in use, will look for another",
+                mountpoint_path.display()
+            );
             continue;
         }
 
@@ -361,7 +411,7 @@ fn create_suitable_mountpoint_dir(
             .next()
             .is_some()
         {
-            // mountpoint_path not empty, cannot mount there
+            log::warn!("Mount path '{}' is not empty", mountpoint_path.display());
             continue;
         }
 
