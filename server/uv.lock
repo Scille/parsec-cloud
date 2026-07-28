@@ -242,7 +242,7 @@ wheels = [
 
 [[package]]
 name = "cibuildwheel"
-version = "4.0.0"
+version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bashlex" },
@@ -255,9 +255,9 @@ dependencies = [
     { name = "packaging" },
     { name = "platformdirs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/70/d0/b5df8e93f3469796b6b33108fb745621067d12cbd77480a3ba42c86b87fa/cibuildwheel-4.0.0.tar.gz", hash = "sha256:33b90d0612bd61f4a6ebca0147f8764e455030042a7be744e7f27390352ad0dd", size = 443797, upload-time = "2026-06-07T18:55:20.811Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/ae/135d31add82bb22eb49e3828726e71150be45013802becb2992956b8e655/cibuildwheel-4.1.0.tar.gz", hash = "sha256:aac6f526c0c06039feedd09f9bbceb989ab244ef0543eaea84c8abdeafb81858", size = 446157, upload-time = "2026-06-12T16:04:02.921Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fc/6e/26a8ee2aebde7ab86849f58e598002f6bdb5060975a1b3a00ab3002bb8f8/cibuildwheel-4.0.0-py3-none-any.whl", hash = "sha256:61427699a7bb6725c8d9650e56aa5462d00982bb7c6bd3590f6af03fe15d0c0e", size = 163060, upload-time = "2026-06-07T18:55:19.416Z" },
+    { url = "https://files.pythonhosted.org/packages/73/3f/20c00404a019b19f1d317f78a8364db3d86021c6c921d0969d1be9067051/cibuildwheel-4.1.0-py3-none-any.whl", hash = "sha256:b9dabe7713f16aec4e7064d031daa2da010e7431d58964e0b97b3eb346952454", size = 164664, upload-time = "2026-06-12T16:04:01.25Z" },
 ]
 
 [[package]]
@@ -729,7 +729,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "asyncpg-stubs", specifier = "~=0.31" },
-    { name = "cibuildwheel", specifier = "~=4.0.0" },
+    { name = "cibuildwheel", specifier = ">=4.0,<4.2" },
     { name = "deptry", specifier = "~=0.25.1" },
     { name = "editorconfig-checker", specifier = "~=3.2.1" },
     { name = "httpx-sse", specifier = "~=0.4.1" },
@@ -745,7 +745,7 @@ dev = [
     { name = "pytest-timeout", specifier = ">=2.2,<2.5" },
     { name = "pytest-xdist", specifier = "~=3.1" },
     { name = "ruff", specifier = "~=0.15.0" },
-    { name = "setuptools", specifier = "~=82.0.0" },
+    { name = "setuptools", specifier = ">=82.0,<83.1" },
     { name = "sqlfluff", specifier = ">=4.0,<4.3" },
     { name = "trustme", specifier = "~=1.2.1" },
     { name = "types-boto3", specifier = "~=1.42.96" },
@@ -1201,11 +1201,11 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "82.0.1"
+version = "83.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/4f/db/cfac1baf10650ab4d1c111714410d2fbb77ac5a616db26775db562c8fab2/setuptools-82.0.1.tar.gz", hash = "sha256:7d872682c5d01cfde07da7bccc7b65469d3dca203318515ada1de5eda35efbf9", size = 1152316, upload-time = "2026-03-09T12:47:17.221Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/34/26/f5d29e25ffdb535afef2d35cdb55b325298f96debd670da4c325e08d70f4/setuptools-83.0.0.tar.gz", hash = "sha256:025bccbbf0fa05b6192bc64ae1e7b16e001fd6d6d4d5de03c97b1c1ade523bef", size = 1154254, upload-time = "2026-07-04T15:31:22.699Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/76/f789f7a86709c6b087c5a2f52f911838cad707cc613162401badc665acfe/setuptools-82.0.1-py3-none-any.whl", hash = "sha256:a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb", size = 1006223, upload-time = "2026-03-09T12:47:15.026Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/40/e1e72872c6354b306daef1703549e8e83b4d43cfea356311bf722a043752/setuptools-83.0.0-py3-none-any.whl", hash = "sha256:29b23c360f22f414dc7336bb39178cc7bcbf6021ed2733cde173f09dba19abb3", size = 1008090, upload-time = "2026-07-04T15:31:20.885Z" },
 ]
 
 [[package]]
