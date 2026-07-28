@@ -28,7 +28,7 @@ export async function takeScreenshot(): Promise<Blob | undefined> {
       );
     });
   } catch (e: any) {
-    window.electronAPI.log('error', `Could not take a screenshot: ${e.toString()}`);
+    window.nativeAPI.log('error', `Could not take a screenshot: ${e.toString()}`);
   } finally {
     if (track) {
       track.stop();

@@ -14,7 +14,7 @@ export interface NavigationOptions {
 }
 
 export async function navigateTo(routeName: Routes, options?: NavigationOptions): Promise<void> {
-  window.electronAPI.log('debug', `Navigating to ${routeName}`);
+  window.nativeAPI.log('debug', `Navigating to ${routeName}`);
 
   const router = getRouter();
 
@@ -56,7 +56,7 @@ export async function routerGoBack(): Promise<void> {
   const backup = getRouteBeforeFileHandler();
 
   if (backup) {
-    window.electronAPI.log('debug', 'Navigating to saved route instead of going back');
+    window.nativeAPI.log('debug', 'Navigating to saved route instead of going back');
     await navigateTo(backup.data.route, {
       replace: true,
       params: { handle: backup.handle, ...backup.data.params },
@@ -74,7 +74,7 @@ export async function backupCurrentOrganization(): Promise<void> {
   const currentHandle = getConnectionHandle();
 
   if (currentHandle === null) {
-    window.electronAPI.log('error', 'Cannot backup the current organization, no handle found');
+    window.nativeAPI.log('error', 'Cannot backup the current organization, no handle found');
   } else {
     // Backup the current route
     const currentRoute = getCurrentRoute();
@@ -104,7 +104,7 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
     return;
   } else if (startedClients.find(([sHandle, _deviceId]) => sHandle === handle) === undefined) {
-    window.electronAPI.log('warn', `Handle '${handle}' not found in the list of started clients`);
+    window.nativeAPI.log('warn', `Handle '${handle}' not found in the list of started clients`);
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
     return;
   }
@@ -117,7 +117,7 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
       await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(backup) } });
     } catch (e: any) {
       // We encounter an error, probably the base64 serialization, we remove the backup and log in to the default page
-      window.electronAPI.log('error', `Error when switching organization, using default logged in page: ${e}`);
+      window.nativeAPI.log('error', `Error when switching organization, using default logged in page: ${e}`);
       routesBackup.splice(backupIndex, 1);
       await navigateTo(Routes.Loading, {
         replace: true,

@@ -68,7 +68,7 @@ export default function useFileOpener(): PathOpener {
         PresentationMode.Modal,
       );
     } else {
-      window.electronAPI.openFile(result.value);
+      window.nativeAPI.openFile(result.value);
     }
   }
 
@@ -84,7 +84,7 @@ export default function useFileOpener(): PathOpener {
         PresentationMode.Modal,
       );
     } else {
-      window.electronAPI.seeInExplorer(result.value);
+      window.nativeAPI.seeInExplorer(result.value);
     }
   }
 
@@ -182,13 +182,13 @@ export default function useFileOpener(): PathOpener {
 
   async function openPath(workspaceHandle: WorkspaceHandle, path: FsPath, options: OpenPathOptions): Promise<void> {
     if (currentlyOpening.value) {
-      window.electronAPI.log('info', 'openPath() called while a file is already being opened.');
+      window.nativeAPI.log('info', 'openPath() called while a file is already being opened.');
       return;
     }
     currentlyOpening.value = true;
     // Make sure that the state gets reset if we miss something
     timeoutId = window.setTimeout(() => {
-      window.electronAPI.log('warn', 'Resolved path opened with timeout, might be worth investigating...');
+      window.nativeAPI.log('warn', 'Resolved path opened with timeout, might be worth investigating...');
       pathOpened();
     }, 30000);
     const entry = await _getEntryStat(workspaceHandle, path, options);
@@ -240,7 +240,7 @@ export default function useFileOpener(): PathOpener {
     const query = getCurrentRouteQuery();
 
     if (currentRouteIs(Routes.FileHandler) && getDocumentPath() === path && Boolean(options.readOnly) === Boolean(query.readOnly)) {
-      window.electronAPI.log('debug', 'File is already opened.');
+      window.nativeAPI.log('debug', 'File is already opened.');
       pathOpened();
       return;
     }
@@ -269,10 +269,7 @@ export default function useFileOpener(): PathOpener {
     } else if (ENABLED_FILE_VIEWERS.includes(contentType.type)) {
       return await _openInViewer(entry, workspaceHandle, options, contentType);
     } else {
-      window.electronAPI.log(
-        'warn',
-        `No way to open file of type '${contentType.type}' (ext '${contentType.extension}'), should not happen`,
-      );
+      window.nativeAPI.log('warn', `No way to open file of type '${contentType.type}' (ext '${contentType.extension}'), should not happen`);
       await informationManager.value.present(
         new Information({
           title: isWeb() ? 'FoldersPage.open.noVisibleOnWebTitle' : undefined,

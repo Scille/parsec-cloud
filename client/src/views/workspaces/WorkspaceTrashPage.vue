@@ -128,7 +128,7 @@ async function refreshTrashedWorkspacesList(): Promise<void> {
     return;
   }
   querying.value = true;
-  window.electronAPI.log('debug', 'Starting Parsec list workspaces');
+  window.nativeAPI.log('debug', 'Starting Parsec list workspaces');
   const result = await listTrashedWorkspaces();
   if (result.ok) {
     workspaceList.value = result.value;

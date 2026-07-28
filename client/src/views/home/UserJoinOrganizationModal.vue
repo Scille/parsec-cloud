@@ -588,7 +588,7 @@ onMounted(async () => {
   const result = await parseParsecAddr(props.invitationLink);
   if (result.ok) {
     if (result.value.tag !== ParsedParsecAddrTag.InvitationUser) {
-      window.electronAPI.log('error', 'Not a user invitation link');
+      window.nativeAPI.log('error', 'Not a user invitation link');
       return;
     }
     organizationName.value = result.value.organizationId;
@@ -598,7 +598,7 @@ onMounted(async () => {
       serverConfig.value = configResult.value;
     }
   } else {
-    window.electronAPI.log('error', `Failed to parse invitation link: ${result.error.tag} (${result.error.error})`);
+    window.nativeAPI.log('error', `Failed to parse invitation link: ${result.error.tag} (${result.error.error})`);
     return;
   }
   await startProcess();

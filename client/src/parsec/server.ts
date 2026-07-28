@@ -25,7 +25,7 @@ export async function getServerConfig(serverAddr: string): Promise<Result<Server
 
   if (result.ok) {
     if ((window as any).TESTING_MOCK_ALLOWED_PROTECTION_METHODS) {
-      window.electronAPI.log('info', 'Mocking allowed protection methods');
+      window.nativeAPI.log('info', 'Mocking allowed protection methods');
       result.value.advisoryDeviceFileProtection = (window as any).TESTING_MOCK_ALLOWED_PROTECTION_METHODS;
     }
 

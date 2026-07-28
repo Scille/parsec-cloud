@@ -606,7 +606,7 @@ async function seeInExplorer(
       PresentationMode.Toast,
     );
   } else {
-    window.electronAPI.openFile(result.value);
+    window.nativeAPI.openFile(result.value);
   }
 }
 

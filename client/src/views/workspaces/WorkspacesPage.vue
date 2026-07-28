@@ -380,12 +380,12 @@ const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
 let hotkeys: HotkeyGroup | null = null;
 
 onMounted(async (): Promise<void> => {
-  window.electronAPI.log('debug', 'Mounted WorkspacePage');
+  window.nativeAPI.log('debug', 'Mounted WorkspacePage');
   displayView.value = (
     await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
   ).displayState;
 
-  window.electronAPI.log('debug', 'Loading favorite workspaces');
+  window.nativeAPI.log('debug', 'Loading favorite workspaces');
 
   await workspaceAttributes.load();
 
@@ -416,33 +416,33 @@ onMounted(async (): Promise<void> => {
           }
           break;
         default:
-          window.electronAPI.log('warn', `Unhandled event ${event}`);
+          window.nativeAPI.log('warn', `Unhandled event ${event}`);
           break;
       }
     },
   );
 
-  window.electronAPI.log('debug', 'Getting user profile');
+  window.nativeAPI.log('debug', 'Getting user profile');
   clientProfile.value = await getClientProfile();
 
-  window.electronAPI.log('debug', 'Refreshing workspace list');
+  window.nativeAPI.log('debug', 'Refreshing workspace list');
   await refreshWorkspacesList();
 
-  window.electronAPI.log('debug', 'Getting Parsec client info');
+  window.nativeAPI.log('debug', 'Getting Parsec client info');
   const infoResult = await parsecGetClientInfo();
 
   if (infoResult.ok) {
     userInfo.value = infoResult.value;
   } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
   }
 
   const query = getCurrentRouteQuery();
   if (query.fileLink) {
-    window.electronAPI.log('debug', 'Handling file link');
+    window.nativeAPI.log('debug', 'Handling file link');
     const success = await handleFileLink(query.fileLink);
     if (!success) {
-      window.electronAPI.log('warn', 'Could not handle file link, going back to workspaces');
+      window.nativeAPI.log('warn', 'Could not handle file link, going back to workspaces');
       await navigateTo(Routes.Workspaces, { query: {} });
     }
   }
@@ -546,23 +546,23 @@ async function refreshWorkspacesList(): Promise<void> {
     return;
   }
   querying.value = true;
-  window.electronAPI.log('debug', 'Starting Parsec list workspaces');
+  window.nativeAPI.log('debug', 'Starting Parsec list workspaces');
   const result = await parsecListWorkspaces();
   if (result.ok) {
     for (const wk of result.value) {
-      window.electronAPI.log('debug', `Processing workspace: ${wk.name}`);
+      window.nativeAPI.log('debug', `Processing workspace: ${wk.name}`);
       const sharingResult = await parsecGetWorkspaceSharing(wk.id, false);
       if (sharingResult.ok) {
         wk.sharing = sharingResult.value;
       } else {
-        window.electronAPI.log('warn', `Failed to get sharing for ${wk.name}`);
+        window.nativeAPI.log('warn', `Failed to get sharing for ${wk.name}`);
       }
       if (isDesktop() && wk.mountpoints.length === 0 && !workspaceAttributes.isHidden(wk.id)) {
         const mountResult = await parsecMountWorkspace(wk.handle);
         if (mountResult.ok) {
           wk.mountpoints.push(mountResult.value);
         } else {
-          window.electronAPI.log('warn', `Failed to mount ${wk.name}: ${mountResult.error.error}`);
+          window.nativeAPI.log('warn', `Failed to mount ${wk.name}: ${mountResult.error.error}`);
         }
       }
     }

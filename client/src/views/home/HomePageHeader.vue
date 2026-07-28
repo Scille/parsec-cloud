@@ -208,7 +208,7 @@ onMounted(async () => {
   } else {
     accountInfo.value = undefined;
   }
-  window.electronAPI.getUpdateAvailability();
+  window.nativeAPI.getUpdateAvailability();
   accountLoggedIn.value = ParsecAccount.isLoggedIn();
 });
 
@@ -226,22 +226,22 @@ onUnmounted(async () => {
 async function update(): Promise<void> {
   const existingModal = await modalController.getTop();
   if (existingModal) {
-    window.electronAPI.log('debug', 'An existing modal is opened, skipping update prompt');
+    window.nativeAPI.log('debug', 'An existing modal is opened, skipping update prompt');
     return;
   }
   if (!updateAvailability.value) {
-    window.electronAPI.log('error', 'Missing update data when trying to update');
+    window.nativeAPI.log('error', 'Missing update data when trying to update');
     return;
   }
   if (!updateAvailability.value.version) {
-    window.electronAPI.log('error', 'Version missing from update data');
+    window.nativeAPI.log('error', 'Version missing from update data');
     return;
   }
 
   const answer = await openUpdateAppModal(updateAvailability.value.version);
 
   if (answer === Answer.Yes) {
-    window.electronAPI.prepareUpdate();
+    window.nativeAPI.prepareUpdate();
   }
   suppressUpdatePrompt();
 }

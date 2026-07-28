@@ -62,7 +62,7 @@ export async function importFile(
     let offset = 0;
     while (true) {
       if (signal.aborted) {
-        window.electronAPI.log('info', 'Cancelling import...');
+        window.nativeAPI.log('info', 'Cancelling import...');
         throw new FileOperationCancelled();
       }
 
@@ -103,7 +103,7 @@ export async function restoreFile(
   let fdR: FileDescriptor | null = null;
   let fdW: FileDescriptor | null = null;
   try {
-    window.electronAPI.log('debug', `Restoring file ${source.path} into ${destination.path}`);
+    window.nativeAPI.log('debug', `Restoring file ${source.path} into ${destination.path}`);
     const statsResult = await history.entryStat(source.path);
     if (!statsResult.ok) {
       throw new FileOperationException(OperationFailedErrors.LibParsecCallFailed, stringifyError(statsResult.error));
@@ -190,16 +190,16 @@ export class OperationTransaction {
   }
 
   async clear(): Promise<void> {
-    window.electronAPI.log('debug', 'Clearing the transaction...');
+    window.nativeAPI.log('debug', 'Clearing the transaction...');
     for (const [path, _file] of this.files) {
       await deleteFile(this.workspace, path);
     }
     this.files = [];
-    window.electronAPI.log('debug', 'Transaction cleared.');
+    window.nativeAPI.log('debug', 'Transaction cleared.');
   }
 
   async commit(policy: DuplicatePolicy): Promise<void> {
-    window.electronAPI.log('debug', 'Committing the transaction...');
+    window.nativeAPI.log('debug', 'Committing the transaction...');
     for (const [source, destination] of this.files) {
       if (policy === DuplicatePolicy.AddCounter) {
         const result = await moveWithCounter(this.workspace, source, destination);
@@ -222,7 +222,7 @@ export class OperationTransaction {
         }
       }
     }
-    window.electronAPI.log('debug', 'Transaction committed.');
+    window.nativeAPI.log('debug', 'Transaction committed.');
     this.files = [];
   }
 
@@ -304,7 +304,7 @@ export async function copyFile(
   let fdR: FileDescriptor | null = null;
   let fdW: FileDescriptor | null = null;
   try {
-    window.electronAPI.log('debug', `Copying file ${source.name} into ${destination}`);
+    window.nativeAPI.log('debug', `Copying file ${source.name} into ${destination}`);
     // Open the source
     const openReadResult = await openFile(workspace, source.path, { read: true });
     if (!openReadResult.ok) {
@@ -374,7 +374,7 @@ export async function copyFolder(
   if (!mkdirResult.ok) {
     throw new FileOperationException(OperationFailedErrors.LibParsecCallFailed, stringifyError(mkdirResult.error));
   }
-  window.electronAPI.log('debug', `Copying folder ${source.name}/ into ${destination}`);
+  window.nativeAPI.log('debug', `Copying folder ${source.name}/ into ${destination}`);
   for (const [index, entry] of tree.entries.entries()) {
     const relativePath = entry.path.substring(source.path.length);
     const parts = (await Path.parse(relativePath)).slice(0, -1);

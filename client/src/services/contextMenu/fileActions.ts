@@ -375,7 +375,7 @@ export function useFileActions() {
 
   async function openEntry(entryToOpen: EntryStat, options: OpenPathOptions, workspaceInfo: WorkspaceInfo): Promise<void> {
     if (!entryToOpen.isFile()) {
-      window.electronAPI.log('warn', 'Trying to open an entry that is not a file.');
+      window.nativeAPI.log('warn', 'Trying to open an entry that is not a file.');
       return;
     }
 

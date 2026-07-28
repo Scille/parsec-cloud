@@ -58,7 +58,7 @@ async function getComponent(): Promise<Component | undefined> {
 }
 
 function emitError(message: string): void {
-  window.electronAPI.log('error', message);
+  window.nativeAPI.log('error', message);
   informationManager.value.present(
     new Information({
       message: 'fileViewers.errors.titles.genericError',

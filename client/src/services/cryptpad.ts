@@ -131,7 +131,7 @@ export function isFileEditable(name: string): boolean {
 }
 
 function cryptpadLog(level: 'debug' | 'warn' | 'error' | 'info', message: string): void {
-  window.electronAPI.log(level, `[Cryptpad] ${message}`);
+  window.nativeAPI.log(level, `[Cryptpad] ${message}`);
 }
 
 export interface CryptpadSession {
@@ -151,7 +151,7 @@ export async function openDocument(
     return undefined;
   }
 
-  window.electronAPI.log('debug', `Trying to open document on server '${CRYPTPAD_SERVER}'`);
+  window.nativeAPI.log('debug', `Trying to open document on server '${CRYPTPAD_SERVER}'`);
 
   function sendMessageToFrame(command: CryptpadCommAPI.Commands, data?: any): void {
     if (!frame.contentWindow) {

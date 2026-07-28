@@ -206,7 +206,7 @@ const CLEAN_APP_VERSION = normalizeAppVersion(
 );
 
 async function openUrl(url: string): Promise<void> {
-  window.electronAPI.log('debug', `Opening ${url}`);
+  window.nativeAPI.log('debug', `Opening ${url}`);
   window.open(url, '_blank');
 }
 
@@ -290,7 +290,7 @@ async function getCryptpadServer(): Promise<string | null> {
   const connHandle = getConnectionHandle();
 
   if (!connHandle) {
-    window.electronAPI.log('warn', 'Cannot get the current connection handle');
+    window.nativeAPI.log('warn', 'Cannot get the current connection handle');
     return null;
   }
   const cachedServer = CryptpadServerCache.get(connHandle);
@@ -299,11 +299,11 @@ async function getCryptpadServer(): Promise<string | null> {
   }
   const result = await getCurrentServerConfig();
   if (!result.ok) {
-    window.electronAPI.log('warn', `Failed to retrieve server config: ${result.error.tag}`);
+    window.nativeAPI.log('warn', `Failed to retrieve server config: ${result.error.tag}`);
     return null;
   }
   if (!result.value.cryptpad) {
-    window.electronAPI.log('info', "Server doesn't have a cryptpad configuration");
+    window.nativeAPI.log('info', "Server doesn't have a cryptpad configuration");
     CryptpadServerCache.set(connHandle, null);
     return null;
   }
@@ -313,7 +313,7 @@ async function getCryptpadServer(): Promise<string | null> {
 
 export function ensureHttpsProtocol(server: string): string {
   if (!server.startsWith('http://') && !server.startsWith('https://') && !server.startsWith('parsec3://')) {
-    window.electronAPI.log('warn', `URL ${server} doesn't start with http/https/parsec3, forcing https.`);
+    window.nativeAPI.log('warn', `URL ${server} doesn't start with http/https/parsec3, forcing https.`);
     return `https://${server}`;
   }
   return server;

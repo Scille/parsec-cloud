@@ -348,7 +348,7 @@ async function validateCode(): Promise<void> {
         error.value = 'loginPage.createAccount.errors.offlineOrIncorrectServer';
       } else {
         error.value = 'loginPage.createAccount.errors.offlineOrIncorrectServer';
-        window.electronAPI.log('error', `Failed to validated the code: ${result.error.tag} (${result.error.error})`);
+        window.nativeAPI.log('error', `Failed to validated the code: ${result.error.tag} (${result.error.error})`);
       }
     }
   } finally {

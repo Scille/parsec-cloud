@@ -200,7 +200,7 @@ async function onFileOperationEvent(
   isFileOperationManagerActive.value = true;
   if (!operationData) {
     if (event !== FileOperationEvents.AllFinished) {
-      window.electronAPI.log('warn', `Got event ${event} without operation data`);
+      window.nativeAPI.log('warn', `Got event ${event} without operation data`);
     } else {
       isFileOperationManagerActive.value = false;
     }

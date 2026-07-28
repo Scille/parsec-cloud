@@ -528,7 +528,7 @@ export async function resizePage(page: Page, width: number, height?: number): Pr
 
 export async function sendUpdateEvent(page: MsPage): Promise<void> {
   await page.evaluate(() => {
-    window.electronAPI.getUpdateAvailability(true);
+    window.nativeAPI.getUpdateAvailability(true);
   });
 }
 

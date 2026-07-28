@@ -130,11 +130,11 @@ onMounted(async () => {
 
   eventCbId = await eventDistributor.value.registerCallback([Events.Online, Events.Offline], async (event: Events) => {
     if (event === Events.Offline) {
-      window.electronAPI.log('warn', 'Network connection lost while editing');
+      window.nativeAPI.log('warn', 'Network connection lost while editing');
       emits('onSaveStateChange', SaveState.Offline);
       await openIssueModal(EditorIssueStatus.NetworkOffline, false);
     } else if (event === Events.Online) {
-      window.electronAPI.log('info', 'Network connection restored');
+      window.nativeAPI.log('info', 'Network connection restored');
       emits('onSaveStateChange', SaveState.None);
     }
   });
@@ -155,12 +155,12 @@ async function loadEditor(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
 
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Cannot retrieve workspace handle');
+    window.nativeAPI.log('error', 'Cannot retrieve workspace handle');
     emits('fileError');
     return;
   }
   if (!editorFrame.value) {
-    window.electronAPI.log('error', 'Cannot get the iframe element');
+    window.nativeAPI.log('error', 'Cannot get the iframe element');
     emits('fileError');
     return;
   }
@@ -191,7 +191,7 @@ async function loadEditor(): Promise<void> {
     },
     {
       onReady: (): void => {
-        window.electronAPI.log('info', 'CryptPad editor is ready and document loaded successfully');
+        window.nativeAPI.log('info', 'CryptPad editor is ready and document loaded successfully');
         loadFinished.value = true;
         emits('fileLoaded');
       },
@@ -209,7 +209,7 @@ async function loadEditor(): Promise<void> {
           const openResult = await openFile(workspaceHandle, contentInfo.path, { write: true, truncate: true });
 
           if (!openResult.ok) {
-            window.electronAPI.log('error', `Failed to open file: ${openResult.error.tag} (${openResult.error.error})`);
+            window.nativeAPI.log('error', `Failed to open file: ${openResult.error.tag} (${openResult.error.error})`);
             hasError = true;
             return;
           }
@@ -218,10 +218,10 @@ async function loadEditor(): Promise<void> {
           const writeResult = await writeFile(workspaceHandle, fd, 0, new Uint8Array(arrayBuffer));
           if (!writeResult.ok) {
             hasError = true;
-            window.electronAPI.log('error', `Failed to write file: ${writeResult.error.tag} (${writeResult.error.error})`);
+            window.nativeAPI.log('error', `Failed to write file: ${writeResult.error.tag} (${writeResult.error.error})`);
           }
         } catch (e: any) {
-          window.electronAPI.log('error', `Failed to save file: ${e.toString()}`);
+          window.nativeAPI.log('error', `Failed to save file: ${e.toString()}`);
           hasError = true;
         } finally {
           if (fd) {
@@ -254,7 +254,7 @@ async function loadEditor(): Promise<void> {
           // Auto-save on initial unsaved changes (e.g. OO conversion artifacts)
           if (!initialSaveDone) {
             initialSaveDone = true;
-            window.electronAPI.log('info', 'Auto-saving initial unsaved changes');
+            window.nativeAPI.log('info', 'Auto-saving initial unsaved changes');
             save();
             return;
           }
@@ -266,7 +266,7 @@ async function loadEditor(): Promise<void> {
         showErrorTips.value = true;
 
         if (err instanceof CryptpadError) {
-          window.electronAPI.log('info', `Failed to load Cryptpad: ${err}`);
+          window.nativeAPI.log('info', `Failed to load Cryptpad: ${err}`);
           switch (err.code) {
             case CryptpadErrorCodes.InitFailed:
               error.value = EditorErrorMessage.EditableOnlyOnSystem;
@@ -286,7 +286,7 @@ async function loadEditor(): Promise<void> {
                 // Don't process it as a normal error
                 return;
               } else {
-                window.electronAPI.log('error', `Unhandled event error: ${err.details}`);
+                window.nativeAPI.log('error', `Unhandled event error: ${err.details}`);
               }
               break;
             case CryptpadErrorCodes.NotAvailable:
@@ -295,7 +295,7 @@ async function loadEditor(): Promise<void> {
               break;
           }
         } else {
-          window.electronAPI.log('error', `Unhandled error: ${err}`);
+          window.nativeAPI.log('error', `Unhandled error: ${err}`);
         }
         emits('fileError');
         loadFinished.value = true;
@@ -309,11 +309,11 @@ async function loadEditor(): Promise<void> {
 async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = true): Promise<MsModalResult> {
   // Safety check: only show modal if we're still on the file handler/editor route
   if (!currentRouteIs(Routes.FileHandler) || (currentRouteIs(Routes.FileHandler) && getFileHandlerMode() !== FileHandlerMode.Edit)) {
-    window.electronAPI.log('info', 'Skipping modal - user navigated away from editor');
+    window.nativeAPI.log('info', 'Skipping modal - user navigated away from editor');
     return MsModalResult.Cancel;
   }
   if (await modalController.getTop()) {
-    window.electronAPI.log('warn', 'A modal is already opened, skipping...');
+    window.nativeAPI.log('warn', 'A modal is already opened, skipping...');
     return MsModalResult.Cancel;
   }
 
@@ -351,7 +351,7 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
     if (loadFinished.value) {
       return 'close';
     } else {
-      window.electronAPI.log('info', `User chose to wait, ask them again in ${WAIT_TIMEOUT}ms`);
+      window.nativeAPI.log('info', `User chose to wait, ask them again in ${WAIT_TIMEOUT}ms`);
       setTimeout(() => {
         openTimeoutModal();
       }, WAIT_TIMEOUT);

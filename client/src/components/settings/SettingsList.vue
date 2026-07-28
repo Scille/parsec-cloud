@@ -219,7 +219,7 @@ async function changeTheme(selectedTheme: Theme): Promise<void> {
 }
 
 async function openConfigDir(): Promise<void> {
-  window.electronAPI.openConfigDir();
+  window.nativeAPI.openConfigDir();
 }
 
 async function openLogs(): Promise<void> {

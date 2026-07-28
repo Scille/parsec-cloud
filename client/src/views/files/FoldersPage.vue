@@ -802,7 +802,7 @@ onMounted(async () => {
   if (clientInfoResult.ok) {
     userInfo.value = clientInfoResult.value;
   } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
 
   fileOpCanceller = await fileOperationManager.value.registerCallback(onFileOperationEvent);
@@ -924,7 +924,7 @@ async function onFileOperationEvent(
 ): Promise<void> {
   if (!operationData) {
     if (event !== FileOperationEvents.AllFinished) {
-      window.electronAPI.log('warn', `Event ${event} received without operation data`);
+      window.nativeAPI.log('warn', `Event ${event} received without operation data`);
     }
     return;
   }
@@ -1166,7 +1166,7 @@ async function createNewFile(name: EntryName, fileType: FileContentType): Promis
         );
       }
     } else {
-      window.electronAPI.log('error', `Cannot create a new document of type ${fileType}`);
+      window.nativeAPI.log('error', `Cannot create a new document of type ${fileType}`);
     }
   } finally {
     await modal.dismiss();
@@ -1289,7 +1289,7 @@ async function getNewFileName(fileType: FileContentType): Promise<string | null>
       break;
   }
   if (!defaultNewName) {
-    window.electronAPI.log('warn', 'No default name for file');
+    window.nativeAPI.log('warn', 'No default name for file');
     return null;
   }
 
@@ -1350,7 +1350,7 @@ function getSelectedEntries(): EntryModel[] {
 
 async function openEntry(entryToOpen: EntryModel, options: OpenPathOptions): Promise<void> {
   if (!workspaceInfo.value) {
-    window.electronAPI.log('warn', 'Trying to open an entry but missing workspace info.');
+    window.nativeAPI.log('warn', 'Trying to open an entry but missing workspace info.');
     return;
   }
   await fileActions.openEntry(entryToOpen, options, workspaceInfo.value);

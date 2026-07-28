@@ -144,7 +144,7 @@ async function updateInformation(): Promise<void> {
       error.value = '';
     } else {
       error.value = 'OrganizationPage.getInfoFailed';
-      window.electronAPI.log('error', `Failed to retrieve organization info: ${result.error.tag})`);
+      window.nativeAPI.log('error', `Failed to retrieve organization info: ${result.error.tag})`);
     }
   });
   parsecGetClientInfo().then((result) => {
@@ -153,7 +153,7 @@ async function updateInformation(): Promise<void> {
       userInfo.value = result.value;
     } else {
       error.value = 'OrganizationPage.getInfoFailed';
-      window.electronAPI.log('error', `Failed to retrieve user info: ${result.error.tag} (${result.error.error})`);
+      window.nativeAPI.log('error', `Failed to retrieve user info: ${result.error.tag} (${result.error.error})`);
     }
   });
   getCurrentAvailableDevice().then(async (result) => {
@@ -164,7 +164,7 @@ async function updateInformation(): Promise<void> {
         serverConfig.value = serverInfo.value;
       }
     } else {
-      window.electronAPI.log('error', `Failed to retrieve current device: ${result.error.tag}`);
+      window.nativeAPI.log('error', `Failed to retrieve current device: ${result.error.tag}`);
     }
   });
 }

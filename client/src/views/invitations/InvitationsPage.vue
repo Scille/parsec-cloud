@@ -410,7 +410,7 @@ async function inviteUser(): Promise<void> {
     } else {
       message = 'UsersPage.invitation.inviteFailedSome';
     }
-    window.electronAPI.log('error', `Failed to create invitations: ${lastError.tag} (${lastError.error})`);
+    window.nativeAPI.log('error', `Failed to create invitations: ${lastError.tag} (${lastError.error})`);
     informationManager.value.present(
       new Information({
         message,
@@ -607,7 +607,7 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
 
   if (request.identitySystem.tag === AsyncEnrollmentIdentitySystemTag.PKI && !certificate.value) {
     if (!pkiAvailable.value) {
-      window.electronAPI.log('error', 'PKI not available');
+      window.nativeAPI.log('error', 'PKI not available');
       return;
     }
     const pkiModal = await modalController.create({
@@ -650,7 +650,7 @@ async function onAcceptAsyncEnrollmentRequestClicked(request: AsyncEnrollmentUnt
     }
     strategy = makeAcceptOpenBaoIdentityStrategy(data.openBaoClient as OpenBaoClient);
   } else {
-    window.electronAPI.log('error', `Unknown identity system ${request.identitySystem.tag}`);
+    window.nativeAPI.log('error', `Unknown identity system ${request.identitySystem.tag}`);
     return;
   }
 
@@ -744,7 +744,7 @@ async function refreshInvitationList(): Promise<void> {
   if (result.ok) {
     invitations.value = result.value;
   } else {
-    window.electronAPI.log('error', `Failed to list invitations: ${result.error.tag} (${result.error.error})`);
+    window.nativeAPI.log('error', `Failed to list invitations: ${result.error.tag} (${result.error.error})`);
   }
 }
 
@@ -755,7 +755,7 @@ async function refreshAsyncEnrollmentRequestList(): Promise<void> {
     asyncListError.value = '';
   } else {
     asyncListError.value = 'InvitationsPage.asyncEnrollmentRequest.errors.failToListRequests';
-    window.electronAPI.log('error', `Failed to list pki join requests: ${result.error.tag} (${result.error.error})`);
+    window.nativeAPI.log('error', `Failed to list pki join requests: ${result.error.tag} (${result.error.error})`);
   }
 }
 

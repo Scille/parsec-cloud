@@ -110,7 +110,7 @@ onMounted(async () => {
 
   // No handle
   if (!handle) {
-    window.electronAPI.log('error', 'Failed to retrieve connection handle while logged in');
+    window.nativeAPI.log('error', 'Failed to retrieve connection handle while logged in');
     await navigateTo(Routes.Home, { replace: true, skipHandle: true });
     return;
   }
@@ -122,7 +122,7 @@ onMounted(async () => {
   const clientInfoResult = await getClientInfo(handle);
   // The handle is invalid
   if (!clientInfoResult.ok) {
-    window.electronAPI.log('error', `Failed to retrieve client info: ${clientInfoResult.error.tag} (${clientInfoResult.error.error})`);
+    window.nativeAPI.log('error', `Failed to retrieve client info: ${clientInfoResult.error.tag} (${clientInfoResult.error.error})`);
     await navigateTo(Routes.Home, { replace: true, skipHandle: true });
     return;
   }
@@ -156,7 +156,7 @@ onMounted(async () => {
   initialized.value = true;
 
   // Making sure we get a notification as soon as possible
-  window.electronAPI.getUpdateAvailability();
+  window.nativeAPI.getUpdateAvailability();
 
   if (clientInfoResult.value.mustAcceptTos) {
     modalsSequencer.set(Modals.TOS, true);
@@ -180,7 +180,7 @@ async function eventCallback(event: Events, data?: EventData): Promise<void> {
       await logout();
       break;
     case Events.TOSAcceptRequired:
-      window.electronAPI.log('info', `Toggling modal ${Modals.TOS}`);
+      window.nativeAPI.log('info', `Toggling modal ${Modals.TOS}`);
       modalsSequencer.set(Modals.TOS, true);
       break;
     case Events.EntryDeleted:
@@ -193,35 +193,35 @@ async function eventCallback(event: Events, data?: EventData): Promise<void> {
       });
       break;
     case Events.OrganizationNotFound:
-      window.electronAPI.log('info', `Toggling modal ${Modals.OrganizationNotFound}`);
+      window.nativeAPI.log('info', `Toggling modal ${Modals.OrganizationNotFound}`);
       modalsSequencer.set(Modals.OrganizationNotFound, true);
       break;
     case Events.IncompatibleServer:
-      window.electronAPI.log('info', `Toggling modal ${Modals.IncompatibleServer}`);
+      window.nativeAPI.log('info', `Toggling modal ${Modals.IncompatibleServer}`);
       modalsSequencer.set(Modals.IncompatibleServer, true);
       break;
     case Events.ExpiredOrganization:
-      window.electronAPI.log('info', `Toggling modal ${Modals.ExpiredOrganization}`);
+      window.nativeAPI.log('info', `Toggling modal ${Modals.ExpiredOrganization}`);
       modalsSequencer.set(Modals.ExpiredOrganization, true);
       break;
     case Events.ClientRevoked:
-      window.electronAPI.log('info', `Toggling modal ${Modals.Revoked}`);
+      window.nativeAPI.log('info', `Toggling modal ${Modals.Revoked}`);
       modalsSequencer.set(Modals.Revoked, true);
       break;
     case Events.WebClientNotAllowed:
-      window.electronAPI.log('info', `Toggling modal ${Modals.WebClientNotAllowed}`);
+      window.nativeAPI.log('info', `Toggling modal ${Modals.WebClientNotAllowed}`);
       modalsSequencer.set(Modals.WebClientNotAllowed, true);
       break;
     case Events.ClockDesync:
-      window.electronAPI.log('info', `Toggling modal ${Modals.ClockDesync}`);
+      window.nativeAPI.log('info', `Toggling modal ${Modals.ClockDesync}`);
       modalsSequencer.set(Modals.ClockDesync, true);
       break;
     case Events.ClientFrozen:
-      window.electronAPI.log('info', `Toggling modal ${Modals.Frozen}`);
+      window.nativeAPI.log('info', `Toggling modal ${Modals.Frozen}`);
       modalsSequencer.set(Modals.Frozen, true);
       break;
     case Events.UpdateAvailability: {
-      window.electronAPI.log('info', `Toggling modal ${Modals.AppUpdateAvailable}`);
+      window.nativeAPI.log('info', `Toggling modal ${Modals.AppUpdateAvailable}`);
       modalsSequencer.set(Modals.AppUpdateAvailable, true);
       updateAvailableData.value = data as UpdateAvailabilityData;
       break;
@@ -244,11 +244,11 @@ async function checkAuthentication(): Promise<void> {
     return;
   }
   if (!serverConfig.value.isAuthMethodAllowed(primaryProtectionTag)) {
-    window.electronAPI.log('info', `Authentication method ${primaryProtectionTag} is not allowed by the server`);
+    window.nativeAPI.log('info', `Authentication method ${primaryProtectionTag} is not allowed by the server`);
     modalsSequencer.set(Modals.UpdateAuthentication, true);
   } else if (serverConfig.value.doesAuthMethodRequireTotp(primaryProtectionTag) && !currentDevice.value.totpOpaqueKeyId) {
     // else if because if we change the authentication method, we can't be sure that the next one will require TOTP
-    window.electronAPI.log('info', `The server requires TOTP to be set for authentication method ${primaryProtectionTag}`);
+    window.nativeAPI.log('info', `The server requires TOTP to be set for authentication method ${primaryProtectionTag}`);
     modalsSequencer.set(Modals.SetupTOTP, true);
   }
 }
@@ -272,7 +272,7 @@ async function watchModals(): Promise<void> {
       const cb = CALLBACKS.get(modal);
       if (cb) {
         modalsSequencer.set(modal, false);
-        window.electronAPI.log('info', `Showing ${modal} modal`);
+        window.nativeAPI.log('info', `Showing ${modal} modal`);
         await cb();
       }
     }
@@ -485,11 +485,11 @@ async function onTermsOfService(): Promise<void> {
     return;
   }
   if (!result.value.perLocaleUrls.size) {
-    window.electronAPI.log('warn', 'Received empty Terms of Service dictionary');
+    window.nativeAPI.log('warn', 'Received empty Terms of Service dictionary');
     return;
   }
   if (result.value.updatedOn.toMillis() === lastAccepted.value?.toMillis()) {
-    window.electronAPI.log('warn', 'Already accepted those TOS');
+    window.nativeAPI.log('warn', 'Already accepted those TOS');
     return;
   }
   const tosModal = await modalController.create({
@@ -521,7 +521,7 @@ async function onTermsOfService(): Promise<void> {
       // we will log them out.
       return;
     } else {
-      window.electronAPI.log('error', `Error when accepting the TOS: ${JSON.stringify(acceptResult.error)}`);
+      window.nativeAPI.log('error', `Error when accepting the TOS: ${JSON.stringify(acceptResult.error)}`);
       injections.informationManager.present(
         new Information({
           message: 'CreateOrganization.acceptTOS.update.acceptError',
@@ -542,19 +542,19 @@ async function onAppUpdate(): Promise<void> {
 
   const existingModal = await modalController.getTop();
   if (existingModal) {
-    window.electronAPI.log('debug', 'An existing modal is opened, skipping update prompt');
+    window.nativeAPI.log('debug', 'An existing modal is opened, skipping update prompt');
     return;
   }
 
   if (!updateAvailableData.value.version) {
-    window.electronAPI.log('error', 'Version missing from update data');
+    window.nativeAPI.log('error', 'Version missing from update data');
     return;
   }
 
   const answer = await openUpdateAppModal(updateAvailableData.value.version);
 
   if (answer === Answer.Yes) {
-    window.electronAPI.prepareUpdate();
+    window.nativeAPI.prepareUpdate();
   }
   suppressUpdatePrompt();
 }
@@ -572,7 +572,7 @@ async function logout(): Promise<void> {
 
   const handle = getConnectionHandle();
   if (!handle) {
-    window.electronAPI.log('error', 'No handle found when trying to log out');
+    window.nativeAPI.log('error', 'No handle found when trying to log out');
   } else {
     const startedClients = await listStartedClients();
     const deviceId = startedClients.find(([sHandle, _deviceId]) => sHandle === handle)?.[1];
@@ -603,7 +603,7 @@ async function logout(): Promise<void> {
     await injectionProvider.clean(handle);
     const logoutResult = await parsecLogout();
     if (!logoutResult.ok) {
-      window.electronAPI.log('error', `Error when logging out: ${JSON.stringify(logoutResult.error)}`);
+      window.nativeAPI.log('error', `Error when logging out: ${JSON.stringify(logoutResult.error)}`);
     }
   }
   recentDocumentManager.resetHistory();

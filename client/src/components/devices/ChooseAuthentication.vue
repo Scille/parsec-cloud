@@ -278,7 +278,7 @@ async function getSaveStrategy(): Promise<DeviceSaveStrategy | undefined> {
     return constructSaveStrategy(PrimaryProtectionStrategy.useKeyring());
   } else if (authentication.value === DevicePrimaryProtectionStrategyTag.OpenBao) {
     if (!openBaoClient.value) {
-      window.electronAPI.log('error', 'Selected auth is openBao but no client available');
+      window.nativeAPI.log('error', 'Selected auth is openBao but no client available');
       return undefined;
     }
     return constructSaveStrategy(PrimaryProtectionStrategy.useOpenBao(openBaoClient.value.getConnectionInfo()));
@@ -311,18 +311,18 @@ async function areFieldsCorrect(): Promise<boolean> {
 
 async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> {
   if (querying.value) {
-    window.electronAPI.log('warn', 'Clicked on SSO login while already login in');
+    window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
     return;
   }
   if (!props.serverConfig?.openbao) {
     error.value = 'Authentication.openBaoUnavailable';
-    window.electronAPI.log('error', 'OpenBao not enabled on this server');
+    window.nativeAPI.log('error', 'OpenBao not enabled on this server');
     return;
   }
   const auth = props.serverConfig.openbao.auths.find((auth) => auth.tag === provider);
   if (!auth) {
     error.value = 'Authentication.invalidOpenBaoData';
-    window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
+    window.nativeAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
     return;
   }
   try {
@@ -340,7 +340,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
       } else {
         error.value = 'Authentication.invalidOpenBaoData';
       }
-      window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
+      window.nativeAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
     } else {
       openBaoClient.value = result.value;
     }

@@ -147,7 +147,7 @@ async function openBaoConnect(
 ): Promise<OpenBaoResult<OpenBaoClient>> {
   const connResult = await getConnectionUrl(openBaoServer, mountpoint);
   if (!connResult.ok) {
-    window.electronAPI.log('error', `Failed to retrieve SSO auth url: ${JSON.stringify(connResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve SSO auth url: ${JSON.stringify(connResult.error)}`);
     return connResult;
   }
   let resultPromise!: Promise<{ code: string; state: string }>;
@@ -161,7 +161,7 @@ async function openBaoConnect(
         5 * 60 * 1000,
       );
 
-      window.electronAPI.receive(
+      window.nativeAPI.receive(
         'parsec-sso-complete',
         async (result: Result<{ code: string; state: string }, { error: string; description?: string }>) => {
           if (result.ok) {
@@ -197,8 +197,8 @@ async function openBaoConnect(
     });
   }
 
-  if (!window.electronAPI.openPopup(connResult.value)) {
-    window.electronAPI.log('error', 'Failed to open popup');
+  if (!window.nativeAPI.openPopup(connResult.value)) {
+    window.nativeAPI.log('error', 'Failed to open popup');
     return { ok: false, error: { type: OpenBaoErrorType.PopupFailed } };
   }
 
@@ -219,7 +219,7 @@ async function openBaoConnect(
     );
     return { ok: true, value: client };
   } catch (err: any) {
-    window.electronAPI.log('error', `Error when connecting to SSO: ${err.error} (${err.description})`);
+    window.nativeAPI.log('error', `Error when connecting to SSO: ${err.error} (${err.description})`);
     return { ok: false, error: { type: OpenBaoErrorType.InitError, detail: err.error ?? err.toString() } };
   }
 }

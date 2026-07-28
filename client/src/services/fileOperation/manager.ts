@@ -371,7 +371,7 @@ export class FileOperationManager {
         await this.eventDistributor.distribute(FileOperationEvents.Cancelled, this.pendingOperations[index]);
         this.pendingOperations.splice(index, 1);
       } else {
-        window.electronAPI.log('warn', 'Could not find the operation to cancel');
+        window.nativeAPI.log('warn', 'Could not find the operation to cancel');
       }
     }
   }
@@ -700,7 +700,7 @@ export class FileOperationManager {
         let fileSize = 0;
         const rStream = await createReadStream(data.workspaceHandle, entry.path, async (sizeRead: number) => {
           if (signal.aborted) {
-            window.electronAPI.log('info', 'Cancelling import...');
+            window.nativeAPI.log('info', 'Cancelling import...');
             throw new FileOperationCancelled();
           }
           fileSize += sizeRead;
@@ -724,7 +724,7 @@ export class FileOperationManager {
         await writer.add(relPath, rStream);
         return fileSize;
       } catch (e: any) {
-        window.electronAPI.log('error', 'Failed to add file to archive');
+        window.nativeAPI.log('error', 'Failed to add file to archive');
         throw e;
       }
     }
@@ -734,7 +734,7 @@ export class FileOperationManager {
       if (result.ok) {
         for (const child of result.value) {
           if (signal.aborted) {
-            window.electronAPI.log('info', 'Cancelling import...');
+            window.nativeAPI.log('info', 'Cancelling import...');
             throw new FileOperationCancelled();
           }
 
@@ -818,7 +818,7 @@ export class FileOperationManager {
         let fileSize = 0;
         const rStream = await createReadStream(data.workspaceHandle, entry.path, async (sizeRead: number) => {
           if (signal.aborted) {
-            window.electronAPI.log('info', 'Cancelling download...');
+            window.nativeAPI.log('info', 'Cancelling download...');
             throw new FileOperationCancelled();
           }
           fileSize += sizeRead;
@@ -849,7 +849,7 @@ export class FileOperationManager {
         await wStream.close();
         return fileSize;
       } catch (e: any) {
-        window.electronAPI.log('error', `Failed to write file '${entry.name}' to disk: ${e.toString()}`);
+        window.nativeAPI.log('error', `Failed to write file '${entry.name}' to disk: ${e.toString()}`);
         if (wStream) {
           await wStream.abort();
         }
@@ -865,7 +865,7 @@ export class FileOperationManager {
       if (result.ok) {
         for (const child of result.value) {
           if (signal.aborted) {
-            window.electronAPI.log('info', 'Cancelling download...');
+            window.nativeAPI.log('info', 'Cancelling download...');
             throw new FileOperationCancelled();
           }
 
@@ -916,13 +916,13 @@ export class FileOperationManager {
     const transaction = new OperationTransaction(data.workspaceHandle);
     const globalTotalSize = data.files.reduce((sum, file) => sum + file.size, 0);
 
-    window.electronAPI.log('info', `Starting the import of ${data.files.length} files`);
+    window.nativeAPI.log('info', `Starting the import of ${data.files.length} files`);
 
     try {
       let globalCurrentSize = 0;
       for (const [i, file] of data.files.entries()) {
         if (signal.aborted) {
-          window.electronAPI.log('info', 'Cancelling import...');
+          window.nativeAPI.log('info', 'Cancelling import...');
           throw new FileOperationCancelled();
         }
         const destinationDir = await Path.parent(Path.quickJoin(data.destination, (file as any).relativePath));
@@ -988,7 +988,7 @@ export class FileOperationManager {
         await wait(500);
         continue;
       }
-      window.electronAPI.log('info', `Starting next file operation ${elem.type}`);
+      window.nativeAPI.log('info', `Starting next file operation ${elem.type}`);
       let job: Promise<void>;
       const aborter = new AbortController();
       switch (elem.type) {
@@ -1021,7 +1021,7 @@ export class FileOperationManager {
           break;
         }
         default:
-          window.electronAPI.log('warn', `Unhandled file operation '${elem.type}'`);
+          window.nativeAPI.log('warn', `Unhandled file operation '${elem.type}'`);
           continue;
       }
       await this.eventDistributor.distribute(FileOperationEvents.Started, elem);

@@ -500,7 +500,7 @@ async function refreshPendingJoinRequests(): Promise<void> {
   if (asyncEnrollmentsResult.ok) {
     pendingRequestsCount.value = asyncEnrollmentsResult.value.length;
   } else {
-    window.electronAPI.log('error', `Failed to list async enrollments: ${asyncEnrollmentsResult.error.tag}`);
+    window.nativeAPI.log('error', `Failed to list async enrollments: ${asyncEnrollmentsResult.error.tag}`);
     pendingRequestsCount.value = 0;
   }
 }
@@ -521,7 +521,7 @@ async function loadAll(): Promise<void> {
   if (result.ok) {
     workspaces.value = result.value.sort((w1, w2) => w1.name.toLocaleLowerCase().localeCompare(w2.name.toLocaleLowerCase()));
   } else {
-    window.electronAPI.log('error', `Failed to list workspaces ${JSON.stringify(result.error)}`);
+    window.nativeAPI.log('error', `Failed to list workspaces ${JSON.stringify(result.error)}`);
   }
 
   const handle = getWorkspaceHandle();

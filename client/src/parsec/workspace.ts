@@ -370,7 +370,7 @@ export async function getPathLink(
   timestamp: DateTime | null = null,
 ): Promise<Result<ParsecWorkspacePathAddrAndRedirectionURL, WorkspaceGeneratePathAddrError>> {
   if (timestamp) {
-    window.electronAPI.log('warn', 'Parameter `timestamp` is ignored');
+    window.nativeAPI.log('warn', 'Parameter `timestamp` is ignored');
   }
   return await libparsec.workspaceGeneratePathAddr(workspaceHandle, path);
 }
