@@ -479,6 +479,9 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Rust: [ReplaceRegex(r"rust: [0-9.]+", "rust: {version}")],
         Tool.Node: [ReplaceRegex(r"node: [0-9.]+", "node: {version}")],
     },
+    ROOT_DIR / ".readthedocs.yml": {
+        Tool.Python: [ReplaceRegex(r'python: "[0-9.]+"', hide_patch_version('python: "{version}"'))]
+    },
     ROOT_DIR / "rust-toolchain.toml": {
         Tool.Rust: [ReplaceRegex(r'channel = ".*"', 'channel = "{version}"')]
     },

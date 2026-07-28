@@ -12,7 +12,7 @@
 
 ### Tools
 
-- **Python 3.12+** — used by `misc/releaser.py` and `misc/sign_windows_release.py`
+- **Python 3.14+** — used by `misc/releaser.py` and `misc/sign_windows_release.py`
 - **Git**
 - **GPG key** — must be configured locally *and* linked to your GitHub account (release commits and tags are annotated & signed).
   Generate one with `gpg --gen-key` if needed, then check your git config:

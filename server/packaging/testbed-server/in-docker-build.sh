@@ -19,7 +19,7 @@ VIRTUAL_ENV=$PWD/venv MATURIN_PEP517_ARGS="$(python make.py --quiet python-ci-li
 
 # Boto3/Botocore are pretty big dependencies and won't be used (given the testbed
 # server only uses the memory storage)
-rm -rf ./venv/lib/python3.12/site-packages/{boto3,botocore,pip,setuptools}
+rm -rf ./venv/lib/python3.14/site-packages/{boto3,botocore,pip,setuptools}
 
 # Basic check to see if the wheel looks like it's well built.
 ./venv/bin/parsec --version
