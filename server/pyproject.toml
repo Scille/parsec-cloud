@@ -22,15 +22,15 @@ dependencies = [
     "click>=8.0, <9",
     "cryptography>=46.0.6",
     "httpx>=0.28.1, <0.29",
-    "pbr>=6.1.1, <7",
+    "pbr>=6.1.1,<8",
     "pydantic>=2.12.4, <3",
     "pydantic-core>=2.41.5, <3",
     "sentry-sdk>=2.30.0, <3",
     "starlette>=0.49.3, <2",
-    "structlog>=25.4.0, <26",
+    "structlog>=25.4.0,<27",
     # ASGI server
     "fastapi>=0.121.2, <1",
-    "uvicorn>=0.35.0, <0.36",
+    "uvicorn>=0.35.0,<0.52",
     "jinja2>=3.0, <4",
     # PostgreSQL
     "asyncpg~=0.31",
