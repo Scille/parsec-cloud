@@ -72,11 +72,11 @@ dev = [
     "sqlfluff~=4.0.0",
     # test
     "httpx-sse~=0.4.1",
-    "pytest~=9.0.1",
+    "pytest>=9.0.1,<9.2.0",
     "pytest-asyncio~=1.0",
-    "pytest-cov~=7.0.0",
+    "pytest-cov>=7.0,<7.2",
     "pytest-rerunfailures~=16.0",
-    "pytest-timeout~=2.2.0",
+    "pytest-timeout>=2.2,<2.5",
     "pytest-xdist~=3.1",
     "trustme~=1.2.1",
     # type-stubs
