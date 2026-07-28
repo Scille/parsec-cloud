@@ -8,6 +8,7 @@ import {
   fillInputModal,
   fillIonInput,
   getClipboardText,
+  mockLibParsec,
   MsPage,
   msTest,
   setWriteClipboardPermission,
@@ -572,4 +573,19 @@ msTest('Trying copy/paste link for adding a new device', async ({ myProfilePage 
   await setWriteClipboardPermission(myProfilePage.context(), true);
   await greetModal.locator('#copy-link-btn').click();
   await expect(myProfilePage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
+});
+
+msTest('Greet device process start fails', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
+  await myProfilePage.locator('.menu-list__item').nth(1).click();
+  await mockLibParsec(myProfilePage, [
+    {
+      name: 'clientNewDeviceInvitation',
+      result: { ok: false, error: { tag: 'ClientNewDeviceInvitationErrorOffline', error: 'Cannot create invitation' } },
+    },
+  ]);
+  await myProfilePage.locator('.profile-content-item').locator('#add-device-button').click();
+  const greetModal = myProfilePage.locator('.greet-organization-modal');
+  await expect(myProfilePage).toShowToast('Failed to start the onboarding process. Please make sure you are online.', 'Error');
+  await expect(greetModal).toBeHidden();
 });

@@ -7,6 +7,7 @@ import {
   expect,
   fillIonInput,
   logout,
+  mockLibParsec,
   MsPage,
   msTest,
   openExternalLink,
@@ -27,6 +28,21 @@ msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(devices.nth(1).locator('.badge-active')).toBeHidden();
   await expect(devices.nth(0).locator('.badge-active')).toBeVisible();
   await expect(devices.nth(0).locator('.badge-active')).toHaveText('Current');
+});
+
+msTest('Check devices list with error', async ({ myProfilePage }) => {
+  await mockLibParsec(myProfilePage, [
+    {
+      name: 'clientListUserDevices',
+      result: { ok: false, error: { tag: 'ClientListUserDevicesErrorInternal', error: 'Cannot list devices' } },
+    },
+  ]);
+  await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
+  await myProfilePage.locator('.menu-list__item').nth(1).click();
+  const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
+  await expect(devices).toHaveCount(0);
+  await expect(myProfilePage.locator('.no-device')).toBeVisible();
+  await expect(myProfilePage.locator('.no-device')).toHaveText('Failed to retrieve device information.');
 });
 
 async function checkMenuItem(

@@ -10,6 +10,7 @@ import {
   getClipboardText,
   inviteUsers,
   login,
+  mockLibParsec,
   MsPage,
   msTest,
   resizePage,
@@ -55,6 +56,22 @@ msTest('User list default state', async ({ usersPage }) => {
   await expect(actionBar.locator('.ms-grid-list-toggle').locator('#grid-view')).toNotHaveDisabledAttribute();
   await expect(actionBar.locator('.ms-grid-list-toggle').locator('#list-view')).toHaveDisabledAttribute();
   await expect(usersPage.locator('#users-page-user-list').getByRole('listitem')).toHaveCount(USERS.length);
+});
+
+msTest('User list fails', async ({ connected }) => {
+  await mockLibParsec(connected, [
+    {
+      name: 'clientListUsers',
+      result: { ok: false, error: { tag: 'ClientListUsersErrorInternal', error: 'Failed' } },
+    },
+  ]);
+  await connected.locator('.sidebar').locator('#sidebar-users').click();
+  await expect(connected).toHavePageTitle('Users');
+  await expect(connected).toBeUserPage();
+  await expect(connected).toShowToast('Failed to retrieve users for this organization. Please make sure you are online.', 'Error');
+  await expect(connected.locator('.users-container').locator('.no-active-content')).toBeVisible();
+  await expect(connected.locator('.users-container').locator('.no-active-content')).toHaveText('No user to display.');
+  await expect(connected.locator('#users-page-user-list').getByRole('listitem')).toHaveCount(0);
 });
 
 function getStatusForUser(user: any): string {
@@ -114,43 +131,97 @@ msTest('Check user grid items', async ({ usersPage }) => {
   }
 });
 
-msTest('Revoke one user with context menu and check context menu', async ({ usersPage }) => {
-  const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
-  await item.hover();
-  const menu = usersPage.locator('#user-context-menu');
-  await expect(menu).toBeHidden();
-  // Opens context menu with button
-  await item.locator('.options-button').click();
-  await expect(menu).toBeVisible();
-  // Full context menu
-  await expect(menu.getByRole('listitem')).toHaveText([
-    'Deletion',
-    'Revoke this user',
-    'Profile',
-    'Change profile',
-    'User details',
-    'View details',
-    'Copy roles',
-    'Copy workspace roles',
-  ]);
+for (const success of [true, false]) {
+  msTest(`Revoke one user with context menu and check context menu (success: ${success})`, async ({ usersPage }) => {
+    if (!success) {
+      await mockLibParsec(usersPage, [
+        {
+          name: 'clientRevokeUser',
+          result: { ok: false, error: { tag: 'ClientRevokeUserErrorOffline', error: 'offline' } },
+        },
+      ]);
+    }
 
-  // Revoke the user
-  await menu.getByRole('listitem').nth(1).click();
-  await answerQuestion(usersPage, true, {
-    expectedTitleText: 'Revoke this user?',
-    expectedQuestionText:
-      'This will revoke Boby McBobFace, preventing them from accessing this organization.Are you sure you want to proceed?',
-    expectedPositiveText: 'Revoke',
-    expectedNegativeText: 'Cancel',
+    const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
+    await item.hover();
+    const menu = usersPage.locator('#user-context-menu');
+    await expect(menu).toBeHidden();
+    // Opens context menu with button
+    await item.locator('.options-button').click();
+    await expect(menu).toBeVisible();
+    // Full context menu
+    await expect(menu.getByRole('listitem')).toHaveText([
+      'Deletion',
+      'Revoke this user',
+      'Profile',
+      'Change profile',
+      'User details',
+      'View details',
+      'Copy roles',
+      'Copy workspace roles',
+    ]);
+
+    // Revoke the user
+    await menu.getByRole('listitem').nth(1).click();
+    await answerQuestion(usersPage, true, {
+      expectedTitleText: 'Revoke this user?',
+      expectedQuestionText:
+        'This will revoke Boby McBobFace, preventing them from accessing this organization.Are you sure you want to proceed?',
+      expectedPositiveText: 'Revoke',
+      expectedNegativeText: 'Cancel',
+    });
+
+    if (success) {
+      await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
+      await expect(item.locator('.user-status')).toHaveText('Revoked');
+      // Opens context menu with right click
+      await expect(menu).toBeHidden();
+      await item.click({ button: 'right' });
+      await expect(menu).toBeVisible();
+      await expect(menu.getByRole('listitem')).toHaveText(['User details', 'View details', 'Copy roles', 'Copy workspace roles']);
+    } else {
+      await expect(usersPage).toShowToast('Failed to revoke this user.', 'Error');
+      await expect(item.locator('.user-status')).toHaveText('Active');
+    }
   });
-  await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
 
-  // Opens context menu with right click
-  await expect(menu).toBeHidden();
-  await item.click({ button: 'right' });
-  await expect(menu).toBeVisible();
-  await expect(menu.getByRole('listitem')).toHaveText(['User details', 'View details', 'Copy roles', 'Copy workspace roles']);
-});
+  msTest(`Revoke two users with selection (success: ${success})`, async ({ usersPage }) => {
+    if (!success) {
+      await mockLibParsec(usersPage, [
+        {
+          name: 'clientRevokeUser',
+          result: { ok: false, error: { tag: 'ClientRevokeUserErrorOffline', error: 'offline' } },
+        },
+      ]);
+    }
+
+    const item1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
+    await item1.hover();
+    await item1.locator('.ms-checkbox').check();
+
+    const item2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
+    await item2.hover();
+    await item2.locator('.ms-checkbox').check();
+
+    await usersPage.locator('#activate-users-ms-action-bar').getByText('Revoke these users').click();
+    await answerQuestion(usersPage, true, {
+      expectedTitleText: 'Revoke these users?',
+      expectedQuestionText:
+        'This will revoke these 2 users, preventing them from accessing this organization.Are you sure you want to proceed?',
+      expectedPositiveText: 'Revoke',
+      expectedNegativeText: 'Cancel',
+    });
+    if (success) {
+      await expect(usersPage).toShowToast('2 users have been revoked, they can no longer access this organization.', 'Success');
+      await expect(item1.locator('.user-status')).toHaveText('Revoked');
+      await expect(item2.locator('.user-status')).toHaveText('Revoked');
+    } else {
+      await expect(usersPage).toShowToast('Failed to revoke any user.', 'Error');
+      await expect(item1.locator('.user-status')).toHaveText('Active');
+      await expect(item2.locator('.user-status')).toHaveText('Active');
+    }
+  });
+}
 
 msTest('Revoke one user with selection', async ({ usersPage }) => {
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
@@ -165,26 +236,7 @@ msTest('Revoke one user with selection', async ({ usersPage }) => {
     expectedNegativeText: 'Cancel',
   });
   await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
-});
-
-msTest('Revoke two users with selection', async ({ usersPage }) => {
-  const item1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
-  await item1.hover();
-  await item1.locator('.ms-checkbox').check();
-
-  const item2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
-  await item2.hover();
-  await item2.locator('.ms-checkbox').check();
-
-  await usersPage.locator('#activate-users-ms-action-bar').getByText('Revoke these users').click();
-  await answerQuestion(usersPage, true, {
-    expectedTitleText: 'Revoke these users?',
-    expectedQuestionText:
-      'This will revoke these 2 users, preventing them from accessing this organization.Are you sure you want to proceed?',
-    expectedPositiveText: 'Revoke',
-    expectedNegativeText: 'Cancel',
-  });
-  await expect(usersPage).toShowToast('2 users have been revoked, they can no longer access this organization.', 'Success');
+  await expect(item.locator('.user-status')).toHaveText('Revoked');
 });
 
 msTest('Selection in grid mode', async ({ usersPage }) => {
@@ -643,32 +695,48 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   await nextButton.click();
 });
 
-msTest('Update profile', async ({ usersPage }) => {
-  const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(1);
-  await sourceUser.hover();
-  await sourceUser.locator('.options-button').click();
-  const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(1).getByRole('listitem').nth(1);
-  await expect(menuButton).toHaveText('Change profile');
-  await menuButton.click();
-  const modal = usersPage.locator('.update-profile-modal');
-  const modalContent = modal.locator('.ms-modal-content');
-  await expect(modal).toBeVisible();
-  const nextButton = modal.locator('#next-button');
-  await expect(nextButton).toHaveText('Change');
-  await expect(nextButton).toHaveDisabledAttribute();
-  await expect(modalContent.locator('.update-profile-user__item').nth(0)).toHaveText('Boby McBobFace');
-  const profileButton = modalContent.locator('#dropdown-popover-button');
-  await expect(profileButton).toHaveText('Choose a profile');
-  await profileButton.click();
-  const profileDropdown = usersPage.locator('.dropdown-popover');
-  await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member']);
-  await expect(profileDropdown.getByRole('listitem').nth(1)).toHaveTheClass('item-disabled');
-  await profileDropdown.getByRole('listitem').nth(0).click();
-  await expect(profileButton).toHaveText('Administrator');
-  await expect(nextButton).toBeTrulyEnabled();
-  await nextButton.click();
-  await expect(usersPage).toShowToast('The profile has been changed!', 'Success');
-});
+for (const success of [true, false]) {
+  msTest(`Update profile (success: ${success})`, async ({ usersPage }) => {
+    if (!success) {
+      await mockLibParsec(usersPage, [
+        {
+          name: 'clientUpdateUserProfile',
+          result: { ok: false, error: { tag: 'ClientUserUpdateProfileErrorOffline', error: 'offline' } },
+        },
+      ]);
+    }
+    const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(1);
+    await sourceUser.hover();
+    await sourceUser.locator('.options-button').click();
+    const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(1).getByRole('listitem').nth(1);
+    await expect(menuButton).toHaveText('Change profile');
+    await menuButton.click();
+    const modal = usersPage.locator('.update-profile-modal');
+    const modalContent = modal.locator('.ms-modal-content');
+    await expect(modal).toBeVisible();
+    const nextButton = modal.locator('#next-button');
+    await expect(nextButton).toHaveText('Change');
+    await expect(nextButton).toHaveDisabledAttribute();
+    await expect(modalContent.locator('.update-profile-user__item').nth(0)).toHaveText('Boby McBobFace');
+    const profileButton = modalContent.locator('#dropdown-popover-button');
+    await expect(profileButton).toHaveText('Choose a profile');
+    await profileButton.click();
+    const profileDropdown = usersPage.locator('.dropdown-popover');
+    await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member']);
+    await expect(profileDropdown.getByRole('listitem').nth(1)).toHaveTheClass('item-disabled');
+    await profileDropdown.getByRole('listitem').nth(0).click();
+    await expect(profileButton).toHaveText('Administrator');
+    await expect(nextButton).toBeTrulyEnabled();
+    await nextButton.click();
+    if (success) {
+      await expect(usersPage).toShowToast('The profile has been changed!', 'Success');
+      await expect(sourceUser.locator('.user-profile')).toHaveText('Administrator');
+    } else {
+      await expect(usersPage).toShowToast('Could not change the profile. Make sure you are online.', 'Error');
+      await expect(sourceUser.locator('.user-profile')).toHaveText('Member');
+    }
+  });
+}
 
 msTest('Update multiple profiles', async ({ usersPage }) => {
   msTest.setTimeout(120_000);
