@@ -69,7 +69,7 @@ dev = [
     "editorconfig-checker~=3.2.1",
     "pyright~=1.1.353",
     "ruff~=0.15.0",
-    "sqlfluff~=4.0.0",
+    "sqlfluff>=4.0,<4.3",
     # test
     "httpx-sse~=0.4.1",
     "pytest~=9.0.1",
