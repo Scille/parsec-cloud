@@ -5,7 +5,6 @@ from collections.abc import Awaitable, Callable
 from typing import (
     TYPE_CHECKING,
     Any,
-    ForwardRef,
     TypeVar,
     get_type_hints,
 )
@@ -71,7 +70,8 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTyp
             expected_type_name = "AnonymousClientContext"
         case _:
             raise ValueError(f"unexpected family {m_family}")
-    assert types["client_ctx"] == ForwardRef(expected_type_name), (
+    # Only compare __forward_arg__ to not have issue with the `owner` value of `ForwardedRef`
+    assert types["client_ctx"].__forward_arg__ == expected_type_name, (
         f"Expect `client_ctx`({types['client_ctx']}) to be an `{expected_type_name}`. Did you add `from __future__ import annotations` ?"
     )
 

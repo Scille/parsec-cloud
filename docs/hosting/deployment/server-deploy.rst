@@ -354,7 +354,7 @@ Additional Requirements
 
 In addition to the :ref:`base requirements <doc_hosting_deployment_prerequisites>`, you will need:
 
-- Python v3.12 with ``pip`` and ``venv`` modules
+- Python v3.14 with ``pip`` and ``venv`` modules
 - Parsec Server (Python package), available at https://pypi.org/project/parsec-cloud/
 
   - It can be installed with ``pip`` (see Installation step below).
