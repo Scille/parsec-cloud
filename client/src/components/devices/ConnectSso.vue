@@ -58,16 +58,16 @@ function getOpenBaoClient(): OpenBaoClient | undefined {
 
 async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> {
   if (querying.value) {
-    window.electronAPI.log('warn', 'Clicked on SSO login while already login in');
+    window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
     return;
   }
   if (!props.serverConfig?.openbao) {
-    window.electronAPI.log('error', 'OpenBao not enabled on this server');
+    window.nativeAPI.log('error', 'OpenBao not enabled on this server');
     return;
   }
   const auth = props.serverConfig.openbao.auths.find((auth) => auth.tag === provider);
   if (!auth) {
-    window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
+    window.nativeAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
     return;
   }
   try {
@@ -85,7 +85,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfigTag): Promise<void> 
       } else {
         error.value = 'Authentication.invalidOpenBaoData';
       }
-      window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
+      window.nativeAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
       emits('openBaoConnectError', result.error);
       return;
     }

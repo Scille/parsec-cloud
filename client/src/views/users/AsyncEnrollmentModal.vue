@@ -276,7 +276,7 @@ async function onNextButtonClicked(): Promise<boolean> {
     }
   } else if (state.value === JoinRequestState.MethodPKI) {
     if (!selectedCert.value?.signCert || !selectedCert.value?.encryptCert) {
-      window.electronAPI.log('error', 'Invalid state for async enrollment with PKI');
+      window.nativeAPI.log('error', 'Invalid state for async enrollment with PKI');
       return false;
     }
     const signCertResult = await openCertificate(selectedCert.value.signCert.reference);
@@ -319,7 +319,7 @@ async function onNextButtonClicked(): Promise<boolean> {
     return modalController.dismiss(null, MsModalResult.Confirm);
   } else if (state.value === JoinRequestState.MethodSSO) {
     if (!fullName.value || !email.value || !openBaoClient.value) {
-      window.electronAPI.log('error', 'Invalid state for async enrollment with OpenBao');
+      window.nativeAPI.log('error', 'Invalid state for async enrollment with OpenBao');
       return false;
     }
     const result = await requestJoinOrganization(
@@ -351,7 +351,7 @@ async function onNextButtonClicked(): Promise<boolean> {
     }
     return modalController.dismiss(null, MsModalResult.Confirm);
   } else {
-    window.electronAPI.log('error', 'Invalid state for async enrollment modal');
+    window.nativeAPI.log('error', 'Invalid state for async enrollment modal');
     return false;
   }
   return true;

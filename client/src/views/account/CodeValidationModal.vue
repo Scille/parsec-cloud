@@ -67,7 +67,7 @@ async function resendCode(): Promise<void> {
   resendDisabled.value = true;
   const result = await ParsecAccount.requestAccountDeletion();
   if (!result.ok) {
-    window.electronAPI.log('error', `Failed to request account deletion: ${result.error.tag} (${result.error.error})`);
+    window.nativeAPI.log('error', `Failed to request account deletion: ${result.error.tag} (${result.error.error})`);
     error.value = 'HomePage.profile.account.deleteAccount.error.reSentCode';
   }
   setTimeout(() => {
@@ -83,7 +83,7 @@ async function onConfirm(): Promise<boolean> {
   try {
     const result = await ParsecAccount.confirmAccountDeletion(code.value);
     if (!result.ok) {
-      window.electronAPI.log('error', `Failed to confirm account deletion: ${result.error.tag} (${result.error.error})`);
+      window.nativeAPI.log('error', `Failed to confirm account deletion: ${result.error.tag} (${result.error.error})`);
       error.value = 'HomePage.profile.account.deleteAccount.error.delete';
       return false;
     } else {

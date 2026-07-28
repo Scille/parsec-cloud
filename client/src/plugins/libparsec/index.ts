@@ -27,8 +27,8 @@ const _libparsec = registerPlugin<LibParsecPlugin>('LibParsec', {
 
 function logError(level: 'warn' | 'error', message: string): void {
   // may not be available right at the start
-  if (window.electronAPI && window.electronAPI.log) {
-    window.electronAPI.log(level, message);
+  if (window.nativeAPI && window.nativeAPI.log) {
+    window.nativeAPI.log(level, message);
   } else {
     console[level](message);
   }

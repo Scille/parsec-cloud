@@ -88,7 +88,7 @@ onMounted(async () => {
     isOnline.value = clientInfoResult.value.isServerOnline;
   }
 
-  window.electronAPI.getUpdateAvailability();
+  window.nativeAPI.getUpdateAvailability();
 });
 
 onUnmounted(async () => {
@@ -124,7 +124,7 @@ async function openOrganizationPopover(event: Event): Promise<void> {
 
     if (answer === Answer.Yes) {
       await eventDistributor.value.dispatchEvent(Events.LogoutRequested);
-      window.electronAPI.prepareUpdate();
+      window.nativeAPI.prepareUpdate();
     }
   } else if (data.option === ProfilePopoverOption.LogOut) {
     const answer = await askQuestion(

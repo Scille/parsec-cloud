@@ -220,7 +220,7 @@ async function nextStep(): Promise<void> {
   } else if (pageStep.value === ChangeAuthenticationStep.ChooseNewAuthMethod) {
     await changeAuthentication();
   } else {
-    window.electronAPI.log('error', 'Update auth modal is in invalid state');
+    window.nativeAPI.log('error', 'Update auth modal is in invalid state');
   }
 }
 

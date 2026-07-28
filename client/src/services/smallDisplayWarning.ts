@@ -27,7 +27,7 @@ export function useSmallDisplayWarning(infoManager?: InformationManager): any {
   async function checkSmallDisplay(): Promise<void> {
     if (!window.usesTestbed() && isSmallDisplay.value && !warnedAboutDisplay) {
       warnedAboutDisplay = true;
-      window.electronAPI.log('warn', 'Small display detected, warning the user...');
+      window.nativeAPI.log('warn', 'Small display detected, warning the user...');
       if (informationManager) {
         await informationManager.present(
           new Information({

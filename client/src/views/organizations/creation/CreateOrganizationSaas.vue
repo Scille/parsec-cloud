@@ -203,10 +203,7 @@ async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInforma
 
 async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID, seqKey: string | undefined): Promise<void> {
   if (!personalInformation.value) {
-    window.electronAPI.log(
-      'error',
-      'OrganizationCreation: no authentication token after choosing the organization name, should not happen',
-    );
+    window.nativeAPI.log('error', 'OrganizationCreation: no authentication token after choosing the organization name, should not happen');
     return;
   }
   organizationName.value = chosenOrganizationName;
@@ -223,7 +220,7 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID, 
 
 async function onAuthenticationChosen(chosenSaveStrategy: DeviceSaveStrategy): Promise<void> {
   if (!personalInformation.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data on auth chosen, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data on auth chosen, should not happen');
   }
   currentError.value = undefined;
   saveStrategy.value = chosenSaveStrategy;
@@ -241,7 +238,7 @@ async function onCreationError(startTime: number): Promise<void> {
 
 async function onCreateClicked(): Promise<void> {
   if (!organizationName.value || !personalInformation.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
     return;
   }
 
@@ -253,14 +250,14 @@ async function onCreateClicked(): Promise<void> {
     const response = await BmsAccessInstance.get().createOrganization(organizationName.value);
 
     if (response.isError) {
-      window.electronAPI.log('error', `Failed to create organization: ${JSON.stringify(response.errors)}`);
+      window.nativeAPI.log('error', `Failed to create organization: ${JSON.stringify(response.errors)}`);
       // TODO: Change this error handling with the real backend response
       if (response.errors && response.errors.some((error) => error.code === 'parsec_bad_status')) {
         currentError.value = 'CreateOrganization.errors.alreadyExists';
       } else if (response.status === CONNECTION_ERROR_STATUS) {
         currentError.value = 'CreateOrganization.errors.offline';
       } else {
-        window.electronAPI.log('error', `Failed to create Saas organization, unhandled error ${JSON.stringify(response.errors)}`);
+        window.nativeAPI.log('error', `Failed to create Saas organization, unhandled error ${JSON.stringify(response.errors)}`);
         currentError.value = {
           key: 'CreateOrganization.errors.generic',
           data: { reason: 'Unknown' },
@@ -275,7 +272,7 @@ async function onCreateClicked(): Promise<void> {
       await onCreationError(startTime);
       return;
     } else if (!response.isError && !response.data.bootstrapLink) {
-      window.electronAPI.log('error', 'Server did not provide a bootstrap link');
+      window.nativeAPI.log('error', 'Server did not provide a bootstrap link');
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: 'MissingBootstrapLink' } };
       return;
     } else {
@@ -333,7 +330,7 @@ async function onCreateClicked(): Promise<void> {
 
 async function onGoClicked(): Promise<void> {
   if (!saveStrategy.value || !availableDevice.value || !organizationName.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
     return;
   }
   emits('organizationCreated', organizationName.value, availableDevice.value, toRaw(saveStrategy.value));

@@ -129,7 +129,7 @@ onMounted(async () => {
   if (infoResult.ok) {
     userInfo.value = infoResult.value;
   } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
   }
 });
 

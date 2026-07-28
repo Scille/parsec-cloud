@@ -361,14 +361,14 @@ async function refreshJoinRequestsList(): Promise<void> {
   // If we haven't set the interval yet and there's at least one join request or if
   // the function returned an error, we set the interval to try again in a minute.
   if (intervalId === null && (joinRequests.value.length > 0 || !result.ok)) {
-    window.electronAPI.log('info', 'Polling the join request list');
+    window.nativeAPI.log('info', 'Polling the join request list');
     intervalId = setInterval(() => {
       refreshJoinRequestsList();
     }, 30000);
   }
   // If there's no requests, no point in polling
   if (intervalId !== null && joinRequests.value.length === 0 && result.ok) {
-    window.electronAPI.log('info', 'Stopping the poll for the join request list');
+    window.nativeAPI.log('info', 'Stopping the poll for the join request list');
     clearInterval(intervalId);
     intervalId = null;
   }
@@ -604,7 +604,7 @@ async function onJoinRequestClicked(request: AsyncEnrollmentRequest): Promise<vo
           PresentationMode.Toast,
         );
       } else {
-        window.electronAPI.log('error', `Failed to cancel async join request: ${result.error.tag} (${result.error.error})`);
+        window.nativeAPI.log('error', `Failed to cancel async join request: ${result.error.tag} (${result.error.error})`);
         informationManager.present(
           new Information({
             message: 'HomePage.organizationRequest.requestCancelError',
@@ -640,7 +640,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
   let primaryProtection!: DevicePrimaryProtectionStrategy;
   const parsedAddrResult = await parseParsecAddr(request.enrollment.addr);
   if (!parsedAddrResult.ok) {
-    window.electronAPI.log('error', 'Failed to parse request enrollment address');
+    window.nativeAPI.log('error', 'Failed to parse request enrollment address');
     return;
   }
   const serverAddr = await buildParsecAddr(parsedAddrResult.value);
@@ -661,7 +661,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
         }),
         PresentationMode.Toast,
       );
-      window.electronAPI.log('error', 'Weird case of PKI not being available when creating the device from the async request');
+      window.nativeAPI.log('error', 'Weird case of PKI not being available when creating the device from the async request');
       return;
     }
     const identitySystem = request.enrollment.identitySystem as AvailablePendingAsyncEnrollmentIdentitySystemPKI;
@@ -689,7 +689,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
         }),
         PresentationMode.Toast,
       );
-      window.electronAPI.log('error', 'Failed to get server config when creating the device from the async request');
+      window.nativeAPI.log('error', 'Failed to get server config when creating the device from the async request');
       return;
     }
     if (!serverConfigResult.value?.openbao || serverConfigResult.value.openbao.auths.length === 0) {
@@ -701,7 +701,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
         }),
         PresentationMode.Toast,
       );
-      window.electronAPI.log('error', 'No openbao auths available when creating the device from the async request');
+      window.nativeAPI.log('error', 'No openbao auths available when creating the device from the async request');
       return;
     }
     const ssoModal = await modalController.create({
@@ -721,7 +721,7 @@ async function finalizeRequest(request: AsyncEnrollmentRequest): Promise<void> {
     identityStrategy = makeAcceptOpenBaoIdentityStrategy(data.openBaoClient as OpenBaoClient);
     primaryProtection = PrimaryProtectionStrategy.useOpenBao((data.openBaoClient as OpenBaoClient).getConnectionInfo());
   } else {
-    window.electronAPI.log('error', 'Unknown identity system');
+    window.nativeAPI.log('error', 'Unknown identity system');
     return;
   }
 
@@ -787,7 +787,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   }
 
   if (!component) {
-    window.electronAPI.log('error', 'Trying to open join link modal with invalid link');
+    window.nativeAPI.log('error', 'Trying to open join link modal with invalid link');
     return;
   }
   const modal = await modalController.create({
@@ -817,7 +817,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
 
 async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
   if (await isDeviceLoggedIn(device)) {
-    window.electronAPI.log('debug', 'Selected organization is already logged in, switching to it');
+    window.nativeAPI.log('debug', 'Selected organization is already logged in, switching to it');
     const handle = await getDeviceHandle(device);
     switchOrganization(handle ?? null, false);
   } else {
@@ -826,7 +826,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       storedDeviceDataDict.value[device.deviceId]?.orgCreationDate &&
       isExpired(getDurationBeforeExpiration(storedDeviceDataDict.value[device.deviceId].orgCreationDate as DateTime))
     ) {
-      window.electronAPI.log('debug', 'Selected expired trial organization');
+      window.nativeAPI.log('debug', 'Selected expired trial organization');
       const answer = await askQuestion('HomePage.expiredDevice.questionTitle', 'HomePage.expiredDevice.questionMessage', {
         yesIsDangerous: true,
         yesText: 'HomePage.expiredDevice.questionYes',
@@ -834,7 +834,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
         backdropDismiss: true,
       });
       if (answer === Answer.Yes) {
-        window.electronAPI.log('debug', 'Archiving expired trial organization');
+        window.nativeAPI.log('debug', 'Archiving expired trial organization');
         const result = await archiveDevice(device);
         if (result.ok) {
           informationManager.present(
@@ -847,7 +847,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
           await refreshDeviceList();
           return;
         } else {
-          window.electronAPI.log('error', 'Could not archive expired trial organization');
+          window.nativeAPI.log('error', 'Could not archive expired trial organization');
           informationManager.present(
             new Information({
               message: 'HomePage.expiredDevice.archiveFailure',
@@ -859,10 +859,10 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
       }
     }
     if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
-      window.electronAPI.log('debug', 'Logging in with Keyring');
+      window.nativeAPI.log('debug', 'Logging in with Keyring');
       await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useKeyring()));
     } else if (device.ty.tag === AvailableDeviceTypeTag.PKI) {
-      window.electronAPI.log('debug', 'Logging in with Smartcard');
+      window.nativeAPI.log('debug', 'Logging in with Smartcard');
       const certResult = await openCertificate((device.ty as AvailableDeviceTypePKI).certificateRef);
       if (!certResult.ok) {
         await handleLoginError(device, { tag: ClientStartErrorTag.Internal, error: `${certResult.error.tag} (${certResult.error.error})` });
@@ -877,7 +877,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
         }
         await login(device, constructAccessStrategy(device, PrimaryProtectionStrategy.useAccountVault(handle)));
       } catch (e: any) {
-        window.electronAPI.log('error', `Failed to log in with vault: ${e.toString()}`);
+        window.nativeAPI.log('error', `Failed to log in with vault: ${e.toString()}`);
         informationManager.present(
           new Information({
             message: 'HomePage.loginErrors.vaultFailed',
@@ -887,7 +887,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
         );
       }
     } else {
-      window.electronAPI.log('debug', 'Logging in with Password');
+      window.nativeAPI.log('debug', 'Logging in with Password');
       selectedDevice.value = device;
       state.value = HomePageState.Login;
     }
@@ -896,7 +896,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
 
 async function handleLoginError(device: AvailableDevice, error: ClientStartError): Promise<void> {
   if (device.ty.tag === AvailableDeviceTypeTag.Password) {
-    window.electronAPI.log('debug', 'Handling Password login error');
+    window.nativeAPI.log('debug', 'Handling Password login error');
     selectedDevice.value = device;
     state.value = HomePageState.Login;
     await nextTick();
@@ -904,7 +904,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       loginPageRef.value.setLoginError(error);
     }
   } else if (device.ty.tag === AvailableDeviceTypeTag.Keyring) {
-    window.electronAPI.log('debug', 'Handling Keyring login error');
+    window.nativeAPI.log('debug', 'Handling Keyring login error');
     if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed || error.tag === ClientStartErrorTag.KeyringError) {
       const answer = await askQuestion('HomePage.loginErrors.keyringFailedTitle', 'HomePage.loginErrors.keyringFailedQuestion', {
         yesText: 'HomePage.loginErrors.keyringFailedUsedRecovery',
@@ -924,7 +924,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       );
     }
   } else if (device.ty.tag === AvailableDeviceTypeTag.OpenBao) {
-    window.electronAPI.log('error', `Failed to login with OpenBAO: ${error.tag} (${error.error})`);
+    window.nativeAPI.log('error', `Failed to login with OpenBAO: ${error.tag} (${error.error})`);
     informationManager.present(
       new Information({
         message: 'HomePage.loginErrors.openBaoFailed',
@@ -933,7 +933,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       PresentationMode.Toast,
     );
   } else if (device.ty.tag === AvailableDeviceTypeTag.PKI) {
-    window.electronAPI.log('error', `Failed to login with PKI: ${error.tag} (${error.error})`);
+    window.nativeAPI.log('error', `Failed to login with PKI: ${error.tag} (${error.error})`);
     informationManager.present(
       new Information({
         message: 'HomePage.loginErrors.pkiFailed',
@@ -942,7 +942,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       PresentationMode.Toast,
     );
   } else {
-    window.electronAPI.log('error', `Unhandled error for device authentication type ${device.ty.tag}`);
+    window.nativeAPI.log('error', `Unhandled error for device authentication type ${device.ty.tag}`);
   }
 }
 
@@ -970,11 +970,11 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
           if (isWeb() && device.ty.tag === AvailableDeviceTypeTag.Password) {
             const regResult = await ParsecAccount.registerNewDevice({ organizationId: device.organizationId, userId: device.userId });
             if (!regResult.ok) {
-              window.electronAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
+              window.nativeAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
             }
           }
         } else {
-          window.electronAPI.log(
+          window.nativeAPI.log(
             'error',
             `Failed to create the registration device: ${createRegResult.error.tag} (${createRegResult.error.error})`,
           );
@@ -993,7 +993,7 @@ async function handleRegistration(device: AvailableDevice, access: DeviceAccessS
 
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   loginInProgress.value = true;
-  window.electronAPI.log('debug', 'Starting Parsec login');
+  window.nativeAPI.log('debug', 'Starting Parsec login');
 
   if (device.totpOpaqueKeyId !== null) {
     const code = await getTextFromUser(
@@ -1010,7 +1010,7 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     }
     const fetchTotpResult = await fetchTotpOpaqueKey(device.serverAddr, device.organizationId, device.userId, device.totpOpaqueKeyId, code);
     if (!fetchTotpResult.ok) {
-      window.electronAPI.log('warn', `Failed to retrieve totp opaque key: '${fetchTotpResult.error.tag}'`);
+      window.nativeAPI.log('warn', `Failed to retrieve totp opaque key: '${fetchTotpResult.error.tag}'`);
       let message = 'Authentication.mfa.error.failedToRetrieveKey';
       if (fetchTotpResult.error.tag === TotpFetchOpaqueKeyErrorTag.InvalidOneTimePassword) {
         message = 'Authentication.mfa.error.invalidCode';
@@ -1033,7 +1033,7 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     await closeCertificate(access.primaryProtection.pkiEncryptPrivateKeyHandle);
   }
   if (result.ok) {
-    window.electronAPI.log('debug', 'getOrganizationCreationDate');
+    window.nativeAPI.log('debug', 'getOrganizationCreationDate');
     const creationDateResult = await getOrganizationCreationDate(result.value);
     storedDeviceDataDict.value[device.deviceId] = {
       lastLogin: DateTime.now(),

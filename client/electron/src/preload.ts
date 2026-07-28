@@ -20,7 +20,7 @@ ipcRenderer.on('parsec-custom-branding-folder', (_event, ...args: any[]) => {
 });
 
 process.once('loaded', async () => {
-  contextBridge.exposeInMainWorld('electronAPI', {
+  contextBridge.exposeInMainWorld('nativeAPI', {
     sendConfig: (config: any) => {
       ipcRenderer.send(PageToWindowChannel.ConfigUpdate, config);
     },

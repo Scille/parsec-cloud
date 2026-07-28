@@ -159,7 +159,7 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
       // to import the module and set a global state, and finally the real `libparsec.pkiInitForScws` is called.
 
       if ((window as any).TESTING_MOCKED_SCWS) {
-        window.electronAPI.log('info', 'PKI is mocked');
+        window.nativeAPI.log('info', 'PKI is mocked');
         // To test the PKI we pretend SCWS is enabled, but
         // we are going to rely on the testbed.
         const result = await (libparsec.pkiInitForScws as any)(
@@ -338,7 +338,7 @@ const _ASYNC_ENROLLMENT_PARSEC_API = {
     if (result.ok) {
       const validCerts: Array<AvailablePkiCertificateValid> = result.value.filter((cert) => {
         if (cert.tag !== AvailablePkiCertificateTag.Valid) {
-          window.electronAPI.log('warn', `Invalid certificate: ${cert.invalidReason.tag}`);
+          window.nativeAPI.log('warn', `Invalid certificate: ${cert.invalidReason.tag}`);
           return false;
         }
         return true;

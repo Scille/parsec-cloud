@@ -14,13 +14,13 @@ export async function persistStorage(): Promise<void> {
       if ((window as any).TESTING !== true && isWeb() && navigator.storage && !(await navigator.storage.persisted())) {
         const result = await navigator.storage.persist();
         if (!result) {
-          window.electronAPI.log('warn', 'Failed to make the storage persistent.');
+          window.nativeAPI.log('warn', 'Failed to make the storage persistent.');
         } else {
-          window.electronAPI.log('info', 'Storage is persistent.');
+          window.nativeAPI.log('info', 'Storage is persistent.');
         }
       }
     } catch (err: any) {
-      window.electronAPI.log('warn', `Error when trying to make the storage persistent: ${err.toString()}`);
+      window.nativeAPI.log('warn', `Error when trying to make the storage persistent: ${err.toString()}`);
     }
   }
   // Wrapping and calling without await so even if `persistStorage` is called with await,
@@ -92,7 +92,7 @@ export class StorageManager {
 
     const config = await this.retrieveConfig();
     if (isElectron()) {
-      window.electronAPI.sendConfig(config);
+      window.nativeAPI.sendConfig(config);
     }
     return storage;
   }
@@ -192,7 +192,7 @@ export class StorageManager {
       hideParsecDownload: data.hideParsecDownload,
       skipWorkspaceHiddenWarning: data.skipWorkspaceHiddenWarning,
     });
-    window.electronAPI.sendConfig(data);
+    window.nativeAPI.sendConfig(data);
   }
 
   async retrieveConfig(): Promise<Config> {
@@ -255,7 +255,7 @@ export class StorageManager {
   }
 
   async clearAll(): Promise<void> {
-    window.electronAPI.log('warn', 'Clearing all cache');
+    window.nativeAPI.log('warn', 'Clearing all cache');
     await this.internalStore.clear();
   }
 }

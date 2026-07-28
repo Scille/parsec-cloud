@@ -269,7 +269,7 @@ onMounted(async () => {
   } else {
     const parseResult = await parseParsecAddr(props.params.link);
     if (!parseResult.ok || parseResult.value.tag !== ParsedParsecAddrTag.TOTPReset) {
-      window.electronAPI.log('warn', 'Invalid totp reset link');
+      window.nativeAPI.log('warn', 'Invalid totp reset link');
       return;
     }
     const statusResult = await totpResetStatus(props.params.link);
@@ -292,11 +292,11 @@ async function copyCode(): Promise<void> {
 
 async function setupTotp(): Promise<void> {
   if (props.params.mode !== 'setup') {
-    window.electronAPI.log('warn', 'Mode is not setup.');
+    window.nativeAPI.log('warn', 'Mode is not setup.');
     return;
   }
   if (!primaryProtection.value) {
-    window.electronAPI.log('warn', 'Primary protection not provided.');
+    window.nativeAPI.log('warn', 'Primary protection not provided.');
     return;
   }
   const result = await verifyTotpSetup(verifyCode.value.trim());
@@ -321,11 +321,11 @@ async function setupTotp(): Promise<void> {
 
 async function activateTotp(): Promise<void> {
   if (props.params.mode !== 'activate') {
-    window.electronAPI.log('warn', 'Mode is not activate.');
+    window.nativeAPI.log('warn', 'Mode is not activate.');
     return;
   }
   if (!primaryProtection.value) {
-    window.electronAPI.log('warn', 'Primary protection not provided.');
+    window.nativeAPI.log('warn', 'Primary protection not provided.');
     return;
   }
 
@@ -346,7 +346,7 @@ async function activateTotp(): Promise<void> {
 
 async function resetTotp(): Promise<void> {
   if (props.params.mode !== 'reset') {
-    window.electronAPI.log('warn', 'Mode is not reset.');
+    window.nativeAPI.log('warn', 'Mode is not reset.');
     return;
   }
   if (!verifyCode.value.length) {

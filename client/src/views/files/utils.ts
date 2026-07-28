@@ -83,7 +83,7 @@ export async function downloadFiles(options: DownloadOptions): Promise<void> {
     }
   } catch (e: any) {
     if (e.name === 'NotAllowedError') {
-      window.electronAPI.log('error', 'No permission for showSaveFilePicker');
+      window.nativeAPI.log('error', 'No permission for showSaveFilePicker');
       options.informationManager.present(
         new Information({
           message: 'FoldersPage.DownloadFile.noPermissions',
@@ -93,7 +93,7 @@ export async function downloadFiles(options: DownloadOptions): Promise<void> {
       );
     } else if (e.name === 'AbortError') {
       if ((e.toString() as string).toLocaleLowerCase().includes('user aborted')) {
-        window.electronAPI.log('debug', 'User cancelled the showSaveFilePicker');
+        window.nativeAPI.log('debug', 'User cancelled the showSaveFilePicker');
       } else {
         options.informationManager.present(
           new Information({
@@ -102,10 +102,10 @@ export async function downloadFiles(options: DownloadOptions): Promise<void> {
           }),
           PresentationMode.Toast,
         );
-        window.electronAPI.log('error', `Could not create the file: ${e.toString()}`);
+        window.nativeAPI.log('error', `Could not create the file: ${e.toString()}`);
       }
     } else {
-      window.electronAPI.log('error', `Failed to select destination file: ${e.toString()}`);
+      window.nativeAPI.log('error', `Failed to select destination file: ${e.toString()}`);
     }
   }
 }

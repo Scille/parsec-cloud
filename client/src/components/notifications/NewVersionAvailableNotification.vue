@@ -60,7 +60,7 @@ async function update(): Promise<void> {
 
   if (answer === Answer.Yes) {
     await props.eventDistributor.dispatchEvent(Events.LogoutRequested);
-    window.electronAPI.prepareUpdate();
+    window.nativeAPI.prepareUpdate();
   }
 }
 </script>

@@ -40,7 +40,7 @@ export async function copyPathLinkToClipboard(
   informationManager: InformationManager,
 ): Promise<void> {
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
     return;
   }
 

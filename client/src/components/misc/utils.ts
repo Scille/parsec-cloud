@@ -42,16 +42,16 @@ export async function getLogs(): Promise<string> {
   } else {
     const logs = await new Promise<string>((resolve) => {
       const timeoutId = setTimeout(() => {
-        window.electronAPI.log('warn', 'Took too long to retrieve the logs.');
+        window.nativeAPI.log('warn', 'Took too long to retrieve the logs.');
         resolve('');
       }, 10000);
 
-      window.electronAPI.receive('parsec-log-records', async (logs: string) => {
+      window.nativeAPI.receive('parsec-log-records', async (logs: string) => {
         clearTimeout(timeoutId);
         resolve(logs);
       });
 
-      window.electronAPI.getLogs();
+      window.nativeAPI.getLogs();
     });
     return logs;
   }

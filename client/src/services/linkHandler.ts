@@ -155,6 +155,6 @@ export async function handleParsecLink(link: string, informationManager: Informa
   } else if (result.value.tag === ParsedParsecAddrTag.TOTPReset) {
     await handleTotpReset(link);
   } else {
-    window.electronAPI.log('warn', `Unhandled link type '${result.value.tag}'`);
+    window.nativeAPI.log('warn', `Unhandled link type '${result.value.tag}'`);
   }
 }

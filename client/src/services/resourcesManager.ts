@@ -136,7 +136,7 @@ class FileSystemResourcesProvider implements IResourcesProvider {
 
   async load(res: Resources): Promise<NonNullable<unknown>> {
     const resName = resolveResource(res, this.cacheBustingSuffix);
-    const data = await window.electronAPI.readCustomFile(resName);
+    const data = await window.nativeAPI.readCustomFile(resName);
 
     if (!data) {
       throw new Error('File not found');
@@ -165,10 +165,10 @@ class _ResourcesManager {
 
   async loadAll(): Promise<void> {
     if (this.provider === null) {
-      window.electronAPI.log('info', 'Custom branding is not enabled, not loading resources');
+      window.nativeAPI.log('info', 'Custom branding is not enabled, not loading resources');
       return;
     } else {
-      window.electronAPI.log('info', 'Custom branding is enabled, loading resources...');
+      window.nativeAPI.log('info', 'Custom branding is enabled, loading resources...');
     }
     const promises: Array<Promise<NonNullable<unknown>>> = [];
     for (const res of Object.values(Resources)) {
@@ -182,7 +182,7 @@ class _ResourcesManager {
           }
         })
         .catch((reason) => {
-          window.electronAPI.log('debug', `Failed to retrieve custom resource ${res}: ${reason.toString()}`);
+          window.nativeAPI.log('debug', `Failed to retrieve custom resource ${res}: ${reason.toString()}`);
         });
       promises.push(promise);
     }

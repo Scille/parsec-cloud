@@ -167,7 +167,7 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
 
 async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<void> {
   if (!name.value || !email.value) {
-    window.electronAPI.log('error', 'Missing data on org creation step, should not happen');
+    window.nativeAPI.log('error', 'Missing data on org creation step, should not happen');
     return;
   }
 
@@ -193,7 +193,7 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
     currentError.value = undefined;
     step.value = Steps.Created;
   } else {
-    window.electronAPI.log('error', `Failed to create organization: ${JSON.stringify(result.error)}`);
+    window.nativeAPI.log('error', `Failed to create organization: ${JSON.stringify(result.error)}`);
     switch (result.error.tag) {
       case BootstrapOrganizationErrorTag.Offline:
         currentError.value = 'CreateOrganization.errors.offline';
@@ -241,7 +241,7 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
 
 async function onGoClicked(): Promise<void> {
   if (!saveStrategy.value || !availableDevice.value || !organizationName.value) {
-    window.electronAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
+    window.nativeAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
     return;
   }
   emits('organizationCreated', organizationName.value, availableDevice.value, toRaw(saveStrategy.value));

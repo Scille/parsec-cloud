@@ -49,7 +49,7 @@ class RecentDocumentManager {
   async loadFromStorage(storage: StorageManager, handle: ConnectionHandle | null = null): Promise<void> {
     const clientInfoResult = await getClientInfo(handle);
     if (!clientInfoResult.ok) {
-      window.electronAPI.log('error', `Failed to load recent workspaces: ${JSON.stringify(clientInfoResult.error)}`);
+      window.nativeAPI.log('error', `Failed to load recent workspaces: ${JSON.stringify(clientInfoResult.error)}`);
       return;
     }
     const dataKey = this._getStorageDataKey(clientInfoResult.value.userId);
@@ -59,7 +59,7 @@ class RecentDocumentManager {
     }
     const workspacesResult = await listWorkspaces(handle);
     if (!workspacesResult.ok) {
-      window.electronAPI.log('error', `Failed to load recent workspaces: ${JSON.stringify(workspacesResult.error)}`);
+      window.nativeAPI.log('error', `Failed to load recent workspaces: ${JSON.stringify(workspacesResult.error)}`);
       return;
     }
 
@@ -74,7 +74,7 @@ class RecentDocumentManager {
   async saveToStorage(storage: StorageManager): Promise<void> {
     const clientInfoResult = await getClientInfo();
     if (!clientInfoResult.ok) {
-      window.electronAPI.log('error', `Failed to save recent workspaces: ${JSON.stringify(clientInfoResult.error)}`);
+      window.nativeAPI.log('error', `Failed to save recent workspaces: ${JSON.stringify(clientInfoResult.error)}`);
       return;
     }
     const dataKey = this._getStorageDataKey(clientInfoResult.value.userId);
@@ -86,7 +86,7 @@ class RecentDocumentManager {
   async refreshWorkspaces(handle: ConnectionHandle): Promise<void> {
     const workspacesResult = await listWorkspaces(handle);
     if (!workspacesResult.ok) {
-      window.electronAPI.log('error', `Failed to load recent workspaces: ${JSON.stringify(workspacesResult.error)}`);
+      window.nativeAPI.log('error', `Failed to load recent workspaces: ${JSON.stringify(workspacesResult.error)}`);
       return;
     }
     this.workspaces.value.forEach((item, index) => {

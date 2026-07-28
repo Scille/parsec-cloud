@@ -87,7 +87,7 @@ async function deleteAccount(): Promise<void> {
 
     const reqResult = await ParsecAccount.requestAccountDeletion();
     if (!reqResult.ok) {
-      window.electronAPI.log('error', `Failed to request account deletion: ${reqResult.error.tag} (${reqResult.error.error})`);
+      window.nativeAPI.log('error', `Failed to request account deletion: ${reqResult.error.tag} (${reqResult.error.error})`);
       informationManager.present(
         new Information({
           message: 'HomePage.profile.account.deleteAccount.error.sendCode',
@@ -144,7 +144,7 @@ onMounted(async () => {
   } else {
     accountInfo.value = undefined;
   }
-  window.electronAPI.getUpdateAvailability();
+  window.nativeAPI.getUpdateAvailability();
   accountLoggedIn.value = ParsecAccount.isLoggedIn();
 });
 

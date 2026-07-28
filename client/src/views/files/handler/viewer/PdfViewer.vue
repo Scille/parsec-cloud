@@ -97,7 +97,7 @@ onMounted(async () => {
     await loadPages();
     await renderPage(1);
   } catch (e: any) {
-    window.electronAPI.log('error', `Failed to parse PDF: ${e}`);
+    window.nativeAPI.log('error', `Failed to parse PDF: ${e}`);
     error.value = 'fileViewers.pdf.loadDocumentError';
   } finally {
     loading.value = false;
@@ -144,7 +144,7 @@ async function loadPage(pageIndex: number): Promise<void> {
       return;
     }
     drawErrorCanvas(canvasElement);
-    window.electronAPI.log('error', `Failed to load PDF page: ${e}`);
+    window.nativeAPI.log('error', `Failed to load PDF page: ${e}`);
   } finally {
     loading.value = false;
   }
@@ -230,7 +230,7 @@ async function renderPage(pageNumber: number): Promise<void> {
       return;
     }
     drawErrorCanvas(canvasElement);
-    window.electronAPI.log('error', `Failed to render PDF page: ${e}`);
+    window.nativeAPI.log('error', `Failed to render PDF page: ${e}`);
   } finally {
     isRendering.value = false;
   }

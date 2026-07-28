@@ -491,7 +491,7 @@ onMounted(async () => {
 
   if (addrResult.ok) {
     if (addrResult.value.tag !== ParsedParsecAddrTag.InvitationDevice) {
-      window.electronAPI.log('error', 'Not a device invitation link');
+      window.nativeAPI.log('error', 'Not a device invitation link');
       return;
     }
     organizationName.value = addrResult.value.organizationId;
@@ -501,7 +501,7 @@ onMounted(async () => {
       serverConfig.value = configResult.value;
     }
   } else {
-    window.electronAPI.log('error', `Failed to parse invitation link: ${addrResult.error.tag} (${addrResult.error.error})`);
+    window.nativeAPI.log('error', `Failed to parse invitation link: ${addrResult.error.tag} (${addrResult.error.error})`);
     return;
   }
   await startProcess();

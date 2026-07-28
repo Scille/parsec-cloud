@@ -175,7 +175,7 @@ export function useFileContextMenu() {
         await fileActions.showEnclosingFolder(entries[0], workspaceInfo);
         break;
       default:
-        window.electronAPI.log('warn', `Unknown file action ${action}`);
+        window.nativeAPI.log('warn', `Unknown file action ${action}`);
         break;
     }
   }

@@ -132,21 +132,21 @@ async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
     } else {
       errorMessage.value = 'Authentication.openBaoUnknown';
     }
-    window.electronAPI.log(
+    window.nativeAPI.log(
       'error',
       `Error while retrieving server config: ${serverConfigResult.error.tag} (${serverConfigResult.error.error})`,
     );
     return;
   }
   if (!serverConfigResult.value.openbao) {
-    window.electronAPI.log('error', 'Device has OpenBao auth but OpenBao is not configured on this server');
+    window.nativeAPI.log('error', 'Device has OpenBao auth but OpenBao is not configured on this server');
     errorMessage.value = 'Authentication.openBaoUnavailable';
     return;
   }
   const provInfo = serverConfigResult.value.openbao.auths.find((v) => v.tag === provider);
   if (!provInfo) {
     errorMessage.value = 'Authentication.invalidOpenBaoData';
-    window.electronAPI.log('error', `Device has provider '${provider}' configured, but it's not handled by this server.`);
+    window.nativeAPI.log('error', `Device has provider '${provider}' configured, but it's not handled by this server.`);
     return;
   }
 
@@ -164,7 +164,7 @@ async function onLoginSSOClick(provider: OpenBaoAuthConfigTag): Promise<void> {
     } else {
       errorMessage.value = 'Authentication.invalidOpenBaoData';
     }
-    window.electronAPI.log('error', `Failed to log in to openbao: ${JSON.stringify(connResult.error)}`);
+    window.nativeAPI.log('error', `Failed to log in to openbao: ${JSON.stringify(connResult.error)}`);
     return;
   } else {
     isConnectWithSSO.value = true;
@@ -188,18 +188,18 @@ async function setLoginError(error: ClientStartError): Promise<void> {
       errorMessage.value = 'HomePage.organizationLogin.passwordError';
       break;
     case ClientStartErrorTag.LoadDeviceInvalidPath:
-      window.electronAPI.log('warn', error.error);
+      window.nativeAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.deviceNotFound';
       break;
     case ClientStartErrorTag.LoadDeviceInvalidData:
-      window.electronAPI.log('warn', error.error);
+      window.nativeAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.deviceInvalidData';
       break;
     case ClientStartErrorTag.DeviceUsedByAnotherProcess:
       errorMessage.value = 'HomePage.organizationLogin.deviceAlreadyUsed';
       break;
     case ClientStartErrorTag.Internal:
-      window.electronAPI.log('warn', error.error);
+      window.nativeAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.unknownError';
       break;
   }

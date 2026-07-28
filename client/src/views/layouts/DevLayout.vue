@@ -36,7 +36,7 @@ onMounted(async () => {
   const handle = getConnectionHandle();
 
   if (!handle) {
-    window.electronAPI.log('error', 'Failed to retrieve connection handle while logged in');
+    window.nativeAPI.log('error', 'Failed to retrieve connection handle while logged in');
     await navigateTo(Routes.Home, { replace: true, skipHandle: true });
     return;
   }
@@ -66,10 +66,10 @@ onMounted(async () => {
   // When in dev mode, we often open directly a connected page,
   // so a few states are not properly set.
   if (parsec.ParsecAccount.isLoggedIn()) {
-    window.electronAPI.log('info', `Parsec Account logged in, default handle should be "${DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT}"`);
+    window.nativeAPI.log('info', `Parsec Account logged in, default handle should be "${DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT}"`);
   }
   if (handle !== getDevDefaultHandle()) {
-    window.electronAPI.log('error', `In dev mode, you should use "${getDevDefaultHandle()}" as the default handle`);
+    window.nativeAPI.log('error', `In dev mode, you should use "${getDevDefaultHandle()}" as the default handle`);
     // eslint-disable-next-line no-alert
     alert(
       `Use "${DEFAULT_HANDLE}" or "${DEFAULT_HANDLE_WITH_PARSEC_ACCOUNT}" (if using ParsecAccount)
@@ -78,13 +78,13 @@ as the default handle when not connecting properly`,
     await navigateTo(Routes.Home);
     return;
   }
-  window.electronAPI.log('info', 'Page was refreshed, login in a default device');
+  window.nativeAPI.log('info', 'Page was refreshed, login in a default device');
   injectionProvider.createNewInjections(getDevDefaultHandle(), new EventDistributor());
   // Not filtering the devices, because we need alice first device, not the second one
   const listResult = await parsec.listAvailableDevicesWithError(false);
   let devices: Array<parsec.AvailableDevice> = [];
   if (!listResult.ok) {
-    window.electronAPI.log('error', `Error when listing the devices: ${listResult.error.tag} (${listResult.error.error})`);
+    window.nativeAPI.log('error', `Error when listing the devices: ${listResult.error.tag} (${listResult.error.error})`);
   } else {
     devices = listResult.value;
   }
@@ -93,7 +93,7 @@ as the default handle when not connecting properly`,
 
   if (!device) {
     device = devices[0];
-    window.electronAPI.log('error', `Could not find Alice device, using ${device.humanHandle.label}`);
+    window.nativeAPI.log('error', `Could not find Alice device, using ${device.humanHandle.label}`);
   }
 
   const result = await parsec.login(
@@ -101,11 +101,11 @@ as the default handle when not connecting properly`,
     parsec.constructAccessStrategy(device, parsec.PrimaryProtectionStrategy.usePassword('P@ssw0rd.')),
   );
   if (!result.ok) {
-    window.electronAPI.log('error', `Failed to log in on a default device: ${JSON.stringify(result.error)}`);
+    window.nativeAPI.log('error', `Failed to log in on a default device: ${JSON.stringify(result.error)}`);
   } else if (result.value !== getDevDefaultHandle()) {
-    window.electronAPI.log('error', `Lib returned handle ${result.value} instead of ${getDevDefaultHandle()}`);
+    window.nativeAPI.log('error', `Lib returned handle ${result.value} instead of ${getDevDefaultHandle()}`);
   } else {
-    window.electronAPI.log('info', `Logged in as ${device.humanHandle.label}`);
+    window.nativeAPI.log('info', `Logged in as ${device.humanHandle.label}`);
   }
 
   if (import.meta.env.PARSEC_APP_CLEAR_CACHE === 'true') {
@@ -118,14 +118,14 @@ as the default handle when not connecting properly`,
 async function populate(handle: parsec.ConnectionHandle): Promise<void> {
   if (import.meta.env.PARSEC_APP_DEV_POPULATE_WORKSPACES && !isNaN(Number(import.meta.env.PARSEC_APP_DEV_POPULATE_WORKSPACES))) {
     for (let i = 2; i < Number(import.meta.env.PARSEC_APP_DEV_POPULATE_WORKSPACES) + 2; i++) {
-      window.electronAPI.log('info', `Creating workspace 'wksp${i}'`);
+      window.nativeAPI.log('info', `Creating workspace 'wksp${i}'`);
       await parsec.createWorkspace(`wksp${i}`);
     }
   }
 
   const workspaces = await parsec.listWorkspaces(getConnectionHandle());
   if (!workspaces.ok) {
-    window.electronAPI.log('error', 'Failed to list workspaces');
+    window.nativeAPI.log('error', 'Failed to list workspaces');
     return;
   }
 
@@ -206,12 +206,12 @@ async function addUser(
     return;
   }
 
-  window.electronAPI.log('debug', `Adding user ${label} <${email}>`);
+  window.nativeAPI.log('debug', `Adding user ${label} <${email}>`);
 
   greetUser(connHandle, invResult.value.token, profile)
     .then(async () => {
       if (revoke) {
-        window.electronAPI.log('debug', `Revoking ${label} <${email}>`);
+        window.nativeAPI.log('debug', `Revoking ${label} <${email}>`);
         const result = await parsec.listUsers(true, email);
         if (result.ok && result.value.length > 0) {
           await parsec.revokeUser(result.value[0].id);
@@ -219,11 +219,11 @@ async function addUser(
       }
     })
     .catch((err: string) => {
-      window.electronAPI.log('error', `Greet failed: ${err}`);
+      window.nativeAPI.log('error', `Greet failed: ${err}`);
     });
   const [invitationAddr, _] = invResult.value.addr;
   claimUser(email, label, invitationAddr).catch((err: string) => {
-    window.electronAPI.log('error', `Claim failed: ${err}`);
+    window.nativeAPI.log('error', `Claim failed: ${err}`);
   });
 }
 
@@ -316,7 +316,7 @@ async function populateManyFiles(workspace: parsec.WorkspaceInfo, treeDefinition
   let filesCreated = 0;
   const AVAILABLE_EXTENSIONS = ['png', 'docx', 'xlsx', 'mp4', 'mp3', 'pdf', 'txt', 'pptx'];
 
-  window.electronAPI.log('debug', `Creating mock arborescence in workspace ${workspace.name}`);
+  window.nativeAPI.log('debug', `Creating mock arborescence in workspace ${workspace.name}`);
   for (let i = 0; i < treeDefinition[0]; i++) {
     const folder1Name = uniqueNamesGenerator({ dictionaries: [adjectives, colors, animals] });
     await parsec.createFolder(workspace.handle, `/${folder1Name}`);
@@ -332,7 +332,7 @@ async function populateManyFiles(workspace: parsec.WorkspaceInfo, treeDefinition
         await parsec.createFile(workspace.handle, `/${folder1Name}/${folder2Name}/${file2Name}.${extension2}`);
         filesCreated += 1;
         if (filesCreated % 20 === 0) {
-          window.electronAPI.log('debug', `${filesCreated}/${treeDefinition[0] * treeDefinition[1] * treeDefinition[2]}`);
+          window.nativeAPI.log('debug', `${filesCreated}/${treeDefinition[0] * treeDefinition[1] * treeDefinition[2]}`);
         }
       }
     }
@@ -343,7 +343,7 @@ async function populateRealFiles(workspace: parsec.WorkspaceInfo): Promise<void>
   // Avoid importing files if unnecessary
   const mockFiles = await import('@/parsec/mock_files');
 
-  window.electronAPI.log('debug', `Creating mock files in workspace ${workspace.name}`);
+  window.nativeAPI.log('debug', `Creating mock files in workspace ${workspace.name}`);
   await parsec.createFolder(workspace.handle, '/Folder_éèñÑ');
 
   for (const fileType in mockFiles.MockFileType) {
@@ -356,14 +356,14 @@ async function populateRealFiles(workspace: parsec.WorkspaceInfo): Promise<void>
     });
 
     if (!openResult.ok) {
-      window.electronAPI.log('error', `Could not open file ${fileName}`);
+      window.nativeAPI.log('error', `Could not open file ${fileName}`);
       continue;
     }
     try {
       const content = await mockFiles.getMockFileContent(fileType as any);
       const writeResult = await parsec.writeFile(workspace.handle, openResult.value, 0, content);
       if (!writeResult.ok) {
-        window.electronAPI.log('error', `Failed to write file ${fileName}`);
+        window.nativeAPI.log('error', `Failed to write file ${fileName}`);
         continue;
       }
     } finally {
@@ -377,10 +377,10 @@ async function addReadOnlyWorkspace(): Promise<void> {
   const bobDevice = devices.find((d) => d.humanHandle.label === 'Boby McBobFace');
   const aliceDevice = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace');
 
-  window.electronAPI.log('debug', 'Creating read-only workspace');
+  window.nativeAPI.log('debug', 'Creating read-only workspace');
 
   if (!bobDevice || !aliceDevice) {
-    window.electronAPI.log('error', 'Could not find Alice or Bob device');
+    window.nativeAPI.log('error', 'Could not find Alice or Bob device');
     return;
   }
   const loginResult = await libparsec.clientStart(
@@ -388,24 +388,24 @@ async function addReadOnlyWorkspace(): Promise<void> {
     parsec.constructAccessStrategy(bobDevice, parsec.PrimaryProtectionStrategy.usePassword('P@ssw0rd.')),
   );
   if (!loginResult.ok) {
-    window.electronAPI.log('error', `Failed to login as Bob: ${loginResult.error.error}`);
+    window.nativeAPI.log('error', `Failed to login as Bob: ${loginResult.error.error}`);
     return;
   }
   try {
     const wkResult = await libparsec.clientCreateWorkspace(loginResult.value, 'wksp-ro');
     if (!wkResult.ok) {
-      window.electronAPI.log('error', `Failed to create a workspace as Bob: ${wkResult.error.error}`);
+      window.nativeAPI.log('error', `Failed to create a workspace as Bob: ${wkResult.error.error}`);
       return;
     }
 
     /* Does not work currently because of some problems with the testbed */
     // const mockFiles = await import('@/parsec/mock_files');
 
-    // window.electronAPI.log('debug', 'Creating mock files in read-only workspace');
+    // window.nativeAPI.log('debug', 'Creating mock files in read-only workspace');
 
     // const startWkResult = await libparsec.clientStartWorkspace(loginResult.value, wkResult.value);
     // if (!startWkResult.ok) {
-    //   window.electronAPI.log('error', `Failed to start workspace: ${startWkResult.error.error}`);
+    //   window.nativeAPI.log('error', `Failed to start workspace: ${startWkResult.error.error}`);
     //   return;
     // }
     // for (const fileType in mockFiles.MockFileType) {
@@ -418,14 +418,14 @@ async function addReadOnlyWorkspace(): Promise<void> {
     //     read: false,
     //   });
     //   if (!openResult.ok) {
-    //     window.electronAPI.log('error', `Could not open file ${fileName}`);
+    //     window.nativeAPI.log('error', `Could not open file ${fileName}`);
     //     continue;
     //   }
     //   try {
     //     const content = await mockFiles.getMockFileContent(fileType as any);
     //     const writeResult = await libparsec.workspaceFdWrite(startWkResult.value, openResult.value, BigInt(0), content);
     //     if (!writeResult.ok) {
-    //       window.electronAPI.log('error', `Failed to write file ${fileName}`);
+    //       window.nativeAPI.log('error', `Failed to write file ${fileName}`);
     //       continue;
     //     }
     //   } finally {
@@ -440,12 +440,12 @@ async function addReadOnlyWorkspace(): Promise<void> {
       parsec.WorkspaceRole.Reader,
     );
     if (!shareResult.ok) {
-      window.electronAPI.log('error', `Failed to share Bob's workspace with Alice: ${shareResult.error.error}`);
+      window.nativeAPI.log('error', `Failed to share Bob's workspace with Alice: ${shareResult.error.error}`);
       return;
     }
-    window.electronAPI.log('debug', 'Read-only workspace created');
+    window.nativeAPI.log('debug', 'Read-only workspace created');
   } catch (e: any) {
-    window.electronAPI.log('error', `Error while creating read-only workspace: ${e}`);
+    window.nativeAPI.log('error', `Error while creating read-only workspace: ${e}`);
   } finally {
     await libparsec.clientStop(loginResult.value);
   }

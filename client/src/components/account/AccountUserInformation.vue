@@ -147,7 +147,7 @@ async function submit(): Promise<void> {
           break;
         default:
           error.value = 'loginPage.createAccount.errors.generic';
-          window.electronAPI.log('error', `Create account start error: ${result.error.tag} (${result.error.error})`);
+          window.nativeAPI.log('error', `Create account start error: ${result.error.tag} (${result.error.error})`);
           break;
       }
     } else {

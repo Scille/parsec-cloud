@@ -363,16 +363,16 @@ async function loadFile(): Promise<boolean> {
   const workspaceHandle = getWorkspaceHandle();
   let atTime: DateTime | undefined = undefined;
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
     return false;
   }
   const path = getDocumentPath();
   if (!path) {
-    window.electronAPI.log('error', 'Failed to retrieve document path');
+    window.nativeAPI.log('error', 'Failed to retrieve document path');
   }
   const fileName = await Path.filename(path);
   if (!fileName) {
-    window.electronAPI.log('error', 'Failed to retrieve the file name');
+    window.nativeAPI.log('error', 'Failed to retrieve the file name');
     return false;
   }
 
@@ -383,19 +383,19 @@ async function loadFile(): Promise<boolean> {
 
   const stats = await getFileStats(workspaceHandle, path, atTime);
   if (!stats) {
-    window.electronAPI.log('error', 'Failed to get file stats');
+    window.nativeAPI.log('error', 'Failed to get file stats');
     return false;
   }
 
   const fileInfoSerialized = getCurrentRouteQuery().fileTypeInfo;
   if (!fileInfoSerialized) {
-    window.electronAPI.log('error', 'Failed to retrieve file type info');
+    window.nativeAPI.log('error', 'Failed to retrieve file type info');
     return false;
   }
   const fileInfo: DetectedFileType = Base64.toObject(fileInfoSerialized) as DetectedFileType;
 
   if (!fileInfo) {
-    window.electronAPI.log('error', 'Failed to deserialize file type info');
+    window.nativeAPI.log('error', 'Failed to deserialize file type info');
     return false;
   }
 
@@ -482,7 +482,7 @@ onMounted(async () => {
   if (clientInfoResult.ok) {
     userInfo.value = clientInfoResult.value;
   } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
+    window.nativeAPI.log('error', `Failed to retrieve user info ${JSON.stringify(clientInfoResult.error)}`);
   }
 
   if (!(await loadFile())) {
@@ -542,7 +542,7 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
 
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
     return false;
   }
 
@@ -559,7 +559,7 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
     );
     return false;
   } else {
-    window.electronAPI.openFile(result.value);
+    window.nativeAPI.openFile(result.value);
     return true;
   }
 }
@@ -567,7 +567,7 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
 async function copyLink(path: FsPath): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
     return;
   }
   copyPathLinkToClipboard(path, workspaceHandle, informationManager.value);
@@ -643,12 +643,12 @@ async function downloadFile(): Promise<void> {
 
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
-    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    window.nativeAPI.log('error', 'Failed to retrieve workspace handle');
     return;
   }
   const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
   if (!workspaceInfoResult.ok) {
-    window.electronAPI.log(
+    window.nativeAPI.log(
       'error',
       `Failed to retrieve workspace info: ${workspaceInfoResult.error.tag} (${workspaceInfoResult.error.error})`,
     );
@@ -656,17 +656,17 @@ async function downloadFile(): Promise<void> {
   }
 
   if (!contentInfo.value) {
-    window.electronAPI.log('error', 'No content info when trying to download a file');
+    window.nativeAPI.log('error', 'No content info when trying to download a file');
     return;
   }
   const entryResult = await entryStat(workspaceHandle, contentInfo.value.path);
 
   if (!entryResult.ok) {
-    window.electronAPI.log('error', 'Failed to stat entry when trying to download a file');
+    window.nativeAPI.log('error', 'Failed to stat entry when trying to download a file');
     return;
   }
   if (!entryResult.value.isFile()) {
-    window.electronAPI.log('error', 'Entry is not a file');
+    window.nativeAPI.log('error', 'Entry is not a file');
     return;
   }
 
@@ -734,7 +734,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
         }
         break;
       default:
-        window.electronAPI.log('warn', `No match for selected viewer action '${data.action}'`);
+        window.nativeAPI.log('warn', `No match for selected viewer action '${data.action}'`);
         break;
     }
   }

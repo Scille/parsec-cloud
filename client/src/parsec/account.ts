@@ -179,11 +179,11 @@ class _ParsecAccount {
     }
     if (Env.isAccountAutoLoginEnabled()) {
       const TEST_PASSWORD = 'P@ssw0rd.';
-      window.electronAPI.log('info', `Using Parsec Account auto-login, server is '${Env.getAccountServer()}'`);
+      window.nativeAPI.log('info', `Using Parsec Account auto-login, server is '${Env.getAccountServer()}'`);
       // Create test account
       const newAccountResult = await libparsec.testNewAccount(Env.getAccountServer());
       if (!newAccountResult.ok) {
-        window.electronAPI.log(
+        window.nativeAPI.log(
           'error',
           `No auto-login possible, testNewAccount failed: ${newAccountResult.error.tag} (${newAccountResult.error.error})`,
         );
@@ -192,17 +192,17 @@ class _ParsecAccount {
       // Login to the test account
       const loginResult = await this.login(ParsecAccountAccess.useMasterSecretForLogin(newAccountResult.value[1]), Env.getAccountServer());
       if (!loginResult.ok) {
-        window.electronAPI.log('error', `Failed to login: ${loginResult.error.tag} (${loginResult.error.error})`);
+        window.nativeAPI.log('error', `Failed to login: ${loginResult.error.tag} (${loginResult.error.error})`);
         return;
       }
       // Add a password authentication
-      window.electronAPI.log('info', `Setting new password to test Parsec Account: '${TEST_PASSWORD}'`);
+      window.nativeAPI.log('info', `Setting new password to test Parsec Account: '${TEST_PASSWORD}'`);
       const addAuthResult = await libparsec.accountCreateAuthMethod(loginResult.value, {
         tag: AccountAuthMethodStrategyTag.Password,
         password: TEST_PASSWORD,
       });
       if (!addAuthResult.ok) {
-        window.electronAPI.log(
+        window.nativeAPI.log(
           'error',
           `Failed to add new password authentication: ${addAuthResult.error.tag} (${addAuthResult.error.error})`,
         );
@@ -212,14 +212,14 @@ class _ParsecAccount {
 
     const startedAccounts = await libparsec.listStartedAccounts();
     if (startedAccounts.length > 0) {
-      window.electronAPI.log('info', `${startedAccounts.length} account(s) already started, reusing if possible`);
+      window.nativeAPI.log('info', `${startedAccounts.length} account(s) already started, reusing if possible`);
       const infoResult = await libparsec.accountInfo(startedAccounts[0]);
       if (infoResult.ok) {
         this.handle = startedAccounts[0];
         this.serverAddr = infoResult.value.serverAddr;
         await this.registerAllDevices();
       } else {
-        window.electronAPI.log('error', `One account started but failed to get info: ${infoResult.error.tag} (${infoResult.error.error})`);
+        window.nativeAPI.log('error', `One account started but failed to get info: ${infoResult.error.tag} (${infoResult.error.error})`);
       }
     }
   }
@@ -261,7 +261,7 @@ class _ParsecAccount {
     }
     const listResult = await this.listRegistrationDevices();
     if (!listResult.ok) {
-      window.electronAPI.log('error', `Failed to list registration devices: ${listResult.error.tag} (${listResult.error.error})`);
+      window.nativeAPI.log('error', `Failed to list registration devices: ${listResult.error.tag} (${listResult.error.error})`);
       return;
     }
     const availableDevices = await listAvailableDevices(false);
@@ -291,7 +291,7 @@ class _ParsecAccount {
         saveStrategy,
       );
       if (!regResult.ok) {
-        window.electronAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
+        window.nativeAPI.log('error', `Failed to register new device: ${regResult.error.tag} (${regResult.error.error})`);
       }
     }
   }
@@ -371,7 +371,7 @@ class _ParsecAccount {
       const accountUrl = new URL(this.serverAddr.replace('parsec3:', 'https:'));
       return addrUrl.host === accountUrl.host && addrUrl.port === accountUrl.port;
     } catch (e: any) {
-      window.electronAPI.log('error', `Failed to compare device address with server address: ${e.toString()}`);
+      window.nativeAPI.log('error', `Failed to compare device address with server address: ${e.toString()}`);
       return false;
     }
   }
@@ -395,7 +395,7 @@ class _ParsecAccount {
         value: result.value.find((rd) => rd.organizationId === device.organizationId && rd.userId === device.userId) !== undefined,
       };
     } catch (e: any) {
-      window.electronAPI.log('error', `Failed to compare device address with server address: ${e.toString()}`);
+      window.nativeAPI.log('error', `Failed to compare device address with server address: ${e.toString()}`);
       return { ok: false, error: { tag: AccountListRegistrationDevicesErrorTag.Internal, error: e.toString() } };
     }
   }

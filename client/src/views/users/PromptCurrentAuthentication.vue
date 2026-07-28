@@ -94,21 +94,21 @@ async function onEnterPressed(): Promise<void> {
 
 async function onSSOLoginClicked(): Promise<void> {
   if (querying.value) {
-    window.electronAPI.log('warn', 'Clicked on SSO login while already login in');
+    window.nativeAPI.log('warn', 'Clicked on SSO login while already login in');
     return;
   }
   if (!props.serverConfig || !props.serverConfig.openbao) {
-    window.electronAPI.log('error', 'Server config or current device not found');
+    window.nativeAPI.log('error', 'Server config or current device not found');
     return;
   }
   if (props.device.ty.tag !== AvailableDeviceTypeTag.OpenBao) {
-    window.electronAPI.log('error', 'Device is not OpenBao device');
+    window.nativeAPI.log('error', 'Device is not OpenBao device');
     return;
   }
   const provider = (props.device.ty as AvailableDeviceTypeOpenBao).openbaoPreferredAuthId;
   const auth = props.serverConfig.openbao.auths.find((v) => v.tag === provider);
   if (!auth) {
-    window.electronAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
+    window.nativeAPI.log('error', `Provider '${provider}' selected but is not available in server config`);
     return;
   }
   try {
@@ -126,7 +126,7 @@ async function onSSOLoginClicked(): Promise<void> {
       } else {
         errorMessage.value = 'Authentication.invalidOpenBaoData';
       }
-      window.electronAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
+      window.nativeAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
     } else {
       emits('authenticationSelected', PrimaryProtectionStrategy.useOpenBao(result.value.getConnectionInfo()));
       emits('enterPressed');
