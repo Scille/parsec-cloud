@@ -9,6 +9,12 @@ build:
   os: ubuntu-24.04
   tools:
     python: "3.14"
+  jobs:
+    # Read the Docs native support for uv seems broken with uv 0.12
+    # See: https://github.com/readthedocs/readthedocs.org/issues/13213
+    create_environment:
+      - echo "${READTHEDOCS_REPOSITORY_PATH}/${UV_PROJECT}" "${READTHEDOCS_VIRTUALENV_PATH}"
+      - uv venv --project "${READTHEDOCS_REPOSITORY_PATH}/${UV_PROJECT}" "${READTHEDOCS_VIRTUALENV_PATH}"
 
 python:
   install:
