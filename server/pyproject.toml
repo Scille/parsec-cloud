@@ -33,7 +33,7 @@ dependencies = [
     "uvicorn>=0.35.0, <0.36",
     "jinja2>=3.0, <4",
     # PostgreSQL
-    "asyncpg>=0.29.0, <0.30",
+    "asyncpg~=0.31",
     # S3
     "boto3>=1.42, <2",
     "botocore>=1.42, <2",
@@ -80,7 +80,7 @@ dev = [
     "pytest-xdist~=3.1",
     "trustme~=1.2.1",
     # type-stubs
-    "asyncpg-stubs~=0.29.1",
+    "asyncpg-stubs~=0.31",
     "types-boto3~=1.42.96",
     # used only in misc/test_expected_payload_cooker.py
     # to generate payloads for libparsec protocol serialization tests
