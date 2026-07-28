@@ -63,7 +63,7 @@ dev = [
     "cibuildwheel~=4.0.0",
     "maturin~=1.14.1",
     "patchelf~=0.17.2.4; platform_system=='Linux'",
-    "setuptools~=82.0.0",
+    "setuptools>=82.0,<83.1",
     # lint
     "deptry~=0.25.1",
     "editorconfig-checker~=3.2.1",
