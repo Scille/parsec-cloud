@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use parsec_cli::commands::*;
+use parsec_cli::{commands::*, ui};
 
 use clap::{Parser, Subcommand};
 
@@ -10,6 +10,14 @@ use clap::{Parser, Subcommand};
 struct Arg {
     #[command(subcommand)]
     command: Command,
+    /// How message are displayed
+    #[arg(long, default_value_t)]
+    progress: ui::ProgressStyle,
+    /// How to format outputted data
+    #[arg(long, default_value_t)]
+    format: ui::DataFormat,
+    #[arg(long, default_value_t)]
+    color: clap::ColorChoice,
 }
 
 #[derive(Subcommand)]
@@ -60,13 +68,19 @@ async fn main() -> anyhow::Result<()> {
     let arg = Arg::parse();
     env_logger::init();
 
+    let ui = ui::Ui {
+        format: arg.format,
+        progress: arg.progress,
+        color: arg.color,
+    };
+
     match arg.command {
-        Command::Device(device) => device::dispatch_command(device).await,
+        Command::Device(device) => device::dispatch_command(ui, device).await,
         Command::Invite(invitation) => invite::dispatch_command(invitation).await,
         Command::Organization(organization) => organization::dispatch_command(organization).await,
         Command::User(user) => user::dispatch_command(user).await,
         Command::Server(server) => server::dispatch_command(server).await,
-        Command::Workspace(workspace) => workspace::dispatch_command(workspace).await,
+        Command::Workspace(workspace) => workspace::dispatch_command(ui, workspace).await,
         Command::Certificate(certificate) => certificate::dispatch_command(certificate).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,

@@ -25,10 +25,10 @@ pub enum Group {
     OverwriteServerURL(overwrite_server_url::Args),
 }
 
-pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
+pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<()> {
     match command {
-        Group::ForgetLocal(args) => forget_local::main(args).await,
-        Group::List(args) => list::main(args).await,
+        Group::ForgetLocal(args) => forget_local::main(ui, args).await,
+        Group::List(args) => list::main(ui, args).await,
         Group::ChangeAuthentication(args) => change_authentication::main(args).await,
         Group::ExportRecoveryDevice(args) => export_recovery_device::main(args).await,
         Group::ImportRecoveryDevice(args) => import_recovery_device::main(args).await,
