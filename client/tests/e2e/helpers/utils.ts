@@ -585,3 +585,70 @@ export async function unselectFile(entry: Locator): Promise<void> {
   await entry.page().waitForTimeout(200);
   await expect(entry.locator('.ms-checkbox')).not.toBeChecked();
 }
+
+type ContextMenuMode = 'folder-full' | 'folder-readonly' | 'file-full' | 'file-readonly';
+
+export async function checkEntryContextMenu(page: MsPage, mode: ContextMenuMode, action?: string | 'dismiss'): Promise<void> {
+  const menu = page.locator('.file-context-menu');
+  await expect(menu).toBeVisible();
+  const actions = menu.locator('.menu-list').locator('.list-group-item');
+  const titles = menu.locator('.menu-list').locator('.list-group-title');
+  if (mode === 'file-full') {
+    await expect(titles).toHaveText(['File management', 'Collaboration']);
+    await expect(actions.locator('.list-group-item__label')).toHaveText([
+      'Preview',
+      'Rename',
+      'Move to',
+      'Make a copy',
+      'Show enclosing folder',
+      'History',
+      'Download',
+      'Download as a ZIP file',
+      'Details',
+      'Delete',
+      'Copy link',
+    ]);
+  } else if (mode === 'folder-full') {
+    await expect(titles).toHaveText(['Folder management', 'Collaboration']);
+    await expect(actions.locator('.list-group-item__label')).toHaveText([
+      'Rename',
+      'Move to',
+      'Make a copy',
+      'Show enclosing folder',
+      'History',
+      'Download',
+      'Download as a ZIP file',
+      'Details',
+      'Delete',
+      'Copy link',
+    ]);
+  } else if (mode === 'file-readonly') {
+    await expect(titles).toHaveText(['File management', 'Collaboration']);
+    await expect(actions.locator('.list-group-item__label')).toHaveText([
+      'Preview',
+      'Show enclosing folder',
+      'History',
+      'Download',
+      'Download as a ZIP file',
+      'Details',
+      'Copy link',
+    ]);
+  } else if (mode === 'folder-readonly') {
+    await expect(titles).toHaveText(['Folder management', 'Collaboration']);
+    await expect(actions.locator('.list-group-item__label')).toHaveText([
+      'Show enclosing folder',
+      'History',
+      'Download',
+      'Download as a ZIP file',
+      'Details',
+      'Copy link',
+    ]);
+  }
+  if (action === 'dismiss') {
+    await menu.click();
+    await expect(menu).toBeHidden();
+  } else if (action) {
+    await actions.locator('.list-group-item__label', { hasText: action }).click();
+    await expect(menu).toBeHidden();
+  }
+}
