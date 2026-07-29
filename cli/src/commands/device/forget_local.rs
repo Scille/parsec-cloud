@@ -1,22 +1,39 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::io::{IsTerminal, Write};
+
 use dialoguer::Confirm;
-use libparsec::AvailableDevice;
 use libparsec_client::remove_device;
 
-use crate::utils::*;
+use crate::{
+    ui::{compat::AvailableDeviceDisplay, CLIDisplay},
+    utils::*,
+};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device]
-    pub struct Args {}
+    pub struct Args {
+        /// Force forgetting local device without confirmation
+        #[arg(long)]
+        force: bool,
+    }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args { device, config_dir } = args;
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+    let Args {
+        device,
+        config_dir,
+        force,
+    } = args;
     log::trace!(
         "Forgetting local device {} (confdir={})",
         device.as_deref().unwrap_or("N/A"),
         config_dir.display(),
+    );
+
+    anyhow::ensure!(
+        std::io::stdout().is_terminal() || force,
+        "Need to pass `--force` when not a terminal"
     );
 
     // FIXME: https://github.com/Scille/parsec-cloud/issues/8604
@@ -26,24 +43,21 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         ..Default::default()
     });
 
-    let device = load_device_file(&config.config_dir, device).await?;
+    let device = load_device_file(&config.config_dir, device)
+        .await
+        .map(AvailableDeviceDisplay)?;
 
-    let short_id = &device.device_id.hex()[..3];
-    let AvailableDevice {
-        organization_id,
-        human_handle,
-        device_label,
-        ..
-    } = &device;
+    ui.with_message(|fmt, out| {
+        writeln!(out, "You are about to forget the following local device:")?;
+        device.plain_write(&fmt, &mut *out)?;
+        out.write_all(b"\n")
+    })?;
 
-    println!("You are about to forget the following local device:");
-    println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
-
-    if !Confirm::new().with_prompt("Are you sure?").interact()? {
-        println!("Operation cancelled");
-    } else {
+    if force || Confirm::new().with_prompt("Are you sure?").interact()? {
         remove_device(&config, &device).await?;
-        println!("The local device has been forgotten");
+        ui.with_message(|_fmt, out| writeln!(out, "The local device has been forgotten"))?;
+    } else {
+        ui.with_message(|_fmt, out| writeln!(out, "Operation cancelled"))?;
     }
 
     Ok(())

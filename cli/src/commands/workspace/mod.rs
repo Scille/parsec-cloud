@@ -27,7 +27,7 @@ pub enum Group {
     Mount(mount::Args),
 }
 
-pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
+pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<()> {
     match command {
         Group::ListUsers(args) => list_users::main(args).await,
         Group::Archive(args) => archive::main(args).await,
@@ -35,7 +35,7 @@ pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
         Group::List(args) => list::main(args).await,
         Group::Import(args) => import::main(args).await,
         Group::Share(args) => share::main(args).await,
-        Group::Sync(args) => sync::main(args).await,
+        Group::Sync(args) => sync::main(ui, args).await,
         Group::Mount(args) => mount::main(args).await,
     }
 }
