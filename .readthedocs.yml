@@ -9,6 +9,14 @@ build:
   os: ubuntu-24.04
   tools:
     python: "3.14"
+  # Override jobs since read the docs native support for uv seems broken with uv 0.12
+  # See: https://github.com/readthedocs/readthedocs.org/issues/13213
+  jobs:
+    create_environment:
+      - uv venv --project "${READTHEDOCS_REPOSITORY_PATH}/${UV_PROJECT}" "${READTHEDOCS_VIRTUALENV_PATH}"
+    build:
+      html:
+        - uv run --project "${READTHEDOCS_REPOSITORY_PATH}/${UV_PROJECT}" --no-sync --no-dev sphinx-build -T -b html -d $READTHEDOCS_REPOSITORY_PATH/docs/_build/doctrees -D language=$READTHEDOCS_LANGUAGE $READTHEDOCS_REPOSITORY_PATH/docs $READTHEDOCS_OUTPUT/html
 
 python:
   install:
