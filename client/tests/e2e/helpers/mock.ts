@@ -18,3 +18,9 @@ export async function mockStripe(context: BrowserContext): Promise<void> {
     });
   });
 }
+
+export async function mockDesktop(page: MsPage): Promise<void> {
+  await page.evaluate(() => {
+    window.isDesktop = () => true;
+  });
+}
