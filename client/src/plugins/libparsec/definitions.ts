@@ -168,12 +168,12 @@ export type U8 = number
 export type U16 = number
 export type I32 = number
 export type CacheSize = number
-export type FileDescriptor = number
 export type Handle = number
 export type U32 = number
 export type VersionInt = number
 export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';
 export type I64 = bigint
+export type FileDescriptor = bigint
 export type IndexInt = bigint
 export type SizeInt = bigint
 export type U64 = bigint

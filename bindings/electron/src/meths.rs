@@ -29904,16 +29904,14 @@ fn workspace_fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -29974,16 +29972,14 @@ fn workspace_fd_flush(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30044,16 +30040,14 @@ fn workspace_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30131,16 +30125,14 @@ fn workspace_fd_resize(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30214,16 +30206,14 @@ fn workspace_fd_stat(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30280,16 +30270,14 @@ fn workspace_fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30359,16 +30347,14 @@ fn workspace_fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsProm
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30439,16 +30425,14 @@ fn workspace_fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> 
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30592,16 +30576,14 @@ fn workspace_history_fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30650,16 +30632,14 @@ fn workspace_history_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30739,16 +30719,14 @@ fn workspace_history_fd_stat(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let fd = {
-        let js_val = cx.argument::<JsNumber>(1)?;
+        let js_val = cx.argument::<JsBigInt>(1)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            match custom_from_rs_u32(v) {
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u64(v) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -30971,16 +30949,16 @@ fn workspace_history_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, {
-                            let custom_to_rs_u32 =
+                        let js_value = JsBigInt::from_u64(&mut cx, {
+                            let custom_to_rs_u64 =
                                 |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                     Ok(fd.0)
                                 };
-                            match custom_to_rs_u32(ok) {
+                            match custom_to_rs_u64(ok) {
                                 Ok(ok) => ok,
                                 Err(err) => return cx.throw_type_error(err),
                             }
-                        } as f64);
+                        });
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -31047,17 +31025,16 @@ fn workspace_history_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<J
                         let js_value = {
                             let (x0, x1) = ok;
                             let js_array = JsArray::new(&mut cx, 2);
-                            let js_value = JsNumber::new(&mut cx, {
-                                let custom_to_rs_u32 =
+                            let js_value = JsBigInt::from_u64(&mut cx, {
+                                let custom_to_rs_u64 =
                                     |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                         Ok(fd.0)
                                     };
-                                match custom_to_rs_u32(x0) {
+                                match custom_to_rs_u64(x0) {
                                     Ok(ok) => ok,
                                     Err(err) => return cx.throw_type_error(err),
                                 }
-                            }
-                                as f64);
+                            });
                             js_array.set(&mut cx, 0, js_value)?;
                             let js_value = JsString::try_new(&mut cx, {
                                 let custom_to_rs_string =
@@ -31136,16 +31113,16 @@ fn workspace_history_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsProm
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, {
-                            let custom_to_rs_u32 =
+                        let js_value = JsBigInt::from_u64(&mut cx, {
+                            let custom_to_rs_u64 =
                                 |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                     Ok(fd.0)
                                 };
-                            match custom_to_rs_u32(ok) {
+                            match custom_to_rs_u64(ok) {
                                 Ok(ok) => ok,
                                 Err(err) => return cx.throw_type_error(err),
                             }
-                        } as f64);
+                        });
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -31961,16 +31938,16 @@ fn workspace_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, {
-                            let custom_to_rs_u32 =
+                        let js_value = JsBigInt::from_u64(&mut cx, {
+                            let custom_to_rs_u64 =
                                 |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                     Ok(fd.0)
                                 };
-                            match custom_to_rs_u32(ok) {
+                            match custom_to_rs_u64(ok) {
                                 Ok(ok) => ok,
                                 Err(err) => return cx.throw_type_error(err),
                             }
-                        } as f64);
+                        });
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -32039,17 +32016,16 @@ fn workspace_open_file_and_get_id(mut cx: FunctionContext) -> JsResult<JsPromise
                         let js_value = {
                             let (x0, x1) = ok;
                             let js_array = JsArray::new(&mut cx, 2);
-                            let js_value = JsNumber::new(&mut cx, {
-                                let custom_to_rs_u32 =
+                            let js_value = JsBigInt::from_u64(&mut cx, {
+                                let custom_to_rs_u64 =
                                     |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                         Ok(fd.0)
                                     };
-                                match custom_to_rs_u32(x0) {
+                                match custom_to_rs_u64(x0) {
                                     Ok(ok) => ok,
                                     Err(err) => return cx.throw_type_error(err),
                                 }
-                            }
-                                as f64);
+                            });
                             js_array.set(&mut cx, 0, js_value)?;
                             let js_value = JsString::try_new(&mut cx, {
                                 let custom_to_rs_string =
@@ -32130,16 +32106,16 @@ fn workspace_open_file_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, {
-                            let custom_to_rs_u32 =
+                        let js_value = JsBigInt::from_u64(&mut cx, {
+                            let custom_to_rs_u64 =
                                 |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
                                     Ok(fd.0)
                                 };
-                            match custom_to_rs_u32(ok) {
+                            match custom_to_rs_u64(ok) {
                                 Ok(ok) => ok,
                                 Err(err) => return cx.throw_type_error(err),
                             }
-                        } as f64);
+                        });
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }

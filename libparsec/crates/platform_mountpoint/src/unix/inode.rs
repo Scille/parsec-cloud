@@ -4,12 +4,14 @@ use std::collections::HashMap;
 
 use libparsec_types::FsPath;
 
+pub use fuser::INodeNo;
+
 /// `paths_indexed_by_inode` allocator indexed by `inode`
 /// The index of path is the inode number and the free inodes are stored
 /// `Pasteur` must contain his rage when he sees this code
 struct PathsStore {
     paths_indexed_by_inode: Vec<FsPath>,
-    stack_unused_inodes: Vec<Inode>,
+    stack_unused_inodes: Vec<INodeNo>,
 }
 
 impl Default for PathsStore {
@@ -58,15 +60,10 @@ impl Counter {
     }
 }
 
-/// `Inode` wrapper used to interface with `FUSE` low level `API`.
-///
-/// We use that structure to provide a high level `API`
-pub(crate) type Inode = u64;
-
 #[derive(Default)]
 pub(crate) struct InodesManager {
     paths_store: PathsStore,
-    opened: HashMap<FsPath, (Counter, Inode)>,
+    opened: HashMap<FsPath, (Counter, INodeNo)>,
 }
 
 impl InodesManager {
@@ -77,20 +74,20 @@ impl InodesManager {
         }
     }
 
-    pub(super) fn insert_path(&mut self, path: FsPath) -> Inode {
+    pub(super) fn insert_path(&mut self, path: FsPath) -> INodeNo {
         if let Some((counter, inode)) = self.opened.get_mut(&path) {
             counter.increment();
             return *inode;
         }
 
         let inode = if let Some(inode) = self.paths_store.stack_unused_inodes.pop() {
-            let index = inode as usize;
+            let index = inode.0 as usize;
             self.paths_store.paths_indexed_by_inode[index] = path.clone();
             inode
         } else {
             let index = self.paths_store.paths_indexed_by_inode.len();
             self.paths_store.paths_indexed_by_inode.push(path.clone());
-            index as Inode
+            INodeNo(index as u64)
         };
 
         self.opened.insert(path, (Counter::default(), inode));
@@ -100,8 +97,8 @@ impl InodesManager {
     /// It will panic if:
     /// - `inode` does not exist
     /// - `nlookup` is greater than the `counter` associated to the `inode`
-    pub(super) fn remove_path_or_panic(&mut self, inode: Inode, nlookup: u64) {
-        let index = inode as usize;
+    pub(super) fn remove_path_or_panic(&mut self, inode: INodeNo, nlookup: u64) {
+        let index = inode.0 as usize;
         let path = &self.paths_store.paths_indexed_by_inode[index];
 
         if let Some((counter, _)) = self.opened.get_mut(path) {
@@ -116,8 +113,8 @@ impl InodesManager {
 
     /// It will panic if:
     /// - `inode` does not exist
-    pub(super) fn get_path_or_panic(&self, inode: Inode) -> FsPath {
-        let index = inode as usize;
+    pub(super) fn get_path_or_panic(&self, inode: INodeNo) -> FsPath {
+        let index = inode.0 as usize;
         self.paths_store.paths_indexed_by_inode[index].clone()
     }
 

@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import type { FileDescriptor } from '@/plugins/libparsec';
 import { libparsec } from '@/plugins/libparsec';
 import * as pdfjs from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
@@ -52,7 +53,7 @@ async function _initStreamingWorker(): Promise<void> {
       size: number;
       historyHandle: number | null;
     };
-    let fd: number | undefined;
+    let fd: FileDescriptor | undefined;
     try {
       if (historyHandle !== null) {
         const openResult = await libparsec.workspaceHistoryOpenFile(historyHandle, filePath);

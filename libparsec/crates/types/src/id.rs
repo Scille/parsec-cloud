@@ -868,7 +868,7 @@ impl Display for UserProfile {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct FileDescriptor(pub u32);
+pub struct FileDescriptor(pub u64);
 
 #[cfg(test)]
 #[path = "../tests/unit/id.rs"]

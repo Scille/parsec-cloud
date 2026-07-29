@@ -11,7 +11,6 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
     sync::Arc,
-    thread::JoinHandle,
 };
 
 use libparsec_client::MountpointMountStrategy;
@@ -19,9 +18,8 @@ use libparsec_types::prelude::*;
 
 #[derive(Debug)]
 pub struct Mountpoint {
-    unmounter: fuser::SessionUnmounter,
     path: std::path::PathBuf,
-    session_loop: Option<JoinHandle<std::io::Result<()>>>,
+    session_loop: Option<fuser::BackgroundSession>,
 }
 
 impl Mountpoint {
@@ -120,35 +118,42 @@ impl Mountpoint {
         // Mount operation consist of blocking code, so run it in a thread
         tokio::task::spawn_blocking(move || {
             log::debug!("Will mount {workspace_name} at {}", mount_path.display());
-            let options = [
-                fuser::MountOption::FSName("parsec".into()),
-                #[cfg(target_os = "macos")]
-                fuser::MountOption::CUSTOM(format!("volname={workspace_name}")),
-                #[cfg(target_os = "macos")]
-                fuser::MountOption::AllowOther,
-                fuser::MountOption::DefaultPermissions,
-                fuser::MountOption::NoSuid,
-                fuser::MountOption::Async,
-                #[cfg(not(skip_fuse_atime_option))]
-                fuser::MountOption::Atime,
-                #[cfg(skip_fuse_atime_option)]
-                fuser::MountOption::NoAtime,
-                fuser::MountOption::Exec,
-                // TODO: Should detect and re-mount when the workspace switched between read-only and read-write
-                if is_read_only {
-                    fuser::MountOption::RO
-                } else {
-                    fuser::MountOption::RW
-                },
-                fuser::MountOption::NoDev,
-            ];
 
-            let mut session = fuser::Session::new(filesystem, &mount_path, &options)
-                .map_err(|err| anyhow::anyhow!("cannot mount: {}", err))?;
+            let session_config = {
+                let mut cfg = fuser::Config::default();
+                cfg.mount_options = vec![
+                    fuser::MountOption::FSName("parsec".into()),
+                    #[cfg(target_os = "macos")]
+                    fuser::MountOption::CUSTOM(format!("volname={workspace_name}")),
+                    fuser::MountOption::DefaultPermissions,
+                    fuser::MountOption::NoSuid,
+                    fuser::MountOption::Async,
+                    #[cfg(not(skip_fuse_atime_option))]
+                    fuser::MountOption::Atime,
+                    #[cfg(skip_fuse_atime_option)]
+                    fuser::MountOption::NoAtime,
+                    fuser::MountOption::Exec,
+                    // TODO: Should detect and re-mount when the workspace switched between read-only and read-write
+                    if is_read_only {
+                        fuser::MountOption::RO
+                    } else {
+                        fuser::MountOption::RW
+                    },
+                    fuser::MountOption::NoDev,
+                ];
+                cfg.acl = cfg_select! {
+                    target_os = "macos" => fuser::SessionACL::All,
+                    _ => fuser::SessionACL::Owner,
+                };
+                cfg.n_threads = Some(1);
+                cfg.clone_fd = true;
+                cfg
+            };
 
-            let unmounter = session.unmount_callable();
+            let session = fuser::Session::new(filesystem, &mount_path, &session_config)
+                .context("creating fuser session")?;
 
-            let session_loop = std::thread::spawn(move || session.run());
+            let session_loop = session.spawn().context("starting fuser session")?;
 
             // Poll the FS to check if the mountpoint has appeared
             // (`st_dev` is the device number of the filesystem, hence it will change after unmounting)
@@ -172,7 +177,6 @@ impl Mountpoint {
             log::info!("mountpoint is ready at '{}'!", mount_path.display());
 
             Ok(Mountpoint {
-                unmounter,
                 path: mount_path,
                 session_loop: Some(session_loop),
             })
@@ -192,17 +196,10 @@ impl Mountpoint {
     ) -> anyhow::Result<()> {
         // Unmount operation consist of blocking code, so run it in a thread
         tokio::task::spawn_blocking(move || {
-            // `SessionUnmounter::unmount` is idempotent
-            self.unmounter
-                .unmount()
-                .map_err(|err| anyhow::anyhow!("cannot umount: {}", err))?;
-
-            // Session loop automatically stops once the unmount is called
             if let Some(session_loop) = self.session_loop.take() {
                 session_loop
-                    .join()
-                    .map_err(|err| anyhow::anyhow!("cannot join session loop thread: {:?}", err))?
-                    .map_err(|err| anyhow::anyhow!("unexpected error in session loop: {}", err))?;
+                    .umount_and_join()
+                    .context("cannot unmount and join fuser session")?;
             }
 
             // We do the same as WinFSP: remove the directory.
@@ -220,7 +217,7 @@ impl Mountpoint {
 
 impl Drop for Mountpoint {
     fn drop(&mut self) {
-        if self.session_loop.is_some() {
+        if let Some(session_loop) = self.session_loop.take() {
             // `unmount` hasn't been called, the two reasons for that are:
             // - a panic occurred
             // - WorkspaceOps is stopped from libparsec high level API (in that case,
@@ -229,8 +226,9 @@ impl Drop for Mountpoint {
             // In both cases, we must unmount the filesystem in best effort (i.e. we
             // cannot do anything if errors occur).
 
-            // `SessionUnmounter::unmount` is idempotent
-            let _ = self.unmounter.unmount();
+            if let Err(e) = session_loop.umount_and_join() {
+                log::warn!("Failed to unmount and join fuser session: {e}");
+            }
 
             // We do the same as WinFSP: remove the directory.
             let _ = std::fs::remove_dir(&self.path);
