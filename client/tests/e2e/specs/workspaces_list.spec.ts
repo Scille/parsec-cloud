@@ -3,6 +3,7 @@
 import { Locator, Page, TestInfo } from '@playwright/test';
 import {
   answerQuestion,
+  checkEntryContextMenu,
   createFolder,
   createWorkspace,
   DisplaySize,
@@ -500,6 +501,47 @@ for (const gridMode of [false, true]) {
   });
 }
 
+for (const entryType of ['file', 'folder']) {
+  msTest(`Workspace search result context menu for ${entryType}`, async ({ workspaces }, testingInfo: TestInfo) => {
+    const workspaceItems = workspaces.locator('.workspaces-container').locator('.workspace-card-item');
+    await createWorkspace(workspaces, 'wksp2');
+    await expect(workspaceItems).toHaveCount(2);
+
+    const searchInput = workspaces.locator('#workspaces-ms-action-bar').locator('#search-input-workspace').locator('ion-input');
+
+    for (let i = 0; i < 2; i++) {
+      await workspaceItems.nth(i).click();
+      await expect(workspaces).toBeDocumentPage();
+      await importDefaultFiles(workspaces, testingInfo, ImportDocuments.Txt, true);
+      await workspaces.locator('#connected-header').locator('.back-button').click();
+      await expect(workspaces).toBeWorkspacePage();
+    }
+
+    const searchResult = workspaces.locator('.file-search-results');
+    await expect(searchResult).toBeHidden();
+    if (entryType === 'file') {
+      await fillIonInput(searchInput, 'text');
+    } else {
+      await fillIonInput(searchInput, 'folder');
+    }
+    await expect(searchResult).toBeVisible();
+    await expect(searchResult.locator('.results-header')).toHaveText('Search results (2 results)');
+
+    const searchItems = searchResult.locator('.result-list-item');
+    await expect(searchItems).toHaveCount(2);
+    if (entryType === 'file') {
+      await expect(searchItems.locator('.label-name')).toHaveText(['text.txt', 'text.txt']);
+    } else {
+      await expect(searchItems.locator('.label-name')).toHaveText(['Dir_Folder', 'Dir_Folder']);
+    }
+    const detailsModal = workspaces.locator('.file-details-modal');
+    await expect(detailsModal).toBeHidden();
+    await searchItems.nth(0).click({ button: 'right' });
+    await checkEntryContextMenu(workspaces, entryType === 'file' ? 'file-full' : 'folder-full', 'Details');
+    await expect(detailsModal).toBeVisible();
+  });
+}
+
 msTest('Workspace interact with search results', async ({ workspaces }, testingInfo: TestInfo) => {
   const container = workspaces.locator('.workspaces-container');
   const workspaceItems = container.locator('.workspace-card-item');
@@ -548,11 +590,7 @@ msTest('Workspace interact with search results', async ({ workspaces }, testingI
 
   await expect(searchResult.locator('.results-header')).toHaveText('Search results (3 results)');
   await expect(searchItems).toHaveCount(3);
-  await expect((await searchItems.locator('.label-name').allInnerTexts()).sort()).toEqual([
-    'document.docx',
-    'documentFolder',
-    'pdfDocument.pdf',
-  ]);
+  expect((await searchItems.locator('.label-name').allInnerTexts()).sort()).toEqual(['document.docx', 'documentFolder', 'pdfDocument.pdf']);
   expect((await searchItems.locator('.label-path').allInnerTexts()).sort()).toEqual(['/', '/', '/']);
   const filterPopover = workspaces.locator('.document-filter-popover');
   await expect(filterPopover).toBeHidden();

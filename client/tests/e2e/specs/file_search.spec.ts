@@ -1,7 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { TestInfo } from '@playwright/test';
-import { createFolder, expect, fillIonInput, importDefaultFiles, ImportDocuments, MsPage, msTest } from '@tests/e2e/helpers';
+import {
+  checkEntryContextMenu,
+  createFolder,
+  expect,
+  fillIonInput,
+  importDefaultFiles,
+  ImportDocuments,
+  MsPage,
+  msTest,
+} from '@tests/e2e/helpers';
 
 async function populateWorkspace(page: MsPage, testInfo: TestInfo): Promise<void> {
   // Folder Work
@@ -165,4 +174,63 @@ msTest.describe(() => {
       'No results match your search in this workspace',
     );
   });
+
+  for (const entryType of ['file', 'folder']) {
+    for (const method of ['right_click', 'button']) {
+      msTest(`Search result open context menu on ${entryType} with ${method}`, async ({ documents }, testInfo: TestInfo) => {
+        const entries = documents.locator('.folder-container').locator('.file-list-item');
+        await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
+        await expect(entries).toHaveCount(2);
+
+        const searchContainer = documents.locator('.file-search-results');
+        const searchInput = documents.locator('#folders-ms-action-bar').locator('.ms-search-input').locator('ion-input');
+        const results = searchContainer.locator('.result-list-item');
+
+        await expect(searchContainer).toBeHidden();
+        if (entryType === 'file') {
+          await fillIonInput(searchInput, 'image');
+        } else {
+          await fillIonInput(searchInput, 'folder');
+        }
+        await expect(searchContainer).toBeVisible();
+        await expect(results).toHaveCount(1);
+        if (method === 'button') {
+          await results.nth(0).hover();
+          await expect(results.nth(0).locator('.options-button')).toBeVisible();
+          await results.nth(0).locator('.options-button').click();
+        } else {
+          await results.nth(0).click({ button: 'right' });
+        }
+        const detailsModal = documents.locator('.file-details-modal');
+        await expect(detailsModal).toBeHidden();
+        await checkEntryContextMenu(documents, entryType === 'file' ? 'file-full' : 'folder-full', 'Details');
+        await expect(detailsModal).toBeVisible();
+      });
+    }
+  }
+
+  for (const entryType of ['file', 'folder']) {
+    msTest(`Search result open context menu on ${entryType} in read-only workspace`, async ({ documentsReadOnly }) => {
+      const entries = documentsReadOnly.locator('.folder-container').locator('.file-list-item');
+      await expect(entries).toHaveCount(9);
+
+      const searchContainer = documentsReadOnly.locator('.file-search-results');
+      const searchInput = documentsReadOnly.locator('#folders-ms-action-bar').locator('.ms-search-input').locator('ion-input');
+      const results = searchContainer.locator('.result-list-item');
+
+      await expect(searchContainer).toBeHidden();
+      if (entryType === 'file') {
+        await fillIonInput(searchInput, 'image');
+      } else {
+        await fillIonInput(searchInput, 'folder');
+      }
+      await expect(searchContainer).toBeVisible();
+      await expect(results).toHaveCount(1);
+      await results.nth(0).click({ button: 'right' });
+      const detailsModal = documentsReadOnly.locator('.file-details-modal');
+      await expect(detailsModal).toBeHidden();
+      await checkEntryContextMenu(documentsReadOnly, entryType === 'file' ? 'file-readonly' : 'folder-readonly', 'Details');
+      await expect(detailsModal).toBeVisible();
+    });
+  }
 });
