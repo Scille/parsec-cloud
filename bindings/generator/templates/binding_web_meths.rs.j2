@@ -561,7 +561,7 @@ JsValue::from({{ rs_value }})
     let custom_to_rs_u64 = {{ type.custom_to_rs_u64 }};
     let v = match custom_to_rs_u64({{ rs_value }}) {
         Ok(ok) => ok,
-        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        Err(err) => return Err(JsValue::from(TypeError::new(err))),
     };
     JsValue::from(v)
 }

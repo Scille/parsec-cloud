@@ -20,7 +20,7 @@ from .common import (
     Result,
     SizeInt,
     Structure,
-    U32BasedType,
+    U64BasedType,
     Variant,
     VariantItemUnit,
     VersionInt,
@@ -497,9 +497,9 @@ class OpenOptions(Structure):
     create_new: bool
 
 
-class FileDescriptor(U32BasedType):
-    custom_from_rs_u32 = "|raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) }"
-    custom_to_rs_u32 = "|fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) }"
+class FileDescriptor(U64BasedType):
+    custom_from_rs_u64 = "|raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) }"
+    custom_to_rs_u64 = "|fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) }"
 
 
 class WorkspaceIsFileContentLocalError(ErrorVariant):

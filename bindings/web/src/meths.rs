@@ -29860,12 +29860,12 @@ pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
 // workspace_fd_close
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceFdClose(workspace: u32, fd: u32) -> Promise {
+pub fn workspaceFdClose(workspace: u32, fd: u64) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::workspace_fd_close(workspace, fd).await;
@@ -29895,12 +29895,12 @@ pub fn workspaceFdClose(workspace: u32, fd: u32) -> Promise {
 // workspace_fd_flush
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceFdFlush(workspace: u32, fd: u32) -> Promise {
+pub fn workspaceFdFlush(workspace: u32, fd: u64) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::workspace_fd_flush(workspace, fd).await;
@@ -29930,12 +29930,12 @@ pub fn workspaceFdFlush(workspace: u32, fd: u32) -> Promise {
 // workspace_fd_read
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceFdRead(workspace: u32, fd: u32, offset: u64, size: u64) -> Promise {
+pub fn workspaceFdRead(workspace: u32, fd: u64, offset: u64, size: u64) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::workspace_fd_read(workspace, fd, offset, size).await;
@@ -29961,12 +29961,12 @@ pub fn workspaceFdRead(workspace: u32, fd: u32, offset: u64, size: u64) -> Promi
 // workspace_fd_resize
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceFdResize(workspace: u32, fd: u32, length: u64, truncate_only: bool) -> Promise {
+pub fn workspaceFdResize(workspace: u32, fd: u64, length: u64, truncate_only: bool) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::workspace_fd_resize(workspace, fd, length, truncate_only).await;
@@ -29996,12 +29996,12 @@ pub fn workspaceFdResize(workspace: u32, fd: u32, length: u64, truncate_only: bo
 // workspace_fd_stat
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceFdStat(workspace: u32, fd: u32) -> Promise {
+pub fn workspaceFdStat(workspace: u32, fd: u64) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::workspace_fd_stat(workspace, fd).await;
@@ -30027,12 +30027,12 @@ pub fn workspaceFdStat(workspace: u32, fd: u32) -> Promise {
 // workspace_fd_write
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceFdWrite(workspace: u32, fd: u32, offset: u64, data: Uint8Array) -> Promise {
+pub fn workspaceFdWrite(workspace: u32, fd: u64, offset: u64, data: Uint8Array) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let data = data.to_vec();
@@ -30062,15 +30062,15 @@ pub fn workspaceFdWrite(workspace: u32, fd: u32, offset: u64, data: Uint8Array) 
 #[wasm_bindgen]
 pub fn workspaceFdWriteConstrainedIo(
     workspace: u32,
-    fd: u32,
+    fd: u64,
     offset: u64,
     data: Uint8Array,
 ) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let data = data.to_vec();
@@ -30100,12 +30100,12 @@ pub fn workspaceFdWriteConstrainedIo(
 // workspace_fd_write_start_eof
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceFdWriteStartEof(workspace: u32, fd: u32, data: Uint8Array) -> Promise {
+pub fn workspaceFdWriteStartEof(workspace: u32, fd: u64, data: Uint8Array) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let data = data.to_vec();
@@ -30200,12 +30200,12 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
 // workspace_history_fd_close
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistoryFdClose(workspace_history: u32, fd: u32) -> Promise {
+pub fn workspaceHistoryFdClose(workspace_history: u32, fd: u64) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret = libparsec::workspace_history_fd_close(workspace_history, fd);
         Ok(match ret {
@@ -30234,12 +30234,12 @@ pub fn workspaceHistoryFdClose(workspace_history: u32, fd: u32) -> Promise {
 // workspace_history_fd_read
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistoryFdRead(workspace_history: u32, fd: u32, offset: u64, size: u64) -> Promise {
+pub fn workspaceHistoryFdRead(workspace_history: u32, fd: u64, offset: u64, size: u64) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::workspace_history_fd_read(workspace_history, fd, offset, size).await;
@@ -30265,12 +30265,12 @@ pub fn workspaceHistoryFdRead(workspace_history: u32, fd: u32, offset: u64, size
 // workspace_history_fd_stat
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn workspaceHistoryFdStat(workspace_history: u32, fd: u32) -> Promise {
+pub fn workspaceHistoryFdStat(workspace_history: u32, fd: u64) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_u64 =
+                |raw: u64| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u64(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::workspace_history_fd_stat(workspace_history, fd).await;
@@ -30415,9 +30415,9 @@ pub fn workspaceHistoryOpenFile(workspace_history: u32, path: String) -> Promise
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
-                    let custom_to_rs_u32 =
+                    let custom_to_rs_u64 =
                         |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
-                    let v = match custom_to_rs_u32(value) {
+                    let v = match custom_to_rs_u64(value) {
                         Ok(ok) => ok,
                         Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
@@ -30461,9 +30461,9 @@ pub fn workspaceHistoryOpenFileAndGetId(workspace_history: u32, path: String) ->
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
                     let js_value = {
-                        let custom_to_rs_u32 =
+                        let custom_to_rs_u64 =
                             |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
-                        let v = match custom_to_rs_u32(x1) {
+                        let v = match custom_to_rs_u64(x1) {
                             Ok(ok) => ok,
                             Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
@@ -30519,9 +30519,9 @@ pub fn workspaceHistoryOpenFileById(workspace_history: u32, entry_id: String) ->
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
-                    let custom_to_rs_u32 =
+                    let custom_to_rs_u64 =
                         |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
-                    let v = match custom_to_rs_u32(value) {
+                    let v = match custom_to_rs_u64(value) {
                         Ok(ok) => ok,
                         Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
@@ -31016,9 +31016,9 @@ pub fn workspaceOpenFile(workspace: u32, path: String, mode: Object) -> Promise 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
-                    let custom_to_rs_u32 =
+                    let custom_to_rs_u64 =
                         |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
-                    let v = match custom_to_rs_u32(value) {
+                    let v = match custom_to_rs_u64(value) {
                         Ok(ok) => ok,
                         Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };
@@ -31065,9 +31065,9 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
                     let js_value = {
-                        let custom_to_rs_u32 =
+                        let custom_to_rs_u64 =
                             |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
-                        let v = match custom_to_rs_u32(x1) {
+                        let v = match custom_to_rs_u64(x1) {
                             Ok(ok) => ok,
                             Err(err) => return Err(JsValue::from(TypeError::new(err))),
                         };
@@ -31126,9 +31126,9 @@ pub fn workspaceOpenFileById(workspace: u32, entry_id: String, mode: Object) -> 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
-                    let custom_to_rs_u32 =
+                    let custom_to_rs_u64 =
                         |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
-                    let v = match custom_to_rs_u32(value) {
+                    let v = match custom_to_rs_u64(value) {
                         Ok(ok) => ok,
                         Err(err) => return Err(JsValue::from(TypeError::new(err))),
                     };

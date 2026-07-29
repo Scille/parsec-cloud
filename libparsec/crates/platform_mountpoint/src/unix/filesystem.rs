@@ -2,6 +2,7 @@
 
 use std::{
     ffi::OsStr,
+    fmt::Write,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -16,7 +17,8 @@ use libparsec_client::workspace::{
 };
 use libparsec_types::prelude::*;
 
-use super::inode::{Inode, InodesManager};
+use super::inode::{INodeNo, InodesManager};
+use fuser::{Errno, Generation, InitFlags, Request};
 
 /// Validity timeout set to zero to prevent FUSE from doing caching logic on it.
 /// This is because FUSE caching is not aware of external modification (i.e. sync
@@ -31,7 +33,7 @@ const TTL: std::time::Duration = std::time::Duration::ZERO;
 /// time). So if the file system reuses an inode after it has been deleted, it
 /// must assign a new, previously unused generation number to the inode at the
 /// same time.
-const GENERATION: u64 = 0;
+const GENERATION: Generation = Generation(0);
 /// The default block size, set to 512 KB.
 const BLOCK_SIZE: u64 = 512 * 1024;
 /// Read-write permissions for files and folders.
@@ -49,7 +51,7 @@ fn os_name_to_entry_name(name: &OsStr) -> EntryNameResult<EntryName> {
 
 fn file_stat_to_file_attr(
     stat: FileStat,
-    inode: Inode,
+    inode: INodeNo,
     uid: u32,
     gid: u32,
     is_read_only: bool,
@@ -82,7 +84,7 @@ fn file_stat_to_file_attr(
 
 fn entry_stat_to_file_attr(
     stat: EntryStat,
-    inode: Inode,
+    inode: INodeNo,
     uid: u32,
     gid: u32,
     is_read_only: bool,
@@ -173,7 +175,7 @@ async fn reply_with_lookup(
     ops: &WorkspaceOps,
     uid: u32,
     gid: u32,
-    inode: Inode,
+    inode: INodeNo,
     entry_id: VlobID,
     reply: fuser::ReplyEntry,
     is_read_only: bool,
@@ -190,9 +192,9 @@ async fn reply_with_lookup(
             GENERATION,
         ),
         Err(err) => match err {
-            WorkspaceStatEntryError::EntryNotFound => reply.error(libc::ENOENT),
-            WorkspaceStatEntryError::Offline(_) => reply.error(libc::EHOSTUNREACH),
-            WorkspaceStatEntryError::NoRealmAccess => reply.error(libc::EPERM),
+            WorkspaceStatEntryError::EntryNotFound => reply.error(Errno::ENOENT),
+            WorkspaceStatEntryError::Offline(_) => reply.error(Errno::EHOSTUNREACH),
+            WorkspaceStatEntryError::NoRealmAccess => reply.error(Errno::EPERM),
             WorkspaceStatEntryError::Stopped
             | WorkspaceStatEntryError::RealmDeleted
             | WorkspaceStatEntryError::InvalidKeysBundle(_)
@@ -200,7 +202,7 @@ async fn reply_with_lookup(
             | WorkspaceStatEntryError::InvalidManifest(_)
             | WorkspaceStatEntryError::Internal(_) => {
                 log::warn!("FUSE `{operation_name}` operation failed: {err:?}");
-                reply.error(libc::EIO)
+                reply.error(Errno::EIO)
             }
         },
     }
@@ -229,7 +231,7 @@ macro_rules! reply_on_drop_guard {
                     // Already replied
                     None => (),
                     // Not replied time to do it with ourself !
-                    Some(reply) => reply.error(libc::EIO),
+                    Some(reply) => reply.error(Errno::EIO),
                 }
             }
         }
@@ -249,36 +251,15 @@ pub(crate) static LOOKUP_HOOK: Mutex<
     Option<Box<dyn FnMut(&FsPath) -> Option<Result<EntryStat, WorkspaceStatEntryError>> + Send>>,
 > = Mutex::new(None);
 
-/// Helper macro to add one (or multiple) capabilities to fuser config.
-///
-/// Example:
-/// ```
-/// add_capabilities!(config, <capability>)
-/// add_capabilities!(config, <capability1>, ..., <capabilityN>)
-/// ```
-macro_rules! add_capabilities {
-    ($config:expr, $capability:ident) => {
-        $config
-            .add_capabilities(fuser::consts::$capability as u64)
-            .expect(concat!("Capability available: ", stringify!($capability)));
-    };
-
-    ($config:expr, $($capability:ident),*) => {
-        $(
-            add_capabilities!($config, $capability);
-        )*
-    };
-}
-
 // See https://libfuse.github.io/doxygen/structfuse__operations.html for documentation
 // of each of the methods implemented here.
 impl fuser::Filesystem for Filesystem {
     fn init(
         &mut self,
-        _req: &fuser::Request<'_>,
+        _req: &fuser::Request,
         // see https://libfuse.github.io/doxygen/structfuse__conn__info.html
         config: &mut fuser::KernelConfig,
-    ) -> Result<(), libc::c_int> {
+    ) -> std::io::Result<()> {
         // See libfuse & Linux documentation for a description of the capabilities.
         // See:
         // - https://github.com/torvalds/linux/blob/e32cde8d2bd7d251a8f9b434143977ddf13dcec6/include/uapi/linux/fuse.h#L376-L428
@@ -305,48 +286,62 @@ impl fuser::Filesystem for Filesystem {
         // - https://www.kernel.org/doc/html/latest/filesystems/fuse-io.html
         // - https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L322
 
-        add_capabilities!(
-            config,
+        let caps =
+
             // Do not send separate SETATTR request before open(O_TRUNC).
             // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L188
-            FUSE_ATOMIC_O_TRUNC
-        );
-
-        #[cfg(not(target_os = "macos"))]
-        {
-            // Capabilities not supported by MacFuse 4.8
-            add_capabilities!(
-                config,
+        InitFlags::FUSE_ATOMIC_O_TRUNC
+        ;
+        let caps = caps
+            | cfg_select! {
+                target_os = "macos" => { InitFlags::empty() },
+                _ => {
+                // Capabilities not supported by MacFuse 4.8
                 // Support IOCTL on directories.
                 // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L253
-                FUSE_IOCTL_DIR,
+                InitFlags::FUSE_HAS_IOCTL_DIR |
                 // Tell FUSE the data may change without going through the filesystem, hence attributes
                 // validity should be checked on each access (leading to `getattr()` on timeout).
                 // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L275
-                FUSE_AUTO_INVAL_DATA,
+                InitFlags::FUSE_AUTO_INVAL_DATA |
                 // Enable `readdirplus` support (readdir + lookup in one a single go).
                 // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L283
-                FUSE_DO_READDIRPLUS,
+                InitFlags::FUSE_DO_READDIRPLUS |
                 // Adaptative readdirplus optimization support: still use readdir when lookup is
                 // has already been done by the previous readdirplus.
                 // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L311
-                FUSE_READDIRPLUS_AUTO,
+                InitFlags::FUSE_READDIRPLUS_AUTO |
                 // Allow parallel lookups and readdir on any given folder (default is serialized).
                 // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L354
-                FUSE_PARALLEL_DIROPS
-            );
-            // Fuser doesn't provided splice config on macOS
-            add_capabilities!(
-                config,
+                InitFlags::FUSE_PARALLEL_DIROPS |
+
+                // Fuser doesn't provided splice config on macOS
                 // TODO: `FUSE_SPLICE_READ` seems to require `write_buf()` to be implemented, which is
                 //       not even exposed in fuser !
                 // Allow splice operations (see `man 2 splice`, basically kernel space page-based operations)
                 // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L216
-                FUSE_SPLICE_WRITE,
-                FUSE_SPLICE_MOVE,
-                FUSE_SPLICE_READ
-            );
-        }
+                InitFlags::FUSE_SPLICE_WRITE |
+                InitFlags::FUSE_SPLICE_MOVE |
+                InitFlags::FUSE_SPLICE_READ
+                }
+            };
+
+        config.add_capabilities(caps).map_err(|e| {
+            let mut s = "cannot add following fuse capabilities: ".to_owned();
+            let mut it_names = e.iter_names();
+            it_names
+                .try_for_each(|(name, v)| write!(s, "{name} ({v:#x})"))
+                .and_then(|_| {
+                    let remaining_bits = it_names.remaining().bits();
+                    if remaining_bits != 0 {
+                        write!(s, ", remaining bits: {remaining_bits:#x}")
+                    } else {
+                        Ok(())
+                    }
+                })
+                .expect("Cannot generator error message");
+            std::io::Error::new(std::io::ErrorKind::Unsupported, s)
+        })?;
 
         // Inform the Kernel about the granularity of the timestamps supported by our filesystem.
         // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L609-L622
@@ -368,9 +363,9 @@ impl fuser::Filesystem for Filesystem {
     /// The lookup transforms the path name to an `inode`.
     /// The `inode` is then used by all other operations and is freed by `forget`.
     fn lookup(
-        &mut self,
-        req: &fuser::Request<'_>,
-        parent: u64,
+        &self,
+        req: &Request,
+        parent: INodeNo,
         name: &std::ffi::OsStr,
         reply: fuser::ReplyEntry,
     ) {
@@ -382,11 +377,11 @@ impl fuser::Filesystem for Filesystem {
         let name = match os_name_to_entry_name(name) {
             Ok(name) => name,
             Err(EntryNameError::NameTooLong) => {
-                reply.manual().error(libc::ENAMETOOLONG);
+                reply.manual().error(Errno::ENAMETOOLONG);
                 return;
             }
             Err(EntryNameError::InvalidName) => {
-                reply.manual().error(libc::EINVAL);
+                reply.manual().error(Errno::EINVAL);
                 return;
             }
         };
@@ -432,9 +427,11 @@ impl fuser::Filesystem for Filesystem {
                     )
                 }
                 Err(err) => match err {
-                    WorkspaceStatEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
-                    WorkspaceStatEntryError::Offline(_) => reply.manual().error(libc::EHOSTUNREACH),
-                    WorkspaceStatEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
+                    WorkspaceStatEntryError::EntryNotFound => reply.manual().error(Errno::ENOENT),
+                    WorkspaceStatEntryError::Offline(_) => {
+                        reply.manual().error(Errno::EHOSTUNREACH)
+                    }
+                    WorkspaceStatEntryError::NoRealmAccess => reply.manual().error(Errno::EPERM),
                     WorkspaceStatEntryError::Stopped
                     | WorkspaceStatEntryError::RealmDeleted
                     | WorkspaceStatEntryError::InvalidKeysBundle(_)
@@ -442,21 +439,21 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceStatEntryError::InvalidManifest(_)
                     | WorkspaceStatEntryError::Internal(_) => {
                         log::warn!("FUSE `lookup` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                 },
             }
         });
     }
 
-    fn forget(&mut self, _req: &fuser::Request<'_>, ino: u64, nlookup: u64) {
+    fn forget(&self, _req: &Request, ino: INodeNo, nlookup: u64) {
         self.inodes
             .lock()
             .expect("mutex is poisoned")
             .remove_path_or_panic(ino, nlookup);
     }
 
-    fn statfs(&mut self, _req: &fuser::Request<'_>, ino: u64, reply: fuser::ReplyStatfs) {
+    fn statfs(&self, _req: &Request, ino: INodeNo, reply: fuser::ReplyStatfs) {
         log::debug!("[FUSE] statfs(ino: {ino:#x?})");
 
         // We have currently no way of easily getting the size of workspace
@@ -477,10 +474,10 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn getattr(
-        &mut self,
-        req: &fuser::Request<'_>,
-        ino: u64,
-        _fh: Option<u64>,
+        &self,
+        req: &Request,
+        ino: INodeNo,
+        _fh: Option<fuser::FileHandle>,
         reply: fuser::ReplyAttr,
     ) {
         log::debug!("[FUSE] getattr(ino: {ino:#x?})");
@@ -506,9 +503,9 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn mkdir(
-        &mut self,
-        req: &fuser::Request<'_>,
-        parent: u64,
+        &self,
+        req: &Request,
+        parent: INodeNo,
         name: &std::ffi::OsStr,
         _mode: u32,
         _umask: u32,
@@ -522,11 +519,11 @@ impl fuser::Filesystem for Filesystem {
         let name = match os_name_to_entry_name(name) {
             Ok(name) => name,
             Err(EntryNameError::NameTooLong) => {
-                reply.manual().error(libc::ENAMETOOLONG);
+                reply.manual().error(Errno::ENAMETOOLONG);
                 return;
             }
             Err(EntryNameError::InvalidName) => {
-                reply.manual().error(libc::EINVAL);
+                reply.manual().error(Errno::EINVAL);
                 return;
             }
         };
@@ -561,19 +558,19 @@ impl fuser::Filesystem for Filesystem {
                 }
                 Err(err) => match err {
                     WorkspaceCreateFolderError::EntryExists { .. } => {
-                        reply.manual().error(libc::EEXIST)
+                        reply.manual().error(Errno::EEXIST)
                     }
                     WorkspaceCreateFolderError::ParentNotAFolder => {
-                        reply.manual().error(libc::ENOENT)
+                        reply.manual().error(Errno::ENOENT)
                     }
                     WorkspaceCreateFolderError::ParentNotFound => {
-                        reply.manual().error(libc::ENOENT)
+                        reply.manual().error(Errno::ENOENT)
                     }
                     WorkspaceCreateFolderError::Offline(_) => {
-                        reply.manual().error(libc::EHOSTUNREACH)
+                        reply.manual().error(Errno::EHOSTUNREACH)
                     }
-                    WorkspaceCreateFolderError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceCreateFolderError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
+                    WorkspaceCreateFolderError::NoRealmAccess => reply.manual().error(Errno::EPERM),
+                    WorkspaceCreateFolderError::ReadOnlyRealm => reply.manual().error(Errno::EROFS),
                     WorkspaceCreateFolderError::Stopped
                     | WorkspaceCreateFolderError::RealmDeleted
                     | WorkspaceCreateFolderError::InvalidKeysBundle(_)
@@ -581,7 +578,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceCreateFolderError::InvalidManifest(_)
                     | WorkspaceCreateFolderError::Internal(_) => {
                         log::warn!("FUSE `mkdir` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                 },
             }
@@ -589,9 +586,9 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn rmdir(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        parent: u64,
+        &self,
+        _req: &Request,
+        parent: INodeNo,
         name: &std::ffi::OsStr,
         reply: fuser::ReplyEmpty,
     ) {
@@ -601,11 +598,11 @@ impl fuser::Filesystem for Filesystem {
         let name = match os_name_to_entry_name(name) {
             Ok(name) => name,
             Err(EntryNameError::NameTooLong) => {
-                reply.manual().error(libc::ENAMETOOLONG);
+                reply.manual().error(Errno::ENAMETOOLONG);
                 return;
             }
             Err(EntryNameError::InvalidName) => {
-                reply.manual().error(libc::EINVAL);
+                reply.manual().error(Errno::EINVAL);
                 return;
             }
         };
@@ -623,19 +620,19 @@ impl fuser::Filesystem for Filesystem {
                     reply.manual().ok();
                 }
                 Err(err) => match err {
-                    WorkspaceRemoveEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
-                    WorkspaceRemoveEntryError::EntryIsFile => reply.manual().error(libc::ENOTDIR),
+                    WorkspaceRemoveEntryError::EntryNotFound => reply.manual().error(Errno::ENOENT),
+                    WorkspaceRemoveEntryError::EntryIsFile => reply.manual().error(Errno::ENOTDIR),
                     WorkspaceRemoveEntryError::EntryIsNonEmptyFolder => {
-                        reply.manual().error(libc::ENOTEMPTY)
+                        reply.manual().error(Errno::ENOTEMPTY)
                     }
                     WorkspaceRemoveEntryError::Offline(_) => {
-                        reply.manual().error(libc::EHOSTUNREACH)
+                        reply.manual().error(Errno::EHOSTUNREACH)
                     }
                     WorkspaceRemoveEntryError::CannotRemoveRoot => {
-                        reply.manual().error(libc::EPERM)
+                        reply.manual().error(Errno::EPERM)
                     }
-                    WorkspaceRemoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
+                    WorkspaceRemoveEntryError::NoRealmAccess => reply.manual().error(Errno::EPERM),
+                    WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(Errno::EROFS),
                     WorkspaceRemoveEntryError::Stopped
                     | WorkspaceRemoveEntryError::RealmDeleted
                     | WorkspaceRemoveEntryError::InvalidKeysBundle(_)
@@ -643,7 +640,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceRemoveEntryError::InvalidManifest(_)
                     | WorkspaceRemoveEntryError::Internal(_) => {
                         log::warn!("FUSE `rmdir` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                     // Never returned given we *are* removing a folder
                     WorkspaceRemoveEntryError::EntryIsFolder => unreachable!(),
@@ -653,9 +650,9 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn unlink(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        parent: u64,
+        &self,
+        _req: &Request,
+        parent: INodeNo,
         name: &std::ffi::OsStr,
         reply: fuser::ReplyEmpty,
     ) {
@@ -665,11 +662,11 @@ impl fuser::Filesystem for Filesystem {
         let name = match os_name_to_entry_name(name) {
             Ok(name) => name,
             Err(EntryNameError::NameTooLong) => {
-                reply.manual().error(libc::ENAMETOOLONG);
+                reply.manual().error(Errno::ENAMETOOLONG);
                 return;
             }
             Err(EntryNameError::InvalidName) => {
-                reply.manual().error(libc::EINVAL);
+                reply.manual().error(Errno::EINVAL);
                 return;
             }
         };
@@ -687,19 +684,19 @@ impl fuser::Filesystem for Filesystem {
                     reply.manual().ok();
                 }
                 Err(err) => match err {
-                    WorkspaceRemoveEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
-                    WorkspaceRemoveEntryError::EntryIsFolder => reply.manual().error(libc::EISDIR),
+                    WorkspaceRemoveEntryError::EntryNotFound => reply.manual().error(Errno::ENOENT),
+                    WorkspaceRemoveEntryError::EntryIsFolder => reply.manual().error(Errno::EISDIR),
                     WorkspaceRemoveEntryError::EntryIsNonEmptyFolder => {
-                        reply.manual().error(libc::ENOTEMPTY)
+                        reply.manual().error(Errno::ENOTEMPTY)
                     }
                     WorkspaceRemoveEntryError::Offline(_) => {
-                        reply.manual().error(libc::EHOSTUNREACH)
+                        reply.manual().error(Errno::EHOSTUNREACH)
                     }
                     WorkspaceRemoveEntryError::CannotRemoveRoot => {
-                        reply.manual().error(libc::EPERM)
+                        reply.manual().error(Errno::EPERM)
                     }
-                    WorkspaceRemoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
+                    WorkspaceRemoveEntryError::NoRealmAccess => reply.manual().error(Errno::EPERM),
+                    WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(Errno::EROFS),
                     WorkspaceRemoveEntryError::Stopped
                     | WorkspaceRemoveEntryError::RealmDeleted
                     | WorkspaceRemoveEntryError::InvalidKeysBundle(_)
@@ -707,7 +704,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceRemoveEntryError::InvalidManifest(_)
                     | WorkspaceRemoveEntryError::Internal(_) => {
                         log::warn!("FUSE `unlink` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                     // Never returned given we *are* removing a file
                     WorkspaceRemoveEntryError::EntryIsFile => unreachable!(),
@@ -717,13 +714,13 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn rename(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        src_parent: u64,
+        &self,
+        _req: &Request,
+        src_parent: INodeNo,
         src_name: &std::ffi::OsStr,
-        dst_parent: u64,
+        dst_parent: INodeNo,
         dst_name: &std::ffi::OsStr,
-        flags: u32,
+        flags: fuser::RenameFlags,
         reply: fuser::ReplyEmpty,
     ) {
         log::debug!(
@@ -737,9 +734,9 @@ impl fuser::Filesystem for Filesystem {
         #[cfg(target_os = "macos")]
         let mode = MoveEntryMode::CanReplace;
         #[cfg(not(target_os = "macos"))]
-        let mode = if flags & libc::RENAME_NOREPLACE != 0 {
+        let mode = if flags.contains(fuser::RenameFlags::RENAME_NOREPLACE) {
             MoveEntryMode::NoReplace
-        } else if flags & libc::RENAME_EXCHANGE != 0 {
+        } else if flags.contains(fuser::RenameFlags::RENAME_EXCHANGE) {
             MoveEntryMode::Exchange
         } else {
             MoveEntryMode::CanReplace
@@ -748,22 +745,22 @@ impl fuser::Filesystem for Filesystem {
         let src_name = match os_name_to_entry_name(src_name) {
             Ok(name) => name,
             Err(EntryNameError::NameTooLong) => {
-                reply.manual().error(libc::ENAMETOOLONG);
+                reply.manual().error(Errno::ENAMETOOLONG);
                 return;
             }
             Err(EntryNameError::InvalidName) => {
-                reply.manual().error(libc::EINVAL);
+                reply.manual().error(Errno::EINVAL);
                 return;
             }
         };
         let dst_name = match os_name_to_entry_name(dst_name) {
             Ok(name) => name,
             Err(EntryNameError::NameTooLong) => {
-                reply.manual().error(libc::ENAMETOOLONG);
+                reply.manual().error(Errno::ENAMETOOLONG);
                 return;
             }
             Err(EntryNameError::InvalidName) => {
-                reply.manual().error(libc::EINVAL);
+                reply.manual().error(Errno::EINVAL);
                 return;
             }
         };
@@ -792,15 +789,17 @@ impl fuser::Filesystem for Filesystem {
                 Err(err) => match err {
                     WorkspaceMoveEntryError::SourceNotFound
                     | WorkspaceMoveEntryError::DestinationNotFound => {
-                        reply.manual().error(libc::ENOENT)
+                        reply.manual().error(Errno::ENOENT)
                     }
                     WorkspaceMoveEntryError::DestinationExists { .. } => {
-                        reply.manual().error(libc::EEXIST)
+                        reply.manual().error(Errno::EEXIST)
                     }
-                    WorkspaceMoveEntryError::CannotMoveRoot => reply.manual().error(libc::EPERM),
-                    WorkspaceMoveEntryError::Offline(_) => reply.manual().error(libc::EHOSTUNREACH),
-                    WorkspaceMoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceMoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
+                    WorkspaceMoveEntryError::CannotMoveRoot => reply.manual().error(Errno::EPERM),
+                    WorkspaceMoveEntryError::Offline(_) => {
+                        reply.manual().error(Errno::EHOSTUNREACH)
+                    }
+                    WorkspaceMoveEntryError::NoRealmAccess => reply.manual().error(Errno::EPERM),
+                    WorkspaceMoveEntryError::ReadOnlyRealm => reply.manual().error(Errno::EROFS),
                     WorkspaceMoveEntryError::Stopped
                     | WorkspaceMoveEntryError::RealmDeleted
                     | WorkspaceMoveEntryError::InvalidKeysBundle(_)
@@ -808,7 +807,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceMoveEntryError::InvalidManifest(_)
                     | WorkspaceMoveEntryError::Internal(_) => {
                         log::warn!("FUSE `rename` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                 },
             }
@@ -816,7 +815,7 @@ impl fuser::Filesystem for Filesystem {
     }
 
     // Note flags doesn't contains O_CREAT, O_EXCL, O_NOCTTY and O_TRUNC
-    fn open(&mut self, _req: &fuser::Request<'_>, ino: u64, flags: i32, reply: fuser::ReplyOpen) {
+    fn open(&self, _req: &Request, ino: INodeNo, flags: fuser::OpenFlags, reply: fuser::ReplyOpen) {
         log::debug!("[FUSE] open(ino: {ino:#x?}, flags: {flags:#x?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyOpen);
 
@@ -831,33 +830,27 @@ impl fuser::Filesystem for Filesystem {
                 let mut options = OpenOptions {
                     read: false,
                     write: false,
-                    // append: flags & libc::O_APPEND != 0,
-                    truncate: flags & libc::O_TRUNC != 0,
+                    truncate: flags.0 & libc::O_TRUNC != 0,
                     create: false,
                     create_new: false,
                 };
-                match flags & libc::O_ACCMODE {
-                    libc::O_RDONLY => {
+                match flags.acc_mode() {
+                    fuser::OpenAccMode::O_RDONLY => {
                         // Behavior is undefined, but most filesystems return EACCES
-                        if flags & libc::O_TRUNC != 0 {
-                            reply.manual().error(libc::EACCES);
+                        if options.truncate {
+                            reply.manual().error(Errno::EACCES);
                             return;
                         }
                         // TODO: Fuser's reference implementation mentions a `FMODE_EXEC` here
                         // (see: https://github.com/cberner/fuser/blob/be820a8080f229301028546e819b4997af26cf47/examples/simple.rs#L1336)
                         options.read = true;
                     }
-                    libc::O_WRONLY => {
+                    fuser::OpenAccMode::O_WRONLY => {
                         options.write = true;
                     }
-                    libc::O_RDWR => {
+                    fuser::OpenAccMode::O_RDWR => {
                         options.read = true;
                         options.write = true;
-                    }
-                    // Exactly one access mode flag must be specified
-                    _ => {
-                        reply.manual().error(libc::EINVAL);
-                        return;
                     }
                 }
                 options
@@ -867,18 +860,20 @@ impl fuser::Filesystem for Filesystem {
                 Ok(fd) => fd,
                 Err(err) => {
                     return match err {
-                        WorkspaceOpenFileError::EntryNotFound => reply.manual().error(libc::ENOENT),
+                        WorkspaceOpenFileError::EntryNotFound => {
+                            reply.manual().error(Errno::ENOENT)
+                        }
                         WorkspaceOpenFileError::Offline(_) => {
-                            reply.manual().error(libc::EHOSTUNREACH)
+                            reply.manual().error(Errno::EHOSTUNREACH)
                         }
                         WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
-                            reply.manual().error(libc::EEXIST)
+                            reply.manual().error(Errno::EEXIST)
                         }
                         WorkspaceOpenFileError::EntryNotAFile { .. } => {
-                            reply.manual().error(libc::EISDIR)
+                            reply.manual().error(Errno::EISDIR)
                         }
-                        WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                        WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
+                        WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(Errno::EPERM),
+                        WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(Errno::EROFS),
                         WorkspaceOpenFileError::Stopped
                         | WorkspaceOpenFileError::RealmDeleted
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
@@ -886,23 +881,24 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceOpenFileError::InvalidManifest(_)
                         | WorkspaceOpenFileError::Internal(_) => {
                             log::warn!("FUSE `open` operation cannot complete: {err:?}");
-                            reply.manual().error(libc::EIO)
+                            reply.manual().error(Errno::EIO)
                         }
                     }
                 }
             };
 
             // Flag is only to enable FOPEN_DIRECT_IO which we don't use
-            let open_flags = 0;
-            reply.manual().opened(fd.0.into(), open_flags);
+            // TODO: Investigate if we could use FOPEN_PARALLEL_DIRECT_WRITES.
+            let open_flags = fuser::FopenFlags::empty();
+            reply.manual().opened(fuser::FileHandle(fd.0), open_flags);
         });
     }
 
     // Note flags doesn't contains O_NOCTTY
     fn create(
-        &mut self,
-        req: &fuser::Request<'_>,
-        parent: u64,
+        &self,
+        req: &Request,
+        parent: INodeNo,
         name: &std::ffi::OsStr,
         // Mode & umask are for the file creation, but we don't support them
         _mode: u32,
@@ -918,11 +914,11 @@ impl fuser::Filesystem for Filesystem {
         let name = match os_name_to_entry_name(name) {
             Ok(name) => name,
             Err(EntryNameError::NameTooLong) => {
-                reply.manual().error(libc::ENAMETOOLONG);
+                reply.manual().error(Errno::ENAMETOOLONG);
                 return;
             }
             Err(EntryNameError::InvalidName) => {
-                reply.manual().error(libc::EINVAL);
+                reply.manual().error(Errno::EINVAL);
                 return;
             }
         };
@@ -954,7 +950,7 @@ impl fuser::Filesystem for Filesystem {
                     libc::O_RDONLY => {
                         // Behavior is undefined, but most filesystems return EACCES
                         if flags & libc::O_TRUNC != 0 {
-                            reply.manual().error(libc::EACCES);
+                            reply.manual().error(Errno::EACCES);
                             return;
                         }
                         // TODO: Fuser's reference implementation mentions a `FMODE_EXEC` here
@@ -970,7 +966,7 @@ impl fuser::Filesystem for Filesystem {
                     }
                     // Exactly one access mode flag must be specified
                     _ => {
-                        reply.manual().error(libc::EINVAL);
+                        reply.manual().error(Errno::EINVAL);
                         return;
                     }
                 }
@@ -981,18 +977,20 @@ impl fuser::Filesystem for Filesystem {
                 Ok(fd) => fd,
                 Err(err) => {
                     return match err {
-                        WorkspaceOpenFileError::EntryNotFound => reply.manual().error(libc::ENOENT),
+                        WorkspaceOpenFileError::EntryNotFound => {
+                            reply.manual().error(Errno::ENOENT)
+                        }
                         WorkspaceOpenFileError::Offline(_) => {
-                            reply.manual().error(libc::EHOSTUNREACH)
+                            reply.manual().error(Errno::EHOSTUNREACH)
                         }
                         WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
-                            reply.manual().error(libc::EEXIST)
+                            reply.manual().error(Errno::EEXIST)
                         }
                         WorkspaceOpenFileError::EntryNotAFile { .. } => {
-                            reply.manual().error(libc::EISDIR)
+                            reply.manual().error(Errno::EISDIR)
                         }
-                        WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                        WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
+                        WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(Errno::EPERM),
+                        WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(Errno::EROFS),
                         WorkspaceOpenFileError::Stopped
                         | WorkspaceOpenFileError::RealmDeleted
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
@@ -1000,14 +998,14 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceOpenFileError::InvalidManifest(_)
                         | WorkspaceOpenFileError::Internal(_) => {
                             log::warn!("FUSE `create` operation cannot complete: {err:?}");
-                            reply.manual().error(libc::EIO)
+                            reply.manual().error(Errno::EIO)
                         }
                     }
                 }
             };
 
             // Flag is only to enable FOPEN_DIRECT_IO which we don't use
-            let open_flags = 0;
+            let open_flags = fuser::FopenFlags::empty();
 
             let inode = {
                 let mut inodes_guard = inodes.lock().expect("mutex is poisoned");
@@ -1020,7 +1018,7 @@ impl fuser::Filesystem for Filesystem {
                     return match err {
                         // Unexpected: We have just created this file descriptor !
                         WorkspaceFdStatError::BadFileDescriptor
-                        | WorkspaceFdStatError::Internal(_) => reply.manual().error(libc::EIO),
+                        | WorkspaceFdStatError::Internal(_) => reply.manual().error(Errno::EIO),
                     };
                 }
             };
@@ -1029,7 +1027,7 @@ impl fuser::Filesystem for Filesystem {
                 &TTL,
                 &file_stat_to_file_attr(stat, inode, uid, gid, is_read_only),
                 GENERATION,
-                fd.0.into(),
+                fuser::FileHandle(fd.0),
                 open_flags,
             );
         });
@@ -1037,9 +1035,9 @@ impl fuser::Filesystem for Filesystem {
 
     // Set file attributes, mostly use for truncating files
     fn setattr(
-        &mut self,
-        req: &fuser::Request<'_>,
-        ino: u64,
+        &self,
+        req: &Request,
+        ino: INodeNo,
         mode: Option<u32>,
         uid: Option<u32>,
         gid: Option<u32>,
@@ -1047,11 +1045,11 @@ impl fuser::Filesystem for Filesystem {
         _atime: Option<fuser::TimeOrNow>,
         _mtime: Option<fuser::TimeOrNow>,
         _ctime: Option<std::time::SystemTime>,
-        fh: Option<u64>,
+        fh: Option<fuser::FileHandle>,
         _crtime: Option<std::time::SystemTime>,
         _chgtime: Option<std::time::SystemTime>,
         _bkuptime: Option<std::time::SystemTime>,
-        flags: Option<u32>,
+        flags: Option<fuser::BsdFileFlags>,
         reply: fuser::ReplyAttr,
     ) {
         log::debug!(
@@ -1069,18 +1067,18 @@ impl fuser::Filesystem for Filesystem {
                 let ops = self.ops.clone();
                 let is_read_only = self.is_read_only;
                 self.tokio_handle.spawn(async move {
-                    let fd = FileDescriptor(fh as u32);
+                    let fd = FileDescriptor(fh.into());
                     match ops.fd_resize(fd, size, false).await {
                         Ok(()) => (),
                         Err(err) => {
                             return match err {
                                 WorkspaceFdResizeError::NotInWriteMode => {
-                                    reply.manual().error(libc::EBADF)
+                                    reply.manual().error(Errno::EBADF)
                                 }
                                 // Unexpected: FUSE is supposed to only give us valid file descriptors !
                                 WorkspaceFdResizeError::BadFileDescriptor
                                 | WorkspaceFdResizeError::Internal(_) => {
-                                    reply.manual().error(libc::EIO)
+                                    reply.manual().error(Errno::EIO)
                                 }
                             };
                         }
@@ -1093,7 +1091,7 @@ impl fuser::Filesystem for Filesystem {
                                 // Unexpected: FUSE is supposed to only give us valid file descriptors !
                                 WorkspaceFdStatError::BadFileDescriptor
                                 | WorkspaceFdStatError::Internal(_) => {
-                                    reply.manual().error(libc::EIO)
+                                    reply.manual().error(Errno::EIO)
                                 }
                             };
                         }
@@ -1130,22 +1128,22 @@ impl fuser::Filesystem for Filesystem {
                         Err(err) => {
                             return match err {
                                 WorkspaceOpenFileError::EntryNotFound => {
-                                    reply.manual().error(libc::ENOENT)
+                                    reply.manual().error(Errno::ENOENT)
                                 }
                                 WorkspaceOpenFileError::Offline(_) => {
-                                    reply.manual().error(libc::EHOSTUNREACH)
+                                    reply.manual().error(Errno::EHOSTUNREACH)
                                 }
                                 WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
-                                    reply.manual().error(libc::EEXIST)
+                                    reply.manual().error(Errno::EEXIST)
                                 }
                                 WorkspaceOpenFileError::EntryNotAFile { .. } => {
-                                    reply.manual().error(libc::EISDIR)
+                                    reply.manual().error(Errno::EISDIR)
                                 }
                                 WorkspaceOpenFileError::NoRealmAccess => {
-                                    reply.manual().error(libc::EPERM)
+                                    reply.manual().error(Errno::EPERM)
                                 }
                                 WorkspaceOpenFileError::ReadOnlyRealm => {
-                                    reply.manual().error(libc::EROFS)
+                                    reply.manual().error(Errno::EROFS)
                                 }
                                 WorkspaceOpenFileError::Stopped
                                 | WorkspaceOpenFileError::RealmDeleted
@@ -1154,7 +1152,7 @@ impl fuser::Filesystem for Filesystem {
                                 | WorkspaceOpenFileError::InvalidManifest(_)
                                 | WorkspaceOpenFileError::Internal(_) => {
                                     log::warn!("FUSE `setattr` operation cannot complete: {err:?}");
-                                    reply.manual().error(libc::EIO)
+                                    reply.manual().error(Errno::EIO)
                                 }
                             }
                         }
@@ -1168,7 +1166,7 @@ impl fuser::Filesystem for Filesystem {
                                 WorkspaceFdStatError::BadFileDescriptor
                                 | WorkspaceFdStatError::Internal(_) => {
                                     log::warn!("FUSE `setattr` operation cannot complete: {err:?}");
-                                    reply.manual().error(libc::EIO)
+                                    reply.manual().error(Errno::EIO)
                                 }
                             };
                         }
@@ -1184,7 +1182,7 @@ impl fuser::Filesystem for Filesystem {
                             | WorkspaceFdCloseError::Internal(_)
                             => {
                                 log::warn!("FUSE `setattr` operation cannot complete: {err:?}");
-                                reply.manual().error(libc::EIO)
+                                reply.manual().error(Errno::EIO)
                             }
                         };
                         }
@@ -1228,14 +1226,14 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn read(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        ino: u64,
-        fh: u64,
-        offset: i64,
+        &self,
+        _req: &Request,
+        ino: INodeNo,
+        fh: fuser::FileHandle,
+        offset: u64,
         size: u32,
-        _flags: i32,
-        _lock_owner: Option<u64>,
+        _flags: fuser::OpenFlags,
+        _lock_owner: Option<fuser::LockOwner>,
         reply: fuser::ReplyData,
     ) {
         log::debug!("[FUSE] read(ino: {ino:#x?}, fh: {fh}, offset: {offset}, size: {size})",);
@@ -1243,19 +1241,17 @@ impl fuser::Filesystem for Filesystem {
 
         let ops = self.ops.clone();
         self.tokio_handle.spawn(async move {
-            let fd = FileDescriptor(fh as u32);
+            let fd = FileDescriptor(fh.into());
             let mut buf = Vec::with_capacity(size as usize);
-            // TODO: investigate if offset can be negative or if this is just poor typing on FUSE's part
-            let offset = u64::try_from(offset).expect("Offset is negative");
             match ops.fd_read(fd, offset, size as u64, &mut buf).await {
                 Ok(_) => {
                     reply.manual().data(&buf);
                 }
                 Err(err) => match err {
-                    WorkspaceFdReadError::Offline(_) => reply.manual().error(libc::EHOSTUNREACH),
-                    WorkspaceFdReadError::ServerBlockstoreUnavailable => reply.manual().error(libc::EHOSTUNREACH),
-                    WorkspaceFdReadError::NotInReadMode => reply.manual().error(libc::EBADF),
-                    WorkspaceFdReadError::NoRealmAccess => reply.manual().error(libc::EPERM),
+                    WorkspaceFdReadError::Offline(_) => reply.manual().error(Errno::EHOSTUNREACH),
+                    WorkspaceFdReadError::ServerBlockstoreUnavailable => reply.manual().error(Errno::EHOSTUNREACH),
+                    WorkspaceFdReadError::NotInReadMode => reply.manual().error(Errno::EBADF),
+                    WorkspaceFdReadError::NoRealmAccess => reply.manual().error(Errno::EPERM),
                     WorkspaceFdReadError::Stopped
                     | WorkspaceFdReadError::RealmDeleted
                     | WorkspaceFdReadError::InvalidBlockAccess(_)
@@ -1266,7 +1262,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceFdReadError::Internal(_)
                     => {
                         log::warn!("FUSE `read` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                 },
             }
@@ -1274,15 +1270,15 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn write(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        ino: u64,
-        fh: u64,
-        offset: i64,
+        &self,
+        _req: &Request,
+        ino: INodeNo,
+        fh: fuser::FileHandle,
+        offset: u64,
         data: &[u8],
-        _write_flags: u32,
-        _flags: i32,
-        _lock_owner: Option<u64>,
+        _write_flags: fuser::WriteFlags,
+        _flags: fuser::OpenFlags,
+        _lock_owner: Option<fuser::LockOwner>,
         reply: fuser::ReplyWrite,
     ) {
         log::debug!(
@@ -1297,20 +1293,19 @@ impl fuser::Filesystem for Filesystem {
 
         let ops = self.ops.clone();
         self.tokio_handle.spawn(async move {
-            let fd = FileDescriptor(fh as u32);
+            let fd = FileDescriptor(fh.into());
             // TODO: investigate if offset can be negative or if this is just poor typing on FUSE's part
-            let offset = u64::try_from(offset).expect("Offset is negative");
             match ops.fd_write(fd, offset, &data).await {
                 Ok(written) => {
                     reply.manual().written(written as u32);
                 }
                 Err(err) => match err {
-                    WorkspaceFdWriteError::NotInWriteMode => reply.manual().error(libc::EBADF),
+                    WorkspaceFdWriteError::NotInWriteMode => reply.manual().error(Errno::EBADF),
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     WorkspaceFdWriteError::BadFileDescriptor
                     | WorkspaceFdWriteError::Internal(_) => {
                         log::warn!("FUSE `write` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                 },
             }
@@ -1330,11 +1325,11 @@ impl fuser::Filesystem for Filesystem {
     /// the file right after closing a file descriptor that modified it might end up with
     /// outdated data !
     fn flush(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        ino: u64,
-        fh: u64,
-        lock_owner: u64,
+        &self,
+        _req: &Request,
+        ino: INodeNo,
+        fh: fuser::FileHandle,
+        lock_owner: fuser::LockOwner,
         reply: fuser::ReplyEmpty,
     ) {
         log::debug!("[FUSE] flush(ino: {ino:#x?}, fh: {fh}, lock_owner: {lock_owner:?})");
@@ -1343,7 +1338,7 @@ impl fuser::Filesystem for Filesystem {
 
         let ops = self.ops.clone();
         self.tokio_handle.spawn(async move {
-            let fd = FileDescriptor(fh as u32);
+            let fd = FileDescriptor(fh.into());
             match ops.fd_flush(fd).await {
                 Ok(()) => {
                     reply.manual().ok();
@@ -1358,7 +1353,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceFdFlushError::Internal(_)
                     => {
                         log::warn!("FUSE `flush` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                 },
             }
@@ -1366,12 +1361,12 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn release(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        ino: u64,
-        fh: u64,
-        flags: i32,
-        lock_owner: Option<u64>,
+        &self,
+        _req: &Request,
+        ino: INodeNo,
+        fh: fuser::FileHandle,
+        flags: fuser::OpenFlags,
+        lock_owner: Option<fuser::LockOwner>,
         flush: bool,
         reply: fuser::ReplyEmpty,
     ) {
@@ -1382,7 +1377,7 @@ impl fuser::Filesystem for Filesystem {
 
         let ops = self.ops.clone();
         self.tokio_handle.spawn(async move {
-            let fd = FileDescriptor(fh as u32);
+            let fd = FileDescriptor(fh.into());
             match ops.fd_close(fd).await {
                 Ok(()) => {
                     reply.manual().ok();
@@ -1394,7 +1389,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceFdCloseError::Internal(_)
                     => {
                         log::warn!("FUSE `release` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                 },
             }
@@ -1402,10 +1397,10 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn fsync(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        ino: u64,
-        fh: u64,
+        &self,
+        _req: &Request,
+        ino: INodeNo,
+        fh: fuser::FileHandle,
         datasync: bool,
         reply: fuser::ReplyEmpty,
     ) {
@@ -1414,20 +1409,20 @@ impl fuser::Filesystem for Filesystem {
 
         let ops = self.ops.clone();
         self.tokio_handle.spawn(async move {
-            let fd = FileDescriptor(fh as u32);
+            let fd = FileDescriptor(fh.into());
             match ops.fd_flush(fd).await {
                 Ok(()) => {
                     reply.manual().ok();
                 }
                 Err(err) => match err {
-                    WorkspaceFdFlushError::NotInWriteMode => reply.manual().error(libc::EACCES),
+                    WorkspaceFdFlushError::NotInWriteMode => reply.manual().error(Errno::EACCES),
                     WorkspaceFdFlushError::Stopped
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     | WorkspaceFdFlushError::BadFileDescriptor
                     | WorkspaceFdFlushError::Internal(_)
                     => {
                         log::warn!("FUSE `fsync` operation cannot complete: {err:?}");
-                        reply.manual().error(libc::EIO)
+                        reply.manual().error(Errno::EIO)
                     }
                 },
             }
@@ -1451,10 +1446,10 @@ impl fuser::Filesystem for Filesystem {
     //
     // see https://unix.stackexchange.com/a/637666
     fn opendir(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        ino: u64,
-        flags: i32,
+        &self,
+        _req: &Request,
+        ino: INodeNo,
+        flags: fuser::OpenFlags,
         reply: fuser::ReplyOpen,
     ) {
         log::debug!("[FUSE] opendir(ino: {ino:#x?}, flags: {flags:#x?})");
@@ -1472,16 +1467,16 @@ impl fuser::Filesystem for Filesystem {
                 Err(err) => {
                     return match err {
                         WorkspaceOpenFolderReaderError::EntryNotFound => {
-                            reply.manual().error(libc::ENOENT)
+                            reply.manual().error(Errno::ENOENT)
                         }
                         WorkspaceOpenFolderReaderError::EntryIsFile => {
-                            reply.manual().error(libc::ENOTDIR);
+                            reply.manual().error(Errno::ENOTDIR);
                         }
                         WorkspaceOpenFolderReaderError::Offline(_) => {
-                            reply.manual().error(libc::EHOSTUNREACH)
+                            reply.manual().error(Errno::EHOSTUNREACH)
                         }
                         WorkspaceOpenFolderReaderError::NoRealmAccess => {
-                            reply.manual().error(libc::EPERM)
+                            reply.manual().error(Errno::EPERM)
                         }
                         WorkspaceOpenFolderReaderError::Stopped
                         | WorkspaceOpenFolderReaderError::RealmDeleted
@@ -1490,35 +1485,36 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceOpenFolderReaderError::InvalidManifest(_)
                         | WorkspaceOpenFolderReaderError::Internal(_) => {
                             log::warn!("FUSE `opendir` operation cannot complete: {err:?}");
-                            reply.manual().error(libc::EIO)
+                            reply.manual().error(Errno::EIO)
                         }
                     }
                 }
             };
 
-            let open_flags = 0; // TODO: what to set here ?
+            // Flag is only to enable FOPEN_DIRECT_IO which we don't use
+            let open_flags = fuser::FopenFlags::empty();
 
             // Hold my beer
             let boxed_path_and_folder_reader = Arc::new((path, folder_reader));
             let fh = Arc::into_raw(boxed_path_and_folder_reader) as u64;
 
-            reply.manual().opened(fh, open_flags);
+            reply.manual().opened(fuser::FileHandle(fh), open_flags);
         });
     }
 
     fn readdirplus(
-        &mut self,
-        req: &fuser::Request<'_>,
-        ino: u64,
-        fh: u64,
-        offset: i64,
+        &self,
+        req: &Request,
+        ino: INodeNo,
+        fh: fuser::FileHandle,
+        offset: u64,
         reply: fuser::ReplyDirectoryPlus,
     ) {
         log::debug!("[FUSE] readdirplus(ino: {ino:#x?}, fh: {fh}, offset: {offset})");
         let mut reply = reply_on_drop_guard!(reply, fuser::ReplyDirectoryPlus);
 
         let boxed_path_and_folder_reader = {
-            let ptr = fh as *mut (FsPath, FolderReader);
+            let ptr = fh.0 as *mut (FsPath, FolderReader);
             // SAFETY: `ptr` is a valid pointer that have been created by `opendir`
             // We must increment the refcount given `Arc::from_raw` use in the next line
             // "steal" the owner ship of the pointer (and hence will release the data
@@ -1550,10 +1546,10 @@ impl fuser::Filesystem for Filesystem {
                     Err(err) => {
                         return match err {
                             FolderReaderStatEntryError::Offline(_) => {
-                                reply.manual().error(libc::EHOSTUNREACH)
+                                reply.manual().error(Errno::EHOSTUNREACH)
                             }
                             FolderReaderStatEntryError::NoRealmAccess => {
-                                reply.manual().error(libc::EPERM)
+                                reply.manual().error(Errno::EPERM)
                             }
                             FolderReaderStatEntryError::Stopped
                             | FolderReaderStatEntryError::RealmDeleted
@@ -1562,7 +1558,7 @@ impl fuser::Filesystem for Filesystem {
                             | FolderReaderStatEntryError::InvalidManifest(_)
                             | FolderReaderStatEntryError::Internal(_) => {
                                 log::warn!("FUSE `readdirplus` operation cannot complete: {err:?}");
-                                reply.manual().error(libc::EIO)
+                                reply.manual().error(Errno::EIO)
                             }
                         }
                     }
@@ -1576,7 +1572,7 @@ impl fuser::Filesystem for Filesystem {
                 let buffer_full = match child_stat {
                     EntryStat::File { .. } => reply.borrow().add(
                         child_inode,
-                        (offset + 1) as i64,
+                        (offset + 1) as u64,
                         OsStr::new(child_name.as_ref()),
                         &TTL,
                         &entry_stat_to_file_attr(child_stat, child_inode, uid, gid, is_read_only),
@@ -1584,7 +1580,7 @@ impl fuser::Filesystem for Filesystem {
                     ),
                     EntryStat::Folder { .. } => reply.borrow().add(
                         child_inode,
-                        (offset + 1) as i64,
+                        (offset + 1) as u64,
                         OsStr::new(child_name.as_ref()),
                         &TTL,
                         &entry_stat_to_file_attr(child_stat, child_inode, uid, gid, is_read_only),
@@ -1605,18 +1601,18 @@ impl fuser::Filesystem for Filesystem {
     // `readdir` is only implemented as a fallback in case `readdirplus` is not available
     // on the current FUSE version.
     fn readdir(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        ino: u64,
-        fh: u64,
-        offset: i64,
+        &self,
+        _req: &Request,
+        ino: INodeNo,
+        fh: fuser::FileHandle,
+        offset: u64,
         reply: fuser::ReplyDirectory,
     ) {
         log::debug!("[FUSE] readdir(ino: {ino:#x?}, fh: {fh}, offset: {offset})");
         let mut reply = reply_on_drop_guard!(reply, fuser::ReplyDirectory);
 
         let boxed_path_and_folder_reader = {
-            let ptr = fh as *mut (FsPath, FolderReader);
+            let ptr = fh.0 as *mut (FsPath, FolderReader);
             // SAFETY: `ptr` is a valid pointer that have been created by `opendir`
             // We must increment the refcount given `Arc::from_raw` use in the next line
             // "steal" the owner ship of the pointer (and hence will release the data
@@ -1645,10 +1641,10 @@ impl fuser::Filesystem for Filesystem {
                     Err(err) => {
                         return match err {
                             FolderReaderStatEntryError::Offline(_) => {
-                                reply.manual().error(libc::EHOSTUNREACH)
+                                reply.manual().error(Errno::EHOSTUNREACH)
                             }
                             FolderReaderStatEntryError::NoRealmAccess => {
-                                reply.manual().error(libc::EPERM)
+                                reply.manual().error(Errno::EPERM)
                             }
                             FolderReaderStatEntryError::Stopped
                             | FolderReaderStatEntryError::RealmDeleted
@@ -1657,7 +1653,7 @@ impl fuser::Filesystem for Filesystem {
                             | FolderReaderStatEntryError::InvalidManifest(_)
                             | FolderReaderStatEntryError::Internal(_) => {
                                 log::warn!("FUSE `readdir` operation cannot complete: {err:?}");
-                                reply.manual().error(libc::EIO)
+                                reply.manual().error(Errno::EIO)
                             }
                         }
                     }
@@ -1671,13 +1667,13 @@ impl fuser::Filesystem for Filesystem {
                 let buffer_full = match child_stat {
                     EntryStat::File { .. } => reply.borrow().add(
                         child_inode,
-                        (offset + 1) as i64,
+                        (offset + 1) as u64,
                         fuser::FileType::RegularFile,
                         OsStr::new(child_name.as_ref()),
                     ),
                     EntryStat::Folder { .. } => reply.borrow().add(
                         child_inode,
-                        (offset + 1) as i64,
+                        (offset + 1) as u64,
                         fuser::FileType::Directory,
                         OsStr::new(child_name.as_ref()),
                     ),
@@ -1694,18 +1690,18 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn releasedir(
-        &mut self,
-        _req: &fuser::Request<'_>,
-        ino: u64,
-        fh: u64,
-        flags: i32,
+        &self,
+        _req: &Request,
+        ino: INodeNo,
+        fh: fuser::FileHandle,
+        flags: fuser::OpenFlags,
         reply: fuser::ReplyEmpty,
     ) {
         log::debug!("[FUSE] releasedir(ino: {ino:#x?}, fh: {fh}, flags: {flags:#x?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
         {
-            let ptr = fh as *mut (FsPath, FolderReader);
+            let ptr = fh.0 as *mut (FsPath, FolderReader);
             // SAFETY: `ptr` is a valid pointer that have been created by `opendir`
             let _ = unsafe { Arc::from_raw(ptr) };
         }
@@ -1731,11 +1727,11 @@ impl fuser::Filesystem for Filesystem {
 async fn getattr_from_path(
     ops: &WorkspaceOps,
     path: FsPath,
-    ino: u64,
+    ino: INodeNo,
     uid: u32,
     gid: u32,
     is_read_only: bool,
-) -> Result<fuser::FileAttr, i32> {
+) -> Result<fuser::FileAttr, Errno> {
     match ops
         .stat_entry(&path)
         .await
@@ -1745,9 +1741,9 @@ async fn getattr_from_path(
     {
         Ok(stat) => Ok(stat),
         Err(err) => match err {
-            WorkspaceStatEntryError::EntryNotFound => Err(libc::ENOENT),
-            WorkspaceStatEntryError::Offline(_) => Err(libc::EHOSTUNREACH),
-            WorkspaceStatEntryError::NoRealmAccess => Err(libc::EPERM),
+            WorkspaceStatEntryError::EntryNotFound => Err(Errno::ENOENT),
+            WorkspaceStatEntryError::Offline(_) => Err(Errno::EHOSTUNREACH),
+            WorkspaceStatEntryError::NoRealmAccess => Err(Errno::EPERM),
             WorkspaceStatEntryError::Stopped
             | WorkspaceStatEntryError::RealmDeleted
             | WorkspaceStatEntryError::InvalidKeysBundle(_)
@@ -1755,7 +1751,7 @@ async fn getattr_from_path(
             | WorkspaceStatEntryError::InvalidManifest(_)
             | WorkspaceStatEntryError::Internal(_) => {
                 log::warn!("FUSE `getattr_from_path` operation cannot complete: {err:?}");
-                Err(libc::EIO)
+                Err(Errno::EIO)
             }
         },
     }
