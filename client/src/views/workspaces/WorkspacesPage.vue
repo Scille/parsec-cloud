@@ -538,7 +538,7 @@ async function onDisplayStateChange(): Promise<void> {
 
 async function onSelfPromoteClick(workspace: WorkspaceInfo): Promise<void> {
   await takeOwnershipOfWorkspace(workspace, informationManager.value);
-  refreshWorkspacesList();
+  await refreshWorkspacesList();
 }
 
 async function refreshWorkspacesList(): Promise<void> {
@@ -762,11 +762,10 @@ async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
   await contextMenu.openContextMenu(event, workspace);
-  await refreshWorkspacesList();
-
   if (onFinished) {
     onFinished();
   }
+  await refreshWorkspacesList();
 }
 
 const actionBarOptionsWorkspacesPage = computed(() => {
