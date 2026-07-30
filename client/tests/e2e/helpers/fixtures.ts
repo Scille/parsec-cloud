@@ -236,6 +236,7 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
     return page.displaySize;
   };
   await page.setDisplaySize(opts.displaySize ?? DisplaySize.Large);
+  page.setupOptions = opts;
 }
 
 const debugTest = base.extend({

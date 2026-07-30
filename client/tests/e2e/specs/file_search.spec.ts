@@ -203,7 +203,7 @@ msTest.describe(() => {
         }
         const detailsModal = documents.locator('.file-details-modal');
         await expect(detailsModal).toBeHidden();
-        await checkEntryContextMenu(documents, entryType === 'file' ? 'file-full' : 'folder-full', 'Details');
+        await checkEntryContextMenu(documents, entryType === 'file' ? 'file-full' : 'folder-full', 'Details', { fromSearch: true });
         await expect(detailsModal).toBeVisible();
       });
     }
@@ -229,7 +229,9 @@ msTest.describe(() => {
       await results.nth(0).click({ button: 'right' });
       const detailsModal = documentsReadOnly.locator('.file-details-modal');
       await expect(detailsModal).toBeHidden();
-      await checkEntryContextMenu(documentsReadOnly, entryType === 'file' ? 'file-readonly' : 'folder-readonly', 'Details');
+      await checkEntryContextMenu(documentsReadOnly, entryType === 'file' ? 'file-readonly' : 'folder-readonly', 'Details', {
+        fromSearch: true,
+      });
       await expect(detailsModal).toBeVisible();
     });
   }

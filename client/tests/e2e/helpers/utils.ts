@@ -484,6 +484,9 @@ export async function importDefaultFiles(
         paths.push(path.join(testInfo.config.rootDir, 'data', 'imports', document));
       }
     }
+    if (paths.length === 0) {
+      return;
+    }
 
     await dragAndDropFile(documentsPage, dropZone, paths);
     imported = paths.length;
@@ -586,21 +589,42 @@ export async function unselectFile(entry: Locator): Promise<void> {
   await expect(entry.locator('.ms-checkbox')).not.toBeChecked();
 }
 
-type ContextMenuMode = 'folder-full' | 'folder-readonly' | 'file-full' | 'file-readonly';
+type EntryContextMenuMode =
+  | 'folder-full'
+  | 'folder-readonly'
+  | 'file-full'
+  | 'file-readonly'
+  | 'multiple-entries-full'
+  | 'multiple-entries-readonly';
+interface EntryContextMenuOptions {
+  canEdit?: boolean;
+  fromSearch?: boolean;
+}
 
-export async function checkEntryContextMenu(page: MsPage, mode: ContextMenuMode, action?: string | 'dismiss'): Promise<void> {
-  const menu = page.locator('.file-context-menu');
+export async function checkEntryContextMenu(
+  page: MsPage,
+  mode: EntryContextMenuMode,
+  action?: string | 'dismiss',
+  options?: EntryContextMenuOptions,
+): Promise<void> {
+  const menu = page.locator(page.displaySize === DisplaySize.Large ? '.file-context-menu' : '.file-context-sheet-modal');
   await expect(menu).toBeVisible();
-  const actions = menu.locator('.menu-list').locator('.list-group-item');
+  const labels = menu
+    .locator('.menu-list')
+    .locator(page.displaySize === DisplaySize.Large ? '.list-group-item__label' : '.list-group-item__label-small');
   const titles = menu.locator('.menu-list').locator('.list-group-title');
+
   if (mode === 'file-full') {
-    await expect(titles).toHaveText(['File management', 'Collaboration']);
-    await expect(actions.locator('.list-group-item__label')).toHaveText([
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['File management', 'Collaboration']);
+    }
+    await expect(labels).toHaveText([
       'Preview',
+      ...(options?.canEdit ? ['Edit'] : []),
       'Rename',
       'Move to',
       'Make a copy',
-      'Show enclosing folder',
+      ...(options?.fromSearch ? ['Show enclosing folder'] : []),
       'History',
       'Download',
       'Download as a ZIP file',
@@ -609,12 +633,14 @@ export async function checkEntryContextMenu(page: MsPage, mode: ContextMenuMode,
       'Copy link',
     ]);
   } else if (mode === 'folder-full') {
-    await expect(titles).toHaveText(['Folder management', 'Collaboration']);
-    await expect(actions.locator('.list-group-item__label')).toHaveText([
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Folder management', 'Collaboration']);
+    }
+    await expect(labels).toHaveText([
       'Rename',
       'Move to',
       'Make a copy',
-      'Show enclosing folder',
+      ...(options?.fromSearch ? ['Show enclosing folder'] : []),
       'History',
       'Download',
       'Download as a ZIP file',
@@ -623,32 +649,71 @@ export async function checkEntryContextMenu(page: MsPage, mode: ContextMenuMode,
       'Copy link',
     ]);
   } else if (mode === 'file-readonly') {
-    await expect(titles).toHaveText(['File management', 'Collaboration']);
-    await expect(actions.locator('.list-group-item__label')).toHaveText([
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['File management', 'Collaboration']);
+    }
+    await expect(labels).toHaveText([
       'Preview',
-      'Show enclosing folder',
-      'History',
+      ...(options?.fromSearch ? ['Show enclosing folder'] : []),
       'Download',
       'Download as a ZIP file',
       'Details',
       'Copy link',
     ]);
   } else if (mode === 'folder-readonly') {
-    await expect(titles).toHaveText(['Folder management', 'Collaboration']);
-    await expect(actions.locator('.list-group-item__label')).toHaveText([
-      'Show enclosing folder',
-      'History',
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Folder management', 'Collaboration']);
+    }
+    await expect(labels).toHaveText([
+      ...(options?.fromSearch ? ['Show enclosing folder'] : []),
       'Download',
       'Download as a ZIP file',
       'Details',
       'Copy link',
     ]);
+  } else if (mode === 'multiple-entries-full') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Folder management']);
+    }
+    await expect(labels).toHaveText(['Move to', 'Make a copy', 'Download', 'Download as a ZIP file', 'Delete']);
+  } else if (mode === 'multiple-entries-readonly') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Folder management']);
+    }
+    await expect(labels).toHaveText(['Download', 'Download as a ZIP file']);
   }
   if (action === 'dismiss') {
-    await menu.click();
+    await menu.locator('ion-backdrop').click();
     await expect(menu).toBeHidden();
   } else if (action) {
-    await actions.locator('.list-group-item__label', { hasText: action }).click();
+    await labels.filter({ hasText: action }).click();
+    await expect(menu).toBeHidden();
+  }
+}
+
+export async function checkFolderGlobalContextMenu(page: MsPage, mode: 'full' | 'readonly', action?: string | 'dismiss'): Promise<void> {
+  const menu = page.locator('.folder-global-context-menu');
+
+  if (mode === 'full') {
+    await expect(menu).toBeVisible();
+    const actions = menu.locator('.menu-list').locator('.list-group-item');
+    await expect(actions.locator('.list-group-item__label')).toHaveText([
+      'New folder',
+      'Import files',
+      'Import a folder',
+      'Document',
+      'Spreadsheet',
+      'Presentation',
+      'Text',
+    ]);
+    if (action === 'dismiss') {
+      await menu.locator('ion-backdrop').click();
+      await expect(menu).toBeHidden();
+    } else if (action) {
+      await actions.locator('.list-group-item__label', { hasText: action }).click();
+      await expect(menu).toBeHidden();
+    }
+  } else if (mode === 'readonly') {
     await expect(menu).toBeHidden();
   }
 }

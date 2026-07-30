@@ -131,7 +131,7 @@
           button
           @click="onClick(FileAction.ShowHistory)"
           class="ion-no-padding list-group-item"
-          v-show="!multipleFiles && !isReadOnly"
+          v-if="!multipleFiles && !isReadOnly"
         >
           <ion-icon
             class="list-group-item__icon"
