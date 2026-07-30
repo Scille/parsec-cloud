@@ -126,7 +126,7 @@
             button
             @click="onClick(FileAction.ShowHistory)"
             class="ion-no-padding list-group-item"
-            v-show="!multipleFiles && !isReadOnly"
+            v-if="!multipleFiles && !isReadOnly"
           >
             <ion-icon
               class="list-group-item__icon"
@@ -169,22 +169,7 @@
 
           <ion-item
             button
-            v-show="!multipleFiles"
-            @click="onClick(FileAction.CopyLink)"
-            class="ion-no-padding list-group-item"
-          >
-            <ion-icon
-              class="list-group-item__icon"
-              :icon="link"
-            />
-            <ion-text class="button-large list-group-item__label-small">
-              {{ $msTranslate('FoldersPage.fileContextMenu.actionCopyLink') }}
-            </ion-text>
-          </ion-item>
-
-          <ion-item
-            button
-            v-show="!multipleFiles"
+            v-if="!multipleFiles"
             @click="onClick(FileAction.ShowDetails)"
             class="ion-no-padding list-group-item"
           >
@@ -196,15 +181,12 @@
               {{ $msTranslate('FoldersPage.fileContextMenu.actionDetails') }}
             </ion-text>
           </ion-item>
-        </ion-item-group>
-        <ion-item-group
-          class="list-group"
-          v-if="!isReadOnly"
-        >
+
           <ion-item
             button
             @click="onClick(FileAction.Delete)"
             class="ion-no-padding list-group-item"
+            v-if="!isReadOnly"
           >
             <ion-icon
               class="list-group-item__icon"
@@ -212,6 +194,25 @@
             />
             <ion-text class="button-large list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionDelete') }}
+            </ion-text>
+          </ion-item>
+        </ion-item-group>
+        <ion-item-group
+          class="list-group"
+          v-if="!multipleFiles"
+        >
+          <ion-item
+            button
+            v-if="!multipleFiles"
+            @click="onClick(FileAction.CopyLink)"
+            class="ion-no-padding list-group-item"
+          >
+            <ion-icon
+              class="list-group-item__icon"
+              :icon="link"
+            />
+            <ion-text class="button-large list-group-item__label-small">
+              {{ $msTranslate('FoldersPage.fileContextMenu.actionCopyLink') }}
             </ion-text>
           </ion-item>
         </ion-item-group>

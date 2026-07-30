@@ -75,6 +75,7 @@ export interface MsPage extends Page {
   defaultSmallSize: [number, number];
   setDisplaySize: (displaySize: DisplaySize) => Promise<void>;
   getDisplaySize: () => Promise<DisplaySize>;
+  setupOptions: SetupOptions;
 }
 
 export interface MsContext extends BrowserContext {
