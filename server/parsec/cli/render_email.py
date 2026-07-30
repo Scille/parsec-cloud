@@ -13,6 +13,7 @@ from parsec.components.account import (
     _generate_account_create_validation_email,
     _generate_account_delete_validation_email,
 )
+from parsec.components.async_enrollment import generate_accepted_enrollment_email
 from parsec.components.invite import generate_invite_email
 from parsec.components.totp import generate_totp_reset_email
 from parsec.templates import get_environment
@@ -235,3 +236,28 @@ def totp_reset(
     )
 
     write_mail_file_to_filesystem(message, output_dir, "account_delete_validation_email")
+
+
+@render_email.command(short_help="Generate async enrollment email")
+@mail_templates_shared_options
+@click.option(
+    "--organization-id", type=OrganizationID, default=DEFAULT_ORGANIZATION_ID, show_default=True
+)
+def async_enroll(
+    sender: EmailAddress,
+    recipient: EmailAddress,
+    organization_id: OrganizationID,
+    server_url: str,
+    output_dir: Path,
+    template_dir: Path | None,
+):
+    jinja_env = get_environment(template_dir)
+    message = generate_accepted_enrollment_email(
+        jinja_env=jinja_env,
+        from_addr=sender,
+        to_addr=recipient,
+        organization_id=organization_id,
+        server_url=server_url,
+    )
+
+    write_mail_file_to_filesystem(message, output_dir, "async_enrollment_accept")
