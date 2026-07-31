@@ -2,7 +2,6 @@
 
 import { entryNameValidator } from '@/common/validators';
 import { copyPathLinkToClipboard, selectFolder } from '@/components/files';
-import { showWorkspace } from '@/components/workspaces/utils';
 import {
   deleteFile,
   deleteFolder,
@@ -19,6 +18,7 @@ import {
   WorkspaceMoveEntryErrorTag,
 } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
+import { useWorkspaceActions } from '@/services/contextMenu/workspaceActions';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { DuplicatePolicy, FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -38,6 +38,7 @@ export function useFileActions() {
   const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
   const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
   const storageManager: StorageManager = inject(StorageManagerKey)!;
+  const workspaceActions = useWorkspaceActions();
 
   async function deleteEntries(entries: EntryStat[], workspaceInfo: WorkspaceInfo): Promise<void> {
     if (entries.length === 0) {
@@ -391,7 +392,7 @@ export function useFileActions() {
         return;
       }
 
-      const result = await showWorkspace(workspaceInfo, workspaceAttributes, informationManager.value, eventDistributor.value);
+      const result = await workspaceActions.showWorkspace(workspaceInfo);
 
       if (!result) {
         return;
@@ -419,7 +420,7 @@ export function useFileActions() {
         return;
       }
 
-      const result = await showWorkspace(workspaceInfo, workspaceAttributes, informationManager.value, eventDistributor.value);
+      const result = await workspaceActions.showWorkspace(workspaceInfo);
 
       if (!result) {
         return;

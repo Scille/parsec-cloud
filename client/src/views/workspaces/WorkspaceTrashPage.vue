@@ -85,10 +85,11 @@
 
 <script setup lang="ts">
 import NoTrashedWorkspaces from '@/assets/images/no-trashed-workspaces.svg?raw';
-import { formatWorkspaceDeletionDelay, useWorkspaceContextMenu } from '@/components/workspaces/utils';
+import { formatWorkspaceDeletionDelay } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { getClientInfo, listTrashedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
 import { currentRouteIs, navigateTo, navigateToWorkspace, Routes } from '@/router';
+import { useWorkspaceContextMenu } from '@/services/contextMenu';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';

@@ -66,7 +66,10 @@
       </div>
 
       <!-- workspaces -->
-      <div class="main-container workspaces-container scroll">
+      <div
+        class="main-container workspaces-container scroll"
+        @contextmenu.stop="openWorkspaceGlobalContextMenu"
+      >
         <div
           class="mobile-filters"
           v-if="isSmallDisplay"
@@ -143,7 +146,7 @@
               id="new-workspace"
               class="button-default button-large"
               fill="outline"
-              @click="openCreateWorkspaceModal()"
+              @click="actions.openCreateWorkspaceModal()"
             >
               <ion-icon :icon="addCircle" />
               {{ $msTranslate('WorkspacesPage.createWorkspace') }}
@@ -246,7 +249,6 @@
 import NoFavoriteWorkspaces from '@/assets/images/no-favorite-workspaces.svg?raw';
 import NoHiddenWorkspaces from '@/assets/images/no-hidden-workspaces.svg?raw';
 import NoRecentWorkspaces from '@/assets/images/no-recent-workspaces.svg?raw';
-import { workspaceNameValidator } from '@/common/validators';
 import { FileSearchResults } from '@/components/files';
 import { FileSearch } from '@/components/files/handler/viewer/types';
 import {
@@ -256,9 +258,6 @@ import {
   WorkspacesPageFilters,
   WorkspacesPageSavedData,
   compareWorkspaceRoles,
-  takeOwnershipOfWorkspace,
-  useWorkspaceContextMenu,
-  workspaceShareClick,
 } from '@/components/workspaces';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceCategoriesMenu from '@/components/workspaces/WorkspaceCategoriesMenu.vue';
@@ -271,7 +270,6 @@ import {
   SearchResult,
   UserProfile,
   WorkspaceInfo,
-  WorkspaceName,
   WorkspaceRole,
   decryptFileLink,
   entryStat,
@@ -280,14 +278,13 @@ import {
   getWorkspaceInfo,
   isDesktop,
   parseFileLink,
-  createWorkspace as parsecCreateWorkspace,
   getClientInfo as parsecGetClientInfo,
   getWorkspaceSharing as parsecGetWorkspaceSharing,
   listAvailableWorkspaces as parsecListWorkspaces,
   mountWorkspace as parsecMountWorkspace,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
-import { useFileContextMenu } from '@/services/contextMenu';
+import { useFileContextMenu, useWorkspaceActions, useWorkspaceContextMenu } from '@/services/contextMenu';
 import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -299,7 +296,6 @@ import { WorkspaceAction, WorkspaceMenu, isWorkspaceAction } from '@/views/works
 import { IonButton, IonContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import {
-  Answer,
   DisplayState,
   MsActionBar,
   MsGridListToggle,
@@ -311,8 +307,6 @@ import {
   MsSorterChangeEvent,
   MsSpinner,
   NoWorkspace,
-  askQuestion,
-  getTextFromUser,
   useWindowSize,
 } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
@@ -327,6 +321,7 @@ enum SortWorkspaceBy {
 const fileContextMenu = useFileContextMenu();
 const contextMenu = useWorkspaceContextMenu(false);
 const workspaceAttributes = useWorkspaceAttributes();
+const actions = useWorkspaceActions();
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const userInfo: Ref<ClientInfo | null> = ref(null);
@@ -356,10 +351,7 @@ const routeWatchCancel = watchRoute(async () => {
   }
 
   const query = getCurrentRouteQuery();
-  if (query.workspaceName) {
-    await createWorkspace(query.workspaceName);
-    await navigateTo(Routes.Workspaces, { replace: true, query: {} });
-  } else if (query.fileLink) {
+  if (query.fileLink) {
     const success = await handleFileLink(query.fileLink);
     if (!success) {
       await navigateTo(Routes.Workspaces, { query: {} });
@@ -392,7 +384,7 @@ onMounted(async (): Promise<void> => {
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
     { key: 'n', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Workspaces },
-    openCreateWorkspaceModal,
+    actions.openCreateWorkspaceModal,
   );
   hotkeys.add(
     { key: 'g', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Workspaces },
@@ -536,8 +528,16 @@ async function onDisplayStateChange(): Promise<void> {
   );
 }
 
+async function openWorkspaceGlobalContextMenu(event: Event): Promise<void> {
+  if (userInfo.value?.currentProfile === UserProfile.Outsider) {
+    return;
+  }
+  event.preventDefault();
+  await contextMenu.openGlobalContextMenu(event);
+}
+
 async function onSelfPromoteClick(workspace: WorkspaceInfo): Promise<void> {
-  await takeOwnershipOfWorkspace(workspace, informationManager.value);
+  await actions.takeOwnershipOfWorkspace(workspace);
   await refreshWorkspacesList();
 }
 
@@ -653,91 +653,6 @@ function onMsSorterChange(event: MsSorterChangeEvent): void {
   sortByAsc.value = event.sortByAsc;
 }
 
-async function createWorkspace(name: WorkspaceName): Promise<void> {
-  // Externals shouldn't be able to access here, but putting this as safety
-  if (clientProfile.value === UserProfile.Outsider) {
-    return;
-  }
-  const result = await parsecCreateWorkspace(name);
-  if (result.ok) {
-    informationManager.value.present(
-      new Information({
-        message: {
-          key: 'WorkspacesPage.newWorkspaceSuccess',
-          data: {
-            workspace: name,
-          },
-        },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-
-    await navigateTo(Routes.Workspaces, { query: { workspaceMenu: WorkspaceMenu.All } });
-  } else {
-    informationManager.value.present(
-      new Information({
-        message: 'WorkspacesPage.newWorkspaceError',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-}
-
-async function openCreateWorkspaceModal(): Promise<void> {
-  let workspaceName: string | null = null;
-  while (true) {
-    workspaceName = await getTextFromUser(
-      {
-        title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
-        trim: true,
-        validator: workspaceNameValidator,
-        inputLabel: 'WorkspacesPage.CreateWorkspaceModal.label',
-        placeholder: 'WorkspacesPage.CreateWorkspaceModal.placeholder',
-        okButtonText: 'WorkspacesPage.CreateWorkspaceModal.create',
-        defaultValue: workspaceName ?? undefined,
-      },
-      isLargeDisplay.value,
-    );
-
-    if (!workspaceName) {
-      return;
-    }
-    const found = workspaceList.value.find((wi) => {
-      // eslint thinks workspaceName can be null here, no idea why
-      const newName = workspaceName!.toLocaleLowerCase();
-      const current = wi.name.toLocaleLowerCase();
-
-      // If we find a case-insensitive match or one name contains the other and the name is a bit longer that a few letters,
-      // both names are not too far off each other in length (3 characters difference at most)
-      // For example, we already have a 'Workspace', and we're trying to create 'Workspace 1'
-      if (newName === current) {
-        return true;
-      }
-      return (
-        newName.length > 6 && Math.abs(newName.length - current.length) <= 3 && (current.includes(newName) || newName.includes(current))
-      );
-    });
-    if (found) {
-      const answer = await askQuestion(
-        'WorkspacesPage.CreateWorkspaceModal.sameNameExistsTitle',
-        'WorkspacesPage.CreateWorkspaceModal.sameNameExistsQuestion',
-        {
-          yesText: 'WorkspacesPage.CreateWorkspaceModal.createAnyway',
-          noText: 'WorkspacesPage.CreateWorkspaceModal.cancel',
-        },
-      );
-      if (answer === Answer.Yes) {
-        break;
-      }
-    } else {
-      break;
-    }
-  }
-  await createWorkspace(workspaceName);
-}
-
 async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
   recentDocumentManager.addWorkspace(workspace);
   await recentDocumentManager.saveToStorage(storageManager);
@@ -750,13 +665,13 @@ async function onWorkspaceFavoriteClick(workspace: WorkspaceInfo): Promise<void>
 }
 
 async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
-  await workspaceShareClick(workspace, informationManager.value, eventDistributor.value, isLargeDisplay.value);
+  await actions.workspaceShareClick(workspace);
   await refreshWorkspacesList();
 }
 
 async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
   if (action === WorkspaceAction.CreateWorkspace) {
-    return await openCreateWorkspaceModal();
+    await actions.openCreateWorkspaceModal();
   }
 }
 
@@ -777,7 +692,7 @@ const actionBarOptionsWorkspacesPage = computed(() => {
       label: 'WorkspacesPage.createWorkspace',
       icon: addCircle,
       onClick: async (): Promise<void> => {
-        await openCreateWorkspaceModal();
+        await actions.openCreateWorkspaceModal();
       },
     });
   }
