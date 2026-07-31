@@ -17,8 +17,8 @@ async fn export_recovery_device(tmp_path: TmpPath) {
         "device",
         "export-recovery-device",
         "--device",
-        &alice.device_id.hex(),
-        &output.to_string_lossy()
+        alice.device_id.hex(),
+        &output
     )
     .stdout(predicates::str::contains("Recovery device saved at"));
 

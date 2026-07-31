@@ -74,7 +74,7 @@ async fn mount_workspace(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         "--workspace",
         &workspace_id.hex(),
-        &mount_dir.to_string_lossy()
+        &mount_dir
     );
     let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
 

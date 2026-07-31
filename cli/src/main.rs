@@ -36,5 +36,6 @@ async fn main() -> anyhow::Result<()> {
         }
         #[cfg(feature = "manpage")]
         Command::ManPage(args) => man_page::main(ui, args).await,
+        Command::Sequester(group) => sequester::dispatch_command(ui, group).await,
     }
 }

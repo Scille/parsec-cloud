@@ -2207,7 +2207,7 @@ dependencies = [
  "portable-atomic",
  "portable-atomic-util",
  "serde_core",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3510,8 +3510,10 @@ dependencies = [
  "clap_mangen",
  "criterion",
  "ctrlc",
+ "data-encoding",
  "dialoguer",
  "env_logger",
+ "futures",
  "itertools 0.15.0",
  "libparsec",
  "libparsec_client",
@@ -3520,6 +3522,7 @@ dependencies = [
  "libparsec_platform_ipc",
  "libparsec_platform_mountpoint",
  "libparsec_tests_fixtures",
+ "libparsec_types",
  "log",
  "parsec-cli",
  "predicates",
@@ -3531,6 +3534,7 @@ dependencies = [
  "serde_json",
  "shadow-rs",
  "spinners",
+ "textwrap",
  "thiserror 2.0.19",
  "tokio",
  "url",
@@ -5298,6 +5302,12 @@ name = "termtree"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
+
+[[package]]
+name = "textwrap"
+version = "0.16.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c13547615a44dc9c452a8a534638acdf07120d4b6847c8178705da06306a3057"
 
 [[package]]
 name = "thiserror"

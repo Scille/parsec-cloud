@@ -16,7 +16,7 @@ async fn create_organization(tmp_path: TmpPath) {
         "create",
         unique_org_id().as_ref(),
         "--addr",
-        &std::env::var(TESTBED_SERVER).unwrap(),
+        std::env::var(TESTBED_SERVER).unwrap(),
         "--token",
         DEFAULT_ADMINISTRATION_TOKEN
     )

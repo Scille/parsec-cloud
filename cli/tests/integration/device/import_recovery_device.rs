@@ -26,7 +26,7 @@ async fn import_recovery_device(tmp_path: TmpPath) {
         "device",
         "import-recovery-device",
         "--input",
-        &input.to_string_lossy(),
+        &input,
         "--label",
         "new_device"
     )

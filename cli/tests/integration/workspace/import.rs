@@ -46,7 +46,7 @@ async fn workspace_import_file(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         "--workspace",
         &wid.hex(),
-        &file.to_string_lossy(),
+        &file,
         "/test.txt"
     )
     .stdout(predicates::str::is_empty());
@@ -115,7 +115,7 @@ async fn workspace_import_file_to_specific_path(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         "--workspace",
         &wid.hex(),
-        &file.to_string_lossy(),
+        &file,
         "/a/b/c/test.txt" // path does not exists
     )
     .stderr(predicates::str::contains("Path doesn't exist"));
@@ -130,7 +130,7 @@ async fn workspace_import_file_to_specific_path(tmp_path: TmpPath) {
         "--workspace",
         &wid.hex(),
         "--parents",
-        &file.to_string_lossy(),
+        &file,
         "/d/e/f/test.txt" // path does not exists but it should be created
     )
     .stdout(predicates::str::is_empty());
@@ -146,7 +146,7 @@ async fn workspace_import_file_to_specific_path(tmp_path: TmpPath) {
         "--workspace",
         &wid.hex(),
         "--parents",
-        &file.to_string_lossy(),
+        &file,
         "/d/e/f/test2.txt" // path exists but it should not fail
     )
     .stdout(predicates::str::is_empty());
@@ -213,7 +213,7 @@ async fn issue_8941_import_file_where_inbound_and_outbound_sync_are_required(tmp
         &alice.device_id.hex(),
         "--workspace",
         &wid.hex(),
-        &test_file.to_string_lossy(),
+        &test_file,
         "/test.txt"
     )
     .stdout(predicates::str::is_empty());
@@ -228,7 +228,7 @@ async fn issue_8941_import_file_where_inbound_and_outbound_sync_are_required(tmp
         "--workspace",
         &wid.hex(),
         "--update=all",
-        &test_file.to_string_lossy(),
+        &test_file,
         "/test.txt"
     )
     .stdout(predicates::str::is_empty());
@@ -295,7 +295,7 @@ async fn workspace_import_folder(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         "--workspace",
         &wid.hex(),
-        &folder.to_string_lossy(),
+        &folder,
         "/test"
     )
     .stdout(predicates::str::is_empty());
@@ -380,7 +380,7 @@ async fn import_prevent_overwrite(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         "--workspace",
         &wid.hex(),
-        &file.to_string_lossy(),
+        &file,
         "/do_not_overwrite_me.txt"
     )
     .stdout(predicates::str::is_empty())
@@ -396,7 +396,7 @@ async fn import_prevent_overwrite(tmp_path: TmpPath) {
         "--workspace",
         &wid.hex(),
         "--update=none-fail",
-        &file.to_string_lossy(),
+        &file,
         "/do_not_overwrite_me.txt"
     )
     .stdout(predicates::str::is_empty())
