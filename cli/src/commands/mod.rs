@@ -9,6 +9,7 @@ pub mod organization;
 pub mod rm;
 #[cfg(feature = "testenv")]
 pub mod run_testenv;
+pub mod sequester;
 pub mod server;
 pub mod shared_recovery;
 pub mod tos;

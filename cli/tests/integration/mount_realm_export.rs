@@ -85,7 +85,7 @@ async fn sequester_decryptor(tmp_path: TmpPath) {
                 ),
                 "--timestamp",
                 "2000-01-16T00:00:00Z",
-                &export_db_path.to_string_lossy()
+                &export_db_path
             )
             .current_dir(&base_mountpoint_path)
             .spawn()

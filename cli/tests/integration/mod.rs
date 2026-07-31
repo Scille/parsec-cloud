@@ -10,6 +10,7 @@ mod manpage;
 mod mount_realm_export;
 mod organization;
 mod rm;
+mod sequester;
 mod server;
 mod shared_recovery;
 mod tos;
@@ -134,7 +135,7 @@ macro_rules! assert_cmd {
     };
     ($($cmd:expr),+) => {
         assert_cmd::cargo::cargo_bin_cmd!("parsec-cli")
-            .args([$($cmd),+])
+            $(.arg($cmd))+
     };
 }
 
@@ -158,7 +159,7 @@ macro_rules! std_cmd {
     ($($args:expr),*) => {
         {
             let mut command = std::process::Command::new(assert_cmd::cargo::cargo_bin!("parsec-cli"));
-            command.args([$($args),*]);
+            command$(.arg($args))*;
             command
         }
     }
@@ -175,7 +176,7 @@ fn shared_recovery_create(
         "shared-recovery",
         "info",
         "--device",
-        &alice.device_id.hex()
+        alice.device_id.hex()
     )
     .stdout(predicates::str::contains(format!(
         "Shared recovery {RED}never setup{RESET}"

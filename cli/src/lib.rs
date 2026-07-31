@@ -73,6 +73,8 @@ pub enum Command {
     /// Print CLI man pages to the console or a file
     #[cfg(feature = "manpage")]
     ManPage(man_page::Args),
+    #[command(subcommand)]
+    Sequester(sequester::Group),
 }
 
 struct LongVersion;

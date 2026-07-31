@@ -1,6 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{fmt::Display, ops::Deref, path::Path, sync::Arc};
+use std::{
+    fmt::Display,
+    ops::Deref,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use anyhow::anyhow;
 use dialoguer::FuzzySelect;
@@ -521,5 +526,57 @@ pub fn maybe_plural(number: &u8) -> &str {
         ""
     } else {
         "s"
+    }
+}
+
+#[derive(Clone)]
+pub enum OutputFile {
+    Stdout,
+    Path(PathBuf),
+}
+
+impl OutputFile {
+    pub async fn with_created_file<F, T>(&self, f: F) -> std::io::Result<T>
+    where
+        F: AsyncFnOnce(&mut (dyn tokio::io::AsyncWrite + Unpin)) -> std::io::Result<T>,
+    {
+        match self {
+            OutputFile::Stdout => f(&mut tokio::io::stdout()).await,
+            OutputFile::Path(path) => {
+                let mut file = tokio::fs::File::create(path).await?;
+                f(&mut file).await
+            }
+        }
+    }
+}
+
+impl clap::builder::ValueParserFactory for OutputFile {
+    type Parser = OutputFileParser;
+
+    fn value_parser() -> Self::Parser {
+        OutputFileParser
+    }
+}
+
+#[derive(Clone)]
+pub struct OutputFileParser;
+
+impl clap::builder::TypedValueParser for OutputFileParser {
+    type Value = OutputFile;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        if value == "-" {
+            Ok(Self::Value::Stdout)
+        } else {
+            let path_parser = clap::builder::PathBufValueParser::new();
+            path_parser
+                .parse_ref(cmd, arg, value)
+                .map(Self::Value::Path)
+        }
     }
 }

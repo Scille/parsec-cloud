@@ -81,7 +81,7 @@ async fn bootstrap_organization_with_sequester(tmp_path: TmpPath) {
         "--email",
         "alice@example.com",
         "--sequester-key",
-        &path.to_string_lossy()
+        &path
     )
     .stdout(predicates::str::contains("Organization bootstrapped"));
 }

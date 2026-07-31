@@ -26,18 +26,21 @@ testenv = []
 manpage = ["dep:clap_mangen"]
 
 [dependencies]
-libparsec = { workspace = true }
-libparsec_crypto = { workspace = true }
-libparsec_client = { workspace = true }
-libparsec_client_connection = { workspace = true }
-libparsec_platform_ipc = { workspace = true }
-libparsec_platform_mountpoint = { workspace = true }
+libparsec_client.workspace = true
+libparsec_client_connection.workspace = true
+libparsec_crypto.workspace = true
+libparsec_platform_ipc.workspace = true
+libparsec_platform_mountpoint.workspace = true
+libparsec_types.workspace = true
+libparsec.workspace = true
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["default", "derive", "env"] }
 # `termination` feature enable handling of SIGHUP/SIGTERM on top of SIGINT
 ctrlc = { workspace = true, features = ["termination"] }
+data-encoding.workspace = true
 dialoguer = { workspace = true, features = ["fuzzy-select"] }
+futures.workspace = true
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
 log = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }
@@ -45,6 +48,7 @@ rpassword = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["std"] }
 spinners = { workspace = true }
+textwrap.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-std"] }
 url = { workspace = true, optional = true }
 uuid = { workspace = true }

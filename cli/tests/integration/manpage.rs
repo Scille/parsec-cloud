@@ -11,14 +11,9 @@ async fn gen_man_page(#[case] mode: Mode, tmp_path: TmpPath) {
     if mode == Mode::Separate {
         tokio::fs::create_dir(&out_path).await.unwrap();
     }
-    crate::assert_cmd_success!(
-        "man-page",
-        "--mode",
-        &mode.to_string(),
-        &out_path.to_string_lossy()
-    )
-    .stdout(predicates::str::is_empty())
-    .stderr(predicates::str::is_empty());
+    crate::assert_cmd_success!("man-page", "--mode", &mode.to_string(), &out_path)
+        .stdout(predicates::str::is_empty())
+        .stderr(predicates::str::is_empty());
 
     let metadata = tokio::fs::metadata(&out_path).await.unwrap();
     match mode {
