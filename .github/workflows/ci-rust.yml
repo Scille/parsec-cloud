@@ -325,6 +325,8 @@ jobs:
             # Mountpoint cannot be tested on macOS because it requires macFUSE installation,
             # that required the installation of a kernel extension that require a restart.
             PLATFORM_CRATES=`echo $PLATFORM_CRATES | sed -e 's/-p libparsec_platform_mountpoint//'`
+            # Instead run check only for that crate
+            cargo check -p libparsec_platform_mountpoint
           fi
           cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $PLATFORM_CRATES --features libparsec_crypto/use-libsodium
         timeout-minutes: 30
