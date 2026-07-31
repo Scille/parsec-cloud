@@ -12,7 +12,7 @@
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    @contextmenu="onOptionsClick"
+    @contextmenu.stop="onOptionsClick"
   >
     <div class="workspace-list-item-content">
       <div

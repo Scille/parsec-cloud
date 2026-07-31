@@ -196,6 +196,7 @@
             <!-- all workspaces -->
             <ion-text
               @click="onCategoryMenuChange(WorkspaceMenu.All)"
+              @contextmenu="openWorkspaceGlobalContextMenu"
               class="sidebar-content-organization-button button-medium"
               :class="{ active: currentRouteIs(Routes.Workspaces) }"
               id="sidebar-all-workspaces"
@@ -330,7 +331,6 @@ import { getSecurityWarnings, RecommendationAction, SecurityWarnings } from '@/c
 import RecommendationChecklistPopoverModal from '@/components/misc/RecommendationChecklistPopoverModal.vue';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { SidebarMenuList, SidebarRecentFileItem, SidebarWorkspaceItem } from '@/components/sidebar';
-import { useWorkspaceContextMenu } from '@/components/workspaces';
 import {
   ClientInfo,
   getAsyncEnrollmentAddr,
@@ -357,6 +357,7 @@ import {
   switchOrganization,
   watchRoute,
 } from '@/router';
+import { useWorkspaceContextMenu } from '@/services/contextMenu';
 import {
   EventData,
   EventDistributor,
@@ -828,6 +829,11 @@ async function openRecentFile(file: RecentFile): Promise<void> {
 
 async function removeRecentFile(file: RecentFile): Promise<void> {
   recentDocumentManager.removeFile(file);
+}
+
+async function openWorkspaceGlobalContextMenu(event: Event): Promise<void> {
+  event.preventDefault();
+  await workspaceContextMenu.openGlobalContextMenu(event);
 }
 
 async function onOpenWorkspaceContextMenu(event: Event): Promise<void> {

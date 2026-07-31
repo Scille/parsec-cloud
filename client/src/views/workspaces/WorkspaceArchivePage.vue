@@ -75,10 +75,10 @@
 
 <script setup lang="ts">
 import NoArchivedWorkspaces from '@/assets/images/no-archived-workspaces.svg?raw';
-import { useWorkspaceContextMenu } from '@/components/workspaces/utils';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { listArchivedWorkspaces, UserProfile, WorkspaceInfo } from '@/parsec';
 import { currentRouteIs, navigateTo, navigateToWorkspace, Routes } from '@/router';
+import { useWorkspaceContextMenu } from '@/services/contextMenu';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
