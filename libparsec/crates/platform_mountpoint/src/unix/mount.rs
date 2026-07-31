@@ -85,14 +85,12 @@ impl Mountpoint {
             MountpointMountStrategy::Disabled => return Err(anyhow::anyhow!("Mount disabled !")),
         };
 
-        let mount_path = tokio::task::spawn_blocking(move || {
-            create_suitable_mountpoint_dir(&mountpoint_base_dir, &workspace_name)
-                .map(|(p, _)| p)
-                .context("cannot create mountpoint dir")
-        })
-        .await??;
+        let mount_path = create_suitable_mountpoint_dir(&mountpoint_base_dir, &workspace_name)
+            .await
+            .map(|(p, _)| p)
+            .context("cannot create mountpoint dir")?;
 
-        Self::do_mount_at_path(mount_path, filesystem, is_read_only).await
+        Self::do_mount_at_path(mount_path, workspace_name, filesystem, is_read_only).await
     }
 
     pub async fn mount_at_path(
@@ -108,11 +106,12 @@ impl Mountpoint {
             tokio::runtime::Handle::current(),
             is_read_only,
         );
-        Self::do_mount_at_path(path, filesystem, is_read_only).await
+        Self::do_mount_at_path(path, workspace_name, filesystem, is_read_only).await
     }
 
     async fn do_mount_at_path<FS: fuser::Filesystem + Send + 'static>(
         mount_path: PathBuf,
+        workspace_name: EntryName,
         filesystem: FS,
         is_read_only: bool,
     ) -> anyhow::Result<Self> {
@@ -120,6 +119,7 @@ impl Mountpoint {
 
         // Mount operation consist of blocking code, so run it in a thread
         tokio::task::spawn_blocking(move || {
+            log::debug!("Will mount {workspace_name} at {}", mount_path.display());
             let options = [
                 fuser::MountOption::FSName("parsec".into()),
                 #[cfg(target_os = "macos")]
@@ -351,7 +351,7 @@ pub async fn clean_base_mountpoint_dir(
 /// The checks performed here are not atomic (and the mount operation is not
 /// itself atomic anyway), hence there are still some edge-cases where the
 /// mountpoint can crash due to concurrent changes on the mountpoint path.
-fn create_suitable_mountpoint_dir(
+async fn create_suitable_mountpoint_dir(
     base_mountpoint_path: &std::path::Path,
     workspace_name: &EntryName,
 ) -> anyhow::Result<(std::path::PathBuf, u64)> {
@@ -379,7 +379,7 @@ fn create_suitable_mountpoint_dir(
         "Workspace name `{workspace_name:?}` cannot form a valid path item"
     );
 
-    std::fs::create_dir_all(base_mountpoint_path)?;
+    tokio::fs::create_dir_all(base_mountpoint_path).await?;
     let base_st_dev = std::fs::metadata(base_mountpoint_path)?.st_dev();
 
     for attempt in 1.. {
@@ -390,14 +390,14 @@ fn create_suitable_mountpoint_dir(
         };
 
         // On POSIX systems, mounting target must exists
-        ok_or_continue!(
-            std::fs::create_dir_all(&mountpoint_path).inspect_err(|e| log::warn!(
+        ok_or_continue!(tokio::fs::create_dir_all(&mountpoint_path)
+            .await
+            .inspect_err(|e| log::warn!(
                 "Failed to create directory for mount path '{}': {e}",
                 mountpoint_path.display()
-            ))
-        );
+            )));
 
-        let initial_st_dev = ok_or_continue!(std::fs::metadata(&mountpoint_path)).st_dev();
+        let initial_st_dev = ok_or_continue!(tokio::fs::metadata(&mountpoint_path).await).st_dev();
 
         if initial_st_dev != base_st_dev {
             log::warn!(
@@ -407,8 +407,9 @@ fn create_suitable_mountpoint_dir(
             continue;
         }
 
-        if ok_or_continue!(std::fs::read_dir(&mountpoint_path))
-            .next()
+        if ok_or_continue!(tokio::fs::read_dir(&mountpoint_path).await)
+            .next_entry()
+            .await?
             .is_some()
         {
             log::warn!("Mount path '{}' is not empty", mountpoint_path.display());
