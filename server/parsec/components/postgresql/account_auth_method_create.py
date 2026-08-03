@@ -88,7 +88,7 @@ async def auth_method_create(
     new_auth_method_mac_key: SecretKey,
     new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
     new_vault_key_access: bytes,
-) -> None | AccountAuthMethodCreateBadOutcome:
+) -> AccountAuthMethodCreateBadOutcome | None:
     # 1) Retrieve account & vault
 
     row = await conn.fetchrow(*_q_get_current_vault_from_auth_method(auth_method_id=auth_method_id))

@@ -330,8 +330,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
-        tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
-    ) -> None | OrganizationUpdateBadOutcome:
+        tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset,
+    ) -> OrganizationUpdateBadOutcome | None:
         if realm_minimum_archiving_period_before_deletion is not Unset:
             assert realm_minimum_archiving_period_before_deletion >= 0  # Sanity check
 
@@ -350,7 +350,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @no_transaction
     async def get_tos(
         self, conn: AsyncpgConnection, id: OrganizationID
-    ) -> TermsOfService | None | OrganizationGetTosBadOutcome:
+    ) -> TermsOfService | OrganizationGetTosBadOutcome | None:
         return await organization_get_tos(conn, id)
 
     @override

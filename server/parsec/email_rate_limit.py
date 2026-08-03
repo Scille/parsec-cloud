@@ -41,7 +41,7 @@ class EmailRateLimit:
         now: DateTime,
         client_ip_address: str | Literal[""],
         recipient: EmailAddress,
-    ) -> None | DateTime:
+    ) -> DateTime | None:
         # 1) Start with some cleanup: since we use a 1 hours sliding window, we
         #    discard anything older than that.
 

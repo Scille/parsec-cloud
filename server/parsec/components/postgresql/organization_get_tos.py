@@ -28,7 +28,7 @@ LIMIT 1
 async def organization_get_tos(
     conn: AsyncpgConnection,
     id: OrganizationID,
-) -> TermsOfService | None | OrganizationGetTosBadOutcome:
+) -> TermsOfService | OrganizationGetTosBadOutcome | None:
     row = await conn.fetchrow(*_q_get_tos(organization_id=id.str))
 
     if not row:

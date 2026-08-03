@@ -126,7 +126,7 @@ def get_artifacts(base_url: str, token: str, name: str) -> Artifacts:
 def get_artifact(
     artifact_name: str,
     token: str,
-    version: None | str = None,
+    version: str | None = None,
     base_url: str = BASE_URL,
 ) -> Artifact:
     artifacts = get_artifacts(base_url, token, artifact_name)

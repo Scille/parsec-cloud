@@ -128,7 +128,7 @@ class ShamirRecoveryInvitation:
     threshold: int
     recipients: list[ShamirRecoveryRecipient]
     shamir_recovery_created_on: DateTime
-    shamir_recovery_deleted_on: None | DateTime
+    shamir_recovery_deleted_on: DateTime | None
 
     @property
     def shamir_recovery_is_deleted(self) -> bool:
@@ -550,7 +550,7 @@ class BaseInviteComponent:
         token: AccessToken,
         claimer_email: EmailAddress,
         greeter_human_handle: HumanHandle,
-    ) -> None | SendEmailBadOutcome:
+    ) -> SendEmailBadOutcome | None:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
@@ -585,7 +585,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         token: AccessToken,
         email: EmailAddress,
-    ) -> None | SendEmailBadOutcome:
+    ) -> SendEmailBadOutcome | None:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
@@ -619,7 +619,7 @@ class BaseInviteComponent:
         token: AccessToken,
         email: EmailAddress,
         greeter_human_handle: HumanHandle,
-    ) -> None | SendEmailBadOutcome:
+    ) -> SendEmailBadOutcome | None:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
@@ -661,7 +661,7 @@ class BaseInviteComponent:
         send_email: bool,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForUserBadOutcome:
         raise NotImplementedError
 
     async def new_for_device(
@@ -672,7 +672,7 @@ class BaseInviteComponent:
         send_email: bool,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForDeviceBadOutcome:
         raise NotImplementedError
 
     async def new_for_shamir_recovery(
@@ -684,7 +684,7 @@ class BaseInviteComponent:
         claimer_user_id: UserID,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForShamirRecoveryBadOutcome:
         raise NotImplementedError
 
     async def cancel(
@@ -693,7 +693,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         token: AccessToken,
-    ) -> None | InviteCancelBadOutcome:
+    ) -> InviteCancelBadOutcome | None:
         raise NotImplementedError
 
     async def list(
@@ -1139,7 +1139,7 @@ class BaseInviteComponent:
         greeter: UserID,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
-    ) -> None | InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+    ) -> InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome | None:
         raise NotImplementedError
 
     @api
@@ -1193,7 +1193,7 @@ class BaseInviteComponent:
         token: AccessToken,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
-    ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+    ) -> InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome | None:
         raise NotImplementedError
 
     @api
@@ -1370,7 +1370,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         token: AccessToken,
-    ) -> None | InviteCompleteBadOutcome:
+    ) -> InviteCompleteBadOutcome | None:
         raise NotImplementedError
 
     @api

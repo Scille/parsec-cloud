@@ -70,7 +70,7 @@ class BaseBlockComponent:
         block_id: BlockID,
         key_index: int,
         block: bytes,
-    ) -> None | BadKeyIndex | BlockCreateBadOutcome:
+    ) -> BadKeyIndex | BlockCreateBadOutcome | None:
         raise NotImplementedError
 
     async def test_dump_blocks(

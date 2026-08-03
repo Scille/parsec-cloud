@@ -484,7 +484,7 @@ class BaseUserComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         tos_updated_on: DateTime,
-    ) -> None | UserAcceptTosBadOutcome:
+    ) -> UserAcceptTosBadOutcome | None:
         raise NotImplementedError
 
     async def list_frozen_users(

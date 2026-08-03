@@ -51,7 +51,7 @@ async def async_enrollment_reject(
     organization_id: OrganizationID,
     author: DeviceID,
     enrollment_id: AsyncEnrollmentID,
-) -> None | AsyncEnrollmentRejectBadOutcome:
+) -> AsyncEnrollmentRejectBadOutcome | None:
     # 1) We lock the common topic to ensure the user doesn't change its role
     # after we checked it.
     # Note the lock is not strictly mandatory since here we only modify data

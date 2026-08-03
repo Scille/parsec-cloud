@@ -123,7 +123,7 @@ async def realm_delete_2_do_delete_metadata(
     organization_id: OrganizationID,
     realm_id: VlobID,
     now: DateTime,
-) -> None | RealmDelete2DoDeleteMetadataBadOutcome:
+) -> RealmDelete2DoDeleteMetadataBadOutcome | None:
     row = await conn.fetchrow(
         *_q_get_realm_info(organization_id=organization_id.str, realm_id=realm_id)
     )

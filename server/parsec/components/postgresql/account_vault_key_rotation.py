@@ -118,7 +118,7 @@ async def vault_key_rotation(
     new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
     new_vault_key_access: bytes,
     items: dict[HashDigest, bytes],
-) -> None | AccountVaultKeyRotation:
+) -> AccountVaultKeyRotation | None:
     # 1) Get account and current vault
 
     row = await conn.fetchrow(

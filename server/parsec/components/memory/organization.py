@@ -354,8 +354,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
-        tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
-    ) -> None | OrganizationUpdateBadOutcome:
+        tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset,
+    ) -> OrganizationUpdateBadOutcome | None:
         if realm_minimum_archiving_period_before_deletion is not Unset:
             assert realm_minimum_archiving_period_before_deletion >= 0  # Sanity check
 
@@ -390,7 +390,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     @override
     async def get_tos(
         self, id: OrganizationID
-    ) -> TermsOfService | None | OrganizationGetTosBadOutcome:
+    ) -> TermsOfService | OrganizationGetTosBadOutcome | None:
         try:
             org = self._data.organizations[id]
         except KeyError:

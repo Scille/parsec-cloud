@@ -139,13 +139,13 @@ async def vlob_update(
     timestamp: DateTime,
     blob: bytes,
 ) -> (
-    None
-    | BadKeyIndex
+    BadKeyIndex
     | VlobUpdateBadOutcome
     | TimestampOutOfBallpark
     | RequireGreaterTimestamp
     | RejectedBySequesterService
     | SequesterServiceUnavailable
+    | None
 ):
     # 1) Query the database to get all info about org/device/user/realm/vlob
     #    and lock the common & realm topics

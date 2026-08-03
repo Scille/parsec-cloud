@@ -197,7 +197,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         send_email: bool,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForUserBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -283,7 +283,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         send_email: bool,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForDeviceBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -362,7 +362,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         claimer_user_id: UserID,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForShamirRecoveryBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -463,7 +463,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         token: AccessToken,
-    ) -> None | InviteCancelBadOutcome:
+    ) -> InviteCancelBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -836,7 +836,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         greeter: UserID,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
-    ) -> None | InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+    ) -> InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -894,7 +894,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         token: AccessToken,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
-    ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+    ) -> InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -1076,7 +1076,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         token: AccessToken,
-    ) -> None | InviteCompleteBadOutcome:
+    ) -> InviteCompleteBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:

@@ -102,13 +102,13 @@ class BaseVlobComponent:
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobCreateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         raise NotImplementedError
 
@@ -124,13 +124,13 @@ class BaseVlobComponent:
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobUpdateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         raise NotImplementedError
 

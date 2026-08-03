@@ -116,7 +116,7 @@ class PGAccountComponent(BaseAccountComponent):
         now: DateTime,
         email: EmailAddress,
         validation_code: ValidationCode,
-    ) -> None | AccountCreateProceedBadOutcome:
+    ) -> AccountCreateProceedBadOutcome | None:
         return await create_check_validation_code(self.pool, now, email, validation_code)
 
     @override
@@ -134,7 +134,7 @@ class PGAccountComponent(BaseAccountComponent):
         auth_method_id: AccountAuthMethodID,
         auth_method_mac_key: SecretKey,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-    ) -> None | AccountCreateProceedBadOutcome:
+    ) -> AccountCreateProceedBadOutcome | None:
         return await create_proceed(
             self.pool,
             now,
@@ -191,7 +191,7 @@ class PGAccountComponent(BaseAccountComponent):
         now: DateTime,
         auth_method_id: AccountAuthMethodID,
         validation_code: ValidationCode,
-    ) -> None | AccountDeleteProceedBadOutcome:
+    ) -> AccountDeleteProceedBadOutcome | None:
         return await delete_proceed(self.pool, now, auth_method_id, validation_code)
 
     @override
@@ -241,7 +241,7 @@ class PGAccountComponent(BaseAccountComponent):
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-    ) -> None | AccountRecoverProceedBadOutcome:
+    ) -> AccountRecoverProceedBadOutcome | None:
         return await recover_proceed(
             self.pool,
             now,
@@ -284,7 +284,7 @@ class PGAccountComponent(BaseAccountComponent):
         auth_method_id: AccountAuthMethodID,
         item_fingerprint: HashDigest,
         item: bytes,
-    ) -> None | AccountVaultItemUploadBadOutcome:
+    ) -> AccountVaultItemUploadBadOutcome | None:
         return await vault_item_upload(conn, auth_method_id, item_fingerprint, item)
 
     @override
@@ -308,7 +308,7 @@ class PGAccountComponent(BaseAccountComponent):
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
-    ) -> None | AccountVaultKeyRotation:
+    ) -> AccountVaultKeyRotation | None:
         return await vault_key_rotation(
             conn,
             now,
@@ -356,7 +356,7 @@ class PGAccountComponent(BaseAccountComponent):
         new_auth_method_mac_key: SecretKey,
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
-    ) -> None | AccountAuthMethodCreateBadOutcome:
+    ) -> AccountAuthMethodCreateBadOutcome | None:
         return await auth_method_create(
             conn,
             now,
@@ -384,5 +384,5 @@ class PGAccountComponent(BaseAccountComponent):
         now: DateTime,
         auth_method_id: AccountAuthMethodID,
         to_disable_auth_method_id: AccountAuthMethodID,
-    ) -> None | AccountAuthMethodDisableBadOutcome:
+    ) -> AccountAuthMethodDisableBadOutcome | None:
         return await auth_method_disable(conn, now, auth_method_id, to_disable_auth_method_id)

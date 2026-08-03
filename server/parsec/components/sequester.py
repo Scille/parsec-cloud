@@ -176,7 +176,7 @@ class BaseSequesterComponent:
         organization_id: OrganizationID,
         service_id: SequesterServiceID,
         config: SequesterServiceConfig,
-    ) -> None | SequesterUpdateConfigForServiceStoreBadOutcome:
+    ) -> SequesterUpdateConfigForServiceStoreBadOutcome | None:
         raise NotImplementedError
 
     async def revoke_service(

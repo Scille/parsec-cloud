@@ -149,7 +149,7 @@ async def block_create(
     block_id: BlockID,
     key_index: int,
     block: bytes,
-) -> None | BadKeyIndex | BlockCreateBadOutcome:
+) -> BadKeyIndex | BlockCreateBadOutcome | None:
     # Given block metadata and block data are stored on different storages,
     # being atomic is not easy here :(
     #

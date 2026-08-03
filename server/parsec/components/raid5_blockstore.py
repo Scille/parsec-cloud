@@ -134,7 +134,7 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         nb_chunks = len(self.blockstores) - 1
         chunks = split_block_in_chunks(block, nb_chunks)
         assert len(chunks) == nb_chunks

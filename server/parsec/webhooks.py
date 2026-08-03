@@ -99,7 +99,7 @@ class WebhooksComponent:
         version: int,
         timestamp: DateTime,
         blob: bytes,
-    ) -> None | SequesterServiceUnavailable | RejectedBySequesterService:
+    ) -> SequesterServiceUnavailable | RejectedBySequesterService | None:
         # Proceed webhook service before storage (guarantee data are not stored if they are rejected)
         try:
             ret = await self._http_client.post(
@@ -174,7 +174,7 @@ class WebhooksComponent:
         encryption_algorithm: SecretKeyAlgorithm,
         hash_algorithm: HashAlgorithm,
         key_canary: bytes,
-    ) -> None | SequesterServiceUnavailable | RejectedBySequesterService:
+    ) -> SequesterServiceUnavailable | RejectedBySequesterService | None:
         # Proceed webhook service before storage (guarantee data are not stored if they are rejected)
         try:
             ret = await self._http_client.post(

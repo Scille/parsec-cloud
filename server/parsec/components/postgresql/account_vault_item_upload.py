@@ -42,7 +42,7 @@ async def vault_item_upload(
     auth_method_id: AccountAuthMethodID,
     item_fingerprint: HashDigest,
     item: bytes,
-) -> None | AccountVaultItemUploadBadOutcome:
+) -> AccountVaultItemUploadBadOutcome | None:
     # 1) Find the current vault for this auth method
 
     row = await conn.fetchrow(*_q_get_vault_from_auth_method(auth_method_id=auth_method_id))

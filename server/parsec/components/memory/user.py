@@ -826,7 +826,7 @@ class MemoryUserComponent(BaseUserComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         tos_updated_on: DateTime,
-    ) -> None | UserAcceptTosBadOutcome:
+    ) -> UserAcceptTosBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:

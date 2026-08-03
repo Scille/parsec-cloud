@@ -93,13 +93,13 @@ class PGVlobComponent(BaseVlobComponent):
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobCreateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         return await vlob_create(
             conn,
@@ -129,13 +129,13 @@ class PGVlobComponent(BaseVlobComponent):
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobUpdateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         return await vlob_update(
             conn,

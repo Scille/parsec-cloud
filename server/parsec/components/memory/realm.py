@@ -1331,7 +1331,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         organization_id: OrganizationID,
         realm_id: VlobID,
         now: DateTime,
-    ) -> None | RealmDelete2DoDeleteMetadataBadOutcome:
+    ) -> RealmDelete2DoDeleteMetadataBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:

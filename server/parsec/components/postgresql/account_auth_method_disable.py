@@ -59,7 +59,7 @@ async def auth_method_disable(
     now: DateTime,
     auth_method_id: AccountAuthMethodID,
     to_disable_auth_method_id: AccountAuthMethodID,
-) -> None | AccountAuthMethodDisableBadOutcome:
+) -> AccountAuthMethodDisableBadOutcome | None:
     if auth_method_id == to_disable_auth_method_id:
         return AccountAuthMethodDisableBadOutcome.SELF_DISABLE_NOT_ALLOWED
 

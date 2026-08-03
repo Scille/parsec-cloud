@@ -171,7 +171,7 @@ async def delete_proceed(
     now: DateTime,
     auth_method_id: AccountAuthMethodID,
     validation_code: ValidationCode,
-) -> None | AccountDeleteProceedBadOutcome:
+) -> AccountDeleteProceedBadOutcome | None:
     # Acquire a connection from the pool by hand is needed here since we don't
     # want a rollback-on-error behavior (which is what the `@transaction`
     # decorator does).
@@ -211,7 +211,7 @@ async def _delete_proceed(
     now: DateTime,
     auth_method_id: AccountAuthMethodID,
     validation_code: ValidationCode,
-) -> tuple[bool, None | AccountDeleteProceedBadOutcome]:
+) -> tuple[bool, AccountDeleteProceedBadOutcome | None]:
     # 1) Find the account associated with this auth method
 
     row = await conn.fetchrow(

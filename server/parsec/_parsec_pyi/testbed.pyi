@@ -287,7 +287,7 @@ class TestbedEventUpdateOrganization:
     active_users_limit: ActiveUsersLimit | UnsetType
     user_profile_outsider_allowed: bool | UnsetType
     realm_minimum_archiving_period_before_deletion: int | UnsetType
-    tos: None | dict[str, str] | UnsetType
+    tos: dict[str, str] | UnsetType | None
 
 TestbedEvent = (
     TestbedEventBootstrapOrganization

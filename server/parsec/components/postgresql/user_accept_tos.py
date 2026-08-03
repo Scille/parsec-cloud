@@ -54,7 +54,7 @@ async def user_accept_tos(
     organization_id: OrganizationID,
     author: DeviceID,
     tos_updated_on: DateTime,
-) -> None | UserAcceptTosBadOutcome:
+) -> UserAcceptTosBadOutcome | None:
     match await auth_no_lock(conn, organization_id, author):
         case AuthNoLockData() as db_auth:
             pass

@@ -65,13 +65,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobCreateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -210,13 +210,13 @@ class MemoryVlobComponent(BaseVlobComponent):
         timestamp: DateTime,
         blob: bytes,
     ) -> (
-        None
-        | BadKeyIndex
+        BadKeyIndex
         | VlobUpdateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceUnavailable
+        | None
     ):
         try:
             org = self._data.organizations[organization_id]

@@ -181,7 +181,6 @@ __all__ = [
     "GreeterOrClaimer",
     "InvitationStatus",
     "InvitationType",
-    "InvitationType",
     "OpenBaoAuthType",
     "RealmRole",
     "UserProfile",
@@ -201,8 +200,6 @@ __all__ = [
     "SequesterServiceID",
     "TOTPOpaqueKeyID",
     "UserID",
-    "VlobID",
-    "VlobID",
     "VlobID",
     # Addrs
     "ParsecActionAddr",
