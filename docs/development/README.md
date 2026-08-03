@@ -95,6 +95,13 @@ In addition to the [shared requirements](#shared-requirements), for working with
    nvm install 24.18.0
    ```
 
+   If you have installed multiple versions, make sure you are using the right one.
+   You can choose one of the following options:
+
+   - Enable it each time for the current session: `nvm use 24.18.0` (or `nvm use` from the `client` directory)
+   - Enable it automatically via [deeper shell integration](https://github.com/nvm-sh/nvm#deeper-shell-integration)
+   - Set it as default globally: `nvm alias default 24.18.0`
+
 2. Install `wasm-pack`
 
    Currently, we use `wasm-pack@0.13.1`.
