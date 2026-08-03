@@ -302,3 +302,17 @@ Until the deletion date:
 .. note::
 
     To clean the database see :ref:`here <doc_hosting_administration_workspace_deletion>`.
+
+Take ownership of a workspace
+-----------------------------
+
+In some situations, a workspace may find itself without an owner, and in this case, it would no longer have anyone able to perform owner-only administrative actions such a renaming or archiving.
+
+When this situation is detected, the application displays a ``Missing ownership`` button to eligible users. By clicking on it, a user can take ownership of the workspace (their role on the workspace becomes **Owner**).
+
+Users with the highest remaining workspace role are eligible to become the new owner. If multiple users share that highest role, the ownership goes to the first one.
+
+.. image:: screens/workspace_take_ownership.png
+    :align: center
+    :alt: Missing ownership button on the workspace
+    :width: 300
