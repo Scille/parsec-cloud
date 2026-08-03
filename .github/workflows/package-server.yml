@@ -111,6 +111,16 @@ jobs:
           LIBPARSEC_FORCE_VENDORED_OPENSSL: true
         timeout-minutes: 1
 
+      # Ensure rust toolchain is correctly installed on MacOS
+      # Previously, with some bad luck on the runner, `cibuildwheel` would fail when `maturin` invoking `cargo`
+      # fail to install the effective toolchain
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # pin v1.17.0
+        if: matrix.platform == 'macos'
+        with:
+          # We setup the cache by hand, see below
+          cache: false
+        timeout-minutes: 10
+
       - name: Build wheel
         uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c # pin v4.1.1
         with:
