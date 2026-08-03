@@ -3,8 +3,7 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{
-    parse_macro_input, punctuated::Pair, spanned::Spanned, FnArg, ItemFn, LitInt, LitStr, Pat,
-    Type, TypeReference,
+    parse_macro_input, spanned::Spanned, FnArg, ItemFn, LitInt, LitStr, Pat, Type, TypeReference,
 };
 
 #[proc_macro_attribute]
@@ -91,7 +90,7 @@ pub fn parsec_test(
 }
 
 fn validate_testbed_argument(sig: &mut syn::Signature) -> Result<(), TokenStream> {
-    match sig.inputs.pop().map(Pair::into_value) {
+    match sig.inputs.pop() {
         Some(FnArg::Typed(typed)) => {
             validate_testbed_argument_name(&typed)?;
             validate_testbed_argument_type(&typed)?;
