@@ -283,7 +283,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5106bf2680d585dc5f29711b8aa5dde353180b8e14af89b7f0424f760c84e7ce"
 dependencies = [
  "hashbrown 0.15.5",
- "rand 0.8.6",
+ "rand 0.8.7",
  "zeroize",
 ]
 
@@ -969,7 +969,7 @@ dependencies = [
  "num",
  "once_cell",
  "openssl",
- "rand 0.8.6",
+ "rand 0.8.7",
 ]
 
 [[package]]
@@ -2419,7 +2419,7 @@ dependencies = [
  "libsodium-rs",
  "openssl",
  "pretty_assertions",
- "rand 0.8.6",
+ "rand 0.8.7",
  "rmp-serde",
  "rsa",
  "rstest",
@@ -2653,7 +2653,7 @@ dependencies = [
  "libparsec_tests_lite",
  "libparsec_types",
  "paste",
- "rand 0.8.6",
+ "rand 0.8.7",
  "rmp-serde",
  "serde",
  "serde_json",
@@ -2772,7 +2772,7 @@ dependencies = [
  "libparsec_zstd",
  "paste",
  "percent-encoding",
- "rand 0.8.6",
+ "rand 0.8.7",
  "regex",
  "regex-syntax",
  "rmp-serde",
@@ -3150,7 +3150,7 @@ dependencies = [
  "num-integer",
  "num-iter",
  "num-traits",
- "rand 0.8.6",
+ "rand 0.8.7",
  "smallvec",
  "zeroize",
 ]
@@ -3855,9 +3855,9 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 
 [[package]]
 name = "rand"
-version = "0.8.6"
+version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ca0ecfa931c29007047d1bc58e623ab12e5590e8c7cc53200d5202b69266d8a"
+checksum = "22f6172bdec972074665ed81ed53b71da00bfc44b65a753cfde883ec4c702a1a"
 dependencies = [
  "libc",
  "rand_chacha 0.3.1",
@@ -4209,7 +4209,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b3a8fb4672e840a587a66fc577a5491375df51ddb88f2a2c2a792598c326fe14"
 dependencies = [
  "quote",
- "rand 0.8.6",
+ "rand 0.8.7",
  "syn 2.0.119",
 ]
 
@@ -4279,9 +4279,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-pki-types"
-version = "1.14.1"
+version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30a7197ae7eb376e574fe940d068c30fe0462554a3ddbe4eca7838e049c937a9"
+checksum = "2f4925028c7eb5d1fcdaf196971378ed9d2c1c4efc7dc5d011256f76c99c0a96"
 dependencies = [
  "zeroize",
 ]
