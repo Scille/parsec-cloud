@@ -80,12 +80,7 @@ const props = defineProps<{
 }>();
 
 const showDescription = computed(() => {
-  return ![
-    AuthenticationCardState.Active,
-    AuthenticationCardState.Current,
-    AuthenticationCardState.Unavailable,
-    AuthenticationCardState.Forbidden,
-  ].includes(props.state);
+  return ![AuthenticationCardState.Current, AuthenticationCardState.Unavailable, AuthenticationCardState.Forbidden].includes(props.state);
 });
 
 const disabled = computed(() => {
@@ -244,11 +239,18 @@ function keyringUnavailableMessage(): Translatable {
   }
 
   &--active {
-    background: var(--parsec-color-light-secondary-premiere);
     box-shadow:
       0 1px 1px 0 rgba(0, 0, 0, 0.05),
       0 1px 4px 0 rgba(0, 0, 0, 0.03),
       0 0 1px 0 rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      background: var(--parsec-color-light-primary-30);
+
+      .image-container {
+        background-color: var(--parsec-color-light-primary-100);
+      }
+    }
 
     .authentication-card__icon {
       color: var(--parsec-color-light-primary-400);

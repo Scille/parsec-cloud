@@ -167,33 +167,37 @@ msTest('Change password', async ({ myProfilePage }) => {
 });
 
 msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
+  msTest.setTimeout(45_000);
   await expect(myProfilePage.locator('.menu-list__item').nth(2)).toHaveText('Authentication');
   await myProfilePage.locator('.menu-list__item').nth(2).click();
   await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
   await myProfilePage.locator('#change-authentication-button').click();
-  const changePasswordModal = myProfilePage.locator('.change-authentication-modal');
-  await expect(changePasswordModal).toBeVisible();
-  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Enter your current password');
-  await expect(changePasswordModal.locator('ion-footer').locator('#next-button')).toBeTrulyDisabled();
-  const currentPasswordContainer = changePasswordModal.locator('.input-container').nth(0);
+  const changeAuthModal = myProfilePage.locator('.change-authentication-modal');
+  await expect(changeAuthModal).toBeVisible();
+  await expect(changeAuthModal.locator('.modal-header')).toHaveText('Enter your current password');
+  await expect(changeAuthModal.locator('ion-footer').locator('#next-button')).toBeTrulyDisabled();
+  const currentPasswordContainer = changeAuthModal.locator('.input-container').nth(0);
 
   await fillIonInput(currentPasswordContainer.locator('ion-input'), 'P@ssw0rd.');
-  await changePasswordModal.locator('#next-button').click();
+  await changeAuthModal.locator('#next-button').click();
 
-  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Change authentication method');
-  await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
+  await expect(changeAuthModal.locator('.modal-header')).toHaveText('Change authentication method');
+  await expect(changeAuthModal.locator('#next-button')).toHaveDisabledAttribute();
 
-  const authRadio = changePasswordModal.locator('.radio-list-item:visible');
+  const authRadio = changeAuthModal.locator('.radio-list-item:visible');
   await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
   await authRadio.nth(3).click();
 
-  await expect(changePasswordModal.locator('#next-button')).toHaveText('Confirm change');
-  await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
-  await changePasswordModal.locator('.proconnect-button').click();
-  await expect(changePasswordModal.locator('#next-button')).toNotHaveDisabledAttribute();
-  await changePasswordModal.locator('#next-button').click();
-  await expect(changePasswordModal).toBeHidden();
+  await expect(changeAuthModal.locator('#next-button')).toHaveText('Confirm change');
+  await expect(changeAuthModal.locator('#next-button')).toHaveDisabledAttribute();
+  await changeAuthModal.locator('.proconnect-button').click();
+  await expect(changeAuthModal.locator('#next-button')).toNotHaveDisabledAttribute();
+  await changeAuthModal.locator('#next-button').click();
+  await expect(changeAuthModal).toBeHidden();
   await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
+  await expect(myProfilePage.locator('.authentication-container').locator('.authentication-item-content__description').nth(0)).toHaveText(
+    'Single Sign-On',
+  );
 
   await logout(myProfilePage);
 
@@ -213,6 +217,23 @@ msTest('Change auth to/from openbao', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
 
   await myProfilePage.locator('#change-authentication-button').click();
+  await expect(changeAuthModal).toBeVisible();
+  await expect(changeAuthModal.locator('.proconnect-button')).toBeVisible();
+  await changeAuthModal.locator('.proconnect-button').click();
+  await expect(authRadio).toHaveAuthentication({ keyringDisabled: true, pkiDisabled: true });
+  // Back to password
+  await authRadio.nth(0).click();
+
+  await expect(changeAuthModal.locator('.choose-password')).toBeVisible();
+  const passwordInputs = changeAuthModal.locator('.choose-password').locator('ion-input');
+  await fillIonInput(passwordInputs.nth(0), 'N3wP@ssw0rd.');
+  await fillIonInput(passwordInputs.nth(1), 'N3wP@ssw0rd.');
+  await changeAuthModal.locator('#next-button').click();
+  await expect(changeAuthModal).toBeHidden();
+  await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
+  await expect(myProfilePage.locator('.authentication-container').locator('.authentication-item-content__description').nth(0)).toHaveText(
+    'Password',
+  );
 });
 
 msTest('Check settings section', async ({ myProfilePage }) => {
