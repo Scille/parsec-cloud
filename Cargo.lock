@@ -2676,7 +2676,7 @@ dependencies = [
  "rstest",
  "serde",
  "serde_with",
- "syn 2.0.119",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -2734,7 +2734,7 @@ version = "3.9.4-a.0+dev"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.3",
 ]
 
 [[package]]
