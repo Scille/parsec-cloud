@@ -63,6 +63,7 @@ UV_INSTALL_SCRIPT = ReplaceRegex(
 )
 UV_VERSION_MARKER = ReplaceRegex(r"[0-9.]+ # marker:uv-version", "{version} # marker:uv-version")
 NODE_GA_VERSION = ReplaceRegex(r"node-version: [0-9.]+", "node-version: {version}")
+NODE_NVMRC_VERSION = ReplaceRegex(r"^[0-9.]+", "{version}")
 WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-version: {version}")
 PYTHON_DOCKER_VERSION = ReplaceRegex(r"python:\d.\d+", hide_patch_version("python:{version}"))
 PYTHON_SMALL_VERSION = ReplaceRegex(r"python\d.\d+", hide_patch_version("python{version}"))
@@ -316,6 +317,9 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / "cli/tests/integration/version.rs": {
         Tool.Parsec: [ReplaceRegex(r'"parsec-cli .*", ', '"parsec-cli {version}", ')]
+    },
+    ROOT_DIR / "client/.nvmrc": {
+        Tool.Node: [NODE_NVMRC_VERSION],
     },
     ROOT_DIR / "client/electron/assets/installer.nsh": {
         Tool.WinFSP: [ReplaceRegex(r'WINFSP_VERSION ".*"', 'WINFSP_VERSION "{version}"')],
