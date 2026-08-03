@@ -371,6 +371,8 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Node: [
             ReplaceRegex(r"Node [0-9.]+", "Node {version}"),
             ReplaceRegex(r"nvm install [0-9.]+", "nvm install {version}"),
+            ReplaceRegex(r"nvm use [0-9.]+", "nvm use {version}"),
+            ReplaceRegex(r"nvm alias default [0-9.]+", "nvm alias default {version}"),
         ],
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
