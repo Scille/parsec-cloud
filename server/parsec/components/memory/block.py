@@ -86,7 +86,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         key_index: int,
         block: bytes,
-    ) -> None | BadKeyIndex | BlockCreateBadOutcome:
+    ) -> BadKeyIndex | BlockCreateBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -176,7 +176,7 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:

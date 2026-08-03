@@ -65,7 +65,7 @@ class PGTOTPComponent(BaseTOTPComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         one_time_password: str,
-    ) -> None | TOTPSetupConfirmBadOutcome:
+    ) -> TOTPSetupConfirmBadOutcome | None:
         return await totp_setup_confirm(conn, organization_id, author, one_time_password)
 
     @override
@@ -88,7 +88,7 @@ class PGTOTPComponent(BaseTOTPComponent):
         user_id: UserID,
         token: AccessToken,
         one_time_password: str,
-    ) -> None | TOTPSetupConfirmWithTokenBadOutcome:
+    ) -> TOTPSetupConfirmWithTokenBadOutcome | None:
         return await totp_setup_confirm_with_token(
             conn, organization_id, user_id, token, one_time_password
         )
@@ -126,7 +126,7 @@ class PGTOTPComponent(BaseTOTPComponent):
         user_email: EmailAddress | None = None,
         send_email: bool = False,
     ) -> (
-        tuple[UserID, EmailAddress, ParsecTOTPResetAddr, None | SendEmailBadOutcome]
+        tuple[UserID, EmailAddress, ParsecTOTPResetAddr, SendEmailBadOutcome | None]
         | TOTPResetBadOutcome
     ):
         # Must first do the PostgreSQL transaction...

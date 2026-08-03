@@ -1265,7 +1265,7 @@ class PGInviteComponent(BaseInviteComponent):
         send_email: bool,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForUserBadOutcome:
         # Perform operation inside a PostgreSQL transaction
         outcome = await self._new_for_user(
             now, organization_id, author, claimer_email, send_email, force_token
@@ -1302,7 +1302,7 @@ class PGInviteComponent(BaseInviteComponent):
         send_email: bool,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | HumanHandle] | InviteNewForUserBadOutcome:
+    ) -> tuple[AccessToken, HumanHandle | None] | InviteNewForUserBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1364,7 +1364,7 @@ class PGInviteComponent(BaseInviteComponent):
         send_email: bool,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForDeviceBadOutcome:
         # Perform operation inside a PostgreSQL transaction
         outcome = await self._new_for_device(now, organization_id, author, send_email, force_token)
         match outcome:
@@ -1397,7 +1397,7 @@ class PGInviteComponent(BaseInviteComponent):
         send_email: bool,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | HumanHandle] | InviteNewForDeviceBadOutcome:
+    ) -> tuple[AccessToken, HumanHandle | None] | InviteNewForDeviceBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1454,7 +1454,7 @@ class PGInviteComponent(BaseInviteComponent):
         claimer_user_id: UserID,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
+    ) -> tuple[AccessToken, SendEmailBadOutcome | None] | InviteNewForShamirRecoveryBadOutcome:
         # Perform operation inside a PostgreSQL transaction
         outcome = await self._new_for_shamir_recovery(
             now, organization_id, author, send_email, claimer_user_id, force_token
@@ -1491,7 +1491,7 @@ class PGInviteComponent(BaseInviteComponent):
         claimer_user_id: UserID,
         # Only needed for testbed template
         force_token: AccessToken | None = None,
-    ) -> tuple[AccessToken, None | HumanHandle] | InviteNewForShamirRecoveryBadOutcome:
+    ) -> tuple[AccessToken, HumanHandle | None] | InviteNewForShamirRecoveryBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
@@ -1634,7 +1634,7 @@ class PGInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         token: AccessToken,
-    ) -> None | InviteCancelBadOutcome:
+    ) -> InviteCancelBadOutcome | None:
         match await self.organization._get(conn, organization_id):
             case Organization() as org:
                 pass
@@ -2375,7 +2375,7 @@ class PGInviteComponent(BaseInviteComponent):
         greeter: UserID,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
-    ) -> None | InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+    ) -> InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome | None:
         match await self.organization._get(conn, organization_id):
             case Organization() as org:
                 pass
@@ -2442,7 +2442,7 @@ class PGInviteComponent(BaseInviteComponent):
         token: AccessToken,
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
-    ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+    ) -> InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome | None:
         match await self.organization._get(conn, organization_id):
             case Organization() as org:
                 pass
@@ -2671,7 +2671,7 @@ class PGInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         token: AccessToken,
-    ) -> None | InviteCompleteBadOutcome:
+    ) -> InviteCompleteBadOutcome | None:
         match await self.organization._get(conn, organization_id):
             case Organization() as org:
                 pass

@@ -55,7 +55,7 @@ async def async_enrollment_cancel(
     now: DateTime,
     organization_id: OrganizationID,
     enrollment_id: AsyncEnrollmentID,
-) -> None | AsyncEnrollmentCancelBadOutcome:
+) -> AsyncEnrollmentCancelBadOutcome | None:
     # 1) Check organization exists and is not expired
 
     org_row = await conn.fetchrow(

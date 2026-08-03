@@ -79,7 +79,7 @@ class SwiftBlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         slug = build_swift_slug(organization_id=organization_id, id=block_id)
         try:
             await anyio.to_thread.run_sync(

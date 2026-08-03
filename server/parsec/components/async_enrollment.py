@@ -372,10 +372,10 @@ class BaseAsyncEnrollmentComponent:
         submit_payload: bytes,
         submit_payload_signature: AsyncEnrollmentPayloadSignature,
     ) -> (
-        None
-        | AsyncEnrollmentSubmitValidateBadOutcome
+        AsyncEnrollmentSubmitValidateBadOutcome
         | AsyncEnrollmentEmailAlreadySubmitted
         | AsyncEnrollmentSubmitBadOutcome
+        | None
     ):
         raise NotImplementedError
 
@@ -398,7 +398,7 @@ class BaseAsyncEnrollmentComponent:
         now: DateTime,
         organization_id: OrganizationID,
         enrollment_id: AsyncEnrollmentID,
-    ) -> None | AsyncEnrollmentCancelBadOutcome:
+    ) -> AsyncEnrollmentCancelBadOutcome | None:
         raise NotImplementedError
 
     async def reject(
@@ -407,7 +407,7 @@ class BaseAsyncEnrollmentComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         enrollment_id: AsyncEnrollmentID,
-    ) -> None | AsyncEnrollmentRejectBadOutcome:
+    ) -> AsyncEnrollmentRejectBadOutcome | None:
         raise NotImplementedError
 
     async def accept(
@@ -774,7 +774,7 @@ async def send_accepted_enrollment_email(
     config: BackendConfig,
     organization_id: OrganizationID,
     claimer_email: EmailAddress,
-) -> None | SendEmailBadOutcome:
+) -> SendEmailBadOutcome | None:
     if not config.server_addr:
         return SendEmailBadOutcome.BAD_SMTP_CONFIG
     message = generate_accepted_enrollment_email(

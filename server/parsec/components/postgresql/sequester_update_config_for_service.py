@@ -65,7 +65,7 @@ async def sequester_update_config_for_service(
     organization_id: OrganizationID,
     service_id: SequesterServiceID,
     config: SequesterServiceConfig,
-) -> None | SequesterUpdateConfigForServiceStoreBadOutcome:
+) -> SequesterUpdateConfigForServiceStoreBadOutcome | None:
     match config:
         case SequesterServiceType.STORAGE as service_type:
             webhook_url = None

@@ -66,7 +66,7 @@ class BaseBlockStoreComponent:
 
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         raise NotImplementedError
 
 

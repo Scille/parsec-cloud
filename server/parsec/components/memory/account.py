@@ -138,7 +138,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         now: DateTime,
         email: EmailAddress,
         validation_code: ValidationCode,
-    ) -> None | AccountCreateProceedBadOutcome:
+    ) -> AccountCreateProceedBadOutcome | None:
         async with self._data.account_creation_lock:
             return self._create_account_check_code(now, email, validation_code)
 
@@ -147,7 +147,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         now: DateTime,
         email: EmailAddress,
         validation_code: ValidationCode,
-    ) -> None | AccountCreateProceedBadOutcome:
+    ) -> AccountCreateProceedBadOutcome | None:
         try:
             last_mail_info = self._data.account_create_validation_emails[email]
         except KeyError:
@@ -178,7 +178,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         auth_method_id: AccountAuthMethodID,
         auth_method_mac_key: SecretKey,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-    ) -> None | AccountCreateProceedBadOutcome:
+    ) -> AccountCreateProceedBadOutcome | None:
         async with self._data.account_creation_lock:
             outcome = self._create_account_check_code(now, human_handle.email, validation_code)
             match outcome:
@@ -255,7 +255,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         now: DateTime,
         auth_method_id: AccountAuthMethodID,
         validation_code: ValidationCode,
-    ) -> None | AccountDeleteProceedBadOutcome:
+    ) -> AccountDeleteProceedBadOutcome | None:
         async with self._data.account_creation_lock:
             # 1) Retrieve the account
 
@@ -336,7 +336,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-    ) -> None | AccountRecoverProceedBadOutcome:
+    ) -> AccountRecoverProceedBadOutcome | None:
         async with self._data.account_creation_lock:
             # 1) Check validation code
 
@@ -394,7 +394,7 @@ class MemoryAccountComponent(BaseAccountComponent):
     @override
     async def vault_item_upload(
         self, auth_method_id: AccountAuthMethodID, item_fingerprint: HashDigest, item: bytes
-    ) -> None | AccountVaultItemUploadBadOutcome:
+    ) -> AccountVaultItemUploadBadOutcome | None:
         match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
             case (account, _):
                 pass
@@ -434,7 +434,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
-    ) -> None | AccountVaultKeyRotation:
+    ) -> AccountVaultKeyRotation | None:
         match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
             case (account, _):
                 pass
@@ -602,7 +602,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         new_auth_method_mac_key: SecretKey,
         new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
-    ) -> None | AccountAuthMethodCreateBadOutcome:
+    ) -> AccountAuthMethodCreateBadOutcome | None:
         # Verify the requesting account exists and is active
         match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
             case (account, _):
@@ -675,7 +675,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         now: DateTime,
         auth_method_id: AccountAuthMethodID,
         to_disable_auth_method_id: AccountAuthMethodID,
-    ) -> None | AccountAuthMethodDisableBadOutcome:
+    ) -> AccountAuthMethodDisableBadOutcome | None:
         if auth_method_id == to_disable_auth_method_id:
             return AccountAuthMethodDisableBadOutcome.SELF_DISABLE_NOT_ALLOWED
 

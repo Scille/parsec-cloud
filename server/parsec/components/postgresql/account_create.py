@@ -117,7 +117,7 @@ async def create_check_validation_code(
     now: DateTime,
     email: EmailAddress,
     validation_code: ValidationCode,
-) -> None | AccountCreateProceedBadOutcome:
+) -> AccountCreateProceedBadOutcome | None:
     # Acquire a connection from the pool by hand is needed here since we don't
     # want a rollback-on-error behavior (which is what the `@transaction`
     # decorator does).
@@ -227,7 +227,7 @@ async def _create_check_validation_code(
     now: DateTime,
     email: EmailAddress,
     validation_code: ValidationCode,
-) -> None | AccountCreateProceedBadOutcome:
+) -> AccountCreateProceedBadOutcome | None:
     row = await conn.fetchrow(*_q_get_validation_code(email=email.str))
     if not row:
         # No validation code found for this email in the database
@@ -281,7 +281,7 @@ async def create_proceed(
     auth_method_id: AccountAuthMethodID,
     auth_method_mac_key: SecretKey,
     auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-) -> None | AccountCreateProceedBadOutcome:
+) -> AccountCreateProceedBadOutcome | None:
     # Acquire a connection from the pool by hand is needed here since we don't
     # want a rollback-on-error behavior (which is what the `@transaction`
     # decorator does).
@@ -333,7 +333,7 @@ async def _create_proceed(
     auth_method_id: AccountAuthMethodID,
     auth_method_mac_key: SecretKey,
     auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-) -> tuple[bool, None | AccountCreateProceedBadOutcome]:
+) -> tuple[bool, AccountCreateProceedBadOutcome | None]:
     # 1) Lock the `account` database so we are the only one allowed to modify it
 
     await q_take_account_create_write_lock(conn, mode="write")

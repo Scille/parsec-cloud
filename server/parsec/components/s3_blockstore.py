@@ -68,7 +68,7 @@ class S3BlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         slug = build_s3_slug(organization_id=organization_id, block_id=block_id)
         try:
             assert self._s3 is not None

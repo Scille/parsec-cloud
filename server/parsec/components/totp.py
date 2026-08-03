@@ -74,7 +74,7 @@ def generate_totp_secret() -> bytes:
     return secrets.token_bytes(20)
 
 
-def compute_wait_until(failed_attemps: int, last_attempt: DateTime | None) -> None | DateTime:
+def compute_wait_until(failed_attemps: int, last_attempt: DateTime | None) -> DateTime | None:
     if failed_attemps <= 0:
         return None
     assert last_attempt is not None
@@ -217,7 +217,7 @@ class BaseTOTPComponent:
         organization_id: OrganizationID,
         totp_reset_url: ParsecTOTPResetAddr,
         to_addr: EmailAddress,
-    ) -> None | SendEmailBadOutcome:
+    ) -> SendEmailBadOutcome | None:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
@@ -250,7 +250,7 @@ class BaseTOTPComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         one_time_password: str,
-    ) -> None | TOTPSetupConfirmBadOutcome:
+    ) -> TOTPSetupConfirmBadOutcome | None:
         raise NotImplementedError
 
     # Anonymous TOTP setup (with reset token)
@@ -269,7 +269,7 @@ class BaseTOTPComponent:
         user_id: UserID,
         token: AccessToken,
         one_time_password: str,
-    ) -> None | TOTPSetupConfirmWithTokenBadOutcome:
+    ) -> TOTPSetupConfirmWithTokenBadOutcome | None:
         raise NotImplementedError
 
     # Opaque key management
@@ -298,7 +298,7 @@ class BaseTOTPComponent:
         user_email: EmailAddress | None = None,
         send_email: bool = False,
     ) -> (
-        tuple[UserID, EmailAddress, ParsecTOTPResetAddr, None | SendEmailBadOutcome]
+        tuple[UserID, EmailAddress, ParsecTOTPResetAddr, SendEmailBadOutcome | None]
         | TOTPResetBadOutcome
     ):
         raise NotImplementedError

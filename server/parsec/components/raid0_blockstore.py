@@ -28,6 +28,6 @@ class RAID0BlockStoreComponent(BaseBlockStoreComponent):
     @override
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         blockstore = self._get_blockstore(block_id)
         await blockstore.create(organization_id, block_id, block)

@@ -66,8 +66,8 @@ async def organization_update(
     active_users_limit: UnsetType | ActiveUsersLimit = Unset,
     user_profile_outsider_allowed: UnsetType | bool = Unset,
     realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
-    tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
-) -> None | OrganizationUpdateBadOutcome:
+    tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset,
+) -> OrganizationUpdateBadOutcome | None:
     with_is_expired = is_expired is not Unset
     with_active_users_limit = active_users_limit is not Unset
     with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset

@@ -347,7 +347,7 @@ class PGUserComponent(BaseUserComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         tos_updated_on: DateTime,
-    ) -> None | UserAcceptTosBadOutcome:
+    ) -> UserAcceptTosBadOutcome | None:
         return await user_accept_tos(
             conn,
             now,

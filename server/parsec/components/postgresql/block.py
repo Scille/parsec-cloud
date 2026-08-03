@@ -61,7 +61,7 @@ class PGBlockComponent(BaseBlockComponent):
         block_id: BlockID,
         key_index: int,
         block: bytes,
-    ) -> None | BadKeyIndex | BlockCreateBadOutcome:
+    ) -> BadKeyIndex | BlockCreateBadOutcome | None:
         return await block_create(
             self.blockstore,
             self.pool,
@@ -118,7 +118,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
 
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None | BlockStoreCreateBadOutcome:
+    ) -> BlockStoreCreateBadOutcome | None:
         async with self.pool.acquire() as conn:
             try:
                 ret = await conn.execute(

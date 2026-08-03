@@ -76,10 +76,10 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         submit_payload: bytes,
         submit_payload_signature: AsyncEnrollmentPayloadSignature,
     ) -> (
-        None
-        | AsyncEnrollmentSubmitValidateBadOutcome
+        AsyncEnrollmentSubmitValidateBadOutcome
         | AsyncEnrollmentEmailAlreadySubmitted
         | AsyncEnrollmentSubmitBadOutcome
+        | None
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -226,7 +226,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         now: DateTime,
         organization_id: OrganizationID,
         enrollment_id: AsyncEnrollmentID,
-    ) -> None | AsyncEnrollmentCancelBadOutcome:
+    ) -> AsyncEnrollmentCancelBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -254,7 +254,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         enrollment_id: AsyncEnrollmentID,
-    ) -> None | AsyncEnrollmentRejectBadOutcome:
+    ) -> AsyncEnrollmentRejectBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:

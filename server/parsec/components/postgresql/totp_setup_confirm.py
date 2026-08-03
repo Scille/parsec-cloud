@@ -43,9 +43,9 @@ async def _totp_setup_confirm(
     user_internal_id: int,
     one_time_password: str,
 ) -> (
-    None
-    | Literal[TOTPSetupConfirmBadOutcome.ALREADY_SETUP]
+    Literal[TOTPSetupConfirmBadOutcome.ALREADY_SETUP]
     | Literal[TOTPSetupConfirmBadOutcome.INVALID_ONE_TIME_PASSWORD]
+    | None
 ):
     row = await conn.fetchrow(*_q_get_totp(user_internal_id=user_internal_id))
     assert row is not None
@@ -77,7 +77,7 @@ async def totp_setup_confirm(
     organization_id: OrganizationID,
     author: DeviceID,
     one_time_password: str,
-) -> None | TOTPSetupConfirmBadOutcome:
+) -> TOTPSetupConfirmBadOutcome | None:
     match await auth_no_lock(conn, organization_id, author):
         case AuthNoLockData() as db_auth:
             pass
@@ -101,7 +101,7 @@ async def totp_setup_confirm_with_token(
     user_id: UserID,
     token: AccessToken,
     one_time_password: str,
-) -> None | TOTPSetupConfirmWithTokenBadOutcome:
+) -> TOTPSetupConfirmWithTokenBadOutcome | None:
     row = await conn.fetchrow(
         *_q_get_organization_user_token(organization_id=organization_id.str, user_id=user_id)
     )

@@ -26,7 +26,7 @@ class SendEmailBadOutcome(BadOutcomeEnum):
 
 def _smtp_send_email(
     email_config: SmtpEmailConfig, to_addr: EmailAddress, message: Message
-) -> None | SendEmailBadOutcome:
+) -> SendEmailBadOutcome | None:
     try:
         context = ssl.create_default_context()
         logger.debug("SSL Context", context=context)
@@ -70,7 +70,7 @@ def _smtp_send_email(
 
 def _mocked_send_email(
     email_config: MockedEmailConfig, to_addr: EmailAddress, message: Message
-) -> None | SendEmailBadOutcome:
+) -> SendEmailBadOutcome | None:
     message_body = message.as_string()
     timestamp = DateTime.now()
     email_config.sent_emails.append(
@@ -115,7 +115,7 @@ AT: {timestamp.to_rfc3339()}
 
 async def send_email(
     email_config: EmailConfig, to_addr: EmailAddress, message: Message
-) -> None | SendEmailBadOutcome:
+) -> SendEmailBadOutcome | None:
     if isinstance(email_config, SmtpEmailConfig):
         _send_email = _smtp_send_email
     else:

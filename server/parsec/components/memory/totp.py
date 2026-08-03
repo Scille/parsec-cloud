@@ -80,7 +80,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         one_time_password: str,
-    ) -> None | TOTPSetupConfirmBadOutcome:
+    ) -> TOTPSetupConfirmBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -157,7 +157,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
         user_id: UserID,
         token: AccessToken,
         one_time_password: str,
-    ) -> None | TOTPSetupConfirmWithTokenBadOutcome:
+    ) -> TOTPSetupConfirmWithTokenBadOutcome | None:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -286,7 +286,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
         user_email: EmailAddress | None = None,
         send_email: bool = False,
     ) -> (
-        tuple[UserID, EmailAddress, ParsecTOTPResetAddr, None | SendEmailBadOutcome]
+        tuple[UserID, EmailAddress, ParsecTOTPResetAddr, SendEmailBadOutcome | None]
         | TOTPResetBadOutcome
     ):
         try:

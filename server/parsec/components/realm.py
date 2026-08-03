@@ -810,7 +810,7 @@ class BaseRealmComponent:
         organization_id: OrganizationID,
         realm_id: VlobID,
         now: DateTime,
-    ) -> None | RealmDelete2DoDeleteMetadataBadOutcome:
+    ) -> RealmDelete2DoDeleteMetadataBadOutcome | None:
         """
         Mark the realm as deleted, and delete its vlobs, keys bundles and blocks metadata.
 

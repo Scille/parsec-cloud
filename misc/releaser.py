@@ -107,7 +107,7 @@ class Version:
         self.major = major
         self.minor = minor
         self.patch = patch
-        self.pre: None | tuple[str, int] = None
+        self.pre: tuple[str, int] | None = None
         self._dev = dev
         self.local: str | None = local
 

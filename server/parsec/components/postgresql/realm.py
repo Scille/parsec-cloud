@@ -424,7 +424,7 @@ class PGRealmComponent(BaseRealmComponent):
         organization_id: OrganizationID,
         realm_id: VlobID,
         now: DateTime,
-    ) -> None | RealmDelete2DoDeleteMetadataBadOutcome:
+    ) -> RealmDelete2DoDeleteMetadataBadOutcome | None:
         return await realm_delete_2_do_delete_metadata(conn, organization_id, realm_id, now)
 
     @override

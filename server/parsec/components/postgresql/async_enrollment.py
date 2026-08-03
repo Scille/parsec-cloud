@@ -58,10 +58,10 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         submit_payload: bytes,
         submit_payload_signature: AsyncEnrollmentPayloadSignature,
     ) -> (
-        None
-        | AsyncEnrollmentSubmitValidateBadOutcome
+        AsyncEnrollmentSubmitValidateBadOutcome
         | AsyncEnrollmentEmailAlreadySubmitted
         | AsyncEnrollmentSubmitBadOutcome
+        | None
     ):
         return await async_enrollment_submit(
             conn,
@@ -109,7 +109,7 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         now: DateTime,
         organization_id: OrganizationID,
         enrollment_id: AsyncEnrollmentID,
-    ) -> None | AsyncEnrollmentCancelBadOutcome:
+    ) -> AsyncEnrollmentCancelBadOutcome | None:
         return await async_enrollment_cancel(
             conn,
             now,
@@ -126,7 +126,7 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         enrollment_id: AsyncEnrollmentID,
-    ) -> None | AsyncEnrollmentRejectBadOutcome:
+    ) -> AsyncEnrollmentRejectBadOutcome | None:
         return await async_enrollment_reject(
             conn,
             now,

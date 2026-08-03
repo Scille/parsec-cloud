@@ -505,7 +505,7 @@ class MemoryTOTPThrottle:
     failed_attemps: int = 0
 
     @property
-    def wait_until(self) -> None | DateTime:
+    def wait_until(self) -> DateTime | None:
         return compute_wait_until(self.failed_attemps, self.last_attempt)
 
     def register_failed_attempt(self, now: DateTime) -> None:
@@ -679,9 +679,9 @@ class MemoryGreetingAttempt:
     greeter_id: UserID
 
     # Mutable properties
-    claimer_joined: None | DateTime = None
-    greeter_joined: None | DateTime = None
-    cancelled_reason: None | tuple[GreeterOrClaimer, CancelledGreetingAttemptReason, DateTime] = (
+    claimer_joined: DateTime | None = None
+    greeter_joined: DateTime | None = None
+    cancelled_reason: tuple[GreeterOrClaimer, CancelledGreetingAttemptReason, DateTime] | None = (
         None
     )
     greeter_steps: list[bytes] = field(default_factory=list)
