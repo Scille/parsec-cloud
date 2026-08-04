@@ -596,9 +596,11 @@ type EntryContextMenuMode =
   | 'file-readonly'
   | 'multiple-entries-full'
   | 'multiple-entries-readonly';
+
 interface EntryContextMenuOptions {
   canEdit?: boolean;
   fromSearch?: boolean;
+  onDesktop?: true;
 }
 
 export async function checkEntryContextMenu(
@@ -625,9 +627,11 @@ export async function checkEntryContextMenu(
       'Move to',
       'Make a copy',
       ...(options?.fromSearch ? ['Show enclosing folder'] : []),
+      ...(options?.onDesktop ? ['Open with default app'] : []),
+      ...(options?.onDesktop ? ['Show in explorer'] : []),
       'History',
-      'Download',
-      'Download as a ZIP file',
+      ...(options?.onDesktop ? [] : ['Download']),
+      ...(options?.onDesktop ? [] : ['Download as a ZIP file']),
       'Details',
       'Delete',
       'Copy link',
@@ -641,9 +645,10 @@ export async function checkEntryContextMenu(
       'Move to',
       'Make a copy',
       ...(options?.fromSearch ? ['Show enclosing folder'] : []),
+      ...(options?.onDesktop ? ['Show in explorer'] : []),
       'History',
-      'Download',
-      'Download as a ZIP file',
+      ...(options?.onDesktop ? [] : ['Download']),
+      ...(options?.onDesktop ? [] : ['Download as a ZIP file']),
       'Details',
       'Delete',
       'Copy link',
@@ -655,8 +660,10 @@ export async function checkEntryContextMenu(
     await expect(labels).toHaveText([
       'Preview',
       ...(options?.fromSearch ? ['Show enclosing folder'] : []),
-      'Download',
-      'Download as a ZIP file',
+      ...(options?.onDesktop ? [] : ['Download']),
+      ...(options?.onDesktop ? [] : ['Download as a ZIP file']),
+      ...(options?.onDesktop ? ['Open with default app'] : []),
+      ...(options?.onDesktop ? ['Show in explorer'] : []),
       'Details',
       'Copy link',
     ]);
@@ -666,8 +673,9 @@ export async function checkEntryContextMenu(
     }
     await expect(labels).toHaveText([
       ...(options?.fromSearch ? ['Show enclosing folder'] : []),
-      'Download',
-      'Download as a ZIP file',
+      ...(options?.onDesktop ? [] : ['Download']),
+      ...(options?.onDesktop ? [] : ['Download as a ZIP file']),
+      ...(options?.onDesktop ? ['Show in explorer'] : []),
       'Details',
       'Copy link',
     ]);
@@ -714,6 +722,70 @@ export async function checkFolderGlobalContextMenu(page: MsPage, mode: 'full' | 
       await expect(menu).toBeHidden();
     }
   } else if (mode === 'readonly') {
+    await expect(menu).toBeHidden();
+  }
+}
+
+interface WorkspaceContextMenuOptions {
+  isHidden?: boolean;
+  isStarred?: boolean;
+}
+
+export async function checkWorkspaceContextMenu(
+  page: MsPage,
+  mode: 'owner' | 'archived' | 'deleted' | 'normal',
+  action?: string | 'dismiss',
+  options?: WorkspaceContextMenuOptions,
+): Promise<void> {
+  const menu = page.locator(page.displaySize === DisplaySize.Large ? '.workspace-context-menu' : '.workspace-context-sheet-modal');
+  const actions = menu
+    .locator('.menu-list')
+    .locator(page.displaySize === DisplaySize.Large ? '.list-group-item__label' : '.list-group-item__label-small');
+  const titles = menu.locator('.menu-list').locator('.list-group-title__label');
+
+  await expect(menu).toBeVisible();
+  if (mode === 'owner') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Workspace management', 'Collaboration', 'Miscellaneous']);
+    }
+    await expect(actions).toHaveText([
+      'Rename',
+      'History',
+      options?.isHidden ? 'Show this workspace' : 'Hide this workspace',
+      'Archive this workspace',
+      'Delete this workspace',
+      'Copy link',
+      'Sharing and roles',
+      options?.isStarred ? 'Removed as starred' : 'Add as starred',
+    ]);
+  } else if (mode === 'archived') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Workspace management']);
+    }
+    await expect(actions).toHaveText(['History', 'Restore this workspace', 'Delete this workspace']);
+  } else if (mode === 'deleted') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Workspace management']);
+    }
+    await expect(actions).toHaveText(['History', 'Restore this workspace']);
+  } else if (mode === 'normal') {
+    if (page.displaySize === DisplaySize.Large) {
+      await expect(titles).toHaveText(['Workspace management', 'Collaboration', 'Miscellaneous']);
+    }
+    await expect(actions).toHaveText([
+      'History',
+      options?.isHidden ? 'Show this workspace' : 'Hide this workspace',
+      'Copy link',
+      'Sharing and roles',
+      options?.isStarred ? 'Removed as starred' : 'Add as starred',
+    ]);
+  }
+
+  if (action === 'dismiss') {
+    await menu.locator('ion-backdrop').click();
+    await expect(menu).toBeHidden();
+  } else if (action) {
+    await actions.filter({ hasText: action }).click();
     await expect(menu).toBeHidden();
   }
 }

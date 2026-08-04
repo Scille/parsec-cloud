@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DisplaySize, expect, fillIonInput, login, MsPage, msTest, openExternalLink } from '@tests/e2e/helpers';
+import { DisplaySize, expect, fillIonInput, login, mockLibParsec, MsPage, msTest, openExternalLink } from '@tests/e2e/helpers';
 
 for (const displaySize of ['small', 'large']) {
   msTest(`Workspace sharing modal default state on ${displaySize} display`, { tag: '@important' }, async ({ workspaceSharingModal }) => {
@@ -283,4 +283,24 @@ msTest('Batch workspace sharing hidden when reader', async ({ home }) => {
 
   await expect(content.locator('.modal-head-content').locator('.dropdown-container').locator('#dropdown-popover-button')).toBeHidden();
   await expect(content.locator('#batch-activate-button')).toBeHidden();
+});
+
+msTest('Workspace sharing modal error', async ({ workspaces }) => {
+  await mockLibParsec(workspaces, [
+    {
+      name: 'clientListWorkspaceUsers',
+      result: { ok: false, error: { tag: 'ClientListWorkspaceUsersErrorInternal', error: 'failed' } },
+    },
+  ]);
+  await workspaces
+    .locator('.workspaces-container-grid')
+    .locator('.workspace-card-item')
+    .nth(0)
+    .locator('.workspace-card-bottom__icons')
+    .locator('.icon-share-container')
+    .nth(0)
+    .click();
+  const modal = workspaces.locator('.workspace-sharing-modal');
+  await expect(modal).toBeVisible();
+  await expect(workspaces).toShowToast('Failed to get sharing information for this workspace.', 'Error');
 });
