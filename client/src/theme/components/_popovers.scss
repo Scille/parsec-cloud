@@ -155,7 +155,7 @@
       }
 
       &__label,
-      &-label-small {
+      &__label-small {
         color: var(--parsec-color-light-secondary-hard-grey);
         --color: var(--parsec-color-light-secondary-hard-grey);
       }
@@ -174,7 +174,8 @@
         .filter-text,
         .filter-icon,
         .list-group-item__icon,
-        .list-group-item__label {
+        .list-group-item__label,
+        .list-group-item__label-small {
           color: var(--parsec-color-light-primary-600);
           --fill-color: var(--parsec-color-light-primary-600);
         }
@@ -182,6 +183,7 @@
 
       &.item-danger {
         .list-group-item__label,
+        .list-group-item__label-small,
         .list-group-item__icon {
           color: var(--parsec-color-light-danger-500);
         }
@@ -190,6 +192,7 @@
           background: var(--parsec-color-light-danger-50);
 
           .list-group-item__label,
+          .list-group-item__label-small,
           .list-group-item__icon {
             color: var(--parsec-color-light-danger-700);
           }
@@ -198,6 +201,7 @@
 
       &.item-action {
         .list-group-item__label,
+        .list-group-item__label-small,
         .list-group-item__icon {
           color: var(--parsec-color-light-primary-500);
         }
@@ -206,6 +210,7 @@
           background: var(--parsec-color-light-primary-50);
 
           .list-group-item__label,
+          .list-group-item__label-small,
           .list-group-item__icon {
             color: var(--parsec-color-light-primary-700);
           }
@@ -235,7 +240,7 @@
       &:hover {
         color: var(--parsec-color-light-primary-600);
 
-        .list-group-item__label-small {
+        f {
           color: var(--parsec-color-light-primary-600);
         }
       }
