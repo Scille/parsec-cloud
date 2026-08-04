@@ -18,10 +18,12 @@ name = "integration"
 path = "tests/integration/mod.rs"
 
 [features]
+default = ["manpage"]
 use-libsodium = ["libparsec_crypto/use-libsodium"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 vendored-dbus = ["libparsec/vendored-dbus"]
 testenv = []
+manpage = ["dep:clap_mangen"]
 
 [dependencies]
 libparsec = { workspace = true }
@@ -43,12 +45,13 @@ rpassword = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["std"] }
 spinners = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-std"] }
 url = { workspace = true, optional = true }
 uuid = { workspace = true }
 itertools = { workspace = true, features = ["use_std"] }
 thiserror = { workspace = true }
 shadow-rs.workspace = true
+clap_mangen = { workspace = true, features = ["env"], optional = true }
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }
