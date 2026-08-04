@@ -113,7 +113,7 @@ async function refreshArchivedWorkspacesList(): Promise<void> {
     return;
   }
   querying.value = true;
-  window.nativeAPI.log('debug', 'Starting Parsec list workspaces');
+  window.nativeAPI.log('debug', 'Starting Parsec list archived workspaces');
   const result = await listArchivedWorkspaces();
   if (result.ok) {
     workspaceList.value = result.value;

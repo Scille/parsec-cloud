@@ -1,6 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, DisplaySize, expect, fillInputModal, fillIonInput, login, mockLibParsec, msTest } from '@tests/e2e/helpers';
+import {
+  answerQuestion,
+  checkEntryContextMenu,
+  checkWorkspaceContextMenu,
+  DisplaySize,
+  expect,
+  fillInputModal,
+  fillIonInput,
+  login,
+  mockLibParsec,
+  msTest,
+} from '@tests/e2e/helpers';
 import { DateTime } from 'luxon';
 
 msTest('Trash a workspace', async ({ workspaces }) => {
@@ -18,15 +29,11 @@ msTest('Trash a workspace', async ({ workspaces }) => {
   // Move workspace to bin
   const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
   await wk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await expect(contextMenu).toBeVisible();
-  const binButton = contextMenu.getByRole('listitem').nth(5);
-  await expect(binButton).toHaveText('Delete this workspace');
-  await binButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
   await answerQuestion(workspaces, false);
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  await binButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
   await answerQuestion(workspaces, true);
   await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(0)).toHaveText('Delete this workspace');
   await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(1)).toContainText(
@@ -35,7 +42,7 @@ msTest('Trash a workspace', async ({ workspaces }) => {
   await workspaces.locator('.text-input-modal').locator('#cancel-button').click();
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  await binButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
   await answerQuestion(workspaces, true);
   const inputModal = workspaces.locator('.text-input-modal');
   await fillIonInput(inputModal.locator('.form-input'), 'wksp2');
@@ -51,20 +58,12 @@ msTest('Trash a workspace', async ({ workspaces }) => {
   await expect(wk).toBeVisible();
   await expect(wk.locator('.custom-icon')).toBeVisible();
   await wk.click({ button: 'right' });
-  await expect(contextMenu.getByRole('group').getByRole('listitem')).toHaveText([
-    'Workspace management',
-    'History',
-    'Restore this workspace',
-  ]);
+  await checkWorkspaceContextMenu(workspaces, 'deleted', 'dismiss');
 });
 
 msTest('Trash a workspace with no deletion delay', async ({ workspaces }) => {
   // Delete workspace
   const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
-  await wk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await expect(contextMenu).toBeVisible();
-  const binButton = contextMenu.getByRole('listitem').nth(5);
   await mockLibParsec(workspaces, [
     {
       name: 'clientInfo',
@@ -76,7 +75,8 @@ msTest('Trash a workspace with no deletion delay', async ({ workspaces }) => {
       },
     },
   ]);
-  await binButton.click();
+  await wk.click({ button: 'right' });
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
   await answerQuestion(workspaces, true);
   await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(0)).toHaveText('Delete this workspace');
   await expect(workspaces.locator('.text-input-modal').locator('ion-text').nth(1)).toHaveText(
@@ -95,11 +95,7 @@ msTest('Trash an archived workspace', async ({ workspaces }) => {
   // Archive workspace
   const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
   await wk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await expect(contextMenu).toBeVisible();
-  const archiveButton = contextMenu.getByRole('listitem').nth(4);
-  await expect(archiveButton).toHaveText('Archive this workspace');
-  await archiveButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Archive this workspace');
   await expect(workspaces.locator('.question-modal').locator('.ms-modal-header__title')).toHaveText(['Archive this workspace']);
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
@@ -109,7 +105,7 @@ msTest('Trash an archived workspace', async ({ workspaces }) => {
   await sidebarArchiveButton.click();
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  await contextMenu.getByRole('listitem').nth(3).click();
+  await checkWorkspaceContextMenu(workspaces, 'archived', 'Delete this workspace');
   await answerQuestion(workspaces, true);
   await fillInputModal(workspaces, 'wksp1');
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
@@ -127,8 +123,8 @@ msTest('Restore a trashed workspace', async ({ workspaces }) => {
 
   // Move workspace to bin
   await wk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await contextMenu.getByRole('listitem').nth(5).click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
+
   await answerQuestion(workspaces, true);
   await fillInputModal(workspaces, 'wksp1');
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
@@ -138,13 +134,11 @@ msTest('Restore a trashed workspace', async ({ workspaces }) => {
   await sidebarTrashButton.click();
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  const restoreButton = contextMenu.getByRole('listitem').nth(2);
-  await expect(restoreButton).toHaveText('Restore this workspace');
-  await restoreButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'deleted', 'Restore this workspace');
   await answerQuestion(workspaces, false);
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  await restoreButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'deleted', 'Restore this workspace');
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been restored.', 'Success');
 
@@ -164,31 +158,12 @@ msTest('Check trashed workspace is read-only', async ({ parsecEditics }) => {
   await expect(parsecEditics.locator('.file-context-menu')).toBeHidden();
   const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(2);
   await entry.click({ button: 'right' });
-  await expect(parsecEditics.locator('.file-context-menu')).toBeVisible();
-  const popover = parsecEditics.locator('.file-context-menu');
-  await expect(popover.getByRole('group')).toHaveCount(2);
-  await expect(popover.getByRole('listitem')).toHaveText([
-    'File management',
-    'Preview',
-    'Edit',
-    'Rename',
-    'Move to',
-    'Make a copy',
-    'History',
-    'Download',
-    'Download as a ZIP file',
-    'Details',
-    'Delete',
-    'Collaboration',
-    'Copy link',
-  ]);
-  await popover.locator('ion-backdrop').click();
+  await checkEntryContextMenu(parsecEditics, 'file-full', 'dismiss', { canEdit: true });
 
   // Move workspace to bin
   await sidebarWorkspacesButton.click();
   await wk.click({ button: 'right' });
-  const contextMenu = parsecEditics.locator('.workspace-context-menu');
-  await contextMenu.getByRole('listitem').nth(5).click();
+  await checkWorkspaceContextMenu(parsecEditics, 'owner', 'Delete this workspace');
   await answerQuestion(parsecEditics, true);
   await fillInputModal(parsecEditics, 'wksp1');
   await expect(parsecEditics).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
@@ -199,17 +174,7 @@ msTest('Check trashed workspace is read-only', async ({ parsecEditics }) => {
   // Check file context menu
   await wk.click();
   await entry.click({ button: 'right' });
-  await expect(parsecEditics.locator('.file-context-menu')).toBeVisible();
-  await expect(popover.getByRole('group')).toHaveCount(2);
-  await expect(popover.getByRole('listitem')).toHaveText([
-    'File management',
-    'Preview',
-    'Download',
-    'Download as a ZIP file',
-    'Details',
-    'Collaboration',
-    'Copy link',
-  ]);
+  await checkEntryContextMenu(parsecEditics, 'file-readonly', 'dismiss', { canEdit: true });
 });
 
 msTest('Trash a workspace in small display', async ({ workspaces }) => {
@@ -219,10 +184,7 @@ msTest('Trash a workspace in small display', async ({ workspaces }) => {
   const workspaceCard = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
   await workspaceCard.locator('.icon-option-container').click();
 
-  const popover = workspaces.locator('.workspace-context-sheet-modal');
-  await expect(popover).toBeVisible();
-  await expect(popover.getByRole('listitem').nth(4)).toHaveText('Delete this workspace');
-  await popover.getByRole('listitem').nth(4).click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
   await expect(workspaces.locator('.question-modal').locator('.ms-small-display-modal-header__title')).toHaveText('Important information');
   await answerQuestion(workspaces, true);
   await fillInputModal(workspaces, 'wksp1');
@@ -266,8 +228,7 @@ msTest('Check workspace deletion sync on second client', async ({ workspaces }) 
   // Move workspace to bin
   const aliceWk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
   await aliceWk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await contextMenu.getByRole('listitem').nth(5).click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
   await answerQuestion(workspaces, true);
   await fillInputModal(workspaces, 'wksp1');
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been moved to the bin.', 'Success');
@@ -282,7 +243,7 @@ msTest('Check workspace deletion sync on second client', async ({ workspaces }) 
 
   // Restore workspace
   await aliceWk.click({ button: 'right' });
-  await contextMenu.getByRole('listitem').nth(2).click();
+  await checkWorkspaceContextMenu(workspaces, 'deleted', 'Restore this workspace');
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been restored.', 'Success');
 
@@ -297,8 +258,7 @@ msTest('Check deleted workspace displayed timestamp', async ({ workspaces }) => 
 
   // Move workspace to bin
   await wk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await contextMenu.getByRole('listitem').nth(5).click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Delete this workspace');
   await answerQuestion(workspaces, true);
   const deletionTimestamp = DateTime.now().plus({ days: 30 });
   await fillInputModal(workspaces, 'wksp1');

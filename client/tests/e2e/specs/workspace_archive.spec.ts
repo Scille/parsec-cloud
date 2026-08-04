@@ -1,6 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, DisplaySize, expect, login, msTest } from '@tests/e2e/helpers';
+import {
+  answerQuestion,
+  checkEntryContextMenu,
+  checkWorkspaceContextMenu,
+  DisplaySize,
+  expect,
+  login,
+  mockLibParsec,
+  msTest,
+} from '@tests/e2e/helpers';
 import { DateTime } from 'luxon';
 
 msTest('Archive workspace', async ({ workspaces }) => {
@@ -18,16 +27,12 @@ msTest('Archive workspace', async ({ workspaces }) => {
   await sidebarWorkspacesButton.click();
   const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
   await wk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await expect(contextMenu).toBeVisible();
-  const archiveButton = contextMenu.getByRole('listitem').nth(4);
-  await expect(archiveButton).toHaveText('Archive this workspace');
-  await archiveButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Archive this workspace');
   await expect(workspaces.locator('.question-modal').locator('.ms-modal-header__title')).toHaveText('Archive this workspace');
   await answerQuestion(workspaces, false);
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  await archiveButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Archive this workspace');
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
 
@@ -38,12 +43,7 @@ msTest('Archive workspace', async ({ workspaces }) => {
   await expect(wk.locator('.archived-label')).toBeVisible();
   await expect(wk.locator('.archived-label')).toHaveText('Read only');
   await wk.click({ button: 'right' });
-  await expect(contextMenu.getByRole('group').getByRole('listitem')).toHaveText([
-    'Workspace management',
-    'History',
-    'Restore this workspace',
-    'Delete this workspace',
-  ]);
+  await checkWorkspaceContextMenu(workspaces, 'archived', 'dismiss');
 });
 
 msTest('Restore an archived workspace', async ({ workspaces }) => {
@@ -53,8 +53,7 @@ msTest('Restore an archived workspace', async ({ workspaces }) => {
 
   // Archive workspace
   await wk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await contextMenu.getByRole('listitem').nth(4).click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Archive this workspace');
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
 
@@ -63,13 +62,11 @@ msTest('Restore an archived workspace', async ({ workspaces }) => {
   await sidebarArchiveButton.click();
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  const restoreButton = contextMenu.getByRole('listitem').nth(2);
-  await expect(restoreButton).toHaveText('Restore this workspace');
-  await restoreButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'archived', 'Restore this workspace');
   await answerQuestion(workspaces, false);
   await expect(wk).toBeVisible();
   await wk.click({ button: 'right' });
-  await restoreButton.click();
+  await checkWorkspaceContextMenu(workspaces, 'archived', 'Restore this workspace');
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been restored.', 'Success');
 
@@ -89,31 +86,12 @@ msTest('Check archived workspace is read-only', async ({ parsecEditics }) => {
   await expect(parsecEditics.locator('.file-context-menu')).toBeHidden();
   const entry = parsecEditics.locator('.folder-container').locator('.file-list-item').nth(2);
   await entry.click({ button: 'right' });
-  await expect(parsecEditics.locator('.file-context-menu')).toBeVisible();
-  const popover = parsecEditics.locator('.file-context-menu');
-  await expect(popover.getByRole('group')).toHaveCount(2);
-  await expect(popover.getByRole('listitem')).toHaveText([
-    'File management',
-    'Preview',
-    'Edit',
-    'Rename',
-    'Move to',
-    'Make a copy',
-    'History',
-    'Download',
-    'Download as a ZIP file',
-    'Details',
-    'Delete',
-    'Collaboration',
-    'Copy link',
-  ]);
-  await popover.locator('ion-backdrop').click();
+  await checkEntryContextMenu(parsecEditics, 'file-full', 'dismiss', { canEdit: true });
   await sidebarWorkspacesButton.click();
 
   // Archive workspace
   await wk.click({ button: 'right' });
-  const contextMenu = parsecEditics.locator('.workspace-context-menu');
-  await contextMenu.getByRole('listitem').nth(4).click();
+  await checkWorkspaceContextMenu(parsecEditics, 'owner', 'Archive this workspace');
   await answerQuestion(parsecEditics, true);
   await expect(parsecEditics).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
   await expect(wk).not.toBeVisible();
@@ -123,17 +101,8 @@ msTest('Check archived workspace is read-only', async ({ parsecEditics }) => {
   // Check file context menu
   await wk.click();
   await entry.click({ button: 'right' });
-  await expect(parsecEditics.locator('.file-context-menu')).toBeVisible();
-  await expect(popover.getByRole('group')).toHaveCount(2);
-  await expect(popover.getByRole('listitem')).toHaveText([
-    'File management',
-    'Preview',
-    'Download',
-    'Download as a ZIP file',
-    'Details',
-    'Collaboration',
-    'Copy link',
-  ]);
+
+  await checkEntryContextMenu(parsecEditics, 'file-readonly', 'dismiss');
 });
 
 msTest('Archive workspace in small display', async ({ workspaces }) => {
@@ -142,10 +111,7 @@ msTest('Archive workspace in small display', async ({ workspaces }) => {
   const workspaceCard = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
   await workspaceCard.locator('.icon-option-container').click();
 
-  const popover = workspaces.locator('.workspace-context-sheet-modal');
-  await expect(popover).toBeVisible();
-  await expect(popover.getByRole('listitem').nth(3)).toHaveText('Archive this workspace');
-  await popover.getByRole('listitem').nth(3).click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Archive this workspace');
 
   await expect(workspaces.locator('.question-modal').locator('.ms-small-display-modal-header__title')).toHaveText('Archive this workspace');
   await answerQuestion(workspaces, true);
@@ -188,8 +154,7 @@ msTest('Check workspace archiving sync on second client', async ({ workspaces })
   // Archive workspace
   const aliceWk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
   await aliceWk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await contextMenu.getByRole('listitem').nth(4).click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Archive this workspace');
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
 
@@ -203,7 +168,7 @@ msTest('Check workspace archiving sync on second client', async ({ workspaces })
 
   // Restore workspace
   await aliceWk.click({ button: 'right' });
-  await contextMenu.getByRole('listitem').nth(2).click();
+  await checkWorkspaceContextMenu(workspaces, 'archived', 'Restore this workspace');
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been restored.', 'Success');
 
@@ -218,8 +183,7 @@ msTest('Check archived workspace displayed timestamp', async ({ workspaces }) =>
 
   // Archive workspace
   await wk.click({ button: 'right' });
-  const contextMenu = workspaces.locator('.workspace-context-menu');
-  await contextMenu.getByRole('listitem').nth(4).click();
+  await checkWorkspaceContextMenu(workspaces, 'owner', 'Archive this workspace');
   const archivingTimestamp = DateTime.now();
   await answerQuestion(workspaces, true);
   await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
@@ -230,4 +194,25 @@ msTest('Check archived workspace displayed timestamp', async ({ workspaces }) =>
   await expect(wkTimestamp).toContainText('Archived on: ');
   await expect(wkTimestamp).toContainText(`${archivingTimestamp.day}`);
   await expect(wkTimestamp).toContainText(`${archivingTimestamp.year}`);
+});
+
+msTest('Archived workspaces list error', async ({ workspaces }) => {
+  const sidebarArchiveButton = workspaces.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-archived-workspaces');
+  const wk = workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+
+  // Archive workspace
+  await wk.click({ button: 'right' });
+  const contextMenu = workspaces.locator('.workspace-context-menu');
+  await contextMenu.getByRole('listitem').nth(4).click();
+  await answerQuestion(workspaces, true);
+  await expect(workspaces).toShowToast('The workspace wksp1 has successfully been archived.', 'Success');
+
+  await mockLibParsec(workspaces, [
+    {
+      name: 'clientListWorkspaces',
+      result: { ok: false, error: { tag: 'ClientListWorkspacesErrorInternal', error: 'failed' } },
+    },
+  ]);
+  await sidebarArchiveButton.click();
+  await expect(workspaces).toShowToast('Failed to list the workspaces.', 'Error');
 });

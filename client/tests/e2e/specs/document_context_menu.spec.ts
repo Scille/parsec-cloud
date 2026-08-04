@@ -15,6 +15,7 @@ import {
   MsPage,
   msTest,
 } from '@tests/e2e/helpers';
+import { mockDesktop } from '@tests/e2e/helpers/mock';
 
 async function isInGridMode(page: MsPage): Promise<boolean> {
   const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
@@ -128,6 +129,33 @@ msTest.describe(() => {
       },
     );
   }
+
+  msTest('Document actions default state on desktop mode for file and folder', async ({ documents }, testInfo: TestInfo) => {
+    await mockDesktop(documents);
+    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
+    await expect(documents.locator('.file-context-menu')).toBeHidden();
+    const entry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
+    await entry.hover();
+    await entry.locator('.options-button').click();
+    await checkEntryContextMenu(documents, 'file-full', 'dismiss', { onDesktop: true });
+    const folder = documents.locator('.folder-container').locator('.file-list-item').nth(0);
+    await folder.hover();
+    await folder.locator('.options-button').click();
+    await checkEntryContextMenu(documents, 'folder-full', 'dismiss', { onDesktop: true });
+  });
+
+  msTest('Document actions default state on desktop mode for file and folder in readonly', async ({ documentsReadOnly }) => {
+    await mockDesktop(documentsReadOnly);
+    await expect(documentsReadOnly.locator('.file-context-menu')).toBeHidden();
+    const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(1);
+    await entry.hover();
+    await entry.locator('.options-button').click();
+    await checkEntryContextMenu(documentsReadOnly, 'file-readonly', 'dismiss', { onDesktop: true });
+    const folder = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(0);
+    await folder.hover();
+    await folder.locator('.options-button').click();
+    await checkEntryContextMenu(documentsReadOnly, 'folder-readonly', 'dismiss', { onDesktop: true });
+  });
 
   msTest('Document popover on right click for file with editics', async ({ parsecEditics }, testInfo: TestInfo) => {
     await importDefaultFiles(parsecEditics, testInfo, ImportDocuments.Docx, false);

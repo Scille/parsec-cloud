@@ -3,6 +3,7 @@
 import { Page, TestInfo } from '@playwright/test';
 import {
   answerQuestion,
+  checkWorkspaceContextMenu,
   createFolder,
   DisplaySize,
   expect,
@@ -45,9 +46,7 @@ msTest.describe(() => {
         await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
         await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
       }
-      const contextMenu = documents.locator('.workspace-context-menu');
-      await expect(contextMenu).toBeVisible();
-      await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+      await checkWorkspaceContextMenu(documents, 'owner', 'History');
       await expect(documents).toBeWorkspaceHistoryPage();
     });
   }
@@ -60,8 +59,7 @@ msTest.describe(() => {
     await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').locator('ion-button').click();
     await expect(documents).toBeWorkspacePage();
     await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
-    const contextMenu = documents.locator('.workspace-context-menu');
-    await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+    await checkWorkspaceContextMenu(documents, 'owner', 'History');
     await expect(documents.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
     const container = documents.locator('.history-container');
     await expect(container.locator('.head-content__title')).toHaveText('Workspace: wksp1');
@@ -106,8 +104,7 @@ msTest.describe(() => {
     await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').locator('ion-button').click();
     await expect(documents).toBeWorkspacePage();
     await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
-    const contextMenu = documents.locator('.workspace-context-menu');
-    await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+    await checkWorkspaceContextMenu(documents, 'owner', 'History');
     await expect(documents.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
     const container = documents.locator('.history-container');
     await expect(container.locator('.head-content__title')).toHaveText('Workspace: wksp1');
@@ -128,8 +125,7 @@ msTest.describe(() => {
     await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').locator('ion-button').click();
     await expect(documents).toBeWorkspacePage();
     await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
-    const contextMenu = documents.locator('.workspace-context-menu');
-    await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+    await checkWorkspaceContextMenu(documents, 'owner', 'History');
     await expect(documents.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
     await expect(documents).toBeWorkspaceHistoryPage();
     const container = documents.locator('.history-container');
@@ -158,8 +154,7 @@ msTest.describe(() => {
     await parsecEditics.locator('.sidebar').locator('#sidebar-workspaces').locator('#sidebar-all-workspaces').click();
     await expect(parsecEditics).toBeWorkspacePage();
     await parsecEditics.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
-    const contextMenu = parsecEditics.locator('.workspace-context-menu');
-    await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+    await checkWorkspaceContextMenu(parsecEditics, 'owner', 'History');
     await expect(parsecEditics.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
     const container = parsecEditics.locator('.history-container');
     await expect(container.locator('.head-content__title')).toHaveText('Workspace: wksp1');
@@ -215,9 +210,7 @@ msTest.describe(() => {
     await expect(documents).toBeWorkspacePage();
     await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
     await documents.locator('.workspace-card-item').locator('.icon-option-container').click();
-    const contextMenu = documents.locator('.workspace-context-menu');
-    await expect(contextMenu).toBeVisible();
-    await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+    await checkWorkspaceContextMenu(documents, 'owner', 'History');
     await expect(documents).toBeWorkspaceHistoryPage();
     await headerContentMatch(['wksp1']);
     await navigateDown();
@@ -279,9 +272,7 @@ msTest.describe(() => {
     await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
     await expect(documents).toBeWorkspacePage();
     await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
-    const contextMenu = documents.locator('.workspace-context-menu');
-    await expect(contextMenu).toBeVisible();
-    await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+    await checkWorkspaceContextMenu(documents, 'owner', 'History');
     await expect(documents).toBeWorkspaceHistoryPage();
     const selectAllButton = documents.locator('.folder-header').locator('.select-button');
     await expect(selectAllButton).toHaveText('Select all');
@@ -329,7 +320,7 @@ msTest.describe(() => {
       }
 
       await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
-      await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+      await checkWorkspaceContextMenu(documents, page === 'archived' ? 'archived' : 'deleted', 'History');
       await expect(documents.locator('.topbar-left').locator('.topbar-left-text__title')).toHaveText('History');
       const container = documents.locator('.history-container');
       await expect(container.locator('.head-content__title')).toHaveText(
