@@ -298,13 +298,11 @@ import {
   EntryName,
   Path,
   WorkspaceCreateFolderErrorTag,
-  WorkspaceID,
   WorkspaceRole,
   entryStat,
   getClientInfo,
   isDesktop,
   isWeb,
-  listWorkspaces,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { useFileContextMenu } from '@/services/contextMenu';
@@ -719,7 +717,7 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
   if (event === Events.EntryUpdated) {
     await listFolder({ sameFolder: true });
   } else if (event === Events.WorkspaceUpdated && workspaceInfo.value) {
-    await updateWorkspaceInfo(workspaceInfo.value.id);
+    await updateWorkspaceInfo(workspaceInfo.value.handle);
   } else if (event === Events.EntrySynced || event === Events.EntrySyncStarted || event === Events.EntrySyncProgress) {
     const syncedData = data as EntrySyncData;
     if (!workspaceInfo.value || workspaceInfo.value.id !== syncedData.workspaceId) {
@@ -827,12 +825,13 @@ onUnmounted(async () => {
   }
 });
 
-async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
-  const workspacesResult = await listWorkspaces();
+async function updateWorkspaceInfo(handle: parsec.WorkspaceHandle): Promise<void> {
+  const workspaceResult = await parsec.getWorkspaceInfo(handle);
 
-  if (workspacesResult.ok) {
-    const wInfo = workspacesResult.value.find((wi) => wi.id === workspaceId);
-    if (!wInfo) {
+  if (!workspaceResult.ok) {
+    const listWorkspacesResult = await parsec.listWorkspaces();
+
+    if (listWorkspacesResult.ok && !listWorkspacesResult.value.find((wk) => wk.handle === handle)) {
       // Not found, probably means that we've been excluded from the workspace
       await informationManager.value.present(
         new Information({
@@ -846,55 +845,50 @@ async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
         }),
         PresentationMode.Modal,
       );
-      await navigateTo(Routes.Workspaces);
     } else {
-      // display a toast if the role has been changed in a significant manner: Reader to something else, or something else to Reader
-      if (workspaceInfo.value?.selfRole === WorkspaceRole.Reader && wInfo.selfRole !== WorkspaceRole.Reader) {
-        await informationManager.value.present(
-          new Information({
-            message: {
-              key: 'FoldersPage.events.roleUpdateNoLongerReader',
+      await informationManager.value.present(
+        new Information({
+          message: {
+            key: 'FoldersPage.errors.failedToListWorkspaces',
+            data: {
+              reason: workspaceResult.error.tag,
             },
-            level: InformationLevel.Info,
-          }),
-          PresentationMode.Toast,
-        );
-      } else if (workspaceInfo.value?.selfRole !== WorkspaceRole.Reader && wInfo.selfRole === WorkspaceRole.Reader) {
-        await informationManager.value.present(
-          new Information({
-            message: {
-              key: 'FoldersPage.events.roleUpdateNowReader',
-            },
-            level: InformationLevel.Warning,
-          }),
-          PresentationMode.Toast,
-        );
-      }
-      // Just update the info, the page appearance should update automatically
-      if (!workspaceInfo.value) {
-        return;
-      }
-      workspaceInfo.value.name = wInfo.name;
-      workspaceInfo.value.selfRole = wInfo.selfRole;
-      workspaceInfo.value.isArchived = wInfo.isArchived;
-      workspaceInfo.value.isTrashed = wInfo.isTrashed;
+          },
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
     }
-  } else {
-    // Don't really know what to do in this case, just move the user back to workspaces list
+    await navigateTo(Routes.Workspaces);
+    return;
+  }
+  // display a toast if the role has been changed in a significant manner: Reader to something else, or something else to Reader
+  if (workspaceInfo.value?.selfRole === WorkspaceRole.Reader && workspaceResult.value.selfRole !== WorkspaceRole.Reader) {
     await informationManager.value.present(
       new Information({
         message: {
-          key: 'FoldersPage.errors.failedToListWorkspaces',
-          data: {
-            reason: workspacesResult.error.tag,
-          },
+          key: 'FoldersPage.events.roleUpdateNoLongerReader',
         },
         level: InformationLevel.Info,
       }),
       PresentationMode.Toast,
     );
-    await navigateTo(Routes.Workspaces);
+  } else if (
+    workspaceInfo.value &&
+    workspaceInfo.value.selfRole !== WorkspaceRole.Reader &&
+    workspaceResult.value.selfRole === WorkspaceRole.Reader
+  ) {
+    await informationManager.value.present(
+      new Information({
+        message: {
+          key: 'FoldersPage.events.roleUpdateNowReader',
+        },
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Toast,
+    );
   }
+  workspaceInfo.value = workspaceResult.value;
 }
 
 async function onDisplayStateChange(): Promise<void> {

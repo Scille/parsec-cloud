@@ -1049,7 +1049,7 @@
             "folderPlaceholder": "Mon dossier"
         },
         "events": {
-            "workspaceUnshared": "L'espace de travail {name} n'est plus partagé avec vous.",
+            "workspaceUnshared": "L'espace de travail <b>{name}</b> n'est plus partagé avec vous.",
             "roleUpdateNoLongerReader": "Votre rôle sur cet espace de travail a été mis à jour. Vous n'êtes plus Lecteur et pouvez mettre à jour les fichiers ou en importer de nouveaux.",
             "roleUpdateNowReader": "Votre rôle sur cet espace de travail a été mis à jour. Vous êtes à présent Lecteur et ne pouvez plus mettre à jour les fichiers ou en importer de nouveaux."
         },

@@ -1,6 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DisplaySize, expect, fillIonInput, login, mockLibParsec, MsPage, msTest, openExternalLink } from '@tests/e2e/helpers';
+import { TestInfo } from '@playwright/test';
+import {
+  checkEntryContextMenu,
+  DisplaySize,
+  expect,
+  fillIonInput,
+  importDefaultFiles,
+  ImportDocuments,
+  login,
+  mockLibParsec,
+  MsPage,
+  msTest,
+  openExternalLink,
+} from '@tests/e2e/helpers';
 
 for (const displaySize of ['small', 'large']) {
   msTest(`Workspace sharing modal default state on ${displaySize} display`, { tag: '@important' }, async ({ workspaceSharingModal }) => {
@@ -96,7 +109,7 @@ msTest('Share with external', async ({ workspaceSharingModal }) => {
   await expect(users.nth(2).locator('.dropdown-button')).toHaveText('Reader');
 });
 
-msTest('Unshare workspace', async ({ workspaceSharingModal }) => {
+msTest('Unshare workspace while on workspace page', async ({ workspaceSharingModal }) => {
   msTest.setTimeout(45_000);
   const page = workspaceSharingModal.page() as MsPage;
   const secondTab = await (workspaceSharingModal.page() as MsPage).openNewTab();
@@ -132,6 +145,110 @@ msTest('Unshare workspace', async ({ workspaceSharingModal }) => {
   // Check that Bob doesn't have any workspaces anymore
   await expect(workspaces).toHaveCount(0);
   await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
+});
+
+msTest('Unshare workspace while navigating inside it', async ({ workspaceSharingModal }) => {
+  msTest.setTimeout(45_000);
+  const page = workspaceSharingModal.page() as MsPage;
+  const secondTab = await (workspaceSharingModal.page() as MsPage).openNewTab();
+  // Login on the second tab with Bob, should have one workspace shared by default
+  await login(secondTab, 'Boby McBobFace');
+  const workspaces = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item');
+  await expect(workspaces).toHaveCount(1);
+  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
+  await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeHidden();
+  await workspaces.nth(0).click();
+  await expect(secondTab).toBeDocumentPage();
+
+  // On the first tab, unshare the workspace with Bob
+  const content = workspaceSharingModal.locator('.ms-modal-content');
+  await expect(content.locator('.user-list-members').locator('.workspace-user-role')).toHaveCount(2);
+  await expect(content.locator('.user-list-suggestions').locator('.workspace-user-role')).toHaveCount(1);
+  const user2 = content.locator('.user-list-members').locator('.workspace-user-role').nth(1);
+  await expect(user2.locator('.dropdown-button')).toHaveText('Reader');
+  await user2.locator('.dropdown-button').click();
+  const roleDropdown = page.locator('.dropdown-popover');
+  const roles = roleDropdown.getByRole('list').getByRole('listitem');
+  await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
+  await roles.nth(4).click();
+  await expect(page).toShowToast('The workspace is no longer shared with Boby McBobFace.', 'Success');
+  await expect(content.locator('.user-list-members').locator('.workspace-user-role')).toHaveCount(1);
+  await expect(content.locator('.user-list-suggestions').locator('.workspace-user-role')).toHaveCount(2);
+  await expect(content.locator('#only-user-warning')).toBeVisible();
+  await expect(content.locator('#only-user-warning')).toContainText('To prevent data loss, share this workspace with other users');
+  await openExternalLink(
+    page,
+    workspaceSharingModal.locator('#only-user-warning').locator('.see-more-button'),
+    new RegExp('^https://docs\\.parsec\\.cloud/(en|fr)/[a-z0-9-+.]+/userguide/parsec_workspaces\\.html(#share-a-workspace)?$'),
+  );
+
+  await expect(secondTab).toShowInformationModal('The workspace wksp1 is no longer shared with you.', 'Error');
+  // Redirected to workspaces
+  await expect(secondTab).toBeWorkspacePage();
+});
+
+msTest('Change workspace role from and to reader while navigating inside it', async ({ workspaces }, testInfo: TestInfo) => {
+  msTest.setTimeout(45_000);
+  await workspaces.locator('.workspaces-container').locator('.workspace-card-item').nth(0).click();
+  await expect(workspaces).toBeDocumentPage();
+  await importDefaultFiles(workspaces, testInfo, ImportDocuments.Pdf, false);
+  await expect(workspaces.locator('.folder-container').locator('.file-list-item')).toHaveCount(1);
+  await workspaces.locator('#connected-header').locator('.back-button').click();
+  await expect(workspaces).toBeWorkspacePage();
+  await workspaces.locator('.workspaces-container').locator('.workspace-card-item').nth(0).locator('.icon-share-container').nth(0).click();
+  const modal = workspaces.locator('.workspace-sharing-modal');
+  await expect(modal).toBeVisible();
+  const secondTab = await workspaces.openNewTab();
+  // Login on the second tab with Bob, should have one workspace shared by default
+  await login(secondTab, 'Boby McBobFace');
+  const wks2 = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item');
+  await expect(wks2).toHaveCount(1);
+  await expect(wks2.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
+  await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeHidden();
+  await wks2.nth(0).click();
+  await expect(secondTab).toBeDocumentPage();
+
+  // On the first tab, make Bob a manager
+  const content = modal.locator('.ms-modal-content');
+  await expect(content.locator('.user-list-members').locator('.workspace-user-role')).toHaveCount(2);
+  await expect(content.locator('.user-list-suggestions').locator('.workspace-user-role')).toHaveCount(1);
+  const user2 = content.locator('.user-list-members').locator('.workspace-user-role').nth(1);
+  await expect(user2.locator('.dropdown-button')).toHaveText('Reader');
+  await user2.locator('.dropdown-button').click();
+  const roleDropdown = workspaces.locator('.dropdown-popover');
+  const roles = roleDropdown.getByRole('list').getByRole('listitem');
+  await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
+  await roles.nth(1).click();
+  await expect(workspaces).toShowToast("Boby McBobFace's role has been updated to Manager.", 'Success');
+  await expect(content.locator('.user-list-members').locator('.workspace-user-role')).toHaveCount(2);
+  await expect(content.locator('.user-list-suggestions').locator('.workspace-user-role')).toHaveCount(1);
+  await expect(content.locator('#only-user-warning')).toBeHidden();
+
+  // Check that Bob's UI is reacting
+  await expect(secondTab).toShowToast(
+    'Your role on this workspace has been updated. You are no longer a Reader and can import and update entries.',
+    'Info',
+  );
+  await expect(secondTab.locator('.action-bar').locator('.ms-action-bar-button')).toHaveText(['New folder', 'New file', 'Import']);
+  await expect(secondTab.locator('.action-bar').locator('.workspace-role-tag')).toHaveText('Manager');
+  await secondTab.locator('.folder-container').locator('.file-list-item').nth(0).click({ button: 'right' });
+  await checkEntryContextMenu(secondTab, 'file-full', 'dismiss');
+
+  // Back to reader
+  await user2.locator('.dropdown-button').click();
+  await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
+  await roles.nth(3).click();
+  await expect(workspaces).toShowToast("Boby McBobFace's role has been updated to Reader.", 'Success');
+
+  // Check that Bob's UI is reacting
+  await expect(secondTab).toShowToast(
+    'Your role on this workspace has been updated. You are now a Reader and can no longer import or update entries.',
+    'Warning',
+  );
+  await expect(secondTab.locator('.action-bar').locator('.ms-action-bar-button')).toHaveCount(0);
+  await expect(secondTab.locator('.action-bar').locator('.workspace-role-tag')).toHaveText('Reader');
+  await secondTab.locator('.folder-container').locator('.file-list-item').nth(0).click({ button: 'right' });
+  await checkEntryContextMenu(secondTab, 'file-readonly', 'dismiss');
 });
 
 msTest('Filter users', async ({ workspaceSharingModal }) => {
