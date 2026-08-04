@@ -214,6 +214,33 @@ async function openPopover(event: Event): Promise<void> {
     align-items: center;
     gap: 0.5rem;
     width: 100%;
+    padding: 0.25rem 0.5rem;
+    position: relative;
+    cursor: pointer;
+
+    &::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0.6;
+      z-index: -10;
+      left: 0;
+      border-radius: var(--parsec-radius-8);
+    }
+
+    &:hover:not(.breadcrumb-collapsed) {
+      color: var(--parsec-color-light-secondary-text);
+      position: relative;
+
+      .main-icon {
+        color: var(--parsec-color-light-secondary-text);
+      }
+
+      &::after {
+        background: var(--parsec-color-light-secondary-medium);
+      }
+    }
   }
 
   &-element {
@@ -222,8 +249,8 @@ async function openPopover(event: Event): Promise<void> {
     }
 
     &::part(native) {
-      cursor: pointer;
-      padding: 0.25rem 0.5rem;
+      cursor: default;
+      padding: 0;
       max-width: calc(v-bind(breadcrumbWidthProperty));
     }
 
@@ -244,33 +271,6 @@ async function openPopover(event: Event): Promise<void> {
       background: var(--parsec-color-light-secondary-medium);
       color: var(--parsec-color-light-secondary-grey);
       margin-inline: 0.5rem;
-    }
-
-    &:hover:not(.breadcrumb-collapsed) {
-      color: var(--parsec-color-light-secondary-text);
-      position: relative;
-
-      .main-icon {
-        color: var(--parsec-color-light-secondary-text);
-      }
-
-      &::after {
-        content: '';
-        position: absolute;
-        width: calc(100% - 0.25rem);
-        height: 100%;
-        border-radius: var(--parsec-radius-8);
-        background: var(--parsec-color-light-secondary-medium);
-        opacity: 0.6;
-        z-index: -10;
-      }
-
-      @include ms.responsive-breakpoint('md') {
-        &::after {
-          left: 0.5rem;
-          width: calc(100% - 1.25rem);
-        }
-      }
     }
   }
 
