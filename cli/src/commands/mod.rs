@@ -2,6 +2,8 @@ pub mod certificate;
 pub mod device;
 pub mod invite;
 pub mod ls;
+#[cfg(feature = "manpage")]
+pub mod man_page;
 pub mod mount_realm_export;
 pub mod organization;
 pub mod rm;

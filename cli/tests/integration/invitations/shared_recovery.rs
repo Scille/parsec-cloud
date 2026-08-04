@@ -33,9 +33,9 @@ async fn invite_shared_recovery(tmp_path: TmpPath) {
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
-#[tokio::test]
 #[case("http")]
 #[case("parsec3")]
+#[tokio::test]
 async fn invite_shared_recovery_dance(tmp_path: TmpPath, #[case] scheme: &str) {
     let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 

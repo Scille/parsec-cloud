@@ -8,9 +8,9 @@ use crate::{
 use parsec_cli::commands::organization::create::create_organization_req;
 
 #[rstest::rstest]
-#[tokio::test]
 #[case("http")]
 #[case("parsec3")]
+#[tokio::test]
 async fn bootstrap_organization(tmp_path: TmpPath, #[case] scheme: &str) {
     bootstrap_cli_test(&tmp_path).await.unwrap();
 
