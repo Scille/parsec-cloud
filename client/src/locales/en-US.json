@@ -1048,7 +1048,7 @@
             "folderPlaceholder": "My folder"
         },
         "events": {
-            "workspaceUnshared": "The workspace {name} is no longer shared with you.",
+            "workspaceUnshared": "The workspace <b>{name}</b> is no longer shared with you.",
             "roleUpdateNoLongerReader": "Your role on this workspace has been updated. You are no longer a Reader and can import and update entries.",
             "roleUpdateNowReader": "Your role on this workspace has been updated. You are now a Reader and can no longer import or update entries."
         },
