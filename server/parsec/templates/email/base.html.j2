@@ -26,10 +26,23 @@
                   </td>
                 </tr>
                 <tr class="title">
-                  <td><h1>{% block title %}{% endblock %}</h1></td>
+                  <td><h1 style="padding-bottom: 10px;">{% block title %}{% endblock %}</h1></td>
                 </tr>
+                {% if user_label is defined %}
                 <tr>
-                  <td>{% block description %}{% endblock %}</td>
+                  <td>
+                    <p style="line-height: 1.6; color: #51517B; font-size: 16px;">
+                    Hi {{ user_label }},
+                    </p>
+                  </td>
+                </tr>
+                {% endif %}
+                <tr>
+                  <td>
+                    <p style="line-height: 1.6; color: #51517B; font-size: 16px;">
+                    {% block description %}{% endblock %}
+                    </p>
+                  </td>
                 </tr>
               </table>
             </td>

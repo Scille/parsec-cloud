@@ -1,25 +1,18 @@
-{% if is_user_invitation %}
-You have received an invitation from {{ greeter }} to join the {{ organization_id }} organization on Parsec.
-{% elif is_device_invitation %}
-You have received an invitation to add a new device to the {{ organization_id}} organization on Parsec.
-{% elif is_shamir_recovery_invitation %}
-You have received an invitation to start a recovery procedure on the {{ organization_id }} organization on Parsec.
+{% extends "email/base.txt.j2" %}
+{% block main_content %}
+{% if is_user_invitation %}You have received an invitation from {{ greeter }} to join the {{ organization_id }} organization on Parsec.
+{% elif is_device_invitation %}You have received an invitation to add a new device to the {{ organization_id}} organization on Parsec.
+{% elif is_shamir_recovery_invitation %}You have received an invitation to start a recovery procedure on the {{ organization_id }} organization on Parsec.
 {% endif %}
-
 Your next steps:
 
-1. If you haven't yet installed, download the Parsec client via the following link: https://parsec.cloud/en/start-parsec
-
+1. If you haven't already, download and install Parsec: https://parsec.cloud/en/start-parsec
 2. Once installed, open the following link to proceed to Parsec: {{ invitation_url }}
-
-{% if is_user_invitation %}
-3. Get in touch with {{ greeter }} and follow the next steps on the Parsec client.
-{% elif is_device_invitation %}
-3. Start the invitation process from a device already part of the organization,
+{% if is_user_invitation %}3. Get in touch with {{ greeter }} and follow the next steps on the Parsec client.
+{% elif is_device_invitation %}3. Start the invitation process from a device already part of the organization,
 then follow the steps on the Parsec client.
-{% elif is_shamir_recovery_invitation %}
-3. Get in touch with {{ greeter }} and follow the next steps on the Parsec client.
+{% elif is_shamir_recovery_invitation %}3. Get in touch with {{ greeter }} and follow the next steps on the Parsec client.
 {% endif %}
-
 For more information please refer to the User Guide:
 https://docs.parsec.cloud/en/stable/userguide/join-organization.html
+{% endblock %}

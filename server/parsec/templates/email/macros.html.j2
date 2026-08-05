@@ -41,9 +41,7 @@
 
 {% macro render_note() %}
 <tr class="content-footer">
-    <td class="note">
-        {{ caller() }}
-    </td>
+  <td class="note">{{ caller() }}</td>
 </tr>
 {% endmacro %}
 
@@ -55,9 +53,9 @@ origin page using window.opener unless link type noopener or noreferrer is speci
 
 {% macro render_fallback_link(url) %}
 <p style="font-size: 14px; color: #51517B;">
-    If the button does not work, please click on the following link:
+  If the button does not work, please click on the following link:
+  <a href="{{ url }}" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">{{ url }}</a>
 </p>
-<a href="{{ url }}" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">{{ url }}</a>
 {% endmacro %}
 
 {% macro render_code(code) %}
