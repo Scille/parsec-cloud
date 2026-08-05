@@ -1,3 +1,5 @@
+#[cfg(feature = "shell-completion")]
+pub mod auto_complete;
 pub mod certificate;
 pub mod device;
 pub mod invite;

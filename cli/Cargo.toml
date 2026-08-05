@@ -18,12 +18,13 @@ name = "integration"
 path = "tests/integration/mod.rs"
 
 [features]
-default = ["manpage"]
+default = ["manpage", "shell-completion"]
 use-libsodium = ["libparsec_crypto/use-libsodium"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 vendored-dbus = ["libparsec/vendored-dbus"]
 testenv = []
 manpage = ["dep:clap_mangen"]
+shell-completion = ["dep:clap_complete"]
 
 [dependencies]
 libparsec_client.workspace = true
@@ -56,6 +57,7 @@ itertools = { workspace = true, features = ["use_std"] }
 thiserror = { workspace = true }
 shadow-rs.workspace = true
 clap_mangen = { workspace = true, features = ["env"], optional = true }
+clap_complete = { workspace = true, optional = true }
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }
