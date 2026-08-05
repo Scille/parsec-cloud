@@ -15,7 +15,7 @@ use crate::{
 #[derive(clap::Parser)]
 pub struct RunTestenv {
     /// Sourced script file
-    #[arg(long)]
+    #[arg(long, value_hint = clap::ValueHint::FilePath)]
     source_file: Option<PathBuf>,
     /// Main process id.
     /// When this process stops, the server will be automatically killed
@@ -25,7 +25,7 @@ pub struct RunTestenv {
     #[arg(short, long, default_value_t)]
     empty: bool,
     /// The organization ID to use for the test environment.
-    #[arg(default_value_os = "Org")]
+    #[arg(default_value_os = "Org", value_hint = clap::ValueHint::Other)]
     organization: libparsec::OrganizationID,
 }
 

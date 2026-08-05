@@ -12,7 +12,7 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
     pub struct Args {
         /// The new server URL
-        #[arg(short, long, value_parser = ParsecAddr::from_http_url)]
+        #[arg(short, long, value_parser = ParsecAddr::from_http_url, value_hint = clap::ValueHint::Url)]
         server_url: ParsecAddr,
     }
 );

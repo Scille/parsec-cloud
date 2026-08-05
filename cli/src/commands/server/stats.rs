@@ -12,7 +12,7 @@ crate::clap_parser_with_shared_opts_builder!(
         #[arg(short, long, default_value_t = Format::Json)]
         format: Format,
         /// Ignore everything after this date (e.g: 2024-01-01T00:00:00-00:00)
-        #[arg(short, long)]
+        #[arg(short, long, value_hint = clap::ValueHint::Other)]
         end_date: Option<DateTime>,
     }
 );

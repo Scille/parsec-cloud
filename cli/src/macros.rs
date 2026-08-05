@@ -83,7 +83,13 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Parsec config directory"]
-                #[arg(short, long, default_value_os_t = libparsec::get_default_config_dir(), env = $crate::utils::PARSEC_CONFIG_DIR)]
+                #[arg(
+                    short,
+                    long,
+                    default_value_os_t = libparsec::get_default_config_dir(),
+                    env = $crate::utils::PARSEC_CONFIG_DIR,
+                    value_hint = clap::ValueHint::DirPath
+                )]
                 pub(crate) config_dir: std::path::PathBuf,
                 $(
                     $(#[$field_attr])*
@@ -108,7 +114,13 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Parsec data directory"]
-                #[arg(short, long, default_value_os_t = libparsec::get_default_data_base_dir(), env = $crate::utils::PARSEC_DATA_DIR)]
+                #[arg(
+                    short,
+                    long,
+                    default_value_os_t = libparsec::get_default_data_base_dir(),
+                    env = $crate::utils::PARSEC_DATA_DIR,
+                    value_hint = clap::ValueHint::DirPath
+                )]
                 pub(crate) data_dir: std::path::PathBuf,
                 $(
                     $(#[$field_attr])*
@@ -133,7 +145,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Device ID"]
-                #[arg(short, long, env = "PARSEC_DEVICE_ID")]
+                #[arg(short, long, env = "PARSEC_DEVICE_ID", value_hint = clap::ValueHint::Other)]
                 pub(crate) device: Option<String>,
                 $(
                     $(#[$field_attr])*
@@ -158,7 +170,13 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Workspace ID"]
-                #[arg(short, long, env = "PARSEC_WORKSPACE_ID", value_parser = libparsec::VlobID::from_hex)]
+                #[arg(
+                    short,
+                    long,
+                    env = "PARSEC_WORKSPACE_ID",
+                    value_parser = libparsec::VlobID::from_hex,
+                    value_hint = clap::ValueHint::Other
+                )]
                 pub(crate) workspace: libparsec::VlobID,
                 $(
                     $(#[$field_attr])*
@@ -183,7 +201,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Organization ID"]
-                #[arg(short, long, env = "PARSEC_ORGANIZATION_ID")]
+                #[arg(short, long, env = "PARSEC_ORGANIZATION_ID", value_hint = clap::ValueHint::Other)]
                 pub(crate) organization: libparsec::OrganizationID,
                 $(
                     $(#[$field_attr])*
@@ -234,7 +252,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Server address (e.g: parsec3://127.0.0.1:6770?no_ssl=true)"]
-                #[arg(short, long, env = "PARSEC_SERVER_ADDR")]
+                #[arg(short, long, env = "PARSEC_SERVER_ADDR", value_hint = clap::ValueHint::Url)]
                 pub(crate) addr: libparsec::ParsecAddr,
                 $(
                     $(#[$field_attr])*
@@ -259,7 +277,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Administration token"]
-                #[arg(short, long, env = "PARSEC_ADMINISTRATION_TOKEN")]
+                #[arg(short, long, env = "PARSEC_ADMINISTRATION_TOKEN", value_hint = clap::ValueHint::Other)]
                 pub(crate) token: String,
                 $(
                     $(#[$field_attr])*

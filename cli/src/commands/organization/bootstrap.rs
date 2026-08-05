@@ -14,19 +14,19 @@ pub struct Args {
     /// Bootstrap address
     /// (e.g: parsec3://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a
     /// or http://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a)
-    #[arg(short, long)]
+    #[arg(short, long, value_hint = clap::ValueHint::Url)]
     addr: Url,
     /// Device label
-    #[arg(short, long)]
+    #[arg(short, long, value_hint = clap::ValueHint::Hostname)]
     device_label: DeviceLabel,
     /// User fullname
-    #[arg(short, long)]
+    #[arg(short, long, value_hint = clap::ValueHint::Username)]
     label: String,
     /// User email
-    #[arg(short, long)]
+    #[arg(short, long, value_hint = clap::ValueHint::EmailAddress)]
     email: EmailAddress,
     /// Sequester authority verify key path
-    #[arg(long)]
+    #[arg(long, value_hint = clap::ValueHint::FilePath)]
     sequester_key: Option<PathBuf>,
     /// Read the password from stdin instead of TTY
     #[arg(long, default_value_t)]
