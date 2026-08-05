@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 
 /// Parsec cli
 #[derive(Parser)]
-#[command(version)]
+#[command(version(LongVersion))]
 struct Arg {
     #[command(subcommand)]
     command: Command,
@@ -79,5 +79,32 @@ async fn main() -> anyhow::Result<()> {
         Command::MountRealmExport(mount_realm_export) => {
             mount_realm_export::main(mount_realm_export).await
         }
+    }
+}
+
+struct LongVersion;
+
+shadow_rs::shadow!(build);
+
+impl From<LongVersion> for clap::builder::Str {
+    fn from(_value: LongVersion) -> Self {
+        use build::*;
+
+        // cspell: words: formatcp
+        shadow_rs::formatcp!(
+            // One the same line since `clap` prefix with the cli name and expect the version to follow
+            r#"{PKG_VERSION}
+branch: {BRANCH}
+commit_hash: {SHORT_COMMIT}
+build_target: {BUILD_TARGET}
+build_os: {BUILD_OS}
+build_profile: {BUILD_RUST_CHANNEL}
+build_features: {CARGO_FEATURES}
+rust_version: {RUST_VERSION}
+rust_channel: {RUST_CHANNEL}
+cargo_version: {CARGO_VERSION}
+git_clean: {GIT_CLEAN}"#,
+        )
+        .into()
     }
 }
