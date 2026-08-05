@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator, AsyncIterator, Mapping, Sequence
+from collections.abc import AsyncGenerator, Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
@@ -1048,26 +1048,33 @@ class StreamingResponseMiddleware(StreamingResponse):
 
     async def __call__(self, scope, receive, send) -> None:
         self.client_ctx.logger.info("SSE session start")
+        # NOTE: since anyio>=4, functions using task groups always wrap exceptions in groups.
+        #       Thus the except* syntax below for exceptions raised from _run_session
+        #       See: https://anyio.readthedocs.io/en/stable/migration.html#task-groups-now-wrap-single-exceptions-in-groups
         try:
             await self._run_session(scope, receive, send)
-        except HTTPException as exc:
+        except* HTTPException as excgrp:
+            exc = excgrp.exceptions[0]
+            assert isinstance(exc, HTTPException)
             self.client_ctx.logger.info(
                 "SSE session HTTP error",
                 status_code=exc.status_code,
                 detail=exc.detail,
             )
-            raise
-        except Exception as exc:
+            raise exc
+        except* Exception as excgrp:
+            exc = excgrp.exceptions[0]
             self.client_ctx.logger.error("SSE session exception", exc_info=exc)
-            raise
-        except BaseException as exc:
+            raise exc
+        except* BaseException as excgrp:
+            exc = excgrp.exceptions[0]
             self.client_ctx.logger.debug("SSE session base exception", exc_info=exc)
-            raise
+            raise exc
         else:
             self.client_ctx.logger.info("SSE session end")
 
     @asynccontextmanager
-    async def listen_events_context(self) -> AsyncIterator[ApiEventListenOutcome]:
+    async def listen_events_context(self) -> AsyncGenerator[ApiEventListenOutcome]:
         # This task is responsible for registering the client to the SSE stream and unregistering it
         # when it finishes. It can either get cancelled internally (e.g. when the client gets frozen
         # or revoked) or externally by the task group below (e.g. when the client gets disconnected).

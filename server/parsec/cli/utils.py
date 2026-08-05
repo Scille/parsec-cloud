@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import datetime
 import traceback
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
+from collections.abc import AsyncGenerator, Awaitable, Callable, Generator
 from contextlib import asynccontextmanager, contextmanager
 from functools import partial
 from typing import (
@@ -15,6 +15,7 @@ from typing import (
 
 import anyio
 import click
+from anyio import to_thread
 
 from parsec._parsec import DateTime, ParsecAddr, SecretKey
 from parsec.backend import Backend, backend_factory
@@ -46,7 +47,7 @@ ko = click.style("✘", fg="red")
 
 
 @contextmanager
-def operation(txt: str) -> Iterator[None]:
+def operation(txt: str) -> Generator[None]:
     click.echo(txt, nl=False)
     try:
         yield
@@ -62,7 +63,7 @@ def operation(txt: str) -> Iterator[None]:
 @asynccontextmanager
 async def spinner(
     txt: str, sep: str = " ", scheme: str = "dots", color: str = "magenta"
-) -> AsyncIterator[None]:
+) -> AsyncGenerator[None]:
     scheme_theme = SCHEMES[scheme]
     interval = scheme_theme["interval"]
     frames = scheme_theme["frames"]
@@ -103,20 +104,21 @@ async def spinner(
 
 
 @contextmanager
-def cli_exception_handler(debug: bool) -> Iterator[bool]:
+def cli_exception_handler(debug: bool) -> Generator[bool]:
+    # NOTE: since anyio>=4, functions using task groups always wrap exceptions in groups (thus, the except* syntax below)
+    #       See: https://anyio.readthedocs.io/en/stable/migration.html#task-groups-now-wrap-single-exceptions-in-groups
     try:
         yield debug
-
-    except KeyboardInterrupt:
+    except* KeyboardInterrupt:
         raise SystemExit(0)
-
-    except Exception as exc:
+    except* Exception as excgrp:
+        exc = excgrp.exceptions[0]
         exc_msg = str(exc)
         if not exc_msg.strip():
             exc_msg = repr(exc)
         click.echo(click.style("Error: ", fg="red") + exc_msg)
         if debug:
-            raise
+            raise exc
         else:
             raise SystemExit(1)
 
@@ -166,7 +168,7 @@ def generate_not_available_cmd(exc: BaseException, hint: str | None = None) -> c
 
 def async_wrapper[**P, R](fn: Callable[P, R]) -> Callable[P, Awaitable[R]]:
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        return await anyio.to_thread.run_sync(partial(fn, *args, **kwargs))
+        return await to_thread.run_sync(partial(fn, *args, **kwargs))
 
     return wrapper
 
@@ -261,7 +263,7 @@ async def start_backend(
     blockstore_config: BaseBlockStoreConfig,
     debug: bool,
     populate_with_template: str | None = None,
-):
+) -> AsyncGenerator[Backend, Any]:
     """
     Start backend for CLI usage.
 

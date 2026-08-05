@@ -4,7 +4,10 @@ from __future__ import annotations
 import anyio
 import pytest
 
-from tests.common import LogCaptureFixture
+
+# Simple task function to raise the exception received
+async def _raise(exc: Exception) -> None:
+    raise exc
 
 
 async def test_create_task_group_exists() -> None:
@@ -12,55 +15,55 @@ async def test_create_task_group_exists() -> None:
         pass
 
 
-@pytest.mark.xfail(reason="Should let @vxgmichel investigate if the behavior is ok")
-async def test_create_task_group_exception_group_collapse(caplog: LogCaptureFixture) -> None:
-    async def _raise(exc: Exception) -> None:
-        raise exc
-
-    with pytest.raises(ZeroDivisionError) as ctx:
+async def test_create_task_group_exception_group() -> None:
+    # A single exception should not "collapse", it should be wrapped in an ExceptionGroup (since anyio>=4)
+    # See: https://anyio.readthedocs.io/en/stable/migration.html#task-groups-now-wrap-single-exceptions-in-groups
+    with pytest.raises(ExceptionGroup) as exc:
         async with anyio.create_task_group():
             await _raise(ZeroDivisionError(1, 2, 3))
 
-    exception = ctx.value
-    assert isinstance(exception, ZeroDivisionError)
-    assert exception.args == (1, 2, 3)
+    assert not isinstance(exc, BaseExceptionGroup)
+    assert len(exc.value.exceptions) == 1
+    assert isinstance(exc.value.exceptions[0], ZeroDivisionError)
+    assert exc.value.exceptions[0].args, (1, 2, 3)
 
-    assert not isinstance(exception, BaseExceptionGroup)
-
-    with pytest.raises(ZeroDivisionError) as ctx:
+    # Multiple exceptions should be wrapped in an ExceptionGroup
+    with pytest.raises(ExceptionGroup) as exc:
         async with anyio.create_task_group() as tg:
-            tg.start_soon(_raise, RuntimeError())
-            await _raise(ZeroDivisionError(1, 2, 3))
+            tg.start_soon(_raise, RuntimeError())  # will raise RuntimeError
+            await _raise(ZeroDivisionError(1, 2, 3))  # will raise ZeroDivisionError
 
-    caplog.assert_occurred_once("[warning  ] A BaseExceptionGroup has been detected [parsec.utils]")
-
-    exception = ctx.value
-    assert isinstance(exception, ZeroDivisionError)
-    assert exception.args == (1, 2, 3)
-
-    assert isinstance(exception, BaseExceptionGroup)
-    assert len(exception.exceptions) == 2
-
-    a, b = exception.exceptions
-    assert isinstance(a, ZeroDivisionError)
-    assert not isinstance(a, BaseExceptionGroup)
-    assert isinstance(b, RuntimeError)
-    assert not isinstance(b, BaseExceptionGroup)
+    assert not isinstance(exc, BaseExceptionGroup)
+    assert len(exc.value.exceptions) == 2
+    zero_division_error, runtime_error = exc.value.exceptions
+    assert isinstance(runtime_error, RuntimeError)
+    assert isinstance(zero_division_error, ZeroDivisionError)
+    assert zero_division_error.args, (1, 2, 3)
 
 
-@pytest.mark.xfail(reason="Should let @vxgmichel investigate if the behavior is ok")
 async def test_create_task_group_exception_group_with_cancelled() -> None:
-    async def _raise(exc: Exception) -> None:
-        raise exc
-
-    with anyio.CancelScope() as cancel_scope:
+    # Cancel scope after raise in a task group should result in an ExceptionGroup
+    with pytest.raises(ExceptionGroup) as exc:
         async with anyio.create_task_group() as tg:
             tg.start_soon(_raise, ZeroDivisionError(1, 2, 3))
-            cancel_scope.cancel()
+            tg.cancel_scope.cancel()
             await anyio.sleep(1)
 
-    with anyio.CancelScope() as cancel_scope:
+    assert not isinstance(exc, BaseExceptionGroup)
+    assert len(exc.value.exceptions) == 1
+    assert isinstance(exc.value.exceptions[0], ZeroDivisionError)
+    assert exc.value.exceptions[0].args, (1, 2, 3)
+
+    # Cancel scope after raise in a task group should also result in an ExceptionGroup
+    with pytest.raises(ExceptionGroup) as exc:
         async with anyio.create_task_group() as tg:
             tg.start_soon(_raise, RuntimeError())
-            cancel_scope.cancel()
+            tg.cancel_scope.cancel()
             raise ZeroDivisionError(1, 2, 3)
+
+    assert not isinstance(exc, BaseExceptionGroup)
+    assert len(exc.value.exceptions) == 2
+    zero_division_error, runtime_error = exc.value.exceptions
+    assert isinstance(runtime_error, RuntimeError)
+    assert isinstance(zero_division_error, ZeroDivisionError)
+    assert zero_division_error.args, (1, 2, 3)

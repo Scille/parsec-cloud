@@ -7,7 +7,7 @@ import hashlib
 import uuid
 from base64 import b64decode, b64encode
 from collections import defaultdict
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
@@ -959,7 +959,7 @@ async def test_new_account(request: Request) -> Response:
 @asynccontextmanager
 async def testbed_backend_factory(
     server_addr: ParsecAddr, with_postgresql: str | None
-) -> AsyncIterator[TestbedBackend]:
+) -> AsyncGenerator[TestbedBackend]:
     blockstore_config = (
         MockedBlockStoreConfig() if with_postgresql is None else PostgreSQLBlockStoreConfig()
     )
