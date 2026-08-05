@@ -4,7 +4,7 @@ from __future__ import annotations
 import importlib.resources
 import json
 import re
-from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine, Iterable
+from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine, Iterable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -204,7 +204,7 @@ async def handle_json(conn: AsyncpgConnection) -> None:
 @asynccontextmanager
 async def asyncpg_pool_factory(
     url: str, min_connections: int, max_connections: int
-) -> AsyncIterator[AsyncpgPool]:
+) -> AsyncGenerator[AsyncpgPool]:
     # By default AsyncPG only work with Python standard `datetime.DateTime`
     # for timestamp types, here we override this behavior to uses our own custom
     # - DateTime type

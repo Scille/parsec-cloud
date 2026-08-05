@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import cast, override
 
@@ -47,7 +47,7 @@ class PGEventBus(EventBus):
 
 
 @asynccontextmanager
-async def event_bus_factory(pool: AsyncpgPool) -> AsyncIterator[PGEventBus]:
+async def event_bus_factory(pool: AsyncpgPool) -> AsyncGenerator[PGEventBus]:
     _connection_lost = False
 
     def _on_notification_conn_termination(conn: object) -> None:

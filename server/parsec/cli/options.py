@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import sys
 from collections import defaultdict
-from collections.abc import Callable, Coroutine, Iterable, Iterator
+from collections.abc import Callable, Coroutine, Generator, Iterable
 from contextlib import contextmanager
 from functools import wraps
 from itertools import count
@@ -81,13 +81,13 @@ def logging_config_options(
             if log_file in (None, "-"):
 
                 @contextmanager
-                def open_log_file() -> Iterator[TextIO]:
+                def open_log_file() -> Generator[TextIO]:
                     yield sys.stderr
 
             else:
 
                 @contextmanager
-                def open_log_file() -> Iterator[TextIO]:
+                def open_log_file() -> Generator[TextIO]:
                     assert log_file is not None
                     yield cast(TextIO, click.open_file(filename=log_file, mode="w"))
 

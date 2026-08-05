@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
-from collections.abc import AsyncIterator, Callable, Iterator, Sequence
+from collections.abc import AsyncGenerator, Callable, Generator, Sequence
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from enum import auto
@@ -204,7 +204,7 @@ class EventBus:
             pass
 
     @contextmanager
-    def create_waiter(self, filter: Callable[[Event], bool]) -> Iterator[EventWaiter]:
+    def create_waiter(self, filter: Callable[[Event], bool]) -> Generator[EventWaiter]:
         waiter = EventWaiter(filter)
         self.connect(waiter._cb)
         try:
@@ -213,7 +213,7 @@ class EventBus:
             self.disconnect(waiter._cb)
 
     @contextmanager
-    def spy(self) -> Iterator[EventBusSpy]:
+    def spy(self) -> Generator[EventBusSpy]:
         """Only for tests !"""
         spy = EventBusSpy()
         self.connect(spy._on_event_cb)
@@ -462,11 +462,11 @@ class BaseEventsComponent:
     @asynccontextmanager
     async def sse_api_events_listen(
         self, client_ctx: AuthenticatedClientContext, last_event_id: UUID | None
-    ) -> AsyncIterator[
+    ) -> AsyncGenerator[
         tuple[EventOrganizationConfig, ClientBroadcastableEventStream]
         | SseAPiEventsListenBadOutcome
     ]:
-        async with anyio.open_cancel_scope() as cancel_scope:
+        with anyio.CancelScope() as cancel_scope:
             outcome = await self._register_client(
                 client_ctx=client_ctx, last_event_id=last_event_id, cancel_scope=cancel_scope
             )

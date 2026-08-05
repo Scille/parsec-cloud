@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from base64 import b64decode
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from dataclasses import dataclass, field
 
@@ -210,7 +210,7 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient, BaseTosRpcClient):
     @asynccontextmanager
     async def events_listen(  # pyright: ignore [reportIncompatibleMethodOverride]
         self, last_event_id: str | None = None, now: DateTime | None = None
-    ) -> AsyncIterator[EventsListenSSE]:
+    ) -> AsyncGenerator[EventsListenSSE]:
         now = now or DateTime.now()
         token = AuthenticatedToken.generate_raw(
             device_id=self.device_id,

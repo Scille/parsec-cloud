@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from asyncio import Event, Lock
 from collections import defaultdict
-from collections.abc import AsyncIterator, Iterable, Iterator
+from collections.abc import AsyncGenerator, Iterable, Iterator
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -183,7 +183,7 @@ class MemoryOrganization:
     _notify_me_on_topic_lock_release: Event | None = None
 
     @asynccontextmanager
-    async def advisory_lock_exclusive(self, lock: AdvisoryLock) -> AsyncIterator[None]:
+    async def advisory_lock_exclusive(self, lock: AdvisoryLock) -> AsyncGenerator[None]:
         """
         Equivalent to `SELECT pg_advisory_xact_lock(<lock ID>, _id) FROM organization WHERE organization_id = <org>`
         """
@@ -191,7 +191,7 @@ class MemoryOrganization:
             yield
 
     @asynccontextmanager
-    async def advisory_lock_shared(self, lock: AdvisoryLock) -> AsyncIterator[None]:
+    async def advisory_lock_shared(self, lock: AdvisoryLock) -> AsyncGenerator[None]:
         """
         Equivalent to `SELECT pg_advisory_xact_lock_shared(<lock ID>, _id) FROM organization WHERE organization_id = <org>`
         """
@@ -201,7 +201,7 @@ class MemoryOrganization:
     @asynccontextmanager
     async def topics_lock(
         self, read: Iterable[TopicAndDiscriminant] = (), write: Iterable[TopicAndDiscriminant] = ()
-    ) -> AsyncIterator[tuple[DateTime, ...]]:
+    ) -> AsyncGenerator[tuple[DateTime, ...]]:
         """
         Read is equivalent to `SELECT last_timestamp FROM <topic table> WHERE organization_id = <org> FOR SHARE`
 

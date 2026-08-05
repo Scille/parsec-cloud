@@ -152,10 +152,6 @@ updates:
   - package-ecosystem: uv
     directory: /server
     versioning-strategy: increase-if-necessary
-    ignore:
-      - dependency-name: anyio
-        versions:
-          - ">=4.0.0"
     pull-request-branch-name:
       separator: "-"
     labels:
