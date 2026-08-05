@@ -2,6 +2,7 @@
 
 import { TestInfo } from '@playwright/test';
 import {
+  checkEntryContextMenu,
   createFolder,
   dragAndDropFile,
   expect,
@@ -127,11 +128,7 @@ msTest.describe(() => {
     const audioEntry = documents.locator('.folder-container').locator('.file-list-item').first();
     await audioEntry.hover();
     await audioEntry.locator('.options-button').click();
-    await documents
-      .locator('.file-context-menu')
-      .getByRole('listitem')
-      .filter({ hasText: /^Download$/ })
-      .click();
+    await checkEntryContextMenu(documents, 'file-full', 'Download');
 
     // Download warning modal is visible
     const warningModal = documents.locator('.download-warning-modal');
@@ -164,11 +161,7 @@ msTest.describe(() => {
     const pyEntry = documents.locator('.folder-container').locator('.file-list-item').last();
     await pyEntry.hover();
     await pyEntry.locator('.options-button').click();
-    await documents
-      .locator('.file-context-menu')
-      .getByRole('listitem')
-      .filter({ hasText: /^Download$/ })
-      .click();
+    await checkEntryContextMenu(documents, 'file-full', 'Download');
     // This time the warning doesn't show up
     await documents.waitForTimeout(1000);
     await expect(opItems).toHaveCount(3);
@@ -229,7 +222,7 @@ msTest.describe(() => {
     await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
     await expect(actionBar.locator('.counter')).toHaveText('1 selected item');
 
-    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(8);
+    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(9);
 
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();

@@ -1174,22 +1174,6 @@
         "itemsDoneAmount": "Une autre opération terminée | {amount} autres opérations terminées",
         "itemsErrorAmount": "Une autre opération annulée ou échouée | {amount} autres opérations annulées ou échouées",
         "operationAmount": "{amount} opération",
-        "tabbar": {
-            "rename": "Renommer",
-            "move": "Déplacer",
-            "duplicate": "Copier",
-            "delete": "Supprimer",
-            "share": "Partager",
-            "download": "Télécharger",
-            "downloadAsArchive": "Télécharger comme fichier ZIP",
-            "copyLink": "Copier le lien",
-            "history": "Historique",
-            "preview": "Aperçu",
-            "openWithDefault": "Ouvrir avec l'app par défaut",
-            "seeInExplorer": "Afficher dans l'explorateur",
-            "details": "Détails",
-            "edit": "Éditer"
-        },
         "search": {
             "title": "Résultats de la recherche",
             "resultsCount": "{count} résultat | {count} résultats",

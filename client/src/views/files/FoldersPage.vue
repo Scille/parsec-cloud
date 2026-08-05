@@ -13,7 +13,7 @@
       <ms-action-bar
         id="folders-ms-action-bar"
         v-if="isLargeDisplay"
-        :buttons="actionBarOptionsFoldersPage"
+        :buttons="actionBarDesktop"
       >
         <div class="right-side">
           <ion-text
@@ -339,20 +339,7 @@ import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileAction, FolderGlobalAction, getDuplicatePolicy, isFolderGlobalAction } from '@/views/files';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 import { IonContent, IonIcon, IonPage, IonText, popoverController } from '@ionic/vue';
-import {
-  archive,
-  arrowRedo,
-  create,
-  download,
-  duplicate,
-  eye,
-  folderOpen,
-  informationCircle,
-  link,
-  open,
-  time,
-  trashBin,
-} from 'ionicons/icons';
+import { arrowRedo, create, download, duplicate, eye, folderOpen, informationCircle, link, open, time, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 
 const customTabBar = useCustomTabBar();
@@ -469,112 +456,208 @@ const itemsToShow = computed(() => {
 const tabBarActions = computed(() => {
   const selectedEntries = getSelectedEntries();
   const actions: MenuAction[] = [];
-  if (!isReadOnly.value) {
-    if (selectedEntries.length === 1) {
-      actions.push({
-        label: 'FoldersPage.tabbar.rename',
-        action: async () => await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries()),
-        image: RenameIcon,
-      });
-    } else {
-      actions.push({
-        label: 'FoldersPage.tabbar.duplicate',
-        action: async () => await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries()),
-        icon: duplicate,
-      });
-    }
-    actions.push({
-      label: 'FoldersPage.tabbar.move',
-      action: async () => await dispatchContextMenuAction(FileAction.MoveTo, getSelectedEntries()),
-      icon: arrowRedo,
-    });
-    actions.push({
-      label: 'FoldersPage.tabbar.delete',
-      action: async () => await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries()),
-      icon: trashBin,
-      danger: true,
-    });
+
+  if (search.value) {
+    return actions;
   }
-  if (selectedEntries.length === 1 && selectedEntries[0].isFile()) {
-    actions.push({
-      label: 'FoldersPage.tabbar.preview',
-      action: async () => await openEntry(getSelectedEntries()[0], {}),
-      icon: eye,
-    });
-    if (isFileEditable(selectedEntries[0].name) && !isReadOnly.value) {
-      actions.push({
-        label: 'FoldersPage.tabbar.edit',
-        action: async () => await openEntry(getSelectedEntries()[0], {}),
-        icon: create,
-      });
-    }
-  }
-  if (selectedEntries.length > folders.value.getSelectedEntries().length && isWeb()) {
-    actions.push({
-      label: 'FoldersPage.tabbar.download',
-      action: async () => await dispatchContextMenuAction(FileAction.Download, getSelectedEntries()),
-      icon: download,
-    });
-    actions.push({
-      label: 'FoldersPage.tabbar.downloadAsArchive',
-      action: async () => await dispatchContextMenuAction(FileAction.DownloadAsArchive, getSelectedEntries()),
-      image: ZipFolderIcon,
-    });
-  }
-  if (selectedEntries.length === 1) {
-    if (isDesktop()) {
-      if (selectedEntries[0].isFile()) {
-        actions.push({
-          label: 'FoldersPage.tabbar.seeInExplorer',
-          action: async () => await dispatchContextMenuAction(FileAction.SeeInExplorer, getSelectedEntries()),
-          image: EyeOpenIcon,
-        });
-      }
-      actions.push({
-        label: 'FoldersPage.tabbar.openWithDefault',
-        action: async () => await openEntry(getSelectedEntries()[0], { skipViewers: true }),
-        icon: open,
-      });
-    }
-    if (isReadOnly.value) {
-      actions.push(
-        {
-          label: 'FoldersPage.tabbar.copyLink',
-          action: async () => await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries()),
-          icon: link,
-        },
-        {
-          label: 'FoldersPage.tabbar.details',
-          action: async () => await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries()),
-          icon: informationCircle,
-        },
-      );
-    } else {
-      actions.push(
-        {
-          label: 'FoldersPage.tabbar.duplicate',
-          action: async () => await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries()),
-          icon: duplicate,
-        },
-        {
-          label: 'FoldersPage.tabbar.copyLink',
-          action: async () => await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries()),
-          icon: link,
-        },
-        {
-          label: 'FoldersPage.tabbar.history',
-          action: async () => await dispatchContextMenuAction(FileAction.ShowHistory, getSelectedEntries()),
-          icon: time,
-        },
-        {
-          label: 'FoldersPage.tabbar.details',
-          action: async () => await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries()),
-          icon: informationCircle,
-        },
-      );
-    }
-  }
+
+  // disagreement between prettier and eslint
+  /* eslint-disable indent */
+  actions.push(
+    ...(isLargeDisplay.value && !isReadOnly.value && selectedEntries.length === 0
+      ? [
+          {
+            label: 'FoldersPage.createFolder',
+            icon: folderOpen,
+            action: createFolder,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isLargeDisplay.value && !isReadOnly.value && selectedEntries.length === 0
+      ? [
+          {
+            label: 'FoldersPage.createFile.button',
+            image: DocumentNew,
+            action: async (event: MouseEvent) => {
+              await onCreateNewFileClicked(event);
+            },
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isLargeDisplay.value && !isReadOnly.value && selectedEntries.length === 0
+      ? [
+          {
+            label: 'FoldersPage.import',
+            image: DocumentImport,
+            action: async (event: MouseEvent) => {
+              await onImportClicked(event);
+            },
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(selectedEntries.length === 1 && selectedEntries[0].isFile()
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionPreview',
+            action: async () => await openEntry(selectedEntries[0], { skipViewers: false, readOnly: true }),
+            icon: eye,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length === 1 && selectedEntries[0].isFile() && isFileEditable(selectedEntries[0].name)
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionEdit',
+            action: async () => await openEntry(selectedEntries[0], {}),
+            icon: create,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionRename',
+            action: async () => await dispatchContextMenuAction(FileAction.Rename, selectedEntries),
+            image: RenameIcon,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length >= 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionMoveTo',
+            action: async () => await dispatchContextMenuAction(FileAction.MoveTo, selectedEntries),
+            icon: arrowRedo,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length >= 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionMakeACopy',
+            action: async () => await dispatchContextMenuAction(FileAction.MakeACopy, selectedEntries),
+            icon: duplicate,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(!isReadOnly.value && selectedEntries.length >= 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionDelete',
+            action: async () => await dispatchContextMenuAction(FileAction.Delete, selectedEntries),
+            icon: trashBin,
+            danger: true,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isWeb() && selectedEntries.length >= 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionDownload',
+            action: async () => await dispatchContextMenuAction(FileAction.Download, selectedEntries),
+            icon: download,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isWeb() && selectedEntries.length >= 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionDownloadAsArchive',
+            action: async () => await dispatchContextMenuAction(FileAction.DownloadAsArchive, selectedEntries),
+            image: ZipFolderIcon,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isDesktop() && selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionSeeInExplorer',
+            action: async () => await dispatchContextMenuAction(FileAction.SeeInExplorer, selectedEntries),
+            image: EyeOpenIcon,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(isDesktop() && selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionOpen',
+            action: async () => await openEntry(selectedEntries[0], { skipViewers: true }),
+            icon: open,
+          },
+        ]
+      : []),
+  );
+
+  actions.push(
+    ...(selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionHistory',
+            action: async () => await dispatchContextMenuAction(FileAction.ShowHistory, selectedEntries),
+            icon: time,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionCopyLink',
+            action: async () => await dispatchContextMenuAction(FileAction.CopyLink, selectedEntries),
+            icon: link,
+          },
+        ]
+      : []),
+  );
+  actions.push(
+    ...(selectedEntries.length === 1
+      ? [
+          {
+            label: 'FoldersPage.fileContextMenu.actionDetails',
+            action: async () => await dispatchContextMenuAction(FileAction.ShowDetails, selectedEntries),
+            icon: informationCircle,
+          },
+        ]
+      : []),
+  );
+  /* eslint-enable indent */
   return actions;
+});
+
+const actionBarDesktop = computed(() => {
+  return tabBarActions.value.map((action) => {
+    return {
+      label: action.label,
+      image: action.image,
+      icon: action.icon,
+      onClick: action.action,
+    } as MsActionBarAction;
+  });
 });
 
 const fileOperationsCurrentDir = asyncComputed(async () => {
@@ -1519,170 +1602,6 @@ async function onDropAsReader(): Promise<void> {
     PresentationMode.Toast,
   );
 }
-
-const actionBarOptionsFoldersPage = computed(() => {
-  const actionArray: Array<MsActionBarAction> = [];
-  const selectedEntries = getSelectedEntries();
-
-  if (search.value) {
-    return actionArray;
-  }
-
-  if (selectedFilesCount.value === 0 && !isReadOnly.value) {
-    actionArray.push(
-      {
-        label: 'FoldersPage.createFolder',
-        icon: folderOpen,
-        onClick: async () => {
-          await createFolder();
-        },
-      },
-      {
-        label: 'FoldersPage.createFile.button',
-        image: DocumentNew,
-        onClick: async (event: MouseEvent) => {
-          await onCreateNewFileClicked(event);
-        },
-      },
-      {
-        label: 'FoldersPage.import',
-        image: DocumentImport,
-        onClick: async (event: MouseEvent) => {
-          await onImportClicked(event);
-        },
-      },
-    );
-  }
-  if (selectedFilesCount.value === 1) {
-    if (selectedEntries[0].isFile()) {
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionPreview',
-        icon: eye,
-        onClick: async () => {
-          await openEntry(getSelectedEntries()[0], { skipViewers: false, readOnly: true });
-        },
-      });
-    }
-    if (selectedEntries[0].isFile() && !isReadOnly.value && isFileEditable(selectedEntries[0].name)) {
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionEdit',
-        icon: create,
-        onClick: async () => {
-          await openEntry(getSelectedEntries()[0], {});
-        },
-      });
-    }
-    if (!isReadOnly.value) {
-      actionArray.push(
-        {
-          label: 'FoldersPage.fileContextMenu.actionRename',
-          image: RenameIcon,
-          onClick: async () => {
-            await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionMoveTo',
-          icon: arrowRedo,
-          onClick: async () => {
-            await dispatchContextMenuAction(FileAction.MoveTo, getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionMakeACopy',
-          icon: duplicate,
-          onClick: async () => {
-            await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionDelete',
-          icon: trashBin,
-          onClick: async () => {
-            await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries());
-          },
-        },
-      );
-    }
-    if (isWeb()) {
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionDownload',
-        icon: download,
-        onClick: async () => {
-          await dispatchContextMenuAction(FileAction.Download, getSelectedEntries());
-        },
-      });
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionDownloadAsArchive',
-        icon: archive,
-        onClick: async () => {
-          await dispatchContextMenuAction(FileAction.DownloadAsArchive, getSelectedEntries());
-        },
-      });
-    }
-    actionArray.push(
-      {
-        label: 'FoldersPage.fileContextMenu.actionDetails',
-        icon: informationCircle,
-        onClick: async () => {
-          await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries());
-        },
-      },
-      {
-        label: 'FoldersPage.fileContextMenu.actionCopyLink',
-        icon: link,
-        onClick: async () => {
-          await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries());
-        },
-      },
-    );
-  }
-  if (selectedFilesCount.value > 1) {
-    if (!isReadOnly.value) {
-      actionArray.push(
-        {
-          label: 'FoldersPage.fileContextMenu.actionMoveTo',
-          icon: arrowRedo,
-          onClick: async () => {
-            await dispatchContextMenuAction(FileAction.MoveTo, getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionMakeACopy',
-          icon: duplicate,
-          onClick: async () => {
-            await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries());
-          },
-        },
-        {
-          label: 'FoldersPage.fileContextMenu.actionDelete',
-          icon: trashBin,
-          onClick: async () => {
-            await dispatchContextMenuAction(FileAction.Delete, getSelectedEntries());
-          },
-        },
-      );
-    }
-    if (isWeb()) {
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionDownload',
-        icon: download,
-        onClick: async () => {
-          await dispatchContextMenuAction(FileAction.Download, getSelectedEntries());
-        },
-      });
-      actionArray.push({
-        label: 'FoldersPage.fileContextMenu.actionDownloadAsArchive',
-        image: ZipFolderIcon,
-        onClick: async () => {
-          await dispatchContextMenuAction(FileAction.DownloadAsArchive, getSelectedEntries());
-        },
-      });
-    }
-  }
-
-  return actionArray;
-});
 
 function onSearchValueChange(pattern: string): void {
   searchInputValue.value = pattern;

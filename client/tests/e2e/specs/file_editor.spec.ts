@@ -2,6 +2,7 @@
 
 import { TestInfo } from '@playwright/test';
 import {
+  checkEntryContextMenu,
   expect,
   fillInputModal,
   getClipboardText,
@@ -50,14 +51,10 @@ msTest.describe(() => {
         }
       } else {
         await entry.click({ button: 'right' });
-        const menu = parsecEditics.locator('#file-context-menu');
-        await expect(menu).toBeVisible();
         if (mode === 'edit') {
-          await expect(menu.getByRole('listitem').nth(2)).toHaveText('Edit');
-          await menu.getByRole('listitem').nth(2).click();
+          await checkEntryContextMenu(parsecEditics, 'file-full', 'Edit', { canEdit: true });
         } else {
-          await expect(menu.getByRole('listitem').nth(1)).toHaveText('Preview');
-          await menu.getByRole('listitem').nth(1).click();
+          await checkEntryContextMenu(parsecEditics, 'file-full', 'Preview', { canEdit: true });
         }
       }
       await expect(parsecEditics.locator('.file-editor')).toBeVisible();
