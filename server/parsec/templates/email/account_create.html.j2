@@ -1,9 +1,11 @@
 {% extends "email/base.html.j2" %}
-{% block document_title %}Parsec Account: Confirm your email address{% endblock %}
+{% block document_title %}Parsec Account creation{% endblock %}
 
-{% block preheader %}Please confirm your email address to get started with your Parsec Account.{% endblock %}
+{% block preheader %}Confirm your email address to get started with your Parsec Account.{% endblock %}
 
 {% block title %}Confirm your email address{% endblock %}
+
+{% block description %}Please confirm your email address to get started with your Parsec Account.{% endblock %}
 
 {% block main_content %}
 {% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_code %}

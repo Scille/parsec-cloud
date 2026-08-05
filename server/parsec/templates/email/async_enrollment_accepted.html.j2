@@ -1,25 +1,30 @@
 {% extends "email/base.html.j2" %}
 
-{% block document_title %}Join request accepted{% endblock %}
+{% block document_title %}Parsec join request accepted{% endblock %}
 
 {% block preheader %}Your request to join {{ organization_id }} has been accepted.{% endblock %}
 
 {% block title %}You are now part of {{ organization_id }}{% endblock %}
 
+{% block description %}Your request to join <b>{{ organization_id }}</b> has been accepted.{% endblock %}
+
 {% block main_content %}
-{% from "email/macros.html.j2" import render_note %}
-
-<p>Your request to join <strong>{{ organization_id }}</strong> has been accepted.</p>
-
-<p>Follow the next steps to add it to your organizations:
-<ol>
-  <li><strong>Open Parsec</strong>: {{ server_url }}</li>
-  <li>Choose to continue on <strong>Web</strong> or <strong>Desktop</strong> depending on where you submitted your join request</li>
-  <li>Click on <strong>Add to my organizations</strong> next to your join request</li>
-</ol>
-</p>
-
-<p>You can now log into {{ organization_id }} and start sharing your data securely.</p>
+{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_note %}
+{{
+  gen_contents([
+    namespace(
+      title="Open Parsec",
+      text="Open Parsec and continue on <strong>Web</strong> or <strong>Desktop</strong> depending on where you submitted your join request from.",
+      extras=[
+        render_link(server_url, "Open Parsec")
+      ]
+    ),
+    namespace(
+      title="Add your new organization",
+      text="Click on <strong>Add to my organizations</strong> next to your join request. You can now login and start sharing your data securely.",
+    )
+  ])
+}}
 
 {% call render_note() %}
 <p style="font-size: 14px; color: #51517B; padding-bottom: 8px;">

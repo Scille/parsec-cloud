@@ -421,7 +421,10 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             # Send mail
             if send_mail:
                 await send_accepted_enrollment_email(
-                    self._config, organization_id, u_certif.human_handle.email
+                    config=self._config,
+                    organization_id=organization_id,
+                    claimer_email=u_certif.human_handle.email,
+                    user_label=u_certif.human_handle.label,
                 )
 
             return u_certif, d_certif

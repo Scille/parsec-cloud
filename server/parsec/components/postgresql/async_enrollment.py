@@ -222,9 +222,10 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
         # operation can be long.
         if send_mail:
             mail_outcome = await send_accepted_enrollment_email(
-                self._config,
+                config=self._config,
                 organization_id=organization_id,
                 claimer_email=user_cert.human_handle.email,
+                user_label=user_cert.human_handle.label,
             )
             match mail_outcome:
                 case None:

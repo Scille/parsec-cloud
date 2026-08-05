@@ -20,6 +20,7 @@ from parsec.templates import get_environment
 
 DEFAULT_SENDER_EMAIL = EmailAddress("parsec@example.com")
 DEFAULT_RECIPIENT_EMAIL = EmailAddress("alice@example.com")
+DEFAULT_RECIPIENT_LABEL = "Alice"
 DEFAULT_ORGANIZATION_ID = OrganizationID("CoolOrg")
 DEFAULT_INVITATION_URL = "https://invitation.parsec.example.com"
 DEFAULT_BASE_SERVER_URL = "https://parsec.example.com"
@@ -74,6 +75,11 @@ def mail_templates_shared_options[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
             default=DEFAULT_RECIPIENT_EMAIL.str,
         ),
         click.option(
+            "--recipient-label",
+            show_default=True,
+            default=DEFAULT_RECIPIENT_LABEL,
+        ),
+        click.option(
             "--output-dir",
             show_default=True,
             default=".",
@@ -125,6 +131,7 @@ def render_email():
 def invite(
     sender: EmailAddress,
     recipient: EmailAddress,
+    recipient_label: str,  # TODO: support user label
     invitation_type: InvitationType,
     organization_id: OrganizationID,
     invitation_url: str,
@@ -150,7 +157,7 @@ def invite(
     write_mail_file_to_filesystem(message, output_dir, "invitation_mail")
 
 
-@render_email.command(short_help="Generate account create validation email")
+@render_email.command(short_help="Generate Parsec Account create validation email")
 @mail_templates_shared_options
 @click.option(
     "--validation-code",
@@ -161,6 +168,7 @@ def invite(
 def account_create(
     sender: EmailAddress,
     recipient: EmailAddress,
+    recipient_label: str,  # TODO: support user label
     validation_code: ValidationCode,
     server_url: str,
     output_dir: Path,
@@ -178,7 +186,7 @@ def account_create(
     write_mail_file_to_filesystem(message, output_dir, "account_create_validation_email")
 
 
-@render_email.command(short_help="Generate account delete validation email")
+@render_email.command(short_help="Generate Parsec Account delete validation email")
 @mail_templates_shared_options
 @click.option(
     "--validation-code",
@@ -189,6 +197,7 @@ def account_create(
 def account_delete(
     sender: EmailAddress,
     recipient: EmailAddress,
+    recipient_label: str,  # TODO: support user label
     validation_code: ValidationCode,
     server_url: str,
     output_dir: Path,
@@ -219,6 +228,7 @@ def account_delete(
 def totp_reset(
     sender: EmailAddress,
     recipient: EmailAddress,
+    recipient_label: str,  # TODO: support user label
     organization_id: OrganizationID,
     totp_reset_url: str,
     server_url: str,
@@ -235,10 +245,10 @@ def totp_reset(
         server_url=server_url,
     )
 
-    write_mail_file_to_filesystem(message, output_dir, "account_delete_validation_email")
+    write_mail_file_to_filesystem(message, output_dir, "totp_reset_email")
 
 
-@render_email.command(short_help="Generate async enrollment email")
+@render_email.command(short_help="Generate async enrollment accepted email")
 @mail_templates_shared_options
 @click.option(
     "--organization-id", type=OrganizationID, default=DEFAULT_ORGANIZATION_ID, show_default=True
@@ -246,6 +256,7 @@ def totp_reset(
 def async_enroll(
     sender: EmailAddress,
     recipient: EmailAddress,
+    recipient_label: str,
     organization_id: OrganizationID,
     server_url: str,
     output_dir: Path,
@@ -257,7 +268,8 @@ def async_enroll(
         from_addr=sender,
         to_addr=recipient,
         organization_id=organization_id,
+        user_label=recipient_label,
         server_url=server_url,
     )
 
-    write_mail_file_to_filesystem(message, output_dir, "async_enrollment_accept")
+    write_mail_file_to_filesystem(message, output_dir, "async_enrollment_accepted_email")

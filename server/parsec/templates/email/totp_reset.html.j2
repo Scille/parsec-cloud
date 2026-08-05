@@ -1,26 +1,20 @@
 {% extends "email/base.html.j2" %}
-{% block document_title %}Your MFA has been reset in Parsec{% endblock %}
 
-{% block preheader %}Your MFA has been reset for the {{ organization_id }} organization in Parsec.{% endblock %}
+{% block document_title %}Parsec MFA reset{% endblock %}
 
-{% block title %}
-Your MFA has been reset for <b>{{ organization_id }}</b>
-{% endblock %}
+{% block preheader %}Your MFA has been reset for <b>{{ organization_id }}{% endblock %}
 
-{% block description %}
-<p style="line-height: 28.9px; color: #51517B; font-size: 16px;">
-Your MFA (Multi-Factor Authentication) has been reset for the <b>{{ organization_id }}</b> organization in Parsec.
-</p>
-{% endblock %}
+{% block title %}Your MFA has been reset for <b>{{ organization_id }}</b>{% endblock %}
+
+{% block description %}Your MFA has been reset for the <b>{{ organization_id }}</b>.{% endblock %}
 
 {% block main_content %}
 {% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_note %}
-
 {{
   gen_contents([
     namespace(
-      title="Re-enable MFA",
-      text="Use the link below to re-enable MFA:",
+      title="Enable MFA",
+      text="Click on the following link to re-enable MFA:",
       extras=[
         render_link(totp_reset_url, "Enable MFA"),
         render_fallback_link(totp_reset_url)

@@ -1,26 +1,23 @@
 {% extends "email/base.html.j2" %}
-{% block document_title %}Parsec Invitation{% endblock %}
+{% block document_title %}Parsec invitation{% endblock %}
 
-{% block preheader %}Follow these steps to join your new workspace on Parsec.{% endblock %}
+{% block preheader %}You have been invited to join {{ organization_id }} on Parsec.{% endblock %}
 
 {% block title %}
-{% if is_user_invitation %}
-Invitation to join the organization {{ organization_id}}
+{% if is_user_invitation %}You have been invited to join {{ organization_id }}
+{% elif is_device_invitation %}You want to add a new device for {{ organization_id }}
+{% elif is_shamir_recovery_invitation %}You have been invited to recover access to {{ organization_id }}
 {% endif %}
 {% endblock %}
 
 {% block description %}
-<p style="line-height: 28.9px; color: #51517B; font-size: 16px;">
 {% if is_user_invitation %}
 You have received an invitation from <b>{{ greeter }}</b> to join the <b>{{ organization_id }}</b> organization on Parsec.
 {% elif is_device_invitation %}
-You have received an invitation to add a new device to the <b>{{ organization_id }}</b>
-organization on Parsec.
+You want to add a new device for the <b>{{ organization_id }}</b> organization on Parsec.
 {% elif is_shamir_recovery_invitation %}
-You have received an invitation to start a recovery procedure on the <b>{{ organization_id }}</b>
-organization on Parsec.
+You have received an invitation to recover access to the <b>{{ organization_id }}</b> organization on Parsec.
 {% endif %}
-</p>
 {% endblock %}
 
 {% block main_content %}

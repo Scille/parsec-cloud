@@ -774,6 +774,7 @@ async def send_accepted_enrollment_email(
     config: BackendConfig,
     organization_id: OrganizationID,
     claimer_email: EmailAddress,
+    user_label: str,
 ) -> SendEmailBadOutcome | None:
     if not config.server_addr:
         return SendEmailBadOutcome.BAD_SMTP_CONFIG
@@ -782,6 +783,7 @@ async def send_accepted_enrollment_email(
         from_addr=config.email_config.sender,
         to_addr=claimer_email,
         organization_id=organization_id,
+        user_label=user_label,
         server_url=config.server_addr.to_http_url(),
     )
     return await send_email(
@@ -796,6 +798,7 @@ def generate_accepted_enrollment_email(
     from_addr: EmailAddress,
     to_addr: EmailAddress,
     organization_id: OrganizationID,
+    user_label: str,
     server_url: str,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
@@ -803,17 +806,19 @@ def generate_accepted_enrollment_email(
 
     html = jinja_env.get_template("email/async_enrollment_accepted.html.j2").render(
         organization_id=organization_id.str,
+        user_label=user_label,
         server_url=server_url,
     )
     text = jinja_env.get_template("email/async_enrollment_accepted.txt.j2").render(
         organization_id=organization_id.str,
+        user_label=user_label,
         server_url=server_url,
     )
 
     # mail settings
     message = MIMEMultipart("alternative")
 
-    message["Subject"] = f"[Parsec] Request accepted to join {organization_id.str}"
+    message["Subject"] = f"[Parsec] Your request to join {organization_id.str} has been accepted"
     message["From"] = str(from_addr)
     message["To"] = str(to_addr)
 

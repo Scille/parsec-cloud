@@ -1,17 +1,14 @@
-Hello!
-
+{% extends "email/base.txt.j2" %}
+{% block main_content %}
 Please confirm your email address to get started with your Parsec Account.
 
 To confirm your email address:
 
-1. Make sure to download and install Parsec app (https://parsec.cloud/en/start-parsec)
+1. If you haven't already, download and install Parsec: https://parsec.cloud/en/start-parsec
 2. Once installed, use the following code to confirm your email address:
+
 {{ validation_code }}
 
-Thank you,
-
-Parsec Cloud team
-https://parsec.cloud/
-
-If you didn’t request this email, then someone has probably entered your email address by mistake.
-Sorry about that. You can safely ignore this email or get in touch with us to report it.
+If you didn't request this email, then someone has probably entered your email address by mistake.
+You can safely ignore this email or get in touch with us to report it.
+{% endblock %}
