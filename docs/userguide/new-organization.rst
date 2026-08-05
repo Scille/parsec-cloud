@@ -21,7 +21,7 @@ servers and associated to your customer account.
 
 .. note::
 
-  Please `visit our website to choose the offer <https://parsec.cloud/tarification/>`_
+  Please `visit our website to choose the offer <https://parsec.cloud/en/pricing/>`_
   that best suits your needs and follow the steps to create your account.
 
 .. image:: screens/create_organization.png
