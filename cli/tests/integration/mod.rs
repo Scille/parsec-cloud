@@ -1,5 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
+#[cfg(feature = "shell-completion")]
+mod auto_complete;
 mod certificate;
 mod device;
 mod device_option;

@@ -16,7 +16,7 @@ const SEQUESTER_SERVICE_CERTIFICATE_PEM_FOOTER: &[u8] =
 #[derive(clap::Args)]
 pub struct Args {
     /// Service name
-    #[arg(long)]
+    #[arg(long, value_hint = clap::ValueHint::Other)]
     service_label: String,
     /// File containing the public key to use when generating the service's certificate
     #[arg(long, value_hint = clap::ValueHint::FilePath)]

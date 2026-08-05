@@ -75,6 +75,8 @@ pub enum Command {
     ManPage(man_page::Args),
     #[command(subcommand)]
     Sequester(sequester::Group),
+    #[cfg(feature = "shell-completion")]
+    AutoComplete(auto_complete::Args),
 }
 
 struct LongVersion;
