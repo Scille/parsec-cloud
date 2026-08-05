@@ -48,6 +48,7 @@ url = { workspace = true, optional = true }
 uuid = { workspace = true }
 itertools = { workspace = true, features = ["use_std"] }
 thiserror = { workspace = true }
+shadow-rs.workspace = true
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }
@@ -60,6 +61,9 @@ rstest = { workspace = true }
 uuid = { workspace = true, features = ["v6", "std", "rng"] }
 
 criterion = { workspace = true }
+
+[build-dependencies]
+shadow-rs = { workspace = true, features = ["git2", "build"] }
 
 [target.'cfg(target_family = "unix")'.dev-dependencies]
 # rexpect doesn't support Windows (see https://github.com/rust-cli/rexpect/issues/11)

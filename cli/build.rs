@@ -11,4 +11,9 @@ fn main() {
     // loaded ("delayload" option in MSVC) so that we will have time to first configure the
     // lookup directory.
     winfsp_wrs_build::build();
+
+    shadow_rs::ShadowBuilder::builder()
+        .build_pattern(shadow_rs::BuildPattern::Lazy)
+        .build()
+        .expect("Cannot get build environment info");
 }
