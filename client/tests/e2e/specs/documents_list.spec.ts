@@ -502,16 +502,16 @@ msTest.describe(() => {
 
     // Resize to 1500px
     await resizePage(documents, 1500);
-    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to']);
+    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy']);
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
     await expect(documents.locator('.popover-viewport').getByRole('listitem')).toHaveText([
-      'Make a copy',
       'Delete',
       'Download',
       'Download as a ZIP file',
-      'Details',
+      'History',
       'Copy link',
+      'Details',
     ]);
     await documents.keyboard.press('Escape');
 
@@ -527,8 +527,9 @@ msTest.describe(() => {
       'Delete',
       'Download',
       'Download as a ZIP file',
-      'Details',
+      'History',
       'Copy link',
+      'Details',
     ]);
     await documents.keyboard.press('Escape');
 
@@ -536,16 +537,16 @@ msTest.describe(() => {
     const topbarButton = documents.locator('#connected-header').locator('#trigger-toggle-menu-button');
     await expect(topbarButton).toBeVisible();
     await topbarButton.click();
-    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to']);
+    await expect(actionsBarButtons).toHaveText(['Preview', 'Rename', 'Move to', 'Make a copy']);
     await expect(actionBarMoreButton).toBeVisible();
     await actionBarMoreButton.click();
     await expect(popover.getByRole('listitem')).toHaveText([
-      'Make a copy',
       'Delete',
       'Download',
       'Download as a ZIP file',
-      'Details',
+      'History',
       'Copy link',
+      'Details',
     ]);
   });
 

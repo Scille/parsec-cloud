@@ -1172,22 +1172,6 @@
         "itemsDoneAmount": "One more operation done | {amount} more operations done",
         "itemsErrorAmount": "One more operation cancelled or failed | {amount} more operations cancelled or failed",
         "operationAmount": "{amount} operations",
-        "tabbar": {
-            "rename": "Rename",
-            "move": "Move",
-            "duplicate": "Copy",
-            "delete": "Delete",
-            "share": "Share",
-            "download": "Download",
-            "downloadAsArchive": "Download as a ZIP file",
-            "copyLink": "Copy link",
-            "history": "History",
-            "preview": "Preview",
-            "openWithDefault": "Open with default app",
-            "seeInExplorer": "Show in explorer",
-            "details": "Details",
-            "edit": "Edit"
-        },
         "search": {
             "title": "Search results",
             "resultsCount": "{count} result | {count} results",

@@ -192,7 +192,7 @@ msTest.describe(() => {
 
   msTest('Document popover on right click on multiple files with a folder', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
-    await documents.waitForTimeout(300);
+    await documents.waitForTimeout(500);
     await documents.locator('.folder-container').locator('.files-list-header').locator('.ms-checkbox').check();
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     await expect(entries).toHaveCount(2);

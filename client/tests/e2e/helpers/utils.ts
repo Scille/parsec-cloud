@@ -694,7 +694,7 @@ export async function checkEntryContextMenu(
     await menu.locator('ion-backdrop').click();
     await expect(menu).toBeHidden();
   } else if (action) {
-    await labels.filter({ hasText: action }).click();
+    await labels.filter({ hasText: new RegExp(`^${action}$`) }).click();
     await expect(menu).toBeHidden();
   }
 }
