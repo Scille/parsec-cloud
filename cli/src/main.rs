@@ -89,6 +89,7 @@ shadow_rs::shadow!(build);
 impl From<LongVersion> for clap::builder::Str {
     fn from(_value: LongVersion) -> Self {
         use build::*;
+        use libparsec_crypto::CRYPTO_BACKEND;
 
         // cspell: words: formatcp
         shadow_rs::formatcp!(
@@ -99,7 +100,8 @@ commit_hash: {SHORT_COMMIT}
 build_target: {BUILD_TARGET}
 build_os: {BUILD_OS}
 build_profile: {BUILD_RUST_CHANNEL}
-build_features: {CARGO_FEATURES}
+cli_features: {CARGO_FEATURES}
+crypto_backend: {CRYPTO_BACKEND}
 rust_version: {RUST_VERSION}
 rust_channel: {RUST_CHANNEL}
 cargo_version: {CARGO_VERSION}
