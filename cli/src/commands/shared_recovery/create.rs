@@ -54,7 +54,7 @@ crate::clap_parser_with_shared_opts_builder!(
         /// If missing organization's admins will be used instead.
         /// Author must not be included as recipient.
         /// email or email:weight format is expected (weight defaults to one if not provided).
-        #[arg(long, num_args = 1..=255)]
+        #[arg(long, num_args = 1..=255, value_hint = clap::ValueHint::EmailAddress)]
         recipients: Option<Vec<WeightedEmail>>,
         /// Threshold number of shares required to proceed with recovery.
         #[arg(short, long, requires = "recipients")]

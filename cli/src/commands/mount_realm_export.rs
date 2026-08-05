@@ -10,13 +10,14 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, password_stdin]
     pub struct Args {
         /// Path to the realm export database
+        #[arg(value_hint = clap::ValueHint::FilePath)]
         export_db_path: PathBuf,
         /// Sequester service or user to use for decryption.
         /// Allowed format `device:<device_id>` or `sequester:<service_id>:<path/to/private_key.pem>`.
-        #[arg(short, long)]
+        #[arg(short, long, value_hint = clap::ValueHint::Other)]
         decryptor: Vec<Decryptor>,
         /// Browse the realm at a specific point in time.
-        #[arg(short, long)]
+        #[arg(short, long, value_hint = clap::ValueHint::Other)]
         timestamp: Option<DateTime>,
     }
 );

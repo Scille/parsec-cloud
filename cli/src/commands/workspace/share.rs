@@ -8,10 +8,10 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, workspace, password_stdin]
     pub struct Args {
         /// The user ID to share the workspace with
-        #[arg(short, long, value_parser = UserID::from_hex)]
+        #[arg(short, long, value_parser = UserID::from_hex, value_hint = clap::ValueHint::Other)]
         user: UserID,
         /// Role (owner/manager/contributor/reader)
-        #[arg(short, long)]
+        #[arg(short, long, value_hint = clap::ValueHint::Other)]
         role: RealmRole,
     }
 );

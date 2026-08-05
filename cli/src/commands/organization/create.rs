@@ -8,6 +8,7 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = addr, token]
     pub struct Args {
         /// The organization name that will be created
+        #[arg(value_hint = clap::ValueHint::Other)]
         organization: OrganizationID,
     }
 );

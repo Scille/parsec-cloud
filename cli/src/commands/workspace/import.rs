@@ -15,6 +15,7 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin, workspace]
     pub struct Args {
         /// Local file or folder to import (e.g. "myfile.txt")
+        #[arg(value_hint = clap::ValueHint::FilePath)]
         pub(crate) src: PathBuf,
         /// Destination path in the workspace (e.g. "/path/to/myfile.txt")
         ///
@@ -22,6 +23,7 @@ crate::clap_parser_with_shared_opts_builder!(
         /// parent directories do not exist, unless the `parents` option is enabled.
         ///
         /// If the destination file already exists, its content will be replaced.
+        #[arg(value_hint = clap::ValueHint::DirPath)]
         pub(crate) dest: FsPath,
         /// If specified, create parent directories as needed
         ///

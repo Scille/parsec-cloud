@@ -9,10 +9,11 @@ crate::clap_parser_with_shared_opts_builder!(
         #[arg(long)]
         remove: bool,
         /// Read the TOS configuration from a JSON file.
-        #[arg(long)]
+        #[arg(long, value_hint = clap::ValueHint::FilePath)]
         from_json: Option<PathBuf>,
         /// List of locale and url for TOS configuration
         /// Each arguments should be in the form of `{locale}={url}`
+        #[arg(value_hint = clap::ValueHint::Other)]
         raw: Vec<String>,
     }
 );

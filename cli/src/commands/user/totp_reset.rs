@@ -9,10 +9,10 @@ crate::clap_parser_with_shared_opts_builder!(
     #[command(group(clap::ArgGroup::new("user_ref").required(true)))]
     pub struct Args {
         /// User ID (hex) of the user to reset TOTP for (mutually exclusive with --user-email)
-        #[arg(long, group = "user_ref", value_parser = UserID::from_hex)]
+        #[arg(long, group = "user_ref", value_parser = UserID::from_hex, value_hint = clap::ValueHint::Other)]
         user_id: Option<UserID>,
         /// Email of the user to reset TOTP for (mutually exclusive with --user-id)
-        #[arg(long, group = "user_ref")]
+        #[arg(long, group = "user_ref", value_hint = clap::ValueHint::EmailAddress)]
         user_email: Option<EmailAddress>,
         /// Request the server to send the an email informing the user of the reset
         #[arg(long, default_value_t)]
