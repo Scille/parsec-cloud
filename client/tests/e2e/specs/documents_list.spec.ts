@@ -340,6 +340,26 @@ msTest.describe(() => {
     });
   }
 
+  msTest('Create folder error', async ({ documents }) => {
+    await mockLibParsec(documents, [
+      {
+        name: 'workspaceCreateFolderAll',
+        result: { ok: false, error: { tag: 'WorkspaceCreateFolderErrorInternal', error: 'failed' } },
+      },
+    ]);
+
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await expect(entries).toHaveCount(0);
+
+    const actionBar = documents.locator('#folders-ms-action-bar');
+    await actionBar.getByText('New folder').click();
+
+    await fillInputModal(documents, 'My folder');
+    await expect(documents).toShowToast('Failed to create folder `My folder`, please try again.', 'Error');
+
+    await expect(entries).toHaveCount(0);
+  });
+
   msTest('Create a folder with a name too long', async ({ documents }) => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     await expect(entries).toHaveCount(0);

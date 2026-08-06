@@ -1197,8 +1197,8 @@ async function createNewFile(name: EntryName, fileType: FileContentType): Promis
         default:
           return;
       }
-      const path = await parsec.Path.join(currentPath.value, name);
-      const fdResult = await parsec.openFile(workspaceInfo.value.handle, path, { createNew: true, create: true, write: true });
+      const tmpPath = await parsec.getTemporaryPath(currentPath.value);
+      const fdResult = await parsec.openFile(workspaceInfo.value.handle, tmpPath, { createNew: true, create: true, write: true });
       if (!fdResult.ok) {
         informationManager.value.present(
           new Information({
@@ -1222,6 +1222,9 @@ async function createNewFile(name: EntryName, fileType: FileContentType): Promis
             }),
             PresentationMode.Toast,
           );
+          await parsec.deleteFile(workspaceInfo.value.handle, tmpPath);
+        } else {
+          await parsec.rename(workspaceInfo.value.handle, tmpPath, name, true);
         }
       } finally {
         await parsec.closeFile(workspaceInfo.value.handle, fdResult.value);

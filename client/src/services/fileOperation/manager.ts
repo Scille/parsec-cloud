@@ -9,6 +9,7 @@ import {
   EntryStatFolder,
   EntryTree,
   FsPath,
+  getTemporaryPath,
   getWorkspaceInfo,
   HistoryEntryTree,
   listTree,
@@ -60,10 +61,6 @@ import { v4 as uuid4 } from 'uuid';
 const MAX_SIMULTANEOUS_OPERATIONS = 3;
 
 export const FileOperationManagerKey = 'fileOperationManager';
-
-async function getTemporaryPath(parent: FsPath): Promise<FsPath> {
-  return Path.quickJoin(parent, `._${crypto.randomUUID()}`);
-}
 
 export class PreparedImport {
   manager: FileOperationManager;
