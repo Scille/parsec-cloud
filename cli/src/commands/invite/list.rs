@@ -11,7 +11,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, list_invite);
 
-pub async fn list_invite(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn list_invite(
+    _todo_ui: crate::Ui,
+    _args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     log::trace!("Listing invitations");
     poll_server_for_new_certificates(client).await?;
 

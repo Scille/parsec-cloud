@@ -76,22 +76,24 @@ async fn main() -> anyhow::Result<()> {
 
     match arg.command {
         Command::Device(device) => device::dispatch_command(ui, device).await,
-        Command::Invite(invitation) => invite::dispatch_command(invitation).await,
-        Command::Organization(organization) => organization::dispatch_command(organization).await,
-        Command::User(user) => user::dispatch_command(user).await,
-        Command::Server(server) => server::dispatch_command(server).await,
+        Command::Invite(invitation) => invite::dispatch_command(ui, invitation).await,
+        Command::Organization(organization) => {
+            organization::dispatch_command(ui, organization).await
+        }
+        Command::User(user) => user::dispatch_command(ui, user).await,
+        Command::Server(server) => server::dispatch_command(ui, server).await,
         Command::Workspace(workspace) => workspace::dispatch_command(ui, workspace).await,
-        Command::Certificate(certificate) => certificate::dispatch_command(certificate).await,
+        Command::Certificate(certificate) => certificate::dispatch_command(ui, certificate).await,
         #[cfg(feature = "testenv")]
-        Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
-        Command::Ls(ls) => ls::main(ls).await,
-        Command::Rm(rm) => rm::main(rm).await,
-        Command::Tos(tos) => tos::dispatch_command(tos).await,
+        Command::RunTestenv(run_testenv) => run_testenv::run_testenv(ui, run_testenv).await,
+        Command::Ls(ls) => ls::main(ui, ls).await,
+        Command::Rm(rm) => rm::main(ui, rm).await,
+        Command::Tos(tos) => tos::dispatch_command(ui, tos).await,
         Command::SharedRecovery(shared_recovery) => {
-            shared_recovery::dispatch_command(shared_recovery).await
+            shared_recovery::dispatch_command(ui, shared_recovery).await
         }
         Command::MountRealmExport(mount_realm_export) => {
-            mount_realm_export::main(mount_realm_export).await
+            mount_realm_export::main(ui, mount_realm_export).await
         }
     }
 }

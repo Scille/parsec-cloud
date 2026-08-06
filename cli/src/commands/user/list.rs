@@ -13,7 +13,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, list_user);
 
-pub async fn list_user(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn list_user(
+    _todo_ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args { skip_revoked, .. } = args;
     log::trace!("Listing users (skip_revoked={skip_revoked})");
 

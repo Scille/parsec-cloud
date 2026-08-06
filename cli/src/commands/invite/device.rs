@@ -12,7 +12,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, invite_device);
 
-pub async fn invite_device(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn invite_device(
+    _todo_ui: crate::Ui,
+    _args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     log::trace!("Inviting a device");
 
     let mut handle = start_spinner("Creating device invitation".into());

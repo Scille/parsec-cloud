@@ -63,7 +63,7 @@ pub async fn bootstrap_organization_req(
     .map_err(anyhow::Error::from)
 }
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         email,
         label,

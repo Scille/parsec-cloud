@@ -67,7 +67,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, create_shared_recovery);
 
-pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn create_shared_recovery(
+    _todo_ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args {
         recipients,
         threshold,

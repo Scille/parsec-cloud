@@ -12,10 +12,10 @@ pub enum Group {
     Accept(accept::Args),
 }
 
-pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
+pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<()> {
     match command {
-        Group::List(args) => list::main(args).await,
-        Group::Config(args) => config::main(args).await,
-        Group::Accept(args) => accept::main(args).await,
+        Group::List(args) => list::main(ui, args).await,
+        Group::Config(args) => config::main(ui, args).await,
+        Group::Accept(args) => accept::main(ui, args).await,
     }
 }

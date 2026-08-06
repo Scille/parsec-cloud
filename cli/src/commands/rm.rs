@@ -13,7 +13,7 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, rm);
 
-pub async fn rm(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn rm(_todo_ui: crate::Ui, args: Args, client: &StartedClient) -> anyhow::Result<()> {
     let Args {
         workspace, path, ..
     } = args;

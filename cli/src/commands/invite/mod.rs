@@ -24,14 +24,14 @@ pub enum Group {
     SharedRecovery(shared_recovery::Args),
 }
 
-pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
+pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<()> {
     match command {
-        Group::Cancel(args) => cancel::main(args).await,
-        Group::Claim(args) => claim::main(args).await,
-        Group::Greet(args) => greet::main(args).await,
-        Group::List(args) => list::main(args).await,
-        Group::User(args) => user::main(args).await,
-        Group::Device(args) => device::main(args).await,
-        Group::SharedRecovery(args) => shared_recovery::main(args).await,
+        Group::Cancel(args) => cancel::main(ui, args).await,
+        Group::Claim(args) => claim::main(ui, args).await,
+        Group::Greet(args) => greet::main(ui, args).await,
+        Group::List(args) => list::main(ui, args).await,
+        Group::User(args) => user::main(ui, args).await,
+        Group::Device(args) => device::main(ui, args).await,
+        Group::SharedRecovery(args) => shared_recovery::main(ui, args).await,
     }
 }

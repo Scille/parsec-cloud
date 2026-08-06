@@ -55,7 +55,7 @@ impl std::str::FromStr for Decryptor {
     }
 }
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         config_dir,
         password_stdin,

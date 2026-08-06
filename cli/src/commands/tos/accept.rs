@@ -12,7 +12,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, accept_tos);
 
-pub async fn accept_tos(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn accept_tos(
+    _todo_ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args { yes, .. } = args;
 
     let tos = match client.get_tos().await {

@@ -16,7 +16,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, invite_cancel);
 
-pub async fn invite_cancel(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn invite_cancel(
+    _todo_ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args { token, .. } = args;
     log::trace!("Cancelling invitation");
 

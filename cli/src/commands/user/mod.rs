@@ -12,10 +12,10 @@ pub enum Group {
     TotpReset(totp_reset::Args),
 }
 
-pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
+pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<()> {
     match command {
-        Group::List(args) => list::main(args).await,
-        Group::Revoke(args) => revoke::main(args).await,
-        Group::TotpReset(args) => totp_reset::main(args).await,
+        Group::List(args) => list::main(ui, args).await,
+        Group::Revoke(args) => revoke::main(ui, args).await,
+        Group::TotpReset(args) => totp_reset::main(ui, args).await,
     }
 }
