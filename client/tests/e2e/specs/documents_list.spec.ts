@@ -6,17 +6,20 @@ import {
   clearLibParsecMocks,
   createFolder,
   DisplaySize,
+  dragAndDropFile,
   expect,
   fillInputModal,
   fillIonInput,
   importDefaultFiles,
   ImportDocuments,
+  login,
   mockLibParsec,
   msTest,
   resizePage,
   selectFile,
   unselectFile,
 } from '@tests/e2e/helpers';
+import path from 'path';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -671,6 +674,23 @@ msTest.describe(() => {
     await expect(noFilesContent).toBeHidden();
     await expect(errorListFolder).toBeHidden();
   });
+
+  msTest('Drop file in empty read only workspace', async ({ home }, testInfo: TestInfo) => {
+    await login(home, 'Boby McBobFace');
+    await expect(home).toBeWorkspacePage();
+    await home.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(home).toBeDocumentPage();
+    const dropZone = home.locator('.folder-container').locator('.drop-zone').nth(0);
+    await dragAndDropFile(home, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png')]);
+    await expect(home).toShowToast('You are a Reader on this workspace and cannot import files.', 'Error');
+    await expect(home.locator('.folder-container').locator('.no-files')).toBeVisible();
+  });
+});
+
+msTest('Drop file in full read only workspace', async ({ documentsReadOnly }, testInfo: TestInfo) => {
+  const dropZone = documentsReadOnly.locator('.folder-container').locator('.drop-zone').nth(0);
+  await dragAndDropFile(documentsReadOnly, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png')]);
+  await expect(documentsReadOnly).toShowToast('You are a Reader on this workspace and cannot import files.', 'Error');
 });
 
 msTest('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {
