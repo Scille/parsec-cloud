@@ -96,17 +96,12 @@
           ref="fileInputs"
           @files-added="startImportFiles"
         />
-        <div
+
+        <ms-spinner
           v-show="querying"
-          class="body-lg"
-        >
-          <div class="no-files-content">
-            <ms-spinner class="ms-spinner" />
-            <ion-text>
-              {{ $msTranslate('FoldersPage.loading') }}
-            </ion-text>
-          </div>
-        </div>
+          class="ms-spinner loading-files-content"
+          title="FoldersPage.loading"
+        />
 
         <div
           v-if="isSmallDisplay"
@@ -152,6 +147,7 @@
           <file-drop-zone
             :show-drop-message="true"
             @files-added="startImportFiles"
+            @drop-as-reader="onDropAsReader"
             @global-menu-click="openGlobalContextMenu"
             :is-reader="isReadOnly"
           >
@@ -1673,6 +1669,11 @@ async function startSearch(pattern: string): Promise<void> {
   height: 100%;
 }
 
+.loading-files-content {
+  display: flex;
+  justify-content: center;
+}
+
 .mobile-filters {
   @include ms.responsive-breakpoint('sm') {
     margin-top: 0 !important;
@@ -1738,10 +1739,6 @@ async function startSearch(pattern: string): Promise<void> {
     justify-content: center;
     gap: 1rem;
     padding: 2rem 1rem;
-
-    .ms-spinner {
-      height: 1.5rem;
-    }
   }
 }
 
