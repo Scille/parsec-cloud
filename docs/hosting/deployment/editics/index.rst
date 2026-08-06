@@ -8,27 +8,53 @@
 Cryptpad Deployment
 ===================
 
-Cryptpad deployment allows to edit documents directly in the application.
 
-It's incredibly useful on :ref:`web <doc_hosting_deployment_webapp>` since users won't have access to the file system mountpoints provided by the desktop application.
+Overview
+========
+
+Parsec supports an integrated file editor through :ref:`Cryptpad <https://cryptpad.fr/>`, allowing document edition directly in the application.
+
+It's very useful on :ref:`web <doc_hosting_deployment_webapp>` since users won't have access to the file system mountpoints provided by the desktop application.
+
+See `this section of our documentation <https://docs.parsec.cloud/en/latest/userguide/manage-files.html#file-editing-in-parsec>` for more information on its in-app usage.
+
+Security
+========
+
+Architecture
+============
+
+.. mermaid::
+
+  flowchart TD
+  cryptpad[Cryptpad Server]
+  client[Parsec Client]
+  server[Parsec Server]
+  editor[Embedded file editor]
+  client --(1) Connection ---> server
+  server --(2) Connection ---> cryptpad
+  cryptpad --(3) Enables file edition if correctly set up ---> editor
+
+Deployment
+==========
 
 Obtaining the patched server
-============================
+----------------------------
 
 .. _cryptpad-repo: https://github.com/Scille/cryptpad
 
-Parsec maintain a `soft-fork of cryptpad <cryptpad-repo_>`_ source as it requires some light modifications to better integrate in parsec.
+Parsec maintains a `soft-fork of cryptpad <cryptpad-repo_>`_ source as it requires some light modifications to better integrate in parsec.
 
 .. _cryptpad-server-repo: https://github.com/Scille/cryptpad-server
 .. _cryptpad-docker: https://github.com/Scille/cryptpad-server/pkgs/container/cryptpad-server%2Fcryptpad
 .. _cryptpad-server-static-build: https://github.com/Scille/cryptpad-server/releases/download/v0.3/cryptpad-server.zip
 
-We have a repository used to `build the cryptpad server <cryptpad-server-repo_>`_ either as a `linux container <cryptpad-docker_>`_ format or `the resources needed for a nodejs server <cryptpad-server-static-build_>`_.
+We have a repository used to `build the cryptpad server <cryptpad-server-repo_>`_, either as a `linux container <cryptpad-docker_>`_ format or as a `.zip containing the resources needed for a nodejs server <cryptpad-server-static-build_>`_.
 
 Deploying using the docker testing infra
-========================================
+----------------------------------------
 
-To deploy cryptpad using :ref:`the docker-compose stack <doc_hosting_deployment_with_docker>`, we will need to patch some configuration:
+To deploy cryptpad usingo :ref:`the docker-compose stack <doc_hosting_deployment_with_docker>`, we will need to patch some configuration:
 
 #. We will deploy alongside the parsec server our patched cryptpad server.
 
@@ -118,19 +144,19 @@ If you have an already running stack, you need to:
       docker compose --file ./parsec-server.docker.yaml up --detach parsec-server
 
 Other deployment methods
-========================
+------------------------
 
 .. _Cryptpad server README: https://github.com/Scille/cryptpad-server
 
-For other deployment methods refer to https://github.com/Scille/cryptpad-server/blob/master/README.md
+For other deployment methods please refer to https://github.com/Scille/cryptpad-server/blob/master/README.md
 
-Further more you need some specific configure of both :ref:`Parsec <parsec-specific-config>` and :ref:`Cryptpad <cryptpad-specific-config>`.
+Furthermore you need some specific configuration of both :ref:`Parsec <parsec-specific-config>` and :ref:`Cryptpad <cryptpad-specific-config>`.
 
 Verify the deployment
-=====================
+---------------------
 
 Before trying to use CryptPad in parsec, open the server URL (https://cryptpad.parsec.localhost) in the browser, you should get the following page:
 
 .. image:: ./404-welcome-cryptpad.png
 
-If you have the following, it means the Cryptpad server is somewhat working, to confirm how can now try to use it in Parsec.
+If you have the following, it means the Cryptpad server is somewhat working, to confirm it you can now try to use it in Parsec.
