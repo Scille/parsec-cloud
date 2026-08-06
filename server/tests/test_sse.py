@@ -241,6 +241,7 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
         # And then the connection is closed
         with pytest.raises(StopAsyncIteration):
             event = await bob_sse.next_event()
+            raise ValueError(event)  # Sometime the test is flaky and the SSE channel is not closed
 
 
 async def test_close_on_organization_tos_updated(
