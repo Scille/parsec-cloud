@@ -20,12 +20,6 @@ pub struct Ui {
 }
 
 impl Ui {
-    pub fn data_println<T: CLIDisplay>(&self, data: &T) -> std::io::Result<()> {
-        let mut stdout = std::io::stdout().lock();
-        self.print_data(data, &mut stdout)?;
-        stdout.write_all(b"\n")
-    }
-
     pub fn data_print<T: CLIDisplay>(&self, data: &T) -> std::io::Result<()> {
         self.print_data(data, &mut std::io::stdout().lock())
     }
@@ -40,7 +34,8 @@ impl Ui {
         match self.format {
             DataFormat::Plain => data.plain_write(&color_formatter, out),
             DataFormat::Json => {
-                serde_json::to_writer_pretty(out, &data).map_err(std::io::Error::from)
+                serde_json::to_writer_pretty(&mut *out, &data).map_err(std::io::Error::from)?;
+                out.write_all(b"\n")
             }
         }
     }
