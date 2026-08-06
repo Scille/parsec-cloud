@@ -378,7 +378,7 @@ async function setupApp(): Promise<void> {
       });
       window.nativeAPI.receive('parsec-open-link', async (link: string) => {
         // Don't try to handle empty links
-        if (!link || link === 'parsec3://') {
+        if (!link || link === 'parsec3://' || link === 'parsec3:///') {
           return;
         }
         await handleParsecLink(link, getCurrentInformationManager(injectionProvider));
