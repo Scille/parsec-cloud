@@ -10,7 +10,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, list_users_workspace);
 
-pub async fn list_users_workspace(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn list_users_workspace(
+    _todo_ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args { workspace: wid, .. } = args;
 
     log::trace!("Listing users in the workspace");

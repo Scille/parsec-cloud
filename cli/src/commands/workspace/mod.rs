@@ -29,13 +29,13 @@ pub enum Group {
 
 pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<()> {
     match command {
-        Group::ListUsers(args) => list_users::main(args).await,
-        Group::Archive(args) => archive::main(args).await,
-        Group::Create(args) => create::main(args).await,
-        Group::List(args) => list::main(args).await,
-        Group::Import(args) => import::main(args).await,
-        Group::Share(args) => share::main(args).await,
+        Group::ListUsers(args) => list_users::main(ui, args).await,
+        Group::Archive(args) => archive::main(ui, args).await,
+        Group::Create(args) => create::main(ui, args).await,
+        Group::List(args) => list::main(ui, args).await,
+        Group::Import(args) => import::main(ui, args).await,
+        Group::Share(args) => share::main(ui, args).await,
         Group::Sync(args) => sync::main(ui, args).await,
-        Group::Mount(args) => mount::main(args).await,
+        Group::Mount(args) => mount::main(ui, args).await,
     }
 }

@@ -17,7 +17,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, export_recovery_device);
 
-pub async fn export_recovery_device(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn export_recovery_device(
+    _todo_ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args { output, .. } = args;
     log::trace!("Exporting recovery device at {}", output.display());
 

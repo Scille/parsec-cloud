@@ -12,7 +12,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, forget_all_certificates);
 
-pub async fn forget_all_certificates(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn forget_all_certificates(
+    _todo_ui: crate::Ui,
+    _args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let short_id = &client.device_id().hex()[..3];
     let organization_id = client.organization_id();
     let human_handle = client.human_handle();

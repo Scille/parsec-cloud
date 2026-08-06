@@ -78,7 +78,7 @@ async fn totp_reset_req(
     }
 }
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         organization,
         token,

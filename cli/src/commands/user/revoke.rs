@@ -16,7 +16,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, revoke_user);
 
-pub async fn revoke_user(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn revoke_user(
+    _todo_ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args { email, .. } = args;
     poll_server_for_new_certificates(client).await?;
     let users = client.list_users(true, None, None).await?;

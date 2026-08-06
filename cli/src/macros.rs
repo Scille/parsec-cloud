@@ -6,7 +6,7 @@
 #[macro_export]
 macro_rules! build_main_with_client {
     ($fn_name:ident, $callback:expr, $config:expr) => {
-        pub async fn $fn_name(args: Args) -> anyhow::Result<()> {
+        pub async fn $fn_name(ui: $crate::Ui, args: Args) -> anyhow::Result<()> {
             let client = $crate::utils::load_client_with_config(
                 &args.config_dir,
                 args.device.clone(),
@@ -15,7 +15,7 @@ macro_rules! build_main_with_client {
             )
             .await?;
 
-            let res = ($callback)(args, client.as_ref()).await;
+            let res = ($callback)(ui, args, client.as_ref()).await;
 
             client.stop().await;
 

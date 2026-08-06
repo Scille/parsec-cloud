@@ -29,9 +29,9 @@ pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<(
     match command {
         Group::ForgetLocal(args) => forget_local::main(ui, args).await,
         Group::List(args) => list::main(ui, args).await,
-        Group::ChangeAuthentication(args) => change_authentication::main(args).await,
-        Group::ExportRecoveryDevice(args) => export_recovery_device::main(args).await,
-        Group::ImportRecoveryDevice(args) => import_recovery_device::main(args).await,
-        Group::OverwriteServerURL(args) => overwrite_server_url::main(args).await,
+        Group::ChangeAuthentication(args) => change_authentication::main(ui, args).await,
+        Group::ExportRecoveryDevice(args) => export_recovery_device::main(ui, args).await,
+        Group::ImportRecoveryDevice(args) => import_recovery_device::main(ui, args).await,
+        Group::OverwriteServerURL(args) => overwrite_server_url::main(ui, args).await,
     }
 }

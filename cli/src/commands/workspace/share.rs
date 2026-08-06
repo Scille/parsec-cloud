@@ -18,7 +18,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 crate::build_main_with_client!(main, share_workspace);
 
-pub async fn share_workspace(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn share_workspace(
+    _todo_ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     let Args {
         workspace: wid,
         user,

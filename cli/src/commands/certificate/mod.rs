@@ -16,9 +16,9 @@ pub enum Group {
     ForgetAllCertificates(forget_all_certificates::Args),
 }
 
-pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
+pub async fn dispatch_command(ui: crate::Ui, command: Group) -> anyhow::Result<()> {
     match command {
-        Group::Poll(args) => poll::main(args).await,
-        Group::ForgetAllCertificates(args) => forget_all_certificates::main(args).await,
+        Group::Poll(args) => poll::main(ui, args).await,
+        Group::ForgetAllCertificates(args) => forget_all_certificates::main(ui, args).await,
     }
 }

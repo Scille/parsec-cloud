@@ -29,7 +29,7 @@ pub struct RunTestenv {
     organization: libparsec::OrganizationID,
 }
 
-pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
+pub async fn run_testenv(_todo_ui: crate::Ui, run_testenv: RunTestenv) -> anyhow::Result<()> {
     let RunTestenv {
         main_process_id,
         source_file,

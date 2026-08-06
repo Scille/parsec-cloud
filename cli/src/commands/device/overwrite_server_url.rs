@@ -17,7 +17,7 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let device = load_device_file(&args.config_dir, args.device).await?;
 
     if device.totp_opaque_key_id.is_some() {

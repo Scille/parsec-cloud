@@ -8,7 +8,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 build_main_with_client!(main, delete_shared_recovery);
 
-pub async fn delete_shared_recovery(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn delete_shared_recovery(
+    _todo_ui: crate::Ui,
+    _args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     poll_server_for_new_certificates(client).await?;
 
     let mut handle = start_spinner("Deleting shared recovery setup".into());

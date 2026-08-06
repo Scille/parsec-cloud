@@ -21,7 +21,7 @@ enum NewAccessStrategyChoice {
     Keyring,
 }
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let device = load_device_file(&args.config_dir, args.device).await?;
 
     let new_save_strategy_choice = match (args.password, args.keyring) {

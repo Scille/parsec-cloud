@@ -12,7 +12,11 @@ crate::clap_parser_with_shared_opts_builder!(
 
 build_main_with_client!(main, shared_recovery_list);
 
-pub async fn shared_recovery_list(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn shared_recovery_list(
+    _todo_ui: crate::Ui,
+    _args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     poll_server_for_new_certificates(client).await?;
 
     let res = client.list_shamir_recoveries_for_others().await?;

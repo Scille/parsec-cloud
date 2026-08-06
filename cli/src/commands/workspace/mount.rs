@@ -23,7 +23,11 @@ crate::build_main_with_client!(
     .into()
 );
 
-pub async fn mount_workspace(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn mount_workspace(
+    _todo_ui: crate::Ui,
+    args: Args,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
     log::trace!("Mounting workspace");
     let Args {
         workspace,

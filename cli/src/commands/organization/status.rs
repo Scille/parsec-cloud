@@ -29,7 +29,7 @@ pub async fn status_organization_req(
     Ok(rep.json::<Value>().await?)
 }
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         organization,
         token,
