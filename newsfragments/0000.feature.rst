@@ -14,3 +14,7 @@ CLI revamped:
   - message indicating how much devices are found on stderr (if you want to count the number of devices you could pipe output into `wc -l`)
 - ``workspace sync``:
   - Most message are shown on stderr
+- ``ls``
+  - Support outputting JSON data
+- ``mount-realm-export``
+  - Support global ``progress`` option

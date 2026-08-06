@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{io::Write as _, path::PathBuf, sync::Arc};
 
 use libparsec::{DateTime, EntryName, SequesterPrivateKeyDer, SequesterServiceID};
 use libparsec_client::{WorkspaceHistoryOps, WorkspaceHistoryRealmExportDecryptor};
@@ -55,7 +55,7 @@ impl std::str::FromStr for Decryptor {
     }
 }
 
-pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         config_dir,
         password_stdin,
@@ -102,13 +102,18 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         WorkspaceHistoryOps::start_with_realm_export(config, &export_db_path, decryptors).await?,
     );
 
-    println!("Organization: {}", wksp_history_ops.organization_id());
-    println!("Realm ID: {}", wksp_history_ops.realm_id());
-    println!(
-        "Export temporal bounds: {} to {}",
-        wksp_history_ops.timestamp_lower_bound(),
-        wksp_history_ops.timestamp_higher_bound()
-    );
+    ui.with_message(|_, out| {
+        writeln!(out, "Organization: {}", wksp_history_ops.organization_id())
+    })?;
+    ui.with_message(|_, out| writeln!(out, "Realm ID: {}", wksp_history_ops.realm_id()))?;
+    ui.with_message(|_, out| {
+        writeln!(
+            out,
+            "Export temporal bounds: {} to {}",
+            wksp_history_ops.timestamp_lower_bound(),
+            wksp_history_ops.timestamp_higher_bound()
+        )
+    })?;
 
     let timestamp = timestamp.unwrap_or(wksp_history_ops.timestamp_higher_bound());
     wksp_history_ops
@@ -121,7 +126,7 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         .unwrap_or("realm_export".parse().expect("valid entry name"));
 
     let mountpoint = Mountpoint::mount_history(wksp_history_ops, mountpoint_name_hint).await?;
-    println!("Mounted at {:?}", mountpoint.path());
+    ui.with_message(|_, out| writeln!(out, "Mounted at {:?}", mountpoint.path()))?;
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
     ctrlc::set_handler(move || {
@@ -130,7 +135,7 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     .expect("Failed to set Ctrl-C handler");
     rx.recv().await.expect("Ctrl-C handler failed");
 
-    println!("Bye ;-)");
+    ui.with_message(|_, out| writeln!(out, "Bye ;-)"))?;
     mountpoint.unmount().await?;
 
     Ok(())
