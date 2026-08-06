@@ -379,3 +379,7 @@ export async function isFileContentAvailable(workspaceHandle: WorkspaceHandle, p
 
   return result.ok && result.value;
 }
+
+export async function getTemporaryPath(parent: FsPath): Promise<FsPath> {
+  return Path.quickJoin(parent, `._${crypto.randomUUID()}`);
+}

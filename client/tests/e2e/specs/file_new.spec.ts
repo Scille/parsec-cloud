@@ -1,7 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { TestInfo } from '@playwright/test';
-import { expect, fillIonInput, importDefaultFiles, ImportDocuments, msTest } from '@tests/e2e/helpers';
+import {
+  checkFolderGlobalContextMenu,
+  expect,
+  fillIonInput,
+  importDefaultFiles,
+  ImportDocuments,
+  mockLibParsec,
+  msTest,
+} from '@tests/e2e/helpers';
 
 msTest.describe(() => {
   msTest.use({
@@ -34,10 +42,58 @@ msTest.describe(() => {
       await fillIonInput(modal.locator('ion-input'), `MyFile.${file[1]}`);
       await expect(modal.locator('#next-button')).toHaveText('Create the new file');
       await modal.locator('#next-button').click();
+      await expect(modal).toBeHidden();
       await expect(entries).toHaveCount(1);
       await expect(entries.nth(0).locator('.file-name')).toHaveText(`MyFile.${file[1]}`);
     });
   }
+
+  for (const file of [
+    ['docx', 'Document'],
+    ['xlsx', 'Spreadsheet'],
+    ['pptx', 'Presentation'],
+    ['txt', 'Text'],
+  ] as const) {
+    msTest(`Create new ${file[1]} file from context menu`, async ({ documents }) => {
+      const entries = documents.locator('.folder-container').locator('.file-list-item');
+      await expect(entries).toHaveCount(0);
+      await documents.locator('.folder-container').click({ button: 'right' });
+      await checkFolderGlobalContextMenu(documents, 'full', file[1]);
+      const modal = documents.locator('.text-input-modal');
+      await expect(modal).toBeVisible();
+      await expect(modal.locator('.ms-modal-header__title')).toHaveText('File name');
+      await expect(modal.locator('.input-container').locator('.form-label')).toHaveText('Choose the new file name');
+      await fillIonInput(modal.locator('ion-input'), `${file[1]}.${file[0]}`);
+      await expect(modal.locator('#next-button')).toHaveText('Create the new file');
+      await modal.locator('#next-button').click();
+      await expect(modal).toBeHidden();
+      await expect(entries).toHaveCount(1);
+      await expect(entries.nth(0).locator('.file-name')).toHaveText(`${file[1]}.${file[0]}`);
+    });
+  }
+
+  msTest('Create new error', async ({ documents }) => {
+    await mockLibParsec(documents, [
+      {
+        name: 'workspaceFdWrite',
+        result: { ok: false, error: { tag: 'WorkspaceFdWriteErrorInternal', error: 'failed' } },
+      },
+    ]);
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await expect(entries).toHaveCount(0);
+    await documents.locator('.folder-container').click({ button: 'right' });
+    await checkFolderGlobalContextMenu(documents, 'full', 'Document');
+    const modal = documents.locator('.text-input-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('.ms-modal-header__title')).toHaveText('File name');
+    await expect(modal.locator('.input-container').locator('.form-label')).toHaveText('Choose the new file name');
+    await fillIonInput(modal.locator('ion-input'), 'Document.docx');
+    await expect(modal.locator('#next-button')).toHaveText('Create the new file');
+    await modal.locator('#next-button').click();
+    await expect(documents).toShowToast('Failed to create the file.', 'Error');
+    await expect(modal).toBeHidden();
+    await expect(entries).toHaveCount(0);
+  });
 
   msTest('Create file already exists', async ({ documents }, testInfo: TestInfo) => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
