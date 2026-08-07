@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { BrowserContext, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 import { OrganizationInformation, UserData } from '@tests/e2e/helpers/data';
 import { LibParsecFunction } from '@tests/e2e/helpers/libparsec';
 
@@ -67,7 +67,6 @@ export interface MsPage extends Page {
   release: () => Promise<void>;
   isReleased: boolean;
   skipTestbedRelease: boolean;
-  getContext: () => MsContext;
   openNewTab: (opts?: SetupOptions) => Promise<MsPage>;
   isDebugEnabled: () => boolean;
   displaySize: DisplaySize;
@@ -76,10 +75,6 @@ export interface MsPage extends Page {
   setDisplaySize: (displaySize: DisplaySize) => Promise<void>;
   getDisplaySize: () => Promise<DisplaySize>;
   setupOptions: SetupOptions;
-}
-
-export interface MsContext extends BrowserContext {
-  testbedConfigPath: string;
 }
 
 export enum ImportDocuments {
