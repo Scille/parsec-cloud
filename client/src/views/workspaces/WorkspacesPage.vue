@@ -131,7 +131,12 @@
               />
               <span v-else-if="filteredWorkspaces.length === 0"> {{ $msTranslate('WorkspacesPage.noMatchingWorkspaces') }}</span>
             </ion-text>
-            <span v-else>{{ $msTranslate('WorkspacesPage.noWorkspaces') }}</span>
+            <span v-else>
+              <span v-if="userInfo?.currentProfile === UserProfile.Outsider">{{
+                $msTranslate('WorkspacesPage.noWorkspacesExternal')
+              }}</span>
+              <span v-else>{{ $msTranslate('WorkspacesPage.noWorkspaces') }}</span>
+            </span>
             <ion-button
               v-if="showHiddenWorkspacesButton"
               @click="workspaceMenuState = WorkspaceMenu.Hidden"
