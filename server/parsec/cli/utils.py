@@ -14,8 +14,11 @@ from typing import (
 )
 
 import anyio
+
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
 import click
-from anyio import to_thread
 
 from parsec._parsec import DateTime, ParsecAddr, SecretKey
 from parsec.backend import Backend, backend_factory
@@ -168,7 +171,7 @@ def generate_not_available_cmd(exc: BaseException, hint: str | None = None) -> c
 
 def async_wrapper[**P, R](fn: Callable[P, R]) -> Callable[P, Awaitable[R]]:
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        return await to_thread.run_sync(partial(fn, *args, **kwargs))
+        return await anyio.to_thread.run_sync(partial(fn, *args, **kwargs))
 
     return wrapper
 

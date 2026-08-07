@@ -6,6 +6,10 @@ from typing import override
 from unittest.mock import Mock
 
 import anyio
+
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
 import pbr.version
 
 # TODO: is this still needed ? for what purpose ?

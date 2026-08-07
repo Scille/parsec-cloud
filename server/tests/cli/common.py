@@ -17,6 +17,10 @@ from contextlib import asynccontextmanager, contextmanager
 from time import sleep
 
 import anyio
+
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
 from click.testing import CliRunner, Result
 
 from parsec._parsec import (

@@ -9,6 +9,10 @@ from typing import NewType, cast
 
 import anyio
 
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
+
 from parsec._parsec import BlockID, OrganizationID, SequesterServiceID, VlobID
 from parsec.components.blockstore import BaseBlockStoreComponent
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
