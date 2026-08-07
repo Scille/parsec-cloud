@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { fixupPluginRules } from '@eslint/compat';
 import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
 import pluginVue from 'eslint-plugin-vue';
 import { defineConfig } from 'eslint/config';
@@ -44,7 +45,12 @@ export default defineConfig([
     },
     plugins: {
       '@typescript-eslint': tseslint.plugin,
-      'no-relative-import-paths': noRelativeImportPaths,
+      // Using fixupPluginRules wrapper because the 'eslint-plugin-no-relative-import-paths' plugin v1.6.1
+      // is not compatible with ESLint v10.
+      // Remove the wrapper once this is fixed:
+      // https://github.com/MelvinVermeer/eslint-plugin-no-relative-import-paths/issues/48
+      // https://github.com/MelvinVermeer/eslint-plugin-no-relative-import-paths/pull/47
+      'no-relative-import-paths': fixupPluginRules(noRelativeImportPaths),
     },
   },
   {
@@ -65,7 +71,12 @@ export default defineConfig([
   {
     plugins: {
       '@typescript-eslint': tseslint.plugin,
-      'no-relative-import-paths': noRelativeImportPaths,
+      // Using fixupPluginRules wrapper because the 'eslint-plugin-no-relative-import-paths' plugin v1.6.1
+      // is not compatible with ESLint v10.
+      // Remove the wrapper once this is fixed:
+      // https://github.com/MelvinVermeer/eslint-plugin-no-relative-import-paths/issues/48
+      // https://github.com/MelvinVermeer/eslint-plugin-no-relative-import-paths/pull/47
+      'no-relative-import-paths': fixupPluginRules(noRelativeImportPaths),
     },
   },
   {
