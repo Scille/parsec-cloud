@@ -2,7 +2,7 @@ use anyhow::Context;
 use libparsec_platform_mountpoint::Mountpoint;
 
 use crate::utils::StartedClient;
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin, workspace]
@@ -24,7 +24,7 @@ crate::build_main_with_client!(
 );
 
 pub async fn mount_workspace(
-    _todo_ui: crate::Ui,
+    ui: crate::Ui,
     args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
@@ -47,7 +47,12 @@ pub async fn mount_workspace(
         .await
         .context("Failed to mount workspace at specified directory")?;
 
-    println!("Workspace mounted, send SIGINT signal (Ctrl-C) to stop");
+    ui.with_message(|_, out| {
+        writeln!(
+            out,
+            "Workspace mounted, send SIGINT signal (Ctrl-C) to stop"
+        )
+    })?;
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
     ctrlc::set_handler(move || {
@@ -56,7 +61,7 @@ pub async fn mount_workspace(
     .expect("Failed to set Ctrl-C handler");
     rx.recv().await.expect("Ctrl-C handler failed");
 
-    println!("Signal received, stopping...");
+    ui.with_message(|_, out| writeln!(out, "Signal received, stopping..."))?;
     let mut unmount_option = libparsec_platform_mountpoint::UnmountOptions::default();
     unmount_option.remove_dir = false;
     mountpoint

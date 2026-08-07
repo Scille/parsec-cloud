@@ -1,6 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::io::Write;
 
-use crate::utils::*;
+use crate::{
+    ui::{compat::WorkspaceUserAccessInfoDisplay, Color},
+    utils::*,
+};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, workspace, password_stdin]
@@ -11,7 +15,7 @@ crate::clap_parser_with_shared_opts_builder!(
 crate::build_main_with_client!(main, list_users_workspace);
 
 pub async fn list_users_workspace(
-    _todo_ui: crate::Ui,
+    ui: crate::Ui,
     args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
@@ -19,25 +23,27 @@ pub async fn list_users_workspace(
 
     log::trace!("Listing users in the workspace");
 
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&ui, client).await?;
     client.refresh_workspaces_list().await?;
-    let users = client.list_workspace_users(wid).await?;
+    let users = client
+        .list_workspace_users(wid)
+        .await?
+        .into_iter()
+        .map(WorkspaceUserAccessInfoDisplay)
+        .collect::<Vec<_>>();
 
     if users.is_empty() {
-        println!("No user has access to that workspace");
+        ui.with_message(|_, out| writeln!(out, "No user has access to that workspace"))?;
     } else {
-        let n = users.len();
-        println!("Workspace {wid} is shared with {GREEN}{n}{RESET} user(s)");
+        ui.with_message(|fmt, out| {
+            writeln!(
+                out,
+                "Workspace {wid} is shared with {count} user(s)",
+                count = fmt.wrap_in_color(Color::Green, users.len())
+            )
+        })?;
 
-        for user in users {
-            let id = user.user_id;
-            let name = user.human_handle.label();
-            let email = user.human_handle.email();
-            let role = user.current_role;
-            let profile = user.current_profile;
-
-            println!("{BULLET_CHAR} User {YELLOW}{id}{RESET} ({YELLOW}{profile}{RESET}) - {GREEN}{name}{RESET} ({email}) has role {GREEN}{role}{RESET}");
-        }
+        ui.data_print(&users.as_slice())?;
     }
 
     Ok(())

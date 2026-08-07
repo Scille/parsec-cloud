@@ -41,7 +41,7 @@ async fn archive_workspace(tmp_path: TmpPath) {
         &wid.hex(),
         "--archived"
     )
-    .stdout(predicates::str::contains(
+    .stderr(predicates::str::contains(
         "Workspace archiving status has been updated",
     ));
 

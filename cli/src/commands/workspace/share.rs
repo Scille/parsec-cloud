@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::fmt::Write;
 
 use libparsec::{RealmRole, UserID};
 
@@ -19,7 +20,7 @@ crate::clap_parser_with_shared_opts_builder!(
 crate::build_main_with_client!(main, share_workspace);
 
 pub async fn share_workspace(
-    _todo_ui: crate::Ui,
+    ui: crate::Ui,
     args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
@@ -31,11 +32,11 @@ pub async fn share_workspace(
     } = args;
     log::trace!("Sharing workspace {wid} to {user} with role {role}");
 
-    let mut handle = start_spinner("Sharing workspace".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Sharing workspace"))?;
 
     client.share_workspace(wid, user, Some(role)).await?;
 
-    handle.stop_with_message("Workspace has been shared".into());
+    handle.stop_with(|_, out| write!(out, "Workspace has been shared"))?;
 
     client.stop().await;
 

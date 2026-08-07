@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use std::{
-    fmt::Display,
+    fmt::{Display, Write},
     ops::Deref,
     path::{Path, PathBuf},
     sync::Arc,
@@ -19,6 +19,8 @@ use libparsec_platform_ipc::{
     lock_device_for_use, try_lock_device_for_use, InUseDeviceLockGuard, TryLockDeviceForUseError,
 };
 use spinners::{Spinner, Spinners, Stream};
+
+use crate::ui::Color;
 
 /// Environment variable to set the Parsec config directory
 /// Should not be confused with [`libparsec::PARSEC_BASE_CONFIG_DIR`]
@@ -492,10 +494,13 @@ pub fn choose_user_profile() -> anyhow::Result<UserProfile> {
     Ok(profiles[selected_profile])
 }
 
-pub async fn poll_server_for_new_certificates(client: &StartedClient) -> anyhow::Result<()> {
-    let mut spinner = start_spinner("Poll server for new certificates".into());
+pub async fn poll_server_for_new_certificates(
+    ui: &crate::Ui,
+    client: &StartedClient,
+) -> anyhow::Result<()> {
+    let spinner = ui.with_spinner(|_, out| write!(out, "Poll server for new certificates"))?;
     client.poll_server_for_new_certificates().await?;
-    spinner.stop_with_symbol(GREEN_CHECKMARK);
+    spinner.stop_with_symbol(|fmt, out| write!(out, "{}", fmt.wrap_in_color(Color::Green, "✔")))?;
     Ok(())
 }
 

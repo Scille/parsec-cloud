@@ -47,7 +47,7 @@ async fn share_workspace(tmp_path: TmpPath) {
         "--role",
         "contributor"
     )
-    .stdout(predicates::str::contains("Workspace has been shared"));
+    .stderr(predicates::str::contains("Workspace has been shared"));
 
     log::debug!("Check if bob has been added to the workspace as a contributor");
     let bob_client = start_client(bob).await.unwrap();

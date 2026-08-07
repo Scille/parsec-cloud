@@ -1,9 +1,9 @@
 use libparsec::{tmp_path, RealmRole, TmpPath};
+use predicates::boolean::PredicateBooleanExt;
 
 use crate::{
     bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    GREEN, RESET, YELLOW,
 };
 use parsec_cli::utils::start_client;
 
@@ -44,9 +44,16 @@ async fn list_users(tmp_path: TmpPath) {
         "--workspace",
         &wid.hex()
     )
-    .stdout(predicates::str::contains(format!("Workspace {wid} is shared with {GREEN}3{RESET} user(s)")))
-    .stdout(predicates::str::contains(format!("({YELLOW}ADMIN{RESET}) - {GREEN}Alice{RESET} (alice@example.com) has role {GREEN}owner{RESET}",)))
-    .stdout(predicates::str::contains(format!("({YELLOW}STANDARD{RESET}) - {GREEN}Bob{RESET} (bob@example.com) has role {GREEN}manager{RESET}",)))
-    .stdout(predicates::str::contains(format!("({YELLOW}OUTSIDER{RESET}) - {GREEN}Toto{RESET} (toto@example.com) has role {GREEN}reader{RESET}",)
-    ));
+    .stderr(predicates::str::contains(format!(
+        "Workspace {wid} is shared with 3 user(s)"
+    )))
+    .stdout(
+        predicates::str::contains("(ADMIN) - Alice (alice@example.com) has role owner")
+            .and(predicates::str::contains(
+                "(STANDARD) - Bob (bob@example.com) has role manager",
+            ))
+            .and(predicates::str::contains(
+                "(OUTSIDER) - Toto (toto@example.com) has role reader",
+            )),
+    );
 }

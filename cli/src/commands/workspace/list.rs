@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::io::Write;
 
-use libparsec::DateTime;
-use libparsec::RealmArchivingConfiguration;
-
-use crate::utils::*;
+use crate::{
+    ui::{compat::WorkspaceInfoDisplay, Color},
+    utils::*,
+};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
@@ -13,40 +14,33 @@ crate::clap_parser_with_shared_opts_builder!(
 crate::build_main_with_client!(main, list_workspace);
 
 pub async fn list_workspace(
-    _todo_ui: crate::Ui,
+    ui: crate::Ui,
     _args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
     log::trace!("Listing workspaces");
 
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&ui, client).await?;
     client.refresh_workspaces_list().await?;
-    let workspaces = client.list_workspaces().await;
+    let workspaces = client
+        .list_workspaces()
+        .await
+        .into_iter()
+        .map(WorkspaceInfoDisplay)
+        .collect::<Vec<_>>();
 
     if workspaces.is_empty() {
         println!("No workspaces found");
     } else {
-        let n = workspaces.len();
-        println!("Found {GREEN}{n}{RESET} workspace(s)");
+        ui.with_message(|fmt, out| {
+            writeln!(
+                out,
+                "Found {count} workspace(s)",
+                count = fmt.wrap_in_color(Color::Green, workspaces.len())
+            )
+        })?;
 
-        let now = DateTime::now();
-        for ws in workspaces {
-            let id = ws.id.hex();
-            let name = ws.name;
-            let role = ws.self_role;
-            let archiving_status = match &ws.archiving_configuration {
-                RealmArchivingConfiguration::Available => String::new(),
-                RealmArchivingConfiguration::Archived => " [archived]".to_string(),
-                RealmArchivingConfiguration::DeletionPlanned { deletion_date } => {
-                    if *deletion_date <= now {
-                        format!(" [deleted since {deletion_date}]")
-                    } else {
-                        format!(" [deletion planned: {deletion_date}]")
-                    }
-                }
-            };
-            println!("{YELLOW}{id}{RESET} - {name}: {role}{archiving_status}");
-        }
+        ui.data_print(&workspaces.as_slice())?;
     }
 
     Ok(())

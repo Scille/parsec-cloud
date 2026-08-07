@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::fmt::Write;
 
 use libparsec::RequestedRealmArchivingConfiguration;
 
@@ -24,7 +25,7 @@ crate::clap_parser_with_shared_opts_builder!(
 crate::build_main_with_client!(main, archive_workspace);
 
 pub async fn archive_workspace(
-    _todo_ui: crate::Ui,
+    ui: crate::Ui,
     args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
@@ -50,11 +51,11 @@ pub async fn archive_workspace(
 
     log::trace!("Archiving workspace {wid} with configuration {configuration:?}");
 
-    let mut handle = start_spinner("Updating workspace archiving status".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Updating workspace archiving status"))?;
 
     client.archive_workspace(wid, configuration).await?;
 
-    handle.stop_with_message("Workspace archiving status has been updated".into());
+    handle.stop_with(|_, out| write!(out, "Workspace archiving status has been updated"))?;
 
     client.stop().await;
 

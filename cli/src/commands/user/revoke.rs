@@ -22,7 +22,7 @@ pub async fn revoke_user(
     client: &StartedClient,
 ) -> anyhow::Result<()> {
     let Args { email, .. } = args;
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&_todo_ui, client).await?;
     let users = client.list_users(true, None, None).await?;
     let to_revoke = users
         .iter()
