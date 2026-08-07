@@ -59,3 +59,47 @@ where
         })
     }
 }
+
+pub struct LocalDeviceDisplayRef<'a>(pub &'a libparsec_types::LocalDevice);
+
+impl<'a> Deref for LocalDeviceDisplayRef<'a> {
+    type Target = libparsec_types::LocalDevice;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
+    }
+}
+
+impl<'a> Serialize for LocalDeviceDisplayRef<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("AvailableDevice", 4)?;
+        s.serialize_field("device_id", &self.device_id.hex())?;
+        s.serialize_field("organization_id", &self.organization_id())?;
+        s.serialize_field("human_handle", &self.human_handle.to_string())?;
+        s.serialize_field("device_label", &self.device_label)?;
+        s.end()
+    }
+}
+
+impl<'a> CLIDisplay for LocalDeviceDisplayRef<'a> {
+    fn plain_write<W: Write>(&self, fmt: &ColorFormatter, mut w: W) -> std::io::Result<()> {
+        write!(
+            w,
+            "{dev_id} - {org_id}: {handle} @ {label}",
+            dev_id = fmt.wrap_in_color(
+                Color::Yellow,
+                format_args!(
+                    "{id:.prec$}",
+                    id = self.device_id.hex(),
+                    prec = crate::utils::MINIMAL_SHORT_ID_SIZE
+                )
+            ),
+            org_id = self.organization_id(),
+            handle = self.human_handle,
+            label = self.device_label,
+        )
+    }
+}
