@@ -108,13 +108,13 @@ const error = ref<string>('');
 const validInfo = computed(() => {
   return Boolean(
     email.value.length > 0 &&
-      emailInputRef.value !== undefined &&
-      emailInputRef.value?.validity === Validity.Valid &&
-      !querying.value &&
-      lastName.value.length > 0 &&
-      firstName.value.length > 0 &&
-      serverInputRef.value !== undefined &&
-      serverInputRef.value?.validity === Validity.Valid,
+    emailInputRef.value !== undefined &&
+    emailInputRef.value?.validity === Validity.Valid &&
+    !querying.value &&
+    lastName.value.length > 0 &&
+    firstName.value.length > 0 &&
+    serverInputRef.value !== undefined &&
+    serverInputRef.value?.validity === Validity.Valid,
   );
 });
 
