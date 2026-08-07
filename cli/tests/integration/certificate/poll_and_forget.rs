@@ -20,7 +20,7 @@ async fn poll_and_forget(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains("Added 7 new certificates"));
+    .stderr(predicates::str::contains("Added 7 new certificates"));
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -29,7 +29,7 @@ async fn poll_and_forget(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains("Added 0 new certificates"));
+    .stderr(predicates::str::contains("Added 0 new certificates"));
 
     let cmd = crate::std_cmd!(
         "certificate",
@@ -55,5 +55,5 @@ async fn poll_and_forget(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains("Added 7 new certificates"));
+    .stderr(predicates::str::contains("Added 7 new certificates"));
 }

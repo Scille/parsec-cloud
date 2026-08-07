@@ -351,6 +351,10 @@ impl Client {
         &self.device.human_handle
     }
 
+    pub fn device(&self) -> &LocalDevice {
+        self.device.as_ref()
+    }
+
     pub async fn get_current_self_profile(
         &self,
     ) -> Result<UserProfile, ClientGetCurrentSelfProfileError> {

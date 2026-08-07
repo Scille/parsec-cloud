@@ -56,14 +56,13 @@ pub async fn main(_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     cmd.build();
 
     if output.as_os_str() == AsRef::<std::ffi::OsStr>::as_ref("-") {
-        // let stdout = tokio::io::stdout();
-        // let mut buffered = tokio::io::BufWriter::new(stdout);
-        // render_allinone_commands(&cmd, &mut buffered).await?;
-        // buffered
-        //     .flush()
-        //     .await
-        //     .context("Cannot flush data to output")
-        todo!()
+        let stdout = tokio::io::stdout();
+        let mut buffered = tokio::io::BufWriter::new(stdout);
+        render_allinone_commands(&cmd, &mut buffered).await?;
+        buffered
+            .flush()
+            .await
+            .context("Cannot flush data to output")
     } else {
         match mode {
             Mode::AllInOne => {
