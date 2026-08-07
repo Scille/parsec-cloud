@@ -181,11 +181,7 @@ import { computed, ref } from 'vue';
 
 const props = defineProps<{
   operationData:
-    | FileOperationCopyData
-    | FileOperationMoveData
-    | FileOperationRestoreData
-    | FileOperationDownloadData
-    | FileOperationDownloadFilesData;
+    FileOperationCopyData | FileOperationMoveData | FileOperationRestoreData | FileOperationDownloadData | FileOperationDownloadFilesData;
   status: FileOperationEvents;
   eventData?: FileOperationEventData;
 }>();

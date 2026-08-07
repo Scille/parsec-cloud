@@ -590,12 +590,7 @@ export async function unselectFile(entry: Locator): Promise<void> {
 }
 
 type EntryContextMenuMode =
-  | 'folder-full'
-  | 'folder-readonly'
-  | 'file-full'
-  | 'file-readonly'
-  | 'multiple-entries-full'
-  | 'multiple-entries-readonly';
+  'folder-full' | 'folder-readonly' | 'file-full' | 'file-readonly' | 'multiple-entries-full' | 'multiple-entries-readonly';
 
 interface EntryContextMenuOptions {
   canEdit?: boolean;

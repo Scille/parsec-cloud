@@ -123,12 +123,12 @@ const loginError = ref<Translatable>('');
 const validInfo = computed(() => {
   return Boolean(
     email.value.length > 0 &&
-      emailInputRef.value &&
-      emailInputRef.value.validity === Validity.Valid &&
-      !querying.value &&
-      password.value.length > 0 &&
-      serverInputRef.value &&
-      serverInputRef.value.validity === Validity.Valid,
+    emailInputRef.value &&
+    emailInputRef.value.validity === Validity.Valid &&
+    !querying.value &&
+    password.value.length > 0 &&
+    serverInputRef.value &&
+    serverInputRef.value.validity === Validity.Valid,
   );
 });
 
