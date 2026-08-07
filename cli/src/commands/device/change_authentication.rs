@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::io::Write;
 
 use libparsec::{
     AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy, DeviceSaveStrategy,
@@ -21,7 +22,7 @@ enum NewAccessStrategyChoice {
     Keyring,
 }
 
-pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let device = load_device_file(&args.config_dir, args.device).await?;
 
     let new_save_strategy_choice = match (args.password, args.keyring) {
@@ -130,7 +131,7 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     )
     .await?;
 
-    println!("Device authentication changed successfully");
+    ui.with_message(|_, out| writeln!(out, "Device authentication changed successfully"))?;
 
     Ok(())
 }

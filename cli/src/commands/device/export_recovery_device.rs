@@ -1,10 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::fmt::Write;
 
 use std::path::PathBuf;
 
 use libparsec::{DateTime, DeviceLabel};
 
-use crate::utils::*;
+use crate::{
+    ui::{CLIDisplay, Color},
+    utils::*,
+};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
@@ -18,14 +22,14 @@ crate::clap_parser_with_shared_opts_builder!(
 crate::build_main_with_client!(main, export_recovery_device);
 
 pub async fn export_recovery_device(
-    _todo_ui: crate::Ui,
+    ui: crate::Ui,
     args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
     let Args { output, .. } = args;
     log::trace!("Exporting recovery device at {}", output.display());
 
-    let mut handle = start_spinner("Saving recovery device file".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Saving recovery device file"))?;
 
     let now = DateTime::now();
     let (passphrase, data) = client
@@ -34,11 +38,35 @@ pub async fn export_recovery_device(
 
     tokio::fs::write(&output, data).await?;
 
-    handle.stop_with_message(format!(
-        "Recovery device saved at {path}\n{RED}Save the recovery passphrase in a safe place:{RESET} {GREEN}{passwd}{RESET}",
-        path = output.display(),
-        passwd = passphrase.as_str()
-    ));
+    handle.stop();
+
+    ui.data_print(&ExportedRecoveryDev {
+        path: output,
+        passphrase: passphrase.as_str(),
+    })?;
 
     Ok(())
+}
+
+#[derive(serde::Serialize)]
+struct ExportedRecoveryDev<'a> {
+    path: PathBuf,
+    passphrase: &'a str,
+}
+
+impl<'a> CLIDisplay for ExportedRecoveryDev<'a> {
+    fn plain_write<W: std::io::prelude::Write>(
+        &self,
+        fmt: &crate::ui::ColorFormatter,
+        mut w: W,
+    ) -> std::io::Result<()> {
+        writeln!(w, "Recovery device saved at {}", self.path.display())?;
+        writeln!(
+            w,
+            "{save_msg} {passwd}",
+            save_msg =
+                fmt.wrap_in_color(Color::Red, "Save the recovery passphrase in a safe place:"),
+            passwd = fmt.wrap_in_color(Color::Green, self.passphrase)
+        )
+    }
 }

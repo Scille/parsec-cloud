@@ -52,12 +52,18 @@ impl Spinner {
         }
         Ok(())
     }
+
+    pub fn stop(mut self) {
+        if let Some(mut spinner) = self.spinner.take() {
+            spinner.stop_with_newline();
+        }
+    }
 }
 
 impl Drop for Spinner {
     fn drop(&mut self) {
         if let Some(mut spinner) = self.spinner.take() {
-            spinner.stop();
+            spinner.stop_with_newline();
         }
     }
 }

@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::io::Write;
 
 use std::path::PathBuf;
 
 use libparsec::DeviceLabel;
 
-use crate::utils::*;
+use crate::{ui::compat::AvailableDeviceDisplay, utils::*};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, password_stdin]
@@ -18,7 +19,7 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         input,
         config_dir,
@@ -55,10 +56,11 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         device_label.clone(),
         libparsec_client::DeviceSaveStrategy::new_password(password),
     )
-    .await?;
+    .await
+    .map(AvailableDeviceDisplay)?;
 
-    println!("New device created:");
-    println!("{}", &format_single_device(&new_device));
+    ui.with_message(|_, out| writeln!(out, "New device created:"))?;
+    ui.data_print(&new_device)?;
 
     Ok(())
 }
