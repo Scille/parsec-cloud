@@ -29,6 +29,7 @@
           <ms-search-input
             placeholder="WorkspacesPage.filterPlaceholder"
             id="search-input-workspace"
+            ref="searchInputRef"
             :debounce="300"
             @change="onSearchValueChange"
             v-model="searchPattern"
@@ -331,6 +332,7 @@ const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
 const workspaceFilters = ref<WorkspacesPageFilters>({ owner: true, manager: true, contributor: true, reader: true });
 const querying = ref(true);
+const searchInputRef = ref();
 
 const informationManager: Ref<InformationManager> = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -391,6 +393,10 @@ onMounted(async (): Promise<void> => {
     async () => {
       displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
     },
+  );
+  hotkeys.add(
+    { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Workspaces },
+    async () => await searchInputRef.value?.setFocus(),
   );
 
   eventCbId = await eventDistributor.value.registerCallback(
