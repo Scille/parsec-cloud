@@ -171,34 +171,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       await expect(connected.locator('.toggle-view').locator('.pki-button')).toHaveTheClass('active');
     }
   });
-}
 
-msTest('No access to organization info as external', async ({ workspacesExternal }) => {
-  await expect(workspacesExternal.locator('.sidebar').locator('#sidebar-organization-information')).toBeHidden();
-  await workspacesExternal.setDisplaySize(DisplaySize.Small);
-  const tabBarButtons = workspacesExternal.locator('#tab-bar').locator('.tab-bar-menu-button');
-  await expect(tabBarButtons.nth(2)).toHaveText('Organization');
-  await expect(tabBarButtons.nth(2)).toBeHidden();
-});
-
-msTest('Copy server address', async ({ organizationPage }) => {
-  const btn = organizationPage.locator('.organization-info').locator('#copy-link-btn');
-  await btn.click();
-  await expect(organizationPage).toShowToast(
-    'Failed to copy the organization address. Your browser or device does not seem to support copy/paste.',
-    'Error',
-  );
-  // Try again with permissions
-  await organizationPage.context().grantPermissions(['clipboard-write']);
-  await btn.click();
-  await expect(btn).toBeHidden();
-  await expect(organizationPage.locator('.organization-info').locator('.server-address-value__copied')).toBeVisible();
-  await expect(organizationPage.locator('.organization-info').locator('.server-address-value__copied')).toHaveText('Copied');
-
-  expect(await getClipboardText(organizationPage)).toMatch(/^parsec3:\/\/.+$/);
-});
-
-for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
   msTest(`Org info default state on ${displaySize} display with different configuration`, async ({ connected }) => {
     await mockLibParsec(connected, [
       {
@@ -286,4 +259,55 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await expect(storageContainer.locator('.storage-list-item__value').nth(0)).toHaveText(/^\d+(\.\d{1,2})? (B|KB|MB|GB|TB)$/);
     await expect(storageContainer.locator('.storage-list-item__value').nth(1)).toHaveText(/^\d+(\.\d{1,2})? (B|KB|MB|GB|TB)$/);
   });
+
+  msTest(`Org info error state on ${displaySize} display`, async ({ connected }) => {
+    await mockLibParsec(connected, [
+      {
+        name: 'clientOrganizationInfo',
+        result: { ok: false, error: { tag: 'ClientOrganizationInfoErrorInternal', error: 'failed' } },
+      },
+    ]);
+
+    await connected.locator('.sidebar').locator('#sidebar-organization-information').click();
+    await expect(connected).toHavePageTitle('Information');
+    await expect(connected).toBeOrganizationPage();
+
+    // Alias
+    const organizationPage = connected;
+
+    if (displaySize === DisplaySize.Small) {
+      await organizationPage.setDisplaySize(DisplaySize.Small);
+    }
+
+    await expect(organizationPage.locator('.organization-sections')).toBeHidden();
+    await expect(organizationPage.locator('.organization-page-error')).toBeVisible();
+    await expect(organizationPage.locator('.organization-page-error')).toHaveText(
+      'Failed to retrieve organization information. Please make sure you are online.',
+    );
+  });
 }
+
+msTest('No access to organization info as external', async ({ workspacesExternal }) => {
+  await expect(workspacesExternal.locator('.sidebar').locator('#sidebar-organization-information')).toBeHidden();
+  await workspacesExternal.setDisplaySize(DisplaySize.Small);
+  const tabBarButtons = workspacesExternal.locator('#tab-bar').locator('.tab-bar-menu-button');
+  await expect(tabBarButtons.nth(2)).toHaveText('Organization');
+  await expect(tabBarButtons.nth(2)).toBeHidden();
+});
+
+msTest('Copy server address', async ({ organizationPage }) => {
+  const btn = organizationPage.locator('.organization-info').locator('#copy-link-btn');
+  await btn.click();
+  await expect(organizationPage).toShowToast(
+    'Failed to copy the organization address. Your browser or device does not seem to support copy/paste.',
+    'Error',
+  );
+  // Try again with permissions
+  await organizationPage.context().grantPermissions(['clipboard-write']);
+  await btn.click();
+  await expect(btn).toBeHidden();
+  await expect(organizationPage.locator('.organization-info').locator('.server-address-value__copied')).toBeVisible();
+  await expect(organizationPage.locator('.organization-info').locator('.server-address-value__copied')).toHaveText('Copied');
+
+  expect(await getClipboardText(organizationPage)).toMatch(/^parsec3:\/\/.+$/);
+});

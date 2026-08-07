@@ -175,7 +175,6 @@ export type {
   ClientGetTosError,
   ClientGetUserDeviceError,
   ClientGetUserInfoError,
-  ClientInfo,
   ClientInfoError,
   ClientListAsyncEnrollmentsError,
   ClientListShamirRecoveriesForOthersError,
@@ -319,6 +318,7 @@ export type {
 import type {
   AccessToken,
   AvailablePendingAsyncEnrollment,
+  ClientInfo,
   DateTime,
   DeviceInfo,
   EntryName,
@@ -485,12 +485,10 @@ interface OrganizationInfo {
     metadata: number;
     data: number;
   };
-  outsidersAllowed: boolean;
   userLimit?: number;
-  organizationAddr: ParsecOrganizationAddr;
-  organizationId: OrganizationID;
   creationDate?: DateTime;
   workspaceDeletionDelay: number;
+  clientInfo: ClientInfo;
 }
 
 interface AccountInvitation {
@@ -600,6 +598,7 @@ export {
   CertificatePart,
   CertificatePurpose,
   CertificateWithDetailsValid,
+  ClientInfo,
   ConnectionHandle,
   DateTime,
   DevicePrimaryProtectionStrategyTag,

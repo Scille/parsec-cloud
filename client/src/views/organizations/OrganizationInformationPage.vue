@@ -11,9 +11,9 @@
         @click="openOrganizationChoice($event)"
         v-if="isSmallDisplay"
       >
-        <template v-if="userInfo">
+        <template v-if="orgInfo">
           <ion-avatar class="organization-header-avatar body-lg">
-            <span v-if="!isTrialOrg">{{ userInfo.organizationId.substring(0, 2) }}</span>
+            <span v-if="!isTrialOrg">{{ orgInfo.clientInfo.organizationId.substring(0, 2) }}</span>
             <!-- prettier-ignore -->
             <ms-image
               v-else
@@ -21,7 +21,7 @@
               class="avatar-logo"
             />
           </ion-avatar>
-          <ion-text class="organization-header-text title-h2">{{ userInfo.organizationId }}</ion-text>
+          <ion-text class="organization-header-text title-h2">{{ orgInfo.clientInfo.organizationId }}</ion-text>
           <ms-image
             :image="ChevronExpand"
             class="header-icon"
@@ -45,12 +45,47 @@
         </template>
       </div>
 
-      <template v-if="orgInfo && userInfo">
+      <template v-else>
+        <template v-if="!orgInfo && !error">
+          <div
+            class="skeleton"
+            v-for="n in 3"
+            :key="n"
+          >
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton__title"
+            />
+            <div class="skeleton-content">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-content__text"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-content__text"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-content__text"
+              />
+            </div>
+          </div>
+        </template>
+
+        <template v-if="error">
+          <ms-report-text
+            :theme="MsReportTheme.Error"
+            class="organization-page-error"
+          >
+            {{ $msTranslate(error) }}
+          </ms-report-text>
+        </template>
+      </template>
+
+      <template v-if="orgInfo">
         <div class="organization-sections">
-          <organization-user-information
-            :org-info="orgInfo"
-            :user-info="userInfo"
-          />
+          <organization-user-information :org-info="orgInfo" />
           <!-- ------------- Information ------------- -->
           <organization-configuration-information
             :org-info="orgInfo"
@@ -60,42 +95,6 @@
           <!-- ------------- Storage list ------------- -->
           <organization-storage-information :org-info="orgInfo" />
         </div>
-      </template>
-
-      <template v-else-if="!error">
-        <div
-          class="skeleton"
-          v-for="n in 3"
-          :key="n"
-        >
-          <ion-skeleton-text
-            :animated="true"
-            class="skeleton__title"
-          />
-          <div class="skeleton-content">
-            <ion-skeleton-text
-              :animated="true"
-              class="skeleton-content__text"
-            />
-            <ion-skeleton-text
-              :animated="true"
-              class="skeleton-content__text"
-            />
-            <ion-skeleton-text
-              :animated="true"
-              class="skeleton-content__text"
-            />
-          </div>
-        </div>
-      </template>
-
-      <template v-else>
-        <ms-report-text
-          :theme="MsReportTheme.Error"
-          class="organization-page-error"
-        >
-          {{ $msTranslate(error) }}
-        </ms-report-text>
       </template>
     </ion-content>
   </ion-page>
@@ -107,15 +106,7 @@ import OrganizationConfigurationInformation from '@/components/organizations/Org
 import OrganizationStorageInformation from '@/components/organizations/OrganizationStorageInformation.vue';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import OrganizationUserInformation from '@/components/organizations/OrganizationUserInformation.vue';
-import {
-  ClientInfo,
-  OrganizationInfo,
-  ServerConfig,
-  getCurrentAvailableDevice,
-  getOrganizationInfo,
-  getServerConfig,
-  getClientInfo as parsecGetClientInfo,
-} from '@/parsec';
+import { OrganizationInfo, ServerConfig, getCurrentAvailableDevice, getOrganizationInfo, getServerConfig } from '@/parsec';
 import { Routes, currentRouteIs, switchOrganization, watchRoute } from '@/router';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
@@ -127,7 +118,6 @@ const { isSmallDisplay } = useWindowSize();
 
 const orgInfo: Ref<OrganizationInfo | null> = ref(null);
 const serverConfig: Ref<ServerConfig | null> = ref(null);
-const userInfo: Ref<ClientInfo | null> = ref(null);
 const isTrialOrg = ref(false);
 const error = ref('');
 
@@ -144,16 +134,6 @@ async function updateInformation(): Promise<void> {
       error.value = '';
     } else {
       error.value = 'OrganizationPage.getInfoFailed';
-      window.nativeAPI.log('error', `Failed to retrieve organization info: ${result.error.tag})`);
-    }
-  });
-  parsecGetClientInfo().then((result) => {
-    if (result.ok) {
-      error.value = '';
-      userInfo.value = result.value;
-    } else {
-      error.value = 'OrganizationPage.getInfoFailed';
-      window.nativeAPI.log('error', `Failed to retrieve user info: ${result.error.tag} (${result.error.error})`);
     }
   });
   getCurrentAvailableDevice().then(async (result) => {
@@ -163,8 +143,6 @@ async function updateInformation(): Promise<void> {
       if (serverInfo.ok) {
         serverConfig.value = serverInfo.value;
       }
-    } else {
-      window.nativeAPI.log('error', `Failed to retrieve current device: ${result.error.tag}`);
     }
   });
 }

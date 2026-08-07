@@ -11,7 +11,7 @@
         fill="clear"
         class="card-header__button user-invite-button"
         @click="inviteUser"
-        v-show="userInfo.currentProfile === UserProfile.Admin"
+        v-show="orgInfo.clientInfo.currentProfile === UserProfile.Admin"
       >
         <ion-icon
           :icon="personAdd"
@@ -75,7 +75,7 @@
           </div>
           <!-- Outsiders if allowed -->
           <div
-            v-if="orgInfo.outsidersAllowed"
+            v-if="orgInfo.clientInfo.serverOrganizationConfig.userProfileOutsiderAllowed"
             class="user-active-list-item"
           >
             <user-profile-tag :profile="UserProfile.Outsider" />
@@ -96,7 +96,7 @@
 
       <div
         class="invitation-card-list"
-        v-show="userInfo.currentProfile === UserProfile.Admin"
+        v-show="orgInfo.clientInfo.currentProfile === UserProfile.Admin"
       >
         <div
           button
@@ -134,7 +134,7 @@
 
 <script setup lang="ts">
 import UserProfileTag from '@/components/users/UserProfileTag.vue';
-import { ClientInfo, listAsyncEnrollments, listUserInvitations, OrganizationInfo, UserProfile } from '@/parsec';
+import { listAsyncEnrollments, listUserInvitations, OrganizationInfo, UserProfile } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { InvitationView } from '@/views/invitations/types';
@@ -143,7 +143,6 @@ import { link, mailUnread, personAdd } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 defineProps<{
-  userInfo: ClientInfo;
   orgInfo: OrganizationInfo;
 }>();
 
