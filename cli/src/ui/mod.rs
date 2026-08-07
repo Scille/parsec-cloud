@@ -124,6 +124,7 @@ impl<D: fmt::Display> fmt::Display for StyledValue<D> {
 pub enum Color {
     Yellow,
     Green,
+    Red,
 }
 
 impl Color {
@@ -131,6 +132,7 @@ impl Color {
         match self {
             Color::Yellow => crate::utils::YELLOW,
             Color::Green => crate::utils::GREEN,
+            Color::Red => crate::utils::RED,
         }
     }
 }

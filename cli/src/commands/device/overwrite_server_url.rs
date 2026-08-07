@@ -1,12 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::io::Write;
 
 use dialoguer::Confirm;
 use libparsec::{
-    AvailableDevice, AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy,
-    ParsecAddr,
+    AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy, ParsecAddr,
 };
 
-use crate::utils::*;
+use crate::{
+    ui::{compat::AvailableDeviceDisplay, Color},
+    utils::*,
+};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
@@ -17,7 +20,7 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let device = load_device_file(&args.config_dir, args.device).await?;
 
     if device.totp_opaque_key_id.is_some() {
@@ -82,21 +85,29 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         }
     };
 
-    let short_id = &device.device_id.hex()[..3];
-    let AvailableDevice {
-        organization_id,
-        human_handle,
-        device_label,
-        ..
-    } = &device;
+    let device = AvailableDeviceDisplay(device);
 
-    println!("You are about to update the following device:");
-    println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
-    println!("Current server URL: {YELLOW}{}{RESET}", device.server_addr);
-    println!("New server URL: {YELLOW}{}{RESET}", args.server_url);
+    ui.with_message(|_, out| write!(out, "You are about to update the following device:"))?;
+    ui.message_println(&device)?;
+    ui.with_message(|fmt, out| {
+        writeln!(
+            out,
+            "Current server URL: {url}",
+            url = fmt.wrap_in_color(Color::Yellow, &device.server_addr)
+        )
+    })?;
+    ui.with_message(|fmt, out| {
+        writeln!(
+            out,
+            "New server URL: {url}",
+            url = fmt.wrap_in_color(Color::Yellow, &args.server_url)
+        )
+    })?;
 
+    // FIXME: Should handle when run from a non-interactive terminal by pass `--force` option
+    // (look at `device forget-local`)
     if !Confirm::new().with_prompt("Are you sure? ").interact()? {
-        println!("Operation cancelled");
+        ui.with_message(|_, out| writeln!(out, "Operation cancelled"))?;
     } else {
         libparsec::update_device_overwrite_server_addr(
             &args.config_dir,
@@ -105,7 +116,7 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         )
         .await?;
 
-        println!("Device updated successfully");
+        ui.with_message(|_, out| write!(out, "Device updated successfully"))?;
     }
 
     Ok(())
