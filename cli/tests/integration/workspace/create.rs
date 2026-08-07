@@ -19,7 +19,7 @@ async fn create_workspace(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         "new-workspace"
     )
-    .stdout(predicates::str::contains("Workspace has been created"));
+    .stderr(predicates::str::contains("Workspace has been created"));
 
     let client = start_client(alice).await.unwrap();
 

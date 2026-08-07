@@ -17,7 +17,7 @@ pub async fn shared_recovery_info(
     _args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&_todo_ui, client).await?;
 
     let info = client.get_self_shamir_recovery().await?;
     let users = client.list_users(false, None, None).await?;

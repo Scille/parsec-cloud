@@ -17,7 +17,7 @@ pub async fn list_invite(
     client: &StartedClient,
 ) -> anyhow::Result<()> {
     log::trace!("Listing invitations");
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&_todo_ui, client).await?;
 
     let mut handle = start_spinner("Listing invitations".into());
 

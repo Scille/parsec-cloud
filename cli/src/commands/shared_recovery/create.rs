@@ -79,7 +79,7 @@ pub async fn create_shared_recovery(
         ..
     } = args;
 
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&_todo_ui, client).await?;
 
     let mut handle = start_spinner("Creating shared recovery setup".into());
     let users = client.list_users(true, None, None).await?;

@@ -37,7 +37,7 @@ pub async fn device_greet(
     let Args { token, .. } = args;
     log::trace!("Greeting invitation");
 
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&_todo_ui, client).await?;
 
     let invitation = step0(client, token).await?;
 

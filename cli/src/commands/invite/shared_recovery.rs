@@ -28,7 +28,7 @@ pub async fn invite_shared_recovery(
     } = args;
     log::trace!("Inviting an user to perform a shared recovery");
 
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&_todo_ui, client).await?;
 
     let users = client.list_users(true, None, None).await?;
     let user_info = users

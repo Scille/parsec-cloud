@@ -13,7 +13,7 @@ pub async fn delete_shared_recovery(
     _args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
-    poll_server_for_new_certificates(client).await?;
+    poll_server_for_new_certificates(&_todo_ui, client).await?;
 
     let mut handle = start_spinner("Deleting shared recovery setup".into());
 

@@ -58,7 +58,7 @@ crate::build_main_with_client!(
 );
 
 pub async fn workspace_import(
-    _todo_ui: crate::Ui,
+    _ui: crate::Ui,
     args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {

@@ -58,6 +58,18 @@ impl Spinner {
             spinner.stop_with_newline();
         }
     }
+
+    pub fn stop_with_symbol<F>(mut self, f: F) -> std::fmt::Result
+    where
+        F: FnOnce(&ColorFormatter, &mut String) -> std::fmt::Result,
+    {
+        if let Some(mut spinner) = self.spinner.take() {
+            let mut msg = String::new();
+            f(&self.color_formatter, &mut msg)?;
+            spinner.stop_with_symbol(&msg);
+        }
+        Ok(())
+    }
 }
 
 impl Drop for Spinner {
