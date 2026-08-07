@@ -32,10 +32,10 @@
           </ion-label>
           <div
             class="info-list-item__value cell-title"
-            :class="orgInfo.outsidersAllowed ? 'success' : 'warning'"
+            :class="orgInfo.clientInfo.serverOrganizationConfig.userProfileOutsiderAllowed ? 'success' : 'warning'"
           >
             {{
-              orgInfo.outsidersAllowed
+              orgInfo.clientInfo.serverOrganizationConfig.userProfileOutsiderAllowed
                 ? $msTranslate('OrganizationPage.configuration.allowed')
                 : $msTranslate('OrganizationPage.configuration.forbidden')
             }}
@@ -60,13 +60,13 @@
           </ion-text>
           <div class="server-address-value">
             <ion-text class="server-address-value__text body">
-              {{ orgInfo.organizationAddr }}
+              {{ orgInfo.clientInfo.organizationAddr }}
             </ion-text>
             <ion-button
               fill="clear"
               size="small"
               id="copy-link-btn"
-              @click="copyAddress(orgInfo.organizationAddr)"
+              @click="copyAddress(orgInfo.clientInfo.organizationAddr)"
               v-if="!addressCopiedToClipboard"
             >
               <ion-icon
