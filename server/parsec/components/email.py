@@ -10,6 +10,10 @@ from enum import auto
 
 import anyio
 
+# Required because the top-level module of anyio does not correctly load the submodule to_thread
+# see https://github.com/microsoft/pyright/issues/10912
+import anyio.to_thread
+
 from parsec._parsec import DateTime, EmailAddress
 from parsec.config import EmailConfig, MockedEmailConfig, MockedSentEmail, SmtpEmailConfig
 from parsec.logging import get_logger
@@ -113,12 +117,16 @@ AT: {timestamp.to_rfc3339()}
     )
 
 
-async def send_email(
+def _send_email(
     email_config: EmailConfig, to_addr: EmailAddress, message: Message
 ) -> SendEmailBadOutcome | None:
     if isinstance(email_config, SmtpEmailConfig):
-        _send_email = _smtp_send_email
+        _smtp_send_email(email_config, to_addr, message)
     else:
-        _send_email = _mocked_send_email
+        _mocked_send_email(email_config, to_addr, message)
 
+
+async def send_email(
+    email_config: EmailConfig, to_addr: EmailAddress, message: Message
+) -> SendEmailBadOutcome | None:
     return await anyio.to_thread.run_sync(_send_email, email_config, to_addr, message)
