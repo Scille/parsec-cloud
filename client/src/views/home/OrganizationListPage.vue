@@ -206,7 +206,7 @@
             placeholder="HomePage.organizationList.search"
             v-model="searchQuery"
             id="search-input-organization"
-            ref="searchInput"
+            ref="searchInputRef"
           />
           <ms-sorter
             v-if="confLoaded"
@@ -386,11 +386,7 @@ onMounted(async (): Promise<void> => {
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
     { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Home },
-    async () => {
-      if (searchInputRef.value) {
-        searchInputRef.value.setFocus();
-      }
-    },
+    async () => await searchInputRef.value?.setFocus(),
   );
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
   const storedData = await storageManager.retrieveComponentData<OrganizationListSavedData>(ORGANIZATION_LIST_DATA_KEY, {

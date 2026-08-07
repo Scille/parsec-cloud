@@ -31,6 +31,7 @@
             v-model="users.searchFilter"
             @change="users.unselectHiddenUsers()"
             id="search-input-users"
+            ref="searchInputRef"
           />
           <!-- prettier-ignore -->
           <user-filter
@@ -184,6 +185,7 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
 const selectionEnabled = ref<boolean>(false);
+const searchInputRef = ref();
 
 let hotkeys: HotkeyGroup | null = null;
 const users = ref(new UserCollection());
@@ -455,7 +457,11 @@ onMounted(async (): Promise<void> => {
     },
   );
   hotkeys.add({ key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Users }, async () =>
-    selectAllUsers(),
+    users.value.hasAllSelected() ? unselectAllUsers() : selectAllUsers(),
+  );
+  hotkeys.add(
+    { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Users },
+    async () => await searchInputRef.value?.setFocus(),
   );
 
   const result = await parsecGetClientInfo();
