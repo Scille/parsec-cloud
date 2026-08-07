@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, Locator } from '@playwright/test';
-import { MsContext, MsPage } from '@tests/e2e/helpers/types';
+import { BrowserContext, expect, Locator } from '@playwright/test';
+import { MsPage } from '@tests/e2e/helpers/types';
 
 const EXTERNAL_URLS = [
   'parsec.cloud',
@@ -13,7 +13,7 @@ const EXTERNAL_URLS = [
   'www.proconnect.gouv.fr',
 ];
 
-export async function mockExternalWebsites(context: MsContext): Promise<void> {
+export async function mockExternalWebsites(context: BrowserContext): Promise<void> {
   for (const host of EXTERNAL_URLS) {
     await context.route(`**://${host}/**`, async (route) => {
       await route.fulfill({

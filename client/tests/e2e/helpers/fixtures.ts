@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, TestInfo, test as base } from '@playwright/test';
+import { BrowserContext, Locator, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/helpers/bms';
 import { CRYPTPAD_SERVER } from '@tests/e2e/helpers/cryptpad';
@@ -9,7 +9,7 @@ import { mockExternalWebsites } from '@tests/e2e/helpers/externalWebsites';
 import { mockLibParsec } from '@tests/e2e/helpers/libparsec';
 import { mockStripe } from '@tests/e2e/helpers/mock';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
-import { DisplaySize, MsContext, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
+import { DisplaySize, MsPage, SetupOptions } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
 import { CoverageReport } from 'monocart-coverage-reports';
 // @ts-expect-error
@@ -277,7 +277,7 @@ interface ClientAreaInitialParams {
 }
 
 export const msTest = debugTest.extend<{
-  context: MsContext;
+  context: BrowserContext;
   home: MsPage;
   secondTab: MsPage;
   connected: MsPage;
@@ -305,7 +305,7 @@ export const msTest = debugTest.extend<{
   parsecEditics: MsPage;
 }>({
   context: async ({ browser }, use) => {
-    const context = (await browser.newContext()) as MsContext;
+    const context = await browser.newContext();
     await context.grantPermissions(['clipboard-read']);
     await mockExternalWebsites(context);
 
