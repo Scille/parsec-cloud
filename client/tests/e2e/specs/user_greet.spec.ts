@@ -242,6 +242,14 @@ msTest('Greet user whole process in large display', { tag: '@important' }, async
   await expect(secondTab).toBeWorkspacePage();
   const profile = secondTab.locator('.topbar').locator('.profile-header');
   await expect(profile.locator('.text-content-name')).toHaveText('Gordon Freeman');
+
+  // Checking the message for no workspaces here as well since it can only be checked for a new user
+  // and it takes a long time to invite someone.
+  await expect(secondTab.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(0);
+  await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
+  await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces').locator('span').nth(0)).toHaveText(
+    'You do not have access to any workspaces yet. Workspaces that you create or have been shared with you will be listed here.',
+  );
 });
 
 msTest('Host selects invalid SAS code', async ({ usersPage }) => {

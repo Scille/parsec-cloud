@@ -10,6 +10,8 @@ import {
   fillIonInput,
   importDefaultFiles,
   ImportDocuments,
+  login,
+  mockLibParsec,
   msTest,
 } from '@tests/e2e/helpers';
 
@@ -49,30 +51,31 @@ msTest('Check workspace card', async ({ workspaces }) => {
 });
 
 for (const gridMode of [false, true]) {
-  msTest.fail(`Empty workspaces in ${gridMode ? 'grid' : 'list'} mode`, { tag: '@important' }, async ({ connected }) => {
+  msTest(`Empty workspaces for external in ${gridMode ? 'grid' : 'list'} mode`, async ({ home }) => {
+    await login(home, 'Malloryy McMalloryFace');
     if (!gridMode) {
-      await toggleViewMode(connected);
+      await toggleViewMode(home);
     }
-    const actionBar = connected.locator('#workspaces-ms-action-bar');
-    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(1);
-    await expect(actionBar.getByText('New workspace')).toHaveText('New workspace');
+    const actionBar = home.locator('#workspaces-ms-action-bar');
+    // Externals can't create workspaces
+    await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(0);
     await expect(actionBar.locator('.counter')).toHaveText('No items');
     await expect(actionBar.locator('#workspace-filter-select')).toHaveText('Name');
     if (gridMode) {
       await expect(actionBar.locator('.ms-grid-list-toggle').locator('#grid-view')).toHaveDisabledAttribute();
       await expect(actionBar.locator('.ms-grid-list-toggle').locator('#list-view')).toBeEnabled();
-      await expect(connected.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(0);
-      await expect(connected.locator('.workspaces-container').locator('.no-workspaces-content')).toBeVisible();
-      await expect(connected.locator('.workspaces-container').locator('.no-workspaces-content').locator('ion-text')).toHaveText(
-        'You do not have access to any workspace yet. Workspaces that you create or have been shared with you will be listed here.',
+      await expect(home.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(0);
+      await expect(home.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
+      await expect(home.locator('.workspaces-container').locator('.no-workspaces').locator('span').nth(0)).toHaveText(
+        'You do not have access to any workspaces. Workspaces that have been shared with you will be listed here.',
       );
     } else {
       await expect(actionBar.locator('.ms-grid-list-toggle').locator('#grid-view')).toBeEnabled();
       await expect(actionBar.locator('.ms-grid-list-toggle').locator('#list-view')).toHaveDisabledAttribute();
-      await expect(connected.locator('.workspaces-container').locator('.no-workspaces-content')).toBeVisible();
-      await expect(connected.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(0);
-      await expect(connected.locator('.workspaces-container').locator('.no-workspaces-content').locator('ion-text')).toHaveText(
-        'You do not have access to any workspace yet. Workspaces that you create or have been shared with you will be listed here.',
+      await expect(home.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
+      await expect(home.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(0);
+      await expect(home.locator('.workspaces-container').locator('.no-workspaces').locator('span').nth(0)).toHaveText(
+        'You do not have access to any workspaces. Workspaces that have been shared with you will be listed here.',
       );
     }
   });
@@ -695,4 +698,15 @@ msTest('Check no favorite or recent workspaces', async ({ connected }) => {
   await expect(connected.locator('.workspaces-container').locator('.no-favorite-workspaces').locator('ion-text')).toHaveText(
     'You have not set starred any workspaces yet. Starred workspaces will be listed here.',
   );
+});
+
+msTest('Workspace list error', async ({ home }) => {
+  await mockLibParsec(home, [
+    {
+      name: 'clientListWorkspaces',
+      result: { ok: false, error: { tag: 'ClientListWorkspacesErrorInternal', error: 'failed' } },
+    },
+  ]);
+  await login(home, 'Alicey McAliceFace');
+  await expect(home).toShowToast('Failed to list the workspaces.', 'Error');
 });
