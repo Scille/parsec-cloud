@@ -42,7 +42,7 @@ async fn bootstrap_organization(tmp_path: TmpPath, #[case] scheme: &str) {
         "--email",
         "alice@example.com"
     )
-    .stdout(predicates::str::contains("Organization bootstrapped"));
+    .stderr(predicates::str::contains("Organization bootstrapped"));
 }
 
 #[rstest::rstest]
@@ -83,7 +83,7 @@ async fn bootstrap_organization_with_sequester(tmp_path: TmpPath) {
         "--sequester-key",
         &path
     )
-    .stdout(predicates::str::contains("Organization bootstrapped"));
+    .stderr(predicates::str::contains("Organization bootstrapped"));
 }
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows

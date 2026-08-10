@@ -199,3 +199,9 @@ impl CLIDisplay for WorkspaceUserAccessInfoDisplay {
         )
     }
 }
+
+impl CLIDisplay for serde_json::Value {
+    fn plain_write<W: Write>(&self, _fmt: &ColorFormatter, w: W) -> std::io::Result<()> {
+        serde_json::to_writer_pretty(w, self).map_err(Into::into)
+    }
+}
