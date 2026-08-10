@@ -48,7 +48,7 @@ CLI revamped:
   +--------------------------------------------+--------+-------+----------+
   | ``sequester generate-service-certificate`` | N/a    | N/a   | N/a      |
   +--------------------------------------------+--------+-------+----------+
-  | ``server stats``                           |        |       |          |
+  | ``server stats``                           | ✅     | N/a   | ✅       |
   +--------------------------------------------+--------+-------+----------+
   | ``shared-recovery create``                 | N/a    | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
@@ -122,3 +122,7 @@ CLI revamped:
   - ``invite device``: Return a redirection link to support web client
   - ``invite shared-recovery``: Return a redirection link to support web client
   - ``invite user``: Return a redirection link to support web client
+  - ``server stats``:
+
+    - Replace local ``--format`` with global one, plain format correspond to CSV style
+    - Using global ``--format`` cause using CSV format by default over JSON unless the format is specified
