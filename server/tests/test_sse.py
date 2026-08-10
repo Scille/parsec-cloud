@@ -137,7 +137,8 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
         )
         # When the server detect backpressure, it should close the connection
         with pytest.raises(StopAsyncIteration):
-            await alice_sse.next_event()
+            event = await alice_sse.next_event()
+            raise ValueError(event)  # Sometime the test is flaky and the SSE channel is not closed
 
         mock_send_nowait.assert_called_once()
 
@@ -286,3 +287,4 @@ async def test_close_on_organization_tos_updated(
         # And then the connection is closed
         with pytest.raises(StopAsyncIteration):
             event = await bob_sse.next_event()
+            raise ValueError(event)  # Sometime the test is flaky and the SSE channel is not closed
