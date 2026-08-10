@@ -18,15 +18,8 @@ static SENTRY_DSN_LIBPARSEC: &str =
 static SENTRY_CLIENT_GUARD: OnceCell<ClientInitGuard> = OnceCell::new();
 
 fn init_sentry() {
-    SENTRY_CLIENT_GUARD.get_or_init(|| {
-        sentry::init((
-            SENTRY_DSN_LIBPARSEC,
-            ClientOptions {
-                release: sentry::release_name!(),
-                ..Default::default()
-            },
-        ))
-    });
+    let options = ClientOptions::new().maybe_release(sentry::release_name!());
+    SENTRY_CLIENT_GUARD.get_or_init(|| sentry::init((SENTRY_DSN_LIBPARSEC, options)));
 }
 
 #[neon::main]
