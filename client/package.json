@@ -64,7 +64,7 @@
     "devDependencies": {
         "@capacitor/cli": "^8.4.2",
         "@eslint/compat": "^2.1.0",
-        "@playwright/test": "^1.62.0",
+        "@playwright/test": "^1.62.1",
         "@sentry/vite-plugin": "^5.4.0",
         "@types/luxon": "^3.7.2",
         "@types/node": "^26.1.2",
