@@ -92,7 +92,7 @@
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.65.0",
         "unique-names-generator": "^4.7.1",
-        "vite": "^8.1.5",
+        "vite": "^8.2.0",
         "vite-plugin-static-copy": "^4.1.1",
         "vitest": "4.1.10",
         "vue-eslint-parser": "^10.4.1",
