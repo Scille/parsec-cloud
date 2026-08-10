@@ -3562,6 +3562,7 @@ dependencies = [
  "rstest",
  "serde",
  "serde_json",
+ "serde_with",
  "shadow-rs",
  "spinners",
  "textwrap",

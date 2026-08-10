@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
 use libparsec::{OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr};
+use std::fmt::Write;
 
-use crate::utils::*;
+use crate::ui::{CLIDisplay, Color};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = addr, token]
@@ -69,7 +69,7 @@ pub async fn create_organization_req(
     }
 }
 
-pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         organization,
         token,
@@ -77,14 +77,35 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     } = args;
     log::trace!("Creating organization \"{organization}\" (addr={addr})");
 
-    let mut handle = start_spinner("Creating organization".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Creating organization"))?;
 
     let organization_addr = create_organization_req(&organization, &addr, &token).await?;
 
-    handle.stop_with_message(format!(
-        "Organization bootstrap URL: {YELLOW}{}{RESET}",
+    handle.stop();
+
+    ui.data_print(&OrganizationBootstrapUrlDisplay(
         organization_addr.to_http_redirection_url(),
-    ));
+    ))?;
 
     Ok(())
+}
+
+#[serde_with::serde_as]
+#[derive(serde::Serialize)]
+pub struct OrganizationBootstrapUrlDisplay(
+    #[serde_as(as = "serde_with::DisplayFromStr")] pub libparsec_types::Url,
+);
+
+impl CLIDisplay for OrganizationBootstrapUrlDisplay {
+    fn plain_write<W: std::io::prelude::Write>(
+        &self,
+        fmt: &crate::ui::ColorFormatter,
+        mut w: W,
+    ) -> std::io::Result<()> {
+        write!(
+            w,
+            "Organization bootstrap URL: {}",
+            fmt.wrap_in_color(Color::Yellow, &self.0)
+        )
+    }
 }

@@ -8,7 +8,7 @@ async fn stats_organization(tmp_path: TmpPath) {
     let (url, _, org_id) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     let expect = format!(
-        "{:#}\n",
+        "{:#}",
         serde_json::json!({
             "active_users": 3,
             "data_size": 0,

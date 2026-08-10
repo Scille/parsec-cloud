@@ -1,13 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
-use std::{path::PathBuf, sync::Arc};
+use std::{fmt::Write as _, io::Write as _, path::PathBuf, sync::Arc};
 
 use libparsec::{
     AvailableDevice, ClientConfig, DeviceLabel, DevicePrimaryProtectionStrategy,
     DeviceSaveStrategy, EmailAddress, HumanHandle, ParsecOrganizationBootstrapAddr, Password, Url,
 };
 
-use crate::utils::*;
+use crate::{ui::compat::AvailableDeviceDisplay, utils::*};
 
 #[derive(clap::Parser)]
 pub struct Args {
@@ -63,7 +62,7 @@ pub async fn bootstrap_organization_req(
     .map_err(anyhow::Error::from)
 }
 
-pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         email,
         label,
@@ -94,7 +93,8 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         None
     };
 
-    let mut handle = start_spinner("Bootstrapping organization in the server".into());
+    let handle =
+        ui.with_spinner(|_, out| write!(out, "Bootstrapping organization in the server"))?;
 
     let new_device = bootstrap_organization_req(
         ClientConfig::default(),
@@ -104,12 +104,13 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         password,
         sequester_authority_verify_key_pem.as_deref(),
     )
-    .await?;
+    .await
+    .map(AvailableDeviceDisplay)?;
 
-    handle.stop_with_message("Organization bootstrapped".into());
+    handle.stop_with(|_, out| write!(out, "Organization bootstrapped"))?;
 
-    println!("New device created:");
-    println!("{}", &format_single_device(&new_device));
+    ui.with_message(|_, out| writeln!(out, "New device created:"))?;
+    ui.data_print(&new_device)?;
 
     Ok(())
 }

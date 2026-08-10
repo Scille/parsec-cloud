@@ -29,7 +29,7 @@ pub async fn stats_organization_req(
     Ok(rep.json::<Value>().await?)
 }
 
-pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         organization,
         token,
@@ -39,7 +39,7 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
 
     let rep = stats_organization_req(&organization, &addr, &token).await?;
 
-    println!("{rep:#}");
+    ui.data_print(&rep)?;
 
     Ok(())
 }
