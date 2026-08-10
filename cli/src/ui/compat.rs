@@ -1,6 +1,9 @@
+use crate::ui;
+
 use super::{CLIDisplay, Color, ColorFormatter};
 use std::{borrow::Cow, io::Write, ops::Deref};
 
+use reqwest::Url;
 use serde::{ser::SerializeStruct, Serialize};
 
 const DEVICE_ID_FIELD: &str = "device_id";
@@ -203,5 +206,162 @@ impl CLIDisplay for WorkspaceUserAccessInfoDisplay {
 impl CLIDisplay for serde_json::Value {
     fn plain_write<W: Write>(&self, _fmt: &ColorFormatter, w: W) -> std::io::Result<()> {
         serde_json::to_writer_pretty(w, self).map_err(Into::into)
+    }
+}
+
+pub struct InviteItemDisplay<'a>(
+    pub libparsec_client::InviteListItem,
+    pub &'a [libparsec_client::UserInfo],
+);
+
+impl<'a> InviteItemDisplay<'a> {
+    fn search_user_from_id(
+        &self,
+        user_id: libparsec_types::UserID,
+    ) -> Option<&libparsec_client::UserInfo> {
+        self.1.iter().find(|user| user.id == user_id)
+    }
+}
+
+impl<'a> Deref for InviteItemDisplay<'a> {
+    type Target = libparsec_client::InviteListItem;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a> Serialize for InviteItemDisplay<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match &self.0 {
+            libparsec_client::InviteListItem::User {
+                claimer_email,
+                status,
+                token,
+                ..
+            } => {
+                let mut s = serializer.serialize_struct("InviteListItemUser", 4)?;
+                s.serialize_field("invitation_type", "user")?;
+                s.serialize_field("invitation_token", &token.hex())?;
+                s.serialize_field("invitation_status", &status)?;
+                s.serialize_field("claimer_email", &claimer_email)?;
+                s.end()
+            }
+            libparsec_client::InviteListItem::Device { status, token, .. } => {
+                let mut s = serializer.serialize_struct("InviteListItemDevice", 3)?;
+                s.serialize_field("invitation_type", "device")?;
+                s.serialize_field("invitation_token", &token.hex())?;
+                s.serialize_field("invitation_status", &status)?;
+                s.end()
+            }
+            libparsec_client::InviteListItem::ShamirRecovery {
+                claimer_user_id,
+                status,
+                token,
+                ..
+            } => {
+                let user = self.search_user_from_id(*claimer_user_id);
+                let mut s = serializer.serialize_struct(
+                    "InviteListItemShamir",
+                    4 + if user.is_some() { 1 } else { 0 },
+                )?;
+                s.serialize_field("invitation_type", "shamir")?;
+                s.serialize_field("invitation_token", &token.hex())?;
+                s.serialize_field("invitation_status", &status)?;
+
+                if let Some(user) = user {
+                    s.serialize_field("claimer_human_handle", &user.human_handle)?;
+                }
+                s.serialize_field("claimer_user_id", &claimer_user_id)?;
+
+                s.end()
+            }
+        }
+    }
+}
+
+impl<'a> CLIDisplay for InviteItemDisplay<'a> {
+    fn plain_write<W: Write>(&self, fmt: &ColorFormatter, mut w: W) -> std::io::Result<()> {
+        fn format_status(
+            fmt: &ColorFormatter,
+            status: &libparsec_types::InvitationStatus,
+        ) -> ui::StyledValue<&'static str> {
+            match status {
+                libparsec_types::InvitationStatus::Pending => {
+                    fmt.wrap_in_color(Color::Yellow, "pending")
+                }
+                libparsec_types::InvitationStatus::Cancelled => {
+                    fmt.wrap_in_color(Color::Red, "cancelled")
+                }
+                libparsec_types::InvitationStatus::Finished => {
+                    fmt.wrap_in_color(Color::Green, "finished")
+                }
+            }
+        }
+
+        match &self.0 {
+            libparsec_client::InviteListItem::User {
+                claimer_email,
+                status,
+                token,
+                ..
+            } => write!(
+                w,
+                "{token}\t{status}\nuser (email={claimer_email})",
+                token = token.hex(),
+                status = format_status(fmt, status)
+            ),
+            libparsec_client::InviteListItem::Device { status, token, .. } => write!(
+                w,
+                "{token}\t{status}\tdevice",
+                token = token.hex(),
+                status = format_status(fmt, status)
+            ),
+            libparsec_client::InviteListItem::ShamirRecovery {
+                status,
+                token,
+                claimer_user_id,
+                ..
+            } => {
+                let user_info = self.search_user_from_id(*claimer_user_id);
+                let detail = if let Some(user_info) = user_info {
+                    format_args!("{}", user_info.human_handle)
+                } else {
+                    format_args!("id={claimer_user_id}")
+                };
+                write!(
+                    w,
+                    "{token}\t{status}\tshamir recovery ({detail})",
+                    token = token.hex(),
+                    status = format_status(fmt, status)
+                )
+            }
+        }
+    }
+}
+
+#[serde_with::serde_as]
+#[derive(Serialize)]
+pub struct InvitationLink {
+    pub token: libparsec_types::AccessToken,
+    #[serde_as(as = "serde_with::DisplayFromStr")]
+    pub url: Url,
+}
+
+impl CLIDisplay for InvitationLink {
+    fn plain_write<W: Write>(&self, fmt: &ColorFormatter, mut w: W) -> std::io::Result<()> {
+        writeln!(
+            w,
+            "Invitation token: {}",
+            fmt.wrap_in_color(Color::Yellow, self.token)
+        )?;
+        write!(
+            w,
+            "Invitation URL: {}",
+            fmt.wrap_in_color(Color::Yellow, &self.url)
+        )
     }
 }

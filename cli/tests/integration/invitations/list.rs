@@ -8,7 +8,6 @@ use crate::{
     bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
-use parsec_cli::utils::{RESET, YELLOW};
 
 async fn invite_device(cmds: &AuthenticatedCmds) -> AccessToken {
     let rep = cmds
@@ -46,8 +45,7 @@ async fn list_invitations(tmp_path: TmpPath) {
         &alice.device_id.hex()
     )
     .stdout(predicates::str::contains(format!(
-        "{}\t{YELLOW}pending{RESET}\tdevice",
-        token.hex()
+        "{token}\tpending\tdevice",
     )));
 }
 
@@ -67,9 +65,8 @@ async fn issue_9176_list_more_than_one_invitations(tmp_path: TmpPath) {
     let token2 = invite_device(&cmds).await;
     let token3 = invite_device(&cmds).await;
 
-    let contains_invite = |token: AccessToken| {
-        predicates::str::contains(format!("{token}\t{YELLOW}pending{RESET}\tdevice"))
-    };
+    let contains_invite =
+        |token: AccessToken| predicates::str::contains(format!("{token}\tpending\tdevice"));
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -97,5 +94,5 @@ async fn no_invitations(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains("No invitation."));
+    .stderr(predicates::str::contains("No invitation."));
 }

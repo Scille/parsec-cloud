@@ -24,19 +24,19 @@ CLI revamped:
   +--------------------------------------------+--------+-------+----------+
   | ``device overwrite-server-url``            | N/a    | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
-  | ``invite cancel``                          |        |       |          |
+  | ``invite cancel``                          | N/a    | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
-  | ``invite claim``                           |        |       |          |
+  | ``invite claim``                           | N/a    | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
-  | ``invite device``                          |        |       |          |
+  | ``invite device``                          | ✅     | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
-  | ``invite greet``                           |        |       |          |
+  | ``invite greet``                           | N/a    | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
-  | ``invite list``                            |        |       |          |
+  | ``invite list``                            | ✅     | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
-  | ``invite shared-recovery``                 |        |       |          |
+  | ``invite shared-recovery``                 | ✅     | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
-  | ``invite user``                            |        |       |          |
+  | ``invite user``                            | ✅     | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
   | ``organization bootstrap``                 | ✅     | ✅    | ✅       |
   +--------------------------------------------+--------+-------+----------+
@@ -116,3 +116,9 @@ CLI revamped:
 
   - devices are listed on stdout
   - message indicating how much devices are found on stderr (if you want to count the number of devices you could pipe output into ``wc -l``)
+
+- **BREAKING CHANGE**:
+
+  - ``invite device``: Return a redirection link to support web client
+  - ``invite shared-recovery``: Return a redirection link to support web client
+  - ``invite user``: Return a redirection link to support web client
