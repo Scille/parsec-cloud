@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::fmt::Write;
 
 use anyhow::Context;
 use libparsec::{InvitationType, ParsecInvitationAddr};
 
-use crate::utils::*;
+use crate::{ui::compat::InvitationLink, utils::StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
@@ -13,13 +14,13 @@ crate::clap_parser_with_shared_opts_builder!(
 crate::build_main_with_client!(main, invite_device);
 
 pub async fn invite_device(
-    _todo_ui: crate::Ui,
+    ui: crate::Ui,
     _args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
     log::trace!("Inviting a device");
 
-    let mut handle = start_spinner("Creating device invitation".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Creating device invitation"))?;
 
     let (token, _email_sent_status) = client
         .new_device_invitation(false)
@@ -32,11 +33,11 @@ pub async fn invite_device(
         InvitationType::Device,
         token,
     )
-    .to_url();
+    .to_http_redirection_url();
 
-    handle.stop_with_message(format!(
-        "Invitation token: {YELLOW}{token}{RESET}\nInvitation URL: {YELLOW}{url}{RESET}"
-    ));
+    handle.stop();
+
+    ui.data_print(&InvitationLink { token, url })?;
 
     Ok(())
 }

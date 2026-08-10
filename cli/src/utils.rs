@@ -20,7 +20,7 @@ use libparsec_platform_ipc::{
 };
 use spinners::{Spinner, Spinners, Stream};
 
-use crate::ui::Color;
+use crate::ui::{Color, ColorFormatter};
 
 /// Environment variable to set the Parsec config directory
 /// Should not be confused with [`libparsec::PARSEC_BASE_CONFIG_DIR`]
@@ -33,8 +33,13 @@ pub const GREEN: &str = "\x1B[92m";
 pub const RED: &str = "\x1B[91m";
 pub const RESET: &str = "\x1B[39m";
 pub const YELLOW: &str = "\x1B[33m";
+pub const CHECKMARK: &str = "✔";
 pub const GREEN_CHECKMARK: &str = "\x1B[92m✔\x1B[39m";
 pub const BULLET_CHAR: &str = "•";
+
+pub fn make_checkmark_symbol(fmt: &ColorFormatter, out: &mut String) -> std::fmt::Result {
+    write!(out, "{}", fmt.wrap_in_color(Color::Green, CHECKMARK))
+}
 
 pub fn format_single_device(device: &AvailableDevice) -> String {
     let short_id = &device.device_id.hex()[..MINIMAL_SHORT_ID_SIZE];
@@ -500,7 +505,7 @@ pub async fn poll_server_for_new_certificates(
 ) -> anyhow::Result<()> {
     let spinner = ui.with_spinner(|_, out| write!(out, "Poll server for new certificates"))?;
     client.poll_server_for_new_certificates().await?;
-    spinner.stop_with_symbol(|fmt, out| write!(out, "{}", fmt.wrap_in_color(Color::Green, "✔")))?;
+    spinner.stop_with_symbol(make_checkmark_symbol)?;
     Ok(())
 }
 

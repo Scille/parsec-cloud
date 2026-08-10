@@ -47,5 +47,5 @@ async fn cancel_invitation(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         &token.hex()
     )
-    .stdout(predicates::str::contains("Invitation canceled"));
+    .stderr(predicates::str::contains("Invitation canceled"));
 }

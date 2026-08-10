@@ -1,8 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::{fmt::Write as _, io::Write as _};
 
 use libparsec::{EmailAddress, InvitationEmailSentStatus, InvitationType, ParsecInvitationAddr};
 
-use crate::utils::*;
+use crate::{
+    ui::compat::InvitationLink,
+    utils::{poll_server_for_new_certificates, StartedClient},
+};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
@@ -19,7 +23,7 @@ crate::clap_parser_with_shared_opts_builder!(
 crate::build_main_with_client!(main, invite_shared_recovery);
 
 pub async fn invite_shared_recovery(
-    _todo_ui: crate::Ui,
+    ui: crate::Ui,
     args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
@@ -28,7 +32,7 @@ pub async fn invite_shared_recovery(
     } = args;
     log::trace!("Inviting an user to perform a shared recovery");
 
-    poll_server_for_new_certificates(&_todo_ui, client).await?;
+    poll_server_for_new_certificates(&ui, client).await?;
 
     let users = client.list_users(true, None, None).await?;
     let user_info = users
@@ -36,7 +40,7 @@ pub async fn invite_shared_recovery(
         .find(|u| u.human_handle.email() == &email)
         .ok_or_else(|| anyhow::anyhow!("User with email {} not found", email))?;
 
-    let mut handle = start_spinner("Creating a shared recovery invitation".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Creating a shared recovery invitation"))?;
     let (url, email_sent_status, token) = match client
         .new_shamir_recovery_invitation(user_info.id, send_email)
         .await
@@ -48,7 +52,7 @@ pub async fn invite_shared_recovery(
                 InvitationType::ShamirRecovery,
                 token,
             )
-            .to_url(),
+            .to_http_redirection_url(),
             email_sent_status,
             token,
         ),
@@ -59,23 +63,33 @@ pub async fn invite_shared_recovery(
         }
     };
 
-    handle.stop_with_message(format!(
-        "Invitation token: {YELLOW}{token}{RESET}\nInvitation URL: {YELLOW}{url}{RESET}"
-    ));
+    handle.stop();
 
     if send_email {
         match email_sent_status {
             InvitationEmailSentStatus::Success => {
-                println!("Invitation email sent to {email}");
+                ui.with_message(|_, out| writeln!(out, "Invitation email sent to {email}"))?;
             }
             InvitationEmailSentStatus::RecipientRefused => {
-                println!("Invitation email not sent to {email} because the recipient was refused");
+                ui.with_message(|_, out| {
+                    writeln!(
+                        out,
+                        "Invitation email not sent to {email} because the recipient was refused"
+                    )
+                })?;
             }
             InvitationEmailSentStatus::ServerUnavailable => {
-                println!("Invitation email not sent to {email} because the server is unavailable");
+                ui.with_message(|_, out| {
+                    writeln!(
+                        out,
+                        "Invitation email not sent to {email} because the server is unavailable"
+                    )
+                })?;
             }
         }
     }
+
+    ui.data_print(&InvitationLink { token, url })?;
 
     Ok(())
 }
