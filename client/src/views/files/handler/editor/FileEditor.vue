@@ -167,6 +167,7 @@ async function loadEditor(): Promise<void> {
     {
       documentContent: content,
       documentName: contentInfo.fileName,
+      documentExtension: contentInfo.extension,
       documentType: documentType.value,
       key: crypto.randomUUID(),
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
