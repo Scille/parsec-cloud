@@ -4,7 +4,6 @@ use crate::{
     bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
-use parsec_cli::utils::{GREEN, RED, RESET};
 
 #[rstest::rstest]
 #[tokio::test]
@@ -24,9 +23,7 @@ async fn info_shared_recovery_ok(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains(format!(
-        "Shared recovery {RED}never setup{RESET}"
-    )));
+    .stdout(predicates::str::contains("Shared recovery never setup"));
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -41,7 +38,7 @@ async fn info_shared_recovery_ok(tmp_path: TmpPath) {
         "1",
         "--no-confirmation"
     )
-    .stdout(predicates::str::contains(
+    .stderr(predicates::str::contains(
         "Shared recovery setup has been created",
     ));
 
@@ -52,7 +49,5 @@ async fn info_shared_recovery_ok(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains(format!(
-        "Shared recovery {GREEN}set up{RESET}"
-    )));
+    .stdout(predicates::str::contains("Shared recovery set up"));
 }

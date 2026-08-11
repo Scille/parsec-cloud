@@ -1,12 +1,13 @@
-use std::{collections::HashMap, num::NonZeroU8};
+use std::{collections::HashMap, fmt::Write as _, io::Write as _, num::NonZeroU8};
 
 use dialoguer::{Confirm, Input};
-use itertools::Itertools;
 use libparsec::{EmailAddress, UserID, UserProfile};
 
-use crate::utils::{
-    maybe_plural, poll_server_for_new_certificates, start_spinner, StartedClient, BULLET_CHAR,
-    GREEN_CHECKMARK,
+use crate::{
+    ui::Color,
+    utils::{
+        maybe_plural, poll_server_for_new_certificates, StartedClient, BULLET_CHAR, CHECKMARK,
+    },
 };
 
 const ONE: NonZeroU8 = NonZeroU8::new(1).expect("always valid");
@@ -68,7 +69,7 @@ crate::clap_parser_with_shared_opts_builder!(
 crate::build_main_with_client!(main, create_shared_recovery);
 
 pub async fn create_shared_recovery(
-    _todo_ui: crate::Ui,
+    ui: crate::Ui,
     args: Args,
     client: &StartedClient,
 ) -> anyhow::Result<()> {
@@ -79,9 +80,9 @@ pub async fn create_shared_recovery(
         ..
     } = args;
 
-    poll_server_for_new_certificates(&_todo_ui, client).await?;
+    poll_server_for_new_certificates(&ui, client).await?;
 
-    let mut handle = start_spinner("Creating shared recovery setup".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Creating shared recovery setup"))?;
     let users = client.list_users(true, None, None).await?;
 
     let per_recipient_shares: HashMap<UserID, NonZeroU8> = if let Some(recipients) = recipients {
@@ -115,11 +116,11 @@ pub async fn create_shared_recovery(
     };
 
     // we must stop the handle here to avoid messing up with the threshold choice
-    handle.stop_with_symbol("..."); // not green check mark because it's not finished
+    handle.stop_with_symbol(|_, out| write!(out, "..."))?; // not green check mark because it's not finished
     let threshold = if let Some(t) = threshold {
         t
     } else {
-        println!("The threshold is the minimum number of shares that one must gather to recover the account");
+        ui.with_message(|_, out| writeln!(out, "The threshold is the minimum number of shares that one must gather to recover the account"))?;
         // note that this is a blocking call
         Input::<NonZeroU8>::new()
             .with_prompt(format!(
@@ -129,38 +130,42 @@ pub async fn create_shared_recovery(
             .interact_text()?
     };
 
-    println!(
-        "The following shared recovery setup will be created:\n{BULLET_CHAR} Threshold: {threshold}\n{}",
+    ui.with_message(|_, out| {
+        writeln!(out, "The following shared recovery setup with a threshold set to {threshold} will be created:")?;
         per_recipient_shares
             .iter()
-            .map(|(recipient, share)| {
+            .try_for_each(|(recipient, share)| {
                 let user = &users
                     .iter()
                     .find(|x| x.id == *recipient)
                     .expect("missing recipient")
                     .human_handle;
-                format!("{BULLET_CHAR} User {user} will have {share} share{}", maybe_plural(&share.get()))
+                writeln!(out, "{BULLET_CHAR} User {user} will have {share} share{}", maybe_plural(share.get()))
             })
-            .join("\n"));
+    })?;
 
     if !no_confirmation
         && !Confirm::new()
             .with_prompt("Do you want to proceed?")
             .interact()?
     {
-        println!("Shared recovery creation aborted.");
+        ui.with_message(|_, out| writeln!(out, "Shared recovery creation aborted."))?;
         return Ok(());
     }
 
-    let mut handle = start_spinner("Creating shared recovery setup".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Creating shared recovery setup"))?;
 
     client
         .setup_shamir_recovery(per_recipient_shares, threshold)
         .await?;
 
-    handle.stop_with_message(format!(
-        "{GREEN_CHECKMARK} Shared recovery setup has been created"
-    ));
+    handle.stop_with(|fmt, out| {
+        write!(
+            out,
+            "{} Shared recovery setup has been created",
+            fmt.wrap_in_color(Color::Green, CHECKMARK)
+        )
+    })?;
 
     Ok(())
 }

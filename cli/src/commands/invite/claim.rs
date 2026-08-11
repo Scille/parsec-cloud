@@ -204,7 +204,7 @@ fn shamir_pick_recipient(
             "{} - {} share{}",
             r.human_handle,
             r.shares,
-            maybe_plural(&r.shares.get())
+            maybe_plural(r.shares.get())
         )
     });
     if ctx.retrieved_shares().is_empty() {
@@ -213,7 +213,7 @@ fn shamir_pick_recipient(
                 out,
                 "{} share{} needed for recovery",
                 ctx.threshold(),
-                maybe_plural(&ctx.threshold().get())
+                maybe_plural(ctx.threshold().get())
             )
         })?;
     } else {

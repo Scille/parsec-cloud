@@ -30,7 +30,6 @@ use libparsec::{
     ClientConfig, OrganizationID, ParsecAddr, TmpPath, PARSEC_BASE_CONFIG_DIR,
     PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
 };
-use parsec_cli::utils::{GREEN, RED, RESET};
 use std::sync::Arc;
 
 pub use parsec_cli::testenv_utils;
@@ -180,9 +179,7 @@ fn shared_recovery_create(
         "--device",
         alice.device_id.hex()
     )
-    .stdout(predicates::str::contains(format!(
-        "Shared recovery {RED}never setup{RESET}"
-    )));
+    .stdout(predicates::str::contains("Shared recovery never setup"));
 
     if let Some(toto) = toto {
         crate::assert_cmd_success!(
@@ -198,7 +195,7 @@ fn shared_recovery_create(
             "1",
             "--no-confirmation"
         )
-        .stdout(predicates::str::contains(
+        .stderr(predicates::str::contains(
             "Shared recovery setup has been created",
         ));
     } else {
@@ -214,7 +211,7 @@ fn shared_recovery_create(
             "1",
             "--no-confirmation"
         )
-        .stdout(predicates::str::contains(
+        .stderr(predicates::str::contains(
             "Shared recovery setup has been created",
         ));
     }
@@ -226,9 +223,7 @@ fn shared_recovery_create(
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains(format!(
-        "Shared recovery {GREEN}set up{RESET}"
-    )));
+    .stdout(predicates::str::contains("Shared recovery set up"));
 }
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
