@@ -261,6 +261,18 @@ export async function workspacesInGridMode(workspacesPage: Page): Promise<boolea
   return (await workspacesPage.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
 }
 
+export async function documentsInGridMode(documentsPage: Page): Promise<boolean> {
+  return (await documentsPage.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
+}
+
+export async function documentsToggleViewMode(documentsPage: Page): Promise<void> {
+  if (await documentsInGridMode(documentsPage)) {
+    await documentsPage.locator('#folders-ms-action-bar').locator('#list-view').click();
+  } else {
+    await documentsPage.locator('#folders-ms-action-bar').locator('#grid-view').click();
+  }
+}
+
 export async function createWorkspace(workspacesPage: MsPage, name: string): Promise<void> {
   const displaySize = await workspacesPage.getDisplaySize();
   let workspacesCount = 0;

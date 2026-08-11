@@ -1,46 +1,20 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Page, TestInfo } from '@playwright/test';
+import { TestInfo } from '@playwright/test';
 import {
-  answerQuestion,
   clearLibParsecMocks,
   createFolder,
   DisplaySize,
-  dragAndDropFile,
+  documentsToggleViewMode,
   expect,
-  fillInputModal,
-  fillIonInput,
   importDefaultFiles,
   ImportDocuments,
-  login,
   mockLibParsec,
   msTest,
   resizePage,
   selectFile,
   unselectFile,
 } from '@tests/e2e/helpers';
-import path from 'path';
-
-async function isInGridMode(page: Page): Promise<boolean> {
-  return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
-}
-
-async function toggleViewMode(page: Page): Promise<void> {
-  if (await isInGridMode(page)) {
-    await page.locator('#folders-ms-action-bar').locator('#list-view').click();
-  } else {
-    await page.locator('#folders-ms-action-bar').locator('#grid-view').click();
-  }
-}
-
-const FILE_MATCHER = /^[A-Za-z0-9_.]+$/;
-const DIR_MATCHER = /^Dir_[A-Za-z_]+$/;
-const TIME_MATCHER = /^(now|< 1 minute|(\d{1,2}|one) minutes? ago)$/;
-const SIZE_MATCHER = /^[0-9.]+ (K|M|G)?B$/;
-
-const NAME_MATCHER_ARRAY = new Array(1).fill(DIR_MATCHER).concat(new Array(8).fill(FILE_MATCHER));
-const TIME_MATCHER_ARRAY = new Array(9).fill(TIME_MATCHER);
-const SIZE_MATCHER_ARRAY = new Array(1).fill('').concat(new Array(8).fill(SIZE_MATCHER));
 
 msTest.describe(() => {
   msTest.use({
@@ -80,7 +54,7 @@ msTest.describe(() => {
 
   msTest('Check documents in grid mode', async ({ documents }, testInfo: TestInfo) => {
     await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Pdf, true);
-    await toggleViewMode(documents);
+    await documentsToggleViewMode(documents);
     const entries = documents.locator('.folder-container').locator('.file-card-item');
     await expect(entries).toHaveCount(3);
     await expect(entries.locator('.file-card__title')).toHaveText(['Dir_Folder', 'audio.mp3', 'pdfDocument.pdf']);
@@ -210,73 +184,7 @@ msTest.describe(() => {
     await expect(actionBar.locator('.counter')).toHaveText('4 items');
   });
 
-  msTest('Delete all documents', async ({ documents }, testInfo: TestInfo) => {
-    await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Pdf | ImportDocuments.Png, true);
-    await documents.waitForTimeout(500);
-    const globalCheckbox = documents.locator('.folder-container').locator('.files-list-header').locator('.ms-checkbox');
-    await expect(globalCheckbox).not.toBeChecked();
-    await globalCheckbox.check();
-    await documents.waitForTimeout(100);
-    await expect(globalCheckbox).toBeChecked();
-
-    const actionBar = documents.locator('#folders-ms-action-bar');
-    await expect(actionBar.locator('.counter')).toHaveText('4 selected items');
-
-    const entries = documents.locator('.folder-container').locator('.file-list-item');
-    await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
-    await expect(entries.nth(1).locator('.ms-checkbox')).toBeChecked();
-    await expect(entries.nth(2).locator('.ms-checkbox')).toBeChecked();
-    await expect(entries.nth(3).locator('.ms-checkbox')).toBeChecked();
-
-    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(3);
-
-    const deleteButton = actionBar.locator('.ms-action-bar-button:visible').nth(2);
-    await expect(deleteButton).toBeVisible();
-    await expect(deleteButton).toHaveText('Delete');
-    await deleteButton.click();
-    await answerQuestion(documents, true, {
-      expectedTitleText: 'Delete multiple items',
-      expectedQuestionText: /Are you sure you want to delete these \d+ items\?/,
-      expectedPositiveText: /Delete \d+ items/,
-      expectedNegativeText: 'Keep items',
-    });
-    await expect(entries).toHaveCount(0);
-    await expect(documents.locator('.folder-container').locator('.no-files')).toBeVisible();
-    await expect(actionBar.locator('.counter')).toHaveText('No items');
-  });
-
   for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
-    msTest(`Create a folder ${displaySize} display`, async ({ documents }, testInfo: TestInfo) => {
-      await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
-
-      const entries = documents.locator('.folder-container').locator('.file-list-item');
-
-      if (displaySize === DisplaySize.Small) {
-        await documents.setDisplaySize(DisplaySize.Small);
-      } else {
-        const actionBar = documents.locator('#folders-ms-action-bar');
-        await expect(entries).toHaveCount(1);
-        await expect(actionBar.locator('.counter')).toHaveText('1 item');
-      }
-
-      if (displaySize === DisplaySize.Small) {
-        const addButton = documents.locator('.tab-bar-menu').locator('#add-menu-fab-button');
-        await expect(addButton).toBeVisible();
-        await addButton.click();
-        const modal = documents.locator('.tab-menu-modal');
-        await expect(modal).toBeVisible();
-        await modal.locator('.list-group-item').filter({ hasText: 'New folder' }).click();
-      } else {
-        const actionBar = documents.locator('#folders-ms-action-bar');
-        await actionBar.getByText('New folder').click();
-      }
-
-      await fillInputModal(documents, 'My folder');
-
-      await expect(entries).toHaveCount(2);
-      await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(['My folder', 'image.png']);
-    });
-
     msTest(`Header breadcrumbs ${displaySize} display`, async ({ documents }, testInfo: TestInfo) => {
       async function navigateDown(): Promise<void> {
         await documents.locator('.folder-container').getByRole('listitem').nth(0).locator('.label-name').click();
@@ -340,69 +248,6 @@ msTest.describe(() => {
     });
   }
 
-  msTest('Create folder error', async ({ documents }) => {
-    await mockLibParsec(documents, [
-      {
-        name: 'workspaceCreateFolderAll',
-        result: { ok: false, error: { tag: 'WorkspaceCreateFolderErrorInternal', error: 'failed' } },
-      },
-    ]);
-
-    const entries = documents.locator('.folder-container').locator('.file-list-item');
-    await expect(entries).toHaveCount(0);
-
-    const actionBar = documents.locator('#folders-ms-action-bar');
-    await actionBar.getByText('New folder').click();
-
-    await fillInputModal(documents, 'My folder');
-    await expect(documents).toShowToast('Failed to create folder `My folder`, please try again.', 'Error');
-
-    await expect(entries).toHaveCount(0);
-  });
-
-  msTest('Create a folder with a name too long', async ({ documents }) => {
-    const entries = documents.locator('.folder-container').locator('.file-list-item');
-    await expect(entries).toHaveCount(0);
-
-    const actionBar = documents.locator('#folders-ms-action-bar');
-    await actionBar.getByText('New folder').click();
-
-    const modal = documents.locator('.text-input-modal');
-    await expect(modal).toBeVisible();
-    const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
-    await fillIonInput(modal.locator('ion-input'), 'A'.repeat(132));
-    await expect(modal.locator('.form-error')).toBeVisible();
-    await expect(modal.locator('.form-error')).toHaveText('Folder name is too long, limit is 128 characters.');
-    await fillIonInput(modal.locator('ion-input'), 'A'.repeat(64));
-    await expect(modal.locator('.form-error')).toBeHidden();
-    await expect(okButton).toBeTrulyEnabled();
-    await okButton.click();
-
-    await expect(entries).toHaveCount(1);
-    await expect(entries.locator('.file-name').locator('.label-name').nth(0)).toHaveText('A'.repeat(64));
-  });
-
-  for (const file of [true, false]) {
-    msTest(`Rename a ${file ? 'file' : 'folder'} with a name too long`, async ({ documents }, testInfo: TestInfo) => {
-      await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
-      const entries = documents.locator('.folder-container').locator('.file-list-item');
-      await expect(entries).toHaveCount(2);
-
-      const entry = file ? entries.nth(1) : entries.nth(0);
-      await entry.click({ button: 'right' });
-      await expect(documents.locator('.file-context-menu')).toBeVisible();
-      await documents.locator('.file-context-menu').getByRole('listitem').filter({ hasText: 'Rename' }).click();
-
-      const modal = documents.locator('.text-input-modal');
-      await expect(modal).toBeVisible();
-      const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
-      await fillIonInput(modal.locator('ion-input'), 'A'.repeat(132));
-      await expect(modal.locator('.form-error')).toBeVisible();
-      await expect(modal.locator('.form-error')).toHaveText(`${file ? 'File' : 'Folder'} name is too long, limit is 128 characters.`);
-      await expect(okButton).toBeTrulyDisabled();
-    });
-  }
-
   msTest('Import context menu', async ({ documents }) => {
     await expect(documents.locator('.import-popover')).toBeHidden();
     const actionBar = documents.locator('#folders-ms-action-bar');
@@ -435,7 +280,7 @@ msTest.describe(() => {
 
     await expect(actionBar.locator('.counter')).toHaveText('3 selected items');
 
-    await toggleViewMode(documents);
+    await documentsToggleViewMode(documents);
     await expect(actionBar.locator('.counter')).toHaveText('3 selected items');
     const entries = documents.locator('.folder-container').locator('.file-card-item');
 
@@ -469,7 +314,7 @@ msTest.describe(() => {
 
     await expect(actionBar.locator('.counter')).toHaveText('2 selected items');
 
-    await toggleViewMode(documents);
+    await documentsToggleViewMode(documents);
     await expect(actionBar.locator('.counter')).toHaveText('2 selected items');
     const entries = documents.locator('.folder-container').locator('.file-card-item');
 
@@ -579,7 +424,7 @@ msTest.describe(() => {
       await documents.waitForTimeout(500);
 
       if (gridMode) {
-        await toggleViewMode(documents);
+        await documentsToggleViewMode(documents);
       }
       const entries = documents.locator('.folder-container').locator(gridMode ? '.file-card-item' : '.file-list-item');
       const actionBar = documents.locator('#folders-ms-action-bar');
@@ -603,23 +448,6 @@ msTest.describe(() => {
 
       await expect(actionBar.locator('.counter')).toHaveText('2 selected items');
     });
-  }
-
-  for (const gridMode of [false, true]) {
-    msTest(`Open file in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }, testInfo) => {
-      await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
-
-      await expect(documents.locator('.information-modal')).toBeHidden();
-      await expect(documents).toHaveHeader(['wksp1'], true, true);
-      if (gridMode) {
-        await toggleViewMode(documents);
-        await documents.locator('.folder-container').locator('.file-card-item').nth(1).dblclick();
-      } else {
-        await documents.locator('.folder-container').getByRole('listitem').nth(1).dblclick();
-      }
-
-      await expect(documents).toBeViewerPage();
-    });
 
     msTest(`Navigation back and forth in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }, testInfo: TestInfo) => {
       async function navigateDown(): Promise<void> {
@@ -642,7 +470,7 @@ msTest.describe(() => {
       await importDefaultFiles(documents, testInfo, ImportDocuments.Png, true);
 
       if (gridMode) {
-        await toggleViewMode(documents);
+        await documentsToggleViewMode(documents);
       }
 
       await expect(documents).toHaveHeader(['wksp1'], true, true);
@@ -694,26 +522,13 @@ msTest.describe(() => {
     await expect(noFilesContent).toBeHidden();
     await expect(errorListFolder).toBeHidden();
   });
-
-  msTest('Drop file in empty read only workspace', async ({ home }, testInfo: TestInfo) => {
-    await login(home, 'Boby McBobFace');
-    await expect(home).toBeWorkspacePage();
-    await home.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(home).toBeDocumentPage();
-    const dropZone = home.locator('.folder-container').locator('.drop-zone').nth(0);
-    await dragAndDropFile(home, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png')]);
-    await expect(home).toShowToast('You are a Reader on this workspace and cannot import files.', 'Error');
-    await expect(home.locator('.folder-container').locator('.no-files')).toBeVisible();
-  });
-});
-
-msTest('Drop file in full read only workspace', async ({ documentsReadOnly }, testInfo: TestInfo) => {
-  const dropZone = documentsReadOnly.locator('.folder-container').locator('.drop-zone').nth(0);
-  await dragAndDropFile(documentsReadOnly, dropZone, [path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png')]);
-  await expect(documentsReadOnly).toShowToast('You are a Reader on this workspace and cannot import files.', 'Error');
 });
 
 msTest('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {
+  const NAME_MATCHER_ARRAY = new Array(1).fill(/^Dir_[A-Za-z_]+$/).concat(new Array(8).fill(/^[A-Za-z0-9_.]+$/));
+  const TIME_MATCHER_ARRAY = new Array(9).fill(/^(now|< 1 minute|(\d{1,2}|one) minutes? ago)$/);
+  const SIZE_MATCHER_ARRAY = new Array(1).fill('').concat(new Array(8).fill(/^[0-9.]+ (K|M|G)?B$/));
+
   const actionBar = documentsReadOnly.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(0);
   await expect(actionBar.locator('.right-side').locator('.label-role')).toHaveText('Reader');
