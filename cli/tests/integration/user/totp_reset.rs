@@ -1,14 +1,15 @@
 use libparsec::{tmp_path, TmpPath};
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, TESTBED_SERVER},
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn totp_reset_by_email(tmp_path: TmpPath) {
-    let (_, devices, org_id) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn totp_reset_by_email(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, devices, org_id) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         "user",
@@ -33,8 +34,8 @@ async fn totp_reset_by_email(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn totp_reset_by_user_id(tmp_path: TmpPath) {
-    let (_, devices, org_id) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn totp_reset_by_user_id(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, devices, org_id) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         "user",
@@ -64,8 +65,8 @@ async fn totp_reset_by_user_id(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn totp_reset_user_not_found(tmp_path: TmpPath) {
-    let (_, _, org_id) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn totp_reset_user_not_found(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, _, org_id) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_failure!(
         "user",

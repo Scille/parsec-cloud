@@ -2,21 +2,21 @@ use libparsec::{tmp_path, RealmRole, TmpPath};
 use predicates::boolean::PredicateBooleanExt;
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
-use parsec_cli::utils::start_client;
+use parsec_cli::{ui::Ui, utils::start_client};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn list_users(tmp_path: TmpPath) {
+async fn list_users(tmp_path: TmpPath, test_ui: &Ui) {
     let (
         _,
         TestOrganization {
             alice, bob, toto, ..
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let client = start_client(alice).await.unwrap();
 

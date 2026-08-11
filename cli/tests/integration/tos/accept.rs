@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 
 use libparsec::{tmp_path, OrganizationID, ParsecAddr, TmpPath};
+#[cfg(target_family = "unix")]
+use parsec_cli::ui::Ui;
 
+#[cfg(target_family = "unix")]
+use crate::test_ui;
 use crate::{
     bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD},
@@ -30,9 +34,9 @@ async fn config_tos(
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
-async fn test_accept_tos(tmp_path: TmpPath) {
+async fn test_accept_tos(tmp_path: TmpPath, test_ui: &Ui) {
     let (addr, TestOrganization { alice, .. }, organization) =
-        bootstrap_cli_test(&tmp_path).await.unwrap();
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     let tos = config_tos(&addr, &organization).await;
 
     let cmd = crate::std_cmd!(
@@ -57,9 +61,9 @@ async fn test_accept_tos(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn tldr_skip_with_yes(tmp_path: TmpPath) {
+async fn tldr_skip_with_yes(tmp_path: TmpPath, test_ui: &Ui) {
     let (addr, TestOrganization { alice, .. }, organization) =
-        bootstrap_cli_test(&tmp_path).await.unwrap();
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     config_tos(&addr, &organization).await;
 
     crate::assert_cmd_success!(
@@ -75,8 +79,9 @@ async fn tldr_skip_with_yes(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn no_tos(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn no_tos(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -91,9 +96,13 @@ async fn no_tos(tmp_path: TmpPath) {
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
-async fn did_not_accept_tos(#[values("no", "No", "NO")] reply: &str, tmp_path: TmpPath) {
+async fn did_not_accept_tos(
+    #[values("no", "No", "NO")] reply: &str,
+    tmp_path: TmpPath,
+    test_ui: &Ui,
+) {
     let (addr, TestOrganization { alice, .. }, organization) =
-        bootstrap_cli_test(&tmp_path).await.unwrap();
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     let tos = config_tos(&addr, &organization).await;
 
     let cmd = crate::std_cmd!(

@@ -2,18 +2,21 @@
 use libparsec::{tmp_path, ParsecAddr, TmpPath};
 #[cfg(target_family = "unix")]
 use libparsec_tests_fixtures::prelude::*;
+#[cfg(target_family = "unix")]
+use parsec_cli::ui::Ui;
 
 #[cfg(target_family = "unix")]
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
-async fn ok(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn ok(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let cmd = crate::std_cmd!(
         "device",

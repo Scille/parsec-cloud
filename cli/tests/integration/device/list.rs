@@ -1,11 +1,12 @@
 use libparsec::{tmp_path, TmpPath};
+use parsec_cli::ui::Ui;
 
-use crate::bootstrap_cli_test;
+use crate::{bootstrap_cli_test, test_ui};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn list_devices(tmp_path: TmpPath) {
-    bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn list_devices(tmp_path: TmpPath, test_ui: &Ui) {
+    bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let path = tmp_path.join("config/parsec3/libparsec");
     let path_str = path.to_string_lossy();

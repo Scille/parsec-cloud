@@ -1,18 +1,18 @@
 use libparsec::{tmp_path, SequesterKeySize, SequesterSigningKeyDer, TmpPath};
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER},
     unique_org_id,
 };
-use parsec_cli::commands::organization::create::create_organization_req;
+use parsec_cli::{commands::organization::create::create_organization_req, ui::Ui};
 
 #[rstest::rstest]
 #[case("http")]
 #[case("parsec3")]
 #[tokio::test]
-async fn bootstrap_organization(tmp_path: TmpPath, #[case] scheme: &str) {
-    bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn bootstrap_organization(tmp_path: TmpPath, test_ui: &Ui, #[case] scheme: &str) {
+    bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let organization_id = unique_org_id();
     let addr = std::env::var(TESTBED_SERVER).unwrap().parse().unwrap();
@@ -47,8 +47,8 @@ async fn bootstrap_organization(tmp_path: TmpPath, #[case] scheme: &str) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn bootstrap_organization_with_sequester(tmp_path: TmpPath) {
-    bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn bootstrap_organization_with_sequester(tmp_path: TmpPath, test_ui: &Ui) {
+    bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     // write verify key to file
     let (_private_key, verify_key) =
@@ -89,8 +89,8 @@ async fn bootstrap_organization_with_sequester(tmp_path: TmpPath) {
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
-async fn bootstrap_organization_password_stdin(tmp_path: TmpPath) {
-    bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn bootstrap_organization_password_stdin(tmp_path: TmpPath, test_ui: &Ui) {
+    bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let organization_id = unique_org_id();
     let addr = std::env::var(TESTBED_SERVER).unwrap().parse().unwrap();

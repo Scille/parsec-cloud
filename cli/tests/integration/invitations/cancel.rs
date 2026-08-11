@@ -2,16 +2,18 @@ use libparsec::{
     authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
     AuthenticatedCmds, InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn cancel_invitation(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn cancel_invitation(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),

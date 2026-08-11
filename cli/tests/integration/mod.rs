@@ -76,11 +76,12 @@ fn unique_org_id() -> OrganizationID {
 }
 
 async fn run_local_organization(
+    ui: &parsec_cli::ui::Ui,
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
     config: TestenvConfig,
 ) -> anyhow::Result<(ParsecAddr, TestOrganization, OrganizationID)> {
-    let url = new_environment(tmp_dir, source_file, config, false)
+    let url = new_environment(ui, tmp_dir, source_file, config, false)
         .await?
         .unwrap();
 
@@ -103,12 +104,13 @@ fn wait_for(mut reader: impl BufRead, buf: &mut String, text: &str) {
 }
 
 async fn bootstrap_cli_test(
+    ui: &parsec_cli::ui::Ui,
     tmp_path: &TmpPath,
 ) -> anyhow::Result<(ParsecAddr, TestOrganization, OrganizationID)> {
     let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, devices, org_id) = run_local_organization(tmp_path, None, config).await?;
+    let (url, devices, org_id) = run_local_organization(ui, tmp_path, None, config).await?;
 
     set_env(tmp_path_str, &url);
     Ok((url, devices, org_id))
@@ -241,4 +243,10 @@ fn spawn_interactive_command(
         })
         .strip_ansi_escape_codes(true);
     rexpect::spawn_with_options(command, option)
+}
+
+#[rstest::fixture]
+#[once]
+fn test_ui() -> parsec_cli::ui::Ui {
+    parsec_cli::ui::Ui::default()
 }

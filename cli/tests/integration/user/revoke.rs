@@ -1,14 +1,16 @@
 use libparsec::{tmp_path, TmpPath};
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn revoke_user_ok(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, toto, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn revoke_user_ok(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, toto, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -26,8 +28,9 @@ async fn revoke_user_ok(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn revoke_user_not_found(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn revoke_user_not_found(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_failure!(
         with_password = DEFAULT_DEVICE_PASSWORD,

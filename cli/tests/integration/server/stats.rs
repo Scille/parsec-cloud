@@ -1,12 +1,13 @@
 use libparsec::{tmp_path, TmpPath};
+use parsec_cli::ui::Ui;
 use serde_json::Value;
 
-use crate::{bootstrap_cli_test, testenv_utils::DEFAULT_ADMINISTRATION_TOKEN};
+use crate::{bootstrap_cli_test, test_ui, testenv_utils::DEFAULT_ADMINISTRATION_TOKEN};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn stats_server(tmp_path: TmpPath) {
-    let (url, _, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn stats_server(tmp_path: TmpPath, test_ui: &Ui) {
+    let (url, _, _) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let result = crate::assert_cmd_success!(
         "--format=json",
@@ -26,8 +27,8 @@ async fn stats_server(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn csv_format(tmp_path: TmpPath) {
-    let (url, _, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn csv_format(tmp_path: TmpPath, test_ui: &Ui) {
+    let (url, _, _) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         "--format=plain", // CSV format is obtained by specifying the plain format
@@ -44,8 +45,8 @@ async fn csv_format(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn with_end_date(tmp_path: TmpPath) {
-    let (url, _, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn with_end_date(tmp_path: TmpPath, test_ui: &Ui) {
+    let (url, _, _) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         "server",

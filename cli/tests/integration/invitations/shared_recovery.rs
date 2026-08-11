@@ -6,16 +6,18 @@ use libparsec::{
     authenticated_cmds::latest::invite_new_shamir_recovery, get_default_config_dir, tmp_path,
     AuthenticatedCmds, InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn invite_shared_recovery(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn invite_shared_recovery(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, bob, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::shared_recovery_create(&alice, &bob, None);
 
@@ -36,8 +38,9 @@ async fn invite_shared_recovery(tmp_path: TmpPath) {
 #[case("http")]
 #[case("parsec3")]
 #[tokio::test]
-async fn invite_shared_recovery_dance(tmp_path: TmpPath, #[case] scheme: &str) {
-    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn invite_shared_recovery_dance(tmp_path: TmpPath, test_ui: &Ui, #[case] scheme: &str) {
+    let (_, TestOrganization { alice, bob, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::shared_recovery_create(&alice, &bob, None);
     let cmds = AuthenticatedCmds::new(

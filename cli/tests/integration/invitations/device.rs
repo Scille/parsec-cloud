@@ -6,16 +6,18 @@ use libparsec::{
     authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
     AuthenticatedCmds, InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test, std_cmd,
+    bootstrap_cli_test, std_cmd, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn invite_device(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn invite_device(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -33,8 +35,9 @@ async fn invite_device(tmp_path: TmpPath) {
 #[case("http")]
 #[case("parsec3")]
 #[tokio::test]
-async fn invite_device_dance(tmp_path: TmpPath, #[case] scheme: &str) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn invite_device_dance(tmp_path: TmpPath, test_ui: &Ui, #[case] scheme: &str) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),

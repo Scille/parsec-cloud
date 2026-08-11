@@ -1,14 +1,17 @@
 #[cfg(target_family = "unix")]
 use libparsec::{tmp_path, TmpPath};
+#[cfg(target_family = "unix")]
+use parsec_cli::ui::Ui;
 
 #[cfg(target_family = "unix")]
-use crate::{bootstrap_cli_test, testenv_utils::TestOrganization};
+use crate::{bootstrap_cli_test, test_ui, testenv_utils::TestOrganization};
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
-async fn forget_device(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn forget_device(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let cmd = crate::std_cmd!("device", "forget-local", "--device", &alice.device_id.hex());
     let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
