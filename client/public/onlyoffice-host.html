@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>OnlyOffice</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      #placeholder {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="placeholder"></div>
+    <script>
+      // POC host page for the vendored OnlyOffice client (see client/vendors/onlyoffice/README.md).
+      //
+      // This page is loaded in an iframe by FileEditor.vue / src/services/onlyoffice.ts. It loads the
+      // vendored `DocsAPI` script and bridges it to the parent window with postMessage, replacing the
+      // websocket-based server communication OnlyOffice normally relies on with the `connectMockServer`
+      // hook that CryptPad's OnlyOffice fork exposes for that purpose.
+      //
+      // There is intentionally no document persistence here: edits made through `onMessage` are kept
+      // in-memory by the editor only, nothing is sent back to Parsec.
+      (function () {
+        var parentWindow = window.parent;
+
+        function postToParent(command, data) {
+          parentWindow.postMessage(Object.assign({ command: command }, data || {}), '*');
+        }
+
+        function loadScript(src) {
+          return new Promise(function (resolve, reject) {
+            var script = document.createElement('script');
+            script.src = src;
+            script.onload = function () {
+              resolve();
+            };
+            script.onerror = function () {
+              reject(new Error('Failed to load ' + src));
+            };
+            document.head.appendChild(script);
+          });
+        }
+
+        function buildConfig(options) {
+          var blob = new Blob([options.documentContent], { type: 'application/octet-stream' });
+          var url = URL.createObjectURL(blob);
+
+          return {
+            width: '100%',
+            height: '100%',
+            documentType: options.documentType,
+            document: {
+              key: options.key,
+              title: options.documentName,
+              url: url,
+              permissions: {
+                edit: options.mode === 'edit',
+                download: false,
+                print: true,
+              },
+            },
+            editorConfig: {
+              mode: options.mode,
+              lang: options.locale,
+              user: {
+                id: options.userId,
+                name: options.userName,
+              },
+              customization: {
+                compactHeader: false,
+                chat: false,
+                comments: false,
+                help: false,
+                about: false,
+                feedback: false,
+                anonymous: { request: false },
+                uiTheme: options.theme === 'dark' ? 'theme-dark' : 'theme-classic-light',
+              },
+            },
+            events: {
+              onAppReady: function () {
+                postToParent('oo-app-ready');
+              },
+              onDocumentReady: function () {
+                postToParent('oo-ready');
+              },
+              onError: function (event) {
+                postToParent('oo-error', { details: event && event.data !== undefined ? JSON.stringify(event.data) : String(event) });
+              },
+            },
+          };
+        }
+
+        function openDocument(options) {
+          loadScript('/onlyoffice/web-apps/apps/api/documents/api.js')
+            .then(function () {
+              if (!window.DocsAPI || !window.DocsAPI.DocEditor) {
+                postToParent('oo-error', { details: 'DocsAPI is not available' });
+                return;
+              }
+              // CryptPad's OnlyOffice fork's `connectMockServer` reaches for `window.APP.getImageURL`
+              // without initializing `window.APP` itself: CryptPad's own host page normally does
+              // that as part of its own (much larger) bootstrap. Do the same here.
+              window.APP = window.APP || {};
+              var config = buildConfig(options);
+              var docEditor = new window.DocsAPI.DocEditor('placeholder', config);
+              docEditor.connectMockServer({
+                onMessage: function () {
+                  // No collaborative server yet: edits stay local to this tab and are never relayed.
+                },
+                getParticipants: function () {
+                  return {
+                    list: [{ id: options.userId, username: options.userName, indexUser: 0, view: options.mode !== 'edit' }],
+                    index: 0,
+                  };
+                },
+                onAuth: function () {},
+                getInitialChanges: function () {
+                  return [];
+                },
+                getImageURL: function () {
+                  return Promise.resolve('');
+                },
+              });
+            })
+            .catch(function (err) {
+              postToParent('oo-error', { details: err.message });
+            });
+        }
+
+        window.addEventListener('message', function (event) {
+          if (event.source !== parentWindow) {
+            return;
+          }
+          var data = event.data;
+          if (!data || data.command !== 'oo-open') {
+            return;
+          }
+          openDocument(data.options);
+        });
+
+        postToParent('oo-host-ready');
+      })();
+    </script>
+  </body>
+</html>

@@ -23,7 +23,9 @@ interface DetectedFileType {
 const OPENABLE_FILES = {
   IMAGES: ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif'],
   SPREADSHEETS: ['xlsx', 'xls', 'ods'],
-  DOCUMENTS: ['docx', 'odt'],
+  // `bin` is OnlyOffice's own native document format (see client/vendors/onlyoffice/README.md),
+  // used as-is without any conversion step.
+  DOCUMENTS: ['docx', 'odt', 'bin'],
   PDF_DOCUMENTS: ['pdf'],
   AUDIOS: ['wav', 'mp3', 'ogg'],
   VIDEOS: ['mp4', 'mpeg', 'webm'],
