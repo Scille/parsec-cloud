@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
 use libparsec::ClientConfig;
 
@@ -9,7 +9,7 @@ use crate::{
         initialize_test_organization, new_environment, parsec_addr_from_http_url, TestenvConfig,
         DEFAULT_DEVICE_PASSWORD,
     },
-    utils::{RESET, YELLOW},
+    ui::Color,
 };
 
 #[derive(clap::Parser)]
@@ -29,7 +29,7 @@ pub struct RunTestenv {
     organization: libparsec::OrganizationID,
 }
 
-pub async fn run_testenv(_todo_ui: crate::Ui, run_testenv: RunTestenv) -> anyhow::Result<()> {
+pub async fn run_testenv(ui: crate::Ui, run_testenv: RunTestenv) -> anyhow::Result<()> {
     let RunTestenv {
         main_process_id,
         source_file,
@@ -53,22 +53,34 @@ pub async fn run_testenv(_todo_ui: crate::Ui, run_testenv: RunTestenv) -> anyhow
         )),
     };
 
-    let url = new_environment(&tmp_dir, source_file, testenv_config, empty).await?;
+    let url = new_environment(&ui, &tmp_dir, source_file, testenv_config, empty).await?;
 
     if !empty {
         let url = url.expect("Mismatch condition in new_environment when starting a new server");
         let org = initialize_test_organization(ClientConfig::default(), url, organization).await?;
 
-        println!("Alice & Bob devices (password: {YELLOW}{DEFAULT_DEVICE_PASSWORD}{RESET}):");
-        println!(
-            "- {YELLOW}{}{RESET} // Alice",
-            &org.alice.device_id.hex()[..3]
-        );
-        println!(
-            "- {YELLOW}{}{RESET} // Alice 2nd device",
-            &org.other_alice.device_id.hex()[..3]
-        );
-        println!("- {YELLOW}{}{RESET} // Bob", &org.bob.device_id.hex()[..3]);
+        ui.with_message(|fmt, out| {
+            writeln!(
+                out,
+                "Alice & Bob devices (password: {}):",
+                fmt.wrap_in_color(Color::Yellow, DEFAULT_DEVICE_PASSWORD)
+            )?;
+            writeln!(
+                out,
+                "- {} // Alice",
+                fmt.wrap_in_color(Color::Yellow, &org.alice.device_id.hex()[..3])
+            )?;
+            writeln!(
+                out,
+                "- {} // Alice 2nd device",
+                fmt.wrap_in_color(Color::Yellow, &org.other_alice.device_id.hex()[..3])
+            )?;
+            writeln!(
+                out,
+                "- {} // Bob",
+                fmt.wrap_in_color(Color::Yellow, &org.bob.device_id.hex()[..3])
+            )
+        })?;
     }
 
     Ok(())

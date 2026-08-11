@@ -2,19 +2,21 @@ use std::io::{BufReader, Write};
 
 use libparsec::{tmp_path, TmpPath};
 use libparsec_tests_fixtures::prelude::*;
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     wait_for,
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn ok(tmp_path: TmpPath) {
+async fn ok(tmp_path: TmpPath, test_ui: &Ui) {
     const NEW_DEVICE_PASSWORD: &str = "S3cr3t";
 
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let mut process = crate::std_cmd!(
         "device",

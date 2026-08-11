@@ -1,11 +1,12 @@
 use libparsec::{tmp_path, TmpPath};
+use parsec_cli::ui::Ui;
 
-use crate::{bootstrap_cli_test, testenv_utils::DEFAULT_ADMINISTRATION_TOKEN};
+use crate::{bootstrap_cli_test, test_ui, testenv_utils::DEFAULT_ADMINISTRATION_TOKEN};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn stats_organization(tmp_path: TmpPath) {
-    let (url, _, org_id) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn stats_organization(tmp_path: TmpPath, test_ui: &Ui) {
+    let (url, _, org_id) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let expect = format!(
         "{:#}",

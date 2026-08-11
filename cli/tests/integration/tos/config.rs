@@ -3,19 +3,20 @@ use std::collections::HashMap;
 use libparsec::{tmp_path, ClientGetTosError, TmpPath};
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN},
 };
 use parsec_cli::{
     commands::tos::config::{config_tos_for_org_req, TosReq},
+    ui::Ui,
     utils::start_client,
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn test_set_tos_from_arg(tmp_path: TmpPath) {
+async fn test_set_tos_from_arg(tmp_path: TmpPath, test_ui: &Ui) {
     let (addr, TestOrganization { alice, .. }, organization) =
-        bootstrap_cli_test(&tmp_path).await.unwrap();
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         "tos",
@@ -46,9 +47,9 @@ async fn test_set_tos_from_arg(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn test_set_tos_from_file(tmp_path: TmpPath) {
+async fn test_set_tos_from_file(tmp_path: TmpPath, test_ui: &Ui) {
     let (addr, TestOrganization { alice, .. }, organization) =
-        bootstrap_cli_test(&tmp_path).await.unwrap();
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let expected_tos = HashMap::from_iter([
         ("fr_fr".into(), "http://example.com/tos".into()),
@@ -82,9 +83,9 @@ async fn test_set_tos_from_file(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn test_remove_tos(tmp_path: TmpPath) {
+async fn test_remove_tos(tmp_path: TmpPath, test_ui: &Ui) {
     let (addr, TestOrganization { alice, .. }, organization) =
-        bootstrap_cli_test(&tmp_path).await.unwrap();
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     config_tos_for_org_req(
         &addr,
@@ -135,8 +136,8 @@ async fn test_invalid_tos_arg() {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn test_org_not_found(tmp_path: TmpPath) {
-    let (addr, _, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn test_org_not_found(tmp_path: TmpPath, test_ui: &Ui) {
+    let (addr, _, _) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_failure!(
         "tos",

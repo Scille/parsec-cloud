@@ -4,10 +4,11 @@ use libparsec::{LocalDevice, OpenOptions, VlobID};
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use parsec_cli::{
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    ui::Ui,
     utils::start_client,
 };
 
-use crate::bootstrap_cli_test;
+use crate::{bootstrap_cli_test, test_ui};
 
 pub async fn setup_workspace(alice: Arc<LocalDevice>) -> VlobID {
     log::debug!("Create a workspace for alice");
@@ -50,8 +51,9 @@ pub async fn setup_workspace(alice: Arc<LocalDevice>) -> VlobID {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn mount_workspace(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn mount_workspace(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     let mount_dir = tmp_path.join("mountpoint");
 
     std::assert_matches!(

@@ -1,5 +1,5 @@
 use std::{
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Write as _},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::Arc,
@@ -18,7 +18,7 @@ use crate::{
     commands::organization::{
         bootstrap::bootstrap_organization_req, create::create_organization_req,
     },
-    utils::{RESET, YELLOW},
+    ui::Color,
 };
 
 pub const DEFAULT_ADMINISTRATION_TOKEN: &str = "s3cr3t";
@@ -276,6 +276,7 @@ pub enum TestenvConfig {
 /// Setup the environment variables
 /// Set stop_after_process to kill the server once the process will run down
 pub async fn new_environment(
+    ui: &crate::Ui,
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
     config: TestenvConfig,
@@ -287,12 +288,18 @@ pub async fn new_environment(
 
     let url = match config {
         TestenvConfig::ConnectToServer(url) => {
-            println!("Using testbed server: {YELLOW}{url}{RESET}");
+            ui.with_message(|fmt, out| {
+                writeln!(
+                    out,
+                    "Using testbed server: {}",
+                    fmt.wrap_in_color(Color::Yellow, &url)
+                )
+            })?;
             env.push((TESTBED_SERVER, url.to_string()));
             Some(url)
         }
         TestenvConfig::StartNewServer { stop_after_process } if !empty => {
-            println!("Start a new server");
+            ui.with_message(|_, out| writeln!(out, "Start a new server"))?;
             if let Ok(last_server_id) = std::env::var(LAST_SERVER_PID) {
                 kill_last_testbed_server(last_server_id)?;
             }
@@ -304,9 +311,14 @@ pub async fn new_environment(
 
             let id = child.id();
 
-            println!(
-                "Running server with the process id {YELLOW}{id}{RESET} on port {YELLOW}{port_from_pid}{RESET}"
-            );
+            ui.with_message(|fmt, out| {
+                writeln!(
+                    out,
+                    "Running server with the process id {} on port {}",
+                    fmt.wrap_in_color(Color::Yellow, id),
+                    fmt.wrap_in_color(Color::Yellow, port_from_pid)
+                )
+            })?;
 
             let server_addr = ParsecAddr::new("127.0.0.1".into(), Some(port_from_pid), false);
             env.push((TESTBED_SERVER, server_addr.to_url().to_string()));
@@ -317,7 +329,12 @@ pub async fn new_environment(
     };
 
     if let Some(source_file) = source_file {
-        println!("Your environment will be configured with the following commands:");
+        ui.with_message(|_, out| {
+            writeln!(
+                out,
+                "Your environment will be configured with the following commands:"
+            )
+        })?;
         let mut buf = String::new();
 
         for (key, value) in &env {
@@ -327,15 +344,20 @@ pub async fn new_environment(
 
         std::fs::write(source_file, buf)?;
     } else {
-        println!("[Warning] This code has not been sourced.");
-        println!("Please configure your environment with the following commands:");
+        ui.with_message(|_, out| writeln!(out, "[Warning] This code has not been sourced."))?;
+        ui.with_message(|_, out| {
+            writeln!(
+                out,
+                "Please configure your environment with the following commands:"
+            )
+        })?;
     }
 
     for (key, value) in env {
         // We set var for the current process
         std::env::set_var(key, &value);
 
-        println!("   {export_keyword} {key}={value}");
+        ui.with_message(|_, out| writeln!(out, "   {export_keyword} {key}={value}"))?;
     }
 
     Ok(url)

@@ -3,15 +3,16 @@ use std::sync::Arc;
 use libparsec::{tmp_path, EntryName, LocalDevice, TmpPath, VlobID};
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
-use parsec_cli::utils::start_client;
+use parsec_cli::{ui::Ui, utils::start_client};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn workspace_import_file(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn workspace_import_file(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, bob, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     // Initialize workspace
     let wid = {
@@ -79,8 +80,9 @@ async fn workspace_import_file(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn workspace_import_file_to_specific_path(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn workspace_import_file_to_specific_path(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, bob, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     // Initialize workspace
     let wid = {
@@ -185,14 +187,17 @@ async fn workspace_import_file_to_specific_path(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn issue_8941_import_file_where_inbound_and_outbound_sync_are_required(tmp_path: TmpPath) {
+async fn issue_8941_import_file_where_inbound_and_outbound_sync_are_required(
+    tmp_path: TmpPath,
+    test_ui: &Ui,
+) {
     let (
         _,
         TestOrganization {
             alice, other_alice, ..
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     // Create a workspace C with device A
     let wid = create_workspace(alice.clone()).await;
@@ -254,8 +259,9 @@ async fn refresh_workspace_list(device: Arc<LocalDevice>) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn workspace_import_folder(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn workspace_import_folder(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, bob, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     // Initialize workspace
     let wid = {
@@ -344,8 +350,9 @@ async fn workspace_import_folder(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn import_prevent_overwrite(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn import_prevent_overwrite(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, bob, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     // Initialize workspace
     let wid = {

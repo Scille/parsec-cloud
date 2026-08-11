@@ -1,15 +1,16 @@
 use libparsec::{tmp_path, RealmRole, TmpPath};
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
-use parsec_cli::utils::start_client;
+use parsec_cli::{ui::Ui, utils::start_client};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn create_workspace(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn create_workspace(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,

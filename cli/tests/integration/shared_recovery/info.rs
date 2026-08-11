@@ -1,20 +1,21 @@
 use libparsec::{tmp_path, TmpPath};
+use parsec_cli::ui::Ui;
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
 #[rstest::rstest]
 #[tokio::test]
-async fn info_shared_recovery_ok(tmp_path: TmpPath) {
+async fn info_shared_recovery_ok(tmp_path: TmpPath, test_ui: &Ui) {
     let (
         _,
         TestOrganization {
             alice, bob, toto, ..
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,

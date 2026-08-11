@@ -4,14 +4,17 @@ use libparsec::{tmp_path, HumanHandle, LocalDevice, ParsecAddr, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
 use super::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{create_new_device, create_new_user, TestOrganization},
 };
-use parsec_cli::utils::{get_minimal_short_id_size, RESET, YELLOW};
+use parsec_cli::{
+    ui::Ui,
+    utils::{get_minimal_short_id_size, RESET, YELLOW},
+};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn device_not_found(tmp_path: TmpPath) {
+async fn device_not_found(tmp_path: TmpPath, test_ui: &Ui) {
     const A_DEVICE_THAT_DOES_NOT_EXIST: &str = "0000";
     let (
         _,
@@ -22,7 +25,7 @@ async fn device_not_found(tmp_path: TmpPath) {
             toto,
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let mut devices = [alice, other_alice, bob, toto];
     devices.sort_by_cached_key(|d| d.device_id.hex());
@@ -74,7 +77,7 @@ fn format_devices(
 
 #[rstest::rstest]
 #[tokio::test]
-async fn missing_option(tmp_path: TmpPath) {
+async fn missing_option(tmp_path: TmpPath, test_ui: &Ui) {
     let (
         _,
         TestOrganization {
@@ -84,7 +87,7 @@ async fn missing_option(tmp_path: TmpPath) {
             toto,
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let mut devices = [alice, other_alice, bob, toto];
     devices.sort_by_cached_key(|d| d.device_id.hex());
@@ -101,9 +104,9 @@ async fn missing_option(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn multiple_device_found(tmp_path: TmpPath) {
+async fn multiple_device_found(tmp_path: TmpPath, test_ui: &Ui) {
     let config = super::get_testenv_config();
-    let url = super::new_environment(&tmp_path, None, config, false)
+    let url = super::new_environment(test_ui, &tmp_path, None, config, false)
         .await
         .unwrap()
         .unwrap();

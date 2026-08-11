@@ -2,13 +2,17 @@ use libparsec::{tmp_path, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
 use super::bootstrap_cli_test;
-use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
-use parsec_cli::utils::start_client;
+use crate::{
+    test_ui,
+    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+};
+use parsec_cli::{ui::Ui, utils::start_client};
 
 #[rstest::rstest]
 #[tokio::test]
-async fn ls_files(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn ls_files(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let wid = {
         let client = start_client(alice.clone()).await.unwrap();

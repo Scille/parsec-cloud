@@ -4,12 +4,12 @@ use libparsec::{tmp_path, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
 use crate::{
-    bootstrap_cli_test,
+    bootstrap_cli_test, test_ui,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
-use parsec_cli::commands::shared_recovery::create::WeightedEmail;
 use parsec_cli::commands::shared_recovery::create::WeightedEmailParseError;
+use parsec_cli::{commands::shared_recovery::create::WeightedEmail, ui::Ui};
 
 #[rstest::rstest]
 #[tokio::test]
@@ -44,14 +44,14 @@ async fn weighted_email_from_str() {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn create_shared_recovery_ok(tmp_path: TmpPath) {
+async fn create_shared_recovery_ok(tmp_path: TmpPath, test_ui: &Ui) {
     let (
         _,
         TestOrganization {
             alice, bob, toto, ..
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -73,14 +73,14 @@ async fn create_shared_recovery_ok(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn create_shared_recovery_with_weights(tmp_path: TmpPath) {
+async fn create_shared_recovery_with_weights(tmp_path: TmpPath, test_ui: &Ui) {
     let (
         _,
         TestOrganization {
             alice, bob, toto, ..
         },
         _,
-    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    ) = bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -110,8 +110,9 @@ async fn create_shared_recovery_with_weights(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn create_shared_recovery_inexistent_email(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn create_shared_recovery_inexistent_email(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     // a non existent recipient
 
     crate::assert_cmd_failure!(
@@ -134,8 +135,9 @@ async fn create_shared_recovery_inexistent_email(tmp_path: TmpPath) {
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
-async fn create_shared_recovery_default(tmp_path: TmpPath) {
-    let (_, TestOrganization { bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn create_shared_recovery_default(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { bob, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     let cmd = crate::std_cmd!(
         "shared-recovery",
         "create",
@@ -164,8 +166,9 @@ async fn create_shared_recovery_default(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn create_shared_recovery_no_recipient(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+async fn create_shared_recovery_no_recipient(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     // Alice is the only admin
     crate::assert_cmd_failure!(
