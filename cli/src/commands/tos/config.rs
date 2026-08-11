@@ -18,7 +18,7 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+pub async fn main(_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         organization,
         token,
@@ -29,7 +29,11 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     } = args;
     log::trace!("Configure TOS for organization {organization} (addr={addr})");
 
-    let raw_data = from_json.map(std::fs::read_to_string).transpose()?;
+    let raw_data = if let Some(path) = from_json {
+        Some(tokio::fs::read_to_string(path).await?)
+    } else {
+        None
+    };
 
     let req = if let Some(ref raw_data) = raw_data {
         let localized_tos_url = serde_json::from_str::<HashMap<_, _>>(raw_data)?;

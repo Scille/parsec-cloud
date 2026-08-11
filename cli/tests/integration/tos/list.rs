@@ -7,10 +7,7 @@ use crate::{
     bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD},
 };
-use parsec_cli::{
-    commands::tos::config::{config_tos_for_org_req, TosReq},
-    utils::BULLET_CHAR,
-};
+use parsec_cli::commands::tos::config::{config_tos_for_org_req, TosReq};
 
 #[rstest::rstest]
 #[tokio::test]
@@ -24,7 +21,7 @@ async fn list_no_tos_available(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains("No Terms of Service available"));
+    .stderr(predicates::str::contains("No Terms of Service available"));
 }
 
 #[rstest::rstest]
@@ -55,11 +52,9 @@ async fn list_tos_ok(tmp_path: TmpPath) {
     )
     .stdout(
         predicates::str::contains("Terms of Service updated on")
-            .and(predicates::str::contains(format!(
-                "{BULLET_CHAR} fr_FR: http://example.com/tos"
-            )))
-            .and(predicates::str::contains(format!(
-                "{BULLET_CHAR} en_DK: http://example.com/en/tos"
-            ))),
+            .and(predicates::str::contains("- fr_FR: http://example.com/tos"))
+            .and(predicates::str::contains(
+                "- en_DK: http://example.com/en/tos",
+            )),
     );
 }

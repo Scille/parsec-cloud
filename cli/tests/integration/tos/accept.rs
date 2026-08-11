@@ -85,7 +85,7 @@ async fn no_tos(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains("No Terms of Service available"));
+    .stderr(predicates::str::contains("No Terms of Service available"));
 }
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows

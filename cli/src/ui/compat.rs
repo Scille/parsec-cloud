@@ -365,3 +365,33 @@ impl CLIDisplay for InvitationLink {
         )
     }
 }
+
+pub struct TOSDisplay(pub libparsec_client::Tos);
+
+impl serde::Serialize for TOSDisplay {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("TOS", 2)?;
+        s.serialize_field("updated_on", &self.0.updated_on)?;
+        s.serialize_field("per_locale_urls", &self.0.per_locale_urls)?;
+        s.end()
+    }
+}
+
+impl CLIDisplay for TOSDisplay {
+    fn plain_write<W: std::io::prelude::Write>(
+        &self,
+        _fmt: &crate::ui::ColorFormatter,
+        mut w: W,
+    ) -> std::io::Result<()> {
+        writeln!(w, "Terms of Service updated on {}:", self.0.updated_on)?;
+        let mut sorted = self.0.per_locale_urls.iter().collect::<Vec<_>>();
+        sorted.sort_by_key(|(locale, _)| *locale);
+        for (locale, url) in sorted {
+            writeln!(w, "- {locale}: {url}")?;
+        }
+        Ok(())
+    }
+}
