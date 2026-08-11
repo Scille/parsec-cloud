@@ -51,7 +51,7 @@
         "file-type": "^21.3.2",
         "ionicons": "^8.0.9",
         "luxon": "^3.5.0",
-        "megashark-lib": "https://github.com/Scille/megashark-lib/releases/download/build-c7f90678b6dd1fb9131006d774f931ef95875431/megashark-lib-c7f90678b6dd1fb9131006d774f931ef95875431.tgz",
+        "megashark-lib": "https://github.com/Scille/megashark-lib/releases/download/build-7af6d60e9005b39e67cac1d3178b830eb19aa86f/megashark-lib-7af6d60e9005b39e67cac1d3178b830eb19aa86f.tgz",
         "native-file-system-adapter": "^3.0.1",
         "pdfjs-dist": "^5.4.624",
         "qrcode-vue3": "^1.7.1",
