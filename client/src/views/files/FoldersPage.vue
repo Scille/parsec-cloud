@@ -303,7 +303,6 @@ import {
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { useFileContextMenu } from '@/services/contextMenu';
 import { useFileActions } from '@/services/contextMenu/fileActions';
-import { isFileEditable } from '@/services/cryptpad';
 import {
   EntrySyncData,
   EventData,
@@ -330,6 +329,7 @@ import {
 import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { isFileEditable } from '@/services/onlyoffice';
 import { OpenPathOptions } from '@/services/pathOpener';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileAction, FolderGlobalAction, getDuplicatePolicy, isFolderGlobalAction } from '@/views/files';
