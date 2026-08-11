@@ -66,40 +66,40 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo, closeFile, FileDescriptor, openFile, writeFile } from '@/parsec';
+import { ClientInfo } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
-  CryptpadEditors,
-  CryptpadError,
-  CryptpadErrorCodes,
-  CryptpadOpenModes,
-  CryptpadSession,
-  getCryptpadEditor,
+  getOnlyOfficeDocumentType,
+  OnlyOfficeDocumentType,
+  OnlyOfficeError,
+  OnlyOfficeErrorCodes,
+  OnlyOfficeOpenModes,
+  OnlyOfficeSession,
   openDocument,
-} from '@/services/cryptpad';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+} from '@/services/onlyoffice';
 import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { longLocaleCodeToShort } from '@/services/translation';
-import { EditorButtonAction, EditorErrorMessage, EditorErrorTitle, EditorIssueStatus, SaveState } from '@/views/files/handler/editor';
+import { EditorButtonAction, EditorErrorTitle, EditorIssueStatus, SaveState } from '@/views/files/handler/editor';
 import EditorIssueModal from '@/views/files/handler/editor/EditorIssueModal.vue';
 import { FileHandlerMode } from '@/views/files/handler/types';
 import { FileContentInfo } from '@/views/files/handler/viewer/utils';
 import { IonButton, IonIcon, IonItem, IonList, IonText, modalController } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { I18n, LogoIconGradient, MsImage, MsModalResult, MsSpinner } from 'megashark-lib';
-import { inject, onMounted, onUnmounted, Ref, ref, useTemplateRef } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+
+// Time to wait for the document to be fully loaded (fonts, dictionaries, etc.) before offering
+// the user the option to keep waiting or give up, see openTimeoutModal().
+const READY_TIMEOUT_MS = 15000;
 
 const editorFrame = useTemplateRef<HTMLIFrameElement>('editorFrame');
-const documentType = ref<CryptpadEditors>(CryptpadEditors.Unsupported);
+const documentType = ref<OnlyOfficeDocumentType>(OnlyOfficeDocumentType.Unsupported);
 const error = ref('');
 const showErrorTips = ref(false);
-const eventDistributor: Ref<EventDistributor> = inject(EventDistributorKey)!;
-let eventCbId: null | string = null;
 const loadFinished = ref(false);
-let session: CryptpadSession | undefined = undefined;
+let session: OnlyOfficeSession | undefined = undefined;
 const frameReady = ref(false);
-let initialSaveDone = false;
-let pendingSaveResolve: ((success: boolean) => void) | null = null;
+let readyTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
 const {
   contentInfo,
@@ -118,36 +118,24 @@ const emits = defineEmits<{
 }>();
 
 onMounted(async () => {
-  documentType.value = getCryptpadEditor(contentInfo.contentType);
+  documentType.value = getOnlyOfficeDocumentType(contentInfo.contentType);
 
-  if (documentType.value === CryptpadEditors.Unsupported) {
+  if (documentType.value === OnlyOfficeDocumentType.Unsupported) {
     error.value = EditorErrorTitle.UnsupportedFileType;
     await openIssueModal(EditorIssueStatus.UnsupportedFileType);
     return;
   }
 
   await loadEditor();
-
-  eventCbId = await eventDistributor.value.registerCallback([Events.Online, Events.Offline], async (event: Events) => {
-    if (event === Events.Offline) {
-      window.nativeAPI.log('warn', 'Network connection lost while editing');
-      emits('onSaveStateChange', SaveState.Offline);
-      await openIssueModal(EditorIssueStatus.NetworkOffline, false);
-    } else if (event === Events.Online) {
-      window.nativeAPI.log('info', 'Network connection restored');
-      emits('onSaveStateChange', SaveState.None);
-    }
-  });
 });
 
 onUnmounted(() => {
+  if (readyTimeoutId) {
+    clearTimeout(readyTimeoutId);
+  }
   if (session) {
     session.controller.abort();
     session = undefined;
-  }
-
-  if (eventCbId) {
-    eventDistributor.value.removeCallback(eventCbId);
   }
 });
 
@@ -170,7 +158,6 @@ async function loadEditor(): Promise<void> {
     session = undefined;
   }
 
-  let isSaving = false;
   const content = await getFileContent(workspaceHandle, contentInfo.path, contentInfo.timestamp);
   if (!content) {
     emits('fileError');
@@ -180,118 +167,36 @@ async function loadEditor(): Promise<void> {
     {
       documentContent: content,
       documentName: contentInfo.fileName,
-      documentExtension: contentInfo.extension,
-      cryptpadEditor: documentType.value as CryptpadEditors,
+      documentType: documentType.value,
       key: crypto.randomUUID(),
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
-      autosaveInterval: 10,
-      mode: readOnly || contentInfo.timestamp ? CryptpadOpenModes.View : CryptpadOpenModes.Edit,
+      mode: readOnly || contentInfo.timestamp ? OnlyOfficeOpenModes.View : OnlyOfficeOpenModes.Edit,
       locale: longLocaleCodeToShort(I18n.getLocale()),
     },
     {
       onReady: (): void => {
-        window.nativeAPI.log('info', 'CryptPad editor is ready and document loaded successfully');
+        window.nativeAPI.log('info', 'OnlyOffice editor is ready and document loaded successfully');
+        if (readyTimeoutId) {
+          clearTimeout(readyTimeoutId);
+          readyTimeoutId = undefined;
+        }
         loadFinished.value = true;
         emits('fileLoaded');
-      },
-      onSave: async (file: Blob): Promise<void> => {
-        let hasError = false;
-        let fd: FileDescriptor | undefined = undefined;
-        const start = Date.now();
-        try {
-          if (readOnly) {
-            return;
-          }
-          isSaving = true;
-          emits('onSaveStateChange', SaveState.Saving);
-          // Handle save logic here
-          const openResult = await openFile(workspaceHandle, contentInfo.path, { write: true, truncate: true });
-
-          if (!openResult.ok) {
-            window.nativeAPI.log('error', `Failed to open file: ${openResult.error.tag} (${openResult.error.error})`);
-            hasError = true;
-            return;
-          }
-          fd = openResult.value;
-          const arrayBuffer = await file.arrayBuffer();
-          const writeResult = await writeFile(workspaceHandle, fd, 0, new Uint8Array(arrayBuffer));
-          if (!writeResult.ok) {
-            hasError = true;
-            window.nativeAPI.log('error', `Failed to write file: ${writeResult.error.tag} (${writeResult.error.error})`);
-          }
-        } catch (e: any) {
-          window.nativeAPI.log('error', `Failed to save file: ${e.toString()}`);
-          hasError = true;
-        } finally {
-          if (fd) {
-            await closeFile(workspaceHandle, fd);
-          }
-          const end = Date.now();
-          setTimeout(
-            () => {
-              if (isSaving === true) {
-                isSaving = false;
-                if (!hasError) {
-                  emits('onSaveStateChange', SaveState.Saved);
-                } else {
-                  emits('onSaveStateChange', SaveState.Error);
-                }
-                // Resolve pending manual save promise
-                if (pendingSaveResolve) {
-                  pendingSaveResolve(!hasError);
-                  pendingSaveResolve = null;
-                }
-              }
-            },
-            (window as any).TESTING === true ? 0 : Math.max(1000 - (end - start), 0),
-          );
-        }
-      },
-      onHasUnsavedChanges: (unsaved: boolean): void => {
-        if (unsaved) {
-          isSaving = false;
-          // Auto-save on initial unsaved changes (e.g. OO conversion artifacts)
-          if (!initialSaveDone) {
-            initialSaveDone = true;
-            window.nativeAPI.log('info', 'Auto-saving initial unsaved changes');
-            save();
-            return;
-          }
-          emits('onSaveStateChange', SaveState.Unsaved);
-        }
       },
       onError: async (err: unknown): Promise<void> => {
         error.value = 'fileViewers.errors.titles.genericError';
         showErrorTips.value = true;
 
-        if (err instanceof CryptpadError) {
-          window.nativeAPI.log('info', `Failed to load Cryptpad: ${err}`);
+        if (err instanceof OnlyOfficeError) {
+          window.nativeAPI.log('info', `Failed to load OnlyOffice: ${err}`);
           switch (err.code) {
-            case CryptpadErrorCodes.InitFailed:
-              error.value = EditorErrorMessage.EditableOnlyOnSystem;
-              break;
-            case CryptpadErrorCodes.OpenFailed:
-            case CryptpadErrorCodes.OpenInvalidConfig:
-              error.value = 'fileEditors.errors.titles.openFailed';
-              break;
-            case CryptpadErrorCodes.FrameLoadFailed:
-            case CryptpadErrorCodes.FrameNotLoaded:
+            case OnlyOfficeErrorCodes.FrameLoadFailed:
+            case OnlyOfficeErrorCodes.FrameNotLoaded:
               error.value = 'fileEditors.errors.titles.frameLoadFailed';
               break;
-            case CryptpadErrorCodes.EventError:
-              if (err.details && err.details.toString() === 'ready-timeout') {
-                error.value = '';
-                await openTimeoutModal();
-                // Don't process it as a normal error
-                return;
-              } else {
-                window.nativeAPI.log('error', `Unhandled event error: ${err.details}`);
-              }
-              break;
-            case CryptpadErrorCodes.NotAvailable:
-              showErrorTips.value = false;
-              error.value = 'fileEditors.errors.titles.cryptpadNotAvailable';
+            case OnlyOfficeErrorCodes.EventError:
+              window.nativeAPI.log('error', `Unhandled event error: ${err.details}`);
               break;
           }
         } else {
@@ -304,6 +209,17 @@ async function loadEditor(): Promise<void> {
     editorFrame.value,
   );
   frameReady.value = true;
+
+  // OnlyOffice's own assets (sdkjs, fonts, dictionaries) can take a while to load on first use,
+  // give the user the option to keep waiting rather than silently doing nothing.
+  readyTimeoutId = setTimeout(
+    () => {
+      if (!loadFinished.value) {
+        openTimeoutModal();
+      }
+    },
+    (window as any).TESTING === true ? 500 : READY_TIMEOUT_MS,
+  );
 }
 
 async function openIssueModal(status: EditorIssueStatus, redirectAfterDismiss = true): Promise<MsModalResult> {
@@ -367,26 +283,8 @@ async function openTimeoutModal(): Promise<'wait' | 'close'> {
 }
 
 async function save(): Promise<boolean> {
-  if (!session) {
-    return false;
-  }
-  // If a save is already pending, resolve it as failed before starting a new one
-  if (pendingSaveResolve) {
-    pendingSaveResolve(false);
-    pendingSaveResolve = null;
-  }
-  return new Promise<boolean>((resolve) => {
-    const SAVE_TIMEOUT_MS = 5000;
-    pendingSaveResolve = resolve;
-    session!.save();
-    // Timeout in case save never completes
-    setTimeout(() => {
-      if (pendingSaveResolve === resolve) {
-        pendingSaveResolve = null;
-        resolve(false);
-      }
-    }, SAVE_TIMEOUT_MS);
-  });
+  // POC: saving back to Parsec isn't implemented yet, see client/src/services/onlyoffice.ts.
+  return true;
 }
 
 defineExpose({ save });

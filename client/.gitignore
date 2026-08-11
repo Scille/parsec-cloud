@@ -45,3 +45,5 @@ npm-debug.log*
 .env.development.local
 # Resources for custom branding
 /public/custom
+# Vendored OnlyOffice client (POC, downloaded manually, see vendors/onlyoffice/README.md)
+/vendors/onlyoffice/editor

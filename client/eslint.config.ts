@@ -15,6 +15,8 @@ export default defineConfig([
       'pkg/**',
       'dist/**',
       'node_modules/**',
+      // POC: vendored OnlyOffice client (see client/vendors/onlyoffice/README.md), not our code.
+      'vendors/**',
       'electron/build/**',
       'electron/app/**',
       'electron/src/**',

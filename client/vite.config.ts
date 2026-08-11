@@ -103,6 +103,13 @@ plugins.push(
         src: 'node_modules/pdfjs-dist/wasm/*',
         dest: 'pdfjs',
       },
+      // POC: vendored OnlyOffice client (see client/vendors/onlyoffice/README.md).
+      // Not present in dev checkouts that haven't downloaded it, so this is best-effort.
+      {
+        src: 'vendors/onlyoffice/editor/**/*',
+        dest: 'onlyoffice',
+        rename: { stripBase: 3 },
+      },
     ],
   }),
 );
@@ -185,6 +192,44 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
           const filePath = path.join(import.meta.dirname, 'dist/custom', req.url ?? '/');
           try {
             res.end(await fs.promises.readFile(filePath));
+          } catch {
+            res.statusCode = 404;
+            res.end();
+          }
+        });
+      },
+    },
+    {
+      // POC: serve the vendored OnlyOffice client (see client/vendors/onlyoffice/README.md)
+      // at `/onlyoffice/*` in dev mode. This folder is downloaded manually and may not be present.
+      name: 'serve-onlyoffice-vendor',
+      configureServer(server) {
+        const ONLYOFFICE_MIME_TYPES: Record<string, string> = {
+          '.html': 'text/html',
+          '.js': 'text/javascript',
+          '.mjs': 'text/javascript',
+          '.css': 'text/css',
+          '.json': 'application/json',
+          '.wasm': 'application/wasm',
+          '.svg': 'image/svg+xml',
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.gif': 'image/gif',
+          '.ico': 'image/x-icon',
+          '.ttf': 'font/ttf',
+          '.otf': 'font/otf',
+          '.woff': 'font/woff',
+          '.woff2': 'font/woff2',
+        };
+        server.middlewares.use('/onlyoffice', async (req, res, _next) => {
+          const filePath = path.join(__dirname, 'vendors/onlyoffice/editor', (req.url ?? '/').split('?')[0]);
+          try {
+            const content = await fs.promises.readFile(filePath);
+            const mimeType = ONLYOFFICE_MIME_TYPES[path.extname(filePath)];
+            if (mimeType) {
+              res.setHeader('Content-Type', mimeType);
+            }
+            res.end(content);
           } catch {
             res.statusCode = 404;
             res.end();

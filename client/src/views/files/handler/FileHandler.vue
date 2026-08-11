@@ -140,7 +140,7 @@
                 id="file-handler-open-editor"
                 @click="openEditor(contentInfo.path)"
                 :disabled="pathOpener.currentlyOpening.value"
-                v-if="!contentInfo.timestamp && readOnly && isCryptpadEnabledForDocumentType(contentInfo.contentType) && !isReader"
+                v-if="!contentInfo.timestamp && readOnly && isOnlyOfficeEnabledForDocumentType(contentInfo.contentType) && !isReader"
               >
                 <ion-icon
                   :icon="create"
@@ -239,11 +239,11 @@ import {
   Routes,
   watchRoute,
 } from '@/router';
-import { isCryptpadEnabledForDocumentType } from '@/services/cryptpad';
 import { Env } from '@/services/environment';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperation/manager';
 import useHeaderControl from '@/services/headerControl';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { isOnlyOfficeEnabledForDocumentType } from '@/services/onlyoffice';
 import usePathOpener from '@/services/pathOpener';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -708,7 +708,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
       canEdit:
         !contentInfo.value.timestamp &&
         readOnly.value &&
-        isCryptpadEnabledForDocumentType(contentInfo.value.contentType) &&
+        isOnlyOfficeEnabledForDocumentType(contentInfo.value.contentType) &&
         !isReader.value,
     },
   });
