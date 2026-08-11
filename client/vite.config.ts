@@ -11,7 +11,7 @@ import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } fr
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { brotliCompress } from 'zlib';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
-import wasmPack from './scripts/vite_plugin_wasm_pack';
+import wasmPack from './scripts/vite_plugin_wasm_pack.ts';
 
 // Vue hoists static template parts into module-level constants, created once at import time
 // regardless of whether the component ever mounts. That's invisible in normal use, but it means
@@ -132,7 +132,7 @@ if (platform === 'web') {
           }),
         );
       }
-      await compressDir(path.resolve(__dirname, 'dist'));
+      await compressDir(path.resolve(import.meta.dirname, 'dist'));
     },
   });
 }
@@ -157,7 +157,7 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
   base: process.env.BASE_URL || './',
   test: {
     include: ['tests/unit/specs/*.spec.ts'],
-    setupFiles: [path.resolve(__dirname, './tests/component/support/setup.ts')],
+    setupFiles: [path.resolve(import.meta.dirname, './tests/component/support/setup.ts')],
     server: {
       deps: {
         inline: ['megashark-lib'],
@@ -166,9 +166,9 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
     env: loadEnv('development', process.cwd(), ''),
     globals: true,
     alias: {
-      '@libparsec_trampoline': path.resolve(__dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
-      '@': path.resolve(__dirname, './src'),
-      '@tests': path.resolve(__dirname, './tests'),
+      '@libparsec_trampoline': path.resolve(import.meta.dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
+      '@': path.resolve(import.meta.dirname, './src'),
+      '@tests': path.resolve(import.meta.dirname, './tests'),
     },
     fakeTimers: {
       toFake: ['setTimeout', 'clearTimeout', 'Date'],
@@ -182,7 +182,7 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
       name: 'serve-dist-custom',
       configureServer(server) {
         server.middlewares.use('/custom', async (req, res, _next) => {
-          const filePath = path.join(__dirname, 'dist/custom', req.url ?? '/');
+          const filePath = path.join(import.meta.dirname, 'dist/custom', req.url ?? '/');
           try {
             res.end(await fs.promises.readFile(filePath));
           } catch {
@@ -209,8 +209,8 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
   },
   resolve: {
     alias: {
-      '@libparsec_trampoline': path.resolve(__dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
-      '@': path.resolve(__dirname, './src'),
+      '@libparsec_trampoline': path.resolve(import.meta.dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
   define: {
