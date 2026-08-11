@@ -5,7 +5,6 @@ use crate::{
     bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
-use parsec_cli::utils::{GREEN, RESET};
 
 #[rstest::rstest]
 #[tokio::test]
@@ -19,9 +18,9 @@ async fn list_users(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
+    .stderr(predicates::str::contains("Found 3 user(s)"))
     .stdout(
-        predicates::str::contains(format!("Found {GREEN}3{RESET} user(s)"))
-            .and(predicates::str::contains("Alice"))
+        predicates::str::contains("Alice")
             .and(predicates::str::contains("Bob"))
             .and(predicates::str::contains("Toto")),
     );

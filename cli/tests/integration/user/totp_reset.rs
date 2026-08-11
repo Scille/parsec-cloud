@@ -22,8 +22,13 @@ async fn totp_reset_by_email(tmp_path: TmpPath) {
         "--user-email",
         &devices.alice.human_handle.email().to_string()
     )
-    .stdout(predicates::str::contains("TOTP reset for user"))
-    .stdout(predicates::str::is_match("Reset URL: .*parsec3://.*a=totp_reset&p=.*").unwrap());
+    .stdout(
+        predicates::str::is_match(format!(
+            "TOTP reset URL for user {uid} is parsec3://.*a=totp_reset&p=.*",
+            uid = devices.alice.user_id.hex()
+        ))
+        .unwrap(),
+    );
 }
 
 #[rstest::rstest]
@@ -44,14 +49,17 @@ async fn totp_reset_by_user_id(tmp_path: TmpPath) {
         &devices.alice.user_id.hex(),
         "--send-email"
     )
-    .stdout(predicates::str::contains("TOTP reset for user"))
-    .stdout(predicates::str::is_match("Reset URL: .*parsec3://.*a=totp_reset&p=.*").unwrap())
     .stdout(
-        predicates::str::is_match(
-            "An email with the reset URL has been sent to .*alice@example.com",
-        )
+        predicates::str::is_match(format!(
+            "TOTP reset URL for user {uid} is parsec3://.*a=totp_reset&p=.*",
+            uid = devices.alice.user_id.hex()
+        ))
         .unwrap(),
-    );
+    )
+    .stderr(predicates::str::contains(format!(
+        "An email with the reset URL has been sent to {}",
+        devices.alice.human_handle.email()
+    )));
 }
 
 #[rstest::rstest]

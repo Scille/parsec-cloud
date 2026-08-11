@@ -1,8 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+use std::fmt::Write as _;
 
 use libparsec::{EmailAddress, OrganizationID, ParsecAddr, UserID};
 
-use crate::utils::*;
+use crate::ui::{CLIDisplay, Color};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = addr, token, organization]
@@ -78,7 +79,7 @@ async fn totp_reset_req(
     }
 }
 
-pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
+pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
         organization,
         token,
@@ -88,7 +89,7 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         send_email,
     } = args;
 
-    let mut handle = start_spinner("Resetting TOTP".into());
+    let handle = ui.with_spinner(|_, out| write!(out, "Resetting TOTP"))?;
 
     let res = totp_reset_req(
         &organization,
@@ -100,31 +101,44 @@ pub async fn main(_todo_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     )
     .await?;
 
-    let msg = match res.email_sent_status.as_ref() {
-        "NOT_SENT_AS_REQUESTED" => {
-            format!(
-                "TOTP reset for user {GREEN}{}{RESET}\nReset URL: {YELLOW}{}{RESET}",
-                res.user_id, res.totp_reset_url,
-            )
-        }
-        "SENT_AS_REQUESTED" => {
-            format!(
-                "TOTP reset for user {GREEN}{}{RESET}\n\
-                Reset URL: {YELLOW}{}{RESET}\n\
-                An email with the reset URL has been sent to {YELLOW}{}{RESET}",
-                res.user_id, res.totp_reset_url, res.user_email,
-            )
-        }
-        email_sent_err => {
-            format!(
-                "TOTP reset for user {GREEN}{}{RESET}\n\
-                Reset URL: {YELLOW}{}{RESET}\n\
-                Email sending to {YELLOW}{}{RESET} has failed (error: {})",
-                res.user_id, res.totp_reset_url, res.user_email, email_sent_err
-            )
-        }
-    };
-    handle.stop_with_message(msg);
+    handle.stop_with(|fmt, out| match res.email_sent_status.as_str() {
+        "NOT_SENT_AS_REQUESTED" => Ok(()),
+        "SENT_AS_REQUESTED" => write!(
+            out,
+            "An email with the reset URL has been sent to {}",
+            fmt.wrap_in_color(Color::Yellow, res.user_email)
+        ),
+        err => write!(
+            out,
+            "Email sending to {} has failed (error: {err})",
+            fmt.wrap_in_color(Color::Yellow, res.user_email)
+        ),
+    })?;
+    ui.data_print(&TotpResetLink {
+        uid: res.user_id,
+        url: res.totp_reset_url,
+    })?;
 
     Ok(())
+}
+
+#[derive(serde::Serialize)]
+struct TotpResetLink {
+    uid: String,
+    url: String,
+}
+
+impl CLIDisplay for TotpResetLink {
+    fn plain_write<W: std::io::prelude::Write>(
+        &self,
+        fmt: &crate::ui::ColorFormatter,
+        mut w: W,
+    ) -> std::io::Result<()> {
+        write!(
+            w,
+            "TOTP reset URL for user {} is {}",
+            fmt.wrap_in_color(Color::Green, &self.uid),
+            self.url
+        )
+    }
 }

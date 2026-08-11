@@ -18,7 +18,7 @@ async fn revoke_user_ok(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         &toto.human_handle.email().to_string()
     )
-    .stdout(predicates::str::contains(format!(
+    .stderr(predicates::str::contains(format!(
         "User {} has been revoked",
         toto.human_handle.email()
     )));
