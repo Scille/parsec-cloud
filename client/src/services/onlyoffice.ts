@@ -2,6 +2,7 @@
 
 import { detectOpenableFile, FileContentType } from '@/common/fileTypes';
 import { Env } from '@/services/environment';
+import { convertToNativeFormat } from '@/services/x2t';
 
 // POC: replaces the (broken) Cryptpad integration with a direct integration of OnlyOffice,
 // using CryptPad's own end-to-end-encrypted fork of OnlyOffice (client-side code only, vendored
@@ -39,6 +40,10 @@ namespace OnlyOfficeCommAPI {
   export interface OpenDocumentOptions {
     documentContent: Uint8Array;
     documentName: string;
+    // File extension of `documentContent` as stored in Parsec, e.g. `docx` or `bin`. Anything other
+    // than `bin` (OnlyOffice's own native format) is converted with x2t before being handed to the
+    // editor, see services/x2t.ts.
+    documentExtension: string;
     documentType: OnlyOfficeCommAPI.DocumentTypes;
     key: string;
     userName: string;
@@ -57,6 +62,7 @@ export enum OnlyOfficeErrorCodes {
   FrameNotLoaded = 'frame-not-loaded',
   FrameLoadFailed = 'frame-load-failed',
   EventError = 'event-error',
+  ConversionFailed = 'conversion-failed',
 }
 
 interface OnlyOfficeEventHandlers {
@@ -81,6 +87,10 @@ export interface OnlyOfficeSession {
 }
 
 const HOST_PAGE = `${import.meta.env.BASE_URL}onlyoffice-host.html`;
+
+// OnlyOffice's own native format (see client/vendors/onlyoffice/README.md): anything else needs to
+// go through x2t first, see prepareDocumentContent() below.
+const NATIVE_EXTENSION = 'bin';
 
 // The blank documents OnlyOffice itself uses when starting a new file from scratch, borrowed
 // verbatim from CryptPad (see client/vendors/onlyoffice/README.md). Used as a fallback so that an
@@ -125,10 +135,7 @@ export function isFileEditable(name: string): boolean {
 
 // An empty file (e.g. freshly created and never opened yet) isn't a valid OnlyOffice document:
 // substitute one of the blank templates above so the editor has something to load.
-async function getEditableContent(documentContent: Uint8Array, documentType: OnlyOfficeDocumentType): Promise<Uint8Array> {
-  if (documentContent.byteLength > 0) {
-    return documentContent;
-  }
+async function loadBlankTemplate(documentType: OnlyOfficeDocumentType, documentContent: Uint8Array): Promise<Uint8Array> {
   const templateUrl = BLANK_TEMPLATE_URLS[documentType];
   if (!templateUrl) {
     return documentContent;
@@ -142,14 +149,27 @@ async function getEditableContent(documentContent: Uint8Array, documentType: Onl
   }
 }
 
+// Gets `options.documentContent` into a shape the editor can open directly: OnlyOffice's own
+// native format, either as-is, converted from another office format with x2t, or a blank template
+// when there's nothing to open/convert (e.g. an empty file freshly created outside the editor).
+async function prepareDocumentContent(options: OpenDocumentOptions): Promise<Uint8Array> {
+  const { documentContent, documentExtension, documentType } = options;
+
+  if (documentContent.byteLength === 0) {
+    return loadBlankTemplate(documentType, documentContent);
+  }
+  if (documentExtension === NATIVE_EXTENSION) {
+    return documentContent;
+  }
+  return convertToNativeFormat(documentContent, options.documentName, documentExtension);
+}
+
 export async function openDocument(
   options: OpenDocumentOptions,
   handlers: OnlyOfficeEventHandlers,
   frame: HTMLIFrameElement,
 ): Promise<OnlyOfficeSession | undefined> {
   const controller = new AbortController();
-
-  const documentContent = await getEditableContent(options.documentContent, options.documentType);
 
   try {
     await new Promise<void>((resolve, reject) => {
@@ -193,11 +213,20 @@ export async function openDocument(
     return undefined;
   }
 
-  onlyOfficeLog('debug', 'Host frame is ready, opening the document');
+  onlyOfficeLog('debug', 'Host frame is ready, preparing the document');
 
   if (!frame.contentWindow) {
     controller.abort();
     handlers.onError(new OnlyOfficeError(OnlyOfficeErrorCodes.FrameNotLoaded));
+    return undefined;
+  }
+
+  let documentContent: Uint8Array;
+  try {
+    documentContent = await prepareDocumentContent(options);
+  } catch (e: unknown) {
+    controller.abort();
+    handlers.onError(e instanceof OnlyOfficeError ? e : new OnlyOfficeError(OnlyOfficeErrorCodes.ConversionFailed, String(e)));
     return undefined;
   }
 

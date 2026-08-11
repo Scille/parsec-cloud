@@ -45,5 +45,6 @@ npm-debug.log*
 .env.development.local
 # Resources for custom branding
 /public/custom
-# Vendored OnlyOffice client (POC, downloaded manually, see vendors/onlyoffice/README.md)
+# Vendored OnlyOffice client & x2t converter (POC, downloaded manually, see vendors/onlyoffice/README.md)
 /vendors/onlyoffice/editor
+/vendors/onlyoffice/x2t

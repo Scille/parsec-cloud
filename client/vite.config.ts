@@ -103,11 +103,16 @@ plugins.push(
         src: 'node_modules/pdfjs-dist/wasm/*',
         dest: 'pdfjs',
       },
-      // POC: vendored OnlyOffice client (see client/vendors/onlyoffice/README.md).
-      // Not present in dev checkouts that haven't downloaded it, so this is best-effort.
+      // POC: vendored OnlyOffice client and x2t converter (see client/vendors/onlyoffice/README.md).
+      // Not present in dev checkouts that haven't downloaded them, so this is best-effort.
       {
         src: 'vendors/onlyoffice/editor/**/*',
         dest: 'onlyoffice',
+        rename: { stripBase: 3 },
+      },
+      {
+        src: 'vendors/onlyoffice/x2t/**/*',
+        dest: 'onlyoffice-x2t',
         rename: { stripBase: 3 },
       },
     ],
@@ -200,8 +205,9 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
       },
     },
     {
-      // POC: serve the vendored OnlyOffice client (see client/vendors/onlyoffice/README.md)
-      // at `/onlyoffice/*` in dev mode. This folder is downloaded manually and may not be present.
+      // POC: serve the vendored OnlyOffice client and x2t converter (see
+      // client/vendors/onlyoffice/README.md) at `/onlyoffice/*` and `/onlyoffice-x2t/*` in dev
+      // mode. These folders are downloaded manually and may not be present.
       name: 'serve-onlyoffice-vendor',
       configureServer(server) {
         const ONLYOFFICE_MIME_TYPES: Record<string, string> = {
@@ -221,20 +227,24 @@ const config: UserConfigFnObject = (_env: ConfigEnv) => ({
           '.woff': 'font/woff',
           '.woff2': 'font/woff2',
         };
-        server.middlewares.use('/onlyoffice', async (req, res, _next) => {
-          const filePath = path.join(__dirname, 'vendors/onlyoffice/editor', (req.url ?? '/').split('?')[0]);
-          try {
-            const content = await fs.promises.readFile(filePath);
-            const mimeType = ONLYOFFICE_MIME_TYPES[path.extname(filePath)];
-            if (mimeType) {
-              res.setHeader('Content-Type', mimeType);
+        const serveVendorDir = (urlPrefix: string, dir: string): void => {
+          server.middlewares.use(urlPrefix, async (req, res, _next) => {
+            const filePath = path.join(__dirname, dir, (req.url ?? '/').split('?')[0]);
+            try {
+              const content = await fs.promises.readFile(filePath);
+              const mimeType = ONLYOFFICE_MIME_TYPES[path.extname(filePath)];
+              if (mimeType) {
+                res.setHeader('Content-Type', mimeType);
+              }
+              res.end(content);
+            } catch {
+              res.statusCode = 404;
+              res.end();
             }
-            res.end(content);
-          } catch {
-            res.statusCode = 404;
-            res.end();
-          }
-        });
+          });
+        };
+        serveVendorDir('/onlyoffice', 'vendors/onlyoffice/editor');
+        serveVendorDir('/onlyoffice-x2t', 'vendors/onlyoffice/x2t');
       },
     },
   ],
