@@ -66,7 +66,7 @@ async fn create_shared_recovery_ok(tmp_path: TmpPath) {
         "1",
         "--no-confirmation"
     )
-    .stdout(predicates::str::contains(
+    .stderr(predicates::str::contains(
         "Shared recovery setup has been created",
     ));
 }
@@ -95,7 +95,7 @@ async fn create_shared_recovery_with_weights(tmp_path: TmpPath) {
         "2",
         "--no-confirmation"
     )
-    .stdout(
+    .stderr(
         predicates::str::contains("Shared recovery setup has been created")
             .and(predicates::str::contains(format!(
                 "• User {} will have 2 shares",
@@ -154,7 +154,7 @@ async fn create_shared_recovery_default(tmp_path: TmpPath) {
 
     p.exp_regex(".*The threshold is the minimum number of shares that one must gather to recover the account.*").unwrap();
     p.send_line("1").unwrap();
-    p.exp_string("The following shared recovery setup will be created")
+    p.exp_string("The following shared recovery setup with a threshold set to 1 will be created")
         .unwrap();
     p.send_line("y").unwrap();
     p.exp_regex(".*Shared recovery setup has been created.*")
