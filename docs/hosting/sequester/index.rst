@@ -77,11 +77,11 @@ You can do that either via ``parsec-cli``:
 .. code-block:: bash
 
   ./parsec-cli organization bootstrap \
-               --addr="$BOOTSTRAP_LINK" \
-               --device-label "my device" \
-               --label "John Doe" \
-               --email john.doe@example.com \
-               --sequester-key ./authority_key.pub
+      --addr="$BOOTSTRAP_LINK" \
+      --device-label "my device" \
+      --label "John Doe" \
+      --email john.doe@example.com \
+      --sequester-key ./authority_key.pub
 
 Or using the GUI application:
 
@@ -117,12 +117,25 @@ You can create the service key and certificate with the following commands:
 
       You must ensure that the computer clock is on time with the server (you can use ``date --utc`` to compare the clocks)
 
+   You can generate the sequester certificate using the server CLI:
+
+   .. version-added:: 3.10.0
+
+      ``parsec-cli`` can generate the sequester certificate
+
+      .. code-block:: bash
+
+         parsec-cli sequester generate-service-certificate \
+            --service-label="Sequester service" \
+            --service-public-key=./sequester_key.pub \
+            --authority-private-key=./authority_key.private
+
    .. code-block:: bash
 
      python -m parsec sequester generate_service_certificate \
-               --service-label="Sequester service" \
-               --service-public-key=./sequester_key.pub \
-               --authority-private-key=./authority_key.private
+       --service-label="Sequester service" \
+       --service-public-key=./sequester_key.pub \
+       --authority-private-key=./authority_key.private
 
    .. tip::
 
@@ -137,8 +150,8 @@ Enable sequester service
    .. code-block:: bash
 
      python -m parsec sequester create_service \
-               --organization=organization-sequester-test \
-               --service-certificate=./sequester_service_certificate-ef9adae7ee9f44cc9f974fdcaaff8839-2025-02-23T21:19:35.484948Z.pem
+       --organization=organization-sequester-test \
+       --service-certificate=./sequester_service_certificate-ef9adae7ee9f44cc9f974fdcaaff8839-2025-02-23T21:19:35.484948Z.pem
 
    .. note::
 
@@ -175,20 +188,25 @@ Overview:
 
     # On Parsec server, identity real (workspace) to export
     python -m parsec human_accesses \
-              --organization=organization-sequester-test [--db=$POSTGRESQL_URL]
+      --organization=organization-sequester-test [--db=$POSTGRESQL_URL]
 
     # This creates a file "parsec-export-$ORG-realm-$REALM-$TIMESTAMP.sqlite".
     python -m parsec export_realm
-              --organization=organization-sequester-test \
-              --realm=<id-realm> [--db=$POSTGRESQL_URL --blockstore=$S3_URL]
+      --organization=organization-sequester-test \
+      --realm=<id-realm> [--db=$POSTGRESQL_URL --blockstore=$S3_URL]
 
 
 Using exported data
 ===================
 
+Use ``parsec-cli`` to mount a virtual drive with decrypted data:
+
 .. code-block:: bash
 
-  # This command mount a disk drive with decrypted data
-  ./parsec-cli mount-realm-export \
-               parsec-export-organization-sequester-test-realm-f749b8035f6e4bd88e96ae557828a583-20250225T135312Z.sqlite \
-               -d sequester:7bd707ce86df42288634f2a78db7f10e:./sequester_key.private
+  parsec-cli sequester mount \
+    --decryptor sequester:7bd707ce86df42288634f2a78db7f10e:./sequester_key.private \
+    parsec-export-organization-sequester-test-realm-f749b8035f6e4bd88e96ae557828a583-20250225T135312Z.sqlite
+
+.. version-changed:: 3.10.0
+
+   The command ``mount-realm-export`` was renamed to ``sequester mount``
