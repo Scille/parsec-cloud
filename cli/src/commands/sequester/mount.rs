@@ -8,6 +8,7 @@ use crate::utils::{default_client_config, load_and_unlock_device};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, password_stdin]
+    /// Mount a realm export as a workspace.
     pub struct Args {
         /// Path to the realm export database
         #[arg(value_hint = clap::ValueHint::FilePath)]
@@ -103,10 +104,8 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     );
 
     ui.with_message(|_, out| {
-        writeln!(out, "Organization: {}", wksp_history_ops.organization_id())
-    })?;
-    ui.with_message(|_, out| writeln!(out, "Realm ID: {}", wksp_history_ops.realm_id()))?;
-    ui.with_message(|_, out| {
+        writeln!(out, "Organization: {}", wksp_history_ops.organization_id())?;
+        writeln!(out, "Realm ID: {}", wksp_history_ops.realm_id())?;
         writeln!(
             out,
             "Export temporal bounds: {} to {}",
@@ -126,7 +125,13 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         .unwrap_or("realm_export".parse().expect("valid entry name"));
 
     let mountpoint = Mountpoint::mount_history(wksp_history_ops, mountpoint_name_hint).await?;
-    ui.with_message(|_, out| writeln!(out, "Mounted at {:?}", mountpoint.path()))?;
+    ui.with_message(|_, out| {
+        writeln!(
+            out,
+            "Mounted at {}, send SIGINT signal (Ctrl-C) to stop",
+            mountpoint.path().display()
+        )
+    })?;
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
     ctrlc::set_handler(move || {

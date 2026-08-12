@@ -9,7 +9,6 @@ mod invitations;
 mod ls;
 #[cfg(feature = "manpage")]
 mod manpage;
-mod mount_realm_export;
 mod organization;
 mod rm;
 mod sequester;

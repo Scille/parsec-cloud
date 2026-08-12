@@ -81,7 +81,7 @@ async fn mount_workspace(tmp_path: TmpPath, test_ui: &Ui) {
     let mut p = crate::spawn_interactive_command(cmd, Some(1500)).unwrap();
 
     p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
-    p.exp_string("Workspace mount").unwrap();
+    p.exp_string("Workspace mounted").unwrap();
 
     std::assert_matches!(
         tokio::fs::try_exists(&mount_dir).await,

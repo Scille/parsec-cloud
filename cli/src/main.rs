@@ -33,9 +33,6 @@ async fn main() -> anyhow::Result<()> {
         Command::SharedRecovery(shared_recovery) => {
             shared_recovery::dispatch_command(ui, shared_recovery).await
         }
-        Command::MountRealmExport(mount_realm_export) => {
-            mount_realm_export::main(ui, mount_realm_export).await
-        }
         #[cfg(feature = "manpage")]
         Command::ManPage(args) => man_page::main(ui, args).await,
         Command::Sequester(group) => sequester::dispatch_command(ui, group).await,

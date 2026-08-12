@@ -68,8 +68,6 @@ pub enum Command {
     /// Contains subcommands related to shared recovery devices (shamir)
     #[command(subcommand)]
     SharedRecovery(shared_recovery::Group),
-    /// Mount a realm export as a workspace.
-    MountRealmExport(mount_realm_export::Args),
     /// Print CLI man pages to the console or a file
     #[cfg(feature = "manpage")]
     ManPage(man_page::Args),
