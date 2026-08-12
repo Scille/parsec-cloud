@@ -76,7 +76,7 @@ pub async fn main(_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
                     .await
                     .context("Cannot flush data to output")
             }
-            Mode::Separate => render_separate_commands(cmd, &output).await,
+            Mode::Separate => render_separate_commands(&cmd, &output).await,
         }
     }
 }
@@ -106,14 +106,14 @@ async fn write_man_to_file<W: AsyncWrite + Unpin>(
     Ok(())
 }
 
-async fn render_separate_commands(cmd: clap::Command, out_dir: &Path) -> anyhow::Result<()> {
+async fn render_separate_commands(cmd: &clap::Command, out_dir: &Path) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        tokio::fs::try_exists(out_dir).await?,
+        "Output directory is missing: {}",
+        out_dir.display()
+    );
     let mut tasks = tokio::task::JoinSet::new();
-    create_render_task(cmd.clone(), out_dir, &mut tasks);
-    for sub_command in cmd.get_subcommands() {
-        if sub_command.get_name() != "help" {
-            create_render_task(sub_command.clone(), out_dir, &mut tasks);
-        }
-    }
+    create_render_task(cmd, out_dir, &mut tasks);
     while let Some(task) = tasks.join_next().await {
         task??;
     }
@@ -121,14 +121,18 @@ async fn render_separate_commands(cmd: clap::Command, out_dir: &Path) -> anyhow:
 }
 
 fn create_render_task(
-    cmd: clap::Command,
+    cmd: &clap::Command,
     out_dir: &Path,
     join_set: &mut JoinSet<anyhow::Result<()>>,
 ) {
-    let man = clap_mangen::Man::new(cmd);
+    let man = clap_mangen::Man::new(cmd.clone());
     let path = out_dir.join(man.get_filename());
-    log::debug!("Will write a man page to {}", path.display());
     join_set.spawn(write_man_in_file(man, path));
+    for sub_command in cmd.get_subcommands() {
+        if sub_command.get_name() != "help" {
+            create_render_task(sub_command, out_dir, join_set);
+        }
+    }
 }
 
 async fn write_man_in_file(man: clap_mangen::Man, filepath: PathBuf) -> anyhow::Result<()> {
