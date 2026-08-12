@@ -422,7 +422,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
                 r"parsec-cli_.*_linux-x86_64-musl",
                 "parsec-cli_{version}_linux-x86_64-musl",
             ),
-            ReplaceRegex(r"parsec-cli .*", "parsec-cli {version}"),
+            ReplaceRegex(r"replace:: ``parsec-cli .*``", "replace:: ``parsec-cli {version}``"),
         ]
     },
     ROOT_DIR / "docs/conf.py": {

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-20 16:24+0200\n"
+"POT-Creation-Date: 2026-08-12 13:35+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -17,40 +17,39 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
-#: ../../cli/install-cli.rst:7
+#: ../../cli/install-cli.rst:10
 msgid "Install Parsec CLI (Linux)"
 msgstr "Installer la CLI Parsec (Linux)"
 
-#: ../../cli/install-cli.rst:9
-msgid ""
-"In order to deploy and maintain Parsec Server, you would need to perform "
-"some operations with Parsec :abbr:`CLI (Command-Line Interface)` for Linux. "
-"These operations can be performed from another machine."
-msgstr ""
-"Pour déployer et gérer Parsec Server, vous devrez effectuer certaines "
-"opérations à l'aide de Parsec :abbr:`CLI (Interface de ligne de commande)` "
-"sous Linux. Ces opérations peuvent être effectuées depuis un autre "
-"ordinateur."
-
 #: ../../cli/install-cli.rst:12
 msgid ""
-"Parsec :abbr:`CLI (Command-Line Interface)` is a standalone binary that can "
-"be downloaded from GitHub releases page."
+"In order to deploy and maintain Parsec Server, you would need to perform "
+"some operations with |parsec-cli| for Linux. These operations can be "
+"performed from another machine."
 msgstr ""
-"L'interface de ligne de commande (CLI) de Parsec est un binaire autonome qui "
-"peut être téléchargé depuis la page des versions sur GitHub."
+"Pour déployer et gérer Parsec Server, vous devrez effectuer certaines "
+"opérations à l'aide de |parsec-cli| sous Linux. Ces opérations peuvent être "
+"effectuées depuis un autre ordinateur."
 
-#: ../../cli/install-cli.rst:17
+#: ../../cli/install-cli.rst:15
+msgid ""
+"|parsec-cli| is a standalone binary that can be downloaded from GitHub "
+"releases page."
+msgstr ""
+"|parsec-cli| est un binaire autonome qui peut être téléchargé depuis la page "
+"des versions sur GitHub."
+
+#: ../../cli/install-cli.rst:20
 msgid "Download `Parsec CLI`_."
 msgstr "Téléchargez `Parsec CLI`_."
 
-#: ../../cli/install-cli.rst:19
+#: ../../cli/install-cli.rst:22
 msgid "Make the file executable"
 msgstr "Rendre le fichier exécutable :"
 
-#: ../../cli/install-cli.rst:21
+#: ../../cli/install-cli.rst:24
 msgid ""
 "Right-click on file, then :menuselection:`Properties --> Allow executing "
 "file as program`"
@@ -58,32 +57,77 @@ msgstr ""
 "Clic droit sur le fichier, puis :menuselection:`Propriétés --> Autoriser "
 "l'exécution du fichier en tant que programme`"
 
-#: ../../cli/install-cli.rst:22
+#: ../../cli/install-cli.rst:25
 msgid "Or use the :command:`chmod` command:"
 msgstr "Ou utilisez la commande :command:`chmod` :"
 
-#: ../../cli/install-cli.rst:28
+#: ../../cli/install-cli.rst:31
 msgid "Verify the installation by running the following command:"
 msgstr "Vérifiez l'installation en exécutant la commande suivante :"
 
-#: ../../cli/install-cli.rst:34
-msgid "The Parsec CLI version should be displayed:"
-msgstr "Ce qui devrait afficher la version installée :"
+#: ../../cli/install-cli.rst:37
+msgid "The Parsec CLI version should be displayed as |parsec-version|"
+msgstr "La version devrait être affichée comme |parsec-version|"
 
-#: ../../cli/install-cli.rst:40
+#: ../../cli/install-cli.rst:39
 msgid "For convenience, put the executable in ``~/.local/bin``"
 msgstr "Par soucis de praticité, copiez l'exécutable dans ``~/.local/bin``"
 
-#: ../../cli/install-cli.rst:46
+#: ../../cli/install-cli.rst:45
 msgid "and make a symbolic link"
 msgstr "et faites un lien symbolique"
 
-#: ../../cli/install-cli.rst:53
+#: ../../cli/install-cli.rst:52
 msgid "You will be able to execute ``parsec-cli`` from anywhere."
 msgstr "Vous pourrez exécuter ``parsec-cli`` depuis n'importe quel endroit."
 
-#: ../../cli/install-cli.rst:55
+#: ../../cli/install-cli.rst:56
 msgid "To update, follow the previous steps with the new version."
 msgstr ""
 "Pour mettre à jour, suivez les étapes décrites précédemment avec la nouvelle "
 "version."
+
+#: ../../cli/install-cli.rst:59
+msgid "Install man pages"
+msgstr "Installer les pages de manuel"
+
+#: ../../cli/install-cli.rst:61
+msgid "You can install the |parsec-cli| man pages by doing the following:"
+msgstr ""
+"Vous pouvez installer les pages de manuel pour |parsec-cli| en faisant les "
+"opérations suivantes :"
+
+#: ../../cli/install-cli.rst:63
+msgid "Create the local man pages folder:"
+msgstr "Créer le dossier local pour les pages de manuel :"
+
+#: ../../cli/install-cli.rst:71
+msgid ""
+"To make the pages available system-wide, replace the folder path with ``/usr/"
+"local/share/man/man1`` on the commands above and below."
+msgstr ""
+"Pour rendre les pages de manuel accessible pour tout le système, remplacer "
+"le dossier avec ``/usr/local/share/man/man1`` sur les commandes au-dessus et "
+"en-dessous."
+
+#: ../../cli/install-cli.rst:73
+msgid "Generate the man pages:"
+msgstr "Generer les pages de manuel :"
+
+#: ../../cli/install-cli.rst:79
+msgid "Update the man pages database:"
+msgstr "Mettre a jour la base de donnée des manuels :"
+
+#: ../../cli/install-cli.rst:85
+msgid "Verify:"
+msgstr "Verification :"
+
+#: ../../cli/install-cli.rst:93
+msgid ""
+"If ``man`` cannot find the page, ensure that the path where you put the "
+"pages is in the variable ``$MANPATH``. You can also verify if ``mandb`` "
+"explored the folder."
+msgstr ""
+"Si ``man`` n'arrive pas a trouver la page, verifier que le chemin où se "
+"trouve les pages est present dans la variable ``$MANPATH``. Vous pouvez "
+"aussi verifier si ``mandb`` a explorer le chemin."

@@ -2,14 +2,17 @@
 
 .. _doc_cli_install_cli:
 
+.. |parsec-cli| replace:: Parsec :abbr:`CLI (Command-Line Interface)`
+.. |parsec-version| replace:: ``parsec-cli 3.9.4-a.0+dev``
+
 ==========================
 Install Parsec CLI (Linux)
 ==========================
 
 In order to deploy and maintain Parsec Server, you would need to perform some operations with
-Parsec :abbr:`CLI (Command-Line Interface)` for Linux. These operations can be performed from another machine.
+|parsec-cli| for Linux. These operations can be performed from another machine.
 
-Parsec :abbr:`CLI (Command-Line Interface)` is a standalone binary that can be downloaded from
+|parsec-cli| is a standalone binary that can be downloaded from
 GitHub releases page.
 
 .. _Parsec CLI: https://github.com/Scille/parsec-cloud/releases/download/v3.9.4-a.0+dev/parsec-cli_3.9.4-a.0+dev_linux-x86_64-musl
@@ -31,11 +34,7 @@ GitHub releases page.
 
       ./parsec-cli_3.9.4-a.0+dev_linux-x86_64-musl --version
 
-   The Parsec CLI version should be displayed:
-
-   .. code-block:: shell
-
-      parsec-cli 3.9.4-a.0+dev
+   The Parsec CLI version should be displayed as |parsec-version|
 
 4. For convenience, put the executable in ``~/.local/bin``
 
@@ -55,3 +54,41 @@ GitHub releases page.
 .. tip::
 
    To update, follow the previous steps with the new version.
+
+Install man pages
+=================
+
+You can install the |parsec-cli| man pages by doing the following:
+
+1. Create the local man pages folder:
+
+   .. code-block:: shell
+
+      mkdir -p ~/.local/share/man/man1
+
+   .. tip::
+
+      To make the pages available system-wide, replace the folder path with ``/usr/local/share/man/man1`` on the commands above and below.
+
+2. Generate the man pages:
+
+   .. code-block:: shell
+
+      parsec-cli man-page --mode separate ~/.local/share/man/man1
+
+3. Update the man pages database:
+
+   .. code-block:: shell
+
+      mandb
+
+4. Verify:
+
+   .. code-block:: shell
+
+      man parsec-cli
+
+   .. important::
+
+      If ``man`` cannot find the page, ensure that the path where you put the pages is in the variable ``$MANPATH``.
+      You can also verify if ``mandb`` explored the folder.
