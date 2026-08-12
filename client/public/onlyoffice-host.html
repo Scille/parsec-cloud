@@ -28,8 +28,12 @@
       // websocket-based server communication OnlyOffice normally relies on with the `connectMockServer`
       // hook that CryptPad's OnlyOffice fork exposes for that purpose.
       //
-      // There is intentionally no document persistence here: edits made through `onMessage` are kept
-      // in-memory by the editor only, nothing is sent back to Parsec.
+      // Step 3.2 (see root CLAUDE.md): the actual client/server protocol is now mocked by
+      // onlyoffice-mock-server.js (localStorage + BroadcastChannel only, no network - see that file
+      // and notes/communication_protocol.md), instead of a bare no-op stub. It shows every message the
+      // client sends/receives in an on-page debug panel, and two tabs opening the same document join
+      // the same simulated session. Document *content* is still never sent back to Parsec: there's no
+      // save/export wired up yet.
       (function () {
         var parentWindow = window.parent;
 
@@ -102,7 +106,7 @@
         }
 
         function openDocument(options) {
-          loadScript('/onlyoffice/web-apps/apps/api/documents/api.js')
+          Promise.all([loadScript('/onlyoffice/web-apps/apps/api/documents/api.js'), loadScript('/onlyoffice-mock-server.js')])
             .then(function () {
               if (!window.DocsAPI || !window.DocsAPI.DocEditor) {
                 postToParent('oo-error', { details: 'DocsAPI is not available' });
@@ -114,24 +118,17 @@
               window.APP = window.APP || {};
               var config = buildConfig(options);
               var docEditor = new window.DocsAPI.DocEditor('placeholder', config);
-              docEditor.connectMockServer({
-                onMessage: function () {
-                  // No collaborative server yet: edits stay local to this tab and are never relayed.
-                },
-                getParticipants: function () {
-                  return {
-                    list: [{ id: options.userId, username: options.userName, indexUser: 0, view: options.mode !== 'edit' }],
-                    index: 0,
-                  };
-                },
-                onAuth: function () {},
-                getInitialChanges: function () {
-                  return [];
-                },
-                getImageURL: function () {
-                  return Promise.resolve('');
-                },
+              var mockServer = window.OnlyOfficeMockServer.create({
+                documentId: options.documentId,
+                userId: options.userId,
+                userName: options.userName,
+                mode: options.mode,
               });
+              mockServer.setEditor(docEditor);
+              window.addEventListener('pagehide', function () {
+                mockServer.destroy();
+              });
+              docEditor.connectMockServer(mockServer);
             })
             .catch(function (err) {
               postToParent('oo-error', { details: err.message });

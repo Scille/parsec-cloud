@@ -45,6 +45,11 @@ namespace OnlyOfficeCommAPI {
     // editor, see services/x2t.ts.
     documentExtension: string;
     documentType: OnlyOfficeCommAPI.DocumentTypes;
+    // Stable identifier of the document being edited (e.g. `${workspaceId}:${path}`), used only to
+    // key the mock collaboration session in onlyoffice-mock-server.js (see step 3.2 in CLAUDE.md) so
+    // that two tabs/users opening the same file join the same simulated session. Not to be confused
+    // with `key` below, which is OnlyOffice's own per-editing-session key.
+    documentId: string;
     key: string;
     userName: string;
     userId: string;

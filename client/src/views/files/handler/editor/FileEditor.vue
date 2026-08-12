@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo } from '@/parsec';
+import { ClientInfo, getWorkspaceInfo } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   getOnlyOfficeDocumentType,
@@ -163,12 +163,18 @@ async function loadEditor(): Promise<void> {
     emits('fileError');
     return;
   }
+  // POC (step 3.2): identify the document independently of the workspace handle (a per-session
+  // local resource id, not shared across users/tabs) so that two clients opening the same file join
+  // the same simulated collaboration session in onlyoffice-mock-server.js.
+  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
+  const documentId = `${workspaceInfoResult.ok ? workspaceInfoResult.value.id : workspaceHandle}:${contentInfo.path}`;
   session = await openDocument(
     {
       documentContent: content,
       documentName: contentInfo.fileName,
       documentExtension: contentInfo.extension,
       documentType: documentType.value,
+      documentId,
       key: crypto.randomUUID(),
       userName: userInfo ? userInfo.humanHandle.label : I18n.translate('UsersPage.anonymous'),
       userId: userInfo ? userInfo.userId : crypto.randomUUID(),
