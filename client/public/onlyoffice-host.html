@@ -125,6 +125,7 @@
                 mode: options.mode,
               });
               mockServer.setEditor(docEditor);
+              window.__ooMockServer = mockServer; // debugging hook, see notes/communication_protocol.md
               window.addEventListener('pagehide', function () {
                 mockServer.destroy();
               });

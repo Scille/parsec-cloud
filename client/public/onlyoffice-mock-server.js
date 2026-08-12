@@ -169,6 +169,7 @@
       this.presenceStorageKey = `${this.channelKey}:presence`;
       this.bc = ('BroadcastChannel' in global) ? new BroadcastChannel(this.channelKey) : null;
       this._fakeParticipants = []; // manually-simulated (non-tab) participants, for single-tab testing
+      this._cursorHistory = []; // this session's own recent real cursor values, see the 'cursor' case below
       this._lastParticipantsKey = '';
       this._heartbeatTimer = null;
       this._onBcMessage = this._onBcMessage.bind(this);
@@ -196,13 +197,17 @@
         .filter((id) => Date.now() - presence[id].ts < 20000) // prune stale (crashed/closed) tabs
         .sort();
       let myIndex = 0;
+      // `id` must be unique per *connection* (so the same real user in two tabs shows as two rows
+      // merged under one name) while `idOriginal` is the per-*person* identity the client actually
+      // groups/colors by (see notes/communication_protocol.md) - omitting `idOriginal` made every
+      // participant collapse into a single "(N)" row keyed by the shared `undefined` value.
       const list = ids.map((id, i) => {
         if (id === this.clientId) myIndex = i;
         const p = presence[id];
-        return { id: p.userId, username: p.userName, indexUser: i, view: p.mode === 'view' };
+        return { id, idOriginal: p.userId, username: p.userName, indexUser: i, view: p.mode === 'view' };
       });
       this._fakeParticipants.forEach((p, i) => {
-        list.push({ id: p.userId, username: p.userName, indexUser: ids.length + i, view: false });
+        list.push({ id: p.userId, idOriginal: p.userId, username: p.userName, indexUser: ids.length + i, view: false });
       });
       return { list, index: myIndex };
     }
@@ -245,14 +250,34 @@
           break;
         case 'cursor':
           // Ephemeral: never persisted, just relayed live to whoever else is connected right now.
-          this._broadcast({ kind: 'cursor', from: this.clientId, cursor: msg.cursor });
+          // `from` (this tab's connection id) must match the `id` a connectState used for this tab's
+          // participant entry, and `userId` (the person) must match that entry's `idOriginal` - the
+          // client only draws a labelled/colored foreign cursor for an id it already knows about via
+          // connectState (see notes/communication_protocol.md).
+          // Used by the "Simulate cursor move" button, see below: keep a short history rather than
+          // just the latest value, so the simulated cursor lands somewhere *near* but not exactly on
+          // top of this session's current position (see the CURSOR_COLLISION note further down).
+          this._cursorHistory.push(msg.cursor);
+          if (this._cursorHistory.length > 8) this._cursorHistory.shift();
+          this._broadcast({ kind: 'cursor', from: this.clientId, userId: this.userId, cursor: msg.cursor });
           break;
-        case 'getLock':
-          // Ephemeral lock grant: broadcast (and echo back to self, like the real server does) so
-          // every connected client - including this one - reflects the same lock state.
-          this._broadcast({ kind: 'lock', from: this.clientId, locks: msg.block || [] });
+        case 'getLock': {
+          // Unlike saveChanges (which has a separate unSaveLock ack), getLock's grant *is* the ack:
+          // the requester blocks further local edits until it receives one back. BroadcastChannel
+          // never delivers to its own sender, so without an explicit self-delivery here, Alice's own
+          // lock request would never be acknowledged and she'd be stuck unable to edit - this was a
+          // real bug (see notes/communication_protocol.md).
+          //
+          // The client also expects `locks` as an id-keyed map of `{time, user, block}` entries (per
+          // CryptPad's `getLock()`), not the raw `block` array the *request* carries.
+          const uid = (global.crypto && global.crypto.randomUUID) ? global.crypto.randomUUID() : String(Math.random());
+          const locks = { [uid]: { time: Date.now(), user: this.userId, block: msg.block && msg.block[0] } };
+          this._sendToClient('getLock', { locks });
+          this._broadcast({ kind: 'lock', from: this.clientId, locks });
           break;
+        }
         case 'unLockDocument':
+          this._sendToClient('releaseLock', { locks: {} });
           this._broadcast({ kind: 'releaseLock', from: this.clientId });
           break;
         case 'saveChanges': {
@@ -395,7 +420,7 @@
         case 'cursor':
           if (data.from !== this.clientId) {
             this._sendToClient('cursor', {
-              messages: [{ cursor: data.cursor, time: Date.now(), user: data.from, useridoriginal: data.from }],
+              messages: [{ cursor: data.cursor, time: Date.now(), user: data.from, useridoriginal: data.userId }],
             });
           }
           break;
@@ -406,7 +431,7 @@
           break;
         case 'releaseLock':
           if (data.from !== this.clientId) {
-            this._sendToClient('releaseLock', { locks: [] });
+            this._sendToClient('releaseLock', { locks: {} });
           }
           break;
       }
@@ -435,14 +460,50 @@
         },
         {
           label: 'Simulate cursor move',
-          title: 'Sends an ephemeral cursor message as if from a simulated user',
+          title:
+            'Sends an ephemeral cursor message as if from a simulated user (auto-joins one first if ' +
+            'needed - the client only draws a cursor for a participant it already knows about). Reuses ' +
+            'one of this session’s own past real cursor positions (not the current one - see the ' +
+            'CURSOR_COLLISION note in the code/notes/communication_protocol.md for why), since - like ' +
+            'saveChanges - the position value is an OnlyOffice-internal encoding we can’t hand-craft.',
           onClick: () => {
-            const from = this._fakeParticipants.length
-              ? this._fakeParticipants[this._fakeParticipants.length - 1].userId
-              : 'fake-bob-cursor';
-            const digit = Math.floor(Math.random() * 9);
+            if (!this._fakeParticipants.length) {
+              this._fakeParticipants.push({ userId: 'fake-bob-1', userName: 'Bob (simulated #1)' });
+              this._pushParticipantsIfChanged();
+            }
+            const from = this._fakeParticipants[this._fakeParticipants.length - 1].userId;
+            // CURSOR_COLLISION: deliberately avoid reusing this session's *current* cursor position.
+            // A real second user's cursor essentially never lands on your exact current character
+            // offset - but ours would, every time, if we always reused the latest value, and OnlyOffice's
+            // own vendored engine has a reproducible edge case there: local typing silently stops being
+            // processed (no message is even attempted - confirmed by watching this very panel stay
+            // empty) until the tab loses and regains focus and the cursor is moved. That's internal to
+            // the minified sdkjs engine, not something this mock server's protocol layer can fix, so we
+            // just avoid manufacturing the exact-overlap case in the first place.
+            //
+            // OnlyOffice only emits a 'cursor' message on explicit repositioning (a click, arrow-key
+            // navigation), not per keystroke while typing continuously, and a position can coincidentally
+            // repeat across captures (e.g. re-clicking near the same spot) - so "the oldest entry" isn't
+            // reliably different from "the current one" either. Search for *any* captured value that
+            // actually differs from the current one, and only fall back to skipping (with an explanation)
+            // if every capture we have happens to be identical to it.
+            const current = this._cursorHistory[this._cursorHistory.length - 1];
+            const cursor = this._cursorHistory.find((value) => value !== current);
+            if (!cursor) {
+              Panel.log(
+                'in',
+                {
+                  type: '(info) cursor-collision-avoided',
+                  note:
+                    'no captured cursor position differs from this session’s current one yet - click ' +
+                    'around the document a bit (not just type) then try again',
+                },
+                'not a real OnlyOffice message',
+              );
+              return;
+            }
             this._sendToClient('cursor', {
-              messages: [{ cursor: `10;AgAAAD${digit}AAAAAAA==`, time: Date.now(), user: from, useridoriginal: from }],
+              messages: [{ cursor, time: Date.now(), user: from, useridoriginal: from }],
             });
           },
         },
