@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.3.0-rc.12+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-20 08:15+0000\n"
+"POT-Creation-Date: 2026-08-12 10:30+0000\n"
 "PO-Revision-Date: 2025-02-26 23:56-0300\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -240,7 +240,17 @@ msgstr ""
 "celle du serveur (vous pouvez utiliser ``date --utc`` pour comparer les "
 "horloges)"
 
-#: ../../hosting/sequester/index.rst:129
+#: ../../hosting/sequester/index.rst:122
+msgid "``parsec-cli`` can generate the sequester certificate"
+msgstr "``parsec-cli`` peut generer le certificat du sequestre"
+
+#: ../../hosting/sequester/index.rst:132
+msgid "You can generate the sequester certificate using the server CLI:"
+msgstr ""
+"Vous pouvez créer le certificat de séquestre à l'aide de la commande "
+"suivante :"
+
+#: ../../hosting/sequester/index.rst:143
 msgid ""
 "This step while using the parsec server CLI does not require to be executed "
 "on the same machine as the service."
@@ -249,11 +259,11 @@ msgstr ""
 "serveur Parsec, n'a pas besoin d'être exécutée sur la même machine que le "
 "service."
 
-#: ../../hosting/sequester/index.rst:132
+#: ../../hosting/sequester/index.rst:146
 msgid "Enable sequester service"
 msgstr "Activer le service de séquestre"
 
-#: ../../hosting/sequester/index.rst:134
+#: ../../hosting/sequester/index.rst:148
 msgid ""
 "Next, provide to the parsec server's administrator the recently generated "
 "service certificate."
@@ -261,27 +271,27 @@ msgstr ""
 "Ensuite, fournissez à l'administrateur du serveur Parsec le certificat de "
 "service récemment généré."
 
-#: ../../hosting/sequester/index.rst:135
+#: ../../hosting/sequester/index.rst:149
 msgid "The admin now needs to create the service on the server:"
 msgstr "L'administrateur doit maintenant créer le service sur le serveur :"
 
-#: ../../hosting/sequester/index.rst:145
+#: ../../hosting/sequester/index.rst:159
 msgid "You need to have access to the database credentials for that operation."
 msgstr ""
 "Vous devez avoir accès aux identifiants de la base de données pour cette "
 "opération."
 
-#: ../../hosting/sequester/index.rst:149
+#: ../../hosting/sequester/index.rst:163
 msgid "The sequester service can only be enabled on bootstrapped organization."
 msgstr ""
 "Le service de séquestre ne peut être activé que sur une organisation "
 "initialisée."
 
-#: ../../hosting/sequester/index.rst:152
+#: ../../hosting/sequester/index.rst:166
 msgid "Exporting data with sequester service"
 msgstr "Exportation de données avec le service séquestre"
 
-#: ../../hosting/sequester/index.rst:154
+#: ../../hosting/sequester/index.rst:168
 msgid ""
 "Realm vs Workspace: In Parsec vocabulary, workspace and realm are two sides "
 "of the same coin. In a nutshell, the realm is a server-side concept that "
@@ -294,7 +304,7 @@ msgstr ""
 "cryptées, tandis que l'espace de travail est le concept côté client qui fait "
 "référence à ces données une fois décryptées."
 
-#: ../../hosting/sequester/index.rst:159
+#: ../../hosting/sequester/index.rst:173
 msgid ""
 "Hence the \"realm export\" is the operation of exporting from the server all "
 "the encrypted data that, when used with the right decryption keys, will "
@@ -307,15 +317,15 @@ msgstr ""
 "accès en lecture complet à un espace de travail à tout moment jusqu'à la "
 "date d'exportation."
 
-#: ../../hosting/sequester/index.rst:163
+#: ../../hosting/sequester/index.rst:177
 msgid "Overview:"
 msgstr "Vue d'ensemble :"
 
-#: ../../hosting/sequester/index.rst:165
+#: ../../hosting/sequester/index.rst:179
 msgid "An organization exists with a workspace"
 msgstr "Une organisation existe avec un espace de travail"
 
-#: ../../hosting/sequester/index.rst:166
+#: ../../hosting/sequester/index.rst:180
 msgid ""
 "From the server CLI, a realm is exported. This generates a large ``.sqlite`` "
 "file containing all encrypted data belonging to this realm."
@@ -324,7 +334,7 @@ msgstr ""
 "grand fichier ``.sqlite`` contenant toutes les données cryptées appartenant "
 "à ce realm."
 
-#: ../../hosting/sequester/index.rst:168
+#: ../../hosting/sequester/index.rst:182
 msgid ""
 "The realm export file is transferred to a machine containing the decryption "
 "keys:"
@@ -332,11 +342,11 @@ msgstr ""
 "Le fichier d'exportation du realm est transféré vers une machine contenant "
 "les clés de décryptage :"
 
-#: ../../hosting/sequester/index.rst:170
+#: ../../hosting/sequester/index.rst:184
 msgid "Sequestered service key in case of a sequestered organization."
 msgstr "Clé de service du séquestre dans le cas d'une organisation séquestrée."
 
-#: ../../hosting/sequester/index.rst:171
+#: ../../hosting/sequester/index.rst:185
 msgid ""
 "Device key otherwise (i.e. decrypt the realm export from a machine normally "
 "used to run the Parsec client)."
@@ -344,6 +354,17 @@ msgstr ""
 "Clé de l'appareil, sinon (c'est-à-dire décrypter l'exportation du realm à "
 "partir d'une machine normalement utilisée pour exécuter le client Parsec)."
 
-#: ../../hosting/sequester/index.rst:187
+#: ../../hosting/sequester/index.rst:201
 msgid "Using exported data"
 msgstr "Utilisation des données exportées"
+
+#: ../../hosting/sequester/index.rst:203
+msgid "Use ``parsec-cli`` to mount a virtual drive with decrypted data:"
+msgstr ""
+"Utiliser ``parsec-cli`` pour monter un disque virtuel avec la donnée "
+"déchiffrée :"
+
+#: ../../hosting/sequester/index.rst:213
+msgid "The command ``mount-realm-export`` was renamed to ``sequester mount``"
+msgstr ""
+"La commande ``mount-realm-export`` a été renommée vers ``sequester mount``"
