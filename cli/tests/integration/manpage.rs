@@ -19,17 +19,17 @@ async fn gen_man_page(#[case] mode: Mode, tmp_path: TmpPath) {
     match mode {
         Mode::AllInOne => {
             assert!(metadata.is_file());
-            #[cfg(target_family = "unix")]
-            {
-                use std::os::unix::fs::MetadataExt;
-                assert!(metadata.size() > 0);
-            }
+            assert!(metadata.len() > 20);
         }
         Mode::Separate => {
             assert!(metadata.is_dir());
             let mut entries = tokio::fs::read_dir(out_path).await.unwrap();
             let mut count = 0_usize;
-            while let Ok(Some(_)) = entries.next_entry().await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let metadata = entry.metadata().await.unwrap();
+                assert!(metadata.is_file());
+                assert!(metadata.len() > 20);
+
                 count += 1;
             }
             assert!(count > 1);
