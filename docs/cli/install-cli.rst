@@ -55,6 +55,20 @@ GitHub releases page.
 
    To update, follow the previous steps with the new version.
 
+Enable auto-completion
+======================
+
+To have your shell auto-complete the ``parsec-cli`` command arguments,
+you will need to have the following line in your shell RC file:
+
+.. code-block:: shell
+
+   eval "$(parsec-cli auto-complete $SHELL)"
+
+.. note::
+
+   The above code-snippet is for ``bash``, adapt it to your shell.
+
 Install man pages
 =================
 
