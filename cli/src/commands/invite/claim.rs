@@ -439,8 +439,8 @@ async fn step4_user(
     ctx: UserClaimInProgress3Ctx,
 ) -> anyhow::Result<UserClaimFinalizeCtx> {
     let mut input = String::new();
-    let device_label = choose_device_label(&mut input)?;
-    let human_handle = choose_human_handle(&mut input)?;
+    let device_label = choose_device_label(ui, &mut input)?;
+    let human_handle = choose_human_handle(ui, &mut input)?;
 
     let handle = ui.with_spinner(|_, out| write!(out, "Waiting for greeter"))?;
 
@@ -457,7 +457,7 @@ async fn step4_device(
     ctx: DeviceClaimInProgress3Ctx,
 ) -> anyhow::Result<DeviceClaimFinalizeCtx> {
     let mut input = String::new();
-    let device_label = choose_device_label(&mut input)?;
+    let device_label = choose_device_label(ui, &mut input)?;
 
     let handle = ui.with_spinner(|_, out| write!(out, "Waiting for greeter"))?;
 
