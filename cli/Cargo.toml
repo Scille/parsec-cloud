@@ -67,6 +67,7 @@ parsec-cli = { path = ".", features = ["testenv"] }
 
 assert_cmd = { workspace = true }
 predicates = { workspace = true, features = ["regex"] }
+regex.workspace = true
 rstest = { workspace = true }
 uuid = { workspace = true, features = ["v6", "std", "rng"] }
 
