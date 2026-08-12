@@ -6,6 +6,8 @@ import {
   checkEntryContextMenu,
   checkFolderGlobalContextMenu,
   DisplaySize,
+  documentsInGridMode,
+  documentsToggleViewMode,
   expect,
   fillInputModal,
   fillIonInput,
@@ -17,29 +19,9 @@ import {
 } from '@tests/e2e/helpers';
 import { mockDesktop } from '@tests/e2e/helpers/mock';
 
-async function isInGridMode(page: MsPage): Promise<boolean> {
-  const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
-  return (
-    (await page
-      .locator(smallDisplay ? '.mobile-filters' : '#folders-ms-action-bar')
-      .locator('#grid-view')
-      .getAttribute('disabled')) !== null
-  );
-}
-
-async function toggleViewMode(page: MsPage): Promise<void> {
-  const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
-  const locator = smallDisplay ? '.mobile-filters' : '#folders-ms-action-bar';
-  if (await isInGridMode(page)) {
-    await page.locator(locator).locator('#list-view').click();
-  } else {
-    await page.locator(locator).locator('#grid-view').click();
-  }
-}
-
 async function openPopover(page: MsPage, index: number): Promise<Locator> {
   const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
-  if (await isInGridMode(page)) {
+  if (await documentsInGridMode(page)) {
     const entry = page.locator('.folder-container').locator('.file-card-item').nth(index);
     await entry.hover();
     await entry.locator('.card-option').click();
@@ -74,7 +56,7 @@ msTest.describe(() => {
         await entry.hover();
         await entry.locator('.options-button').click();
       } else {
-        await toggleViewMode(documents);
+        await documentsToggleViewMode(documents);
         const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
         await entry.hover();
         await entry.locator('.card-option').click();
@@ -90,7 +72,7 @@ msTest.describe(() => {
         await entry.hover();
         await entry.locator('.options-button').click();
       } else {
-        await toggleViewMode(documents);
+        await documentsToggleViewMode(documents);
         const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
         await entry.hover();
         await entry.locator('.card-option').click();
@@ -105,7 +87,7 @@ msTest.describe(() => {
         const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
         await entry.click({ button: 'right' });
       } else {
-        await toggleViewMode(documents);
+        await documentsToggleViewMode(documents);
         const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
         await entry.click({ button: 'right' });
       }
@@ -121,7 +103,7 @@ msTest.describe(() => {
           const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
           await entry.click({ button: 'right' });
         } else {
-          await toggleViewMode(documents);
+          await documentsToggleViewMode(documents);
           const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
           await entry.click({ button: 'right' });
         }
@@ -200,13 +182,6 @@ msTest.describe(() => {
 
     await entries.nth(0).locator('.file-last-update').click({ button: 'right' });
     await checkEntryContextMenu(documents, 'multiple-entries-full', 'dismiss');
-  });
-
-  msTest('Popover with right click on empty space', async ({ documents }, testInfo: TestInfo) => {
-    await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
-
-    await documents.locator('.folder-container').click({ button: 'right', position: { x: 100, y: 10 } });
-    await checkFolderGlobalContextMenu(documents, 'full', 'dismiss');
   });
 
   msTest('Popover with right click on empty space readonly', async ({ documentsReadOnly }) => {
@@ -303,6 +278,19 @@ msTest.describe(() => {
 
   for (const gridMode of [false, true]) {
     msTest(
+      `Documents popover with right click on empty space in ${gridMode ? 'grid' : 'list'}`,
+      async ({ documents }, testInfo: TestInfo) => {
+        await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
+
+        if (gridMode) {
+          await documentsToggleViewMode(documents);
+        }
+        await documents.locator('.folder-container').click({ button: 'right', position: { x: 100, y: 10 } });
+        await checkFolderGlobalContextMenu(documents, 'full', 'dismiss');
+      },
+    );
+
+    msTest(
       `Small display document actions default state in ${gridMode ? 'grid' : 'list'} mode for file`,
       async ({ documents }, testInfo: TestInfo) => {
         await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
@@ -313,7 +301,7 @@ msTest.describe(() => {
           await entry.hover();
           await entry.locator('.options-button').click();
         } else {
-          await toggleViewMode(documents);
+          await documentsToggleViewMode(documents);
           const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
           await entry.hover();
           await entry.locator('.card-option').click();
@@ -335,7 +323,7 @@ msTest.describe(() => {
           await entry.hover();
           await entry.locator('.options-button').click();
         } else {
-          await toggleViewMode(documents);
+          await documentsToggleViewMode(documents);
           const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
           await entry.hover();
           await entry.locator('.card-option').click();
@@ -354,7 +342,7 @@ msTest.describe(() => {
           const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
           await entry.click({ button: 'right' });
         } else {
-          await toggleViewMode(documents);
+          await documentsToggleViewMode(documents);
           const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
           await entry.click({ button: 'right' });
         }
@@ -376,7 +364,7 @@ msTest.describe(() => {
           const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
           await entry.click({ button: 'right' });
         } else {
-          await toggleViewMode(documents);
+          await documentsToggleViewMode(documents);
           const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
           await entry.click({ button: 'right' });
         }

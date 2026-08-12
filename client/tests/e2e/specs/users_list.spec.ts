@@ -4,6 +4,7 @@ import { Locator, Page } from '@playwright/test';
 import {
   addUser,
   answerQuestion,
+  checkUserContextMenu,
   DisplaySize,
   expect,
   fillIonInput,
@@ -144,25 +145,9 @@ for (const success of [true, false]) {
 
     const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
     await item.hover();
-    const menu = usersPage.locator('#user-context-menu');
-    await expect(menu).toBeHidden();
     // Opens context menu with button
     await item.locator('.options-button').click();
-    await expect(menu).toBeVisible();
-    // Full context menu
-    await expect(menu.getByRole('listitem')).toHaveText([
-      'Deletion',
-      'Revoke this user',
-      'Profile',
-      'Change profile',
-      'User details',
-      'View details',
-      'Copy roles',
-      'Copy workspace roles',
-    ]);
-
-    // Revoke the user
-    await menu.getByRole('listitem').nth(1).click();
+    await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'Revoke this user');
     await answerQuestion(usersPage, true, {
       expectedTitleText: 'Revoke this user?',
       expectedQuestionText:
@@ -175,13 +160,13 @@ for (const success of [true, false]) {
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
       await expect(item.locator('.user-status')).toHaveText('Revoked');
       // Opens context menu with right click
-      await expect(menu).toBeHidden();
       await item.click({ button: 'right' });
-      await expect(menu).toBeVisible();
-      await expect(menu.getByRole('listitem')).toHaveText(['User details', 'View details', 'Copy roles', 'Copy workspace roles']);
+      await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'dismiss', { isRevoked: true });
     } else {
       await expect(usersPage).toShowToast('Failed to revoke this user.', 'Error');
       await expect(item.locator('.user-status')).toHaveText('Active');
+      await item.click({ button: 'right' });
+      await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'dismiss');
     }
   });
 
@@ -672,9 +657,7 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(1);
   await sourceUser.hover();
   await sourceUser.locator('.options-button').click();
-  const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(3).getByRole('listitem').nth(1);
-  await expect(menuButton).toHaveText('Copy workspace roles');
-  await menuButton.click();
+  await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'Copy workspace roles');
   const modal = usersPage.locator('.role-assignment-modal');
   await expect(modal).toBeVisible();
   const nextButton = modal.locator('#next-button');
@@ -708,9 +691,7 @@ for (const success of [true, false]) {
     const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(1);
     await sourceUser.hover();
     await sourceUser.locator('.options-button').click();
-    const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(1).getByRole('listitem').nth(1);
-    await expect(menuButton).toHaveText('Change profile');
-    await menuButton.click();
+    await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'Change profile');
     const modal = usersPage.locator('.update-profile-modal');
     const modalContent = modal.locator('.ms-modal-content');
     await expect(modal).toBeVisible();
@@ -826,45 +807,64 @@ msTest('Small display selection', async ({ usersPage }) => {
   await expect(user2.locator('.ms-checkbox')).not.toBeVisible();
 });
 
-msTest('Small display member context menu', async ({ usersPage }) => {
-  await usersPage.setDisplaySize(DisplaySize.Small);
-  const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
-  const modal = usersPage.locator('.user-context-sheet-modal');
+for (const gridOrList of ['grid', 'list']) {
+  for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+    msTest(`Member context menu in ${displaySize} display in ${gridOrList} mode`, async ({ usersPage }) => {
+      if (gridOrList === 'grid') {
+        await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
+      }
+      if (displaySize === DisplaySize.Small) {
+        await usersPage.setDisplaySize(DisplaySize.Small);
+      }
+      await usersPage.waitForTimeout(500);
+      const user = usersPage
+        .locator('.users-container')
+        .locator(gridOrList === 'list' ? '.user-list-item' : '.user-card-item')
+        .nth(1);
+      await user.click({ button: 'right' });
+      // Forced to use `View details` as the action. In grid mode, when the action is `dismiss` and the user is nth(1), it doesn't
+      // work. It works in list mode, it works with user nth(2), it makes absolutely no sense at all.
+      await checkUserContextMenu(usersPage, 'Administrator', 'Standard', 'View details');
+    });
 
-  await user1.locator('.user-options').click();
-  await expect(modal).toBeVisible();
-  await expect(modal.getByRole('group')).toHaveCount(2);
-  await expect(modal.getByRole('listitem')).toHaveText(['Revoke this user', 'Copy workspace roles', 'Change profile', 'View details']);
-});
+    msTest(`External external context menu in ${displaySize} display in ${gridOrList} mode`, async ({ usersPage }) => {
+      if (gridOrList === 'grid') {
+        await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
+      }
+      if (displaySize === DisplaySize.Small) {
+        await usersPage.setDisplaySize(DisplaySize.Small);
+      }
+      await usersPage.waitForTimeout(500);
+      const user = usersPage
+        .locator('.users-container')
+        .locator(gridOrList === 'list' ? '.user-list-item' : '.user-card-item')
+        .nth(2);
+      await user.click({ button: 'right' });
+      // Forced to use `View details` as the action. In grid mode, when the action is `dismiss` and the user is nth(1), it doesn't
+      // work. It works in list mode, it works with user nth(2), it makes absolutely no sense at all.
+      await checkUserContextMenu(usersPage, 'Administrator', 'External', 'View details');
+    });
 
-msTest('Small display external context menu', async ({ usersPage }) => {
-  await usersPage.setDisplaySize(DisplaySize.Small);
-  const user2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
-  const modal = usersPage.locator('.user-context-sheet-modal');
-
-  await user2.locator('.user-options').click();
-  await expect(modal).toBeVisible();
-  await expect(modal.getByRole('group')).toHaveCount(2);
-  await expect(modal.getByRole('listitem')).toHaveText(['Revoke this user', 'Copy workspace roles', 'View details']);
-});
-
-msTest('Small display multiple users context menu', async ({ usersPage }) => {
-  await usersPage.setDisplaySize(DisplaySize.Small);
-  const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
-  const modal = usersPage.locator('.user-context-sheet-modal');
-
-  await user1.hover();
-  await user1.locator('.ms-checkbox').click();
-  const headerOption = usersPage.locator('.small-display-selection-header').locator('.button-medium');
-  await headerOption.nth(0).click();
-  await headerOption.nth(0).click();
-
-  await user1.locator('.user-options').click();
-  await expect(modal.getByRole('group')).toHaveCount(1);
-  await expect(modal.getByRole('listitem')).toHaveText(['Revoke these users', 'Change profiles']);
-  await modal.getByRole('listitem').nth(1).click();
-  await expect(usersPage.locator('.update-profile-modal').locator('.ms-modal-content').locator('.warn-outsiders')).toBeVisible();
-});
+    msTest(`Multiple users context menu in ${displaySize} display in ${gridOrList} mode`, async ({ usersPage }) => {
+      await usersPage.waitForTimeout(200);
+      usersPage.locator('.users-container').locator('.user-list-header').locator('.ms-checkbox').check();
+      await usersPage.waitForTimeout(200);
+      if (gridOrList === 'grid') {
+        await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
+      }
+      if (displaySize === DisplaySize.Small) {
+        await usersPage.setDisplaySize(DisplaySize.Small);
+      }
+      await usersPage.waitForTimeout(500);
+      const user = usersPage
+        .locator('.users-container')
+        .locator(gridOrList === 'list' ? '.user-list-item' : '.user-card-item')
+        .nth(1);
+      await user.click({ button: 'right' });
+      await checkUserContextMenu(usersPage, 'Administrator', 'multi-users', 'Revoke these users');
+    });
+  }
+}
 
 msTest('Impossible to select users as standard', async ({ workspacesStandard }) => {
   await workspacesStandard.locator('.sidebar').locator('.sidebar-content-organization-button').nth(0).click();
