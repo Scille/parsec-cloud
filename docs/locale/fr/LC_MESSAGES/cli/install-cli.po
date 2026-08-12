@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 13:35+0000\n"
+"POT-Creation-Date: 2026-08-12 14:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -88,20 +88,39 @@ msgstr ""
 "version."
 
 #: ../../cli/install-cli.rst:59
+msgid "Enable auto-completion"
+msgstr "Activer l'auto completion"
+
+#: ../../cli/install-cli.rst:61
+msgid ""
+"To have your shell auto-complete the ``parsec-cli`` command arguments, you "
+"will need to have the following line in your shell RC file:"
+msgstr ""
+"Pour avoir votre inviter de commandes auto-completer les arguments de la "
+"commande ``parsec-cli``, vous aurez besoin de mettre la ligne suivante de le "
+"fichier RC de votre invite de commandes :"
+
+#: ../../cli/install-cli.rst:70
+msgid "The above code-snippet is for ``bash``, adapt it to your shell."
+msgstr ""
+"Le snipper de code au-dessus est pour ``bash``, adapter le pour votre "
+"invite de commandes."
+
+#: ../../cli/install-cli.rst:73
 msgid "Install man pages"
 msgstr "Installer les pages de manuel"
 
-#: ../../cli/install-cli.rst:61
+#: ../../cli/install-cli.rst:75
 msgid "You can install the |parsec-cli| man pages by doing the following:"
 msgstr ""
 "Vous pouvez installer les pages de manuel pour |parsec-cli| en faisant les "
 "opérations suivantes :"
 
-#: ../../cli/install-cli.rst:63
+#: ../../cli/install-cli.rst:77
 msgid "Create the local man pages folder:"
 msgstr "Créer le dossier local pour les pages de manuel :"
 
-#: ../../cli/install-cli.rst:71
+#: ../../cli/install-cli.rst:85
 msgid ""
 "To make the pages available system-wide, replace the folder path with ``/usr/"
 "local/share/man/man1`` on the commands above and below."
@@ -110,19 +129,19 @@ msgstr ""
 "le dossier avec ``/usr/local/share/man/man1`` sur les commandes au-dessus et "
 "en-dessous."
 
-#: ../../cli/install-cli.rst:73
+#: ../../cli/install-cli.rst:87
 msgid "Generate the man pages:"
 msgstr "Generer les pages de manuel :"
 
-#: ../../cli/install-cli.rst:79
+#: ../../cli/install-cli.rst:93
 msgid "Update the man pages database:"
 msgstr "Mettre a jour la base de donnée des manuels :"
 
-#: ../../cli/install-cli.rst:85
+#: ../../cli/install-cli.rst:99
 msgid "Verify:"
 msgstr "Verification :"
 
-#: ../../cli/install-cli.rst:93
+#: ../../cli/install-cli.rst:107
 msgid ""
 "If ``man`` cannot find the page, ensure that the path where you put the "
 "pages is in the variable ``$MANPATH``. You can also verify if ``mandb`` "
