@@ -662,23 +662,30 @@ msTest('Create new workspace name too long', async ({ workspaces }) => {
   await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['A'.repeat(64), 'wksp1']);
 });
 
-msTest('Create new with context menu', async ({ workspaces }) => {
-  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
-  const popover = workspaces.locator('.workspace-global-context-menu');
-  await expect(popover).toBeHidden();
-  await workspaces.locator('.workspaces-container').click({ button: 'right' });
-  await expect(popover).toBeVisible();
-  await expect(popover.locator('.list-group-item__label')).toHaveText(['New workspace']);
-  await popover.locator('.list-group-item__label').nth(0).click();
-  const modal = workspaces.locator('.text-input-modal');
-  await expect(modal).toBeVisible();
-  const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
-  await fillIonInput(modal.locator('ion-input'), 'Another Workspace');
-  await okButton.click();
-  await expect(modal).toBeHidden();
-  await expect(workspaces).toShowToast("The workspace 'Another Workspace' has been created!", 'Success');
-  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['Another Workspace', 'wksp1']);
-});
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+  msTest(`Create new with context menu in ${displaySize} display`, async ({ workspaces }) => {
+    if (displaySize === DisplaySize.Small) {
+      await workspaces.setDisplaySize(DisplaySize.Small);
+    }
+    await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['wksp1']);
+    const popover = workspaces.locator(
+      displaySize === DisplaySize.Large ? '.workspace-global-context-menu' : '.workspace-context-sheet-modal',
+    );
+    await expect(popover).toBeHidden();
+    await workspaces.locator('.workspaces-container').click({ button: 'right' });
+    await expect(popover).toBeVisible();
+    await expect(popover.locator('.list-group-item__label')).toHaveText(['New workspace']);
+    await popover.locator('.list-group-item__label').nth(0).click();
+    const modal = workspaces.locator('.text-input-modal');
+    await expect(modal).toBeVisible();
+    const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
+    await fillIonInput(modal.locator('ion-input'), 'Another Workspace');
+    await okButton.click();
+    await expect(modal).toBeHidden();
+    await expect(workspaces).toShowToast("The workspace 'Another Workspace' has been created!", 'Success');
+    await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['Another Workspace', 'wksp1']);
+  });
+}
 
 msTest('Check no favorite or recent workspaces', async ({ connected }) => {
   const workspaceCategoriesMenu = connected.locator('.workspace-categories-menu');

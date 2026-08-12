@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator } from '@playwright/test';
-import { answerQuestion, expect, MsPage, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, checkUserContextMenu, expect, MsPage, msTest } from '@tests/e2e/helpers';
 import { DateTime } from 'luxon';
 
 async function openModalWithUser(usersPage: MsPage, userIndex: number, revokeFirst?: boolean): Promise<Locator> {
@@ -12,23 +12,14 @@ async function openModalWithUser(usersPage: MsPage, userIndex: number, revokeFir
   if (revokeFirst) {
     await user.hover();
     await user.locator('.options-button').click();
-    await usersPage.locator('.user-context-menu').getByRole('listitem').nth(1).click();
+    await checkUserContextMenu(usersPage, 'Administrator', 'External', 'Revoke this user');
     await answerQuestion(usersPage, true);
     await expect(usersPage).toShowToast('Malloryy McMalloryFace has been revoked. They can no longer access this organization.', 'Success');
     await expect(user).toHaveTheClass('revoked');
   }
   await user.hover();
   await user.locator('.options-button').click();
-  const popover = usersPage.locator('.user-context-menu');
-  let nth = 5;
-  if (isOutsider) {
-    nth = 3;
-  }
-  if (revokeFirst) {
-    nth = 1;
-  }
-
-  await popover.getByRole('listitem').nth(nth).click();
+  await checkUserContextMenu(usersPage, 'Administrator', isOutsider ? 'External' : 'Standard', 'View details', { isRevoked: revokeFirst });
   const modal = usersPage.locator('.user-details-modal');
   await expect(modal).toBeVisible();
   return modal;

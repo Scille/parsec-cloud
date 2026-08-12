@@ -261,15 +261,23 @@ export async function workspacesInGridMode(workspacesPage: Page): Promise<boolea
   return (await workspacesPage.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
 }
 
-export async function documentsInGridMode(documentsPage: Page): Promise<boolean> {
-  return (await documentsPage.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
+export async function documentsInGridMode(documentsPage: MsPage): Promise<boolean> {
+  const smallDisplay = (await documentsPage.getDisplaySize()) === DisplaySize.Small;
+  return (
+    (await documentsPage
+      .locator(smallDisplay ? '.mobile-filters' : '#folders-ms-action-bar')
+      .locator('#grid-view')
+      .getAttribute('disabled')) !== null
+  );
 }
 
-export async function documentsToggleViewMode(documentsPage: Page): Promise<void> {
+export async function documentsToggleViewMode(documentsPage: MsPage): Promise<void> {
+  const smallDisplay = (await documentsPage.getDisplaySize()) === DisplaySize.Small;
+  const locator = smallDisplay ? '.mobile-filters' : '#folders-ms-action-bar';
   if (await documentsInGridMode(documentsPage)) {
-    await documentsPage.locator('#folders-ms-action-bar').locator('#list-view').click();
+    await documentsPage.locator(locator).locator('#list-view').click();
   } else {
-    await documentsPage.locator('#folders-ms-action-bar').locator('#grid-view').click();
+    await documentsPage.locator(locator).locator('#grid-view').click();
   }
 }
 
@@ -793,6 +801,48 @@ export async function checkWorkspaceContextMenu(
     await expect(menu).toBeHidden();
   } else if (action) {
     await actions.filter({ hasText: action }).click();
+    await expect(menu).toBeHidden();
+  }
+}
+
+export async function checkUserContextMenu(
+  page: MsPage,
+  clientRole: 'Administrator' | 'Standard',
+  userRole: 'Administrator' | 'External' | 'Standard' | 'multi-users',
+  action?: string | 'dismiss',
+  options?: { isRevoked?: boolean },
+): Promise<void> {
+  const menu = page.locator(page.displaySize === DisplaySize.Large ? '.user-context-menu' : '.user-context-sheet-modal');
+  const labels = menu.locator(page.displaySize === DisplaySize.Large ? '.list-group-item__label' : '.list-group-item__label-small');
+
+  const expectedTitles = [
+    ...(clientRole === 'Administrator' && !options?.isRevoked ? ['Deletion'] : []),
+    ...(userRole !== 'multi-users' ? ['Copy roles'] : []),
+    ...(userRole !== 'External' && !options?.isRevoked ? ['Profile'] : []),
+    ...(userRole !== 'multi-users' ? ['User details'] : []),
+  ];
+  const expectedLabels = [
+    ...(clientRole === 'Administrator' && !options?.isRevoked
+      ? userRole === 'multi-users'
+        ? ['Revoke these users']
+        : ['Revoke this user']
+      : []),
+    ...(userRole !== 'multi-users' ? ['Copy workspace roles'] : []),
+    ...(userRole !== 'External' && !options?.isRevoked ? (userRole === 'multi-users' ? ['Change profiles'] : ['Change profile']) : []),
+    ...(userRole !== 'multi-users' ? ['View details'] : []),
+  ];
+
+  await expect(menu).toBeVisible();
+  if (page.displaySize === DisplaySize.Large) {
+    await expect(menu.locator('.list-group-title')).toHaveText(expectedTitles);
+  }
+  await expect(labels).toHaveText(expectedLabels);
+  if (action === 'dismiss') {
+    await menu.locator('ion-backdrop').click();
+    await expect(menu).toBeHidden();
+  } else if (action) {
+    expect(expectedLabels).toContain(action);
+    await labels.filter({ hasText: action }).click();
     await expect(menu).toBeHidden();
   }
 }

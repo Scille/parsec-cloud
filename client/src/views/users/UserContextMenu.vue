@@ -30,6 +30,30 @@
 
       <ion-item-group
         class="list-group"
+        v-if="!multipleSelected"
+      >
+        <ion-item class="list-group-title button-small">
+          <ion-text class="list-group-title__label">
+            {{ $msTranslate('UsersPage.userContextMenu.titleAssignRoles') }}
+          </ion-text>
+        </ion-item>
+        <ion-item
+          button
+          @click="onClick(UserAction.AssignRoles)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon
+            class="list-group-item__icon"
+            :icon="returnUpForward"
+          />
+          <ion-text class="button-medium list-group-item__label">
+            {{ $msTranslate('UsersPage.userContextMenu.actionAssignRoles') }}
+          </ion-text>
+        </ion-item>
+      </ion-item-group>
+
+      <ion-item-group
+        class="list-group"
         v-if="canUpdateProfile"
       >
         <ion-item class="list-group-title button-small">
@@ -72,30 +96,6 @@
           />
           <ion-text class="button-medium list-group-item__label">
             {{ $msTranslate('UsersPage.userContextMenu.actionDetails') }}
-          </ion-text>
-        </ion-item>
-      </ion-item-group>
-
-      <ion-item-group
-        class="list-group"
-        v-if="!multipleSelected"
-      >
-        <ion-item class="list-group-title button-small">
-          <ion-text class="list-group-title__label">
-            {{ $msTranslate('UsersPage.userContextMenu.titleAssignRoles') }}
-          </ion-text>
-        </ion-item>
-        <ion-item
-          button
-          @click="onClick(UserAction.AssignRoles)"
-          class="ion-no-padding list-group-item"
-        >
-          <ion-icon
-            class="list-group-item__icon"
-            :icon="returnUpForward"
-          />
-          <ion-text class="button-medium list-group-item__label">
-            {{ $msTranslate('UsersPage.userContextMenu.actionAssignRoles') }}
           </ion-text>
         </ion-item>
       </ion-item-group>

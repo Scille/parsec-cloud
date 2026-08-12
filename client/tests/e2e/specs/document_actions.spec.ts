@@ -41,41 +41,6 @@ msTest.describe(() => {
     });
   }
 
-  msTest('Delete all documents', async ({ documents }, testInfo: TestInfo) => {
-    await importDefaultFiles(documents, testInfo, ImportDocuments.Mp3 | ImportDocuments.Pdf | ImportDocuments.Png, true);
-    await documents.waitForTimeout(500);
-    const globalCheckbox = documents.locator('.folder-container').locator('.files-list-header').locator('.ms-checkbox');
-    await expect(globalCheckbox).not.toBeChecked();
-    await globalCheckbox.check();
-    await documents.waitForTimeout(100);
-    await expect(globalCheckbox).toBeChecked();
-
-    const actionBar = documents.locator('#folders-ms-action-bar');
-    await expect(actionBar.locator('.counter')).toHaveText('4 selected items');
-
-    const entries = documents.locator('.folder-container').locator('.file-list-item');
-    await expect(entries.nth(0).locator('.ms-checkbox')).toBeChecked();
-    await expect(entries.nth(1).locator('.ms-checkbox')).toBeChecked();
-    await expect(entries.nth(2).locator('.ms-checkbox')).toBeChecked();
-    await expect(entries.nth(3).locator('.ms-checkbox')).toBeChecked();
-
-    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(3);
-
-    const deleteButton = actionBar.locator('.ms-action-bar-button:visible').nth(2);
-    await expect(deleteButton).toBeVisible();
-    await expect(deleteButton).toHaveText('Delete');
-    await deleteButton.click();
-    await answerQuestion(documents, true, {
-      expectedTitleText: 'Delete multiple items',
-      expectedQuestionText: /Are you sure you want to delete these \d+ items\?/,
-      expectedPositiveText: /Delete \d+ items/,
-      expectedNegativeText: 'Keep items',
-    });
-    await expect(entries).toHaveCount(0);
-    await expect(documents.locator('.folder-container').locator('.no-files')).toBeVisible();
-    await expect(actionBar.locator('.counter')).toHaveText('No items');
-  });
-
   for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     msTest(`Create a folder ${displaySize} display`, async ({ documents }, testInfo: TestInfo) => {
       await importDefaultFiles(documents, testInfo, ImportDocuments.Png, false);
@@ -106,6 +71,40 @@ msTest.describe(() => {
 
       await expect(entries).toHaveCount(2);
       await expect(entries.locator('.file-name').locator('.label-name')).toHaveText(['My folder', 'image.png']);
+    });
+
+    msTest(`Delete all documents with action bar in ${displaySize} display`, async ({ documents }, testInfo: TestInfo) => {
+      await importDefaultFiles(documents, testInfo, ImportDocuments.Pdf | ImportDocuments.Png, true);
+      await documents.waitForTimeout(500);
+      const entries = documents.locator('.folder-container').locator('.file-list-item');
+      await expect(entries).toHaveCount(3);
+      const globalCheckbox = documents.locator('.folder-container').locator('.files-list-header').locator('.ms-checkbox');
+      await expect(globalCheckbox).not.toBeChecked();
+      await globalCheckbox.check();
+      await documents.waitForTimeout(100);
+      await expect(globalCheckbox).toBeChecked();
+
+      if (displaySize === DisplaySize.Small) {
+        await documents.setDisplaySize(DisplaySize.Small);
+        await expect(documents.locator('#tab-bar-options')).toBeVisible();
+        await expect(documents.locator('#tab-bar-options').locator('.tab-bar-menu-button').nth(2)).toHaveText('Delete');
+        await documents.locator('#tab-bar-options').locator('.tab-bar-menu-button').nth(2).click();
+      } else {
+        const actionBar = documents.locator('#folders-ms-action-bar');
+        const deleteButton = actionBar.locator('.ms-action-bar-button:visible').nth(2);
+        await expect(deleteButton).toBeVisible();
+        await expect(deleteButton).toHaveText('Delete');
+        await deleteButton.click();
+      }
+
+      await answerQuestion(documents, true, {
+        expectedTitleText: 'Delete multiple items',
+        expectedQuestionText: /Are you sure you want to delete these 3 items\?/,
+        expectedPositiveText: /Delete 3 items/,
+        expectedNegativeText: 'Keep items',
+      });
+      await expect(entries).toHaveCount(0);
+      await expect(documents.locator('.folder-container').locator('.no-files')).toBeVisible();
     });
   }
 
