@@ -131,18 +131,20 @@ fn create_render_task(
     join_set.spawn(write_man_in_file(man, path));
 }
 
-async fn write_man_in_file(man: clap_mangen::Man, file: PathBuf) -> anyhow::Result<()> {
+async fn write_man_in_file(man: clap_mangen::Man, filepath: PathBuf) -> anyhow::Result<()> {
+    log::debug!("Writing man page to {}", filepath.display());
     let buff = render_man_in_memory(man)?;
 
-    let file = tokio::fs::File::create(file)
+    let mut file = tokio::fs::File::create(&filepath)
         .await
-        .context("Failed to open file")?;
-    let mut buffered = tokio::io::BufWriter::new(file);
+        .with_context(|| format!("Failed to open file {}", filepath.display()))?;
 
-    buffered
-        .write_all_buf(&mut Cursor::new(buff))
+    file.write_all_buf(&mut Cursor::new(buff))
         .await
-        .context("Failed to write manpage to writer")
+        .context("Failed to write manpage to writer")?;
+    file.flush().await.context("Failed to flush to file")?;
+    log::debug!("Done writing man page to {}", filepath.display());
+    Ok(())
 }
 
 fn render_man_in_memory(man: clap_mangen::Man) -> anyhow::Result<Vec<u8>> {
