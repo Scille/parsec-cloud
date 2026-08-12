@@ -72,6 +72,7 @@ function loadX2T(): Promise<X2TModule> {
 }
 
 // x2t's in-memory FS chokes on the same characters a real filesystem would.
+// TODO: investigate if the FS actually follow UNIX rules (i.e. only `/` and `\x00` are not allowed)
 function sanitizeFileName(name: string): string {
   const sanitized = name.replace(/[/\\?<>:*|"]/g, '');
   return sanitized || 'file';
@@ -94,6 +95,7 @@ async function runConversion(module: X2TModule, fileName: string, data: Uint8Arr
   module.ccall('main1', 'number', ['string'], ['/working/params.xml']);
 
   return module.FS.readFile(`/working/${outputFileName}`);
+  // TODO: need to clean the FS ?
 }
 
 // Converts `data` (the raw content of a `.<extension>` file, e.g. `docx`) into OnlyOffice's native
