@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use std::{
-    fmt::{Display, Write},
+    fmt::{Display, Write as _},
+    io::Write as _,
     ops::Deref,
     path::{Path, PathBuf},
     sync::Arc,
@@ -435,9 +436,9 @@ pub fn choose_password(from: ReadPasswordFrom) -> anyhow::Result<Password> {
     }
 }
 
-pub fn choose_device_label(input: &mut String) -> anyhow::Result<DeviceLabel> {
+pub fn choose_device_label(ui: &crate::Ui, input: &mut String) -> anyhow::Result<DeviceLabel> {
     loop {
-        println!("Enter device label:");
+        ui.with_message(|_, out| writeln!(out, "Enter device label:"))?;
         input.clear();
         std::io::stdin().read_line(input)?;
 
@@ -448,15 +449,15 @@ pub fn choose_device_label(input: &mut String) -> anyhow::Result<DeviceLabel> {
     }
 }
 
-pub fn choose_human_handle(input: &mut String) -> anyhow::Result<HumanHandle> {
+pub fn choose_human_handle(ui: &crate::Ui, input: &mut String) -> anyhow::Result<HumanHandle> {
     loop {
-        println!("Enter email:");
+        ui.with_message(|_, out| writeln!(out, "Enter email:"))?;
         input.clear();
         std::io::stdin().read_line(input)?;
 
         let email = input.trim().to_string();
 
-        println!("Enter name:");
+        ui.with_message(|_, out| writeln!(out, "Enter name:"))?;
         input.clear();
         std::io::stdin().read_line(input)?;
 
