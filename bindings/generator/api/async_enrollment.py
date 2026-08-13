@@ -15,11 +15,35 @@ from .common import (
     Structure,
     UserProfile,
     Variant,
+    VariantItemTuple,
     VariantItemUnit,
     X509CertificateReference,
 )
 from .config import ClientConfig
 from .device import AvailableDevice, DeviceSaveStrategy
+
+
+class PkiErrorDetail(ErrorVariant):
+    class UnsupportedAlgorithm:
+        pass
+
+    class Decrypt:
+        pass
+
+    class Untrusted:
+        pass
+
+    class Sign:
+        pass
+
+    class CannotAcquirePubkey:
+        pass
+
+    class CannotEncrypt:
+        pass
+
+    class Internal:
+        pass
 
 
 class ClientGetAsyncEnrollmentAddrError(ErrorVariant):
@@ -167,8 +191,7 @@ class ClientAcceptAsyncEnrollmentError(ErrorVariant):
     class PKICannotOpenCertificateStore:
         pass
 
-    class PKIUnusableX509CertificateReference:
-        pass
+    PKIUnusableX509CertificateReference = VariantItemTuple(PkiErrorDetail)
 
 
 class EmailSentStatus(Variant):
@@ -226,8 +249,7 @@ class SubmitAsyncEnrollmentError(ErrorVariant):
     class PKICannotOpenCertificateStore:
         pass
 
-    class PKIUnusableX509CertificateReference:
-        pass
+    PKIUnusableX509CertificateReference = VariantItemTuple(PkiErrorDetail)
 
 
 class AvailablePendingAsyncEnrollmentIdentitySystem(Variant):
@@ -361,8 +383,7 @@ class SubmitterFinalizeAsyncEnrollmentError(ErrorVariant):
     class PKICannotOpenCertificateStore:
         pass
 
-    class PKIUnusableX509CertificateReference:
-        pass
+    PKIUnusableX509CertificateReference = VariantItemTuple(PkiErrorDetail)
 
 
 async def submitter_finalize_async_enrollment(

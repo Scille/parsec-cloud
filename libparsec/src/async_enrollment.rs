@@ -8,9 +8,10 @@ pub use libparsec_client::{
     AsyncEnrollmentIdentitySystem, AsyncEnrollmentUntrusted, AvailableDevice,
     AvailablePendingAsyncEnrollment, AvailablePendingAsyncEnrollmentIdentitySystem,
     ClientAcceptAsyncEnrollmentError, ClientListAsyncEnrollmentsError,
-    ClientRejectAsyncEnrollmentError, PendingAsyncEnrollmentInfo, SubmitAsyncEnrollmentError,
-    SubmitterCancelAsyncEnrollmentError, SubmitterFinalizeAsyncEnrollmentError,
-    SubmitterGetAsyncEnrollmentInfoError, SubmitterListLocalAsyncEnrollmentsError,
+    ClientRejectAsyncEnrollmentError, PendingAsyncEnrollmentInfo, PkiErrorDetail,
+    SubmitAsyncEnrollmentError, SubmitterCancelAsyncEnrollmentError,
+    SubmitterFinalizeAsyncEnrollmentError, SubmitterGetAsyncEnrollmentInfoError,
+    SubmitterListLocalAsyncEnrollmentsError,
 };
 pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
 pub use libparsec_protocol::invited_cmds::latest::invite_info::{
@@ -29,7 +30,7 @@ mod strategy {
     use std::sync::Arc;
 
     use libparsec_client::{
-        AcceptAsyncEnrollmentError, SubmitAsyncEnrollmentError,
+        AcceptAsyncEnrollmentError, PkiErrorDetail, SubmitAsyncEnrollmentError,
         SubmitterFinalizeAsyncEnrollmentError,
     };
     use libparsec_client_connection::protocol;
@@ -317,8 +318,8 @@ mod strategy {
             Box::pin(pretend_future_is_send_on_web(async move {
                 let key = SecretKey::generate();
 
-                let der = pki_encrypt_certificate.get_der().await.map_err(|e| {
-                    SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(e.into())
+                let der = pki_encrypt_certificate.get_der().await.map_err(|err| {
+                    SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
                 })?;
 
                 let (algorithm, encrypted_key) =
@@ -330,9 +331,11 @@ mod strategy {
                             )
                         })?;
 
-                let pki_encrypt_certificate_reference =
-                    pki_encrypt_certificate.to_reference().await.map_err(|e| {
-                        SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(e.into())
+                let pki_encrypt_certificate_reference = pki_encrypt_certificate
+                    .to_reference()
+                    .await
+                    .map_err(|err| {
+                        SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
                     })?;
 
                 let identity_system = AsyncEnrollmentLocalPendingIdentitySystem::PKI {
@@ -664,9 +667,11 @@ mod strategy {
                                 err.into(),
                             )
                         })?;
-                let pki_system = crate::pki::get_pki_system()
-                    .await
-                    .map_err(AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference)?;
+                let pki_system = crate::pki::get_pki_system().await.map_err(|err| {
+                    AcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                        PkiErrorDetail::Internal(err),
+                    )
+                })?;
                 let certificate_revocation_lists = pki_system
                     .get_certificate_revocation_lists()
                     .await
@@ -798,13 +803,13 @@ mod strategy {
 
                 let validation_path: libparsec_platform_pki::X509ValidationPathOwned =
                     pki_sign_certificate.get_validation_path().await.map_err(|err| {
-                        SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
-                            err.into(),
-                        )
+                        SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(err.into())
                     })?;
-                let pki_system = crate::pki::get_pki_system().await.map_err(
-                    SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference,
-                )?;
+                let pki_system = crate::pki::get_pki_system().await.map_err(|err| {
+                    SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+                        PkiErrorDetail::Internal(err),
+                    )
+                })?;
                 let certificate_revocation_lists = pki_system
                     .get_certificate_revocation_lists()
                     .await
