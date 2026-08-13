@@ -1567,6 +1567,7 @@ export interface ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain 
 export interface ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
     tag: "ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference"
     error: string
+    x1: PkiErrorDetail
 }
 export interface ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark {
     tag: "ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark"
@@ -3531,6 +3532,45 @@ export type PendingAsyncEnrollmentInfo =
   | PendingAsyncEnrollmentInfoSubmitted
 
 
+// PkiErrorDetail
+export interface PkiErrorDetailCannotAcquirePubkey {
+    tag: "PkiErrorDetailCannotAcquirePubkey"
+    error: string
+}
+export interface PkiErrorDetailCannotEncrypt {
+    tag: "PkiErrorDetailCannotEncrypt"
+    error: string
+}
+export interface PkiErrorDetailDecrypt {
+    tag: "PkiErrorDetailDecrypt"
+    error: string
+}
+export interface PkiErrorDetailInternal {
+    tag: "PkiErrorDetailInternal"
+    error: string
+}
+export interface PkiErrorDetailSign {
+    tag: "PkiErrorDetailSign"
+    error: string
+}
+export interface PkiErrorDetailUnsupportedAlgorithm {
+    tag: "PkiErrorDetailUnsupportedAlgorithm"
+    error: string
+}
+export interface PkiErrorDetailUntrusted {
+    tag: "PkiErrorDetailUntrusted"
+    error: string
+}
+export type PkiErrorDetail =
+  | PkiErrorDetailCannotAcquirePubkey
+  | PkiErrorDetailCannotEncrypt
+  | PkiErrorDetailDecrypt
+  | PkiErrorDetailInternal
+  | PkiErrorDetailSign
+  | PkiErrorDetailUnsupportedAlgorithm
+  | PkiErrorDetailUntrusted
+
+
 // PkiOpenUserCertificatePrivateKeyError
 export interface PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound {
     tag: "PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound"
@@ -3850,6 +3890,7 @@ export interface SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain {
 export interface SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
     tag: "SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference"
     error: string
+    x1: PkiErrorDetail
 }
 export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled
@@ -3971,6 +4012,7 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateSt
 export interface SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference"
     error: string
+    x1: PkiErrorDetail
 }
 export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath {
     tag: "SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath"

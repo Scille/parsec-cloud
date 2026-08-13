@@ -9269,14 +9269,21 @@ fn variant_client_accept_async_enrollment_error_rs_to_js(
                 &"ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain".into(),
             )?;
         }
-        #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::ClientAcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference {
-            ..
-        } => {
+        libparsec::ClientAcceptAsyncEnrollmentError::PKIUnusableX509CertificateReference(
+            x1,
+            ..,
+        ) => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into(),
+            )?;
+            let js_x1 = variant_pki_error_detail_rs_to_js(x1)?;
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into(),
             )?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
@@ -17928,6 +17935,60 @@ fn variant_pending_async_enrollment_info_rs_to_js(
     Ok(js_obj)
 }
 
+// PkiErrorDetail
+
+#[allow(dead_code)]
+fn variant_pki_error_detail_rs_to_js(
+    rs_obj: libparsec::PkiErrorDetail,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::PkiErrorDetail::CannotAcquirePubkey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiErrorDetailCannotAcquirePubkey".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::PkiErrorDetail::CannotEncrypt { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiErrorDetailCannotEncrypt".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::PkiErrorDetail::Decrypt { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PkiErrorDetailDecrypt".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::PkiErrorDetail::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PkiErrorDetailInternal".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::PkiErrorDetail::Sign { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PkiErrorDetailSign".into())?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::PkiErrorDetail::UnsupportedAlgorithm { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"PkiErrorDetailUnsupportedAlgorithm".into(),
+            )?;
+        }
+        #[allow(clippy::unneeded_struct_pattern)]
+        libparsec::PkiErrorDetail::Untrusted { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"PkiErrorDetailUntrusted".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // PkiOpenUserCertificatePrivateKeyError
 
 #[allow(dead_code)]
@@ -19948,12 +20009,18 @@ fn variant_submit_async_enrollment_error_rs_to_js(
                 &"SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain".into(),
             )?;
         }
-        #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference { .. } => {
+        libparsec::SubmitAsyncEnrollmentError::PKIUnusableX509CertificateReference(x1, ..) => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into(),
+            )?;
+            let js_x1 = variant_pki_error_detail_rs_to_js(x1)?;
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into(),
             )?;
         }
     }
@@ -20283,9 +20350,15 @@ fn variant_submitter_finalize_async_enrollment_error_rs_to_js(
         libparsec::SubmitterFinalizeAsyncEnrollmentError::PKICannotOpenCertificateStore{   .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateStore".into())?;
         }
-        #[allow(clippy::unneeded_struct_pattern)]
-        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference{   .. } => {
+        libparsec::SubmitterFinalizeAsyncEnrollmentError::PKIUnusableX509CertificateReference( x1, .. ) => {
             Reflect::set(&js_obj, &"tag".into(), &"SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference".into())?;
+            let js_x1 = variant_pki_error_detail_rs_to_js(x1)?;
+            Reflect::set(
+                &js_obj,
+                &"x1".into(),
+                #[expect(clippy::useless_conversion)]
+                &js_x1.into()
+            )?;
         }
         #[allow(clippy::unneeded_struct_pattern)]
         libparsec::SubmitterFinalizeAsyncEnrollmentError::SaveDeviceInvalidPath{   .. } => {

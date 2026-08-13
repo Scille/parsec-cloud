@@ -1824,6 +1824,7 @@ export interface ClientAcceptAsyncEnrollmentErrorPKIServerInvalidX509Trustchain 
 export interface ClientAcceptAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
     tag: ClientAcceptAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference
     error: string
+    x1: PkiErrorDetail
 }
 export interface ClientAcceptAsyncEnrollmentErrorTimestampOutOfBallpark {
     tag: ClientAcceptAsyncEnrollmentErrorTag.TimestampOutOfBallpark
@@ -4226,6 +4227,54 @@ export type PendingAsyncEnrollmentInfo =
   | PendingAsyncEnrollmentInfoRejected
   | PendingAsyncEnrollmentInfoSubmitted
 
+// PkiErrorDetail
+export enum PkiErrorDetailTag {
+    CannotAcquirePubkey = 'PkiErrorDetailCannotAcquirePubkey',
+    CannotEncrypt = 'PkiErrorDetailCannotEncrypt',
+    Decrypt = 'PkiErrorDetailDecrypt',
+    Internal = 'PkiErrorDetailInternal',
+    Sign = 'PkiErrorDetailSign',
+    UnsupportedAlgorithm = 'PkiErrorDetailUnsupportedAlgorithm',
+    Untrusted = 'PkiErrorDetailUntrusted',
+}
+
+export interface PkiErrorDetailCannotAcquirePubkey {
+    tag: PkiErrorDetailTag.CannotAcquirePubkey
+    error: string
+}
+export interface PkiErrorDetailCannotEncrypt {
+    tag: PkiErrorDetailTag.CannotEncrypt
+    error: string
+}
+export interface PkiErrorDetailDecrypt {
+    tag: PkiErrorDetailTag.Decrypt
+    error: string
+}
+export interface PkiErrorDetailInternal {
+    tag: PkiErrorDetailTag.Internal
+    error: string
+}
+export interface PkiErrorDetailSign {
+    tag: PkiErrorDetailTag.Sign
+    error: string
+}
+export interface PkiErrorDetailUnsupportedAlgorithm {
+    tag: PkiErrorDetailTag.UnsupportedAlgorithm
+    error: string
+}
+export interface PkiErrorDetailUntrusted {
+    tag: PkiErrorDetailTag.Untrusted
+    error: string
+}
+export type PkiErrorDetail =
+  | PkiErrorDetailCannotAcquirePubkey
+  | PkiErrorDetailCannotEncrypt
+  | PkiErrorDetailDecrypt
+  | PkiErrorDetailInternal
+  | PkiErrorDetailSign
+  | PkiErrorDetailUnsupportedAlgorithm
+  | PkiErrorDetailUntrusted
+
 // PkiOpenUserCertificatePrivateKeyError
 export enum PkiOpenUserCertificatePrivateKeyErrorTag {
     CertificateNotFound = 'PkiOpenUserCertificatePrivateKeyErrorCertificateNotFound',
@@ -4627,6 +4676,7 @@ export interface SubmitAsyncEnrollmentErrorPKIServerInvalidX509Trustchain {
 export interface SubmitAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
     tag: SubmitAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference
     error: string
+    x1: PkiErrorDetail
 }
 export type SubmitAsyncEnrollmentError =
   | SubmitAsyncEnrollmentErrorEmailAlreadyEnrolled
@@ -4778,6 +4828,7 @@ export interface SubmitterFinalizeAsyncEnrollmentErrorPKICannotOpenCertificateSt
 export interface SubmitterFinalizeAsyncEnrollmentErrorPKIUnusableX509CertificateReference {
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.PKIUnusableX509CertificateReference
     error: string
+    x1: PkiErrorDetail
 }
 export interface SubmitterFinalizeAsyncEnrollmentErrorSaveDeviceInvalidPath {
     tag: SubmitterFinalizeAsyncEnrollmentErrorTag.SaveDeviceInvalidPath

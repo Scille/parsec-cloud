@@ -9,7 +9,7 @@ use libparsec_platform_device_loader::{
 };
 use libparsec_types::prelude::*;
 
-use crate::ClientConfig;
+use crate::{ClientConfig, PkiErrorDetail};
 
 #[derive(Debug, thiserror::Error)]
 pub enum SubmitAsyncEnrollmentError {
@@ -41,7 +41,7 @@ pub enum SubmitAsyncEnrollmentError {
     PKICannotOpenCertificateStore(anyhow::Error),
     // Certificate not found, invalid certificate, cannot use to sign etc.
     #[error("Cannot use the referenced X509 certificate for PKI operation: {0}")]
-    PKIUnusableX509CertificateReference(anyhow::Error),
+    PKIUnusableX509CertificateReference(PkiErrorDetail),
 }
 
 pub trait SubmitAsyncEnrollmentIdentityStrategy: Send + Sync {
