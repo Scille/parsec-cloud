@@ -12,7 +12,7 @@ This page aims to provide a quick overview of the most used commands.
 Device
 ======
 
-For more, see :ref:`device <doc_cli_device>`
+For more, see :ref:`device <parsec-cli-device>`
 
 .. code-block:: shell
 
@@ -27,7 +27,7 @@ For more, see :ref:`device <doc_cli_device>`
 Invite
 ======
 
-For more, see :ref:`invite <doc_cli_invite>`
+For more, see :ref:`invite <parsec-cli-invite>`
 
 .. code-block:: shell
 
@@ -42,7 +42,7 @@ For more, see :ref:`invite <doc_cli_invite>`
 User
 ====
 
-For more, see :ref:`user <doc_cli_user>`
+For more, see :ref:`user <parsec-cli-user>`
 
 .. code-block:: shell
 
@@ -54,7 +54,7 @@ For more, see :ref:`user <doc_cli_user>`
 Workspace
 =========
 
-For more, see :ref:`workspace <doc_cli_workspace>`
+For more, see :ref:`workspace <parsec-cli-workspace>`
 
 .. code-block:: shell
 

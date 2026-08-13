@@ -1,0 +1,40 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-workspace-share 1  "share " 
+.SH NAME
+parsec\-cli\-workspace\-share \- Share workspace
+.SH SYNOPSIS
+\fBparsec\-cli workspace share\fR [\fB\-\-password\-stdin\fR] <\fB\-w\fR|\fB\-\-workspace\fR> [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] <\fB\-u\fR|\fB\-\-user\fR> <\fB\-r\fR|\fB\-\-role\fR> [\fB\-h\fR|\fB\-\-help\fR] 
+.SH DESCRIPTION
+Share workspace
+.SH OPTIONS
+.TP
+\fB\-\-password\-stdin\fR
+Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
+.TP
+\fB\-w\fR, \fB\-\-workspace\fR \fI<WORKSPACE>\fR
+Workspace ID
+.RS
+May also be specified with the \fBPARSEC_WORKSPACE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-d\fR, \fB\-\-device\fR \fI<DEVICE>\fR
+Device ID
+.RS
+May also be specified with the \fBPARSEC_DEVICE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-u\fR, \fB\-\-user\fR \fI<USER>\fR
+The user ID to share the workspace with
+.TP
+\fB\-r\fR, \fB\-\-role\fR \fI<ROLE>\fR
+Role (owner/manager/contributor/reader)
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help

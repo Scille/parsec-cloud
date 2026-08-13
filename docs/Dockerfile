@@ -1,7 +1,7 @@
 # cspell:words inotify
 
 # Using bookworm because it provides the same version of gettext (v0.21) used in the CI.
-FROM python:3.12-slim-bookworm
+FROM python:3.14-slim-bookworm
 
 SHELL [ "/bin/bash", "-c" ]
 
@@ -29,6 +29,7 @@ RUN apt-get update \
     git \
     gettext \
     inotify-tools \
+    pandoc \
     # Remove unnecessary apt cache
     && rm -rf /var/lib/apt/lists/*
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+import sys
+from pathlib import Path
 
 # cspell:dictionaries fr-fr
 rst_prolog = """
@@ -26,6 +28,8 @@ rst_prolog = """
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
 
+sys.path.append(str(Path("./_ext").resolve()))
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
@@ -36,8 +40,8 @@ extensions = [
     # Allow to use svg images in latex build.
     # https://www.sphinx-doc.org/en/master/usage/extensions/imgconverter.html
     "sphinx.ext.imgconverter",
+    "manpages",  # Custom extension to support manpages
 ]
-
 # Sphinx-intl config
 locale_dirs = ["locale/"]
 # Configure how pot & po file are generated:
@@ -48,9 +52,6 @@ gettext_compact = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
-
-# The suffix of source filenames.
-source_suffix = ".rst"
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
@@ -83,7 +84,7 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ["_build", ".venv"]
+exclude_patterns = ["_build", ".venv", "rfcs", "development", "HOSTING.md", "README.md"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -309,6 +310,9 @@ texinfo_documents = [
         "Miscellaneous",
     )
 ]
+
+# manpages config (Our custom extension)
+command_prefixes = ["parsec-cli"]
 
 # Documents to append as an appendix to all manuals.
 # texinfo_appendices = []

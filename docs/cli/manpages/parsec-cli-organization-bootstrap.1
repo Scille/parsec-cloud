@@ -1,0 +1,31 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-organization-bootstrap 1  "bootstrap " 
+.SH NAME
+parsec\-cli\-organization\-bootstrap \- Configure new organization
+.SH SYNOPSIS
+\fBparsec\-cli organization bootstrap\fR <\fB\-a\fR|\fB\-\-addr\fR> <\fB\-d\fR|\fB\-\-device\-label\fR> <\fB\-l\fR|\fB\-\-label\fR> <\fB\-e\fR|\fB\-\-email\fR> [\fB\-\-sequester\-key\fR] [\fB\-\-password\-stdin\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+.SH DESCRIPTION
+Configure new organization
+.SH OPTIONS
+.TP
+\fB\-a\fR, \fB\-\-addr\fR \fI<ADDR>\fR
+Bootstrap address (e.g: parsec3://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a or http://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a)
+.TP
+\fB\-d\fR, \fB\-\-device\-label\fR \fI<DEVICE_LABEL>\fR
+Device label
+.TP
+\fB\-l\fR, \fB\-\-label\fR \fI<LABEL>\fR
+User fullname
+.TP
+\fB\-e\fR, \fB\-\-email\fR \fI<EMAIL>\fR
+User email
+.TP
+\fB\-\-sequester\-key\fR \fI<SEQUESTER_KEY>\fR
+Sequester authority verify key path
+.TP
+\fB\-\-password\-stdin\fR
+Read the password from stdin instead of TTY
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help

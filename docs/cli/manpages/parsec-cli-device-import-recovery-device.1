@@ -1,0 +1,28 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-device-import-recovery-device 1  "import-recovery-device " 
+.SH NAME
+parsec\-cli\-device\-import\-recovery\-device \- Import recovery device
+.SH SYNOPSIS
+\fBparsec\-cli device import\-recovery\-device\fR [\fB\-\-password\-stdin\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] <\fB\-i\fR|\fB\-\-input\fR> <\fB\-l\fR|\fB\-\-label\fR> [\fB\-h\fR|\fB\-\-help\fR] 
+.SH DESCRIPTION
+Import recovery device
+.SH OPTIONS
+.TP
+\fB\-\-password\-stdin\fR
+Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-i\fR, \fB\-\-input\fR \fI<INPUT>\fR
+Path where encrypted recovery device data is
+.TP
+\fB\-l\fR, \fB\-\-label\fR \fI<LABEL>\fR
+new device label
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help

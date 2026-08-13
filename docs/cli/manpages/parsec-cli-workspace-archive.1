@@ -1,0 +1,43 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-workspace-archive 1  "archive " 
+.SH NAME
+parsec\-cli\-workspace\-archive \- Archive workspace
+.SH SYNOPSIS
+\fBparsec\-cli workspace archive\fR [\fB\-\-password\-stdin\fR] <\fB\-w\fR|\fB\-\-workspace\fR> [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-\-archived\fR] [\fB\-\-deletion\-planned\-in\-seconds\fR] [\fB\-\-available\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+.SH DESCRIPTION
+Archive workspace
+.SH OPTIONS
+.TP
+\fB\-\-password\-stdin\fR
+Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
+.TP
+\fB\-w\fR, \fB\-\-workspace\fR \fI<WORKSPACE>\fR
+Workspace ID
+.RS
+May also be specified with the \fBPARSEC_WORKSPACE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-d\fR, \fB\-\-device\fR \fI<DEVICE>\fR
+Device ID
+.RS
+May also be specified with the \fBPARSEC_DEVICE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-\-archived\fR
+Archive the workspace in read\-only mode
+.TP
+\fB\-\-deletion\-planned\-in\-seconds\fR \fI<DELETION_PLANNED_IN_SECONDS>\fR
+Plan workspace deletion, i.e. the workspace will be available for deletion once the archiving period (provided in seconds) is elapsed
+.TP
+\fB\-\-available\fR
+Make the workspace available again
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help

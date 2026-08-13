@@ -19,7 +19,7 @@ endif
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+ALLSPHINXOPTS   = --jobs auto --doctree-dir $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 # Using '-halt-on-error' allows `make pdflatex` to finish (instead of hanging)
 # even if there are errors. In case of errors a message is displayed pointing
 # to the log file (usually '_build/latex/parsec.log')
@@ -167,6 +167,7 @@ gettext:
 		$(BUILDDIR)/locale/hosting/deployment/webapp/index.pot \
 		$(BUILDDIR)/locale/hosting/deployment/webapp/idopte-pki-web.pot \
 		$(BUILDDIR)/locale/hosting/deployment/editics/index.pot \
+		$(BUILDDIR)/locale/cli/manpages/*.pot \
 	@echo
 	@echo "Build finished. The message catalogs are in $(BUILDDIR)/locale."
 

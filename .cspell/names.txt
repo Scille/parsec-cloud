@@ -36,6 +36,7 @@ luchihoratiu
 mailhog
 Malloryy
 mandb
+manpages
 Manraj
 Mcalice
 michu
@@ -47,6 +48,7 @@ murcielago
 mypc
 Nihilanth
 oremanj
+pandoc
 Poedit
 proconnect
 rechiffrement
@@ -61,6 +63,7 @@ scalingo
 Scille
 SCWS
 sitx
+subcmd
 Swatinem
 taplo
 titeuf

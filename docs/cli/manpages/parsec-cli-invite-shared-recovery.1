@@ -1,0 +1,34 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-invite-shared-recovery 1  "shared-recovery " 
+.SH NAME
+parsec\-cli\-invite\-shared\-recovery \- Create shared recovery invitation
+.SH SYNOPSIS
+\fBparsec\-cli invite shared\-recovery\fR [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-\-send\-email\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIEMAIL\fR> 
+.SH DESCRIPTION
+Create shared recovery invitation
+.SH OPTIONS
+.TP
+\fB\-\-password\-stdin\fR
+Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
+.TP
+\fB\-d\fR, \fB\-\-device\fR \fI<DEVICE>\fR
+Device ID
+.RS
+May also be specified with the \fBPARSEC_DEVICE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-\-send\-email\fR
+Send email to the invitee
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIEMAIL\fR>
+Claimer email (i.e.: The invitee)
