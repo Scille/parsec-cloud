@@ -140,8 +140,6 @@ import SmallDisplaySelectionHeader from '@/components/header/SmallDisplaySelecti
 import { SortProperty, UserCollection, UserFilter, UserFilterLabels, UserModel } from '@/components/users';
 import {
   ClientInfo,
-  ClientUserUpdateProfileError,
-  ClientUserUpdateProfileErrorTag,
   InvitationStatus,
   UserID,
   UserInfo,
@@ -149,40 +147,34 @@ import {
   getAsyncEnrollmentAddr,
   getClientInfo as parsecGetClientInfo,
   listUsers as parsecListUsers,
-  revokeUser as parsecRevokeUser,
-  updateProfile as parsecUpdateProfile,
 } from '@/parsec';
 import { Routes, currentRouteIsUserRoute, navigateTo, watchRoute } from '@/router';
+import { UserAction, useUserActions, useUserContextMenu } from '@/services/contextMenu';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import useHeaderControl from '@/services/headerControl';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
-import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
-import { UserAction } from '@/views/users/types';
-import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
-import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
-import { openGlobalUserContextMenu as _openGlobalUserContextMenu, openUserContextMenu as _openUserContextMenu } from '@/views/users/utils';
-import { IonContent, IonPage, IonText, modalController } from '@ionic/vue';
+import { IonContent, IonPage, IonText } from '@ionic/vue';
 import { informationCircle, link, personAdd, personRemove, repeat, returnUpForward } from 'ionicons/icons';
 import {
-  Answer,
   DisplayState,
   MsActionBar,
   MsGridListToggle,
   MsImage,
-  MsModalResult,
   MsOptions,
   MsSearchInput,
   MsSorter,
   NoActiveUser,
-  askQuestion,
   useWindowSize,
 } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
+
+const contextMenu = useUserContextMenu();
+const actions = useUserActions();
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -300,125 +292,23 @@ async function onFilterUpdated(): Promise<void> {
   await storeComponentData();
 }
 
-async function revokeUser(user: UserInfo): Promise<void> {
-  const answer = await askQuestion(
-    { key: 'UsersPage.revocation.revokeTitle', count: 1 },
-    { key: 'UsersPage.revocation.revokeQuestion', data: { user: user.humanHandle.label }, count: 1 },
-    {
-      yesIsDangerous: true,
-      yesText: 'UsersPage.revocation.revokeYes',
-      noText: 'UsersPage.revocation.revokeNo',
-    },
-  );
-  if (answer === Answer.No) {
-    return;
-  }
-  const result = await parsecRevokeUser(user.id);
-
-  if (!result.ok) {
-    informationManager.value.present(
-      new Information({
-        message: { key: 'UsersPage.revocation.revokeFailed', count: 1 },
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    informationManager.value.present(
-      new Information({
-        message: { key: 'UsersPage.revocation.revokeSuccess', data: { user: user.humanHandle.label }, count: 1 },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-  await onSelectionCancel();
-  await refreshUserList();
-}
-
 function getUsersCount(): number {
   return users.value.usersCount();
 }
 
 async function revokeSelectedUsers(): Promise<void> {
   const selectedUsers = users.value.getSelectedUsers();
+  await actions.revokeUsers(selectedUsers);
 
-  if (selectedUsers.length === 1) {
-    return await revokeUser(selectedUsers[0]);
-  }
-
-  const answer = await askQuestion(
-    { key: 'UsersPage.revocation.revokeTitle', count: selectedUsers.length },
-    { key: 'UsersPage.revocation.revokeQuestion', data: { count: selectedUsers.length }, count: selectedUsers.length },
-    {
-      yesIsDangerous: true,
-      yesText: 'UsersPage.revocation.revokeYes',
-      noText: 'UsersPage.revocation.revokeNo',
-    },
-  );
-  if (answer === Answer.No) {
-    return;
-  }
-  let errorCount = 0;
-
-  for (const user of selectedUsers) {
-    const result = await parsecRevokeUser(user.id);
-    if (!result.ok) {
-      errorCount += 1;
-    }
-  }
-  if (errorCount === 0) {
-    informationManager.value.present(
-      new Information({
-        message: {
-          key: 'UsersPage.revocation.revokeSuccess',
-          data: { count: selectedUsers.length },
-          count: selectedUsers.length,
-        },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  } else if (errorCount < selectedUsers.length) {
-    informationManager.value.present(
-      new Information({
-        message: 'UsersPage.revocation.revokeSomeFailed',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    informationManager.value.present(
-      new Information({
-        message: { key: 'UsersPage.revocation.revokeFailed', count: selectedUsers.length },
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
   await onSelectionCancel();
   await refreshUserList();
-}
-
-async function openUserDetails(user: UserInfo): Promise<void> {
-  const modal = await modalController.create({
-    component: UserDetailsModal,
-    cssClass: 'user-details-modal',
-    componentProps: {
-      user: user,
-      informationManager: informationManager.value,
-    },
-  });
-  await modal.present();
-  await modal.onWillDismiss();
-  await modal.dismiss();
 }
 
 async function openSelectedUserDetails(): Promise<void> {
   const selectedUsers = users.value.getSelectedUsers();
 
   if (selectedUsers.length === 1) {
-    return await openUserDetails(selectedUsers[0]);
+    await actions.openDetails(selectedUsers[0]);
   }
 }
 
@@ -427,68 +317,40 @@ function isCurrentUser(userId: UserID): boolean {
 }
 
 async function openUserContextMenu(event: Event, user: UserModel, onFinished?: () => void): Promise<void> {
+  const currentUser = users.value.getCurrentUser();
+  if (!currentUser) {
+    return;
+  }
   let selectedUsers = users.value.getSelectedUsers();
   if (selectedUsers.length === 0 || !selectedUsers.includes(user)) {
+    users.value.selectAll(false);
     selectedUsers = [user];
   }
 
-  // a Standard or Outsider user can't do anything with multiple users
-  if (!isAdmin.value && selectedUsers.length > 1) {
-    return;
-  }
-
-  const data = await _openUserContextMenu(event, selectedUsers, isAdmin.value, isLargeDisplay.value);
-
-  const actions = new Map<UserAction, (user: UserModel) => Promise<void>>([
-    [UserAction.Revoke, revokeUser],
-    [UserAction.Details, openUserDetails],
-    [UserAction.AssignRoles, assignWorkspaceRoles],
-    [UserAction.UpdateProfile, updateUserProfile],
-  ]);
-  const actionsMultiple = new Map<UserAction, () => Promise<void>>([
-    [UserAction.Revoke, revokeSelectedUsers],
-    [UserAction.UpdateProfile, updateSelectedUserProfiles],
-  ]);
-
-  if (!data) {
-    if (onFinished) {
-      onFinished();
-    }
-    return;
-  }
-
-  if (selectedUsers.length === 1) {
-    const fn = actions.get(data.action);
-    if (fn) {
-      await fn(selectedUsers[0]);
-    }
-  } else {
-    const fn = actionsMultiple.get(data.action);
-    if (fn) {
-      await fn();
-    }
-  }
+  await contextMenu.openUserContextMenu(selectedUsers, currentUser, event);
 
   if (onFinished) {
     onFinished();
   }
+  await onSelectionCancel();
+  await refreshUserList();
 }
 
 async function openGlobalUserContextMenu(): Promise<void> {
-  const data = await _openGlobalUserContextMenu();
+  const action = await contextMenu.openGlobalUserContextMenu();
 
-  const actions = new Map<UserAction, () => Promise<void>>([
-    [UserAction.ToggleSelect, toggleSelection],
-    [UserAction.SelectAll, selectAllUsers],
-  ]);
-
-  if (!data) {
-    return;
-  }
-
-  const fn = actions.get(data.action);
-  if (fn) {
-    await fn();
+  switch (action) {
+    case UserAction.ToggleSelect: {
+      await toggleSelection();
+      break;
+    }
+    case UserAction.SelectAll: {
+      await selectAllUsers();
+      break;
+    }
+    default: {
+      break;
+    }
   }
 }
 
@@ -517,81 +379,19 @@ async function updateSelectedUserProfiles(): Promise<void> {
   await updateUserProfiles(users.value.getSelectedUsers());
 }
 
-async function updateUserProfile(user: UserInfo): Promise<void> {
-  await updateUserProfiles([user]);
-}
-
 async function updateUserProfiles(selectedUsers: Array<UserInfo>): Promise<void> {
-  const modal = await modalController.create({
-    component: UpdateProfileModal,
-    cssClass: 'update-profile-modal',
-    componentProps: {
-      users: selectedUsers,
-    },
-  });
-  await modal.present();
-  const { data, role } = await modal.onWillDismiss();
-  await modal.dismiss();
-
-  if (role !== MsModalResult.Confirm) {
-    return;
-  }
-  const newProfile = data.profile;
-  let firstError: ClientUserUpdateProfileError | undefined = undefined;
-  const affectedUsers = selectedUsers.filter((u) => u.currentProfile !== UserProfile.Outsider);
-
-  for (const user of affectedUsers) {
-    if (user.currentProfile === newProfile) {
-      continue;
-    }
-    const result = await parsecUpdateProfile(user.id, newProfile);
-    if (!result.ok) {
-      if (!firstError) {
-        firstError = result.error;
-      }
-    }
-  }
-  let message = '';
-  if (!firstError) {
-    message = 'UsersPage.updateProfile.success';
-  } else {
-    switch (firstError.tag) {
-      case ClientUserUpdateProfileErrorTag.Offline:
-        message = 'UsersPage.updateProfile.failedOffline';
-        break;
-      default:
-        message = 'UsersPage.updateProfile.failedGeneric';
-        break;
-    }
-  }
-  informationManager.value.present(
-    new Information({
-      message: { key: message, count: affectedUsers.length },
-      level: firstError === undefined ? InformationLevel.Success : InformationLevel.Error,
-    }),
-    PresentationMode.Toast,
-  );
-
+  await actions.updateProfiles(selectedUsers);
   await onSelectionCancel();
   await refreshUserList();
 }
 
 async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
-  const modal = await modalController.create({
-    component: BulkRoleAssignmentModal,
-    cssClass: 'role-assignment-modal',
-    componentProps: {
-      sourceUser: user,
-      currentUser: users.value.getCurrentUser(),
-      informationManager: informationManager.value,
-    },
-  });
-  await modal.present();
-  const result = await modal.onWillDismiss();
-  await modal.dismiss();
-  if (result.role === MsModalResult.Confirm) {
-    onSelectionCancel();
+  const currentUser = users.value.getCurrentUser();
+  if (!currentUser) {
+    return;
   }
+  await actions.copyWorkspaceRoles(user, currentUser);
+  onSelectionCancel();
 }
 
 async function refreshUserList(): Promise<void> {

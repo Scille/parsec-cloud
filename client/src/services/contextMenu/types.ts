@@ -31,3 +31,19 @@ export enum FileAction {
   SeeInExplorer = 'file-see-in-explorer',
   ShowEnclosingFolder = 'file-show-enclosing-folder',
 }
+
+export enum UserAction {
+  Invite = 'user-invite',
+  CopyAsyncEnrollmentLink = 'user-copy-async-enrollment-link',
+  Revoke = 'user-revoke',
+  Details = 'user-details',
+  AssignRoles = 'user-assign-roles',
+  UpdateProfile = 'user-update-profile',
+  ToggleSelect = 'user-toggle-select',
+  SelectAll = 'user-select-all',
+  UnselectAll = 'user-unselect-all',
+}
+
+export function isUserAction(value: any): value is UserAction {
+  return Object.values(UserAction).includes(value);
+}
