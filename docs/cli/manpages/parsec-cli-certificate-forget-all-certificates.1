@@ -1,0 +1,32 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-certificate-forget-all-certificates 1  "forget-all-certificates " 
+.SH NAME
+parsec\-cli\-certificate\-forget\-all\-certificates \- Forget all certificates from the local database, this is not needed under normal circumstances
+.SH SYNOPSIS
+\fBparsec\-cli certificate forget\-all\-certificates\fR [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+.SH DESCRIPTION
+Forget all certificates from the local database, this is not needed under normal circumstances.
+.PP
+Clearing the certificates might be useful in case the server database got rolled back to a previous state, resulting in the local database containing certificates that are no longer valid.
+.PP
+Note that this scenario is technically similar to a server compromise, so the user should ensure the rollback is legit before clearing the certificates!
+.SH OPTIONS
+.TP
+\fB\-\-password\-stdin\fR
+Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
+.TP
+\fB\-d\fR, \fB\-\-device\fR \fI<DEVICE>\fR
+Device ID
+.RS
+May also be specified with the \fBPARSEC_DEVICE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)

@@ -1,0 +1,28 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-sequester-generate-service-certificate 1  "generate-service-certificate " 
+.SH NAME
+parsec\-cli\-sequester\-generate\-service\-certificate \- Generate a signed service certificate
+.SH SYNOPSIS
+\fBparsec\-cli sequester generate\-service\-certificate\fR <\fB\-\-service\-label\fR> <\fB\-\-service\-public\-key\fR> <\fB\-\-authority\-private\-key\fR> [\fB\-\-datetime\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIOUTPUT\fR> 
+.SH DESCRIPTION
+Generate a signed service certificate
+.SH OPTIONS
+.TP
+\fB\-\-service\-label\fR \fI<SERVICE_LABEL>\fR
+Service name
+.TP
+\fB\-\-service\-public\-key\fR \fI<SERVICE_PUBLIC_KEY>\fR
+File containing the public key to use when generating the service\*(Aqs certificate
+.TP
+\fB\-\-authority\-private\-key\fR \fI<AUTHORITY_PRIVATE_KEY>\fR
+File containing the private key used to sign the service\*(Aqs certificate
+.TP
+\fB\-\-datetime\fR \fI<DATETIME>\fR [default: 2026\-08\-14T12:12:00Z]
+Timestamp at which the certificate is valid (similar to `notBefore` in a x509 certificate)
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIOUTPUT\fR>
+Write the certificate at the given path

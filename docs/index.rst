@@ -59,14 +59,7 @@ You can also use the search function in the top left corner.
     :caption: Parsec CLI
     :name: section-cli
 
-    cli/introduction
-    cli/install-cli
-    cli/first-steps
-    cli/invite
-    cli/device
-    cli/user
-    cli/workspace
-    cli/cheat-sheet
+    cli/index.rst
 
 .. only:: html
 

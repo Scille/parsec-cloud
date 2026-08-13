@@ -1,0 +1,64 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-workspace-import 1  "import " 
+.SH NAME
+parsec\-cli\-workspace\-import \- Import a local file to a remote workspace
+.SH SYNOPSIS
+\fBparsec\-cli workspace import\fR <\fB\-w\fR|\fB\-\-workspace\fR> [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-p\fR|\fB\-\-parents\fR] [\fB\-\-update\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fISRC\fR> <\fIDEST\fR> 
+.SH DESCRIPTION
+Import a local file to a remote workspace
+.SH OPTIONS
+.TP
+\fB\-w\fR, \fB\-\-workspace\fR \fI<WORKSPACE>\fR
+Workspace ID
+.RS
+May also be specified with the \fBPARSEC_WORKSPACE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-\-password\-stdin\fR
+Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
+.TP
+\fB\-d\fR, \fB\-\-device\fR \fI<DEVICE>\fR
+Device ID
+.RS
+May also be specified with the \fBPARSEC_DEVICE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-p\fR, \fB\-\-parents\fR
+If specified, create parent directories as needed
+
+No error if parent directories already exist (similar to `mkdir \-p`)
+.TP
+\fB\-\-update\fR \fI<UPDATE>\fR [default: none\-fail]
+Control how existing files are updated.
+
+(similar to `cp \-\-update=...`)
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+all: Existing files in destination are replaced
+.IP \(bu 2
+none\-fail: Existing files in destination are not replaced but raise and error instead
+.RE
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.TP
+<\fISRC\fR>
+Local file or folder to import (e.g. "myfile.txt")
+.TP
+<\fIDEST\fR>
+Destination path in the workspace (e.g. "/path/to/myfile.txt")
+
+The path is absolute from the workspace root directory. The command will fail if the parent directories do not exist, unless the `parents` option is enabled.
+
+If the destination file already exists, its content will be replaced.

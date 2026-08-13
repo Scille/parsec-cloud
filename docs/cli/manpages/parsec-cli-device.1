@@ -1,0 +1,35 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-device 1  "device " 
+.SH NAME
+parsec\-cli\-device \- Contains subcommands related to devices
+.SH SYNOPSIS
+\fBparsec\-cli device\fR [\fB\-h\fR|\fB\-\-help\fR] <\fIsubcommands\fR>
+.SH DESCRIPTION
+Contains subcommands related to devices
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.SH SUBCOMMANDS
+.TP
+parsec\-cli\-device\-forget\-local(1)
+Forget a local device It will still exist on the server but not locally anymore
+.TP
+parsec\-cli\-device\-list(1)
+List all devices
+.TP
+parsec\-cli\-device\-change\-authentication(1)
+Change authentication medium for a device
+.TP
+parsec\-cli\-device\-export\-recovery\-device(1)
+Export recovery device
+.TP
+parsec\-cli\-device\-import\-recovery\-device(1)
+Import recovery device
+.TP
+parsec\-cli\-device\-overwrite\-server\-url(1)
+Change the server URL for the device, this is normally not needed
+.TP
+parsec\-cli\-device\-help(1)
+Print this message or the help of the given subcommand(s)

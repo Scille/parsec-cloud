@@ -1,0 +1,32 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-auto-complete 1  "auto-complete " 
+.SH NAME
+parsec\-cli\-auto\-complete \- Display autocomplete setup script for shell
+.SH SYNOPSIS
+\fBparsec\-cli auto\-complete\fR [\fB\-h\fR|\fB\-\-help\fR] <\fISHELL\fR> 
+.SH DESCRIPTION
+Display autocomplete setup script for shell
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fISHELL\fR>
+Shell to generate completion script for (e.g. bash, fish, powershell, zsh, ...)
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+bash
+.IP \(bu 2
+elvish
+.IP \(bu 2
+fish
+.IP \(bu 2
+powershell
+.IP \(bu 2
+zsh
+.RE

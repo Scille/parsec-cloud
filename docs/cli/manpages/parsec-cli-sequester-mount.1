@@ -1,0 +1,31 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-sequester-mount 1  "mount " 
+.SH NAME
+parsec\-cli\-sequester\-mount \- Mount a realm export as a workspace
+.SH SYNOPSIS
+\fBparsec\-cli sequester mount\fR [\fB\-\-password\-stdin\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-d\fR|\fB\-\-decryptor\fR] [\fB\-t\fR|\fB\-\-timestamp\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIEXPORT_DB_PATH\fR> 
+.SH DESCRIPTION
+Mount a realm export as a workspace
+.SH OPTIONS
+.TP
+\fB\-\-password\-stdin\fR
+Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-d\fR, \fB\-\-decryptor\fR \fI<DECRYPTOR>\fR
+Sequester service or user to use for decryption. Allowed format `device:<device_id>` or `sequester:<service_id>:<path/to/private_key.pem>`
+.TP
+\fB\-t\fR, \fB\-\-timestamp\fR \fI<TIMESTAMP>\fR
+Browse the realm at a specific point in time
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIEXPORT_DB_PATH\fR>
+Path to the realm export database

@@ -1,0 +1,40 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-user-totp-reset 1  "totp-reset " 
+.SH NAME
+parsec\-cli\-user\-totp\-reset \- Reset TOTP (aka MFA, Multi\-Factor Authentication) for a user (administration command)
+.SH SYNOPSIS
+\fBparsec\-cli user totp\-reset\fR <\fB\-o\fR|\fB\-\-organization\fR> <\fB\-t\fR|\fB\-\-token\fR> <\fB\-a\fR|\fB\-\-addr\fR> [\fB\-\-user\-id\fR] [\fB\-\-user\-email\fR] [\fB\-\-send\-email\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+.SH DESCRIPTION
+Reset TOTP (aka MFA, Multi\-Factor Authentication) for a user (administration command)
+.SH OPTIONS
+.TP
+\fB\-o\fR, \fB\-\-organization\fR \fI<ORGANIZATION>\fR
+Organization ID
+.RS
+May also be specified with the \fBPARSEC_ORGANIZATION_ID\fR environment variable. 
+.RE
+.TP
+\fB\-t\fR, \fB\-\-token\fR \fI<TOKEN>\fR
+Administration token
+.RS
+May also be specified with the \fBPARSEC_ADMINISTRATION_TOKEN\fR environment variable. 
+.RE
+.TP
+\fB\-a\fR, \fB\-\-addr\fR \fI<ADDR>\fR
+Server address (e.g: parsec3://127.0.0.1:6770?no_ssl=true)
+.RS
+May also be specified with the \fBPARSEC_SERVER_ADDR\fR environment variable. 
+.RE
+.TP
+\fB\-\-user\-id\fR \fI<USER_ID>\fR
+User ID (hex) of the user to reset TOTP for (mutually exclusive with \-\-user\-email)
+.TP
+\fB\-\-user\-email\fR \fI<USER_EMAIL>\fR
+Email of the user to reset TOTP for (mutually exclusive with \-\-user\-id)
+.TP
+\fB\-\-send\-email\fR
+Request the server to send the an email informing the user of the reset
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help

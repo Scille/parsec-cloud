@@ -1,0 +1,26 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-user 1  "user " 
+.SH NAME
+parsec\-cli\-user \- Contains subcommands related to user
+.SH SYNOPSIS
+\fBparsec\-cli user\fR [\fB\-h\fR|\fB\-\-help\fR] <\fIsubcommands\fR>
+.SH DESCRIPTION
+Contains subcommands related to user
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.SH SUBCOMMANDS
+.TP
+parsec\-cli\-user\-list(1)
+List users
+.TP
+parsec\-cli\-user\-revoke(1)
+Revoke a user
+.TP
+parsec\-cli\-user\-totp\-reset(1)
+Reset TOTP (aka MFA, Multi\-Factor Authentication) for a user (administration command)
+.TP
+parsec\-cli\-user\-help(1)
+Print this message or the help of the given subcommand(s)
