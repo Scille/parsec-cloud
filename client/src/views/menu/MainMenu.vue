@@ -357,7 +357,7 @@ import {
   switchOrganization,
   watchRoute,
 } from '@/router';
-import { useWorkspaceContextMenu } from '@/services/contextMenu';
+import { isUserAction, UserAction, useWorkspaceContextMenu } from '@/services/contextMenu';
 import {
   EventData,
   EventDistributor,
@@ -379,7 +379,6 @@ import { FolderGlobalAction } from '@/views/files';
 import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
 import TabBarMenu from '@/views/menu/TabBarMenu.vue';
 import { useCustomTabBar } from '@/views/menu/utils';
-import { isUserAction, UserAction } from '@/views/users';
 import { WorkspaceAction } from '@/views/workspaces';
 import { WorkspaceMenu } from '@/views/workspaces/types';
 import {

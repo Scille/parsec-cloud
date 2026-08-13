@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { UserAction } from '@/views/users/types';
+import { UserAction } from '@/services/contextMenu';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonList, IonText, popoverController } from '@ionic/vue';
 import { informationCircle, personRemove, repeat, returnUpForward } from 'ionicons/icons';
 

@@ -325,11 +325,15 @@ msTest('Test user options tab menu', async ({ usersPage }) => {
   await usersPage.locator('.role-assignment-modal').locator('.closeBtn').nth(1).click();
 
   // `Profile` button
+  await user1.hover();
+  await user1.locator('.ms-checkbox').check();
   await tabItem.nth(2).click();
   await expect(usersPage.locator('.update-profile-modal')).toBeVisible();
   await usersPage.locator('.update-profile-modal').locator('.closeBtn').click();
 
   // `Revoke` button
+  await user1.hover();
+  await user1.locator('.ms-checkbox').check();
   await tabItem.nth(3).click();
   await expect(usersPage.locator('.question-modal')).toBeVisible();
   await expect(usersPage.locator('.question-modal').locator('ion-title')).toHaveText('Revoke this user?');
