@@ -1,0 +1,19 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-device-list 1  "list " 
+.SH NAME
+parsec\-cli\-device\-list \- List all devices
+.SH SYNOPSIS
+\fBparsec\-cli device list\fR [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+.SH DESCRIPTION
+List all devices
+.SH OPTIONS
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help

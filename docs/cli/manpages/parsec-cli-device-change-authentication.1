@@ -1,0 +1,34 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-device-change-authentication 1  "change-authentication " 
+.SH NAME
+parsec\-cli\-device\-change\-authentication \- Change authentication medium for a device
+.SH SYNOPSIS
+\fBparsec\-cli device change\-authentication\fR [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-p\fR|\fB\-\-password\fR] [\fB\-k\fR|\fB\-\-keyring\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+.SH DESCRIPTION
+Change authentication medium for a device
+.SH OPTIONS
+.TP
+\fB\-\-password\-stdin\fR
+Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
+.TP
+\fB\-d\fR, \fB\-\-device\fR \fI<DEVICE>\fR
+Device ID
+.RS
+May also be specified with the \fBPARSEC_DEVICE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-p\fR, \fB\-\-password\fR
+
+.TP
+\fB\-k\fR, \fB\-\-keyring\fR
+
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help

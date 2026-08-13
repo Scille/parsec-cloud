@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec Documentation 3.8.2-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-22 15:11+0200\n"
+"POT-Creation-Date: 2026-08-14 07:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
 #: ../../cli/cheat-sheet.rst:7
 msgid "Cheat sheet"
@@ -34,29 +34,29 @@ msgid "Device"
 msgstr "Appareil"
 
 #: ../../cli/cheat-sheet.rst:15
-msgid "For more, see :ref:`device <doc_cli_device>`"
-msgstr "Pour plus de détails, voir :ref:`device <doc_cli_device>`"
+msgid "For more, see :ref:`device <parsec-cli-device>`"
+msgstr "Pour plus de détails, voir :ref:`device <parsec-cli-device>`"
 
 #: ../../cli/cheat-sheet.rst:28
 msgid "Invite"
 msgstr "Invitation"
 
 #: ../../cli/cheat-sheet.rst:30
-msgid "For more, see :ref:`invite <doc_cli_invite>`"
-msgstr "Pour plus de détails, voir :ref:`invite <doc_cli_invite>`"
+msgid "For more, see :ref:`invite <parsec-cli-invite>`"
+msgstr "Pour plus de détails, voir :ref:`invite <parsec-cli-invite>`"
 
 #: ../../cli/cheat-sheet.rst:43
 msgid "User"
 msgstr "Utilisateur"
 
 #: ../../cli/cheat-sheet.rst:45
-msgid "For more, see :ref:`user <doc_cli_user>`"
-msgstr "Pour plus de détails, voir :ref:`user <doc_cli_user>`"
+msgid "For more, see :ref:`user <parsec-cli-user>`"
+msgstr "Pour plus de détails, voir :ref:`user <parsec-cli-user>`"
 
 #: ../../cli/cheat-sheet.rst:55
 msgid "Workspace"
 msgstr "Espace de travail"
 
 #: ../../cli/cheat-sheet.rst:57
-msgid "For more, see :ref:`workspace <doc_cli_workspace>`"
-msgstr "Pour plus de détails, voir :ref:`workspace <doc_cli_workspace>`"
+msgid "For more, see :ref:`workspace <parsec-cli-workspace>`"
+msgstr "Pour plus de détails, voir :ref:`workspace <parsec-cli-workspace>`"
