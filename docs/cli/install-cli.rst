@@ -58,51 +58,55 @@ GitHub releases page.
 Enable auto-completion
 ======================
 
-To have your shell auto-complete the ``parsec-cli`` command arguments,
-you will need to have the following line in your shell RC file:
+.. version-added:: 3.10.0
 
-.. code-block:: shell
+   To have your shell auto-complete the ``parsec-cli`` command arguments,
+   you will need to have the following line in your shell RC file:
 
-   eval "$(parsec-cli auto-complete $SHELL)"
+   .. code-block:: shell
 
-.. note::
+      eval "$(parsec-cli auto-complete $SHELL)"
 
-   The above code-snippet is for ``bash``, adapt it to your shell.
+   .. note::
+
+      The above code-snippet is for ``bash``, adapt it to your shell.
 
 Install man pages
 =================
 
-You can install the |parsec-cli| man pages by doing the following:
+.. version-added:: 3.10.0
 
-1. Create the local man pages folder:
+   You can install the |parsec-cli| man pages by doing the following:
 
-   .. code-block:: shell
+   1. Create the local man pages folder:
 
-      mkdir -p ~/.local/share/man/man1
+      .. code-block:: shell
 
-   .. tip::
+         mkdir -p ~/.local/share/man/man1
 
-      To make the pages available system-wide, replace the folder path with ``/usr/local/share/man/man1`` on the commands above and below.
+      .. tip::
 
-2. Generate the man pages:
+         To make the pages available system-wide, replace the folder path with ``/usr/local/share/man/man1`` on the commands above and below.
 
-   .. code-block:: shell
+   2. Generate the man pages:
 
-      parsec-cli man-page --mode separate ~/.local/share/man/man1
+      .. code-block:: shell
 
-3. Update the man pages database:
+         parsec-cli man-page --mode separate ~/.local/share/man/man1
 
-   .. code-block:: shell
+   3. Update the man pages database:
 
-      mandb
+      .. code-block:: shell
 
-4. Verify:
+         mandb
 
-   .. code-block:: shell
+   4. Verify:
 
-      man parsec-cli
+      .. code-block:: shell
 
-   .. important::
+         man parsec-cli
 
-      If ``man`` cannot find the page, ensure that the path where you put the pages is in the variable ``$MANPATH``.
-      You can also verify if ``mandb`` explored the folder.
+      .. important::
+
+         If ``man`` cannot find the page, ensure that the path where you put the pages is in the variable ``$MANPATH``.
+         You can also verify if ``mandb`` explored the folder.
