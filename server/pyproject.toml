@@ -60,7 +60,7 @@ cache-keys = [{ file = "pyproject.toml" }]
 [dependency-groups]
 dev = [
     # build
-    "cibuildwheel>=4.0,<4.2",
+    "cibuildwheel>=4.0,<4.3",
     "maturin~=1.14.1",
     "patchelf~=0.17.2.4; platform_system=='Linux'",
     "setuptools>=82.0,<83.1",
