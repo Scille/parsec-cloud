@@ -1,3 +1,4 @@
+use anyhow::Context;
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 use libparsec::{OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr};
 use std::fmt::Write;
@@ -61,7 +62,9 @@ pub async fn create_organization_req(
             "organization_id": organization_id,
         }))
         .send()
-        .await?;
+        .await?
+        .error_for_status()
+        .context("Unexpected response status")?;
 
     match rep.json::<CreateOrganizationRep>().await? {
         CreateOrganizationRep::Ok(res) => Ok(res.bootstrap_url),

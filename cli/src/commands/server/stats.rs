@@ -1,5 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::io::Write;
+
+use anyhow::Context;
 use reqwest::Response;
 use serde_json::Value;
 
@@ -72,17 +75,24 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     } = args;
     log::trace!("Retrieving server's stats (addr={addr})");
 
-    let rep = stats_server_req(&addr, &token, ui.format.into(), end_date).await?;
+    let rep = stats_server_req(&addr, &token, ui.format.into(), end_date)
+        .await?
+        .error_for_status()
+        .context("Unexpected response status")?;
+
+    std::debug_assert_matches!(rep.content_length(), Some(size) if size > 0, "Server should have replied with a response containing data");
 
     match ui.format {
         DataFormat::Json => {
+            let mut stdout = std::io::stdout().lock();
             let json = rep.json::<Value>().await?;
-            serde_json::to_writer_pretty(std::io::stdout().lock(), &json)?;
+            serde_json::to_writer_pretty(&mut stdout, &json)?;
+            stdout.flush()?;
         }
         DataFormat::Plain => {
-            tokio::io::stdout()
-                .write_all(rep.text().await?.as_bytes())
-                .await?
+            let mut stdout = tokio::io::stdout();
+            stdout.write_all(rep.text().await?.as_bytes()).await?;
+            stdout.flush().await?;
         }
     }
 
