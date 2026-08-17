@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use anyhow::Context;
 use serde_json::Value;
 
 use libparsec::{OrganizationID, ParsecAddr};
@@ -24,7 +25,9 @@ pub async fn status_organization_req(
         .get(url)
         .bearer_auth(administration_token)
         .send()
-        .await?;
+        .await?
+        .error_for_status()
+        .context("Unexpected response status")?;
 
     Ok(rep.json::<Value>().await?)
 }
