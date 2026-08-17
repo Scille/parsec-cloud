@@ -99,7 +99,7 @@ jobs:
         timeout-minutes: 30
 
       # Install syft
-      - uses: taiki-e/install-action@6a1bd70eaac3c8bdf093356838d7ee09fda951cf # pin v2.85.5
+      - uses: taiki-e/install-action@6c6fd71fe4fb72c3697d269963d0e15df8adedad # pin v2.85.10
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 

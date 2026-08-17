@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # pin v7.0.1
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706  # pin v4.0.2
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # pin v4.0.3
         id: changes
         with:
           list-files: shell
@@ -147,7 +147,7 @@ jobs:
           fi
         timeout-minutes: 1
 
-      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706  # pin v4.0.2
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # pin v4.0.3
         id: newsfragment-have-changed
         with:
           filters: |
@@ -194,7 +194,7 @@ jobs:
           diff --unified .pre-commit-config.yaml $TEMP_FILE || true
           echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
-      - uses: taiki-e/install-action@6a1bd70eaac3c8bdf093356838d7ee09fda951cf # pin v2.85.5
+      - uses: taiki-e/install-action@6c6fd71fe4fb72c3697d269963d0e15df8adedad # pin v2.85.10
         with:
           tool: taplo-cli@0.9.3
 
