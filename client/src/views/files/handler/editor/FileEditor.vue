@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo, getWorkspaceInfo } from '@/parsec';
+import { ClientInfo } from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   getOnlyOfficeDocumentType,
@@ -166,8 +166,13 @@ async function loadEditor(): Promise<void> {
   // POC (step 3.2): identify the document independently of the workspace handle (a per-session
   // local resource id, not shared across users/tabs) so that two clients opening the same file join
   // the same simulated collaboration session in onlyoffice-mock-server.js.
-  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
-  const documentId = `${workspaceInfoResult.ok ? workspaceInfoResult.value.id : workspaceHandle}:${contentInfo.path}`;
+  //
+  // Keyed on the file's own VlobID (contentInfo.fileId), not its path: a path can be reused (delete
+  // + recreate, rename) across genuinely different files, and onlyoffice-mock-server.js's session
+  // state (localStorage) is durable across page reloads - keying on path let a brand-new file
+  // silently resume a stale collaboration session (locks, accumulated changes) from a past, unrelated
+  // file that happened to share the same name.
+  const documentId = contentInfo.fileId;
   session = await openDocument(
     {
       documentContent: content,

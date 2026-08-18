@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { FileContentType } from '@/common/fileTypes';
-import { EntryName, FsPath, WorkspaceHandle } from '@/parsec';
+import { EntryID, EntryName, FsPath, WorkspaceHandle } from '@/parsec';
 import { DateTime } from 'luxon';
 
 export interface FileContentInfo {
@@ -9,6 +9,7 @@ export interface FileContentInfo {
   contentType: FileContentType;
   fileName: EntryName;
   path: FsPath;
+  fileId: EntryID;
   workspaceHandle: WorkspaceHandle;
   timestamp?: DateTime;
   size: number;
