@@ -127,9 +127,14 @@ async fn multiple_device_found(tmp_path: TmpPath, test_ui: &Ui) {
             org_addr,
             "dev1".parse().unwrap(),
             libparsec::HumanHandle::from_raw("first@dev1.com", "First").unwrap(),
-            crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
-                .to_string()
-                .into(),
+            libparsec::DeviceSaveStrategy {
+                totp_protection: None,
+                primary_protection: libparsec::DevicePrimaryProtectionStrategy::Password {
+                    password: crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
+                        .to_string()
+                        .into(),
+                },
+            },
             None,
         )
         .await
