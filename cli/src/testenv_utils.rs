@@ -50,7 +50,12 @@ pub async fn initialize_test_organization(
         organization_addr,
         "laptop".parse().expect("Unreachable"),
         HumanHandle::from_raw("alice@example.com", "Alice").expect("Unreachable"),
-        DEFAULT_DEVICE_PASSWORD.to_string().into(),
+        libparsec::DeviceSaveStrategy {
+            totp_protection: None,
+            primary_protection: libparsec::DevicePrimaryProtectionStrategy::Password {
+                password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
+            },
+        },
         None,
     )
     .await?;

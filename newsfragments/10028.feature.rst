@@ -2,3 +2,4 @@
 
 Impacted commands:
 - device import-recovery-device
+- organization bootstrap

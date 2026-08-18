@@ -8,10 +8,13 @@ use crate::{
 use parsec_cli::{commands::organization::create::create_organization_req, ui::Ui};
 
 #[rstest::rstest]
-#[case("http")]
-#[case("parsec3")]
 #[tokio::test]
-async fn bootstrap_organization(tmp_path: TmpPath, test_ui: &Ui, #[case] scheme: &str) {
+async fn bootstrap_organization(
+    tmp_path: TmpPath,
+    test_ui: &Ui,
+    #[values("http", "parsec3")] scheme: &str,
+    #[values("password", "keyring")] auth: &str,
+) {
     bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
     let organization_id = unique_org_id();
@@ -29,6 +32,7 @@ async fn bootstrap_organization(tmp_path: TmpPath, test_ui: &Ui, #[case] scheme:
         _ => unimplemented!(),
     };
     log::debug!("Bootstrapping organization {organization_id}");
+
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
         "organization",
@@ -40,7 +44,9 @@ async fn bootstrap_organization(tmp_path: TmpPath, test_ui: &Ui, #[case] scheme:
         "--label",
         "Alice",
         "--email",
-        "alice@example.com"
+        "alice@example.com",
+        "--auth",
+        auth
     )
     .stderr(predicates::str::contains("Organization bootstrapped"));
 }
