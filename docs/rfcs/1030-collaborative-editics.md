@@ -130,6 +130,26 @@ user with write access to join and do the save for them...).
 | `getMessages` / `message` | client → server / reply | OnlyOffice's built-in chat; unused here |
 | `openDocument` (`message.c === "imgurls"`) | client → server | asks for the URLs of images referenced by pasted/duplicated content |
 
+
+Events recognized by the OnlyOffice server (cf. [EuroOffice source code](https://github.com/Euro-Office/server/blob/c438fd3d336497b2acf7bfe6b4f9ee4fde1fcfbf/DocService/sources/DocsCoServer.js#L1904-L1990))
+TODO
+| `auth` |
+| `message` |
+| `cursor` |
+| `getLock` |
+| `saveChanges` |
+| `isSaveLock` |
+| `unSaveLock` |
+| `getMessages` |
+| `unLockDocument` |
+| `close` |
+| `openDocument` |
+| `clientLog` |
+| `extendSession` |
+| `forceSaveStart` |
+| `rpc` |
+| `authChangesAck` |
+
 ### 2.1 - Examples of typical messages
 
 - Create a new session
