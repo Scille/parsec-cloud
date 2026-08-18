@@ -410,7 +410,21 @@
       switch (data.kind) {
         case 'log': {
           const entry = this._readLog()[data.seq];
-          if (entry) this._sendToClient('saveChanges', { changes: entry.changes, changesIndex: entry.seq });
+          // startSaveChanges/endSaveChanges mark the first/last chunk of a (possibly multi-part) save
+          // (see notes/onlyoffice_protocol_types.md, "Large saves are chunked"). The POC never splits
+          // a save into multiple chunks, so every broadcast is both the first and the last - but the
+          // flags must still be sent as `true`: the receiving client's _onSaveChanges buffers `changes`
+          // into an internal queue and returns *without applying them* whenever `endSaveChanges` is
+          // falsy, waiting for a final chunk that (without this) would never arrive. Omitting these
+          // flags was a real bug: edits from one tab silently never appeared in another.
+          if (entry) {
+            this._sendToClient('saveChanges', {
+              changes: entry.changes,
+              changesIndex: entry.seq,
+              startSaveChanges: true,
+              endSaveChanges: true,
+            });
+          }
           this._updateStatus();
           break;
         }
@@ -528,7 +542,13 @@
             // even reaches onMessage), this synthetic entry has no local origin to apply it - and
             // BroadcastChannel never delivers back to its own sender - so this tab needs an explicit
             // delivery too, or "Bob"'s replayed edit would only show up in *other* tabs.
-            this._sendToClient('saveChanges', { changes: entry.changes, changesIndex: entry.seq });
+            // See the 'log' case in _onBcMessage for why startSaveChanges/endSaveChanges must be true.
+            this._sendToClient('saveChanges', {
+              changes: entry.changes,
+              changesIndex: entry.seq,
+              startSaveChanges: true,
+              endSaveChanges: true,
+            });
             this._broadcast({ kind: 'log', seq: entry.seq });
             this._maybeWarnCheckpoint(entry.seq);
             this._updateStatus();

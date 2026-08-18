@@ -404,6 +404,7 @@ async function loadFile(): Promise<boolean> {
     contentType: fileInfo.type,
     fileName: fileName,
     path: path,
+    fileId: stats.id,
     workspaceHandle: workspaceHandle,
     timestamp: atTime,
     size: stats.size,
