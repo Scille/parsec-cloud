@@ -35,10 +35,13 @@ async fn invite_shared_recovery(tmp_path: TmpPath, test_ui: &Ui) {
 
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
-#[case("http")]
-#[case("parsec3")]
 #[tokio::test]
-async fn invite_shared_recovery_dance(tmp_path: TmpPath, test_ui: &Ui, #[case] scheme: &str) {
+async fn invite_shared_recovery_dance(
+    tmp_path: TmpPath,
+    test_ui: &Ui,
+    #[values("http", "parsec3")] scheme: &str,
+    #[values("password", "keyring")] auth: &str,
+) {
     let (_, TestOrganization { alice, bob, .. }, _) =
         bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
@@ -95,7 +98,7 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath, test_ui: &Ui, #[case] s
         _ => unimplemented!(),
     };
 
-    let program_claimer = crate::std_cmd!("invite", "claim", &addr);
+    let program_claimer = crate::std_cmd!("invite", "claim", &addr, "--auth", auth);
 
     let p_claimer = Arc::new(Mutex::new(
         crate::spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
@@ -179,12 +182,12 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath, test_ui: &Ui, #[case] s
     locked.send_line("label").unwrap();
     locked.exp_string("Recovering device").unwrap();
 
-    locked
-        .exp_string("Enter password for the new device:")
-        .unwrap();
-    locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
-    locked.exp_string("Confirm password:").unwrap();
+    if auth == "password" {
+        locked.exp_string("New device password:").unwrap();
+        locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+        locked.exp_string("Confirm password:").unwrap();
 
-    locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+        locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+    }
     locked.exp_eof().unwrap();
 }
