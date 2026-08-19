@@ -613,23 +613,13 @@ impl Display for NewAuthMethod {
 
 impl NewAuthMethod {
     // TODO delete when the CLI stops using internal libparsec crates
-    pub fn get_client_save_strategy(
+    pub async fn get_client_save_strategy(
         self,
         password_stdin: bool,
     ) -> anyhow::Result<libparsec_client::DeviceSaveStrategy> {
-        match self {
-            NewAuthMethod::Password => {
-                let password = choose_password(if password_stdin {
-                    ReadPasswordFrom::Stdin
-                } else {
-                    ReadPasswordFrom::Tty {
-                        prompt: "Enter password for the new device:",
-                    }
-                })?;
-                Ok(libparsec_client::DeviceSaveStrategy::new_password(password))
-            }
-            NewAuthMethod::Keyring => Ok(libparsec_client::DeviceSaveStrategy::new_keyring()),
-        }
+        self.get_save_strategy(password_stdin)?
+            .convert_with_side_effects()
+            .await
     }
 
     pub fn get_save_strategy(

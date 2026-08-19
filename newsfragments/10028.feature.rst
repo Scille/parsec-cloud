@@ -1,3 +1,4 @@
 [CLI][Breaking] Add --auth common option to setup new authentication method.
 
 Impacted commands:
+- device import-recovery-device
