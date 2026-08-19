@@ -7,8 +7,10 @@ use crate::{
 use parsec_cli::{ui::Ui, utils::start_client};
 
 #[rstest::rstest]
+#[case("password")]
+#[case("keyring")]
 #[tokio::test]
-async fn import_recovery_device(tmp_path: TmpPath, test_ui: &Ui) {
+async fn import_recovery_device_password(tmp_path: TmpPath, test_ui: &Ui, #[case] auth: &str) {
     let (_, TestOrganization { alice, .. }, _) =
         bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
 
@@ -29,7 +31,9 @@ async fn import_recovery_device(tmp_path: TmpPath, test_ui: &Ui) {
         "--input",
         &input,
         "--label",
-        "new_device"
+        "new_device",
+        "--auth",
+        auth
     )
     .stderr(predicates::str::contains("New device created:"));
 }

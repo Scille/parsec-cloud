@@ -8,12 +8,12 @@ use libparsec::DeviceLabel;
 use crate::{ui::compat::AvailableDeviceDisplay, utils::*};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, password_stdin]
+    #[with = config_dir, password_stdin, auth]
     pub struct Args {
         /// Path where encrypted recovery device data is
         #[arg(short, long, value_hint = clap::ValueHint::FilePath)]
         input: PathBuf,
-        /// new device label
+        /// New device label
         #[arg(short, long, value_hint = clap::ValueHint::Other)]
         label: String,
     }
@@ -25,7 +25,9 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         config_dir,
         password_stdin,
         label,
+        auth,
     } = args;
+    // TODO: fail if password std and keyring ?
     log::trace!(
         "Importing recovery device from {} (confdir={})",
         input.display(),
@@ -40,21 +42,14 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
             prompt: "Enter passphrase for the recovery file:",
         }
     })?;
-    let password = choose_password(if password_stdin {
-        ReadPasswordFrom::Stdin
-    } else {
-        ReadPasswordFrom::Tty {
-            prompt: "Enter password for the new device:",
-        }
-    })?;
-
+    let strategy = auth.get_client_save_strategy(password_stdin).await?;
     let device_label = DeviceLabel::try_from(label.as_str())?;
     let new_device = libparsec_client::import_recovery_device(
         &config_dir,
         &recovery_device,
         passphrase.to_string(),
         device_label.clone(),
-        libparsec_client::DeviceSaveStrategy::new_password(password),
+        strategy,
     )
     .await
     .map(AvailableDeviceDisplay)?;
