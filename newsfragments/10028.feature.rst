@@ -3,3 +3,4 @@
 Impacted commands:
 - device import-recovery-device
 - organization bootstrap
+- invite claim (replaces use_keyring option)
