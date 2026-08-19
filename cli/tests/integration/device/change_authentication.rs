@@ -12,7 +12,9 @@ use crate::{
 
 #[rstest::rstest]
 #[tokio::test]
-async fn ok(tmp_path: TmpPath, test_ui: &Ui) {
+#[case("password")]
+#[case("keyring")]
+async fn ok(tmp_path: TmpPath, test_ui: &Ui, #[case] auth: &str) {
     const NEW_DEVICE_PASSWORD: &str = "S3cr3t";
 
     let (_, TestOrganization { alice, .. }, _) =
@@ -23,7 +25,8 @@ async fn ok(tmp_path: TmpPath, test_ui: &Ui) {
         "change-authentication",
         "--device",
         &alice.device_id.hex(),
-        "--password",
+        "--auth",
+        auth,
         "--password-stdin"
     )
     .stdin(std::process::Stdio::piped())
@@ -38,8 +41,10 @@ async fn ok(tmp_path: TmpPath, test_ui: &Ui) {
     stdin.write_all(DEFAULT_DEVICE_PASSWORD.as_bytes()).unwrap();
     stdin.write_all(b"\n").unwrap();
 
-    stdin.write_all(NEW_DEVICE_PASSWORD.as_bytes()).unwrap();
-    stdin.write_all(b"\n").unwrap();
+    if auth == "password" {
+        stdin.write_all(NEW_DEVICE_PASSWORD.as_bytes()).unwrap();
+        stdin.write_all(b"\n").unwrap();
+    }
 
     let mut buf = String::new();
     wait_for(
