@@ -10,6 +10,7 @@ const DEVICE_ID_FIELD: &str = "device_id";
 const ORGANIZATION_ID_FIELD: &str = "organization_id";
 const USER_HUMAN_HANDLE_FIELD: &str = "human_handle";
 const DEVICE_LABEL_FIELD: &str = "device_label";
+const DEVICE_TYPE_FIELD: &str = "device_type";
 const WORKSPACE_ID_FIELD: &str = "workspace_id";
 const WORKSPACE_NAME_FIELD: &str = "workspace_name";
 const WORKSPACE_STATUS_FIELD: &str = "workspace_status";
@@ -32,11 +33,13 @@ impl Serialize for AvailableDeviceDisplay {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("AvailableDevice", 4)?;
+        let mut s = serializer.serialize_struct("AvailableDevice", 5)?;
         s.serialize_field(DEVICE_ID_FIELD, &self.device_id.hex())?;
         s.serialize_field(ORGANIZATION_ID_FIELD, &self.organization_id)?;
         s.serialize_field(USER_HUMAN_HANDLE_FIELD, &self.human_handle.to_string())?;
         s.serialize_field(DEVICE_LABEL_FIELD, &self.device_label)?;
+        s.serialize_field(DEVICE_TYPE_FIELD, &self.ty.to_string())?;
+
         s.end()
     }
 }
@@ -45,7 +48,7 @@ impl CLIDisplay for AvailableDeviceDisplay {
     fn plain_write<W: Write>(&self, fmt: &ColorFormatter, mut w: W) -> std::io::Result<()> {
         write!(
             w,
-            "{dev_id} - {org_id}: {handle} @ {label}",
+            "{dev_id} - {org_id}: {handle} @ {label} ({ty})",
             dev_id = fmt.wrap_in_color(
                 Color::Yellow,
                 format_args!(
@@ -57,6 +60,7 @@ impl CLIDisplay for AvailableDeviceDisplay {
             org_id = self.organization_id,
             handle = self.human_handle,
             label = self.device_label,
+            ty = self.ty,
         )
     }
 }
