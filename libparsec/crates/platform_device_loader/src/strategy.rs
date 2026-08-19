@@ -1,6 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    fmt::{Display, Formatter},
+    path::PathBuf,
+    sync::Arc,
+};
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_crypto::{Password, SecretKey};
@@ -276,6 +280,20 @@ pub enum AvailableDeviceType {
         openbao_entity_id: String,
         openbao_preferred_auth_id: String,
     },
+}
+
+impl Display for AvailableDeviceType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        let s = match self {
+            AvailableDeviceType::Keyring => "keyring",
+            AvailableDeviceType::Password => "password",
+            AvailableDeviceType::PKI { .. } => "pki",
+            AvailableDeviceType::Recovery => "recovery",
+            AvailableDeviceType::AccountVault => "account vault",
+            AvailableDeviceType::OpenBao { .. } => "openBao",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
