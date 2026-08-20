@@ -1,0 +1,3 @@
+[CLI][Breaking] Add --auth common option to setup new authentication method.
+
+Impacted commands:
