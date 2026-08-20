@@ -1,5 +1,6 @@
 !define WINFSP_VERSION "2.1.25156"
 !define WINFSP_FILE "winfsp-${WINFSP_VERSION}.msi"
+!define VC_REDIST_FILE "vc_redist.x64.exe"
 
 !macro installWinFSP
     File /oname=$PLUGINSDIR\${WINFSP_FILE} ${PROJECT_DIR}\build\${WINFSP_FILE}
@@ -25,6 +26,12 @@
     ${EndIf}
 !macroend
 
+!macro installVCRedist
+    File /oname=$PLUGINSDIR\${VC_REDIST_FILE} ${PROJECT_DIR}\build\${VC_REDIST_FILE}
+    ExecWait '"$PLUGINSDIR\${VC_REDIST_FILE}" /install /passive /norestart'
+!macroend
+
 !macro customInstall
     !insertmacro mayInstallWinFSP
+    !insertmacro installVCRedist
 !macroend

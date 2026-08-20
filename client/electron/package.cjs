@@ -152,7 +152,15 @@ const options = {
     buildResources: 'assets',
   },
 
-  files: ['assets/**/*', '!assets/installer.nsh', 'build/**/*', '!build/**/*.js.map', '!build/**/*.msi', 'app/**/*'],
+  files: [
+    'assets/**/*',
+    '!assets/installer.nsh',
+    'build/**/*',
+    '!build/**/*.js.map',
+    '!build/**/*.msi',
+    '!build/vc_redist.x64.exe',
+    'app/**/*',
+  ],
 
   publish: publishConfig,
 
