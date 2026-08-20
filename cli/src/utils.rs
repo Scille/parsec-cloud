@@ -9,6 +9,7 @@ use std::{
 };
 
 use anyhow::anyhow;
+use clap::ValueEnum;
 use dialoguer::FuzzySelect;
 use libparsec::{
     internal::{Client, EventBus},
@@ -588,6 +589,73 @@ impl clap::builder::TypedValueParser for OutputFileParser {
             path_parser
                 .parse_ref(cmd, arg, value)
                 .map(Self::Value::Path)
+        }
+    }
+}
+
+// TODO: use in device change authentication instead of NewAccessStrategyChoice
+// TODO: use in invite claim instead of SaveMode
+#[derive(ValueEnum, Debug, Clone, Default)]
+pub enum NewAuthMethod {
+    Keyring,
+    #[default]
+    Password,
+}
+
+impl Display for NewAuthMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        self.to_possible_value()
+            .expect("no values are skipped")
+            .get_name()
+            .fmt(f)
+    }
+}
+
+impl NewAuthMethod {
+    // TODO delete when the CLI stops using internal libparsec crates
+    pub fn get_client_save_strategy(
+        self,
+        password_stdin: bool,
+    ) -> anyhow::Result<libparsec_client::DeviceSaveStrategy> {
+        match self {
+            NewAuthMethod::Password => {
+                let password = choose_password(if password_stdin {
+                    ReadPasswordFrom::Stdin
+                } else {
+                    ReadPasswordFrom::Tty {
+                        prompt: "Enter password for the new device:",
+                    }
+                })?;
+                Ok(libparsec_client::DeviceSaveStrategy::new_password(password))
+            }
+            NewAuthMethod::Keyring => Ok(libparsec_client::DeviceSaveStrategy::new_keyring()),
+        }
+    }
+
+    pub fn get_save_strategy(
+        self,
+        password_stdin: bool,
+    ) -> anyhow::Result<libparsec::DeviceSaveStrategy> {
+        match self {
+            NewAuthMethod::Password => {
+                let password = choose_password(if password_stdin {
+                    ReadPasswordFrom::Stdin
+                } else {
+                    ReadPasswordFrom::Tty {
+                        prompt: "New device password:",
+                    }
+                })?;
+                Ok(libparsec::DeviceSaveStrategy {
+                    totp_protection: None,
+                    primary_protection: libparsec::DevicePrimaryProtectionStrategy::Password {
+                        password,
+                    },
+                })
+            }
+            NewAuthMethod::Keyring => Ok(libparsec::DeviceSaveStrategy {
+                totp_protection: None,
+                primary_protection: libparsec::DevicePrimaryProtectionStrategy::Keyring,
+            }),
         }
     }
 }
