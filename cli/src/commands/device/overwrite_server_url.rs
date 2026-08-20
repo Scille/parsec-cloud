@@ -12,7 +12,7 @@ use crate::{
 };
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, password_stdin, force]
     pub struct Args {
         /// The new server URL
         #[arg(short, long, value_parser = ParsecAddr::from_http_url, value_hint = clap::ValueHint::Url)]
@@ -104,11 +104,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         )
     })?;
 
-    // FIXME: Should handle when run from a non-interactive terminal by pass `--force` option
-    // (look at `device forget-local`)
-    if !Confirm::new().with_prompt("Are you sure? ").interact()? {
-        ui.with_message(|_, out| writeln!(out, "Operation cancelled"))?;
-    } else {
+    if args.force || Confirm::new().with_prompt("Are you sure? ").interact()? {
         libparsec::update_device_overwrite_server_addr(
             &args.config_dir,
             access_strategy,
@@ -117,6 +113,8 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         .await?;
 
         ui.with_message(|_, out| write!(out, "Device updated successfully"))?;
+    } else {
+        ui.with_message(|_, out| writeln!(out, "Operation cancelled"))?;
     }
 
     Ok(())
