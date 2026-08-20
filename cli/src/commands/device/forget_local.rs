@@ -11,11 +11,8 @@ use crate::{
 };
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device]
+    #[with = config_dir, device, force]
     pub struct Args {
-        /// Force forgetting local device without confirmation
-        #[arg(long)]
-        force: bool,
     }
 );
 

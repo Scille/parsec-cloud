@@ -1,0 +1,6 @@
+ [CLI][Breaking] Harmonize --force option.
+
+    Impacted commands:
+    - forget local device
+    - tos accept (replace --yes by --force)
+    - device overwrite server_url

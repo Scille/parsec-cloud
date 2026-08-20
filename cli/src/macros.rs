@@ -286,6 +286,31 @@ macro_rules! clap_parser_with_shared_opts_builder {
             }
         );
     };
+    // force option
+    (
+        #[with = force $(,$modifier:ident)*]
+        $(#[$struct_attr:meta])*
+        $visibility:vis struct $name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field:ident: $field_type:ty,
+            )*
+        }
+    ) => {
+        $crate::clap_parser_with_shared_opts_builder!(
+            #[with = $($modifier),*]
+            $(#[$struct_attr])*
+            $visibility struct $name {
+                #[doc = "force default option to bypass interaction"]
+                #[arg(long, default_value_t)]
+                pub(crate) force: bool,
+                $(
+                    $(#[$field_attr])*
+                    $field_vis $field: $field_type,
+                )*
+            }
+        );
+    };
     (
         #[with =]
         $(#[$struct_attr:meta])*

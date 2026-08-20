@@ -5,17 +5,16 @@ use dialoguer::Confirm;
 use crate::{ui::compat::TOSDisplay, utils::StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = device, config_dir, password_stdin]
+    #[with = device, config_dir, password_stdin, force]
     pub struct Args {
-        #[arg(long)]
-        yes: bool,
+
     }
 );
 
 crate::build_main_with_client!(main, accept_tos);
 
 pub async fn accept_tos(ui: crate::Ui, args: Args, client: &StartedClient) -> anyhow::Result<()> {
-    let Args { yes, .. } = args;
+    let Args { force, .. } = args;
 
     let tos = match client.get_tos().await {
         Ok(tos) => TOSDisplay(tos),
@@ -26,7 +25,7 @@ pub async fn accept_tos(ui: crate::Ui, args: Args, client: &StartedClient) -> an
         Err(e) => return Err(e.into()),
     };
 
-    if !yes {
+    if !force {
         ui.message_println(&tos)?;
         if !Confirm::new()
             .with_prompt("Do you accept these terms of service?")

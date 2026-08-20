@@ -46,3 +46,24 @@ async fn ok(tmp_path: TmpPath, test_ui: &Ui) {
 
     // TODO: Inspect the device content once `device info` CLI command is available
 }
+
+#[rstest::rstest]
+#[tokio::test]
+async fn ok_force(tmp_path: TmpPath, test_ui: &Ui) {
+    let (_, TestOrganization { alice, .. }, _) =
+        bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
+
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "device",
+        "overwrite-server-url",
+        "--device",
+        &alice.device_id.hex(),
+        "--server-url",
+        "https://new.invalid:123",
+        "--force"
+    )
+    .stderr(predicates::str::contains("Device updated successfully"));
+
+    // TODO: Inspect the device content once `device info` CLI command is available
+}

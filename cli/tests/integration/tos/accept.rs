@@ -61,7 +61,7 @@ async fn test_accept_tos(tmp_path: TmpPath, test_ui: &Ui) {
 
 #[rstest::rstest]
 #[tokio::test]
-async fn tldr_skip_with_yes(tmp_path: TmpPath, test_ui: &Ui) {
+async fn tldr_skip_with_force(tmp_path: TmpPath, test_ui: &Ui) {
     let (addr, TestOrganization { alice, .. }, organization) =
         bootstrap_cli_test(test_ui, &tmp_path).await.unwrap();
     config_tos(&addr, &organization).await;
@@ -70,7 +70,7 @@ async fn tldr_skip_with_yes(tmp_path: TmpPath, test_ui: &Ui) {
         with_password = DEFAULT_DEVICE_PASSWORD,
         "tos",
         "accept",
-        "--yes",
+        "--force",
         "--device",
         &alice.device_id.hex()
     )
