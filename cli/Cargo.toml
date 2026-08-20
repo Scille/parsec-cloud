@@ -36,7 +36,7 @@ libparsec_types.workspace = true
 libparsec.workspace = true
 
 anyhow = { workspace = true }
-clap = { workspace = true, features = ["default", "derive", "env"] }
+clap = { workspace = true, features = ["default", "derive", "env", "cargo"] }
 # `termination` feature enable handling of SIGHUP/SIGTERM on top of SIGINT
 ctrlc = { workspace = true, features = ["termination"] }
 data-encoding.workspace = true

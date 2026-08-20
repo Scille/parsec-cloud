@@ -1,6 +1,7 @@
 pub mod gen_service_cert;
 pub mod mount;
 
+/// Contains subcommands related to sequester operations
 #[derive(clap::Subcommand)]
 pub enum Group {
     GenerateServiceCertificate(gen_service_cert::Args),

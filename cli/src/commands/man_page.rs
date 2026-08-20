@@ -51,7 +51,18 @@ pub async fn main(_ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         "Cannot output separated manpage on stdout"
     );
 
-    let mut cmd = crate::Arg::command();
+    let mut cmd = crate::Arg::command()
+        // Replace long version with short version, make man page generation more idempotent (on the
+        // git side)
+        .version(clap::crate_version!())
+        // Overwrite default value of `sequester generate-service-certificate --datetime` option
+        // It use `DateTime::now` making the value change on each call
+        .mut_subcommand("sequester", |subcmd| {
+            subcmd.mut_subcommand("generate-service-certificate", |cmd| {
+                cmd.mut_arg("datetime", |arg| arg.default_value("2026-08-14T12:12:00Z"))
+            })
+        });
+
     // Required introspection.
     cmd.build();
 

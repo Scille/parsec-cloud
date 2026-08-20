@@ -1,0 +1,28 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH parsec-cli-device-forget-local 1  "forget-local " 
+.SH NAME
+parsec\-cli\-device\-forget\-local \- Forget a local device It will still exist on the server but not locally anymore
+.SH SYNOPSIS
+\fBparsec\-cli device forget\-local\fR [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-\-force\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+.SH DESCRIPTION
+Forget a local device It will still exist on the server but not locally anymore
+.SH OPTIONS
+.TP
+\fB\-d\fR, \fB\-\-device\fR \fI<DEVICE>\fR
+Device ID
+.RS
+May also be specified with the \fBPARSEC_DEVICE_ID\fR environment variable. 
+.RE
+.TP
+\fB\-c\fR, \fB\-\-config\-dir\fR \fI<CONFIG_DIR>\fR [default: /home/redacted/.config/parsec3/libparsec]
+Parsec config directory
+.RS
+May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
+.RE
+.TP
+\fB\-\-force\fR
+Force forgetting local device without confirmation
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help

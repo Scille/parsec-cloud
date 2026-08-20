@@ -11,7 +11,7 @@ and to the object storage.
 
 The steps to delete a workspace can be summarized as follows:
 
-#. A User deletes a workspace (see the :ref:`userguide <userguide_delete_workspace>` or the :ref:`cli guide <cli_delete_workspace>`)
+#. A User deletes a workspace (see the :ref:`userguide <userguide_delete_workspace>` or the :ref:`cli guide <parsec-cli-workspace-archive>`)
 #. The workspace is marked as scheduled for deletion in the Server (the delay depends on the Organization configuration)
 #. When the deletion date has passed, the effective removal can be triggered in the Parsec Server.
 #. The corresponding blocks can be deleted from the object storage.
