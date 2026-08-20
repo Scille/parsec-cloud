@@ -153,6 +153,10 @@ export class UserCollection {
     return this.getSelectedUsers().length;
   }
 
+  hasAllSelected(): boolean {
+    return this.selectableUsersCount() === this.selectedCount();
+  }
+
   statusDiff(user1: UserModel, user2: UserModel): number {
     return (
       Number(user2.isActive()) * 4 +

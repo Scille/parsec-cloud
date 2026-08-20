@@ -134,6 +134,10 @@ export class EntryCollection<Model extends EntryModel> {
     return this.entries.filter((entry) => entry.isSelected).length;
   }
 
+  hasAllSelected(): boolean {
+    return this.selectedCount() === this.entries.length;
+  }
+
   sort(property: SortProperty, ascending: boolean): void {
     this.entries.sort((item1, item2) => {
       if (item1.isFile() !== item2.isFile()) {

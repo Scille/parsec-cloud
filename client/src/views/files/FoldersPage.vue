@@ -29,6 +29,7 @@
           <ms-search-input
             :placeholder="'FoldersPage.search.placeholder'"
             id="search-input-files"
+            ref="searchInputRef"
             :debounce="300"
             @change="onSearchValueChange"
             v-model="searchPattern"
@@ -416,6 +417,7 @@ const querying = ref(true);
 const fileListDisplayRef = useTemplateRef<InstanceType<typeof FileListDisplay>>('fileListDisplay');
 const fileGridDisplayRef = useTemplateRef<InstanceType<typeof FileGridDisplay>>('fileGridDisplay');
 
+const searchInputRef = ref();
 const fileInputsRef = useTemplateRef<InstanceType<typeof FileInputs>>('fileInputs');
 let eventCbId: string | null = null;
 
@@ -741,28 +743,48 @@ async function defineShortcuts(): Promise<void> {
   );
   hotkeys.add(
     { key: 'enter', modifiers: Modifiers.None, platforms: Platforms.MacOS, disableIfModal: true, route: Routes.Documents },
-    async () => await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries()),
+    async () => {
+      if (getSelectedEntries().length === 1) {
+        await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries());
+      }
+    },
   );
   hotkeys.add(
     { key: 'f2', modifiers: Modifiers.None, platforms: Platforms.Windows | Platforms.Linux, disableIfModal: true, route: Routes.Documents },
-    async () => await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries()),
+    async () => {
+      if (getSelectedEntries().length === 1) {
+        await dispatchContextMenuAction(FileAction.Rename, getSelectedEntries());
+      }
+    },
   );
   hotkeys.add(
     { key: 'i', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
-    async () => await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries()),
+    async () => {
+      if (getSelectedEntries().length === 1) {
+        await dispatchContextMenuAction(FileAction.ShowDetails, getSelectedEntries());
+      }
+    },
   );
-  // FIXME: Reactivate `x` and `c` hotkeys when copy/move bindings are available
+  // TODO find appropriate shortcuts for MakeACopy and MoveTo, knowing that each of these opens the console on Chrome and Firefox:
+  // - ctrl + shift + C
+  // - cmd + shift + C
+  // - cmd + option + C
+
   // hotkeys.add(
   //   { key: 'c', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
-  //   async () => await copyEntries(getSelectedEntries()),
+  //   async () => await dispatchContextMenuAction(FileAction.MakeACopy, getSelectedEntries()),
   // );
   // hotkeys.add(
   //   { key: 'x', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
-  //   async () => await moveEntriesTo(getSelectedEntries()),
+  //   async () => await dispatchContextMenuAction(FileAction.MoveTo, getSelectedEntries()),
   // );
   hotkeys.add(
     { key: 'l', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop | Platforms.Web, disableIfModal: true, route: Routes.Documents },
-    async () => await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries()),
+    async () => {
+      if (getSelectedEntries().length === 1) {
+        await dispatchContextMenuAction(FileAction.CopyLink, getSelectedEntries());
+      }
+    },
   );
   hotkeys.add(
     {
@@ -787,8 +809,12 @@ async function defineShortcuts(): Promise<void> {
   hotkeys.add(
     { key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
     async () => {
-      selectAll();
+      files.value.hasAllSelected() && folders.value.hasAllSelected() ? unselectAll() : selectAll();
     },
+  );
+  hotkeys.add(
+    { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
+    async () => await searchInputRef.value?.setFocus(),
   );
 }
 
