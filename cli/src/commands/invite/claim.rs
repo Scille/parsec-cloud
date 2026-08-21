@@ -21,7 +21,7 @@ use libparsec::{
     },
     ClientConfig, ParsecInvitationAddr, Url,
 };
-use libparsec_client::{DeviceSaveStrategy, ShamirRecoveryClaimFinalizeCtx};
+use libparsec_client::ShamirRecoveryClaimFinalizeCtx;
 
 use crate::{
     ui::{compat::AvailableDeviceDisplay, Color},
@@ -30,23 +30,15 @@ use crate::{
 use dialoguer::{Confirm, FuzzySelect, Input};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, data_dir, password_stdin]
+    #[with = config_dir, data_dir, password_stdin, auth]
     pub struct Args {
         // cspell:disable-next-line
         /// Server invitation address (e.g.: parsec3://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL`
         /// or http://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL`)
         #[arg(value_hint = clap::ValueHint::Url)]
         addr: Url,
-        /// Use keyring to store the password for the device.
-        #[arg(long, default_value_t, conflicts_with = "password_stdin")]
-        use_keyring: bool,
     }
 );
-
-enum SaveMode {
-    Password { read_from_stdin: bool },
-    Keyring,
-}
 
 pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let Args {
@@ -54,17 +46,11 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         data_dir,
         addr,
         password_stdin,
-        use_keyring,
+        auth,
     } = args;
     let addr = ParsecInvitationAddr::from_any(addr.as_str())?;
     log::trace!("Claiming invitation (addr={addr})");
-    let save_mode = if use_keyring {
-        SaveMode::Keyring
-    } else {
-        SaveMode::Password {
-            read_from_stdin: password_stdin,
-        }
-    };
+
     let config = ClientConfig {
         config_dir,
         data_base_dir: data_dir,
@@ -79,14 +65,18 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
             let ctx = step2_user(ctx).await?;
             let ctx = step3_user(&ui, ctx).await?;
             let ctx = step4_user(&ui, ctx).await?;
-            save_user(&ui, ctx, save_mode).await
+            let save_strategy = auth.get_client_save_strategy(password_stdin).await?;
+
+            save_user(&ui, ctx, save_strategy).await
         }
         AnyClaimRetrievedInfoCtx::Device(ctx) => {
             let ctx = step1_device(&ui, ctx).await?;
             let ctx = step2_device(ctx).await?;
             let ctx = step3_device(&ui, ctx).await?;
             let ctx = step4_device(&ui, ctx).await?;
-            save_device(&ui, ctx, save_mode).await
+            let save_strategy = auth.get_client_save_strategy(password_stdin).await?;
+
+            save_device(&ui, ctx, save_strategy).await
         }
         AnyClaimRetrievedInfoCtx::ShamirRecovery(ctx) => {
             let mut pick_ctx = ctx;
@@ -133,8 +123,9 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
                     }
                 }
             };
+            let save_strategy = auth.get_client_save_strategy(password_stdin).await?;
 
-            save_shamir_recovery(&ui, final_ctx, save_mode).await
+            save_shamir_recovery(&ui, final_ctx, save_strategy).await
         }
     }
 }
@@ -498,29 +489,12 @@ async fn step5_shamir(
     Ok(ctx)
 }
 
-fn get_save_strategy(save_mode: SaveMode) -> anyhow::Result<DeviceSaveStrategy> {
-    match save_mode {
-        SaveMode::Password { read_from_stdin } => {
-            let password = choose_password(if read_from_stdin {
-                ReadPasswordFrom::Stdin
-            } else {
-                ReadPasswordFrom::Tty {
-                    prompt: "Enter password for the new device:",
-                }
-            })?;
-            Ok(DeviceSaveStrategy::new_password(password))
-        }
-        SaveMode::Keyring => Ok(DeviceSaveStrategy::new_keyring()),
-    }
-}
-
 async fn save_user(
     ui: &crate::Ui,
     ctx: UserClaimFinalizeCtx,
-    save_mode: SaveMode,
+    save_strategy: libparsec_client::DeviceSaveStrategy,
 ) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
-    let save_strategy = get_save_strategy(save_mode)?;
     let new_device = ctx
         .save_local_device(&save_strategy, &key_file)
         .await
@@ -532,10 +506,9 @@ async fn save_user(
 async fn save_device(
     ui: &crate::Ui,
     ctx: DeviceClaimFinalizeCtx,
-    save_mode: SaveMode,
+    save_strategy: libparsec_client::DeviceSaveStrategy,
 ) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
-    let save_strategy = get_save_strategy(save_mode)?;
     let new_device = ctx
         .save_local_device(&save_strategy, &key_file)
         .await
@@ -547,10 +520,9 @@ async fn save_device(
 async fn save_shamir_recovery(
     ui: &crate::Ui,
     ctx: ShamirRecoveryClaimFinalizeCtx,
-    save_mode: SaveMode,
+    save_strategy: libparsec_client::DeviceSaveStrategy,
 ) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
-    let save_strategy = get_save_strategy(save_mode)?;
     let new_device = ctx
         .save_local_device(&save_strategy, &key_file)
         .await
