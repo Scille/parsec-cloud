@@ -593,8 +593,6 @@ impl clap::builder::TypedValueParser for OutputFileParser {
     }
 }
 
-// TODO: use in device change authentication instead of NewAccessStrategyChoice
-// TODO: use in invite claim instead of SaveMode
 #[derive(ValueEnum, Debug, Clone, Default)]
 pub enum NewAuthMethod {
     Keyring,

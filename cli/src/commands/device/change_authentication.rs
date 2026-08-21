@@ -1,44 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 use std::io::Write;
 
-use libparsec::{
-    AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy, DeviceSaveStrategy,
-};
+use libparsec::{AvailableDeviceType, DeviceAccessStrategy, DevicePrimaryProtectionStrategy};
 
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, password_stdin, auth]
     pub struct Args {
-       #[clap(long, short, action)]
-        password: bool,
-       #[clap(long, short, action)]
-        keyring: bool,
     }
 );
 
-enum NewAccessStrategyChoice {
-    Password,
-    Keyring,
-}
-
 pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
     let device = load_device_file(&args.config_dir, args.device).await?;
-
-    let new_save_strategy_choice = match (args.password, args.keyring) {
-        (true, false) => NewAccessStrategyChoice::Password,
-        (false, true) => NewAccessStrategyChoice::Keyring,
-        (true, true) => {
-            return Err(anyhow::anyhow!(
-                "Only one of --password and --keyring can be specified"
-            ));
-        }
-        (false, false) => {
-            return Err(anyhow::anyhow!(
-                "One of --password and --keyring must be specified"
-            ));
-        }
-    };
 
     if device.totp_opaque_key_id.is_some() {
         // In theory we should support this authentication method here,
@@ -102,27 +76,7 @@ pub async fn main(ui: crate::Ui, args: Args) -> anyhow::Result<()> {
         }
     };
 
-    let new_save_strategy = match new_save_strategy_choice {
-        NewAccessStrategyChoice::Password => {
-            let password = choose_password(if args.password_stdin {
-                ReadPasswordFrom::Stdin
-            } else {
-                ReadPasswordFrom::Tty {
-                    prompt: "Enter new password for the device:",
-                }
-            })?;
-
-            DeviceSaveStrategy {
-                totp_protection: None,
-                primary_protection: DevicePrimaryProtectionStrategy::Password { password },
-            }
-        }
-
-        NewAccessStrategyChoice::Keyring => DeviceSaveStrategy {
-            totp_protection: None,
-            primary_protection: DevicePrimaryProtectionStrategy::Keyring,
-        },
-    };
+    let new_save_strategy = args.auth.get_save_strategy(args.password_stdin)?;
 
     libparsec::update_device_change_authentication(
         &args.config_dir,
