@@ -1,1 +1,0 @@
-[CLI] Merge options ``--recipients`` and ``--weights`` of the command ``shared-recovery create`` into ``--recipients``.
