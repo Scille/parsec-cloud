@@ -103,7 +103,8 @@ async function downloadLogs(): Promise<boolean> {
     downloadLinkRef.value?.click();
     window.URL.revokeObjectURL(url);
     return true;
-  } catch {
+  } catch (err: unknown) {
+    window.nativeAPI.log('error', `Error when downloading logs: ${String(err)}`);
     return false;
   }
 }
