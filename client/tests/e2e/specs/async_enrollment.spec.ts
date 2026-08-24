@@ -9,6 +9,7 @@ import {
   getOrganizationAddr,
   login,
   logout,
+  mockLibParsec,
   MsPage,
   msTest,
   setupNewPage,
@@ -409,4 +410,38 @@ msTest('Check certificate cards', async ({ context }) => {
   await gordonCert.locator('.additional-emails').click();
   await expect(emailPopover).toBeVisible();
   await expect(emailPopover.locator('.emails-list-item__text')).toHaveText(['gordon@black-mesa.corp', 'gordon@black-mesa.corp']);
+});
+
+msTest('List certificates error', async ({ context }) => {
+  const page = (await context.newPage()) as MsPage;
+  await setupNewPage(page, { mockPki: true });
+  await mockLibParsec(page, [
+    {
+      name: 'pkiListUserCertificates',
+      result: { ok: false, error: { tag: 'PkiSystemListUserCertificateErrorInternal', error: 'Failed' } },
+    },
+  ]);
+
+  const link = getAsyncEnrollmentJoinLink('Test');
+  await page.locator('#create-organization-button').click();
+  await expect(page.locator('.homepage-popover')).toBeVisible();
+  await page.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+  await fillInputModal(page, link);
+  const requestModal = page.locator('.async-enrollment-modal');
+  await expect(requestModal).toBeVisible();
+  const nextButton = requestModal.locator('#next-button');
+
+  await expect(requestModal.locator('.ms-modal-header__title')).toHaveText('Join organization Test');
+  await expect(requestModal.locator('.choose-method')).toBeVisible();
+  const options = requestModal.locator('.choose-method').locator('.choose-method-options-item');
+  await options.nth(0).click();
+  await nextButton.click();
+  await expect(requestModal.locator('.modal-info')).toBeVisible();
+  await expect(requestModal.locator('.async-authentication-modal-header-text__title')).toHaveText('Certificate Authentication (PKI)');
+  const container = requestModal.locator('.certificate-container');
+  await expect(container.locator('.no-certificate')).toBeVisible();
+  await expect(container.locator('.no-certificate')).toHaveText('No certificates available');
+  await expect(container.locator('.container-textinfo')).toBeVisible();
+  await expect(container.locator('.container-textinfo')).toHaveText('Failed to list the certificates.');
+  await expect(requestModal.locator('#next-button')).toBeTrulyDisabled();
 });

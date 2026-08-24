@@ -66,7 +66,7 @@ onMounted(async () => {
   const result = await listCertificates(props.purpose);
 
   if (!result.ok) {
-    error.value = 'Authentication.method.smartcard.listCertificatesFailed';
+    error.value = 'Authentication.method.smartcard.errors.listCertificatesFailed';
   } else {
     certificates.value = result.value.sort((certA, certB) => Number(certA.isExpired()) - Number(certB.isExpired()));
   }
