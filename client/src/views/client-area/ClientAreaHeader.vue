@@ -147,7 +147,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 <style scoped lang="scss">
 .topbar {
   --background: var(--parsec-color-light-secondary-white);
-  padding: 1.5rem 2rem 1rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
   justify-content: space-around;
 

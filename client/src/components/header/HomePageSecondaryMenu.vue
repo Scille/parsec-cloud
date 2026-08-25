@@ -94,6 +94,7 @@ const emits = defineEmits<{
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
+    -webkit-app-region: no-drag;
 
     &-item {
       color: var(--parsec-color-light-secondary-hard-grey);

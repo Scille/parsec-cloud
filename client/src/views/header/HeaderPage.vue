@@ -601,7 +601,7 @@ async function openWorkspacesSwitchModal(): Promise<void> {
 .topbar {
   --background: var(--parsec-color-light-secondary-white);
   display: flex;
-  padding: 1.5rem 2rem 1rem;
+  padding: 1rem 1.5rem;
 
   &::part(container) {
     @include ms.responsive-breakpoint('sm') {

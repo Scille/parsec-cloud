@@ -388,6 +388,7 @@ const emits = defineEmits<{
     align-items: center;
     gap: 1.5rem;
     min-height: 4rem;
+    user-select: none;
 
     @include ms.responsive-breakpoint('xs') {
       width: 100%;
@@ -460,6 +461,7 @@ const emits = defineEmits<{
 
   .topbar-right {
     display: flex;
+    user-select: none;
     gap: 1.25rem;
     justify-content: flex-end;
     align-items: center;
@@ -505,6 +507,7 @@ const emits = defineEmits<{
     color: var(--parsec-color-light-secondary-text);
     cursor: pointer;
     overflow-y: visible;
+    -webkit-app-region: no-drag;
 
     &__icon {
       font-size: 1.75rem;

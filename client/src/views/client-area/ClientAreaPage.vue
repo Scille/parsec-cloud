@@ -15,6 +15,7 @@
       content-id="main"
       menu-id="main-menu"
       class="large-display-menu-container"
+      :class="{ 'menu-collapse': sidebarWidth === 0 }"
     >
       <ion-menu
         content-id="main"
