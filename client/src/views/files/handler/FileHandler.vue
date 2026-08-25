@@ -760,7 +760,7 @@ async function openSmallDisplayActionMenu(): Promise<void> {
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding: 1rem 2rem;
+      padding: 1rem;
       border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
       background: var(--parsec-color-light-secondary-white);
 

@@ -7,6 +7,7 @@
       :user-info="userInfo"
       @sidebar-width-changed="onSidebarWidthChanged"
       @window-width-changed="updateToastOffset"
+      :class="sidebarWidth === 0 ? 'menu-collapse' : ''"
     />
   </ion-page>
 </template>

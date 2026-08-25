@@ -2,7 +2,7 @@
 
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
-import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, shell } from 'electron';
+import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, nativeTheme, shell } from 'electron';
 import log from 'electron-log/main.js';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
@@ -331,8 +331,16 @@ export class ParsecApp {
     // Setup preload script path and construct our main window.
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
     const windowState = process.platform === 'linux' ? {} : this.mainWindowState;
+
+    // Chromium uses the desktop theme for the hover color on title bar buttons.
+    // This is okay for now since we don't have a dark theme yet.
+    nativeTheme.themeSource = 'light';
+
     this.MainWindow = new BrowserWindow({
       icon: appIcon,
+      titleBarStyle: 'hidden',
+      trafficLightPosition: { x: 12, y: 12 },
+      titleBarOverlay: process.platform !== 'darwin' ? { color: '#fcfcfc', symbolColor: '#006eff', height: 40 } : undefined,
       backgroundColor: '#fcfcfc',
       show: false,
       ...windowState,
