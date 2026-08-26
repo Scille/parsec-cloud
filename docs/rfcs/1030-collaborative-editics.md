@@ -245,33 +245,33 @@ list of all OnlyOffice events:
 | `clientLog`          | client |            ❌            |
 | `extendSession`      | client |            ❌            |
 | `forceSaveStart`     | client |            ❌            |
-| `rpc`                | client |            TODO          |
+| `rpc`                | client |            ❌            |
 | `authChangesAck`     | client |            TODO          |
 | `auth`               | server |            TODO          |
 | `message`            | server |            ✅            |
 | `cursor`             | server |            ✅            |
-| `meta`               | server |            ✅            |
+| `meta`               | server |            TODO          |
 | `getLock`            | server |            ✅            |
 | `releaseLock`        | server |            ✅            |
-| `connectState`       | server |            ✅            |
+| `connectState`       | server |            TODO          |
 | `saveChanges`        | server |            ✅            |
-| `authChanges`        | server |            ✅            |
+| `authChanges`        | server |            TODO          |
 | `saveLock`           | server |            ✅            |
-| `unSaveLock`         | server |            ✅            |
-| `savePartChanges`    | server |            ✅            |
-| `drop`               | server |            ✅            |
-| `disconnectReason`   | server |            ✅            |
-| `waitAuth`           | server |            ✅            |
-| `error`              | server |            ✅            |
+| `unSaveLock`         | server |            TODO          |
+| `savePartChanges`    | server |            TODO          |
+| `drop`               | server |            TODO          |
+| `disconnectReason`   | server |            TODO          |
+| `waitAuth`           | server |            TODO          |
+| `error`              | server |            TODO          |
 | `documentOpen`       | server |            ❌            |
 | `warning`            | server |            ✅            |
-| `license`            | server |            ✅            |
-| `session`            | server |            ✅            |
+| `license`            | server |            ❌            |
+| `session`            | server |            ❌            |
 | `refreshToken`       | server |            ❌            |
 | `expiredToken`       | server |            ❌            |
 | `forceSaveStart`     | server |            ❌            |
 | `forceSave`          | server |            ❌            |
-| `rpc`                | server |            ✅            |
+| `rpc`                | server |            ❌            |
 | `updateVersion`      | server |            ❌            |
 
 Detail for each command:
@@ -294,7 +294,7 @@ it to an edition session according to the document ID its provides (see `docid` 
 
 TODO: do we need it ?
 
-#### `message` (client → server)
+#### `message` (client → server) & `message` (server → client)
 
 Send a message in the chat.
 
@@ -315,7 +315,41 @@ Format:
 - Rename to `send_message`.
 - Encrypt `message` field.
 
-#### `cursor` (client → server)
+This leads to the server to send its own `message` event to inform other users.
+
+> [!NOTE]
+>
+> Sender's `message` is also send when the client sends a `getMessages` event.
+
+Format:
+
+```json5
+{
+  "type": "message",
+  "payload": {
+    "type": "message",
+    "messages": [
+      {
+        "docid": <string>,
+        "message": <string>,  // Actual message
+        "time": <integer>,  // timestamp in ms
+        "user": <string>,
+        "useridoriginal": <string>,
+        "username": <string>
+      }
+    ]
+  }
+}
+```
+
+*Editics protocol changes*:
+
+- Remove field `docid` (as the session is only related to a single document).
+- Replace fields `user`/`useridoriginal`/`username` by `device_id` (the client
+  has already a single source of truth on those info).
+- Encrypt `message` field.
+
+#### `cursor` (client → server) & `cursor` (server → client)
 
 Move the cursor.
 
@@ -336,7 +370,35 @@ Format:
 - Rename to `move_cursor`.
 - Encrypt `cursor` field.
 
-#### `getLock` (client → server)
+This leads to the server to send its own `message` event to inform other users.
+
+Format:
+
+```json5
+{
+  "type": "cursor",
+  "payload": {
+    "type": "cursor",
+    "messages": [
+      {
+        "cursor": <string>, // Opaque string in OnlyOffice internal format
+        "time": <integer>,  // timestamp as ms
+        "user": <string>,
+        "useridoriginal": <string>
+      }
+    ]
+  }
+}
+```
+
+*Editics protocol changes*:
+
+- Rename to `cursor_moved`.
+- Encrypt `cursor` field.
+- Replace fields `user`/`useridoriginal` by `device_id` (the client has already a
+  single source of truth on those info).
+
+#### `getLock` (client → server) & `getLock` (server → client)
 
 Ask the server to obtain (i.e. the server sends a `getLock` event) the list of
 all [region locks](#21---session-locks) currently held.
@@ -356,6 +418,23 @@ The operations that actually require a server lock are the "heavy" structural on
 *Editics protocol changes*:
 
 - Rename to `list_region_locks`
+
+Then the server sends:
+
+```json5
+{
+    "type": "getLock",
+    "locks": [
+        {
+            TODO
+        }
+    ]
+}
+```
+
+*Editics protocol changes*:
+
+- Rename to `list_region_locks_rep`
 
 #### `saveChanges` (client → server)
 
@@ -436,7 +515,7 @@ sends a `saveChanges` (see `releaseLocks` field).
 
 Format:
 
-```json
+```json5
 {
   "type": "unSaveLock",
 }
@@ -452,7 +531,7 @@ Get all the chat messages for the session.
 
 Format:
 
-```json
+```json5
 {
   "type": "getMessages",
   "payload": {
@@ -474,7 +553,7 @@ always contains the session messages.
 
 Format:
 
-```json
+```json5
 {
   "type": "unLockDocument",
   "payload": {
@@ -500,7 +579,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -511,7 +590,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -528,7 +607,7 @@ Telemetry info to provide the timing for the following events:
 
 Format:
 
-```json
+```json5
 {
   "type": "clientLog",
   "payload": {
@@ -541,10 +620,25 @@ Format:
 
 *Editics protocol changes*: Ignored since it is only for telemetry purpose.
 
-#### `extendSession` (client → server) & `refreshToken`/`expiredToken` (server → client)
+#### `extendSession` (client → server) & `session`/`refreshToken`/`expiredToken` (server → client)
 
-Ask the server to provide a new JWT token (i.e. server sends `refreshToken` event)
-to stay authenticated.
+The server periodically check each connection to a session:
+
+- If the connection has been idle for 1 hour
+- If the connection is older than 30 days
+
+In both case, the server send a `session` event:
+
+```json5
+{
+    "type": "session",
+    "messages": {
+    "code": <integer>,      // 4002 = idle, 4003 = absolute
+    "reason": <string>,    // "idle session expires" | "absolute session expires"
+    "interval": <number>   // present only for idle (the idle threshold in ms)
+    }
+}
+``` 
 
 Format:
 
@@ -554,6 +648,16 @@ Format:
     "idletime": <integer>  // timestamp in ms
 }
 ```
+
+*Editics protocol changes*: Ignored for now since those connection times are unlikely.
+
+TODO: what to do with refreshToken/expiredToken
+
+The client is then expected to send a `extendSession` event within 2 minutes,
+otherwise the server closes the connection.
+
+Ask the server to provide a new JWT token (i.e. server sends `refreshToken` event)
+to stay authenticated.
 
 If `extendSession` is not used, the server eventually sends a `expiredToken`
 event to the client to inform it that its JWT token has expired.
@@ -612,20 +716,48 @@ Later (on save completion or timeout) the server sends:
 
 *Editics protocol changes*: Ignore those events since document saving is entirely done client-side.
 
-#### `rpc` (client → server)
+#### `rpc` (client → server) & `rpc` (server → client)
+
+Generic client → server request/response envelope.
+
+Operations using RPC:
+
+- `pathurls`: Resolve relative image paths embedded in a change to absolute storage URLs,
+  so the receiver of a change can fetch the images it references.
+  Triggered when a change includes new images that need URL resolution.
+- `saveRelativeFromChanges`: Save using an already-existing relative changes file (a re-save path).
+- `wopi_RefreshFile`: Ask the server to re-read the file from the WOPI host (e.g. after an external change).
+- `wopi_RenameFile`: Ask the server to rename the file on the WOPI host.
+- `sendForm`: Produce/print a filled form (PDF).
 
 Format:
 
-```json
+```json5
+{
+    "type": "rpc",
+    "responseKey": <integer>,  // Monotonic counter
+    "data": {
+        "type": <string>, // e.g. "pathurls"
+        ...
+    }
+}
 ```
 
-*Editics protocol changes*:
+ ```json5
+{
+    "type": "rpc",
+    "responseKey": <integer>,
+    "data": <result>
+}
+ ```
+
+*Editics protocol changes*: Ignore those events as they provide too much cleartext data to the server.
 
 #### `authChangesAck` (client → server)
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -634,46 +766,7 @@ Format:
 
 Format:
 
-```json
-```
-
-*Editics protocol changes*:
-
-#### `message` (server → client)
-
-Format:
-
 ```json5
-{
-  "type": "message",
-  "payload": {
-    "type": "message",
-    "messages": [
-      {
-        "docid": "6e57f907-b4a9-44c8-bee6-ef81229f75ef",
-        "message": "hello",
-        "time": <integer>,  // timestamp in ms
-        "user": <string>,
-        "useridoriginal": <string>,
-        "username": <string>
-      }
-    ]
-  }
-}
-```
-
-*Editics protocol changes*:
-
-- Remove field `docid` (as the session is only related to a single document).
-- Remove fields `user`/`useridoriginal`/`username` and replace them by a
-  `device_id` (the client has already a single source of truth on those info).
-- Encrypt `message` field.
-
-#### `cursor` (server → client)
-
-Format:
-
-```json
 ```
 
 *Editics protocol changes*:
@@ -682,16 +775,7 @@ Format:
 
 Format:
 
-```json
-```
-
-*Editics protocol changes*:
-
-#### `getLock` (server → client)
-
-Format:
-
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -700,7 +784,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -709,7 +793,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -718,7 +802,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -727,7 +811,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -736,14 +820,14 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
 
 #### `unSaveLock` (server → client)
 
-```json
+```json5
 {
   "type": "unSaveLock",
   "payload": {
@@ -759,7 +843,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -768,7 +852,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -777,7 +861,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -786,7 +870,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -795,7 +879,7 @@ Format:
 
 Format:
 
-```json
+```json5
 ```
 
 *Editics protocol changes*:
@@ -805,7 +889,7 @@ Format:
 Event send by the server when handling client `auth` event, this instruct the client
 on how to load the document the session is editing.
 
-```json
+```json5
 {
   "type": "documentOpen",
   "payload": {
@@ -833,7 +917,7 @@ Send a warning message to the client to be displayed to the end user.
 
 Format:
 
-```json
+```json5
 {
     "type": "warning",
     "code": <integer>, // `-200`: FORCED_VIEW_MODE, `-201`: FILE_NOT_ASSEMBLED
@@ -876,32 +960,28 @@ Format:
 
 *Editics protocol changes*: Ignore this event and use a static configuration instead.
 
-#### `session` (server → client)
-
-Format:
-
-```json
-```
-
-*Editics protocol changes*:
-
-#### `rpc` (server → client)
-
-Format:
-
-```json
-```
-
-*Editics protocol changes*:
-
 #### `updateVersion` (server → client)
 
+Inform the client it should reloads its document since its in-memory is staled.
+
+This is to handle a corner case:
+
+1. Alice starts an edition session and makes some changes
+2. Alice has its connection unexpectedly drop, there is now no other participants
+   in the session.
+3. The server triggers a save in the 3rd party storage.
+4. Alice reconnects but is not aware that the saved document has changed.
+
 Format:
 
-```json
+```json5
+{
+    "type": "updateVersion",
+    "success": <boolean>
+}
 ```
 
-*Editics protocol changes*:
+*Editics protocol changes*: Ignore this event since the server is not able to save on its side.
 
 ## 3 - Protocol changes
 
@@ -929,7 +1009,7 @@ Since the server has to keep track of who is connected to an editics session, we
 
 `GET /authenticated/{organization_id}/editics/{workspace_id}/{document_id}/{version}`
 
-```json
+```json5
 [
     {
         "major_versions": [
