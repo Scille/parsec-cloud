@@ -16,6 +16,39 @@
         "yes": "Exit",
         "no": "Cancel"
     },
+    "appMenu": {
+        "main": {
+            "settings": "Settings",
+            "about": "About",
+            "logOut": "Log out",
+            "quit": "Quit"
+        },
+        "edit": {
+            "name": "Edit",
+            "cut": "Cut",
+            "copy": "Copy",
+            "paste": "Paste"
+        },
+        "window": {
+            "name": "Window",
+            "zoomIn": "Zoom in",
+            "minimize": "Minimize",
+            "zoomOut": "Zoom out",
+            "resetZoom": "Reset zoom"
+        },
+        "go": {
+            "name": "Go",
+            "workspaces": "Workspaces",
+            "users": "Users",
+            "profile": "My profile"
+        },
+        "help": {
+            "name": "Help",
+            "documentation": "Documentation",
+            "contact": "Contact us",
+            "bugReport": "Report a bug"
+        }
+    },
     "globalErrors": {
         "openFileFailed": "Failed to open entry at `{path}`.",
         "incompatibleServer": "Your application and the server are not compatible. Online features will not be available. Please check that your application is up-to-date, and if so, contact an administrator.",

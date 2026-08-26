@@ -14,6 +14,7 @@ import { PageToWindowChannel, WindowToPageChannel } from './communicationChannel
 import { setupContentSecurityPolicy } from './cspRules.js';
 import { setupCustomCaFile } from './customCa.js';
 import { FEATURE_FLAGS } from './features.js';
+import { ParsecMenuItem, setupAppMenu } from './menu.js';
 import { ParsecApp, setupReloadWatcher } from './setup.js';
 
 const PARSEC_CONFIG_DIR_NAME = 'parsec3';
@@ -194,6 +195,10 @@ ipcMain.on(PageToWindowChannel.ConfigUpdate, (_event, data) => {
 
 ipcMain.on(PageToWindowChannel.MountpointUpdate, (_event, path) => {
   parsecApp.updateMountpoint(path);
+});
+
+ipcMain.on(PageToWindowChannel.SetupActionMenu, (_event, items: ParsecMenuItem[]) => {
+  setupAppMenu(parsecApp, items);
 });
 
 ipcMain.on(PageToWindowChannel.CloseApp, async (_event) => {

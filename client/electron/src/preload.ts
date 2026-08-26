@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import { createRequire } from 'module';
 import path from 'path';
 import { PageToWindowChannel } from './communicationChannels.js';
+import { ParsecMenuItem } from './menu.js';
 const _require = createRequire(import.meta.url);
 
 contextBridge.exposeInMainWorld('CapacitorCustomPlatform', { name: 'electron', plugins: {} });
@@ -80,6 +81,9 @@ process.once('loaded', async () => {
           resolve(undefined);
         }
       });
+    },
+    setupActionMenu: (items: ParsecMenuItem) => {
+      ipcRenderer.send(PageToWindowChannel.SetupActionMenu, items);
     },
   });
 
