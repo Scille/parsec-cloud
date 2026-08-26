@@ -232,12 +232,11 @@ export class ParsecApp {
         label: locale === 'fr-FR' ? 'Quitter' : 'Quit',
         click: () => {
           this.MainWindow.show();
-          this.sendEvent(WindowToPageChannel.CloseRequest, this.skipConfirmBeforeQuit());
+          this.sendEvent(WindowToPageChannel.CloseRequest);
         },
       }),
     ];
     this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
-    this.setAppMenu(locale);
   }
 
   updateMountpoint(path: string): void {
@@ -249,13 +248,6 @@ export class ParsecApp {
   isTrayEnabled(): boolean {
     if ('minimizeToTray' in this.config) {
       return (this.config as any).minimizeToTray;
-    }
-    return false;
-  }
-
-  skipConfirmBeforeQuit(): boolean {
-    if (process.platform === 'darwin' && 'confirmBeforeQuit' in this.config) {
-      return !(this.config as any).confirmBeforeQuit;
     }
     return false;
   }
@@ -302,65 +294,6 @@ export class ParsecApp {
       app: customAppIconPath ?? join(app.getAppPath(), 'assets', appIconName),
       tray: customTrayIconPath ?? join(app.getAppPath(), 'assets', trayIconName),
     };
-  }
-
-  setAppMenu(locale: any): void {
-    if (process.platform === 'darwin') {
-      const menu = new Menu();
-      menu.append(
-        new MenuItem({
-          label: app.name,
-          submenu: [
-            {
-              label: locale === 'fr-FR' ? 'Quitter' : 'Quit',
-              accelerator: 'Cmd+Q',
-              click: (): void => {
-                this.sendEvent(WindowToPageChannel.CloseRequest, this.skipConfirmBeforeQuit());
-              },
-            },
-          ],
-        }),
-      );
-      menu.append(
-        new MenuItem({
-          label: locale === 'fr-FR' ? 'Edition' : 'Edit',
-          submenu: [
-            {
-              label: locale === 'fr-FR' ? 'Annuler' : 'Undo',
-              accelerator: 'Cmd+Z',
-              role: 'undo',
-            },
-            {
-              label: locale === 'fr-FR' ? 'Rétablir' : 'Redo',
-              accelerator: 'Shift+Cmd+Z',
-              role: 'redo',
-            },
-            { type: 'separator' },
-            {
-              label: locale === 'fr-FR' ? 'Couper' : 'Cut',
-              accelerator: 'Cmd+X',
-              role: 'cut',
-            },
-            {
-              label: locale === 'fr-FR' ? 'Copier' : 'Copy',
-              accelerator: 'Cmd+C',
-              role: 'copy',
-            },
-            {
-              label: locale === 'fr-FR' ? 'Coller' : 'Paste',
-              accelerator: 'Cmd+V',
-              role: 'paste',
-            },
-            {
-              label: locale === 'fr-FR' ? 'Tout sélectionner' : 'Select All',
-              accelerator: 'Cmd+A',
-              role: 'selectAll',
-            },
-          ],
-        }),
-      );
-      Menu.setApplicationMenu(menu);
-    }
   }
 
   onPageInitialized(): void {

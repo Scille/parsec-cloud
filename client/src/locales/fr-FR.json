@@ -16,6 +16,39 @@
         "yes": "Quitter",
         "no": "Annuler"
     },
+    "appMenu": {
+        "main": {
+            "settings": "Paramètres",
+            "about": "À propos",
+            "logOut": "Déconnexion",
+            "quit": "Quitter"
+        },
+        "edit": {
+            "name": "Édition",
+            "cut": "Couper",
+            "copy": "Copier",
+            "paste": "Coller"
+        },
+        "window": {
+            "name": "Fenêtre",
+            "zoomIn": "Zoom avant",
+            "minimize": "Réduire",
+            "zoomOut": "Zoom arrière",
+            "resetZoom": "Réinitialiser le zoom"
+        },
+        "go": {
+            "name": "Aller",
+            "workspaces": "Espaces de travail",
+            "users": "Utilisateurs",
+            "profile": "Mon profil"
+        },
+        "help": {
+            "name": "Aide",
+            "documentation": "Documentation",
+            "contact": "Contact",
+            "bugReport": "Signaler un bug"
+        }
+    },
     "globalErrors": {
         "openFileFailed": "L'élément `{path}` n'a pas pu être ouvert.",
         "incompatibleServer": "Votre application et le serveur ne sont pas compatibles. Les fonctionnalités en-ligne ne seront pas disponibles. Veuillez vérifier que votre application est à jour, et si c'est le cas, contactez un administrateur.",

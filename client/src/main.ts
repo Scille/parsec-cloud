@@ -10,6 +10,7 @@ import { IonicVue, isPlatform, modalController, popoverController } from '@ionic
 /* Theme variables */
 import '@/theme/global.scss';
 
+import { MenuBarActions, ParsecMenuItem, dispatchMenuAction, setupAppMenu } from '@/common/menu';
 import { sanitizeCustomTranslations } from '@/common/utils';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
@@ -357,8 +358,10 @@ async function setupApp(): Promise<void> {
 
       let isQuitDialogOpen = false;
 
-      window.nativeAPI.receive('parsec-close-request', async (force: boolean = false) => {
+      window.nativeAPI.receive('parsec-close-request', async () => {
         let quit = true;
+        const cfg = await storageManager.retrieveConfig();
+        const force = !cfg.confirmBeforeQuit;
         if (force === false) {
           if (isQuitDialogOpen) {
             return;
@@ -444,6 +447,10 @@ async function setupApp(): Promise<void> {
           await storageManager.storeConfig(config);
         }
       });
+      window.nativeAPI.receive('parsec-menu-action-clicked', async (action: string) => {
+        await dispatchMenuAction(injectionProvider, action as MenuBarActions);
+      });
+      await setupAppMenu();
     }
     await persistStorage();
     window.nativeAPI.pageIsInitialized();
@@ -573,6 +580,9 @@ function setupWebNativeAPI(injectionProvider: InjectionProvider): void {
       }
       return true;
     },
+    setupActionMenu: (_items: ParsecMenuItem[]): void => {
+      console.log('setupActionMenu: Not available');
+    },
   };
 }
 
@@ -630,6 +640,7 @@ declare global {
       initError: (error?: string) => void;
       readCustomFile: (file: string) => Promise<ArrayBuffer | undefined>;
       openPopup: (url: string) => boolean;
+      setupActionMenu: (items: ParsecMenuItem[]) => void;
     };
   }
 }

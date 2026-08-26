@@ -17,6 +17,7 @@ export enum PageToWindowChannel {
   PageInitError = 'parsec-page-init-error',
   GetLogs = 'parsec-get-logs',
   OpenPopup = 'parsec-open-popup',
+  SetupActionMenu = 'parsec-setup-action-menu',
 }
 
 export enum WindowToPageChannel {
@@ -31,4 +32,5 @@ export enum WindowToPageChannel {
   CustomBrandingFolder = 'parsec-custom-branding-folder',
   LogRecords = 'parsec-log-records',
   SSOComplete = 'parsec-sso-complete',
+  MenuActionClicked = 'parsec-menu-action-clicked',
 }

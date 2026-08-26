@@ -152,6 +152,7 @@
 </template>
 
 <script setup lang="ts">
+import { setupAppMenu } from '@/common/menu';
 import { openLogDisplayModal } from '@/components/misc';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { isDesktop, isMacOS, usesTestbed } from '@/parsec/environment';
@@ -211,6 +212,7 @@ const configUnwatch = watch(
 async function changeLang(lang: Locale): Promise<void> {
   config.value.locale = lang;
   I18n.changeLocale(lang);
+  await setupAppMenu();
 }
 
 async function changeTheme(selectedTheme: Theme): Promise<void> {
