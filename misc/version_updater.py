@@ -285,6 +285,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / ".github/workflows/codeql.yml": {
         Tool.UV: [UV_VERSION_MARKER],
+        Tool.Node: [NODE_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/docker-server.yml": {
         Tool.Python: [PYTHON_GA_VERSION],
