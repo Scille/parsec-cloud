@@ -13,23 +13,10 @@ This edition system (called "editics") works in two modes:
 - Online mode: the Parsec server hosts an editics collaborative session on which
   all clients looking to view/edit the document connect to.
 
-### 1.1 - Offline vs Online modes
-
 Online mode should be considered the default one (i.e. the client tries to use the
 online mode and fall back in offline if it is not possible).
 
-Note Offline mode is used in two cases:
-
-- The client is offline (i.e. Parsec server cannot be reached)
-- If the document being edited doesn't have a collaborative session running and the user
-  trying to open it doesn't have write access to the workspace containing the document.
-  This is because a user without write access is not allowed to send modification in the
-  collaborative session, and hence cannot send the initial state of the document.
-
-TODO: reader CAN start online session since the initial document is never stored in the
-session (each joining client generates it independently).
-
-### 1.2 - Use of OnlyOffice
+### 1.1 - Use of OnlyOffice
 
 OnlyOffice is used to implement the actual document edition, however its integration
 into Parsec is special since we are in an end-to-end encrypted system:
@@ -48,6 +35,55 @@ For this reason we use the OnlyOffice patched by Cryptpad to support end-to-end 
 Finally we need to re-implement in the Parsec server the communication system used to
 exchange events between the clients connected to a same editics collaborative session
 (e.g. to modify the document, update client's cursor location, etc.).
+
+### 1.2 - Document load/modify/save lifecycle
+
+Let's consider a workspace containing a document `/foo.docx` with vlob ID 42, Alice (OWNER),
+Bob (CONTRIBUTOR) and Mallory (READER) have access to the workspace and want to access the document.
+
+1. Alice wants to edit document `/foo.docx`.
+    1.1. Alice's client resolves `/foo.docx` path and obtains vlob ID 42 with latest version 10.
+    1.2. Alice's client loads in the editics editor the content of vlob ID 42 at version 10.
+    1.3. Alice's client connects to the editics session with ID 42 and specify she uses version 10.
+         The session doesn't exist on the server, it is created.
+2. Alice modifies the document twice. Her client sends two modification events to the editics session.
+   Each modification is given an index ID by the server to ensure they are ordered (so index 1 and 2).
+3. Bob wants to join the session.
+    3.1. Same as step 1.1. but for Bob
+    3.2. Same as step 1.2. but for Bob
+    3.3. Bob's client connects to the editics session with ID 42 and specify he uses version 10.
+        The server accept the connection and pushes to the client all the modifications
+        that occurred since the session was created.
+4. Alice wants to save the document
+    4.1. Alice's client takes a save lock on the session (ensure no other clients tries a concurrent save).
+    4.2. Alice's client exports the document from the editics editor and save it as vlob ID 42 version 11.
+    4.3. Alice's client release the save lock on the session and indicates that all
+         modifications up to index 2 are contained in vlob ID 42 version 11.
+5. Mallory wants to join the session
+    5.1. Same as step 1.1. but for Mallory
+    5.2. Mallory's client loads in the editics editor the content of vlob ID 42 at version 11.
+    5.3. Mallory's client connects to the editics session with ID 42 and specify she uses version 11.
+         The server accept the connection and pushes no modification.
+
+The server ensures the client can reach the correct document state by only allowing certain vlob versions:
+
+- Version must be at least the initial version used when the session has been created.
+- A version more recent that what the session may indicates two situations:
+
+  - The document is currently being saved and the vlob has been modified but the
+    save lock not yet released (this is an unlikely situation).
+  - The document has been currently modified outside of the session, hence there
+    is no guarantees on what the document contains at this version.
+
+When rejecting the client, the server provides the latest allowed version so that the client can retry.
+
+The fact each client has to load the document by itself (i.e. the server doesn't
+provide to the client the document edited in the session but only patches to apply)
+is more performance-hungry on the client, but this prevents the client that created
+the session from controlling the initial content of the document (this is an issue
+since a user with no write access in the workspace can then modify a document by
+creating a session with his tempered document, then wait for a user with write
+access to join and do the save for them...).
 
 ### 1.3 - Session ID vs document ID
 
@@ -84,6 +120,8 @@ have joined the session.
 > This a strong requirement from the OnlyOffice [client code that does arithmetic](
 > https://github.com/cryptpad/onlyoffice-editor/blob/c1be39bb0042d82c0f52d420e2d668f866458611/sdkjs/common/docscoapi.js#L1553)
 > with this index so we cannot just use an UUID here.
+
+TODO: talk about user ID used in OnlyOffice server to decide to broadcast changes
 
 ### 1.5 - Multiple server instances vs sessions
 
@@ -133,55 +171,6 @@ Regarding how encryption is actually handled, the workspace encryption system wi
   with an old key can still be decrypted).
 - The server reject the request if it doesn't use the lastest key index (this
   handles key rotation in case a user no longer as access to the workspace).
-
-### 1.6 - Document load/modify/save lifecycle
-
-Let's consider a workspace containing a document `/foo.docx` with vlob ID 42, Alice (OWNER),
-Bob (CONTRIBUTOR) and Mallory (READER) have access to the workspace and want to access the document.
-
-1. Alice wants to edit document `/foo.docx`.
-    1.1. Alice's client resolves `/foo.docx` path and obtains vlob ID 42 with latest version 10.
-    1.2. Alice's client loads in the editics editor the content of vlob ID 42 at version 10.
-    1.3. Alice's client connects to the editics session with ID 42 and specify she uses version 10.
-         The session doesn't exist on the server, it is created.
-2. Alice modifies the document twice. Her client sends two modification events to the editics session.
-   Each modification is given an index ID by the server to ensure they are ordered (so index 1 and 2).
-3. Bob wants to join the session.
-    3.1. Same as step 1.1. but for Bob
-    3.2. Same as step 1.2. but for Bob
-    3.3. Bob's client connects to the editics session with ID 42 and specify he uses version 10.
-        The server accept the connection and pushes to the client all the modifications
-        that occurred since the session was created.
-4. Alice wants to save the document
-    4.1. Alice's client takes a save lock on the session (ensure no other clients tries a concurrent save).
-    4.2. Alice's client exports the document from the editics editor and save it as vlob ID 42 version 11.
-    4.3. Alice's client release the save lock on the session and indicates that all
-         modifications up to index 2 are contained in vlob ID 42 version 11.
-5. Mallory wants to join the session
-    5.1. Same as step 1.1. but for Mallory
-    5.2. Mallory's client loads in the editics editor the content of vlob ID 42 at version 11.
-    5.3. Mallory's client connects to the editics session with ID 42 and specify she uses version 11.
-         The server accept the connection and pushes no modification.
-
-The server ensures the client can reach the correct document state by only allowing certain vlob versions:
-
-- Version must be at least the initial version used when the session has been created.
-- A version more recent that what the session may indicates two situations:
-
-  - The document is currently being saved and the vlob has been modified but the
-    save lock not yet released (this is an unlikely situation).
-  - The document has been currently modified outside of the session, hence there
-    is no guarantees on what the document contains at this version.
-
-When rejecting the client, the server provides the latest allowed version so that the client can retry.
-
-The fact each client has to load the document by itself (i.e. the server doesn't
-provide to the client the document edited in the session but only patches to apply)
-is more performance-hungry on the client, but this prevents the client that created
-the session from controlling the initial content of the document (this is an issue
-since a user with no write access in the workspace can then modify a document by
-creating a session with his tempered document, then wait for a user with write
-access to join and do the save for them...).
 
 ## 2 - The OnlyOffice communication protocol
 
@@ -259,8 +248,8 @@ list of all OnlyOffice events:
 | `saveLock`           | server |            ✅            |
 | `unSaveLock`         | server |            TODO          |
 | `savePartChanges`    | server |            TODO          |
-| `drop`               | server |            TODO          |
-| `disconnectReason`   | server |            TODO          |
+| `drop`               | server |            ✅            |
+| `disconnectReason`   | server |            ❌            |
 | `waitAuth`           | server |            TODO          |
 | `error`              | server |            TODO          |
 | `documentOpen`       | server |            ❌            |
@@ -436,10 +425,37 @@ Then the server sends:
 
 - Rename to `list_region_locks_rep`
 
-#### `saveChanges` (client → server)
+#### `saveChanges` (client → server) & `saveChanges`/`savePartChanges` (server → client)
 
 Send some modification in the document, this requires to have the lock on the
 document first.
+
+> [!NOTE]
+>
+> - *change ordering*: A global index is held to order each change.
+>
+> - *Chunking of changes*: A single save operation may be too large for one
+>   WebSocket frame, so the client chunks the changes array across several
+>   saveChanges messages. The `startSaveChanges` / `endSaveChanges` flags delimit
+>   the chunked sequence.
+>
+> - *`changes` field format*: `saveChanges` contains a `changes` field that is an
+>   array of modifications. By default this is represented as a JSON-serialized
+>   array of raw op fragments (an OnlyOffice-internal binary/JSON change format
+>   we never need to understand).
+>
+>   A typical example of `changes` field in default format:
+>   `"[\"64;AgAAADEA//8BACxLuimoIAIApwAAAAEAAAAAAAAAAAAAAAAAAAAAAAAA9v///w4AAAAwAC4AMAAuADAALgAwAA==\",\"37;> CAAAADAAXwAyADQAAQAcAAEAAAAFAAAAAQAAAGkAAAAAAwAAAA==\"]"`
+>
+>   Default format is wasteful however so we want to use instead the binary format
+>   (since the actual communication with the Parsec server is going to be done in
+>   msgpack that supports binary data).
+>
+>   Switching to binary format can be done by setting `editorConfig.settings.binaryChanges`
+>   to `true` > in `window.DocsAPI.DocEditor`'s config parameter.
+>
+> - *Spreadsheet Editor lock calculation*: `excelAdditionalInfo` field contains
+>   aditional info that are used by the server to compute locks on cells.
 
 Format:
 
@@ -448,74 +464,192 @@ Format:
   "type": "saveChanges",
   "payload": {
     "type": "saveChanges",
-    // String of JSON serialized array of changes,
-    // each change itself being an opaque string in OnlyOffice internal format
-    "changes": <string>,
-    "startSaveChanges": <boolean>,  // TODO: document
-    "endSaveChanges": <boolean>,  // TODO: document
-    "isCoAuthoring": <boolean>,  // TODO: document
-    "isExcel": <boolean>,  // TODO: document
-    "deleteIndex": <null|integer>,  // TODO: document
-    "excelAdditionalInfo": <string>,  // Opaque string in OnlyOffice internal format
-    "unlock": <boolean>,  // TODO: document
-    "releaseLocks": <boolean>  // TODO: document
+    // List of opaque OnlyOffice-internal change fragment, see the note about its format.
+    "changes": <string | binary>,
+    // true on the first chunk of this save operation.
+    // The server only honors `deleteIndex` and establishes the new "save point"
+    // when this is true.
+    "startSaveChanges": <boolean>,
+    // true on the last chunk of this save operation.
+    // The server only finalizes the save when this is true: it then broadcasts
+    // the changes to other participants, optionally releases locks, and sends
+    // back an `unSaveLock` event. Intermediate chunks get a `savePartChanges`
+    // ack instead.
+    "endSaveChanges": <boolean>,
+    // Whether more than one user is currently co-editing the document.
+    // Maintained by the client (toggled by the `startCoAuthoring` /
+    // `endCoAuthoring` server events). The server only uses it for the
+    // spreadsheet editor, to gate the `excelAdditionalInfo` lock recalculation.
+    "isCoAuthoring": <boolean>,
+    // true if the editor is the Spreadsheet Editor.
+    // The server uses it to decide whether to apply the `excelAdditionalInfo`
+    // column/row lock recalculation. Other editor types ignore that field.
+    "isExcel": <boolean>,
+    // Ask the server to truncate changes up to (including) this index. This is
+    // used to rollback when the user use the undo changes in the document.
+    // Can by `null` or `-1` to indicate no truncate is needed.
+    // Ignored if `startSaveChanges` is not set.
+    "deleteIndex": <null|integer>,
+    // JSON-serialized opaque blob for the Spreadsheet Editor:
+    //   { "UserId": ..., "UserShortId": ..., "CursorInfo": ...,
+    //     "indexCols": ..., "indexRows": ... }
+    // - `CursorInfo` is broadcast as-is to other participants (cursor display).
+    // - `indexCols` / `indexRows` describe inserted columns/rows; the server
+    //   uses them to recalculate the locked ranges of other users so their
+    //   locks follow the shifted cells. Only used for the spreadsheet editor.
+    "excelAdditionalInfo": <null|string>,
+    // Whether the server should release the document's auth lock (not the region locks !)
+    // after this save.
+    // This is only true when switch from solo to collaborative edition (note this
+    // flag is also carride by an `unLockDocument` event since `saveChanges` is
+    // only send if the document has been modified).
+    "unlock": <boolean>,
+    // Whether the server should release the region locks held by this user.
+    "releaseLocks": <boolean>,
+    // Set by the client when re-sending a failed save (server closes connection
+    // or timeouts). Only used on the server for logging purpose.
+    "reSave": <integer | undefined>
   }
 }
 ```
 
-> [!NOTE]
-> *The `saveChanges` wire format*
->
-> `saveChanges` contains a `changes` field that is an array of modifications.
-> By default this is represented as a JSON-serialized array of raw op fragments
-> (an OnlyOffice-internal binary/JSON change format we never need to understand).
->
-> A typical example of `changes` field in default format:
-> `"[\"64;AgAAADEA//8BACxLuimoIAIApwAAAAEAAAAAAAAAAAAAAAAAAAAAAAAA9v///w4AAAAwAC4AMAAuADAALgAwAA==\",\"37;> CAAAADAAXwAyADQAAQAcAAEAAAAFAAAAAQAAAGkAAAAAAwAAAA==\"]"`
->
-> Default format is wasteful however so we want to use instead the binary format
-> (since the actual communication with the Parsec server is going to be done in
-> msgpack that supports binary data).
->
-> Switching to binary format can be done by setting `editorConfig.settings.binaryChanges`
-> to `true` > in `window.DocsAPI.DocEditor`'s config parameter.
-
 *Editics protocol changes*:
 
 - Rename to `save_changes`.
-- Encrypt `changes` and `excelAdditionalInfo` fields.
+- Encrypt `changes` fields.
+- Split `excelAdditionalInfo` into `cursor` (encrypted field) and `excel_info` (containing `index_cells` and `index_rows`)
 - Switch to binary format for `changes` field.
+- Remove `unlock` field: we rely on the fact `unLockDocument` is always send after and contains this field.
+- Remove `reSave`
+- Remove `isExcel`: instead set `excel_info` to null if not excel.
+- Consider removing `isCoAuthoring`: the server should be aware of the state.
 
-#### `isSaveLock` (client → server)
+This leads to the server to send its own event to inform other users:
 
-Try to take the lock to save the document. This leads to the server sending a
-`saveLock` event.
+- To the client the original `saveChanges` is coming from: `unSaveLock` if `endSaveChanges: true`, `savePartChanges` otherwise.
+- To all other clients: `saveChanges`
+
+> [!NOTE]
+> Server also sends a `unSaveLock` event if `endSaveChanges: true`.
 
 Format:
+
+ ```json5
+{
+  "type": "saveChanges",
+  "payload": {
+    "type": "saveChanges",
+    // Array of { docid, change, time, user, useridoriginal }, with:
+    // - `change`: the opaque change fragment
+    // - `time`: server timestamp (ms) of the change.
+    // - `user`: id of the user who made the change.
+    // - `useridoriginal`: original (integrator-provided) user id.
+    //
+    // Null when the change set was too large to publish inline; in that case
+    // the client refetches the missing changes (via the auth/changes flow).
+    "changes": <array | null>,
+    // New total number of changes stored for the document after this save
+    "changesIndex": <integer>,
+
+    // `syncChangesIndex` is the always-advancing sync point, while `changesIndex`
+    // might be lower (in case of undo, see )
+    // Same value as `changesIndex` here (= `puckerIndex`). Tracked separately
+    // by the client as `syncChangesIndex` (the "always-advancing" sync point,
+    // used in the `isSaveLock` / `unSaveLock` handshake). `changesIndex` can
+    // lag behind it (it is reset to the save point on the saver's
+    // `unSaveLock.index`), while `syncChangesIndex` always reflects the total.
+    "syncChangesIndex": <integer>,
+
+    // Mirrors the originator's `endSaveChanges`
+    "endSaveChanges": <boolean>,
+
+    // Locks released by the originator (only when its `releaseLocks` was true).
+    // Each entry: { block, user, time, changes }. For spreadsheet/presentation/
+    // pdf editors, `block` is an object with a `guid`; for the document editor
+    // it's a plain block id. The receiver marks those locks as released and
+    // notifies its lock manager (`onLocksReleased`).
+    // Array of { block, user, time, changes }, with:
+    // - `block`
+    // - `user`
+    // - `time`: server timestamp (ms) of the change.
+
+    "locks": <array>,
+
+    // The originator's `excelAdditionalInfo`, passed through unchanged.
+    // Spreadsheet clients use it to recalculate their own lock ranges
+    // (`onRecalcLocks`) and for cursor display; other editors ignore it
+    // (or use only the cursor portion).
+    "excelAdditionalInfo": <string | undefined>
+  }
+}
+ ```
+
+ Notes:
+ - Unlike the client→server message, the server→client saveChanges does not carry startSaveChanges, isCoAuthoring, isExcel, deleteIndex, unlock, or releaseLocks — only the fields other participants need to apply the changes.
+ - The saving client itself does not receive this broadcast; it receives unSaveLock (and savePartChanges for intermediate chunks) instead.
+
+Format:
+
+```json5
+```
+
+*Editics protocol changes*:
+
+#### `savePartChanges` (server → client)
+
+Format:
+
+```json5
+```
+
+*Editics protocol changes*:
+
+
+#### `isSaveLock` (client → server) & `saveLock` (server → client)
+
+Try to take the lock to save the document.
+
+ Format:
 
 ```json5
 {
   "type": "isSaveLock",
   "payload": {
-    "type": "isSaveLock",
-    "syncChangesIndex": <integer> // TODO: document
+  "type": "isSaveLock",
+    // The client's current change index (i.e. the total number of changes it
+    // has observed for the document so far from the server's `saveChanges` and
+    // `unSaveLock` events).
+    // This is used by the server to detect a desynchronized client, in such
+    // case the server keeps returning `saveLock: true` (denied) so that the
+    // client should catch up before retrying.
+    "syncChangesIndex": <integer>
   }
 }
-```
+ ```
 
-*Editics protocol changes*:
+This leads to the server to send its own event to the client:
 
-- Rename to `is_save_lock`.
+```json5
+{
+  "type": "saveLock",
+  "payload": {
+  "type": "saveLock",
+    // true means somebody else already holds the lock (i.e. the lock wasn denied)
+    "saveLock": <boolean>
+  }
+}
+ ```
 
-#### `unSaveLock` (client → server)
+#### `unSaveLock` (client → server) & `unSaveLock` (server → client)
 
-This is used be the client to cancel a save operation.
+ Cancel an in-progress save operation and release the save lock without saving anything.
+
 Under normal circumstances, the lock is automatically released when the client
 sends a `saveChanges` (see `releaseLocks` field).
 
-Format:
+ Format:
 
-```json5
+ ```json5
 {
   "type": "unSaveLock",
 }
@@ -524,6 +658,32 @@ Format:
 *Editics protocol changes*:
 
 - Rename to `un_save_lock`
+
+This leads to the server to send its own event to the client:
+
+> [!NOTE]
+> `unSaveLock` server event is used for two things:
+>
+> - Cancellation scenario: Response to `unSaveLock` client event
+> - Success scenario: Response to a successful save (i.e. `saveChanges` event with `endSaveChanges: true`)
+
+Format:
+
+ ```json5
+{
+  "type": "unSaveLock",
+  "payload": {
+    "type": "unSaveLock",
+    // The client's new save point (the absolute change index at which this
+    // user's changes were committed) or `-1` in case of cancellation.
+    "index": <integer>,
+    // Server timestamp (ms) of the last change in this save or `-1` in case of cancellation.
+    "time": <integer>,
+    // The new total number of changes stored for the document or `-1` in case of cancellation.
+    "syncChangesIndex": <integer>
+  }
+}
+```
 
 #### `getMessages` (client → server)
 
@@ -551,6 +711,11 @@ always contains the session messages.
 
 #### `unLockDocument` (client → server)
 
+ Notify the server that the client is leaving active editing, or wants to drop its locks and/or the document auth lock. It is sent:
+- on disconnect / closing the editor,
+- when the user stops being the "exclusive" editor (single-editor → co-authoring transition),
+- when explicitly releasing region locks (e.g. after a save that released locks server-side, or on undo).
+
 Format:
 
 ```json5
@@ -571,18 +736,94 @@ Format:
 }
 ```
 
+
+
+
+
+
+ It is a "fire-and-forget cleanup" that optionally combines three independent actions (auth unlock, lock release, save-lock release).
+
+ Format:
+
+ ```json5
+   {
+     "type": "unLockDocument",
+     "payload": {
+       "type": "unLockDocument",
+
+       // Whether the client is currently IN A SAVE OPERATION (i.e. it holds the
+       // save lock from a prior `isSaveLock`/`saveLock` handshake). If true, the
+       // server releases that save lock by sending back an `unSaveLock` event
+       // (with `index: -1, time: -1, syncChangesIndex: -1` — an EMERGENCY
+       // withdrawal without saving).
+       //
+       // In practice the client passes `false` here for a normal cleanup
+       // (the save lock is normally released by the `saveChanges` flow itself).
+       // It is the emergency/companion path to `unSaveLock` (client→server),
+       // which is used to CANCEL a save.
+       "isSave": <boolean>,
+
+       // Whether the server should release the document's AUTH lock for this user.
+       // The auth lock is the "I am the current exclusive editor" lock (distinct
+       // from per-region locks and the save lock). When true, the server calls
+       // `editorData.unlockAuth`; if it succeeds (the lock was indeed this user's),
+       // it publishes an `auth` event to all participants so another user can take
+       // over the document. Maps to the client's `canUnlockDocument` flag.
+       //
+       // False during ordinary saves; set true when the client genuinely leaves
+       // the document (disconnect, or handing off to another editor).
+       "unlock": <boolean>,
+
+       // Same semantics as the `deleteIndex` field of `saveChanges` (UNDO support):
+       //  - null  → no truncation of change history.
+       //  - -1    → no truncation (sentinel, same effect as null).
+       //  - <int> → ABSOLUTE index; the server deletes all stored changes with
+       //            index >= deleteIndex before doing anything else. Used so the
+       //            client can throw away its last changes during an undo that
+       //            coincides with leaving the document.
+       "deleteIndex": <integer | null>,
+
+       // Whether the server should release the REGION locks held by this user
+       // (so other users can lock those areas). Maps to the client's
+       // `canReleaseLocks` flag. When true, the server removes the user's locks
+       // via `removeUserLocks`, sends a `releaseLock` event directly to the
+       // client, AND broadcasts a `releaseLock` event to all other participants
+       // (each lock: `{ block, user, time, changes }`).
+       //
+       // Note the difference from `saveChanges`'s `releaseLocks`: in `saveChanges`
+       // the released locks are returned to OTHER participants embedded inside
+       // the server→client `saveChanges` message (`locks` field). Here, in
+       // `unLockDocument`, they are sent as a standalone `releaseLock` event.
+       "releaseLocks": <boolean>
+     }
+   }
+ ```
+
+
+
+
 *Editics protocol changes*:
 
 - Rename to `un_lock_document`
 
 #### `close` (client → server)
 
+Notify the server that the client is voluntarily leaving the session and closing
+the connection (unlike `unLockDocument` that keeps the connection alive but drops
+locks).
+
 Format:
 
 ```json5
+{
+  "type": "close",
+  "payload": {
+    "type": "close"
+  }
+}
 ```
 
-*Editics protocol changes*:
+*Editics protocol changes*: Keep as-is.
 
 #### `openDocument` (client → server)
 
@@ -638,29 +879,52 @@ In both case, the server send a `session` event:
     "interval": <number>   // present only for idle (the idle threshold in ms)
     }
 }
-``` 
+```
+
+*Editics protocol changes*: Ignored for now since those connection times are unlikely.
+
+The client is then expected to send a `extendSession` event within 2 minutes,
+otherwise the server closes the connection.
 
 Format:
 
 ```json5
 {
     "type": "extendSession",
+    // For how long the client considers itself idle, the server uses this to
+    // determine when it should send the next `session` event.
     "idletime": <integer>  // timestamp in ms
 }
 ```
 
-*Editics protocol changes*: Ignored for now since those connection times are unlikely.
+#### `refreshToken`/`expiredToken` (server → client)
 
-TODO: what to do with refreshToken/expiredToken
+Provide a new JWT token to the client.
 
-The client is then expected to send a `extendSession` event within 2 minutes,
-otherwise the server closes the connection.
+> [!NOTE]
+> The initial JWT token is provided by the server's `auth` event.
 
-Ask the server to provide a new JWT token (i.e. server sends `refreshToken` event)
-to stay authenticated.
+While the JWT token have a 30 days lifetime, this event is not automatically
+triggered, instead it fires when:
 
-If `extendSession` is not used, the server eventually sends a `expiredToken`
-event to the client to inform it that its JWT token has expired.
+- an editor is demoted to viewer (role change).
+- the user correctly enters a document password (i.e. `documentOpen` event with type `setpassword`).
+- the user's display name / connection info changes (i.e. `documentOpen` event with type `changedocinfo`).
+
+Format:
+
+```json5
+{
+  "type": "refreshToken",
+  "payload": {
+    "type": "refreshToken",
+    "messages": <string>  // Freshly signed session JWT token
+  }
+}
+```
+
+`expiredToken` is never send by the OnlyOffice server (but still handled client side,
+legacy code ?): when the token expires, the server sends a `disconnectReason` instead.
 
 *Editics protocol changes*: Ignored since Parsec has its own authentication system the editics protocol relies on.
 
@@ -798,15 +1062,6 @@ Format:
 
 *Editics protocol changes*:
 
-#### `saveChanges` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
 #### `authChanges` (server → client)
 
 Format:
@@ -839,32 +1094,57 @@ Format:
 }
 ```
 
-#### `savePartChanges` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
 #### `drop` (server → client)
 
+Inform the client its editing session has been terminated by an external action (typically
+the integrator has revoked the user's permissions).
+
 Format:
 
 ```json5
+{
+  "type": "drop",
+  "payload": {
+    "type": "drop",
+    // Always the DROP_CODE constant (4007), included for symmetry with `disconnectReason`.
+    "code": 4007,
+    // A free-form description string, usually empty.
+    "description": <string>
+  }
+}
 ```
 
-*Editics protocol changes*:
+*Editics protocol changes*: Keep as-is.
 
 #### `disconnectReason` (server → client)
 
-Format:
+ Tell a client that the server is kicking it out for a specific operational reason:
+ server shutdown, connection timeout, expired JWT token, or because the auth lock was handed to another user.
 
-```json5
-```
+ Unlike drop (which is triggered by an external integrator command targeting specific users), disconnectReason is triggered by server-internal lifecycle/policy decisions and is sent to the specific connection(s) affected.
 
-*Editics protocol changes*:
+ Format:
+
+ ```json5
+   {
+     "type": "disconnectReason",
+     "payload": {
+       "type": "disconnectReason",
+       // 4001  SHUTDOWN_CODE         "server shutdown"
+       // 4002  SESSION_IDLE_CODE     "idle session expires"
+       // 4003  SESSION_ABSOLUTE_CODE "absolute session expires"
+       // 4004  ACCESS_DENIED_CODE    "access deny"
+       // 4006  JWT_ERROR_CODE        "token:" + <jwt error message>
+       // 4007  DROP_CODE             "drop" (also used for auth-lock-taken)
+       "code": <integer>,
+       // Human-readable reason (e.g. "server shutdown", "idle session expires")
+       "description": <string>
+     }
+   }
+ ```
+
+*Editics protocol changes*: Ignored since Parsec has its own logic (based on
+HTTP status code) for handling this.
 
 #### `waitAuth` (server → client)
 
@@ -998,7 +1278,7 @@ On the server, the editics session needs to both keep track of the connected cli
 
 For this we introduce a new authenticated SSE endpoint dedicated to joining a session.
 
-Since the server has to keep track of who is connected to an editics session, we 
+Since the server has to keep track of who is connected to an editics session, we
 
 > [NOTE]
 >
@@ -1341,7 +1621,7 @@ CREATE TABLE editics_session_patch (
     vlob_id UUID NOT NULL,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     blob BYTEA NOT NULL,
-    -- Strictly growing 
+    -- Strictly growing
     index INTEGER NOT NULL,
 
     UNIQUE (realm, vlob_id, index)
@@ -1371,7 +1651,7 @@ CREATE TABLE editics_session_presence (
     last_seen   TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (editics_session_id, user_id)
 );
- ```  
+ ```
 
 ### 5 - Per server session handling
 
