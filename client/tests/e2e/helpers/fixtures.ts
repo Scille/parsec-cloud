@@ -34,40 +34,31 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
   await page.addInitScript(
     (options: SetupOptions & { testbedServer: string }) => {
       async function createMockWritableStream(): Promise<FileSystemWritableFileStream> {
-        return {
-          write: async (data: any): Promise<any> => {
-            if ((window as any).__downloadedFiles === undefined) {
-              (window as any).__downloadedFiles = {
-                default: data,
-              };
-            } else {
-              (window as any).__downloadedFiles.default = data;
-            }
-          },
-          close: async (): Promise<any> => {},
-          abort: async (): Promise<any> => {
+        const record = (data: any): void => {
+          const chunk: Uint8Array = data instanceof Uint8Array ? data : new Uint8Array(data && data.data !== undefined ? data.data : data);
+          if ((window as any).__downloadedFiles === undefined) {
+            (window as any).__downloadedFiles = { default: chunk };
+          } else if ((window as any).__downloadedFiles.default === undefined) {
+            (window as any).__downloadedFiles.default = chunk;
+          } else {
+            (window as any).__downloadedFiles.default = new Uint8Array([...(window as any).__downloadedFiles.default, ...chunk]);
+          }
+        };
+        const stream = new WritableStream({
+          write: (chunk: any): void => record(chunk),
+          abort: (): void => {
             console.log('Stream aborted');
           },
-          writable: {
-            size: 0,
-            getWriter: (): WritableStreamDefaultWriter => {
-              return {
-                ready: new Promise<void>((resolve) => resolve()),
-                close: async (): Promise<void> => {},
-                releaseLock: (): void => {},
-                write: async (chunk: any): Promise<void> => {
-                  if ((window as any).__downloadedFiles === undefined) {
-                    (window as any).__downloadedFiles = {
-                      default: chunk,
-                    };
-                  } else {
-                    (window as any).__downloadedFiles.default = new Uint8Array([...(window as any).__downloadedFiles.default, ...chunk]);
-                  }
-                },
-              } as WritableStreamDefaultWriter;
-            },
-          },
-        } as unknown as FileSystemWritableFileStream;
+        });
+        // `FileSystemWritableFileStream` extends `WritableStream` with these helpers.
+        (stream as any).write = async (data: any): Promise<void> => record(data);
+        (stream as any).seek = async (): Promise<void> => {};
+        (stream as any).truncate = async (): Promise<void> => {};
+        (stream as any).close = async (): Promise<void> => {};
+        (stream as any).abort = async (): Promise<void> => {
+          console.log('Stream aborted');
+        };
+        return stream as unknown as FileSystemWritableFileStream;
       }
 
       (window as any).TESTING = true;
