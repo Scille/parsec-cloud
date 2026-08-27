@@ -52,39 +52,30 @@ const routes: Array<RouteRecordRaw> = [
     path: `/${Routes.Account}`,
     name: Routes.Account,
     component: () => import('@/views/home/AccountHomePage.vue'),
-    beforeEnter: (_to, _from, next): boolean => {
+    beforeEnter: (_to, _from) => {
       if (!Env.isAccountEnabled()) {
-        next(`/${Routes.Home}`);
-      } else {
-        next();
+        return { name: Routes.Home };
       }
-      return true;
     },
   },
   {
     path: `/${Routes.CreateAccount}`,
     name: Routes.CreateAccount,
     component: () => import('@/views/account/CreateAccountPage.vue'),
-    beforeEnter: (_to, _from, next): boolean => {
+    beforeEnter: (_to, _from) => {
       if (!Env.isAccountEnabled()) {
-        next(`/${Routes.Home}`);
-      } else {
-        next();
+        return { name: Routes.Home };
       }
-      return true;
     },
   },
   {
     path: `/${Routes.RecoverAccount}`,
     name: Routes.RecoverAccount,
     component: () => import('@/views/account/RecoverAccountPage.vue'),
-    beforeEnter: (_to, _from, next): boolean => {
+    beforeEnter: (_to, _from) => {
       if (!Env.isAccountEnabled()) {
-        next(`/${Routes.Home}`);
-      } else {
-        next();
+        return { name: Routes.Home };
       }
-      return true;
     },
   },
   {
@@ -168,13 +159,10 @@ const routes: Array<RouteRecordRaw> = [
                         path: `/:handle(\\d+)/${Routes.FileHandler}/:mode(${FileHandlerMode.View}|${FileHandlerMode.Edit})?`,
                         name: Routes.FileHandler,
                         component: () => import('@/views/files/handler/FileHandler.vue'),
-                        beforeEnter: (_to, _from, next): boolean => {
+                        beforeEnter: (_to, from) => {
                           if (!_to.params.mode || (_to.params.mode === FileHandlerMode.Edit && !Env.isEditicsEnabled())) {
-                            next(_from);
-                          } else {
-                            next();
+                            return from;
                           }
-                          return true;
                         },
                       },
                     ],
@@ -252,7 +240,7 @@ export function getRouteBeforeFileHandler(): RouteBackup | undefined {
   return routeBeforeFileHandler;
 }
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   // Clearing history if we come from a page that has no handle.
   // Not taking any risk.
   if (!to.params.handle || !from.params.handle) {
@@ -260,7 +248,6 @@ router.beforeEach((to, from, next) => {
   }
   if (!to.name || !to.params.handle) {
     routeBeforeFileHandler = undefined;
-    next();
     return;
   }
   const routeName = to.name as Routes;
@@ -289,7 +276,6 @@ router.beforeEach((to, from, next) => {
   } else {
     routeBeforeFileHandler = undefined;
   }
-  next();
 });
 
 export function getRouter(): Router {
