@@ -221,46 +221,46 @@ list of all OnlyOffice events:
 | Event                | Origin | Kept in editics protocol |
 |----------------------|--------|--------------------------|
 | `auth`               | client |            TODO          |
+| `auth`               | server |            TODO          |
+| `authChangesAck`     | client |            TODO          |
+| `connectState`       | server |            TODO          |
+| `authChanges`        | server |            TODO          |
+| `waitAuth`           | server |            TODO          |
 | `message`            | client |            ✅            |
+| `message`            | server |            ✅            |
 | `cursor`             | client |            ✅            |
+| `cursor`             | server |            ✅            |
 | `getLock`            | client |            ✅            |
+| `getLock`            | server |            ✅            |
 | `saveChanges`        | client |            ✅            |
+| `saveChanges`        | server |            ✅            |
+| `savePartChanges`    | server |            ✅            |
 | `isSaveLock`         | client |            ✅            |
+| `saveLock`           | server |            ✅            |
 | `unSaveLock`         | client |            ✅            |
+| `unSaveLock`         | server |            ✅            |
 | `getMessages`        | client |            ❌            |
 | `unLockDocument`     | client |            ✅            |
 | `close`              | client |            ✅            |
+| `drop`               | server |            ✅            |
 | `openDocument`       | client |            ❌            |
 | `clientLog`          | client |            ❌            |
 | `extendSession`      | client |            ❌            |
-| `forceSaveStart`     | client |            ❌            |
-| `rpc`                | client |            ❌            |
-| `authChangesAck`     | client |            TODO          |
-| `auth`               | server |            TODO          |
-| `message`            | server |            ✅            |
-| `cursor`             | server |            ✅            |
-| `meta`               | server |            TODO          |
-| `getLock`            | server |            ✅            |
-| `releaseLock`        | server |            ✅            |
-| `connectState`       | server |            TODO          |
-| `saveChanges`        | server |            ✅            |
-| `authChanges`        | server |            TODO          |
-| `saveLock`           | server |            ✅            |
-| `unSaveLock`         | server |            TODO          |
-| `savePartChanges`    | server |            TODO          |
-| `drop`               | server |            ✅            |
-| `disconnectReason`   | server |            ❌            |
-| `waitAuth`           | server |            TODO          |
-| `error`              | server |            TODO          |
-| `documentOpen`       | server |            ❌            |
-| `warning`            | server |            ✅            |
-| `license`            | server |            ❌            |
 | `session`            | server |            ❌            |
 | `refreshToken`       | server |            ❌            |
 | `expiredToken`       | server |            ❌            |
+| `forceSaveStart`     | client |            ❌            |
 | `forceSaveStart`     | server |            ❌            |
 | `forceSave`          | server |            ❌            |
+| `rpc`                | client |            ❌            |
 | `rpc`                | server |            ❌            |
+| `meta`               | server |            ❌            |
+| `releaseLock`        | server |            ✅            |
+| `disconnectReason`   | server |            ❌            |
+| `warning`            | server |            ✅            |
+| `error`              | server |            ❌            |
+| `documentOpen`       | server |            ❌            |
+| `license`            | server |            ❌            |
 | `updateVersion`      | server |            ❌            |
 
 Detail for each command:
@@ -281,7 +281,61 @@ it to an edition session according to the document ID its provides (see `docid` 
 > This is needed since each edition session only lives in a single server instance's
 > memory.
 
+Quick reference, who sends what during a auth handshake:
+
+```raw
+New editor (Kate)                       Server                         Existing editor (John)
+   │                                      │                                      │
+   │── WS open ──────────────────────────►│                                      │
+   │◄── license ──────────────────────────│                                      │
+   │── auth (c→s) ───────────────────────►│                                      │
+   │   (docid, user, token, supportAuthChangesAck:true)                          │
+   │                                      │── connectState {waitAuth:true} ─────►│
+   │◄── waitAuth {lockDocument: John} ────│                                      │
+   │   (Kate is parked; John is nudged)   │                                      │
+   │                                      │◄── unLockDocument {unlock:true} ─────│
+   │                                      │   (John releases the auth lock)      │
+   │◄── authChanges [chunk 1] ────────────│                                      │
+   │── authChangesAck ───────────────────►│                                      │
+   │◄── authChanges [chunk 2 if needed] ──│                                      │
+   │── authChangesAck ───────────────────►│                                      │
+   │◄── auth (s→c) ───────────────────────│                                      │
+   │  (sessionId, participants[John,Kate],│                                      │
+   │   locks, settings, jwt, openedAt)    │                                      │
+   │◄── documentOpen ─────────────────────│                                      │
+   │   (URLs to fetch the document)       │                                      │
+   │                                      │── connectState {waitAuth:false} ────►│
+   │                                      │   (now 2 editors; co-editing on)     │
+```
+
 TODO: do we need it ?
+
+#### `authChangesAck` (client → server)
+
+Format:
+
+```json5
+```
+
+*Editics protocol changes*:
+
+#### `auth` (server → client)
+
+Format:
+
+```json5
+```
+
+*Editics protocol changes*:
+
+#### `waitAuth` (server → client)
+
+Format:
+
+```json5
+```
+
+*Editics protocol changes*:
 
 #### `message` (client → server) & `message` (server → client)
 
@@ -572,7 +626,6 @@ Format:
     // - `block`
     // - `user`
     // - `time`: server timestamp (ms) of the change.
-
     "locks": <array>,
 
     // The originator's `excelAdditionalInfo`, passed through unchanged.
@@ -825,6 +878,28 @@ Format:
 
 *Editics protocol changes*: Keep as-is.
 
+#### `drop` (server → client)
+
+Inform the client its editing session has been terminated by an external action (typically
+the integrator has revoked the user's permissions).
+
+Format:
+
+```json5
+{
+  "type": "drop",
+  "payload": {
+    "type": "drop",
+    // Always the DROP_CODE constant (4007), included for symmetry with `disconnectReason`.
+    "code": 4007,
+    // A free-form description string, usually empty.
+    "description": <string>
+  }
+}
+```
+
+*Editics protocol changes*: Keep as-is.
+
 #### `openDocument` (client → server)
 
 : Ignored since the client deals alone with document opening due to e2e encryption
@@ -861,7 +936,7 @@ Format:
 
 *Editics protocol changes*: Ignored since it is only for telemetry purpose.
 
-#### `extendSession` (client → server) & `session`/`refreshToken`/`expiredToken` (server → client)
+#### `extendSession` (client → server) & `session` (server → client)
 
 The server periodically check each connection to a session:
 
@@ -1017,32 +1092,32 @@ Format:
 
 *Editics protocol changes*: Ignore those events as they provide too much cleartext data to the server.
 
-#### `authChangesAck` (client → server)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
-#### `auth` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
 #### `meta` (server → client)
 
+Notify participants that document metadata has changed (currently: the
+document title, after a WOPI rename). Broadcast to all participants of the
+document.
+
 Format:
 
 ```json5
+{
+  "type": "meta",
+  "payload": {
+    "type": "meta",
+    // Metadata object. Currently produced fields:
+    //   { title: <string> }: new document title (WOPI rename).
+    "messages": <object>
+  }
+}
 ```
 
-*Editics protocol changes*:
+*Editics protocol changes*: Ignore as server don't know about file paths.
+
+> [!NOTE]
+> It might be interesting to support file renaming detection in the future, however
+> this would be done on the client side (so the OnlyOffice editor would get a `meta`
+> without any involvement from the server).
 
 #### `releaseLock` (server → client)
 
@@ -1070,51 +1145,6 @@ Format:
 ```
 
 *Editics protocol changes*:
-
-#### `saveLock` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
-#### `unSaveLock` (server → client)
-
-```json5
-{
-  "type": "unSaveLock",
-  "payload": {
-    "type": "unSaveLock",
-    "index": <integer>,
-    "time": <integer>,  // timestamp in ms
-    "syncChangesIndex": <integer>
-  }
-}
-```
-
-#### `drop` (server → client)
-
-Inform the client its editing session has been terminated by an external action (typically
-the integrator has revoked the user's permissions).
-
-Format:
-
-```json5
-{
-  "type": "drop",
-  "payload": {
-    "type": "drop",
-    // Always the DROP_CODE constant (4007), included for symmetry with `disconnectReason`.
-    "code": 4007,
-    // A free-form description string, usually empty.
-    "description": <string>
-  }
-}
-```
-
-*Editics protocol changes*: Keep as-is.
 
 #### `disconnectReason` (server → client)
 
@@ -1145,24 +1175,6 @@ Format:
 
 *Editics protocol changes*: Ignored since Parsec has its own logic (based on
 HTTP status code) for handling this.
-
-#### `waitAuth` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
-#### `error` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
 
 #### `documentOpen` (server → client)
 
@@ -1209,9 +1221,35 @@ Format:
 
 - Rename to `warning_received`
 
+#### `error` (server → client)
+
+It carries an error identifier and code, and on the
+client it is treated as a **hard disconnect** (it is routed to the same
+handler as `drop`).
+
+Legacy error event. The comment in the client dispatch labels it "Old SDK version",
+it predates the structured `disconnectReason`/`warning` events (kept for backward
+compatibility?).
+
+Format:
+
+```json5
+{
+  "type": "error",
+  "payload": {
+    "type": "error",
+    "description": <string>,
+    "code": <integer>
+  }
+}
+```
+
+*Editics protocol changes*: Ignore this event as it is a legacy one.
+
 #### `license` (server → client)
 
-TODO: document
+Event send right after the wesocket opens, the client uses it to
+enable/disable editor features and to decide branding/customization.
 
 Format:
 
@@ -1220,12 +1258,26 @@ Format:
   "type": "license",
   "payload": {
     "type": "license",
+
+    // License descriptor. Fields:
+    //  - type:               license type id (integer; e.g. 3 in the logs).
+    //  - light:              legacy boolean, always false.
+    //  - mode:               license mode (integer; 0 in the logs).
+    //  - rights:             bitmask of rights (integer; 1 in the logs).
+    //  - buildVersion:       server build version string (e.g. "9.4.1").
+    //  - buildNumber:        server build number (integer; e.g. 15).
+    //  - protectionSupport:  whether protected-file opening is supported.
+    //  - isAnonymousSupport: whether anonymous users are supported.
+    //  - liveViewerSupport:  whether the live viewer feature is supported.
+    //  - branding:           whether branding/white-label is allowed.
+    //  - customization:      whether UI customization is allowed.
+    //  - advancedApi:        whether the advanced editor API is available.
     "license": {
       "type": <integer>,
       "light": <boolean>,
       "mode": <integer>,
       "rights": <integer>,
-      "buildVersion": <string>,  // e.g. "9.4.1"
+      "buildVersion": <string>,
       "buildNumber": <integer>,
       "protectionSupport": <boolean>,
       "isAnonymousSupport": <boolean>,
@@ -1233,7 +1285,11 @@ Format:
       "branding": <boolean>,
       "customization": <boolean>,
       "advancedApi": <boolean>
-    }
+    },
+
+    // AI plugin settings for the editor UI (may be absent). Forwarded to
+    // the editor via `onAiPluginSettings` if the license init is happening.
+    "aiPluginSettings": <object | undefined>
   }
 }
 ```
