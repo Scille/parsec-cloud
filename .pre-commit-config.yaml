@@ -12,6 +12,7 @@ repos:
     rev: v6.0.0
     hooks:
       - id: mixed-line-ending
+        args: [--fix=lf]
         alias: eol
       - id: trailing-whitespace
         exclude_types: [svg, diff]
