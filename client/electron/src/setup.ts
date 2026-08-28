@@ -334,7 +334,7 @@ export class ParsecApp {
 
     // Chromium uses the desktop theme for the hover color on title bar buttons.
     // This is okay for now since we don't have a dark theme yet.
-    nativeTheme.themeSource = 'light';
+    nativeTheme.themeSource = process.platform === 'win32' ? 'light' : 'system';
 
     this.MainWindow = new BrowserWindow({
       icon: appIcon,
