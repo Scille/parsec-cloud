@@ -167,7 +167,7 @@ class CustomGithubProvider extends GitHubProvider {
       result.releaseName = latestReleaseData.feedElement.elementValueOrEmpty('title');
     }
 
-    if (result.releaseNotes === null) {
+    if (result.releaseNotes === null && latestReleaseData.feedElement) {
       result.releaseNotes = computeReleaseNotes(
         this.updater.currentVersion,
         this.updater.fullChangelog,
