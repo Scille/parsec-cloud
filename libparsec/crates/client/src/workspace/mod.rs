@@ -236,9 +236,9 @@ impl WorkspaceOps {
     ///
     /// However the workspace ops doesn't bother to interrogate the certificate
     /// ops whenever it needs those information (this is partly because a newly
-    /// created workspace's informations are not yet available as certificate).
+    /// created workspace's information are not yet available as certificate).
     ///
-    /// Hence this workspace entry that bundles all the informations, but which
+    /// Hence this workspace entry that bundles all the information, but which
     /// needs to be update whenever the corresponding certificates are updated.
     pub(crate) fn update_workspace_external_info(
         &self,
