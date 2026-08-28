@@ -32,6 +32,12 @@ For this reason we use the OnlyOffice patched by Cryptpad to support end-to-end 
 - [x2t](https://github.com/cryptpad/onlyoffice-x2t-wasm) has been patched to compile in WASM in order to run
   client-side in a web browser.
 
+> [!NOTE]
+> `x2t` is a tool to convert the various document formats (docx/xlsx/pptx/etc.) into
+> the internal format used by OnlyOffice (known as "bin format", in practice it
+> basically corresponds to an unzipped Office Open XML with a specific magic header
+> such as "DOCY" for a docx document).
+
 Finally we need to re-implement in the Parsec server the communication system used to
 exchange events between the clients connected to a same editics collaborative session
 (e.g. to modify the document, update client's cursor location, etc.).
@@ -43,15 +49,19 @@ Bob (CONTRIBUTOR) and Mallory (READER) have access to the workspace and want to 
 
 1. Alice wants to edit document `/foo.docx`.
     1.1. Alice's client resolves `/foo.docx` path and obtains vlob ID 42 with latest version 10.
-    1.2. Alice's client loads in the editics editor the content of vlob ID 42 at version 10.
-    1.3. Alice's client connects to the editics session with ID 42 and specify she uses version 10.
+    1.2. Alice's client uses `x2t` to convert the content of vlob ID 42 at version 10 in the
+         bin format.
+    1.3. Alice's client loads in the editics editor the content vlob ID 42 at version 10 converted
+         in bin format.
+    1.4. Alice's client connects to the editics session with ID 42 and specify she uses version 10.
          The session doesn't exist on the server, it is created.
 2. Alice modifies the document twice. Her client sends two modification events to the editics session.
    Each modification is given an index ID by the server to ensure they are ordered (so index 1 and 2).
 3. Bob wants to join the session.
-    3.1. Same as step 1.1. but for Bob
-    3.2. Same as step 1.2. but for Bob
-    3.3. Bob's client connects to the editics session with ID 42 and specify he uses version 10.
+    3.1. Same as step 1.1. but for Bob.
+    3.2. Same as step 1.2. but for Bob.
+    3.3. Same as step 1.3. but for Bob.
+    3.4. Bob's client connects to the editics session with ID 42 and specify he uses version 10.
         The server accept the connection and pushes to the client all the modifications
         that occurred since the session was created.
 4. Alice wants to save the document
@@ -60,9 +70,10 @@ Bob (CONTRIBUTOR) and Mallory (READER) have access to the workspace and want to 
     4.3. Alice's client release the save lock on the session and indicates that all
          modifications up to index 2 are contained in vlob ID 42 version 11.
 5. Mallory wants to join the session
-    5.1. Same as step 1.1. but for Mallory
-    5.2. Mallory's client loads in the editics editor the content of vlob ID 42 at version 11.
-    5.3. Mallory's client connects to the editics session with ID 42 and specify she uses version 11.
+    5.1. Same as step 1.1. but for Mallory (and latest version for vlob ID 42 is now version 11).
+    5.2. Same as step 1.2. but for Mallory (and loaded version for vlob ID 42 is version 11).
+    5.3. Mallory's client loads in the editics editor the content vlob ID 42 at version 11 converted in bin format.
+    5.4. Mallory's client connects to the editics session with ID 42 and specify she uses version 11.
          The server accept the connection and pushes no modification.
 
 The server ensures the client can reach the correct document state by only allowing certain vlob versions:
@@ -79,11 +90,11 @@ When rejecting the client, the server provides the latest allowed version so tha
 
 The fact each client has to load the document by itself (i.e. the server doesn't
 provide to the client the document edited in the session but only patches to apply)
-is more performance-hungry on the client, but this prevents the client that created
-the session from controlling the initial content of the document (this is an issue
-since a user with no write access in the workspace can then modify a document by
-creating a session with his tempered document, then wait for a user with write
-access to join and do the save for them...).
+is more performance-hungry on the client (as `x2t` document conversion is done client-side),
+but this prevents the client that created the session from controlling the initial
+content of the document (this is an issue since a user with no write access in the
+workspace can then modify a document by creating a session with his tempered document,
+then wait for a user with write access to join and do the save for them...).
 
 ### 1.3 - Session ID vs document ID
 
@@ -214,24 +225,72 @@ Each OnlyOffice session has multiple locks:
   Those locks are optimistically taken at edit time, and the edit is rolled back
   if the server denies the lock.
 
+### 2.2 - Connection lifecycle overview
+
+A client connection goes through a fixed sequence of events. Understanding the
+individual events below requires seeing where they fit:
+
+```raw
+ WS open
+   │
+   ▼
+ license (s→c)                    ← server pushes license/feature flags (very first msg)
+   │
+   ▼
+ auth (c→s)                       ← client authenticates (docid, user, token, …)
+   │                                this when the client actually join a session
+   ▼
+ ┌─────────────── waitAuth (s→c) ────────────────┐
+ │  If the document auth-lock is held by another │
+ │  editor (single-editor → co-editing switch):  │
+ │  server sends waitAuth, then connectState     │
+ │  (waitAuth:true) to everyone, and waits.      │
+ │  The old editor must send unLockDocument      │
+ │  {unlock:true} to release the auth lock,      │
+ │  which lets the new editor's pending auth     │
+ │  proceed (→ authChanges + auth).              │
+ └───────────────────────────────────────────────┘
+   │
+   ▼
+ authChanges (s→c) [0..N chunks]  ← backlog of changes since the doc was opened
+   │                                (each chunk acked by the client with authChangesAck)
+   ▼
+ auth (s→c)                       ← server: session id, participants, locks, settings, jwt
+   │
+   ▼
+ documentOpen (s→c)               ← server: where to fetch the document content (URL)
+   │
+   ▼
+ …co-editing… (cursor, getLock, saveChanges, releaseLock, meta, connectState…)
+   │
+   ▼
+ close (c→s) / drop / disconnectReason
+```
+
+The `auth` (c→s) is the gate: nothing else is allowed until it succeeds. The
+server's reply ordering (`waitAuth`? → `authChanges` → `auth` (s→c) →
+`documentOpen`) is enforced by `DocsCoServer.auth()`.
+
 ### 2.2 - Events
 
 list of all OnlyOffice events:
 
 | Event                | Origin | Kept in editics protocol |
 |----------------------|--------|--------------------------|
-| `auth`               | client |            TODO          |
-| `auth`               | server |            TODO          |
-| `authChangesAck`     | client |            TODO          |
-| `connectState`       | server |            TODO          |
-| `authChanges`        | server |            TODO          |
-| `waitAuth`           | server |            TODO          |
+| `auth`               | client |            ✅            |
+| `auth`               | server |            ✅            |
+| `waitAuth`           | server |            ✅            |
+| `connectState`       | server |            ✅            |
+| `authChangesAck`     | client |            ✅            |
+| `authChanges`        | server |            ✅            |
 | `message`            | client |            ✅            |
 | `message`            | server |            ✅            |
+| `getMessages`        | client |            ❌            |
 | `cursor`             | client |            ✅            |
 | `cursor`             | server |            ✅            |
 | `getLock`            | client |            ✅            |
 | `getLock`            | server |            ✅            |
+| `releaseLock`        | server |            ✅            |
 | `saveChanges`        | client |            ✅            |
 | `saveChanges`        | server |            ✅            |
 | `savePartChanges`    | server |            ✅            |
@@ -239,11 +298,13 @@ list of all OnlyOffice events:
 | `saveLock`           | server |            ✅            |
 | `unSaveLock`         | client |            ✅            |
 | `unSaveLock`         | server |            ✅            |
-| `getMessages`        | client |            ❌            |
 | `unLockDocument`     | client |            ✅            |
 | `close`              | client |            ✅            |
 | `drop`               | server |            ✅            |
+| `warning`            | server |            ✅            |
+| `license`            | server |            ❌            |
 | `openDocument`       | client |            ❌            |
+| `documentOpen`       | server |            ❌            |
 | `clientLog`          | client |            ❌            |
 | `extendSession`      | client |            ❌            |
 | `session`            | server |            ❌            |
@@ -255,19 +316,13 @@ list of all OnlyOffice events:
 | `rpc`                | client |            ❌            |
 | `rpc`                | server |            ❌            |
 | `meta`               | server |            ❌            |
-| `releaseLock`        | server |            ✅            |
 | `disconnectReason`   | server |            ❌            |
-| `warning`            | server |            ✅            |
 | `error`              | server |            ❌            |
-| `documentOpen`       | server |            ❌            |
-| `license`            | server |            ❌            |
 | `updateVersion`      | server |            ❌            |
 
 Detail for each command:
 
-#### `auth` (client → server)
-
-Handshake: "I want to open document X as user Y"
+#### `auth` (client → server) & `auth`/`waitAuth` (server → client)
 
 It is this event that authenticates the client (see `jwtOpen` field) and connect
 it to an edition session according to the document ID its provides (see `docid` field).
@@ -310,25 +365,25 @@ New editor (Kate)                       Server                         Existing 
 
 TODO: do we need it ?
 
+#### `connectState` (server → client)
+
+Format:
+
+```json5
+```
+
+*Editics protocol changes*:
+
+#### `authChanges` (server → client)
+
+Format:
+
+```json5
+```
+
+*Editics protocol changes*:
+
 #### `authChangesAck` (client → server)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
-#### `auth` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
-#### `waitAuth` (server → client)
 
 Format:
 
@@ -392,6 +447,30 @@ Format:
   has already a single source of truth on those info).
 - Encrypt `message` field.
 
+#### `getMessages` (client → server)
+
+Get all the chat messages for the session.
+
+Format:
+
+```json5
+{
+  "type": "getMessages",
+  "payload": {
+    "type": "getMessages"
+  }
+}
+```
+
+> [!NOTE]
+> This even is not needed in theory: the client checks for a `messages` field in
+> the server `auth` event.
+> However in practice the server never set this `messages` field, hence why the
+> client has to explicitly send a `getMessages` event.
+
+*Editics protocol changes*: Ignore this event since the `auth` event sent by the server
+always contains the session messages.
+
 #### `cursor` (client → server) & `cursor` (server → client)
 
 Move the cursor.
@@ -443,41 +522,80 @@ Format:
 
 #### `getLock` (client → server) & `getLock` (server → client)
 
-Ask the server to obtain (i.e. the server sends a `getLock` event) the list of
-all [region locks](#21---session-locks) currently held.
+Acquire a [region locks](#21---session-locks) to prevent concurrent edition on some
+part of the document.
 
-This is event is rarely used since region locks are optimisticly taken (i.e.
+This event is used for heavy structural edit (insert/edit images, tables, headers/footers,
+sheet ranges, slide objects, etc.).
+For most edits (e.g. text edit) the region locks are instead optimisticly taken (i.e.
 editing → isSaveLock → saveChanges with no getLock ever sent).
 
-The operations that actually require a server lock are the "heavy" structural ones
-(e.g. inserting/editing images, tables, headers/footers, document settings etc.).
+Client format:
 
 ```json5
 {
-    "type": "getLock"
-}
-```
-
-*Editics protocol changes*:
-
-- Rename to `list_region_locks`
-
-Then the server sends:
-
-```json5
-{
+  "type": "getLock",
+  "payload": {
     "type": "getLock",
-    "locks": [
-        {
-            TODO
-        }
-    ]
+    // Array of block descriptors the client wants to acquire a lock on.
+    // Shape depends on editor type:
+    //  - Word: a plain string block id (a "guid").
+    //  - Spreadsheet: { sheetId, type, rangeOrObjectId, guid }
+    //  - Presentation/diagram: { type, val } or { type, slideId, objId }
+    "block": <array>
+  }
 }
 ```
 
 *Editics protocol changes*:
 
-- Rename to `list_region_locks_rep`
+- Rename to `acquire_region_lock`
+
+Then the server *to every clients* (including the one that send the `getLock` event) a `getLock` event.
+
+Server format:
+
+```json5
+{
+  "type": "getLock",
+  "payload": {
+    "type": "getLock",
+    // Map of block-id → lock record, describing the full lock table as it
+    // stands after the server attempted to acquire the requested blocks for
+    // the requester. In other words: the locks the client just asked for are
+    // now present in this map, attributed to the requester's `user` id (if
+    // they were free); locks held by others appear with their `user` id. Each
+    // record:
+    //   { time, user, block }
+    //  - `time`: server timestamp (ms) when the lock was taken/checked.
+    //  - `user`: id of the user holding the lock. For the blocks the
+    //     requester just acquired, this is the requester's own id.
+    //  - `block`: the original block descriptor (same shape the client sent).
+    //
+    // For the Document editor the map is keyed by the plain block id and the
+    // value's `block` is the string id. For Spreadsheet/Presentation/PDF the
+    // client re-keys by `block.guid`.
+    //
+    // A record is never null in this event (null is only used in releaseLock
+    // to signal "gone"). The `user` field tells each receiver whether the
+    // lock is theirs or someone else's.
+    "locks": <object | array>
+  }
+}
+```
+
+*Editics protocol changes*:
+
+- Rename to `region_lock_acquired`
+
+#### `releaseLock` (server → client)
+
+Format:
+
+```json5
+```
+
+*Editics protocol changes*:
 
 #### `saveChanges` (client → server) & `saveChanges`/`savePartChanges` (server → client)
 
@@ -738,30 +856,6 @@ Format:
 }
 ```
 
-#### `getMessages` (client → server)
-
-Get all the chat messages for the session.
-
-Format:
-
-```json5
-{
-  "type": "getMessages",
-  "payload": {
-    "type": "getMessages"
-  }
-}
-```
-
-> [!NOTE]
-> This even is not needed in theory: the client checks for a `messages` field in
-> the server `auth` event.
-> However in practice the server never set this `messages` field, hence why the
-> client has to explicitly send a `getMessages` event.
-
-*Editics protocol changes*: Ignore this event since the `auth` event sent by the server
-always contains the session messages.
-
 #### `unLockDocument` (client → server)
 
  Notify the server that the client is leaving active editing, or wants to drop its locks and/or the document auth lock. It is sent:
@@ -900,16 +994,148 @@ Format:
 
 *Editics protocol changes*: Keep as-is.
 
-#### `openDocument` (client → server)
+#### `warning` (server → client)
 
-: Ignored since the client deals alone with document opening due to e2e encryption
+Send a warning message to the client to be displayed to the end user.
 
 Format:
 
 ```json5
+{
+    "type": "warning",
+    "code": <integer>, // `-200`: FORCED_VIEW_MODE, `-201`: FILE_NOT_ASSEMBLED
+    "message": <string>
+}
 ```
 
 *Editics protocol changes*:
+
+- Rename to `warning_received`
+
+#### `license` (server → client)
+
+Event send right after the wesocket opens, the client uses it to
+enable/disable editor features and to decide branding/customization.
+
+Format:
+
+```json5
+{
+  "type": "license",
+  "payload": {
+    "type": "license",
+
+    // License descriptor. Fields:
+    //  - type:               license type id (integer; e.g. 3 in the logs).
+    //  - light:              legacy boolean, always false.
+    //  - mode:               license mode (integer; 0 in the logs).
+    //  - rights:             bitmask of rights (integer; 1 in the logs).
+    //  - buildVersion:       server build version string (e.g. "9.4.1").
+    //  - buildNumber:        server build number (integer; e.g. 15).
+    //  - protectionSupport:  whether protected-file opening is supported.
+    //  - isAnonymousSupport: whether anonymous users are supported.
+    //  - liveViewerSupport:  whether the live viewer feature is supported.
+    //  - branding:           whether branding/white-label is allowed.
+    //  - customization:      whether UI customization is allowed.
+    //  - advancedApi:        whether the advanced editor API is available.
+    "license": {
+      "type": <integer>,
+      "light": <boolean>,
+      "mode": <integer>,
+      "rights": <integer>,
+      "buildVersion": <string>,
+      "buildNumber": <integer>,
+      "protectionSupport": <boolean>,
+      "isAnonymousSupport": <boolean>,
+      "liveViewerSupport": <boolean>,
+      "branding": <boolean>,
+      "customization": <boolean>,
+      "advancedApi": <boolean>
+    },
+
+    // AI plugin settings for the editor UI (may be absent). Forwarded to
+    // the editor via `onAiPluginSettings` if the license init is happening.
+    "aiPluginSettings": <object | undefined>
+  }
+}
+```
+
+*Editics protocol changes*: Ignore this event and use a static configuration instead.
+
+#### `openDocument` (client → server) & `documentOpen` (server → client)
+
+Those events are about having the server hosting a file the client needs.
+
+The usecases for this:
+
+1. During the initial opening opening of the document: server sends a `documentOpen` event
+  (after the `auth` event) containing the URL to the document (the server has typically
+  downloaded the document from the 3rd party storage and converted it to the bin format).
+2. To change the document configuration (e.g. set/change/remove document password,
+  or re-open with a different CSV delimiter): client sends `openDocument` with
+  the config changes, and server replies with a `documentOpen` so that the client
+  can update.
+3. To open a password protected document: server sends a `documentOpen` event with
+  `"status": "needpassword"`, client respond with a `openDocument` containing the
+  password and server finally respond with a `documentOpen` containing the URL of
+  the document to download (i.e. back to case 1).
+4. When inserting an image from a URL: client sends a `documentOpen` event with
+   `"c": "imgurls"`, server download the image on its own then responds with a
+   `openDocument` containing the URL (this one pointing on the server) to get the
+   image.
+
+Client event format:
+
+```json5
+{
+  "type": "openDocument",
+  "payload": {
+    "type": "openDocument",
+    // Dispatch key is `message.c`, which can be:
+    // - "reopen": re-open with advanced open options (TXT codepage,
+    //   CSV delimiter, or a DRM password).
+    // - "setpassword": set/change/remove the document password.
+    // - "changedocinfo": change the user's display name.
+    // - "imgurls"/"pathurl"/"pathurls": resolve image/asset URLs.
+    "message": <object>
+  }
+}
+```
+
+Server event format:
+
+```json5
+{
+  "type": "documentOpen",
+  "payload": {
+    "type": "documentOpen",
+    "data": {
+      "type": <string>, // "reopen"/"imgurls"/etc.
+      "status": "ok", // Also "ok" when the original URL couldn't be fetched...
+      "data": {
+        "error": <integer>,  // `0`: no error
+        "urls": [
+          {
+            // URL pointing on the server to download the file
+            "url": <string>,
+            // Path of the file, e.g. "media/563ce5bc334c20e2db00d7c8337df009_image1.jpg"
+            "path": <string>,
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+*Editics protocol changes*: Ignored since server shouldn't deal with unencrypted document content.
+
+> [!NOTE]
+> On client-side, we should nevertheless support the client `openDocument` event:
+>
+> - By having the client downloading the images by itself.
+> - By disabling password protection in the editor (`protectionSupport: false`
+>   in the `license` server event)
 
 #### `clientLog` (client → server)
 
@@ -1119,33 +1345,6 @@ Format:
 > this would be done on the client side (so the OnlyOffice editor would get a `meta`
 > without any involvement from the server).
 
-#### `releaseLock` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
-#### `connectState` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
-#### `authChanges` (server → client)
-
-Format:
-
-```json5
-```
-
-*Editics protocol changes*:
-
 #### `disconnectReason` (server → client)
 
  Tell a client that the server is kicking it out for a specific operational reason:
@@ -1203,24 +1402,6 @@ TODO: this event is also used as response to `openDocument` event...
 
 *Editics protocol changes*: Ignore this event since document opening is entirely done client-side.
 
-#### `warning` (server → client)
-
-Send a warning message to the client to be displayed to the end user.
-
-Format:
-
-```json5
-{
-    "type": "warning",
-    "code": <integer>, // `-200`: FORCED_VIEW_MODE, `-201`: FILE_NOT_ASSEMBLED
-    "message": <string>
-}
-```
-
-*Editics protocol changes*:
-
-- Rename to `warning_received`
-
 #### `error` (server → client)
 
 It carries an error identifier and code, and on the
@@ -1245,56 +1426,6 @@ Format:
 ```
 
 *Editics protocol changes*: Ignore this event as it is a legacy one.
-
-#### `license` (server → client)
-
-Event send right after the wesocket opens, the client uses it to
-enable/disable editor features and to decide branding/customization.
-
-Format:
-
-```json5
-{
-  "type": "license",
-  "payload": {
-    "type": "license",
-
-    // License descriptor. Fields:
-    //  - type:               license type id (integer; e.g. 3 in the logs).
-    //  - light:              legacy boolean, always false.
-    //  - mode:               license mode (integer; 0 in the logs).
-    //  - rights:             bitmask of rights (integer; 1 in the logs).
-    //  - buildVersion:       server build version string (e.g. "9.4.1").
-    //  - buildNumber:        server build number (integer; e.g. 15).
-    //  - protectionSupport:  whether protected-file opening is supported.
-    //  - isAnonymousSupport: whether anonymous users are supported.
-    //  - liveViewerSupport:  whether the live viewer feature is supported.
-    //  - branding:           whether branding/white-label is allowed.
-    //  - customization:      whether UI customization is allowed.
-    //  - advancedApi:        whether the advanced editor API is available.
-    "license": {
-      "type": <integer>,
-      "light": <boolean>,
-      "mode": <integer>,
-      "rights": <integer>,
-      "buildVersion": <string>,
-      "buildNumber": <integer>,
-      "protectionSupport": <boolean>,
-      "isAnonymousSupport": <boolean>,
-      "liveViewerSupport": <boolean>,
-      "branding": <boolean>,
-      "customization": <boolean>,
-      "advancedApi": <boolean>
-    },
-
-    // AI plugin settings for the editor UI (may be absent). Forwarded to
-    // the editor via `onAiPluginSettings` if the license init is happening.
-    "aiPluginSettings": <object | undefined>
-  }
-}
-```
-
-*Editics protocol changes*: Ignore this event and use a static configuration instead.
 
 #### `updateVersion` (server → client)
 
