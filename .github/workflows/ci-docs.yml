@@ -37,12 +37,12 @@ jobs:
             docs
         timeout-minutes: 2
 
-      - uses: taiki-e/install-action@6a1bd70eaac3c8bdf093356838d7ee09fda951cf # pin v2.85.5
+      - uses: taiki-e/install-action@ba47c86ac325773530516bb756137ac718732518 # pin v2.86.5
         with:
           tool: ripgrep
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: 0.11.29 # marker:uv-version
         timeout-minutes: 5
