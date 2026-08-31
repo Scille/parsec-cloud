@@ -38,10 +38,10 @@
     },
     "dependencies": {
         "@capacitor/core": "^8.5.0",
-        "@ionic/core": "^8.8.18",
+        "@ionic/core": "^9.0.0",
         "@ionic/storage": "^4.0.0",
-        "@ionic/vue": "^8.8.18",
-        "@ionic/vue-router": "^8.8.18",
+        "@ionic/vue": "^9.0.0",
+        "@ionic/vue-router": "^9.0.0",
         "@sentry/vue": "^10.70.0",
         "@zip.js/zip.js": "^2.8.51",
         "axios": "^1.19.0",
