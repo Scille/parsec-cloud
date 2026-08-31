@@ -49,7 +49,7 @@ SELECT
     password_algorithm_argon2id_parallelism,
     disabled_on
 FROM vault_authentication_method
-WHERE vault = ANY($vault_internal_ids::INTEGER [])
+WHERE vault = ANY($vault_internal_ids::INTEGER[])
 """)
 
 _q_get_all_vault_items_for_account = Q("""
@@ -58,7 +58,7 @@ SELECT
     fingerprint,
     data
 FROM vault_item
-WHERE vault = ANY($vault_internal_ids::INTEGER [])
+WHERE vault = ANY($vault_internal_ids::INTEGER[])
 """)
 
 
