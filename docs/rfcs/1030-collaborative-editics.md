@@ -363,34 +363,361 @@ New editor (Kate)                       Server                         Existing 
    │                                      │   (now 2 editors; co-editing on)     │
 ```
 
-TODO: do we need it ?
+The handshake is driven by the client's `ConnectionState` enum (defined in
+`sdkjs/common/docscoapicommon.js`, client-side only, not a network message):
+
+| State            | Meaning                                                                                          |
+|------------------|--------------------------------------------------------------------------------------------------|
+| `Reconnect` (-1) | transport lost, waiting to reconnect                                                              |
+| `None` (0)       | not initialized                                                                                  |
+| `WaitAuth` (1)   | socket open, `auth` (c→s) sent, waiting for the server `auth` (s→c) reply (or `waitAuth` first)   |
+| `Authorized` (2)| `auth` (s→c) received, the client is a full participant                                          |
+| `ClosedCoAuth` (3) | co-authoring disabled (e.g. demoted to viewer)                                                 |
+| `ClosedAll` (4)  | connection fully closed                                                                         |
+| `SaveChanges` (10) | client is in the middle of a save round (askSaveChanges/sendChanges handshake)                  |
+| `AskSaveChanges` (11) | same, intermediate sub-state                                                                 |
+
+The client moves to `WaitAuth` on socket open, then to `Authorized` once the
+server `auth` (s→c) reply arrives. Nothing else (cursor, changes, locks…) is
+allowed on the socket until `Authorized` is reached.
+
+Format of the client → server `auth` event:
+
+```json5
+{
+  "type": "auth",
+  "payload": {
+    "type": "auth",
+    "docid": <string>,            // OnlyOffice session ID (= workspace_id + document vlob ID in editics)
+    "token": <string>,            // Integrator-provided document token (also in the JWT below)
+    "user": {
+      "id": <string>,            // Integrator-provided user id (e.g. the device id)
+      "username": <string>,
+      "firstname": <string|null>,
+      "lastname": <string|null>,
+      "indexUser": <integer>     // -1 on first open, the client's participant index on reconnection
+    },
+    "editorType": <integer>,      // 0=Word, 1=Spreadsheet, 2=Presentation, 3=Visio
+    "lastOtherSaveTime": <integer>, // last save timestamp the client knows about, -1 on first open
+    "block": <array>,            // Region lock block ids the client believes it still owns (restore)
+    "sessionId": <string|null>,  // null on first open, the session id on reconnection (marks this as a restore)
+    "sessionTimeConnect": <integer|null>, // null on first open, server-provided connect time on reconnection
+    "sessionTimeIdle": <integer>,// How long the client considers itself idle (ms)
+    "documentFormatSave": <integer>, // Output format id the server should use when exporting (see forceSave)
+    "isCloseCoAuthoring": <boolean>,
+    "openCmd": <object|null>,     // The `open` command that triggered the session (contains doc url, format, etc.)
+    "lang": <string>,
+    "mode": <string>,            // "edit" | "view"
+    "permissions": {
+      "edit": <boolean>,
+      "review": <boolean>
+    },
+    "encrypted": <boolean>,
+    "IsAnonymousUser": <boolean>,
+    "timezoneOffset": <integer>,
+    "headingsColor": <string|null>,
+    "coEditingMode": <string>,   // "fast" | "strict"
+    "jwtOpen": <string>,         // Opening JWT token (proves authorization to open this document)
+    "jwtSession": <string>,      // Session JWT token (proves a previously-established session), takes precedence over `jwtOpen`
+    "time": <integer>,           // client-side `performance.now()`, for server-side timing logs
+    "supportAuthChangesAck": <boolean> // capability flag: if true the client will ack `authChanges` chunks (modern clients)
+  }
+}
+```
+
+Server handling (`DocsCoServer.auth()`):
+
+1. Verifies the JWT (`jwtSession` takes precedence over `jwtOpen`), fills the
+   `data` object from it.
+2. Parses `openCmd`, looks up the document row (`taskResult.select`).
+3. Determines `bIsRestore`: a reconnection is detected when `sessionId` /
+   `sessionTimeConnect` are present (i.e. the client is restoring a known
+   session rather than opening fresh). On restore the server skips the
+   auth-lock logic and the document-open flow.
+4. Assigns `conn.sessionId`, `conn.user.indexUser`, registers the connection,
+   builds the participant map, stores `conn.supportAuthChangesAck`.
+5. Decides the **auth lock** (see `waitAuth` below): if this is the second
+   non-view participant and the first one still holds the lock, the newcomer
+   gets a `waitAuth` and the rest of the handshake is deferred.
+6. Otherwise (or once the lock is released) sends `authChanges` (the change
+   backlog) then the `auth` (s→c) reply.
+
+Format of the server → client `auth` reply:
+
+```json5
+{
+  "type": "auth",
+  "payload": {
+    "type": "auth",
+    "result": <integer>,          // 1 = success
+    "sessionId": <string>,        // The connection's session id (used on reconnection)
+    "sessionTimeConnect": <integer>, // Server timestamp (ms) at connect (used on reconnection)
+    "participants": <array>,      // Current participant map (same shape as in `connectState`)
+    "messages": <array|undefined>, // Chat messages (in practice the server leaves this empty; see `getMessages`)
+    "locks": <object|array>,      // Current region lock table (same shape as server `getLock` reply)
+    "indexUser": <integer>,       // This connection's participant index
+    "hasForgotten": <boolean>,    // Whether the document has unsaved "forgotten" changes
+    "jwt": <string>,             // Fresh session JWT token (replaces `jwtSession`)
+    "g_cAscSpellCheckUrl": <string>,
+    "buildVersion": <string>,
+    "buildNumber": <integer>,
+    "licenseType": <integer>,
+    "settings": <object>,        // Editor config: reconnection params, `binaryChanges`, `websocketMaxPayloadSize`, `maxChangesSize`, image limits, etc.
+    "openedAt": <integer>        // Server timestamp (ms) passed through to `documentOpen`
+  }
+}
+```
+
+On the client, `_onAuth` distinguishes two cases:
+
+- **First auth** (`data.result === 1`, `_isAuth` was false): stores the session
+  id / index / connect time, applies reconnection settings, refreshes
+  participants, applies any offline changes (`AscChanges`), then runs
+  `_updateAuthChanges()` to apply the buffered `authChanges`, and finally
+  `onFirstLoadChangesEnd(openedAt)` (which lets the editor know the document
+  history is fully loaded).
+- **Reconnection** (`_isAuth` already true): refreshes token, participants,
+  messages and locks, and if a save was in flight when the connection dropped
+  (`_isReSaveAfterAuth`) it re-issues `askSaveChanges` to retry it.
+
+In both cases the client moves to `ConnectionState.Authorized`.
+
+*Editics protocol changes*:
+
+- Rename to `editics_auth`.
+- Remove `jwtOpen` / `jwtSession` / `jwt`: Parsec has its own authentication
+  (the SSE endpoint is already authenticated), so OnlyOffice JWTs are not needed.
+- Remove `documentCallbackUrl`, `documentFormatSave`, `headingsColor`,
+  `coEditingMode`, `IsAnonymousUser`, `sessionTimeIdle`: those are OnlyOffice-
+  integrator specific and don't apply to Parsec.
+- Remove `openCmd`: the document is loaded entirely client-side (see `documentOpen`).
+- Remove `mode`/`permissions`: access control is enforced by the Parsec server
+  (realm roles) before the SSE connection is even established.
+- Remove `messages`, `g_cAscSpellCheckUrl`, `buildVersion`/`buildNumber`,
+  `licenseType`, `settings`: those are OnlyOffice integrator features the Parsec
+  server has no business providing.
+- Remove `lastOtherSaveTime`: the save flow in the editics protocol relies on the
+  change index, not on a save timestamp.
+- Keep `docid` (the session id), `user.id` (the device id), `editorType`,
+  `sessionId`/`sessionTimeConnect` (restore detection), `indexUser`,
+  `supportAuthChangesAck`, and `time` (telemetry).
+- The server `auth` (s→c) reply is replaced by the `bootstrap` SSE event (see
+  §3.1) which carries the participant map and the encrypted change backlog in a
+  single message; the separate `authChanges` flow is folded into it.
+
+#### `waitAuth` (server → client)
+
+This is the **single-editor auth lock** during initial open. It exists so that
+when a second editor joins while the first one hasn't finished loading the
+document, the newcomer waits until the first one has applied the full change
+history and switched to co-editing mode — preventing both editors from
+starting from divergent baselines.
+
+The lock is taken in `DocsCoServer.auth()` the moment the **second non-view
+participant** connects (condition: `2 === countNoView && !tmpUser.view`), on
+behalf of the first participant (`firstParticipantNoView.id`). It is stored in
+Redis (`editorData.lockAuth`), keyed by `docId`, owned by the first editor's
+user id. A safety timer (`setLockDocumentTimer`, `tenExpLockDoc` × 2) force-
+releases the lock and drops the first editor if it never unlocks.
+
+While the lock is held, the newcomer is sent `waitAuth` **instead of** the
+`authChanges` + `auth` (s→c) reply, and a `connectState { waitAuth: true }` is
+broadcast to everyone (nudging the first editor to release the lock). The
+deferred `authChanges` + `auth` (s→c) are delivered once the first editor sends
+`unLockDocument { unlock: true }`, which triggers `checkEndAuthLock` →
+`editorData.unlockAuth` → a published `auth` event that fans the handshake out
+to all waiting participants.
+
+Format:
+
+```json5
+{
+  "type": "waitAuth",
+  "payload": {
+    "type": "waitAuth",
+    // The participant currently holding the auth lock (i.e. the established
+    // editor the newcomer must wait for). Same shape as a `participants` entry:
+    //   { id, idOriginal, username, indexUser, view, connectionId,
+    //     isCloseCoAuthoring, isLiveViewer, encrypted }
+    "lockDocument": <object>
+  }
+}
+```
+
+On the client the `waitAuth` case in the dispatcher is a **no-op** by itself;
+its effect comes through the `connectState` message that carries
+`waitAuth: true`, which triggers `onStartCoAuthoring(isStartEvent=false,
+isWaitAuth=true)` → `_unlockDocument(isWaitAuth)` (see `connectState`).
+
+*Editics protocol changes*:
+
+- Kept (renamed to `wait_auth`), it is needed to implement the
+  exclusive → co-editing transition (see §1.4 and the `co_editing_ready` field
+  of the `participants` SSE event in §3.1).
+- `lockDocument` is replaced by the holder's `device_id` / participant index
+  only (the client already knows the participant details from the `bootstrap`
+  / `participants` events).
 
 #### `connectState` (server → client)
 
+Broadcast to **all** participants whenever the participant set changes (a
+client joins, leaves, or is dropped). It is also the vehicle that carries the
+`waitAuth` flag which nudges the established editor to release the auth lock.
+
+Produced by `DocsCoServer.sendParticipantsState()`, published on every join
+(after `auth()`) and every disconnect. Each message carries a monotonically
+increasing `participantsTimestamp` so clients can ignore out-of-order/stale
+broadcasts.
+
 Format:
 
 ```json5
+{
+  "type": "connectState",
+  "payload": {
+    "type": "connectState",
+    // Monotonic timestamp (ms) of this participant-set update. The client
+    // keeps `_participantsTimestamp` and ignores any message whose timestamp
+    // is older, so reordered deliveries don't clobber a newer state.
+    "participantsTimestamp": <integer>,
+    // Full replacement of the participant set (not a delta). Each entry:
+    //   { id, idOriginal, username, indexUser, view, connectionId,
+    //     isCloseCoAuthoring, isLiveViewer, encrypted }
+    //  - `id`: `<userId><indexUser>` composite id used as the participant key.
+    //  - `idOriginal`: integrator-provided user id (the device id in editics).
+    //  - `indexUser`: the participant index (order of arrival in the session).
+    //  - `view`: whether the participant is a viewer (read-only).
+    //  - `connectionId`: the underlying connection's id (= `sessionId`).
+    //  - `isLiveViewer`/`isCloseCoAuthoring`/`encrypted`: feature flags.
+    "participants": <array>,
+    // true while the document auth lock is held (see `waitAuth`). When true it
+    // tells the established editor it must send `unLockDocument { unlock: true }`
+    // once its document is loaded, to release the lock and let newcomers proceed.
+    "waitAuth": <boolean>
+  }
+}
 ```
 
+Client handling (`DocsCoApi._onConnectionStateChanged`):
+
+1. Drops the message if `participantsTimestamp` is stale.
+2. Updates `_participants` / `_countEditUsers`, computes the diff
+   (`usersStateChanged`).
+3. If the diff is non-empty and there is more than one edit user → calls
+   `onStartCoAuthoring(isStartEvent=false, isWaitAuth)`, which on the editor
+   side calls `_unlockDocument(isWaitAuth)` → sends `unLockDocument`.
+4. Fires `onConnectionStateChanged` per changed user (join/leave notifications
+   to the editor UI).
+
+The `waitAuth` value and the `isWaitAuth` argument exist mostly as sanity
+checks (the client logs a `changesError` if `waitAuth` is set but the
+participant set didn't actually change or there aren't >1 edit users, which
+would indicate a race condition).
+
 *Editics protocol changes*:
+
+- Rename to `participants` (this is exactly the `participants` SSE event in
+  §3.1).
+- Replace `participantsTimestamp` with a `DateTime timestamp` (same monotonic
+  role).
+- Replace the `participants` array with a `Dictionary<Integer, DeviceID>`
+  (participant index → device id), since the client already knows the rest.
+- Replace the `waitAuth` boolean with `co_editing_ready: Boolean` (inverted
+  meaning: `true` once the established editor has released the auth lock and
+  co-editing is fully on; corresponds to `waitAuth: false`).
 
 #### `authChanges` (server → client)
 
+Delivered during the auth handshake (after `waitAuth`, if any, and before the
+`auth` (s→c) reply), this is the **backlog of document changes** that occurred
+in the session before the newcomer joined. It lets a freshly-connecting client
+reach the exact same document state as the existing editors.
+
+The change set can be large, so the server sends it in **chunks** bounded by
+`websocketMaxPayloadSize` (~1.5MB), and uses an **ack-based flow control** when
+the client declared `supportAuthChangesAck: true`: the server sets
+`conn.authChangesAck = true`, sends a chunk, then blocks (polling every 100ms,
+up to 30s) until the client replies with `authChangesAck`. Only sent to
+`needSendChanges` connections (editors and live viewers; pure viewers are
+skipped).
+
 Format:
 
 ```json5
+{
+  "type": "authChanges",
+  "payload": {
+    "type": "authChanges",
+    // A slice of the document's change history, in order. Each entry is one
+    // stored change:
+    //   { docid, change, time, user, useridoriginal }
+    //  - `change`: an opaque OnlyOffice change fragment (JSON or binary,
+    //     depending on `settings.binaryChanges`).
+    //  - `time`: server timestamp (ms) the change was stored.
+    //  - `user`: composite `<userId><indexUser>` of the change's author.
+    //  - `useridoriginal`: integrator-provided user id of the author.
+    // The whole array is at most `websocketMaxPayloadSize`-worth of changes.
+    "changes": <array>
+  }
+}
 ```
 
+Client handling (`DocsCoApi._onAuthChanges`): the client **buffers** the chunk
+into `_authChanges` and immediately replies with `authChangesAck` (so the
+server can send the next chunk). The buffered changes are applied all at once
+later, by `_updateAuthChanges()`, called from `_onAuth` right before
+`onFirstLoadChangesEnd`. `_updateAuthChanges` also reconciles against
+`_authOtherChanges` (changes that arrived via `saveChanges` broadcasts while the
+auth handshake was in progress) by computing `changesIndex` diffs so nothing
+is double-applied.
+
+> [!NOTE]
+> The `authChanges` chunks are not interleaved with the `auth` (s→c) reply:
+> they are sent first (once the auth lock is clear), then the `auth` reply is
+> sent, then `documentOpen`. The client only applies the buffered changes in
+> `_updateAuthChanges()` after it has processed the `auth` reply (so it knows
+> its session id, participant index, and the lock table).
+
 *Editics protocol changes*:
+
+- Folded into the `bootstrap` SSE event (§3.1): the change backlog is delivered
+  as `encrypted_changes: List<(Index, Bytes)>` in the same message that
+  acknowledges the join. No separate chunking / ack flow is needed since SSE
+  is one-directional and the server controls the send rate (and the changes are
+  end-to-end encrypted, so the server can't size-optimize them by inspecting
+  content).
+- The opaque `change` fragments are replaced by `(Index, Bytes)` tuples
+  (change index + encrypted change blob).
+- Drop the `docid`/`user`/`useridoriginal` fields: the author is conveyed by
+  the `participant` field of the `change` SSE event, and the session is
+  single-document.
 
 #### `authChangesAck` (client → server)
 
+Acknowledge one `authChanges` chunk so the server can send the next one (see
+`authChanges`). This is the flow-control half of the chunked handshake.
+
 Format:
 
 ```json5
+{
+  "type": "authChangesAck",
+  "payload": {
+    "type": "authChangesAck"
+  }
+}
 ```
 
+Server handling (`DocsCoServer` dispatch): `delete conn.authChangesAck`, which
+unblocks the chunk-sending loop (`sendAuthChangesByChunks`) so it can send the
+next chunk or proceed to the `auth` (s→c) reply. If the ack doesn't arrive
+within 30s the server gives up waiting (the `authChangesAck` flag is cleared
+and the loop continues regardless).
+
 *Editics protocol changes*:
+
+- Removed: there is no chunked flow to ack since `authChanges` is folded into
+  the single `bootstrap` SSE event (see `authChanges`).
 
 #### `message` (client → server) & `message` (server → client)
 
