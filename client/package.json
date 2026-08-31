@@ -81,14 +81,14 @@
         "eslint-plugin-vue": "^10.10.0",
         "fs-extra": "^11.4.0",
         "globals": "^17.11.0",
-        "happy-dom": "^20.11.2",
+        "happy-dom": "^20.11.6",
         "jiti": "^2.7.0",
         "knip": "^6.32.2",
         "monocart-coverage-reports": "^2.12.12",
         "otplib": "^13.4.1",
         "prettier": "3.9.6",
         "prettier-plugin-organize-imports": "^4.3.0",
-        "sass": "^1.102.0",
+        "sass": "^1.103.1",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.67.0",
         "unique-names-generator": "^4.7.1",
@@ -96,6 +96,6 @@
         "vite-plugin-static-copy": "^4.1.1",
         "vitest": "4.1.10",
         "vue-eslint-parser": "^10.4.1",
-        "vue-tsc": "^3.3.9"
+        "vue-tsc": "^3.3.10"
     }
 }
