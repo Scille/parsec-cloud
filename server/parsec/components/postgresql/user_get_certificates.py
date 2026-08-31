@@ -191,8 +191,8 @@ my_realm_certificates AS (
 
 realm_after AS (
     SELECT
-        UNNEST($realm_after_ids::UUID []) AS realm_id,
-        UNNEST($realm_after_timestamps::TIMESTAMPTZ []) AS realm_after
+        UNNEST($realm_after_ids::UUID[]) AS realm_id,
+        UNNEST($realm_after_timestamps::TIMESTAMPTZ[]) AS realm_after
 ),
 
 my_all_certificates AS (
