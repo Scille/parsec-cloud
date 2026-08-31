@@ -103,8 +103,8 @@ msgstr ""
 #: ../../cli/install-cli.rst:70
 msgid "The above code-snippet is for ``bash``, adapt it to your shell."
 msgstr ""
-"Le snipper de code au-dessus est pour ``bash``, adapter le pour votre "
-"invite de commandes."
+"Le snipper de code au-dessus est pour ``bash``, adapter le pour votre invite "
+"de commandes."
 
 #: ../../cli/install-cli.rst:73
 msgid "Install man pages"
