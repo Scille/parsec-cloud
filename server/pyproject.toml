@@ -30,7 +30,7 @@ dependencies = [
     "structlog>=25.4.0,<27",
     # ASGI server
     "fastapi>=0.121.2, <1",
-    "uvicorn>=0.35.0,<0.52",
+    "uvicorn>=0.35.0,<0.53",
     "jinja2>=3.0, <4",
     # PostgreSQL
     "asyncpg~=0.31",
