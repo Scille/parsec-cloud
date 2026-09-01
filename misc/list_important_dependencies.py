@@ -350,7 +350,6 @@ def list_python_deps(versions: dict[str, str]) -> set[Dependency]:
         # Build
         "cibuildwheel",
         "maturin",
-        "setuptools",
         "patchelf",
     )
     deps = {
