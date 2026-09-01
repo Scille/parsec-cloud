@@ -1,6 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, EntryName, FsPath, ParsecAccount, ParsecWorkspacePathAddr, WorkspaceHandle, WorkspaceName } from '@/parsec';
+import {
+  ConnectionHandle,
+  EntryName,
+  FsPath,
+  getClientInfo,
+  ParsecAccount,
+  ParsecWorkspacePathAddr,
+  WorkspaceHandle,
+  WorkspaceName,
+} from '@/parsec';
 import { DeviceID, OrganizationID } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { ServerType } from '@/services/parsecServers';
@@ -9,7 +18,7 @@ import { InvitationView } from '@/views/invitations/types';
 import { WorkspaceMenu } from '@/views/workspaces/types';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
-import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
+import { RouteLocationNormalizedLoaded, Router, RouteRecordRaw } from 'vue-router';
 
 export enum Routes {
   Home = 'home',
@@ -240,7 +249,7 @@ export function getRouteBeforeFileHandler(): RouteBackup | undefined {
   return routeBeforeFileHandler;
 }
 
-router.beforeEach((to, from) => {
+router.beforeEach(async (to, from) => {
   // Clearing history if we come from a page that has no handle.
   // Not taking any risk.
   if (!to.params.handle || !from.params.handle) {
@@ -249,6 +258,21 @@ router.beforeEach((to, from) => {
   if (!to.name || !to.params.handle) {
     routeBeforeFileHandler = undefined;
     return;
+  }
+  // Switching handles, either after logout/login or multi-org shenanigans
+  if (from.params.handle && from.params.handle !== to.params.handle) {
+    // `return false` brings a few errors and navigation glitches, returning
+    // the `from` route seems much more stable
+    return from;
+  } else if (!from.params.handle) {
+    // From non-logged page
+    // Check if the handle matches a logged org
+    const result = await getClientInfo(Number(to.params.handle));
+    if (!result.ok) {
+      // `return false` brings a few errors and navigation glitches, returning
+      // the `from` route seems much more stable
+      return from;
+    }
   }
   const routeName = to.name as Routes;
   if (visitedLastHistory.has(to.name as Routes)) {
