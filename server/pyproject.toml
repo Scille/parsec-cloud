@@ -60,9 +60,9 @@ cache-keys = [{ file = "pyproject.toml" }]
 [dependency-groups]
 dev = [
     # build
-    "cibuildwheel>=4.0,<4.2",
+    "cibuildwheel>=4.0,<4.3",
     "maturin~=1.14.1",
-    "patchelf~=0.17.2.4; platform_system=='Linux'",
+    "patchelf>=0.17.2.4,<0.19.2.0; platform_system=='Linux'",
     # lint
     "deptry~=0.25.1",
     "editorconfig-checker>=3.2.1,<3.12.0",
@@ -153,6 +153,6 @@ requires = [
     "maturin>=1.14.1,<2.0", # Need to build rust lib
     # Fix rust lib 3rd lib dependencies
     "maturin[patchelf]>=1.14.1,<2.0; platform_system=='Linux'",
-    "patchelf~=0.17.2.1; platform_system=='Linux'",
+    "patchelf>=0.17.2.1,<0.19.2.0; platform_system=='Linux'",
 ]
 build-backend = "maturin"
