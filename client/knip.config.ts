@@ -20,14 +20,7 @@ const config = {
     electron: {
       // Add entry files not added by knip's default entry file patterns
       // See: https://knip.dev/explanations/entry-files#default-entry-file-patterns
-      entry: [
-        'assets/electron-publisher-custom.js',
-        'scripts/before-pack.cjs',
-        'src/index.ts',
-        'src/preload.ts',
-        'src/setup.ts',
-        'src/winRegistry.ts',
-      ],
+      entry: ['assets/electron-publisher-custom.js', 'scripts/before-pack.cjs', 'src/preload.ts', 'src/setup.ts', 'src/winRegistry.ts'],
     },
   },
   // Exclude the following checks from the report
@@ -63,10 +56,6 @@ const config = {
     'regedit',
     // commented most of the time, but can be useful in dev
     '@vitejs/plugin-basic-ssl',
-  ],
-  ignoreBinaries: [
-    // TODO: Investigate why is reported as unlisted binary in the CI
-    'electron',
   ],
 } satisfies KnipConfig;
 
