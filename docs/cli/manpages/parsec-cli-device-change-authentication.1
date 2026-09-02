@@ -4,10 +4,23 @@
 .SH NAME
 parsec\-cli\-device\-change\-authentication \- Change authentication medium for a device
 .SH SYNOPSIS
-\fBparsec\-cli device change\-authentication\fR [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-p\fR|\fB\-\-password\fR] [\fB\-k\fR|\fB\-\-keyring\fR] [\fB\-h\fR|\fB\-\-help\fR] 
+\fBparsec\-cli device change\-authentication\fR [\fB\-\-auth\fR] [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-device\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] 
 .SH DESCRIPTION
 Change authentication medium for a device
 .SH OPTIONS
+.TP
+\fB\-\-auth\fR \fI<AUTH>\fR [default: password]
+New authentication method for the new device
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+keyring
+.IP \(bu 2
+password
+.RE
 .TP
 \fB\-\-password\-stdin\fR
 Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
@@ -23,12 +36,6 @@ Parsec config directory
 .RS
 May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
 .RE
-.TP
-\fB\-p\fR, \fB\-\-password\fR
-
-.TP
-\fB\-k\fR, \fB\-\-keyring\fR
-
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Print help

@@ -4,10 +4,23 @@
 .SH NAME
 parsec\-cli\-invite\-claim \- Claim an invitation
 .SH SYNOPSIS
-\fBparsec\-cli invite claim\fR [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-data\-dir\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-\-use\-keyring\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIADDR\fR> 
+\fBparsec\-cli invite claim\fR [\fB\-\-auth\fR] [\fB\-\-password\-stdin\fR] [\fB\-d\fR|\fB\-\-data\-dir\fR] [\fB\-c\fR|\fB\-\-config\-dir\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIADDR\fR> 
 .SH DESCRIPTION
 Claim an invitation
 .SH OPTIONS
+.TP
+\fB\-\-auth\fR \fI<AUTH>\fR [default: password]
+New authentication method for the new device
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+keyring
+.IP \(bu 2
+password
+.RE
 .TP
 \fB\-\-password\-stdin\fR
 Read the password from stdin instead of TTY. This flag needs to be explicitly set (it does not have a env var)
@@ -23,9 +36,6 @@ Parsec config directory
 .RS
 May also be specified with the \fBPARSEC_CONFIG_DIR\fR environment variable. 
 .RE
-.TP
-\fB\-\-use\-keyring\fR
-Use keyring to store the password for the device
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Print help
